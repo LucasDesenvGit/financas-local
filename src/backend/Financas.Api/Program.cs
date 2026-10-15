@@ -14,18 +14,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseWindowsService();
+builder.Host.UseSystemd();
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.AddServerHeader = false;
+    o.Limits.MaxRequestBodySize = 1_048_576;
+});
 var cfg = builder.Configuration;
 
 // ---------------------------------------------------------------- Banco de dados
+var caminhoBanco = cfg["Banco:Caminho"] ?? Path.Combine(AppContext.BaseDirectory, "dados", "sql", "FinancasLocal.db");
 builder.Services.AddDbContext<FinancasDbContext>(opcoes =>
-{
-    opcoes.UseSqlServer(cfg.GetConnectionString("Financas"), sql =>
-    {
-        sql.EnableRetryOnFailure(3);
-        var nivel = cfg.GetValue<int?>("Banco:NivelCompatibilidade");
-        if (nivel is int n) sql.UseCompatibilityLevel(n);
-    });
-});
+    opcoes.UseSqlite($"Data Source={caminhoBanco}"));
 
 // ---------------------------------------------------------------- Proteção de dados (chaves em D:, protegidas por DPAPI)
 var pastaChaves = cfg["Seguranca:PastaChaves"];
