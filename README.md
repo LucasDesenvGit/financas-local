@@ -51,11 +51,21 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 
 ## Migrar de uma instalação com SQL Server
 
-Se você já usava o Finanças Local no Windows com IIS e SQL Server Express, use a ferramenta de migração para trazer os dados para o novo banco SQLite:
+Se você já usava o Finanças Local no Windows com IIS e SQL Server Express, use a ferramenta de migração para trazer os dados para o novo banco SQLite. **Não rode o `2-criar-banco.sh` antes**: os dados iniciais dele (categorias e configurações padrão) conflitam com os dados migrados. O destino precisa ser um banco vazio, só com a estrutura:
 
 ```bash
-dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string do SQL Server de origem>" "<caminho do .db de destino>"
+# 1. Pare o site antigo no IIS, para nada mudar no SQL Server durante a cópia.
+# 2. Crie o banco vazio, só com a estrutura:
+sqlite3 dados/sql/FinancasLocal.db < banco/01-estrutura.sql
+# 3. Migre (a connection string antiga está no appsettings.Production.json da publicação do IIS):
+dotnet run --project src/backend/Financas.MigrarSqlite -- \
+  'Server=.\FINANCAS;Database=FinancasLocal;Integrated Security=True;Encrypt=True;TrustServerCertificate=True' \
+  dados/sql/FinancasLocal.db
+# 4. Publique normalmente:
+scripts/3-publicar.sh
 ```
+
+A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de linhas de cada tabela no final. A pasta `dados\sql` da instalação antiga só é acessível por Administradores, então no Windows rode esses comandos num Git Bash aberto como Administrador.
 
 É seguro rodar mesmo sem um SQL Server disponível: a ferramenta detecta que não há nada para migrar e termina sem erro. Como o Client Secret da Pluggy e o token da brapi foram criptografados com chaves da instalação antiga (que não podem ser lidas em outra máquina ou sistema operacional), a migração limpa esses dois campos — informe-os de novo em **Configurações** depois de migrar (mesma situação da linha "o secret da Pluggy não abre mais" em Problemas comuns).
 

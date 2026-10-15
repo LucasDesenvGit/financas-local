@@ -86,7 +86,8 @@ public static class Program
         if (!File.Exists(destinoCaminho))
         {
             ErroLinha($"O arquivo de destino '{destinoCaminho}' não existe.");
-            ErroLinha("Rode antes o scripts/2-criar-banco.sh para gerar a estrutura a partir de banco/01-estrutura.sql.");
+            ErroLinha("Crie antes um banco vazio só com a estrutura: sqlite3 \"<destino>\" < banco/01-estrutura.sql");
+            ErroLinha("(não use o 2-criar-banco.sh: os dados iniciais dele conflitam com os dados migrados).");
             return 1;
         }
 
@@ -109,10 +110,25 @@ public static class Program
         {
             ErroLinha("O arquivo de destino existe, mas não tem a estrutura esperada.");
             ErroLinha("Tabelas faltando: " + string.Join(", ", tabelasFaltando));
-            ErroLinha("Esta ferramenta não cria esquema (isso é responsabilidade do scripts/2-criar-banco.sh, via banco/01-estrutura.sql). Rode-o antes e tente de novo.");
+            ErroLinha("Esta ferramenta não cria esquema: crie o destino com banco/01-estrutura.sql e tente de novo.");
             return 1;
         }
         Ok("estrutura compatível");
+
+        // Os Ids da origem são copiados como estão: qualquer linha já presente no destino (ex.: as
+        // categorias e configurações padrão do banco/02-dados-iniciais.sql) colidiria com eles.
+        var tabelasComDados = new List<string>();
+        foreach (var tabela in tabelasEsperadas)
+        {
+            if (await TabelaTemLinhasAsync(destino, tabela)) tabelasComDados.Add(tabela);
+        }
+        if (tabelasComDados.Count > 0)
+        {
+            ErroLinha("O arquivo de destino já tem dados em: " + string.Join(", ", tabelasComDados));
+            ErroLinha("A migração precisa de um banco vazio, criado só com banco/01-estrutura.sql (sem o 02-dados-iniciais.sql).");
+            return 1;
+        }
+        Ok("destino vazio");
 
         Etapa("Ordenando tabelas por dependência de chave estrangeira");
         var ordem = OrdenarPorDependencia(origem.Model);
@@ -375,6 +391,24 @@ public static class Program
         }
 
         return tabelas;
+    }
+
+    private static async Task<bool> TabelaTemLinhasAsync(FinancasDbContext destino, string tabela)
+    {
+        var conexao = destino.Database.GetDbConnection();
+        var precisaAbrir = conexao.State != ConnectionState.Open;
+        if (precisaAbrir) await conexao.OpenAsync();
+        try
+        {
+            await using var cmd = conexao.CreateCommand();
+            // Nome vem do modelo do EF (não de entrada do usuário); aspas duplas são o escape de identificador do SQLite.
+            cmd.CommandText = $"SELECT EXISTS (SELECT 1 FROM \"{tabela.Replace("\"", "\"\"")}\");";
+            return Convert.ToInt64(await cmd.ExecuteScalarAsync()) == 1;
+        }
+        finally
+        {
+            if (precisaAbrir) await conexao.CloseAsync();
+        }
     }
 
     private static async Task<List<string>> ObterViolacoesForeignKeyAsync(FinancasDbContext destino)
