@@ -3,7 +3,7 @@
     Cria o repositorio no GitHub, envia as branches main e develop e aplica as protecoes.
 
 .DESCRIPTION
-    Requer o GitHub CLI (gh). Se nao estiver instalado:  winget install --id GitHub.cli -e
+    Se o GitHub CLI (gh) nao estiver instalado, o script instala pelo winget.
     Na primeira vez, o script pede o login (gh auth login) pelo navegador.
 
     O que e configurado:
@@ -38,7 +38,22 @@ function Executar([string]$descricao, [scriptblock]$comando) {
 }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "Git nao encontrado. Instale: winget install --id Git.Git -e" }
-if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "GitHub CLI nao encontrado. Instale: winget install --id GitHub.cli -e (e abra um novo PowerShell)" }
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    # Instala o GitHub CLI pelo winget (pacote oficial publicado pela GitHub no repositorio da Microsoft).
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        throw "GitHub CLI nao encontrado e o winget nao esta disponivel. Baixe em https://cli.github.com e rode o script de novo."
+    }
+    Executar "Instalando o GitHub CLI (winget)" {
+        winget install --id GitHub.cli --exact --source winget --accept-package-agreements --accept-source-agreements --silent
+    }
+    # Recarrega o PATH desta sessao para encontrar o gh recem-instalado.
+    $env:PATH = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        $padrao = Join-Path $env:ProgramFiles "GitHub CLI"
+        if (Test-Path (Join-Path $padrao "gh.exe")) { $env:PATH = "$padrao;$env:PATH" }
+        else { throw "GitHub CLI instalado, mas nao encontrado no PATH. Abra um novo PowerShell e rode o script de novo." }
+    }
+}
 if (-not (Test-Path (Join-Path $raiz ".git"))) { throw "Esta pasta nao e um repositorio Git: $raiz" }
 
 # Repositorio criado fora do Windows: ajustes para o Git do Windows.
