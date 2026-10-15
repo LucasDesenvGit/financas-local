@@ -16,15 +16,17 @@ public class PainelController : BaseController
     private readonly RelatorioService _relatorios;
     private readonly ConfiguracaoService _config;
     private readonly CarteiraService _carteira;
+    private readonly EmprestimoService _emprestimos;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
-        CarteiraService carteira)
+        CarteiraService carteira, EmprestimoService emprestimos)
     {
         _db = db;
         _contas = contas;
         _relatorios = relatorios;
         _config = config;
         _carteira = carteira;
+        _emprestimos = emprestimos;
     }
 
     [HttpGet]
@@ -57,7 +59,9 @@ public class PainelController : BaseController
         // Open Finance + carteira de renda variável (cotação atual), sem contar duas vezes o mesmo ativo.
         var composicao = await _carteira.ComposicaoAsync(ct);
         var totalInvestido = investidoManual + composicao.Total;
-        var patrimonio = saldoContas + totalInvestido - dividaCartoes;
+        // Saldo devedor de financiamentos e empréstimos (Open Finance), mostrados separadamente.
+        var credito = await _emprestimos.TotaisAsync(ct);
+        var patrimonio = saldoContas + totalInvestido - dividaCartoes - credito.SaldoFinanciamentos - credito.SaldoEmprestimos;
 
         // Movimento do mês
         var (receitas, despesas) = await _relatorios.TotaisAsync(inicio, fim, ct);
@@ -98,6 +102,14 @@ public class PainelController : BaseController
                 alertas.Add($"{nome} precisa de uma ação sua no Meu Pluggy para voltar a sincronizar.");
         }
 
+        var contratosEmAtraso = await _db.Emprestimos.AsNoTracking()
+            .Where(e => e.ConexaoBancaria!.Ativa && e.SaldoDevedor > 0 && e.ParcelasEmAtraso > 0)
+            .Select(e => new { e.Produto, e.Natureza, e.ParcelasEmAtraso })
+            .ToListAsync(ct);
+        foreach (var e in contratosEmAtraso)
+            alertas.Add($"{(e.Natureza == NaturezaCredito.Financiamento ? "Financiamento" : "Empréstimo")} \"{e.Produto}\" " +
+                        $"com {e.ParcelasEmAtraso} parcela(s) em atraso.");
+
         var emergenciaMes = Math.Abs(await _db.Transacoes.AsNoTracking()
             .Where(t => t.Data >= inicio && t.Data <= fim && t.Emergencia && t.Valor < 0 && !t.IgnorarRelatorios
                         && t.Tipo != TipoTransacao.Transferencia)
@@ -108,8 +120,21 @@ public class PainelController : BaseController
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
-            ultimaSincronizacao, emergenciaMes);
+            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos);
     }
+}
+
+[Route("api/emprestimos")]
+public class EmprestimosController : BaseController
+{
+    private readonly EmprestimoService _emprestimos;
+
+    public EmprestimosController(EmprestimoService emprestimos) => _emprestimos = emprestimos;
+
+    /// <summary>Contratos de crédito do Open Finance com os totais de financiamentos e de empréstimos separados.</summary>
+    [HttpGet]
+    public async Task<ActionResult<PainelEmprestimosDto>> Painel(CancellationToken ct)
+        => await _emprestimos.PainelAsync(ct);
 }
 
 [Route("api/relatorios")]

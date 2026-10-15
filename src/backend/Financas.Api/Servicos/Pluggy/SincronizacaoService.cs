@@ -206,6 +206,7 @@ public class SincronizacaoService
             }
 
             await SincronizarInvestimentosAsync(sessao, conexao, ct);
+            await SincronizarEmprestimosAsync(sessao, conexao, ct);
 
             conexao.UltimaSincronizacaoEm = DateTime.UtcNow;
             conexao.UltimoErro = item.Error?.Message is { Length: > 0 } erroItem
@@ -400,6 +401,94 @@ public class SincronizacaoService
             _db.ChangeTracker.Clear();
         }
     }
+
+    /// <summary>
+    /// Contratos de crédito (empréstimos e financiamentos) e os pagamentos já feitos de cada um.
+    /// Complementar: se a instituição não compartilha "operações de crédito", a sincronização segue sem eles.
+    /// </summary>
+    private async Task SincronizarEmprestimosAsync(PluggySessao sessao, ConexaoBancaria conexao, CancellationToken ct)
+    {
+        List<PluggyEmprestimo> emprestimosPluggy;
+        try
+        {
+            emprestimosPluggy = await _pluggy.ListarEmprestimosAsync(sessao, conexao.PluggyItemId, ct);
+        }
+        catch (PluggyException ex) when (ex.StatusCode is 400 or 403 or 404)
+        {
+            // Instituição sem o produto de crédito ou consentimento sem "operações de crédito": ignora.
+            return;
+        }
+        catch (Exception ex) when (ex is PluggyException or System.Text.Json.JsonException or HttpRequestException)
+        {
+            _logger.LogWarning(ex, "Não foi possível obter os empréstimos/financiamentos da conexão {ConexaoId}.", conexao.Id);
+            return;
+        }
+
+        var existentes = await _db.Emprestimos.Include(e => e.Pagamentos)
+            .Where(e => e.ConexaoBancariaId == conexao.Id)
+            .ToDictionaryAsync(e => e.PluggyLoanId, ct);
+        var recebidos = new HashSet<string>();
+
+        foreach (var pe in emprestimosPluggy)
+        {
+            if (string.IsNullOrWhiteSpace(pe.Id) || !recebidos.Add(pe.Id)) continue;
+            if (!existentes.TryGetValue(pe.Id, out var emp))
+            {
+                emp = new Emprestimo { ConexaoBancariaId = conexao.Id, PluggyLoanId = pe.Id };
+                _db.Emprestimos.Add(emp);
+            }
+
+            emp.Natureza = ClassificacaoCredito.Natureza(pe.Kind, pe.Type, pe.ProductName);
+            emp.Modalidade = Limitar(pe.Type, 80);
+            emp.Produto = Limitar(pe.ProductName?.Trim(), 200) is { Length: > 0 } produto
+                ? produto
+                : ClassificacaoCredito.DescreverModalidade(pe.Type, emp.Natureza);
+            emp.NumeroContrato = Limitar(pe.ContractNumber, 100);
+            emp.Moeda = NormalizarMoeda(pe.CurrencyCode);
+            emp.ValorContratado = Arredondar(pe.ContractAmount ?? 0);
+            emp.SaldoDevedor = Arredondar(Math.Max(0, pe.Payments?.ContractOutstandingBalance ?? 0));
+            emp.ParcelasTotal = pe.Installments?.TotalNumberOfInstallments;
+            emp.ParcelasPagas = pe.Installments?.PaidInstallments;
+            emp.ParcelasAVencer = pe.Installments?.DueInstallments;
+            emp.ParcelasEmAtraso = pe.Installments?.PastDueInstallments;
+            emp.Periodicidade = Limitar(pe.InstallmentPeriodicity, 30);
+            emp.SistemaAmortizacao = Limitar(pe.AmortizationScheduled, 30);
+            var taxa = pe.InterestRates?.FirstOrDefault();
+            emp.TaxaJuros = Fracao(taxa?.PreFixedRate);
+            emp.PeriodicidadeTaxa = Limitar(taxa?.TaxPeriodicity, 10);
+            emp.Indexador = Limitar(taxa?.ReferentialRateIndexerSubType ?? taxa?.ReferentialRateIndexerType, 60);
+            emp.Cet = Fracao(pe.Cet);
+            emp.DataContratacao = pe.ContractDate is { } dc ? Relogio.ParaDataLocal(dc) : null;
+            emp.DataPrimeiraParcela = pe.FirstInstallmentDueDate is { } dp ? Relogio.ParaDataLocal(dp) : null;
+            emp.DataVencimentoFinal = pe.DueDate is { } dv ? Relogio.ParaDataLocal(dv) : null;
+
+            // Pagamentos: a instituição sempre devolve o histórico completo, então recarrega.
+            _db.PagamentosEmprestimo.RemoveRange(emp.Pagamentos);
+            emp.Pagamentos = (pe.Payments?.Releases ?? new())
+                .Where(r => r.PaidDate is not null && r.PaidAmount is > 0)
+                .Select(r => new PagamentoEmprestimo
+                {
+                    Data = Relogio.ParaDataLocal(r.PaidDate!.Value),
+                    Valor = Arredondar(r.PaidAmount!.Value),
+                    Extraordinario = r.IsOverParcelPayment == true
+                })
+                .ToList();
+
+            var ultimaParcela = emp.Pagamentos.Where(p => !p.Extraordinario).MaxBy(p => p.Data);
+            emp.ValorParcela = ultimaParcela?.Valor
+                ?? (emp.ParcelasAVencer is > 0 && emp.SaldoDevedor > 0
+                    ? Math.Round(emp.SaldoDevedor / emp.ParcelasAVencer.Value, 2)
+                    : null);
+            emp.AtualizadoEm = DateTime.UtcNow;
+        }
+
+        _db.Emprestimos.RemoveRange(existentes.Values.Where(e => !recebidos.Contains(e.PluggyLoanId)));
+        await _db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Taxas vêm em fração (0.0975 = 9,75%); descarta valores absurdos.</summary>
+    private static decimal? Fracao(double? valor)
+        => valor is { } v && Math.Abs(v) < 1000 ? Math.Round((decimal)v, 8) : null;
 
     /// <summary>
     /// Registra na carteira, como compras, os FIIs/ações/ETFs que o Open Finance informa (todas as conexões ativas).

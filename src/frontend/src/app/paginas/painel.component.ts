@@ -37,7 +37,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         <article class="kpi kpi-destaque">
           <span>Patrimônio líquido</span>
           <strong>{{ d.patrimonioLiquido | currency }}</strong>
-          <small>contas + investimentos (cotação atual) − cartões</small>
+          <small>contas + investimentos (cotação atual) − cartões{{ d.dividaFinanciamentos + d.dividaEmprestimos > 0 ? ' − financiamentos − empréstimos' : '' }}</small>
         </article>
         <article class="kpi">
           <span>Patrimônio sem renda variável</span>
@@ -52,6 +52,20 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <span>Faturas de cartão</span>
           <strong class="negativo">{{ d.dividaCartoes | currency }}</strong>
         </article>
+        @if (d.dividaFinanciamentos > 0) {
+          <article class="kpi kpi-credito kpi-financiamento">
+            <span>Financiamentos</span>
+            <strong class="negativo">{{ d.dividaFinanciamentos | currency }}</strong>
+            <small>saldo devedor · <a routerLink="/emprestimos">ver contratos</a></small>
+          </article>
+        }
+        @if (d.dividaEmprestimos > 0) {
+          <article class="kpi kpi-credito kpi-emprestimo">
+            <span>Empréstimos</span>
+            <strong class="negativo">{{ d.dividaEmprestimos | currency }}</strong>
+            <small>saldo devedor · <a routerLink="/emprestimos">ver contratos</a></small>
+          </article>
+        }
         <article class="kpi">
           <span>Investimentos</span>
           <strong>{{ d.totalInvestido | currency }}</strong>
@@ -162,7 +176,13 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     } @else if (!erro()) {
       <p class="texto-suave">Carregando…</p>
     }
-  `
+  `,
+  styles: [`
+    .kpi-credito { position: relative; overflow: hidden; }
+    .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
+    .kpi-financiamento::before { background: #8fa8f0; }
+    .kpi-emprestimo::before { background: #f6a467; }
+  `]
 })
 export class PainelComponent implements OnInit {
   private readonly api = inject(ApiService);

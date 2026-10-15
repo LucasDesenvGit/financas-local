@@ -71,6 +71,9 @@ public class PluggyClient
     public Task<List<PluggyInvestimento>> ListarInvestimentosAsync(PluggySessao s, string itemId, CancellationToken ct)
         => ListarPaginadoAsync<PluggyInvestimento>(s, $"investments?itemId={Uri.EscapeDataString(itemId)}", ct);
 
+    public Task<List<PluggyEmprestimo>> ListarEmprestimosAsync(PluggySessao s, string itemId, CancellationToken ct)
+        => ListarPaginadoAsync<PluggyEmprestimo>(s, $"loans?itemId={Uri.EscapeDataString(itemId)}", ct);
+
     public Task<List<PluggyMovimentoInvestimento>> ListarMovimentosInvestimentoAsync(PluggySessao s, string investmentId,
         CancellationToken ct)
         => ListarPaginadoAsync<PluggyMovimentoInvestimento>(s, $"investments/{Uri.EscapeDataString(investmentId)}/transactions", ct);

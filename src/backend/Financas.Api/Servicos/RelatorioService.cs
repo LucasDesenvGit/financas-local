@@ -12,12 +12,14 @@ public class RelatorioService
     private readonly FinancasDbContext _db;
     private readonly ContaService _contas;
     private readonly CarteiraService _carteira;
+    private readonly EmprestimoService _emprestimos;
 
-    public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira)
+    public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira, EmprestimoService emprestimos)
     {
         _db = db;
         _contas = contas;
         _carteira = carteira;
+        _emprestimos = emprestimos;
     }
 
     /// <summary>Transações que entram nos relatórios (exclui transferências e itens marcados para ignorar).</summary>
@@ -335,7 +337,8 @@ public class RelatorioService
         var resumoAnteriorCompleto = Resumir(fluxoAnterior);
 
         // Patrimônio estimado ao fim de cada mês: patrimônio de hoje menos o resultado dos meses seguintes.
-        var patrimonioAtual = await PatrimonioAtualAsync(ct);
+        var credito = await _emprestimos.TotaisAsync(ct);
+        var patrimonioAtual = await PatrimonioAtualAsync(credito, ct);
         var resultadoPorMes = (await FluxoMensalAsync(new DateOnly(ano, 1, 1), hoje, ct))
             .ToDictionary(m => (m.Ano, m.Mes), m => m.Receitas - m.Despesas);
         var meses = new List<MesComparativoDto>();
@@ -416,7 +419,7 @@ public class RelatorioService
             categorias.Where(c => c.Natureza == null).Sum(c => c.Valor),
             resumo.Resultado);
 
-        var saude = await SaudeFinanceiraAsync(patrimonioAtual, categoriasInfo.Where(c => c.Value.Natureza == NaturezaGasto.Essencial
+        var saude = await SaudeFinanceiraAsync(patrimonioAtual, credito, categoriasInfo.Where(c => c.Value.Natureza == NaturezaGasto.Essencial
             || (c.Value.Natureza == null && c.Value.CategoriaPaiId is int p && categoriasInfo.TryGetValue(p, out var pai) && pai.Natureza == NaturezaGasto.Essencial))
             .Select(c => c.Key).ToList(), ct);
 
@@ -424,8 +427,8 @@ public class RelatorioService
             resumoAnteriorCompleto, meses, categorias, distribuicao, saude);
     }
 
-    /// <summary>Contas + investimentos − faturas de cartão (mesma regra do painel).</summary>
-    private async Task<decimal> PatrimonioAtualAsync(CancellationToken ct)
+    /// <summary>Contas + investimentos − faturas de cartão − financiamentos − empréstimos (mesma regra do painel).</summary>
+    private async Task<decimal> PatrimonioAtualAsync(TotaisCreditoDto credito, CancellationToken ct)
     {
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
@@ -434,12 +437,15 @@ public class RelatorioService
             ? -Math.Max(0, -saldos.GetValueOrDefault(c.Id))
             : saldos.GetValueOrDefault(c.Id));
         var investimentos = await _carteira.ComposicaoAsync(ct);
-        return total + investimentos.Total;
+        return total + investimentos.Total - credito.SaldoFinanciamentos - credito.SaldoEmprestimos;
     }
 
-    /// <summary>Indicadores com base nos últimos 12 meses completos.</summary>
-    private async Task<SaudeFinanceiraDto> SaudeFinanceiraAsync(decimal patrimonioAtual, List<int> categoriasEssenciais,
-        CancellationToken ct)
+    /// <summary>
+    /// Indicadores com base nos últimos 12 meses completos. O comprometimento da renda soma as parcelas de cartão
+    /// (último mês) com as parcelas mensais dos contratos de financiamento e de empréstimo, informadas separadamente.
+    /// </summary>
+    private async Task<SaudeFinanceiraDto> SaudeFinanceiraAsync(decimal patrimonioAtual, TotaisCreditoDto credito,
+        List<int> categoriasEssenciais, CancellationToken ct)
     {
         var hoje = Relogio.Hoje;
         var inicioMesAtual = new DateOnly(hoje.Year, hoje.Month, 1);
@@ -475,12 +481,15 @@ public class RelatorioService
         var reserva = contas.Where(c => c.Tipo != TipoConta.CartaoCredito).Sum(c => Math.Max(0, saldos.GetValueOrDefault(c.Id)))
             + (await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa).SumAsync(i => (decimal?)i.Saldo, ct) ?? 0m);
 
+        var totalParcelas = parcelas + credito.ParcelaMensalFinanciamentos + credito.ParcelaMensalEmprestimos;
         return new SaudeFinanceiraDto(
             Math.Round(patrimonioAtual, 2), Math.Round(reserva, 2), Math.Round(gasto, 2), Math.Round(gastoEssencial, 2),
             gasto > 0 ? Math.Round(reserva / gasto, 1) : null,
             gastoEssencial > 0 ? Math.Round(reserva / gastoEssencial, 1) : null,
             Math.Round(renda, 2), Math.Round(parcelas, 2),
-            renda > 0 ? Math.Round(parcelas / renda * 100m, 1) : null,
-            meses);
+            renda > 0 ? Math.Round(totalParcelas / renda * 100m, 1) : null,
+            meses,
+            credito.ParcelaMensalFinanciamentos, credito.ParcelaMensalEmprestimos,
+            credito.SaldoFinanciamentos, credito.SaldoEmprestimos);
     }
 }

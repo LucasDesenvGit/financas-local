@@ -101,6 +101,7 @@ builder.Services.AddScoped<CarteiraService>();
 builder.Services.AddScoped<CotacaoService>();
 builder.Services.AddScoped<ExtratoCarteiraService>();
 builder.Services.AddScoped<FiiService>();
+builder.Services.AddScoped<EmprestimoService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<SincronizacaoService>();
 builder.Services.AddHostedService<SincronizacaoHostedService>();
