@@ -31,7 +31,7 @@ jobs:
         run: dotnet build FinancasLocal.sln -c Release
 
       - name: Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
