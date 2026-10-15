@@ -1,0 +1,47 @@
+# ------------------------------------------------------------------
+# Dados locais e gerados — NUNCA versionar (contêm banco, chaves e backups)
+# ------------------------------------------------------------------
+/dados/
+/backups/
+/publicado/
+/ferramentas/
+/instaladores/
+/sqlserver/
+/diagnostico-*.txt
+appsettings.Production.json
+appsettings.*.local.json
+*.bak
+*.mdf
+*.ldf
+*.pfx
+*.key
+
+# ------------------------------------------------------------------
+# .NET / Visual Studio
+# ------------------------------------------------------------------
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.rsuser
+TestResults/
+*.nupkg
+
+# ------------------------------------------------------------------
+# Angular / Node
+# ------------------------------------------------------------------
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# ------------------------------------------------------------------
+# Editores e sistema
+# ------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store

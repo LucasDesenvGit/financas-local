@@ -1,0 +1,8 @@
+# Revisor padrão de tudo no repositório.
+# (O GitHub aceita o e-mail cadastrado na conta no lugar do @usuario.)
+* lukunsan2@gmail.com
+
+# Mudanças sensíveis: banco, segurança e scripts de instalação.
+/banco/                                  lukunsan2@gmail.com
+/scripts/                                lukunsan2@gmail.com
+/src/backend/Financas.Api/Seguranca/     lukunsan2@gmail.com

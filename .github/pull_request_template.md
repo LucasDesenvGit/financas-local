@@ -1,0 +1,24 @@
+## O que muda
+
+<!-- Resumo em 1-3 linhas. -->
+
+## Tipo
+
+- [ ] Funcionalidade (`feat`)
+- [ ] Correção (`fix`)
+- [ ] Refatoração / manutenção
+- [ ] Documentação
+
+## Checklist
+
+- [ ] `dotnet build FinancasLocal.sln -c Release` sem erros
+- [ ] `npm run build` em `src/frontend` sem erros
+- [ ] Mudou o banco? Bloco idempotente em `banco/01-estrutura.sql` + entidade e `FinancasDbContext` (sem migrations)
+- [ ] Consultas só com LINQ/lambda
+- [ ] Nenhum dado pessoal, senha, chave ou `appsettings.Production.json`
+- [ ] README/CHANGELOG atualizados, se necessário
+
+## Depois do merge
+
+- [ ] Rodar `scripts\2-criar-banco.ps1` (se mudou o banco)
+- [ ] Rodar `scripts\3-publicar.ps1`

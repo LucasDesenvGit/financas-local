@@ -1,0 +1,20 @@
+# Texto normalizado com LF no repositório.
+* text=auto eol=lf
+
+# Scripts do Windows precisam de CRLF (o Windows PowerShell 5.1 é sensível a isso).
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# Binários
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.zip  binary
+*.tgz  binary
+*.pfx  binary
+
+# Diferenças mais legíveis
+*.cs   diff=csharp
+*.md   diff=markdown
