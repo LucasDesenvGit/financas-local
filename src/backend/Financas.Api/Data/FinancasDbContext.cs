@@ -35,8 +35,6 @@ public class FinancasDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
-        mb.HasDefaultSchema("dbo");
-
         mb.Entity<Usuario>(e =>
         {
             e.ToTable("Usuario");
@@ -126,13 +124,13 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.PluggyAccountId).HasMaxLength(64);
             e.Property(x => x.Nome).HasMaxLength(120).IsRequired();
             e.Property(x => x.Numero).HasMaxLength(60);
-            e.Property(x => x.Moeda).HasColumnType("char(3)").HasMaxLength(3).IsFixedLength();
+            e.Property(x => x.Moeda).HasMaxLength(3);
             e.Property(x => x.SaldoInicial).HasPrecision(18, 2);
             e.Property(x => x.Saldo).HasPrecision(18, 2);
             e.Property(x => x.LimiteCredito).HasPrecision(18, 2);
             e.Property(x => x.LimiteDisponivel).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
-            e.HasIndex(x => x.PluggyAccountId).IsUnique().HasFilter("[PluggyAccountId] IS NOT NULL");
+            e.HasIndex(x => x.PluggyAccountId).IsUnique().HasFilter("PluggyAccountId IS NOT NULL");
             e.HasOne(x => x.ConexaoBancaria).WithMany(x => x.Contas)
                 .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -145,7 +143,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.ValorTotal).HasPrecision(18, 2);
             e.Property(x => x.ValorMinimo).HasPrecision(18, 2);
             e.Property(x => x.ValorPago).HasPrecision(18, 2);
-            e.HasIndex(x => x.PluggyBillId).IsUnique().HasFilter("[PluggyBillId] IS NOT NULL");
+            e.HasIndex(x => x.PluggyBillId).IsUnique().HasFilter("PluggyBillId IS NOT NULL");
             e.HasOne(x => x.Conta).WithMany(x => x.Faturas)
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -161,7 +159,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Valor).HasPrecision(18, 2);
             e.Property(x => x.PluggyCategoriaId).HasMaxLength(20);
             e.Property(x => x.Observacao).HasMaxLength(1000);
-            e.HasIndex(x => x.PluggyTransactionId).IsUnique().HasFilter("[PluggyTransactionId] IS NOT NULL");
+            e.HasIndex(x => x.PluggyTransactionId).IsUnique().HasFilter("PluggyTransactionId IS NOT NULL");
             e.HasOne(x => x.Conta).WithMany(x => x.Transacoes)
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Categoria).WithMany()
@@ -180,7 +178,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Subtipo).HasMaxLength(60);
             e.Property(x => x.Codigo).HasMaxLength(60);
             e.Property(x => x.Emissor).HasMaxLength(200);
-            e.Property(x => x.Moeda).HasColumnType("char(3)").HasMaxLength(3).IsFixedLength();
+            e.Property(x => x.Moeda).HasMaxLength(3);
             e.Property(x => x.Saldo).HasPrecision(18, 2);
             e.Property(x => x.ValorAplicado).HasPrecision(18, 2);
             e.Property(x => x.Rendimento).HasPrecision(18, 2);
@@ -236,8 +234,8 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Taxas).HasPrecision(18, 2);
             e.Property(x => x.Observacao).HasMaxLength(300);
             e.Property(x => x.PluggyTransacaoId).HasMaxLength(100);
-            e.HasIndex(x => x.PluggyTransacaoId).IsUnique().HasFilter("[PluggyTransacaoId] IS NOT NULL");
-            e.HasIndex(x => x.TransacaoId).IsUnique().HasFilter("[TransacaoId] IS NOT NULL");
+            e.HasIndex(x => x.PluggyTransacaoId).IsUnique().HasFilter("PluggyTransacaoId IS NOT NULL");
+            e.HasIndex(x => x.TransacaoId).IsUnique().HasFilter("TransacaoId IS NOT NULL");
             e.HasOne(x => x.Ativo).WithMany(x => x.Operacoes)
                 .HasForeignKey(x => x.AtivoId).OnDelete(DeleteBehavior.Cascade);
         });
