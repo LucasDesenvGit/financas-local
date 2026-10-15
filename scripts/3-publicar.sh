@@ -120,12 +120,16 @@ fi
 
 # ------------------------------------------------------------------ Configuracao de producao
 etapa 'Gerando appsettings.Production.json'
-# Este script assume caminhos no formato POSIX em $Raiz (o padrao no Git Bash,
-# ex.: /c/FinancasLocal) e deixa o json.dump do Python escapar corretamente
-# qualquer caractere especial ao gravar o arquivo.
-PASTA_SQL="$PastaSql" \
-PASTA_CHAVES="$PastaChaves" \
-PFX_CAMINHO="$pfx" \
+# $Raiz fica no formato POSIX do Git Bash (ex.: /c/FinancasLocal), que o .NET
+# no Windows nao entende: la os caminhos gravados no json sao convertidos para
+# o formato misto (C:/FinancasLocal). O json.dump do Python escapa
+# corretamente qualquer caractere especial ao gravar o arquivo.
+caminho_nativo() {
+    if [[ "$SO" == windows ]]; then cygpath -m "$1"; else echo "$1"; fi
+}
+PASTA_SQL="$(caminho_nativo "$PastaSql")" \
+PASTA_CHAVES="$(caminho_nativo "$PastaChaves")" \
+PFX_CAMINHO="$(caminho_nativo "$pfx")" \
 PFX_SENHA="$senha_pfx" \
 DESTINO_CONFIG="$preparo/appsettings.Production.json" \
 python3 -I -c '
