@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Financas.Api</RootNamespace>
+    <AssemblyName>Financas.Api</AssemblyName>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Não gerar web.config automaticamente: usamos o nosso (com cabeçalhos de segurança do IIS) -->
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Versões flutuantes no patch: sempre a correção de segurança mais recente da linha 10.0 -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.*" />
+    <!-- Forca versao corrigida de dependencia transitiva do SqlClient (avisos NU1902/NU1903) -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="web.config" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+</Project>
