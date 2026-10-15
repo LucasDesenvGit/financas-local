@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Infraestrutura
+- Backend migrado de SQL Server Express/IIS para SQLite/Kestrel — o projeto agora roda em Windows e Linux com os mesmos scripts.
+- Nova ferramenta `Financas.MigrarSqlite` para migrar os dados de uma instalação antiga com SQL Server para o SQLite novo.
+- Scripts `.sh` (bash) substituindo os `.ps1` de instalação, criação do banco, publicação e backup.
+
 ## [1.0.0] — 2026-10-15
 
 Primeira versão versionada no Git.

@@ -45,3 +45,9 @@ jobs:
 
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py
+
+      - name: Aplicar schema num banco SQLite descartável
+        run: |
+          rm -f /tmp/ci-financaslocal.db
+          sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
+          sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
