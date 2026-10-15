@@ -1,0 +1,147 @@
+namespace Financas.Api.Entidades;
+
+public class Categoria
+{
+    public int Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public TipoCategoria Tipo { get; set; }
+    public string Cor { get; set; } = "#64748b";
+    public string? Icone { get; set; }
+    public int? CategoriaPaiId { get; set; }
+    public bool Ativa { get; set; } = true;
+    /// <summary>Só para despesas: essencial ou estilo de vida (regra 50/30/20).</summary>
+    public NaturezaGasto? Natureza { get; set; }
+
+    public Categoria? CategoriaPai { get; set; }
+    public List<Categoria> Subcategorias { get; set; } = new();
+}
+
+public class RegraCategorizacao
+{
+    public int Id { get; set; }
+    public string Texto { get; set; } = string.Empty;
+    public TipoCorrespondencia TipoCorrespondencia { get; set; } = TipoCorrespondencia.Contem;
+    public int CategoriaId { get; set; }
+    public int Prioridade { get; set; } = 100;
+    public bool Ativa { get; set; } = true;
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
+    public Categoria? Categoria { get; set; }
+}
+
+public class Conta
+{
+    public int Id { get; set; }
+    public int? ConexaoBancariaId { get; set; }
+    public string? PluggyAccountId { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public TipoConta Tipo { get; set; }
+    public OrigemConta Origem { get; set; }
+    public string? Numero { get; set; }
+    public string Moeda { get; set; } = "BRL";
+    public decimal SaldoInicial { get; set; }
+    /// <summary>Saldo informado pela instituição (contas Open Finance). Para cartão é negativo (dívida).</summary>
+    public decimal Saldo { get; set; }
+    public decimal? LimiteCredito { get; set; }
+    public decimal? LimiteDisponivel { get; set; }
+    public byte? DiaFechamento { get; set; }
+    public byte? DiaVencimento { get; set; }
+    public string Cor { get; set; } = "#0f766e";
+    public bool IncluirNoSaldo { get; set; } = true;
+    public bool Arquivada { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+
+    public ConexaoBancaria? ConexaoBancaria { get; set; }
+    public List<Transacao> Transacoes { get; set; } = new();
+    public List<FaturaCartao> Faturas { get; set; } = new();
+}
+
+public class FaturaCartao
+{
+    public int Id { get; set; }
+    public int ContaId { get; set; }
+    public string? PluggyBillId { get; set; }
+    public DateOnly DataVencimento { get; set; }
+    public DateOnly? DataFechamento { get; set; }
+    public decimal ValorTotal { get; set; }
+    public decimal? ValorMinimo { get; set; }
+    public decimal? ValorPago { get; set; }
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+
+    public Conta? Conta { get; set; }
+}
+
+public class Transacao
+{
+    public long Id { get; set; }
+    public int ContaId { get; set; }
+    public string? PluggyTransactionId { get; set; }
+    public DateOnly Data { get; set; }
+    public string Descricao { get; set; } = string.Empty;
+    public string? DescricaoOriginal { get; set; }
+    public string? Estabelecimento { get; set; }
+    public decimal Valor { get; set; }
+    public TipoTransacao Tipo { get; set; }
+    public StatusTransacao Status { get; set; } = StatusTransacao.Efetivada;
+    public int? CategoriaId { get; set; }
+    public bool CategoriaManual { get; set; }
+    public string? PluggyCategoriaId { get; set; }
+    public int? FaturaCartaoId { get; set; }
+    public short? ParcelaNumero { get; set; }
+    public short? ParcelaTotal { get; set; }
+    public bool IgnorarRelatorios { get; set; }
+    /// <summary>Gasto de emergência (destacado nos relatórios e orçamentos).</summary>
+    public bool Emergencia { get; set; }
+    public Guid? TransferenciaGrupo { get; set; }
+    public string? Observacao { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+
+    public Conta? Conta { get; set; }
+    public Categoria? Categoria { get; set; }
+    public FaturaCartao? FaturaCartao { get; set; }
+}
+
+public class Orcamento
+{
+    public int Id { get; set; }
+    public int CategoriaId { get; set; }
+    public short Ano { get; set; }
+    public byte Mes { get; set; }
+    public decimal Valor { get; set; }
+
+    public Categoria? Categoria { get; set; }
+}
+
+public class Meta
+{
+    public int Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public decimal ValorAlvo { get; set; }
+    public decimal ValorAtual { get; set; }
+    public DateOnly? DataAlvo { get; set; }
+    public int? ContaId { get; set; }
+    public string Cor { get; set; } = "#0f766e";
+    public bool Concluida { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
+    public Conta? Conta { get; set; }
+}
+
+public class ContaAgendada
+{
+    public int Id { get; set; }
+    public string Descricao { get; set; } = string.Empty;
+    public decimal Valor { get; set; }
+    public DateOnly ProximoVencimento { get; set; }
+    public Recorrencia Recorrencia { get; set; } = Recorrencia.Mensal;
+    public int? CategoriaId { get; set; }
+    public int? ContaId { get; set; }
+    public bool Ativa { get; set; } = true;
+    public DateOnly? UltimoPagamentoEm { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
+    public Categoria? Categoria { get; set; }
+    public Conta? Conta { get; set; }
+}
