@@ -124,6 +124,8 @@ public class Meta
     public int? ContaId { get; set; }
     /// <summary>Cofrinho da conta que guarda o dinheiro da meta (nome, como no ReservaService). Null = saldo da conta.</summary>
     public string? ReservaNome { get; set; }
+    /// <summary>Ordem de prioridade (1 = primeira) no assistente de metas; 0 = ainda sem ordem (vai para o fim).</summary>
+    public int Prioridade { get; set; }
     public string Cor { get; set; } = "#0f766e";
     public bool Concluida { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;

@@ -169,7 +169,29 @@ public record AplicarSugestaoOrcamentoDto([Range(2000, 2100)] short Ano, [Range(
 public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual, DateOnly? DataAlvo,
     int? ContaId, string? ContaNome, string Cor, bool Concluida, decimal Percentual, decimal? AporteMensalSugerido,
     decimal ValorInicial, decimal SaldoConta, string? ReservaNome = null, decimal? SaldoReserva = null,
-    bool ReservaConferir = false, bool ReservaNaoEncontrada = false);
+    bool ReservaConferir = false, bool ReservaNaoEncontrada = false, int Prioridade = 0);
+
+/// <summary>Nova ordem de prioridade das metas (a primeira da lista é a 1ª prioridade).</summary>
+public record PrioridadesMetasDto([Required, MinLength(1), MaxLength(200)] List<int> Ids);
+
+/// <summary>Um mês do plano de uma meta: sobra prevista (a da Projeção), parcelas do mês e o recomendado para ela.</summary>
+public record PlanoMesMetaDto(short Ano, byte Mes, decimal SobraPrevista, decimal Parcelas, decimal Recomendado);
+
+/// <summary>
+/// Recomendação de uma meta (#90). <c>Recomendado</c>: quanto guardar este mês (null sem histórico suficiente);
+/// <c>PedidoMes</c>: quanto o prazo pede este mês, pela capacidade dos meses até ele; <c>DivisaoIgual</c>: a divisão
+/// linear de antes, como referência; <c>NoPrazo</c>: null sem data-alvo; <c>ParaManterPrazo</c>: quanto os próximos
+/// meses precisam, em média, quando o ritmo recomendado não cumpre o prazo.
+/// </summary>
+public record PlanoMetaDto(int MetaId, decimal Falta, decimal? Recomendado, decimal? PedidoMes, decimal? DivisaoIgual,
+    DateOnly? DataProvavel, bool? NoPrazo, decimal? ParaManterPrazo, List<PlanoMesMetaDto> Plano);
+
+/// <summary>
+/// Plano do mês para as metas. <c>Disponivel</c> = false com menos de 3 meses completos de extrato (só a divisão igual).
+/// </summary>
+public record PlanoMetasDto(bool Disponivel, int MesesConsiderados, short Ano, byte Mes, decimal SobraPrevista,
+    int MargemPercentual, decimal Capacidade, decimal TotalPedido, decimal TotalRecomendado, bool SobraNegativa,
+    List<PlanoMetaDto> Metas);
 
 public record SalvarMetaDto(
     [Required, StringLength(120)] string Nome,

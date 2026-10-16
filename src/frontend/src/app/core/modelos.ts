@@ -142,6 +142,22 @@ export interface Meta {
   valorInicial: number; saldoConta: number;
   /** #89: cofrinho (reserva) que guarda o dinheiro da meta; com ele, o progresso usa o saldo do cofrinho. */
   reservaNome: string | null; saldoReserva: number | null; reservaConferir: boolean; reservaNaoEncontrada: boolean;
+  /** #90: ordem de prioridade (1 = primeira); 0 = ainda sem ordem. */
+  prioridade: number;
+}
+
+/** #90 — um mês do plano de uma meta. */
+export interface PlanoMesMeta { ano: number; mes: number; sobraPrevista: number; parcelas: number; recomendado: number }
+
+export interface PlanoMeta {
+  metaId: number; falta: number; recomendado: number | null; pedidoMes: number | null; divisaoIgual: number | null;
+  dataProvavel: string | null; noPrazo: boolean | null; paraManterPrazo: number | null; plano: PlanoMesMeta[];
+}
+
+/** #90 — quanto guardar este mês, pela sobra prevista (a da Projeção) e pela ordem de prioridade. */
+export interface PlanoMetas {
+  disponivel: boolean; mesesConsiderados: number; ano: number; mes: number; sobraPrevista: number; margemPercentual: number;
+  capacidade: number; totalPedido: number; totalRecomendado: number; sobraNegativa: boolean; metas: PlanoMeta[];
 }
 
 export interface SalvarMeta {

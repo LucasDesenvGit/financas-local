@@ -1,10 +1,12 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Conta, Meta, Reserva, SalvarMeta } from '../core/modelos';
+import { Conta, Meta, PlanoMeta, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
+import { TermoComponent } from '../compartilhado/termo.component';
+import { NOMES_MESES } from '../compartilhado/utilidades';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { CORES_SUGERIDAS } from '../compartilhado/utilidades';
@@ -12,12 +14,35 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-metas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
       <button type="button" class="botao botao-primario" (click)="nova()">+ Nova meta</button>
     </header>
+
+    @if (plano(); as p) {
+      <section class="painel-bloco assistente-metas" aria-labelledby="titulo-assistente">
+        @if (!p.disponivel) {
+          <h2 id="titulo-assistente">Quanto guardar este mês</h2>
+          <p>Preciso de pelo menos 3 meses completos de extrato para olhar seus gastos. Por enquanto, cada meta mostra a divisão igual até a data.</p>
+        } @else {
+          <h2 id="titulo-assistente">{{ nomeMes(p.mes) }}/{{ p.ano }} ·
+            <app-termo chave="sobraPrevista">sobra prevista</app-termo> {{ p.sobraPrevista | currency }}</h2>
+          @if (p.sobraNegativa) {
+            <p class="negativo">A projeção deste mês fecha no vermelho: recomendo guardar R$ 0 agora.</p>
+          } @else {
+            <p>
+              @if (p.totalPedido > 0) { Suas metas com prazo pedem {{ p.totalPedido | currency }} este mês. }
+              Recomendo guardar <strong>{{ p.totalRecomendado | currency }}</strong>
+              (a sobra menos {{ p.margemPercentual }}% de <app-termo chave="margemSeguranca">margem de segurança</app-termo>),
+              dividido pela ordem de prioridade das metas.
+            </p>
+          }
+          <a routerLink="/projecao">Ver projeção →</a>
+        }
+      </section>
+    }
 
     <section class="grade-cartoes">
       @for (m of metas(); track m.id) {
@@ -31,7 +56,47 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           </div>
           <p><strong>{{ m.valorAtual | currency }}</strong> <span class="texto-suave">de {{ m.valorAlvo | currency }}</span></p>
           @if (m.dataAlvo) { <p class="texto-suave">até {{ m.dataAlvo | date: 'MMM/yyyy' }}</p> }
-          @if (m.aporteMensalSugerido) {
+          @if (!m.concluida && posicao(m) > 0) {
+            <div class="linha-prioridade">
+              <span class="etiqueta etiqueta-suave">{{ posicao(m) }}ª prioridade</span>
+              <button type="button" class="botao-icone" (click)="mover(m, -1)" [disabled]="posicao(m) === 1"
+                [attr.aria-label]="'Subir a prioridade de ' + m.nome">↑</button>
+              <button type="button" class="botao-icone" (click)="mover(m, 1)" [disabled]="posicao(m) === ativas().length"
+                [attr.aria-label]="'Descer a prioridade de ' + m.nome">↓</button>
+            </div>
+          }
+          @if (planoDe(m); as pm) {
+            <p class="recomendado">Este mês: guarde <strong>{{ pm.recomendado | currency }}</strong></p>
+            @if (pm.divisaoIgual) {
+              <p class="texto-suave">Divisão igual seria {{ pm.divisaoIgual | currency }}/mês · faltam {{ pm.falta | currency }}</p>
+            }
+            @if (pm.noPrazo === false && prazoVencido(m)) {
+              <p class="aviso-prazo" role="status">⚠ O prazo ({{ m.dataAlvo | date: 'MMM/yyyy' }}) já passou. Nesse ritmo você chega em
+                {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}; se quiser, edite a data da meta.</p>
+            } @else if (pm.noPrazo === false) {
+              <p class="aviso-prazo" role="status">⚠ Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}
+                (meta: {{ m.dataAlvo | date: 'MMM/yyyy' }}).
+                @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de {{ pm.paraManterPrazo | currency }}. }</p>
+            } @else if (pm.noPrazo === null) {
+              <p class="texto-suave">Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}.</p>
+            }
+            <button type="button" class="link botao-plano" [attr.aria-expanded]="planoAberto() === m.id"
+              [attr.aria-controls]="'plano-meta-' + m.id" (click)="alternarPlano(m.id)">
+              <span aria-hidden="true">{{ planoAberto() === m.id ? '▾' : '▸' }}</span> Plano mês a mês</button>
+            <div [id]="'plano-meta-' + m.id">
+              @if (planoAberto() === m.id) {
+                <table class="tabela tabela-plano">
+                  <thead><tr><th>Mês</th><th class="direita">Sobra prevista</th><th class="direita">Parcelas</th><th class="direita">Guardar</th></tr></thead>
+                  <tbody>
+                    @for (x of pm.plano; track x.ano * 100 + x.mes) {
+                      <tr><td>{{ nomeMesCurto(x.mes) }}/{{ x.ano % 100 }}</td><td class="direita">{{ x.sobraPrevista | currency }}</td>
+                        <td class="direita">{{ x.parcelas | currency }}</td><td class="direita"><strong>{{ x.recomendado | currency }}</strong></td></tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+          } @else if (m.aporteMensalSugerido) {
             <p class="texto-suave">Guardar <strong>{{ m.aporteMensalSugerido | currency }}</strong>/mês para chegar lá</p>
           }
           @if (m.reservaNome) {
@@ -125,6 +190,15 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
   `,
   styles: `
     .aviso-cofrinho { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
+    .assistente-metas h2 { margin: 0 0 8px; }
+    .assistente-metas p { margin: 0 0 8px; }
+    .linha-prioridade { display: flex; align-items: center; gap: 6px; }
+    .linha-prioridade .botao-icone { width: 28px; height: 28px; }
+    .recomendado { margin: 0; }
+    .aviso-prazo { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
+    .botao-plano { justify-self: start; padding-left: 0; }
+    .tabela-plano { font-size: 0.8rem; }
+    .tabela-plano th, .tabela-plano td { padding: 4px 6px; }
   `
 })
 export class MetasComponent implements OnInit {
@@ -134,6 +208,11 @@ export class MetasComponent implements OnInit {
   readonly cores = CORES_SUGERIDAS;
   readonly metas = signal<Meta[]>([]);
   readonly contas = signal<Conta[]>([]);
+  /** #90: plano do mês (quanto guardar em cada meta) e o plano mês a mês aberto. */
+  readonly plano = signal<PlanoMetas | null>(null);
+  readonly planoAberto = signal<number | null>(null);
+  /** Metas em aberto, na ordem de prioridade (a da API). */
+  readonly ativas = computed(() => this.metas().filter((m) => !m.concluida));
   /** #89: cofrinhos (reservas do extrato), para o campo da meta. */
   readonly reservas = signal<Reserva[]>([]);
 
@@ -169,6 +248,54 @@ export class MetasComponent implements OnInit {
       next: (m) => this.metas.set(m),
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+    // O assistente é complementar: se falhar, os cartões mostram a divisão igual, como antes.
+    this.api.planoMetas().subscribe({ next: (p) => this.plano.set(p), error: () => this.plano.set(null) });
+  }
+
+  /** Recomendação da meta (null sem histórico suficiente: o cartão mostra a divisão igual). */
+  planoDe(m: Meta): PlanoMeta | null {
+    const p = this.plano();
+    if (!p?.disponivel || m.concluida) return null;
+    return p.metas.find((x) => x.metaId === m.id && x.recomendado !== null) ?? null;
+  }
+
+  /** Prazo antes do mês do plano: não há mais "manter o prazo", só a data provável. */
+  prazoVencido(m: Meta): boolean {
+    const p = this.plano();
+    if (!p || !m.dataAlvo) return false;
+    const [ano, mes] = m.dataAlvo.split('-').map(Number);
+    return ano * 12 + mes < p.ano * 12 + p.mes;
+  }
+
+  /** Posição na ordem de prioridade (1 = primeira) entre as metas em aberto. */
+  posicao(m: Meta): number {
+    return this.ativas().findIndex((x) => x.id === m.id) + 1;
+  }
+
+  /** Sobe (-1) ou desce (+1) a meta uma posição e grava a nova ordem. */
+  mover(m: Meta, direcao: -1 | 1): void {
+    const ordem = this.ativas().map((x) => x.id);
+    const i = ordem.indexOf(m.id);
+    const j = i + direcao;
+    if (i < 0 || j < 0 || j >= ordem.length) return;
+    [ordem[i], ordem[j]] = [ordem[j], ordem[i]];
+    this.api.ordenarMetas(ordem).subscribe({
+      next: () => this.carregar(),
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  alternarPlano(id: number): void {
+    this.planoAberto.update((v) => (v === id ? null : id));
+  }
+
+  nomeMes(mes: number): string {
+    const n = NOMES_MESES[mes - 1];
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  }
+
+  nomeMesCurto(mes: number): string {
+    return NOMES_MESES[mes - 1].slice(0, 3);
   }
 
   nova(): void {

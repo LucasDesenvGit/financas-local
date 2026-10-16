@@ -69,6 +69,10 @@ public class ParametroService
         new(ConfiguracaoService.OrcamentoCorteCartao, "Orçamentos", "Corte por uso do cartão",
             "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
             TipoParametro.Inteiro, 10, 0, 50, "%"),
+
+        new(ConfiguracaoService.MetasMargemSeguranca, "Metas", "Margem de segurança",
+            "Quanto da sobra prevista do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar.",
+            TipoParametro.Inteiro, 10, 0, 50, "% da sobra"),
     ];
 
     private static readonly DateTime IniciadoEm = Process.GetCurrentProcess().StartTime.ToUniversalTime();

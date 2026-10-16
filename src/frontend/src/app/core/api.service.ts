@@ -9,7 +9,7 @@ import {
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva
+  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -118,6 +118,8 @@ export class ApiService {
   // Metas
   metas(): Observable<Meta[]> { return this.http.get<Meta[]>(`${this.base}/metas`); }
   reservas(): Observable<Reserva[]> { return this.http.get<Reserva[]>(`${this.base}/reservas`); }
+  planoMetas(): Observable<PlanoMetas> { return this.http.get<PlanoMetas>(`${this.base}/metas/plano`); }
+  ordenarMetas(ids: number[]): Observable<void> { return this.http.put<void>(`${this.base}/metas/prioridades`, { ids }); }
   criarMeta(dto: SalvarMeta): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas`, dto); }
   atualizarMeta(id: number, dto: SalvarMeta): Observable<Meta> { return this.http.put<Meta>(`${this.base}/metas/${id}`, dto); }
   aporteMeta(id: number, valor: number): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas/${id}/aporte`, { valor }); }

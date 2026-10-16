@@ -121,19 +121,45 @@ public class MetasController : BaseController
     private readonly FinancasDbContext _db;
     private readonly ContaService _contas;
     private readonly ReservaService _reservas;
+    private readonly AssistenteMetasService _assistente;
 
-    public MetasController(FinancasDbContext db, ContaService contas, ReservaService reservas)
+    public MetasController(FinancasDbContext db, ContaService contas, ReservaService reservas, AssistenteMetasService assistente)
     {
         _db = db;
         _contas = contas;
         _reservas = reservas;
+        _assistente = assistente;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MetaDto>>> Listar(CancellationToken ct)
+    public async Task<ActionResult<List<MetaDto>>> Listar(CancellationToken ct) => await ListarMetasAsync(ct);
+
+    /// <summary>#90: quanto guardar este mês em cada meta, pela sobra prevista e pela ordem de prioridade.</summary>
+    [HttpGet("plano")]
+    public async Task<ActionResult<PlanoMetasDto>> Plano(CancellationToken ct)
+        => await _assistente.PlanejarAsync(await ListarMetasAsync(ct), ct);
+
+    /// <summary>Nova ordem de prioridade: a primeira da lista é a 1ª. Metas fora da lista vão para o fim.</summary>
+    [HttpPut("prioridades")]
+    public async Task<IActionResult> Prioridades(PrioridadesMetasDto dto, CancellationToken ct)
+    {
+        if (dto.Ids.Distinct().Count() != dto.Ids.Count) return Erro("Meta repetida na ordem.");
+        var metas = await _db.Metas.ToListAsync(ct);
+        if (dto.Ids.Any(id => metas.All(m => m.Id != id))) return Erro("Meta inválida.");
+        var proxima = 1;
+        foreach (var id in dto.Ids) metas.First(m => m.Id == id).Prioridade = proxima++;
+        foreach (var m in metas.Where(m => !dto.Ids.Contains(m.Id)).OrderBy(m => m.Prioridade == 0 ? int.MaxValue : m.Prioridade))
+            m.Prioridade = proxima++;
+        await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>Metas com o progresso calculado, em ordem de prioridade (sem ordem definida vão para o fim).</summary>
+    private async Task<List<MetaDto>> ListarMetasAsync(CancellationToken ct)
     {
         var metas = await _db.Metas.AsNoTracking().Include(m => m.Conta)
-            .OrderBy(m => m.Concluida).ThenBy(m => m.DataAlvo).ThenBy(m => m.Nome)
+            .OrderBy(m => m.Concluida).ThenBy(m => m.Prioridade == 0 ? int.MaxValue : m.Prioridade)
+            .ThenBy(m => m.DataAlvo == null).ThenBy(m => m.DataAlvo).ThenBy(m => m.Nome)
             .ToListAsync(ct);
         var saldos = metas.Any(m => m.ContaId != null)
             ? await _contas.CalcularSaldosAsync(ct)
@@ -148,7 +174,9 @@ public class MetasController : BaseController
         if (dto.ContaId is { } cid && !await _db.Contas.AnyAsync(c => c.Id == cid, ct)) return Erro("Conta inválida.");
         var (erro, cofrinho) = await ValidarCofrinhoAsync(dto, null, ct);
         if (erro is not null) return Erro(erro);
-        var m = new Meta { CriadoEm = DateTime.UtcNow };
+        // Meta nova entra no fim da ordem de prioridade.
+        var ultima = await _db.Metas.MaxAsync(x => (int?)x.Prioridade, ct) ?? 0;
+        var m = new Meta { CriadoEm = DateTime.UtcNow, Prioridade = ultima + 1 };
         Aplicar(m, dto, cofrinho);
         _db.Metas.Add(m);
         await _db.SaveChangesAsync(ct);
@@ -251,7 +279,7 @@ public class MetasController : BaseController
             m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta,
             reserva?.Nome ?? m.ReservaNome, reserva?.Saldo,
             reserva is not null && (reserva.PodeTerSaldoAnterior || reserva.ConferenciaAntiga),
-            m.ReservaNome is not null && reserva is null);
+            m.ReservaNome is not null && reserva is null, m.Prioridade);
     }
 }
 
