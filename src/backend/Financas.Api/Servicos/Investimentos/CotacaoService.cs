@@ -35,10 +35,10 @@ public partial class CotacaoService
         _logger = logger;
     }
 
-    [GeneratedRegex("^[A-Z][A-Z0-9]{3}[0-9]{1,2}F?$")]
+    [GeneratedRegex("^[A-Z][A-Z0-9]{2,11}$")]
     private static partial Regex FormatoTicker();
 
-    /// <summary>Normaliza e valida um código da B3 (ex.: "mxrf11 " → "MXRF11"). Retorna null se inválido.</summary>
+    /// <summary>Normaliza e valida um código de ativo (ex.: "mxrf11 " → "MXRF11"). Retorna null se inválido.</summary>
     public static string? NormalizarTicker(string? ticker)
     {
         var t = (ticker ?? string.Empty).Trim().ToUpperInvariant();

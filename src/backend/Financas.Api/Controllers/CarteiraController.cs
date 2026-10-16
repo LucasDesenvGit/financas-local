@@ -110,7 +110,7 @@ public class CarteiraController : BaseController
     public async Task<IActionResult> CriarOperacao(SalvarOperacaoDto dto, CancellationToken ct)
     {
         var ticker = CotacaoService.NormalizarTicker(dto.Ticker);
-        if (ticker is null) return Erro("Código inválido. Use o código da B3, por exemplo MXRF11 ou PETR4.");
+        if (ticker is null) return Erro("Código de ativo inválido. Use apenas letras e números, por exemplo AOK, MXRF11 ou PETR4.");
         var validacao = Validar(dto);
         if (validacao is not null) return validacao;
 
