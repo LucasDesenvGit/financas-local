@@ -196,6 +196,7 @@ export interface Painel {
   ultimaSincronizacao: string | null;
   despesasEmergenciaMes: number;
   dividaFinanciamentos: number; dividaEmprestimos: number;
+  diasProximosVencimentos: number;
 }
 
 export interface Emprestimo {
@@ -221,7 +222,21 @@ export interface ConfiguracaoPluggy {
 }
 
 export interface SalvarConfiguracaoPluggy {
-  clientId: string; clientSecret: string | null; intervaloHoras: number; diasRetroativos: number; habilitada: boolean;
+  clientId: string; clientSecret: string | null;
+  /** Opcionais: a aba Parametrização cuida deles. */
+  intervaloHoras?: number; diasRetroativos?: number; habilitada?: boolean;
+}
+
+export enum TipoParametro { Inteiro = 1, Booleano = 2 }
+/** Booleanos usam 0/1 em valor e padrao. */
+export interface Parametro {
+  chave: string; grupo: string; nome: string; descricao: string; tipo: TipoParametro;
+  valor: number; padrao: number; minimo: number | null; maximo: number | null; unidade: string | null;
+}
+export interface InfoSistema {
+  versao: string; dotNet: string; sistemaOperacional: string; iniciadoEm: string; caminhoBanco: string;
+  tamanhoBancoBytes: number | null; pastaChaves: string; contas: number; transacoes: number; conexoesAtivas: number;
+  ultimaSincronizacao: string | null;
 }
 
 export interface Conexao {

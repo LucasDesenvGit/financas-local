@@ -94,6 +94,7 @@ builder.Services.AddHttpContextAccessor();
 // ---------------------------------------------------------------- Serviços da aplicação
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ConfiguracaoService>();
+builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();

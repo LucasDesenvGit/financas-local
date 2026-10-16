@@ -18,6 +18,10 @@ public class ConfiguracaoService
     public const string DiasPrimeiraCarga = "Sincronizacao.DiasPrimeiraCarga";
     public const string SincronizacaoHabilitada = "Sincronizacao.Habilitada";
     public const string UltimaSincronizacaoGeral = "Sincronizacao.UltimaExecucao";
+    public const string DiasProximosVencimentos = "Painel.DiasProximosVencimentos";
+    public const string DiasAvisoConsentimento = "Painel.DiasAvisoConsentimento";
+    public const string MaximoTentativasLogin = "Seguranca.MaximoTentativasLogin";
+    public const string MinutosBloqueio = "Seguranca.MinutosBloqueio";
 
     private readonly FinancasDbContext _db;
     private readonly IDataProtector _protetor;

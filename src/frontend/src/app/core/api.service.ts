@@ -9,7 +9,7 @@ import {
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria, PainelEmprestimos
+  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -171,6 +171,12 @@ export class ApiService {
   }
 
   // Open Finance
+  parametros(): Observable<Parametro[]> { return this.http.get<Parametro[]>(`${this.base}/parametros`); }
+  salvarParametros(valores: Record<string, number>): Observable<Parametro[]> {
+    return this.http.put<Parametro[]>(`${this.base}/parametros`, { valores });
+  }
+  infoSistema(): Observable<InfoSistema> { return this.http.get<InfoSistema>(`${this.base}/parametros/sistema`); }
+
   configuracaoPluggy(): Observable<ConfiguracaoPluggy> {
     return this.http.get<ConfiguracaoPluggy>(`${this.base}/open-finance/configuracao`);
   }

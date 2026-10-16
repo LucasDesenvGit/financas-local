@@ -153,7 +153,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
                 <span class="valor">{{ c.valor | currency }}</span>
               </li>
             } @empty {
-              <li class="vazio">Nada vencendo nos próximos 15 dias.</li>
+              <li class="vazio">Nada vencendo nos próximos {{ d.diasProximosVencimentos }} dias.</li>
             }
           </ul>
         </section>

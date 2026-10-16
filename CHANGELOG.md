@@ -12,6 +12,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Investimentos em moeda estrangeira (Open Finance) entram no patrimônio, na reserva e nos totais da carteira convertidos para reais; a tela de investimentos mostra o valor original e o convertido. Moeda sem cotação fica fora dos totais, com aviso.
 - Ativos no exterior na carteira (ex.: AAPL, VOO): em **+ Lançar compra/venda**, escolha a moeda; o câmbio vem preenchido com a PTAX do dia e pode ser trocado pelo da corretora. Custo e resultado em reais por operação, valor atual pelo câmbio de hoje e proventos pelo câmbio da data-com.
 - Visão anual: o comprometimento da renda soma as parcelas de cartão, financiamentos e empréstimos, mostradas separadamente.
+- Configurações em abas (**Open Finance**, **Parametrização**, **Segurança**), com link direto por `?aba=`.
+- Nova aba **Parametrização**: sincronização automática, intervalo, dias relidos e histórico da primeira carga; dias de próximos vencimentos e de aviso de consentimento no painel; tentativas de login e tempo de bloqueio. Cada parâmetro mostra a faixa válida e o padrão, vale na hora (sem reiniciar) e é validado pela API (`GET/PUT /api/parametros`). Bloco **Sistema** somente leitura com versão, caminhos, tamanho do banco e totais (`GET /api/parametros/sistema`).
+- Tentativas de login e tempo de bloqueio saem do `appsettings.json` para a Parametrização; o valor do `appsettings.json`, se existir, vira o padrão.
 
 ### Banco
 - Novas tabelas `Emprestimo` e `PagamentoEmprestimo` em `banco/01-estrutura.sql`: rode `scripts/2-criar-banco.sh` antes de publicar.

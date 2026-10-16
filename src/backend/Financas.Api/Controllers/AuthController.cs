@@ -24,16 +24,16 @@ public class AuthController : BaseController
     private readonly IPasswordHasher<Usuario> _hasher;
     private readonly IAntiforgery _antiforgery;
     private readonly AuditoriaService _auditoria;
-    private readonly IConfiguration _cfg;
+    private readonly ParametroService _parametros;
 
     public AuthController(FinancasDbContext db, IPasswordHasher<Usuario> hasher, IAntiforgery antiforgery,
-        AuditoriaService auditoria, IConfiguration cfg)
+        AuditoriaService auditoria, ParametroService parametros)
     {
         _db = db;
         _hasher = hasher;
         _antiforgery = antiforgery;
         _auditoria = auditoria;
-        _cfg = cfg;
+        _parametros = parametros;
     }
 
     /// <summary>Informa se o sistema já tem usuário e se a sessão está ativa. Também emite o token CSRF.</summary>
@@ -102,9 +102,10 @@ public class AuthController : BaseController
         if (resultado == PasswordVerificationResult.Failed)
         {
             usuario.TentativasFalhas++;
-            if (usuario.TentativasFalhas >= _cfg.GetValue("Seguranca:MaximoTentativasLogin", 5))
+            if (usuario.TentativasFalhas >= await _parametros.ObterInteiroAsync(ConfiguracaoService.MaximoTentativasLogin, ct))
             {
-                usuario.BloqueadoAte = DateTime.UtcNow.AddMinutes(_cfg.GetValue("Seguranca:MinutosBloqueio", 15));
+                usuario.BloqueadoAte = DateTime.UtcNow.AddMinutes(
+                    await _parametros.ObterInteiroAsync(ConfiguracaoService.MinutosBloqueio, ct));
                 usuario.TentativasFalhas = 0;
             }
             _auditoria.Registrar("LoginFalha", login);
