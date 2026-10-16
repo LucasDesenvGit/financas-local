@@ -464,3 +464,15 @@ CREATE TABLE IF NOT EXISTS IndiceMensal
     Fechamento  TEXT NOT NULL,
     CONSTRAINT PK_IndiceMensal PRIMARY KEY (Codigo, Mes)
 );
+
+/* Cotação PTAX de fechamento (reais por 1 unidade da moeda), Banco Central/Olinda — guardada para uso offline
+   e atualizada automaticamente pela API (CambioHostedService). */
+CREATE TABLE IF NOT EXISTS CotacaoMoeda
+(
+    Moeda   TEXT NOT NULL,
+    Data    TEXT NOT NULL,
+    Compra  TEXT NOT NULL,
+    Venda   TEXT NOT NULL,
+    AtualizadoEm TEXT NOT NULL,
+    CONSTRAINT PK_CotacaoMoeda PRIMARY KEY (Moeda, Data)
+);

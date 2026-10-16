@@ -34,6 +34,7 @@ public class FinancasDbContext : DbContext
     public DbSet<TaxaSelicDiaria> TaxasSelic => Set<TaxaSelicDiaria>();
     public DbSet<PrecoMensalAtivo> PrecosMensaisAtivo => Set<PrecoMensalAtivo>();
     public DbSet<IndiceMensal> IndicesMensais => Set<IndiceMensal>();
+    public DbSet<CotacaoMoeda> CotacoesMoeda => Set<CotacaoMoeda>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -307,6 +308,15 @@ public class FinancasDbContext : DbContext
             e.ToTable("TaxaSelicDiaria");
             e.HasKey(x => x.Data);
             e.Property(x => x.Taxa).HasPrecision(12, 8);
+        });
+
+        mb.Entity<CotacaoMoeda>(e =>
+        {
+            e.ToTable("CotacaoMoeda");
+            e.HasKey(x => new { x.Moeda, x.Data });
+            e.Property(x => x.Moeda).HasMaxLength(3);
+            e.Property(x => x.Compra).HasPrecision(18, 8);
+            e.Property(x => x.Venda).HasPrecision(18, 8);
         });
 
         mb.Entity<ContaAgendada>(e =>

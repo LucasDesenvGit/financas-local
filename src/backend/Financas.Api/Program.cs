@@ -3,6 +3,7 @@ using Financas.Api.Data;
 using Financas.Api.Entidades;
 using Financas.Api.Seguranca;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Investimentos;
 using Financas.Api.Servicos.Pluggy;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -105,6 +106,7 @@ builder.Services.AddScoped<EmprestimoService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<SincronizacaoService>();
 builder.Services.AddHostedService<SincronizacaoHostedService>();
+builder.Services.AddHostedService<CambioHostedService>();
 
 var urlPluggy = new Uri(cfg["Pluggy:UrlBase"] ?? "https://api.pluggy.ai/");
 if (urlPluggy.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("A URL da Pluggy deve usar HTTPS.");
@@ -120,6 +122,13 @@ const string AgenteNavegador = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleW
 builder.Services.AddHttpClient<SelicService>(c =>
 {
     c.BaseAddress = new Uri("https://api.bcb.gov.br/");
+    c.Timeout = TimeSpan.FromSeconds(30);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("FinancasLocal/1.0");
+    c.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+});
+builder.Services.AddHttpClient<CambioService>(c =>
+{
+    c.BaseAddress = new Uri("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/");
     c.Timeout = TimeSpan.FromSeconds(30);
     c.DefaultRequestHeaders.UserAgent.ParseAdd("FinancasLocal/1.0");
     c.DefaultRequestHeaders.Accept.ParseAdd("application/json");

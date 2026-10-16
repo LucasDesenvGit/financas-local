@@ -114,7 +114,7 @@ Como tudo é local, o objetivo foi manter o sistema simples sem abrir mão do es
 - **Validação de host:** só `localhost`/`127.0.0.1`, o que protege contra DNS rebinding.
 - **Auditoria** de logins, falhas, trocas de senha e alterações de credenciais, visível em Configurações.
 - Consultas ao banco somente via LINQ/EF Core, sem SQL montado a partir de texto do usuário.
-- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy.
+- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy.
 
 Recomendações:
 - Ative criptografia de disco (**BitLocker** no Windows, **LUKS**/dm-crypt no Linux), porque o SQLite não criptografa o arquivo do banco.

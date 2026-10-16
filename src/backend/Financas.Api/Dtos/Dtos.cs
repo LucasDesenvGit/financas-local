@@ -167,6 +167,16 @@ public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo,
     string Moeda, decimal Saldo, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
     DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
 
+/* ----------------------------- Câmbio ----------------------------- */
+public record MoedaDto(string Codigo, string Nome);
+
+/// <summary>Reais por 1 unidade da moeda. <c>Data</c> é o dia útil da cotação, que pode ser anterior a <c>DataSolicitada</c>.</summary>
+public record CotacaoMoedaDto(string Moeda, DateOnly DataSolicitada, DateOnly Data, decimal Compra, decimal Venda,
+    string Fonte);
+
+/// <summary>Última cotação guardada de cada moeda (disponível mesmo sem internet).</summary>
+public record CotacoesAtuaisDto(DateTime? AtualizadoEm, List<CotacaoMoedaDto> Cotacoes);
+
 /* ----------------------------- Empréstimos e financiamentos ----------------------------- */
 /// <summary>Saldo devedor e parcela mensal dos contratos em aberto, separados por natureza.</summary>
 public record TotaisCreditoDto(decimal SaldoFinanciamentos, decimal SaldoEmprestimos,

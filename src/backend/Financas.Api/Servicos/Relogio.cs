@@ -18,6 +18,9 @@ public static class Relogio
 
     public static DateOnly Hoje => DateOnly.FromDateTime(AgoraLocal);
 
+    /// <summary>Converte um instante (UTC ou com Kind definido) para a hora de Brasília.</summary>
+    public static DateTime ParaHoraLocal(DateTime instante) => TimeZoneInfo.ConvertTime(instante.ToUniversalTime(), Fuso);
+
     public static DateOnly ParaDataLocal(DateTimeOffset valor)
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(valor, Fuso).DateTime);
 
