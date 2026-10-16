@@ -57,6 +57,10 @@ export const GLOSSARIO = {
     termo: 'Patrimônio sem renda variável',
     definicao: 'O patrimônio líquido sem contar ações, FIIs e ETFs, cujo valor sobe e desce todo dia. Mostra a parte mais estável do que você tem.'
   },
+  dividaCartoes: {
+    termo: 'Dívida total nos cartões',
+    definicao: 'Tudo o que você deve nos cartões hoje, somando todos, inclusive parcelas que ainda vão vencer. Não é a fatura do mês.'
+  },
   precoMedio: {
     termo: 'Preço médio',
     definicao: 'Quanto você pagou, em média, por cota, somando todas as compras.',

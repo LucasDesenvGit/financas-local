@@ -7,7 +7,7 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { Painel, ValorCategoria } from '../core/modelos';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -28,7 +28,6 @@ import { Icones } from '../compartilhado/icones';
           <p class="texto-suave">Última sincronização: {{ u | date: 'dd/MM/yyyy HH:mm' }}</p>
         }
       </div>
-      <app-seletor-mes [valor]="periodo()" (mudou)="mudarPeriodo($event)" />
     </header>
 
     @if (erro()) { <p class="erro">{{ erro() }}</p> }
@@ -40,6 +39,11 @@ import { Icones } from '../compartilhado/icones';
         </section>
       }
 
+      <section class="secao-painel" aria-labelledby="titulo-hoje">
+        <header class="secao-titulo">
+          <h2 id="titulo-hoje">Situação hoje</h2>
+          <p class="texto-suave">posição em {{ hoje | date: 'dd/MM/yyyy' }} · não muda com o mês escolhido</p>
+        </header>
       <section class="kpis">
         <article class="kpi kpi-destaque">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.patrimonio" [tamanho]="16" /> Patrimônio líquido</span>
@@ -56,8 +60,10 @@ import { Icones } from '../compartilhado/icones';
           <strong [class.negativo]="d.saldoContas < 0">{{ d.saldoContas | currency }}</strong>
         </article>
         <article class="kpi">
-          <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Faturas de cartão</span>
+          <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" />
+            <app-termo chave="dividaCartoes">Dívida total nos cartões</app-termo></span>
           <strong class="negativo">{{ d.dividaCartoes | currency }}</strong>
+          <small>todos os cartões, com parcelas futuras</small>
         </article>
         @if (d.dividaFinanciamentos > 0) {
           <article class="kpi kpi-credito kpi-financiamento">
@@ -80,6 +86,29 @@ import { Icones } from '../compartilhado/icones';
         </article>
       </section>
 
+        <section class="painel-bloco">
+          <div class="bloco-titulo"><h2>Próximos vencimentos</h2><a routerLink="/contas-a-pagar">ver todos</a></div>
+          <ul class="lista-simples">
+            @for (c of d.proximasContas; track c.id) {
+              <li>
+                <span class="cresce">{{ c.descricao }}</span>
+                <span [class.negativo]="c.diasParaVencer < 0" class="texto-suave">
+                  {{ c.diasParaVencer < 0 ? 'vencida' : c.diasParaVencer === 0 ? 'hoje' : 'em ' + c.diasParaVencer + 'd' }}
+                </span>
+                <span class="valor">{{ c.valor | currency }}</span>
+              </li>
+            } @empty {
+              <li class="vazio">Nada vencendo nos próximos {{ d.diasProximosVencimentos }} dias.</li>
+            }
+          </ul>
+        </section>
+      </section>
+
+      <section class="secao-painel" aria-labelledby="titulo-mes">
+        <header class="secao-titulo">
+          <h2 id="titulo-mes">Mês de {{ nomeMes() }}</h2>
+          <app-seletor-mes [valor]="periodo()" (mudou)="mudarPeriodo($event)" />
+        </header>
       <section class="kpis kpis-mes">
         <article class="kpi">
           <span>Receitas do mês</span>
@@ -99,6 +128,27 @@ import { Icones } from '../compartilhado/icones';
           </strong>
           @if (d.receitasMes > 0) {
             <small>{{ (d.receitasMes - d.despesasMes) / d.receitasMes * 100 | number: '1.0-0' }}% da renda poupada</small>
+          }
+        </article>
+        <article class="kpi kpi-faturas">
+          <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Faturas do mês</span>
+          <strong [class.negativo]="d.totalFaturasDoMes > 0">{{ d.totalFaturasDoMes | currency }}</strong>
+          @if (d.faturasDoMes?.length) {
+            <ul class="lista-faturas">
+              @for (f of d.faturasDoMes; track f.faturaId) {
+                <li>
+                  <a routerLink="/contas" [queryParams]="{ faturas: f.contaId }" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a>
+                  <span class="texto-suave">vence {{ f.vencimento | date: 'dd/MM' }}</span>
+                  <span class="valor">{{ f.valorTotal | currency }}</span>
+                  <span class="etiqueta" [class.etiqueta-sucesso]="f.situacao === 'paga'" [class.etiqueta-alerta]="f.situacao === 'fechada'">{{ rotuloSituacao(f.situacao) }}</span>
+                </li>
+              }
+            </ul>
+            @if (d.cartoesSemFaturaNoMes > 0) {
+              <small>{{ d.cartoesSemFaturaNoMes }} cartão(ões) sem fatura informada neste mês</small>
+            }
+          } @else {
+            <small>Nenhuma fatura com vencimento neste mês (o banco só informa faturas dos cartões do Open Finance).</small>
           }
         </article>
       </section>
@@ -127,42 +177,26 @@ import { Icones } from '../compartilhado/icones';
             <p class="vazio">Nenhuma despesa neste mês.</p>
           }
         </section>
-        <div class="coluna-blocos">
-          <section class="painel-bloco">
-            <div class="bloco-titulo"><h2>Orçamentos</h2><a routerLink="/orcamentos">ver todos</a></div>
-            @for (o of d.orcamentos; track o.id) {
-              <div class="barra-orcamento">
-                <div class="linha-flex">
-                  <span>{{ o.categoriaNome }}</span>
-                  <span class="texto-suave">{{ o.gasto | currency }} de {{ o.valor | currency }}</span>
-                </div>
-                <div class="trilho"><div class="progresso" [class.estourado]="o.situacao === 'estourado'"
-                  [class.emergencia]="o.situacao === 'emergencia'"
-                  [class.atencao]="o.percentual >= 80 && o.percentual <= 100"
-                  [style.width.%]="o.percentual > 100 ? 100 : o.percentual"></div></div>
+        <section class="painel-bloco">
+          <div class="bloco-titulo"><h2>Orçamentos</h2><a routerLink="/orcamentos">ver todos</a></div>
+          @for (o of d.orcamentos; track o.id) {
+            <div class="barra-orcamento">
+              <div class="linha-flex">
+                <span>{{ o.categoriaNome }}</span>
+                <span class="texto-suave">{{ o.gasto | currency }} de {{ o.valor | currency }}</span>
               </div>
-            } @empty {
-              <p class="vazio">Nenhum orçamento para este mês. <a routerLink="/orcamentos">Criar</a></p>
-            }
-          </section>
-          <section class="painel-bloco">
-            <div class="bloco-titulo"><h2>Próximos vencimentos</h2><a routerLink="/contas-a-pagar">ver todos</a></div>
-            <ul class="lista-simples">
-              @for (c of d.proximasContas; track c.id) {
-                <li>
-                  <span class="cresce">{{ c.descricao }}</span>
-                  <span [class.negativo]="c.diasParaVencer < 0" class="texto-suave">
-                    {{ c.diasParaVencer < 0 ? 'vencida' : c.diasParaVencer === 0 ? 'hoje' : 'em ' + c.diasParaVencer + 'd' }}
-                  </span>
-                  <span class="valor">{{ c.valor | currency }}</span>
-                </li>
-              } @empty {
-                <li class="vazio">Nada vencendo nos próximos {{ d.diasProximosVencimentos }} dias.</li>
-              }
-            </ul>
-          </section>
-        </div>
+              <div class="trilho"><div class="progresso" [class.estourado]="o.situacao === 'estourado'"
+                [class.emergencia]="o.situacao === 'emergencia'"
+                [class.atencao]="o.percentual >= 80 && o.percentual <= 100"
+                [style.width.%]="o.percentual > 100 ? 100 : o.percentual"></div></div>
+            </div>
+          } @empty {
+            <p class="vazio">Nenhum orçamento para este mês. <a routerLink="/orcamentos">Criar</a></p>
+          }
+        </section>
       </div>
+
+      </section>
 
       <app-mais-analises chave="painel" conteudo="receitas × despesas em 12 meses e últimas transações">
         <ng-template>
@@ -200,6 +234,13 @@ import { Icones } from '../compartilhado/icones';
     .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
     .kpi-financiamento::before { background: #8fa8f0; }
     .kpi-emprestimo::before { background: #d9b45a; }
+    .secao-painel { margin-bottom: 8px; }
+    .secao-titulo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 16px; margin: 6px 0 12px; }
+    .secao-titulo h2 { margin: 0; font-size: 1.15rem; }
+    .secao-titulo p { margin: 0; flex: 1 1 260px; }
+    .lista-faturas { list-style: none; margin: 6px 0 2px; padding: 0; display: grid; gap: 4px; font-size: 0.84rem; }
+    .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+    .lista-faturas .valor { margin-left: auto; }
   `]
 })
 export class PainelComponent implements OnInit {
@@ -209,6 +250,13 @@ export class PainelComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
+  /** UX-12: "Situação hoje" é sempre a posição de hoje; "Mês de …" segue o seletor. */
+  readonly hoje = new Date();
+  readonly nomeMes = computed(() => `${NOMES_MESES[this.periodo().mes - 1]}/${this.periodo().ano}`);
+
+  rotuloSituacao(situacao: 'paga' | 'fechada' | 'aberta'): string {
+    return situacao === 'paga' ? 'paga' : situacao === 'fechada' ? 'fechada' : 'em aberto';
+  }
   readonly dados = signal<Painel | null>(null);
   readonly erro = signal<string | null>(null);
 

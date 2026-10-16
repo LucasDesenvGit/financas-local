@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, TipoConta } from '../core/modelos';
@@ -203,6 +203,9 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 export class ContasComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  /** UX-12: /contas?faturas=ID abre direto as faturas do cartão (link de "Faturas do mês" no Painel). */
+  private faturasPelaUrl = Number(this.rota.snapshot.queryParamMap.get('faturas')) || null;
 
   readonly TipoConta = TipoConta;
   readonly OrigemConta = OrigemConta;
@@ -282,7 +285,12 @@ export class ContasComponent implements OnInit {
 
   carregar(): void {
     this.api.contas(this.mostrarArquivadas).subscribe({
-      next: (c) => this.contas.set(c),
+      next: (c) => {
+        this.contas.set(c);
+        const cartao = this.faturasPelaUrl ? c.find((x) => x.id === this.faturasPelaUrl) : undefined;
+        this.faturasPelaUrl = null;
+        if (cartao) this.verFaturas(cartao);
+      },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
   }
