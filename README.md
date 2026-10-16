@@ -29,7 +29,16 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 
 ## Instalação (uma vez)
 
-Abra um terminal com bash disponível (no Linux, o terminal do próprio sistema; no Windows, o Git Bash ou o WSL).
+**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador, instala o Git for Windows pelo `winget` se faltar e roda as três etapas abaixo. Pode rodar de novo para atualizar.
+
+**Linux (ou Windows pelo terminal), com um comando:**
+
+```bash
+cd financas-local/scripts
+./instalar.sh                # roda 1, 2 e 3 em sequência e para no primeiro erro
+```
+
+**Etapa por etapa.** Abra um terminal com bash disponível (no Linux, o terminal do próprio sistema; no Windows, o **Git Bash**, que vem com o [Git for Windows](https://git-scm.com/download/win) — `winget install Git.Git` —, ou o WSL). No Windows não precisa instalar mais nada: nem Python, nem sqlite3. Abra o Git Bash **como Administrador** para o `3-publicar-atualizar.sh`, que registra o serviço do Windows.
 
 ```bash
 cd financas-local/scripts
@@ -46,9 +55,9 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 |---|---|---|
 | .NET 10 SDK (portátil em `ferramentas/dotnet`) | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 + assinatura do instalador |
 | Node.js LTS (portátil em `ferramentas/node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
-| `sqlite3` (CLI) | gerenciador de pacotes do sistema operacional | — |
+| `sqlite3` (CLI) | o do sistema, se houver; senão portátil em `ferramentas/sqlite`, baixado de `www.sqlite.org` (Linux arm64: gerenciador de pacotes) | SHA3-256 publicado na página oficial de download |
 
-`1-preparar-ambiente.sh` verifica cada um desses componentes e só baixa/instala o que ainda não estiver disponível.
+`1-preparar-ambiente.sh` confere antes as ferramentas básicas do terminal (`curl`, `tar`, `sha256sum`…, todas presentes no Git Bash), depois verifica cada um desses componentes, só baixa/instala o que ainda não estiver disponível e, no final, mostra a versão de cada um.
 
 ## Migrar de uma instalação com SQL Server
 
@@ -152,7 +161,7 @@ financas-local/
 ├── dados/                 [gerado] banco (SQLite), chaves, logs — acesso restrito
 ├── backups/               [gerado] backups do banco
 ├── publicado/             [gerado] aplicação publicada
-├── ferramentas/           [gerado] .NET SDK, Node.js, caches NuGet/npm
+├── ferramentas/           [gerado] .NET SDK, Node.js, sqlite3 (se preciso), caches NuGet/npm
 └── instaladores/          [gerado] instaladores baixados (podem ser apagados)
 ```
 
@@ -160,6 +169,9 @@ financas-local/
 
 | Sintoma | O que fazer |
 |---|---|
+| Windows: `Python was not found`, `sqlite3: command not found` ou `unzip: command not found` | Versão antiga dos scripts. Atualize o repositório e rode o `1-preparar-ambiente.sh` de novo: ele instala o que falta e não usa mais Python |
+| Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
+| Windows: o serviço não é registrado/iniciado | Rode o `3-publicar-atualizar.sh` num Git Bash aberto como Administrador |
 | Navegador alerta sobre o certificado | Rode o `3-publicar-atualizar.sh` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
 | Sincronização falha com 401/403 | Confira o Client ID e o Secret e se o MeuPluggy foi autorizado para aquele banco |
 | O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |

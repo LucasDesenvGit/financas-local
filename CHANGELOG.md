@@ -34,6 +34,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Janelas sobrepostas (ex.: editar uma operação a partir da lista de operações): a aberta por último fica por cima, e o Esc fecha só ela — antes, a edição abria atrás e um Esc fechava todas.
 - Investimentos: a tela não carregava (erro 500) quando o Banco Central ou outra fonte demorava mais que o tempo limite; agora segue sem o dado, como já fazia sem internet. Mesmo ajuste nas cotações, no câmbio, na importação pelo extrato e na sincronização do Open Finance.
 - Publicação no Linux: `scripts/3-publicar.sh` passa a se chamar `scripts/3-publicar-atualizar.sh` e reinicia o serviço quando ele já está rodando (antes, continuava com a versão antiga em memória).
+- Instalação num Windows novo: o `1-preparar-ambiente.sh` deixa de depender de Python (que no Windows costuma ser só o atalho da Microsoft Store) e de `unzip`, baixa o `sqlite3` portátil oficial quando falta, confere as ferramentas do terminal antes de começar e mostra as versões instaladas no final. O `3-publicar-atualizar.sh` também não usa mais Python, funciona com `--pular-build` sem o .NET no PATH e avisa logo no início quando o Git Bash não está como Administrador (ADR 0011).
+- Instalação em um passo: `scripts/instalar.sh` roda as três etapas em sequência; no Windows, basta dar dois cliques em `instalar-windows.cmd`, que pede Administrador, instala o Git for Windows pelo `winget` se faltar e chama o `instalar.sh` (ADR 0011).
+- Backup agendado no Windows (`4-backup.sh --agendar`): a tarefa era criada com caminhos do Git Bash (`/usr/bin/bash`, `/c/...`), que o Agendador de Tarefas não entende, e não rodava. Agora usa caminhos do Windows e o `bash.exe` do Git for Windows.
 - Validação do código da B3 volta ao formato estrito (ex.: PETR4, MXRF11); ativos de fora da B3, como AOK, entram escolhendo a moeda (ADR 0009).
 
 ### Documentação

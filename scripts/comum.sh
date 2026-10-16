@@ -37,6 +37,12 @@ PastaChaves="$Dados/chaves"
 PastaBackups="$Raiz/backups"
 PastaPublicado="$Raiz/publicado"
 
+# sqlite3 portatil (baixado pelo 1-preparar-ambiente.sh quando o sistema nao tem
+# um) vale para todos os scripts, inclusive 2-criar-banco.sh e 4-backup.sh.
+if [[ -d "$Ferramentas/sqlite" ]]; then
+    export PATH="$Ferramentas/sqlite:$PATH"
+fi
+
 # ---------------------------------------------------------------- Mensagens
 etapa() {
     printf '\n\033[36m==> %s\033[0m\n' "$1"
@@ -73,7 +79,34 @@ baixar_arquivo() {
     fi
 }
 
-# verificar_hash arquivo hash_esperado algoritmo(sha256|sha512)
+# Caminho no formato que programas nativos entendem. No Git Bash, $Raiz fica no
+# formato POSIX (ex.: /c/FinancasLocal), que node.exe/dotnet.exe nao entendem
+# quando o caminho vai dentro de variavel de ambiente ou de um arquivo; la ele
+# vira o formato misto (C:/FinancasLocal).
+caminho_nativo() {
+    if [[ "$SO" == windows ]]; then cygpath -m "$1"; else echo "$1"; fi
+}
+
+# extrair_zip arquivo.zip pasta_destino
+# O Git Bash nem sempre traz o unzip; no Windows o PowerShell (Expand-Archive)
+# esta sempre disponivel e serve de alternativa.
+extrair_zip() {
+    local arquivo="$1" destino="$2"
+    garantir_pasta "$destino"
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -q -o "$arquivo" -d "$destino"
+    elif [[ "$SO" == windows ]] && command -v powershell.exe >/dev/null 2>&1; then
+        ORIGEM_ZIP="$(cygpath -w "$arquivo")" DESTINO_ZIP="$(cygpath -w "$destino")" \
+            powershell.exe -NoProfile -NonInteractive -Command \
+            '$ErrorActionPreference = "Stop"; $ProgressPreference = "SilentlyContinue"; Expand-Archive -LiteralPath $env:ORIGEM_ZIP -DestinationPath $env:DESTINO_ZIP -Force'
+    else
+        erro_sai "unzip nao encontrado para extrair $(basename "$arquivo"). Instale o unzip e rode de novo."
+    fi
+}
+
+# verificar_hash arquivo hash_esperado algoritmo(sha256|sha512|sha3-256)
+# sha3-256 (usado pelo sqlite.org) e calculado pelo Node.js, que o
+# 1-preparar-ambiente.sh instala antes de precisar dele.
 verificar_hash() {
     local arquivo="$1" esperado="$2" algoritmo="$3" hash=""
     case "$algoritmo" in
@@ -94,6 +127,10 @@ verificar_hash() {
             else
                 erro_sai 'Nenhuma ferramenta de SHA-512 disponivel (sha512sum/shasum).'
             fi
+            ;;
+        sha3-256)
+            requer_comando node 'Node.js nao encontrado (necessario para conferir o hash SHA3-256).'
+            hash="$(node -e 'const c = require("crypto"), fs = require("fs"); process.stdout.write(c.createHash("sha3-256").update(fs.readFileSync(process.argv[1])).digest("hex"));' "$(caminho_nativo "$arquivo")")"
             ;;
         *)
             erro_sai "Algoritmo de hash desconhecido: $algoritmo"
