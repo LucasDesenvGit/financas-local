@@ -87,3 +87,14 @@ export const CORES_SUGERIDAS = [
   '#a7a3f5', '#92c8f0', '#8fd5b4', '#8fd8d8', '#b5cf9a', '#f2d98b',
   '#f8c09a', '#f4a89a', '#f5a3b0', '#f3b3d3', '#d4a5e8', '#a9b4c6'
 ];
+
+/** Valor em reais para frases-resumo; com "Ocultar valores" ligado devolve null (a frase usa só percentuais). */
+export function reaisOuNada(valor: number, oculto: boolean): string | null {
+  return oculto ? null : valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+}
+
+/** Percentual curto para frases-resumo: 12,3 → "12%", 0,4 → "0,4%". */
+export function pct(valor: number): string {
+  const abs = Math.abs(valor);
+  return `${abs.toLocaleString('pt-BR', { maximumFractionDigits: abs < 10 ? 1 : 0 })}%`;
+}
