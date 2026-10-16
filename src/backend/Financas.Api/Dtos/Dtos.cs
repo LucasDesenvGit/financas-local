@@ -316,7 +316,7 @@ public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao 
     OrigemOperacao Origem);
 
 public record SalvarOperacaoDto(
-    [Required, StringLength(12, MinimumLength = 5)] string Ticker,
+    [Required, StringLength(12, MinimumLength = 3)] string Ticker,
     TipoAtivo? TipoAtivo,
     TipoOperacao Tipo,
     DateOnly Data,
@@ -382,7 +382,7 @@ public record SugestaoExtratoDto(long TransacaoId, DateOnly Data, string Descric
 
 public record ImportarExtratoItemDto(
     long TransacaoId,
-    [Required, StringLength(12, MinimumLength = 5)] string Ticker,
+    [Required, StringLength(12, MinimumLength = 3)] string Ticker,
     TipoOperacao Tipo,
     [Range(0.000001, 1000000000.0)] decimal Quantidade,
     [Range(0.0, 100000000.0)] decimal PrecoUnitario,

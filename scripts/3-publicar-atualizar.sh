@@ -204,8 +204,13 @@ WantedBy=default.target
 EOF
         if command -v systemctl >/dev/null 2>&1; then
             systemctl --user daemon-reload
-            systemctl --user enable --now financaslocal.service
-            ok 'servico systemd (usuario) registrado e iniciado'
+            if systemctl --user is-active --quiet financaslocal.service; then
+                systemctl --user restart financaslocal.service
+                ok 'servico systemd (usuario) atualizado e reiniciado'
+            else
+                systemctl --user enable --now financaslocal.service
+                ok 'servico systemd (usuario) registrado e iniciado'
+            fi
         else
             aviso "systemctl nao encontrado; unidade escrita em $unidade mas nao habilitada automaticamente."
         fi

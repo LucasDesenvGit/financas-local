@@ -207,7 +207,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     </tr>
                   } @empty {
                     <tr><td colspan="10" class="vazio">
-                      Nenhum ativo lançado. Use <strong>+ Lançar compra/venda</strong> com o código da B3 (ex.: MXRF11) e o preço pago.
+                      Nenhum ativo lançado. Use <strong>+ Lançar compra/venda</strong> com o código do ativo (ex.: AOK ou MXRF11) e o preço pago.
                     </td></tr>
                   }
                 </tbody>
@@ -293,7 +293,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <div class="grade-campos">
             @if (editandoOpId === null) {
               <label>Código na B3
-                <input name="ticker" [(ngModel)]="fo.ticker" required maxlength="12" placeholder="MXRF11" autocomplete="off"
+                <input name="ticker" [(ngModel)]="fo.ticker" required minlength="3" maxlength="12" placeholder="AOK" autocomplete="off"
                   class="maiusculas">
               </label>
               <label>Tipo do ativo
@@ -415,7 +415,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     <app-modal [aberto]="importacaoAberta()" titulo="Importar compras e vendas do extrato" (fechar)="importacaoAberta.set(false)">
       <div class="formulario">
         <p class="texto-suave">
-          Transações com código da B3 na descrição (ex.: "COMPRA MXRF11 10 x 9,85"). Quando o extrato não traz quantidade
+          Transações com código de ativo na descrição (ex.: "COMPRA MXRF11 10 x 9,85"). Quando o extrato não traz quantidade
           ou preço, eles são calculados pelo valor da transação e pela cotação de fechamento do dia. Confira antes de importar.
           FIIs da corretora conectada no Meu Pluggy entram sozinhos na sincronização.
         </p>
