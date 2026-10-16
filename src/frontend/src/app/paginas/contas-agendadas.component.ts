@@ -30,7 +30,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     <div class="tabela-rolagem">
       <table class="tabela">
         <thead>
-          <tr><th>Vencimento</th><th>Descrição</th><th>Recorrência</th><th>Categoria</th><th class="direita">Valor</th><th></th></tr>
+          <tr><th>Vencimento</th><th>Descrição</th><th>Recorrência</th><th>Categoria</th><th class="direita">Valor</th><th><span class="so-leitor">Ações</span></th></tr>
         </thead>
         <tbody>
           @for (c of itens(); track c.id) {
@@ -72,15 +72,18 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <div class="tabela-rolagem">
             <table class="tabela">
               <thead>
-                <tr><th>Próximo (estimado)</th><th>Descrição</th><th>Categoria</th><th class="direita">Valor</th><th></th></tr>
+                <tr><th>Próximo (estimado)</th><th>Descrição</th><th>Categoria</th><th class="direita">Valor</th><th><span class="so-leitor">Ações</span></th></tr>
               </thead>
               <tbody>
                 @for (s of sugestoesVisiveis(); track s.chave) {
                   <tr>
                     <td class="nowrap">{{ s.proximoVencimento | date: 'dd/MM/yyyy' }}<br>
-                      <small class="texto-suave">costuma ser dia {{ s.diaHabitual }}</small></td>
+                      <small class="texto-suave">costuma ser dia {{ s.diaHabitual }}</small>
+                      @if (s.vencimentoSemPagamento) {
+                        <br><small class="texto-alerta">o de {{ s.vencimentoSemPagamento | date: 'dd/MM' }} ainda não apareceu no extrato</small>
+                      }</td>
                     <td>{{ s.descricao }}<br>
-                      <small class="texto-suave">pago em {{ s.meses }} meses · último em {{ s.ultimoPagamento | date: 'dd/MM' }} · {{ s.contaNome }}</small></td>
+                      <small class="texto-suave">pago em {{ s.meses }} meses@if (s.pagamentos !== s.meses) { ({{ s.pagamentos }} pagamentos) } · último em {{ s.ultimoPagamento | date: 'dd/MM' }} · {{ s.contaNome }}</small></td>
                     <td>{{ s.categoriaNome ?? '—' }}</td>
                     <td class="direita valor nowrap">
                       @if (s.valorVariavel) {
@@ -237,7 +240,7 @@ export class ContasAgendadasComponent implements OnInit {
     const fim = paraData(s.ultimoPagamento);
     return {
       ...paramsTransacoes({
-        contaId: s.contaId, tipo: 'despesa',
+        tipo: 'despesa',
         inicio: primeiroDiaMes(inicio.getFullYear(), inicio.getMonth() + 1),
         fim: ultimoDiaMes(fim.getFullYear(), fim.getMonth() + 1)
       }),
@@ -255,7 +258,7 @@ export class ContasAgendadasComponent implements OnInit {
   }
 
   /** Lembrado só neste navegador: é conveniência de tela, não dado financeiro. */
-  private static readonly CHAVE_IGNORADAS = 'contas-agendadas.sugestoes-ignoradas';
+  private static readonly CHAVE_IGNORADAS = 'financas.sugestoesContasIgnoradas';
 
   private static lerIgnoradas(): string[] {
     try {

@@ -78,8 +78,13 @@ public class SugestaoContaAgendadaService
             var variavel = valor > 0 && (maximo - minimo) / valor > VariacaoValorFixo;
 
             var dia = (int)Mediana(itens.Select(t => (decimal)t.Data.Day).ToList());
-            var proximoMes = new DateOnly(recente.Data.Year, recente.Data.Month, 1).AddMonths(1);
-            var proximo = proximoMes.AddDays(Math.Min(dia, DateTime.DaysInMonth(proximoMes.Year, proximoMes.Month)) - 1);
+            // Vencimento esperado no mês seguinte ao último pagamento. Se já passou sem o pagamento aparecer (o último
+            // pode ter até DiasSemPagamento dias), a sugestão avisa e propõe o próximo que ainda vai vencer: cadastrar
+            // não pode criar uma conta já vencida.
+            var esperado = NoDia(new DateOnly(recente.Data.Year, recente.Data.Month, 1).AddMonths(1), dia);
+            var proximo = esperado;
+            while (proximo < hoje) proximo = NoDia(new DateOnly(proximo.Year, proximo.Month, 1).AddMonths(1), dia);
+            DateOnly? semPagamento = esperado < hoje ? esperado : null;
 
             var categoria = itens.Where(t => t.CategoriaId != null).GroupBy(t => t.CategoriaId)
                 .OrderByDescending(c => c.Count()).Select(c => c.First()).FirstOrDefault();
@@ -92,11 +97,15 @@ public class SugestaoContaAgendadaService
                 Math.Round(valor, 2), variavel, Math.Round(minimo, 2), Math.Round(maximo, 2),
                 proximo, dia, meses.Count, itens.Count, recente.Data, itens[^1].Data,
                 categoria?.CategoriaId, categoria?.CategoriaNome, conta.ContaId, conta.ContaNome,
-                termoBusca));
+                termoBusca, semPagamento));
         }
 
         return resultado.OrderBy(s => s.ProximoVencimento).ThenByDescending(s => s.Valor).Take(MaximoSugestoes).ToList();
     }
+
+    /// <summary>O dia habitual dentro do mês (dia 31 vira o último dia em meses mais curtos).</summary>
+    private static DateOnly NoDia(DateOnly inicioDoMes, int dia)
+        => inicioDoMes.AddDays(Math.Min(dia, DateTime.DaysInMonth(inicioDoMes.Year, inicioDoMes.Month)) - 1);
 
     /// <summary>
     /// Mesma chave da sugestão de categorias; se a descrição não tiver palavra significativa (ex.: "BOLETO F I A P"),

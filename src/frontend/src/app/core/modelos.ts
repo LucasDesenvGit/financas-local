@@ -146,6 +146,8 @@ export interface SugestaoContaAgendada {
   proximoVencimento: string; diaHabitual: number; meses: number; pagamentos: number;
   ultimoPagamento: string; primeiroPagamento: string;
   categoriaId: number | null; categoriaNome: string | null; contaId: number; contaNome: string; termoBusca: string;
+  /** Vencimento esperado que já passou sem o pagamento aparecer no extrato (null quando não há). */
+  vencimentoSemPagamento: string | null;
 }
 
 export interface Investimento {

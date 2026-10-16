@@ -165,11 +165,14 @@ public record SalvarContaAgendadaDto(
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 
-/// <summary>Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar.</summary>
+/// <summary>
+/// Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar. <c>ProximoVencimento</c> nunca é
+/// passado; <c>VencimentoSemPagamento</c> é o vencimento esperado que já passou sem o pagamento aparecer no extrato.
+/// </summary>
 public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal Valor, bool ValorVariavel,
     decimal ValorMinimo, decimal ValorMaximo, DateOnly ProximoVencimento, int DiaHabitual, int Meses, int Pagamentos,
     DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,
-    string ContaNome, string TermoBusca);
+    string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento);
 
 /* ----------------------------- Investimentos ----------------------------- */
 /// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
