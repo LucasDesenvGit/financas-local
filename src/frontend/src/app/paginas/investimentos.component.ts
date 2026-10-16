@@ -17,6 +17,7 @@ import { dataIso, pct, reaisOuNada } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -48,7 +49,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
 @Component({
   selector: 'app-investimentos',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent,
+  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
     InvestimentosFiisComponent],
   template: `
     <header class="cabecalho-pagina">
@@ -125,46 +126,50 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
       @switch (aba()) {
         @case ('resumo') {
-          <div class="grade-2">
-            <section class="painel-bloco">
-              <h2>Seu dinheiro na renda variável x na Selic</h2>
-              @if (d.evolucao.length) {
-                <app-grafico-explicado [resumo]="resumoEvolucao()"
-                  comoLer="Área lilás: o que você aplicou (compras menos vendas). Tracejado: quanto esse mesmo dinheiro teria hoje na Selic. Ponto verde: valor de mercado atual (proventos não entram neste gráfico).">
-                  <app-grafico [configuracao]="graficoEvolucao()" [altura]="270" />
-                </app-grafico-explicado>
-              } @else { <p class="vazio">Lance suas compras para ver a comparação.</p> }
-            </section>
-            <section class="painel-bloco">
-              <h2>Distribuição</h2>
-              @if (d.distribuicao.length) {
-                <app-grafico-explicado [resumo]="resumoDistribuicao()"
-                  comoLer="Cada fatia é um tipo de investimento, do tamanho do valor dele hoje. A lista abaixo traz os valores.">
-                  <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
-                </app-grafico-explicado>
-                <ul class="lista-legenda">
-                  @for (g of d.distribuicao; track g.nome; let i = $index) {
-                    <li>
-                      <span class="ponto" [style.background]="cor(i)"></span>
-                      <span class="cresce">{{ g.nome }}</span>
-                      <span class="valor">{{ g.valor | currency }}</span>
-                      <span class="texto-suave pct">{{ d.totalGeral > 0 ? (g.valor / d.totalGeral * 100 | number: '1.0-0') : 0 }}%</span>
-                    </li>
-                  }
-                </ul>
-              } @else { <p class="vazio">Nenhum investimento ainda.</p> }
-            </section>
-          </div>
-
-          @if (abertas().length) {
-            <section class="painel-bloco">
-              <h2>Rentabilidade por ativo x Selic no mesmo período</h2>
-              <app-grafico-explicado [resumo]="resumoAtivos()"
-                comoLer="Para cada ativo: resultado total (valorização, vendas e proventos) em verde quando ganhou da Selic e em rosa quando perdeu; em laranja-claro, a Selic com as mesmas datas e valores das suas compras.">
-                <app-grafico [configuracao]="graficoAtivos()" [altura]="alturaGraficoAtivos()" />
+          <section class="painel-bloco">
+            <h2>Seu dinheiro na renda variável x na Selic</h2>
+            @if (d.evolucao.length) {
+              <app-grafico-explicado [resumo]="resumoEvolucao()"
+                comoLer="Área lilás: o que você aplicou (compras menos vendas). Tracejado: quanto esse mesmo dinheiro teria hoje na Selic. Ponto verde: valor de mercado atual (proventos não entram neste gráfico).">
+                <app-grafico [configuracao]="graficoEvolucao()" [altura]="270" />
               </app-grafico-explicado>
-            </section>
-          }
+            } @else { <p class="vazio">Lance suas compras para ver a comparação.</p> }
+          </section>
+
+          <app-mais-analises chave="investimentos" conteudo="distribuição por tipo e rentabilidade de cada ativo x Selic">
+            <ng-template>
+              <div class="grade-2">
+                <section class="painel-bloco">
+                  <h2>Distribuição</h2>
+                  @if (d.distribuicao.length) {
+                    <app-grafico-explicado [resumo]="resumoDistribuicao()"
+                      comoLer="Cada fatia é um tipo de investimento, do tamanho do valor dele hoje. A lista abaixo traz os valores.">
+                      <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
+                    </app-grafico-explicado>
+                    <ul class="lista-legenda">
+                      @for (g of d.distribuicao; track g.nome; let i = $index) {
+                        <li>
+                          <span class="ponto" [style.background]="cor(i)"></span>
+                          <span class="cresce">{{ g.nome }}</span>
+                          <span class="valor">{{ g.valor | currency }}</span>
+                          <span class="texto-suave pct">{{ d.totalGeral > 0 ? (g.valor / d.totalGeral * 100 | number: '1.0-0') : 0 }}%</span>
+                        </li>
+                      }
+                    </ul>
+                  } @else { <p class="vazio">Nenhum investimento ainda.</p> }
+                </section>
+                @if (abertas().length) {
+                  <section class="painel-bloco">
+                    <h2>Rentabilidade por ativo x Selic no mesmo período</h2>
+                    <app-grafico-explicado [resumo]="resumoAtivos()"
+                      comoLer="Para cada ativo: resultado total (valorização, vendas e proventos) em verde quando ganhou da Selic e em rosa quando perdeu; em laranja-claro, a Selic com as mesmas datas e valores das suas compras.">
+                      <app-grafico [configuracao]="graficoAtivos()" [altura]="alturaGraficoAtivos()" />
+                    </app-grafico-explicado>
+                  </section>
+                }
+              </div>
+            </ng-template>
+          </app-mais-analises>
         }
 
         @case ('fii') {

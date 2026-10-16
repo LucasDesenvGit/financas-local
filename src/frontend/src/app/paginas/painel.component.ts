@@ -11,13 +11,15 @@ import { NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes,
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent],
+  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
+    MaisAnalisesComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -125,67 +127,70 @@ import { Icones } from '../compartilhado/icones';
             <p class="vazio">Nenhuma despesa neste mês.</p>
           }
         </section>
-
-        <section class="painel-bloco">
-          <h2>Receitas × despesas (12 meses)</h2>
-          <app-grafico-explicado [resumo]="resumoEvolucao()"
-            comoLer="Verde: receitas; rosa: despesas. Quando a barra rosa passa da verde, o mês fechou no vermelho.">
-            <app-grafico [configuracao]="graficoEvolucao()" [altura]="300" />
-          </app-grafico-explicado>
-        </section>
-      </div>
-
-      <div class="grade-3">
-        <section class="painel-bloco">
-          <div class="bloco-titulo"><h2>Orçamentos</h2><a routerLink="/orcamentos">ver todos</a></div>
-          @for (o of d.orcamentos; track o.id) {
-            <div class="barra-orcamento">
-              <div class="linha-flex">
-                <span>{{ o.categoriaNome }}</span>
-                <span class="texto-suave">{{ o.gasto | currency }} de {{ o.valor | currency }}</span>
+        <div class="coluna-blocos">
+          <section class="painel-bloco">
+            <div class="bloco-titulo"><h2>Orçamentos</h2><a routerLink="/orcamentos">ver todos</a></div>
+            @for (o of d.orcamentos; track o.id) {
+              <div class="barra-orcamento">
+                <div class="linha-flex">
+                  <span>{{ o.categoriaNome }}</span>
+                  <span class="texto-suave">{{ o.gasto | currency }} de {{ o.valor | currency }}</span>
+                </div>
+                <div class="trilho"><div class="progresso" [class.estourado]="o.situacao === 'estourado'"
+                  [class.emergencia]="o.situacao === 'emergencia'"
+                  [class.atencao]="o.percentual >= 80 && o.percentual <= 100"
+                  [style.width.%]="o.percentual > 100 ? 100 : o.percentual"></div></div>
               </div>
-              <div class="trilho"><div class="progresso" [class.estourado]="o.situacao === 'estourado'"
-                [class.emergencia]="o.situacao === 'emergencia'"
-                [class.atencao]="o.percentual >= 80 && o.percentual <= 100"
-                [style.width.%]="o.percentual > 100 ? 100 : o.percentual"></div></div>
-            </div>
-          } @empty {
-            <p class="vazio">Nenhum orçamento para este mês. <a routerLink="/orcamentos">Criar</a></p>
-          }
-        </section>
-
-        <section class="painel-bloco">
-          <div class="bloco-titulo"><h2>Próximos vencimentos</h2><a routerLink="/contas-a-pagar">ver todos</a></div>
-          <ul class="lista-simples">
-            @for (c of d.proximasContas; track c.id) {
-              <li>
-                <span class="cresce">{{ c.descricao }}</span>
-                <span [class.negativo]="c.diasParaVencer < 0" class="texto-suave">
-                  {{ c.diasParaVencer < 0 ? 'vencida' : c.diasParaVencer === 0 ? 'hoje' : 'em ' + c.diasParaVencer + 'd' }}
-                </span>
-                <span class="valor">{{ c.valor | currency }}</span>
-              </li>
             } @empty {
-              <li class="vazio">Nada vencendo nos próximos {{ d.diasProximosVencimentos }} dias.</li>
+              <p class="vazio">Nenhum orçamento para este mês. <a routerLink="/orcamentos">Criar</a></p>
             }
-          </ul>
-        </section>
-
-        <section class="painel-bloco">
-          <div class="bloco-titulo"><h2>Últimas transações</h2><a routerLink="/transacoes">ver todas</a></div>
-          <ul class="lista-simples">
-            @for (t of d.ultimasTransacoes; track t.id) {
-              <li>
-                <span class="data-curta">{{ t.data | date: 'dd/MM' }}</span>
-                <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}</span>
-                <span class="valor" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</span>
-              </li>
-            } @empty {
-              <li class="vazio">Sem transações ainda.</li>
-            }
-          </ul>
-        </section>
+          </section>
+          <section class="painel-bloco">
+            <div class="bloco-titulo"><h2>Próximos vencimentos</h2><a routerLink="/contas-a-pagar">ver todos</a></div>
+            <ul class="lista-simples">
+              @for (c of d.proximasContas; track c.id) {
+                <li>
+                  <span class="cresce">{{ c.descricao }}</span>
+                  <span [class.negativo]="c.diasParaVencer < 0" class="texto-suave">
+                    {{ c.diasParaVencer < 0 ? 'vencida' : c.diasParaVencer === 0 ? 'hoje' : 'em ' + c.diasParaVencer + 'd' }}
+                  </span>
+                  <span class="valor">{{ c.valor | currency }}</span>
+                </li>
+              } @empty {
+                <li class="vazio">Nada vencendo nos próximos {{ d.diasProximosVencimentos }} dias.</li>
+              }
+            </ul>
+          </section>
+        </div>
       </div>
+
+      <app-mais-analises chave="painel" conteudo="receitas × despesas em 12 meses e últimas transações">
+        <ng-template>
+          <div class="grade-2">
+            <section class="painel-bloco">
+              <h2>Receitas × despesas (12 meses)</h2>
+              <app-grafico-explicado [resumo]="resumoEvolucao()"
+                comoLer="Verde: receitas; rosa: despesas. Quando a barra rosa passa da verde, o mês fechou no vermelho.">
+                <app-grafico [configuracao]="graficoEvolucao()" [altura]="300" />
+              </app-grafico-explicado>
+            </section>
+            <section class="painel-bloco">
+              <div class="bloco-titulo"><h2>Últimas transações</h2><a routerLink="/transacoes">ver todas</a></div>
+              <ul class="lista-simples">
+                @for (t of d.ultimasTransacoes; track t.id) {
+                  <li>
+                    <span class="data-curta">{{ t.data | date: 'dd/MM' }}</span>
+                    <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}</span>
+                    <span class="valor" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</span>
+                  </li>
+                } @empty {
+                  <li class="vazio">Sem transações ainda.</li>
+                }
+              </ul>
+            </section>
+          </div>
+        </ng-template>
+      </app-mais-analises>
     } @else if (!erro()) {
       <p class="texto-suave">Carregando…</p>
     }
