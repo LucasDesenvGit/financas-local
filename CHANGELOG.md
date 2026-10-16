@@ -21,6 +21,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Ícones do [Lucide](https://lucide.dev) (licença ISC, empacotados no build) no menu, nos botões de sincronizar, ocultar valores e tema, e nos cartões do painel.
 - Novo logo e ícone do site (cofrinho), com versões PNG para atalho no celular e na área de trabalho e `manifest.webmanifest`.
 
+- Script para parar tudo o que o projeto deixou rodando (serviço, API fora do serviço, `ng serve`) e conferir se o banco ficou livre: `parar-windows.cmd` no Windows, com dois cliques e sem bash, e `scripts/parar.sh` no Linux/macOS. `--desativar` tira o serviço da inicialização automática. Só procura processos com a pasta do projeto na linha de comando (não derruba outro app nem um `dotnet build`) e sai com código 1 se algo ficou rodando. Os testes de instalação no Windows e no Linux param e sobem o sistema de novo.
+
 ### Correções (layout)
 - Avisos de lista vazia (ex.: "Nenhum empréstimo ou financiamento encontrado.") ficavam fora do meio do cartão em telas largas: o texto era centralizado dentro de uma caixa de 78 caracteres encostada à esquerda. Agora a caixa também é centralizada, em todas as telas (#46).
 - Contraste da cor principal da paleta Lavanda (texto dos botões) passa de 3,5:1 para 4,7:1.

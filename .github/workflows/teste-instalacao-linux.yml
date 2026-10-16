@@ -92,6 +92,20 @@ jobs:
           env PATH="$PATH_LIMPO" bash scripts/4-backup.sh
           ls backups/FinancasLocal_*.db
 
+      - name: Parar (parar.sh --desativar)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/parar.sh --desativar
+          if systemctl --user is-active --quiet financaslocal.service; then echo "::error::servico continua ativo"; exit 1; fi
+          estado="$(systemctl --user is-enabled financaslocal.service || true)"
+          [[ "$estado" == disabled ]] || { echo "::error::servico continua habilitado ($estado)"; exit 1; }
+          if curl -k -fsS https://127.0.0.1:5443/api/auth/estado; then echo "::error::API continua respondendo"; exit 1; fi
+
+      - name: Subir de novo (3-publicar-atualizar.sh --pular-build)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/3-publicar-atualizar.sh --pular-build
+          systemctl --user is-enabled --quiet financaslocal.service || { echo "::error::servico nao voltou a ser habilitado"; exit 1; }
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+
       - name: Diagnostico
         if: failure()
         run: |
