@@ -28,6 +28,37 @@ export function paraData(iso: string): Date {
   return new Date(a, m - 1, d);
 }
 
+/** Data "yyyy-MM-dd" válida (formato e dia existente no calendário). */
+export function dataIsoValida(valor: string | null | undefined): valor is string {
+  if (!valor || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const d = paraData(valor);
+  return !isNaN(d.getTime()) && dataIso(d) === valor;
+}
+
+/** Contexto que uma tela de resumo leva para /transacoes (categoria + período + tipo). */
+export interface ContextoTransacoes {
+  /** Id da categoria; null = "Sem categoria". Omitido = todas. */
+  categoriaId?: number | null;
+  inicio?: string;
+  fim?: string;
+  tipo?: 'despesa' | 'receita' | 'transferencia';
+  contaId?: number;
+}
+
+/**
+ * Query params de /transacoes (UX-1). Use sempre esta função para montar o link, em vez de string na mão:
+ * `<a routerLink="/transacoes" [queryParams]="paramsTransacoes({ categoriaId, inicio, fim, tipo: 'despesa' })">`.
+ */
+export function paramsTransacoes(c: ContextoTransacoes): Record<string, string> {
+  const p: Record<string, string> = {};
+  if (c.categoriaId !== undefined) p['categoria'] = c.categoriaId === null ? 'sem' : String(c.categoriaId);
+  if (c.inicio) p['inicio'] = c.inicio;
+  if (c.fim) p['fim'] = c.fim;
+  if (c.tipo) p['tipo'] = c.tipo;
+  if (c.contaId) p['conta'] = String(c.contaId);
+  return p;
+}
+
 export const CORES_SUGERIDAS = [
   '#a7a3f5', '#92c8f0', '#8fd5b4', '#8fd8d8', '#b5cf9a', '#f2d98b',
   '#f8c09a', '#f4a89a', '#f5a3b0', '#f3b3d3', '#d4a5e8', '#a9b4c6'
