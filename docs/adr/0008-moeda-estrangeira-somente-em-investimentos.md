@@ -1,6 +1,6 @@
 # 0008. Moeda estrangeira só em investimentos; demais registros em reais
 
-- **Status:** Aceita
+- **Status:** Aceita — o item sobre a carteira manual foi substituído pela [0009](0009-ativos-no-exterior-na-carteira-manual.md)
 - **Data:** 2026-10-16
 - **Relacionadas:** [0007](0007-cotacao-de-cambio-pela-ptax-do-banco-central.md)
 
@@ -28,7 +28,7 @@ A única moeda respeitada pelo sistema é a de **`Investimento.Moeda`**:
 - A conversão para reais acontece **na leitura**, onde os valores são somados ou comparados, com a última cotação guardada pelo `CambioService` (`ConversorMoeda`, taxa de **compra** da PTAX — a que vale para avaliar um bem em moeda estrangeira). Nenhum valor convertido é gravado.
 - Investimento cuja moeda não tem cotação guardada **fica fora dos totais**, com aviso ao usuário — nunca é somado como se fosse real.
 - `Conta.Moeda` e `Emprestimo.Moeda` continuam sendo gravadas pela sincronização, mas **não são usadas**: contas, transações e empréstimos são tratados como reais.
-- A carteira manual (`Ativo`) continua só em reais.
+- ~~A carteira manual (`Ativo`) continua só em reais.~~ Substituído pela [0009](0009-ativos-no-exterior-na-carteira-manual.md): a carteira manual aceita ativos no exterior.
 
 ## Consequências
 
@@ -48,6 +48,6 @@ Abra uma ADR nova que substitua esta quando surgir:
 - uma conta em moeda estrangeira;
 - a necessidade do valor original de compras internacionais no cartão;
 - um empréstimo em moeda estrangeira;
-- ativos de bolsa estrangeira na carteira manual.
+- ~~ativos de bolsa estrangeira na carteira manual~~ (feito na [0009](0009-ativos-no-exterior-na-carteira-manual.md)).
 
 O ponto de partida já existe: `Conta.Moeda` e `Emprestimo.Moeda` estão gravadas, e as transações precisariam de colunas novas (valor original, moeda e taxa) pelo processo de [BANCO-DE-DADOS.md](../BANCO-DE-DADOS.md).

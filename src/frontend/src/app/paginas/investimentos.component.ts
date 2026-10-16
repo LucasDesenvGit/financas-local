@@ -5,7 +5,7 @@ import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  AtualizarAtivo, Carteira, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
+  AtualizarAtivo, Carteira, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
   SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
 } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
@@ -30,6 +30,8 @@ const COR_CARTEIRA = '#a7a3f5';
 const COR_SELIC = '#f8c09a';
 const COR_MERCADO = '#8fd5b4';
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+/** Símbolo curto para rótulos de campo (o pipe de moeda já formata os valores). */
+const SIMBOLOS_MOEDA: Record<string, string> = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF' };
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
 type Aba = 'resumo' | 'fii' | 'rv' | 'of';
@@ -173,13 +175,17 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <tr [class.encerrada]="p.quantidade === 0">
                       <td>
                         <strong>{{ p.ticker }}</strong> <span class="etiqueta etiqueta-suave">{{ nomeTipo(p.tipo) }}</span>
+                        @if (p.moeda !== 'BRL') { <span class="etiqueta etiqueta-suave" title="Ativo no exterior">{{ p.moeda }}</span> }
                         @if (p.nome) { <br><small class="texto-suave">{{ p.nome }}</small> }
                       </td>
                       <td class="direita">{{ qtd(p.quantidade) }}</td>
-                      <td class="direita">{{ p.precoMedio | currency }}</td>
+                      <td class="direita">{{ p.precoMedio | currency: p.moeda }}</td>
                       <td class="direita">
                         @if (p.precoAtual !== null) {
-                          {{ p.precoAtual | currency }}
+                          {{ p.precoAtual | currency: p.moeda }}
+                          @if (p.moeda !== 'BRL') {
+                            <br><small class="texto-suave">{{ p.precoAtualEmReais !== null ? (p.precoAtualEmReais | currency) : 'sem câmbio' }}</small>
+                          }
                           @if (p.precoManual) {
                             <br><small class="etiqueta etiqueta-alerta">manual</small>
                           } @else if (p.variacaoDia !== null) {
@@ -213,7 +219,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     </tr>
                   } @empty {
                     <tr><td colspan="10" class="vazio">
-                      Nenhum ativo lançado. Use <strong>+ Lançar compra/venda</strong> com o código da B3 (ex.: MXRF11) e o preço pago.
+                      Nenhum ativo lançado. Use <strong>+ Lançar compra/venda</strong> com o código da B3 (ex.: MXRF11) e o preço pago,
+                      ou escolha outra moeda para um ativo no exterior (ex.: AAPL em USD).
                     </td></tr>
                   }
                 </tbody>
@@ -221,7 +228,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             </div>
             <p class="texto-suave nota">
               Preço médio pelo método da Receita (taxas entram no custo). Proventos são estimados pela quantidade que você tinha na
-              data-com. "x Selic" compara o valor atual com quanto o mesmo dinheiro (com as mesmas vendas e proventos retirados)
+              data-com. Ativos no exterior: preço médio e cotação na moeda do ativo; custo, valores e resultados em reais, cada
+              operação pelo seu câmbio e o valor atual pelo câmbio de hoje (proventos do exterior aparecem brutos, antes do imposto
+              retido lá fora). "x Selic" compara o valor atual com quanto o mesmo dinheiro (com as mesmas vendas e proventos retirados)
               teria hoje na Selic.
             </p>
           </section>
@@ -296,33 +305,64 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       @if (formOp; as fo) {
         <form (ngSubmit)="salvarOperacao()" #f="ngForm" class="formulario">
           <div class="segmentado" role="group" aria-label="Tipo de operação">
-            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Compra" (click)="fo.tipo = TipoOperacao.Compra">Compra</button>
-            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Venda" (click)="fo.tipo = TipoOperacao.Venda">Venda</button>
+            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Compra" (click)="fo.tipo = TipoOperacao.Compra; aoMudarDataOuTipo()">Compra</button>
+            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Venda" (click)="fo.tipo = TipoOperacao.Venda; aoMudarDataOuTipo()">Venda</button>
           </div>
           <div class="grade-campos">
             @if (editandoOpId === null) {
-              <label>Código na B3
-                <input name="ticker" [(ngModel)]="fo.ticker" required maxlength="12" placeholder="MXRF11" autocomplete="off"
-                  class="maiusculas">
+              <label>Moeda
+                <select name="moeda" [(ngModel)]="fo.moeda" (ngModelChange)="aoMudarMoeda()" [disabled]="moedaTravada">
+                  <option value="BRL">BRL — Real (B3)</option>
+                  @for (m of moedas(); track m.codigo) { <option [value]="m.codigo">{{ m.codigo }} — {{ m.nome }} (exterior)</option> }
+                </select>
+                @if (moedaTravada) { <small class="texto-suave">A moeda de um ativo já lançado não muda.</small> }
+              </label>
+              <label>{{ fo.moeda === 'BRL' ? 'Código na B3' : 'Código (como no Yahoo Finance)' }}
+                <input name="ticker" [(ngModel)]="fo.ticker" required maxlength="12" autocomplete="off" class="maiusculas"
+                  [placeholder]="fo.moeda === 'BRL' ? 'MXRF11' : 'AAPL'">
               </label>
               <label>Tipo do ativo
                 <select name="tipoAtivo" [(ngModel)]="fo.tipoAtivo">
-                  <option [ngValue]="null">Detectar pelo código</option>
-                  @for (t of tiposAtivo; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
+                  <option [ngValue]="null">{{ fo.moeda === 'BRL' ? 'Detectar pelo código' : 'Ações (padrão)' }}</option>
+                  @for (t of tiposPara(fo.moeda); track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
                 </select>
               </label>
             } @else {
-              <p><span class="texto-suave">Ativo</span><br><strong>{{ fo.ticker }}</strong></p>
+              <p><span class="texto-suave">Ativo</span><br><strong>{{ fo.ticker }}</strong>
+                @if (fo.moeda !== 'BRL') { <span class="etiqueta etiqueta-suave">{{ fo.moeda }}</span> }</p>
             }
           </div>
           <div class="grade-campos">
-            <label>Data <input type="date" name="data" [(ngModel)]="fo.data" required [max]="hoje"></label>
+            <label>Data <input type="date" name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" required [max]="hoje"></label>
             <label>Quantidade <input type="number" name="qtd" [(ngModel)]="fo.quantidade" required min="0.000001" step="any"></label>
-            <label>Preço por cota (R$) <input type="number" name="preco" [(ngModel)]="fo.precoUnitario" required min="0" step="any"></label>
-            <label>Taxas/corretagem (R$) <input type="number" name="taxas" [(ngModel)]="fo.taxas" min="0" step="0.01"></label>
+            <label>Preço por cota ({{ simbolo(fo.moeda) }}) <input type="number" name="preco" [(ngModel)]="fo.precoUnitario" required min="0" step="any"></label>
+            <label>Taxas/corretagem ({{ simbolo(fo.moeda) }}) <input type="number" name="taxas" [(ngModel)]="fo.taxas" min="0" step="0.01"></label>
           </div>
+          @if (fo.moeda !== 'BRL') {
+            <div class="grade-campos">
+              <label>Câmbio (R$ por 1 {{ fo.moeda }})
+                <input type="number" name="cambio" [(ngModel)]="fo.cambio" (ngModelChange)="cambioEditado = true"
+                  required min="0.000001" step="any">
+              </label>
+              <p class="texto-suave nota-cambio">
+                @if (buscandoCambio()) {
+                  Buscando a PTAX do dia…
+                } @else if (ptaxSugerida; as s) {
+                  PTAX de {{ s.tipo }} de {{ s.data | date: 'dd/MM/yyyy' }}: {{ s.valor | number: '1.4-4' }}.
+                  @if (cambioEditado && fo.cambio !== s.valor) {
+                    <button type="button" class="link" (click)="usarPtax()">usar a PTAX</button>
+                  } @else {
+                    Troque pelo câmbio que a corretora cobrou, se for diferente.
+                  }
+                } @else {
+                  Sem PTAX para essa data: informe o câmbio que a corretora cobrou.
+                }
+              </p>
+            </div>
+          }
           <label>Observação <input name="obs" [(ngModel)]="fo.observacao" maxlength="300"></label>
-          <p class="texto-suave">Total da operação: <strong>{{ totalOperacao(fo) | currency }}</strong></p>
+          <p class="texto-suave">Total da operação: <strong>{{ totalOperacao(fo) | currency: fo.moeda }}</strong>
+            @if (fo.moeda !== 'BRL' && fo.cambio) { ≈ <strong>{{ totalOperacao(fo) * fo.cambio | currency }}</strong> }</p>
           <div class="rodape-form">
             @if (editandoOpId) { <button type="button" class="botao botao-perigo" (click)="excluirOperacao()">Excluir</button> }
             <span class="cresce"></span>
@@ -337,13 +377,13 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     <app-modal [aberto]="ativoAberto() !== null" [titulo]="'Operações · ' + (ativoAberto()?.ticker ?? '')" (fechar)="ativoAberto.set(null)">
       @if (ativoAberto(); as a) {
         <div class="resumo-ativo">
-          <div><span class="texto-suave">Preço médio</span><strong>{{ a.precoMedio | currency }}</strong></div>
+          <div><span class="texto-suave">Preço médio</span><strong>{{ a.precoMedio | currency: a.moeda }}</strong></div>
           <div><span class="texto-suave">Cotação atual</span>
-            <strong>{{ a.precoAtual !== null ? (a.precoAtual | currency) : '—' }}</strong></div>
+            <strong>{{ a.precoAtual !== null ? (a.precoAtual | currency: a.moeda) : '—' }}</strong></div>
           <div><span class="texto-suave">Cotas</span><strong>{{ qtd(a.quantidade) }}</strong></div>
           @if (a.ultimoProvento; as up) {
             <div><span class="texto-suave">Último provento (data-com {{ up.dataCom | date: 'dd/MM/yy' }})</span>
-              <strong>{{ up.valorPorCota | currency: 'BRL' : 'symbol' : '1.2-4' }} por cota</strong></div>
+              <strong>{{ up.valorPorCota | currency: a.moeda : 'symbol' : '1.2-4' }} por cota</strong></div>
           }
         </div>
         <div class="tabela-rolagem">
@@ -360,7 +400,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                   <td><span class="etiqueta" [class.etiqueta-sucesso]="o.tipo === TipoOperacao.Compra"
                     [class.etiqueta-alerta]="o.tipo === TipoOperacao.Venda">{{ o.tipo === TipoOperacao.Compra ? 'compra' : 'venda' }}</span></td>
                   <td class="direita">{{ qtd(o.quantidade) }}</td>
-                  <td class="direita">{{ o.precoUnitario | currency: 'BRL' : 'symbol' : '1.2-4' }}</td>
+                  <td class="direita">{{ o.precoUnitario | currency: o.moeda : 'symbol' : '1.2-4' }}
+                    @if (o.moeda !== 'BRL') { <br><small class="texto-suave">câmbio {{ o.cambio | number: '1.2-4' }}</small> }</td>
                   <td class="direita">{{ o.valorTotal | currency }}</td>
                   <td class="direita">
                     @if (o.variacaoPreco !== null) {
@@ -394,7 +435,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <label>Nome <input name="nome" [(ngModel)]="fa.nome" maxlength="150"></label>
           <label>Tipo
             <select name="tipo" [(ngModel)]="fa.tipo">
-              @for (t of tiposAtivo; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
+              @for (t of tiposPara(ativoEditado?.moeda); track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
             </select>
           </label>
           @if (fa.tipo === TipoAtivo.Fii) {
@@ -407,7 +448,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           }
           <label class="checkbox"><input type="checkbox" name="manual" [(ngModel)]="fa.precoManual"> Informar a cotação manualmente</label>
           @if (fa.precoManual) {
-            <label>Cotação atual (R$) <input type="number" name="preco" [(ngModel)]="fa.precoAtual" min="0.0001" step="any" required></label>
+            <label>Cotação atual ({{ simbolo(ativoEditado?.moeda) }}) <input type="number" name="preco" [(ngModel)]="fa.precoAtual" min="0.0001" step="any" required></label>
             <p class="texto-suave">Útil quando a fonte automática não encontra o ativo. Desmarque para voltar à cotação automática.</p>
           }
           <div class="rodape-form">
@@ -518,6 +559,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     .barra-importacao { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     .tabela-importacao td { vertical-align: top; }
     .campo-curto { width: 96px; padding: 4px 8px; }
+    .nota-cambio { align-self: end; margin: 0 0 6px; font-size: 0.85rem; }
     :host ::ng-deep .modal:has(.tabela-importacao) { width: min(1100px, 96vw); }
   `
 })
@@ -552,6 +594,13 @@ export class InvestimentosComponent implements OnInit {
 
   formOp: SalvarOperacao | null = null;
   editandoOpId: number | null = null;
+  readonly moedas = signal<MoedaCambio[]>([]);
+  readonly buscandoCambio = signal(false);
+  /** Ativo já lançado: a moeda vem dele e não pode ser trocada. */
+  moedaTravada = false;
+  /** O usuário digitou o câmbio: mudar data/tipo não sobrescreve. */
+  cambioEditado = false;
+  ptaxSugerida: { data: string; valor: number; tipo: 'compra' | 'venda' } | null = null;
   formAtivo: AtualizarAtivo | null = null;
   ativoEditado: PosicaoAtivo | null = null;
   tokenBrapi = '';
@@ -681,31 +730,100 @@ export class InvestimentosComponent implements OnInit {
   /* ------------------------------ operações ------------------------------ */
 
   novaOperacao(ticker = ''): void {
+    const existente = ticker ? this.dados()?.posicoes.find((p) => p.ticker === ticker) : undefined;
     this.editandoOpId = null;
+    this.moedaTravada = !!existente;
+    this.cambioEditado = false;
+    this.ptaxSugerida = null;
     this.formOp = {
       ticker, tipoAtivo: null, tipo: TipoOperacao.Compra, data: this.hoje, quantidade: null, precoUnitario: null,
-      taxas: 0, observacao: null
+      taxas: 0, observacao: null, moeda: existente?.moeda ?? 'BRL', cambio: null
     };
+    this.carregarMoedas();
+    this.sugerirCambio();
   }
 
   editarOperacao(o: OperacaoAtivo): void {
     this.editandoOpId = o.id;
+    this.moedaTravada = true;
+    // Mantém o câmbio gravado; a PTAX aparece só como referência.
+    this.cambioEditado = true;
+    this.ptaxSugerida = null;
     this.formOp = {
       ticker: o.ticker, tipoAtivo: null, tipo: o.tipo, data: o.data, quantidade: o.quantidade,
-      precoUnitario: o.precoUnitario, taxas: o.taxas, observacao: o.observacao
+      precoUnitario: o.precoUnitario, taxas: o.taxas, observacao: o.observacao, moeda: o.moeda,
+      cambio: o.moeda === 'BRL' ? null : o.cambio
     };
+    this.sugerirCambio();
   }
 
+  aoMudarMoeda(): void {
+    if (!this.formOp) return;
+    this.formOp.tipoAtivo = null;
+    this.formOp.cambio = null;
+    this.cambioEditado = false;
+    this.sugerirCambio();
+  }
+
+  aoMudarDataOuTipo(): void {
+    this.sugerirCambio();
+  }
+
+  usarPtax(): void {
+    if (!this.formOp || !this.ptaxSugerida) return;
+    this.formOp.cambio = this.ptaxSugerida.valor;
+    this.cambioEditado = false;
+  }
+
+  /** Busca a PTAX da data (venda na compra, compra na venda) e preenche o câmbio, se o usuário não o digitou. */
+  private sugerirCambio(): void {
+    const f = this.formOp;
+    this.ptaxSugerida = null;
+    if (!f || f.moeda === 'BRL' || !f.data) return;
+    const { moeda, data, tipo } = f;
+    this.buscandoCambio.set(true);
+    this.api.cotacaoCambio(moeda, data).subscribe({
+      next: (c) => {
+        this.buscandoCambio.set(false);
+        // Ignora respostas atrasadas de uma escolha anterior.
+        if (this.formOp !== f || f.moeda !== moeda || f.data !== data || f.tipo !== tipo) return;
+        const compra = tipo === TipoOperacao.Compra;
+        this.ptaxSugerida = { data: c.data, valor: compra ? c.venda : c.compra, tipo: compra ? 'venda' : 'compra' };
+        if (!this.cambioEditado) f.cambio = this.ptaxSugerida.valor;
+      },
+      error: () => this.buscandoCambio.set(false)
+    });
+  }
+
+  private carregarMoedas(): void {
+    if (this.moedas().length > 0) return;
+    this.api.moedasCambio().subscribe({ next: (m) => this.moedas.set(m), error: () => this.moedas.set([]) });
+  }
+
+  /** Total na moeda do ativo. */
   totalOperacao(f: SalvarOperacao): number {
     const bruto = (f.quantidade ?? 0) * (f.precoUnitario ?? 0);
     return f.tipo === TipoOperacao.Compra ? bruto + (f.taxas ?? 0) : bruto - (f.taxas ?? 0);
+  }
+
+  simbolo(moeda: string | null | undefined): string {
+    const m = moeda ?? 'BRL';
+    return SIMBOLOS_MOEDA[m] ?? m;
+  }
+
+  /** FIIs e BDRs são da B3: ativo no exterior só pode ser ação, ETF ou outro. */
+  tiposPara(moeda: string | null | undefined): TipoAtivo[] {
+    return !moeda || moeda === 'BRL'
+      ? this.tiposAtivo
+      : this.tiposAtivo.filter((t) => t !== TipoAtivo.Fii && t !== TipoAtivo.Bdr);
   }
 
   salvarOperacao(): void {
     const f = this.formOp;
     if (!f) return;
     const dto: SalvarOperacao = {
-      ...f, ticker: f.ticker.trim().toUpperCase(), taxas: f.taxas ?? 0, observacao: f.observacao?.trim() || null
+      ...f, ticker: f.ticker.trim().toUpperCase(), taxas: f.taxas ?? 0, observacao: f.observacao?.trim() || null,
+      cambio: f.moeda === 'BRL' ? null : f.cambio
     };
     this.salvando.set(true);
     const id = this.editandoOpId;

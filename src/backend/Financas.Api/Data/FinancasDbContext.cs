@@ -254,6 +254,7 @@ public class FinancasDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Ticker).HasMaxLength(12).IsRequired();
             e.Property(x => x.Nome).HasMaxLength(150);
+            e.Property(x => x.Moeda).HasMaxLength(3).IsRequired();
             e.Property(x => x.PrecoAtual).HasPrecision(18, 4);
             e.Property(x => x.PrecoAnterior).HasPrecision(18, 4);
             e.Property(x => x.FonteCotacao).HasMaxLength(20);
@@ -268,6 +269,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Quantidade).HasPrecision(18, 6);
             e.Property(x => x.PrecoUnitario).HasPrecision(18, 6);
             e.Property(x => x.Taxas).HasPrecision(18, 2);
+            e.Property(x => x.Cambio).HasPrecision(18, 8);
             e.Property(x => x.Observacao).HasMaxLength(300);
             e.Property(x => x.PluggyTransacaoId).HasMaxLength(100);
             e.HasIndex(x => x.PluggyTransacaoId).IsUnique().HasFilter("PluggyTransacaoId IS NOT NULL");

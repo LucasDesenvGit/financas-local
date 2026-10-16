@@ -40,6 +40,12 @@ etapa "Criando a estrutura em $banco (01-estrutura.sql)"
 sqlite3 "$banco" < "$pasta_banco_sql/01-estrutura.sql"
 ok 'estrutura criada/atualizada'
 
+etapa 'Adicionando colunas novas em tabelas existentes'
+# Bancos criados antes de cada coluna existir; em banco novo ela ja nasce no CREATE TABLE.
+adicionar_coluna_se_ausente "Ativo" "Moeda" "TEXT NOT NULL DEFAULT 'BRL'"
+adicionar_coluna_se_ausente "OperacaoAtivo" "Cambio" "TEXT NOT NULL DEFAULT '1'"
+ok 'colunas conferidas'
+
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'
 [[ -f "$pasta_banco_sql/02-dados-iniciais.sql" ]] || erro_sai "Arquivo nao encontrado: $pasta_banco_sql/02-dados-iniciais.sql"
 sqlite3 "$banco" < "$pasta_banco_sql/02-dados-iniciais.sql"

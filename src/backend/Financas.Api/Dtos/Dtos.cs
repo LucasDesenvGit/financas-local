@@ -291,9 +291,13 @@ public record SelicResumoDto(decimal? MetaAnual, decimal? Acumulado12Meses, deci
 
 public record UltimoProventoDto(DateOnly DataCom, decimal ValorPorCota);
 
-public record PosicaoAtivoDto(int Id, string Ticker, string? Nome, TipoAtivo Tipo,
+/// <summary>
+/// Posição de um ativo da carteira manual. <c>PrecoMedio</c>, <c>PrecoAtual</c>, <c>PrecoAnterior</c> e o último provento
+/// estão na moeda do ativo; custo, valores e resultados estão em reais.
+/// </summary>
+public record PosicaoAtivoDto(int Id, string Ticker, string? Nome, TipoAtivo Tipo, string Moeda,
     decimal Quantidade, decimal PrecoMedio, decimal Custo,
-    decimal? PrecoAtual, decimal? PrecoAnterior, decimal? VariacaoDia,
+    decimal? PrecoAtual, decimal? PrecoAtualEmReais, decimal? PrecoAnterior, decimal? VariacaoDia,
     decimal ValorMercado, decimal Valorizacao, decimal? ValorizacaoPercentual,
     decimal LucroRealizado, decimal ProventosRecebidos, decimal Proventos12Meses, decimal? DividendYield12Meses,
     decimal ResultadoTotal, decimal? ResultadoTotalPercentual,
@@ -326,20 +330,28 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
     DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
     List<string> MoedasSemCotacao);
 
+/// <summary>Preço, taxas e preço atual na moeda do ativo; <c>ValorTotal</c>, <c>ValorAtual</c> e Selic em reais.</summary>
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,
-    decimal Quantidade, decimal PrecoUnitario, decimal Taxas, decimal ValorTotal, string? Observacao,
+    decimal Quantidade, decimal PrecoUnitario, decimal Taxas, string Moeda, decimal Cambio, decimal ValorTotal,
+    string? Observacao,
     decimal? PrecoAtual, decimal? VariacaoPreco, decimal? ValorAtual, decimal ValorSeFosseSelic,
     OrigemOperacao Origem);
 
+/// <summary>
+/// Preço e taxas na moeda do ativo. <c>Moeda</c> só vale no primeiro lançamento do ativo (padrão BRL = B3).
+/// <c>Cambio</c> = reais por 1 unidade da moeda na operação; ignorado em BRL e, se vier vazio, usa a PTAX da data.
+/// </summary>
 public record SalvarOperacaoDto(
-    [Required, StringLength(12, MinimumLength = 5)] string Ticker,
+    [Required, StringLength(12, MinimumLength = 1)] string Ticker,
     TipoAtivo? TipoAtivo,
     TipoOperacao Tipo,
     DateOnly Data,
     [Range(0.000001, 1000000000.0)] decimal Quantidade,
     [Range(0.0, 100000000.0)] decimal PrecoUnitario,
     [Range(0.0, 10000000.0)] decimal Taxas,
-    [StringLength(300)] string? Observacao);
+    [StringLength(300)] string? Observacao,
+    [StringLength(3)] string? Moeda = null,
+    [Range(0.000001, 100000.0)] decimal? Cambio = null);
 
 public record AtualizarAtivoDto(
     [StringLength(150)] string? Nome,

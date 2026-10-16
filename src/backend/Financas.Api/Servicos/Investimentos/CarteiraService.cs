@@ -38,13 +38,19 @@ public class CarteiraService
 
     /* ============================== Cálculo de posição ============================== */
 
-    /// <summary>Resultado do processamento das operações de um ativo (método do preço médio).</summary>
+    /// <summary>
+    /// Resultado do processamento das operações de um ativo (método do preço médio). <see cref="Custo"/>,
+    /// <see cref="PrecoMedio"/> e <see cref="LucroRealizado"/> estão em reais (cada operação pelo seu câmbio);
+    /// <see cref="CustoNaMoeda"/> e <see cref="PrecoMedioNaMoeda"/> estão na moeda do ativo.
+    /// </summary>
     public sealed class Posicao
     {
         public decimal Quantidade { get; set; }
         public decimal Custo { get; set; }
+        public decimal CustoNaMoeda { get; set; }
         public decimal LucroRealizado { get; set; }
         public decimal PrecoMedio => Quantidade > 0 ? Custo / Quantidade : 0m;
+        public decimal PrecoMedioNaMoeda => Quantidade > 0 ? CustoNaMoeda / Quantidade : 0m;
     }
 
     public static Posicao Calcular(IEnumerable<OperacaoAtivo> operacoes, DateOnly? ate = null)
@@ -55,27 +61,37 @@ public class CarteiraService
             if (ate is DateOnly limite && op.Data > limite) break;
             if (op.Tipo == TipoOperacao.Compra)
             {
-                p.Custo += op.Quantidade * op.PrecoUnitario + op.Taxas;
+                var naMoeda = op.Quantidade * op.PrecoUnitario + op.Taxas;
+                p.Custo += naMoeda * op.Cambio;
+                p.CustoNaMoeda += naMoeda;
                 p.Quantidade += op.Quantidade;
             }
             else if (p.Quantidade > 0)
             {
                 var qtd = Math.Min(op.Quantidade, p.Quantidade);
                 var medio = p.Custo / p.Quantidade;
-                var liquido = qtd * op.PrecoUnitario - op.Taxas;
+                var medioNaMoeda = p.CustoNaMoeda / p.Quantidade;
+                // Venda em reais pelo câmbio do dia da venda: o lucro inclui a variação da moeda.
+                var liquido = (qtd * op.PrecoUnitario - op.Taxas) * op.Cambio;
                 p.LucroRealizado += liquido - medio * qtd;
                 p.Custo -= medio * qtd;
+                p.CustoNaMoeda -= medioNaMoeda * qtd;
                 p.Quantidade -= qtd;
-                if (p.Quantidade <= 0.0000005m) { p.Quantidade = 0; p.Custo = 0; }
+                if (p.Quantidade <= 0.0000005m) { p.Quantidade = 0; p.Custo = 0; p.CustoNaMoeda = 0; }
             }
         }
         return p;
     }
 
+    /// <summary>Valor da operação em reais, pelo câmbio da própria operação.</summary>
     private static decimal ValorOperacao(OperacaoAtivo op)
-        => op.Tipo == TipoOperacao.Compra
+        => (op.Tipo == TipoOperacao.Compra
             ? op.Quantidade * op.PrecoUnitario + op.Taxas
-            : op.Quantidade * op.PrecoUnitario - op.Taxas;
+            : op.Quantidade * op.PrecoUnitario - op.Taxas) * op.Cambio;
+
+    /// <summary>Cotação atual do ativo em reais (null sem cotação do ativo ou sem cotação da moeda).</summary>
+    private static decimal? PrecoAtualEmReais(Ativo a, ConversorMoeda conversor)
+        => a.PrecoAtual is decimal preco && conversor.Taxa(a.Moeda) is decimal taxa ? preco * taxa : null;
 
     /// <summary>Quantidade em carteira ao fim de cada data-com (para calcular proventos).</summary>
     private static decimal QuantidadeEm(List<OperacaoAtivo> operacoes, DateOnly data)
@@ -92,6 +108,7 @@ public class CarteiraService
     public async Task<ComposicaoInvestimentos> ComposicaoAsync(CancellationToken ct)
     {
         var ativos = await _db.Ativos.AsNoTracking().Include(a => a.Operacoes).ToListAsync(ct);
+        var conversor = await _cambio.ObterConversorAsync(ct);
         decimal carteira = 0;
         var tickersEmCarteira = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var a in ativos)
@@ -99,12 +116,12 @@ public class CarteiraService
             var p = Calcular(a.Operacoes);
             if (p.Quantidade <= 0) continue;
             tickersEmCarteira.Add(a.Ticker);
-            carteira += a.PrecoAtual is decimal preco ? p.Quantidade * preco : p.Custo;
+            // Sem cotação (do ativo ou da moeda), vale o custo em reais.
+            carteira += PrecoAtualEmReais(a, conversor) is decimal preco ? p.Quantidade * preco : p.Custo;
         }
 
         var openFinance = await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa)
             .Select(i => new { i.Saldo, i.Moeda, i.Codigo, i.Tipo }).ToListAsync(ct);
-        var conversor = await _cambio.ObterConversorAsync(ct);
         decimal ofRendaVariavel = 0, ofDemais = 0;
         foreach (var i in openFinance)
         {
@@ -123,7 +140,8 @@ public class CarteiraService
         => tipoPluggy is not null && TiposRendaVariavelPluggy.Contains(tipoPluggy.ToUpperInvariant());
 
     private static bool CodigoNaCarteira(string? codigo, HashSet<string> tickers)
-        => CotacaoService.NormalizarTicker(codigo) is string t && tickers.Contains(t);
+        => (CotacaoService.NormalizarTicker(codigo) ?? CotacaoService.NormalizarTickerExterior(codigo)) is string t
+           && tickers.Contains(t);
 
     /* ============================== Visão completa ============================== */
 
@@ -153,6 +171,9 @@ public class CarteiraService
             .Include(a => a.Proventos)
             .OrderBy(a => a.Ticker)
             .ToListAsync(ct);
+        // Histórico de câmbio desde a primeira operação, para converter proventos pela data-com.
+        var primeiraOperacao = ativos.SelectMany(a => a.Operacoes).Select(o => (DateOnly?)o.Data).Min();
+        var conversor = await _cambio.ObterConversorAsync(ct, primeiraOperacao);
 
         var posicoes = new List<PosicaoAtivoDto>();
         var fluxos = new List<(DateOnly Data, decimal Valor)>(); // + aplicação, − resgate (vendas e proventos)
@@ -175,15 +196,16 @@ public class CarteiraService
             {
                 var qtd = QuantidadeEm(operacoes, pr.DataCom);
                 if (qtd <= 0) continue;
-                var valor = qtd * pr.ValorPorCota;
+                if (conversor.ParaReais(qtd * pr.ValorPorCota, a.Moeda, pr.DataCom) is not decimal valor) continue;
                 proventosRecebidos += valor;
                 if (pr.DataCom > ha12Meses) proventos12 += valor;
                 fluxosAtivo.Add((pr.DataCom, -valor));
             }
             fluxos.AddRange(fluxosAtivo);
 
-            var semCotacao = a.PrecoAtual is null;
-            var valorMercado = p.Quantidade * (a.PrecoAtual ?? p.PrecoMedio);
+            var precoEmReais = PrecoAtualEmReais(a, conversor);
+            var semCotacao = precoEmReais is null;
+            var valorMercado = p.Quantidade * (precoEmReais ?? p.PrecoMedio);
             var valorizacao = valorMercado - p.Custo;
             var compras = operacoes.Where(o => o.Tipo == TipoOperacao.Compra).Sum(o => ValorOperacao(o));
             var resultado = valorizacao + p.LucroRealizado + proventosRecebidos;
@@ -202,9 +224,9 @@ public class CarteiraService
             }
 
             posicoes.Add(new PosicaoAtivoDto(
-                a.Id, a.Ticker, a.Nome, a.Tipo,
-                p.Quantidade, Math.Round(p.PrecoMedio, 4), Math.Round(p.Custo, 2),
-                a.PrecoAtual, a.PrecoAnterior,
+                a.Id, a.Ticker, a.Nome, a.Tipo, a.Moeda,
+                p.Quantidade, Math.Round(p.PrecoMedioNaMoeda, 4), Math.Round(p.Custo, 2),
+                a.PrecoAtual, precoEmReais is decimal pr2 ? Math.Round(pr2, 4) : null, a.PrecoAnterior,
                 a.PrecoAtual is decimal pa && a.PrecoAnterior is decimal pant && pant > 0
                     ? Math.Round((pa / pant - 1) * 100, 2) : null,
                 Math.Round(valorMercado, 2), Math.Round(valorizacao, 2),
@@ -267,7 +289,6 @@ public class CarteiraService
                 i.DataVencimento, i.TaxaAnual, i.AtualizadoEm, Instituicao = i.ConexaoBancaria!.NomeInstituicao
             })
             .ToListAsync(ct);
-        var conversor = await _cambio.ObterConversorAsync(ct);
         var openFinance = new List<InvestimentoComparadoDto>();
         foreach (var i in investimentos)
         {
@@ -332,16 +353,18 @@ public class CarteiraService
             .FirstOrDefaultAsync(a => a.Id == ativoId, ct);
         if (ativo is null) return null;
         var hoje = Relogio.Hoje;
+        var precoEmReais = PrecoAtualEmReais(ativo, await _cambio.ObterConversorAsync(ct));
         return ativo.Operacoes.OrderByDescending(o => o.Data).ThenByDescending(o => o.Id)
             .Select(o =>
             {
                 var valor = ValorOperacao(o);
                 var compra = o.Tipo == TipoOperacao.Compra;
+                // Variação do preço na moeda do ativo; o "vale hoje" é em reais, com o câmbio atual.
                 decimal? variacao = compra && ativo.PrecoAtual is decimal pa && o.PrecoUnitario > 0
                     ? Math.Round((pa / o.PrecoUnitario - 1) * 100, 2) : null;
-                decimal? valorAtual = compra && ativo.PrecoAtual is decimal pa2 ? Math.Round(o.Quantidade * pa2, 2) : null;
+                decimal? valorAtual = compra && precoEmReais is decimal pr ? Math.Round(o.Quantidade * pr, 2) : null;
                 return new OperacaoAtivoDto(o.Id, o.AtivoId, ativo.Ticker, o.Tipo, o.Data, o.Quantidade, o.PrecoUnitario,
-                    o.Taxas, Math.Round(valor, 2), o.Observacao, ativo.PrecoAtual, variacao, valorAtual,
+                    o.Taxas, ativo.Moeda, o.Cambio, Math.Round(valor, 2), o.Observacao, ativo.PrecoAtual, variacao, valorAtual,
                     Math.Round(valor * selic.Fator(o.Data, hoje), 2), o.Origem);
             })
             .ToList();

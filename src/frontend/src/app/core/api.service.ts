@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   OpcaoCategoria, SugestaoCategoria,
-  AtualizarAtivo, Carteira, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
+  AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
   SugestaoExtrato,
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
@@ -130,6 +130,11 @@ export class ApiService {
   emprestimos(): Observable<PainelEmprestimos> { return this.http.get<PainelEmprestimos>(`${this.base}/emprestimos`); }
 
   // Carteira (renda variável + comparação com a Selic)
+  moedasCambio(): Observable<MoedaCambio[]> { return this.http.get<MoedaCambio[]>(`${this.base}/cambio/moedas`); }
+  cotacaoCambio(moeda: string, data: string): Observable<CotacaoMoeda> {
+    return this.http.get<CotacaoMoeda>(`${this.base}/cambio/cotacao`, { params: this.params({ moeda, data }) });
+  }
+
   carteira(): Observable<Carteira> { return this.http.get<Carteira>(`${this.base}/carteira`); }
   atualizarCotacoes(ativoId?: number): Observable<ResultadoCotacoes> {
     return this.http.post<ResultadoCotacoes>(`${this.base}/carteira/atualizar-cotacoes`, {}, { params: this.params({ ativoId }) });

@@ -134,9 +134,50 @@ public partial class CambioService
         return new CotacoesAtuaisDto(await _config.ObterDataAsync(ChaveUltimaAtualizacao, ct), cotacoes);
     }
 
-    /// <summary>Conversor para reais com a última cotação guardada de cada moeda (não consulta a internet).</summary>
-    public async Task<ConversorMoeda> ObterConversorAsync(CancellationToken ct)
-        => new(await UltimasCotacoesAsync(ct));
+    /// <summary>
+    /// Conversor para reais com a última cotação guardada de cada moeda (não consulta a internet). Com
+    /// <paramref name="historicoDesde"/>, carrega também as cotações diárias desde a data, para converter pela data.
+    /// </summary>
+    public async Task<ConversorMoeda> ObterConversorAsync(CancellationToken ct, DateOnly? historicoDesde = null)
+    {
+        var ultimas = await UltimasCotacoesAsync(ct);
+        if (historicoDesde is not DateOnly desde) return new ConversorMoeda(ultimas);
+        var inicio = desde.AddDays(-DiasRetroativos);
+        var historico = await _db.CotacoesMoeda.AsNoTracking().Where(c => c.Data >= inicio).ToListAsync(ct);
+        return new ConversorMoeda(ultimas, historico);
+    }
+
+    /// <summary>
+    /// Garante no banco as cotações diárias da moeda desde a data (para converter operações e proventos antigos).
+    /// Só consulta a API se faltar o começo do período; falha de rede não interrompe quem chamou.
+    /// </summary>
+    public async Task GarantirHistoricoAsync(string moeda, DateOnly desde, CancellationToken ct)
+    {
+        if (moeda == MoedaBase) return;
+        var hoje = Relogio.Hoje;
+        if (desde > hoje) return;
+        var minimo = await _db.CotacoesMoeda.Where(c => c.Moeda == moeda).MinAsync(c => (DateOnly?)c.Data, ct);
+        // Já cobre o começo (com folga de um fim de semana prolongado): nada a baixar.
+        if (minimo is DateOnly m && m <= desde.AddDays(DiasRetroativos)) return;
+        var ate = minimo is DateOnly m2 ? m2.AddDays(-1) : hoje;
+
+        try
+        {
+            // Um ano por consulta, para não depender do limite de tamanho da API.
+            for (var parteInicio = desde.AddDays(-DiasRetroativos); parteInicio <= ate; parteInicio = parteInicio.AddYears(1))
+            {
+                var parteFim = parteInicio.AddYears(1).AddDays(-1);
+                if (parteFim > ate) parteFim = ate;
+                await BaixarAsync(moeda, parteInicio, parteFim, ct);
+                await _db.SaveChangesAsync(ct);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Não foi possível baixar o histórico de {Moeda} no Banco Central.", moeda);
+            _db.ChangeTracker.Clear();
+        }
+    }
 
     private async Task<List<CotacaoMoeda>> UltimasCotacoesAsync(CancellationToken ct)
     {

@@ -271,10 +271,11 @@ export interface SelicResumo {
   metaAnual: number | null; acumulado12Meses: number | null; acumuladoAno: number | null; atualizadaAte: string | null;
 }
 
+/** Preço médio, preço atual/anterior e último provento na moeda do ativo; custo, valores e resultados em reais. */
 export interface PosicaoAtivo {
-  id: number; ticker: string; nome: string | null; tipo: TipoAtivo;
+  id: number; ticker: string; nome: string | null; tipo: TipoAtivo; moeda: string;
   quantidade: number; precoMedio: number; custo: number;
-  precoAtual: number | null; precoAnterior: number | null; variacaoDia: number | null;
+  precoAtual: number | null; precoAtualEmReais: number | null; precoAnterior: number | null; variacaoDia: number | null;
   valorMercado: number; valorizacao: number; valorizacaoPercentual: number | null;
   lucroRealizado: number; proventosRecebidos: number; proventos12Meses: number; dividendYield12Meses: number | null;
   resultadoTotal: number; resultadoTotalPercentual: number | null;
@@ -313,16 +314,24 @@ export interface ResultadoImportacaoCarteira {
   erros: string[]; mensagem: string | null;
 }
 
+/** Preço, taxas e preço atual na moeda do ativo; valorTotal, valorAtual e Selic em reais. */
 export interface OperacaoAtivo {
   id: number; ativoId: number; ticker: string; tipo: TipoOperacao; data: string; quantidade: number;
-  precoUnitario: number; taxas: number; valorTotal: number; observacao: string | null;
+  precoUnitario: number; taxas: number; moeda: string; cambio: number; valorTotal: number; observacao: string | null;
   precoAtual: number | null; variacaoPreco: number | null; valorAtual: number | null; valorSeFosseSelic: number;
   origem: OrigemOperacao;
 }
 
+/** Preço e taxas na moeda do ativo; cambio = R$ por 1 unidade da moeda (ignorado em BRL). */
 export interface SalvarOperacao {
   ticker: string; tipoAtivo: TipoAtivo | null; tipo: TipoOperacao; data: string; quantidade: number | null;
-  precoUnitario: number | null; taxas: number; observacao: string | null;
+  precoUnitario: number | null; taxas: number; observacao: string | null; moeda: string; cambio: number | null;
+}
+
+/* ----------------------------- Câmbio ----------------------------- */
+export interface MoedaCambio { codigo: string; nome: string; }
+export interface CotacaoMoeda {
+  moeda: string; dataSolicitada: string; data: string; compra: number; venda: number; fonte: string;
 }
 
 export interface AtualizarAtivo {
