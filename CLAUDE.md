@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: API em C#/.NET 10 hospedada via Kestrel (sem IIS — `UseWindowsService`/`UseSystemd` em `Program.cs`), front-end Angular 20, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas.
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: API em C#/.NET 10 hospedada via Kestrel (sem IIS — `UseWindowsService`/`UseSystemd` em `Program.cs`), front-end Angular 20, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
 
 ## Comandos
 
@@ -18,7 +18,7 @@ cd src/frontend && npm start                    # front-end em dev (http://local
 python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura.sql é idempotente
 
 # Banco (sem migrations)
-scripts/2-criar-banco.sh                        # roda os scripts de banco/ em ordem + ALTER TABLE pendentes (PRAGMA table_info)
+scripts/2-criar-banco.sh                        # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
 
 # Publicação
 scripts/3-publicar.sh                           # compila front+API, publica, cuida de certificado e do serviço do sistema
@@ -53,10 +53,22 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - Componentes standalone, signals e control flow (`@if`/`@for`).
 
 **Banco** (`banco/`) — **sem EF Core Migrations**, de propósito, em SQLite:
-- `01-estrutura.sql` — tabelas/índices/restrições com `CREATE TABLE/INDEX IF NOT EXISTS` (idempotência nativa do SQLite), organizado em blocos sequenciais por versão (`v4`, `v5`, ...) — verificado pelo CI via `scripts/ci/verificar-sql.py` e aplicado de fato a um banco SQLite descartável no CI. Nunca apagar/renomear coluna em uso sem bloco de transição.
+- `01-estrutura.sql` — tabelas/índices/restrições com `CREATE TABLE/INDEX IF NOT EXISTS` (idempotência nativa do SQLite); baseline limpa da troca SQL Server → SQLite, com tabelas novas acrescentadas no fim — verificado pelo CI via `scripts/ci/verificar-sql.py` e aplicado de fato a um banco SQLite descartável no CI. Nunca apagar/renomear coluna em uso sem bloco de transição.
 - `02-dados-iniciais.sql` — categorias/config/regras padrão.
-- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica em `scripts/2-criar-banco.sh` (checagem via `PRAGMA table_info`), não no SQL.
+- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/comum.sh`, checa via `PRAGMA table_info`) em `scripts/2-criar-banco.sh`, não no SQL. Hoje nenhuma chamada existe ainda — a primeira coluna nova inaugura o uso.
 - Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+
+## Decisões de arquitetura (ADRs) — obrigatório
+
+As decisões ficam em `docs/adr/` (índice, critérios e ciclo de vida em [docs/adr/README.md](docs/adr/README.md); modelo em `docs/adr/0000-modelo.md`). **Antes de implementar** qualquer mudança que adicione ou troque dependência/integração externa (inclusive novo domínio de saída de rede), mude o banco além de uma tabela/coluna rotineira, mexa em segurança, infraestrutura/publicação/CI, ou crie/quebre um padrão de código do projeto:
+
+1. Leia o índice de `docs/adr/README.md` e as ADRs do assunto. Se a mudança contraria uma ADR **Aceita**, avise o usuário antes de seguir — não contorne a decisão em silêncio.
+2. **Já existe ADR do assunto:** atualize-a se a mudança só detalha ou ajusta a mesma decisão (consequências, passos práticos). Se a decisão em si mudou, crie uma ADR nova e marque a antiga como `Substituída por NNNN` — nunca apague ADR.
+3. **Não existe:** crie `docs/adr/NNNN-titulo-em-kebab-case.md` a partir do modelo, com o próximo número livre, alternativas consideradas e consequências negativas; marque como *inferido* o que não foi confirmado pelo usuário.
+4. Atualize o índice em `docs/adr/README.md` e, se mudar o estado atual descrito, `docs/ARQUITETURA.md`.
+5. A ADR vai no mesmo commit/PR da mudança. Ao final, diga ao usuário qual ADR foi criada ou atualizada (ou por que a mudança não precisou de uma).
+
+Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoint que só segue padrões já registrados.
 
 ## Convenções de código
 
