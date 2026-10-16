@@ -102,7 +102,8 @@ import { Icones } from '../compartilhado/icones';
         <section class="painel-bloco">
           <h2>Gastos por categoria</h2>
           @if (d.gastosPorCategoria.length) {
-            <app-grafico [configuracao]="graficoCategorias()" [altura]="240" />
+            <app-grafico [configuracao]="graficoCategorias()" [altura]="240" dicaClique="Clique para ver as transações"
+              (itemClicado)="abrirCategoria($event)" />
             <ul class="lista-legenda">
               @for (g of d.gastosPorCategoria.slice(0, 8); track g.nome) {
                 <li>
@@ -201,6 +202,12 @@ export class PainelComponent implements OnInit {
   linkCategoria(g: ValorCategoria): Record<string, string> {
     const { ano, mes } = this.periodo();
     return paramsTransacoes({ categoriaId: g.categoriaId, inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' });
+  }
+
+  /** UX-4: clique na fatia da rosca (mesmos itens do gráfico, na mesma ordem). A legenda é o caminho por teclado/toque. */
+  abrirCategoria(indice: number): void {
+    const item = (this.dados()?.gastosPorCategoria ?? []).slice(0, 10)[indice];
+    if (item) void this.router.navigate(['/transacoes'], { queryParams: this.linkCategoria(item) });
   }
 
   readonly graficoCategorias = computed<ChartConfiguration<'doughnut'>>(() => {
