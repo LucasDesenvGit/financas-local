@@ -6,6 +6,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 |---|---|
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, pastas e decisões técnicas |
 | [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md) | Como alterar a estrutura do banco (sem migrations) |
+| [docs/adr/](docs/adr/README.md) | Decisões de arquitetura (ADRs): por que cada escolha foi feita |
 | [CONTRIBUINDO.md](CONTRIBUINDO.md) | Branches, commits, pull requests e checklist |
 | [CHANGELOG.md](CHANGELOG.md) | Histórico de versões |
 
@@ -143,7 +144,7 @@ A publicação para o serviço do sistema por alguns segundos, copia os arquivos
 financas-local/
 ├── .github/               CI, templates de PR/issue, CODEOWNERS, Dependabot
 ├── banco/                 scripts SQL (estrutura, dados iniciais)
-├── docs/                  arquitetura e guia do banco
+├── docs/                  arquitetura, guia do banco e ADRs (docs/adr)
 ├── scripts/               instalação, publicação e backup (bash, Windows e Linux)
 │   └── git/              configuração do repositório no GitHub (PowerShell)
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
