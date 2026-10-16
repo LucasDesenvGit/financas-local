@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- Transações: filtro de **várias categorias** de uma vez, com caixas de marcar (cada categoria inclui as subcategorias, e dá para somar "Sem categoria"). Um chip por categoria em "Filtrando:", cada um com o seu ✕; na URL, `?categoria=12,20,sem` (links antigos com uma categoria continuam valendo). A API aceita `categoriaIds` repetido, mantendo `categoriaId`.
 - Empréstimos e financiamentos importados pelo Open Finance (`GET /loans` da Pluggy): saldo devedor, parcelas, taxa, CET e histórico de pagamentos de cada contrato.
 - Nova página **Empréstimos e financiamentos**, com financiamentos (imóvel, veículo, bens) e empréstimos sempre separados: totais, contratos e pagamentos por mês.
 - Painel: patrimônio líquido passa a descontar o saldo devedor de financiamentos e de empréstimos (cada um em seu cartão), com alerta de parcelas em atraso.

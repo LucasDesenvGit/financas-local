@@ -17,7 +17,7 @@ Os resumos (Painel, Orçamentos, Visão anual, Categorias) mostravam totais por 
 ## Decisão
 
 - **Detalhe por navegação:** totais por categoria (gráficos, listas, orçamentos, categorias) levam a `/transacoes` filtrada, com o contexto completo — categoria, período, tipo e conta — montado **sempre** por `paramsTransacoes()` (`compartilhado/utilidades.ts`), nunca string na mão. Clique em gráfico (canvas) tem equivalente em `<a>`/`<button>` (WCAG 2.1.1).
-- **Estado na URL:** Transações lê e grava o filtro em query params (`categoria`, `conta`, `tipo`, `inicio`, `fim`, `emergencias`, `busca`, `pagina`), só o que difere do padrão. Cada parâmetro é validado sozinho; inválido é ignorado e a URL se corrige. Atualização de filtro usa `replaceUrl`, para o voltar levar à tela anterior e não ao filtro anterior (*julgamento próprio*: é a convenção mais comum, mas há apps que empilham). Busca textual vai para a URL só no Enter.
+- **Estado na URL:** Transações lê e grava o filtro em query params (`categoria` — uma ou várias, separadas por vírgula, cada valor validado sozinho —, `conta`, `tipo`, `inicio`, `fim`, `emergencias`, `busca`, `pagina`), só o que difere do padrão. Cada parâmetro é validado sozinho; inválido é ignorado e a URL se corrige. Atualização de filtro usa `replaceUrl`, para o voltar levar à tela anterior e não ao filtro anterior (*julgamento próprio*: é a convenção mais comum, mas há apps que empilham). Busca textual vai para a URL só no Enter.
 - **Filtro ativo sempre visível:** tela que pode abrir filtrada mostra chips com ✕ e "Limpar filtros" (Nielsen 1 e 3).
 
 ## Consequências
