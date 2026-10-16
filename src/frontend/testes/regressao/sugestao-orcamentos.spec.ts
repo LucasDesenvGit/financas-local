@@ -58,6 +58,17 @@ describe('Regressão: sugestão de orçamentos', () => {
     expect(t.aplicados[0].itens.map((i) => i.categoriaId)).toEqual([1]);
   });
 
+  it('categoria com orçamento marcada e com o valor apagado conta o atual no total (ela não é gravada)', async () => {
+    const t = abrirSugestao();
+    await t.fixture.whenStable();
+    await t.marcar('Mercado');
+    await t.digitar('Mercado', '');
+    // Moradia 1.210 + Lazer 160 + Mercado 900 (atual) = 2.270, igual a antes de marcar
+    expect(t.total()).toMatch(/R\$\s2\.270,00/);
+    t.botaoAplicar().click();
+    expect(t.aplicados[0].itens.map((i) => i.categoriaId)).toEqual([1, 3]);
+  });
+
   it('sem renda, não mostra a barra de distribuição nem compara com o disponível', async () => {
     const t = abrirSugestao(sugestao({ rendaMedia: 0, disponivel: 0, metaPoupanca: 0,
       avisos: ['Sem receitas nos últimos meses: a sugestão usa só o seu histórico de gastos, sem teto de renda.'] }));
