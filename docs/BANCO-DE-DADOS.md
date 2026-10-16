@@ -41,6 +41,8 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 
    Coluna `NOT NULL` adicionada a uma tabela com dados precisa de `DEFAULT`.
 
+   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/instalar-windows.ps1`) lê essas linhas do `2-criar-banco.sh` em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)).
+
 ### Depois de qualquer mudança
 
 1. Atualize a entidade em `Entidades/` e o mapeamento em `Data/FinancasDbContext.cs` (tamanhos e precisão iguais ao SQL).

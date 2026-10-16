@@ -35,7 +35,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Investimentos: a tela não carregava (erro 500) quando o Banco Central ou outra fonte demorava mais que o tempo limite; agora segue sem o dado, como já fazia sem internet. Mesmo ajuste nas cotações, no câmbio, na importação pelo extrato e na sincronização do Open Finance.
 - Publicação no Linux: `scripts/3-publicar.sh` passa a se chamar `scripts/3-publicar-atualizar.sh` e reinicia o serviço quando ele já está rodando (antes, continuava com a versão antiga em memória).
 - Instalação num Windows novo: o `1-preparar-ambiente.sh` deixa de depender de Python (que no Windows costuma ser só o atalho da Microsoft Store) e de `unzip`, baixa o `sqlite3` portátil oficial quando falta, confere as ferramentas do terminal antes de começar e mostra as versões instaladas no final. O `3-publicar-atualizar.sh` também não usa mais Python, funciona com `--pular-build` sem o .NET no PATH e avisa logo no início quando o Git Bash não está como Administrador (ADR 0011).
-- Instalação em um passo: `scripts/instalar.sh` roda as três etapas em sequência; no Windows, basta dar dois cliques em `instalar-windows.cmd`, que pede Administrador, instala o Git for Windows pelo `winget` se faltar e chama o `instalar.sh` (ADR 0011).
+- Instalação em um passo: `scripts/instalar.sh` roda as três etapas em sequência. No Windows, basta dar dois cliques em `instalar-windows.cmd`, que pede Administrador e roda `scripts/instalar-windows.ps1` — só PowerShell, sem Git, bash nem Python (ADR 0012).
+- Publicação no Windows: o serviço é parado antes de copiar os arquivos novos (antes, a cópia falhava com as DLLs em uso).
+- Instalador do Windows: o log guarda também as mensagens de erro do npm/dotnet e os eventos do Windows quando a API não sobe; o erro final diz em que etapa parou; API que não responde em 30 s reprova a instalação (antes, terminava em verde); certificado confiável para todas as contas do computador, sem janela de confirmação; clique na janela não congela mais a instalação (QuickEdit desligado); no fim, abre o site e fecha sozinho (só fica aberto se der erro); o log acumula as execuções.
+- Atualização mais segura (Windows e bash): cópia do banco em `backups/FinancasLocal-antes-instalacao-*.db` antes de mudar a estrutura (ficam as 5 mais recentes), `sqlite3` espera em vez de falhar com `database is locked` se a API estiver gravando; no Windows, se a versão nova não subir, a anterior volta sozinha.
+- Backup e criação do banco funcionam em pastas com apóstrofo no caminho (ex.: `C:\Users\D'Avila`).
 - Backup agendado no Windows (`4-backup.sh --agendar`): a tarefa era criada com caminhos do Git Bash (`/usr/bin/bash`, `/c/...`), que o Agendador de Tarefas não entende, e não rodava. Agora usa caminhos do Windows e o `bash.exe` do Git for Windows.
 - Validação do código da B3 volta ao formato estrito (ex.: PETR4, MXRF11); ativos de fora da B3, como AOK, entram escolhendo a moeda (ADR 0009).
 
@@ -44,6 +48,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Decisões de arquitetura passam a ser registradas como ADRs em `docs/adr/`, com as decisões já tomadas registradas retroativamente.
 
 ### Infraestrutura
+- Novo workflow **Teste de instalação no Linux**: roda `scripts/instalar.sh` num runner Ubuntu sem dotnet, node, sqlite3 e Python no PATH, confere o serviço `systemd --user` e a API, testa a atualização e o `4-backup.sh`.
+- Novo workflow **Teste de instalação no Windows**: instala do zero num runner Windows (sem as ferramentas do runner no PATH), confere o serviço e a API, e testa a atualização pelo `instalar-windows.cmd`.
 - Backend migrado de SQL Server Express/IIS para SQLite/Kestrel — o projeto agora roda em Windows e Linux com os mesmos scripts.
 - Nova ferramenta `Financas.MigrarSqlite` para migrar os dados de uma instalação antiga com SQL Server para o SQLite novo.
 - Scripts `.sh` (bash) substituindo os `.ps1` de instalação, criação do banco, publicação e backup.

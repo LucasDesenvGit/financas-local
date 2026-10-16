@@ -150,6 +150,15 @@ require("fs").writeFileSync(e.DESTINO_CONFIG, JSON.stringify(config, null, 2) + 
 ok 'configuracao gerada'
 
 # ------------------------------------------------------------------ Copia dos arquivos
+# O Windows trava as DLLs em uso: o servico tem de parar antes da copia.
+if [[ "$SO" == windows ]] && sc.exe query "$nome_servico" >/dev/null 2>&1; then
+    sc.exe stop "$nome_servico" >/dev/null 2>&1 || true
+    for _ in $(seq 1 15); do
+        sc.exe query "$nome_servico" 2>/dev/null | grep -q STOPPED && break
+        sleep 2
+    done
+fi
+
 etapa "Publicando em $destino"
 garantir_pasta "$destino"
 # Ha uma breve janela de indisponibilidade durante a copia (poucos segundos).

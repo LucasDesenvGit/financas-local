@@ -3,20 +3,26 @@ rem =====================================================================
 rem FinancasLocal - instalador para Windows (duplo clique)
 rem
 rem  - Pede elevacao (Administrador), necessaria para registrar o servico
-rem  - Procura o Git Bash; se nao houver, instala o Git for Windows via winget
-rem  - Roda scripts/instalar.sh (as 3 etapas) no Git Bash
+rem  - Roda scripts\instalar-windows.ps1 no Windows PowerShell, que ja vem
+rem    com o Windows: nao precisa de Git, bash nem winget
+rem  - Deu certo: abre o site no navegador e fecha sozinho em 10 s.
+rem    Deu errado: a janela fica aberta com o erro.
 rem
 rem Pode ser executado de novo para atualizar a instalacao.
+rem Repassa os argumentos ao script (ex.: instalar-windows.cmd -PularBuild).
+rem Sem ninguem na frente da tela (ex.: CI), defina FINANCAS_SEM_INTERACAO=1:
+rem nao abre o navegador nem espera tecla/tempo no final.
 rem =====================================================================
 setlocal
 rem Caminho passado ao PowerShell por variavel de ambiente: evita problemas de
 rem aspas/apostrofos no caminho da pasta.
 set "ARQUIVO_CMD=%~f0"
+set "ARGUMENTOS=%*"
 
 net session >nul 2>&1
 if errorlevel 1 (
     echo Pedindo permissao de Administrador...
-    powershell -NoProfile -Command "Start-Process -FilePath $env:ARQUIVO_CMD -Verb RunAs" 2>nul
+    powershell.exe -NoProfile -Command "$a = @{FilePath=$env:ARQUIVO_CMD; Verb='RunAs'}; if ($env:ARGUMENTOS) { $a.ArgumentList = $env:ARGUMENTOS }; Start-Process @a" 2>nul
     if errorlevel 1 (
         echo Permissao de Administrador negada. Instalacao cancelada.
         pause
@@ -27,50 +33,22 @@ if errorlevel 1 (
 
 cd /d "%~dp0"
 
-call :procurar_bash
-if defined GIT_BASH goto rodar
+rem -ExecutionPolicy Bypass vale so para este processo: nao muda a politica do computador.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\instalar-windows.ps1" %*
+if errorlevel 1 goto falhou
 
-echo Git Bash nao encontrado. Instalando o Git for Windows pelo winget...
-where winget >nul 2>&1
-if errorlevel 1 goto sem_winget
-winget install --id Git.Git -e --source winget --accept-source-agreements --accept-package-agreements
-call :procurar_bash
-if defined GIT_BASH goto rodar
+if "%FINANCAS_SEM_INTERACAO%"=="1" exit /b 0
 echo.
-echo Nao foi possivel encontrar o Git Bash depois da instalacao.
-echo Instale manualmente em https://git-scm.com/download/win e rode este arquivo de novo.
-pause
-exit /b 1
-
-:sem_winget
-echo.
-echo O winget nao esta disponivel neste Windows.
-echo Instale o Git for Windows em https://git-scm.com/download/win e rode este arquivo de novo.
-pause
-exit /b 1
-
-:rodar
-echo Usando %GIT_BASH%
-"%GIT_BASH%" scripts/instalar.sh
-if errorlevel 1 (
-    echo.
-    echo A instalacao falhou. Veja a mensagem de ERRO acima.
-    pause
-    exit /b 1
-)
-echo.
-pause
+echo Abrindo https://localhost:5443 no navegador...
+rem explorer.exe abre o navegador padrao sem herdar a elevacao desta janela
+rem (um "start" direto abriria o navegador como Administrador).
+explorer.exe "https://localhost:5443"
+echo Esta janela fecha em 10 segundos.
+timeout /t 10 >nul
 exit /b 0
 
-rem Procura o bash.exe do Git for Windows (nao o bash.exe do WSL em System32).
-rem Fica fora de blocos com parenteses porque "Program Files (x86)" quebraria o bloco.
-:procurar_bash
-set "GIT_BASH="
-if exist "%ProgramFiles%\Git\bin\bash.exe" set "GIT_BASH=%ProgramFiles%\Git\bin\bash.exe"
-if defined GIT_BASH exit /b 0
-if exist "%ProgramFiles(x86)%\Git\bin\bash.exe" set "GIT_BASH=%ProgramFiles(x86)%\Git\bin\bash.exe"
-if defined GIT_BASH exit /b 0
-if exist "%LocalAppData%\Programs\Git\bin\bash.exe" set "GIT_BASH=%LocalAppData%\Programs\Git\bin\bash.exe"
-if defined GIT_BASH exit /b 0
-for /f "delims=" %%G in ('where git.exe 2^>nul') do if not defined GIT_BASH if exist "%%~dpG..\bin\bash.exe" set "GIT_BASH=%%~dpG..\bin\bash.exe"
-exit /b 0
+:falhou
+echo.
+echo A instalacao falhou. Veja a mensagem de ERRO acima e o log em instaladores\instalacao-windows.log.
+if not "%FINANCAS_SEM_INTERACAO%"=="1" pause
+exit /b 1

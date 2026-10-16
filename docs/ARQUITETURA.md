@@ -60,11 +60,12 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 
 ## Scripts — `scripts/`
 
-Todos em bash; funcionam em Linux, macOS e Windows (Git Bash/MSYS ou WSL).
+Em bash, para Linux, macOS e Windows (Git Bash/MSYS ou WSL). No Windows, a instalação também tem uma versão em PowerShell que dispensa o bash ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)).
 
 | Script | Função |
 |---|---|
-| `instalar.sh` | Roda as etapas 1, 2 e 3 em sequência e para no primeiro erro. No Windows, `instalar-windows.cmd` (na raiz) pede elevação, instala o Git for Windows pelo `winget` se faltar e abre este script no Git Bash. |
+| `instalar.sh` | Roda as etapas 1, 2 e 3 em sequência e para no primeiro erro. |
+| `instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash; chamado por `instalar-windows.cmd` (na raiz), que pede elevação. Lê a lista de colunas novas do `2-criar-banco.sh`. Mudanças nas etapas 1 e 3 do bash precisam ser refletidas aqui. |
 | `1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, .NET 10 SDK e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
 | `2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. |
 | `3-publicar-atualizar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |

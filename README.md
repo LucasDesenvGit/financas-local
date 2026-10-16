@@ -29,16 +29,16 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 
 ## Instalação (uma vez)
 
-**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador, instala o Git for Windows pelo `winget` se faltar e roda as três etapas abaixo. Pode rodar de novo para atualizar.
+**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
 
-**Linux (ou Windows pelo terminal), com um comando:**
+**Linux (ou Windows pelo Git Bash), com um comando:**
 
 ```bash
 cd financas-local/scripts
 ./instalar.sh                # roda 1, 2 e 3 em sequência e para no primeiro erro
 ```
 
-**Etapa por etapa.** Abra um terminal com bash disponível (no Linux, o terminal do próprio sistema; no Windows, o **Git Bash**, que vem com o [Git for Windows](https://git-scm.com/download/win) — `winget install Git.Git` —, ou o WSL). No Windows não precisa instalar mais nada: nem Python, nem sqlite3. Abra o Git Bash **como Administrador** para o `3-publicar-atualizar.sh`, que registra o serviço do Windows.
+**Etapa por etapa (bash).** Abra um terminal com bash disponível (no Linux, o terminal do próprio sistema; no Windows, o **Git Bash**, que vem com o [Git for Windows](https://git-scm.com/download/win), ou o WSL). Abra o Git Bash **como Administrador** para o `3-publicar-atualizar.sh`, que registra o serviço do Windows. O backup (`4-backup.sh`) continua precisando de bash no Windows.
 
 ```bash
 cd financas-local/scripts
@@ -154,7 +154,7 @@ financas-local/
 ├── .github/               CI, templates de PR/issue, CODEOWNERS, Dependabot
 ├── banco/                 scripts SQL (estrutura, dados iniciais)
 ├── docs/                  arquitetura, guia do banco e ADRs (docs/adr)
-├── scripts/               instalação, publicação e backup (bash, Windows e Linux)
+├── scripts/               instalação, publicação e backup (bash; no Windows também instalar-windows.ps1)
 │   └── git/              configuração do repositório no GitHub (PowerShell)
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
 ├── src/frontend/          financas-web (Angular)
@@ -169,7 +169,8 @@ financas-local/
 
 | Sintoma | O que fazer |
 |---|---|
-| Windows: `Python was not found`, `sqlite3: command not found` ou `unzip: command not found` | Versão antiga dos scripts. Atualize o repositório e rode o `1-preparar-ambiente.sh` de novo: ele instala o que falta e não usa mais Python |
+| Windows: `Python was not found`, `sqlite3: command not found` ou `unzip: command not found` | Versão antiga dos scripts. Atualize o repositório e use o `instalar-windows.cmd`, que não depende de bash nem de Python |
+| Windows: o `instalar-windows.cmd` falhou | Veja a linha `ERRO` na janela e o log completo em `instaladores/instalacao-windows.log` |
 | Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
 | Windows: o serviço não é registrado/iniciado | Rode o `3-publicar-atualizar.sh` num Git Bash aberto como Administrador |
 | Navegador alerta sobre o certificado | Rode o `3-publicar-atualizar.sh` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
