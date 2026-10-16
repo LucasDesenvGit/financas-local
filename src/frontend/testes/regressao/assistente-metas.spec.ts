@@ -24,6 +24,17 @@ describe('Regressão: assistente de metas', () => {
     expect(aviso[0]).toMatch(/Nesse ritmo você chega em set\.?\/2028 \(meta: jun\.?\/2027\)\. Para manter o prazo, os próximos meses precisam de R\$\s7\.323,77\./);
   });
 
+  it('prazo que já passou diz isso, sem pedir para "manter o prazo"', async () => {
+    const metas = METAS.map((m) => (m.id === 3 ? { ...m, dataAlvo: '2026-06-01' } : m));
+    const p = plano();
+    p.metas[2] = { ...p.metas[2], paraManterPrazo: null };
+    const t = abrirMetas(metas, p);
+    await t.atualizar();
+    const aviso = t.raiz.querySelector('.aviso-prazo')!.textContent!.replace(/\s+/g, ' ');
+    expect(aviso).toMatch(/O prazo \(jun\.?\/2026\) já passou\. Nesse ritmo você chega em set\.?\/2028; se quiser, edite a data da meta\./);
+    expect(aviso).not.toContain('manter o prazo');
+  });
+
   it('meta sem data mostra a data provável no ritmo recomendado', async () => {
     const t = abrirMetas(METAS, plano());
     await t.atualizar();

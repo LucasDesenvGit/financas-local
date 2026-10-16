@@ -70,7 +70,10 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
             @if (pm.divisaoIgual) {
               <p class="texto-suave">Divisão igual seria {{ pm.divisaoIgual | currency }}/mês · faltam {{ pm.falta | currency }}</p>
             }
-            @if (pm.noPrazo === false) {
+            @if (pm.noPrazo === false && prazoVencido(m)) {
+              <p class="aviso-prazo" role="status">⚠ O prazo ({{ m.dataAlvo | date: 'MMM/yyyy' }}) já passou. Nesse ritmo você chega em
+                {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}; se quiser, edite a data da meta.</p>
+            } @else if (pm.noPrazo === false) {
               <p class="aviso-prazo" role="status">⚠ Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}
                 (meta: {{ m.dataAlvo | date: 'MMM/yyyy' }}).
                 @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de {{ pm.paraManterPrazo | currency }}. }</p>
@@ -254,6 +257,14 @@ export class MetasComponent implements OnInit {
     const p = this.plano();
     if (!p?.disponivel || m.concluida) return null;
     return p.metas.find((x) => x.metaId === m.id && x.recomendado !== null) ?? null;
+  }
+
+  /** Prazo antes do mês do plano: não há mais "manter o prazo", só a data provável. */
+  prazoVencido(m: Meta): boolean {
+    const p = this.plano();
+    if (!p || !m.dataAlvo) return false;
+    const [ano, mes] = m.dataAlvo.split('-').map(Number);
+    return ano * 12 + mes < p.ano * 12 + p.mes;
   }
 
   /** Posição na ordem de prioridade (1 = primeira) entre as metas em aberto. */
