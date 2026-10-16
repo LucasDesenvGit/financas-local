@@ -23,6 +23,11 @@ on:
 permissions:
   contents: read
 
+# "shell: bash" explicito liga o pipefail: sem ele, uma falha antes do "| tee" passaria batido.
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: teste-instalacao-linux-${{ github.ref }}
   cancel-in-progress: true
