@@ -35,6 +35,25 @@ public class SincronizacaoLog
     public ConexaoBancaria? ConexaoBancaria { get; set; }
 }
 
+/// <summary>
+/// Saldo real de uma reserva ("cofrinho") conferido pelo usuário. A instituição não informa esse saldo pelo
+/// Open Finance; ele é estimado pelos lançamentos "Dinheiro reservado/retirado {Nome}" da conta
+/// (ver <c>ReservaService</c>), partindo deste valor conferido quando houver.
+/// </summary>
+public class ReservaConferencia
+{
+    public int Id { get; set; }
+    public int ContaId { get; set; }
+    /// <summary>Nome da reserva como aparece no extrato (ex.: "Emergência").</summary>
+    public string Nome { get; set; } = string.Empty;
+    public decimal SaldoConferido { get; set; }
+    /// <summary>Data da conferência: lançamentos até esse dia já estão no saldo conferido.</summary>
+    public DateOnly DataConferencia { get; set; }
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+
+    public Conta? Conta { get; set; }
+}
+
 public class CategoriaPluggy
 {
     public string PluggyCategoriaId { get; set; } = string.Empty;
