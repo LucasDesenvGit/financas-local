@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-16
-- **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (scripts bash nos dois sistemas)
+- **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (scripts bash nos dois sistemas); [0012](0012-instalador-do-windows-em-powershell.md) (instalador do Windows sem bash)
 
 ## Contexto
 
@@ -24,7 +24,7 @@ O resultado eram vários erros seguidos na primeira instalação.
 
 Os scripts não dependem mais de `python3` nem de `jq`: o `1-preparar-ambiente.sh` instala primeiro o Node.js (o índice de versões é lido do `index.tab`, só com `awk`) e passa a usá-lo para ler os metadados do .NET e conferir hashes SHA3-256; o `3-publicar-atualizar.sh` usa o Node para ler e gravar o `appsettings.Production.json`. Quando o sistema não tem `sqlite3`, ele é baixado de `www.sqlite.org` (pacote `sqlite-tools` oficial) para `ferramentas/sqlite`, que `comum.sh` põe no PATH de todos os scripts. Sem `unzip` no Windows, os `.zip` são extraídos pelo PowerShell (`Expand-Archive`).
 
-Para instalar em um passo, `scripts/instalar.sh` roda as três etapas em sequência. No Windows, `instalar-windows.cmd` (na raiz, para dois cliques) pede elevação, procura o `bash.exe` do Git for Windows (não o do WSL), instala o Git pelo `winget` se faltar e chama o `instalar.sh`. Um instalador de verdade (MSI/Inno Setup) foi descartado por ora: exigiria empacotar e assinar um executável a cada versão, e os scripts bash continuariam sendo necessários para compilar e publicar (*inferido*: preferência por manter um único caminho de instalação).
+Para instalar em um passo, `scripts/instalar.sh` roda as três etapas em sequência. No Windows, o instalador de dois cliques não usa bash: ver [0012](0012-instalador-do-windows-em-powershell.md), que segue a mesma estratégia de ferramentas portáteis.
 
 ## Consequências
 
@@ -34,7 +34,5 @@ Para instalar em um passo, `scripts/instalar.sh` roda as três etapas em sequên
   - o hash do sqlite3 vem da mesma origem que o arquivo (não há assinatura separada), proteção igual à do `SHASUMS256.txt` do Node;
   - o sqlite3 portátil não se atualiza sozinho: se já existir um `sqlite3` (do sistema ou de `ferramentas/sqlite`), ele é mantido;
   - Linux arm64 não tem `sqlite-tools` publicado: lá o `sqlite3` continua vindo do gerenciador de pacotes;
-  - o `scripts/ci/verificar-sql.py` continua em Python, mas roda só no CI;
-  - o `instalar-windows.cmd` depende do `winget` para instalar o Git; sem ele (Windows antigo ou bloqueado pela empresa), o Git for Windows tem de ser instalado à mão;
-  - o `.cmd` precisa de quebra de linha CRLF (garantida pelo `.gitattributes`); baixado como zip por outra ferramenta, pode não funcionar.
+  - o `scripts/ci/verificar-sql.py` continua em Python, mas roda só no CI.
 - **Na prática:** em script novo, não usar `python3`/`jq`; para JSON, usar `node -e` com caminhos convertidos por `caminho_nativo` (no Git Bash, `/c/...` não é entendido pelo `node.exe` dentro de variáveis de ambiente). Para `.zip`, usar `extrair_zip` de `comum.sh`.

@@ -22,6 +22,8 @@ scripts/2-criar-banco.sh                        # roda os scripts de banco/ em o
 
 # Publicação
 scripts/3-publicar-atualizar.sh                 # compila front+API, publica, cuida de certificado e do serviço do sistema
+scripts/instalar.sh                             # etapas 1-3 de uma vez (bash)
+instalar-windows.cmd                            # Windows sem bash: eleva e roda scripts/instalar-windows.ps1 (etapas 1-3 em PowerShell 5.1, ADR 0012)
 
 # Migrar dados de uma instalação antiga (SQL Server/IIS) para o SQLite novo — seguro rodar mesmo sem SQL Server disponível
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
@@ -55,7 +57,8 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 **Banco** (`banco/`) — **sem EF Core Migrations**, de propósito, em SQLite:
 - `01-estrutura.sql` — tabelas/índices/restrições com `CREATE TABLE/INDEX IF NOT EXISTS` (idempotência nativa do SQLite); baseline limpa da troca SQL Server → SQLite, com tabelas novas acrescentadas no fim — verificado pelo CI via `scripts/ci/verificar-sql.py` e aplicado de fato a um banco SQLite descartável no CI. Nunca apagar/renomear coluna em uso sem bloco de transição.
 - `02-dados-iniciais.sql` — categorias/config/regras padrão.
-- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/comum.sh`, checa via `PRAGMA table_info`) em `scripts/2-criar-banco.sh`, não no SQL.
+- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/comum.sh`, checa via `PRAGMA table_info`) em `scripts/2-criar-banco.sh`, não no SQL — uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` lê essas linhas.
+- Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/instalar-windows.ps1` precisa da mesma mudança (e vice-versa).
 - Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 
 ## Decisões de arquitetura (ADRs) — obrigatório

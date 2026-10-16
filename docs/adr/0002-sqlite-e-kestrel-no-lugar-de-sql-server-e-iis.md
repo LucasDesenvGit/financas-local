@@ -1,6 +1,6 @@
 # 0002. SQLite e Kestrel no lugar de SQL Server Express e IIS
 
-- **Status:** Aceita
+- **Status:** Aceita — a instalação no Windows sem bash foi substituída pela [0012](0012-instalador-do-windows-em-powershell.md)
 - **Data:** 2026-10-15
 - **Relacionadas:** [0003](0003-esquema-por-scripts-sql-idempotentes.md)
 
