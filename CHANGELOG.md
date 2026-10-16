@@ -8,10 +8,21 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Empréstimos e financiamentos importados pelo Open Finance (`GET /loans` da Pluggy): saldo devedor, parcelas, taxa, CET e histórico de pagamentos de cada contrato.
 - Nova página **Empréstimos e financiamentos**, com financiamentos (imóvel, veículo, bens) e empréstimos sempre separados: totais, contratos e pagamentos por mês.
 - Painel: patrimônio líquido passa a descontar o saldo devedor de financiamentos e de empréstimos (cada um em seu cartão), com alerta de parcelas em atraso.
+- Câmbio: cotação PTAX oficial do Banco Central (`GET /api/cambio/moedas` e `GET /api/cambio/cotacao?moeda=USD&data=2026-10-15`), guardada no banco para uso offline (`GET /api/cambio/cotacoes`) e atualizada automaticamente uma vez por dia e de novo depois do fechamento do Banco Central (~13h30).
+- Investimentos em moeda estrangeira (Open Finance) entram no patrimônio, na reserva e nos totais da carteira convertidos para reais; a tela de investimentos mostra o valor original e o convertido. Moeda sem cotação fica fora dos totais, com aviso.
+- Ativos no exterior na carteira (ex.: AAPL, VOO): em **+ Lançar compra/venda**, escolha a moeda; o câmbio vem preenchido com a PTAX do dia e pode ser trocado pelo da corretora. Custo e resultado em reais por operação, valor atual pelo câmbio de hoje e proventos pelo câmbio da data-com.
 - Visão anual: o comprometimento da renda soma as parcelas de cartão, financiamentos e empréstimos, mostradas separadamente.
 
 ### Banco
 - Novas tabelas `Emprestimo` e `PagamentoEmprestimo` em `banco/01-estrutura.sql`: rode `scripts/2-criar-banco.sh` antes de publicar.
+- Nova tabela `CotacaoMoeda` (cache das cotações de câmbio) em `banco/01-estrutura.sql`.
+- Novas colunas `Ativo.Moeda` e `OperacaoAtivo.Cambio`: rode `scripts/2-criar-banco.sh` (primeiro uso de `adicionar_coluna_se_ausente`).
+
+### Correções
+- Janelas sobrepostas (ex.: editar uma operação a partir da lista de operações): a aberta por último fica por cima, e o Esc fecha só ela — antes, a edição abria atrás e um Esc fechava todas.
+- Investimentos: a tela não carregava (erro 500) quando o Banco Central ou outra fonte demorava mais que o tempo limite; agora segue sem o dado, como já fazia sem internet. Mesmo ajuste nas cotações, no câmbio, na importação pelo extrato e na sincronização do Open Finance.
+- Publicação no Linux: `scripts/3-publicar.sh` passa a se chamar `scripts/3-publicar-atualizar.sh` e reinicia o serviço quando ele já está rodando (antes, continuava com a versão antiga em memória).
+- Validação do código da B3 volta ao formato estrito (ex.: PETR4, MXRF11); ativos de fora da B3, como AOK, entram escolhendo a moeda (ADR 0009).
 
 ### Documentação
 - Pasta `docs/` restaurada (fora apagada por engano na migração para SQLite) e atualizada para SQLite/Kestrel e scripts bash.

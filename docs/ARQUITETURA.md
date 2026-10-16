@@ -6,6 +6,7 @@ Navegador (Angular)  ──HTTPS 127.0.0.1:5443──►  Financas.Api (.NET 10,
                                                    ├─► SQLite (dados/sql/FinancasLocal.db, arquivo local)
                                                    ├─► api.pluggy.ai          (Open Finance)
                                                    ├─► api.bcb.gov.br         (Selic)
+                                                   ├─► olinda.bcb.gov.br      (câmbio — PTAX)
                                                    └─► Yahoo Finance/brapi    (cotações)
 ```
 
@@ -21,6 +22,7 @@ O Angular é publicado dentro da própria API (`wwwroot`), então site e API tê
 | `Servicos/` | Regras de negócio. `RelatorioService` (painel, orçamentos, projeção, visão anual), `CategorizacaoService` (regras automáticas), `SugestaoCategoriaService` (sugestões pelo histórico), `ContaService` (saldos), `EmprestimoService` (empréstimos e financiamentos), `ConfiguracaoService`, `AuditoriaService`, `Relogio` (fuso de Brasília). |
 | `Servicos/Pluggy/` | Cliente HTTP da Pluggy (sem SDK), modelos e sincronização (agendada pelo `SincronizacaoHostedService`). |
 | `Servicos/Investimentos/` | Carteira de renda variável, cotações (`CotacaoService`), Selic (`SelicService`), FIIs (`FiiService`) e importação pelo extrato (`ExtratoCarteiraService`). |
+| `Servicos/Cambio/` | Cotação PTAX de moedas estrangeiras (`CambioService`), guardada no banco para uso offline e atualizada pelo `CambioHostedService`. |
 | `Entidades/` | Classes mapeadas no EF Core. |
 | `Data/FinancasDbContext.cs` | Mapeamento das tabelas (nomes, tamanhos, precisão, índices) — em sincronia manual com `banco/01-estrutura.sql`. |
 | `Dtos/` | Contratos de entrada e saída da API (arquivo único `Dtos.cs`). |
@@ -31,6 +33,7 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 - **Sem migrations.** O banco é criado e atualizado por scripts SQL idempotentes ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md); passo a passo em [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md)).
 - **Front-end no `wwwroot` da API**, mesma origem ([ADR 0004](adr/0004-front-end-publicado-no-wwwroot-da-api.md)).
 - **Cliente HTTP próprio** para a Pluggy e as demais integrações ([ADR 0006](adr/0006-cliente-http-proprio-para-a-pluggy.md)).
+- **Câmbio pela PTAX** do Banco Central, guardado no banco para uso offline ([ADR 0007](adr/0007-cotacao-de-cambio-pela-ptax-do-banco-central.md)). Só investimentos respeitam moeda estrangeira; o resto é em reais ([ADR 0008](adr/0008-moeda-estrangeira-somente-em-investimentos.md)).
 - **Consultas só com LINQ/lambda** sobre entidades mapeadas; atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
 - **Segredos** (Client Secret da Pluggy, token da brapi) ficam criptografados na tabela `Configuracao` com Data Protection. Chaves em `dados/chaves`: protegidas por DPAPI no Windows e por permissão de arquivo no Linux ([ADR 0005](adr/0005-segredos-criptografados-com-data-protection.md)).
 - **Datas** sempre no fuso de Brasília (`Relogio`).
@@ -62,7 +65,7 @@ Todos em bash; funcionam em Linux, macOS e Windows (Git Bash/MSYS ou WSL).
 |---|---|
 | `1-preparar-ambiente.sh` | .NET 10 SDK e Node.js LTS portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x do PATH); confere se o `sqlite3` está instalado. |
 | `2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. |
-| `3-publicar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
+| `3-publicar-atualizar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
 | `4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |
 | `comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, helpers de coluna do banco). |
 | `ci/verificar-sql.py` | Usado no CI: confere que `banco/*.sql` é idempotente e não tem sintaxe de T-SQL. |

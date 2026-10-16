@@ -97,7 +97,7 @@ public class SincronizacaoService
             {
                 await AtualizarCategoriasPluggyAsync(sessao, ct);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 // Não impede a sincronização das transações.
                 _logger.LogWarning(ex, "Não foi possível atualizar a lista de categorias da Pluggy.");
@@ -223,7 +223,7 @@ public class SincronizacaoService
 
             return new ResultadoSincronizacaoDto(true, novas, atualizadas, null);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogError(ex, "Erro ao sincronizar a conexão {ConexaoId}.", conexaoId);
             _db.ChangeTracker.Clear();
@@ -394,7 +394,7 @@ public class SincronizacaoService
         {
             await ImportarRendaVariavelAsync(sessao, conexao.Id, ct);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             // A carteira é complementar: uma falha aqui não invalida a sincronização.
             _logger.LogWarning(ex, "Não foi possível importar as operações de renda variável do Open Finance.");
@@ -664,7 +664,7 @@ public class SincronizacaoService
 
                 await _db.SaveChangesAsync(ct);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Falha ao importar {Ticker} do Open Finance.", ticker);
                 resultado.Erros.Add(ticker);

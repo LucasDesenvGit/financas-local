@@ -2,6 +2,7 @@ using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Investimentos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,10 +20,13 @@ public class CarteiraController : BaseController
     private readonly ConfiguracaoService _config;
     private readonly FiiService _fiis;
     private readonly ExtratoCarteiraService _extrato;
+    private readonly CambioService _cambio;
 
     public CarteiraController(FinancasDbContext db, CarteiraService carteira, SelicService selic,
-        CotacaoService cotacoes, ConfiguracaoService config, FiiService fiis, ExtratoCarteiraService extrato)
+        CotacaoService cotacoes, ConfiguracaoService config, FiiService fiis, ExtratoCarteiraService extrato,
+        CambioService cambio)
     {
+        _cambio = cambio;
         _db = db;
         _carteira = carteira;
         _selic = selic;
@@ -62,7 +66,7 @@ public class CarteiraController : BaseController
         if (resultado.AtivosCriados > 0 || resultado.OperacoesImportadas > 0)
         {
             try { await _cotacoes.AtualizarAsync(null, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* as cotações podem ser atualizadas depois */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* as cotações podem ser atualizadas depois */ }
         }
         return resultado;
     }
@@ -109,8 +113,14 @@ public class CarteiraController : BaseController
     [HttpPost("operacoes")]
     public async Task<IActionResult> CriarOperacao(SalvarOperacaoDto dto, CancellationToken ct)
     {
-        var ticker = CotacaoService.NormalizarTicker(dto.Ticker);
-        if (ticker is null) return Erro("Código de ativo inválido. Use apenas letras e números, por exemplo AOK, MXRF11 ou PETR4.");
+        var moeda = string.IsNullOrWhiteSpace(dto.Moeda) ? CambioService.MoedaBase : CambioService.NormalizarMoeda(dto.Moeda);
+        if (moeda is null) return Erro("Moeda inválida. Use o código de 3 letras (ex.: USD).");
+        var exterior = moeda != CambioService.MoedaBase;
+        var ticker = CotacaoService.NormalizarTicker(dto.Ticker, moeda);
+        if (ticker is null)
+            return Erro(exterior
+                ? "Código inválido. Use o código como no Yahoo Finance, por exemplo AAPL, VOO ou SAP.DE (ativos da B3 ficam em reais)."
+                : "Código inválido. Use o código da B3, por exemplo MXRF11 ou PETR4.");
         var validacao = Validar(dto);
         if (validacao is not null) return validacao;
 
@@ -118,9 +128,30 @@ public class CarteiraController : BaseController
         var novo = ativo is null;
         if (ativo is null)
         {
-            ativo = new Ativo { Ticker = ticker, Tipo = dto.TipoAtivo ?? SugerirTipo(ticker) };
+            if (exterior)
+            {
+                var moedas = await _cambio.ListarMoedasAsync(ct);
+                if (moedas.Count > 0 && moedas.All(m => m.Codigo != moeda))
+                    return Erro($"Não há cotação de câmbio do Banco Central para {moeda}.");
+                if (dto.TipoAtivo is TipoAtivo.Fii or TipoAtivo.Bdr)
+                    return Erro("FIIs e BDRs são da B3: lance em reais.");
+            }
+            ativo = new Ativo
+            {
+                Ticker = ticker,
+                Moeda = moeda,
+                Tipo = dto.TipoAtivo ?? (exterior ? TipoAtivo.Acao : SugerirTipo(ticker))
+            };
             _db.Ativos.Add(ativo);
         }
+        else if (ativo.Moeda != moeda)
+        {
+            return Erro($"{ticker} já está lançado em {ativo.Moeda}. A moeda de um ativo não muda: use {ativo.Moeda}.");
+        }
+
+        var cambio = await CambioDaOperacaoAsync(ativo.Moeda, dto, ct);
+        if (cambio is null)
+            return Erro($"Informe o câmbio (R$ por 1 {ativo.Moeda}): não há cotação do Banco Central para essa data.");
 
         var op = new OperacaoAtivo
         {
@@ -130,6 +161,7 @@ public class CarteiraController : BaseController
             Quantidade = dto.Quantidade,
             PrecoUnitario = dto.PrecoUnitario,
             Taxas = dto.Taxas,
+            Cambio = cambio.Value,
             Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim()
         };
         _db.OperacoesAtivo.Add(op);
@@ -143,7 +175,7 @@ public class CarteiraController : BaseController
         if (novo)
         {
             try { await _cotacoes.AtualizarAsync(new[] { ativo.Id }, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* segue com o preço médio */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* segue com o preço médio */ }
         }
         return Ok(new { op.Id, ativo.Ticker, AtivoId = ativo.Id });
     }
@@ -153,12 +185,16 @@ public class CarteiraController : BaseController
     {
         var op = await _db.OperacoesAtivo.Include(o => o.Ativo).FirstOrDefaultAsync(o => o.Id == id, ct);
         if (op is null) return NaoEncontrado();
-        var ticker = CotacaoService.NormalizarTicker(dto.Ticker);
-        if (ticker is null || ticker != op.Ativo!.Ticker)
+        var ticker = CotacaoService.NormalizarTicker(dto.Ticker, op.Ativo!.Moeda);
+        if (ticker is null || ticker != op.Ativo.Ticker)
             return Erro("Não é possível trocar o ativo de uma operação. Exclua e lance novamente.");
         var validacao = Validar(dto);
         if (validacao is not null) return validacao;
+        var cambio = await CambioDaOperacaoAsync(op.Ativo.Moeda, dto, ct);
+        if (cambio is null)
+            return Erro($"Informe o câmbio (R$ por 1 {op.Ativo.Moeda}): não há cotação do Banco Central para essa data.");
 
+        op.Cambio = cambio.Value;
         op.Tipo = dto.Tipo;
         op.Data = dto.Data;
         op.Quantidade = dto.Quantidade;
@@ -190,6 +226,8 @@ public class CarteiraController : BaseController
         var ativo = await _db.Ativos.FirstOrDefaultAsync(a => a.Id == id, ct);
         if (ativo is null) return NaoEncontrado();
         if (!Enum.IsDefined(dto.Tipo)) return Erro("Tipo de ativo inválido.");
+        if (ativo.Moeda != CambioService.MoedaBase && dto.Tipo is TipoAtivo.Fii or TipoAtivo.Bdr)
+            return Erro("FIIs e BDRs são da B3: um ativo no exterior não pode ter esse tipo.");
         if (dto.PrecoManual && (dto.PrecoAtual is null || dto.PrecoAtual <= 0))
             return Erro("Informe o preço atual para usar preço manual.");
 
@@ -211,7 +249,7 @@ public class CarteiraController : BaseController
         if (!dto.PrecoManual && ativo.FonteCotacao == "Manual")
         {
             try { await _cotacoes.AtualizarAsync(new[] { ativo.Id }, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* mantém o último preço */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* mantém o último preço */ }
         }
         return NoContent();
     }
@@ -253,6 +291,19 @@ public class CarteiraController : BaseController
         if (dto.Data > Relogio.Hoje) return Erro("A data não pode estar no futuro.");
         if (dto.Data < new DateOnly(1995, 1, 1)) return Erro("Data inválida.");
         return null;
+    }
+
+    /// <summary>
+    /// Câmbio da operação: 1 em reais; o informado; ou, se vier vazio, a PTAX da data — de venda na compra (a corretora
+    /// vende a moeda a você) e de compra na venda. Null se não houver como obter.
+    /// </summary>
+    private async Task<decimal?> CambioDaOperacaoAsync(string moeda, SalvarOperacaoDto dto, CancellationToken ct)
+    {
+        if (moeda == CambioService.MoedaBase) return 1m;
+        if (dto.Cambio is decimal informado && informado > 0) return informado;
+        var ptax = await _cambio.ObterCotacaoAsync(moeda, dto.Data, ct);
+        if (ptax is null) return null;
+        return dto.Tipo == TipoOperacao.Compra ? ptax.Venda : ptax.Compra;
     }
 
     /// <summary>Confere se nenhuma venda (em ordem cronológica) supera a quantidade em carteira.</summary>

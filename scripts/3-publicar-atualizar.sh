@@ -13,8 +13,8 @@
 # Rode de novo sempre que atualizar o codigo: a publicacao nao apaga dados.
 #
 # Uso:
-#   scripts/3-publicar.sh
-#   scripts/3-publicar.sh --pular-build
+#   scripts/3-publicar-atualizar.sh
+#   scripts/3-publicar-atualizar.sh --pular-build
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 

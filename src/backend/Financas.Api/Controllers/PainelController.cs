@@ -2,6 +2,7 @@ using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Investimentos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,9 @@ public class PainelController : BaseController
                 : $"Orçamento de {o.CategoriaNome} estourado ({o.Percentual:0}%).");
         foreach (var p in proximas.Where(p => p.DiasParaVencer < 0))
             alertas.Add($"Conta \"{p.Descricao}\" vencida desde {p.ProximoVencimento:dd/MM}.");
+        if (composicao.MoedasSemCotacao.Count > 0)
+            alertas.Add($"Investimentos em {string.Join(", ", composicao.MoedasSemCotacao)} ficaram fora do patrimônio: "
+                + "não há cotação de câmbio guardada para essa moeda.");
 
         var limiteConsentimento = DateTime.UtcNow.AddDays(30);
         var conexoes = await _db.ConexoesBancarias.AsNoTracking().Where(c => c.Ativa)
@@ -204,15 +208,24 @@ public class RelatoriosController : BaseController
 public class InvestimentosController : BaseController
 {
     private readonly FinancasDbContext _db;
+    private readonly CambioService _cambio;
 
-    public InvestimentosController(FinancasDbContext db) => _db = db;
+    public InvestimentosController(FinancasDbContext db, CambioService cambio)
+    {
+        _db = db;
+        _cambio = cambio;
+    }
 
     [HttpGet]
     public async Task<ActionResult<List<InvestimentoDto>>> Listar(CancellationToken ct)
-        => await _db.Investimentos.AsNoTracking()
+    {
+        var lista = await _db.Investimentos.AsNoTracking()
             .OrderBy(i => i.Tipo).ThenByDescending(i => i.Saldo)
-            .Select(i => new InvestimentoDto(i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor, i.Moeda, i.Saldo,
+            .Select(i => new InvestimentoDto(i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor, i.Moeda, i.Saldo, null,
                 i.ValorAplicado, i.Rendimento, i.TaxaAnual, i.DataVencimento, i.Status,
                 i.ConexaoBancaria!.NomeInstituicao, i.AtualizadoEm))
             .ToListAsync(ct);
+        var conversor = await _cambio.ObterConversorAsync(ct);
+        return lista.Select(i => i with { SaldoEmReais = conversor.ParaReais(i.Saldo, i.Moeda) }).ToList();
+    }
 }

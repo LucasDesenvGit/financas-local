@@ -163,9 +163,20 @@ public record SalvarContaAgendadaDto(
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 
 /* ----------------------------- Investimentos ----------------------------- */
+/// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
 public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo, string? Emissor,
-    string Moeda, decimal Saldo, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
+    string Moeda, decimal Saldo, decimal? SaldoEmReais, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
     DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
+
+/* ----------------------------- Câmbio ----------------------------- */
+public record MoedaDto(string Codigo, string Nome);
+
+/// <summary>Reais por 1 unidade da moeda. <c>Data</c> é o dia útil da cotação, que pode ser anterior a <c>DataSolicitada</c>.</summary>
+public record CotacaoMoedaDto(string Moeda, DateOnly DataSolicitada, DateOnly Data, decimal Compra, decimal Venda,
+    string Fonte);
+
+/// <summary>Última cotação guardada de cada moeda (disponível mesmo sem internet).</summary>
+public record CotacoesAtuaisDto(DateTime? AtualizadoEm, List<CotacaoMoedaDto> Cotacoes);
 
 /* ----------------------------- Empréstimos e financiamentos ----------------------------- */
 /// <summary>Saldo devedor e parcela mensal dos contratos em aberto, separados por natureza.</summary>
@@ -280,9 +291,13 @@ public record SelicResumoDto(decimal? MetaAnual, decimal? Acumulado12Meses, deci
 
 public record UltimoProventoDto(DateOnly DataCom, decimal ValorPorCota);
 
-public record PosicaoAtivoDto(int Id, string Ticker, string? Nome, TipoAtivo Tipo,
+/// <summary>
+/// Posição de um ativo da carteira manual. <c>PrecoMedio</c>, <c>PrecoAtual</c>, <c>PrecoAnterior</c> e o último provento
+/// estão na moeda do ativo; custo, valores e resultados estão em reais.
+/// </summary>
+public record PosicaoAtivoDto(int Id, string Ticker, string? Nome, TipoAtivo Tipo, string Moeda,
     decimal Quantidade, decimal PrecoMedio, decimal Custo,
-    decimal? PrecoAtual, decimal? PrecoAnterior, decimal? VariacaoDia,
+    decimal? PrecoAtual, decimal? PrecoAtualEmReais, decimal? PrecoAnterior, decimal? VariacaoDia,
     decimal ValorMercado, decimal Valorizacao, decimal? ValorizacaoPercentual,
     decimal LucroRealizado, decimal ProventosRecebidos, decimal Proventos12Meses, decimal? DividendYield12Meses,
     decimal ResultadoTotal, decimal? ResultadoTotalPercentual,
@@ -299,31 +314,44 @@ public record EvolucaoCarteiraDto(int Ano, int Mes, decimal Aplicado, decimal Ap
 
 public record DistribuicaoInvestimentoDto(string Nome, decimal Valor);
 
-/// <summary>Investimento vindo do Open Finance comparado com a Selic do período.</summary>
+/// <summary>
+/// Investimento vindo do Open Finance comparado com a Selic do período. Saldo, valor aplicado e rentabilidade
+/// estão na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.
+/// </summary>
 public record InvestimentoComparadoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo,
-    string? Emissor, string? NomeInstituicao, decimal Saldo, decimal? ValorAplicado, DateOnly? DataAplicacao,
+    string? Emissor, string? NomeInstituicao, string Moeda, decimal Saldo, decimal? SaldoEmReais,
+    decimal? ValorAplicado, DateOnly? DataAplicacao,
     DateOnly? DataVencimento, decimal? TaxaAnual, decimal? Rentabilidade, decimal? SelicNoPeriodo,
     decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm);
 
 public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVariavel, List<PosicaoAtivoDto> Posicoes,
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
     decimal TotalInvestimentosManuais, decimal TotalGeral, List<DistribuicaoInvestimentoDto> Distribuicao,
-    DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados);
+    DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
+    List<string> MoedasSemCotacao);
 
+/// <summary>Preço, taxas e preço atual na moeda do ativo; <c>ValorTotal</c>, <c>ValorAtual</c> e Selic em reais.</summary>
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,
-    decimal Quantidade, decimal PrecoUnitario, decimal Taxas, decimal ValorTotal, string? Observacao,
+    decimal Quantidade, decimal PrecoUnitario, decimal Taxas, string Moeda, decimal Cambio, decimal ValorTotal,
+    string? Observacao,
     decimal? PrecoAtual, decimal? VariacaoPreco, decimal? ValorAtual, decimal ValorSeFosseSelic,
     OrigemOperacao Origem);
 
+/// <summary>
+/// Preço e taxas na moeda do ativo. <c>Moeda</c> só vale no primeiro lançamento do ativo (padrão BRL = B3).
+/// <c>Cambio</c> = reais por 1 unidade da moeda na operação; ignorado em BRL e, se vier vazio, usa a PTAX da data.
+/// </summary>
 public record SalvarOperacaoDto(
-    [Required, StringLength(12, MinimumLength = 3)] string Ticker,
+    [Required, StringLength(12, MinimumLength = 1)] string Ticker,
     TipoAtivo? TipoAtivo,
     TipoOperacao Tipo,
     DateOnly Data,
     [Range(0.000001, 1000000000.0)] decimal Quantidade,
     [Range(0.0, 100000000.0)] decimal PrecoUnitario,
     [Range(0.0, 10000000.0)] decimal Taxas,
-    [StringLength(300)] string? Observacao);
+    [StringLength(300)] string? Observacao,
+    [StringLength(3)] string? Moeda = null,
+    [Range(0.000001, 100000.0)] decimal? Cambio = null);
 
 public record AtualizarAtivoDto(
     [StringLength(150)] string? Nome,

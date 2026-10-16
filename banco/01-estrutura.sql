@@ -388,6 +388,8 @@ CREATE TABLE IF NOT EXISTS Ativo
     Ticker              TEXT    NOT NULL,
     Nome                TEXT    NULL,
     Tipo                INTEGER NOT NULL CONSTRAINT DF_Ativo_Tipo DEFAULT 1,
+    -- Moeda do ativo (ISO 4217): BRL = B3; outra = ativo no exterior. Bancos antigos: coluna via 2-criar-banco.sh.
+    Moeda               TEXT    NOT NULL CONSTRAINT DF_Ativo_Moeda DEFAULT 'BRL',
     PrecoAtual          TEXT    NULL,
     PrecoAnterior       TEXT    NULL,
     PrecoAtualizadoEm   TEXT    NULL,
@@ -409,6 +411,8 @@ CREATE TABLE IF NOT EXISTS OperacaoAtivo
     Quantidade          TEXT    NOT NULL,
     PrecoUnitario       TEXT    NOT NULL,
     Taxas               TEXT    NOT NULL CONSTRAINT DF_OperacaoAtivo_Taxas DEFAULT '0',
+    -- Reais por 1 unidade da moeda do ativo na operação (1 para BRL). Bancos antigos: coluna via 2-criar-banco.sh.
+    Cambio              TEXT    NOT NULL CONSTRAINT DF_OperacaoAtivo_Cambio DEFAULT '1',
     Observacao          TEXT    NULL,
     Origem              INTEGER NOT NULL CONSTRAINT DF_OperacaoAtivo_Origem DEFAULT 1,
     -- Id da movimentação do investimento na Pluggy (operações importadas do Open Finance).
@@ -463,4 +467,16 @@ CREATE TABLE IF NOT EXISTS IndiceMensal
     Mes         TEXT NOT NULL,
     Fechamento  TEXT NOT NULL,
     CONSTRAINT PK_IndiceMensal PRIMARY KEY (Codigo, Mes)
+);
+
+/* Cotação PTAX de fechamento (reais por 1 unidade da moeda), Banco Central/Olinda — guardada para uso offline
+   e atualizada automaticamente pela API (CambioHostedService). */
+CREATE TABLE IF NOT EXISTS CotacaoMoeda
+(
+    Moeda   TEXT NOT NULL,
+    Data    TEXT NOT NULL,
+    Compra  TEXT NOT NULL,
+    Venda   TEXT NOT NULL,
+    AtualizadoEm TEXT NOT NULL,
+    CONSTRAINT PK_CotacaoMoeda PRIMARY KEY (Moeda, Data)
 );

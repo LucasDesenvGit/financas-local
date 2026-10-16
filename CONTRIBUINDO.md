@@ -24,7 +24,7 @@ git push -u origin feature/minha-melhoria
 gh pr create --base develop --fill
 ```
 
-Para publicar uma versão: PR de `develop` para `main`, merge, tag (`git tag v1.1.0; git push --tags`) e `scripts/3-publicar.sh`.
+Para publicar uma versão: PR de `develop` para `main`, merge, tag (`git tag v1.1.0; git push --tags`) e `scripts/3-publicar-atualizar.sh`.
 
 ## Mensagens de commit
 

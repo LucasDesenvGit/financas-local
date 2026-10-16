@@ -6,6 +6,9 @@ public class Ativo
     public string Ticker { get; set; } = string.Empty;
     public string? Nome { get; set; }
     public TipoAtivo Tipo { get; set; } = TipoAtivo.Fii;
+    /// <summary>Moeda do ativo (ISO 4217). BRL = B3; outra moeda = ativo no exterior. Não muda depois de criado.</summary>
+    public string Moeda { get; set; } = "BRL";
+    /// <summary>Última cotação, na moeda do ativo.</summary>
     public decimal? PrecoAtual { get; set; }
     public decimal? PrecoAnterior { get; set; }
     public DateTime? PrecoAtualizadoEm { get; set; }
@@ -26,8 +29,12 @@ public class OperacaoAtivo
     public TipoOperacao Tipo { get; set; }
     public DateOnly Data { get; set; }
     public decimal Quantidade { get; set; }
+    /// <summary>Preço por cota, na moeda do ativo.</summary>
     public decimal PrecoUnitario { get; set; }
+    /// <summary>Taxas e corretagem, na moeda do ativo.</summary>
     public decimal Taxas { get; set; }
+    /// <summary>Reais por 1 unidade da moeda do ativo nesta operação (1 para ativos em reais).</summary>
+    public decimal Cambio { get; set; } = 1m;
     public string? Observacao { get; set; }
     public OrigemOperacao Origem { get; set; } = OrigemOperacao.Manual;
     /// <summary>Id da movimentação do investimento na Pluggy (operações importadas do Open Finance).</summary>
@@ -44,6 +51,7 @@ public class ProventoAtivo
     public int Id { get; set; }
     public int AtivoId { get; set; }
     public DateOnly DataCom { get; set; }
+    /// <summary>Valor por cota, na moeda do ativo.</summary>
     public decimal ValorPorCota { get; set; }
 
     public Ativo? Ativo { get; set; }

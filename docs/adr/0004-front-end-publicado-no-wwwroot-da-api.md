@@ -20,5 +20,5 @@ Publicamos o build do Angular dentro do `wwwroot` da API: site e API têm a mesm
 ## Consequências
 
 - **Positivas:** sem CORS; cookies com prefixo `__Host-`, `HttpOnly`, `Secure` e `SameSite=Strict`; CSRF resolvido com o par de cookies/cabeçalho `X-XSRF-TOKEN` que o `HttpClient` do Angular já envia; CSP restritiva possível porque nada vem de outra origem; um único processo e um único certificado.
-- **Negativas:** front e API são publicados juntos (`scripts/3-publicar.sh` compila os dois); em desenvolvimento é preciso o proxy do `npm start` (`/api` → API) para simular a mesma origem.
+- **Negativas:** front e API são publicados juntos (`scripts/3-publicar-atualizar.sh` compila os dois); em desenvolvimento é preciso o proxy do `npm start` (`/api` → API) para simular a mesma origem.
 - **Na prática:** o front-end chama a API só pelo `ApiService`, com caminhos relativos `/api/...`; nenhum script, fonte ou recurso de terceiros pode ser carregado no front-end.
