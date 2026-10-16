@@ -19,6 +19,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Novas colunas `Ativo.Moeda` e `OperacaoAtivo.Cambio`: rode `scripts/2-criar-banco.sh` (primeiro uso de `adicionar_coluna_se_ausente`).
 
 ### Correções
+- Janelas sobrepostas (ex.: editar uma operação a partir da lista de operações): a aberta por último fica por cima, e o Esc fecha só ela — antes, a edição abria atrás e um Esc fechava todas.
 - Investimentos: a tela não carregava (erro 500) quando o Banco Central ou outra fonte demorava mais que o tempo limite; agora segue sem o dado, como já fazia sem internet. Mesmo ajuste nas cotações, no câmbio, na importação pelo extrato e na sincronização do Open Finance.
 - Publicação no Linux: `scripts/3-publicar.sh` passa a se chamar `scripts/3-publicar-atualizar.sh` e reinicia o serviço quando ele já está rodando (antes, continuava com a versão antiga em memória).
 - Validação do código da B3 volta ao formato estrito (ex.: PETR4, MXRF11); ativos de fora da B3, como AOK, entram escolhendo a moeda (ADR 0009).
