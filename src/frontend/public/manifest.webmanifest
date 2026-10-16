@@ -1,0 +1,14 @@
+{
+  "name": "Finanças Local",
+  "short_name": "Finanças",
+  "description": "Gerenciador financeiro pessoal que roda no seu computador.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#f5f4fa",
+  "theme_color": "#6267da",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
