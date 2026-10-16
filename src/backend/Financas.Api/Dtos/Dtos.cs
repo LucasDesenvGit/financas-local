@@ -49,6 +49,9 @@ public class FiltroTransacoesDto
     public DateOnly? Fim { get; set; }
     public int? ContaId { get; set; }
     public int? CategoriaId { get; set; }
+    /// <summary>Várias categorias (?categoriaIds=1&amp;categoriaIds=2); cada uma inclui as subcategorias.</summary>
+    [MaxLength(200)] public List<int>? CategoriaIds { get; set; }
+    /// <summary>Sem categoria; junto com categorias, soma as duas coisas (OU).</summary>
     public bool SemCategoria { get; set; }
     public bool SomenteEmergencias { get; set; }
     public TipoTransacao? Tipo { get; set; }

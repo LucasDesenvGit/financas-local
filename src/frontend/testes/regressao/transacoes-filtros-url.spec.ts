@@ -14,20 +14,20 @@ describe('Regressão: filtros de Transações na URL', () => {
     const t = await abrirTransacoes('/transacoes?categoria=12&conta=3&tipo=despesa&inicio=2026-09-01&fim=2026-09-30&emergencias=1&busca=mercado');
     expect(t.buscas).toHaveLength(1);
     expect(t.buscas[0]).toMatchObject({
-      categoriaId: 12, semCategoria: false, contaId: 3, tipo: TipoTransacao.Despesa,
+      categoriaIds: [12], semCategoria: false, contaId: 3, tipo: TipoTransacao.Despesa,
       inicio: '2026-09-01', fim: '2026-09-30', somenteEmergencias: true, busca: 'mercado', pagina: 1
     });
   });
 
   it('categoria=sem filtra "Sem categoria"', async () => {
     const t = await abrirTransacoes('/transacoes?categoria=sem');
-    expect(t.buscas[0]).toMatchObject({ semCategoria: true, categoriaId: null });
+    expect(t.buscas[0]).toMatchObject({ semCategoria: true, categoriaIds: [] });
   });
 
   it('ignora cada parâmetro inválido sozinho e limpa a URL', async () => {
     const t = await abrirTransacoes('/transacoes?pagina=abc&busca=%20%20&emergencias=talvez&inicio=2026-02-30&tipo=xyz&categoria=999&conta=77');
     expect(t.buscas[0]).toMatchObject({
-      ...mesAtual, categoriaId: null, semCategoria: false, contaId: null, tipo: null, somenteEmergencias: false, pagina: 1
+      ...mesAtual, categoriaIds: [], semCategoria: false, contaId: null, tipo: null, somenteEmergencias: false, pagina: 1
     });
     expect(t.buscas[0].busca ?? '').toBe('');
     expect(t.router.url).toBe('/transacoes');
@@ -89,7 +89,42 @@ describe('Regressão: filtros de Transações na URL', () => {
     const t = await abrirTransacoes('/transacoes?tipo=despesa&busca=mercado&categoria=12');
     t.tela.limparFiltros();
     await t.assentar();
-    expect(t.buscas.at(-1)).toMatchObject({ ...mesAtual, tipo: null, busca: '', categoriaId: null, semCategoria: false });
+    expect(t.buscas.at(-1)).toMatchObject({ ...mesAtual, tipo: null, busca: '', categoriaIds: [], semCategoria: false });
     expect(t.router.url).toBe('/transacoes');
+  });
+
+  describe('várias categorias', () => {
+    it('lê a lista separada por vírgula, com "sem categoria" junto', async () => {
+      const t = await abrirTransacoes('/transacoes?categoria=12,sem,21');
+      expect(t.buscas[0]).toMatchObject({ categoriaIds: [12, 21], semCategoria: true });
+    });
+
+    it('link antigo com uma categoria só continua funcionando', async () => {
+      const t = await abrirTransacoes('/transacoes?categoria=20');
+      expect(t.buscas[0]).toMatchObject({ categoriaIds: [20], semCategoria: false });
+      expect(parametrosDaUrl(t.router)).toEqual({ categoria: '20' });
+    });
+
+    it('descarta só as categorias inválidas ou repetidas da lista', async () => {
+      const t = await abrirTransacoes('/transacoes?categoria=12,999,abc,12,,20');
+      expect(t.buscas[0]).toMatchObject({ categoriaIds: [12, 20] });
+      expect(parametrosDaUrl(t.router)).toEqual({ categoria: '12,20' });
+    });
+
+    it('marcar categorias grava a lista na URL, na ordem em que foram marcadas', async () => {
+      const t = await abrirTransacoes();
+      t.tela.aplicarFiltroCategorias(['20', 'sem', '12']);
+      await t.assentar();
+      expect(t.buscas.at(-1)).toMatchObject({ categoriaIds: [20, 12], semCategoria: true, pagina: 1 });
+      expect(parametrosDaUrl(t.router)).toEqual({ categoria: '20,sem,12' });
+    });
+
+    it('desmarcar tudo volta a "Todas" e tira a categoria da URL', async () => {
+      const t = await abrirTransacoes('/transacoes?categoria=12,20');
+      t.tela.aplicarFiltroCategorias([]);
+      await t.assentar();
+      expect(t.buscas.at(-1)).toMatchObject({ categoriaIds: [], semCategoria: false });
+      expect(t.router.url).toBe('/transacoes');
+    });
   });
 });

@@ -21,7 +21,9 @@ export class ApiService {
   private params(obj: object): HttpParams {
     let p = new HttpParams();
     for (const [chave, valor] of Object.entries(obj)) {
-      if (valor !== null && valor !== undefined && valor !== '') p = p.set(chave, String(valor));
+      // Lista vira a chave repetida (?categoriaIds=1&categoriaIds=2), que é o que o ASP.NET entende como List<int>.
+      if (Array.isArray(valor)) for (const v of valor) p = p.append(chave, String(v));
+      else if (valor !== null && valor !== undefined && valor !== '') p = p.set(chave, String(valor));
     }
     return p;
   }

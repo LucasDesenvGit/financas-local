@@ -37,9 +37,13 @@ public class TransacoesController : BaseController
         if (f.Inicio is { } inicio) q = q.Where(t => t.Data >= inicio);
         if (f.Fim is { } fim) q = q.Where(t => t.Data <= fim);
         if (f.ContaId is { } contaId) q = q.Where(t => t.ContaId == contaId);
-        if (f.SemCategoria) q = q.Where(t => t.CategoriaId == null);
-        else if (f.CategoriaId is { } categoriaId)
-            q = q.Where(t => t.CategoriaId == categoriaId || t.Categoria!.CategoriaPaiId == categoriaId);
+        // Categorias marcadas (cada uma com as subcategorias) e/ou "sem categoria": basta atender a uma delas.
+        var categorias = (f.CategoriaIds ?? []).Concat(f.CategoriaId is { } c ? [c] : []).Distinct().ToList();
+        var semCategoria = f.SemCategoria;
+        if (semCategoria || categorias.Count > 0)
+            q = q.Where(t => (semCategoria && t.CategoriaId == null)
+                             || (t.CategoriaId != null && (categorias.Contains(t.CategoriaId.Value)
+                                 || (t.Categoria!.CategoriaPaiId != null && categorias.Contains(t.Categoria.CategoriaPaiId.Value)))));
         if (f.Tipo is { } tipo) q = q.Where(t => t.Tipo == tipo);
         if (f.SomenteEmergencias) q = q.Where(t => t.Emergencia);
         if (!string.IsNullOrWhiteSpace(f.Busca))
