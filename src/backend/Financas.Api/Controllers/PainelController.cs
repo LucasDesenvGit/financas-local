@@ -18,9 +18,10 @@ public class PainelController : BaseController
     private readonly ConfiguracaoService _config;
     private readonly CarteiraService _carteira;
     private readonly EmprestimoService _emprestimos;
+    private readonly ReservaService _reservas;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
-        CarteiraService carteira, EmprestimoService emprestimos)
+        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas)
     {
         _db = db;
         _contas = contas;
@@ -28,6 +29,7 @@ public class PainelController : BaseController
         _config = config;
         _carteira = carteira;
         _emprestimos = emprestimos;
+        _reservas = reservas;
     }
 
     [HttpGet]
@@ -88,6 +90,12 @@ public class PainelController : BaseController
         if (composicao.MoedasSemCotacao.Count > 0)
             alertas.Add($"Investimentos em {string.Join(", ", composicao.MoedasSemCotacao)} ficaram fora do patrimônio: "
                 + "não há cotação de câmbio guardada para essa moeda.");
+
+        var reservasAConferir = (await _reservas.ListarAsync(ct))
+            .Where(r => r.PodeTerSaldoAnterior || r.ConferenciaAntiga).Select(r => r.Nome).ToList();
+        if (reservasAConferir.Count > 0)
+            alertas.Add($"Confira o saldo da(s) reserva(s) {string.Join(", ", reservasAConferir)} em Investimentos › Reservas: "
+                + "o valor estimado pelo extrato pode estar diferente do real.");
 
         var limiteConsentimento = DateTime.UtcNow.AddDays(30);
         var conexoes = await _db.ConexoesBancarias.AsNoTracking().Where(c => c.Ativa)

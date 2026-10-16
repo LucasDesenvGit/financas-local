@@ -17,6 +17,15 @@ public class ReservaService
 
     public const int TamanhoMaximoNome = 100;
 
+    /// <summary>Conferência mais velha que isso é sinalizada para ser refeita.</summary>
+    public const int DiasConferenciaAntiga = 30;
+
+    /// <summary>
+    /// Reserva cujo primeiro lançamento está até este número de dias depois do primeiro lançamento importado
+    /// da conta provavelmente já tinha dinheiro antes da janela importada.
+    /// </summary>
+    private const int ToleranciaInicioJanela = 7;
+
     private readonly FinancasDbContext _db;
 
     public ReservaService(FinancasDbContext db) => _db = db;
@@ -55,6 +64,15 @@ public class ReservaService
             .Select(r => new { r.ContaId, NomeConta = r.Conta!.Nome, r.Nome, r.SaldoConferido, r.DataConferencia })
             .ToListAsync(ct);
 
+        // Primeiro lançamento importado de cada conta = início da janela que a sincronização trouxe.
+        var idsContas = movimentos.Select(m => m.ContaId).Distinct().ToList();
+        var inicioJanela = await _db.Transacoes.AsNoTracking()
+            .Where(t => idsContas.Contains(t.ContaId))
+            .GroupBy(t => t.ContaId)
+            .Select(g => new { ContaId = g.Key, Inicio = g.Min(t => t.Data) })
+            .ToDictionaryAsync(x => x.ContaId, x => x.Inicio, ct);
+        var hoje = Relogio.Hoje;
+
         var grupos = movimentos
             .Select(m => new { m.ContaId, m.NomeConta, Nome = ExtrairNome(m.Descricao), m.Data, m.Valor })
             .Where(m => m.Nome is not null)
@@ -78,14 +96,21 @@ public class ReservaService
             var retirado = considerados.Where(m => m.Valor > 0).Sum(m => m.Valor);
             var saldo = (conferencia?.SaldoConferido ?? 0m) + guardado - retirado;
 
+            DateOnly? primeiro = lista.Count > 0 ? lista.Min(m => m.Data) : null;
+            var podeTerSaldoAnterior = conferencia is null && primeiro is DateOnly p
+                && inicioJanela.TryGetValue(chave.ContaId, out var inicio)
+                && p.DayNumber - inicio.DayNumber <= ToleranciaInicioJanela;
+            var conferenciaAntiga = conferencia is not null
+                && hoje.DayNumber - conferencia.DataConferencia.DayNumber > DiasConferenciaAntiga;
+
             reservas.Add(new ReservaDto(chave.ContaId,
                 conferencia?.NomeConta ?? lista[0].NomeConta,
                 conferencia?.Nome ?? lista.OrderByDescending(m => m.Data).First().Nome!,
                 Math.Round(Math.Max(0, saldo), 2), Math.Round(guardado, 2), Math.Round(retirado, 2),
-                lista.Count,
-                lista.Count > 0 ? lista.Min(m => m.Data) : null,
+                lista.Count, primeiro,
                 lista.Count > 0 ? lista.Max(m => m.Data) : null,
-                conferencia?.SaldoConferido, conferencia?.DataConferencia));
+                conferencia?.SaldoConferido, conferencia?.DataConferencia,
+                podeTerSaldoAnterior, conferenciaAntiga));
         }
 
         return reservas.OrderByDescending(r => r.Saldo).ThenBy(r => r.Nome).ToList();

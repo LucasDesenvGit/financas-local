@@ -30,6 +30,9 @@ Usamos **extrato com conferência manual opcional**:
 - As reservas são **descobertas pelo extrato**, sem cadastro. Vêm de lançamentos efetivados das contas Open Finance que entram no patrimônio, com descrição original começando por "Dinheiro reservado " ou "Dinheiro retirado ". O nome da reserva é o resto da descrição, sem diferenciar maiúsculas de minúsculas.
 - **Saldo estimado** = Σ(−valor) desses lançamentos, nunca negativo. Valor negativo na conta é dinheiro indo para a reserva; positivo é dinheiro voltando.
 - **Com conferência** (tabela `ReservaConferencia`: conta, nome, saldo conferido, data): saldo = saldo conferido + Σ(−valor) dos lançamentos com data **posterior** à da conferência. Os lançamentos do próprio dia são considerados já incluídos no valor conferido.
+- **Avisos para conferir**, na aba Reservas e nos alertas do Painel:
+  - **pode haver saldo anterior:** a reserva não tem conferência e o primeiro lançamento dela está até 7 dias depois do primeiro lançamento importado da conta, ou seja, no início da janela que a sincronização trouxe;
+  - **conferência antiga:** a última conferência tem mais de 30 dias.
 - O cálculo é feito **na leitura** (`ReservaService`), não na sincronização. Nada é gravado além da conferência.
 - O total das reservas entra no **total investido e no patrimônio** (`ComposicaoInvestimentos.Reservas`), na **reserva de emergência** (saúde financeira) e na **distribuição** da carteira, como "Reservas". A página de Investimentos ganha a aba "Reservas", com a conferência.
 
@@ -42,6 +45,8 @@ Usamos **extrato com conferência manual opcional**:
   - sem conferência, o saldo é uma estimativa por baixo (dinheiro anterior à janela importada e rendimento não retirado ficam de fora);
   - depende do texto que o Mercado Pago usa no extrato: se a descrição mudar, as reservas somem da lista até os prefixos em `ReservaService` serem ajustados;
   - outra instituição com o mesmo texto no extrato também vira reserva (aceitável: o texto é específico);
+  - dinheiro que sai da reserva sem passar pela conta (ex.: compras pagas direto com o "Cofrinho Mercado Livre") não aparece no extrato: só a conferência corrige, e o aviso de 30 dias existe para lembrar disso;
+  - o aviso de saldo anterior é uma heurística: uma reserva criada de fato no início da janela também é sinalizada até ser conferida;
   - lançamento editado ou excluído à mão no extrato continua contando pela descrição original enquanto existir;
   - não há histórico do saldo da reserva, só o valor atual.
 - **Na prática:**

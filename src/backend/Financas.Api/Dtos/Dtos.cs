@@ -336,10 +336,13 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
 /// depois de <c>DataConferencia</c>; sem ela, só a soma dos movimentos importados (fica abaixo do real se a
 /// reserva já tinha dinheiro antes do primeiro lançamento importado ou se o rendimento ainda não foi retirado).
 /// <c>Guardado</c> e <c>Retirado</c> consideram os mesmos movimentos que entram no saldo.
+/// <c>PodeTerSaldoAnterior</c>: sem conferência e o primeiro lançamento da reserva está no início da janela importada
+/// da conta (a reserva provavelmente já tinha dinheiro antes). <c>ConferenciaAntiga</c>: conferida há mais de
+/// <c>ReservaService.DiasConferenciaAntiga</c> dias.
 /// </summary>
 public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Saldo, decimal Guardado, decimal Retirado,
     int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
-    DateOnly? DataConferencia);
+    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga);
 
 /// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
 public record ConferirReservaDto(

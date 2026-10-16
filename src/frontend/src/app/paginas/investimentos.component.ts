@@ -112,7 +112,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           Open Finance ({{ d.openFinance.length }})</button>
         @if (d.reservas.length) {
           <button type="button" role="tab" [class.ativo]="aba() === 'reservas'" (click)="aba.set('reservas')">
-            Reservas ({{ d.reservas.length }})</button>
+            Reservas ({{ d.reservas.length }})
+            @if (reservasAConferir() > 0) { <span class="etiqueta etiqueta-alerta" title="Reservas para conferir">!</span> }
+          </button>
         }
       </div>
 
@@ -323,16 +325,24 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <td class="direita valor">{{ r.saldo | currency }}</td>
                     <td>
                       @if (r.dataConferencia) {
-                        <span class="etiqueta etiqueta-sucesso">conferido</span>
+                        @if (r.conferenciaAntiga) {
+                          <span class="etiqueta etiqueta-alerta">conferido há mais de 30 dias</span>
+                        } @else {
+                          <span class="etiqueta etiqueta-sucesso">conferido</span>
+                        }
                         <br><small class="texto-suave">{{ r.saldoConferido | currency }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
                           + lançamentos depois</small>
                       } @else {
                         <span class="etiqueta etiqueta-alerta">estimado</span>
                         <br><small class="texto-suave">só pelos lançamentos importados</small>
+                        @if (r.podeTerSaldoAnterior) {
+                          <br><small class="negativo">Pode haver saldo de antes do 1º lançamento importado. Confira.</small>
+                        }
                       }
                     </td>
                     <td class="direita nowrap">
-                      <button type="button" class="link" (click)="abrirConferencia(r)">conferir saldo</button>
+                      <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
+                        (click)="abrirConferencia(r)">conferir saldo</button>
                     </td>
                   </tr>
                 }
@@ -627,6 +637,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     .tabela-carteira td:first-child { white-space: normal; min-width: 160px; }
     tr.encerrada td { opacity: 0.6; }
     .nowrap { white-space: nowrap; }
+    .destaque-conferir { font-weight: 600; }
     .nowrap .link + .link { margin-left: 10px; }
     .nota { font-size: 0.82rem; margin: 12px 2px 0; }
     .resumo-ativo { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -667,6 +678,8 @@ export class InvestimentosComponent implements OnInit {
   readonly importacaoAberta = signal(false);
   readonly carregandoSugestoes = signal(false);
   readonly linhasImportacao = signal<LinhaImportacao[]>([]);
+  readonly reservasAConferir = computed(() =>
+    (this.dados()?.reservas ?? []).filter((r) => r.podeTerSaldoAnterior || r.conferenciaAntiga).length);
   readonly quantidadeFiis = computed(() => this.abertas().filter((p) => p.tipo === TipoAtivo.Fii).length);
 
   formOp: SalvarOperacao | null = null;
