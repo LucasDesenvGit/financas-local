@@ -180,7 +180,7 @@ public partial class ExtratoCarteiraService
         if (novosAtivos.Count > 0)
         {
             try { await _cotacoes.AtualizarAsync(novosAtivos.Select(a => a.Id).ToList(), ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* cotação fica para depois */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* cotação fica para depois */ }
         }
         return criadas;
     }

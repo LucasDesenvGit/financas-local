@@ -66,7 +66,7 @@ public class CarteiraController : BaseController
         if (resultado.AtivosCriados > 0 || resultado.OperacoesImportadas > 0)
         {
             try { await _cotacoes.AtualizarAsync(null, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* as cotações podem ser atualizadas depois */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* as cotações podem ser atualizadas depois */ }
         }
         return resultado;
     }
@@ -175,7 +175,7 @@ public class CarteiraController : BaseController
         if (novo)
         {
             try { await _cotacoes.AtualizarAsync(new[] { ativo.Id }, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* segue com o preço médio */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* segue com o preço médio */ }
         }
         return Ok(new { op.Id, ativo.Ticker, AtivoId = ativo.Id });
     }
@@ -249,7 +249,7 @@ public class CarteiraController : BaseController
         if (!dto.PrecoManual && ativo.FonteCotacao == "Manual")
         {
             try { await _cotacoes.AtualizarAsync(new[] { ativo.Id }, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* mantém o último preço */ }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* mantém o último preço */ }
         }
         return NoContent();
     }

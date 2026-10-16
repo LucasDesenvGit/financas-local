@@ -78,7 +78,7 @@ public partial class CambioService
                 return moedas;
             }
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             // Sem internet ou API indisponível: segue com a lista em cache.
             _logger.LogWarning(ex, "Não foi possível consultar a lista de moedas no Banco Central.");
@@ -109,7 +109,7 @@ public partial class CambioService
                 novas += n;
                 corrigidas += c;
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Não foi possível atualizar a cotação de {Moeda} no Banco Central.", moeda);
                 _db.ChangeTracker.Clear();
@@ -172,7 +172,7 @@ public partial class CambioService
                 await _db.SaveChangesAsync(ct);
             }
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogWarning(ex, "Não foi possível baixar o histórico de {Moeda} no Banco Central.", moeda);
             _db.ChangeTracker.Clear();
@@ -228,7 +228,7 @@ public partial class CambioService
                 if (dia == hoje) await _config.DefinirAsync(chaveConsulta, DateTime.UtcNow.ToString("O"), ct: ct);
                 await _db.SaveChangesAsync(ct);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Não foi possível consultar a cotação de {Moeda} no Banco Central.", moeda);
                 _db.ChangeTracker.Clear();

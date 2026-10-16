@@ -204,8 +204,11 @@ WantedBy=default.target
 EOF
         if command -v systemctl >/dev/null 2>&1; then
             systemctl --user daemon-reload
-            systemctl --user enable --now financaslocal.service
-            ok 'servico systemd (usuario) registrado e iniciado'
+            systemctl --user enable financaslocal.service
+            # restart (e nao "enable --now"): "--now" so inicia se estiver parado, e um servico ja rodando
+            # continuaria com a versao antiga carregada em memoria depois de publicar.
+            systemctl --user restart financaslocal.service
+            ok 'servico systemd (usuario) registrado e reiniciado com a versao publicada'
         else
             aviso "systemctl nao encontrado; unidade escrita em $unidade mas nao habilitada automaticamente."
         fi

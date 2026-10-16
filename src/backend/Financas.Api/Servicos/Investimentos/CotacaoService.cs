@@ -98,7 +98,7 @@ public partial class CotacaoService
             {
                 cotacao = await YahooAsync(exterior ? ativo.Ticker : ativo.Ticker + ".SA", primeiraOperacao, ct);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Falha ao consultar {Ticker} no Yahoo Finance.", ativo.Ticker);
             }
@@ -120,7 +120,7 @@ public partial class CotacaoService
                 {
                     cotacao = await BrapiAsync(ativo.Ticker, token, ct) ?? cotacao;
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+                catch (Exception ex) when (!ct.IsCancellationRequested)
                 {
                     _logger.LogWarning(ex, "Falha ao consultar {Ticker} na brapi.", ativo.Ticker);
                 }
@@ -170,7 +170,7 @@ public partial class CotacaoService
         if (ativos.Count > 0)
         {
             try { await AtualizarIndiceAsync(CodigoIfix, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Não foi possível atualizar o IFIX.");
             }
@@ -324,7 +324,7 @@ public partial class CotacaoService
             if (Resultado(doc) is not JsonElement r) return resultado;
             foreach (var (data, fechamento) in SerieFechamentos(r)) resultado[data] = fechamento;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogWarning(ex, "Falha ao consultar o histórico de {Ticker}.", ticker);
         }
