@@ -787,3 +787,12 @@ details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 55
   --destaque-texto: #fff4ef; --destaque-suave: #e0bfb3;
   --marca-fundo: linear-gradient(135deg, #ffb38f, #f7a8c4); --marca-texto: #4a1f12;
 }
+
+/* ---------------------------------------------------------------- Link de categoria (UX-3)
+   Nome de categoria em listas de resumo que abre /transacoes já filtrada. Em repouso parece o chip/texto de
+   sempre; no hover e no foco vira link. Altura mínima de 24px (WCAG 2.5.8). */
+a.chip-link, a.link-categoria { color: inherit; text-decoration: none; min-height: 24px; border-radius: 99px; }
+a.chip-link:hover, a.chip-link:focus-visible { background: var(--primaria-suave); color: var(--primaria-forte); text-decoration: underline; }
+a.link-categoria { display: inline-flex; align-items: center; }
+a.link-categoria:hover, a.link-categoria:focus-visible { color: var(--primaria-forte); text-decoration: underline; }
+a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }

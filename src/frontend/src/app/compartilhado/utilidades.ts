@@ -59,6 +59,14 @@ export function paramsTransacoes(c: ContextoTransacoes): Record<string, string> 
   return p;
 }
 
+/** Mês/ano vindo da URL (?ano=2026&mes=9), para o voltar do navegador reabrir a tela no mesmo período. */
+export function mesAnoDaUrl(params: { get(nome: string): string | null }): { ano: number; mes: number } | null {
+  const ano = Number(params.get('ano'));
+  const mes = Number(params.get('mes'));
+  return Number.isInteger(ano) && ano >= 2000 && ano <= 2100 && Number.isInteger(mes) && mes >= 1 && mes <= 12
+    ? { ano, mes } : null;
+}
+
 export const CORES_SUGERIDAS = [
   '#a7a3f5', '#92c8f0', '#8fd5b4', '#8fd8d8', '#b5cf9a', '#f2d98b',
   '#f8c09a', '#f4a89a', '#f5a3b0', '#f3b3d3', '#d4a5e8', '#a9b4c6'

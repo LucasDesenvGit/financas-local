@@ -1,13 +1,13 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Painel } from '../core/modelos';
+import { Painel, ValorCategoria } from '../core/modelos';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
+import { NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
@@ -107,7 +107,8 @@ import { Icones } from '../compartilhado/icones';
               @for (g of d.gastosPorCategoria.slice(0, 8); track g.nome) {
                 <li>
                   <span class="ponto" [style.background]="g.cor"></span>
-                  <span class="cresce">{{ g.nome }}</span>
+                  <a class="cresce link-categoria" routerLink="/transacoes" [queryParams]="linkCategoria(g)"
+                    [attr.aria-label]="'Ver transações de ' + g.nome">{{ g.nome }}</a>
                   <span class="valor">{{ g.valor | currency }}</span>
                   <span class="texto-suave pct">{{ g.valor / d.despesasMes * 100 | number: '1.0-0' }}%</span>
                 </li>
@@ -189,10 +190,18 @@ import { Icones } from '../compartilhado/icones';
 export class PainelComponent implements OnInit {
   readonly Icones = Icones;
   private readonly api = inject(ApiService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   readonly dados = signal<Painel | null>(null);
   readonly erro = signal<string | null>(null);
+
+  /** UX-3: despesas da categoria no mês selecionado no Painel ("Sem categoria" vai como categoria=sem). */
+  linkCategoria(g: ValorCategoria): Record<string, string> {
+    const { ano, mes } = this.periodo();
+    return paramsTransacoes({ categoriaId: g.categoriaId, inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' });
+  }
 
   readonly graficoCategorias = computed<ChartConfiguration<'doughnut'>>(() => {
     const itens = (this.dados()?.gastosPorCategoria ?? []).slice(0, 10);
@@ -225,11 +234,15 @@ export class PainelComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const daUrl = mesAnoDaUrl(this.rota.snapshot.queryParamMap);
+    if (daUrl) this.periodo.set(daUrl);
     this.carregar();
   }
 
   mudarPeriodo(p: MesAno): void {
     this.periodo.set(p);
+    // Mês na URL (replaceUrl, sem poluir o histórico): ao voltar de Transações, o Painel reabre no mesmo mês.
+    void this.router.navigate([], { relativeTo: this.rota, queryParams: { ano: p.ano, mes: p.mes }, replaceUrl: true });
     this.carregar();
   }
 
