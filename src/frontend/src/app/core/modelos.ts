@@ -321,7 +321,21 @@ export interface Carteira {
   selic: SelicResumo; rendaVariavel: TotaisRendaVariavel; posicoes: PosicaoAtivo[]; evolucao: EvolucaoCarteira[];
   openFinance: InvestimentoComparado[]; totalOpenFinance: number; totalInvestimentosManuais: number; totalGeral: number;
   distribuicao: { nome: string; valor: number }[]; cotacoesAtualizadasEm: string | null; cotacoesDesatualizadas: boolean;
-  openFinanceNaoRegistrados: number; moedasSemCotacao: string[];
+  openFinanceNaoRegistrados: number; moedasSemCotacao: string[]; reservas: Reserva[]; totalReservas: number;
+}
+
+/**
+ * Reserva ("cofrinho") que a instituição não informa pelo Open Finance, estimada pelos lançamentos
+ * "Dinheiro reservado/retirado {nome}" da conta. Com conferência: saldo conferido + movimentos depois da data.
+ */
+export interface Reserva {
+  contaId: number; nomeConta: string; nome: string; saldo: number; guardado: number; retirado: number;
+  movimentos: number; primeiroMovimento: string | null; ultimoMovimento: string | null;
+  saldoConferido: number | null; dataConferencia: string | null;
+  /** Sem conferência e o 1º lançamento está no início da janela importada: provavelmente já havia saldo antes. */
+  podeTerSaldoAnterior: boolean;
+  /** Conferida há mais de 30 dias. */
+  conferenciaAntiga: boolean;
 }
 
 export interface ResultadoImportacaoCarteira {

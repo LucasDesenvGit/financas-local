@@ -480,3 +480,20 @@ CREATE TABLE IF NOT EXISTS CotacaoMoeda
     AtualizadoEm TEXT NOT NULL,
     CONSTRAINT PK_CotacaoMoeda PRIMARY KEY (Moeda, Data)
 );
+
+/* Saldo real de uma reserva ("cofrinho") conferido pelo usuário. A instituição não informa esse saldo pelo
+   Open Finance: a API o estima pelos lançamentos "Dinheiro reservado/retirado {Nome}" da conta, a partir
+   desta conferência (lançamentos até DataConferencia já estão em SaldoConferido). */
+CREATE TABLE IF NOT EXISTS ReservaConferencia
+(
+    Id              INTEGER NOT NULL CONSTRAINT PK_ReservaConferencia PRIMARY KEY AUTOINCREMENT,
+    ContaId         INTEGER NOT NULL,
+    Nome            TEXT    NOT NULL,
+    SaldoConferido  TEXT    NOT NULL,
+    DataConferencia TEXT    NOT NULL,
+    -- Preenchido pela API (ReservaConferencia.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    AtualizadoEm    TEXT    NOT NULL,
+    CONSTRAINT CK_ReservaConferencia_Saldo CHECK (CAST(SaldoConferido AS REAL) >= 0),
+    CONSTRAINT FK_ReservaConferencia_Conta FOREIGN KEY (ContaId) REFERENCES Conta (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_ReservaConferencia_Conta_Nome ON ReservaConferencia (ContaId, Nome);

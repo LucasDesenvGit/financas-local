@@ -35,6 +35,7 @@ public class FinancasDbContext : DbContext
     public DbSet<PrecoMensalAtivo> PrecosMensaisAtivo => Set<PrecoMensalAtivo>();
     public DbSet<IndiceMensal> IndicesMensais => Set<IndiceMensal>();
     public DbSet<CotacaoMoeda> CotacoesMoeda => Set<CotacaoMoeda>();
+    public DbSet<ReservaConferencia> ReservasConferidas => Set<ReservaConferencia>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -331,6 +332,17 @@ public class FinancasDbContext : DbContext
                 .HasForeignKey(x => x.CategoriaId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.Conta).WithMany()
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        mb.Entity<ReservaConferencia>(e =>
+        {
+            e.ToTable("ReservaConferencia");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            e.Property(x => x.SaldoConferido).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.ContaId, x.Nome }).IsUnique();
+            e.HasOne(x => x.Conta).WithMany()
+                .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
