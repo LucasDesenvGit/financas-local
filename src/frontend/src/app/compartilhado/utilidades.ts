@@ -67,6 +67,22 @@ export function mesAnoDaUrl(params: { get(nome: string): string | null }): { ano
     ? { ano, mes } : null;
 }
 
+/**
+ * Tempo relativo curto, em português: "agora há pouco", "há 5 min", "há 2 h" (mesmo dia), "ontem",
+ * "há 3 dias" (até uma semana) e "em 02/10" depois disso.
+ */
+export function tempoRelativo(quando: Date, agora: Date = new Date()): string {
+  const minutos = Math.floor((agora.getTime() - quando.getTime()) / 60000);
+  if (minutos < 1) return 'agora há pouco';
+  const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  if (quando >= inicioHoje) return minutos < 60 ? `há ${minutos} min` : `há ${Math.floor(minutos / 60)} h`;
+  const inicioOntem = new Date(inicioHoje.getFullYear(), inicioHoje.getMonth(), inicioHoje.getDate() - 1);
+  if (quando >= inicioOntem) return 'ontem';
+  const dias = Math.round((inicioHoje.getTime() - new Date(quando.getFullYear(), quando.getMonth(), quando.getDate()).getTime()) / 86400000);
+  if (dias <= 7) return `há ${dias} dias`;
+  return `em ${String(quando.getDate()).padStart(2, '0')}/${String(quando.getMonth() + 1).padStart(2, '0')}`;
+}
+
 export const CORES_SUGERIDAS = [
   '#a7a3f5', '#92c8f0', '#8fd5b4', '#8fd8d8', '#b5cf9a', '#f2d98b',
   '#f8c09a', '#f4a89a', '#f5a3b0', '#f3b3d3', '#d4a5e8', '#a9b4c6'

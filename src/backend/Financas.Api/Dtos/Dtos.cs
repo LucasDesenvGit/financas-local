@@ -292,6 +292,10 @@ public record SincronizacaoLogDto(long Id, int? ConexaoBancariaId, string? NomeI
 
 public record ResultadoSincronizacaoDto(bool Sucesso, int TransacoesNovas, int TransacoesAtualizadas, string? Mensagem);
 
+/// <summary>Status leve da sincronização para a barra superior (UX-8): consultado a cada poucos minutos em toda tela.</summary>
+public record StatusSincronizacaoDto(DateTime? UltimaSincronizacao, bool EmExecucao, int ConexoesAtivas,
+    int ConexoesComErro, int ConsentimentosVencendo);
+
 public record CategoriaPluggyDto(string PluggyCategoriaId, string Descricao, string? PaiDescricao,
     int? CategoriaId, string? CategoriaNome, int QuantidadeTransacoes);
 

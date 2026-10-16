@@ -254,6 +254,12 @@ export interface ResultadoSincronizacao {
   sucesso: boolean; transacoesNovas: number; transacoesAtualizadas: number; mensagem: string | null;
 }
 
+/** Status leve da sincronização para a barra superior (UX-8). */
+export interface StatusSincronizacao {
+  ultimaSincronizacao: string | null; emExecucao: boolean; conexoesAtivas: number;
+  conexoesComErro: number; consentimentosVencendo: number;
+}
+
 export interface CategoriaPluggy {
   pluggyCategoriaId: string; descricao: string; paiDescricao: string | null; categoriaId: number | null;
   categoriaNome: string | null; quantidadeTransacoes: number;

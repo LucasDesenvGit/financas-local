@@ -1,12 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { ApiService } from '../core/api.service';
-import { AuthService } from '../core/auth.service';
-import { mensagemDeErro } from '../core/erro.interceptor';
-import { AvisosService } from '../compartilhado/avisos.component';
 import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.component';
 import { CalculadoraComponent } from '../compartilhado/calculadora.component';
-import { DicaDirective } from '../compartilhado/dica.directive';
+import { StatusSincronizacaoComponent } from '../compartilhado/status-sincronizacao.component';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
@@ -17,7 +13,7 @@ interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, BotaoPrivacidadeComponent, CalculadoraComponent, MenuUsuarioComponent,
-    IconeComponent, DicaDirective],
+    IconeComponent, StatusSincronizacaoComponent],
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()">
       <aside class="lateral">
@@ -49,11 +45,7 @@ interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
           </button>
           <strong class="barra-titulo so-celular">Finanças</strong>
           <div class="barra-acoes">
-            <button type="button" class="botao-barra botao-sincronizar" (click)="sincronizar()" [disabled]="sincronizando()"
-              aria-label="Sincronizar bancos" appDica="Sincronizar bancos" dicaLado="abaixo">
-              <app-icone [icone]="Icones.sincronizar" [tamanho]="18" [class.girando]="sincronizando()" />
-              <span class="rotulo-barra">{{ sincronizando() ? 'Sincronizando…' : 'Sincronizar' }}</span>
-            </button>
+            <app-status-sincronizacao />
             <app-botao-privacidade />
             <app-calculadora />
             <app-menu-usuario />
@@ -67,12 +59,7 @@ interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
   `
 })
 export class ShellComponent {
-  readonly auth = inject(AuthService);
-  private readonly api = inject(ApiService);
-  private readonly avisos = inject(AvisosService);
-
   readonly menuAberto = signal(false);
-  readonly sincronizando = signal(false);
 
   readonly Icones = Icones;
 
@@ -91,22 +78,4 @@ export class ShellComponent {
     { rota: '/categorias', rotulo: 'Categorias e regras', icone: Icones.categorias },
     { rota: '/configuracoes', rotulo: 'Configurações', icone: Icones.configuracoes }
   ];
-
-  sincronizar(): void {
-    this.sincronizando.set(true);
-    this.api.sincronizar().subscribe({
-      next: (r) => {
-        this.sincronizando.set(false);
-        if (r.sucesso) {
-          this.avisos.sucesso(`Sincronizado: ${r.transacoesNovas} nova(s), ${r.transacoesAtualizadas} atualizada(s).`);
-        } else {
-          this.avisos.erro(r.mensagem ?? 'Falha na sincronização.');
-        }
-      },
-      error: (e) => {
-        this.sincronizando.set(false);
-        this.avisos.erro(mensagemDeErro(e));
-      }
-    });
-  }
 }
