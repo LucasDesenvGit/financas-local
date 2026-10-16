@@ -64,10 +64,11 @@ Todos em bash; funcionam em Linux, macOS e Windows (Git Bash/MSYS ou WSL).
 
 | Script | Função |
 |---|---|
-| `1-preparar-ambiente.sh` | .NET 10 SDK e Node.js LTS portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x do PATH); confere se o `sqlite3` está instalado. |
+| `instalar.sh` | Roda as etapas 1, 2 e 3 em sequência e para no primeiro erro. No Windows, `instalar-windows.cmd` (na raiz) pede elevação, instala o Git for Windows pelo `winget` se faltar e abre este script no Git Bash. |
+| `1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, .NET 10 SDK e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
 | `2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. |
 | `3-publicar-atualizar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
 | `4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |
-| `comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, helpers de coluna do banco). |
+| `comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, caminho nativo no Windows, extração de `.zip`, conferência de hash, helpers de coluna do banco). |
 | `ci/verificar-sql.py` | Usado no CI: confere que `banco/*.sql` é idempotente e não tem sintaxe de T-SQL. |
 | `git/configurar-github.ps1` | Cria o repositório no GitHub, envia as branches e aplica as proteções. |

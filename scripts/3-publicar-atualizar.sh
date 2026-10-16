@@ -32,10 +32,17 @@ preparo="$PastaPublicado/preparo"
 destino="$PastaPublicado/api"
 nome_servico='FinancasLocal'
 
+# dotnet e node (portateis ou do PATH) valem tambem com --pular-build: o
+# certificado usa o dotnet e o appsettings.Production.json e gerado pelo node.
+configurar_ambiente_build
+
+if [[ "$SO" == windows ]] && ! net session >/dev/null 2>&1; then
+    aviso 'Este Git Bash nao esta como Administrador: a publicacao segue, mas o servico do Windows'
+    aviso 'provavelmente nao sera registrado/reiniciado. Para evitar, feche e abra o Git Bash como Administrador.'
+fi
+
 # ------------------------------------------------------------------ Build
 if [[ "$pular_build" -eq 0 ]]; then
-    configurar_ambiente_build
-
     etapa 'Compilando o front-end (Angular)'
     (cd "$pasta_front" && npm ci --no-audit --no-fund && npm run build)
     ok 'front-end compilado'
@@ -67,15 +74,14 @@ config_atual="$destino/appsettings.Production.json"
 # publicado anteriormente (se existir).
 obter_senha_atual() {
     [[ -f "$config_atual" ]] || return 1
-    CONFIG_ATUAL="$config_atual" python3 -I -c '
-import json, os, sys
-try:
-    with open(os.environ["CONFIG_ATUAL"], "r", encoding="utf-8") as f:
-        dados = json.load(f)
-    print(dados["Kestrel"]["Endpoints"]["Https"]["Certificate"]["Password"])
-except Exception:
-    sys.exit(1)
-' 2>/dev/null
+    node -e '
+try {
+    const dados = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, ""));
+    const senha = dados.Kestrel.Endpoints.Https.Certificate.Password;
+    if (!senha) process.exit(1);
+    process.stdout.write(senha);
+} catch { process.exit(1); }
+' "$(caminho_nativo "$config_atual")" 2>/dev/null
 }
 
 # pfx_valido_por_mais_de_30_dias senha
@@ -106,8 +112,7 @@ else
         senha_pfx="$(head -c32 /dev/urandom | base64)"
     fi
     rm -f "$pfx"
-    requer_comando dotnet 'dotnet nao encontrado no PATH (rode configurar_ambiente_build ou instale o SDK).'
-    dotnet dev-certs https -ep "$pfx" -p "$senha_pfx" >/dev/null
+    dotnet dev-certs https -ep "$(caminho_nativo "$pfx")" -p "$senha_pfx" >/dev/null
     ok "certificado gerado em $pfx"
 fi
 
@@ -120,39 +125,27 @@ fi
 
 # ------------------------------------------------------------------ Configuracao de producao
 etapa 'Gerando appsettings.Production.json'
-# $Raiz fica no formato POSIX do Git Bash (ex.: /c/FinancasLocal), que o .NET
-# no Windows nao entende: la os caminhos gravados no json sao convertidos para
-# o formato misto (C:/FinancasLocal). O json.dump do Python escapa
-# corretamente qualquer caractere especial ao gravar o arquivo.
-caminho_nativo() {
-    if [[ "$SO" == windows ]]; then cygpath -m "$1"; else echo "$1"; fi
-}
+# Caminhos gravados no json no formato nativo (caminho_nativo, em comum.sh); o
+# JSON.stringify do Node escapa corretamente qualquer caractere especial.
 PASTA_SQL="$(caminho_nativo "$PastaSql")" \
 PASTA_CHAVES="$(caminho_nativo "$PastaChaves")" \
 PFX_CAMINHO="$(caminho_nativo "$pfx")" \
 PFX_SENHA="$senha_pfx" \
-DESTINO_CONFIG="$preparo/appsettings.Production.json" \
-python3 -I -c '
-import json, os
-
-config = {
-    "Banco": {"Caminho": os.environ["PASTA_SQL"] + "/FinancasLocal.db"},
-    "Seguranca": {"PastaChaves": os.environ["PASTA_CHAVES"]},
-    "Kestrel": {
-        "Endpoints": {
-            "Https": {
-                "Certificate": {
-                    "Path": os.environ["PFX_CAMINHO"],
-                    "Password": os.environ["PFX_SENHA"],
-                }
-            }
-        }
+DESTINO_CONFIG="$(caminho_nativo "$preparo/appsettings.Production.json")" \
+node -e '
+const e = process.env;
+const config = {
+    Banco: { Caminho: e.PASTA_SQL + "/FinancasLocal.db" },
+    Seguranca: { PastaChaves: e.PASTA_CHAVES },
+    Kestrel: {
+        Endpoints: {
+            Https: {
+                Certificate: { Path: e.PFX_CAMINHO, Password: e.PFX_SENHA },
+            },
+        },
     },
-}
-
-with open(os.environ["DESTINO_CONFIG"], "w", encoding="utf-8") as f:
-    json.dump(config, f, indent=2, ensure_ascii=False)
-    f.write("\n")
+};
+require("fs").writeFileSync(e.DESTINO_CONFIG, JSON.stringify(config, null, 2) + "\n", "utf8");
 '
 ok 'configuracao gerada'
 

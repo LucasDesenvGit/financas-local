@@ -73,8 +73,17 @@ if [[ "$agendar" -eq 1 ]]; then
             ;;
         windows)
             requer_comando schtasks.exe 'schtasks.exe nao encontrado no PATH.'
-            bash_exec="$(command -v bash)"
-            tr_valor="\"$bash_exec\" \"$script_path\" --manter $manter"
+            # O Agendador de Tarefas e nativo: nao entende caminhos POSIX
+            # (/usr/bin/bash, /c/...). Usa o bin\bash.exe do Git for Windows,
+            # que monta o PATH do Git Bash (/usr/bin com uname, sed...); o
+            # usr\bin\bash.exe direto so tem esse PATH como shell de login (-l).
+            bash_win="$(cygpath -w /)"
+            bash_win="${bash_win%\\}\\bin\\bash.exe"
+            if [[ -f "$(cygpath -u "$bash_win")" ]]; then
+                tr_valor="\"$bash_win\" \"$(cygpath -w "$script_path")\" --manter $manter"
+            else
+                tr_valor="\"$(cygpath -w "$(command -v bash)")\" -l \"$(cygpath -w "$script_path")\" --manter $manter"
+            fi
             schtasks.exe /Create /TN "FinancasLocal - Backup diario" /TR "$tr_valor" /SC DAILY /ST "$horario" /F >/dev/null
             ok "Backup diario agendado para $horario (Agendador de Tarefas > 'FinancasLocal - Backup diario')."
             ;;
