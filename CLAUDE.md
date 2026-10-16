@@ -21,7 +21,7 @@ python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura
 scripts/2-criar-banco.sh                        # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
 
 # Publicação
-scripts/3-publicar.sh                           # compila front+API, publica, cuida de certificado e do serviço do sistema
+scripts/3-publicar-atualizar.sh                 # compila front+API, publica, cuida de certificado e do serviço do sistema
 
 # Migrar dados de uma instalação antiga (SQL Server/IIS) para o SQLite novo — seguro rodar mesmo sem SQL Server disponível
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"

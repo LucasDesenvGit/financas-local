@@ -20,5 +20,5 @@
 
 ## Depois do merge
 
-- [ ] Rodar `scripts\2-criar-banco.ps1` (se mudou o banco)
-- [ ] Rodar `scripts\3-publicar.ps1`
+- [ ] Rodar `scripts/2-criar-banco.sh` (se mudou o banco)
+- [ ] Rodar `scripts/3-publicar-atualizar.sh`

@@ -35,7 +35,7 @@ Abra um terminal com bash disponível (no Linux, o terminal do próprio sistema;
 cd financas-local/scripts
 ./1-preparar-ambiente.sh     # .NET 10 SDK, Node.js e sqlite3 (poucos minutos)
 ./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
-./3-publicar.sh              # compila e publica como serviço do sistema
+./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
 
 Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuário e a senha (mínimo de 8 caracteres).
@@ -63,7 +63,7 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- \
   'Server=.\FINANCAS;Database=FinancasLocal;Integrated Security=True;Encrypt=True;TrustServerCertificate=True' \
   dados/sql/FinancasLocal.db
 # 4. Publique normalmente:
-scripts/3-publicar.sh
+scripts/3-publicar-atualizar.sh
 ```
 
 A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de linhas de cada tabela no final. A pasta `dados\sql` da instalação antiga só é acessível por Administradores, então no Windows rode esses comandos num Git Bash aberto como Administrador.
@@ -124,7 +124,7 @@ Recomendações:
 ## Atualizar o sistema depois de mudar o código
 
 ```bash
-scripts/3-publicar.sh
+scripts/3-publicar-atualizar.sh
 ```
 
 A publicação para o serviço do sistema por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhum dado é perdido.
@@ -160,6 +160,6 @@ financas-local/
 
 | Sintoma | O que fazer |
 |---|---|
-| Navegador alerta sobre o certificado | Rode o `3-publicar.sh` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
+| Navegador alerta sobre o certificado | Rode o `3-publicar-atualizar.sh` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
 | Sincronização falha com 401/403 | Confira o Client ID e o Secret e se o MeuPluggy foi autorizado para aquele banco |
 | O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |

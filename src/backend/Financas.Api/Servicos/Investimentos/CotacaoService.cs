@@ -42,7 +42,10 @@ public partial class CotacaoService
     [GeneratedRegex("^[A-Z][A-Z0-9]{3}[0-9]{1,2}F?$")]
     private static partial Regex FormatoTicker();
 
-    /// <summary>Normaliza e valida um código da B3 (ex.: "mxrf11 " → "MXRF11"). Retorna null se inválido.</summary>
+    /// <summary>
+    /// Normaliza e valida um código da B3 (ex.: "mxrf11 " → "MXRF11"). Retorna null se inválido. Formato estrito de
+    /// propósito: ativos fora da B3 (AOK, AAPL) entram pela moeda, com <see cref="NormalizarTickerExterior"/> (ADR 0009).
+    /// </summary>
     public static string? NormalizarTicker(string? ticker)
     {
         var t = (ticker ?? string.Empty).Trim().ToUpperInvariant();

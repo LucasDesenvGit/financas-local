@@ -13,8 +13,8 @@
 # Rode de novo sempre que atualizar o codigo: a publicacao nao apaga dados.
 #
 # Uso:
-#   scripts/3-publicar.sh
-#   scripts/3-publicar.sh --pular-build
+#   scripts/3-publicar-atualizar.sh
+#   scripts/3-publicar-atualizar.sh --pular-build
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
@@ -204,11 +204,13 @@ WantedBy=default.target
 EOF
         if command -v systemctl >/dev/null 2>&1; then
             systemctl --user daemon-reload
-            systemctl --user enable financaslocal.service
-            # restart (e nao "enable --now"): "--now" so inicia se estiver parado, e um servico ja rodando
-            # continuaria com a versao antiga carregada em memoria depois de publicar.
-            systemctl --user restart financaslocal.service
-            ok 'servico systemd (usuario) registrado e reiniciado com a versao publicada'
+            if systemctl --user is-active --quiet financaslocal.service; then
+                systemctl --user restart financaslocal.service
+                ok 'servico systemd (usuario) atualizado e reiniciado'
+            else
+                systemctl --user enable --now financaslocal.service
+                ok 'servico systemd (usuario) registrado e iniciado'
+            fi
         else
             aviso "systemctl nao encontrado; unidade escrita em $unidade mas nao habilitada automaticamente."
         fi

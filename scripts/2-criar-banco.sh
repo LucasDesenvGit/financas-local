@@ -55,4 +55,4 @@ total_tabelas="$(sqlite3 "$banco" "SELECT COUNT(*) FROM sqlite_master WHERE type
 
 echo ''
 echo -e "\033[32mBanco pronto ($total_tabelas tabela(s)). Proximo passo:\033[0m"
-echo "   $script_dir/3-publicar.sh"
+echo "   $script_dir/3-publicar-atualizar.sh"

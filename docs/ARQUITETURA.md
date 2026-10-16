@@ -65,7 +65,7 @@ Todos em bash; funcionam em Linux, macOS e Windows (Git Bash/MSYS ou WSL).
 |---|---|
 | `1-preparar-ambiente.sh` | .NET 10 SDK e Node.js LTS portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x do PATH); confere se o `sqlite3` está instalado. |
 | `2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. |
-| `3-publicar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
+| `3-publicar-atualizar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
 | `4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |
 | `comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, helpers de coluna do banco). |
 | `ci/verificar-sql.py` | Usado no CI: confere que `banco/*.sql` é idempotente e não tem sintaxe de T-SQL. |
