@@ -1,19 +1,21 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  Categoria, Conta, ContaAgendada, NOMES_RECORRENCIA, OrigemConta, Recorrencia, SalvarContaAgendada, TipoCategoria
+  Categoria, Conta, ContaAgendada, NOMES_RECORRENCIA, OrigemConta, Recorrencia, SalvarContaAgendada,
+  SugestaoContaAgendada, TipoCategoria
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
-import { dataIso } from '../compartilhado/utilidades';
+import { dataIso, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas a pagar</h1>
@@ -28,7 +30,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     <div class="tabela-rolagem">
       <table class="tabela">
         <thead>
-          <tr><th>Vencimento</th><th>Descrição</th><th>Recorrência</th><th>Categoria</th><th class="direita">Valor</th><th></th></tr>
+          <tr><th>Vencimento</th><th>Descrição</th><th>Recorrência</th><th>Categoria</th><th class="direita">Valor</th><th><span class="so-leitor">Ações</span></th></tr>
         </thead>
         <tbody>
           @for (c of itens(); track c.id) {
@@ -56,6 +58,66 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         </tbody>
       </table>
     </div>
+
+    @if (sugestoesVisiveis().length || ignoradasNaLista().length) {
+      <section class="painel-bloco sugestoes" aria-labelledby="titulo-sugestoes">
+        <div class="bloco-titulo">
+          <h2 id="titulo-sugestoes">Sugestões do extrato</h2>
+        </div>
+        <p class="texto-suave pequeno-texto">
+          Pagamentos que se repetem todo mês nas suas contas e ainda não estão nesta lista. O banco não informa
+          boletos futuros, então o vencimento é estimado pelo dia em que você costuma pagar. Confira antes de salvar.
+        </p>
+        @if (sugestoesVisiveis().length) {
+          <div class="tabela-rolagem">
+            <table class="tabela">
+              <thead>
+                <tr><th>Próximo (estimado)</th><th>Descrição</th><th>Categoria</th><th class="direita">Valor</th><th><span class="so-leitor">Ações</span></th></tr>
+              </thead>
+              <tbody>
+                @for (s of sugestoesVisiveis(); track s.chave) {
+                  <tr>
+                    <td class="nowrap">{{ s.proximoVencimento | date: 'dd/MM/yyyy' }}<br>
+                      <small class="texto-suave">costuma ser dia {{ s.diaHabitual }}</small>
+                      @if (s.vencimentoSemPagamento) {
+                        <br><small class="texto-alerta">o de {{ s.vencimentoSemPagamento | date: 'dd/MM' }} ainda não apareceu no extrato</small>
+                      }</td>
+                    <td>{{ s.descricao }}<br>
+                      <small class="texto-suave">pago em {{ s.meses }} meses@if (s.pagamentos !== s.meses) { ({{ s.pagamentos }} pagamentos) } · último em {{ s.ultimoPagamento | date: 'dd/MM' }} · {{ s.contaNome }}</small></td>
+                    <td>{{ s.categoriaNome ?? '—' }}</td>
+                    <td class="direita valor nowrap">
+                      @if (s.valorVariavel) {
+                        ≈ {{ s.valor | currency }}<br>
+                        <small class="texto-suave">varia de {{ s.valorMinimo | currency }} a {{ s.valorMaximo | currency }}</small>
+                      } @else {
+                        {{ s.valor | currency }}
+                      }
+                    </td>
+                    <td class="direita nowrap">
+                      <button type="button" class="botao botao-pequeno" (click)="cadastrarSugestao(s)"
+                        [attr.aria-label]="'Cadastrar ' + s.descricao">Cadastrar</button>
+                      <a class="link" routerLink="/transacoes" [queryParams]="linkPagamentos(s)"
+                        [attr.aria-label]="'Ver pagamentos de ' + s.descricao">ver pagamentos</a>
+                      <button type="button" class="link" (click)="ignorar(s)"
+                        [attr.aria-label]="'Ignorar sugestão ' + s.descricao">ignorar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="vazio">Nenhuma sugestão nova.</p>
+        }
+        @if (ignoradasNaLista().length) {
+          <p class="pequeno-texto">
+            <button type="button" class="link" (click)="restaurarIgnoradas()">
+              Mostrar de novo {{ ignoradasNaLista().length }} sugestão(ões) ignorada(s)
+            </button>
+          </p>
+        }
+      </section>
+    }
 
     <app-modal [aberto]="form !== null" [titulo]="editandoId ? 'Editar conta' : 'Nova conta a pagar'" (fechar)="form = null">
       @if (form; as fm) {
@@ -123,6 +185,10 @@ export class ContasAgendadasComponent implements OnInit {
   readonly itens = signal<ContaAgendada[]>([]);
   readonly contas = signal<Conta[]>([]);
   readonly categorias = signal<Categoria[]>([]);
+  readonly sugestoes = signal<SugestaoContaAgendada[]>([]);
+  readonly ignoradas = signal<string[]>(ContasAgendadasComponent.lerIgnoradas());
+  readonly sugestoesVisiveis = computed(() => this.sugestoes().filter((s) => !this.ignoradas().includes(s.chave)));
+  readonly ignoradasNaLista = computed(() => this.sugestoes().filter((s) => this.ignoradas().includes(s.chave)));
   readonly categoriasDespesa = computed(() => this.categorias().filter((c) => c.tipo === TipoCategoria.Despesa && c.ativa));
   readonly totalVencido = computed(() =>
     this.itens().filter((c) => c.ativa && c.diasParaVencer < 0).reduce((s, c) => s + c.valor, 0));
@@ -131,6 +197,8 @@ export class ContasAgendadasComponent implements OnInit {
 
   form: SalvarContaAgendada | null = null;
   editandoId: number | null = null;
+  /** Sugestão que originou o formulário aberto: ao salvar, ela sai da lista mesmo se a descrição for editada. */
+  private chaveSugestaoEmCadastro: string | null = null;
   pagando: ContaAgendada | null = null;
   dataPagamento = dataIso();
   lancarTransacao = false;
@@ -154,15 +222,72 @@ export class ContasAgendadasComponent implements OnInit {
       next: (i) => this.itens.set(i),
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+    // Sugestão é complementar: se falhar, a tela segue sem ela.
+    this.api.sugestoesContasAgendadas().subscribe({ next: (s) => this.sugestoes.set(s), error: () => this.sugestoes.set([]) });
+  }
+
+  cadastrarSugestao(s: SugestaoContaAgendada): void {
+    this.editandoId = null;
+    this.chaveSugestaoEmCadastro = s.chave;
+    this.form = {
+      descricao: s.descricao, valor: s.valor, proximoVencimento: s.proximoVencimento, recorrencia: Recorrencia.Mensal,
+      categoriaId: s.categoriaId, contaId: s.contaId, ativa: true
+    };
+  }
+
+  linkPagamentos(s: SugestaoContaAgendada): Record<string, string> {
+    const inicio = paraData(s.primeiroPagamento);
+    const fim = paraData(s.ultimoPagamento);
+    return {
+      ...paramsTransacoes({
+        tipo: 'despesa',
+        inicio: primeiroDiaMes(inicio.getFullYear(), inicio.getMonth() + 1),
+        fim: ultimoDiaMes(fim.getFullYear(), fim.getMonth() + 1)
+      }),
+      busca: s.termoBusca
+    };
+  }
+
+  ignorar(s: SugestaoContaAgendada): void {
+    this.gravarIgnoradas([...this.ignoradas(), s.chave]);
+  }
+
+  restaurarIgnoradas(): void {
+    const naLista = new Set(this.ignoradasNaLista().map((s) => s.chave));
+    this.gravarIgnoradas(this.ignoradas().filter((c) => !naLista.has(c)));
+  }
+
+  /** Lembrado só neste navegador: é conveniência de tela, não dado financeiro. */
+  private static readonly CHAVE_IGNORADAS = 'financas.sugestoesContasIgnoradas';
+
+  private static lerIgnoradas(): string[] {
+    try {
+      const valor = JSON.parse(localStorage.getItem(ContasAgendadasComponent.CHAVE_IGNORADAS) ?? '[]');
+      return Array.isArray(valor) ? valor.filter((c): c is string => typeof c === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private gravarIgnoradas(chaves: string[]): void {
+    const unicas = [...new Set(chaves)].slice(-200);
+    this.ignoradas.set(unicas);
+    try {
+      localStorage.setItem(ContasAgendadasComponent.CHAVE_IGNORADAS, JSON.stringify(unicas));
+    } catch {
+      // Sem armazenamento (janela anônima, bloqueado): vale só até recarregar a tela.
+    }
   }
 
   nova(): void {
     this.editandoId = null;
+    this.chaveSugestaoEmCadastro = null;
     this.form = { descricao: '', valor: 0, proximoVencimento: dataIso(), recorrencia: Recorrencia.Mensal, categoriaId: null, contaId: null, ativa: true };
   }
 
   editar(c: ContaAgendada): void {
     this.editandoId = c.id;
+    this.chaveSugestaoEmCadastro = null;
     this.form = {
       descricao: c.descricao, valor: c.valor, proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia,
       categoriaId: c.categoriaId, contaId: c.contaId, ativa: c.ativa
@@ -176,6 +301,8 @@ export class ContasAgendadasComponent implements OnInit {
     req.subscribe({
       next: () => {
         this.form = null;
+        if (this.chaveSugestaoEmCadastro) this.gravarIgnoradas([...this.ignoradas(), this.chaveSugestaoEmCadastro]);
+        this.chaveSugestaoEmCadastro = null;
         this.avisos.sucesso('Conta salva.');
         this.carregar();
       },

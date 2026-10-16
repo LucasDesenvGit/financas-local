@@ -140,6 +140,16 @@ export interface SalvarContaAgendada {
   categoriaId: number | null; contaId: number | null; ativa: boolean;
 }
 
+/** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
+export interface SugestaoContaAgendada {
+  chave: string; descricao: string; valor: number; valorVariavel: boolean; valorMinimo: number; valorMaximo: number;
+  proximoVencimento: string; diaHabitual: number; meses: number; pagamentos: number;
+  ultimoPagamento: string; primeiroPagamento: string;
+  categoriaId: number | null; categoriaNome: string | null; contaId: number; contaNome: string; termoBusca: string;
+  /** Vencimento esperado que já passou sem o pagamento aparecer no extrato (null quando não há). */
+  vencimentoSemPagamento: string | null;
+}
+
 export interface Investimento {
   id: number; nome: string; tipo: string; subtipo: string | null; codigo: string | null; emissor: string | null;
   moeda: string; saldo: number; saldoEmReais: number | null; valorAplicado: number | null; rendimento: number | null;

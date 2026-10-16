@@ -20,6 +20,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Nova aba **Aparência**: paletas prontas (Lavanda, Oceano, Floresta, Grafite, Pôr do sol), cada uma com versão clara e escura, ou uma cor personalizada (tons calculados para manter contraste de 4,5:1), com prévia. Verde, vermelho, laranja de emergência e as cores de financiamento/empréstimo não mudam. Fica salva no navegador.
 - Ícones do [Lucide](https://lucide.dev) (licença ISC, empacotados no build) no menu, nos botões de sincronizar, ocultar valores e tema, e nos cartões do painel.
 - Novo logo e ícone do site (cofrinho), com versões PNG para atalho no celular e na área de trabalho e `manifest.webmanifest`.
+- **Contas a pagar** sugere cadastrar os pagamentos que se repetem todo mês no extrato (boleto, débito automático, Pix), com vencimento estimado pelo dia habitual e valor pela mediana; cada sugestão pode ser cadastrada (formulário preenchido), conferida em Transações ou ignorada (`GET /api/contas-agendadas/sugestoes`, #62).
 
 - Script para parar tudo o que o projeto deixou rodando (serviço, API fora do serviço, `ng serve`) e conferir se o banco ficou livre: `parar-windows.cmd` no Windows, com dois cliques e sem bash, e `scripts/parar.sh` no Linux/macOS. `--desativar` tira o serviço da inicialização automática. Só procura processos com a pasta do projeto na linha de comando (não derruba outro app nem um `dotnet build`) e sai com código 1 se algo ficou rodando. Os testes de instalação no Windows e no Linux param e sobem o sistema de novo.
 

@@ -648,6 +648,7 @@ details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 55
 /* ---------------- Emergências (laranja) ---------------- */
 .etiqueta-emergencia { background: var(--emergencia-suave); color: var(--emergencia); }
 .texto-emergencia { color: var(--emergencia); }
+.texto-alerta { color: var(--alerta); }
 .botao-emergencia { background: var(--emergencia-suave); color: var(--emergencia); }
 .botao-emergencia:hover:not(:disabled) { background: var(--emergencia-suave); filter: brightness(0.97); }
 
