@@ -1,13 +1,17 @@
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
+using Financas.Api.Servicos.Cambio;
 using Microsoft.EntityFrameworkCore;
 
 namespace Financas.Api.Servicos.Investimentos;
 
-/// <summary>Valores de investimento usados no patrimônio (sem consultas externas).</summary>
+/// <summary>Valores de investimento usados no patrimônio, em reais (sem consultas externas).</summary>
 public record ComposicaoInvestimentos(decimal Carteira, decimal OpenFinanceRendaVariavel, decimal OpenFinanceDemais)
 {
+    /// <summary>Moedas de investimentos que ficaram fora dos totais por falta de cotação guardada.</summary>
+    public IReadOnlyCollection<string> MoedasSemCotacao { get; init; } = Array.Empty<string>();
+
     public decimal RendaVariavel => Carteira + OpenFinanceRendaVariavel;
     public decimal Total => Carteira + OpenFinanceRendaVariavel + OpenFinanceDemais;
 }
@@ -23,11 +27,13 @@ public class CarteiraService
 
     private readonly FinancasDbContext _db;
     private readonly ContaService _contas;
+    private readonly CambioService _cambio;
 
-    public CarteiraService(FinancasDbContext db, ContaService contas)
+    public CarteiraService(FinancasDbContext db, ContaService contas, CambioService cambio)
     {
         _db = db;
         _contas = contas;
+        _cambio = cambio;
     }
 
     /* ============================== Cálculo de posição ============================== */
@@ -80,7 +86,8 @@ public class CarteiraService
     /// <summary>
     /// Valor dos investimentos para compor o patrimônio. Ativos da carteira manual usam a última cotação
     /// (ou o custo, se ainda não houver cotação). Investimentos do Open Finance com o mesmo código de um ativo
-    /// da carteira não são somados de novo.
+    /// da carteira não são somados de novo. Investimentos em moeda estrangeira são convertidos para reais;
+    /// os sem cotação ficam de fora e aparecem em <see cref="ComposicaoInvestimentos.MoedasSemCotacao"/>.
     /// </summary>
     public async Task<ComposicaoInvestimentos> ComposicaoAsync(CancellationToken ct)
     {
@@ -96,15 +103,20 @@ public class CarteiraService
         }
 
         var openFinance = await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa)
-            .Select(i => new { i.Saldo, i.Codigo, i.Tipo }).ToListAsync(ct);
+            .Select(i => new { i.Saldo, i.Moeda, i.Codigo, i.Tipo }).ToListAsync(ct);
+        var conversor = await _cambio.ObterConversorAsync(ct);
         decimal ofRendaVariavel = 0, ofDemais = 0;
         foreach (var i in openFinance)
         {
             if (CodigoNaCarteira(i.Codigo, tickersEmCarteira)) continue;
-            if (EhRendaVariavel(i.Tipo)) ofRendaVariavel += i.Saldo;
-            else ofDemais += i.Saldo;
+            if (conversor.ParaReais(i.Saldo, i.Moeda) is not decimal saldo) continue;
+            if (EhRendaVariavel(i.Tipo)) ofRendaVariavel += saldo;
+            else ofDemais += saldo;
         }
-        return new ComposicaoInvestimentos(Math.Round(carteira, 2), ofRendaVariavel, ofDemais);
+        return new ComposicaoInvestimentos(Math.Round(carteira, 2), ofRendaVariavel, ofDemais)
+        {
+            MoedasSemCotacao = conversor.MoedasSemCotacao.ToList()
+        };
     }
 
     private static bool EhRendaVariavel(string? tipoPluggy)
@@ -251,13 +263,15 @@ public class CarteiraService
             .OrderBy(i => i.Tipo).ThenByDescending(i => i.Saldo)
             .Select(i => new
             {
-                i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor, i.Saldo, i.ValorAplicado, i.DataAplicacao,
+                i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor, i.Moeda, i.Saldo, i.ValorAplicado, i.DataAplicacao,
                 i.DataVencimento, i.TaxaAnual, i.AtualizadoEm, Instituicao = i.ConexaoBancaria!.NomeInstituicao
             })
             .ToListAsync(ct);
+        var conversor = await _cambio.ObterConversorAsync(ct);
         var openFinance = new List<InvestimentoComparadoDto>();
         foreach (var i in investimentos)
         {
+            // Rentabilidade na moeda do investimento (sem a variação do câmbio).
             decimal? rentab = i.ValorAplicado is decimal va && va > 0 ? Math.Round((i.Saldo / va - 1) * 100, 2) : null;
             decimal? selicPeriodo = null, percentual = null;
             if (i.DataAplicacao is DateOnly da && da < hoje && !selic.Vazia)
@@ -266,11 +280,12 @@ public class CarteiraService
                 if (rentab is decimal r && selicPeriodo > 0.05m) percentual = Math.Round(r / selicPeriodo.Value * 100, 1);
             }
             openFinance.Add(new InvestimentoComparadoDto(i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor,
-                i.Instituicao, i.Saldo, i.ValorAplicado, i.DataAplicacao, i.DataVencimento, i.TaxaAnual, rentab,
-                selicPeriodo, percentual, EhRendaVariavel(i.Tipo), CodigoNaCarteira(i.Codigo, tickersEmCarteira),
-                i.AtualizadoEm));
+                i.Instituicao, i.Moeda, i.Saldo, conversor.ParaReais(i.Saldo, i.Moeda), i.ValorAplicado, i.DataAplicacao,
+                i.DataVencimento, i.TaxaAnual, rentab, selicPeriodo, percentual, EhRendaVariavel(i.Tipo),
+                CodigoNaCarteira(i.Codigo, tickersEmCarteira), i.AtualizadoEm));
         }
-        var totalOpenFinance = openFinance.Where(i => !i.JaNaCarteira).Sum(i => i.Saldo);
+        // Totais em reais: investimento em moeda sem cotação fica de fora (avisado em MoedasSemCotacao).
+        var totalOpenFinance = openFinance.Where(i => !i.JaNaCarteira).Sum(i => i.SaldoEmReais ?? 0m);
 
         // Contas do tipo "Investimento" cadastradas manualmente.
         var contasInvestimento = await _db.Contas.AsNoTracking()
@@ -290,7 +305,7 @@ public class CarteiraService
         foreach (var grupo in openFinance.Where(i => !i.JaNaCarteira).GroupBy(i => NomeTipoPluggy(i.Tipo)))
         {
             var existente = distribuicao.FindIndex(d => d.Nome == grupo.Key);
-            var soma = grupo.Sum(i => i.Saldo);
+            var soma = grupo.Sum(i => i.SaldoEmReais ?? 0m);
             if (existente >= 0) distribuicao[existente] = distribuicao[existente] with { Valor = distribuicao[existente].Valor + soma };
             else distribuicao.Add(new DistribuicaoInvestimentoDto(grupo.Key, soma));
         }
@@ -306,7 +321,8 @@ public class CarteiraService
             posicoes.OrderByDescending(p => p.Quantidade > 0).ThenByDescending(p => p.ValorMercado).ToList(),
             evolucao, openFinance, totalOpenFinance, totalManuais, mercado + totalOpenFinance + totalManuais,
             distribuicao, cotacaoMaisAntiga, desatualizadas,
-            openFinance.Count(i => i.RendaVariavel && !i.JaNaCarteira && CotacaoService.NormalizarTicker(i.Codigo ?? i.Nome) is not null));
+            openFinance.Count(i => i.RendaVariavel && !i.JaNaCarteira && CotacaoService.NormalizarTicker(i.Codigo ?? i.Nome) is not null),
+            conversor.MoedasSemCotacao.ToList());
     }
 
     /// <summary>Operações de um ativo, cada compra comparada com o preço atual e com a Selic.</summary>

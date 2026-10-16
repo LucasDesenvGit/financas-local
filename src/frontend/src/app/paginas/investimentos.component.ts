@@ -59,6 +59,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     </header>
 
     @if (dados(); as d) {
+      @if (d.moedasSemCotacao.length > 0) {
+        <section class="alertas">
+          <p>Investimentos em {{ d.moedasSemCotacao.join(', ') }} ficaram fora dos totais: não há cotação de câmbio
+            guardada para essa moeda.</p>
+        </section>
+      }
       <section class="kpis">
         <article class="kpi kpi-destaque">
           <span>Total investido</span>
@@ -250,9 +256,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                       @if (i.jaNaCarteira) { <br><small class="etiqueta etiqueta-alerta">já lançado na carteira — não somado de novo</small> }
                     </td>
                     <td class="texto-suave">{{ i.nomeInstituicao }}</td>
-                    <td class="direita">{{ i.valorAplicado !== null ? (i.valorAplicado | currency) : '—' }}
+                    <td class="direita">{{ i.valorAplicado !== null ? (i.valorAplicado | currency: i.moeda) : '—' }}
                       @if (i.dataAplicacao) { <br><small class="texto-suave">{{ i.dataAplicacao | date: 'dd/MM/yy' }}</small> }</td>
-                    <td class="direita valor">{{ i.saldo | currency }}</td>
+                    <td class="direita valor">{{ i.saldo | currency: i.moeda }}
+                      @if (i.moeda !== 'BRL') {
+                        <br><small class="texto-suave">{{ i.saldoEmReais !== null ? (i.saldoEmReais | currency) : 'sem cotação' }}</small>
+                      }</td>
                     <td class="direita" [class.positivo]="(i.rentabilidade ?? 0) > 0" [class.negativo]="(i.rentabilidade ?? 0) < 0">
                       {{ pct(i.rentabilidade) }}</td>
                     <td class="direita texto-suave">{{ pct(i.selicNoPeriodo, false) }}</td>

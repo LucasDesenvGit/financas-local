@@ -140,7 +140,8 @@ export interface SalvarContaAgendada {
 
 export interface Investimento {
   id: number; nome: string; tipo: string; subtipo: string | null; codigo: string | null; emissor: string | null;
-  moeda: string; saldo: number; valorAplicado: number | null; rendimento: number | null; taxaAnual: number | null;
+  moeda: string; saldo: number; saldoEmReais: number | null; valorAplicado: number | null; rendimento: number | null;
+  taxaAnual: number | null;
   dataVencimento: string | null; status: string | null; nomeInstituicao: string | null; atualizadoEm: string;
 }
 
@@ -294,7 +295,8 @@ export interface EvolucaoCarteira { ano: number; mes: number; aplicado: number; 
 
 export interface InvestimentoComparado {
   id: number; nome: string; tipo: string; subtipo: string | null; codigo: string | null; emissor: string | null;
-  nomeInstituicao: string | null; saldo: number; valorAplicado: number | null; dataAplicacao: string | null;
+  nomeInstituicao: string | null; moeda: string; saldo: number; saldoEmReais: number | null;
+  valorAplicado: number | null; dataAplicacao: string | null;
   dataVencimento: string | null; taxaAnual: number | null; rentabilidade: number | null; selicNoPeriodo: number | null;
   percentualDaSelic: number | null; rendaVariavel: boolean; jaNaCarteira: boolean; atualizadoEm: string;
 }
@@ -303,7 +305,7 @@ export interface Carteira {
   selic: SelicResumo; rendaVariavel: TotaisRendaVariavel; posicoes: PosicaoAtivo[]; evolucao: EvolucaoCarteira[];
   openFinance: InvestimentoComparado[]; totalOpenFinance: number; totalInvestimentosManuais: number; totalGeral: number;
   distribuicao: { nome: string; valor: number }[]; cotacoesAtualizadasEm: string | null; cotacoesDesatualizadas: boolean;
-  openFinanceNaoRegistrados: number;
+  openFinanceNaoRegistrados: number; moedasSemCotacao: string[];
 }
 
 export interface ResultadoImportacaoCarteira {

@@ -163,8 +163,9 @@ public record SalvarContaAgendadaDto(
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 
 /* ----------------------------- Investimentos ----------------------------- */
+/// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
 public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo, string? Emissor,
-    string Moeda, decimal Saldo, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
+    string Moeda, decimal Saldo, decimal? SaldoEmReais, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
     DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
 
 /* ----------------------------- Câmbio ----------------------------- */
@@ -309,16 +310,21 @@ public record EvolucaoCarteiraDto(int Ano, int Mes, decimal Aplicado, decimal Ap
 
 public record DistribuicaoInvestimentoDto(string Nome, decimal Valor);
 
-/// <summary>Investimento vindo do Open Finance comparado com a Selic do período.</summary>
+/// <summary>
+/// Investimento vindo do Open Finance comparado com a Selic do período. Saldo, valor aplicado e rentabilidade
+/// estão na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.
+/// </summary>
 public record InvestimentoComparadoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo,
-    string? Emissor, string? NomeInstituicao, decimal Saldo, decimal? ValorAplicado, DateOnly? DataAplicacao,
+    string? Emissor, string? NomeInstituicao, string Moeda, decimal Saldo, decimal? SaldoEmReais,
+    decimal? ValorAplicado, DateOnly? DataAplicacao,
     DateOnly? DataVencimento, decimal? TaxaAnual, decimal? Rentabilidade, decimal? SelicNoPeriodo,
     decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm);
 
 public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVariavel, List<PosicaoAtivoDto> Posicoes,
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
     decimal TotalInvestimentosManuais, decimal TotalGeral, List<DistribuicaoInvestimentoDto> Distribuicao,
-    DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados);
+    DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
+    List<string> MoedasSemCotacao);
 
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,
     decimal Quantidade, decimal PrecoUnitario, decimal Taxas, decimal ValorTotal, string? Observacao,

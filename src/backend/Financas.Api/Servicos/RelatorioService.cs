@@ -1,6 +1,7 @@
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
+using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Investimentos;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,13 +14,16 @@ public class RelatorioService
     private readonly ContaService _contas;
     private readonly CarteiraService _carteira;
     private readonly EmprestimoService _emprestimos;
+    private readonly CambioService _cambio;
 
-    public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira, EmprestimoService emprestimos)
+    public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira, EmprestimoService emprestimos,
+        CambioService cambio)
     {
         _db = db;
         _contas = contas;
         _carteira = carteira;
         _emprestimos = emprestimos;
+        _cambio = cambio;
     }
 
     /// <summary>Transações que entram nos relatórios (exclui transferências e itens marcados para ignorar).</summary>
@@ -474,12 +478,15 @@ public class RelatorioService
                 .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
         }
 
-        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos.
+        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora).
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
             .Select(c => new { c.Id, c.Tipo }).ToListAsync(ct);
+        var conversor = await _cambio.ObterConversorAsync(ct);
+        var investimentos = await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa)
+            .Select(i => new { i.Saldo, i.Moeda }).ToListAsync(ct);
         var reserva = contas.Where(c => c.Tipo != TipoConta.CartaoCredito).Sum(c => Math.Max(0, saldos.GetValueOrDefault(c.Id)))
-            + (await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa).SumAsync(i => (decimal?)i.Saldo, ct) ?? 0m);
+            + investimentos.Sum(i => conversor.ParaReais(i.Saldo, i.Moeda) ?? 0m);
 
         var totalParcelas = parcelas + credito.ParcelaMensalFinanciamentos + credito.ParcelaMensalEmprestimos;
         return new SaudeFinanceiraDto(

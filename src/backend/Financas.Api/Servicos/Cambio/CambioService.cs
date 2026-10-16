@@ -129,6 +129,17 @@ public partial class CambioService
     /// <summary>Última cotação guardada de cada moeda, sem consultar a internet.</summary>
     public async Task<CotacoesAtuaisDto> UltimasAsync(CancellationToken ct)
     {
+        var hoje = Relogio.Hoje;
+        var cotacoes = (await UltimasCotacoesAsync(ct)).Select(c => ParaDto(c, hoje)).ToList();
+        return new CotacoesAtuaisDto(await _config.ObterDataAsync(ChaveUltimaAtualizacao, ct), cotacoes);
+    }
+
+    /// <summary>Conversor para reais com a última cotação guardada de cada moeda (não consulta a internet).</summary>
+    public async Task<ConversorMoeda> ObterConversorAsync(CancellationToken ct)
+        => new(await UltimasCotacoesAsync(ct));
+
+    private async Task<List<CotacaoMoeda>> UltimasCotacoesAsync(CancellationToken ct)
+    {
         var ultimasDatas = await _db.CotacoesMoeda.AsNoTracking()
             .GroupBy(c => c.Moeda)
             .Select(g => new { Moeda = g.Key, Data = g.Max(c => c.Data) })
@@ -140,12 +151,7 @@ public partial class CambioService
         var linhas = await _db.CotacoesMoeda.AsNoTracking()
             .Where(c => moedas.Contains(c.Moeda) && datas.Contains(c.Data))
             .ToListAsync(ct);
-        var hoje = Relogio.Hoje;
-        var cotacoes = linhas.Where(c => chaves.Contains((c.Moeda, c.Data)))
-            .OrderBy(c => c.Moeda)
-            .Select(c => ParaDto(c, hoje))
-            .ToList();
-        return new CotacoesAtuaisDto(await _config.ObterDataAsync(ChaveUltimaAtualizacao, ct), cotacoes);
+        return linhas.Where(c => chaves.Contains((c.Moeda, c.Data))).OrderBy(c => c.Moeda).ToList();
     }
 
     /// <summary>
