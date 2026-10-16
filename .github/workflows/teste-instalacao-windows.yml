@@ -2,7 +2,7 @@
 # Windows de verdade, com o Windows PowerShell 5.1. O PATH e reduzido ao do Windows puro para
 # esconder o dotnet/node/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
 # computador novo. Nao cobre o pedido de elevacao (UAC): o runner ja roda como Administrador.
-name: Instalador Windows
+name: Teste de instalação no Windows
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
       - scripts/instalar-windows.ps1
       - scripts/2-criar-banco.sh
       - banco/**
-      - .github/workflows/instalador-windows.yml
+      - .github/workflows/teste-instalacao-windows.yml
   pull_request:
     branches: [main, develop]
     paths:
@@ -20,14 +20,14 @@ on:
       - scripts/instalar-windows.ps1
       - scripts/2-criar-banco.sh
       - banco/**
-      - .github/workflows/instalador-windows.yml
+      - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: instalador-windows-${{ github.ref }}
+  group: teste-instalacao-windows-${{ github.ref }}
   cancel-in-progress: true
 
 env:

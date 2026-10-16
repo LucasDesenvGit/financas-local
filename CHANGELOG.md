@@ -45,7 +45,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Decisões de arquitetura passam a ser registradas como ADRs em `docs/adr/`, com as decisões já tomadas registradas retroativamente.
 
 ### Infraestrutura
-- Novo workflow **Instalador Windows**: instala do zero num runner Windows (sem as ferramentas do runner no PATH), confere o serviço e a API, e testa a atualização pelo `instalar-windows.cmd`.
+- Novo workflow **Teste de instalação no Windows**: instala do zero num runner Windows (sem as ferramentas do runner no PATH), confere o serviço e a API, e testa a atualização pelo `instalar-windows.cmd`.
 - Backend migrado de SQL Server Express/IIS para SQLite/Kestrel — o projeto agora roda em Windows e Linux com os mesmos scripts.
 - Nova ferramenta `Financas.MigrarSqlite` para migrar os dados de uma instalação antiga com SQL Server para o SQLite novo.
 - Scripts `.sh` (bash) substituindo os `.ps1` de instalação, criação do banco, publicação e backup.
