@@ -857,3 +857,9 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
   /* No celular: só os ícones (o texto fica no aria-label e na dica). */
   .alerta-sincronizacao .rotulo-barra { display: none; }
 }
+
+/* ---------------------------------------------------------------- Gráfico explicado (UX-9)
+   Resumo (a conclusão) acima, o gráfico, e a linha "como ler" abaixo. */
+.grafico-explicado { margin: 0; }
+.grafico-resumo { margin: 2px 0 12px; font-size: 0.95rem; font-weight: 550; color: var(--texto-forte); line-height: 1.4; }
+.grafico-como-ler { margin: 10px 0 0; font-size: 0.82rem; color: var(--texto-suave); line-height: 1.45; overflow-wrap: anywhere; }

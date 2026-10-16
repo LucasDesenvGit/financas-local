@@ -9,12 +9,15 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { MesValores, TipoTransacao, Transacao, ValorCategoria } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
-import { NOMES_MESES_CURTOS, dataIso, dataIsoValida, paramsTransacoes, primeiroDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES_CURTOS, dataIso, dataIsoValida, paramsTransacoes, pct, primeiroDiaMes, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { PrivacidadeService } from '../core/privacidade.service';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-relatorios',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Relatórios</h1>
@@ -56,8 +59,10 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
     <section class="painel-bloco">
       <h2>Fluxo de caixa mensal</h2>
-      <p class="texto-suave legenda-relatorio">Em <span class="texto-emergencia">laranja</span>, as despesas marcadas como emergência.</p>
-      <app-grafico [configuracao]="graficoFluxo()" [altura]="300" />
+      <app-grafico-explicado [resumo]="resumoFluxo()"
+        comoLer="Verde: receitas. Rosa: despesas do dia a dia; laranja, empilhado em cima: despesas marcadas como emergência. A linha lilás é o saldo acumulado no período.">
+        <app-grafico [configuracao]="graficoFluxo()" [altura]="300" />
+      </app-grafico-explicado>
       <div class="tabela-rolagem">
         <table class="tabela tabela-meses">
           <thead>
@@ -133,6 +138,7 @@ export class RelatoriosComponent implements OnInit {
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly privacidade = inject(PrivacidadeService);
 
   readonly TipoTransacao = TipoTransacao;
   readonly fluxo = signal<MesValores[]>([]);
@@ -142,6 +148,27 @@ export class RelatoriosComponent implements OnInit {
   readonly totalReceitas = computed(() => this.fluxo().reduce((s, m) => s + m.receitas, 0));
   readonly totalDespesas = computed(() => this.fluxo().reduce((s, m) => s + m.despesas, 0));
   readonly totalEmergencia = computed(() => this.fluxo().reduce((s, m) => s + (m.despesasEmergencia ?? 0), 0));
+
+  /** UX-9: quanto sobrou (ou faltou) no período e o peso das emergências. Sem R$ com "ocultar valores". */
+  readonly resumoFluxo = computed(() => {
+    const receitas = this.totalReceitas();
+    const despesas = this.totalDespesas();
+    if (receitas <= 0 && despesas <= 0) return null;
+    const oculto = this.privacidade.oculto();
+    const resultado = receitas - despesas;
+    let frase: string;
+    if (receitas <= 0) {
+      frase = 'No período houve despesas e nenhuma receita.';
+    } else if (resultado >= 0) {
+      const valor = reaisOuNada(resultado, oculto);
+      frase = `No período sobrou ${pct(resultado / receitas * 100)} da renda${valor ? ` (${valor})` : ''}.`;
+    } else {
+      const valor = reaisOuNada(-resultado, oculto);
+      frase = `No período as despesas passaram as receitas em ${pct(-resultado / receitas * 100)}${valor ? ` (${valor})` : ''}.`;
+    }
+    const emergencia = this.totalEmergencia();
+    return emergencia > 0 && despesas > 0 ? `${frase} Emergências foram ${pct(emergencia / despesas * 100)} das despesas.` : frase;
+  });
   readonly mesesPorEmergencia = computed(() => this.fluxo().filter((m) => this.situacaoMes(m) === 'emergencia').length);
   readonly mediaDespesas = computed(() => (this.fluxo().length ? this.totalDespesas() / this.fluxo().length : 0));
   readonly totalCategorias = computed(() => this.categorias().reduce((s, c) => s + c.valor, 0) || 1);
@@ -156,15 +183,15 @@ export class RelatoriosComponent implements OnInit {
       data: {
         labels: meses.map((m) => `${NOMES_MESES_CURTOS[m.mes - 1]}/${String(m.ano).slice(2)}`),
         datasets: [
-          { label: 'Receitas', data: meses.map((m) => m.receitas), backgroundColor: '#8fd5b4', borderRadius: 8, borderSkipped: false,
+          { label: 'Receitas', data: meses.map((m) => m.receitas), backgroundColor: CORES_GRAFICO.receita, borderRadius: 8, borderSkipped: false,
             stack: 'receitas' },
-          { label: 'Despesas', data: meses.map((m) => m.despesas - (m.despesasEmergencia ?? 0)), backgroundColor: '#f5a3b0',
+          { label: 'Despesas', data: meses.map((m) => m.despesas - (m.despesasEmergencia ?? 0)), backgroundColor: CORES_GRAFICO.despesa,
             borderRadius: 8, borderSkipped: false, stack: 'despesas' },
-          { label: 'Emergências', data: meses.map((m) => m.despesasEmergencia ?? 0), backgroundColor: '#f6a467',
+          { label: 'Emergências', data: meses.map((m) => m.despesasEmergencia ?? 0), backgroundColor: CORES_GRAFICO.emergencia,
             borderRadius: 8, borderSkipped: false, stack: 'despesas' },
           // Linha sobreposta do saldo acumulado
-          { label: 'Saldo acumulado', data: saldoAcumulado, type: 'line' as never, borderColor: '#a7a3f5',
-            backgroundColor: '#a7a3f5', borderWidth: 3, pointRadius: 0, tension: 0.35, stack: 'saldo' } as never
+          { label: 'Saldo acumulado', data: saldoAcumulado, type: 'line' as never, borderColor: CORES_GRAFICO.saldo,
+            backgroundColor: CORES_GRAFICO.saldo, borderWidth: 3, pointRadius: 0, tension: 0.35, stack: 'saldo' } as never
         ]
       },
       options: {

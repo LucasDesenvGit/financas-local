@@ -8,7 +8,9 @@ import { NaturezaGasto, PainelAnual } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 
 type Status = 'ok' | 'atencao' | 'alerta' | 'neutro';
 
@@ -21,16 +23,16 @@ interface Indicador {
   progresso: number | null; // 0–100 em relação à meta
 }
 
-const COR_ATUAL = '#a7a3f5';
+const COR_ATUAL = CORES_GRAFICO.saldo;
 const COR_ANTERIOR = '#c9c6dd';
-const COR_RECEITA = '#8fd5b4';
-const COR_RECEITA_ANTERIOR = '#cfe9dc';
+const COR_RECEITA = CORES_GRAFICO.receita;
+const COR_RECEITA_ANTERIOR = CORES_GRAFICO.receitaAnterior;
 
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
 @Component({
   selector: 'app-anual',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent],
+  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -93,41 +95,52 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
       <div class="grade-2">
         <section class="painel-bloco">
           <h2>Despesas mês a mês</h2>
-          <app-grafico [configuracao]="graficoDespesas()" [altura]="260" />
+          <app-grafico-explicado [resumo]="resumoDespesas()" [comoLer]="comoLerComparacao()">
+            <app-grafico [configuracao]="graficoDespesas()" [altura]="260" />
+          </app-grafico-explicado>
         </section>
         <section class="painel-bloco">
           <h2>Receitas mês a mês</h2>
-          <app-grafico [configuracao]="graficoReceitas()" [altura]="260" />
+          <app-grafico-explicado [resumo]="resumoReceitas()" [comoLer]="comoLerComparacao()">
+            <app-grafico [configuracao]="graficoReceitas()" [altura]="260" />
+          </app-grafico-explicado>
         </section>
       </div>
 
       <div class="grade-2">
         <section class="painel-bloco">
           <h2>Poupança acumulada no ano</h2>
-          <p class="texto-suave subtitulo-grafico">Quanto sobrou somando mês a mês: a linha subindo mostra que você está guardando.</p>
-          <app-grafico [configuracao]="graficoAcumulado()" [altura]="250" />
+          <app-grafico-explicado [resumo]="resumoAcumulado()"
+            comoLer="Quanto sobrou somando mês a mês: a linha subindo mostra que você está guardando. Linha cheia: ano escolhido; tracejada: ano de comparação.">
+            <app-grafico [configuracao]="graficoAcumulado()" [altura]="250" />
+          </app-grafico-explicado>
         </section>
         <section class="painel-bloco">
           <h2>Taxa de poupança por mês</h2>
-          <p class="texto-suave subtitulo-grafico">Parte da renda que sobrou em cada mês. A linha tracejada é a referência de 20%.</p>
-          <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
+          <app-grafico-explicado [resumo]="resumoTaxa()"
+            comoLer="Parte da renda que sobrou em cada mês. Verde: 20% ou mais; amarelo: entre 0 e 20%; rosa: mês no vermelho. A linha tracejada é a referência de 20%.">
+            <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
+          </app-grafico-explicado>
         </section>
       </div>
 
       <div class="grade-2">
         <section class="painel-bloco">
           <h2>Para onde vai a sua renda (regra 50/30/20)</h2>
-          <p class="texto-suave subtitulo-grafico">Referência: até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados.
-            Classifique as categorias em Categorias e regras.</p>
-          <app-grafico [configuracao]="grafico503020()" [altura]="170" />
+          <app-grafico-explicado [resumo]="resumo503020()"
+            comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Classifique as categorias em Categorias e regras.">
+            <app-grafico [configuracao]="grafico503020()" [altura]="170" />
+          </app-grafico-explicado>
           @if (d.distribuicao.naoClassificado > 0) {
             <p class="texto-suave pequeno-texto">{{ d.distribuicao.naoClassificado | currency }} em categorias sem classificação.</p>
           }
         </section>
         <section class="painel-bloco">
           <h2>Patrimônio estimado</h2>
-          <p class="texto-suave subtitulo-grafico">Reconstruído a partir do patrimônio de hoje e do resultado de cada mês.</p>
-          <app-grafico [configuracao]="graficoPatrimonio()" [altura]="230" />
+          <app-grafico-explicado [resumo]="resumoPatrimonio()"
+            comoLer="Estimativa: parte do patrimônio de hoje e desconta o resultado de cada mês seguinte. Não inclui a variação de preço dos investimentos ao longo do ano.">
+            <app-grafico [configuracao]="graficoPatrimonio()" [altura]="230" />
+          </app-grafico-explicado>
         </section>
       </div>
 
@@ -297,7 +310,78 @@ export class AnualComponent implements OnInit {
   private readonly rotulosMeses = NOMES_MESES_CURTOS.map((m) => m);
 
   readonly graficoDespesas = computed<ChartConfiguration<'line'>>(() => this.linhasComparativas(
-    (m) => m.despesas, (m) => m.despesasAnterior, COR_ATUAL, COR_ANTERIOR));
+    (m) => m.despesas, (m) => m.despesasAnterior, CORES_GRAFICO.despesa, CORES_GRAFICO.despesaAnterior));
+
+  /* ---------------- UX-9: frases-resumo (sem R$ quando "ocultar valores" está ligado) ---------------- */
+
+  readonly comoLerComparacao = computed(() => {
+    const d = this.dados();
+    return d ? `Linha cheia: ${d.ano}; tracejada: ${d.anoComparacao}. Mês acima da tracejada = valor maior que no ano de comparação.` : '';
+  });
+
+  readonly resumoDespesas = computed(() => this.resumoComparacao('Despesas', (r) => r.despesas));
+  readonly resumoReceitas = computed(() => this.resumoComparacao('Receitas', (r) => r.receitas));
+
+  readonly resumoAcumulado = computed(() => {
+    const d = this.dados();
+    if (!d || d.mesLimite === 0 || (d.resumo.receitas <= 0 && d.resumo.despesas <= 0)) return null;
+    const ate = NOMES_MESES[d.mesLimite - 1];
+    const valor = reaisOuNada(Math.abs(d.resumo.resultado), this.privacidade.oculto());
+    if (d.resumo.resultado >= 0) {
+      const taxa = d.resumo.receitas > 0 ? ` (${pct(d.resumo.taxaPoupanca)} da renda)` : '';
+      return `Até ${ate}, você guardou${valor ? ` ${valor}` : ''} no ano${taxa}.`;
+    }
+    return `Até ${ate}, as despesas passaram as receitas${valor ? ` em ${valor}` : ''} no ano.`;
+  });
+
+  readonly resumoTaxa = computed(() => {
+    const meses = (this.dados()?.meses ?? []).filter((m) => !m.futuro && m.receitas > 0);
+    if (!meses.length) return null;
+    const bons = meses.filter((m) => (m.receitas - m.despesas) / m.receitas >= 0.2).length;
+    if (bons === meses.length) return `Você guardou pelo menos 20% da renda em todos os ${meses.length} meses.`;
+    return `Você guardou pelo menos 20% da renda em ${bons} de ${meses.length} meses.`;
+  });
+
+  readonly resumo503020 = computed(() => {
+    const d = this.dados()?.distribuicao;
+    if (!d || d.receitas <= 0) return null;
+    const parte = (v: number) => pct(v / d.receitas * 100);
+    return `Essenciais: ${parte(d.essenciais)} da renda; estilo de vida: ${parte(d.estiloDeVida + d.naoClassificado)}; `
+      + `guardado: ${parte(Math.max(0, d.poupanca))}.`;
+  });
+
+  readonly resumoPatrimonio = computed(() => {
+    const valores = (this.dados()?.meses ?? []).filter((m) => m.patrimonioEstimado !== null);
+    if (valores.length < 2) return null;
+    const inicio = valores[0];
+    const fim = valores[valores.length - 1];
+    const a = inicio.patrimonioEstimado!;
+    const b = fim.patrimonioEstimado!;
+    const desde = NOMES_MESES[inicio.mes - 1];
+    if (Math.abs(b - a) < 1) return `O patrimônio estimado ficou estável desde ${desde}.`;
+    const direcao = b > a ? 'subiu' : 'caiu';
+    if (a > 0) return `O patrimônio estimado ${direcao} ${pct((b - a) / a * 100)} desde ${desde}.`;
+    const valor = reaisOuNada(Math.abs(b - a), this.privacidade.oculto());
+    return `O patrimônio estimado ${direcao}${valor ? ` ${valor}` : ''} desde ${desde}.`;
+  });
+
+  /** "Despesas 12% acima de 2025 no mesmo período (jan–out)." */
+  private resumoComparacao(nome: string, valor: (r: PainelAnual['resumo']) => number): string | null {
+    const d = this.dados();
+    if (!d || d.mesLimite === 0) return null;
+    const v = this.variacao(valor(d.resumo), valor(d.resumoAnteriorMesmoPeriodo));
+    const periodo = d.mesLimite === 12 ? '' : ` (jan–${NOMES_MESES_CURTOS[d.mesLimite - 1]})`;
+    if (v === null) return `Sem dados de ${d.anoComparacao} para comparar.`;
+    // Ano de comparação com menos meses de movimento (ex.: primeiro ano de uso): a variação engana.
+    const noPeriodo = d.meses.filter((m) => m.mes <= d.mesLimite);
+    const mesesAtual = noPeriodo.filter((m) => !m.futuro && (m.receitas > 0 || m.despesas > 0)).length;
+    const mesesAnterior = noPeriodo.filter((m) => m.receitasAnterior > 0 || m.despesasAnterior > 0).length;
+    if (mesesAnterior < mesesAtual) {
+      return `Só ${mesesAnterior} de ${mesesAtual} meses de ${d.anoComparacao} têm movimento no mesmo período: a comparação ainda não é confiável.`;
+    }
+    if (Math.abs(v) < 1) return `${nome} praticamente iguais às de ${d.anoComparacao} no mesmo período${periodo}.`;
+    return `${nome} ${pct(v)} ${v > 0 ? 'acima' : 'abaixo'} de ${d.anoComparacao} no mesmo período${periodo}.`;
+  }
 
   readonly graficoReceitas = computed<ChartConfiguration<'line'>>(() => this.linhasComparativas(
     (m) => m.receitas, (m) => m.receitasAnterior, COR_RECEITA, COR_RECEITA_ANTERIOR));
@@ -332,7 +416,7 @@ export class AnualComponent implements OnInit {
         datasets: [
           {
             label: 'Taxa de poupança (%)', data: taxas,
-            backgroundColor: taxas.map((t) => (t === null ? 'transparent' : t >= 20 ? '#8fd5b4' : t >= 0 ? '#f6d38a' : '#f5a3b0')),
+            backgroundColor: taxas.map((t) => (t === null ? 'transparent' : t >= 20 ? CORES_GRAFICO.ganhou : t >= 0 ? '#f6d38a' : CORES_GRAFICO.perdeu)),
             borderRadius: 8, borderSkipped: false
           },
           {
@@ -362,7 +446,7 @@ export class AnualComponent implements OnInit {
         datasets: [
           { label: 'Essenciais', data: [essenciais, 50], backgroundColor: '#92c8f0', borderRadius: 6 },
           { label: 'Estilo de vida', data: [estilo, 30], backgroundColor: '#f3b3d3', borderRadius: 6 },
-          { label: 'Guardado', data: [poupanca, 20], backgroundColor: '#8fd5b4', borderRadius: 6 }
+          { label: 'Guardado', data: [poupanca, 20], backgroundColor: CORES_GRAFICO.ganhou, borderRadius: 6 }
         ]
       },
       options: {

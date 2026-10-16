@@ -8,11 +8,13 @@ import { Emprestimo, NaturezaCredito, PainelEmprestimos, ResumoCredito } from '.
 import { PrivacidadeService } from '../core/privacidade.service';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
+import { NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 
 /** Cores fixas por natureza, usadas nos cartões, etiquetas e no gráfico: financiamento sempre azul, empréstimo sempre laranja. */
-const COR_FINANCIAMENTO = '#8fa8f0';
-const COR_EMPRESTIMO = '#f6a467';
+const COR_FINANCIAMENTO = CORES_GRAFICO.financiamento;
+const COR_EMPRESTIMO = CORES_GRAFICO.emprestimo;
 
 interface Grupo {
   natureza: NaturezaCredito; titulo: string; descricao: string; classe: string;
@@ -21,7 +23,7 @@ interface Grupo {
 
 @Component({
   selector: 'app-emprestimos',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent],
+  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -69,12 +71,15 @@ interface Grupo {
         <section class="painel-bloco">
           <div class="bloco-titulo">
             <h2>Pagamentos por mês (12 meses)</h2>
-            <span class="legenda-natureza">
+            <span class="legenda-natureza" aria-hidden="true">
               <span><i class="ponto" [style.background]="corFinanciamento"></i> Financiamentos</span>
               <span><i class="ponto" [style.background]="corEmprestimo"></i> Empréstimos</span>
             </span>
           </div>
-          <app-grafico [configuracao]="graficoPagamentos()" [altura]="260" />
+          <app-grafico-explicado [resumo]="resumoPagamentos()"
+            comoLer="Cada barra é um mês, com os pagamentos empilhados: azul, financiamentos; dourado, empréstimos.">
+            <app-grafico [configuracao]="graficoPagamentos()" [altura]="260" />
+          </app-grafico-explicado>
           <p class="texto-suave pequeno-texto">
             Esses pagamentos também aparecem em <a routerLink="/transacoes">Transações</a> como despesas. Aqui eles
             vêm dos contratos, separados por natureza, para você ver quanto vai para cada tipo de dívida.
@@ -212,6 +217,20 @@ export class EmprestimosComponent implements OnInit {
   readonly atualizadoEm = computed(() => {
     const datas = (this.dados()?.contratos ?? []).map((c) => c.atualizadoEm).sort();
     return datas.length ? datas[datas.length - 1] : null;
+  });
+
+  /** UX-9: quanto dos pagamentos dos últimos 12 meses foi para cada tipo de dívida. Sem R$ com "ocultar valores". */
+  readonly resumoPagamentos = computed(() => {
+    const meses = this.dados()?.pagamentosPorMes ?? [];
+    const fin = meses.reduce((s, m) => s + m.financiamentos, 0);
+    const emp = meses.reduce((s, m) => s + m.emprestimos, 0);
+    const total = fin + emp;
+    if (total <= 0) return null;
+    const valor = reaisOuNada(total, this.privacidade.oculto());
+    const inicio = `Nos últimos 12 meses você pagou${valor ? ` ${valor}` : ''} em dívidas`;
+    if (emp <= 0) return `${inicio}, tudo em financiamentos.`;
+    if (fin <= 0) return `${inicio}, tudo em empréstimos.`;
+    return `${inicio}: ${pct(fin / total * 100)} em financiamentos e ${pct(emp / total * 100)} em empréstimos.`;
   });
 
   readonly graficoPagamentos = computed<ChartConfiguration<'bar'>>(() => {

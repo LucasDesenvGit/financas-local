@@ -7,11 +7,14 @@ import { Projecao } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { NOMES_MESES, NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { PrivacidadeService } from '../core/privacidade.service';
 
 @Component({
   selector: 'app-projecao',
-  imports: [MoedaPipe, DecimalPipe, GraficoComponent],
+  imports: [MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -57,8 +60,10 @@ import { NOMES_MESES, NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
 
         <section class="painel-bloco">
           <h2>Receitas, despesas e saldo previsto</h2>
-          <app-grafico [configuracao]="grafico()" [altura]="320" />
-          <p class="texto-suave legenda-projecao">Barras claras = previsão. A linha mostra o saldo disponível ao fim de cada mês.</p>
+          <app-grafico-explicado [resumo]="resumoGrafico()"
+            comoLer="Verde: receitas; rosa: despesas. Barras claras são previsão (média dos últimos meses + parcelas já contratadas). A linha lilás, no eixo da direita, é o saldo disponível ao fim de cada mês.">
+            <app-grafico [configuracao]="grafico()" [altura]="320" />
+          </app-grafico-explicado>
         </section>
 
         <div class="grade-2">
@@ -136,6 +141,7 @@ import { NOMES_MESES, NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
 export class ProjecaoComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly privacidade = inject(PrivacidadeService);
 
   readonly horizontes = [3, 6, 12];
   readonly meses = signal(6);
@@ -145,6 +151,21 @@ export class ProjecaoComponent implements OnInit {
   readonly ultimo = computed(() => {
     const m = this.dados()?.meses ?? [];
     return m.length ? m[m.length - 1] : null;
+  });
+
+  /** UX-9: para onde vai o saldo no horizonte escolhido, comparado com hoje. Sem R$ com "ocultar valores". */
+  readonly resumoGrafico = computed(() => {
+    const d = this.dados();
+    const u = this.ultimo();
+    if (!d || !u || u.saldoProjetado === null) return null;
+    const oculto = this.privacidade.oculto();
+    const quando = `${NOMES_MESES[u.mes - 1]}/${u.ano}`;
+    const diferenca = u.saldoProjetado - d.saldoDisponivelAtual;
+    const valor = reaisOuNada(u.saldoProjetado, oculto);
+    const base = d.mesesConsiderados > 0 ? `Pela média dos últimos ${d.mesesConsiderados} meses, ` : 'Sem histórico completo ainda, ';
+    if (Math.abs(diferenca) < 1) return `${base}o saldo deve ficar estável até ${quando}${valor ? ` (${valor})` : ''}.`;
+    if (u.saldoProjetado < 0) return `${base}o saldo deve ficar negativo até ${quando}${valor ? ` (${valor})` : ''}.`;
+    return `${base}o saldo deve ${diferenca > 0 ? 'subir' : 'cair'} até ${quando}${valor ? `, chegando a ${valor}` : ''}.`;
   });
 
   readonly resumoTendencia = computed(() => {
@@ -166,17 +187,17 @@ export class ProjecaoComponent implements OnInit {
         datasets: [
           {
             label: 'Receitas', data: meses.map((m) => m.receitas),
-            backgroundColor: meses.map((m) => (realizado(m) ? '#8fd5b4' : '#8fd5b466')),
+            backgroundColor: meses.map((m) => (realizado(m) ? CORES_GRAFICO.receita : CORES_GRAFICO.receita + '66')),
             borderRadius: 8, borderSkipped: false, yAxisID: 'y'
           },
           {
             label: 'Despesas', data: meses.map((m) => m.despesas),
-            backgroundColor: meses.map((m) => (realizado(m) ? '#f5a3b0' : '#f5a3b066')),
+            backgroundColor: meses.map((m) => (realizado(m) ? CORES_GRAFICO.despesa : CORES_GRAFICO.despesa + '66')),
             borderRadius: 8, borderSkipped: false, yAxisID: 'y'
           },
           {
             label: 'Saldo previsto', data: meses.map((m) => m.saldoProjetado),
-            type: 'line' as never, borderColor: '#a7a3f5', backgroundColor: '#a7a3f5',
+            type: 'line' as never, borderColor: CORES_GRAFICO.saldo, backgroundColor: CORES_GRAFICO.saldo,
             borderWidth: 3, pointRadius: 3, tension: 0.35, yAxisID: 'y1', spanGaps: true
           } as never
         ]

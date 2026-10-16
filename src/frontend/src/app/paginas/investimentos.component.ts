@@ -13,7 +13,9 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { dataIso } from '../compartilhado/utilidades';
+import { dataIso, pct, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -25,9 +27,10 @@ const NOMES_TIPO_PLUGGY: Record<string, string> = {
   COE: 'COE',
   OTHER: 'Outros'
 };
-const CORES = ['#a7a3f5', '#92c8f0', '#8fd5b4', '#f8c09a', '#f3b3d3', '#8fd8d8', '#f2d98b', '#a9b4c6'];
+// Paleta dos tipos de investimento: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic (UX-9).
+const CORES = ['#a7a3f5', '#92c8f0', '#c3b1e1', '#8fd8d8', '#f3b3d3', '#f2d98b', '#a9b4c6', '#b8c7f0'];
 const COR_CARTEIRA = '#a7a3f5';
-const COR_SELIC = '#f8c09a';
+const COR_SELIC = CORES_GRAFICO.selic;
 const COR_MERCADO = '#8fd5b4';
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 /** Símbolo curto para rótulos de campo (o pipe de moeda já formata os valores). */
@@ -44,7 +47,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
 @Component({
   selector: 'app-investimentos',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, ModalComponent, InvestimentosFiisComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent,
+    InvestimentosFiisComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -123,16 +127,20 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <div class="grade-2">
             <section class="painel-bloco">
               <h2>Seu dinheiro na renda variável x na Selic</h2>
-              <p class="texto-suave legenda-grafico">Compras menos vendas, e quanto esse mesmo dinheiro teria hoje na Selic.
-                O ponto verde é o valor de mercado atual (proventos não entram neste gráfico).</p>
               @if (d.evolucao.length) {
-                <app-grafico [configuracao]="graficoEvolucao()" [altura]="270" />
+                <app-grafico-explicado [resumo]="resumoEvolucao()"
+                  comoLer="Área lilás: o que você aplicou (compras menos vendas). Tracejado: quanto esse mesmo dinheiro teria hoje na Selic. Ponto verde: valor de mercado atual (proventos não entram neste gráfico).">
+                  <app-grafico [configuracao]="graficoEvolucao()" [altura]="270" />
+                </app-grafico-explicado>
               } @else { <p class="vazio">Lance suas compras para ver a comparação.</p> }
             </section>
             <section class="painel-bloco">
               <h2>Distribuição</h2>
               @if (d.distribuicao.length) {
-                <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
+                <app-grafico-explicado [resumo]="resumoDistribuicao()"
+                  comoLer="Cada fatia é um tipo de investimento, do tamanho do valor dele hoje. A lista abaixo traz os valores.">
+                  <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
+                </app-grafico-explicado>
                 <ul class="lista-legenda">
                   @for (g of d.distribuicao; track g.nome; let i = $index) {
                     <li>
@@ -150,9 +158,10 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           @if (abertas().length) {
             <section class="painel-bloco">
               <h2>Rentabilidade por ativo x Selic no mesmo período</h2>
-              <p class="texto-suave legenda-grafico">Inclui valorização, vendas e proventos. A barra da Selic usa as mesmas datas e
-                valores das suas compras.</p>
-              <app-grafico [configuracao]="graficoAtivos()" [altura]="alturaGraficoAtivos()" />
+              <app-grafico-explicado [resumo]="resumoAtivos()"
+                comoLer="Para cada ativo: resultado total (valorização, vendas e proventos) em verde quando ganhou da Selic e em rosa quando perdeu; em laranja-claro, a Selic com as mesmas datas e valores das suas compras.">
+                <app-grafico [configuracao]="graficoAtivos()" [altura]="alturaGraficoAtivos()" />
+              </app-grafico-explicado>
             </section>
           }
         }
@@ -703,6 +712,37 @@ export class InvestimentosComponent implements OnInit {
   readonly posicoesVisiveis = computed(() => (this.mostrarEncerradas() ? this.dados()?.posicoes ?? [] : this.abertas()));
   readonly alturaGraficoAtivos = computed(() => Math.max(220, this.abertas().length * 36));
 
+  /* ---------------- UX-9: frases-resumo (sem R$ quando "ocultar valores" está ligado) ---------------- */
+
+  /** Valor de mercado hoje × o mesmo dinheiro na Selic (último mês com valor de mercado). */
+  readonly resumoEvolucao = computed(() => {
+    const ev = (this.dados()?.evolucao ?? []).filter((m) => m.valorMercado !== null);
+    const ultimo = ev[ev.length - 1];
+    if (!ultimo || ultimo.aplicadoNaSelic <= 0) return null;
+    const dif = ((ultimo.valorMercado! - ultimo.aplicadoNaSelic) / ultimo.aplicadoNaSelic) * 100;
+    if (Math.abs(dif) < 0.5) return 'Sua renda variável vale hoje praticamente o mesmo que esse dinheiro teria na Selic.';
+    const oculto = this.privacidade.oculto();
+    const valores = oculto ? '' : ` (${reaisOuNada(ultimo.valorMercado!, false)} contra ${reaisOuNada(ultimo.aplicadoNaSelic, false)})`;
+    return `Sua renda variável vale hoje ${pct(dif)} ${dif > 0 ? 'mais' : 'menos'} do que esse dinheiro teria na Selic${valores}.`;
+  });
+
+  readonly resumoDistribuicao = computed(() => {
+    const d = this.dados();
+    const dist = [...(d?.distribuicao ?? [])].sort((a, b) => b.valor - a.valor);
+    if (!d || !dist.length || d.totalGeral <= 0) return null;
+    return `${dist[0].nome} concentra ${pct(dist[0].valor / d.totalGeral * 100)} dos seus investimentos.`;
+  });
+
+  readonly resumoAtivos = computed(() => {
+    const ativos = this.abertas().filter((p) => p.resultadoTotalPercentual !== null && p.resultadoSelicPercentual !== null);
+    if (!ativos.length) return null;
+    const ganharam = ativos.filter((p) => p.resultadoTotalPercentual! >= p.resultadoSelicPercentual!).length;
+    if (ganharam === ativos.length) return ativos.length === 1 ? 'Seu ativo rendeu mais que a Selic no mesmo período.'
+      : `Todos os ${ativos.length} ativos renderam mais que a Selic no mesmo período.`;
+    if (ganharam === 0) return 'Nenhum ativo rendeu mais que a Selic no mesmo período.';
+    return `${ganharam} de ${ativos.length} ativos renderam mais que a Selic no mesmo período.`;
+  });
+
   readonly graficoEvolucao = computed<ChartConfiguration<'line'>>(() => {
     const ev = this.dados()?.evolucao ?? [];
     return {
@@ -754,7 +794,7 @@ export class InvestimentosComponent implements OnInit {
           {
             label: 'Seu resultado (%)', data: ativos.map((p) => p.resultadoTotalPercentual ?? 0),
             backgroundColor: ativos.map((p) =>
-              (p.resultadoTotalPercentual ?? 0) >= (p.resultadoSelicPercentual ?? 0) ? '#8fd5b4' : '#f5a3b0'),
+              (p.resultadoTotalPercentual ?? 0) >= (p.resultadoSelicPercentual ?? 0) ? CORES_GRAFICO.ganhou : CORES_GRAFICO.perdeu),
             borderRadius: 6, borderSkipped: false
           },
           {

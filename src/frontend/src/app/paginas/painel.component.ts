@@ -7,14 +7,16 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { Painel, ValorCategoria } from '../core/modelos';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, SeletorMesComponent, IconeComponent],
+  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -102,8 +104,11 @@ import { Icones } from '../compartilhado/icones';
         <section class="painel-bloco">
           <h2>Gastos por categoria</h2>
           @if (d.gastosPorCategoria.length) {
-            <app-grafico [configuracao]="graficoCategorias()" [altura]="240" dicaClique="Clique para ver as transações"
-              (itemClicado)="abrirCategoria($event)" />
+            <app-grafico-explicado [resumo]="resumoCategorias()"
+              comoLer="Cada fatia é uma categoria, do tamanho da parte dela nas despesas do mês. Clique numa fatia ou no nome da categoria para ver as transações.">
+              <app-grafico [configuracao]="graficoCategorias()" [altura]="240" dicaClique="Clique para ver as transações"
+                (itemClicado)="abrirCategoria($event)" />
+            </app-grafico-explicado>
             <ul class="lista-legenda">
               @for (g of d.gastosPorCategoria.slice(0, 8); track g.nome) {
                 <li>
@@ -122,7 +127,10 @@ import { Icones } from '../compartilhado/icones';
 
         <section class="painel-bloco">
           <h2>Receitas × despesas (12 meses)</h2>
-          <app-grafico [configuracao]="graficoEvolucao()" [altura]="300" />
+          <app-grafico-explicado [resumo]="resumoEvolucao()"
+            comoLer="Verde: receitas; rosa: despesas. Quando a barra rosa passa da verde, o mês fechou no vermelho.">
+            <app-grafico [configuracao]="graficoEvolucao()" [altura]="300" />
+          </app-grafico-explicado>
         </section>
       </div>
 
@@ -185,7 +193,7 @@ import { Icones } from '../compartilhado/icones';
     .kpi-credito { position: relative; overflow: hidden; }
     .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
     .kpi-financiamento::before { background: #8fa8f0; }
-    .kpi-emprestimo::before { background: #f6a467; }
+    .kpi-emprestimo::before { background: #d9b45a; }
   `]
 })
 export class PainelComponent implements OnInit {
@@ -229,8 +237,8 @@ export class PainelComponent implements OnInit {
       data: {
         labels: meses.map((m) => `${NOMES_MESES_CURTOS[m.mes - 1]}/${String(m.ano).slice(2)}`),
         datasets: [
-          { label: 'Receitas', data: meses.map((m) => m.receitas), backgroundColor: '#8fd5b4', borderRadius: 8, borderSkipped: false },
-          { label: 'Despesas', data: meses.map((m) => m.despesas), backgroundColor: '#f5a3b0', borderRadius: 8, borderSkipped: false }
+          { label: 'Receitas', data: meses.map((m) => m.receitas), backgroundColor: CORES_GRAFICO.receita, borderRadius: 8, borderSkipped: false },
+          { label: 'Despesas', data: meses.map((m) => m.despesas), backgroundColor: CORES_GRAFICO.despesa, borderRadius: 8, borderSkipped: false }
         ]
       },
       options: {
@@ -238,6 +246,26 @@ export class PainelComponent implements OnInit {
         scales: { y: { ticks: { callback: (v) => Number(v).toLocaleString('pt-BR', { notation: 'compact' }) } } }
       }
     };
+  });
+
+  /** UX-9: maior categoria do mês e o peso dela (percentuais: vale com "ocultar valores"). */
+  readonly resumoCategorias = computed(() => {
+    const d = this.dados();
+    const itens = d?.gastosPorCategoria ?? [];
+    if (!d || !itens.length || d.despesasMes <= 0) return null;
+    const [primeira, segunda] = itens;
+    const texto = `${primeira.nome} é o maior gasto do mês: ${pct(primeira.valor / d.despesasMes * 100)} das despesas`;
+    return segunda ? `${texto}, seguido de ${segunda.nome} (${pct(segunda.valor / d.despesasMes * 100)}).` : `${texto}.`;
+  });
+
+  /** UX-9: em quantos meses (com movimento) as despesas ficaram abaixo das receitas. */
+  readonly resumoEvolucao = computed(() => {
+    const meses = (this.dados()?.evolucao ?? []).filter((m) => m.receitas > 0 || m.despesas > 0);
+    if (!meses.length) return null;
+    const positivos = meses.filter((m) => m.receitas >= m.despesas).length;
+    if (positivos === meses.length) return `Você gastou menos do que recebeu em todos os ${meses.length} meses.`;
+    if (positivos === 0) return `As despesas passaram as receitas em todos os ${meses.length} meses.`;
+    return `Você gastou menos do que recebeu em ${positivos} dos ${meses.length} meses.`;
   });
 
   ngOnInit(): void {
