@@ -140,11 +140,13 @@ export interface Meta {
   id: number; nome: string; valorAlvo: number; valorAtual: number; dataAlvo: string | null; contaId: number | null;
   contaNome: string | null; cor: string; concluida: boolean; percentual: number; aporteMensalSugerido: number | null;
   valorInicial: number; saldoConta: number;
+  /** #89: cofrinho (reserva) que guarda o dinheiro da meta; com ele, o progresso usa o saldo do cofrinho. */
+  reservaNome: string | null; saldoReserva: number | null; reservaConferir: boolean; reservaNaoEncontrada: boolean;
 }
 
 export interface SalvarMeta {
   nome: string; valorAlvo: number; valorAtual: number; dataAlvo: string | null; contaId: number | null;
-  cor: string; concluida: boolean;
+  cor: string; concluida: boolean; reservaNome: string | null;
 }
 
 export interface ContaAgendada {

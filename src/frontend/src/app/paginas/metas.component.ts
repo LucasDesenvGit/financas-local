@@ -1,9 +1,10 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Conta, Meta, SalvarMeta } from '../core/modelos';
+import { Conta, Meta, Reserva, SalvarMeta } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { CORES_SUGERIDAS } from '../compartilhado/utilidades';
@@ -11,7 +12,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-metas',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, ModalComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
@@ -33,7 +34,18 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           @if (m.aporteMensalSugerido) {
             <p class="texto-suave">Guardar <strong>{{ m.aporteMensalSugerido | currency }}</strong>/mês para chegar lá</p>
           }
-          @if (m.contaNome) {
+          @if (m.reservaNome) {
+            @if (m.reservaNaoEncontrada) {
+              <p class="aviso-cofrinho" role="status">Cofrinho "{{ m.reservaNome }}" não encontrado no extrato de {{ m.contaNome }}.
+                <button type="button" class="link" (click)="editar(m)">Editar a meta</button></p>
+            } @else {
+              <p class="texto-suave">{{ m.valorInicial | currency }} guardados + <strong>{{ m.saldoReserva | currency }}</strong>
+                no cofrinho {{ m.reservaNome }} ({{ m.contaNome }})</p>
+              @if (m.reservaConferir) {
+                <p class="texto-suave">saldo estimado, <a routerLink="/investimentos" [queryParams]="{ aba: 'reservas' }">confira em Reservas</a></p>
+              }
+            }
+          } @else if (m.contaNome) {
             <p class="texto-suave">{{ m.valorInicial | currency }} guardados + {{ m.saldoConta | currency }} em {{ m.contaNome }}</p>
           }
           <footer>
@@ -58,7 +70,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
             <label>Data alvo <input type="date" name="data" [(ngModel)]="fm.dataAlvo"></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
-            <select name="conta" [(ngModel)]="fm.contaId">
+            <select name="conta" [(ngModel)]="fm.contaId" (ngModelChange)="fm.reservaNome = null">
               <option [ngValue]="null">Não — vou registrar os aportes</option>
               @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
             </select>
@@ -66,8 +78,20 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <label>Valor inicial já guardado (R$)
             <input type="number" name="atual" [(ngModel)]="fm.valorAtual" min="0" step="0.01">
           </label>
+          @if (opcoesCofrinho(fm).length) {
+            <label>Qual cofrinho (reserva)?
+              <select name="reserva" [(ngModel)]="fm.reservaNome">
+                <option [ngValue]="null">Saldo disponível da conta (sem cofrinhos)</option>
+                @for (r of opcoesCofrinho(fm); track r.nome) {
+                  <option [ngValue]="r.nome">{{ r.nome }}{{ r.saldo === null ? ' (não encontrado no extrato)' : ' — ' + (r.saldo | currency) }}</option>
+                }
+              </select>
+            </label>
+            <p class="texto-suave">O saldo do cofrinho é estimado pelo extrato.
+              <a routerLink="/investimentos" [queryParams]="{ aba: 'reservas' }" (click)="form = null">Confira em Investimentos › Reservas</a>.</p>
+          }
           @if (fm.contaId !== null) {
-            <p class="texto-suave">O progresso será o valor inicial somado ao saldo atual da conta escolhida.</p>
+            <p class="texto-suave">O progresso será o valor inicial somado ao saldo {{ fm.reservaNome ? 'do cofrinho' : 'atual da conta' }} escolhido.</p>
           }
           <div class="cores">
             @for (cor of cores; track cor) {
@@ -98,6 +122,9 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         </div>
       </form>
     </app-modal>
+  `,
+  styles: `
+    .aviso-cofrinho { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
   `
 })
 export class MetasComponent implements OnInit {
@@ -107,6 +134,8 @@ export class MetasComponent implements OnInit {
   readonly cores = CORES_SUGERIDAS;
   readonly metas = signal<Meta[]>([]);
   readonly contas = signal<Conta[]>([]);
+  /** #89: cofrinhos (reservas do extrato), para o campo da meta. */
+  readonly reservas = signal<Reserva[]>([]);
 
   form: SalvarMeta | null = null;
   editandoId: number | null = null;
@@ -116,6 +145,23 @@ export class MetasComponent implements OnInit {
   ngOnInit(): void {
     this.carregar();
     this.api.contas().subscribe((c) => this.contas.set(c));
+    // Cofrinhos são complementares: se falhar, o formulário fica como antes (sem o campo).
+    this.api.reservas().subscribe({ next: (r) => this.reservas.set(r), error: () => this.reservas.set([]) });
+  }
+
+  /**
+   * Cofrinhos da conta escolhida, com saldo (Nielsen 6: escolher, não digitar). O campo só aparece quando a conta tem
+   * cofrinho (divulgação progressiva). Se a meta aponta para um que sumiu do extrato, ele continua na lista (marcado),
+   * para não ser trocado sem querer.
+   */
+  opcoesCofrinho(fm: SalvarMeta): { nome: string; saldo: number | null }[] {
+    if (fm.contaId === null) return [];
+    const opcoes = this.reservas().filter((r) => r.contaId === fm.contaId)
+      .map((r) => ({ nome: r.nome, saldo: r.saldo as number | null }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    const escolhido = fm.reservaNome;
+    if (escolhido && !opcoes.some((o) => o.nome.toLowerCase() === escolhido.toLowerCase())) opcoes.push({ nome: escolhido, saldo: null });
+    return opcoes;
   }
 
   carregar(): void {
@@ -127,14 +173,14 @@ export class MetasComponent implements OnInit {
 
   nova(): void {
     this.editandoId = null;
-    this.form = { nome: '', valorAlvo: 0, valorAtual: 0, dataAlvo: null, contaId: null, cor: CORES_SUGERIDAS[0], concluida: false };
+    this.form = { nome: '', valorAlvo: 0, valorAtual: 0, dataAlvo: null, contaId: null, cor: CORES_SUGERIDAS[0], concluida: false, reservaNome: null };
   }
 
   editar(m: Meta): void {
     this.editandoId = m.id;
     this.form = {
       nome: m.nome, valorAlvo: m.valorAlvo, valorAtual: m.valorInicial, dataAlvo: m.dataAlvo,
-      contaId: m.contaId, cor: m.cor, concluida: m.concluida
+      contaId: m.contaId, cor: m.cor, concluida: m.concluida, reservaNome: m.reservaNome
     };
   }
 

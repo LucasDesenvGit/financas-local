@@ -53,4 +53,5 @@ Usamos **extrato com conferência manual opcional**:
   - prefixos e regra de cálculo ficam só em `Servicos/Investimentos/ReservaService.cs`;
   - quem soma investimentos para patrimônio ou reserva de emergência deve usar `CarteiraService.ComposicaoAsync` (que já inclui as reservas) ou `ReservaService.TotalAsync`;
   - se a Pluggy passar a informar o saldo das Reservas (em `/investments` ou `/accounts`), esta ADR deve ser substituída e o cálculo removido, para não contar duas vezes;
-  - tabela nova `ReservaConferencia` no fim de `banco/01-estrutura.sql`, criada nos bancos existentes pelo `scripts/2-criar-banco.sh`.
+  - tabela nova `ReservaConferencia` no fim de `banco/01-estrutura.sql`, criada nos bancos existentes pelo `scripts/2-criar-banco.sh`;
+  - uma meta pode acompanhar um cofrinho (`Meta.ReservaNome`, #89): o progresso passa a ser o valor inicial + o saldo estimado da reserva (nunca o saldo da conta junto), identificada pelo mesmo critério — conta + nome, sem diferenciar maiúsculas. Se o cofrinho for renomeado no Mercado Pago, o vínculo deixa de achar a reserva: a meta não soma nada, avisa "não encontrado" e o vínculo não é apagado sozinho.

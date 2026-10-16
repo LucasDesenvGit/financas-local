@@ -161,9 +161,15 @@ public record ItemAplicarSugestaoDto(int CategoriaId, [Range(0.01d, 999999999d)]
 public record AplicarSugestaoOrcamentoDto([Range(2000, 2100)] short Ano, [Range(1, 12)] byte Mes,
     [Required, MinLength(1), MaxLength(500)] List<ItemAplicarSugestaoDto> Itens);
 
+/// <summary>
+/// Meta. Com cofrinho (<c>ReservaNome</c>), o progresso é o valor inicial + <c>SaldoReserva</c> (nunca o saldo da
+/// conta junto); <c>ReservaConferir</c> = saldo só estimado, vale conferir; <c>ReservaNaoEncontrada</c> = o cofrinho
+/// não aparece mais no extrato (nada é somado e o vínculo não é apagado).
+/// </summary>
 public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual, DateOnly? DataAlvo,
     int? ContaId, string? ContaNome, string Cor, bool Concluida, decimal Percentual, decimal? AporteMensalSugerido,
-    decimal ValorInicial, decimal SaldoConta);
+    decimal ValorInicial, decimal SaldoConta, string? ReservaNome = null, decimal? SaldoReserva = null,
+    bool ReservaConferir = false, bool ReservaNaoEncontrada = false);
 
 public record SalvarMetaDto(
     [Required, StringLength(120)] string Nome,
@@ -172,7 +178,8 @@ public record SalvarMetaDto(
     DateOnly? DataAlvo,
     int? ContaId,
     [Required, RegularExpression("^#[0-9a-fA-F]{6}$")] string Cor,
-    bool Concluida);
+    bool Concluida,
+    [StringLength(100)] string? ReservaNome = null);
 
 public record AporteDto([Range(-999999999d, 999999999d)] decimal Valor);
 

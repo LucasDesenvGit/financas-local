@@ -2,6 +2,7 @@ using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Investimentos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -119,11 +120,13 @@ public class MetasController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly ContaService _contas;
+    private readonly ReservaService _reservas;
 
-    public MetasController(FinancasDbContext db, ContaService contas)
+    public MetasController(FinancasDbContext db, ContaService contas, ReservaService reservas)
     {
         _db = db;
         _contas = contas;
+        _reservas = reservas;
     }
 
     [HttpGet]
@@ -135,15 +138,18 @@ public class MetasController : BaseController
         var saldos = metas.Any(m => m.ContaId != null)
             ? await _contas.CalcularSaldosAsync(ct)
             : new Dictionary<int, decimal>();
-        return metas.Select(m => ParaDto(m, saldos)).ToList();
+        var reservas = metas.Any(m => m.ReservaNome != null) ? await _reservas.ListarAsync(ct) : [];
+        return metas.Select(m => ParaDto(m, saldos, reservas)).ToList();
     }
 
     [HttpPost]
     public async Task<ActionResult<MetaDto>> Criar(SalvarMetaDto dto, CancellationToken ct)
     {
         if (dto.ContaId is { } cid && !await _db.Contas.AnyAsync(c => c.Id == cid, ct)) return Erro("Conta inválida.");
+        var (erro, cofrinho) = await ValidarCofrinhoAsync(dto, null, ct);
+        if (erro is not null) return Erro(erro);
         var m = new Meta { CriadoEm = DateTime.UtcNow };
-        Aplicar(m, dto);
+        Aplicar(m, dto, cofrinho);
         _db.Metas.Add(m);
         await _db.SaveChangesAsync(ct);
         return await ObterDtoAsync(m.Id, ct);
@@ -155,7 +161,9 @@ public class MetasController : BaseController
         var m = await _db.Metas.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (m is null) return NaoEncontrado();
         if (dto.ContaId is { } cid && !await _db.Contas.AnyAsync(c => c.Id == cid, ct)) return Erro("Conta inválida.");
-        Aplicar(m, dto);
+        var (erro, cofrinho) = await ValidarCofrinhoAsync(dto, m, ct);
+        if (erro is not null) return Erro(erro);
+        Aplicar(m, dto, cofrinho);
         await _db.SaveChangesAsync(ct);
         return await ObterDtoAsync(id, ct);
     }
@@ -183,25 +191,52 @@ public class MetasController : BaseController
     {
         var m = await _db.Metas.AsNoTracking().Include(x => x.Conta).FirstAsync(x => x.Id == id, ct);
         var saldos = m.ContaId is null ? new Dictionary<int, decimal>() : await _contas.CalcularSaldosAsync(ct);
-        return ParaDto(m, saldos);
+        var reservas = m.ReservaNome is null ? [] : await _reservas.ListarAsync(ct);
+        return ParaDto(m, saldos, reservas);
     }
 
-    private static void Aplicar(Meta m, SalvarMetaDto dto)
+    /// <summary>
+    /// Cofrinho só com conta, e precisa existir nela (mesma identificação do ReservaService: conta + nome, sem
+    /// diferenciar maiúsculas). Ao editar, manter o cofrinho que já estava gravado é aceito mesmo que ele tenha sumido
+    /// do extrato — o cartão avisa, e a pessoa decide trocar ou não. Devolve o nome como está no extrato.
+    /// </summary>
+    private async Task<(string? Erro, string? Nome)> ValidarCofrinhoAsync(SalvarMetaDto dto, Meta? atual, CancellationToken ct)
+    {
+        var nome = string.IsNullOrWhiteSpace(dto.ReservaNome) ? null : dto.ReservaNome.Trim();
+        if (nome is null) return (null, null);
+        if (dto.ContaId is not int contaId) return ("Escolha a conta do cofrinho.", null);
+        var reserva = (await _reservas.ListarAsync(ct))
+            .FirstOrDefault(r => r.ContaId == contaId && string.Equals(r.Nome, nome, StringComparison.OrdinalIgnoreCase));
+        if (reserva is not null) return (null, reserva.Nome);
+        if (atual is not null && atual.ContaId == contaId
+            && string.Equals(atual.ReservaNome, nome, StringComparison.OrdinalIgnoreCase)) return (null, atual.ReservaNome);
+        return ("Cofrinho inválido para esta conta.", null);
+    }
+
+    private static void Aplicar(Meta m, SalvarMetaDto dto, string? cofrinho)
     {
         m.Nome = dto.Nome.Trim();
         m.ValorAlvo = dto.ValorAlvo;
         m.ValorAtual = dto.ValorAtual;
         m.DataAlvo = dto.DataAlvo;
         m.ContaId = dto.ContaId;
+        m.ReservaNome = dto.ContaId is null ? null : cofrinho;
         m.Cor = dto.Cor;
         m.Concluida = dto.Concluida;
     }
 
-    private static MetaDto ParaDto(Meta m, Dictionary<int, decimal> saldos)
+    private static MetaDto ParaDto(Meta m, Dictionary<int, decimal> saldos, List<ReservaDto> reservas)
     {
-        // O valor inicial (ValorAtual gravado) sempre conta; se houver conta vinculada, soma o saldo dela.
-        var saldoConta = m.ContaId is int cid && saldos.TryGetValue(cid, out var saldo) ? Math.Max(0, saldo) : 0m;
-        var atual = m.ValorAtual + saldoConta;
+        // O valor inicial (ValorAtual gravado) sempre conta. Com cofrinho, soma o saldo dele (nunca o da conta junto,
+        // para não contar duas vezes); sem cofrinho, soma o saldo da conta vinculada, como antes (#89).
+        ReservaDto? reserva = null;
+        var saldoConta = 0m;
+        if (m.ReservaNome is not null)
+            reserva = reservas.FirstOrDefault(r => r.ContaId == m.ContaId
+                && string.Equals(r.Nome, m.ReservaNome, StringComparison.OrdinalIgnoreCase));
+        else if (m.ContaId is int cid && saldos.TryGetValue(cid, out var saldo))
+            saldoConta = Math.Max(0, saldo);
+        var atual = m.ValorAtual + saldoConta + (reserva?.Saldo ?? 0m);
         var percentual = m.ValorAlvo > 0 ? Math.Min(100m, Math.Round(atual / m.ValorAlvo * 100m, 1)) : 0m;
 
         decimal? sugestao = null;
@@ -213,7 +248,10 @@ public class MetasController : BaseController
         }
 
         return new MetaDto(m.Id, m.Nome, m.ValorAlvo, atual, m.DataAlvo, m.ContaId, m.Conta?.Nome, m.Cor,
-            m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta);
+            m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta,
+            reserva?.Nome ?? m.ReservaNome, reserva?.Saldo,
+            reserva is not null && (reserva.PodeTerSaldoAnterior || reserva.ConferenciaAntiga),
+            m.ReservaNome is not null && reserva is null);
     }
 }
 

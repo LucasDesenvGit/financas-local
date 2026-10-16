@@ -58,6 +58,7 @@ etapa 'Adicionando colunas novas em tabelas existentes'
 # Bancos criados antes de cada coluna existir; em banco novo ela ja nasce no CREATE TABLE.
 adicionar_coluna_se_ausente "Ativo" "Moeda" "TEXT NOT NULL DEFAULT 'BRL'"
 adicionar_coluna_se_ausente "OperacaoAtivo" "Cambio" "TEXT NOT NULL DEFAULT '1'"
+adicionar_coluna_se_ausente "Meta" "ReservaNome" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'
