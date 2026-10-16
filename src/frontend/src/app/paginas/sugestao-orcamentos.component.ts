@@ -89,7 +89,7 @@ interface Fatia { classe: string; rotulo: string; percentual: number; referencia
               <tr [class.sem-dados]="l.item.sugerido === null">
                 <td><input type="checkbox" [(ngModel)]="l.marcada" (ngModelChange)="mudou()" [disabled]="l.item.sugerido === null"
                   [attr.aria-label]="'Aplicar orçamento de ' + l.item.nome"></td>
-                <td class="nowrap"><span class="ponto" [style.background]="l.item.cor"></span>{{ l.item.nome }}
+                <td class="nowrap categoria"><span class="ponto" [style.background]="l.item.cor"></span>{{ l.item.nome }}
                   <br><small class="texto-suave">{{ rotuloNatureza(l.item.natureza) }}</small></td>
                 <td class="direita">
                   @if (l.item.sugerido === null) {
@@ -156,6 +156,12 @@ interface Fatia { classe: string; rotulo: string; percentual: number; referencia
     tr.sem-dados td { color: var(--texto-suave); }
     .rodape-sugestao { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
     .rodape-sugestao p { margin: 0; }
+    /* Celular: categoria quebra a linha e o campo encolhe, para "Sugerido" caber sem rolar para o lado. */
+    @media (max-width: 600px) {
+      .tabela-sugestao-orcamento td.categoria { white-space: normal; min-width: 96px; }
+      .campo-sugerido { width: 76px; }
+      .tabela-sugestao-orcamento th, .tabela-sugestao-orcamento td { padding-left: 6px; padding-right: 6px; }
+    }
   `
 })
 export class SugestaoOrcamentosComponent implements OnInit {
