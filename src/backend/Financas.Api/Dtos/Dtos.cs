@@ -167,6 +167,26 @@ public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo,
     string Moeda, decimal Saldo, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
     DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
 
+/* ----------------------------- Empréstimos e financiamentos ----------------------------- */
+/// <summary>Saldo devedor e parcela mensal dos contratos em aberto, separados por natureza.</summary>
+public record TotaisCreditoDto(decimal SaldoFinanciamentos, decimal SaldoEmprestimos,
+    decimal ParcelaMensalFinanciamentos, decimal ParcelaMensalEmprestimos);
+
+public record EmprestimoDto(int Id, NaturezaCredito Natureza, string Produto, string? Modalidade, string ModalidadeDescricao,
+    string? NumeroContrato, string? NomeInstituicao, string Moeda, decimal ValorContratado, decimal SaldoDevedor,
+    decimal? ValorParcela, decimal ParcelaMensal, int? ParcelasTotal, int? ParcelasPagas, int? ParcelasAVencer,
+    int ParcelasEmAtraso, string? Periodicidade, string? SistemaAmortizacao, decimal? TaxaJuros, string? PeriodicidadeTaxa,
+    string? Indexador, decimal? Cet, DateOnly? DataContratacao, DateOnly? DataVencimentoFinal, DateOnly? ProximoVencimento,
+    decimal TotalPago, DateOnly? UltimoPagamento, bool Quitado, DateTime AtualizadoEm);
+
+public record ResumoCreditoDto(NaturezaCredito Natureza, int ContratosAbertos, int ContratosQuitados, decimal SaldoDevedor,
+    decimal ValorContratado, decimal ParcelaMensal, decimal TotalPago, int ParcelasEmAtraso);
+
+public record PagamentosMesCreditoDto(int Ano, int Mes, decimal Financiamentos, decimal Emprestimos);
+
+public record PainelEmprestimosDto(ResumoCreditoDto Financiamentos, ResumoCreditoDto Emprestimos,
+    List<EmprestimoDto> Contratos, List<PagamentosMesCreditoDto> PagamentosPorMes);
+
 /* ----------------------------- Painel / relatórios ----------------------------- */
 public record ValorCategoriaDto(int? CategoriaId, string Nome, string Cor, decimal Valor);
 
@@ -186,7 +206,8 @@ public record DistribuicaoRendaDto(decimal Receitas, decimal Essenciais, decimal
 
 public record SaudeFinanceiraDto(decimal PatrimonioAtual, decimal ReservaLiquida, decimal GastoMensalMedio,
     decimal GastoEssencialMensalMedio, decimal? MesesDeReserva, decimal? MesesDeReservaEssencial,
-    decimal RendaMensalMedia, decimal ParcelasMensais, decimal? ComprometimentoParcelas, int MesesAnalisados);
+    decimal RendaMensalMedia, decimal ParcelasMensais, decimal? ComprometimentoParcelas, int MesesAnalisados,
+    decimal ParcelasFinanciamentos, decimal ParcelasEmprestimos, decimal DividaFinanciamentos, decimal DividaEmprestimos);
 
 public record PainelAnualDto(int Ano, int AnoComparacao, int MesLimite, List<int> AnosDisponiveis,
     ResumoAnoDto Resumo, ResumoAnoDto ResumoAnteriorMesmoPeriodo, ResumoAnoDto ResumoAnteriorCompleto,
@@ -219,7 +240,9 @@ public record PainelDto(
     List<TransacaoDto> UltimasTransacoes,
     List<string> Alertas,
     DateTime? UltimaSincronizacao,
-    decimal DespesasEmergenciaMes = 0);
+    decimal DespesasEmergenciaMes = 0,
+    decimal DividaFinanciamentos = 0,
+    decimal DividaEmprestimos = 0);
 
 /* ----------------------------- Open Finance (Pluggy) ----------------------------- */
 public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, int IntervaloHoras,

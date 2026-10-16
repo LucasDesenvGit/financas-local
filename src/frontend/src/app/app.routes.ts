@@ -51,6 +51,11 @@ export const rotas: Routes = [
         title: 'Investimentos · Finanças Local'
       },
       {
+        path: 'emprestimos',
+        loadComponent: () => import('./paginas/emprestimos.component').then((m) => m.EmprestimosComponent),
+        title: 'Empréstimos e financiamentos · Finanças Local'
+      },
+      {
         path: 'relatorios',
         loadComponent: () => import('./paginas/relatorios.component').then((m) => m.RelatoriosComponent),
         title: 'Relatórios · Finanças Local'
