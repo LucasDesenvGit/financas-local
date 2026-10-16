@@ -12,7 +12,7 @@ import {
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
-import { dataIso, dataIsoValida, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, dataIso, dataIsoValida, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 interface FormTransacao {
@@ -40,6 +40,26 @@ interface FormTransferencia {
   valor: number | null;
   data: string;
   descricao: string;
+}
+
+interface ChipFiltro {
+  id: 'periodo' | 'categoria' | 'conta' | 'tipo' | 'emergencias' | 'busca';
+  rotulo: string;
+  cor?: string;
+}
+
+/** "outubro/2026" quando é o mês cheio; senão "01/09 – 15/10" (com ano se o período cruza anos). */
+function rotuloPeriodo(inicio?: string | null, fim?: string | null): string {
+  if (!inicio || !fim) return inicio ? `a partir de ${dataCurta(inicio, true)}` : fim ? `até ${dataCurta(fim, true)}` : 'Todo o período';
+  const [ai, mi] = inicio.split('-').map(Number);
+  if (inicio === primeiroDiaMes(ai, mi) && fim === ultimoDiaMes(ai, mi)) return `${NOMES_MESES[mi - 1]}/${ai}`;
+  const cruzaAno = inicio.substring(0, 4) !== fim.substring(0, 4);
+  return `${dataCurta(inicio, cruzaAno)} – ${dataCurta(fim, cruzaAno)}`;
+}
+
+function dataCurta(iso: string, comAno: boolean): string {
+  const [a, m, d] = iso.split('-');
+  return comAno ? `${d}/${m}/${a}` : `${d}/${m}`;
 }
 
 @Component({
@@ -85,6 +105,23 @@ interface FormTransferencia {
         <input type="search" [(ngModel)]="filtro.busca" (keyup.enter)="buscar(1)" placeholder="descrição, estabelecimento…" maxlength="100">
       </label>
     </section>
+
+    @if (chipsFiltro(); as chips) {
+      @if (chips.length) {
+        <section class="faixa-filtros" aria-label="Filtros ativos">
+          <strong>Filtrando:</strong>
+          @for (c of chips; track c.id) {
+            <span class="chip chip-filtro">
+              @if (c.cor) { <span class="ponto" [style.background]="c.cor"></span> }
+              {{ c.rotulo }}
+              <button type="button" class="chip-remover" (click)="removerFiltro(c.id)"
+                [attr.aria-label]="'Remover filtro: ' + c.rotulo" [title]="'Remover filtro: ' + c.rotulo">✕</button>
+            </span>
+          }
+          <button type="button" class="link" (click)="limparFiltros()">Limpar filtros</button>
+        </section>
+      }
+    }
 
     @if (pagina(); as p) {
       <section class="resumo-filtro">
@@ -322,6 +359,16 @@ interface FormTransferencia {
     </app-modal>
   `,
   styles: `
+    .faixa-filtros {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+      margin: -4px 4px 14px; font-size: 0.9rem;
+    }
+    .chip-filtro { gap: 2px; padding-right: 2px; background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 550; }
+    .chip-remover {
+      display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: 2px;
+      border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; font-size: 0.8rem; line-height: 1;
+    }
+    .chip-remover:hover, .chip-remover:focus-visible { background: var(--superficie); }
     .linha-sugestoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tabela-sugestoes td { vertical-align: top; }
     .tabela-sugestoes td:first-child { max-width: 280px; }
@@ -367,6 +414,55 @@ export class TransacoesComponent implements OnInit {
 
   filtro: FiltroTransacoes = this.filtroInicial();
   filtroCategoria = '';
+  /** Filtro da última busca (o que está na tela), base dos chips de "Filtrando:". */
+  private readonly filtroAplicado = signal<FiltroTransacoes>(this.filtroInicial());
+
+  /**
+   * UX-2: um chip para cada filtro diferente do padrão (mês atual, sem filtros), para quem chega por um link
+   * saber que a lista está filtrada. Nielsen 1 (visibilidade do estado) e 3 (controle: ✕ e "Limpar filtros").
+   */
+  readonly chipsFiltro = computed<ChipFiltro[]>(() => {
+    const f = this.filtroAplicado();
+    const padrao = this.filtroInicial();
+    const chips: ChipFiltro[] = [];
+    if (f.inicio !== padrao.inicio || f.fim !== padrao.fim) chips.push({ id: 'periodo', rotulo: rotuloPeriodo(f.inicio, f.fim) });
+    if (f.semCategoria) {
+      chips.push({ id: 'categoria', rotulo: 'Sem categoria' });
+    } else if (f.categoriaId) {
+      const c = this.todasCategorias().find((x) => x.id === f.categoriaId);
+      chips.push({ id: 'categoria', rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
+    }
+    if (f.contaId) chips.push({ id: 'conta', rotulo: this.contas().find((c) => c.id === f.contaId)?.nome ?? 'Conta' });
+    if (f.tipo) {
+      const nomes: Record<number, string> = {
+        [TipoTransacao.Despesa]: 'Despesas', [TipoTransacao.Receita]: 'Receitas', [TipoTransacao.Transferencia]: 'Transferências'
+      };
+      chips.push({ id: 'tipo', rotulo: nomes[f.tipo] });
+    }
+    if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
+    if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
+    return chips;
+  });
+
+  removerFiltro(id: ChipFiltro['id']): void {
+    const padrao = this.filtroInicial();
+    switch (id) {
+      case 'periodo': this.filtro.inicio = padrao.inicio; this.filtro.fim = padrao.fim; break;
+      case 'categoria': this.filtroCategoria = ''; this.sincronizarFiltroCategoria(); break;
+      case 'conta': this.filtro.contaId = null; break;
+      case 'tipo': this.filtro.tipo = null; break;
+      case 'emergencias': this.filtro.somenteEmergencias = false; break;
+      case 'busca': this.filtro.busca = ''; break;
+    }
+    this.buscar(1);
+  }
+
+  limparFiltros(): void {
+    this.filtro = this.filtroInicial();
+    this.filtroCategoria = '';
+    this.sincronizarFiltroCategoria();
+    this.buscar(1);
+  }
   categoriaLote: number | null = null;
   form: FormTransacao | null = null;
   transferencia: FormTransferencia | null = null;
@@ -452,6 +548,7 @@ export class TransacoesComponent implements OnInit {
 
   buscar(pagina: number): void {
     this.filtro.pagina = pagina;
+    this.filtroAplicado.set({ ...this.filtro });
     this.api.transacoes(this.filtro).subscribe({
       next: (p) => {
         const trocouPagina = this.pagina() !== null && this.pagina()!.pagina !== p.pagina;
