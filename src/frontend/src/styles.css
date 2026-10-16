@@ -881,3 +881,18 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
 }
 .termo-balao strong { color: var(--texto-forte); font-size: 0.9rem; }
 .termo-balao em { color: var(--texto-suave); font-style: normal; }
+
+/* UX-11: blocos empilhados numa célula da grade e "Mais análises" (divulgação progressiva) */
+.coluna-blocos { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.coluna-blocos > .painel-bloco { margin-bottom: 0; }
+.mais-analises { margin: 8px 0 16px; }
+.mais-analises-titulo { margin: 0 0 12px; font-size: 1rem; }
+.mais-analises-botao {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; width: 100%; min-height: 44px;
+  padding: 10px 16px; text-align: left; font: inherit; font-weight: 600; color: var(--texto-forte); cursor: pointer;
+  background: transparent; border: 1px dashed var(--linha); border-radius: var(--raio-medio);
+}
+.mais-analises-botao:hover { background: var(--superficie); border-style: solid; }
+.mais-analises-botao small { font-weight: 400; color: var(--texto-suave); font-size: 0.85rem; }
+.mais-analises-seta { display: inline-block; transition: transform 0.15s ease; color: var(--primaria); }
+.mais-analises.aberta .mais-analises-seta { transform: rotate(90deg); }

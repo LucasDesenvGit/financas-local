@@ -12,6 +12,7 @@ import { NOMES_MESES, NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilh
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { ChaveGlossario } from '../compartilhado/glossario';
 
 type Status = 'ok' | 'atencao' | 'alerta' | 'neutro';
@@ -36,7 +37,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 
 @Component({
   selector: 'app-anual',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent],
+  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -98,46 +99,11 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 
       <div class="grade-2">
         <section class="painel-bloco">
-          <h2>Despesas mês a mês</h2>
-          <app-grafico-explicado [resumo]="resumoDespesas()" [comoLer]="comoLerComparacao()">
-            <app-grafico [configuracao]="graficoDespesas()" [altura]="260" />
-          </app-grafico-explicado>
-        </section>
-        <section class="painel-bloco">
-          <h2>Receitas mês a mês</h2>
-          <app-grafico-explicado [resumo]="resumoReceitas()" [comoLer]="comoLerComparacao()">
-            <app-grafico [configuracao]="graficoReceitas()" [altura]="260" />
-          </app-grafico-explicado>
-        </section>
-      </div>
-
-      <div class="grade-2">
-        <section class="painel-bloco">
           <h2>Poupança acumulada no ano</h2>
           <app-grafico-explicado [resumo]="resumoAcumulado()"
             comoLer="Quanto sobrou somando mês a mês: a linha subindo mostra que você está guardando. Linha cheia: ano escolhido; tracejada: ano de comparação.">
             <app-grafico [configuracao]="graficoAcumulado()" [altura]="250" />
           </app-grafico-explicado>
-        </section>
-        <section class="painel-bloco">
-          <h2><app-termo chave="taxaPoupanca">Taxa de poupança</app-termo> por mês</h2>
-          <app-grafico-explicado [resumo]="resumoTaxa()"
-            comoLer="Parte da renda que sobrou em cada mês. Verde: 20% ou mais; amarelo: entre 0 e 20%; rosa: mês no vermelho. A linha tracejada é a referência de 20%.">
-            <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
-          </app-grafico-explicado>
-        </section>
-      </div>
-
-      <div class="grade-2">
-        <section class="painel-bloco">
-          <h2>Para onde vai a sua renda (<app-termo chave="regra503020">regra 50/30/20</app-termo>)</h2>
-          <app-grafico-explicado [resumo]="resumo503020()"
-            comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Classifique as categorias em Categorias e regras.">
-            <app-grafico [configuracao]="grafico503020()" [altura]="170" />
-          </app-grafico-explicado>
-          @if (d.distribuicao.naoClassificado > 0) {
-            <p class="texto-suave pequeno-texto">{{ d.distribuicao.naoClassificado | currency }} em categorias sem classificação.</p>
-          }
         </section>
         <section class="painel-bloco">
           <h2>Patrimônio estimado</h2>
@@ -149,69 +115,107 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
       </div>
 
       <section class="painel-bloco">
-        <h2>Categorias: {{ d.ano }} × {{ d.anoComparacao }} <small class="texto-suave">(mesmo período)</small></h2>
-        <div class="tabela-rolagem">
-          <table class="tabela">
-            <thead>
-              <tr><th>Categoria</th><th class="direita">{{ d.ano }}</th><th class="direita">{{ d.anoComparacao }}</th>
-                <th class="direita">Variação</th><th style="width: 30%">Peso nos gastos</th></tr>
-            </thead>
-            <tbody>
-              @for (c of d.categorias.slice(0, 15); track c.nome) {
-                <tr>
-                  <td>
-                    <span class="chip"><span class="ponto" [style.background]="c.cor"></span>{{ c.nome }}</span>
-                    @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
-                  </td>
-                  <td class="direita valor">{{ c.valor | currency }}</td>
-                  <td class="direita texto-suave">{{ c.valorAnterior | currency }}</td>
-                  <td class="direita">
-                    @if (c.valorAnterior > 0) {
-                      <span class="variacao-selo" [class.ruim]="c.valor > c.valorAnterior" [class.bom]="c.valor <= c.valorAnterior">
-                        {{ c.valor >= c.valorAnterior ? '▲' : '▼' }} {{ variacaoAbs(c.valor, c.valorAnterior) | number: '1.0-0' }}%
-                      </span>
-                    } @else { <span class="texto-suave">novo</span> }
-                  </td>
-                  <td>
-                    <div class="trilho"><div class="progresso" [style.background]="c.cor"
-                      [style.width.%]="d.resumo.despesas > 0 ? c.valor / d.resumo.despesas * 100 : 0"></div></div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr><td colspan="5" class="vazio">Sem despesas no período.</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <h2>Para onde vai a sua renda (<app-termo chave="regra503020">regra 50/30/20</app-termo>)</h2>
+        <app-grafico-explicado [resumo]="resumo503020()"
+          comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Classifique as categorias em Categorias e regras.">
+          <app-grafico [configuracao]="grafico503020()" [altura]="170" />
+        </app-grafico-explicado>
+        @if (d.distribuicao.naoClassificado > 0) {
+          <p class="texto-suave pequeno-texto">{{ d.distribuicao.naoClassificado | currency }} em categorias sem classificação.</p>
+        }
       </section>
 
-      @if (mapa().linhas.length) {
-        <section class="painel-bloco">
-          <h2>Mapa de gastos {{ d.ano }}</h2>
-          <p class="texto-suave subtitulo-grafico">Quanto mais forte a cor, maior o gasto da categoria naquele mês.</p>
-          <div class="tabela-rolagem">
-            <table class="tabela mapa-calor">
-              <thead>
-                <tr><th>Categoria</th>
-                  @for (m of mapa().meses; track m) { <th class="direita">{{ nomeMes(m) }}</th> }
-                </tr>
-              </thead>
-              <tbody>
-                @for (l of mapa().linhas; track l.nome) {
-                  <tr>
-                    <td class="nowrap"><span class="ponto" [style.background]="l.cor"></span>{{ l.nome }}</td>
-                    @for (v of l.valores; track $index) {
-                      <td class="direita celula-calor" [style.background]="corCalor(l.cor, v, l.maximo)">
-                        {{ v > 0 ? (v | currency) : '' }}
-                      </td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
+      <app-mais-analises chave="anual" conteudo="despesas e receitas mês a mês, taxa de poupança por mês, categorias e mapa de gastos">
+        <ng-template>
+          <div class="grade-2">
+            <section class="painel-bloco">
+              <h2>Despesas mês a mês</h2>
+              <app-grafico-explicado [resumo]="resumoDespesas()" [comoLer]="comoLerComparacao()">
+                <app-grafico [configuracao]="graficoDespesas()" [altura]="260" />
+              </app-grafico-explicado>
+            </section>
+            <section class="painel-bloco">
+              <h2>Receitas mês a mês</h2>
+              <app-grafico-explicado [resumo]="resumoReceitas()" [comoLer]="comoLerComparacao()">
+                <app-grafico [configuracao]="graficoReceitas()" [altura]="260" />
+              </app-grafico-explicado>
+            </section>
           </div>
-        </section>
-      }
+
+          <section class="painel-bloco">
+            <h2><app-termo chave="taxaPoupanca">Taxa de poupança</app-termo> por mês</h2>
+            <app-grafico-explicado [resumo]="resumoTaxa()"
+              comoLer="Parte da renda que sobrou em cada mês. Verde: 20% ou mais; amarelo: entre 0 e 20%; rosa: mês no vermelho. A linha tracejada é a referência de 20%.">
+              <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
+            </app-grafico-explicado>
+          </section>
+
+          <section class="painel-bloco">
+            <h2>Categorias: {{ d.ano }} × {{ d.anoComparacao }} <small class="texto-suave">(mesmo período)</small></h2>
+            <div class="tabela-rolagem">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Categoria</th><th class="direita">{{ d.ano }}</th><th class="direita">{{ d.anoComparacao }}</th>
+                    <th class="direita">Variação</th><th style="width: 30%">Peso nos gastos</th></tr>
+                </thead>
+                <tbody>
+                  @for (c of d.categorias.slice(0, 15); track c.nome) {
+                    <tr>
+                      <td>
+                        <span class="chip"><span class="ponto" [style.background]="c.cor"></span>{{ c.nome }}</span>
+                        @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
+                      </td>
+                      <td class="direita valor">{{ c.valor | currency }}</td>
+                      <td class="direita texto-suave">{{ c.valorAnterior | currency }}</td>
+                      <td class="direita">
+                        @if (c.valorAnterior > 0) {
+                          <span class="variacao-selo" [class.ruim]="c.valor > c.valorAnterior" [class.bom]="c.valor <= c.valorAnterior">
+                            {{ c.valor >= c.valorAnterior ? '▲' : '▼' }} {{ variacaoAbs(c.valor, c.valorAnterior) | number: '1.0-0' }}%
+                          </span>
+                        } @else { <span class="texto-suave">novo</span> }
+                      </td>
+                      <td>
+                        <div class="trilho"><div class="progresso" [style.background]="c.cor"
+                          [style.width.%]="d.resumo.despesas > 0 ? c.valor / d.resumo.despesas * 100 : 0"></div></div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="5" class="vazio">Sem despesas no período.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          @if (mapa().linhas.length) {
+            <section class="painel-bloco">
+              <h2>Mapa de gastos {{ d.ano }}</h2>
+              <p class="texto-suave subtitulo-grafico">Quanto mais forte a cor, maior o gasto da categoria naquele mês.</p>
+              <div class="tabela-rolagem">
+                <table class="tabela mapa-calor">
+                  <thead>
+                    <tr><th>Categoria</th>
+                      @for (m of mapa().meses; track m) { <th class="direita">{{ nomeMes(m) }}</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (l of mapa().linhas; track l.nome) {
+                      <tr>
+                        <td class="nowrap"><span class="ponto" [style.background]="l.cor"></span>{{ l.nome }}</td>
+                        @for (v of l.valores; track $index) {
+                          <td class="direita celula-calor" [style.background]="corCalor(l.cor, v, l.maximo)">
+                            {{ v > 0 ? (v | currency) : '' }}
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+        </ng-template>
+      </app-mais-analises>
     } @else if (!erro()) {
       <p class="texto-suave">Carregando…</p>
     }

@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -12,7 +12,9 @@ import {
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
-import { NOMES_MESES, dataIso, dataIsoValida, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import {
+  ContextoTransacoes, NOMES_MESES, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
+} from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 interface FormTransacao {
@@ -381,6 +383,7 @@ export class TransacoesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly TipoTransacao = TipoTransacao;
   readonly StatusTransacao = StatusTransacao;
@@ -478,22 +481,23 @@ export class TransacoesComponent implements OnInit {
         this.todasCategorias.set(categorias);
         if (precisaListas) {
           this.aplicarParametrosDaUrl(params);
-          this.buscar(1);
+          this.buscar(paginaDaUrl(params));
         }
       },
       error: (e) => {
         this.avisos.erro(mensagemDeErro(e));
-        if (precisaListas) this.buscar(1);
+        if (precisaListas) this.buscar(paginaDaUrl(params));
       }
     });
     if (!precisaListas) {
       this.aplicarParametrosDaUrl(params);
-      this.buscar(1);
+      this.buscar(paginaDaUrl(params));
     }
   }
 
   /**
    * UX-1: filtro vindo de outra tela (?categoria=12|sem&inicio=yyyy-MM-dd&fim=yyyy-MM-dd&tipo=despesa|receita&conta=3).
+   * UX-5: e o que a própria tela grava na URL (&emergencias=1&busca=texto&pagina=2), para o F5 e o link salvo.
    * Cada parâmetro é validado sozinho: um inválido é ignorado e os outros continuam valendo.
    */
   private aplicarParametrosDaUrl(params: ParamMap): void {
@@ -526,6 +530,10 @@ export class TransacoesComponent implements OnInit {
 
     const conta = Number(params.get('conta'));
     if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
+
+    if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
+    const busca = params.get('busca')?.trim();
+    if (busca) this.filtro.busca = busca.slice(0, 100);
   }
 
   rotuloCategoria(c: Categoria): string {
@@ -549,8 +557,15 @@ export class TransacoesComponent implements OnInit {
   buscar(pagina: number): void {
     this.filtro.pagina = pagina;
     this.filtroAplicado.set({ ...this.filtro });
+    this.gravarFiltroNaUrl();
     this.api.transacoes(this.filtro).subscribe({
       next: (p) => {
+        // Página da URL que não existe mais (link antigo, menos transações agora): vai para a última que existe.
+        const ultima = Math.max(1, Math.ceil(p.total / p.tamanhoPagina));
+        if (!p.itens.length && p.pagina > ultima) {
+          this.buscar(ultima);
+          return;
+        }
         const trocouPagina = this.pagina() !== null && this.pagina()!.pagina !== p.pagina;
         this.pagina.set(p);
         this.limparSelecao();
@@ -558,6 +573,30 @@ export class TransacoesComponent implements OnInit {
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+  }
+
+  /**
+   * UX-5: o filtro da busca vai para a URL (só o que difere do padrão), para o F5 e o link salvo manterem a lista.
+   * replaceUrl: o voltar do navegador leva à tela anterior, não ao filtro anterior (julgamento próprio; Nielsen 4).
+   */
+  private gravarFiltroNaUrl(): void {
+    const f = this.filtro;
+    const padrao = this.filtroInicial();
+    const tipos: Record<number, ContextoTransacoes['tipo']> = {
+      [TipoTransacao.Despesa]: 'despesa', [TipoTransacao.Receita]: 'receita', [TipoTransacao.Transferencia]: 'transferencia'
+    };
+    const mudouPeriodo = f.inicio !== padrao.inicio || f.fim !== padrao.fim;
+    const params: Record<string, string> = paramsTransacoes({
+      categoriaId: f.semCategoria ? null : f.categoriaId ?? undefined,
+      inicio: mudouPeriodo ? f.inicio ?? undefined : undefined,
+      fim: mudouPeriodo ? f.fim ?? undefined : undefined,
+      tipo: f.tipo ? tipos[f.tipo] : undefined,
+      contaId: f.contaId ?? undefined
+    });
+    if (f.somenteEmergencias) params['emergencias'] = '1';
+    if (f.busca?.trim()) params['busca'] = f.busca.trim();
+    if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
+    this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
   }
 
   mudarTamanhoPagina(tamanho: number): void {
@@ -797,3 +836,8 @@ export class TransacoesComponent implements OnInit {
   }
 }
 
+/** Página da lista vinda da URL (UX-5); inválida ou ausente = 1. */
+function paginaDaUrl(params: ParamMap): number {
+  const n = Number(params.get('pagina'));
+  return Number.isInteger(n) && n >= 1 && n <= 100000 ? n : 1;
+}
