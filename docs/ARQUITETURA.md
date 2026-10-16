@@ -49,6 +49,7 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 | `src/app/layout/` | Estrutura da tela (menu lateral). |
 | `src/app/paginas/` | Uma página por rota. |
 | `src/styles.css` | Tema (tokens de cor claros/escuros) e componentes visuais globais. |
+| `testes/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). Fora do build do Angular. |
 
 ## Ferramentas — `src/backend/Financas.MigrarSqlite`
 

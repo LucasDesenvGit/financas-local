@@ -5,7 +5,11 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --configuration production"
+    "build": "ng build --configuration production",
+    "test": "jest",
+    "test:regressao": "jest testes/regressao",
+    "test:usabilidade": "jest testes/usabilidade",
+    "test:tipos": "tsc -p tsconfig.spec.json --noEmit"
   },
   "dependencies": {
     "@angular/common": "^20.3.0",
@@ -24,6 +28,10 @@
     "@angular/build": "^20.3.0",
     "@angular/cli": "^20.3.0",
     "@angular/compiler-cli": "^20.3.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "jest-preset-angular": "^17.0.3",
     "typescript": "~5.8.3"
   }
 }
