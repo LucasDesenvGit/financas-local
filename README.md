@@ -19,7 +19,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 | Contas e cartões | Contas do Open Finance (automáticas) e manuais (carteira, bancos sem Open Finance); limite e faturas de cartão |
 | Orçamentos | Limite mensal por categoria, progresso, "copiar do mês anterior" |
 | Metas | Valor alvo, data, aporte mensal sugerido, metas que acompanham o saldo de uma conta |
-| Contas a pagar | Vencimentos únicos, mensais ou anuais, com lembrete no painel |
+| Contas a pagar | Vencimentos únicos, mensais ou anuais, com lembrete no painel; sugere cadastrar os pagamentos que se repetem todo mês no extrato (boleto, débito automático, Pix) |
 | Investimentos | Carteira de renda variável (FIIs, ações, ETFs, BDRs) com preço médio, cotação atual, valorização de cada compra, proventos e DY; comparação com a Selic (carteira, cada ativo e cada investimento do Open Finance); distribuição por classe |
 | Relatórios | Fluxo de caixa mensal com saldo acumulado, despesas/receitas por categoria, maiores despesas |
 | Categorias e regras | Categorias com subcategorias, regras automáticas ("descrição contém UBER → Transporte"), mapeamento das categorias do banco |

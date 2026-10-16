@@ -98,6 +98,7 @@ builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
+builder.Services.AddScoped<SugestaoContaAgendadaService>();
 builder.Services.AddScoped<ContaService>();
 builder.Services.AddScoped<CarteiraService>();
 builder.Services.AddScoped<ReservaService>();

@@ -19,6 +19,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Nova aba **Aparência**: paletas prontas (Lavanda, Oceano, Floresta, Grafite, Pôr do sol), cada uma com versão clara e escura, ou uma cor personalizada (tons calculados para manter contraste de 4,5:1), com prévia. Verde, vermelho, laranja de emergência e as cores de financiamento/empréstimo não mudam. Fica salva no navegador.
 - Ícones do [Lucide](https://lucide.dev) (licença ISC, empacotados no build) no menu, nos botões de sincronizar, ocultar valores e tema, e nos cartões do painel.
 - Novo logo e ícone do site (cofrinho), com versões PNG para atalho no celular e na área de trabalho e `manifest.webmanifest`.
+- **Contas a pagar** sugere cadastrar os pagamentos que se repetem todo mês no extrato (boleto, débito automático, Pix), com vencimento estimado pelo dia habitual e valor pela mediana; cada sugestão pode ser cadastrada (formulário preenchido), conferida em Transações ou ignorada (`GET /api/contas-agendadas/sugestoes`, #62).
 
 ### Correções (layout)
 - Contraste da cor principal da paleta Lavanda (texto dos botões) passa de 3,5:1 para 4,7:1.

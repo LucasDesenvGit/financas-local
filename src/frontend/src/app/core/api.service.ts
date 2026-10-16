@@ -8,7 +8,7 @@ import {
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
-  SalvarContaAgendada, SalvarMeta, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
+  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao
 } from './modelos';
 
@@ -116,6 +116,9 @@ export class ApiService {
 
   // Contas a pagar
   contasAgendadas(): Observable<ContaAgendada[]> { return this.http.get<ContaAgendada[]>(`${this.base}/contas-agendadas`); }
+  sugestoesContasAgendadas(): Observable<SugestaoContaAgendada[]> {
+    return this.http.get<SugestaoContaAgendada[]>(`${this.base}/contas-agendadas/sugestoes`);
+  }
   criarContaAgendada(dto: SalvarContaAgendada): Observable<void> { return this.http.post<void>(`${this.base}/contas-agendadas`, dto); }
   atualizarContaAgendada(id: number, dto: SalvarContaAgendada): Observable<void> {
     return this.http.put<void>(`${this.base}/contas-agendadas/${id}`, dto);
