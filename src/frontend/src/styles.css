@@ -207,7 +207,9 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 .cresce { flex: 1; min-width: 0; }
 .truncar { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .largura-total { width: 100%; }
-.vazio { color: var(--texto-suave); padding: 22px 4px; text-align: center; }
+/* Margens automáticas centralizam a caixa, e não só o texto: o p { max-width: 78ch } deixava a caixa à esquerda
+   do bloco e o texto "centralizado" ficava fora do meio (#46). */
+.vazio { color: var(--texto-suave); padding: 22px 4px; text-align: center; margin-left: auto; margin-right: auto; }
 .linha-flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .valor { font-variant-numeric: tabular-nums; font-weight: 550; }
 .clicavel { cursor: pointer; }
