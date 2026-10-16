@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, TipoConta } from '../core/modelos';
@@ -180,7 +180,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
       }
     </app-modal>
 
-    <app-modal [aberto]="faturasDe() !== null" [titulo]="'Faturas · ' + (faturasDe()?.nome ?? '')" (fechar)="faturasDe.set(null)">
+    <app-modal [aberto]="faturasDe() !== null" [titulo]="'Faturas · ' + (faturasDe()?.nome ?? '')" (fechar)="fecharFaturas()">
       <table class="tabela">
         <thead><tr><th>Vencimento</th><th>Fechamento</th><th class="direita">Total</th><th class="direita">Mínimo</th><th class="direita">Pago</th></tr></thead>
         <tbody>
@@ -204,6 +204,7 @@ export class ContasComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   /** UX-12: /contas?faturas=ID abre direto as faturas do cartão (link de "Faturas do mês" no Painel). */
   private faturasPelaUrl = Number(this.rota.snapshot.queryParamMap.get('faturas')) || null;
 
@@ -345,6 +346,14 @@ export class ContasComponent implements OnInit {
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+  }
+
+  /** Fecha as faturas e tira o ?faturas= da URL (sem isso, o F5 reabriria a janela). replaceUrl: ADR 0018. */
+  fecharFaturas(): void {
+    this.faturasDe.set(null);
+    if (this.rota.snapshot.queryParamMap.has('faturas')) {
+      void this.router.navigate([], { relativeTo: this.rota, queryParams: { faturas: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
   }
 
   verFaturas(c: Conta): void {

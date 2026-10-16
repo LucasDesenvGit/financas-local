@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
@@ -28,7 +28,7 @@ async function abrir(url: string) {
   const harness = await RouterTestingHarness.create();
   await harness.navigateByUrl(url, ContasComponent);
   harness.detectChanges();
-  return { pedidas, raiz: harness.routeNativeElement as HTMLElement };
+  return { pedidas, raiz: harness.routeNativeElement as HTMLElement, harness, router: TestBed.inject(Router) };
 }
 
 /**
@@ -40,6 +40,15 @@ describe('Regressão: link para as faturas de um cartão', () => {
     const t = await abrir('/contas?faturas=2');
     expect(t.pedidas).toEqual([2]);
     expect(t.raiz.querySelector('.modal')!.getAttribute('aria-label')).toBe('Faturas · Cartão Roxo');
+  });
+
+  it('fechar a janela tira o ?faturas= da URL (o F5 não reabre)', async () => {
+    const t = await abrir('/contas?faturas=2');
+    t.raiz.querySelector<HTMLButtonElement>('.modal [aria-label="Fechar"]')!.click();
+    await t.harness.fixture.whenStable();
+    t.harness.detectChanges();
+    expect(t.raiz.querySelector('.modal')).toBeNull();
+    expect(t.router.url).toBe('/contas');
   });
 
   it('id que não existe é ignorado e a tela abre normal', async () => {
