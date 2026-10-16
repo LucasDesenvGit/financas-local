@@ -48,6 +48,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Decisões de arquitetura passam a ser registradas como ADRs em `docs/adr/`, com as decisões já tomadas registradas retroativamente.
 
 ### Infraestrutura
+- Testes automatizados do front-end com **Jest** (`npm test` em `src/frontend`): 84 testes de regressão (filtros de Transações na URL, balão do glossário dentro da tela, utilidades de datas e links) e de usabilidade (nome e estado acessível, teclado e Esc, "Mais análises" que só cria o conteúdo ao abrir, filtros ativos visíveis, status da sincronização anunciado). Rodam na CI (ADR 0013).
 - Novo workflow **Teste de instalação no Linux**: roda `scripts/instalar.sh` num runner Ubuntu sem dotnet, node, sqlite3 e Python no PATH, confere o serviço `systemd --user` e a API, testa a atualização e o `4-backup.sh`.
 - Novo workflow **Teste de instalação no Windows**: instala do zero num runner Windows (sem as ferramentas do runner no PATH), confere o serviço e a API, e testa a atualização pelo `instalar-windows.cmd`.
 - Backend migrado de SQL Server Express/IIS para SQLite/Kestrel — o projeto agora roda em Windows e Linux com os mesmos scripts.
