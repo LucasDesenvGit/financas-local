@@ -8,7 +8,7 @@ import {
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
-  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
+  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao
 } from './modelos';
 
@@ -107,6 +107,12 @@ export class ApiService {
   excluirOrcamento(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/orcamentos/${id}`); }
   copiarOrcamentos(ano: number, mes: number): Observable<ResultadoAplicacao> {
     return this.http.post<ResultadoAplicacao>(`${this.base}/orcamentos/copiar-mes-anterior`, { ano, mes });
+  }
+  sugestaoOrcamentos(ano: number, mes: number): Observable<SugestaoOrcamento> {
+    return this.http.get<SugestaoOrcamento>(`${this.base}/orcamentos/sugestao`, { params: this.params({ ano, mes }) });
+  }
+  aplicarSugestaoOrcamentos(ano: number, mes: number, itens: { categoriaId: number; valor: number }[]): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/orcamentos/aplicar-sugestao`, { ano, mes, itens });
   }
 
   // Metas

@@ -22,6 +22,11 @@ public class ConfiguracaoService
     public const string DiasAvisoConsentimento = "Painel.DiasAvisoConsentimento";
     public const string MaximoTentativasLogin = "Seguranca.MaximoTentativasLogin";
     public const string MinutosBloqueio = "Seguranca.MinutosBloqueio";
+    public const string OrcamentoFolgaEssenciais = "Orcamento.FolgaEssenciais";
+    public const string OrcamentoMetaPoupanca = "Orcamento.MetaPoupanca";
+    public const string OrcamentoCartaoAtencao = "Orcamento.CartaoAtencao";
+    public const string OrcamentoCartaoAlerta = "Orcamento.CartaoAlerta";
+    public const string OrcamentoCorteCartao = "Orcamento.CorteCartao";
 
     private readonly FinancasDbContext _db;
     private readonly IDataProtector _protetor;

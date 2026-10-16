@@ -53,6 +53,22 @@ public class ParametroService
         new(ConfiguracaoService.MinutosBloqueio, "Segurança", "Tempo de bloqueio",
             "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
             TipoParametro.Inteiro, 15, 1, 1440, "minutos", "Seguranca:MinutosBloqueio"),
+
+        new(ConfiguracaoService.OrcamentoMetaPoupanca, "Orçamentos", "Meta de poupança",
+            "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+            TipoParametro.Inteiro, 20, 0, 60, "% da renda"),
+        new(ConfiguracaoService.OrcamentoFolgaEssenciais, "Orçamentos", "Folga nos gastos essenciais",
+            "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+            TipoParametro.Inteiro, 5, 0, 30, "%"),
+        new(ConfiguracaoService.OrcamentoCartaoAtencao, "Orçamentos", "Uso do limite do cartão: atenção",
+            "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+            TipoParametro.Inteiro, 30, 5, 100, "% do limite"),
+        new(ConfiguracaoService.OrcamentoCartaoAlerta, "Orçamentos", "Uso do limite do cartão: alerta",
+            "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+            TipoParametro.Inteiro, 70, 10, 100, "% do limite"),
+        new(ConfiguracaoService.OrcamentoCorteCartao, "Orçamentos", "Corte por uso do cartão",
+            "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+            TipoParametro.Inteiro, 10, 0, 50, "%"),
     ];
 
     private static readonly DateTime IniciadoEm = Process.GetCurrentProcess().StartTime.ToUniversalTime();

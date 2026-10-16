@@ -111,6 +111,24 @@ export interface SalvarRegra {
 
 export interface ResultadoAplicacao { transacoesAtualizadas: number; }
 
+/** #39 — uso do limite de um cartão (média das últimas faturas fechadas ÷ limite). */
+export interface CartaoUsoLimite { contaId: number; nome: string; limite: number; faturaMedia: number; percentual: number }
+
+/** Sugestão para uma categoria principal; sugerido = null quando não há dados suficientes. */
+export interface ItemSugestaoOrcamento {
+  categoriaId: number; nome: string; cor: string; natureza: NaturezaGasto | null; mediana: number; media: number;
+  ultimoMes: number; tendencia: 'alta' | 'queda' | 'estavel' | null; mesesComGasto: number; pagoNoCartaoPercentual: number;
+  sugerido: number | null; atual: number | null; selecionado: boolean; motivos: string[];
+}
+
+export interface SugestaoOrcamento {
+  ano: number; mes: number; mesesBase: number; mesesRenda: number; rendaMedia: number;
+  parcelasCartao: number; parcelasFinanciamentos: number; parcelasEmprestimos: number; percentualPoupanca: number;
+  metaPoupanca: number; disponivel: number; totalSugerido: number; faltaParaCaber: number | null;
+  usoLimiteCartoes: number | null; nivelCartao: 'ok' | 'atencao' | 'alerta' | null; limiteAtencao: number; limiteAlerta: number;
+  cartoes: CartaoUsoLimite[]; avisos: string[]; itens: ItemSugestaoOrcamento[];
+}
+
 export interface Orcamento {
   id: number; categoriaId: number; categoriaNome: string; categoriaCor: string; ano: number; mes: number;
   valor: number; gasto: number; percentual: number; gastoEmergencia: number;

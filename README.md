@@ -17,7 +17,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 | Painel | Patrimônio líquido (com a renda variável pela cotação atual), patrimônio sem renda variável, saldo em contas, faturas, investimentos, receitas × despesas do mês, gastos por categoria, evolução de 12 meses, orçamentos, próximos vencimentos e alertas (orçamento estourado, conta vencida, consentimento expirando, falha de sincronização) |
 | Transações | Filtros por período, conta, uma ou várias categorias (com "sem categoria"), tipo e texto; categorização em lote; lançamentos manuais; transferências; parcelas; transações pendentes; opção de ignorar nos relatórios |
 | Contas e cartões | Contas do Open Finance (automáticas) e manuais (carteira, bancos sem Open Finance); limite e faturas de cartão |
-| Orçamentos | Limite mensal por categoria, progresso, "copiar do mês anterior" |
+| Orçamentos | Limite mensal por categoria, progresso, "copiar do mês anterior" e **✨ Sugerir orçamentos**: valor por categoria a partir dos seus gastos (mediana de 6 meses, sem emergências e picos), cabendo na renda menos parcelas e a meta de poupança, e mais conservador quando os cartões estão com muito limite em uso — revisado e ajustado antes de aplicar |
 | Metas | Valor alvo, data, aporte mensal sugerido, metas que acompanham o saldo de uma conta |
 | Contas a pagar | Vencimentos únicos, mensais ou anuais, com lembrete no painel; sugere cadastrar os pagamentos que se repetem todo mês no extrato (boleto, débito automático, Pix) |
 | Investimentos | Carteira de renda variável (FIIs, ações, ETFs, BDRs) com preço médio, cotação atual, valorização de cada compra, proventos e DY; comparação com a Selic (carteira, cada ativo e cada investimento do Open Finance); distribuição por classe |
