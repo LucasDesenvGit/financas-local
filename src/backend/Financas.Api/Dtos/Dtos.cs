@@ -274,11 +274,13 @@ public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal 
     decimal SaldoDisponivelAtual, List<ProjecaoMesDto> Meses, List<ProjecaoCategoriaDto> Categorias);
 
 /// <summary>
-/// Fatura de um cartão com vencimento no mês do Painel (UX-12). Situação: "paga" (pagamentos cobrem o total),
-/// "fechada" (já fechou ou venceu e não consta pagamento) ou "aberta" (ainda recebendo compras).
+/// Um cartão no mês do Painel (UX-12). <c>ValorMes</c> soma só as transações lançadas no mês (compras e a parcela do
+/// mês; parcelas futuras ficam de fora); <c>ParcelasMes</c> é a parte disso que é parcela. Quando há fatura com
+/// vencimento no mês, vêm o vencimento e a situação dela: "paga" (pagamentos cobrem o total), "fechada" (já fechou
+/// ou venceu sem pagamento informado) ou "aberta" (ainda recebendo compras).
 /// </summary>
-public record FaturaMesDto(int FaturaId, int ContaId, string Cartao, DateOnly Vencimento, decimal ValorTotal,
-    decimal? ValorPago, string Situacao);
+public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
+    DateOnly? Vencimento, string? Situacao);
 
 public record PainelDto(
     decimal SaldoContas,
@@ -301,9 +303,7 @@ public record PainelDto(
     decimal DividaEmprestimos = 0,
     int DiasProximosVencimentos = 15,
     List<FaturaMesDto>? FaturasDoMes = null,
-    decimal TotalFaturasDoMes = 0,
-    /// <summary>Cartões ativos sem fatura informada com vencimento no mês (cartão manual ou sem dado da instituição).</summary>
-    int CartoesSemFaturaNoMes = 0);
+    decimal TotalFaturasDoMes = 0);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>

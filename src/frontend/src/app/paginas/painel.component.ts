@@ -133,22 +133,23 @@ import { Icones } from '../compartilhado/icones';
         <article class="kpi kpi-faturas">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Faturas do mês</span>
           <strong [class.negativo]="d.totalFaturasDoMes > 0">{{ d.totalFaturasDoMes | currency }}</strong>
+          <small>compras e parcelas lançadas no mês, sem parcelas futuras</small>
           @if (d.faturasDoMes?.length) {
             <ul class="lista-faturas">
-              @for (f of d.faturasDoMes; track f.faturaId) {
+              @for (f of d.faturasDoMes; track f.contaId) {
                 <li>
                   <a routerLink="/contas" [queryParams]="{ faturas: f.contaId }" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a>
-                  <span class="texto-suave">vence {{ f.vencimento | date: 'dd/MM' }}</span>
-                  <span class="valor">{{ f.valorTotal | currency }}</span>
-                  <span class="etiqueta" [class.etiqueta-sucesso]="f.situacao === 'paga'" [class.etiqueta-alerta]="f.situacao === 'fechada'">{{ rotuloSituacao(f.situacao) }}</span>
+                  <span class="valor">{{ f.valorMes | currency }}</span>
+                  @if (f.parcelasMes > 0) { <span class="texto-suave detalhe-fatura">{{ f.parcelasMes | currency }} em parcelas</span> }
+                  @if (f.vencimento && f.situacao) {
+                    <span class="texto-suave detalhe-fatura">fatura vence {{ f.vencimento | date: 'dd/MM' }}
+                      <span class="etiqueta" [class.etiqueta-sucesso]="f.situacao === 'paga'" [class.etiqueta-alerta]="f.situacao === 'fechada'">{{ rotuloSituacao(f.situacao) }}</span></span>
+                  }
                 </li>
               }
             </ul>
-            @if (d.cartoesSemFaturaNoMes > 0) {
-              <small>{{ d.cartoesSemFaturaNoMes }} cartão(ões) sem fatura informada neste mês</small>
-            }
           } @else {
-            <small>Nenhuma fatura com vencimento neste mês (o banco só informa faturas dos cartões do Open Finance).</small>
+            <small>Nada lançado nos cartões neste mês.</small>
           }
         </article>
       </section>
@@ -241,6 +242,7 @@ import { Icones } from '../compartilhado/icones';
     .lista-faturas { list-style: none; margin: 6px 0 2px; padding: 0; display: grid; gap: 4px; font-size: 0.84rem; }
     .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
     .lista-faturas .valor { margin-left: auto; }
+    .lista-faturas .detalhe-fatura { flex-basis: 100%; font-size: 0.8rem; }
   `]
 })
 export class PainelComponent implements OnInit {

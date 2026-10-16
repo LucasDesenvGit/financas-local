@@ -133,24 +133,47 @@ public class PainelController : BaseController
 
         var ultimaSincronizacao = await _config.ObterDataAsync(ConfiguracaoService.UltimaSincronizacaoGeral, ct);
 
-        // UX-12: faturas com vencimento no mês escolhido — a conta do mês, diferente da dívida total nos cartões.
-        var cartoesAtivos = await _db.Contas.AsNoTracking()
-            .Where(c => c.Tipo == TipoConta.CartaoCredito && !c.Arquivada).Select(c => c.Id).ToListAsync(ct);
-        var faturasDoMes = (await _db.FaturasCartao.AsNoTracking()
-                .Where(f => f.DataVencimento >= inicio && f.DataVencimento <= fim && cartoesAtivos.Contains(f.ContaId))
-                .Select(f => new { f.Id, f.ContaId, Cartao = f.Conta!.Nome, f.DataVencimento, f.DataFechamento, f.ValorTotal, f.ValorPago })
+        // UX-12: o que cada cartão lançou no mês escolhido — só as transações do mês (compras e a parcela do mês), não o
+        // total informado da fatura nem a dívida total. Pagamento de fatura e transferências ficam de fora; despesa
+        // marcada para ignorar nos relatórios entra (ela continua na conta do cartão). A fatura com vencimento no mês
+        // aparece só como referência (vencimento e situação).
+        var cartoes = await _db.Contas.AsNoTracking()
+            .Where(c => c.Tipo == TipoConta.CartaoCredito && !c.Arquivada).Select(c => new { c.Id, c.Nome }).ToListAsync(ct);
+        var idsCartoes = cartoes.Select(c => c.Id).ToList();
+        var lancadoNoMes = await _db.Transacoes.AsNoTracking()
+            .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= inicio && t.Data <= fim && t.Tipo == TipoTransacao.Despesa)
+            .GroupBy(t => t.ContaId)
+            .Select(g => new
+            {
+                ContaId = g.Key,
+                Valor = -g.Sum(t => t.Valor),
+                Parcelas = -g.Where(t => t.ParcelaTotal != null && t.ParcelaTotal > 1).Sum(t => t.Valor)
+            })
+            .ToDictionaryAsync(x => x.ContaId, ct);
+        var faturasVencendo = (await _db.FaturasCartao.AsNoTracking()
+                .Where(f => f.DataVencimento >= inicio && f.DataVencimento <= fim && idsCartoes.Contains(f.ContaId))
+                .Select(f => new { f.Id, f.ContaId, f.DataVencimento, f.DataFechamento, f.ValorTotal, f.ValorPago })
                 .ToListAsync(ct))
-            .Select(f => new FaturaMesDto(f.Id, f.ContaId, f.Cartao, f.DataVencimento, Math.Abs(f.ValorTotal), f.ValorPago,
-                SituacaoFatura(Math.Abs(f.ValorTotal), f.ValorPago, f.DataFechamento, f.DataVencimento, hoje)))
-            .OrderBy(f => f.Vencimento).ThenBy(f => f.Cartao)
+            .GroupBy(f => f.ContaId).ToDictionary(g => g.Key, g => g.OrderBy(f => f.DataVencimento).First());
+        var faturasDoMes = cartoes
+            .Where(c => lancadoNoMes.ContainsKey(c.Id) || faturasVencendo.ContainsKey(c.Id))
+            .Select(c =>
+            {
+                var lancado = lancadoNoMes.GetValueOrDefault(c.Id);
+                var fatura = faturasVencendo.GetValueOrDefault(c.Id);
+                return new FaturaMesDto(c.Id, c.Nome, Math.Round(Math.Max(0m, lancado?.Valor ?? 0m), 2),
+                    Math.Round(Math.Max(0m, lancado?.Parcelas ?? 0m), 2), fatura?.Id, fatura?.DataVencimento,
+                    fatura is null ? null : SituacaoFatura(Math.Abs(fatura.ValorTotal), fatura.ValorPago, fatura.DataFechamento,
+                        fatura.DataVencimento, hoje));
+            })
+            .OrderByDescending(f => f.ValorMes).ThenBy(f => f.Cartao)
             .ToList();
-        var cartoesSemFatura = cartoesAtivos.Count(id => faturasDoMes.All(f => f.ContaId != id));
 
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
-            faturasDoMes, faturasDoMes.Sum(f => f.ValorTotal), cartoesSemFatura);
+            faturasDoMes, faturasDoMes.Sum(f => f.ValorMes));
     }
 
     /// <summary>

@@ -227,13 +227,14 @@ export interface Painel {
   despesasEmergenciaMes: number;
   dividaFinanciamentos: number; dividaEmprestimos: number;
   diasProximosVencimentos: number;
-  /** UX-12: faturas com vencimento no mês escolhido (a conta do mês, não a dívida total). */
-  faturasDoMes: FaturaMes[] | null; totalFaturasDoMes: number; cartoesSemFaturaNoMes: number;
+  /** UX-12: o que cada cartão lançou no mês escolhido (só transações do mês, sem parcelas futuras). */
+  faturasDoMes: FaturaMes[] | null; totalFaturasDoMes: number;
 }
 
 export interface FaturaMes {
-  faturaId: number; contaId: number; cartao: string; vencimento: string; valorTotal: number; valorPago: number | null;
-  situacao: 'paga' | 'fechada' | 'aberta';
+  contaId: number; cartao: string; valorMes: number; parcelasMes: number;
+  /** Fatura com vencimento no mês, só como referência (pode ser null). */
+  faturaId: number | null; vencimento: string | null; situacao: 'paga' | 'fechada' | 'aberta' | null;
 }
 
 export interface Emprestimo {
