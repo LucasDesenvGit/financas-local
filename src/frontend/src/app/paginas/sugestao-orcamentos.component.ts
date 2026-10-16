@@ -194,9 +194,13 @@ export class SugestaoOrcamentosComponent implements OnInit {
     return this.linhas().filter((l) => l.marcada && l.item.sugerido !== null && (l.valor ?? 0) > 0);
   });
 
-  /** Valor que a categoria vai ter no mês: o digitado, se marcada; senão, o orçamento que já existe (ou nada). */
+  /**
+   * Valor que a categoria vai ter no mês: o digitado, se marcada com valor; senão, o orçamento que já existe (ou nada).
+   * Marcada com o campo vazio ou zerado não é gravada, então continua valendo o atual.
+   */
   private valorNoMes(l: LinhaSugestao): number {
-    return l.marcada && l.item.sugerido !== null ? Number(l.valor) || 0 : l.item.atual ?? 0;
+    const digitado = Number(l.valor);
+    return l.marcada && l.item.sugerido !== null && digitado > 0 ? digitado : l.item.atual ?? 0;
   }
 
   readonly totalDoMes = computed(() => {

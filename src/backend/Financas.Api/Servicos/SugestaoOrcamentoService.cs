@@ -143,7 +143,8 @@ public class SugestaoOrcamentoService
             l.Mediana = Mediana(l.Meses);
             l.UltimoMes = mesesBase > 0 ? l.Meses[^1] : 0;
             l.PagoNoCartao = total > 0 ? porCartao.GetValueOrDefault(l.CategoriaId) / total : 0;
-            if (mesesBase >= 6)
+            // Tendência só faz sentido com gasto recorrente (senão um único mês vira "queda").
+            if (mesesBase >= 6 && l.MesesComGasto >= MinimoMesesComGasto)
             {
                 var recente = l.Meses[^3..].Average();
                 var anterior = l.Meses[..3].Average();
