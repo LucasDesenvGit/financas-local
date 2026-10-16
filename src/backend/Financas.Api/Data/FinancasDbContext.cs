@@ -23,6 +23,8 @@ public class FinancasDbContext : DbContext
     public DbSet<FaturaCartao> FaturasCartao => Set<FaturaCartao>();
     public DbSet<Transacao> Transacoes => Set<Transacao>();
     public DbSet<Investimento> Investimentos => Set<Investimento>();
+    public DbSet<Emprestimo> Emprestimos => Set<Emprestimo>();
+    public DbSet<PagamentoEmprestimo> PagamentosEmprestimo => Set<PagamentoEmprestimo>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
     public DbSet<Meta> Metas => Set<Meta>();
     public DbSet<ContaAgendada> ContasAgendadas => Set<ContaAgendada>();
@@ -188,6 +190,39 @@ public class FinancasDbContext : DbContext
             e.HasIndex(x => x.PluggyInvestmentId).IsUnique();
             e.HasOne(x => x.ConexaoBancaria).WithMany(x => x.Investimentos)
                 .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<Emprestimo>(e =>
+        {
+            e.ToTable("Emprestimo");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.PluggyLoanId).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Modalidade).HasMaxLength(80);
+            e.Property(x => x.Produto).HasMaxLength(200).IsRequired();
+            e.Property(x => x.NumeroContrato).HasMaxLength(100);
+            e.Property(x => x.Moeda).HasMaxLength(3);
+            e.Property(x => x.ValorContratado).HasPrecision(18, 2);
+            e.Property(x => x.SaldoDevedor).HasPrecision(18, 2);
+            e.Property(x => x.ValorParcela).HasPrecision(18, 2);
+            e.Property(x => x.Periodicidade).HasMaxLength(30);
+            e.Property(x => x.SistemaAmortizacao).HasMaxLength(30);
+            e.Property(x => x.TaxaJuros).HasPrecision(12, 8);
+            e.Property(x => x.PeriodicidadeTaxa).HasMaxLength(10);
+            e.Property(x => x.Indexador).HasMaxLength(60);
+            e.Property(x => x.Cet).HasPrecision(12, 8);
+            e.HasIndex(x => x.PluggyLoanId).IsUnique();
+            e.HasOne(x => x.ConexaoBancaria).WithMany(x => x.Emprestimos)
+                .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<PagamentoEmprestimo>(e =>
+        {
+            e.ToTable("PagamentoEmprestimo");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Valor).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.EmprestimoId, x.Data });
+            e.HasOne(x => x.Emprestimo).WithMany(x => x.Pagamentos)
+                .HasForeignKey(x => x.EmprestimoId).OnDelete(DeleteBehavior.Cascade);
         });
 
         mb.Entity<Orcamento>(e =>

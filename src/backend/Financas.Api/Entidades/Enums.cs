@@ -46,6 +46,13 @@ public enum TipoConta : byte
     Outro = 6
 }
 
+/// <summary>Separa financiamentos (crédito vinculado a um bem: imóvel, veículo) dos demais empréstimos.</summary>
+public enum NaturezaCredito : byte
+{
+    Emprestimo = 1,
+    Financiamento = 2
+}
+
 public enum OrigemConta : byte
 {
     Manual = 1,

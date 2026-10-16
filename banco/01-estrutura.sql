@@ -274,6 +274,55 @@ CREATE TABLE IF NOT EXISTS Investimento
 );
 
 /* ------------------------------------------------------------------ */
+/* Empréstimos e financiamentos (somente leitura, do Open Finance)     */
+/* Natureza: 1 Empréstimo, 2 Financiamento                             */
+/* Taxas (TaxaJuros, Cet) em fração: 0.0975 = 9,75%                    */
+/* ------------------------------------------------------------------ */
+CREATE TABLE IF NOT EXISTS Emprestimo
+(
+    Id                  INTEGER NOT NULL CONSTRAINT PK_Emprestimo PRIMARY KEY AUTOINCREMENT,
+    ConexaoBancariaId   INTEGER NOT NULL,
+    PluggyLoanId        TEXT    NOT NULL,
+    Natureza            INTEGER NOT NULL CONSTRAINT CK_Emprestimo_Natureza CHECK (Natureza IN (1, 2)),
+    Modalidade          TEXT    NULL,
+    Produto             TEXT    NOT NULL,
+    NumeroContrato      TEXT    NULL,
+    Moeda               TEXT    NOT NULL CONSTRAINT DF_Emprestimo_Moeda DEFAULT 'BRL',
+    ValorContratado     TEXT    NOT NULL,
+    SaldoDevedor        TEXT    NOT NULL,
+    ValorParcela        TEXT    NULL,
+    ParcelasTotal       INTEGER NULL,
+    ParcelasPagas       INTEGER NULL,
+    ParcelasAVencer     INTEGER NULL,
+    ParcelasEmAtraso    INTEGER NULL,
+    Periodicidade       TEXT    NULL,
+    SistemaAmortizacao  TEXT    NULL,
+    TaxaJuros           TEXT    NULL,
+    PeriodicidadeTaxa   TEXT    NULL,
+    Indexador           TEXT    NULL,
+    Cet                 TEXT    NULL,
+    DataContratacao     TEXT    NULL,
+    DataPrimeiraParcela TEXT    NULL,
+    DataVencimentoFinal TEXT    NULL,
+    -- Preenchido pela API (Emprestimo.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    AtualizadoEm        TEXT    NOT NULL,
+    CONSTRAINT UQ_Emprestimo_PluggyLoanId UNIQUE (PluggyLoanId),
+    CONSTRAINT FK_Emprestimo_ConexaoBancaria FOREIGN KEY (ConexaoBancariaId) REFERENCES ConexaoBancaria (Id) ON DELETE CASCADE
+);
+
+/* Pagamentos efetuados de cada contrato (recarregados a cada sincronização). */
+CREATE TABLE IF NOT EXISTS PagamentoEmprestimo
+(
+    Id              INTEGER NOT NULL CONSTRAINT PK_PagamentoEmprestimo PRIMARY KEY AUTOINCREMENT,
+    EmprestimoId    INTEGER NOT NULL,
+    Data            TEXT    NOT NULL,
+    Valor           TEXT    NOT NULL,
+    Extraordinario  INTEGER NOT NULL CONSTRAINT DF_PagamentoEmprestimo_Extraordinario DEFAULT 0,
+    CONSTRAINT FK_PagamentoEmprestimo_Emprestimo FOREIGN KEY (EmprestimoId) REFERENCES Emprestimo (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_PagamentoEmprestimo_EmprestimoId_Data ON PagamentoEmprestimo (EmprestimoId, Data);
+
+/* ------------------------------------------------------------------ */
 /* Planejamento                                                        */
 /* ------------------------------------------------------------------ */
 CREATE TABLE IF NOT EXISTS Orcamento

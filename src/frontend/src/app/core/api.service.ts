@@ -9,7 +9,7 @@ import {
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria
+  TipoTransacao, ValorCategoria, PainelEmprestimos
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -127,6 +127,7 @@ export class ApiService {
 
   // Investimentos
   investimentos(): Observable<Investimento[]> { return this.http.get<Investimento[]>(`${this.base}/investimentos`); }
+  emprestimos(): Observable<PainelEmprestimos> { return this.http.get<PainelEmprestimos>(`${this.base}/emprestimos`); }
 
   // Carteira (renda variável + comparação com a Selic)
   carteira(): Observable<Carteira> { return this.http.get<Carteira>(`${this.base}/carteira`); }

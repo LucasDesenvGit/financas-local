@@ -79,6 +79,7 @@ export class ShellComponent {
     { rota: '/metas', rotulo: 'Metas', icone: '◎' },
     { rota: '/contas-a-pagar', rotulo: 'Contas a pagar', icone: '◷' },
     { rota: '/investimentos', rotulo: 'Investimentos', icone: '△' },
+    { rota: '/emprestimos', rotulo: 'Empréstimos e financiamentos', icone: '⊟' },
     { rota: '/relatorios', rotulo: 'Relatórios', icone: '▤' },
     { rota: '/projecao', rotulo: 'Projeção', icone: '↗' },
     { rota: '/categorias', rotulo: 'Categorias e regras', icone: '◈' },

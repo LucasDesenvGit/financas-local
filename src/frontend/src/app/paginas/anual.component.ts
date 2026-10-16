@@ -254,7 +254,9 @@ export class AnualComponent implements OnInit {
       {
         titulo: 'Comprometimento com parcelas',
         valor: comp === null ? '—' : `${this.fmt(comp)}% da renda`,
-        meta: oculto ? 'Ideal: abaixo de 30%' : `Ideal: abaixo de 30% · parcelas no último mês: ${this.moeda(s.parcelasMensais)}`,
+        meta: oculto ? 'Ideal: abaixo de 30%' : `Ideal: abaixo de 30% · cartão: ${this.moeda(s.parcelasMensais)}`
+          + (s.parcelasFinanciamentos > 0 ? ` · financiamentos: ${this.moeda(s.parcelasFinanciamentos)}` : '')
+          + (s.parcelasEmprestimos > 0 ? ` · empréstimos: ${this.moeda(s.parcelasEmprestimos)}` : ''),
         explicacao: comp === null ? 'Sem renda registrada no período.'
           : comp < 15 ? 'Parcelas sob controle.'
           : comp < 30 ? 'Atenção a novas compras parceladas.'

@@ -8,6 +8,7 @@ export enum StatusTransacao { Efetivada = 1, Pendente = 2 }
 export enum TipoCorrespondencia { Contem = 1, ComecaCom = 2, Igual = 3 }
 export enum Recorrencia { Unica = 0, Mensal = 1, Anual = 2 }
 export enum NaturezaGasto { Essencial = 1, EstiloDeVida = 2 }
+export enum NaturezaCredito { Emprestimo = 1, Financiamento = 2 }
 
 export const NOMES_TIPO_CONTA: Record<TipoConta, string> = {
   [TipoConta.ContaCorrente]: 'Conta corrente',
@@ -168,6 +169,7 @@ export interface SaudeFinanceira {
   patrimonioAtual: number; reservaLiquida: number; gastoMensalMedio: number; gastoEssencialMensalMedio: number;
   mesesDeReserva: number | null; mesesDeReservaEssencial: number | null; rendaMensalMedia: number; parcelasMensais: number;
   comprometimentoParcelas: number | null; mesesAnalisados: number;
+  parcelasFinanciamentos: number; parcelasEmprestimos: number; dividaFinanciamentos: number; dividaEmprestimos: number;
 }
 export interface PainelAnual {
   ano: number; anoComparacao: number; mesLimite: number; anosDisponiveis: number[];
@@ -192,6 +194,25 @@ export interface Painel {
   orcamentos: Orcamento[]; proximasContas: ContaAgendada[]; ultimasTransacoes: Transacao[]; alertas: string[];
   ultimaSincronizacao: string | null;
   despesasEmergenciaMes: number;
+  dividaFinanciamentos: number; dividaEmprestimos: number;
+}
+
+export interface Emprestimo {
+  id: number; natureza: NaturezaCredito; produto: string; modalidade: string | null; modalidadeDescricao: string;
+  numeroContrato: string | null; nomeInstituicao: string | null; moeda: string; valorContratado: number; saldoDevedor: number;
+  valorParcela: number | null; parcelaMensal: number; parcelasTotal: number | null; parcelasPagas: number | null;
+  parcelasAVencer: number | null; parcelasEmAtraso: number; periodicidade: string | null; sistemaAmortizacao: string | null;
+  taxaJuros: number | null; periodicidadeTaxa: string | null; indexador: string | null; cet: number | null;
+  dataContratacao: string | null; dataVencimentoFinal: string | null; proximoVencimento: string | null;
+  totalPago: number; ultimoPagamento: string | null; quitado: boolean; atualizadoEm: string;
+}
+export interface ResumoCredito {
+  natureza: NaturezaCredito; contratosAbertos: number; contratosQuitados: number; saldoDevedor: number;
+  valorContratado: number; parcelaMensal: number; totalPago: number; parcelasEmAtraso: number;
+}
+export interface PainelEmprestimos {
+  financiamentos: ResumoCredito; emprestimos: ResumoCredito; contratos: Emprestimo[];
+  pagamentosPorMes: { ano: number; mes: number; financiamentos: number; emprestimos: number }[];
 }
 
 export interface ConfiguracaoPluggy {
