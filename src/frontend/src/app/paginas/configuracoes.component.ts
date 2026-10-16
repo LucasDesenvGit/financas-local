@@ -8,12 +8,13 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ParametrizacaoComponent } from './parametrizacao.component';
+import { AparenciaComponent } from './aparencia.component';
 
-type Aba = 'open-finance' | 'parametrizacao' | 'seguranca';
+type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca';
 
 @Component({
   selector: 'app-configuracoes',
-  imports: [FormsModule, DatePipe, ParametrizacaoComponent],
+  imports: [FormsModule, DatePipe, ParametrizacaoComponent, AparenciaComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Configurações</h1>
@@ -27,6 +28,9 @@ type Aba = 'open-finance' | 'parametrizacao' | 'seguranca';
     @switch (aba()) {
     @case ('parametrizacao') {
       <app-parametrizacao />
+    }
+    @case ('aparencia') {
+      <app-aparencia />
     }
     @case ('seguranca') {
     <div class="grade-2">
@@ -168,6 +172,7 @@ export class ConfiguracoesComponent implements OnInit {
   readonly abas: { id: Aba; rotulo: string }[] = [
     { id: 'open-finance', rotulo: 'Open Finance' },
     { id: 'parametrizacao', rotulo: 'Parametrização' },
+    { id: 'aparencia', rotulo: 'Aparência' },
     { id: 'seguranca', rotulo: 'Segurança' }
   ];
   /** Aba atual; vem de ?aba= para dar para abrir direto (ex.: /configuracoes?aba=parametrizacao). */

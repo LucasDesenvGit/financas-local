@@ -15,6 +15,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Configurações em abas (**Open Finance**, **Parametrização**, **Segurança**), com link direto por `?aba=`.
 - Nova aba **Parametrização**: sincronização automática, intervalo, dias relidos e histórico da primeira carga; dias de próximos vencimentos e de aviso de consentimento no painel; tentativas de login e tempo de bloqueio. Cada parâmetro mostra a faixa válida e o padrão, vale na hora (sem reiniciar) e é validado pela API (`GET/PUT /api/parametros`). Bloco **Sistema** somente leitura com versão, caminhos, tamanho do banco e totais (`GET /api/parametros/sistema`).
 - Tentativas de login e tempo de bloqueio saem do `appsettings.json` para a Parametrização; o valor do `appsettings.json`, se existir, vira o padrão.
+- Nova aba **Aparência**: paletas prontas (Lavanda, Oceano, Floresta, Grafite, Pôr do sol), cada uma com versão clara e escura, ou uma cor personalizada (tons calculados para manter contraste de 4,5:1), com prévia. Verde, vermelho, laranja de emergência e as cores de financiamento/empréstimo não mudam. Fica salva no navegador.
+- Ícones do [Lucide](https://lucide.dev) (licença ISC, empacotados no build) no menu, nos botões de sincronizar, ocultar valores e tema, e nos cartões do painel.
+- Novo logo e ícone do site (cofrinho), com versões PNG para atalho no celular e na área de trabalho e `manifest.webmanifest`.
+
+### Correções (layout)
+- Contraste da cor principal da paleta Lavanda (texto dos botões) passa de 3,5:1 para 4,7:1.
+- Arquivos estáticos sem hash no nome (`favicon.svg`, ícones, manifesto) deixam de ficar em cache por um ano: antes, uma troca de ícone não aparecia no navegador.
 
 ### Banco
 - Novas tabelas `Emprestimo` e `PagamentoEmprestimo` em `banco/01-estrutura.sql`: rode `scripts/2-criar-banco.sh` antes de publicar.
