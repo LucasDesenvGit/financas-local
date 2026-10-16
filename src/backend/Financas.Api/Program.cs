@@ -177,15 +177,18 @@ else
 }
 
 app.UseDefaultFiles();
+// Nomes gerados pelo build do Angular: main-ABCD1234.js, chunk-ABCD1234.js, styles-ABCD1234.css.
+var arquivoComHash = new System.Text.RegularExpressions.Regex(@"-[A-Z0-9]{8}\.(js|css)$",
+    System.Text.RegularExpressions.RegexOptions.Compiled);
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        var nome = ctx.File.Name;
-        ctx.Context.Response.Headers["Cache-Control"] =
-            nome.Equals("index.html", StringComparison.OrdinalIgnoreCase)
-                ? "no-cache"
-                : "public, max-age=31536000, immutable";
+        // Só os arquivos do build com hash no nome (ex.: main-ABCD1234.js) são imutáveis; o resto (index.html,
+        // favicon, ícones, manifesto) mantém o nome entre versões e precisa ser revalidado.
+        ctx.Context.Response.Headers["Cache-Control"] = arquivoComHash.IsMatch(ctx.File.Name)
+            ? "public, max-age=31536000, immutable"
+            : "no-cache";
     }
 });
 

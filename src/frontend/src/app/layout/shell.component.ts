@@ -7,17 +7,21 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { SeletorTemaComponent } from '../compartilhado/seletor-tema.component';
 import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.component';
 import { CalculadoraComponent } from '../compartilhado/calculadora.component';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { Icones } from '../compartilhado/icones';
+import { LucideIconData } from 'lucide-angular';
 
-interface ItemMenu { rota: string; rotulo: string; icone: string; }
+interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, SeletorTemaComponent, BotaoPrivacidadeComponent, CalculadoraComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, SeletorTemaComponent, BotaoPrivacidadeComponent, CalculadoraComponent,
+    IconeComponent],
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()">
       <aside class="lateral">
         <div class="marca">
-          <span class="marca-simbolo" aria-hidden="true">F</span>
+          <span class="marca-simbolo" aria-hidden="true"><app-icone [icone]="Icones.marca" [tamanho]="22" [traco]="2" /></span>
           <div>
             <strong>Finanças</strong>
             <small>local e privado</small>
@@ -27,7 +31,7 @@ interface ItemMenu { rota: string; rotulo: string; icone: string; }
         <nav class="menu" aria-label="Menu principal">
           @for (item of menu; track item.rota) {
             <a [routerLink]="item.rota" routerLinkActive="ativo" (click)="menuAberto.set(false)">
-              <span class="menu-icone" aria-hidden="true">{{ item.icone }}</span>
+              <app-icone class="menu-icone" [icone]="item.icone" />
               {{ item.rotulo }}
             </a>
           }
@@ -35,7 +39,7 @@ interface ItemMenu { rota: string; rotulo: string; icone: string; }
 
         <div class="lateral-rodape">
           <button type="button" class="botao botao-suave largura-total" (click)="sincronizar()" [disabled]="sincronizando()">
-            <span aria-hidden="true" [class.girando]="sincronizando()">⟳</span>
+            <app-icone [icone]="Icones.sincronizar" [tamanho]="16" [class.girando]="sincronizando()" />
             {{ sincronizando() ? 'Sincronizando…' : 'Sincronizar bancos' }}
           </button>
           <app-botao-privacidade />
@@ -70,20 +74,22 @@ export class ShellComponent {
   readonly menuAberto = signal(false);
   readonly sincronizando = signal(false);
 
+  readonly Icones = Icones;
+
   readonly menu: ItemMenu[] = [
-    { rota: '/painel', rotulo: 'Painel', icone: '◧' },
-    { rota: '/anual', rotulo: 'Visão anual', icone: '◫' },
-    { rota: '/transacoes', rotulo: 'Transações', icone: '≡' },
-    { rota: '/contas', rotulo: 'Contas e cartões', icone: '▭' },
-    { rota: '/orcamentos', rotulo: 'Orçamentos', icone: '◔' },
-    { rota: '/metas', rotulo: 'Metas', icone: '◎' },
-    { rota: '/contas-a-pagar', rotulo: 'Contas a pagar', icone: '◷' },
-    { rota: '/investimentos', rotulo: 'Investimentos', icone: '△' },
-    { rota: '/emprestimos', rotulo: 'Empréstimos e financiamentos', icone: '⊟' },
-    { rota: '/relatorios', rotulo: 'Relatórios', icone: '▤' },
-    { rota: '/projecao', rotulo: 'Projeção', icone: '↗' },
-    { rota: '/categorias', rotulo: 'Categorias e regras', icone: '◈' },
-    { rota: '/configuracoes', rotulo: 'Configurações', icone: '⚙' }
+    { rota: '/painel', rotulo: 'Painel', icone: Icones.painel },
+    { rota: '/anual', rotulo: 'Visão anual', icone: Icones.visaoAnual },
+    { rota: '/transacoes', rotulo: 'Transações', icone: Icones.transacoes },
+    { rota: '/contas', rotulo: 'Contas e cartões', icone: Icones.contas },
+    { rota: '/orcamentos', rotulo: 'Orçamentos', icone: Icones.orcamentos },
+    { rota: '/metas', rotulo: 'Metas', icone: Icones.metas },
+    { rota: '/contas-a-pagar', rotulo: 'Contas a pagar', icone: Icones.contasAPagar },
+    { rota: '/investimentos', rotulo: 'Investimentos', icone: Icones.investimentos },
+    { rota: '/emprestimos', rotulo: 'Empréstimos e financiamentos', icone: Icones.emprestimos },
+    { rota: '/relatorios', rotulo: 'Relatórios', icone: Icones.relatorios },
+    { rota: '/projecao', rotulo: 'Projeção', icone: Icones.projecao },
+    { rota: '/categorias', rotulo: 'Categorias e regras', icone: Icones.categorias },
+    { rota: '/configuracoes', rotulo: 'Configurações', icone: Icones.configuracoes }
   ];
 
   sincronizar(): void {
