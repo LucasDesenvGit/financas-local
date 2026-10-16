@@ -10,6 +10,8 @@ on:
     paths:
       - instalar-windows.cmd
       - scripts/instalar-windows.ps1
+      - parar-windows.cmd
+      - scripts/parar-windows.ps1
       - scripts/2-criar-banco.sh
       - banco/**
       - .github/workflows/teste-instalacao-windows.yml
@@ -18,6 +20,8 @@ on:
     paths:
       - instalar-windows.cmd
       - scripts/instalar-windows.ps1
+      - parar-windows.cmd
+      - scripts/parar-windows.ps1
       - scripts/2-criar-banco.sh
       - banco/**
       - .github/workflows/teste-instalacao-windows.yml
@@ -80,6 +84,34 @@ jobs:
           dir /b backups\FinancasLocal-antes-instalacao-*.db || exit /b 1
           if not exist publicado\api-anterior\Financas.Api.dll exit /b 1
           powershell.exe -NoProfile -Command "if (-not (Select-String -Path instaladores\instalacao-windows.log -SimpleMatch 'certificado existente reaproveitado' -Quiet)) { exit 1 }" || exit /b 1
+          curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
+
+      # parar-windows.cmd (sem o UAC: o runner ja e Administrador): para, tira do inicio automatico e confere que
+      # nada ficou de pe; depois o instalador sobe de novo e devolve o inicio automatico.
+      - name: Parar (parar-windows.cmd -Desativar)
+        shell: cmd
+        env:
+          FINANCAS_SEM_INTERACAO: "1"
+        run: |
+          set "PATH=%PATH_WINDOWS_PURO%"
+          call parar-windows.cmd -Desativar > parar.log 2>&1
+          set "CODIGO=%errorlevel%"
+          type parar.log
+          if not "%CODIGO%"=="0" exit /b 1
+          powershell.exe -NoProfile -Command "$s = Get-Service FinancasLocal; Write-Host $s.Status $s.StartType; if ($s.Status -ne 'Stopped' -or $s.StartType -ne 'Manual') { exit 1 }" || exit /b 1
+          findstr /c:"nenhum processo com o banco aberto" parar.log || exit /b 1
+          curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado && exit /b 1
+          exit /b 0
+
+      - name: Subir de novo (instalar-windows.cmd)
+        shell: cmd
+        env:
+          FINANCAS_SEM_INTERACAO: "1"
+        run: |
+          set "PATH=%PATH_WINDOWS_PURO%"
+          call instalar-windows.cmd -PularBuild
+          if errorlevel 1 exit /b 1
+          powershell.exe -NoProfile -Command "if ((Get-Service FinancasLocal).StartType -ne 'Automatic') { exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
 
       - name: Diagnostico

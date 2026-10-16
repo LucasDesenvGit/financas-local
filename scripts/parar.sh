@@ -17,12 +17,15 @@
 # Para subir de novo: scripts/3-publicar-atualizar.sh, ou
 #   systemctl --user enable --now financaslocal.service
 #
+# Sai com codigo 1 se algo ficou rodando (ou o banco continua aberto).
 # No Windows nao precisa de bash: de dois cliques em parar-windows.cmd, na raiz.
 # Rodado pelo Git Bash, este script repassa para scripts/parar-windows.ps1.
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
 unidade_systemd='financaslocal.service'
+problemas=0
+problema() { problemas=$((problemas + 1)); aviso "$1"; }
 desativar=0
 compiladores=0
 
@@ -72,14 +75,23 @@ case "$SO" in
 esac
 
 # ------------------------------------------------------------------ 2 e 3. Processos fora do servico
-# Padroes restritos ao projeto, para nao derrubar outros apps .NET/Node da maquina:
+# So processos DESTE projeto (a linha de comando tem a pasta do projeto seguida de /), para nao derrubar
+# outros apps .NET/Node, nem um "dotnet build" com caminho relativo:
 #  - API: executavel/DLL Financas.Api (dotnet run, Visual Studio, publicado/ na mao);
 #  - front: qualquer processo rodando de src/frontend/node_modules (ng serve, esbuild...).
 etapa 'Processos da API e do front fora do servico'
 
+# pids_do_projeto 'regex-do-programa' 'subpasta/' -> PIDs cuja linha de comando casa a regex E contem $Raiz/subpasta.
+# ps -eo (e nao pgrep -a, que no macOS significa outra coisa); a regex vai por ENVIRON para o awk nao mexer nas barras.
+pids_do_projeto() {
+    ps -eo pid=,args= | PADRAO="$1" PASTA="$Raiz/$2" EU="$$" awk '
+        { pid = $1; linha = $0; sub(/^ *[0-9]+ /, "", linha) }
+        linha ~ ENVIRON["PADRAO"] && index(linha, ENVIRON["PASTA"]) && pid != ENVIRON["EU"] { print pid }' || true
+}
+
 parar_processos_unix() {
-    local descricao="$1" padrao="$2" pids
-    pids="$(pgrep -f "$padrao" | grep -vx "$$" || true)"
+    local descricao="$1" padrao="$2" subpasta="$3" pids
+    pids="$(pids_do_projeto "$padrao" "$subpasta")"
     if [[ -z "$pids" ]]; then
         ok "$descricao: nada rodando"
         return
@@ -87,7 +99,7 @@ parar_processos_unix() {
     # shellcheck disable=SC2086
     kill $pids 2>/dev/null || true
     for _ in $(seq 1 10); do
-        pids="$(pgrep -f "$padrao" | grep -vx "$$" || true)"
+        pids="$(pids_do_projeto "$padrao" "$subpasta")"
         [[ -z "$pids" ]] && break
         sleep 1
     done
@@ -100,8 +112,8 @@ parar_processos_unix() {
     fi
 }
 
-parar_processos_unix 'API' 'Financas\.Api(\.dll)?( |$)'
-parar_processos_unix 'Front (ng serve)' "$Raiz/src/frontend/node_modules"
+parar_processos_unix 'API' 'Financas\.Api(\.dll)?( |$)' ''
+parar_processos_unix 'Front (ng serve)' 'node_modules' 'src/frontend/node_modules/'
 
 # ------------------------------------------------------------------ Servidores de build (opcional)
 if [[ $compiladores -eq 1 ]]; then
@@ -127,7 +139,7 @@ elif command -v lsof >/dev/null 2>&1; then
     if [[ -z "$abertos" ]]; then
         ok 'nenhum processo com o banco aberto (SQLite nao tem servico proprio)'
     else
-        aviso 'Ainda ha processo com o banco aberto (ex.: DB Browser, sqlite3, IDE):'
+        problema 'Ainda ha processo com o banco aberto (ex.: DB Browser, sqlite3, IDE):'
         # shellcheck disable=SC2086
         ps -o pid=,args= -p $(echo $abertos | tr ' ' ',') | sed 's/^/        /'
     fi
@@ -136,4 +148,8 @@ else
 fi
 
 echo
+if [[ $problemas -gt 0 ]]; then
+    aviso "Terminou com $problemas pendencia(s): veja os avisos acima."
+    exit 1
+fi
 ok 'Pronto.'
