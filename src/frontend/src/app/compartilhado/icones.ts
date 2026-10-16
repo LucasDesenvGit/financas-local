@@ -3,9 +3,9 @@
  * nada é baixado da internet (a CSP só permite recursos do próprio site). Para trocar um ícone, mude aqui.
  */
 import {
-  ArrowLeftRight, CalendarClock, CalendarRange, ChartColumn, ChartLine, ChartPie, Check, CreditCard, Eye, EyeOff,
-  HandCoins, House, Landmark, LayoutDashboard, Monitor, Moon, Palette, PiggyBank, RefreshCw, Settings, Sun, Tags, Target,
-  TrendingUp, Wallet
+  ArrowLeftRight, Calculator, CalendarClock, CalendarRange, ChartColumn, ChartLine, ChartPie, Check, ChevronDown, CreditCard,
+  Eye, EyeOff, HandCoins, House, Landmark, LayoutDashboard, LogOut, Menu, Monitor, Moon, Palette, PiggyBank, RefreshCw,
+  Settings, Sun, Tags, Target, TrendingUp, Wallet, X
 } from 'lucide-angular';
 
 export const Icones = {
@@ -32,6 +32,11 @@ export const Icones = {
   sistema: Monitor,
   aparencia: Palette,
   marcado: Check,
+  calculadora: Calculator,
+  fechar: X,
+  abrirMenu: ChevronDown,
+  menuLateral: Menu,
+  sair: LogOut,
   // Marca e indicadores
   marca: PiggyBank,
   patrimonio: Wallet,

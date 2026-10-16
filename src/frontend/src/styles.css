@@ -159,11 +159,8 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 .menu a.ativo .menu-icone { opacity: 1; }
 .kpi-rotulo { display: inline-flex; align-items: center; gap: 6px; }
 
-.lateral-rodape { border-top: 1px solid var(--linha); padding-top: 14px; display: grid; gap: 12px; }
-.usuario { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 0 4px; color: var(--texto-suave); }
 
 .conteudo { min-width: 0; }
-.barra-mobile { display: none; }
 .pagina { padding: 32px 36px 56px; max-width: 1380px; }
 
 .cabecalho-pagina {
@@ -180,12 +177,6 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
     transform: translateX(-100%); transition: transform 0.22s ease;
   }
   .menu-aberto .lateral { transform: none; box-shadow: 0 0 0 100vmax var(--fundo-modal); }
-  .lateral .seletor-tema { display: none; }
-  .barra-mobile {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 16px; background: var(--superficie); border-bottom: 1px solid var(--linha);
-    position: sticky; top: 0; z-index: 10;
-  }
   .pagina { padding: 20px 16px 40px; }
 }
 
@@ -202,23 +193,8 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 }
 .seletor-tema button:hover { color: var(--texto); }
 .seletor-tema button.ativo { background: var(--superficie); color: var(--texto-forte); box-shadow: var(--sombra); }
-.barra-mobile .seletor-tema-rotulo { display: none; }
 
 /* ---------------------------------------------------------------- Ocultar valores */
-.botao-privacidade {
-  font: inherit; font-size: 0.86rem; font-weight: 500; width: 100%;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 7px 12px; border: 0; border-radius: var(--raio-pequeno); cursor: pointer;
-  background: var(--superficie-2); color: var(--texto-suave);
-  transition: background-color var(--transicao), color var(--transicao);
-}
-.botao-privacidade:hover { color: var(--texto); background: var(--superficie-3); }
-.botao-privacidade[aria-pressed="true"] { background: var(--primaria-suave); color: var(--primaria-forte); }
-.barra-mobile .botao-privacidade { width: auto; padding: 7px 10px; }
-.barra-mobile .botao-privacidade-rotulo { display: none; }
-.lateral .botao-privacidade { display: inline-flex; }
-@media (max-width: 900px) { .lateral .botao-privacidade { display: none; } }
-@media (min-width: 901px) { .barra-mobile .botao-privacidade { display: none; } }
 
 /* ---------------------------------------------------------------- Utilitários */
 .texto-suave { color: var(--texto-suave); }
@@ -689,14 +665,9 @@ details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 55
 .confianca-nenhuma { background: var(--superficie-3); color: var(--texto-suave); }
 
 /* ---------------- Calculadora flutuante ---------------- */
-.calc-botao {
-  position: fixed; top: 14px; right: 18px; z-index: 60; width: 44px; height: 44px; border-radius: 50%;
-  border: 0; background: var(--primaria); color: var(--primaria-texto); font-size: 1.25rem; cursor: pointer;
-  box-shadow: 0 6px 18px rgba(80, 80, 160, 0.28); display: grid; place-items: center;
-}
-.calc-botao:hover { background: var(--primaria-hover); }
+.calc { position: relative; display: inline-flex; }
 .calc-painel {
-  position: fixed; top: 66px; right: 18px; z-index: 60; width: 290px; background: var(--superficie);
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 60; width: 290px; background: var(--superficie);
   border: 1px solid var(--linha); border-radius: 18px; box-shadow: 0 18px 48px rgba(20, 20, 50, 0.22); padding: 14px;
 }
 .calc-visor { background: var(--superficie-2, var(--superficie-3)); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; text-align: right; }
@@ -715,12 +686,9 @@ details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 55
 .calc-historico { list-style: none; margin: 10px 0 0; padding: 8px 0 0; border-top: 1px solid var(--linha); max-height: 120px; overflow: auto; }
 .calc-historico li { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; color: var(--texto-suave); padding: 2px 0; cursor: pointer; }
 .calc-historico li:hover { color: var(--texto); }
-/* Os botões do cabeçalho das páginas não ficam embaixo do botão flutuante. */
-.cabecalho-pagina { padding-right: 56px; }
 @media (max-width: 900px) {
-  .calc-botao { top: auto; bottom: 18px; }
-  .calc-painel { top: auto; bottom: 72px; right: 12px; left: 12px; width: auto; }
-  .cabecalho-pagina { padding-right: 0; }
+  /* No celular o painel ocupa a largura da tela, logo abaixo da barra. */
+  .calc-painel { position: fixed; top: 62px; right: 12px; left: 12px; width: auto; }
 }
 
 /* ---------------------------------------------------------------- Paletas de cor
@@ -817,3 +785,59 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
 }
 .botao-icone-link:hover, .botao-icone-link:focus-visible { background: var(--primaria-suave); color: var(--primaria-forte); }
 .botao-icone-link:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+
+/* ---------------------------------------------------------------- Barra superior (UX-7)
+   Ações globais num lugar só, fixo no topo e igual no desktop e no celular (Nielsen 4): sincronizar, ocultar
+   valores, calculadora e o menu do usuário (tema, aparência, sair). O menu lateral fica só com a navegação. */
+.barra-superior {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 6px;
+  height: 56px; padding: 0 24px; background: var(--fundo); border-bottom: 1px solid var(--linha);
+}
+.barra-titulo { font-family: var(--fonte-titulo); color: var(--texto-forte); }
+.barra-acoes { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.botao-barra {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-width: 36px; height: 36px; padding: 0 9px; border: 0; border-radius: 10px;
+  background: none; color: var(--texto-suave); font: inherit; font-size: 0.88rem; font-weight: 550; cursor: pointer;
+  transition: background-color var(--transicao), color var(--transicao);
+}
+.botao-barra:hover:not(:disabled), .botao-barra[aria-expanded="true"] { background: var(--superficie-2); color: var(--texto); }
+.botao-barra:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.botao-barra:disabled { cursor: progress; opacity: 0.8; }
+.botao-barra[aria-pressed="true"] { background: var(--primaria-suave); color: var(--primaria-forte); }
+.so-celular { display: none; }
+
+/* Menu do usuário (iniciais ▾) */
+.menu-usuario { position: relative; display: inline-flex; }
+.menu-usuario-botao { gap: 4px; padding: 0 6px 0 4px; }
+.avatar {
+  display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--marca-fundo); color: var(--marca-texto); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.02em;
+}
+.menu-flutuante {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 60; width: 250px; padding: 6px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: 14px; box-shadow: var(--sombra-forte);
+}
+.menu-cabecalho { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; border-bottom: 1px solid var(--linha); margin-bottom: 4px; }
+.menu-cabecalho strong { display: block; color: var(--texto-forte); }
+.menu-cabecalho small { color: var(--texto-suave); font-size: 0.78rem; }
+.menu-grupo { display: grid; padding: 4px 0; }
+.menu-grupo + .menu-grupo { border-top: 1px solid var(--linha); }
+.menu-titulo { font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-suave); padding: 6px 10px 2px; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 0 10px;
+  border: 0; border-radius: 9px; background: none; color: var(--texto); font: inherit; font-size: 0.9rem; text-align: left;
+  text-decoration: none; cursor: pointer;
+}
+.menu-item:hover, .menu-item:focus-visible { background: var(--superficie-2); outline: none; text-decoration: none; }
+.menu-item[aria-checked="true"] { color: var(--primaria-forte); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .barra-superior { padding: 0 10px; }
+  .so-celular { display: inline-flex; }
+  .barra-titulo.so-celular { display: block; }
+  /* No celular o sincronizar mostra só o ícone (o texto fica no aria-label e na dica). */
+  .botao-sincronizar .rotulo-barra { display: none; }
+}
+/* Dicas da barra alinhadas pela direita: centralizadas, vazariam da tela nos botões da ponta. */
+.barra-acoes .com-dica::after { right: 0; transform: none; }
