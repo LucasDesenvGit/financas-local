@@ -5,15 +5,19 @@ import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  AtualizarAtivo, Carteira, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
-  SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
+  AtualizarAtivo, Carteira, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
+  Reserva, SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
 } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { dataIso } from '../compartilhado/utilidades';
+import { dataIso, pct, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
+import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -25,21 +29,28 @@ const NOMES_TIPO_PLUGGY: Record<string, string> = {
   COE: 'COE',
   OTHER: 'Outros'
 };
-const CORES = ['#a7a3f5', '#92c8f0', '#8fd5b4', '#f8c09a', '#f3b3d3', '#8fd8d8', '#f2d98b', '#a9b4c6'];
+// Paleta dos tipos de investimento: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic (UX-9).
+const CORES = ['#a7a3f5', '#92c8f0', '#c3b1e1', '#8fd8d8', '#f3b3d3', '#f2d98b', '#a9b4c6', '#b8c7f0'];
 const COR_CARTEIRA = '#a7a3f5';
-const COR_SELIC = '#f8c09a';
+const COR_SELIC = CORES_GRAFICO.selic;
 const COR_MERCADO = '#8fd5b4';
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+/** Símbolo curto para rótulos de campo (o pipe de moeda já formata os valores). */
+const SIMBOLOS_MOEDA: Record<string, string> = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF' };
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
-type Aba = 'resumo' | 'fii' | 'rv' | 'of';
+type Aba = 'resumo' | 'fii' | 'rv' | 'of' | 'reservas';
+
+/** Formulário de conferência do saldo real de uma reserva. */
+interface FormConferencia { reserva: Reserva; saldo: number | null; data: string }
 
 /** Linha editável da importação pelo extrato. */
 interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas: number }
 
 @Component({
   selector: 'app-investimentos',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, ModalComponent, InvestimentosFiisComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
+    InvestimentosFiisComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -59,11 +70,17 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     </header>
 
     @if (dados(); as d) {
+      @if (d.moedasSemCotacao.length > 0) {
+        <section class="alertas">
+          <p>Investimentos em {{ d.moedasSemCotacao.join(', ') }} ficaram fora dos totais: não há cotação de câmbio
+            guardada para essa moeda.</p>
+        </section>
+      }
       <section class="kpis">
         <article class="kpi kpi-destaque">
           <span>Total investido</span>
           <strong>{{ d.totalGeral | currency }}</strong>
-          <small>renda variável + Open Finance + contas de investimento</small>
+          <small>renda variável + Open Finance + contas de investimento + reservas</small>
         </article>
         <article class="kpi">
           <span>Renda variável (cotação atual)</span>
@@ -85,7 +102,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <small>{{ d.rendaVariavel.proventosRecebidos | currency }} desde a 1ª compra</small>
         </article>
         <article class="kpi">
-          <span>Selic</span>
+          <span><app-termo chave="selic">Selic</app-termo></span>
           <strong>{{ d.selic.metaAnual !== null ? (d.selic.metaAnual | number: '1.2-2') + '% a.a.' : '—' }}</strong>
           <small>12 meses: {{ pct(d.selic.acumulado12Meses, false) }} · no ano: {{ pct(d.selic.acumuladoAno, false) }}</small>
         </article>
@@ -99,45 +116,60 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           Renda variável ({{ abertas().length }})</button>
         <button type="button" role="tab" [class.ativo]="aba() === 'of'" (click)="aba.set('of')">
           Open Finance ({{ d.openFinance.length }})</button>
+        @if (d.reservas.length) {
+          <button type="button" role="tab" [class.ativo]="aba() === 'reservas'" (click)="aba.set('reservas')">
+            Reservas ({{ d.reservas.length }})
+            @if (reservasAConferir() > 0) { <span class="etiqueta etiqueta-alerta" title="Reservas para conferir">!</span> }
+          </button>
+        }
       </div>
 
       @switch (aba()) {
         @case ('resumo') {
-          <div class="grade-2">
-            <section class="painel-bloco">
-              <h2>Seu dinheiro na renda variável x na Selic</h2>
-              <p class="texto-suave legenda-grafico">Compras menos vendas, e quanto esse mesmo dinheiro teria hoje na Selic.
-                O ponto verde é o valor de mercado atual (proventos não entram neste gráfico).</p>
-              @if (d.evolucao.length) {
+          <section class="painel-bloco">
+            <h2>Seu dinheiro na renda variável x na Selic</h2>
+            @if (d.evolucao.length) {
+              <app-grafico-explicado [resumo]="resumoEvolucao()"
+                comoLer="Área lilás: o que você aplicou (compras menos vendas). Tracejado: quanto esse mesmo dinheiro teria hoje na Selic. Ponto verde: valor de mercado atual (proventos não entram neste gráfico).">
                 <app-grafico [configuracao]="graficoEvolucao()" [altura]="270" />
-              } @else { <p class="vazio">Lance suas compras para ver a comparação.</p> }
-            </section>
-            <section class="painel-bloco">
-              <h2>Distribuição</h2>
-              @if (d.distribuicao.length) {
-                <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
-                <ul class="lista-legenda">
-                  @for (g of d.distribuicao; track g.nome; let i = $index) {
-                    <li>
-                      <span class="ponto" [style.background]="cor(i)"></span>
-                      <span class="cresce">{{ g.nome }}</span>
-                      <span class="valor">{{ g.valor | currency }}</span>
-                      <span class="texto-suave pct">{{ d.totalGeral > 0 ? (g.valor / d.totalGeral * 100 | number: '1.0-0') : 0 }}%</span>
-                    </li>
-                  }
-                </ul>
-              } @else { <p class="vazio">Nenhum investimento ainda.</p> }
-            </section>
-          </div>
+              </app-grafico-explicado>
+            } @else { <p class="vazio">Lance suas compras para ver a comparação.</p> }
+          </section>
 
-          @if (abertas().length) {
-            <section class="painel-bloco">
-              <h2>Rentabilidade por ativo x Selic no mesmo período</h2>
-              <p class="texto-suave legenda-grafico">Inclui valorização, vendas e proventos. A barra da Selic usa as mesmas datas e
-                valores das suas compras.</p>
-              <app-grafico [configuracao]="graficoAtivos()" [altura]="alturaGraficoAtivos()" />
-            </section>
-          }
+          <app-mais-analises chave="investimentos" conteudo="distribuição por tipo e rentabilidade de cada ativo x Selic">
+            <ng-template>
+              <div class="grade-2">
+                <section class="painel-bloco">
+                  <h2>Distribuição</h2>
+                  @if (d.distribuicao.length) {
+                    <app-grafico-explicado [resumo]="resumoDistribuicao()"
+                      comoLer="Cada fatia é um tipo de investimento, do tamanho do valor dele hoje. A lista abaixo traz os valores.">
+                      <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
+                    </app-grafico-explicado>
+                    <ul class="lista-legenda">
+                      @for (g of d.distribuicao; track g.nome; let i = $index) {
+                        <li>
+                          <span class="ponto" [style.background]="cor(i)"></span>
+                          <span class="cresce">{{ g.nome }}</span>
+                          <span class="valor">{{ g.valor | currency }}</span>
+                          <span class="texto-suave pct">{{ d.totalGeral > 0 ? (g.valor / d.totalGeral * 100 | number: '1.0-0') : 0 }}%</span>
+                        </li>
+                      }
+                    </ul>
+                  } @else { <p class="vazio">Nenhum investimento ainda.</p> }
+                </section>
+                @if (abertas().length) {
+                  <section class="painel-bloco">
+                    <h2>Rentabilidade por ativo x Selic no mesmo período</h2>
+                    <app-grafico-explicado [resumo]="resumoAtivos()"
+                      comoLer="Para cada ativo: resultado total (valorização, vendas e proventos) em verde quando ganhou da Selic e em rosa quando perdeu; em laranja-claro, a Selic com as mesmas datas e valores das suas compras.">
+                      <app-grafico [configuracao]="graficoAtivos()" [altura]="alturaGraficoAtivos()" />
+                    </app-grafico-explicado>
+                  </section>
+                }
+              </div>
+            </ng-template>
+          </app-mais-analises>
         }
 
         @case ('fii') {
@@ -157,7 +189,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               <table class="tabela tabela-carteira">
                 <thead>
                   <tr>
-                    <th>Ativo</th><th class="direita">Cotas</th><th class="direita">Preço médio</th>
+                    <th>Ativo</th><th class="direita">Cotas</th><th class="direita"><app-termo chave="precoMedio">Preço médio</app-termo></th>
                     <th class="direita">Cotação</th><th class="direita">Valor atual</th><th class="direita">Valorização</th>
                     <th class="direita">Proventos 12m</th><th class="direita">Resultado total</th><th class="direita">x Selic</th><th></th>
                   </tr>
@@ -167,13 +199,17 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <tr [class.encerrada]="p.quantidade === 0">
                       <td>
                         <strong>{{ p.ticker }}</strong> <span class="etiqueta etiqueta-suave">{{ nomeTipo(p.tipo) }}</span>
+                        @if (p.moeda !== 'BRL') { <span class="etiqueta etiqueta-suave" title="Ativo no exterior">{{ p.moeda }}</span> }
                         @if (p.nome) { <br><small class="texto-suave">{{ p.nome }}</small> }
                       </td>
                       <td class="direita">{{ qtd(p.quantidade) }}</td>
-                      <td class="direita">{{ p.precoMedio | currency }}</td>
+                      <td class="direita">{{ p.precoMedio | currency: p.moeda }}</td>
                       <td class="direita">
                         @if (p.precoAtual !== null) {
-                          {{ p.precoAtual | currency }}
+                          {{ p.precoAtual | currency: p.moeda }}
+                          @if (p.moeda !== 'BRL') {
+                            <br><small class="texto-suave">{{ p.precoAtualEmReais !== null ? (p.precoAtualEmReais | currency) : 'sem câmbio' }}</small>
+                          }
                           @if (p.precoManual) {
                             <br><small class="etiqueta etiqueta-alerta">manual</small>
                           } @else if (p.variacaoDia !== null) {
@@ -207,7 +243,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     </tr>
                   } @empty {
                     <tr><td colspan="10" class="vazio">
-                      Nenhum ativo lançado. Use <strong>+ Lançar compra/venda</strong> com o código da B3 (ex.: MXRF11) e o preço pago.
+                      Nenhum ativo lançado. Use <strong>+ Lançar compra/venda</strong> com o código da B3 (ex.: MXRF11) e o preço pago,
+                      ou escolha outra moeda para um ativo no exterior (ex.: AAPL em USD).
                     </td></tr>
                   }
                 </tbody>
@@ -215,7 +252,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             </div>
             <p class="texto-suave nota">
               Preço médio pelo método da Receita (taxas entram no custo). Proventos são estimados pela quantidade que você tinha na
-              data-com. "x Selic" compara o valor atual com quanto o mesmo dinheiro (com as mesmas vendas e proventos retirados)
+              data-com. Ativos no exterior: preço médio e cotação na moeda do ativo; custo, valores e resultados em reais, cada
+              operação pelo seu câmbio e o valor atual pelo câmbio de hoje (proventos do exterior aparecem brutos, antes do imposto
+              retido lá fora). "x Selic" compara o valor atual com quanto o mesmo dinheiro (com as mesmas vendas e proventos retirados)
               teria hoje na Selic.
             </p>
           </section>
@@ -238,7 +277,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             <table class="tabela">
               <thead>
                 <tr><th>Investimento</th><th>Instituição</th><th class="direita">Aplicado</th><th class="direita">Saldo</th>
-                  <th class="direita">Rentabilidade</th><th class="direita">Selic no período</th><th class="direita">% da Selic</th>
+                  <th class="direita">Rentabilidade</th><th class="direita"><app-termo chave="selic">Selic</app-termo> no período</th><th class="direita">% da Selic</th>
                   <th>Vencimento</th></tr>
               </thead>
               <tbody>
@@ -250,9 +289,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                       @if (i.jaNaCarteira) { <br><small class="etiqueta etiqueta-alerta">já lançado na carteira — não somado de novo</small> }
                     </td>
                     <td class="texto-suave">{{ i.nomeInstituicao }}</td>
-                    <td class="direita">{{ i.valorAplicado !== null ? (i.valorAplicado | currency) : '—' }}
+                    <td class="direita">{{ i.valorAplicado !== null ? (i.valorAplicado | currency: i.moeda) : '—' }}
                       @if (i.dataAplicacao) { <br><small class="texto-suave">{{ i.dataAplicacao | date: 'dd/MM/yy' }}</small> }</td>
-                    <td class="direita valor">{{ i.saldo | currency }}</td>
+                    <td class="direita valor">{{ i.saldo | currency: i.moeda }}
+                      @if (i.moeda !== 'BRL') {
+                        <br><small class="texto-suave">{{ i.saldoEmReais !== null ? (i.saldoEmReais | currency) : 'sem cotação' }}</small>
+                      }</td>
                     <td class="direita" [class.positivo]="(i.rentabilidade ?? 0) > 0" [class.negativo]="(i.rentabilidade ?? 0) < 0">
                       {{ pct(i.rentabilidade) }}</td>
                     <td class="direita texto-suave">{{ pct(i.selicNoPeriodo, false) }}</td>
@@ -277,6 +319,59 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             previdência) a instituição pode informar só o total, e o resultado fica aproximado. Valores brutos, antes do IR.
           </p>
         }
+
+        @case ('reservas') {
+          <div class="tabela-rolagem">
+            <table class="tabela">
+              <thead>
+                <tr><th>Reserva</th><th>Conta</th><th class="direita">Guardado</th><th class="direita">Retirado</th>
+                  <th class="direita">Saldo</th><th>Base do saldo</th><th></th></tr>
+              </thead>
+              <tbody>
+                @for (r of d.reservas; track r.contaId + '|' + r.nome) {
+                  <tr [class.encerrada]="r.saldo === 0">
+                    <td><strong>{{ r.nome }}</strong>
+                      <br><small class="texto-suave">{{ r.movimentos }} lançamento(s)
+                        @if (r.primeiroMovimento) { de {{ r.primeiroMovimento | date: 'dd/MM/yy' }} a {{ r.ultimoMovimento | date: 'dd/MM/yy' }} }
+                      </small></td>
+                    <td class="texto-suave">{{ r.nomeConta }}</td>
+                    <td class="direita">{{ r.guardado | currency }}</td>
+                    <td class="direita">{{ r.retirado | currency }}</td>
+                    <td class="direita valor">{{ r.saldo | currency }}</td>
+                    <td>
+                      @if (r.dataConferencia) {
+                        @if (r.conferenciaAntiga) {
+                          <span class="etiqueta etiqueta-alerta">conferido há mais de 30 dias</span>
+                        } @else {
+                          <span class="etiqueta etiqueta-sucesso">conferido</span>
+                        }
+                        <br><small class="texto-suave">{{ r.saldoConferido | currency }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
+                          + lançamentos depois</small>
+                      } @else {
+                        <span class="etiqueta etiqueta-alerta">estimado</span>
+                        <br><small class="texto-suave">só pelos lançamentos importados</small>
+                        @if (r.podeTerSaldoAnterior) {
+                          <br><small class="negativo">Pode haver saldo de antes do 1º lançamento importado. Confira.</small>
+                        }
+                      }
+                    </td>
+                    <td class="direita nowrap">
+                      <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
+                        (click)="abrirConferencia(r)">conferir saldo</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="texto-suave nota">
+            A instituição não informa o saldo destas reservas pelo Open Finance, só os lançamentos "Dinheiro reservado" e
+            "Dinheiro retirado" no extrato da conta. Por isso o saldo é estimado. Sem conferência, ele fica abaixo do real
+            quando a reserva já tinha dinheiro antes do primeiro lançamento importado e quando o rendimento ainda não foi
+            retirado. Confira o valor no app da instituição de vez em quando: os lançamentos seguintes passam a somar a
+            partir dele. O total entra no patrimônio, no total investido e na reserva de emergência.
+          </p>
+        }
       }
     } @else {
       <p class="vazio">Carregando…</p>
@@ -287,33 +382,64 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       @if (formOp; as fo) {
         <form (ngSubmit)="salvarOperacao()" #f="ngForm" class="formulario">
           <div class="segmentado" role="group" aria-label="Tipo de operação">
-            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Compra" (click)="fo.tipo = TipoOperacao.Compra">Compra</button>
-            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Venda" (click)="fo.tipo = TipoOperacao.Venda">Venda</button>
+            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Compra" (click)="fo.tipo = TipoOperacao.Compra; aoMudarDataOuTipo()">Compra</button>
+            <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Venda" (click)="fo.tipo = TipoOperacao.Venda; aoMudarDataOuTipo()">Venda</button>
           </div>
           <div class="grade-campos">
             @if (editandoOpId === null) {
-              <label>Código na B3
-                <input name="ticker" [(ngModel)]="fo.ticker" required maxlength="12" placeholder="MXRF11" autocomplete="off"
-                  class="maiusculas">
+              <label>Moeda
+                <select name="moeda" [(ngModel)]="fo.moeda" (ngModelChange)="aoMudarMoeda()" [disabled]="moedaTravada">
+                  <option value="BRL">BRL — Real (B3)</option>
+                  @for (m of moedas(); track m.codigo) { <option [value]="m.codigo">{{ m.codigo }} — {{ m.nome }} (exterior)</option> }
+                </select>
+                @if (moedaTravada) { <small class="texto-suave">A moeda de um ativo já lançado não muda.</small> }
+              </label>
+              <label>{{ fo.moeda === 'BRL' ? 'Código na B3' : 'Código (como no Yahoo Finance)' }}
+                <input name="ticker" [(ngModel)]="fo.ticker" required maxlength="12" autocomplete="off" class="maiusculas"
+                  [placeholder]="fo.moeda === 'BRL' ? 'MXRF11' : 'AAPL'">
               </label>
               <label>Tipo do ativo
                 <select name="tipoAtivo" [(ngModel)]="fo.tipoAtivo">
-                  <option [ngValue]="null">Detectar pelo código</option>
-                  @for (t of tiposAtivo; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
+                  <option [ngValue]="null">{{ fo.moeda === 'BRL' ? 'Detectar pelo código' : 'Ações (padrão)' }}</option>
+                  @for (t of tiposPara(fo.moeda); track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
                 </select>
               </label>
             } @else {
-              <p><span class="texto-suave">Ativo</span><br><strong>{{ fo.ticker }}</strong></p>
+              <p><span class="texto-suave">Ativo</span><br><strong>{{ fo.ticker }}</strong>
+                @if (fo.moeda !== 'BRL') { <span class="etiqueta etiqueta-suave">{{ fo.moeda }}</span> }</p>
             }
           </div>
           <div class="grade-campos">
-            <label>Data <input type="date" name="data" [(ngModel)]="fo.data" required [max]="hoje"></label>
+            <label>Data <input type="date" name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" required [max]="hoje"></label>
             <label>Quantidade <input type="number" name="qtd" [(ngModel)]="fo.quantidade" required min="0.000001" step="any"></label>
-            <label>Preço por cota (R$) <input type="number" name="preco" [(ngModel)]="fo.precoUnitario" required min="0" step="any"></label>
-            <label>Taxas/corretagem (R$) <input type="number" name="taxas" [(ngModel)]="fo.taxas" min="0" step="0.01"></label>
+            <label>Preço por cota ({{ simbolo(fo.moeda) }}) <input type="number" name="preco" [(ngModel)]="fo.precoUnitario" required min="0" step="any"></label>
+            <label>Taxas/corretagem ({{ simbolo(fo.moeda) }}) <input type="number" name="taxas" [(ngModel)]="fo.taxas" min="0" step="0.01"></label>
           </div>
+          @if (fo.moeda !== 'BRL') {
+            <div class="grade-campos">
+              <label>Câmbio (R$ por 1 {{ fo.moeda }})
+                <input type="number" name="cambio" [(ngModel)]="fo.cambio" (ngModelChange)="cambioEditado = true"
+                  required min="0.000001" step="any">
+              </label>
+              <p class="texto-suave nota-cambio">
+                @if (buscandoCambio()) {
+                  Buscando a PTAX do dia…
+                } @else if (ptaxSugerida; as s) {
+                  PTAX de {{ s.tipo }} de {{ s.data | date: 'dd/MM/yyyy' }}: {{ s.valor | number: '1.4-4' }}.
+                  @if (cambioEditado && fo.cambio !== s.valor) {
+                    <button type="button" class="link" (click)="usarPtax()">usar a PTAX</button>
+                  } @else {
+                    Troque pelo câmbio que a corretora cobrou, se for diferente.
+                  }
+                } @else {
+                  Sem PTAX para essa data: informe o câmbio que a corretora cobrou.
+                }
+              </p>
+            </div>
+          }
           <label>Observação <input name="obs" [(ngModel)]="fo.observacao" maxlength="300"></label>
-          <p class="texto-suave">Total da operação: <strong>{{ totalOperacao(fo) | currency }}</strong></p>
+          <p class="texto-suave">Total da operação: <strong>{{ totalOperacao(fo) | currency: fo.moeda }}</strong>
+            @if (fo.moeda !== 'BRL' && fo.cambio) { ≈ <strong>{{ totalOperacao(fo) * fo.cambio | currency }}</strong> }</p>
           <div class="rodape-form">
             @if (editandoOpId) { <button type="button" class="botao botao-perigo" (click)="excluirOperacao()">Excluir</button> }
             <span class="cresce"></span>
@@ -328,13 +454,13 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     <app-modal [aberto]="ativoAberto() !== null" [titulo]="'Operações · ' + (ativoAberto()?.ticker ?? '')" (fechar)="ativoAberto.set(null)">
       @if (ativoAberto(); as a) {
         <div class="resumo-ativo">
-          <div><span class="texto-suave">Preço médio</span><strong>{{ a.precoMedio | currency }}</strong></div>
+          <div><span class="texto-suave">Preço médio</span><strong>{{ a.precoMedio | currency: a.moeda }}</strong></div>
           <div><span class="texto-suave">Cotação atual</span>
-            <strong>{{ a.precoAtual !== null ? (a.precoAtual | currency) : '—' }}</strong></div>
+            <strong>{{ a.precoAtual !== null ? (a.precoAtual | currency: a.moeda) : '—' }}</strong></div>
           <div><span class="texto-suave">Cotas</span><strong>{{ qtd(a.quantidade) }}</strong></div>
           @if (a.ultimoProvento; as up) {
             <div><span class="texto-suave">Último provento (data-com {{ up.dataCom | date: 'dd/MM/yy' }})</span>
-              <strong>{{ up.valorPorCota | currency: 'BRL' : 'symbol' : '1.2-4' }} por cota</strong></div>
+              <strong>{{ up.valorPorCota | currency: a.moeda : 'symbol' : '1.2-4' }} por cota</strong></div>
           }
         </div>
         <div class="tabela-rolagem">
@@ -351,7 +477,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                   <td><span class="etiqueta" [class.etiqueta-sucesso]="o.tipo === TipoOperacao.Compra"
                     [class.etiqueta-alerta]="o.tipo === TipoOperacao.Venda">{{ o.tipo === TipoOperacao.Compra ? 'compra' : 'venda' }}</span></td>
                   <td class="direita">{{ qtd(o.quantidade) }}</td>
-                  <td class="direita">{{ o.precoUnitario | currency: 'BRL' : 'symbol' : '1.2-4' }}</td>
+                  <td class="direita">{{ o.precoUnitario | currency: o.moeda : 'symbol' : '1.2-4' }}
+                    @if (o.moeda !== 'BRL') { <br><small class="texto-suave">câmbio {{ o.cambio | number: '1.2-4' }}</small> }</td>
                   <td class="direita">{{ o.valorTotal | currency }}</td>
                   <td class="direita">
                     @if (o.variacaoPreco !== null) {
@@ -385,7 +512,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <label>Nome <input name="nome" [(ngModel)]="fa.nome" maxlength="150"></label>
           <label>Tipo
             <select name="tipo" [(ngModel)]="fa.tipo">
-              @for (t of tiposAtivo; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
+              @for (t of tiposPara(ativoEditado?.moeda); track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
             </select>
           </label>
           @if (fa.tipo === TipoAtivo.Fii) {
@@ -398,7 +525,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           }
           <label class="checkbox"><input type="checkbox" name="manual" [(ngModel)]="fa.precoManual"> Informar a cotação manualmente</label>
           @if (fa.precoManual) {
-            <label>Cotação atual (R$) <input type="number" name="preco" [(ngModel)]="fa.precoAtual" min="0.0001" step="any" required></label>
+            <label>Cotação atual ({{ simbolo(ativoEditado?.moeda) }}) <input type="number" name="preco" [(ngModel)]="fa.precoAtual" min="0.0001" step="any" required></label>
             <p class="texto-suave">Útil quando a fonte automática não encontra o ativo. Desmarque para voltar à cotação automática.</p>
           }
           <div class="rodape-form">
@@ -469,6 +596,31 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       </div>
     </app-modal>
 
+    <!-- Conferir o saldo real de uma reserva -->
+    <app-modal [aberto]="formConferencia !== null" [titulo]="'Conferir saldo · ' + (formConferencia?.reserva?.nome ?? '')"
+      (fechar)="formConferencia = null">
+      @if (formConferencia; as fc) {
+        <form (ngSubmit)="salvarConferencia()" #fcf="ngForm" class="formulario">
+          <p class="texto-suave">Abra a reserva no app da instituição e informe o saldo que aparece lá. Os lançamentos até essa
+            data já estão nesse valor; os seguintes são somados a ele.</p>
+          <div class="grade-campos">
+            <label>Saldo na instituição (R$)
+              <input type="number" name="saldo" [(ngModel)]="fc.saldo" required min="0" step="0.01"></label>
+            <label>Conferido em <input type="date" name="data" [(ngModel)]="fc.data" required [max]="hoje"></label>
+          </div>
+          <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong></p>
+          <div class="rodape-form">
+            @if (fc.reserva.dataConferencia) {
+              <button type="button" class="botao botao-perigo" (click)="removerConferencia()">Voltar a estimar</button>
+            }
+            <span class="cresce"></span>
+            <button type="button" class="botao" (click)="formConferencia = null">Cancelar</button>
+            <button class="botao botao-primario" [disabled]="fcf.invalid || salvando()">Salvar</button>
+          </div>
+        </form>
+      }
+    </app-modal>
+
     <!-- Fonte das cotações -->
     <app-modal [aberto]="configAberta()" titulo="Fonte das cotações" (fechar)="configAberta.set(false)">
       <form class="formulario" (ngSubmit)="salvarToken(false)">
@@ -500,6 +652,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     .tabela-carteira td:first-child { white-space: normal; min-width: 160px; }
     tr.encerrada td { opacity: 0.6; }
     .nowrap { white-space: nowrap; }
+    .destaque-conferir { font-weight: 600; }
     .nowrap .link + .link { margin-left: 10px; }
     .nota { font-size: 0.82rem; margin: 12px 2px 0; }
     .resumo-ativo { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -509,6 +662,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     .barra-importacao { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     .tabela-importacao td { vertical-align: top; }
     .campo-curto { width: 96px; padding: 4px 8px; }
+    .nota-cambio { align-self: end; margin: 0 0 6px; font-size: 0.85rem; }
     :host ::ng-deep .modal:has(.tabela-importacao) { width: min(1100px, 96vw); }
   `
 })
@@ -539,11 +693,21 @@ export class InvestimentosComponent implements OnInit {
   readonly importacaoAberta = signal(false);
   readonly carregandoSugestoes = signal(false);
   readonly linhasImportacao = signal<LinhaImportacao[]>([]);
+  readonly reservasAConferir = computed(() =>
+    (this.dados()?.reservas ?? []).filter((r) => r.podeTerSaldoAnterior || r.conferenciaAntiga).length);
   readonly quantidadeFiis = computed(() => this.abertas().filter((p) => p.tipo === TipoAtivo.Fii).length);
 
   formOp: SalvarOperacao | null = null;
   editandoOpId: number | null = null;
+  readonly moedas = signal<MoedaCambio[]>([]);
+  readonly buscandoCambio = signal(false);
+  /** Ativo já lançado: a moeda vem dele e não pode ser trocada. */
+  moedaTravada = false;
+  /** O usuário digitou o câmbio: mudar data/tipo não sobrescreve. */
+  cambioEditado = false;
+  ptaxSugerida: { data: string; valor: number; tipo: 'compra' | 'venda' } | null = null;
   formAtivo: AtualizarAtivo | null = null;
+  formConferencia: FormConferencia | null = null;
   ativoEditado: PosicaoAtivo | null = null;
   tokenBrapi = '';
   private atualizouAutomatico = false;
@@ -553,6 +717,37 @@ export class InvestimentosComponent implements OnInit {
   readonly abertas = computed(() => (this.dados()?.posicoes ?? []).filter((p) => p.quantidade > 0));
   readonly posicoesVisiveis = computed(() => (this.mostrarEncerradas() ? this.dados()?.posicoes ?? [] : this.abertas()));
   readonly alturaGraficoAtivos = computed(() => Math.max(220, this.abertas().length * 36));
+
+  /* ---------------- UX-9: frases-resumo (sem R$ quando "ocultar valores" está ligado) ---------------- */
+
+  /** Valor de mercado hoje × o mesmo dinheiro na Selic (último mês com valor de mercado). */
+  readonly resumoEvolucao = computed(() => {
+    const ev = (this.dados()?.evolucao ?? []).filter((m) => m.valorMercado !== null);
+    const ultimo = ev[ev.length - 1];
+    if (!ultimo || ultimo.aplicadoNaSelic <= 0) return null;
+    const dif = ((ultimo.valorMercado! - ultimo.aplicadoNaSelic) / ultimo.aplicadoNaSelic) * 100;
+    if (Math.abs(dif) < 0.5) return 'Sua renda variável vale hoje praticamente o mesmo que esse dinheiro teria na Selic.';
+    const oculto = this.privacidade.oculto();
+    const valores = oculto ? '' : ` (${reaisOuNada(ultimo.valorMercado!, false)} contra ${reaisOuNada(ultimo.aplicadoNaSelic, false)})`;
+    return `Sua renda variável vale hoje ${pct(dif)} ${dif > 0 ? 'mais' : 'menos'} do que esse dinheiro teria na Selic${valores}.`;
+  });
+
+  readonly resumoDistribuicao = computed(() => {
+    const d = this.dados();
+    const dist = [...(d?.distribuicao ?? [])].sort((a, b) => b.valor - a.valor);
+    if (!d || !dist.length || d.totalGeral <= 0) return null;
+    return `${dist[0].nome} concentra ${pct(dist[0].valor / d.totalGeral * 100)} dos seus investimentos.`;
+  });
+
+  readonly resumoAtivos = computed(() => {
+    const ativos = this.abertas().filter((p) => p.resultadoTotalPercentual !== null && p.resultadoSelicPercentual !== null);
+    if (!ativos.length) return null;
+    const ganharam = ativos.filter((p) => p.resultadoTotalPercentual! >= p.resultadoSelicPercentual!).length;
+    if (ganharam === ativos.length) return ativos.length === 1 ? 'Seu ativo rendeu mais que a Selic no mesmo período.'
+      : `Todos os ${ativos.length} ativos renderam mais que a Selic no mesmo período.`;
+    if (ganharam === 0) return 'Nenhum ativo rendeu mais que a Selic no mesmo período.';
+    return `${ganharam} de ${ativos.length} ativos renderam mais que a Selic no mesmo período.`;
+  });
 
   readonly graficoEvolucao = computed<ChartConfiguration<'line'>>(() => {
     const ev = this.dados()?.evolucao ?? [];
@@ -605,7 +800,7 @@ export class InvestimentosComponent implements OnInit {
           {
             label: 'Seu resultado (%)', data: ativos.map((p) => p.resultadoTotalPercentual ?? 0),
             backgroundColor: ativos.map((p) =>
-              (p.resultadoTotalPercentual ?? 0) >= (p.resultadoSelicPercentual ?? 0) ? '#8fd5b4' : '#f5a3b0'),
+              (p.resultadoTotalPercentual ?? 0) >= (p.resultadoSelicPercentual ?? 0) ? CORES_GRAFICO.ganhou : CORES_GRAFICO.perdeu),
             borderRadius: 6, borderSkipped: false
           },
           {
@@ -672,31 +867,100 @@ export class InvestimentosComponent implements OnInit {
   /* ------------------------------ operações ------------------------------ */
 
   novaOperacao(ticker = ''): void {
+    const existente = ticker ? this.dados()?.posicoes.find((p) => p.ticker === ticker) : undefined;
     this.editandoOpId = null;
+    this.moedaTravada = !!existente;
+    this.cambioEditado = false;
+    this.ptaxSugerida = null;
     this.formOp = {
       ticker, tipoAtivo: null, tipo: TipoOperacao.Compra, data: this.hoje, quantidade: null, precoUnitario: null,
-      taxas: 0, observacao: null
+      taxas: 0, observacao: null, moeda: existente?.moeda ?? 'BRL', cambio: null
     };
+    this.carregarMoedas();
+    this.sugerirCambio();
   }
 
   editarOperacao(o: OperacaoAtivo): void {
     this.editandoOpId = o.id;
+    this.moedaTravada = true;
+    // Mantém o câmbio gravado; a PTAX aparece só como referência.
+    this.cambioEditado = true;
+    this.ptaxSugerida = null;
     this.formOp = {
       ticker: o.ticker, tipoAtivo: null, tipo: o.tipo, data: o.data, quantidade: o.quantidade,
-      precoUnitario: o.precoUnitario, taxas: o.taxas, observacao: o.observacao
+      precoUnitario: o.precoUnitario, taxas: o.taxas, observacao: o.observacao, moeda: o.moeda,
+      cambio: o.moeda === 'BRL' ? null : o.cambio
     };
+    this.sugerirCambio();
   }
 
+  aoMudarMoeda(): void {
+    if (!this.formOp) return;
+    this.formOp.tipoAtivo = null;
+    this.formOp.cambio = null;
+    this.cambioEditado = false;
+    this.sugerirCambio();
+  }
+
+  aoMudarDataOuTipo(): void {
+    this.sugerirCambio();
+  }
+
+  usarPtax(): void {
+    if (!this.formOp || !this.ptaxSugerida) return;
+    this.formOp.cambio = this.ptaxSugerida.valor;
+    this.cambioEditado = false;
+  }
+
+  /** Busca a PTAX da data (venda na compra, compra na venda) e preenche o câmbio, se o usuário não o digitou. */
+  private sugerirCambio(): void {
+    const f = this.formOp;
+    this.ptaxSugerida = null;
+    if (!f || f.moeda === 'BRL' || !f.data) return;
+    const { moeda, data, tipo } = f;
+    this.buscandoCambio.set(true);
+    this.api.cotacaoCambio(moeda, data).subscribe({
+      next: (c) => {
+        this.buscandoCambio.set(false);
+        // Ignora respostas atrasadas de uma escolha anterior.
+        if (this.formOp !== f || f.moeda !== moeda || f.data !== data || f.tipo !== tipo) return;
+        const compra = tipo === TipoOperacao.Compra;
+        this.ptaxSugerida = { data: c.data, valor: compra ? c.venda : c.compra, tipo: compra ? 'venda' : 'compra' };
+        if (!this.cambioEditado) f.cambio = this.ptaxSugerida.valor;
+      },
+      error: () => this.buscandoCambio.set(false)
+    });
+  }
+
+  private carregarMoedas(): void {
+    if (this.moedas().length > 0) return;
+    this.api.moedasCambio().subscribe({ next: (m) => this.moedas.set(m), error: () => this.moedas.set([]) });
+  }
+
+  /** Total na moeda do ativo. */
   totalOperacao(f: SalvarOperacao): number {
     const bruto = (f.quantidade ?? 0) * (f.precoUnitario ?? 0);
     return f.tipo === TipoOperacao.Compra ? bruto + (f.taxas ?? 0) : bruto - (f.taxas ?? 0);
+  }
+
+  simbolo(moeda: string | null | undefined): string {
+    const m = moeda ?? 'BRL';
+    return SIMBOLOS_MOEDA[m] ?? m;
+  }
+
+  /** FIIs e BDRs são da B3: ativo no exterior só pode ser ação, ETF ou outro. */
+  tiposPara(moeda: string | null | undefined): TipoAtivo[] {
+    return !moeda || moeda === 'BRL'
+      ? this.tiposAtivo
+      : this.tiposAtivo.filter((t) => t !== TipoAtivo.Fii && t !== TipoAtivo.Bdr);
   }
 
   salvarOperacao(): void {
     const f = this.formOp;
     if (!f) return;
     const dto: SalvarOperacao = {
-      ...f, ticker: f.ticker.trim().toUpperCase(), taxas: f.taxas ?? 0, observacao: f.observacao?.trim() || null
+      ...f, ticker: f.ticker.trim().toUpperCase(), taxas: f.taxas ?? 0, observacao: f.observacao?.trim() || null,
+      cambio: f.moeda === 'BRL' ? null : f.cambio
     };
     this.salvando.set(true);
     const id = this.editandoOpId;
@@ -785,6 +1049,43 @@ export class InvestimentosComponent implements OnInit {
         this.formAtivo = null;
         this.avisos.sucesso('Ativo excluído.');
         this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /* ------------------------------ reservas ------------------------------ */
+
+  abrirConferencia(r: Reserva): void {
+    this.formConferencia = { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje };
+  }
+
+  salvarConferencia(): void {
+    const f = this.formConferencia;
+    if (!f || f.saldo === null) return;
+    this.salvando.set(true);
+    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.formConferencia = null;
+        this.avisos.sucesso('Saldo da reserva conferido.');
+        this.recarregarDepoisDeAlterar();
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
+  removerConferencia(): void {
+    const f = this.formConferencia;
+    if (!f || !confirm(`Apagar a conferência de ${f.reserva.nome}? O saldo volta a ser estimado só pelos lançamentos.`)) return;
+    this.api.removerConferenciaReserva(f.reserva.contaId, f.reserva.nome).subscribe({
+      next: () => {
+        this.formConferencia = null;
+        this.avisos.sucesso('Conferência apagada.');
+        this.recarregarDepoisDeAlterar();
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });

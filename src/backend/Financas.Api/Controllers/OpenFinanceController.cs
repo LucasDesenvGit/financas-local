@@ -17,9 +17,10 @@ public class OpenFinanceController : BaseController
     private readonly ContaService _contas;
     private readonly CategorizacaoService _categorizacao;
     private readonly AuditoriaService _auditoria;
+    private readonly ParametroService _parametros;
 
     public OpenFinanceController(FinancasDbContext db, ConfiguracaoService config, SincronizacaoService sincronizacao,
-        ContaService contas, CategorizacaoService categorizacao, AuditoriaService auditoria)
+        ContaService contas, CategorizacaoService categorizacao, AuditoriaService auditoria, ParametroService parametros)
     {
         _db = db;
         _config = config;
@@ -27,6 +28,7 @@ public class OpenFinanceController : BaseController
         _contas = contas;
         _categorizacao = categorizacao;
         _auditoria = auditoria;
+        _parametros = parametros;
     }
 
     /* ---------------------------- Credenciais ---------------------------- */
@@ -50,9 +52,12 @@ public class OpenFinanceController : BaseController
             await _config.DefinirAsync(ConfiguracaoService.PluggyClientSecret, dto.ClientSecret.Trim(), protegido: true, ct: ct);
             _auditoria.Registrar("CredencialPluggyAlterada", User.Identity?.Name);
         }
-        await _config.DefinirAsync(ConfiguracaoService.IntervaloHoras, dto.IntervaloHoras.ToString(), ct: ct);
-        await _config.DefinirAsync(ConfiguracaoService.DiasRetroativos, dto.DiasRetroativos.ToString(), ct: ct);
-        await _config.DefinirAsync(ConfiguracaoService.SincronizacaoHabilitada, dto.Habilitada ? "true" : "false", ct: ct);
+        if (dto.IntervaloHoras is { } intervalo)
+            await _config.DefinirAsync(ConfiguracaoService.IntervaloHoras, intervalo.ToString(), ct: ct);
+        if (dto.DiasRetroativos is { } dias)
+            await _config.DefinirAsync(ConfiguracaoService.DiasRetroativos, dias.ToString(), ct: ct);
+        if (dto.Habilitada is { } habilitada)
+            await _config.DefinirAsync(ConfiguracaoService.SincronizacaoHabilitada, habilitada ? "true" : "false", ct: ct);
         await _db.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -150,6 +155,28 @@ public class OpenFinanceController : BaseController
 
     [HttpGet("sincronizacao/estado")]
     public IActionResult EstadoSincronizacao() => Ok(new { emExecucao = SincronizacaoService.EmExecucao });
+
+    /// <summary>
+    /// UX-8: status leve para a barra superior (última sincronização, se há uma rodando e conexões que pedem atenção).
+    /// Lê só a configuração e as conexões ativas, para poder ser chamado de qualquer tela sem pesar.
+    /// </summary>
+    [HttpGet("status")]
+    public async Task<ActionResult<StatusSincronizacaoDto>> Status(CancellationToken ct)
+    {
+        var ultima = await _config.ObterDataAsync(ConfiguracaoService.UltimaSincronizacaoGeral, ct);
+        var limiteConsentimento = DateTime.UtcNow.AddDays(
+            await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasAvisoConsentimento, ct));
+        var conexoes = await _db.ConexoesBancarias.AsNoTracking()
+            .Where(c => c.Ativa)
+            .Select(c => new { c.UltimoErro, c.Status, c.ConsentimentoExpiraEm })
+            .ToListAsync(ct);
+        // Mesma regra dos alertas do Painel: erro na última sincronização ou instituição pedindo ação no Meu Pluggy.
+        var comErro = conexoes.Count(c => !string.IsNullOrEmpty(c.UltimoErro) || c.Status is "LOGIN_ERROR" or "WAITING_USER_ACTION");
+        var consentimentosVencendo = conexoes.Count(c => c.ConsentimentoExpiraEm is { } exp && exp <= limiteConsentimento);
+        return new StatusSincronizacaoDto(
+            ultima is { } u ? DateTime.SpecifyKind(u.ToUniversalTime(), DateTimeKind.Utc) : null,
+            SincronizacaoService.EmExecucao, conexoes.Count, comErro, consentimentosVencendo);
+    }
 
     [HttpGet("logs")]
     public async Task<ActionResult<List<SincronizacaoLogDto>>> Logs(CancellationToken ct)

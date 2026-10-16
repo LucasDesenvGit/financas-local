@@ -49,6 +49,9 @@ public class FiltroTransacoesDto
     public DateOnly? Fim { get; set; }
     public int? ContaId { get; set; }
     public int? CategoriaId { get; set; }
+    /// <summary>Várias categorias (?categoriaIds=1&amp;categoriaIds=2); cada uma inclui as subcategorias.</summary>
+    [MaxLength(200)] public List<int>? CategoriaIds { get; set; }
+    /// <summary>Sem categoria; junto com categorias, soma as duas coisas (OU).</summary>
     public bool SemCategoria { get; set; }
     public bool SomenteEmergencias { get; set; }
     public TipoTransacao? Tipo { get; set; }
@@ -162,10 +165,50 @@ public record SalvarContaAgendadaDto(
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 
+/// <summary>
+/// Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar. <c>ProximoVencimento</c> nunca é
+/// passado; <c>VencimentoSemPagamento</c> é o vencimento esperado que já passou sem o pagamento aparecer no extrato.
+/// </summary>
+public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal Valor, bool ValorVariavel,
+    decimal ValorMinimo, decimal ValorMaximo, DateOnly ProximoVencimento, int DiaHabitual, int Meses, int Pagamentos,
+    DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,
+    string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento);
+
 /* ----------------------------- Investimentos ----------------------------- */
+/// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
 public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo, string? Emissor,
-    string Moeda, decimal Saldo, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
+    string Moeda, decimal Saldo, decimal? SaldoEmReais, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
     DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
+
+/* ----------------------------- Câmbio ----------------------------- */
+public record MoedaDto(string Codigo, string Nome);
+
+/// <summary>Reais por 1 unidade da moeda. <c>Data</c> é o dia útil da cotação, que pode ser anterior a <c>DataSolicitada</c>.</summary>
+public record CotacaoMoedaDto(string Moeda, DateOnly DataSolicitada, DateOnly Data, decimal Compra, decimal Venda,
+    string Fonte);
+
+/// <summary>Última cotação guardada de cada moeda (disponível mesmo sem internet).</summary>
+public record CotacoesAtuaisDto(DateTime? AtualizadoEm, List<CotacaoMoedaDto> Cotacoes);
+
+/* ----------------------------- Empréstimos e financiamentos ----------------------------- */
+/// <summary>Saldo devedor e parcela mensal dos contratos em aberto, separados por natureza.</summary>
+public record TotaisCreditoDto(decimal SaldoFinanciamentos, decimal SaldoEmprestimos,
+    decimal ParcelaMensalFinanciamentos, decimal ParcelaMensalEmprestimos);
+
+public record EmprestimoDto(int Id, NaturezaCredito Natureza, string Produto, string? Modalidade, string ModalidadeDescricao,
+    string? NumeroContrato, string? NomeInstituicao, string Moeda, decimal ValorContratado, decimal SaldoDevedor,
+    decimal? ValorParcela, decimal ParcelaMensal, int? ParcelasTotal, int? ParcelasPagas, int? ParcelasAVencer,
+    int ParcelasEmAtraso, string? Periodicidade, string? SistemaAmortizacao, decimal? TaxaJuros, string? PeriodicidadeTaxa,
+    string? Indexador, decimal? Cet, DateOnly? DataContratacao, DateOnly? DataVencimentoFinal, DateOnly? ProximoVencimento,
+    decimal TotalPago, DateOnly? UltimoPagamento, bool Quitado, DateTime AtualizadoEm);
+
+public record ResumoCreditoDto(NaturezaCredito Natureza, int ContratosAbertos, int ContratosQuitados, decimal SaldoDevedor,
+    decimal ValorContratado, decimal ParcelaMensal, decimal TotalPago, int ParcelasEmAtraso);
+
+public record PagamentosMesCreditoDto(int Ano, int Mes, decimal Financiamentos, decimal Emprestimos);
+
+public record PainelEmprestimosDto(ResumoCreditoDto Financiamentos, ResumoCreditoDto Emprestimos,
+    List<EmprestimoDto> Contratos, List<PagamentosMesCreditoDto> PagamentosPorMes);
 
 /* ----------------------------- Painel / relatórios ----------------------------- */
 public record ValorCategoriaDto(int? CategoriaId, string Nome, string Cor, decimal Valor);
@@ -186,7 +229,8 @@ public record DistribuicaoRendaDto(decimal Receitas, decimal Essenciais, decimal
 
 public record SaudeFinanceiraDto(decimal PatrimonioAtual, decimal ReservaLiquida, decimal GastoMensalMedio,
     decimal GastoEssencialMensalMedio, decimal? MesesDeReserva, decimal? MesesDeReservaEssencial,
-    decimal RendaMensalMedia, decimal ParcelasMensais, decimal? ComprometimentoParcelas, int MesesAnalisados);
+    decimal RendaMensalMedia, decimal ParcelasMensais, decimal? ComprometimentoParcelas, int MesesAnalisados,
+    decimal ParcelasFinanciamentos, decimal ParcelasEmprestimos, decimal DividaFinanciamentos, decimal DividaEmprestimos);
 
 public record PainelAnualDto(int Ano, int AnoComparacao, int MesLimite, List<int> AnosDisponiveis,
     ResumoAnoDto Resumo, ResumoAnoDto ResumoAnteriorMesmoPeriodo, ResumoAnoDto ResumoAnteriorCompleto,
@@ -219,7 +263,21 @@ public record PainelDto(
     List<TransacaoDto> UltimasTransacoes,
     List<string> Alertas,
     DateTime? UltimaSincronizacao,
-    decimal DespesasEmergenciaMes = 0);
+    decimal DespesasEmergenciaMes = 0,
+    decimal DividaFinanciamentos = 0,
+    decimal DividaEmprestimos = 0,
+    int DiasProximosVencimentos = 15);
+
+/* ----------------------------- Parametrização ----------------------------- */
+/// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>
+public record ParametroDto(string Chave, string Grupo, string Nome, string Descricao, Servicos.TipoParametro Tipo,
+    int Valor, int Padrao, int? Minimo, int? Maximo, string? Unidade);
+
+public record SalvarParametrosDto([Required] Dictionary<string, int> Valores);
+
+public record InfoSistemaDto(string Versao, string DotNet, string SistemaOperacional, DateTime IniciadoEm,
+    string CaminhoBanco, long? TamanhoBancoBytes, string PastaChaves, int Contas, int Transacoes, int ConexoesAtivas,
+    DateTime? UltimaSincronizacao);
 
 /* ----------------------------- Open Finance (Pluggy) ----------------------------- */
 public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, int IntervaloHoras,
@@ -228,9 +286,10 @@ public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, in
 public record SalvarConfiguracaoPluggyDto(
     [Required, StringLength(100)] string ClientId,
     [StringLength(200)] string? ClientSecret,
-    [Range(1, 48)] int IntervaloHoras,
-    [Range(1, 365)] int DiasRetroativos,
-    bool Habilitada);
+    // Opcionais: a tela de Parametrização cuida deles; quando omitidos, ficam como estão.
+    [Range(1, 48)] int? IntervaloHoras = null,
+    [Range(1, 365)] int? DiasRetroativos = null,
+    bool? Habilitada = null);
 
 public record ConexaoDto(int Id, string PluggyItemId, string? NomeInstituicao, string? CorPrimaria, string? Status,
     string? StatusExecucao, DateTime? UltimaAtualizacaoInstituicao, DateTime? ConsentimentoExpiraEm,
@@ -245,6 +304,10 @@ public record SincronizacaoLogDto(long Id, int? ConexaoBancariaId, string? NomeI
 
 public record ResultadoSincronizacaoDto(bool Sucesso, int TransacoesNovas, int TransacoesAtualizadas, string? Mensagem);
 
+/// <summary>Status leve da sincronização para a barra superior (UX-8): consultado a cada poucos minutos em toda tela.</summary>
+public record StatusSincronizacaoDto(DateTime? UltimaSincronizacao, bool EmExecucao, int ConexoesAtivas,
+    int ConexoesComErro, int ConsentimentosVencendo);
+
 public record CategoriaPluggyDto(string PluggyCategoriaId, string Descricao, string? PaiDescricao,
     int? CategoriaId, string? CategoriaNome, int QuantidadeTransacoes);
 
@@ -257,9 +320,13 @@ public record SelicResumoDto(decimal? MetaAnual, decimal? Acumulado12Meses, deci
 
 public record UltimoProventoDto(DateOnly DataCom, decimal ValorPorCota);
 
-public record PosicaoAtivoDto(int Id, string Ticker, string? Nome, TipoAtivo Tipo,
+/// <summary>
+/// Posição de um ativo da carteira manual. <c>PrecoMedio</c>, <c>PrecoAtual</c>, <c>PrecoAnterior</c> e o último provento
+/// estão na moeda do ativo; custo, valores e resultados estão em reais.
+/// </summary>
+public record PosicaoAtivoDto(int Id, string Ticker, string? Nome, TipoAtivo Tipo, string Moeda,
     decimal Quantidade, decimal PrecoMedio, decimal Custo,
-    decimal? PrecoAtual, decimal? PrecoAnterior, decimal? VariacaoDia,
+    decimal? PrecoAtual, decimal? PrecoAtualEmReais, decimal? PrecoAnterior, decimal? VariacaoDia,
     decimal ValorMercado, decimal Valorizacao, decimal? ValorizacaoPercentual,
     decimal LucroRealizado, decimal ProventosRecebidos, decimal Proventos12Meses, decimal? DividendYield12Meses,
     decimal ResultadoTotal, decimal? ResultadoTotalPercentual,
@@ -276,31 +343,65 @@ public record EvolucaoCarteiraDto(int Ano, int Mes, decimal Aplicado, decimal Ap
 
 public record DistribuicaoInvestimentoDto(string Nome, decimal Valor);
 
-/// <summary>Investimento vindo do Open Finance comparado com a Selic do período.</summary>
+/// <summary>
+/// Investimento vindo do Open Finance comparado com a Selic do período. Saldo, valor aplicado e rentabilidade
+/// estão na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.
+/// </summary>
 public record InvestimentoComparadoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo,
-    string? Emissor, string? NomeInstituicao, decimal Saldo, decimal? ValorAplicado, DateOnly? DataAplicacao,
+    string? Emissor, string? NomeInstituicao, string Moeda, decimal Saldo, decimal? SaldoEmReais,
+    decimal? ValorAplicado, DateOnly? DataAplicacao,
     DateOnly? DataVencimento, decimal? TaxaAnual, decimal? Rentabilidade, decimal? SelicNoPeriodo,
     decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm);
 
 public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVariavel, List<PosicaoAtivoDto> Posicoes,
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
     decimal TotalInvestimentosManuais, decimal TotalGeral, List<DistribuicaoInvestimentoDto> Distribuicao,
-    DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados);
+    DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
+    List<string> MoedasSemCotacao, List<ReservaDto> Reservas, decimal TotalReservas);
 
+/// <summary>
+/// Reserva ("cofrinho") cujo saldo a instituição não informa pelo Open Finance, estimado pelos lançamentos
+/// "Dinheiro reservado/retirado {Nome}" da conta. Com conferência, <c>Saldo</c> = saldo conferido + movimentos
+/// depois de <c>DataConferencia</c>; sem ela, só a soma dos movimentos importados (fica abaixo do real se a
+/// reserva já tinha dinheiro antes do primeiro lançamento importado ou se o rendimento ainda não foi retirado).
+/// <c>Guardado</c> e <c>Retirado</c> consideram os mesmos movimentos que entram no saldo.
+/// <c>PodeTerSaldoAnterior</c>: sem conferência e o primeiro lançamento da reserva está no início da janela importada
+/// da conta (a reserva provavelmente já tinha dinheiro antes). <c>ConferenciaAntiga</c>: conferida há mais de
+/// <c>ReservaService.DiasConferenciaAntiga</c> dias.
+/// </summary>
+public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Saldo, decimal Guardado, decimal Retirado,
+    int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
+    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga);
+
+/// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
+public record ConferirReservaDto(
+    int ContaId,
+    [Required, StringLength(100)] string Nome,
+    [Range(0, 999999999999)] decimal Saldo,
+    DateOnly? Data);
+
+/// <summary>Preço, taxas e preço atual na moeda do ativo; <c>ValorTotal</c>, <c>ValorAtual</c> e Selic em reais.</summary>
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,
-    decimal Quantidade, decimal PrecoUnitario, decimal Taxas, decimal ValorTotal, string? Observacao,
+    decimal Quantidade, decimal PrecoUnitario, decimal Taxas, string Moeda, decimal Cambio, decimal ValorTotal,
+    string? Observacao,
     decimal? PrecoAtual, decimal? VariacaoPreco, decimal? ValorAtual, decimal ValorSeFosseSelic,
     OrigemOperacao Origem);
 
+/// <summary>
+/// Preço e taxas na moeda do ativo. <c>Moeda</c> só vale no primeiro lançamento do ativo (padrão BRL = B3).
+/// <c>Cambio</c> = reais por 1 unidade da moeda na operação; ignorado em BRL e, se vier vazio, usa a PTAX da data.
+/// </summary>
 public record SalvarOperacaoDto(
-    [Required, StringLength(12, MinimumLength = 5)] string Ticker,
+    [Required, StringLength(12, MinimumLength = 1)] string Ticker,
     TipoAtivo? TipoAtivo,
     TipoOperacao Tipo,
     DateOnly Data,
     [Range(0.000001, 1000000000.0)] decimal Quantidade,
     [Range(0.0, 100000000.0)] decimal PrecoUnitario,
     [Range(0.0, 10000000.0)] decimal Taxas,
-    [StringLength(300)] string? Observacao);
+    [StringLength(300)] string? Observacao,
+    [StringLength(3)] string? Moeda = null,
+    [Range(0.000001, 100000.0)] decimal? Cambio = null);
 
 public record AtualizarAtivoDto(
     [StringLength(150)] string? Nome,
@@ -359,7 +460,7 @@ public record SugestaoExtratoDto(long TransacaoId, DateOnly Data, string Descric
 
 public record ImportarExtratoItemDto(
     long TransacaoId,
-    [Required, StringLength(12, MinimumLength = 5)] string Ticker,
+    [Required, StringLength(12, MinimumLength = 3)] string Ticker,
     TipoOperacao Tipo,
     [Range(0.000001, 1000000000.0)] decimal Quantidade,
     [Range(0.0, 100000000.0)] decimal PrecoUnitario,

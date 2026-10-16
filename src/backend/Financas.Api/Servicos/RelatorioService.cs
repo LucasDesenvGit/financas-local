@@ -1,6 +1,7 @@
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
+using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Investimentos;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,12 +13,19 @@ public class RelatorioService
     private readonly FinancasDbContext _db;
     private readonly ContaService _contas;
     private readonly CarteiraService _carteira;
+    private readonly EmprestimoService _emprestimos;
+    private readonly CambioService _cambio;
+    private readonly ReservaService _reservas;
 
-    public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira)
+    public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira, EmprestimoService emprestimos,
+        CambioService cambio, ReservaService reservas)
     {
         _db = db;
         _contas = contas;
         _carteira = carteira;
+        _emprestimos = emprestimos;
+        _cambio = cambio;
+        _reservas = reservas;
     }
 
     /// <summary>Transações que entram nos relatórios (exclui transferências e itens marcados para ignorar).</summary>
@@ -335,7 +343,8 @@ public class RelatorioService
         var resumoAnteriorCompleto = Resumir(fluxoAnterior);
 
         // Patrimônio estimado ao fim de cada mês: patrimônio de hoje menos o resultado dos meses seguintes.
-        var patrimonioAtual = await PatrimonioAtualAsync(ct);
+        var credito = await _emprestimos.TotaisAsync(ct);
+        var patrimonioAtual = await PatrimonioAtualAsync(credito, ct);
         var resultadoPorMes = (await FluxoMensalAsync(new DateOnly(ano, 1, 1), hoje, ct))
             .ToDictionary(m => (m.Ano, m.Mes), m => m.Receitas - m.Despesas);
         var meses = new List<MesComparativoDto>();
@@ -416,7 +425,7 @@ public class RelatorioService
             categorias.Where(c => c.Natureza == null).Sum(c => c.Valor),
             resumo.Resultado);
 
-        var saude = await SaudeFinanceiraAsync(patrimonioAtual, categoriasInfo.Where(c => c.Value.Natureza == NaturezaGasto.Essencial
+        var saude = await SaudeFinanceiraAsync(patrimonioAtual, credito, categoriasInfo.Where(c => c.Value.Natureza == NaturezaGasto.Essencial
             || (c.Value.Natureza == null && c.Value.CategoriaPaiId is int p && categoriasInfo.TryGetValue(p, out var pai) && pai.Natureza == NaturezaGasto.Essencial))
             .Select(c => c.Key).ToList(), ct);
 
@@ -424,8 +433,8 @@ public class RelatorioService
             resumoAnteriorCompleto, meses, categorias, distribuicao, saude);
     }
 
-    /// <summary>Contas + investimentos − faturas de cartão (mesma regra do painel).</summary>
-    private async Task<decimal> PatrimonioAtualAsync(CancellationToken ct)
+    /// <summary>Contas + investimentos − faturas de cartão − financiamentos − empréstimos (mesma regra do painel).</summary>
+    private async Task<decimal> PatrimonioAtualAsync(TotaisCreditoDto credito, CancellationToken ct)
     {
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
@@ -434,12 +443,15 @@ public class RelatorioService
             ? -Math.Max(0, -saldos.GetValueOrDefault(c.Id))
             : saldos.GetValueOrDefault(c.Id));
         var investimentos = await _carteira.ComposicaoAsync(ct);
-        return total + investimentos.Total;
+        return total + investimentos.Total - credito.SaldoFinanciamentos - credito.SaldoEmprestimos;
     }
 
-    /// <summary>Indicadores com base nos últimos 12 meses completos.</summary>
-    private async Task<SaudeFinanceiraDto> SaudeFinanceiraAsync(decimal patrimonioAtual, List<int> categoriasEssenciais,
-        CancellationToken ct)
+    /// <summary>
+    /// Indicadores com base nos últimos 12 meses completos. O comprometimento da renda soma as parcelas de cartão
+    /// (último mês) com as parcelas mensais dos contratos de financiamento e de empréstimo, informadas separadamente.
+    /// </summary>
+    private async Task<SaudeFinanceiraDto> SaudeFinanceiraAsync(decimal patrimonioAtual, TotaisCreditoDto credito,
+        List<int> categoriasEssenciais, CancellationToken ct)
     {
         var hoje = Relogio.Hoje;
         var inicioMesAtual = new DateOnly(hoje.Year, hoje.Month, 1);
@@ -468,19 +480,27 @@ public class RelatorioService
                 .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
         }
 
-        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos.
+        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora)
+        // + reservas ("cofrinhos") estimadas pelo extrato.
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
             .Select(c => new { c.Id, c.Tipo }).ToListAsync(ct);
+        var conversor = await _cambio.ObterConversorAsync(ct);
+        var investimentos = await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa)
+            .Select(i => new { i.Saldo, i.Moeda }).ToListAsync(ct);
         var reserva = contas.Where(c => c.Tipo != TipoConta.CartaoCredito).Sum(c => Math.Max(0, saldos.GetValueOrDefault(c.Id)))
-            + (await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa).SumAsync(i => (decimal?)i.Saldo, ct) ?? 0m);
+            + investimentos.Sum(i => conversor.ParaReais(i.Saldo, i.Moeda) ?? 0m)
+            + await _reservas.TotalAsync(ct);
 
+        var totalParcelas = parcelas + credito.ParcelaMensalFinanciamentos + credito.ParcelaMensalEmprestimos;
         return new SaudeFinanceiraDto(
             Math.Round(patrimonioAtual, 2), Math.Round(reserva, 2), Math.Round(gasto, 2), Math.Round(gastoEssencial, 2),
             gasto > 0 ? Math.Round(reserva / gasto, 1) : null,
             gastoEssencial > 0 ? Math.Round(reserva / gastoEssencial, 1) : null,
             Math.Round(renda, 2), Math.Round(parcelas, 2),
-            renda > 0 ? Math.Round(parcelas / renda * 100m, 1) : null,
-            meses);
+            renda > 0 ? Math.Round(totalParcelas / renda * 100m, 1) : null,
+            meses,
+            credito.ParcelaMensalFinanciamentos, credito.ParcelaMensalEmprestimos,
+            credito.SaldoFinanciamentos, credito.SaldoEmprestimos);
     }
 }

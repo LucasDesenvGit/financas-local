@@ -1,18 +1,70 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
+import { StatusSincronizacaoService } from '../core/status-sincronizacao.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
+import { ParametrizacaoComponent } from './parametrizacao.component';
+import { AparenciaComponent } from './aparencia.component';
+
+type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca';
 
 @Component({
   selector: 'app-configuracoes',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, ParametrizacaoComponent, AparenciaComponent],
   template: `
-    <header class="cabecalho-pagina"><h1>Configurações</h1></header>
+    <header class="cabecalho-pagina">
+      <h1>Configurações</h1>
+      <nav class="segmentado" aria-label="Seções de configurações">
+        @for (a of abas; track a.id) {
+          <button type="button" [class.ativo]="aba() === a.id" (click)="mudarAba(a.id)">{{ a.rotulo }}</button>
+        }
+      </nav>
+    </header>
 
+    @switch (aba()) {
+    @case ('parametrizacao') {
+      <app-parametrizacao />
+    }
+    @case ('aparencia') {
+      <app-aparencia />
+    }
+    @case ('seguranca') {
+    <div class="grade-2">
+      <section class="painel-bloco">
+        <h2>Alterar senha</h2>
+        <form (ngSubmit)="alterarSenha()" #fs="ngForm" class="formulario">
+          <label>Senha atual <input type="password" name="atual" [(ngModel)]="senhaAtual" required autocomplete="current-password"></label>
+          <label>Nova senha (mín. 8 caracteres) <input type="password" name="nova" [(ngModel)]="novaSenha" required minlength="8" autocomplete="new-password"></label>
+          <label>Confirmar nova senha <input type="password" name="conf" [(ngModel)]="confirmacao" required autocomplete="new-password"></label>
+          <p class="texto-suave">Ao trocar a senha, todas as outras sessões abertas são encerradas.</p>
+          <div class="rodape-form"><span class="cresce"></span>
+            <button class="botao botao-primario" [disabled]="fs.invalid">Alterar senha</button></div>
+        </form>
+      </section>
+
+      <section class="painel-bloco">
+        <h2>Acessos recentes</h2>
+        <ul class="lista-simples">
+          @for (a of auditoria(); track a.id) {
+            <li>
+              <span class="data-curta nowrap">{{ a.dataHora + 'Z' | date: 'dd/MM HH:mm' }}</span>
+              <span class="cresce" [class.negativo]="a.evento.includes('Falha') || a.evento.includes('Bloqueado')">{{ a.evento }}</span>
+              <span class="texto-suave">{{ a.ip }}</span>
+            </li>
+          } @empty { <li class="vazio">Sem registros.</li> }
+        </ul>
+      </section>
+    </div>
+    <p class="texto-suave">Limite de tentativas de login e tempo de bloqueio ficam em
+      <button type="button" class="link" (click)="mudarAba('parametrizacao')">Parametrização</button>.</p>
+    }
+    @default {
     <section class="painel-bloco">
       <h2>Open Finance (via Meu Pluggy)</h2>
       <details class="guia">
@@ -37,10 +89,9 @@ import { AvisosService } from '../compartilhado/avisos.component';
             <input name="clientSecret" type="password" [(ngModel)]="clientSecret" maxlength="200" autocomplete="new-password"
               [placeholder]="secretConfigurado ? '•••••••• (guardado criptografado — deixe vazio para manter)' : ''">
           </label>
-          <label>Sincronizar a cada (horas) <input type="number" name="intervalo" [(ngModel)]="intervaloHoras" min="1" max="48"></label>
-          <label>Reler últimos (dias) <input type="number" name="dias" [(ngModel)]="diasRetroativos" min="1" max="365"></label>
         </div>
-        <label class="checkbox"><input type="checkbox" name="habilitada" [(ngModel)]="habilitada"> Sincronização automática habilitada</label>
+        <p class="texto-suave">Sincronização automática, intervalo e dias relidos ficam em
+          <button type="button" class="link" (click)="mudarAba('parametrizacao')">Parametrização</button>.</p>
         <div class="rodape-form">
           @if (secretConfigurado) { <button type="button" class="botao botao-perigo" (click)="removerSecret()">Apagar secret</button> }
           <span class="cresce"></span>
@@ -109,39 +160,32 @@ import { AvisosService } from '../compartilhado/avisos.component';
         </div>
       </details>
     </section>
-
-    <div class="grade-2">
-      <section class="painel-bloco">
-        <h2>Alterar senha</h2>
-        <form (ngSubmit)="alterarSenha()" #fs="ngForm" class="formulario">
-          <label>Senha atual <input type="password" name="atual" [(ngModel)]="senhaAtual" required autocomplete="current-password"></label>
-          <label>Nova senha (mín. 8 caracteres) <input type="password" name="nova" [(ngModel)]="novaSenha" required minlength="8" autocomplete="new-password"></label>
-          <label>Confirmar nova senha <input type="password" name="conf" [(ngModel)]="confirmacao" required autocomplete="new-password"></label>
-          <p class="texto-suave">Ao trocar a senha, todas as outras sessões abertas são encerradas.</p>
-          <div class="rodape-form"><span class="cresce"></span>
-            <button class="botao botao-primario" [disabled]="fs.invalid">Alterar senha</button></div>
-        </form>
-      </section>
-
-      <section class="painel-bloco">
-        <h2>Acessos recentes</h2>
-        <ul class="lista-simples">
-          @for (a of auditoria(); track a.id) {
-            <li>
-              <span class="data-curta nowrap">{{ a.dataHora + 'Z' | date: 'dd/MM HH:mm' }}</span>
-              <span class="cresce" [class.negativo]="a.evento.includes('Falha') || a.evento.includes('Bloqueado')">{{ a.evento }}</span>
-              <span class="texto-suave">{{ a.ip }}</span>
-            </li>
-          } @empty { <li class="vazio">Sem registros.</li> }
-        </ul>
-      </section>
-    </div>
+    }
+    }
   `
 })
 export class ConfiguracoesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly statusSincronizacao = inject(StatusSincronizacaoService);
+
+  readonly abas: { id: Aba; rotulo: string }[] = [
+    { id: 'open-finance', rotulo: 'Open Finance' },
+    { id: 'parametrizacao', rotulo: 'Parametrização' },
+    { id: 'aparencia', rotulo: 'Aparência' },
+    { id: 'seguranca', rotulo: 'Segurança' }
+  ];
+  /** Aba atual; vem de ?aba= para dar para abrir direto (ex.: /configuracoes?aba=parametrizacao). */
+  readonly aba = signal<Aba>(this.abaDaUrl(this.rota.snapshot.queryParamMap));
+
+  constructor() {
+    // Acompanha a URL também com a tela já aberta (ex.: "Cores e aparência…" no menu do usuário, alerta de conexão
+    // na barra superior): o Angular reaproveita o componente e só os query params mudam.
+    this.rota.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => this.aba.set(this.abaDaUrl(p)));
+  }
 
   readonly conexoes = signal<Conexao[]>([]);
   readonly logs = signal<SincronizacaoLog[]>([]);
@@ -151,9 +195,6 @@ export class ConfiguracoesComponent implements OnInit {
   clientId = '';
   clientSecret = '';
   secretConfigurado = false;
-  intervaloHoras = 6;
-  diasRetroativos = 30;
-  habilitada = true;
   novoItemId = '';
   senhaAtual = '';
   novaSenha = '';
@@ -164,9 +205,6 @@ export class ConfiguracoesComponent implements OnInit {
       next: (c) => {
         this.clientId = c.clientId ?? '';
         this.secretConfigurado = c.secretConfigurado;
-        this.intervaloHoras = c.intervaloHoras;
-        this.diasRetroativos = c.diasRetroativos;
-        this.habilitada = c.habilitada;
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
@@ -174,18 +212,29 @@ export class ConfiguracoesComponent implements OnInit {
     this.api.auditoria().subscribe((a) => this.auditoria.set(a.slice(0, 15)));
   }
 
+  mudarAba(aba: Aba): void {
+    this.aba.set(aba);
+    void this.router.navigate([], {
+      relativeTo: this.rota, queryParams: { aba: aba === 'open-finance' ? null : aba }, replaceUrl: true
+    });
+  }
+
+  private abaDaUrl(params: ParamMap): Aba {
+    const aba = params.get('aba');
+    return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
+  }
+
   carregarConexoes(): void {
     this.api.conexoes().subscribe((c) => this.conexoes.set(c));
     this.api.logsSincronizacao().subscribe((l) => this.logs.set(l));
+    // UX-8: depois de sincronizar, adicionar, pausar ou remover conexão, a barra superior reflete na hora.
+    this.statusSincronizacao.atualizar();
   }
 
   salvarCredenciais(): void {
     this.api.salvarConfiguracaoPluggy({
       clientId: this.clientId.trim(),
-      clientSecret: this.clientSecret.trim() || null,
-      intervaloHoras: Number(this.intervaloHoras) || 6,
-      diasRetroativos: Number(this.diasRetroativos) || 30,
-      habilitada: this.habilitada
+      clientSecret: this.clientSecret.trim() || null
     }).subscribe({
       next: () => {
         if (this.clientSecret.trim()) this.secretConfigurado = true;

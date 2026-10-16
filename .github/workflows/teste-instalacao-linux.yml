@@ -1,0 +1,121 @@
+# Testa a instalacao pelos scripts bash (scripts/instalar.sh = etapas 1, 2 e 3) num Linux de
+# verdade. O runner ja traz dotnet, node e sqlite3 em /usr/bin, entao reduzir o PATH nao basta:
+# o teste monta uma pasta com todos os comandos do sistema MENOS esses (e python3/jq, para provar
+# que os scripts nao dependem deles) e usa so ela no PATH. Assim tudo e baixado, como num
+# computador novo. O servico roda no systemd --user, como numa instalacao real.
+name: Teste de instalação no Linux
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - scripts/*.sh
+      - banco/**
+      - .github/workflows/teste-instalacao-linux.yml
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - scripts/*.sh
+      - banco/**
+      - .github/workflows/teste-instalacao-linux.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# "shell: bash" explicito liga o pipefail: sem ele, uma falha antes do "| tee" passaria batido.
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: teste-instalacao-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  instalar:
+    name: instalar e atualizar
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar PATH sem dotnet, node, sqlite3 e python
+        run: |
+          limpo="$RUNNER_TEMP/bin-limpo"
+          mkdir -p "$limpo"
+          for arq in /usr/bin/* /bin/* /usr/sbin/* /sbin/*; do
+            nome="$(basename "$arq")"
+            case "$nome" in
+              dotnet|node|nodejs|npm|npx|corepack|sqlite3|python|python3|python3.*|jq) continue ;;
+            esac
+            [[ -e "$limpo/$nome" ]] || ln -s "$arq" "$limpo/$nome"
+          done
+          echo "PATH_LIMPO=$limpo" >> "$GITHUB_ENV"
+          for cmd in dotnet node sqlite3 python3 jq; do
+            if PATH="$limpo" command -v "$cmd" >/dev/null; then echo "::error::$cmd ainda visivel"; exit 1; fi
+          done
+
+      # systemd --user precisa de uma sessao do usuario; o linger cria uma sem login.
+      - name: Habilitar systemd --user
+        run: |
+          sudo loginctl enable-linger "$USER"
+          uid="$(id -u)"
+          for _ in $(seq 1 30); do [[ -S "/run/user/$uid/bus" ]] && break; sleep 1; done
+          echo "XDG_RUNTIME_DIR=/run/user/$uid" >> "$GITHUB_ENV"
+          echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" >> "$GITHUB_ENV"
+
+      - name: Instalacao do zero (instalar.sh)
+        run: env PATH="$PATH_LIMPO" bash scripts/instalar.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-1.log"
+
+      - name: Conferir instalacao
+        run: |
+          for p in ferramentas/node/bin/node ferramentas/dotnet/dotnet ferramentas/sqlite/sqlite3 \
+                   dados/sql/FinancasLocal.db dados/chaves/financaslocal.pfx \
+                   publicado/api/Financas.Api.dll publicado/api/wwwroot/index.html \
+                   publicado/api/appsettings.Production.json; do
+            [[ -e "$p" ]] || { echo "::error::nao encontrado: $p"; exit 1; }
+          done
+          systemctl --user is-active --quiet financaslocal.service || { echo "::error::servico nao esta ativo"; exit 1; }
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+
+      - name: Atualizacao (instalar.sh --pular-build)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/instalar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-2.log"
+          grep -q 'certificado existente reaproveitado' "$RUNNER_TEMP/instalacao-2.log" || { echo "::error::certificado nao foi reaproveitado"; exit 1; }
+          grep -q 'servico systemd (usuario) atualizado e reiniciado' "$RUNNER_TEMP/instalacao-2.log" || { echo "::error::servico nao foi reiniciado"; exit 1; }
+          ls backups/FinancasLocal-antes-instalacao-*.db || { echo "::error::backup do banco antes da atualizacao nao foi feito"; exit 1; }
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+
+      - name: Backup (4-backup.sh)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/4-backup.sh
+          ls backups/FinancasLocal_*.db
+
+      - name: Parar (parar.sh --desativar)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/parar.sh --desativar
+          if systemctl --user is-active --quiet financaslocal.service; then echo "::error::servico continua ativo"; exit 1; fi
+          estado="$(systemctl --user is-enabled financaslocal.service || true)"
+          [[ "$estado" == disabled ]] || { echo "::error::servico continua habilitado ($estado)"; exit 1; }
+          if curl -k -fsS https://127.0.0.1:5443/api/auth/estado; then echo "::error::API continua respondendo"; exit 1; fi
+
+      - name: Subir de novo (3-publicar-atualizar.sh --pular-build)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/3-publicar-atualizar.sh --pular-build
+          systemctl --user is-enabled --quiet financaslocal.service || { echo "::error::servico nao voltou a ser habilitado"; exit 1; }
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+
+      - name: Diagnostico
+        if: failure()
+        run: |
+          systemctl --user status financaslocal.service --no-pager || true
+          journalctl --user -u financaslocal.service -n 80 --no-pager || true
+
+      - name: Guardar logs da instalacao
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instalacao-linux-log
+          path: ${{ runner.temp }}/instalacao-*.log
+          if-no-files-found: ignore

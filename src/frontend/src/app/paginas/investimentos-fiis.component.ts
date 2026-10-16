@@ -9,14 +9,20 @@ import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
+import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
+import { pct, reaisOuNada } from '../compartilhado/utilidades';
 
-const CORES = ['#a7a3f5', '#92c8f0', '#8fd5b4', '#f8c09a', '#f3b3d3', '#8fd8d8', '#f2d98b', '#b5cf9a', '#d4a5e8',
-  '#f4a89a', '#a9b4c6', '#f5a3b0'];
+// Paleta dos fundos: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic, que têm significado (UX-9).
+const CORES = ['#a7a3f5', '#92c8f0', '#c3b1e1', '#8fd8d8', '#f3b3d3', '#f2d98b', '#b5cf9a', '#d4a5e8', '#a9b4c6',
+  '#b8c7f0', '#e6c9a8', '#9fb8c8'];
 const COR_FII = '#a7a3f5';
-const COR_SELIC = '#f8c09a';
+const COR_SELIC = CORES_GRAFICO.selic;
 const COR_IFIX = '#92c8f0';
-const COR_POSITIVO = '#8fd5b4';
-const COR_NEGATIVO = '#f5a3b0';
+const COR_POSITIVO = CORES_GRAFICO.ganhou;
+const COR_NEGATIVO = CORES_GRAFICO.perdeu;
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const rotulo = (ano: number, mes: number) => `${MESES[mes - 1]}/${String(ano).slice(2)}`;
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
@@ -24,7 +30,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 /** Aba de FIIs da página de investimentos (inspirada nos painéis de carteira de sites como o Investidor10). */
 @Component({
   selector: 'app-investimentos-fiis',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
   template: `
     @if (dados(); as d) {
       @if (!d.fiis.length) {
@@ -77,56 +83,17 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
                 <button type="button" [class.ativo]="mesesProventos() === 24" (click)="mesesProventos.set(24)">24 meses</button>
               </div>
             </div>
-            <p class="texto-suave legenda-grafico">Pela data-com, com a quantidade de cotas que você tinha em cada data.</p>
-            <app-grafico [configuracao]="graficoProventos()" [altura]="280" />
+            <app-grafico-explicado [resumo]="resumoProventos()"
+              comoLer="Proventos de cada mês pela data-com, com as cotas que você tinha em cada data; cada cor é um fundo. A linha tracejada é a média do período.">
+              <app-grafico [configuracao]="graficoProventos()" [altura]="280" />
+            </app-grafico-explicado>
           </section>
-          <section class="painel-bloco">
-            <h2>Evolução do patrimônio</h2>
-            <p class="texto-suave legenda-grafico">Valor aplicado (custo) x valor de mercado no fim de cada mês.</p>
-            <app-grafico [configuracao]="graficoEvolucao()" [altura]="280" />
-          </section>
-        </div>
-
-        <div class="grade-2">
           <section class="painel-bloco">
             <h2>Rentabilidade acumulada</h2>
-            <p class="texto-suave legenda-grafico">Seus FIIs (cotação + proventos, ponderado pelos aportes) x Selic x IFIX.</p>
-            <app-grafico [configuracao]="graficoRentabilidade()" [altura]="280" />
-          </section>
-          <section class="painel-bloco">
-            <div class="cabecalho-bloco">
-              <h2>Cotação x suas compras</h2>
-              <span class="cresce"></span>
-              <select [ngModel]="tickerHistorico()" (ngModelChange)="tickerHistorico.set($event)" aria-label="Fundo">
-                @for (f of d.fiis; track f.id) { <option [ngValue]="f.ticker">{{ f.ticker }}</option> }
-              </select>
-            </div>
-            <p class="texto-suave legenda-grafico">Fechamento mensal, preço pago em cada compra e seu preço médio.</p>
-            <app-grafico [configuracao]="graficoHistorico()" [altura]="280" />
-          </section>
-        </div>
-
-        <div class="grade-3">
-          <section class="painel-bloco">
-            <h2>Por segmento</h2>
-            <app-grafico [configuracao]="graficoSegmentos()" [altura]="190" />
-            <ul class="lista-legenda">
-              @for (s of d.segmentos; track s.nome; let i = $index) {
-                <li>
-                  <span class="ponto" [style.background]="cor(i)"></span>
-                  <span class="cresce">{{ s.nome }}</span>
-                  <span class="texto-suave pct">{{ d.resumo.valorMercado > 0 ? (s.valor / d.resumo.valorMercado * 100 | number: '1.0-1') : 0 }}%</span>
-                </li>
-              }
-            </ul>
-          </section>
-          <section class="painel-bloco">
-            <h2>Yield on cost x DY atual (12m)</h2>
-            <app-grafico [configuracao]="graficoYield()" [altura]="alturaPorFundo()" />
-          </section>
-          <section class="painel-bloco">
-            <h2>Preço médio x cotação</h2>
-            <app-grafico [configuracao]="graficoPreco()" [altura]="alturaPorFundo()" />
+            <app-grafico-explicado [resumo]="resumoRentabilidade()"
+              comoLer="Rentabilidade acumulada em %: área lilás, seus FIIs (cotação + proventos, ponderado pelos aportes); tracejado, a Selic; azul, o IFIX.">
+              <app-grafico [configuracao]="graficoRentabilidade()" [altura]="280" />
+            </app-grafico-explicado>
           </section>
         </div>
 
@@ -136,9 +103,9 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
             <table class="tabela tabela-fiis">
               <thead>
                 <tr>
-                  <th>Fundo</th><th>Segmento</th><th class="direita">Cotas</th><th class="direita">Preço médio</th>
+                  <th>Fundo</th><th>Segmento</th><th class="direita">Cotas</th><th class="direita"><app-termo chave="precoMedio">Preço médio</app-termo></th>
                   <th class="direita">Cotação</th><th class="direita">Valorização</th><th class="direita">Último rend.</th>
-                  <th class="direita">DY mês / 12m</th><th class="direita">Yield on cost</th><th class="direita">Renda/mês</th>
+                  <th class="direita"><app-termo chave="dy">DY</app-termo> mês / 12m</th><th class="direita"><app-termo chave="yieldOnCost">Yield on cost</app-termo></th><th class="direita">Renda/mês</th>
                   <th class="direita">Peso</th>
                 </tr>
               </thead>
@@ -180,58 +147,117 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
           </p>
         </section>
 
-        <section class="painel-bloco">
-          <div class="cabecalho-bloco">
-            <h2>Cada compra x hoje</h2>
-            <span class="cresce"></span>
-            <select [ngModel]="filtroLote()" (ngModelChange)="filtroLote.set($event)" aria-label="Filtrar fundo">
-              <option [ngValue]="null">Todos os fundos</option>
-              @for (f of d.fiis; track f.id) { <option [ngValue]="f.ticker">{{ f.ticker }}</option> }
-            </select>
-          </div>
-          <div class="tabela-rolagem">
-            <table class="tabela tabela-fiis">
-              <thead>
-                <tr>
-                  <th>Data</th><th>Fundo</th><th class="direita">Cotas</th><th class="direita">Preço pago</th>
-                  <th class="direita">Cotação hoje</th><th class="direita">Variação</th>
-                  <th class="direita" title="Rendimentos dos 12 meses antes da compra ÷ preço pago">DY na compra</th>
-                  <th class="direita" title="Rendimentos dos últimos 12 meses ÷ preço pago">Yield on cost hoje</th>
-                  <th class="direita" title="Rendimentos dos últimos 12 meses ÷ cotação atual">DY atual</th>
-                  <th class="direita">Renda/mês do lote</th><th class="direita">Já rendeu</th><th>Origem</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (l of lotesFiltrados(); track l.operacaoId) {
-                  <tr>
-                    <td>{{ l.data | date: 'dd/MM/yyyy' }}</td>
-                    <td><strong>{{ l.ticker }}</strong></td>
-                    <td class="direita">{{ qtd(l.quantidade) }}</td>
-                    <td class="direita">{{ l.precoPago | currency: 'BRL' : 'symbol' : '1.2-4' }}<br>
-                      <small class="texto-suave">{{ l.valorPago | currency }}</small></td>
-                    <td class="direita">{{ l.precoAtual !== null ? (l.precoAtual | currency) : '—' }}
-                      @if (l.valorAtual !== null) { <br><small class="texto-suave">{{ l.valorAtual | currency }}</small> }</td>
-                    <td class="direita" [class.positivo]="(l.variacaoPercentual ?? 0) >= 0" [class.negativo]="(l.variacaoPercentual ?? 0) < 0">
-                      {{ pct(l.variacaoPercentual) }}</td>
-                    <td class="direita">{{ pct(l.dyNaCompra, false) }}</td>
-                    <td class="direita"><strong [class.positivo]="(l.yieldOnCost12Meses ?? 0) >= (l.dyNaCompra ?? 0)"
-                      [class.negativo]="l.dyNaCompra !== null && (l.yieldOnCost12Meses ?? 0) < l.dyNaCompra">{{ pct(l.yieldOnCost12Meses, false) }}</strong></td>
-                    <td class="direita">{{ pct(l.dyAtual12Meses, false) }}</td>
-                    <td class="direita">{{ l.rendaMensalLote | currency }}</td>
-                    <td class="direita positivo">{{ l.proventosRecebidosLote | currency }}</td>
-                    <td><span class="etiqueta etiqueta-suave">{{ nomeOrigem(l.origem) }}</span></td>
-                  </tr>
-                } @empty {
-                  <tr><td colspan="12" class="vazio">Nenhuma compra.</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <p class="texto-suave nota">
-            "DY na compra" mostra quanto o fundo pagava, nos 12 meses anteriores, sobre o preço que você pagou. Comparado ao
-            "Yield on cost hoje", ele mostra se a renda dessa compra aumentou ou caiu.
-          </p>
-        </section>
+        <app-mais-analises chave="fiis" conteudo="evolução do patrimônio, cotação x compras, segmentos, yield on cost x DY, preço médio e cada compra">
+          <ng-template>
+            <div class="grade-2">
+              <section class="painel-bloco">
+                <h2>Evolução do patrimônio</h2>
+                <app-grafico-explicado [resumo]="resumoEvolucao()"
+                  comoLer="Lilás-claro: valor aplicado (custo). Lilás: valor de mercado no fim de cada mês. Lilás acima do claro = os fundos valem mais do que você pagou.">
+                  <app-grafico [configuracao]="graficoEvolucao()" [altura]="280" />
+                </app-grafico-explicado>
+              </section>
+              <section class="painel-bloco">
+                <div class="cabecalho-bloco">
+                  <h2>Cotação x suas compras</h2>
+                  <span class="cresce"></span>
+                  <select [ngModel]="tickerHistorico()" (ngModelChange)="tickerHistorico.set($event)" aria-label="Fundo">
+                    @for (f of d.fiis; track f.id) { <option [ngValue]="f.ticker">{{ f.ticker }}</option> }
+                  </select>
+                </div>
+                <app-grafico-explicado [resumo]="resumoHistorico()"
+                  comoLer="Área lilás: fechamento mensal da cota. Pontos verdes: preço pago em cada compra. Tracejado: seu preço médio.">
+                  <app-grafico [configuracao]="graficoHistorico()" [altura]="280" />
+                </app-grafico-explicado>
+              </section>
+            </div>
+
+            <div class="grade-3">
+              <section class="painel-bloco">
+                <h2>Por segmento</h2>
+                <app-grafico-explicado [resumo]="resumoSegmentos()" comoLer="Cada fatia é um segmento, pelo valor de mercado dos seus fundos.">
+                  <app-grafico [configuracao]="graficoSegmentos()" [altura]="190" />
+                </app-grafico-explicado>
+                <ul class="lista-legenda">
+                  @for (s of d.segmentos; track s.nome; let i = $index) {
+                    <li>
+                      <span class="ponto" [style.background]="cor(i)"></span>
+                      <span class="cresce">{{ s.nome }}</span>
+                      <span class="texto-suave pct">{{ d.resumo.valorMercado > 0 ? (s.valor / d.resumo.valorMercado * 100 | number: '1.0-1') : 0 }}%</span>
+                    </li>
+                  }
+                </ul>
+              </section>
+              <section class="painel-bloco">
+                <h2><app-termo chave="yieldOnCost">Yield on cost</app-termo> x <app-termo chave="dy">DY</app-termo> atual (12m)</h2>
+                <app-grafico-explicado [resumo]="resumoYield()"
+                  comoLer="Por fundo: yield on cost (proventos de 12 meses sobre o que você pagou) em verde quando é maior que o DY atual e em rosa quando é menor; em azul, o DY atual sobre a cotação de hoje.">
+                  <app-grafico [configuracao]="graficoYield()" [altura]="alturaPorFundo()" />
+                </app-grafico-explicado>
+              </section>
+              <section class="painel-bloco">
+                <h2><app-termo chave="precoMedio">Preço médio</app-termo> x cotação</h2>
+                <app-grafico-explicado [resumo]="resumoPreco()"
+                  comoLer="Por fundo: lilás-claro, seu preço médio; a cotação de hoje em verde quando está acima dele e em rosa quando está abaixo.">
+                  <app-grafico [configuracao]="graficoPreco()" [altura]="alturaPorFundo()" />
+                </app-grafico-explicado>
+              </section>
+            </div>
+
+            <section class="painel-bloco">
+              <div class="cabecalho-bloco">
+                <h2>Cada compra x hoje</h2>
+                <span class="cresce"></span>
+                <select [ngModel]="filtroLote()" (ngModelChange)="filtroLote.set($event)" aria-label="Filtrar fundo">
+                  <option [ngValue]="null">Todos os fundos</option>
+                  @for (f of d.fiis; track f.id) { <option [ngValue]="f.ticker">{{ f.ticker }}</option> }
+                </select>
+              </div>
+              <div class="tabela-rolagem">
+                <table class="tabela tabela-fiis">
+                  <thead>
+                    <tr>
+                      <th>Data</th><th>Fundo</th><th class="direita">Cotas</th><th class="direita">Preço pago</th>
+                      <th class="direita">Cotação hoje</th><th class="direita">Variação</th>
+                      <th class="direita"><app-termo chave="dyNaCompra">DY na compra</app-termo></th>
+                      <th class="direita"><app-termo chave="yieldOnCost">Yield on cost</app-termo> hoje</th>
+                      <th class="direita"><app-termo chave="dy">DY</app-termo> atual</th>
+                      <th class="direita">Renda/mês do lote</th><th class="direita">Já rendeu</th><th>Origem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (l of lotesFiltrados(); track l.operacaoId) {
+                      <tr>
+                        <td>{{ l.data | date: 'dd/MM/yyyy' }}</td>
+                        <td><strong>{{ l.ticker }}</strong></td>
+                        <td class="direita">{{ qtd(l.quantidade) }}</td>
+                        <td class="direita">{{ l.precoPago | currency: 'BRL' : 'symbol' : '1.2-4' }}<br>
+                          <small class="texto-suave">{{ l.valorPago | currency }}</small></td>
+                        <td class="direita">{{ l.precoAtual !== null ? (l.precoAtual | currency) : '—' }}
+                          @if (l.valorAtual !== null) { <br><small class="texto-suave">{{ l.valorAtual | currency }}</small> }</td>
+                        <td class="direita" [class.positivo]="(l.variacaoPercentual ?? 0) >= 0" [class.negativo]="(l.variacaoPercentual ?? 0) < 0">
+                          {{ pct(l.variacaoPercentual) }}</td>
+                        <td class="direita">{{ pct(l.dyNaCompra, false) }}</td>
+                        <td class="direita"><strong [class.positivo]="(l.yieldOnCost12Meses ?? 0) >= (l.dyNaCompra ?? 0)"
+                          [class.negativo]="l.dyNaCompra !== null && (l.yieldOnCost12Meses ?? 0) < l.dyNaCompra">{{ pct(l.yieldOnCost12Meses, false) }}</strong></td>
+                        <td class="direita">{{ pct(l.dyAtual12Meses, false) }}</td>
+                        <td class="direita">{{ l.rendaMensalLote | currency }}</td>
+                        <td class="direita positivo">{{ l.proventosRecebidosLote | currency }}</td>
+                        <td><span class="etiqueta etiqueta-suave">{{ nomeOrigem(l.origem) }}</span></td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="12" class="vazio">Nenhuma compra.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="texto-suave nota">
+                "DY na compra" mostra quanto o fundo pagava, nos 12 meses anteriores, sobre o preço que você pagou. Comparado ao
+                "Yield on cost hoje", ele mostra se a renda dessa compra aumentou ou caiu.
+              </p>
+            </section>
+          </ng-template>
+        </app-mais-analises>
       }
     } @else {
       <p class="vazio">Carregando FIIs…</p>
@@ -286,6 +312,70 @@ export class InvestimentosFiisComponent {
   });
 
   readonly alturaPorFundo = computed(() => Math.max(190, (this.dados()?.fiis.length ?? 0) * 34 + 60));
+
+  /* ---------------- UX-9: frases-resumo (sem R$ quando "ocultar valores" está ligado) ---------------- */
+
+  readonly resumoProventos = computed(() => {
+    const meses = (this.dados()?.proventos ?? []).slice(-this.mesesProventos());
+    if (!meses.length) return null;
+    const media = meses.reduce((s, m) => s + m.total, 0) / meses.length;
+    if (media <= 0) return 'Nenhum provento no período.';
+    const ultimo = meses[meses.length - 1];
+    const dif = ((ultimo.total - media) / media) * 100;
+    const valor = reaisOuNada(media, this.privacidade.oculto());
+    const inicio = valor ? `Média de ${valor} por mês em proventos` : `Proventos de ${meses.length} meses`;
+    if (Math.abs(dif) < 1) return `${inicio}; o último mês ficou na média.`;
+    return `${inicio}; o último mês ficou ${pct(dif)} ${dif > 0 ? 'acima' : 'abaixo'} da média.`;
+  });
+
+  readonly resumoEvolucao = computed(() => {
+    const ev = (this.dados()?.evolucao ?? []).filter((m) => m.valorMercado !== null && m.aplicado > 0);
+    const u = ev[ev.length - 1];
+    if (!u) return null;
+    const dif = ((u.valorMercado! - u.aplicado) / u.aplicado) * 100;
+    if (Math.abs(dif) < 0.5) return 'Seus FIIs valem praticamente o que você aplicou.';
+    return `Seus FIIs valem ${pct(dif)} ${dif > 0 ? 'acima' : 'abaixo'} do valor aplicado.`;
+  });
+
+  readonly resumoRentabilidade = computed(() => {
+    const r = this.dados()?.resumo;
+    if (!r || r.rentabilidadeTotal === null) return null;
+    const fmt = (v: number) => `${v < 0 ? '−' : ''}${pct(v)}`;
+    const comparacoes = [r.rentabilidadeSelic !== null ? `${fmt(r.rentabilidadeSelic)} da Selic` : null,
+      r.rentabilidadeIfix !== null ? `${fmt(r.rentabilidadeIfix)} do IFIX` : null].filter(Boolean);
+    return `Seus FIIs renderam ${fmt(r.rentabilidadeTotal)}${comparacoes.length ? `, contra ${comparacoes.join(' e ')}` : ''} no período.`;
+  });
+
+  readonly resumoHistorico = computed(() => {
+    const f = this.dados()?.fiis.find((x) => x.ticker === this.tickerHistorico());
+    if (!f || f.precoAtual === null || f.precoMedio <= 0) return null;
+    const dif = ((f.precoAtual - f.precoMedio) / f.precoMedio) * 100;
+    if (Math.abs(dif) < 0.5) return `${f.ticker} está cotado praticamente no seu preço médio.`;
+    return `${f.ticker} está cotado ${pct(dif)} ${dif > 0 ? 'acima' : 'abaixo'} do seu preço médio.`;
+  });
+
+  readonly resumoSegmentos = computed(() => {
+    const d = this.dados();
+    const s = [...(d?.segmentos ?? [])].sort((a, b) => b.valor - a.valor);
+    if (!d || !s.length || d.resumo.valorMercado <= 0) return null;
+    return `${s[0].nome} é ${pct(s[0].valor / d.resumo.valorMercado * 100)} da sua carteira de FIIs.`;
+  });
+
+  readonly resumoYield = computed(() => {
+    const f = (this.dados()?.fiis ?? []).filter((x) => x.yieldOnCost12Meses !== null && x.dy12Meses !== null);
+    if (!f.length) return null;
+    const melhores = f.filter((x) => x.yieldOnCost12Meses! >= x.dy12Meses!).length;
+    return `Em ${melhores} de ${f.length} fundos, o que você recebe sobre o preço que pagou (yield on cost) é maior que o DY atual.`;
+  });
+
+  readonly resumoPreco = computed(() => {
+    const f = (this.dados()?.fiis ?? []).filter((x) => x.precoAtual !== null);
+    if (!f.length) return null;
+    const acima = f.filter((x) => x.precoAtual! >= x.precoMedio).length;
+    if (acima === f.length) return `Todos os ${f.length} fundos estão cotados acima do seu preço médio.`;
+    if (acima === 0) return `Todos os ${f.length} fundos estão cotados abaixo do seu preço médio.`;
+    return `${acima} de ${f.length} fundos estão cotados acima do seu preço médio.`;
+  });
 
   readonly graficoProventos = computed<ChartConfiguration<'bar'>>(() => {
     const todos = this.dados()?.proventos ?? [];

@@ -3,13 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   OpcaoCategoria, SugestaoCategoria,
-  AtualizarAtivo, Carteira, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
+  AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
   SugestaoExtrato,
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
-  SalvarContaAgendada, SalvarMeta, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria
+  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
+  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -21,7 +21,9 @@ export class ApiService {
   private params(obj: object): HttpParams {
     let p = new HttpParams();
     for (const [chave, valor] of Object.entries(obj)) {
-      if (valor !== null && valor !== undefined && valor !== '') p = p.set(chave, String(valor));
+      // Lista vira a chave repetida (?categoriaIds=1&categoriaIds=2), que é o que o ASP.NET entende como List<int>.
+      if (Array.isArray(valor)) for (const v of valor) p = p.append(chave, String(v));
+      else if (valor !== null && valor !== undefined && valor !== '') p = p.set(chave, String(valor));
     }
     return p;
   }
@@ -116,6 +118,9 @@ export class ApiService {
 
   // Contas a pagar
   contasAgendadas(): Observable<ContaAgendada[]> { return this.http.get<ContaAgendada[]>(`${this.base}/contas-agendadas`); }
+  sugestoesContasAgendadas(): Observable<SugestaoContaAgendada[]> {
+    return this.http.get<SugestaoContaAgendada[]>(`${this.base}/contas-agendadas/sugestoes`);
+  }
   criarContaAgendada(dto: SalvarContaAgendada): Observable<void> { return this.http.post<void>(`${this.base}/contas-agendadas`, dto); }
   atualizarContaAgendada(id: number, dto: SalvarContaAgendada): Observable<void> {
     return this.http.put<void>(`${this.base}/contas-agendadas/${id}`, dto);
@@ -127,8 +132,14 @@ export class ApiService {
 
   // Investimentos
   investimentos(): Observable<Investimento[]> { return this.http.get<Investimento[]>(`${this.base}/investimentos`); }
+  emprestimos(): Observable<PainelEmprestimos> { return this.http.get<PainelEmprestimos>(`${this.base}/emprestimos`); }
 
   // Carteira (renda variável + comparação com a Selic)
+  moedasCambio(): Observable<MoedaCambio[]> { return this.http.get<MoedaCambio[]>(`${this.base}/cambio/moedas`); }
+  cotacaoCambio(moeda: string, data: string): Observable<CotacaoMoeda> {
+    return this.http.get<CotacaoMoeda>(`${this.base}/cambio/cotacao`, { params: this.params({ moeda, data }) });
+  }
+
   carteira(): Observable<Carteira> { return this.http.get<Carteira>(`${this.base}/carteira`); }
   atualizarCotacoes(ativoId?: number): Observable<ResultadoCotacoes> {
     return this.http.post<ResultadoCotacoes>(`${this.base}/carteira/atualizar-cotacoes`, {}, { params: this.params({ ativoId }) });
@@ -150,6 +161,12 @@ export class ApiService {
   importarOpenFinance(): Observable<ResultadoImportacaoCarteira> {
     return this.http.post<ResultadoImportacaoCarteira>(`${this.base}/carteira/importar-open-finance`, {});
   }
+  conferirReserva(contaId: number, nome: string, saldo: number, data: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/reservas/conferencia`, { contaId, nome, saldo, data });
+  }
+  removerConferenciaReserva(contaId: number, nome: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/reservas/conferencia`, { params: this.params({ contaId, nome }) });
+  }
   fiis(): Observable<PainelFiis> { return this.http.get<PainelFiis>(`${this.base}/carteira/fiis`); }
   sugestoesExtrato(): Observable<SugestaoExtrato[]> {
     return this.http.get<SugestaoExtrato[]>(`${this.base}/carteira/extrato/sugestoes`);
@@ -165,6 +182,12 @@ export class ApiService {
   }
 
   // Open Finance
+  parametros(): Observable<Parametro[]> { return this.http.get<Parametro[]>(`${this.base}/parametros`); }
+  salvarParametros(valores: Record<string, number>): Observable<Parametro[]> {
+    return this.http.put<Parametro[]>(`${this.base}/parametros`, { valores });
+  }
+  infoSistema(): Observable<InfoSistema> { return this.http.get<InfoSistema>(`${this.base}/parametros/sistema`); }
+
   configuracaoPluggy(): Observable<ConfiguracaoPluggy> {
     return this.http.get<ConfiguracaoPluggy>(`${this.base}/open-finance/configuracao`);
   }
@@ -184,6 +207,9 @@ export class ApiService {
   sincronizar(conexaoId?: number): Observable<ResultadoSincronizacao> {
     return this.http.post<ResultadoSincronizacao>(`${this.base}/open-finance/sincronizar`, {},
       { params: this.params({ conexaoId }) });
+  }
+  statusSincronizacao(): Observable<StatusSincronizacao> {
+    return this.http.get<StatusSincronizacao>(`${this.base}/open-finance/status`);
   }
   logsSincronizacao(): Observable<SincronizacaoLog[]> {
     return this.http.get<SincronizacaoLog[]>(`${this.base}/open-finance/logs`);

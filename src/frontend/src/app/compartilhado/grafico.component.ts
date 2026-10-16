@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, Output, effect, inject, input, viewChild } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { TemaService } from '../core/tema.service';
@@ -14,6 +14,16 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly configuracao = input.required<ChartConfiguration<any>>();
   readonly altura = input(260);
+  /** Linha extra no tooltip quando o gráfico é clicável (ex.: "Clique para ver as transações"). */
+  readonly dicaClique = input<string | null>(null);
+  /**
+   * Índice do item clicado (fatia, barra, ponto). Opcional: só quando há quem ouça o gráfico fica clicável (cursor de mão
+   * e dica no tooltip); os demais gráficos não mudam. O clique no canvas é atalho a mais: a tela que usa precisa ter o
+   * mesmo caminho em HTML (WCAG 2.1.1). Em toque, o primeiro toque mostra o tooltip e não navega (não existe hover).
+   */
+  @Output() readonly itemClicado = new EventEmitter<number>();
+  /** Tipo do último ponteiro sobre o canvas ("mouse", "pen" ou "touch"). */
+  private ultimoPonteiro = 'mouse';
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private grafico: Chart | null = null;
@@ -24,13 +34,14 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const cfg = this.configuracao();
-      this.tema.tema(); // redesenha ao trocar claro/escuro
+      this.tema.aparencia(); // redesenha ao trocar claro/escuro ou a paleta de cores
       this.privacidade.oculto(); // e ao ocultar/mostrar valores
       if (this.pronto) this.desenhar(cfg);
     });
   }
 
   ngAfterViewInit(): void {
+    this.canvas().nativeElement.addEventListener('pointerdown', (e) => (this.ultimoPonteiro = e.pointerType));
     this.pronto = true;
     this.desenhar(this.configuracao());
   }
@@ -68,6 +79,30 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
         opcoes.scales = escalas;
       }
     }
+    if (this.itemClicado.observed) this.tornarClicavel(opcoes);
     this.grafico = new Chart(this.canvas().nativeElement, { ...cfg, options: opcoes } as ChartConfiguration);
+  }
+
+  /** Religado a cada desenho: o gráfico é recriado ao trocar tema, paleta ou privacidade. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private tornarClicavel(opcoes: any): void {
+    const canvas = this.canvas().nativeElement;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    opcoes.onClick = (_: unknown, itens: any[]) => {
+      if (this.ultimoPonteiro === 'touch' || !itens.length) return;
+      this.itemClicado.emit(itens[0].index);
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    opcoes.onHover = (_: unknown, itens: any[]) => {
+      canvas.style.cursor = itens.length && this.ultimoPonteiro !== 'touch' ? 'pointer' : 'default';
+    };
+    const dica = this.dicaClique();
+    if (dica && opcoes.plugins?.tooltip?.enabled !== false) {
+      const tooltip = opcoes.plugins?.tooltip ?? {};
+      opcoes.plugins = {
+        ...(opcoes.plugins ?? {}),
+        tooltip: { ...tooltip, callbacks: { ...(tooltip.callbacks ?? {}), footer: () => (this.ultimoPonteiro === 'touch' ? '' : dica) } }
+      };
+    }
   }
 }

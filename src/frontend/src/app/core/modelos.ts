@@ -8,6 +8,7 @@ export enum StatusTransacao { Efetivada = 1, Pendente = 2 }
 export enum TipoCorrespondencia { Contem = 1, ComecaCom = 2, Igual = 3 }
 export enum Recorrencia { Unica = 0, Mensal = 1, Anual = 2 }
 export enum NaturezaGasto { Essencial = 1, EstiloDeVida = 2 }
+export enum NaturezaCredito { Emprestimo = 1, Financiamento = 2 }
 
 export const NOMES_TIPO_CONTA: Record<TipoConta, string> = {
   [TipoConta.ContaCorrente]: 'Conta corrente',
@@ -66,6 +67,8 @@ export interface Transacao {
 
 export interface FiltroTransacoes {
   inicio?: string | null; fim?: string | null; contaId?: number | null; categoriaId?: number | null;
+  /** Várias categorias (cada uma inclui as subcategorias); com semCategoria, soma também as sem categoria. */
+  categoriaIds?: number[] | null;
   semCategoria?: boolean; somenteEmergencias?: boolean; tipo?: TipoTransacao | null; busca?: string | null; pagina?: number; tamanhoPagina?: number;
 }
 
@@ -137,9 +140,20 @@ export interface SalvarContaAgendada {
   categoriaId: number | null; contaId: number | null; ativa: boolean;
 }
 
+/** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
+export interface SugestaoContaAgendada {
+  chave: string; descricao: string; valor: number; valorVariavel: boolean; valorMinimo: number; valorMaximo: number;
+  proximoVencimento: string; diaHabitual: number; meses: number; pagamentos: number;
+  ultimoPagamento: string; primeiroPagamento: string;
+  categoriaId: number | null; categoriaNome: string | null; contaId: number; contaNome: string; termoBusca: string;
+  /** Vencimento esperado que já passou sem o pagamento aparecer no extrato (null quando não há). */
+  vencimentoSemPagamento: string | null;
+}
+
 export interface Investimento {
   id: number; nome: string; tipo: string; subtipo: string | null; codigo: string | null; emissor: string | null;
-  moeda: string; saldo: number; valorAplicado: number | null; rendimento: number | null; taxaAnual: number | null;
+  moeda: string; saldo: number; saldoEmReais: number | null; valorAplicado: number | null; rendimento: number | null;
+  taxaAnual: number | null;
   dataVencimento: string | null; status: string | null; nomeInstituicao: string | null; atualizadoEm: string;
 }
 
@@ -168,6 +182,7 @@ export interface SaudeFinanceira {
   patrimonioAtual: number; reservaLiquida: number; gastoMensalMedio: number; gastoEssencialMensalMedio: number;
   mesesDeReserva: number | null; mesesDeReservaEssencial: number | null; rendaMensalMedia: number; parcelasMensais: number;
   comprometimentoParcelas: number | null; mesesAnalisados: number;
+  parcelasFinanciamentos: number; parcelasEmprestimos: number; dividaFinanciamentos: number; dividaEmprestimos: number;
 }
 export interface PainelAnual {
   ano: number; anoComparacao: number; mesLimite: number; anosDisponiveis: number[];
@@ -192,6 +207,26 @@ export interface Painel {
   orcamentos: Orcamento[]; proximasContas: ContaAgendada[]; ultimasTransacoes: Transacao[]; alertas: string[];
   ultimaSincronizacao: string | null;
   despesasEmergenciaMes: number;
+  dividaFinanciamentos: number; dividaEmprestimos: number;
+  diasProximosVencimentos: number;
+}
+
+export interface Emprestimo {
+  id: number; natureza: NaturezaCredito; produto: string; modalidade: string | null; modalidadeDescricao: string;
+  numeroContrato: string | null; nomeInstituicao: string | null; moeda: string; valorContratado: number; saldoDevedor: number;
+  valorParcela: number | null; parcelaMensal: number; parcelasTotal: number | null; parcelasPagas: number | null;
+  parcelasAVencer: number | null; parcelasEmAtraso: number; periodicidade: string | null; sistemaAmortizacao: string | null;
+  taxaJuros: number | null; periodicidadeTaxa: string | null; indexador: string | null; cet: number | null;
+  dataContratacao: string | null; dataVencimentoFinal: string | null; proximoVencimento: string | null;
+  totalPago: number; ultimoPagamento: string | null; quitado: boolean; atualizadoEm: string;
+}
+export interface ResumoCredito {
+  natureza: NaturezaCredito; contratosAbertos: number; contratosQuitados: number; saldoDevedor: number;
+  valorContratado: number; parcelaMensal: number; totalPago: number; parcelasEmAtraso: number;
+}
+export interface PainelEmprestimos {
+  financiamentos: ResumoCredito; emprestimos: ResumoCredito; contratos: Emprestimo[];
+  pagamentosPorMes: { ano: number; mes: number; financiamentos: number; emprestimos: number }[];
 }
 
 export interface ConfiguracaoPluggy {
@@ -199,7 +234,21 @@ export interface ConfiguracaoPluggy {
 }
 
 export interface SalvarConfiguracaoPluggy {
-  clientId: string; clientSecret: string | null; intervaloHoras: number; diasRetroativos: number; habilitada: boolean;
+  clientId: string; clientSecret: string | null;
+  /** Opcionais: a aba Parametrização cuida deles. */
+  intervaloHoras?: number; diasRetroativos?: number; habilitada?: boolean;
+}
+
+export enum TipoParametro { Inteiro = 1, Booleano = 2 }
+/** Booleanos usam 0/1 em valor e padrao. */
+export interface Parametro {
+  chave: string; grupo: string; nome: string; descricao: string; tipo: TipoParametro;
+  valor: number; padrao: number; minimo: number | null; maximo: number | null; unidade: string | null;
+}
+export interface InfoSistema {
+  versao: string; dotNet: string; sistemaOperacional: string; iniciadoEm: string; caminhoBanco: string;
+  tamanhoBancoBytes: number | null; pastaChaves: string; contas: number; transacoes: number; conexoesAtivas: number;
+  ultimaSincronizacao: string | null;
 }
 
 export interface Conexao {
@@ -215,6 +264,12 @@ export interface SincronizacaoLog {
 
 export interface ResultadoSincronizacao {
   sucesso: boolean; transacoesNovas: number; transacoesAtualizadas: number; mensagem: string | null;
+}
+
+/** Status leve da sincronização para a barra superior (UX-8). */
+export interface StatusSincronizacao {
+  ultimaSincronizacao: string | null; emExecucao: boolean; conexoesAtivas: number;
+  conexoesComErro: number; consentimentosVencendo: number;
 }
 
 export interface CategoriaPluggy {
@@ -249,10 +304,11 @@ export interface SelicResumo {
   metaAnual: number | null; acumulado12Meses: number | null; acumuladoAno: number | null; atualizadaAte: string | null;
 }
 
+/** Preço médio, preço atual/anterior e último provento na moeda do ativo; custo, valores e resultados em reais. */
 export interface PosicaoAtivo {
-  id: number; ticker: string; nome: string | null; tipo: TipoAtivo;
+  id: number; ticker: string; nome: string | null; tipo: TipoAtivo; moeda: string;
   quantidade: number; precoMedio: number; custo: number;
-  precoAtual: number | null; precoAnterior: number | null; variacaoDia: number | null;
+  precoAtual: number | null; precoAtualEmReais: number | null; precoAnterior: number | null; variacaoDia: number | null;
   valorMercado: number; valorizacao: number; valorizacaoPercentual: number | null;
   lucroRealizado: number; proventosRecebidos: number; proventos12Meses: number; dividendYield12Meses: number | null;
   resultadoTotal: number; resultadoTotalPercentual: number | null;
@@ -273,7 +329,8 @@ export interface EvolucaoCarteira { ano: number; mes: number; aplicado: number; 
 
 export interface InvestimentoComparado {
   id: number; nome: string; tipo: string; subtipo: string | null; codigo: string | null; emissor: string | null;
-  nomeInstituicao: string | null; saldo: number; valorAplicado: number | null; dataAplicacao: string | null;
+  nomeInstituicao: string | null; moeda: string; saldo: number; saldoEmReais: number | null;
+  valorAplicado: number | null; dataAplicacao: string | null;
   dataVencimento: string | null; taxaAnual: number | null; rentabilidade: number | null; selicNoPeriodo: number | null;
   percentualDaSelic: number | null; rendaVariavel: boolean; jaNaCarteira: boolean; atualizadoEm: string;
 }
@@ -282,7 +339,21 @@ export interface Carteira {
   selic: SelicResumo; rendaVariavel: TotaisRendaVariavel; posicoes: PosicaoAtivo[]; evolucao: EvolucaoCarteira[];
   openFinance: InvestimentoComparado[]; totalOpenFinance: number; totalInvestimentosManuais: number; totalGeral: number;
   distribuicao: { nome: string; valor: number }[]; cotacoesAtualizadasEm: string | null; cotacoesDesatualizadas: boolean;
-  openFinanceNaoRegistrados: number;
+  openFinanceNaoRegistrados: number; moedasSemCotacao: string[]; reservas: Reserva[]; totalReservas: number;
+}
+
+/**
+ * Reserva ("cofrinho") que a instituição não informa pelo Open Finance, estimada pelos lançamentos
+ * "Dinheiro reservado/retirado {nome}" da conta. Com conferência: saldo conferido + movimentos depois da data.
+ */
+export interface Reserva {
+  contaId: number; nomeConta: string; nome: string; saldo: number; guardado: number; retirado: number;
+  movimentos: number; primeiroMovimento: string | null; ultimoMovimento: string | null;
+  saldoConferido: number | null; dataConferencia: string | null;
+  /** Sem conferência e o 1º lançamento está no início da janela importada: provavelmente já havia saldo antes. */
+  podeTerSaldoAnterior: boolean;
+  /** Conferida há mais de 30 dias. */
+  conferenciaAntiga: boolean;
 }
 
 export interface ResultadoImportacaoCarteira {
@@ -290,16 +361,24 @@ export interface ResultadoImportacaoCarteira {
   erros: string[]; mensagem: string | null;
 }
 
+/** Preço, taxas e preço atual na moeda do ativo; valorTotal, valorAtual e Selic em reais. */
 export interface OperacaoAtivo {
   id: number; ativoId: number; ticker: string; tipo: TipoOperacao; data: string; quantidade: number;
-  precoUnitario: number; taxas: number; valorTotal: number; observacao: string | null;
+  precoUnitario: number; taxas: number; moeda: string; cambio: number; valorTotal: number; observacao: string | null;
   precoAtual: number | null; variacaoPreco: number | null; valorAtual: number | null; valorSeFosseSelic: number;
   origem: OrigemOperacao;
 }
 
+/** Preço e taxas na moeda do ativo; cambio = R$ por 1 unidade da moeda (ignorado em BRL). */
 export interface SalvarOperacao {
   ticker: string; tipoAtivo: TipoAtivo | null; tipo: TipoOperacao; data: string; quantidade: number | null;
-  precoUnitario: number | null; taxas: number; observacao: string | null;
+  precoUnitario: number | null; taxas: number; observacao: string | null; moeda: string; cambio: number | null;
+}
+
+/* ----------------------------- Câmbio ----------------------------- */
+export interface MoedaCambio { codigo: string; nome: string; }
+export interface CotacaoMoeda {
+  moeda: string; dataSolicitada: string; data: string; compra: number; venda: number; fonte: string;
 }
 
 export interface AtualizarAtivo {

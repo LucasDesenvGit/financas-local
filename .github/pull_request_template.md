@@ -13,6 +13,7 @@
 
 - [ ] `dotnet build FinancasLocal.sln -c Release` sem erros
 - [ ] `npm run build` em `src/frontend` sem erros
+- [ ] `npm run test:tipos` e `npm test` em `src/frontend` passam (bug corrigido ganha teste de regressão)
 - [ ] Mudou o banco? Bloco idempotente em `banco/01-estrutura.sql` + entidade e `FinancasDbContext` (sem migrations)
 - [ ] Consultas só com LINQ/lambda
 - [ ] Nenhum dado pessoal, senha, chave ou `appsettings.Production.json`
@@ -20,5 +21,5 @@
 
 ## Depois do merge
 
-- [ ] Rodar `scripts\2-criar-banco.ps1` (se mudou o banco)
-- [ ] Rodar `scripts\3-publicar.ps1`
+- [ ] Rodar `scripts/2-criar-banco.sh` (se mudou o banco)
+- [ ] Rodar `scripts/3-publicar-atualizar.sh`

@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -10,7 +12,10 @@ import {
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
-import { dataIso, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { OpcaoMultipla, SeletorMultiploComponent } from '../compartilhado/seletor-multiplo.component';
+import {
+  ContextoTransacoes, NOMES_MESES, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
+} from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 interface FormTransacao {
@@ -40,9 +45,30 @@ interface FormTransferencia {
   descricao: string;
 }
 
+interface ChipFiltro {
+  /** Categoria tem um chip por valor marcado: `categoria:12`, `categoria:sem`. */
+  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'emergencias' | 'busca';
+  rotulo: string;
+  cor?: string;
+}
+
+/** "outubro/2026" quando é o mês cheio; senão "01/09 – 15/10" (com ano se o período cruza anos). */
+function rotuloPeriodo(inicio?: string | null, fim?: string | null): string {
+  if (!inicio || !fim) return inicio ? `a partir de ${dataCurta(inicio, true)}` : fim ? `até ${dataCurta(fim, true)}` : 'Todo o período';
+  const [ai, mi] = inicio.split('-').map(Number);
+  if (inicio === primeiroDiaMes(ai, mi) && fim === ultimoDiaMes(ai, mi)) return `${NOMES_MESES[mi - 1]}/${ai}`;
+  const cruzaAno = inicio.substring(0, 4) !== fim.substring(0, 4);
+  return `${dataCurta(inicio, cruzaAno)} – ${dataCurta(fim, cruzaAno)}`;
+}
+
+function dataCurta(iso: string, comAno: boolean): string {
+  const [a, m, d] = iso.split('-');
+  return comAno ? `${d}/${m}/${a}` : `${d}/${m}`;
+}
+
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -62,13 +88,8 @@ interface FormTransferencia {
           @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
         </select>
       </label>
-      <label>Categoria
-        <select [(ngModel)]="filtroCategoria" (change)="aplicarFiltroCategoria()">
-          <option value="">Todas</option>
-          <option value="sem">— Sem categoria —</option>
-          @for (c of categorias(); track c.id) { <option [value]="c.id">{{ rotuloCategoria(c) }}</option> }
-        </select>
-      </label>
+      <app-seletor-multiplo rotulo="Categoria" [opcoes]="opcoesCategoria()" [selecionadas]="filtroCategorias"
+        (mudou)="aplicarFiltroCategorias($event)" />
       <label>Tipo
         <select [(ngModel)]="filtro.tipo" (change)="buscar(1)">
           <option [ngValue]="null">Todos</option>
@@ -83,6 +104,23 @@ interface FormTransferencia {
         <input type="search" [(ngModel)]="filtro.busca" (keyup.enter)="buscar(1)" placeholder="descrição, estabelecimento…" maxlength="100">
       </label>
     </section>
+
+    @if (chipsFiltro(); as chips) {
+      @if (chips.length) {
+        <section class="faixa-filtros" aria-label="Filtros ativos">
+          <strong>Filtrando:</strong>
+          @for (c of chips; track c.id) {
+            <span class="chip chip-filtro">
+              @if (c.cor) { <span class="ponto" [style.background]="c.cor"></span> }
+              {{ c.rotulo }}
+              <button type="button" class="chip-remover" (click)="removerFiltro(c.id)"
+                [attr.aria-label]="'Remover filtro: ' + c.rotulo" [title]="'Remover filtro: ' + c.rotulo">✕</button>
+            </span>
+          }
+          <button type="button" class="link" (click)="limparFiltros()">Limpar filtros</button>
+        </section>
+      }
+    }
 
     @if (pagina(); as p) {
       <section class="resumo-filtro">
@@ -320,6 +358,16 @@ interface FormTransferencia {
     </app-modal>
   `,
   styles: `
+    .faixa-filtros {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+      margin: -4px 4px 14px; font-size: 0.9rem;
+    }
+    .chip-filtro { gap: 2px; padding-right: 2px; background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 550; }
+    .chip-remover {
+      display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: 2px;
+      border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; font-size: 0.8rem; line-height: 1;
+    }
+    .chip-remover:hover, .chip-remover:focus-visible { background: var(--superficie); }
     .linha-sugestoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .tabela-sugestoes td { vertical-align: top; }
     .tabela-sugestoes td:first-child { max-width: 280px; }
@@ -331,12 +379,34 @@ interface FormTransferencia {
 export class TransacoesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly TipoTransacao = TipoTransacao;
   readonly StatusTransacao = StatusTransacao;
 
   readonly contas = signal<Conta[]>([]);
-  readonly categorias = signal<Categoria[]>([]);
+  /** Todas as categorias (inclusive inativas), para validar a categoria que chega pela URL. */
+  readonly todasCategorias = signal<Categoria[]>([]);
+  /** Categorias oferecidas nos selects: as ativas e, se for o caso, as inativas que estão no filtro. */
+  readonly categorias = computed(() =>
+    this.todasCategorias().filter((c) => c.ativa || this.categoriasFiltradas().includes(String(c.id))));
+  private readonly categoriasFiltradas = signal<string[]>([]);
+  /** Opções do filtro de categorias: "Sem categoria" e cada categoria seguida das subcategorias (recuadas). */
+  readonly opcoesCategoria = computed<OpcaoMultipla[]>(() => {
+    const lista = this.categorias();
+    const porNome = (a: Categoria, b: Categoria) => a.nome.localeCompare(b.nome, 'pt-BR');
+    const ids = new Set(lista.map((c) => c.id));
+    const raizes = lista.filter((c) => !c.categoriaPaiId || !ids.has(c.categoriaPaiId)).sort(porNome);
+    const opcoes: OpcaoMultipla[] = [{ valor: 'sem', rotulo: 'Sem categoria' }];
+    for (const r of raizes) {
+      opcoes.push({ valor: String(r.id), rotulo: this.rotuloCategoria(r), cor: r.cor });
+      for (const f of lista.filter((c) => c.categoriaPaiId === r.id).sort(porNome)) {
+        opcoes.push({ valor: String(f.id), rotulo: f.nome, cor: f.cor, nivel: 1 });
+      }
+    }
+    return opcoes;
+  });
   readonly pagina = signal<PaginaTransacoes | null>(null);
   readonly selecionadas = signal<Set<number>>(new Set());
   readonly salvando = signal(false);
@@ -358,33 +428,160 @@ export class TransacoesComponent implements OnInit {
   });
 
   filtro: FiltroTransacoes = this.filtroInicial();
-  filtroCategoria = '';
+  /** Categorias marcadas no filtro: 'sem' ou o id, na ordem em que foram marcadas. */
+  filtroCategorias: string[] = [];
+  /** Filtro da última busca (o que está na tela), base dos chips de "Filtrando:". */
+  private readonly filtroAplicado = signal<FiltroTransacoes>(this.filtroInicial());
+
+  /**
+   * UX-2: um chip para cada filtro diferente do padrão (mês atual, sem filtros), para quem chega por um link
+   * saber que a lista está filtrada. Nielsen 1 (visibilidade do estado) e 3 (controle: ✕ e "Limpar filtros").
+   */
+  readonly chipsFiltro = computed<ChipFiltro[]>(() => {
+    const f = this.filtroAplicado();
+    const padrao = this.filtroInicial();
+    const chips: ChipFiltro[] = [];
+    if (f.inicio !== padrao.inicio || f.fim !== padrao.fim) chips.push({ id: 'periodo', rotulo: rotuloPeriodo(f.inicio, f.fim) });
+    if (f.semCategoria) chips.push({ id: 'categoria:sem', rotulo: 'Sem categoria' });
+    for (const id of f.categoriaIds ?? []) {
+      const c = this.todasCategorias().find((x) => x.id === id);
+      chips.push({ id: `categoria:${id}`, rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
+    }
+    if (f.contaId) chips.push({ id: 'conta', rotulo: this.contas().find((c) => c.id === f.contaId)?.nome ?? 'Conta' });
+    if (f.tipo) {
+      const nomes: Record<number, string> = {
+        [TipoTransacao.Despesa]: 'Despesas', [TipoTransacao.Receita]: 'Receitas', [TipoTransacao.Transferencia]: 'Transferências'
+      };
+      chips.push({ id: 'tipo', rotulo: nomes[f.tipo] });
+    }
+    if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
+    if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
+    return chips;
+  });
+
+  removerFiltro(id: ChipFiltro['id']): void {
+    const padrao = this.filtroInicial();
+    if (id.startsWith('categoria:')) {
+      const valor = id.substring('categoria:'.length);
+      this.filtroCategorias = this.filtroCategorias.filter((v) => v !== valor);
+      this.sincronizarFiltroCategoria();
+    }
+    switch (id) {
+      case 'periodo': this.filtro.inicio = padrao.inicio; this.filtro.fim = padrao.fim; break;
+      case 'conta': this.filtro.contaId = null; break;
+      case 'tipo': this.filtro.tipo = null; break;
+      case 'emergencias': this.filtro.somenteEmergencias = false; break;
+      case 'busca': this.filtro.busca = ''; break;
+    }
+    this.buscar(1);
+  }
+
+  limparFiltros(): void {
+    this.filtro = this.filtroInicial();
+    this.filtroCategorias = [];
+    this.sincronizarFiltroCategoria();
+    this.buscar(1);
+  }
   categoriaLote: number | null = null;
   form: FormTransacao | null = null;
   transferencia: FormTransferencia | null = null;
 
   ngOnInit(): void {
-    this.api.contas().subscribe((c) => this.contas.set(c));
-    this.api.categorias().subscribe((c) => this.categorias.set(c.filter((x) => x.ativa)));
-    this.buscar(1);
+    const params = this.rota.snapshot.queryParamMap;
+    // Categoria/conta da URL só são aplicadas depois de conferir que existem; por isso, quando vierem,
+    // a primeira busca espera as listas (uma requisição só, sem a lista piscar).
+    const precisaListas = params.has('categoria') || params.has('conta');
+    forkJoin({ contas: this.api.contas(), categorias: this.api.categorias() }).subscribe({
+      next: ({ contas, categorias }) => {
+        this.contas.set(contas);
+        this.todasCategorias.set(categorias);
+        if (precisaListas) {
+          this.aplicarParametrosDaUrl(params);
+          this.buscar(paginaDaUrl(params));
+        }
+      },
+      error: (e) => {
+        this.avisos.erro(mensagemDeErro(e));
+        if (precisaListas) this.buscar(paginaDaUrl(params));
+      }
+    });
+    if (!precisaListas) {
+      this.aplicarParametrosDaUrl(params);
+      this.buscar(paginaDaUrl(params));
+    }
+  }
+
+  /**
+   * UX-1: filtro vindo de outra tela (?categoria=12|sem&inicio=yyyy-MM-dd&fim=yyyy-MM-dd&tipo=despesa|receita&conta=3).
+   * Várias categorias vêm separadas por vírgula (?categoria=12,20,sem).
+   * UX-5: e o que a própria tela grava na URL (&emergencias=1&busca=texto&pagina=2), para o F5 e o link salvo.
+   * Cada parâmetro é validado sozinho: um inválido é ignorado e os outros continuam valendo.
+   */
+  private aplicarParametrosDaUrl(params: ParamMap): void {
+    const inicio = params.get('inicio');
+    const fim = params.get('fim');
+    const inicioOk = dataIsoValida(inicio);
+    const fimOk = dataIsoValida(fim);
+    if (inicioOk) this.filtro.inicio = inicio;
+    if (fimOk) this.filtro.fim = fim;
+    // Só uma das datas veio válida: a outra acompanha o mês dela, para não sobrar um período invertido (lista vazia).
+    if (inicioOk !== fimOk && this.filtro.inicio! > this.filtro.fim!) {
+      const base = paraData(inicioOk ? this.filtro.inicio! : this.filtro.fim!);
+      if (inicioOk) this.filtro.fim = ultimoDiaMes(base.getFullYear(), base.getMonth() + 1);
+      else this.filtro.inicio = primeiroDiaMes(base.getFullYear(), base.getMonth() + 1);
+    }
+
+    const tipos: Record<string, TipoTransacao> = {
+      despesa: TipoTransacao.Despesa, receita: TipoTransacao.Receita, transferencia: TipoTransacao.Transferencia
+    };
+    const tipo = params.get('tipo');
+    if (tipo && tipos[tipo]) this.filtro.tipo = tipos[tipo];
+
+    const validas = new Set(['sem', ...this.todasCategorias().map((c) => String(c.id))]);
+    const categorias = (params.get('categoria') ?? '').split(',').map((v) => v.trim()).filter((v) => validas.has(v));
+    this.filtroCategorias = [...new Set(categorias)];
+    this.sincronizarFiltroCategoria();
+
+    const conta = Number(params.get('conta'));
+    if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
+
+    if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
+    const busca = params.get('busca')?.trim();
+    if (busca) this.filtro.busca = busca.slice(0, 100);
   }
 
   rotuloCategoria(c: Categoria): string {
     if (!c.categoriaPaiId) return c.nome;
-    const pai = this.categorias().find((x) => x.id === c.categoriaPaiId);
+    const pai = this.todasCategorias().find((x) => x.id === c.categoriaPaiId);
     return pai ? `${pai.nome} › ${c.nome}` : c.nome;
   }
 
-  aplicarFiltroCategoria(): void {
-    this.filtro.semCategoria = this.filtroCategoria === 'sem';
-    this.filtro.categoriaId = this.filtroCategoria && this.filtroCategoria !== 'sem' ? Number(this.filtroCategoria) : null;
+  aplicarFiltroCategorias(valores: string[]): void {
+    this.filtroCategorias = valores;
+    this.sincronizarFiltroCategoria();
     this.buscar(1);
+  }
+
+  /** Leva as categorias marcadas ('sem' | id) para o filtro da API. */
+  private sincronizarFiltroCategoria(): void {
+    this.filtro.semCategoria = this.filtroCategorias.includes('sem');
+    this.filtro.categoriaIds = this.filtroCategorias.filter((v) => v !== 'sem').map(Number);
+    this.filtro.categoriaId = null;
+    this.categoriasFiltradas.set(this.filtroCategorias);
   }
 
   buscar(pagina: number): void {
     this.filtro.pagina = pagina;
+    this.filtroAplicado.set({ ...this.filtro });
+    this.gravarFiltroNaUrl();
     this.api.transacoes(this.filtro).subscribe({
       next: (p) => {
+        // Página da URL que não existe mais (link antigo, menos transações agora): vai para a última que existe.
+        const ultima = Math.max(1, Math.ceil(p.total / p.tamanhoPagina));
+        if (!p.itens.length && p.pagina > ultima) {
+          this.buscar(ultima);
+          return;
+        }
         const trocouPagina = this.pagina() !== null && this.pagina()!.pagina !== p.pagina;
         this.pagina.set(p);
         this.limparSelecao();
@@ -392,6 +589,30 @@ export class TransacoesComponent implements OnInit {
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+  }
+
+  /**
+   * UX-5: o filtro da busca vai para a URL (só o que difere do padrão), para o F5 e o link salvo manterem a lista.
+   * replaceUrl: o voltar do navegador leva à tela anterior, não ao filtro anterior (julgamento próprio; Nielsen 4).
+   */
+  private gravarFiltroNaUrl(): void {
+    const f = this.filtro;
+    const padrao = this.filtroInicial();
+    const tipos: Record<number, ContextoTransacoes['tipo']> = {
+      [TipoTransacao.Despesa]: 'despesa', [TipoTransacao.Receita]: 'receita', [TipoTransacao.Transferencia]: 'transferencia'
+    };
+    const mudouPeriodo = f.inicio !== padrao.inicio || f.fim !== padrao.fim;
+    const params: Record<string, string> = paramsTransacoes({
+      inicio: mudouPeriodo ? f.inicio ?? undefined : undefined,
+      fim: mudouPeriodo ? f.fim ?? undefined : undefined,
+      tipo: f.tipo ? tipos[f.tipo] : undefined,
+      contaId: f.contaId ?? undefined
+    });
+    if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
+    if (f.somenteEmergencias) params['emergencias'] = '1';
+    if (f.busca?.trim()) params['busca'] = f.busca.trim();
+    if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
+    this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
   }
 
   mudarTamanhoPagina(tamanho: number): void {
@@ -625,9 +846,14 @@ export class TransacoesComponent implements OnInit {
     return {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
-      contaId: null, categoriaId: null, semCategoria: false, somenteEmergencias: false, tipo: null, busca: '', pagina: 1,
+      contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, tipo: null, busca: '', pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }
 }
 
+/** Página da lista vinda da URL (UX-5); inválida ou ausente = 1. */
+function paginaDaUrl(params: ParamMap): number {
+  const n = Number(params.get('pagina'));
+  return Number.isInteger(n) && n >= 1 && n <= 100000 ? n : 1;
+}

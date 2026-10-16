@@ -107,7 +107,7 @@ public class SelicService
                 await _config.DefinirAsync(ChaveUltimaConsulta, DateTime.UtcNow.ToString("O"), ct: ct);
                 await _db.SaveChangesAsync(ct);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 // Sem internet ou API indisponível: segue com o que já está em cache.
                 _logger.LogWarning(ex, "Não foi possível atualizar a Selic no Banco Central.");
@@ -142,7 +142,7 @@ public class SelicService
                 return meta;
             }
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogWarning(ex, "Não foi possível consultar a meta Selic.");
         }

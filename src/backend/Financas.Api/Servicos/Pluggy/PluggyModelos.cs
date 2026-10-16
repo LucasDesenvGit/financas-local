@@ -162,6 +162,60 @@ public class PluggyMovimentoInvestimento
     [JsonPropertyName("expenses")] public Dictionary<string, double?>? Expenses { get; set; }
 }
 
+/// <summary>Contrato de crédito (GET /loans): empréstimos e financiamentos do Open Finance.</summary>
+public class PluggyEmprestimo
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
+    /// <summary>Família do contrato na Pluggy (ex.: LOAN, FINANCING).</summary>
+    [JsonPropertyName("kind")] public string? Kind { get; set; }
+    [JsonPropertyName("contractNumber")] public string? ContractNumber { get; set; }
+    [JsonPropertyName("productName")] public string? ProductName { get; set; }
+    /// <summary>Modalidade do Open Finance (ex.: FINANCIAMENTO_HABITACIONAL_SFH).</summary>
+    [JsonPropertyName("type")] public string? Type { get; set; }
+    [JsonPropertyName("contractDate")] public DateTimeOffset? ContractDate { get; set; }
+    [JsonPropertyName("contractAmount")] public double? ContractAmount { get; set; }
+    [JsonPropertyName("currencyCode")] public string? CurrencyCode { get; set; }
+    [JsonPropertyName("dueDate")] public DateTimeOffset? DueDate { get; set; }
+    [JsonPropertyName("installmentPeriodicity")] public string? InstallmentPeriodicity { get; set; }
+    [JsonPropertyName("firstInstallmentDueDate")] public DateTimeOffset? FirstInstallmentDueDate { get; set; }
+    [JsonPropertyName("CET")] public double? Cet { get; set; }
+    [JsonPropertyName("amortizationScheduled")] public string? AmortizationScheduled { get; set; }
+    [JsonPropertyName("interestRates")] public List<PluggyTaxaEmprestimo>? InterestRates { get; set; }
+    [JsonPropertyName("installments")] public PluggyParcelasEmprestimo? Installments { get; set; }
+    [JsonPropertyName("payments")] public PluggyPagamentosEmprestimo? Payments { get; set; }
+}
+
+public class PluggyTaxaEmprestimo
+{
+    /// <summary>AA (ao ano) ou AM (ao mês).</summary>
+    [JsonPropertyName("taxPeriodicity")] public string? TaxPeriodicity { get; set; }
+    [JsonPropertyName("referentialRateIndexerType")] public string? ReferentialRateIndexerType { get; set; }
+    [JsonPropertyName("referentialRateIndexerSubType")] public string? ReferentialRateIndexerSubType { get; set; }
+    [JsonPropertyName("preFixedRate")] public double? PreFixedRate { get; set; }
+    [JsonPropertyName("postFixedRate")] public double? PostFixedRate { get; set; }
+}
+
+public class PluggyParcelasEmprestimo
+{
+    [JsonPropertyName("totalNumberOfInstallments")] public int? TotalNumberOfInstallments { get; set; }
+    [JsonPropertyName("paidInstallments")] public int? PaidInstallments { get; set; }
+    [JsonPropertyName("dueInstallments")] public int? DueInstallments { get; set; }
+    [JsonPropertyName("pastDueInstallments")] public int? PastDueInstallments { get; set; }
+}
+
+public class PluggyPagamentosEmprestimo
+{
+    [JsonPropertyName("contractOutstandingBalance")] public double? ContractOutstandingBalance { get; set; }
+    [JsonPropertyName("releases")] public List<PluggyPagamentoEmprestimo>? Releases { get; set; }
+}
+
+public class PluggyPagamentoEmprestimo
+{
+    [JsonPropertyName("isOverParcelPayment")] public bool? IsOverParcelPayment { get; set; }
+    [JsonPropertyName("paidDate")] public DateTimeOffset? PaidDate { get; set; }
+    [JsonPropertyName("paidAmount")] public double? PaidAmount { get; set; }
+}
+
 public class PluggyCategoria
 {
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;

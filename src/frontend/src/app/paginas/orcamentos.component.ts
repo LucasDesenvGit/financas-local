@@ -1,13 +1,14 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Categoria, Orcamento, TipoCategoria, TipoTransacao, ValorCategoria } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { mesAnoDaUrl, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 interface LinhaOrcamento {
@@ -19,7 +20,7 @@ interface LinhaOrcamento {
 
 @Component({
   selector: 'app-orcamentos',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, SeletorMesComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Orçamentos</h1>
@@ -57,7 +58,8 @@ interface LinhaOrcamento {
         <tbody>
           @for (l of linhas(); track l.categoria.id) {
             <tr>
-              <td><span class="chip"><span class="ponto" [style.background]="l.categoria.cor"></span>{{ l.categoria.nome }}</span></td>
+              <td><a class="chip chip-link" routerLink="/transacoes" [queryParams]="linkCategoria(l.categoria.id)"
+                [attr.aria-label]="'Ver transações de ' + l.categoria.nome"><span class="ponto" [style.background]="l.categoria.cor"></span>{{ l.categoria.nome }}</a></td>
               <td class="direita valor">{{ l.gasto | currency }}
                 @if (l.orcamento && l.orcamento.gastoEmergencia > 0) {
                   <br><small class="texto-emergencia">{{ l.orcamento.gastoEmergencia | currency }} emergência</small>
@@ -87,20 +89,32 @@ interface LinhaOrcamento {
 export class OrcamentosComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   readonly linhas = signal<LinhaOrcamento[]>([]);
+
+  /** UX-3: despesas da categoria no mês do orçamento. */
+  linkCategoria(categoriaId: number): Record<string, string> {
+    const { ano, mes } = this.periodo();
+    return paramsTransacoes({ categoriaId, inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' });
+  }
 
   readonly totalOrcado = computed(() => this.linhas().reduce((s, l) => s + (l.orcamento?.valor ?? 0), 0));
   readonly totalEmergencia = computed(() => this.linhas().reduce((s, l) => s + (l.orcamento?.gastoEmergencia ?? 0), 0));
   readonly totalGastoOrcado = computed(() => this.linhas().reduce((s, l) => s + (l.orcamento ? l.gasto : 0), 0));
 
   ngOnInit(): void {
+    const daUrl = mesAnoDaUrl(this.rota.snapshot.queryParamMap);
+    if (daUrl) this.periodo.set(daUrl);
     this.carregar();
   }
 
   mudarPeriodo(p: MesAno): void {
     this.periodo.set(p);
+    // Mês na URL: ao voltar de Transações, Orçamentos reabre no mesmo mês.
+    void this.router.navigate([], { relativeTo: this.rota, queryParams: { ano: p.ano, mes: p.mes }, replaceUrl: true });
     this.carregar();
   }
 

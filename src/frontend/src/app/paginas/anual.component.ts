@@ -8,12 +8,19 @@ import { NaturezaGasto, PainelAnual } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilhado/utilidades';
+import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
+import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
+import { ChaveGlossario } from '../compartilhado/glossario';
 
 type Status = 'ok' | 'atencao' | 'alerta' | 'neutro';
 
 interface Indicador {
   titulo: string;
+  /** Termo do glossário (UX-10), quando o título é um termo técnico. */
+  termo?: ChaveGlossario;
   valor: string;
   meta: string;
   explicacao: string;
@@ -21,16 +28,16 @@ interface Indicador {
   progresso: number | null; // 0–100 em relação à meta
 }
 
-const COR_ATUAL = '#a7a3f5';
+const COR_ATUAL = CORES_GRAFICO.saldo;
 const COR_ANTERIOR = '#c9c6dd';
-const COR_RECEITA = '#8fd5b4';
-const COR_RECEITA_ANTERIOR = '#cfe9dc';
+const COR_RECEITA = CORES_GRAFICO.receita;
+const COR_RECEITA_ANTERIOR = CORES_GRAFICO.receitaAnterior;
 
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
 @Component({
   selector: 'app-anual',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent],
+  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -59,7 +66,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
         @for (i of indicadores(); track i.titulo) {
           <article class="indicador" [class]="'indicador indicador-' + i.status">
             <div class="indicador-topo">
-              <span>{{ i.titulo }}</span>
+              @if (i.termo) { <span><app-termo [chave]="i.termo">{{ i.titulo }}</app-termo></span> } @else { <span>{{ i.titulo }}</span> }
               <span class="indicador-selo">{{ rotuloStatus(i.status) }}</span>
             </div>
             <strong>{{ i.valor }}</strong>
@@ -92,109 +99,123 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 
       <div class="grade-2">
         <section class="painel-bloco">
-          <h2>Despesas mês a mês</h2>
-          <app-grafico [configuracao]="graficoDespesas()" [altura]="260" />
-        </section>
-        <section class="painel-bloco">
-          <h2>Receitas mês a mês</h2>
-          <app-grafico [configuracao]="graficoReceitas()" [altura]="260" />
-        </section>
-      </div>
-
-      <div class="grade-2">
-        <section class="painel-bloco">
           <h2>Poupança acumulada no ano</h2>
-          <p class="texto-suave subtitulo-grafico">Quanto sobrou somando mês a mês: a linha subindo mostra que você está guardando.</p>
-          <app-grafico [configuracao]="graficoAcumulado()" [altura]="250" />
-        </section>
-        <section class="painel-bloco">
-          <h2>Taxa de poupança por mês</h2>
-          <p class="texto-suave subtitulo-grafico">Parte da renda que sobrou em cada mês. A linha tracejada é a referência de 20%.</p>
-          <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
-        </section>
-      </div>
-
-      <div class="grade-2">
-        <section class="painel-bloco">
-          <h2>Para onde vai a sua renda (regra 50/30/20)</h2>
-          <p class="texto-suave subtitulo-grafico">Referência: até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados.
-            Classifique as categorias em Categorias e regras.</p>
-          <app-grafico [configuracao]="grafico503020()" [altura]="170" />
-          @if (d.distribuicao.naoClassificado > 0) {
-            <p class="texto-suave pequeno-texto">{{ d.distribuicao.naoClassificado | currency }} em categorias sem classificação.</p>
-          }
+          <app-grafico-explicado [resumo]="resumoAcumulado()"
+            comoLer="Quanto sobrou somando mês a mês: a linha subindo mostra que você está guardando. Linha cheia: ano escolhido; tracejada: ano de comparação.">
+            <app-grafico [configuracao]="graficoAcumulado()" [altura]="250" />
+          </app-grafico-explicado>
         </section>
         <section class="painel-bloco">
           <h2>Patrimônio estimado</h2>
-          <p class="texto-suave subtitulo-grafico">Reconstruído a partir do patrimônio de hoje e do resultado de cada mês.</p>
-          <app-grafico [configuracao]="graficoPatrimonio()" [altura]="230" />
+          <app-grafico-explicado [resumo]="resumoPatrimonio()"
+            comoLer="Estimativa: parte do patrimônio de hoje e desconta o resultado de cada mês seguinte. Não inclui a variação de preço dos investimentos ao longo do ano.">
+            <app-grafico [configuracao]="graficoPatrimonio()" [altura]="230" />
+          </app-grafico-explicado>
         </section>
       </div>
 
       <section class="painel-bloco">
-        <h2>Categorias: {{ d.ano }} × {{ d.anoComparacao }} <small class="texto-suave">(mesmo período)</small></h2>
-        <div class="tabela-rolagem">
-          <table class="tabela">
-            <thead>
-              <tr><th>Categoria</th><th class="direita">{{ d.ano }}</th><th class="direita">{{ d.anoComparacao }}</th>
-                <th class="direita">Variação</th><th style="width: 30%">Peso nos gastos</th></tr>
-            </thead>
-            <tbody>
-              @for (c of d.categorias.slice(0, 15); track c.nome) {
-                <tr>
-                  <td>
-                    <span class="chip"><span class="ponto" [style.background]="c.cor"></span>{{ c.nome }}</span>
-                    @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
-                  </td>
-                  <td class="direita valor">{{ c.valor | currency }}</td>
-                  <td class="direita texto-suave">{{ c.valorAnterior | currency }}</td>
-                  <td class="direita">
-                    @if (c.valorAnterior > 0) {
-                      <span class="variacao-selo" [class.ruim]="c.valor > c.valorAnterior" [class.bom]="c.valor <= c.valorAnterior">
-                        {{ c.valor >= c.valorAnterior ? '▲' : '▼' }} {{ variacaoAbs(c.valor, c.valorAnterior) | number: '1.0-0' }}%
-                      </span>
-                    } @else { <span class="texto-suave">novo</span> }
-                  </td>
-                  <td>
-                    <div class="trilho"><div class="progresso" [style.background]="c.cor"
-                      [style.width.%]="d.resumo.despesas > 0 ? c.valor / d.resumo.despesas * 100 : 0"></div></div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr><td colspan="5" class="vazio">Sem despesas no período.</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <h2>Para onde vai a sua renda (<app-termo chave="regra503020">regra 50/30/20</app-termo>)</h2>
+        <app-grafico-explicado [resumo]="resumo503020()"
+          comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Classifique as categorias em Categorias e regras.">
+          <app-grafico [configuracao]="grafico503020()" [altura]="170" />
+        </app-grafico-explicado>
+        @if (d.distribuicao.naoClassificado > 0) {
+          <p class="texto-suave pequeno-texto">{{ d.distribuicao.naoClassificado | currency }} em categorias sem classificação.</p>
+        }
       </section>
 
-      @if (mapa().linhas.length) {
-        <section class="painel-bloco">
-          <h2>Mapa de gastos {{ d.ano }}</h2>
-          <p class="texto-suave subtitulo-grafico">Quanto mais forte a cor, maior o gasto da categoria naquele mês.</p>
-          <div class="tabela-rolagem">
-            <table class="tabela mapa-calor">
-              <thead>
-                <tr><th>Categoria</th>
-                  @for (m of mapa().meses; track m) { <th class="direita">{{ nomeMes(m) }}</th> }
-                </tr>
-              </thead>
-              <tbody>
-                @for (l of mapa().linhas; track l.nome) {
-                  <tr>
-                    <td class="nowrap"><span class="ponto" [style.background]="l.cor"></span>{{ l.nome }}</td>
-                    @for (v of l.valores; track $index) {
-                      <td class="direita celula-calor" [style.background]="corCalor(l.cor, v, l.maximo)">
-                        {{ v > 0 ? (v | currency) : '' }}
-                      </td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
+      <app-mais-analises chave="anual" conteudo="despesas e receitas mês a mês, taxa de poupança por mês, categorias e mapa de gastos">
+        <ng-template>
+          <div class="grade-2">
+            <section class="painel-bloco">
+              <h2>Despesas mês a mês</h2>
+              <app-grafico-explicado [resumo]="resumoDespesas()" [comoLer]="comoLerComparacao()">
+                <app-grafico [configuracao]="graficoDespesas()" [altura]="260" />
+              </app-grafico-explicado>
+            </section>
+            <section class="painel-bloco">
+              <h2>Receitas mês a mês</h2>
+              <app-grafico-explicado [resumo]="resumoReceitas()" [comoLer]="comoLerComparacao()">
+                <app-grafico [configuracao]="graficoReceitas()" [altura]="260" />
+              </app-grafico-explicado>
+            </section>
           </div>
-        </section>
-      }
+
+          <section class="painel-bloco">
+            <h2><app-termo chave="taxaPoupanca">Taxa de poupança</app-termo> por mês</h2>
+            <app-grafico-explicado [resumo]="resumoTaxa()"
+              comoLer="Parte da renda que sobrou em cada mês. Verde: 20% ou mais; amarelo: entre 0 e 20%; rosa: mês no vermelho. A linha tracejada é a referência de 20%.">
+              <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
+            </app-grafico-explicado>
+          </section>
+
+          <section class="painel-bloco">
+            <h2>Categorias: {{ d.ano }} × {{ d.anoComparacao }} <small class="texto-suave">(mesmo período)</small></h2>
+            <div class="tabela-rolagem">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Categoria</th><th class="direita">{{ d.ano }}</th><th class="direita">{{ d.anoComparacao }}</th>
+                    <th class="direita">Variação</th><th style="width: 30%">Peso nos gastos</th></tr>
+                </thead>
+                <tbody>
+                  @for (c of d.categorias.slice(0, 15); track c.nome) {
+                    <tr>
+                      <td>
+                        <span class="chip"><span class="ponto" [style.background]="c.cor"></span>{{ c.nome }}</span>
+                        @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
+                      </td>
+                      <td class="direita valor">{{ c.valor | currency }}</td>
+                      <td class="direita texto-suave">{{ c.valorAnterior | currency }}</td>
+                      <td class="direita">
+                        @if (c.valorAnterior > 0) {
+                          <span class="variacao-selo" [class.ruim]="c.valor > c.valorAnterior" [class.bom]="c.valor <= c.valorAnterior">
+                            {{ c.valor >= c.valorAnterior ? '▲' : '▼' }} {{ variacaoAbs(c.valor, c.valorAnterior) | number: '1.0-0' }}%
+                          </span>
+                        } @else { <span class="texto-suave">novo</span> }
+                      </td>
+                      <td>
+                        <div class="trilho"><div class="progresso" [style.background]="c.cor"
+                          [style.width.%]="d.resumo.despesas > 0 ? c.valor / d.resumo.despesas * 100 : 0"></div></div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="5" class="vazio">Sem despesas no período.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          @if (mapa().linhas.length) {
+            <section class="painel-bloco">
+              <h2>Mapa de gastos {{ d.ano }}</h2>
+              <p class="texto-suave subtitulo-grafico">Quanto mais forte a cor, maior o gasto da categoria naquele mês.</p>
+              <div class="tabela-rolagem">
+                <table class="tabela mapa-calor">
+                  <thead>
+                    <tr><th>Categoria</th>
+                      @for (m of mapa().meses; track m) { <th class="direita">{{ nomeMes(m) }}</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (l of mapa().linhas; track l.nome) {
+                      <tr>
+                        <td class="nowrap"><span class="ponto" [style.background]="l.cor"></span>{{ l.nome }}</td>
+                        @for (v of l.valores; track $index) {
+                          <td class="direita celula-calor" [style.background]="corCalor(l.cor, v, l.maximo)">
+                            {{ v > 0 ? (v | currency) : '' }}
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+        </ng-template>
+      </app-mais-analises>
     } @else if (!erro()) {
       <p class="texto-suave">Carregando…</p>
     }
@@ -231,7 +252,7 @@ export class AnualComponent implements OnInit {
 
     return [
       {
-        titulo: 'Taxa de poupança',
+        titulo: 'Taxa de poupança', termo: 'taxaPoupanca',
         valor: d.resumo.receitas > 0 ? `${this.fmt(taxa)}%` : '—',
         meta: 'Meta: guardar pelo menos 20% da renda',
         explicacao: taxa >= 20 ? 'Ótimo: você está guardando uma boa parte do que ganha.'
@@ -241,7 +262,7 @@ export class AnualComponent implements OnInit {
         progresso: d.resumo.receitas > 0 ? Math.max(0, Math.min(100, (taxa / 20) * 100)) : null
       },
       {
-        titulo: 'Reserva de emergência',
+        titulo: 'Reserva de emergência', termo: 'reservaEmergencia',
         valor: reserva === null ? '—' : `${this.fmt(reserva)} meses`,
         meta: `Meta: 6 meses de gastos${s.mesesDeReservaEssencial !== null ? ` · só essenciais: ${this.fmt(s.mesesDeReservaEssencial)} meses` : ''}`,
         explicacao: reserva === null ? 'Sem histórico de gastos suficiente.'
@@ -252,9 +273,11 @@ export class AnualComponent implements OnInit {
         progresso: reserva === null ? null : Math.min(100, (reserva / 6) * 100)
       },
       {
-        titulo: 'Comprometimento com parcelas',
+        titulo: 'Comprometimento com parcelas', termo: 'comprometimento',
         valor: comp === null ? '—' : `${this.fmt(comp)}% da renda`,
-        meta: oculto ? 'Ideal: abaixo de 30%' : `Ideal: abaixo de 30% · parcelas no último mês: ${this.moeda(s.parcelasMensais)}`,
+        meta: oculto ? 'Ideal: abaixo de 30%' : `Ideal: abaixo de 30% · cartão: ${this.moeda(s.parcelasMensais)}`
+          + (s.parcelasFinanciamentos > 0 ? ` · financiamentos: ${this.moeda(s.parcelasFinanciamentos)}` : '')
+          + (s.parcelasEmprestimos > 0 ? ` · empréstimos: ${this.moeda(s.parcelasEmprestimos)}` : ''),
         explicacao: comp === null ? 'Sem renda registrada no período.'
           : comp < 15 ? 'Parcelas sob controle.'
           : comp < 30 ? 'Atenção a novas compras parceladas.'
@@ -295,7 +318,78 @@ export class AnualComponent implements OnInit {
   private readonly rotulosMeses = NOMES_MESES_CURTOS.map((m) => m);
 
   readonly graficoDespesas = computed<ChartConfiguration<'line'>>(() => this.linhasComparativas(
-    (m) => m.despesas, (m) => m.despesasAnterior, COR_ATUAL, COR_ANTERIOR));
+    (m) => m.despesas, (m) => m.despesasAnterior, CORES_GRAFICO.despesa, CORES_GRAFICO.despesaAnterior));
+
+  /* ---------------- UX-9: frases-resumo (sem R$ quando "ocultar valores" está ligado) ---------------- */
+
+  readonly comoLerComparacao = computed(() => {
+    const d = this.dados();
+    return d ? `Linha cheia: ${d.ano}; tracejada: ${d.anoComparacao}. Mês acima da tracejada = valor maior que no ano de comparação.` : '';
+  });
+
+  readonly resumoDespesas = computed(() => this.resumoComparacao('Despesas', (r) => r.despesas));
+  readonly resumoReceitas = computed(() => this.resumoComparacao('Receitas', (r) => r.receitas));
+
+  readonly resumoAcumulado = computed(() => {
+    const d = this.dados();
+    if (!d || d.mesLimite === 0 || (d.resumo.receitas <= 0 && d.resumo.despesas <= 0)) return null;
+    const ate = NOMES_MESES[d.mesLimite - 1];
+    const valor = reaisOuNada(Math.abs(d.resumo.resultado), this.privacidade.oculto());
+    if (d.resumo.resultado >= 0) {
+      const taxa = d.resumo.receitas > 0 ? ` (${pct(d.resumo.taxaPoupanca)} da renda)` : '';
+      return `Até ${ate}, você guardou${valor ? ` ${valor}` : ''} no ano${taxa}.`;
+    }
+    return `Até ${ate}, as despesas passaram as receitas${valor ? ` em ${valor}` : ''} no ano.`;
+  });
+
+  readonly resumoTaxa = computed(() => {
+    const meses = (this.dados()?.meses ?? []).filter((m) => !m.futuro && m.receitas > 0);
+    if (!meses.length) return null;
+    const bons = meses.filter((m) => (m.receitas - m.despesas) / m.receitas >= 0.2).length;
+    if (bons === meses.length) return `Você guardou pelo menos 20% da renda em todos os ${meses.length} meses.`;
+    return `Você guardou pelo menos 20% da renda em ${bons} de ${meses.length} meses.`;
+  });
+
+  readonly resumo503020 = computed(() => {
+    const d = this.dados()?.distribuicao;
+    if (!d || d.receitas <= 0) return null;
+    const parte = (v: number) => pct(v / d.receitas * 100);
+    return `Essenciais: ${parte(d.essenciais)} da renda; estilo de vida: ${parte(d.estiloDeVida + d.naoClassificado)}; `
+      + `guardado: ${parte(Math.max(0, d.poupanca))}.`;
+  });
+
+  readonly resumoPatrimonio = computed(() => {
+    const valores = (this.dados()?.meses ?? []).filter((m) => m.patrimonioEstimado !== null);
+    if (valores.length < 2) return null;
+    const inicio = valores[0];
+    const fim = valores[valores.length - 1];
+    const a = inicio.patrimonioEstimado!;
+    const b = fim.patrimonioEstimado!;
+    const desde = NOMES_MESES[inicio.mes - 1];
+    if (Math.abs(b - a) < 1) return `O patrimônio estimado ficou estável desde ${desde}.`;
+    const direcao = b > a ? 'subiu' : 'caiu';
+    if (a > 0) return `O patrimônio estimado ${direcao} ${pct((b - a) / a * 100)} desde ${desde}.`;
+    const valor = reaisOuNada(Math.abs(b - a), this.privacidade.oculto());
+    return `O patrimônio estimado ${direcao}${valor ? ` ${valor}` : ''} desde ${desde}.`;
+  });
+
+  /** "Despesas 12% acima de 2025 no mesmo período (jan–out)." */
+  private resumoComparacao(nome: string, valor: (r: PainelAnual['resumo']) => number): string | null {
+    const d = this.dados();
+    if (!d || d.mesLimite === 0) return null;
+    const v = this.variacao(valor(d.resumo), valor(d.resumoAnteriorMesmoPeriodo));
+    const periodo = d.mesLimite === 12 ? '' : ` (jan–${NOMES_MESES_CURTOS[d.mesLimite - 1]})`;
+    if (v === null) return `Sem dados de ${d.anoComparacao} para comparar.`;
+    // Ano de comparação com menos meses de movimento (ex.: primeiro ano de uso): a variação engana.
+    const noPeriodo = d.meses.filter((m) => m.mes <= d.mesLimite);
+    const mesesAtual = noPeriodo.filter((m) => !m.futuro && (m.receitas > 0 || m.despesas > 0)).length;
+    const mesesAnterior = noPeriodo.filter((m) => m.receitasAnterior > 0 || m.despesasAnterior > 0).length;
+    if (mesesAnterior < mesesAtual) {
+      return `Só ${mesesAnterior} de ${mesesAtual} meses de ${d.anoComparacao} têm movimento no mesmo período: a comparação ainda não é confiável.`;
+    }
+    if (Math.abs(v) < 1) return `${nome} praticamente iguais às de ${d.anoComparacao} no mesmo período${periodo}.`;
+    return `${nome} ${pct(v)} ${v > 0 ? 'acima' : 'abaixo'} de ${d.anoComparacao} no mesmo período${periodo}.`;
+  }
 
   readonly graficoReceitas = computed<ChartConfiguration<'line'>>(() => this.linhasComparativas(
     (m) => m.receitas, (m) => m.receitasAnterior, COR_RECEITA, COR_RECEITA_ANTERIOR));
@@ -330,7 +424,7 @@ export class AnualComponent implements OnInit {
         datasets: [
           {
             label: 'Taxa de poupança (%)', data: taxas,
-            backgroundColor: taxas.map((t) => (t === null ? 'transparent' : t >= 20 ? '#8fd5b4' : t >= 0 ? '#f6d38a' : '#f5a3b0')),
+            backgroundColor: taxas.map((t) => (t === null ? 'transparent' : t >= 20 ? CORES_GRAFICO.ganhou : t >= 0 ? '#f6d38a' : CORES_GRAFICO.perdeu)),
             borderRadius: 8, borderSkipped: false
           },
           {
@@ -360,7 +454,7 @@ export class AnualComponent implements OnInit {
         datasets: [
           { label: 'Essenciais', data: [essenciais, 50], backgroundColor: '#92c8f0', borderRadius: 6 },
           { label: 'Estilo de vida', data: [estilo, 30], backgroundColor: '#f3b3d3', borderRadius: 6 },
-          { label: 'Guardado', data: [poupanca, 20], backgroundColor: '#8fd5b4', borderRadius: 6 }
+          { label: 'Guardado', data: [poupanca, 20], backgroundColor: CORES_GRAFICO.ganhou, borderRadius: 6 }
         ]
       },
       options: {

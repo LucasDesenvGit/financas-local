@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Financas.Api.Data;
 using Financas.Api.Entidades;
+using Financas.Api.Servicos.Cambio;
 using Microsoft.EntityFrameworkCore;
 
 namespace Financas.Api.Servicos.Investimentos;
@@ -13,6 +14,7 @@ public record ResultadoCotacoes(int Atualizados, int ProventosNovos, List<string
 /// <summary>
 /// Cotações e proventos de ativos da B3. Fonte principal: Yahoo Finance (pública, sem chave, não oficial).
 /// Alternativa opcional: brapi.dev (exige token gratuito, configurado em Investimentos).
+/// Ativos no exterior (moeda diferente de BRL) usam o código como no Yahoo, sem ".SA"; a brapi só atende a B3.
 /// Somente o código do ativo (ex.: MXRF11) é enviado; nenhuma quantidade, valor ou dado pessoal sai do computador.
 /// </summary>
 public partial class CotacaoService
@@ -24,21 +26,26 @@ public partial class CotacaoService
     private readonly IHttpClientFactory _fabrica;
     private readonly FinancasDbContext _db;
     private readonly ConfiguracaoService _config;
+    private readonly CambioService _cambio;
     private readonly ILogger<CotacaoService> _logger;
 
     public CotacaoService(IHttpClientFactory fabrica, FinancasDbContext db, ConfiguracaoService config,
-        ILogger<CotacaoService> logger)
+        CambioService cambio, ILogger<CotacaoService> logger)
     {
         _fabrica = fabrica;
         _db = db;
         _config = config;
+        _cambio = cambio;
         _logger = logger;
     }
 
     [GeneratedRegex("^[A-Z][A-Z0-9]{3}[0-9]{1,2}F?$")]
     private static partial Regex FormatoTicker();
 
-    /// <summary>Normaliza e valida um código da B3 (ex.: "mxrf11 " → "MXRF11"). Retorna null se inválido.</summary>
+    /// <summary>
+    /// Normaliza e valida um código da B3 (ex.: "mxrf11 " → "MXRF11"). Retorna null se inválido. Formato estrito de
+    /// propósito: ativos fora da B3 (AOK, AAPL) entram pela moeda, com <see cref="NormalizarTickerExterior"/> (ADR 0009).
+    /// </summary>
     public static string? NormalizarTicker(string? ticker)
     {
         var t = (ticker ?? string.Empty).Trim().ToUpperInvariant();
@@ -47,6 +54,26 @@ public partial class CotacaoService
         // Mercado fracionário (final F) usa a mesma cotação do lote padrão.
         return t.Length >= 6 && t.EndsWith('F') ? t[..^1] : t;
     }
+
+    [GeneratedRegex("^[A-Z0-9][A-Z0-9.\\-]{0,11}$")]
+    private static partial Regex FormatoTickerExterior();
+
+    /// <summary>
+    /// Normaliza e valida o código de um ativo no exterior, como no Yahoo Finance (ex.: "aapl" → "AAPL", "SAP.DE").
+    /// Retorna null se inválido ou se for um código da B3 (".SA").
+    /// </summary>
+    public static string? NormalizarTickerExterior(string? ticker)
+    {
+        var t = (ticker ?? string.Empty).Trim().ToUpperInvariant();
+        if (!FormatoTickerExterior().IsMatch(t) || !t.Any(char.IsLetter)) return null;
+        // Código da B3 (".SA" ou no formato PETR4/MXRF11) não pode virar ativo no exterior: colidiria com o da B3.
+        if (t.EndsWith(".SA", StringComparison.Ordinal) || FormatoTicker().IsMatch(t)) return null;
+        return t;
+    }
+
+    /// <summary>Normaliza o código conforme a moeda do ativo: BRL = B3; outra moeda = exterior.</summary>
+    public static string? NormalizarTicker(string? ticker, string moeda)
+        => moeda == CambioService.MoedaBase ? NormalizarTicker(ticker) : NormalizarTickerExterior(ticker);
 
     public async Task<ResultadoCotacoes> AtualizarAsync(IEnumerable<int>? somenteAtivos, CancellationToken ct)
     {
@@ -68,23 +95,35 @@ public partial class CotacaoService
             ct.ThrowIfCancellationRequested();
             var primeiraOperacao = ativo.Operacoes.Count > 0 ? ativo.Operacoes.Min(o => o.Data) : Relogio.Hoje;
 
+            var exterior = ativo.Moeda != CambioService.MoedaBase;
             CotacaoObtida? cotacao = null;
             try
             {
-                cotacao = await YahooAsync(ativo.Ticker, primeiraOperacao, ct);
+                cotacao = await YahooAsync(exterior ? ativo.Ticker : ativo.Ticker + ".SA", primeiraOperacao, ct);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Falha ao consultar {Ticker} no Yahoo Finance.", ativo.Ticker);
             }
 
-            if (cotacao?.Preco is null && !string.IsNullOrWhiteSpace(token))
+            // Cotação em outra moeda que não a do ativo seria convertida errado: descarta. Comparação exata de propósito:
+            // o Yahoo usa "GBp" (pence, 1/100 de libra) em Londres, que não pode passar como "GBP".
+            if (cotacao?.Moeda is string moedaFonte && !string.Equals(moedaFonte, ativo.Moeda, StringComparison.Ordinal))
+            {
+                _logger.LogWarning("Cotação de {Ticker} veio em {MoedaFonte}, mas o ativo está em {Moeda}; ignorada.",
+                    ativo.Ticker, moedaFonte, ativo.Moeda);
+                cotacao = null;
+            }
+
+            if (exterior) await _cambio.GarantirHistoricoAsync(ativo.Moeda, primeiraOperacao, ct);
+
+            if (cotacao?.Preco is null && !exterior && !string.IsNullOrWhiteSpace(token))
             {
                 try
                 {
                     cotacao = await BrapiAsync(ativo.Ticker, token, ct) ?? cotacao;
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+                catch (Exception ex) when (!ct.IsCancellationRequested)
                 {
                     _logger.LogWarning(ex, "Falha ao consultar {Ticker} na brapi.", ativo.Ticker);
                 }
@@ -134,7 +173,7 @@ public partial class CotacaoService
         if (ativos.Count > 0)
         {
             try { await AtualizarIndiceAsync(CodigoIfix, ct); }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Não foi possível atualizar o IFIX.");
             }
@@ -147,16 +186,19 @@ public partial class CotacaoService
         List<(DateOnly DataCom, decimal Valor)> Proventos)
     {
         public List<(DateOnly Mes, decimal Fechamento)> Mensais { get; init; } = new();
+        /// <summary>Moeda em que a fonte informou o preço, quando ela informa.</summary>
+        public string? Moeda { get; init; }
     }
 
-    private async Task<CotacaoObtida?> YahooAsync(string ticker, DateOnly primeiraOperacao, CancellationToken ct)
+    /// <param name="simboloYahoo">Código como no Yahoo: "MXRF11.SA" para a B3, "AAPL" para o exterior.</param>
+    private async Task<CotacaoObtida?> YahooAsync(string simboloYahoo, DateOnly primeiraOperacao, CancellationToken ct)
     {
         var http = _fabrica.CreateClient(ClienteYahoo);
-        var simbolo = Uri.EscapeDataString(ticker + ".SA");
+        var simbolo = Uri.EscapeDataString(simboloYahoo);
 
         // 1) Preço atual e fechamento anterior.
         decimal? preco = null, anterior = null;
-        string? nome = null;
+        string? nome = null, moeda = null;
         using (var resp = await http.GetAsync($"v8/finance/chart/{simbolo}?range=5d&interval=1d", ct))
         {
             if (resp.IsSuccessStatusCode)
@@ -166,6 +208,7 @@ public partial class CotacaoService
                 {
                     preco = Numero(meta, "regularMarketPrice");
                     nome = Texto(meta, "longName") ?? Texto(meta, "shortName");
+                    moeda = Texto(meta, "currency");
                     var fechamentos = Fechamentos(r);
                     // Fechamento anterior = penúltimo pregão (o último é o de hoje, se houver).
                     if (fechamentos.Count >= 2) anterior = fechamentos[^2];
@@ -204,7 +247,7 @@ public partial class CotacaoService
         }
 
         if (preco is null && proventos.Count == 0 && mensais.Count == 0) return null;
-        return new CotacaoObtida(preco, anterior, nome, "Yahoo Finance", proventos) { Mensais = mensais };
+        return new CotacaoObtida(preco, anterior, nome, "Yahoo Finance", proventos) { Mensais = mensais, Moeda = moeda };
     }
 
     public const string CodigoIfix = "IFIX";
@@ -284,7 +327,7 @@ public partial class CotacaoService
             if (Resultado(doc) is not JsonElement r) return resultado;
             foreach (var (data, fechamento) in SerieFechamentos(r)) resultado[data] = fechamento;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogWarning(ex, "Falha ao consultar o histórico de {Ticker}.", ticker);
         }

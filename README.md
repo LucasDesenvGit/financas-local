@@ -1,11 +1,12 @@
 # Finanças Local
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador. A API é em C# (.NET 10) e roda no IIS, o front-end é em Angular e o banco é SQL Server Express. Tudo fica em `D:\FinancasLocal`. Os dados bancários chegam automaticamente pelo **Open Finance**, via **Meu Pluggy**.
+Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, Windows ou Linux. A API é em C# (.NET 10) e hospeda a si mesma via Kestrel (sem IIS), o front-end é em Angular e o banco é SQLite. Tudo fica numa pasta local só sua. Os dados bancários chegam automaticamente pelo **Open Finance**, via **Meu Pluggy**.
 
 | Documento | Conteúdo |
 |---|---|
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, pastas e decisões técnicas |
 | [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md) | Como alterar a estrutura do banco (sem migrations) |
+| [docs/adr/](docs/adr/README.md) | Decisões de arquitetura (ADRs): por que cada escolha foi feita |
 | [CONTRIBUINDO.md](CONTRIBUINDO.md) | Branches, commits, pull requests e checklist |
 | [CHANGELOG.md](CHANGELOG.md) | Histórico de versões |
 
@@ -14,11 +15,11 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador. 
 | Área | Funcionalidades |
 |---|---|
 | Painel | Patrimônio líquido (com a renda variável pela cotação atual), patrimônio sem renda variável, saldo em contas, faturas, investimentos, receitas × despesas do mês, gastos por categoria, evolução de 12 meses, orçamentos, próximos vencimentos e alertas (orçamento estourado, conta vencida, consentimento expirando, falha de sincronização) |
-| Transações | Filtros por período, conta, categoria, tipo e texto; categorização em lote; lançamentos manuais; transferências; parcelas; transações pendentes; opção de ignorar nos relatórios |
+| Transações | Filtros por período, conta, uma ou várias categorias (com "sem categoria"), tipo e texto; categorização em lote; lançamentos manuais; transferências; parcelas; transações pendentes; opção de ignorar nos relatórios |
 | Contas e cartões | Contas do Open Finance (automáticas) e manuais (carteira, bancos sem Open Finance); limite e faturas de cartão |
 | Orçamentos | Limite mensal por categoria, progresso, "copiar do mês anterior" |
 | Metas | Valor alvo, data, aporte mensal sugerido, metas que acompanham o saldo de uma conta |
-| Contas a pagar | Vencimentos únicos, mensais ou anuais, com lembrete no painel |
+| Contas a pagar | Vencimentos únicos, mensais ou anuais, com lembrete no painel; sugere cadastrar os pagamentos que se repetem todo mês no extrato (boleto, débito automático, Pix) |
 | Investimentos | Carteira de renda variável (FIIs, ações, ETFs, BDRs) com preço médio, cotação atual, valorização de cada compra, proventos e DY; comparação com a Selic (carteira, cada ativo e cada investimento do Open Finance); distribuição por classe |
 | Relatórios | Fluxo de caixa mensal com saldo acumulado, despesas/receitas por categoria, maiores despesas |
 | Categorias e regras | Categorias com subcategorias, regras automáticas ("descrição contém UBER → Transporte"), mapeamento das categorias do banco |
@@ -28,14 +29,22 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador. 
 
 ## Instalação (uma vez)
 
-Abra o **Windows PowerShell como Administrador**. Use o "Windows PowerShell", não o PowerShell 7.
+**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
 
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-cd D:\FinancasLocal\scripts
-.\1-instalar-ambiente.ps1     # IIS, .NET 10, Node.js portátil, SQL Server 2025 Express (15-30 min)
-.\2-criar-banco.ps1           # cria o banco com a estrutura completa
-.\3-publicar.ps1              # compila e publica no IIS
+**Linux (ou Windows pelo Git Bash), com um comando:**
+
+```bash
+cd financas-local/scripts
+./instalar.sh                # roda 1, 2 e 3 em sequência e para no primeiro erro
+```
+
+**Etapa por etapa (bash).** Abra um terminal com bash disponível (no Linux, o terminal do próprio sistema; no Windows, o **Git Bash**, que vem com o [Git for Windows](https://git-scm.com/download/win), ou o WSL). Abra o Git Bash **como Administrador** para o `3-publicar-atualizar.sh`, que registra o serviço do Windows. O backup (`4-backup.sh`) continua precisando de bash no Windows.
+
+```bash
+cd financas-local/scripts
+./1-preparar-ambiente.sh     # .NET 10 SDK, Node.js e sqlite3 (poucos minutos)
+./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
+./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
 
 Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuário e a senha (mínimo de 8 caracteres).
@@ -44,21 +53,31 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 
 | Componente | Origem | Verificação |
 |---|---|---|
-| IIS | Recurso do próprio Windows | — |
-| ASP.NET Core Hosting Bundle 10 | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 publicado pela Microsoft + assinatura digital Microsoft |
-| .NET 10 SDK (portátil em `ferramentas\dotnet`) | idem | SHA-512 + assinatura do `dotnet.exe` |
-| SQL Server 2025 Express | `download.microsoft.com` | assinatura digital Microsoft (instalador e `setup.exe`) |
-| Node.js LTS (portátil em `ferramentas\node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
+| .NET 10 SDK (portátil em `ferramentas/dotnet`) | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 + assinatura do instalador |
+| Node.js LTS (portátil em `ferramentas/node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
+| `sqlite3` (CLI) | o do sistema, se houver; senão portátil em `ferramentas/sqlite`, baixado de `www.sqlite.org` (Linux arm64: gerenciador de pacotes) | SHA3-256 publicado na página oficial de download |
 
-Se o download do SQL Server falhar (a Microsoft às vezes muda o link), baixe manualmente em https://www.microsoft.com/sql-server/sql-server-downloads (Express → *Download Media* → *Express Core*) e rode:
+`1-preparar-ambiente.sh` confere antes as ferramentas básicas do terminal (`curl`, `tar`, `sha256sum`…, todas presentes no Git Bash), depois verifica cada um desses componentes, só baixa/instala o que ainda não estiver disponível e, no final, mostra a versão de cada um.
 
-```powershell
-.\1-instalar-ambiente.ps1 -InstaladorSql "C:\caminho\SQLEXPR_x64_ENU.exe"
+## Migrar de uma instalação com SQL Server
+
+Se você já usava o Finanças Local no Windows com IIS e SQL Server Express, use a ferramenta de migração para trazer os dados para o novo banco SQLite. **Não rode o `2-criar-banco.sh` antes**: os dados iniciais dele (categorias e configurações padrão) conflitam com os dados migrados. O destino precisa ser um banco vazio, só com a estrutura:
+
+```bash
+# 1. Pare o site antigo no IIS, para nada mudar no SQL Server durante a cópia.
+# 2. Crie o banco vazio, só com a estrutura:
+sqlite3 dados/sql/FinancasLocal.db < banco/01-estrutura.sql
+# 3. Migre (a connection string antiga está no appsettings.Production.json da publicação do IIS):
+dotnet run --project src/backend/Financas.MigrarSqlite -- \
+  'Server=.\FINANCAS;Database=FinancasLocal;Integrated Security=True;Encrypt=True;TrustServerCertificate=True' \
+  dados/sql/FinancasLocal.db
+# 4. Publique normalmente:
+scripts/3-publicar-atualizar.sh
 ```
 
-**Já tem um SQL Server?** Rode `.\1-instalar-ambiente.ps1 -PularSqlServer` e informe a instância nos outros scripts, por exemplo `-InstanciaSql "localhost\SQLEXPRESS"`.
+A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de linhas de cada tabela no final. A pasta `dados\sql` da instalação antiga só é acessível por Administradores, então no Windows rode esses comandos num Git Bash aberto como Administrador.
 
-**O que inevitavelmente fica no C:** o IIS e o Hosting Bundle (são componentes do Windows) e, se você já tiver outro SQL Server instalado, os componentes compartilhados dele. Dados, banco, backups, chaves, SDK, Node, pacotes NuGet e npm ficam todos no D:.
+É seguro rodar mesmo sem um SQL Server disponível: a ferramenta detecta que não há nada para migrar e termina sem erro. Como o Client Secret da Pluggy e o token da brapi foram criptografados com chaves da instalação antiga (que não podem ser lidas em outra máquina ou sistema operacional), a migração limpa esses dois campos — informe-os de novo em **Configurações** depois de migrar (mesma situação da linha "o secret da Pluggy não abre mais" em Problemas comuns).
 
 ## Conectar o Open Finance (Meu Pluggy)
 
@@ -94,9 +113,9 @@ A aba **FIIs** mostra renda mensal estimada, DY e yield on cost, cada compra com
 
 Como tudo é local, o objetivo foi manter o sistema simples sem abrir mão do essencial:
 
-- **Sem exposição na rede.** O site responde somente em `127.0.0.1` e via HTTPS. O SQL Server foi instalado com TCP/IP e Named Pipes **desligados** e só aceita conexões locais.
-- **Sem senhas em arquivos.** A API acessa o banco com a identidade do pool do IIS (`IIS APPPOOL\FinancasLocal`, autenticação do Windows). Esse usuário só pode ler e gravar dados: não altera a estrutura, não cria logins e não apaga a auditoria. O SQL Server não tem login `sa`.
-- **Client Secret da Pluggy criptografado** no banco com ASP.NET Data Protection. As chaves ficam em `dados\chaves`, protegidas por DPAPI e acessíveis só por Administradores, SYSTEM e o pool do IIS. A API nunca devolve o secret.
+- **Sem exposição na rede.** O Kestrel (servidor web embutido na própria API, sem IIS nem proxy reverso) responde somente em `127.0.0.1`, via HTTPS. O SQLite é só um arquivo local: não tem porta nem listener de rede para proteger.
+- **Sem senhas em arquivos.** O SQLite não tem conceito de login/usuário de banco — o controle de acesso é só a permissão do sistema operacional sobre a pasta `dados`: lê e grava quem roda o processo da API, ou seja, a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows).
+- **Client Secret da Pluggy criptografado** no banco com ASP.NET Data Protection. As chaves ficam em `dados\chaves`: no Windows, protegidas por DPAPI e acessíveis só por Administradores, SYSTEM e a conta do serviço; no Linux, protegidas pelas permissões do sistema de arquivos sobre essa pasta. A API nunca devolve o secret.
 - **Login:** senha com hash PBKDF2-SHA512 (ASP.NET Identity), bloqueio de 15 min após 5 erros, limite de 5 tentativas por minuto e tempo de resposta igual para usuário inexistente.
 - **Sessão:** cookie `__Host-` HttpOnly + Secure + SameSite=Strict, que expira em 2 h sem uso. Trocar a senha derruba as outras sessões.
 - **CSRF:** token antifalsificação validado em todo POST, PUT, PATCH e DELETE.
@@ -104,22 +123,31 @@ Como tudo é local, o objetivo foi manter o sistema simples sem abrir mão do es
 - **Validação de host:** só `localhost`/`127.0.0.1`, o que protege contra DNS rebinding.
 - **Auditoria** de logins, falhas, trocas de senha e alterações de credenciais, visível em Configurações.
 - Consultas ao banco somente via LINQ/EF Core, sem SQL montado a partir de texto do usuário.
-- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy.
+- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy.
 
 Recomendações:
-- Ative o **BitLocker** no disco D:, porque o SQL Server Express não criptografa os arquivos do banco.
-- Agende o backup com `.\4-backup.ps1 -Agendar` e copie de vez em quando a pasta `backups` para um disco externo.
-- Rode o `1-instalar-ambiente.ps1` a cada poucos meses para atualizar o .NET com as correções de segurança.
+- Ative criptografia de disco (**BitLocker** no Windows, **LUKS**/dm-crypt no Linux), porque o SQLite não criptografa o arquivo do banco.
+- Agende execuções periódicas de `scripts/4-backup.sh` e copie de vez em quando a pasta `backups` para um disco externo.
+- Rode o `1-preparar-ambiente.sh` a cada poucos meses para atualizar o .NET com as correções de segurança.
 
 ## Atualizar o sistema depois de mudar o código
 
-```powershell
-D:\FinancasLocal\scripts\3-publicar.ps1
+```bash
+scripts/3-publicar-atualizar.sh
 ```
 
-A publicação coloca o site em manutenção por alguns segundos (`app_offline.htm`), copia os arquivos e volta. Nenhum dado é perdido.
+A publicação para o serviço do sistema por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhum dado é perdido.
 
-**Banco:** não há migrations. Toda a estrutura está em `banco\01-estrutura.sql`, que é idempotente. Para mudar o banco, altere o script, rode `2-criar-banco.ps1` e ajuste as entidades e o `FinancasDbContext`.
+## Parar tudo
+
+O sistema instalado é **um processo só**: a API, rodando como serviço do sistema. O front-end (Angular) é publicado dentro dela e roda no navegador, e o banco (SQLite) é só o arquivo `dados/sql/FinancasLocal.db`, aberto pela própria API, sem serviço nem porta.
+
+- **Windows:** dê dois cliques em `parar-windows.cmd`, na raiz (pede permissão de Administrador; não precisa de bash).
+- **Linux/macOS:** `scripts/parar.sh`.
+
+Os dois param o serviço, a API rodando fora dele (`dotnet run`, Visual Studio) e o front de desenvolvimento (`npm start`), e avisam se algum programa ainda está com o banco aberto. Opções: `--desativar` / `-Desativar` (não sobe sozinho no próximo login/boot) e `--compiladores` / `-Compiladores` (encerra também os servidores de build do .NET). Para subir de novo, rode a publicação (`3-publicar-atualizar.sh` ou `instalar-windows.cmd`).
+
+**Banco:** não há migrations. Toda a estrutura está em `banco\01-estrutura.sql`, que é idempotente. Para mudar o banco, altere o script, rode `2-criar-banco.sh` e ajuste as entidades e o `FinancasDbContext`.
 
 ## Desenvolvimento (Visual Studio)
 
@@ -131,27 +159,29 @@ A publicação coloca o site em manutenção por alguns segundos (`app_offline.h
 ## Estrutura
 
 ```
-D:\FinancasLocal
-├── .github\               CI, templates de PR/issue, CODEOWNERS, Dependabot
-├── banco\                 scripts SQL (estrutura, dados iniciais, permissões)
-├── docs\                  arquitetura e guia do banco
-├── scripts\               instalação, publicação e backup (PowerShell)
-│   └── git\              configuração do repositório no GitHub
-├── src\backend\           Financas.Api (C# / .NET 10 / EF Core)
-├── src\frontend\          financas-web (Angular)
-├── dados\                 [gerado] banco (sql), chaves, logs do IIS — acesso restrito
-├── backups\               [gerado] backups .bak
-├── publicado\             [gerado] site publicado no IIS
-├── ferramentas\           [gerado] .NET SDK, Node.js, caches NuGet/npm
-└── instaladores\          [gerado] instaladores baixados (podem ser apagados)
+financas-local/
+├── .github/               CI, templates de PR/issue, CODEOWNERS, Dependabot
+├── banco/                 scripts SQL (estrutura, dados iniciais)
+├── docs/                  arquitetura, guia do banco e ADRs (docs/adr)
+├── scripts/               instalação, publicação, backup e parada (bash; no Windows também instalar-windows.ps1 e parar-windows.ps1)
+│   └── git/              configuração do repositório no GitHub (PowerShell)
+├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
+├── src/frontend/          financas-web (Angular)
+├── dados/                 [gerado] banco (SQLite), chaves, logs — acesso restrito
+├── backups/               [gerado] backups do banco
+├── publicado/             [gerado] aplicação publicada
+├── ferramentas/           [gerado] .NET SDK, Node.js, sqlite3 (se preciso), caches NuGet/npm
+└── instaladores/          [gerado] instaladores baixados (podem ser apagados)
 ```
 
 ## Problemas comuns
 
 | Sintoma | O que fazer |
 |---|---|
-| Erro 500.19 ou 500.30 no navegador | Rode `iisreset` e confira se o Hosting Bundle foi instalado **depois** do IIS (o script 1 já segue essa ordem). Detalhes em: Visualizador de Eventos → Aplicativo |
-| "Login failed for user IIS APPPOOL\FinancasLocal" | Rode novamente o `2-criar-banco.ps1` |
-| Navegador alerta sobre o certificado | Rode o `3-publicar.ps1` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
+| Windows: `Python was not found`, `sqlite3: command not found` ou `unzip: command not found` | Versão antiga dos scripts. Atualize o repositório e use o `instalar-windows.cmd`, que não depende de bash nem de Python |
+| Windows: o `instalar-windows.cmd` falhou | Veja a linha `ERRO` na janela e o log completo em `instaladores/instalacao-windows.log` |
+| Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
+| Windows: o serviço não é registrado/iniciado | Rode o `3-publicar-atualizar.sh` num Git Bash aberto como Administrador |
+| Navegador alerta sobre o certificado | Rode o `3-publicar-atualizar.sh` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
 | Sincronização falha com 401/403 | Confira o Client ID e o Secret e se o MeuPluggy foi autorizado para aquele banco |
-| Depois de reinstalar o Windows ou mudar o pool, o secret não abre | As chaves DPAPI são da máquina/conta: informe o Client Secret de novo em Configurações |
+| O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |

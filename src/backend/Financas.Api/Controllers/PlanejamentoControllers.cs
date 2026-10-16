@@ -184,17 +184,25 @@ public class ContasAgendadasController : BaseController
     private readonly FinancasDbContext _db;
     private readonly RelatorioService _relatorios;
     private readonly CategorizacaoService _categorizacao;
+    private readonly SugestaoContaAgendadaService _sugestoes;
 
-    public ContasAgendadasController(FinancasDbContext db, RelatorioService relatorios, CategorizacaoService categorizacao)
+    public ContasAgendadasController(FinancasDbContext db, RelatorioService relatorios, CategorizacaoService categorizacao,
+        SugestaoContaAgendadaService sugestoes)
     {
         _db = db;
         _relatorios = relatorios;
         _categorizacao = categorizacao;
+        _sugestoes = sugestoes;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<ContaAgendadaDto>>> Listar(CancellationToken ct)
         => await _relatorios.ContasAgendadasAsync(null, ct);
+
+    /// <summary>Pagamentos mensais do extrato que ainda não estão cadastrados (só sugestão; nada é gravado).</summary>
+    [HttpGet("sugestoes")]
+    public async Task<ActionResult<List<SugestaoContaAgendadaDto>>> Sugestoes(CancellationToken ct)
+        => await _sugestoes.SugerirAsync(ct);
 
     [HttpPost]
     public async Task<IActionResult> Criar(SalvarContaAgendadaDto dto, CancellationToken ct)

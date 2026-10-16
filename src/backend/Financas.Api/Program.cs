@@ -3,6 +3,7 @@ using Financas.Api.Data;
 using Financas.Api.Entidades;
 using Financas.Api.Seguranca;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Investimentos;
 using Financas.Api.Servicos.Pluggy;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -14,18 +15,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseWindowsService();
+builder.Host.UseSystemd();
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.AddServerHeader = false;
+    o.Limits.MaxRequestBodySize = 1_048_576;
+});
 var cfg = builder.Configuration;
 
 // ---------------------------------------------------------------- Banco de dados
+var caminhoBanco = cfg["Banco:Caminho"] ?? Path.Combine(AppContext.BaseDirectory, "dados", "sql", "FinancasLocal.db");
 builder.Services.AddDbContext<FinancasDbContext>(opcoes =>
-{
-    opcoes.UseSqlServer(cfg.GetConnectionString("Financas"), sql =>
-    {
-        sql.EnableRetryOnFailure(3);
-        var nivel = cfg.GetValue<int?>("Banco:NivelCompatibilidade");
-        if (nivel is int n) sql.UseCompatibilityLevel(n);
-    });
-});
+    opcoes.UseSqlite($"Data Source={caminhoBanco}"));
 
 // ---------------------------------------------------------------- Proteção de dados (chaves em D:, protegidas por DPAPI)
 var pastaChaves = cfg["Seguranca:PastaChaves"];
@@ -92,17 +94,22 @@ builder.Services.AddHttpContextAccessor();
 // ---------------------------------------------------------------- Serviços da aplicação
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ConfiguracaoService>();
+builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
+builder.Services.AddScoped<SugestaoContaAgendadaService>();
 builder.Services.AddScoped<ContaService>();
 builder.Services.AddScoped<CarteiraService>();
+builder.Services.AddScoped<ReservaService>();
 builder.Services.AddScoped<CotacaoService>();
 builder.Services.AddScoped<ExtratoCarteiraService>();
 builder.Services.AddScoped<FiiService>();
+builder.Services.AddScoped<EmprestimoService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<SincronizacaoService>();
 builder.Services.AddHostedService<SincronizacaoHostedService>();
+builder.Services.AddHostedService<CambioHostedService>();
 
 var urlPluggy = new Uri(cfg["Pluggy:UrlBase"] ?? "https://api.pluggy.ai/");
 if (urlPluggy.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("A URL da Pluggy deve usar HTTPS.");
@@ -118,6 +125,13 @@ const string AgenteNavegador = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleW
 builder.Services.AddHttpClient<SelicService>(c =>
 {
     c.BaseAddress = new Uri("https://api.bcb.gov.br/");
+    c.Timeout = TimeSpan.FromSeconds(30);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("FinancasLocal/1.0");
+    c.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+});
+builder.Services.AddHttpClient<CambioService>(c =>
+{
+    c.BaseAddress = new Uri("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/");
     c.Timeout = TimeSpan.FromSeconds(30);
     c.DefaultRequestHeaders.UserAgent.ParseAdd("FinancasLocal/1.0");
     c.DefaultRequestHeaders.Accept.ParseAdd("application/json");
@@ -164,15 +178,18 @@ else
 }
 
 app.UseDefaultFiles();
+// Nomes gerados pelo build do Angular: main-ABCD1234.js, chunk-ABCD1234.js, styles-ABCD1234.css.
+var arquivoComHash = new System.Text.RegularExpressions.Regex(@"-[A-Z0-9]{8}\.(js|css)$",
+    System.Text.RegularExpressions.RegexOptions.Compiled);
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        var nome = ctx.File.Name;
-        ctx.Context.Response.Headers["Cache-Control"] =
-            nome.Equals("index.html", StringComparison.OrdinalIgnoreCase)
-                ? "no-cache"
-                : "public, max-age=31536000, immutable";
+        // Só os arquivos do build com hash no nome (ex.: main-ABCD1234.js) são imutáveis; o resto (index.html,
+        // favicon, ícones, manifesto) mantém o nome entre versões e precisa ser revalidado.
+        ctx.Context.Response.Headers["Cache-Control"] = arquivoComHash.IsMatch(ctx.File.Name)
+            ? "public, max-age=31536000, immutable"
+            : "no-cache";
     }
 });
 
