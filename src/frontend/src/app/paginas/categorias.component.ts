@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -8,13 +9,16 @@ import {
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
-import { CORES_SUGERIDAS } from '../compartilhado/utilidades';
+import { CORES_SUGERIDAS, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { Icones } from '../compartilhado/icones';
+import { DicaDirective } from '../compartilhado/dica.directive';
 
 type Aba = 'categorias' | 'regras' | 'openfinance';
 
 @Component({
   selector: 'app-categorias',
-  imports: [FormsModule, ModalComponent],
+  imports: [FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Categorias e regras</h1>
@@ -41,6 +45,11 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                     @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
                     @if (c.natureza === NaturezaGasto.EstiloDeVida) { <span class="etiqueta etiqueta-suave">estilo de vida</span> }
                     @if (!c.ativa) { <small class="texto-suave">inativa</small> }
+                    <a class="botao-icone-link" routerLink="/transacoes" [queryParams]="linkTransacoes(c.id)"
+                      (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()"
+                      [appDica]="'Ver transações (12 meses)'" [attr.aria-label]="'Ver transações de ' + c.nome + ' nos últimos 12 meses'">
+                      <app-icone [icone]="Icones.transacoes" [tamanho]="16" />
+                    </a>
                   </li>
                 }
               </ul>
@@ -134,6 +143,10 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
             }
           </div>
           <label class="checkbox"><input type="checkbox" name="ativa" [(ngModel)]="fc.ativa"> Ativa</label>
+          @if (categoriaId) {
+            <a routerLink="/transacoes" [queryParams]="linkTransacoes(categoriaId)" (click)="formCategoria = null">
+              Ver transações desta categoria (últimos 12 meses)</a>
+          }
           <div class="rodape-form">
             @if (categoriaId) { <button type="button" class="botao botao-perigo" (click)="excluirCategoria()">Excluir</button> }
             <span class="cresce"></span>
@@ -183,6 +196,21 @@ export class CategoriasComponent implements OnInit {
   readonly TipoCategoria = TipoCategoria;
   readonly TipoCorrespondencia = TipoCorrespondencia;
   readonly NaturezaGasto = NaturezaGasto;
+  readonly Icones = Icones;
+
+  /**
+   * UX-6: transações da categoria nos últimos 12 meses (esta tela não tem período; o mês atual deixaria vazia uma
+   * categoria pouco usada, como IPVA). Categoria pai traz as subcategorias (o back-end já faz isso).
+   */
+  linkTransacoes(categoriaId: number): Record<string, string> {
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 11, 1);
+    return paramsTransacoes({
+      categoriaId,
+      inicio: primeiroDiaMes(inicio.getFullYear(), inicio.getMonth() + 1),
+      fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1)
+    });
+  }
   readonly cores = CORES_SUGERIDAS;
 
   readonly aba = signal<Aba>('categorias');
