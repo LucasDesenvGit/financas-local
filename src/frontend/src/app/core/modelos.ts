@@ -67,6 +67,8 @@ export interface Transacao {
 
 export interface FiltroTransacoes {
   inicio?: string | null; fim?: string | null; contaId?: number | null; categoriaId?: number | null;
+  /** Várias categorias (cada uma inclui as subcategorias); com semCategoria, soma também as sem categoria. */
+  categoriaIds?: number[] | null;
   semCategoria?: boolean; somenteEmergencias?: boolean; tipo?: TipoTransacao | null; busca?: string | null; pagina?: number; tamanhoPagina?: number;
 }
 

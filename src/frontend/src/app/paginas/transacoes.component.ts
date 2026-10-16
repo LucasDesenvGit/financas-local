@@ -12,6 +12,7 @@ import {
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
+import { OpcaoMultipla, SeletorMultiploComponent } from '../compartilhado/seletor-multiplo.component';
 import {
   ContextoTransacoes, NOMES_MESES, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
 } from '../compartilhado/utilidades';
@@ -45,7 +46,8 @@ interface FormTransferencia {
 }
 
 interface ChipFiltro {
-  id: 'periodo' | 'categoria' | 'conta' | 'tipo' | 'emergencias' | 'busca';
+  /** Categoria tem um chip por valor marcado: `categoria:12`, `categoria:sem`. */
+  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'emergencias' | 'busca';
   rotulo: string;
   cor?: string;
 }
@@ -66,7 +68,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -86,13 +88,8 @@ function dataCurta(iso: string, comAno: boolean): string {
           @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
         </select>
       </label>
-      <label>Categoria
-        <select [(ngModel)]="filtroCategoria" (change)="aplicarFiltroCategoria()">
-          <option value="">Todas</option>
-          <option value="sem">— Sem categoria —</option>
-          @for (c of categorias(); track c.id) { <option [value]="c.id">{{ rotuloCategoria(c) }}</option> }
-        </select>
-      </label>
+      <app-seletor-multiplo rotulo="Categoria" [opcoes]="opcoesCategoria()" [selecionadas]="filtroCategorias"
+        (mudou)="aplicarFiltroCategorias($event)" />
       <label>Tipo
         <select [(ngModel)]="filtro.tipo" (change)="buscar(1)">
           <option [ngValue]="null">Todos</option>
@@ -391,10 +388,25 @@ export class TransacoesComponent implements OnInit {
   readonly contas = signal<Conta[]>([]);
   /** Todas as categorias (inclusive inativas), para validar a categoria que chega pela URL. */
   readonly todasCategorias = signal<Categoria[]>([]);
-  /** Categorias oferecidas nos selects: as ativas e, se for o caso, a inativa que está no filtro. */
+  /** Categorias oferecidas nos selects: as ativas e, se for o caso, as inativas que estão no filtro. */
   readonly categorias = computed(() =>
-    this.todasCategorias().filter((c) => c.ativa || String(c.id) === this.categoriaFiltrada()));
-  private readonly categoriaFiltrada = signal('');
+    this.todasCategorias().filter((c) => c.ativa || this.categoriasFiltradas().includes(String(c.id))));
+  private readonly categoriasFiltradas = signal<string[]>([]);
+  /** Opções do filtro de categorias: "Sem categoria" e cada categoria seguida das subcategorias (recuadas). */
+  readonly opcoesCategoria = computed<OpcaoMultipla[]>(() => {
+    const lista = this.categorias();
+    const porNome = (a: Categoria, b: Categoria) => a.nome.localeCompare(b.nome, 'pt-BR');
+    const ids = new Set(lista.map((c) => c.id));
+    const raizes = lista.filter((c) => !c.categoriaPaiId || !ids.has(c.categoriaPaiId)).sort(porNome);
+    const opcoes: OpcaoMultipla[] = [{ valor: 'sem', rotulo: 'Sem categoria' }];
+    for (const r of raizes) {
+      opcoes.push({ valor: String(r.id), rotulo: this.rotuloCategoria(r), cor: r.cor });
+      for (const f of lista.filter((c) => c.categoriaPaiId === r.id).sort(porNome)) {
+        opcoes.push({ valor: String(f.id), rotulo: f.nome, cor: f.cor, nivel: 1 });
+      }
+    }
+    return opcoes;
+  });
   readonly pagina = signal<PaginaTransacoes | null>(null);
   readonly selecionadas = signal<Set<number>>(new Set());
   readonly salvando = signal(false);
@@ -416,7 +428,8 @@ export class TransacoesComponent implements OnInit {
   });
 
   filtro: FiltroTransacoes = this.filtroInicial();
-  filtroCategoria = '';
+  /** Categorias marcadas no filtro: 'sem' ou o id, na ordem em que foram marcadas. */
+  filtroCategorias: string[] = [];
   /** Filtro da última busca (o que está na tela), base dos chips de "Filtrando:". */
   private readonly filtroAplicado = signal<FiltroTransacoes>(this.filtroInicial());
 
@@ -429,11 +442,10 @@ export class TransacoesComponent implements OnInit {
     const padrao = this.filtroInicial();
     const chips: ChipFiltro[] = [];
     if (f.inicio !== padrao.inicio || f.fim !== padrao.fim) chips.push({ id: 'periodo', rotulo: rotuloPeriodo(f.inicio, f.fim) });
-    if (f.semCategoria) {
-      chips.push({ id: 'categoria', rotulo: 'Sem categoria' });
-    } else if (f.categoriaId) {
-      const c = this.todasCategorias().find((x) => x.id === f.categoriaId);
-      chips.push({ id: 'categoria', rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
+    if (f.semCategoria) chips.push({ id: 'categoria:sem', rotulo: 'Sem categoria' });
+    for (const id of f.categoriaIds ?? []) {
+      const c = this.todasCategorias().find((x) => x.id === id);
+      chips.push({ id: `categoria:${id}`, rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
     }
     if (f.contaId) chips.push({ id: 'conta', rotulo: this.contas().find((c) => c.id === f.contaId)?.nome ?? 'Conta' });
     if (f.tipo) {
@@ -449,9 +461,13 @@ export class TransacoesComponent implements OnInit {
 
   removerFiltro(id: ChipFiltro['id']): void {
     const padrao = this.filtroInicial();
+    if (id.startsWith('categoria:')) {
+      const valor = id.substring('categoria:'.length);
+      this.filtroCategorias = this.filtroCategorias.filter((v) => v !== valor);
+      this.sincronizarFiltroCategoria();
+    }
     switch (id) {
       case 'periodo': this.filtro.inicio = padrao.inicio; this.filtro.fim = padrao.fim; break;
-      case 'categoria': this.filtroCategoria = ''; this.sincronizarFiltroCategoria(); break;
       case 'conta': this.filtro.contaId = null; break;
       case 'tipo': this.filtro.tipo = null; break;
       case 'emergencias': this.filtro.somenteEmergencias = false; break;
@@ -462,7 +478,7 @@ export class TransacoesComponent implements OnInit {
 
   limparFiltros(): void {
     this.filtro = this.filtroInicial();
-    this.filtroCategoria = '';
+    this.filtroCategorias = [];
     this.sincronizarFiltroCategoria();
     this.buscar(1);
   }
@@ -497,6 +513,7 @@ export class TransacoesComponent implements OnInit {
 
   /**
    * UX-1: filtro vindo de outra tela (?categoria=12|sem&inicio=yyyy-MM-dd&fim=yyyy-MM-dd&tipo=despesa|receita&conta=3).
+   * Várias categorias vêm separadas por vírgula (?categoria=12,20,sem).
    * UX-5: e o que a própria tela grava na URL (&emergencias=1&busca=texto&pagina=2), para o F5 e o link salvo.
    * Cada parâmetro é validado sozinho: um inválido é ignorado e os outros continuam valendo.
    */
@@ -520,12 +537,9 @@ export class TransacoesComponent implements OnInit {
     const tipo = params.get('tipo');
     if (tipo && tipos[tipo]) this.filtro.tipo = tipos[tipo];
 
-    const categoria = params.get('categoria');
-    if (categoria === 'sem') {
-      this.filtroCategoria = 'sem';
-    } else if (categoria && this.todasCategorias().some((c) => String(c.id) === categoria)) {
-      this.filtroCategoria = categoria;
-    }
+    const validas = new Set(['sem', ...this.todasCategorias().map((c) => String(c.id))]);
+    const categorias = (params.get('categoria') ?? '').split(',').map((v) => v.trim()).filter((v) => validas.has(v));
+    this.filtroCategorias = [...new Set(categorias)];
     this.sincronizarFiltroCategoria();
 
     const conta = Number(params.get('conta'));
@@ -542,16 +556,18 @@ export class TransacoesComponent implements OnInit {
     return pai ? `${pai.nome} › ${c.nome}` : c.nome;
   }
 
-  aplicarFiltroCategoria(): void {
+  aplicarFiltroCategorias(valores: string[]): void {
+    this.filtroCategorias = valores;
     this.sincronizarFiltroCategoria();
     this.buscar(1);
   }
 
-  /** Leva o valor do select de categoria ('' | 'sem' | id) para o filtro da API. */
+  /** Leva as categorias marcadas ('sem' | id) para o filtro da API. */
   private sincronizarFiltroCategoria(): void {
-    this.filtro.semCategoria = this.filtroCategoria === 'sem';
-    this.filtro.categoriaId = this.filtroCategoria && this.filtroCategoria !== 'sem' ? Number(this.filtroCategoria) : null;
-    this.categoriaFiltrada.set(this.filtroCategoria);
+    this.filtro.semCategoria = this.filtroCategorias.includes('sem');
+    this.filtro.categoriaIds = this.filtroCategorias.filter((v) => v !== 'sem').map(Number);
+    this.filtro.categoriaId = null;
+    this.categoriasFiltradas.set(this.filtroCategorias);
   }
 
   buscar(pagina: number): void {
@@ -587,12 +603,12 @@ export class TransacoesComponent implements OnInit {
     };
     const mudouPeriodo = f.inicio !== padrao.inicio || f.fim !== padrao.fim;
     const params: Record<string, string> = paramsTransacoes({
-      categoriaId: f.semCategoria ? null : f.categoriaId ?? undefined,
       inicio: mudouPeriodo ? f.inicio ?? undefined : undefined,
       fim: mudouPeriodo ? f.fim ?? undefined : undefined,
       tipo: f.tipo ? tipos[f.tipo] : undefined,
       contaId: f.contaId ?? undefined
     });
+    if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
     if (f.busca?.trim()) params['busca'] = f.busca.trim();
     if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
@@ -830,7 +846,7 @@ export class TransacoesComponent implements OnInit {
     return {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
-      contaId: null, categoriaId: null, semCategoria: false, somenteEmergencias: false, tipo: null, busca: '', pagina: 1,
+      contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, tipo: null, busca: '', pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }

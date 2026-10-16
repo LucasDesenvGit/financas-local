@@ -43,6 +43,12 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
 
+      - name: Testes do front-end (Jest)
+        working-directory: src/frontend
+        run: |
+          npm run test:tipos
+          npm test -- --ci
+
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py
 
