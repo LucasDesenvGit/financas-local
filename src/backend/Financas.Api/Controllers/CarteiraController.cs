@@ -343,3 +343,35 @@ public class CarteiraController : BaseController
         };
     }
 }
+
+/// <summary>
+/// Reservas ("cofrinhos") que a instituição não informa pelo Open Finance, estimadas pelos lançamentos do extrato,
+/// e a conferência do saldo real feita pelo usuário.
+/// </summary>
+[Route("api/reservas")]
+public class ReservasController : BaseController
+{
+    private readonly ReservaService _reservas;
+
+    public ReservasController(ReservaService reservas) => _reservas = reservas;
+
+    [HttpGet]
+    public Task<List<ReservaDto>> Listar(CancellationToken ct) => _reservas.ListarAsync(ct);
+
+    /// <summary>Grava o saldo real da reserva; os lançamentos depois da data passam a somar a partir dele.</summary>
+    [HttpPut("conferencia")]
+    public async Task<IActionResult> Conferir(ConferirReservaDto dto, CancellationToken ct)
+    {
+        var data = dto.Data ?? Relogio.Hoje;
+        if (data > Relogio.Hoje) return Erro("A data da conferência não pode estar no futuro.");
+        if (string.IsNullOrWhiteSpace(dto.Nome)) return Erro("Informe o nome da reserva.");
+        return await _reservas.ConferirAsync(dto.ContaId, dto.Nome, dto.Saldo, data, ct)
+            ? NoContent() : Erro("Conta inválida.");
+    }
+
+    /// <summary>Apaga a conferência: o saldo volta a ser só a soma dos lançamentos do extrato.</summary>
+    [HttpDelete("conferencia")]
+    public async Task<IActionResult> RemoverConferencia([FromQuery] int contaId, [FromQuery] string nome,
+        CancellationToken ct)
+        => await _reservas.RemoverConferenciaAsync(contaId, nome ?? string.Empty, ct) ? NoContent() : NaoEncontrado();
+}

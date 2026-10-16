@@ -6,7 +6,7 @@ import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   AtualizarAtivo, Carteira, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
-  SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
+  Reserva, SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
 } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
@@ -34,7 +34,10 @@ const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'o
 const SIMBOLOS_MOEDA: Record<string, string> = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF' };
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
-type Aba = 'resumo' | 'fii' | 'rv' | 'of';
+type Aba = 'resumo' | 'fii' | 'rv' | 'of' | 'reservas';
+
+/** Formulário de conferência do saldo real de uma reserva. */
+interface FormConferencia { reserva: Reserva; saldo: number | null; data: string }
 
 /** Linha editável da importação pelo extrato. */
 interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas: number }
@@ -71,7 +74,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
         <article class="kpi kpi-destaque">
           <span>Total investido</span>
           <strong>{{ d.totalGeral | currency }}</strong>
-          <small>renda variável + Open Finance + contas de investimento</small>
+          <small>renda variável + Open Finance + contas de investimento + reservas</small>
         </article>
         <article class="kpi">
           <span>Renda variável (cotação atual)</span>
@@ -107,6 +110,10 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           Renda variável ({{ abertas().length }})</button>
         <button type="button" role="tab" [class.ativo]="aba() === 'of'" (click)="aba.set('of')">
           Open Finance ({{ d.openFinance.length }})</button>
+        @if (d.reservas.length) {
+          <button type="button" role="tab" [class.ativo]="aba() === 'reservas'" (click)="aba.set('reservas')">
+            Reservas ({{ d.reservas.length }})</button>
+        }
       </div>
 
       @switch (aba()) {
@@ -293,6 +300,51 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <p class="texto-suave nota">
             A comparação usa a data e o valor aplicado informados pela instituição. Em produtos com vários aportes (fundos,
             previdência) a instituição pode informar só o total, e o resultado fica aproximado. Valores brutos, antes do IR.
+          </p>
+        }
+
+        @case ('reservas') {
+          <div class="tabela-rolagem">
+            <table class="tabela">
+              <thead>
+                <tr><th>Reserva</th><th>Conta</th><th class="direita">Guardado</th><th class="direita">Retirado</th>
+                  <th class="direita">Saldo</th><th>Base do saldo</th><th></th></tr>
+              </thead>
+              <tbody>
+                @for (r of d.reservas; track r.contaId + '|' + r.nome) {
+                  <tr [class.encerrada]="r.saldo === 0">
+                    <td><strong>{{ r.nome }}</strong>
+                      <br><small class="texto-suave">{{ r.movimentos }} lançamento(s)
+                        @if (r.primeiroMovimento) { de {{ r.primeiroMovimento | date: 'dd/MM/yy' }} a {{ r.ultimoMovimento | date: 'dd/MM/yy' }} }
+                      </small></td>
+                    <td class="texto-suave">{{ r.nomeConta }}</td>
+                    <td class="direita">{{ r.guardado | currency }}</td>
+                    <td class="direita">{{ r.retirado | currency }}</td>
+                    <td class="direita valor">{{ r.saldo | currency }}</td>
+                    <td>
+                      @if (r.dataConferencia) {
+                        <span class="etiqueta etiqueta-sucesso">conferido</span>
+                        <br><small class="texto-suave">{{ r.saldoConferido | currency }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
+                          + lançamentos depois</small>
+                      } @else {
+                        <span class="etiqueta etiqueta-alerta">estimado</span>
+                        <br><small class="texto-suave">só pelos lançamentos importados</small>
+                      }
+                    </td>
+                    <td class="direita nowrap">
+                      <button type="button" class="link" (click)="abrirConferencia(r)">conferir saldo</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="texto-suave nota">
+            A instituição não informa o saldo destas reservas pelo Open Finance, só os lançamentos "Dinheiro reservado" e
+            "Dinheiro retirado" no extrato da conta. Por isso o saldo é estimado. Sem conferência, ele fica abaixo do real
+            quando a reserva já tinha dinheiro antes do primeiro lançamento importado e quando o rendimento ainda não foi
+            retirado. Confira o valor no app da instituição de vez em quando: os lançamentos seguintes passam a somar a
+            partir dele. O total entra no patrimônio, no total investido e na reserva de emergência.
           </p>
         }
       }
@@ -519,6 +571,31 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       </div>
     </app-modal>
 
+    <!-- Conferir o saldo real de uma reserva -->
+    <app-modal [aberto]="formConferencia !== null" [titulo]="'Conferir saldo · ' + (formConferencia?.reserva?.nome ?? '')"
+      (fechar)="formConferencia = null">
+      @if (formConferencia; as fc) {
+        <form (ngSubmit)="salvarConferencia()" #fcf="ngForm" class="formulario">
+          <p class="texto-suave">Abra a reserva no app da instituição e informe o saldo que aparece lá. Os lançamentos até essa
+            data já estão nesse valor; os seguintes são somados a ele.</p>
+          <div class="grade-campos">
+            <label>Saldo na instituição (R$)
+              <input type="number" name="saldo" [(ngModel)]="fc.saldo" required min="0" step="0.01"></label>
+            <label>Conferido em <input type="date" name="data" [(ngModel)]="fc.data" required [max]="hoje"></label>
+          </div>
+          <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong></p>
+          <div class="rodape-form">
+            @if (fc.reserva.dataConferencia) {
+              <button type="button" class="botao botao-perigo" (click)="removerConferencia()">Voltar a estimar</button>
+            }
+            <span class="cresce"></span>
+            <button type="button" class="botao" (click)="formConferencia = null">Cancelar</button>
+            <button class="botao botao-primario" [disabled]="fcf.invalid || salvando()">Salvar</button>
+          </div>
+        </form>
+      }
+    </app-modal>
+
     <!-- Fonte das cotações -->
     <app-modal [aberto]="configAberta()" titulo="Fonte das cotações" (fechar)="configAberta.set(false)">
       <form class="formulario" (ngSubmit)="salvarToken(false)">
@@ -602,6 +679,7 @@ export class InvestimentosComponent implements OnInit {
   cambioEditado = false;
   ptaxSugerida: { data: string; valor: number; tipo: 'compra' | 'venda' } | null = null;
   formAtivo: AtualizarAtivo | null = null;
+  formConferencia: FormConferencia | null = null;
   ativoEditado: PosicaoAtivo | null = null;
   tokenBrapi = '';
   private atualizouAutomatico = false;
@@ -912,6 +990,43 @@ export class InvestimentosComponent implements OnInit {
         this.formAtivo = null;
         this.avisos.sucesso('Ativo excluído.');
         this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /* ------------------------------ reservas ------------------------------ */
+
+  abrirConferencia(r: Reserva): void {
+    this.formConferencia = { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje };
+  }
+
+  salvarConferencia(): void {
+    const f = this.formConferencia;
+    if (!f || f.saldo === null) return;
+    this.salvando.set(true);
+    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.formConferencia = null;
+        this.avisos.sucesso('Saldo da reserva conferido.');
+        this.recarregarDepoisDeAlterar();
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
+  removerConferencia(): void {
+    const f = this.formConferencia;
+    if (!f || !confirm(`Apagar a conferência de ${f.reserva.nome}? O saldo volta a ser estimado só pelos lançamentos.`)) return;
+    this.api.removerConferenciaReserva(f.reserva.contaId, f.reserva.nome).subscribe({
+      next: () => {
+        this.formConferencia = null;
+        this.avisos.sucesso('Conferência apagada.');
+        this.recarregarDepoisDeAlterar();
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });

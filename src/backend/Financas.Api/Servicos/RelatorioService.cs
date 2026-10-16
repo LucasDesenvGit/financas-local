@@ -15,15 +15,17 @@ public class RelatorioService
     private readonly CarteiraService _carteira;
     private readonly EmprestimoService _emprestimos;
     private readonly CambioService _cambio;
+    private readonly ReservaService _reservas;
 
     public RelatorioService(FinancasDbContext db, ContaService contas, CarteiraService carteira, EmprestimoService emprestimos,
-        CambioService cambio)
+        CambioService cambio, ReservaService reservas)
     {
         _db = db;
         _contas = contas;
         _carteira = carteira;
         _emprestimos = emprestimos;
         _cambio = cambio;
+        _reservas = reservas;
     }
 
     /// <summary>Transações que entram nos relatórios (exclui transferências e itens marcados para ignorar).</summary>
@@ -478,7 +480,8 @@ public class RelatorioService
                 .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
         }
 
-        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora).
+        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora)
+        // + reservas ("cofrinhos") estimadas pelo extrato.
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
             .Select(c => new { c.Id, c.Tipo }).ToListAsync(ct);
@@ -486,7 +489,8 @@ public class RelatorioService
         var investimentos = await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa)
             .Select(i => new { i.Saldo, i.Moeda }).ToListAsync(ct);
         var reserva = contas.Where(c => c.Tipo != TipoConta.CartaoCredito).Sum(c => Math.Max(0, saldos.GetValueOrDefault(c.Id)))
-            + investimentos.Sum(i => conversor.ParaReais(i.Saldo, i.Moeda) ?? 0m);
+            + investimentos.Sum(i => conversor.ParaReais(i.Saldo, i.Moeda) ?? 0m)
+            + await _reservas.TotalAsync(ct);
 
         var totalParcelas = parcelas + credito.ParcelaMensalFinanciamentos + credito.ParcelaMensalEmprestimos;
         return new SaudeFinanceiraDto(

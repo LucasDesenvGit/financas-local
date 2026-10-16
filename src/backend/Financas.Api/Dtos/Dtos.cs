@@ -328,7 +328,25 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
     decimal TotalInvestimentosManuais, decimal TotalGeral, List<DistribuicaoInvestimentoDto> Distribuicao,
     DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
-    List<string> MoedasSemCotacao);
+    List<string> MoedasSemCotacao, List<ReservaDto> Reservas, decimal TotalReservas);
+
+/// <summary>
+/// Reserva ("cofrinho") cujo saldo a instituição não informa pelo Open Finance, estimado pelos lançamentos
+/// "Dinheiro reservado/retirado {Nome}" da conta. Com conferência, <c>Saldo</c> = saldo conferido + movimentos
+/// depois de <c>DataConferencia</c>; sem ela, só a soma dos movimentos importados (fica abaixo do real se a
+/// reserva já tinha dinheiro antes do primeiro lançamento importado ou se o rendimento ainda não foi retirado).
+/// <c>Guardado</c> e <c>Retirado</c> consideram os mesmos movimentos que entram no saldo.
+/// </summary>
+public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Saldo, decimal Guardado, decimal Retirado,
+    int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
+    DateOnly? DataConferencia);
+
+/// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
+public record ConferirReservaDto(
+    int ContaId,
+    [Required, StringLength(100)] string Nome,
+    [Range(0, 999999999999)] decimal Saldo,
+    DateOnly? Data);
 
 /// <summary>Preço, taxas e preço atual na moeda do ativo; <c>ValorTotal</c>, <c>ValorAtual</c> e Selic em reais.</summary>
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,

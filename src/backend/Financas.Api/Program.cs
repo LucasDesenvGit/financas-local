@@ -99,6 +99,7 @@ builder.Services.AddScoped<CategorizacaoService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<ContaService>();
 builder.Services.AddScoped<CarteiraService>();
+builder.Services.AddScoped<ReservaService>();
 builder.Services.AddScoped<CotacaoService>();
 builder.Services.AddScoped<ExtratoCarteiraService>();
 builder.Services.AddScoped<FiiService>();
