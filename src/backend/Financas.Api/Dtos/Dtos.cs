@@ -253,7 +253,19 @@ public record PainelDto(
     DateTime? UltimaSincronizacao,
     decimal DespesasEmergenciaMes = 0,
     decimal DividaFinanciamentos = 0,
-    decimal DividaEmprestimos = 0);
+    decimal DividaEmprestimos = 0,
+    int DiasProximosVencimentos = 15);
+
+/* ----------------------------- Parametrização ----------------------------- */
+/// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>
+public record ParametroDto(string Chave, string Grupo, string Nome, string Descricao, Servicos.TipoParametro Tipo,
+    int Valor, int Padrao, int? Minimo, int? Maximo, string? Unidade);
+
+public record SalvarParametrosDto([Required] Dictionary<string, int> Valores);
+
+public record InfoSistemaDto(string Versao, string DotNet, string SistemaOperacional, DateTime IniciadoEm,
+    string CaminhoBanco, long? TamanhoBancoBytes, string PastaChaves, int Contas, int Transacoes, int ConexoesAtivas,
+    DateTime? UltimaSincronizacao);
 
 /* ----------------------------- Open Finance (Pluggy) ----------------------------- */
 public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, int IntervaloHoras,
@@ -262,9 +274,10 @@ public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, in
 public record SalvarConfiguracaoPluggyDto(
     [Required, StringLength(100)] string ClientId,
     [StringLength(200)] string? ClientSecret,
-    [Range(1, 48)] int IntervaloHoras,
-    [Range(1, 365)] int DiasRetroativos,
-    bool Habilitada);
+    // Opcionais: a tela de Parametrização cuida deles; quando omitidos, ficam como estão.
+    [Range(1, 48)] int? IntervaloHoras = null,
+    [Range(1, 365)] int? DiasRetroativos = null,
+    bool? Habilitada = null);
 
 public record ConexaoDto(int Id, string PluggyItemId, string? NomeInstituicao, string? CorPrimaria, string? Status,
     string? StatusExecucao, DateTime? UltimaAtualizacaoInstituicao, DateTime? ConsentimentoExpiraEm,

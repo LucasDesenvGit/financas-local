@@ -50,9 +50,12 @@ public class OpenFinanceController : BaseController
             await _config.DefinirAsync(ConfiguracaoService.PluggyClientSecret, dto.ClientSecret.Trim(), protegido: true, ct: ct);
             _auditoria.Registrar("CredencialPluggyAlterada", User.Identity?.Name);
         }
-        await _config.DefinirAsync(ConfiguracaoService.IntervaloHoras, dto.IntervaloHoras.ToString(), ct: ct);
-        await _config.DefinirAsync(ConfiguracaoService.DiasRetroativos, dto.DiasRetroativos.ToString(), ct: ct);
-        await _config.DefinirAsync(ConfiguracaoService.SincronizacaoHabilitada, dto.Habilitada ? "true" : "false", ct: ct);
+        if (dto.IntervaloHoras is { } intervalo)
+            await _config.DefinirAsync(ConfiguracaoService.IntervaloHoras, intervalo.ToString(), ct: ct);
+        if (dto.DiasRetroativos is { } dias)
+            await _config.DefinirAsync(ConfiguracaoService.DiasRetroativos, dias.ToString(), ct: ct);
+        if (dto.Habilitada is { } habilitada)
+            await _config.DefinirAsync(ConfiguracaoService.SincronizacaoHabilitada, habilitada ? "true" : "false", ct: ct);
         await _db.SaveChangesAsync(ct);
         return NoContent();
     }

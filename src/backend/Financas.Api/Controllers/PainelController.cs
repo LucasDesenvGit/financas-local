@@ -19,9 +19,10 @@ public class PainelController : BaseController
     private readonly CarteiraService _carteira;
     private readonly EmprestimoService _emprestimos;
     private readonly ReservaService _reservas;
+    private readonly ParametroService _parametros;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
-        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas)
+        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros)
     {
         _db = db;
         _contas = contas;
@@ -30,6 +31,7 @@ public class PainelController : BaseController
         _carteira = carteira;
         _emprestimos = emprestimos;
         _reservas = reservas;
+        _parametros = parametros;
     }
 
     [HttpGet]
@@ -71,7 +73,8 @@ public class PainelController : BaseController
         var gastos = await _relatorios.TotaisPorCategoriaAsync(inicio, fim, TipoTransacao.Despesa, agruparNoPai: true, ct);
         var evolucao = await _relatorios.FluxoMensalAsync(inicio.AddMonths(-11), fim, ct);
         var orcamentos = await _relatorios.OrcamentosDoMesAsync(a, m, ct);
-        var proximas = await _relatorios.ContasAgendadasAsync(15, ct);
+        var diasVencimentos = await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasProximosVencimentos, ct);
+        var proximas = await _relatorios.ContasAgendadasAsync(diasVencimentos, ct);
 
         var ultimas = await _db.Transacoes.AsNoTracking()
             .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
@@ -97,7 +100,8 @@ public class PainelController : BaseController
             alertas.Add($"Confira o saldo da(s) reserva(s) {string.Join(", ", reservasAConferir)} em Investimentos › Reservas: "
                 + "o valor estimado pelo extrato pode estar diferente do real.");
 
-        var limiteConsentimento = DateTime.UtcNow.AddDays(30);
+        var limiteConsentimento = DateTime.UtcNow.AddDays(
+            await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasAvisoConsentimento, ct));
         var conexoes = await _db.ConexoesBancarias.AsNoTracking().Where(c => c.Ativa)
             .Select(c => new { c.NomeInstituicao, c.ConsentimentoExpiraEm, c.UltimoErro, c.Status })
             .ToListAsync(ct);
@@ -132,7 +136,7 @@ public class PainelController : BaseController
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
-            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos);
+            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos);
     }
 }
 

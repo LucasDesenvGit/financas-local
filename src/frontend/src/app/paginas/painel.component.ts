@@ -9,10 +9,12 @@ import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
 import { NOMES_MESES_CURTOS } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { Icones } from '../compartilhado/icones';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, SeletorMesComponent],
+  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, SeletorMesComponent, IconeComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -35,7 +37,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
       <section class="kpis">
         <article class="kpi kpi-destaque">
-          <span>Patrimônio líquido</span>
+          <span class="kpi-rotulo"><app-icone [icone]="Icones.patrimonio" [tamanho]="16" /> Patrimônio líquido</span>
           <strong>{{ d.patrimonioLiquido | currency }}</strong>
           <small>contas + investimentos (cotação atual) − cartões{{ d.dividaFinanciamentos + d.dividaEmprestimos > 0 ? ' − financiamentos − empréstimos' : '' }}</small>
         </article>
@@ -45,29 +47,29 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <small>sem FIIs, ações e ETFs ({{ d.rendaVariavel | currency }})</small>
         </article>
         <article class="kpi">
-          <span>Saldo em contas</span>
+          <span class="kpi-rotulo"><app-icone [icone]="Icones.banco" [tamanho]="16" /> Saldo em contas</span>
           <strong [class.negativo]="d.saldoContas < 0">{{ d.saldoContas | currency }}</strong>
         </article>
         <article class="kpi">
-          <span>Faturas de cartão</span>
+          <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Faturas de cartão</span>
           <strong class="negativo">{{ d.dividaCartoes | currency }}</strong>
         </article>
         @if (d.dividaFinanciamentos > 0) {
           <article class="kpi kpi-credito kpi-financiamento">
-            <span>Financiamentos</span>
+            <span class="kpi-rotulo"><app-icone [icone]="Icones.financiamento" [tamanho]="16" /> Financiamentos</span>
             <strong class="negativo">{{ d.dividaFinanciamentos | currency }}</strong>
             <small>saldo devedor · <a routerLink="/emprestimos">ver contratos</a></small>
           </article>
         }
         @if (d.dividaEmprestimos > 0) {
           <article class="kpi kpi-credito kpi-emprestimo">
-            <span>Empréstimos</span>
+            <span class="kpi-rotulo"><app-icone [icone]="Icones.emprestimos" [tamanho]="16" /> Empréstimos</span>
             <strong class="negativo">{{ d.dividaEmprestimos | currency }}</strong>
             <small>saldo devedor · <a routerLink="/emprestimos">ver contratos</a></small>
           </article>
         }
         <article class="kpi">
-          <span>Investimentos</span>
+          <span class="kpi-rotulo"><app-icone [icone]="Icones.investimentos" [tamanho]="16" /> Investimentos</span>
           <strong>{{ d.totalInvestido | currency }}</strong>
           <small><a routerLink="/investimentos">ver carteira x Selic</a></small>
         </article>
@@ -153,7 +155,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
                 <span class="valor">{{ c.valor | currency }}</span>
               </li>
             } @empty {
-              <li class="vazio">Nada vencendo nos próximos 15 dias.</li>
+              <li class="vazio">Nada vencendo nos próximos {{ d.diasProximosVencimentos }} dias.</li>
             }
           </ul>
         </section>
@@ -185,6 +187,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
   `]
 })
 export class PainelComponent implements OnInit {
+  readonly Icones = Icones;
   private readonly api = inject(ApiService);
 
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });

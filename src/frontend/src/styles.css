@@ -15,8 +15,8 @@
   --texto-forte: #1d1b2b;
   --texto-suave: #7d7a94;
 
-  --primaria: #7b7fe0;
-  --primaria-hover: #6c70d6;
+  --primaria: #6267da;
+  --primaria-hover: #575bcc;
   --primaria-texto: #ffffff;
   --primaria-suave: #edecfe;
   --primaria-forte: #5559c4;
@@ -35,6 +35,8 @@
   --destaque-fundo: linear-gradient(135deg, #d9d6ff 0%, #c7e3fb 55%, #d3f3e5 100%);
   --destaque-texto: #24223a;
   --destaque-suave: #4f4c6b;
+  --marca-fundo: linear-gradient(135deg, #b9b6ff, #9fd2f6);
+  --marca-texto: #23214a;
 
   --sombra: 0 1px 2px rgba(40, 35, 90, 0.04), 0 6px 20px rgba(40, 35, 90, 0.06);
   --sombra-forte: 0 20px 60px rgba(40, 35, 90, 0.18);
@@ -72,6 +74,8 @@
   --destaque-fundo: linear-gradient(135deg, #34326a 0%, #213b55 55%, #1f3d34 100%);
   --destaque-texto: #f4f3ff;
   --destaque-suave: #c3c1e6;
+  --marca-fundo: linear-gradient(135deg, #b9b6ff, #9fd2f6);
+  --marca-texto: #23214a;
 
   --sombra: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.25);
   --sombra-forte: 0 24px 70px rgba(0, 0, 0, 0.55);
@@ -136,8 +140,8 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 .marca-simbolo {
   width: 40px; height: 40px; border-radius: 12px;
   display: grid; place-items: center;
-  background: linear-gradient(135deg, #b9b6ff, #9fd2f6);
-  color: #23214a;
+  background: var(--marca-fundo);
+  color: var(--marca-texto);
   font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.15rem;
 }
 
@@ -151,7 +155,9 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 }
 .menu a:hover { background: var(--superficie-2); color: var(--texto); text-decoration: none; }
 .menu a.ativo { background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 600; }
-.menu-icone { width: 18px; text-align: center; font-size: 1rem; }
+.menu-icone { width: 18px; display: inline-flex; justify-content: center; opacity: 0.85; }
+.menu a.ativo .menu-icone { opacity: 1; }
+.kpi-rotulo { display: inline-flex; align-items: center; gap: 6px; }
 
 .lateral-rodape { border-top: 1px solid var(--linha); padding-top: 14px; display: grid; gap: 12px; }
 .usuario { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 0 4px; color: var(--texto-suave); }
@@ -390,7 +396,7 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 
 /* Barras de progresso (orçamento, limite, metas) */
 .trilho { height: 8px; background: var(--superficie-3); border-radius: 99px; overflow: hidden; margin: 6px 0 4px; }
-.progresso { height: 100%; background: linear-gradient(90deg, #b3b0ff, #9fd2f6); border-radius: 99px; transition: width 0.4s ease; }
+.progresso { height: 100%; background: var(--marca-fundo); border-radius: 99px; transition: width 0.4s ease; }
 .progresso.atencao { background: linear-gradient(90deg, #f6d38a, #f8c09a); }
 .progresso.estourado { background: linear-gradient(90deg, #f7a8b6, #f4a89a); }
 /* Passou do limite só por causa de gastos de emergência. */
@@ -715,4 +721,69 @@ details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 55
   .calc-botao { top: auto; bottom: 18px; }
   .calc-painel { top: auto; bottom: 72px; right: 12px; left: 12px; width: auto; }
   .cabecalho-pagina { padding-right: 0; }
+}
+
+/* ---------------------------------------------------------------- Paletas de cor
+   O TemaService aplica <html data-paleta="...">. Sem o atributo (ou "lavanda"), valem as cores acima.
+   Cada paleta só troca a cor principal, o destaque, a marca e o tom dos fundos; positivo, negativo,
+   alerta e emergência continuam iguais em todas. Texto sobre a cor principal com contraste >= 4,5:1.
+   A paleta "personalizada" é calculada pelo TemaService a partir da cor escolhida (variáveis inline). */
+:root[data-paleta="oceano"][data-tema="claro"] {
+  --fundo: #f3f7fb; --superficie-2: #eef4fa; --superficie-3: #e1ebf5; --linha: #e0e8f1;
+  --primaria: #2a78b8; --primaria-hover: #23699f; --primaria-texto: #ffffff; --primaria-suave: #e3f1fb; --primaria-forte: #1d5f94;
+  --destaque-fundo: linear-gradient(135deg, #cfe6fb 0%, #c9f0ef 55%, #dff4e8 100%);
+  --destaque-texto: #10293d; --destaque-suave: #3e5a70;
+  --marca-fundo: linear-gradient(135deg, #9fd2f6, #8ee6d6); --marca-texto: #10324a;
+}
+:root[data-paleta="oceano"][data-tema="escuro"] {
+  --fundo: #10151b; --superficie: #161d25; --superficie-2: #1c242e; --superficie-3: #243040; --linha: #26313f;
+  --primaria: #7cc0f2; --primaria-hover: #93cdf5; --primaria-texto: #0d2233; --primaria-suave: #1b3347; --primaria-forte: #a9d8fa;
+  --destaque-fundo: linear-gradient(135deg, #1d3a57 0%, #18414a 55%, #1b3d33 100%);
+  --destaque-texto: #eef7ff; --destaque-suave: #b6cde0;
+  --marca-fundo: linear-gradient(135deg, #9fd2f6, #8ee6d6); --marca-texto: #10324a;
+}
+
+:root[data-paleta="floresta"][data-tema="claro"] {
+  --fundo: #f4f8f5; --superficie-2: #eef5f0; --superficie-3: #e1ede5; --linha: #e1eae4;
+  --primaria: #26845b; --primaria-hover: #1f744f; --primaria-texto: #ffffff; --primaria-suave: #e2f4ea; --primaria-forte: #1f6b4a;
+  --destaque-fundo: linear-gradient(135deg, #d3f0df 0%, #e4f3cf 55%, #f6f0d2 100%);
+  --destaque-texto: #15301f; --destaque-suave: #45604f;
+  --marca-fundo: linear-gradient(135deg, #9fe0bf, #cfe8a0); --marca-texto: #173a28;
+}
+:root[data-paleta="floresta"][data-tema="escuro"] {
+  --fundo: #111713; --superficie: #172019; --superficie-2: #1d2820; --superficie-3: #25332a; --linha: #27342b;
+  --primaria: #7fd6a9; --primaria-hover: #96dfb9; --primaria-texto: #0f2a1d; --primaria-suave: #1c3529; --primaria-forte: #a8e8c6;
+  --destaque-fundo: linear-gradient(135deg, #1e3d2e 0%, #2c3f1f 55%, #3b3a1e 100%);
+  --destaque-texto: #f0fbf4; --destaque-suave: #b9d6c4;
+  --marca-fundo: linear-gradient(135deg, #9fe0bf, #cfe8a0); --marca-texto: #173a28;
+}
+
+:root[data-paleta="grafite"][data-tema="claro"] {
+  --fundo: #f5f5f6; --superficie-2: #f1f2f4; --superficie-3: #e6e8eb; --linha: #e5e7ea;
+  --primaria: #4b5563; --primaria-hover: #3d4552; --primaria-texto: #ffffff; --primaria-suave: #eceef1; --primaria-forte: #2f3640;
+  --destaque-fundo: linear-gradient(135deg, #e3e6ea 0%, #eceef1 55%, #f4f4f2 100%);
+  --destaque-texto: #1f2937; --destaque-suave: #4b5563;
+  --marca-fundo: linear-gradient(135deg, #cfd4db, #aeb6c2); --marca-texto: #1f2937;
+}
+:root[data-paleta="grafite"][data-tema="escuro"] {
+  --fundo: #121417; --superficie: #1a1d21; --superficie-2: #212429; --superficie-3: #2a2e34; --linha: #2c3036;
+  --primaria: #c3c9d2; --primaria-hover: #d4d9e0; --primaria-texto: #15181d; --primaria-suave: #2a2f37; --primaria-forte: #dfe3e8;
+  --destaque-fundo: linear-gradient(135deg, #2b3038 0%, #262b33 55%, #23272e 100%);
+  --destaque-texto: #f3f4f6; --destaque-suave: #b8bec8;
+  --marca-fundo: linear-gradient(135deg, #cfd4db, #aeb6c2); --marca-texto: #1f2937;
+}
+
+:root[data-paleta="por-do-sol"][data-tema="claro"] {
+  --fundo: #fbf6f3; --superficie-2: #f9f1ec; --superficie-3: #f2e4dc; --linha: #f0e3db;
+  --primaria: #c05339; --primaria-hover: #ab4a33; --primaria-texto: #ffffff; --primaria-suave: #fdebe4; --primaria-forte: #a2432c;
+  --destaque-fundo: linear-gradient(135deg, #ffd9c7 0%, #ffe7c2 55%, #f9d3e0 100%);
+  --destaque-texto: #3d1a10; --destaque-suave: #6e4537;
+  --marca-fundo: linear-gradient(135deg, #ffb38f, #f7a8c4); --marca-texto: #4a1f12;
+}
+:root[data-paleta="por-do-sol"][data-tema="escuro"] {
+  --fundo: #181312; --superficie: #211a18; --superficie-2: #2a211e; --superficie-3: #352a26; --linha: #382c28;
+  --primaria: #ff9f7f; --primaria-hover: #ffb197; --primaria-texto: #2e130a; --primaria-suave: #3d241c; --primaria-forte: #ffc2ad;
+  --destaque-fundo: linear-gradient(135deg, #4a2a22 0%, #4a3420 55%, #43243a 100%);
+  --destaque-texto: #fff4ef; --destaque-suave: #e0bfb3;
+  --marca-fundo: linear-gradient(135deg, #ffb38f, #f7a8c4); --marca-texto: #4a1f12;
 }

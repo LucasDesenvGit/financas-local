@@ -24,7 +24,7 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const cfg = this.configuracao();
-      this.tema.tema(); // redesenha ao trocar claro/escuro
+      this.tema.aparencia(); // redesenha ao trocar claro/escuro ou a paleta de cores
       this.privacidade.oculto(); // e ao ocultar/mostrar valores
       if (this.pronto) this.desenhar(cfg);
     });

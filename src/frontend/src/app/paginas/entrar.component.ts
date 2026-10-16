@@ -4,16 +4,18 @@ import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { SeletorTemaComponent } from '../compartilhado/seletor-tema.component';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { Icones } from '../compartilhado/icones';
 
 @Component({
   selector: 'app-entrar',
-  imports: [FormsModule, SeletorTemaComponent],
+  imports: [FormsModule, SeletorTemaComponent, IconeComponent],
   template: `
     <div class="tela-entrada">
       <div class="tela-entrada-tema"><app-seletor-tema /></div>
       <div class="cartao-entrada">
         <div class="marca marca-grande">
-          <span class="marca-simbolo" aria-hidden="true">F</span>
+          <span class="marca-simbolo" aria-hidden="true"><app-icone [icone]="Icones.marca" [tamanho]="22" [traco]="2" /></span>
           <div>
             <strong>Finanças Local</strong>
             <small>seus dados ficam no seu computador</small>
@@ -57,6 +59,7 @@ import { SeletorTemaComponent } from '../compartilhado/seletor-tema.component';
   `
 })
 export class EntrarComponent implements OnInit {
+  readonly Icones = Icones;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
