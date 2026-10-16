@@ -133,10 +133,35 @@ public class PainelController : BaseController
 
         var ultimaSincronizacao = await _config.ObterDataAsync(ConfiguracaoService.UltimaSincronizacaoGeral, ct);
 
+        // UX-12: faturas com vencimento no mês escolhido — a conta do mês, diferente da dívida total nos cartões.
+        var cartoesAtivos = await _db.Contas.AsNoTracking()
+            .Where(c => c.Tipo == TipoConta.CartaoCredito && !c.Arquivada).Select(c => c.Id).ToListAsync(ct);
+        var faturasDoMes = (await _db.FaturasCartao.AsNoTracking()
+                .Where(f => f.DataVencimento >= inicio && f.DataVencimento <= fim && cartoesAtivos.Contains(f.ContaId))
+                .Select(f => new { f.Id, f.ContaId, Cartao = f.Conta!.Nome, f.DataVencimento, f.DataFechamento, f.ValorTotal, f.ValorPago })
+                .ToListAsync(ct))
+            .Select(f => new FaturaMesDto(f.Id, f.ContaId, f.Cartao, f.DataVencimento, Math.Abs(f.ValorTotal), f.ValorPago,
+                SituacaoFatura(Math.Abs(f.ValorTotal), f.ValorPago, f.DataFechamento, f.DataVencimento, hoje)))
+            .OrderBy(f => f.Vencimento).ThenBy(f => f.Cartao)
+            .ToList();
+        var cartoesSemFatura = cartoesAtivos.Count(id => faturasDoMes.All(f => f.ContaId != id));
+
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
-            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos);
+            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
+            faturasDoMes, faturasDoMes.Sum(f => f.ValorTotal), cartoesSemFatura);
+    }
+
+    /// <summary>
+    /// Paga quando os pagamentos informados cobrem o total; fechada quando já fechou (ou venceu) sem pagamento
+    /// informado; aberta enquanto ainda recebe compras. A instituição nem sempre informa o pagamento, por isso uma
+    /// fatura vencida sem pagamento fica "fechada", não "atrasada" (evita alarme falso).
+    /// </summary>
+    private static string SituacaoFatura(decimal total, decimal? pago, DateOnly? fechamento, DateOnly vencimento, DateOnly hoje)
+    {
+        if (total <= 0 || (pago is { } p && Math.Abs(p) >= total - 0.01m)) return "paga";
+        return (fechamento is { } f && f <= hoje) || vencimento < hoje ? "fechada" : "aberta";
     }
 }
 

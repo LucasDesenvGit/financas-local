@@ -273,6 +273,13 @@ public record ProjecaoCategoriaDto(int? CategoriaId, string Nome, string Cor, de
 public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal MediaDespesas,
     decimal SaldoDisponivelAtual, List<ProjecaoMesDto> Meses, List<ProjecaoCategoriaDto> Categorias);
 
+/// <summary>
+/// Fatura de um cartão com vencimento no mês do Painel (UX-12). Situação: "paga" (pagamentos cobrem o total),
+/// "fechada" (já fechou ou venceu e não consta pagamento) ou "aberta" (ainda recebendo compras).
+/// </summary>
+public record FaturaMesDto(int FaturaId, int ContaId, string Cartao, DateOnly Vencimento, decimal ValorTotal,
+    decimal? ValorPago, string Situacao);
+
 public record PainelDto(
     decimal SaldoContas,
     decimal DividaCartoes,
@@ -292,7 +299,11 @@ public record PainelDto(
     decimal DespesasEmergenciaMes = 0,
     decimal DividaFinanciamentos = 0,
     decimal DividaEmprestimos = 0,
-    int DiasProximosVencimentos = 15);
+    int DiasProximosVencimentos = 15,
+    List<FaturaMesDto>? FaturasDoMes = null,
+    decimal TotalFaturasDoMes = 0,
+    /// <summary>Cartões ativos sem fatura informada com vencimento no mês (cartão manual ou sem dado da instituição).</summary>
+    int CartoesSemFaturaNoMes = 0);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>
