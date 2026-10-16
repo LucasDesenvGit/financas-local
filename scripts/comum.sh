@@ -191,19 +191,23 @@ configurar_ambiente_build() {
 # o banco criado, use estes dois helpers. Ambos dependem da variavel $banco
 # (caminho do arquivo .db) ja estar definida no script chamador. Exemplo:
 #   adicionar_coluna_se_ausente "Transacoes" "Observacao" "TEXT"
+# .timeout: se a API (no ar durante uma atualizacao) estiver gravando, o sqlite3 espera ate 15 s
+# em vez de falhar com "database is locked". Uso: sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ...
+SQLITE_ESPERA=(-cmd '.timeout 15000')
+
 coluna_existe() {
     local tabela="$1" coluna="$2" colunas
     # Le a lista inteira antes de comparar (em vez de canalizar direto para um
     # "grep -qx", que fecha o pipe cedo e poderia, com pipefail, propagar um
     # SIGPIPE do sqlite3 como falha espuria).
-    colunas="$(sqlite3 "$banco" "PRAGMA table_info($tabela);" | cut -d'|' -f2)"
+    colunas="$(sqlite3 "${SQLITE_ESPERA[@]}" "$banco" "PRAGMA table_info($tabela);" | cut -d'|' -f2)"
     grep -qx "$coluna" <<<"$colunas"
 }
 
 adicionar_coluna_se_ausente() {
     local tabela="$1" coluna="$2" definicao="$3"
     if ! coluna_existe "$tabela" "$coluna"; then
-        sqlite3 "$banco" "ALTER TABLE $tabela ADD COLUMN $coluna $definicao;"
+        sqlite3 "${SQLITE_ESPERA[@]}" "$banco" "ALTER TABLE $tabela ADD COLUMN $coluna $definicao;"
         ok "coluna $coluna adicionada em $tabela"
     fi
 }

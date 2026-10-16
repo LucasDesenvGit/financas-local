@@ -96,7 +96,10 @@ arquivo="$PastaBackups/FinancasLocal_$(date +%Y%m%d_%H%M%S).db"
 
 etapa "Fazendo backup em $arquivo"
 [[ -f "$banco" ]] || erro_sai "Banco nao encontrado em $banco. Rode antes o 2-criar-banco.sh."
-sqlite3 "$banco" ".backup '$arquivo'"
+# O shell do sqlite3 so tem escape dentro de "...": \ e \" (apostrofo ou aspas no caminho).
+arquivo_sql=${arquivo//\\/\\\\}
+arquivo_sql=${arquivo_sql//\"/\\\"}
+sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ".backup \"$arquivo_sql\""
 [[ "$(sqlite3 "$arquivo" 'PRAGMA integrity_check;')" == 'ok' ]] || erro_sai 'Verificacao de integridade do backup falhou.'
 ok 'backup concluido e verificado'
 

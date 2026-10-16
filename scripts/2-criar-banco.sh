@@ -35,9 +35,23 @@ chmod 700 "$Dados" 2>/dev/null || true
 chmod 700 "$PastaBackups" 2>/dev/null || true
 ok 'pastas criadas e protegidas (melhor esforco)'
 
+# Atualizacao: copia o banco antes de mexer na estrutura. .backup e seguro com a API no ar.
+# Ficam as 5 copias mais recentes (fora da rotacao do 4-backup.sh, que usa outro nome).
+if [[ -f "$banco" ]]; then
+    etapa 'Backup do banco antes da atualizacao'
+    copia="$PastaBackups/FinancasLocal-antes-instalacao-$(date +%Y%m%d_%H%M%S).db"
+    # O shell do sqlite3 so tem escape dentro de "...": \ e \" (apostrofo ou aspas no caminho).
+    copia_sql=${copia//\\/\\\\}
+    copia_sql=${copia_sql//\"/\\\"}
+    sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ".backup \"$copia_sql\""
+    # shellcheck disable=SC2012
+    ls -1 "$PastaBackups"/FinancasLocal-antes-instalacao-*.db 2>/dev/null | sort -r | tail -n +6 | while IFS= read -r velho; do rm -f "$velho"; done
+    ok "copia em $copia"
+fi
+
 etapa "Criando a estrutura em $banco (01-estrutura.sql)"
 [[ -f "$pasta_banco_sql/01-estrutura.sql" ]] || erro_sai "Arquivo nao encontrado: $pasta_banco_sql/01-estrutura.sql"
-sqlite3 "$banco" < "$pasta_banco_sql/01-estrutura.sql"
+sqlite3 "${SQLITE_ESPERA[@]}" "$banco" < "$pasta_banco_sql/01-estrutura.sql"
 ok 'estrutura criada/atualizada'
 
 etapa 'Adicionando colunas novas em tabelas existentes'
@@ -48,10 +62,10 @@ ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'
 [[ -f "$pasta_banco_sql/02-dados-iniciais.sql" ]] || erro_sai "Arquivo nao encontrado: $pasta_banco_sql/02-dados-iniciais.sql"
-sqlite3 "$banco" < "$pasta_banco_sql/02-dados-iniciais.sql"
+sqlite3 "${SQLITE_ESPERA[@]}" "$banco" < "$pasta_banco_sql/02-dados-iniciais.sql"
 ok 'categorias e configuracoes padrao'
 
-total_tabelas="$(sqlite3 "$banco" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';")"
+total_tabelas="$(sqlite3 "${SQLITE_ESPERA[@]}" "$banco" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';")"
 
 echo ''
 echo -e "\033[32mBanco pronto ($total_tabelas tabela(s)). Proximo passo:\033[0m"

@@ -47,7 +47,7 @@ jobs:
         run: |
           $env:PATH = $env:PATH_WINDOWS_PURO
           if (Get-Command dotnet, node, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1 -NaoConfiarCertificado
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Conferir instalacao
@@ -62,17 +62,25 @@ jobs:
           if ((Get-Service FinancasLocal).Status -ne "Running") { throw "servico FinancasLocal nao esta rodando" }
           curl.exe -k -fsS https://127.0.0.1:5443/api/auth/estado
           if ($LASTEXITCODE -ne 0) { throw "API nao respondeu" }
+          # Sem -k: so passa se o certificado estiver nas Autoridades Raiz da maquina.
+          # --ssl-no-revoke: certificado autoassinado nao tem lista de revogacao.
+          curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado
+          if ($LASTEXITCODE -ne 0) { throw "certificado nao e confiavel para o Windows" }
 
-      # Segunda execucao pelo .cmd: testa a atualizacao (servico parado antes da copia,
-      # certificado reaproveitado) e o proprio .cmd. O "echo." responde o pause do final.
+      # Segunda execucao pelo .cmd: testa a atualizacao (backup do banco, copia da versao
+      # anterior, servico parado antes da copia, certificado reaproveitado) e o proprio .cmd.
       - name: Atualizacao (instalar-windows.cmd)
         shell: cmd
+        env:
+          FINANCAS_SEM_INTERACAO: "1"
         run: |
           set "PATH=%PATH_WINDOWS_PURO%"
-          echo.| call instalar-windows.cmd -NaoConfiarCertificado -PularBuild
+          call instalar-windows.cmd -PularBuild
           if errorlevel 1 exit /b 1
+          dir /b backups\FinancasLocal-antes-instalacao-*.db || exit /b 1
+          if not exist publicado\api-anterior\Financas.Api.dll exit /b 1
           powershell.exe -NoProfile -Command "if (-not (Select-String -Path instaladores\instalacao-windows.log -SimpleMatch 'certificado existente reaproveitado' -Quiet)) { exit 1 }" || exit /b 1
-          curl.exe -k -fsS https://127.0.0.1:5443/api/auth/estado || exit /b 1
+          curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
 
       - name: Diagnostico
         if: failure()

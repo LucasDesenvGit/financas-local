@@ -84,6 +84,7 @@ jobs:
           env PATH="$PATH_LIMPO" bash scripts/instalar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-2.log"
           grep -q 'certificado existente reaproveitado' "$RUNNER_TEMP/instalacao-2.log" || { echo "::error::certificado nao foi reaproveitado"; exit 1; }
           grep -q 'servico systemd (usuario) atualizado e reiniciado' "$RUNNER_TEMP/instalacao-2.log" || { echo "::error::servico nao foi reiniciado"; exit 1; }
+          ls backups/FinancasLocal-antes-instalacao-*.db || { echo "::error::backup do banco antes da atualizacao nao foi feito"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
       - name: Backup (4-backup.sh)

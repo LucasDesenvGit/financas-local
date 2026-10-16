@@ -14,7 +14,9 @@
 
     Precisa ser executado como Administrador (registro do servico). O instalar-windows.cmd, na raiz,
     pede a elevacao e chama este script. Pode ser executado de novo para atualizar: nao apaga dados.
-    A saida fica tambem em instaladores\instalacao-windows.log.
+    A saida fica tambem em instaladores\instalacao-windows.log (acumula as execucoes). Numa
+    atualizacao, o banco e copiado para backups\ antes de mudar a estrutura, e a versao publicada
+    anterior volta sozinha se a nova nao subir.
 
     Ao migrar de uma instalacao com SQL Server, NAO use este script: siga o README.
 
@@ -27,8 +29,7 @@
 param(
     # Reaproveita o build anterior (publicado\preparo) e so republica.
     [switch]$PularBuild,
-    # Nao poe o certificado nos confiaveis: o "dotnet dev-certs https --trust" abre uma janela de
-    # confirmacao, que travaria uma instalacao sem ninguem na frente da tela.
+    # Nao poe o certificado nas Autoridades Raiz Confiaveis da maquina (o navegador vai avisar).
     [switch]$NaoConfiarCertificado
 )
 
@@ -49,10 +50,17 @@ $PastaPublicado = Join-Path $Raiz "publicado"
 $NomeServico = "FinancasLocal"
 
 # ---------------------------------------------------------------- Mensagens
-function Etapa([string]$texto) { Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
+$script:EtapaAtual = "inicio"
+function Etapa([string]$texto) { $script:EtapaAtual = $texto; Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
 function Ok([string]$texto) { Write-Host "    OK  $texto" -ForegroundColor Green }
 function Aviso([string]$texto) { Write-Host "    !!  $texto" -ForegroundColor Yellow }
-function ErroSai([string]$texto) { throw $texto }
+# Erros previstos (com mensagem pronta) sao marcados para o catch final nao mostrar a linha do
+# script; os inesperados mostram, para achar a causa.
+function ErroSai([string]$texto) {
+    $erro = New-Object System.Exception $texto
+    $erro.Data["Previsto"] = $true
+    throw $erro
+}
 
 # ---------------------------------------------------------------- Utilitarios
 function Garantir-Pasta([string]$caminho) {
@@ -61,6 +69,7 @@ function Garantir-Pasta([string]$caminho) {
 
 # Caminho com barras normais (C:/FinancasLocal), como o cygpath -m dos scripts bash.
 function Caminho-Barras([string]$caminho) { return $caminho -replace '\\', '/' }
+
 
 # Baixa para arquivo e le como UTF-8: dependendo do Content-Type, o .Content do Invoke-WebRequest
 # do 5.1 vem como bytes em vez de texto.
@@ -105,10 +114,22 @@ function Extrair-Zip([string]$arquivo, [string]$destino) {
 }
 
 # Executa um programa externo e para se ele falhar (o PowerShell nao para sozinho com exit code).
-# Out-Host faz a saida entrar no log (Start-Transcript nao grava saida direta de programa externo).
+# Junta stdout e stderr e passa pelo Out-Host para os dois entrarem no log (o Start-Transcript nao
+# grava saida direta de programa externo); as ultimas linhas vao junto da mensagem de erro, para a
+# causa aparecer ao lado do ERRO.
 function Executar([string]$programa, [string[]]$argumentos) {
-    & $programa @argumentos | Out-Host
-    if ($LASTEXITCODE -ne 0) { ErroSai "Falhou ($LASTEXITCODE): $programa $($argumentos -join ' ')" }
+    # No 5.1, stderr redirecionado com ErrorActionPreference=Stop vira excecao na primeira linha.
+    $ErrorActionPreference = "Continue"
+    $ultimas = New-Object System.Collections.Generic.Queue[string]
+    & $programa @argumentos 2>&1 | ForEach-Object {
+        if ($_ -is [System.Management.Automation.ErrorRecord]) { $linha = $_.Exception.Message } else { $linha = "$_" }
+        $ultimas.Enqueue($linha)
+        if ($ultimas.Count -gt 20) { [void]$ultimas.Dequeue() }
+        $linha
+    } | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        ErroSai ("Falhou ($LASTEXITCODE): $programa $($argumentos -join ' '). Ultimas linhas:`n" + ($ultimas -join "`n"))
+    }
 }
 
 function Adicionar-Path([string]$pasta) {
@@ -269,10 +290,20 @@ function Configurar-AmbienteBuild {
 }
 
 # ================================================================= 2) Banco
+# .timeout: se a API (ainda no ar numa atualizacao) estiver gravando, espera em vez de falhar com
+# "database is locked".
 function Sqlite([string]$banco, [string]$comando) {
-    $saida = & sqlite3 $banco $comando
+    $saida = & sqlite3 -cmd ".timeout 15000" $banco $comando
     if ($LASTEXITCODE -ne 0) { ErroSai "sqlite3 falhou: $comando" }
     return $saida
+}
+
+# Comando do sqlite3 sobre um arquivo (.read, .backup) rodado de dentro da pasta do arquivo, so
+# com o nome: o caminho completo precisaria de aspas (espaco, apostrofo), e o shell do sqlite3 so
+# tem escape dentro de "...", que o PowerShell 5.1 estraga ao passar para programa externo.
+function Sqlite-NaPasta([string]$banco, [string]$comando, [string]$arquivo) {
+    Push-Location -LiteralPath (Split-Path -Parent $arquivo)
+    try { Sqlite $banco "$comando $(Split-Path -Leaf $arquivo)" | Out-Null } finally { Pop-Location }
 }
 
 function Criar-Banco {
@@ -283,12 +314,23 @@ function Criar-Banco {
     foreach ($p in @($Dados, $PastaSql, $PastaChaves, $PastaBackups)) { Garantir-Pasta $p }
     Ok "pastas criadas"
 
+    # Atualizacao: copia o banco antes de mexer na estrutura. .backup e seguro com a API no ar.
+    # Ficam as 5 copias mais recentes (fora da rotacao do 4-backup.sh, que usa outro nome).
+    if (Test-Path -LiteralPath $banco) {
+        Etapa "[2/3] Backup do banco antes da atualizacao"
+        $copia = Join-Path $PastaBackups ("FinancasLocal-antes-instalacao-" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".db")
+        Sqlite-NaPasta $banco ".backup" $copia
+        Get-ChildItem -LiteralPath $PastaBackups -Filter "FinancasLocal-antes-instalacao-*.db" |
+            Sort-Object Name -Descending | Select-Object -Skip 5 | Remove-Item -Force
+        Ok "copia em $copia"
+    }
+
     # .read em vez de redirecionar o arquivo: o pipe do PowerShell 5.1 para programas externos
     # converte o texto para ASCII e estragaria os acentos de 02-dados-iniciais.sql.
     Etapa "[2/3] Criando a estrutura em $banco (01-estrutura.sql)"
     $estrutura = Join-Path $pastaBancoSql "01-estrutura.sql"
     if (-not (Test-Path -LiteralPath $estrutura)) { ErroSai "Arquivo nao encontrado: $estrutura" }
-    Sqlite $banco ".read '$(Caminho-Barras $estrutura)'" | Out-Null
+    Sqlite-NaPasta $banco ".read" $estrutura
     Ok "estrutura criada/atualizada"
 
     # A lista de colunas novas fica so no 2-criar-banco.sh (linhas adicionar_coluna_se_ausente),
@@ -314,7 +356,7 @@ function Criar-Banco {
     Etapa "[2/3] Inserindo dados iniciais (02-dados-iniciais.sql)"
     $iniciais = Join-Path $pastaBancoSql "02-dados-iniciais.sql"
     if (-not (Test-Path -LiteralPath $iniciais)) { ErroSai "Arquivo nao encontrado: $iniciais" }
-    Sqlite $banco ".read '$(Caminho-Barras $iniciais)'" | Out-Null
+    Sqlite-NaPasta $banco ".read" $iniciais
     Ok "categorias e configuracoes padrao"
 
     $tabelas = Sqlite $banco "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
@@ -389,15 +431,25 @@ function Publicar {
         Ok "certificado gerado em $pfx"
     }
 
+    # Confia na loja da MAQUINA (Autoridades Raiz Confiaveis), sem janela: o "dotnet dev-certs
+    # https --trust" pede um clique e, se quem elevou no UAC foi outra conta, poria o certificado so
+    # na conta do administrador. Vai so a parte publica; o FriendlyName identifica o certificado
+    # antigo para troca-lo quando houver renovacao.
     if ($NaoConfiarCertificado) {
         Aviso "Certificado nao marcado como confiavel (-NaoConfiarCertificado). O navegador vai mostrar um aviso de seguranca."
     } else {
-        & dotnet dev-certs https --trust | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Ok "certificado marcado como confiavel neste computador"
-        } else {
-            Aviso "Nao foi possivel confiar automaticamente no certificado. O navegador vai mostrar um aviso de seguranca."
-        }
+        $completo = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($pfx, $senhaPfx)
+        $publico = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(, $completo.RawData)
+        $publico.FriendlyName = $NomeServico
+        $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
+        $loja.Open("ReadWrite")
+        try {
+            foreach ($antigo in @($loja.Certificates)) {
+                if ($antigo.FriendlyName -eq $NomeServico -and $antigo.Thumbprint -ne $publico.Thumbprint) { $loja.Remove($antigo) }
+            }
+            if (-not ($loja.Certificates | Where-Object { $_.Thumbprint -eq $publico.Thumbprint })) { $loja.Add($publico) }
+        } finally { $loja.Close() }
+        Ok "certificado confiavel para todas as contas deste computador (vale so para localhost)"
     }
 
     # ------------------------------------------------------------ Configuracao de producao
@@ -427,6 +479,15 @@ function Publicar {
         Ok "servico parado"
     }
 
+    # Guarda a versao publicada atual para voltar a ela se a nova nao subir.
+    $anterior = Join-Path $PastaPublicado "api-anterior"
+    $temAnterior = Test-Path -LiteralPath (Join-Path $destino "Financas.Api.dll")
+    if ($temAnterior) {
+        & robocopy.exe $destino $anterior /MIR /NFL /NDL /NJH /NJS /NP /R:3 /W:2 | Out-Null
+        if ($LASTEXITCODE -ge 8) { ErroSai "robocopy falhou ($LASTEXITCODE) ao guardar a versao anterior em $anterior." }
+        $global:LASTEXITCODE = 0
+    }
+
     Etapa "[3/3] Publicando em $destino"
     Garantir-Pasta $destino
     # /MIR espelha (apaga o que nao existe mais no build). Codigos de saida < 8 sao sucesso.
@@ -453,27 +514,87 @@ function Publicar {
         New-Service -Name $NomeServico -BinaryPathName $binPath -DisplayName $NomeServico -StartupType Automatic | Out-Null
         Ok "servico criado"
     }
-    Start-Service -Name $NomeServico
-    Ok "servico do Windows iniciado"
+    # ------------------------------------------------------------ Inicio e teste
+    Etapa "[3/3] Iniciando e testando"
+    $inicio = Get-Date
+    $falha = Iniciar-E-Testar
+    if (-not $falha) { return }
 
-    # ------------------------------------------------------------ Teste
-    Etapa "[3/3] Testando"
+    # A nova versao nao subiu: mostra os eventos do Windows (a excecao real da API fica la) e, numa
+    # atualizacao, volta a versao anterior para o site nao ficar fora do ar. O
+    # appsettings.Production.json novo e mantido (o certificado pode ter sido renovado agora).
+    Mostrar-EventosServico $inicio
+    if ($temAnterior) {
+        Aviso "Voltando a versao anterior..."
+        Stop-Service -Name $NomeServico -Force -ErrorAction SilentlyContinue
+        & robocopy.exe $anterior $destino /MIR /XF appsettings.Production.json /NFL /NDL /NJH /NJS /NP /R:3 /W:2 | Out-Null
+        $global:LASTEXITCODE = 0
+        if (-not (Iniciar-E-Testar)) { ErroSai "$falha A versao anterior foi restaurada e esta no ar; veja os eventos acima." }
+        ErroSai "$falha A versao anterior tambem nao subiu; veja os eventos acima."
+    }
+    ErroSai "$falha Veja os eventos acima."
+}
+
+# Inicia o servico e espera a API responder (ate 30 s: a primeira subida gera as chaves do Data
+# Protection). Devolve $null se deu certo, ou a descricao da falha.
+function Iniciar-E-Testar {
+    try {
+        Start-Service -Name $NomeServico
+    } catch {
+        return "O servico $NomeServico nao iniciou ($($_.Exception.Message))."
+    }
     $urlTeste = "https://127.0.0.1:5443/api/auth/estado"
-    $resposta = $null
-    for ($i = 0; $i -lt 5 -and -not $resposta; $i++) {
+    for ($i = 0; $i -lt 15; $i++) {
         $resposta = & curl.exe -k -fs $urlTeste   # sem -S: nada no stderr (vira erro no 5.1)
-        if ($LASTEXITCODE -ne 0) { $resposta = $null; Start-Sleep -Seconds 2 }
+        if ($LASTEXITCODE -eq 0 -and $resposta) {
+            $global:LASTEXITCODE = 0
+            Ok "servico iniciado; API respondeu: $resposta"
+            return $null
+        }
+        Start-Sleep -Seconds 2
     }
     $global:LASTEXITCODE = 0
-    if ($resposta) { Ok "API respondeu: $resposta" }
-    else { Aviso "A API nao respondeu em $urlTeste. Veja o Visualizador de Eventos (Logs do Windows > Aplicativo)." }
+    return "A API nao respondeu em $urlTeste depois de 30 s."
+}
+
+# Copia para a tela (e o log) os eventos do Windows desde $desde: excecao da API (.NET Runtime,
+# Application Error) e erros do Gerenciador de Servicos.
+function Mostrar-EventosServico([datetime]$desde) {
+    $eventos = @()
+    $eventos += Get-WinEvent -FilterHashtable @{ LogName = "Application"; StartTime = $desde } -ErrorAction SilentlyContinue |
+        Where-Object { $_.ProviderName -match "\.NET Runtime|Application Error|Financas" }
+    $eventos += Get-WinEvent -FilterHashtable @{ LogName = "System"; StartTime = $desde; ProviderName = "Service Control Manager" } -ErrorAction SilentlyContinue
+    $eventos = @($eventos | Where-Object { $_ })   # sem eventos, o Get-WinEvent devolve $null
+    if ($eventos.Count -eq 0) { Aviso "Nenhum evento do Windows registrado para o servico."; return }
+    Write-Host ""
+    Write-Host "    Eventos do Windows desde $($desde.ToString('HH:mm:ss')):" -ForegroundColor Yellow
+    $eventos | Sort-Object TimeCreated | Select-Object -Last 10 | ForEach-Object {
+        Write-Host "    [$($_.TimeCreated.ToString('HH:mm:ss'))] $($_.ProviderName): $($_.Message)"
+    }
 }
 
 # ================================================================= Principal
 Garantir-Pasta $Instaladores
 $log = Join-Path $Instaladores "instalacao-windows.log"
-Start-Transcript -Path $log -Force | Out-Null
+Start-Transcript -Path $log -Append | Out-Null   # -Append: rodar de novo nao apaga o log da falha
 $codigo = 0
+
+# Desliga o QuickEdit desta janela: um clique no console do Windows entra no modo "Selecionar" e
+# congela tudo que escreve nela, e a instalacao parece travada. Sem console (ex.: CI), nao faz nada.
+try {
+    Add-Type -Namespace Financas -Name Console -MemberDefinition @'
+[DllImport("kernel32.dll")] public static extern IntPtr GetStdHandle(int n);
+[DllImport("kernel32.dll")] public static extern bool GetConsoleMode(IntPtr h, out uint m);
+[DllImport("kernel32.dll")] public static extern bool SetConsoleMode(IntPtr h, uint m);
+'@
+    $entrada = [Financas.Console]::GetStdHandle(-10)
+    $modo = 0
+    if ([Financas.Console]::GetConsoleMode($entrada, [ref]$modo)) {
+        # tira ENABLE_QUICK_EDIT_MODE (0x40), mantem ENABLE_EXTENDED_FLAGS (0x80)
+        [void][Financas.Console]::SetConsoleMode($entrada, (($modo -band (-bnot 0x40)) -bor 0x80))
+    }
+} catch { }
+
 try {
     $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -504,7 +625,11 @@ try {
     Write-Host "Instalacao concluida. Abra https://localhost:5443 no navegador." -ForegroundColor Green
 } catch {
     Write-Host ""
-    Write-Host "    ERRO  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "    ERRO em `"$script:EtapaAtual`": $($_.Exception.Message)" -ForegroundColor Red
+    if (-not $_.Exception.Data["Previsto"]) {
+        # Erro inesperado (nao veio do ErroSai): a linha do script ajuda a achar a causa.
+        Write-Host $_.InvocationInfo.PositionMessage -ForegroundColor DarkGray
+    }
     Write-Host "    Log completo em $log"
     $codigo = 1
 } finally {
