@@ -27,7 +27,7 @@ Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`,
 
 - **Positivas:** os comportamentos das UX-1 a UX-11 têm rede de proteção (84 testes, ~5 s); cada teste diz qual issue ou princípio protege; uma mudança que quebre, por exemplo, o `replaceUrl` dos filtros ou o "conteúdo só ao abrir" falha na CI (conferido quebrando o código de propósito).
 - **Negativas:**
-  - 4 dependências de desenvolvimento novas (e ~370 pacotes no `package-lock.json`), que não vão para o bundle publicado mas aumentam o `npm ci`;
+  - 5 dependências de desenvolvimento novas — `jest`, `jest-environment-jsdom`, `jest-preset-angular`, `@types/jest` e `@types/node` (para testes que leem arquivos, como o `styles.css`) — e ~370 pacotes no `package-lock.json`, que não vão para o bundle publicado mas aumentam o `npm ci`;
   - o jsdom não calcula layout nem implementa a Popover API: tamanho de alvo (24×24), contraste e posição real ficam fora — a posição do balão é testada com `getBoundingClientRect` simulado, e a Popover API com um substituto mínimo (`testes/apoio/popover.ts`);
   - se o Angular padronizar o Vitest, migrar os testes será trabalho extra (a API do Vitest é quase igual à do Jest);
   - o back-end (.NET) continua sem testes automatizados.
