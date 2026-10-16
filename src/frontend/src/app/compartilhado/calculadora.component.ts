@@ -1,33 +1,28 @@
 import { Component, HostListener, signal } from '@angular/core';
+import { DicaDirective } from './dica.directive';
+import { IconeComponent } from './icone.component';
+import { Icones } from './icones';
 
 interface ItemHistorico { expressao: string; resultado: number; }
 
 /**
- * Calculadora flutuante (canto superior direito). Aceita teclado: números, + - * / % ( ) , . Enter, Backspace e Esc.
+ * Calculadora da barra superior (UX-7: ícone na barra, no mesmo lugar em desktop e celular; o painel abre ancorado
+ * ao botão). Aceita teclado: números, + - * / % ( ) , . Enter, Backspace e Esc; Alt+C abre/fecha de qualquer tela.
  * O cálculo é feito por um analisador próprio (sem eval), compatível com a CSP do site.
  * "100 + 10%" = 110 e "200 - 15%" = 170, como nas calculadoras de bolso.
  */
 @Component({
   selector: 'app-calculadora',
+  imports: [DicaDirective, IconeComponent],
+  host: { class: 'calc' },
   template: `
-    <button type="button" class="calc-botao" (click)="alternar()" [attr.aria-expanded]="aberta()"
-      aria-label="Calculadora" title="Calculadora (Alt+C)">
-      @if (aberta()) {
-        <span aria-hidden="true">×</span>
-      } @else {
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="4" y="2" width="16" height="20" rx="2.5" /><line x1="8" y1="6" x2="16" y2="6" />
-          <line x1="8" y1="11" x2="8.01" y2="11" /><line x1="12" y1="11" x2="12.01" y2="11" />
-          <line x1="16" y1="11" x2="16.01" y2="11" /><line x1="8" y1="15" x2="8.01" y2="15" />
-          <line x1="12" y1="15" x2="12.01" y2="15" /><line x1="16" y1="15" x2="16" y2="18" />
-          <line x1="8" y1="18" x2="12" y2="18" />
-        </svg>
-      }
+    <button type="button" class="botao-barra calc-botao" (click)="alternar()" [attr.aria-expanded]="aberta()"
+      aria-controls="calc-painel" aria-label="Calculadora (Alt+C)" appDica="Calculadora (Alt+C)" dicaLado="abaixo">
+      <app-icone [icone]="aberta() ? Icones.fechar : Icones.calculadora" [tamanho]="18" />
     </button>
 
     @if (aberta()) {
-      <section class="calc-painel" role="dialog" aria-label="Calculadora">
+      <section id="calc-painel" class="calc-painel" role="dialog" aria-label="Calculadora">
         <div class="calc-visor">
           <div class="calc-expressao">{{ expressao() || ' ' }}</div>
           <div class="calc-resultado" aria-live="polite">{{ visor() }}</div>
@@ -78,6 +73,7 @@ interface ItemHistorico { expressao: string; resultado: number; }
   `
 })
 export class CalculadoraComponent {
+  readonly Icones = Icones;
   readonly aberta = signal(false);
   readonly expressao = signal('');
   readonly resultado = signal<number | null>(null);

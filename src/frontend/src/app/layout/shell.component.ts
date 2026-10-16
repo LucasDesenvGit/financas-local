@@ -4,19 +4,20 @@ import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { AvisosService } from '../compartilhado/avisos.component';
-import { SeletorTemaComponent } from '../compartilhado/seletor-tema.component';
 import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.component';
 import { CalculadoraComponent } from '../compartilhado/calculadora.component';
+import { DicaDirective } from '../compartilhado/dica.directive';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
+import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
 import { LucideIconData } from 'lucide-angular';
 
 interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, SeletorTemaComponent, BotaoPrivacidadeComponent, CalculadoraComponent,
-    IconeComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BotaoPrivacidadeComponent, CalculadoraComponent, MenuUsuarioComponent,
+    IconeComponent, DicaDirective],
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()">
       <aside class="lateral">
@@ -37,33 +38,32 @@ interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
           }
         </nav>
 
-        <div class="lateral-rodape">
-          <button type="button" class="botao botao-suave largura-total" (click)="sincronizar()" [disabled]="sincronizando()">
-            <app-icone [icone]="Icones.sincronizar" [tamanho]="16" [class.girando]="sincronizando()" />
-            {{ sincronizando() ? 'Sincronizando…' : 'Sincronizar bancos' }}
-          </button>
-          <app-botao-privacidade />
-          <app-seletor-tema />
-          <div class="usuario">
-            <span>{{ auth.estado()?.login }}</span>
-            <button type="button" class="link" (click)="auth.sair()">Sair</button>
-          </div>
-        </div>
       </aside>
 
       <div class="conteudo">
-        <header class="barra-mobile">
-          <button type="button" class="botao-icone" (click)="menuAberto.set(!menuAberto())" aria-label="Abrir menu">☰</button>
-          <strong class="cresce">Finanças</strong>
-          <app-botao-privacidade />
-          <app-seletor-tema />
+        <!-- UX-7: ações globais numa barra só, fixa no topo e na mesma posição no desktop e no celular. -->
+        <header class="barra-superior">
+          <button type="button" class="botao-barra so-celular" (click)="menuAberto.set(!menuAberto())"
+            [attr.aria-expanded]="menuAberto()" aria-label="Abrir menu de navegação">
+            <app-icone [icone]="Icones.menuLateral" [tamanho]="20" />
+          </button>
+          <strong class="barra-titulo so-celular">Finanças</strong>
+          <div class="barra-acoes">
+            <button type="button" class="botao-barra botao-sincronizar" (click)="sincronizar()" [disabled]="sincronizando()"
+              aria-label="Sincronizar bancos" appDica="Sincronizar bancos" dicaLado="abaixo">
+              <app-icone [icone]="Icones.sincronizar" [tamanho]="18" [class.girando]="sincronizando()" />
+              <span class="rotulo-barra">{{ sincronizando() ? 'Sincronizando…' : 'Sincronizar' }}</span>
+            </button>
+            <app-botao-privacidade />
+            <app-calculadora />
+            <app-menu-usuario />
+          </div>
         </header>
         <main class="pagina">
           <router-outlet />
         </main>
       </div>
     </div>
-    <app-calculadora />
   `
 })
 export class ShellComponent {
