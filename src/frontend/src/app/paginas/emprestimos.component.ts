@@ -11,6 +11,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
 
 /** Cores fixas por natureza, usadas nos cartões, etiquetas e no gráfico: financiamento sempre azul, empréstimo sempre laranja. */
 const COR_FINANCIAMENTO = CORES_GRAFICO.financiamento;
@@ -23,7 +24,7 @@ interface Grupo {
 
 @Component({
   selector: 'app-emprestimos',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent],
+  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, TermoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -123,7 +124,7 @@ interface Grupo {
                   <div><span>Valor contratado</span><strong>{{ c.valorContratado | currency }}</strong></div>
                   <div><span>Já pago</span><strong>{{ c.totalPago | currency }}</strong></div>
                   <div><span>Juros</span><strong>{{ taxa(c) }}</strong></div>
-                  <div><span>CET</span><strong>{{ c.cet !== null ? (c.cet * 100 | number: '1.2-2') + '% a.a.' : '—' }}</strong></div>
+                  <div><span><app-termo chave="cet">CET</app-termo></span><strong>{{ c.cet !== null ? (c.cet * 100 | number: '1.2-2') + '% a.a.' : '—' }}</strong></div>
                 </div>
 
                 @if (c.parcelasTotal) {

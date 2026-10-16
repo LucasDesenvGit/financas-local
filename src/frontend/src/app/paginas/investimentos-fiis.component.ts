@@ -11,6 +11,7 @@ import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
 import { pct, reaisOuNada } from '../compartilhado/utilidades';
 
 // Paleta dos fundos: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic, que têm significado (UX-9).
@@ -28,7 +29,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 /** Aba de FIIs da página de investimentos (inspirada nos painéis de carteira de sites como o Investidor10). */
 @Component({
   selector: 'app-investimentos-fiis',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent],
   template: `
     @if (dados(); as d) {
       @if (!d.fiis.length) {
@@ -135,14 +136,14 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
             </ul>
           </section>
           <section class="painel-bloco">
-            <h2>Yield on cost x DY atual (12m)</h2>
+            <h2><app-termo chave="yieldOnCost">Yield on cost</app-termo> x <app-termo chave="dy">DY</app-termo> atual (12m)</h2>
             <app-grafico-explicado [resumo]="resumoYield()"
               comoLer="Por fundo: yield on cost (proventos de 12 meses sobre o que você pagou) em verde quando é maior que o DY atual e em rosa quando é menor; em azul, o DY atual sobre a cotação de hoje.">
               <app-grafico [configuracao]="graficoYield()" [altura]="alturaPorFundo()" />
             </app-grafico-explicado>
           </section>
           <section class="painel-bloco">
-            <h2>Preço médio x cotação</h2>
+            <h2><app-termo chave="precoMedio">Preço médio</app-termo> x cotação</h2>
             <app-grafico-explicado [resumo]="resumoPreco()"
               comoLer="Por fundo: lilás-claro, seu preço médio; a cotação de hoje em verde quando está acima dele e em rosa quando está abaixo.">
               <app-grafico [configuracao]="graficoPreco()" [altura]="alturaPorFundo()" />
@@ -156,9 +157,9 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
             <table class="tabela tabela-fiis">
               <thead>
                 <tr>
-                  <th>Fundo</th><th>Segmento</th><th class="direita">Cotas</th><th class="direita">Preço médio</th>
+                  <th>Fundo</th><th>Segmento</th><th class="direita">Cotas</th><th class="direita"><app-termo chave="precoMedio">Preço médio</app-termo></th>
                   <th class="direita">Cotação</th><th class="direita">Valorização</th><th class="direita">Último rend.</th>
-                  <th class="direita">DY mês / 12m</th><th class="direita">Yield on cost</th><th class="direita">Renda/mês</th>
+                  <th class="direita"><app-termo chave="dy">DY</app-termo> mês / 12m</th><th class="direita"><app-termo chave="yieldOnCost">Yield on cost</app-termo></th><th class="direita">Renda/mês</th>
                   <th class="direita">Peso</th>
                 </tr>
               </thead>
@@ -215,9 +216,9 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
                 <tr>
                   <th>Data</th><th>Fundo</th><th class="direita">Cotas</th><th class="direita">Preço pago</th>
                   <th class="direita">Cotação hoje</th><th class="direita">Variação</th>
-                  <th class="direita" title="Rendimentos dos 12 meses antes da compra ÷ preço pago">DY na compra</th>
-                  <th class="direita" title="Rendimentos dos últimos 12 meses ÷ preço pago">Yield on cost hoje</th>
-                  <th class="direita" title="Rendimentos dos últimos 12 meses ÷ cotação atual">DY atual</th>
+                  <th class="direita"><app-termo chave="dyNaCompra">DY na compra</app-termo></th>
+                  <th class="direita"><app-termo chave="yieldOnCost">Yield on cost</app-termo> hoje</th>
+                  <th class="direita"><app-termo chave="dy">DY</app-termo> atual</th>
                   <th class="direita">Renda/mês do lote</th><th class="direita">Já rendeu</th><th>Origem</th>
                 </tr>
               </thead>
