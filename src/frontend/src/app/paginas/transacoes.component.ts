@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -10,7 +12,7 @@ import {
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
-import { dataIso, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { dataIso, dataIsoValida, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 interface FormTransacao {
@@ -331,12 +333,18 @@ interface FormTransferencia {
 export class TransacoesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
 
   readonly TipoTransacao = TipoTransacao;
   readonly StatusTransacao = StatusTransacao;
 
   readonly contas = signal<Conta[]>([]);
-  readonly categorias = signal<Categoria[]>([]);
+  /** Todas as categorias (inclusive inativas), para validar a categoria que chega pela URL. */
+  readonly todasCategorias = signal<Categoria[]>([]);
+  /** Categorias oferecidas nos selects: as ativas e, se for o caso, a inativa que está no filtro. */
+  readonly categorias = computed(() =>
+    this.todasCategorias().filter((c) => c.ativa || String(c.id) === this.categoriaFiltrada()));
+  private readonly categoriaFiltrada = signal('');
   readonly pagina = signal<PaginaTransacoes | null>(null);
   readonly selecionadas = signal<Set<number>>(new Set());
   readonly salvando = signal(false);
@@ -364,21 +372,82 @@ export class TransacoesComponent implements OnInit {
   transferencia: FormTransferencia | null = null;
 
   ngOnInit(): void {
-    this.api.contas().subscribe((c) => this.contas.set(c));
-    this.api.categorias().subscribe((c) => this.categorias.set(c.filter((x) => x.ativa)));
-    this.buscar(1);
+    const params = this.rota.snapshot.queryParamMap;
+    // Categoria/conta da URL só são aplicadas depois de conferir que existem; por isso, quando vierem,
+    // a primeira busca espera as listas (uma requisição só, sem a lista piscar).
+    const precisaListas = params.has('categoria') || params.has('conta');
+    forkJoin({ contas: this.api.contas(), categorias: this.api.categorias() }).subscribe({
+      next: ({ contas, categorias }) => {
+        this.contas.set(contas);
+        this.todasCategorias.set(categorias);
+        if (precisaListas) {
+          this.aplicarParametrosDaUrl(params);
+          this.buscar(1);
+        }
+      },
+      error: (e) => {
+        this.avisos.erro(mensagemDeErro(e));
+        if (precisaListas) this.buscar(1);
+      }
+    });
+    if (!precisaListas) {
+      this.aplicarParametrosDaUrl(params);
+      this.buscar(1);
+    }
+  }
+
+  /**
+   * UX-1: filtro vindo de outra tela (?categoria=12|sem&inicio=yyyy-MM-dd&fim=yyyy-MM-dd&tipo=despesa|receita&conta=3).
+   * Cada parâmetro é validado sozinho: um inválido é ignorado e os outros continuam valendo.
+   */
+  private aplicarParametrosDaUrl(params: ParamMap): void {
+    const inicio = params.get('inicio');
+    const fim = params.get('fim');
+    const inicioOk = dataIsoValida(inicio);
+    const fimOk = dataIsoValida(fim);
+    if (inicioOk) this.filtro.inicio = inicio;
+    if (fimOk) this.filtro.fim = fim;
+    // Só uma das datas veio válida: a outra acompanha o mês dela, para não sobrar um período invertido (lista vazia).
+    if (inicioOk !== fimOk && this.filtro.inicio! > this.filtro.fim!) {
+      const base = paraData(inicioOk ? this.filtro.inicio! : this.filtro.fim!);
+      if (inicioOk) this.filtro.fim = ultimoDiaMes(base.getFullYear(), base.getMonth() + 1);
+      else this.filtro.inicio = primeiroDiaMes(base.getFullYear(), base.getMonth() + 1);
+    }
+
+    const tipos: Record<string, TipoTransacao> = {
+      despesa: TipoTransacao.Despesa, receita: TipoTransacao.Receita, transferencia: TipoTransacao.Transferencia
+    };
+    const tipo = params.get('tipo');
+    if (tipo && tipos[tipo]) this.filtro.tipo = tipos[tipo];
+
+    const categoria = params.get('categoria');
+    if (categoria === 'sem') {
+      this.filtroCategoria = 'sem';
+    } else if (categoria && this.todasCategorias().some((c) => String(c.id) === categoria)) {
+      this.filtroCategoria = categoria;
+    }
+    this.sincronizarFiltroCategoria();
+
+    const conta = Number(params.get('conta'));
+    if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
   }
 
   rotuloCategoria(c: Categoria): string {
     if (!c.categoriaPaiId) return c.nome;
-    const pai = this.categorias().find((x) => x.id === c.categoriaPaiId);
+    const pai = this.todasCategorias().find((x) => x.id === c.categoriaPaiId);
     return pai ? `${pai.nome} › ${c.nome}` : c.nome;
   }
 
   aplicarFiltroCategoria(): void {
+    this.sincronizarFiltroCategoria();
+    this.buscar(1);
+  }
+
+  /** Leva o valor do select de categoria ('' | 'sem' | id) para o filtro da API. */
+  private sincronizarFiltroCategoria(): void {
     this.filtro.semCategoria = this.filtroCategoria === 'sem';
     this.filtro.categoriaId = this.filtroCategoria && this.filtroCategoria !== 'sem' ? Number(this.filtroCategoria) : null;
-    this.buscar(1);
+    this.categoriaFiltrada.set(this.filtroCategoria);
   }
 
   buscar(pagina: number): void {
