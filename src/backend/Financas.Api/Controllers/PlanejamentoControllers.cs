@@ -12,11 +12,13 @@ public class OrcamentosController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly RelatorioService _relatorios;
+    private readonly SugestaoOrcamentoService _sugestao;
 
-    public OrcamentosController(FinancasDbContext db, RelatorioService relatorios)
+    public OrcamentosController(FinancasDbContext db, RelatorioService relatorios, SugestaoOrcamentoService sugestao)
     {
         _db = db;
         _relatorios = relatorios;
+        _sugestao = sugestao;
     }
 
     [HttpGet]
@@ -54,6 +56,43 @@ public class OrcamentosController : BaseController
     {
         var apagados = await _db.Orcamentos.Where(o => o.Id == id).ExecuteDeleteAsync(ct);
         return apagados == 0 ? NaoEncontrado() : NoContent();
+    }
+
+    /// <summary>Sugestão de orçamentos por categoria para o mês (só leitura: nada é gravado). #39</summary>
+    [HttpGet("sugestao")]
+    public async Task<ActionResult<SugestaoOrcamentoDto>> Sugestao([FromQuery] int? ano, [FromQuery] int? mes, CancellationToken ct)
+    {
+        var hoje = Relogio.Hoje;
+        var a = ano ?? hoje.Year;
+        var m = mes ?? hoje.Month;
+        if (a < 2000 || a > 2100 || m < 1 || m > 12) return Erro("Período inválido.");
+        return await _sugestao.SugerirAsync(a, m, ct);
+    }
+
+    /// <summary>Grava os valores escolhidos na sugestão (cria ou altera o orçamento de cada categoria no mês).</summary>
+    [HttpPost("aplicar-sugestao")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> AplicarSugestao(AplicarSugestaoOrcamentoDto dto, CancellationToken ct)
+    {
+        var ids = dto.Itens.Select(i => i.CategoriaId).Distinct().ToList();
+        if (ids.Count != dto.Itens.Count) return Erro("Categoria repetida na sugestão.");
+        var validas = await _db.Categorias.AsNoTracking()
+            .Where(c => ids.Contains(c.Id) && c.Tipo == TipoCategoria.Despesa).Select(c => c.Id).ToListAsync(ct);
+        if (validas.Count != ids.Count) return Erro("Orçamentos são definidos para categorias de despesa.");
+
+        var existentes = await _db.Orcamentos
+            .Where(o => o.Ano == dto.Ano && o.Mes == dto.Mes && ids.Contains(o.CategoriaId)).ToListAsync(ct);
+        foreach (var item in dto.Itens)
+        {
+            var o = existentes.FirstOrDefault(x => x.CategoriaId == item.CategoriaId);
+            if (o is null)
+            {
+                o = new Orcamento { CategoriaId = item.CategoriaId, Ano = dto.Ano, Mes = dto.Mes };
+                _db.Orcamentos.Add(o);
+            }
+            o.Valor = item.Valor;
+        }
+        await _db.SaveChangesAsync(ct);
+        return new ResultadoAplicacaoDto(dto.Itens.Count);
     }
 
     /// <summary>Copia os orçamentos do mês anterior para o mês informado (sem sobrescrever os existentes).</summary>

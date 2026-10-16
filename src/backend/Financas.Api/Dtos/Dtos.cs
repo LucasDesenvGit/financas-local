@@ -135,6 +135,32 @@ public record SalvarOrcamentoDto(int CategoriaId, [Range(2000, 2100)] short Ano,
 
 public record CopiarOrcamentoDto([Range(2000, 2100)] short Ano, [Range(1, 12)] byte Mes);
 
+/// <summary>Uso do limite de um cartão: média das últimas faturas fechadas ÷ limite.</summary>
+public record CartaoUsoLimiteDto(int ContaId, string Nome, decimal Limite, decimal FaturaMedia, decimal Percentual);
+
+/// <summary>
+/// Sugestão para uma categoria principal (subcategorias somam nela). <c>Sugerido</c> é null quando não há dados suficientes;
+/// <c>Atual</c> é o orçamento que já existe no mês. <c>Tendencia</c>: "alta", "queda", "estavel" ou null (menos de 6 meses).
+/// </summary>
+public record ItemSugestaoOrcamentoDto(int CategoriaId, string Nome, string Cor, NaturezaGasto? Natureza, decimal Mediana,
+    decimal Media, decimal UltimoMes, string? Tendencia, int MesesComGasto, decimal PagoNoCartaoPercentual,
+    decimal? Sugerido, decimal? Atual, bool Selecionado, List<string> Motivos);
+
+/// <summary>
+/// Sugestão de orçamentos de um mês: o resumo (renda, parcelas, poupança, cartões) e uma linha por categoria.
+/// <c>TotalSugerido</c> é o total do mês ao aplicar a sugestão (categorias que já têm orçamento contam com o atual).
+/// </summary>
+public record SugestaoOrcamentoDto(short Ano, byte Mes, int MesesBase, int MesesRenda, decimal RendaMedia,
+    decimal ParcelasCartao, decimal ParcelasFinanciamentos, decimal ParcelasEmprestimos, decimal PercentualPoupanca,
+    decimal MetaPoupanca, decimal Disponivel, decimal TotalSugerido, decimal? FaltaParaCaber,
+    decimal? UsoLimiteCartoes, string? NivelCartao, decimal LimiteAtencao, decimal LimiteAlerta,
+    List<CartaoUsoLimiteDto> Cartoes, List<string> Avisos, List<ItemSugestaoOrcamentoDto> Itens);
+
+public record ItemAplicarSugestaoDto(int CategoriaId, [Range(0.01d, 999999999d)] decimal Valor);
+
+public record AplicarSugestaoOrcamentoDto([Range(2000, 2100)] short Ano, [Range(1, 12)] byte Mes,
+    [Required, MinLength(1), MaxLength(500)] List<ItemAplicarSugestaoDto> Itens);
+
 public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual, DateOnly? DataAlvo,
     int? ContaId, string? ContaNome, string Cor, bool Concluida, decimal Percentual, decimal? AporteMensalSugerido,
     decimal ValorInicial, decimal SaldoConta);

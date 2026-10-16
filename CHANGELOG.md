@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- Orçamentos: **✨ Sugerir orçamentos** (#39). Para cada categoria, sugere um valor a partir da mediana dos últimos 6 meses (sem emergências, compras parceladas e picos isolados), com o motivo de cada valor. A soma cabe em renda média − parcelas (cartão, financiamentos e empréstimos) − meta de poupança: corta primeiro o estilo de vida, depois o que está sem classificação, e nunca os essenciais sozinho (a tela diz quanto falta). Com os cartões acima do nível de atenção de uso do limite, aperta o estilo de vida pago no cartão. Tudo é revisado numa janela com valores editáveis, total do mês e distribuição da renda (50/30/20) atualizados na hora; categoria que já tem orçamento vem desmarcada. Os percentuais ficam em Configurações › Parametrização › Orçamentos.
 - Transações: filtro de **várias categorias** de uma vez, com caixas de marcar (cada categoria inclui as subcategorias, e dá para somar "Sem categoria"). Um chip por categoria em "Filtrando:", cada um com o seu ✕; na URL, `?categoria=12,20,sem` (links antigos com uma categoria continuam valendo). A API aceita `categoriaIds` repetido, mantendo `categoriaId`.
 - Empréstimos e financiamentos importados pelo Open Finance (`GET /loans` da Pluggy): saldo devedor, parcelas, taxa, CET e histórico de pagamentos de cada contrato.
 - Nova página **Empréstimos e financiamentos**, com financiamentos (imóvel, veículo, bens) e empréstimos sempre separados: totais, contratos e pagamentos por mês.
