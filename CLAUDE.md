@@ -16,6 +16,7 @@ cd src/frontend && npm start                    # front-end em dev (http://local
 
 # CI roda também:
 python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura.sql é idempotente
+# Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam
 
 # Banco (sem migrations)
 scripts/2-criar-banco.sh                        # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
