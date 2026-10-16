@@ -10,13 +10,14 @@ import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.compon
 import { NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent],
+  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -44,7 +45,7 @@ import { Icones } from '../compartilhado/icones';
           <small>contas + investimentos (cotação atual) − cartões{{ d.dividaFinanciamentos + d.dividaEmprestimos > 0 ? ' − financiamentos − empréstimos' : '' }}</small>
         </article>
         <article class="kpi">
-          <span>Patrimônio sem renda variável</span>
+          <span><app-termo chave="patrimonioSemRendaVariavel">Patrimônio sem renda variável</app-termo></span>
           <strong [class.negativo]="d.patrimonioSemRendaVariavel < 0">{{ d.patrimonioSemRendaVariavel | currency }}</strong>
           <small>sem FIIs, ações e ETFs ({{ d.rendaVariavel | currency }})</small>
         </article>

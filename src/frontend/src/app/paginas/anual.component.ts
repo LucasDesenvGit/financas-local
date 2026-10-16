@@ -11,11 +11,15 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES, NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
+import { ChaveGlossario } from '../compartilhado/glossario';
 
 type Status = 'ok' | 'atencao' | 'alerta' | 'neutro';
 
 interface Indicador {
   titulo: string;
+  /** Termo do glossário (UX-10), quando o título é um termo técnico. */
+  termo?: ChaveGlossario;
   valor: string;
   meta: string;
   explicacao: string;
@@ -32,7 +36,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 
 @Component({
   selector: 'app-anual',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
+  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -61,7 +65,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
         @for (i of indicadores(); track i.titulo) {
           <article class="indicador" [class]="'indicador indicador-' + i.status">
             <div class="indicador-topo">
-              <span>{{ i.titulo }}</span>
+              @if (i.termo) { <span><app-termo [chave]="i.termo">{{ i.titulo }}</app-termo></span> } @else { <span>{{ i.titulo }}</span> }
               <span class="indicador-selo">{{ rotuloStatus(i.status) }}</span>
             </div>
             <strong>{{ i.valor }}</strong>
@@ -116,7 +120,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
           </app-grafico-explicado>
         </section>
         <section class="painel-bloco">
-          <h2>Taxa de poupança por mês</h2>
+          <h2><app-termo chave="taxaPoupanca">Taxa de poupança</app-termo> por mês</h2>
           <app-grafico-explicado [resumo]="resumoTaxa()"
             comoLer="Parte da renda que sobrou em cada mês. Verde: 20% ou mais; amarelo: entre 0 e 20%; rosa: mês no vermelho. A linha tracejada é a referência de 20%.">
             <app-grafico [configuracao]="graficoTaxa()" [altura]="250" />
@@ -126,7 +130,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 
       <div class="grade-2">
         <section class="painel-bloco">
-          <h2>Para onde vai a sua renda (regra 50/30/20)</h2>
+          <h2>Para onde vai a sua renda (<app-termo chave="regra503020">regra 50/30/20</app-termo>)</h2>
           <app-grafico-explicado [resumo]="resumo503020()"
             comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Classifique as categorias em Categorias e regras.">
             <app-grafico [configuracao]="grafico503020()" [altura]="170" />
@@ -244,7 +248,7 @@ export class AnualComponent implements OnInit {
 
     return [
       {
-        titulo: 'Taxa de poupança',
+        titulo: 'Taxa de poupança', termo: 'taxaPoupanca',
         valor: d.resumo.receitas > 0 ? `${this.fmt(taxa)}%` : '—',
         meta: 'Meta: guardar pelo menos 20% da renda',
         explicacao: taxa >= 20 ? 'Ótimo: você está guardando uma boa parte do que ganha.'
@@ -254,7 +258,7 @@ export class AnualComponent implements OnInit {
         progresso: d.resumo.receitas > 0 ? Math.max(0, Math.min(100, (taxa / 20) * 100)) : null
       },
       {
-        titulo: 'Reserva de emergência',
+        titulo: 'Reserva de emergência', termo: 'reservaEmergencia',
         valor: reserva === null ? '—' : `${this.fmt(reserva)} meses`,
         meta: `Meta: 6 meses de gastos${s.mesesDeReservaEssencial !== null ? ` · só essenciais: ${this.fmt(s.mesesDeReservaEssencial)} meses` : ''}`,
         explicacao: reserva === null ? 'Sem histórico de gastos suficiente.'
@@ -265,7 +269,7 @@ export class AnualComponent implements OnInit {
         progresso: reserva === null ? null : Math.min(100, (reserva / 6) * 100)
       },
       {
-        titulo: 'Comprometimento com parcelas',
+        titulo: 'Comprometimento com parcelas', termo: 'comprometimento',
         valor: comp === null ? '—' : `${this.fmt(comp)}% da renda`,
         meta: oculto ? 'Ideal: abaixo de 30%' : `Ideal: abaixo de 30% · cartão: ${this.moeda(s.parcelasMensais)}`
           + (s.parcelasFinanciamentos > 0 ? ` · financiamentos: ${this.moeda(s.parcelasFinanciamentos)}` : '')

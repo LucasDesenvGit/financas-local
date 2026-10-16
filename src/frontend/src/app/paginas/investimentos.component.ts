@@ -16,6 +16,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { dataIso, pct, reaisOuNada } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { TermoComponent } from '../compartilhado/termo.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -47,7 +48,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
 @Component({
   selector: 'app-investimentos',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent,
+  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent,
     InvestimentosFiisComponent],
   template: `
     <header class="cabecalho-pagina">
@@ -100,7 +101,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <small>{{ d.rendaVariavel.proventosRecebidos | currency }} desde a 1ª compra</small>
         </article>
         <article class="kpi">
-          <span>Selic</span>
+          <span><app-termo chave="selic">Selic</app-termo></span>
           <strong>{{ d.selic.metaAnual !== null ? (d.selic.metaAnual | number: '1.2-2') + '% a.a.' : '—' }}</strong>
           <small>12 meses: {{ pct(d.selic.acumulado12Meses, false) }} · no ano: {{ pct(d.selic.acumuladoAno, false) }}</small>
         </article>
@@ -183,7 +184,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               <table class="tabela tabela-carteira">
                 <thead>
                   <tr>
-                    <th>Ativo</th><th class="direita">Cotas</th><th class="direita">Preço médio</th>
+                    <th>Ativo</th><th class="direita">Cotas</th><th class="direita"><app-termo chave="precoMedio">Preço médio</app-termo></th>
                     <th class="direita">Cotação</th><th class="direita">Valor atual</th><th class="direita">Valorização</th>
                     <th class="direita">Proventos 12m</th><th class="direita">Resultado total</th><th class="direita">x Selic</th><th></th>
                   </tr>
@@ -271,7 +272,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             <table class="tabela">
               <thead>
                 <tr><th>Investimento</th><th>Instituição</th><th class="direita">Aplicado</th><th class="direita">Saldo</th>
-                  <th class="direita">Rentabilidade</th><th class="direita">Selic no período</th><th class="direita">% da Selic</th>
+                  <th class="direita">Rentabilidade</th><th class="direita"><app-termo chave="selic">Selic</app-termo> no período</th><th class="direita">% da Selic</th>
                   <th>Vencimento</th></tr>
               </thead>
               <tbody>
