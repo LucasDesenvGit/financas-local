@@ -352,6 +352,9 @@ CREATE TABLE IF NOT EXISTS Meta
     -- Cofrinho (reserva do extrato, ADR 0010) da conta que guarda o dinheiro da meta: identificado pelo nome,
     -- como no ReservaService. Bancos antigos: coluna via 2-criar-banco.sh.
     ReservaNome TEXT    NULL,
+    -- Ordem de prioridade (1 = primeira) para o assistente de metas dividir a sobra; 0 = ainda sem ordem.
+    -- Bancos antigos: coluna via 2-criar-banco.sh.
+    Prioridade  INTEGER NOT NULL CONSTRAINT DF_Meta_Prioridade DEFAULT 0,
     -- Preenchido pela API (Meta.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm    TEXT    NOT NULL,
     CONSTRAINT CK_Meta_ValorAlvo CHECK (CAST(ValorAlvo AS REAL) > 0),

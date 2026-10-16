@@ -27,6 +27,7 @@ public class ConfiguracaoService
     public const string OrcamentoCartaoAtencao = "Orcamento.CartaoAtencao";
     public const string OrcamentoCartaoAlerta = "Orcamento.CartaoAlerta";
     public const string OrcamentoCorteCartao = "Orcamento.CorteCartao";
+    public const string MetasMargemSeguranca = "Metas.MargemSeguranca";
 
     private readonly FinancasDbContext _db;
     private readonly IDataProtector _protetor;

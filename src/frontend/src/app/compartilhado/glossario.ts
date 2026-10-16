@@ -61,6 +61,15 @@ export const GLOSSARIO = {
     termo: 'Dívida total nos cartões',
     definicao: 'Tudo o que você deve nos cartões hoje, somando todos, inclusive parcelas que ainda vão vencer. Não é a fatura do mês.'
   },
+  sobraPrevista: {
+    termo: 'Sobra prevista',
+    definicao: 'Receitas médias menos despesas médias à vista e parcelas do mês: a mesma conta da tela de Projeção. No mês atual, o que já entrou e saiu mais o que falta pela média.'
+  },
+  margemSeguranca: {
+    termo: 'Margem de segurança',
+    definicao: 'A parte da sobra prevista que o assistente deixa livre para imprevistos antes de recomendar quanto guardar. Ajuste em Configurações › Parametrização.',
+    exemplo: 'Sobra de R$ 1.350 com margem de 10%: recomenda guardar até R$ 1.215. Dinheiro guardado lançado como despesa (e não como transferência) diminui a sobra prevista.'
+  },
   precoMedio: {
     termo: 'Preço médio',
     definicao: 'Quanto você pagou, em média, por cota, somando todas as compras.',

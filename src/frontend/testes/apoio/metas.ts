@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
-import { Conta, Meta, Reserva, TipoConta } from '../../src/app/core/modelos';
+import { Conta, Meta, PlanoMetas, Reserva, TipoConta } from '../../src/app/core/modelos';
 import { MetasComponent } from '../../src/app/paginas/metas.component';
 
 export const CONTAS = [
@@ -19,16 +19,31 @@ export function meta(campos: Partial<Meta>): Meta {
   return {
     id: 1, nome: 'Viagem', valorAlvo: 10000, valorAtual: 3750, dataAlvo: null, contaId: 1, contaNome: 'Mercado Pago',
     cor: '#a7a3f5', concluida: false, percentual: 37.5, aporteMensalSugerido: null, valorInicial: 500, saldoConta: 0,
-    reservaNome: 'Viagem', saldoReserva: 3250, reservaConferir: false, reservaNaoEncontrada: false, ...campos
+    reservaNome: 'Viagem', saldoReserva: 3250, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 0, ...campos
   };
 }
 
-/** Abre Metas com a API falsa. */
-export function abrirMetas(metas: Meta[] = []) {
+/** Plano sem histórico suficiente (o padrão dos testes que não olham o assistente). */
+export function semPlano(metas: Meta[] = []): PlanoMetas {
+  return { disponivel: false, mesesConsiderados: 1, ano: 2026, mes: 10, sobraPrevista: 0, margemPercentual: 10, capacidade: 0,
+    totalPedido: 0, totalRecomendado: 0, sobraNegativa: false,
+    metas: metas.map((m) => ({ metaId: m.id, falta: m.valorAlvo - m.valorAtual, recomendado: null, pedidoMes: null,
+      divisaoIgual: m.aporteMensalSugerido, dataProvavel: null, noPrazo: null, paraManterPrazo: null, plano: [] })) };
+}
+
+/** Abre Metas com a API falsa; `ordens` guarda cada nova ordem de prioridade enviada. */
+export function abrirMetas(metas: Meta[] = [], plano: PlanoMetas = semPlano(metas)) {
+  const ordens: number[][] = [];
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
-      { provide: ApiService, useValue: { metas: () => of(metas), contas: () => of(CONTAS), reservas: () => of(RESERVAS) } }
+      {
+        provide: ApiService,
+        useValue: {
+          metas: () => of(metas), contas: () => of(CONTAS), reservas: () => of(RESERVAS), planoMetas: () => of(plano),
+          ordenarMetas: (ids: number[]) => { ordens.push(ids); return of(undefined); }
+        }
+      }
     ]
   });
   const fixture = TestBed.createComponent(MetasComponent);
@@ -41,5 +56,5 @@ export function abrirMetas(metas: Meta[] = []) {
     sel.dispatchEvent(new Event('change'));
     await atualizar();
   };
-  return { fixture, tela: fixture.componentInstance, raiz, atualizar, escolher };
+  return { fixture, tela: fixture.componentInstance, raiz, atualizar, escolher, ordens };
 }
