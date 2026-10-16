@@ -20,6 +20,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Ícones do [Lucide](https://lucide.dev) (licença ISC, empacotados no build) no menu, nos botões de sincronizar, ocultar valores e tema, e nos cartões do painel.
 - Novo logo e ícone do site (cofrinho), com versões PNG para atalho no celular e na área de trabalho e `manifest.webmanifest`.
 
+- Script para parar tudo o que o projeto deixou rodando (serviço, API fora do serviço, `ng serve`) e conferir se o banco ficou livre: `parar-windows.cmd` no Windows, com dois cliques e sem bash, e `scripts/parar.sh` no Linux/macOS. `--desativar` tira o serviço da inicialização automática.
+
 ### Correções (layout)
 - Contraste da cor principal da paleta Lavanda (texto dos botões) passa de 3,5:1 para 4,7:1.
 - Arquivos estáticos sem hash no nome (`favicon.svg`, ícones, manifesto) deixam de ficar em cache por um ano: antes, uma troca de ícone não aparecia no navegador.

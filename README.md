@@ -138,6 +138,15 @@ scripts/3-publicar-atualizar.sh
 
 A publicação para o serviço do sistema por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhum dado é perdido.
 
+## Parar tudo
+
+O sistema instalado é **um processo só**: a API, rodando como serviço do sistema. O front-end (Angular) é publicado dentro dela e roda no navegador, e o banco (SQLite) é só o arquivo `dados/sql/FinancasLocal.db`, aberto pela própria API, sem serviço nem porta.
+
+- **Windows:** dê dois cliques em `parar-windows.cmd`, na raiz (pede permissão de Administrador; não precisa de bash).
+- **Linux/macOS:** `scripts/parar.sh`.
+
+Os dois param o serviço, a API rodando fora dele (`dotnet run`, Visual Studio) e o front de desenvolvimento (`npm start`), e avisam se algum programa ainda está com o banco aberto. Opções: `--desativar` / `-Desativar` (não sobe sozinho no próximo login/boot) e `--compiladores` / `-Compiladores` (encerra também os servidores de build do .NET). Para subir de novo, rode a publicação (`3-publicar-atualizar.sh` ou `instalar-windows.cmd`).
+
 **Banco:** não há migrations. Toda a estrutura está em `banco\01-estrutura.sql`, que é idempotente. Para mudar o banco, altere o script, rode `2-criar-banco.sh` e ajuste as entidades e o `FinancasDbContext`.
 
 ## Desenvolvimento (Visual Studio)
@@ -154,7 +163,7 @@ financas-local/
 ├── .github/               CI, templates de PR/issue, CODEOWNERS, Dependabot
 ├── banco/                 scripts SQL (estrutura, dados iniciais)
 ├── docs/                  arquitetura, guia do banco e ADRs (docs/adr)
-├── scripts/               instalação, publicação e backup (bash; no Windows também instalar-windows.ps1)
+├── scripts/               instalação, publicação, backup e parada (bash; no Windows também instalar-windows.ps1 e parar-windows.ps1)
 │   └── git/              configuração do repositório no GitHub (PowerShell)
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
 ├── src/frontend/          financas-web (Angular)
