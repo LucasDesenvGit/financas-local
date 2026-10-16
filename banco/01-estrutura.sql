@@ -349,6 +349,9 @@ CREATE TABLE IF NOT EXISTS Meta
     ContaId     INTEGER NULL,
     Cor         TEXT    NOT NULL CONSTRAINT DF_Meta_Cor DEFAULT '#0f766e',
     Concluida   INTEGER NOT NULL CONSTRAINT DF_Meta_Concluida DEFAULT 0,
+    -- Cofrinho (reserva do extrato, ADR 0010) da conta que guarda o dinheiro da meta: identificado pelo nome,
+    -- como no ReservaService. Bancos antigos: coluna via 2-criar-banco.sh.
+    ReservaNome TEXT    NULL,
     -- Preenchido pela API (Meta.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm    TEXT    NOT NULL,
     CONSTRAINT CK_Meta_ValorAlvo CHECK (CAST(ValorAlvo AS REAL) > 0),

@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChartConfiguration } from 'chart.js';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -681,6 +682,7 @@ export class InvestimentosComponent implements OnInit {
   readonly hoje = dataIso();
 
   readonly dados = signal<Carteira | null>(null);
+  private readonly rota = inject(ActivatedRoute);
   readonly aba = signal<Aba>('resumo');
   readonly mostrarEncerradas = signal(false);
   readonly atualizando = signal(false);
@@ -818,6 +820,9 @@ export class InvestimentosComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // #89: /investimentos?aba=reservas abre direto numa aba (link "confira" do cofrinho em Metas).
+    const aba = this.rota.snapshot.queryParamMap.get('aba');
+    if (aba === 'resumo' || aba === 'fii' || aba === 'rv' || aba === 'of' || aba === 'reservas') this.aba.set(aba);
     this.carregar();
   }
 

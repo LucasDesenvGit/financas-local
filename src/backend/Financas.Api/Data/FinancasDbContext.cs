@@ -245,6 +245,8 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.ValorAlvo).HasPrecision(18, 2);
             e.Property(x => x.ValorAtual).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
+            // Mesmo tamanho do nome da reserva (ReservaService.TamanhoMaximoNome).
+            e.Property(x => x.ReservaNome).HasMaxLength(100);
             e.HasOne(x => x.Conta).WithMany()
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.SetNull);
         });
