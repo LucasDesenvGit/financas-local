@@ -1,9 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
+import { StatusSincronizacaoService } from '../core/status-sincronizacao.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
@@ -168,6 +170,7 @@ export class ConfiguracoesComponent implements OnInit {
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly statusSincronizacao = inject(StatusSincronizacaoService);
 
   readonly abas: { id: Aba; rotulo: string }[] = [
     { id: 'open-finance', rotulo: 'Open Finance' },
@@ -176,7 +179,13 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'seguranca', rotulo: 'Segurança' }
   ];
   /** Aba atual; vem de ?aba= para dar para abrir direto (ex.: /configuracoes?aba=parametrizacao). */
-  readonly aba = signal<Aba>(this.abaDaUrl());
+  readonly aba = signal<Aba>(this.abaDaUrl(this.rota.snapshot.queryParamMap));
+
+  constructor() {
+    // Acompanha a URL também com a tela já aberta (ex.: "Cores e aparência…" no menu do usuário, alerta de conexão
+    // na barra superior): o Angular reaproveita o componente e só os query params mudam.
+    this.rota.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => this.aba.set(this.abaDaUrl(p)));
+  }
 
   readonly conexoes = signal<Conexao[]>([]);
   readonly logs = signal<SincronizacaoLog[]>([]);
@@ -210,14 +219,16 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  private abaDaUrl(): Aba {
-    const aba = this.rota.snapshot.queryParamMap.get('aba');
-    return this.abas.some((a) => a.id === aba) ? (aba as Aba) : 'open-finance';
+  private abaDaUrl(params: ParamMap): Aba {
+    const aba = params.get('aba');
+    return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
   }
 
   carregarConexoes(): void {
     this.api.conexoes().subscribe((c) => this.conexoes.set(c));
     this.api.logsSincronizacao().subscribe((l) => this.logs.set(l));
+    // UX-8: depois de sincronizar, adicionar, pausar ou remover conexão, a barra superior reflete na hora.
+    this.statusSincronizacao.atualizar();
   }
 
   salvarCredenciais(): void {

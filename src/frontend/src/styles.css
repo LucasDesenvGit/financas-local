@@ -841,3 +841,19 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
 }
 /* Dicas da barra alinhadas pela direita: centralizadas, vazariam da tela nos botões da ponta. */
 .barra-acoes .com-dica::after { right: 0; transform: none; }
+
+/* Texto só para leitores de tela (anúncios aria-live, rótulos extras). */
+.so-leitor {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------------------------------------------------------------- Status da sincronização (UX-8) */
+.status-sincronizacao { display: inline-flex; align-items: center; gap: 4px; }
+.botao-sincronizar .rotulo-barra { font-variant-numeric: tabular-nums; }
+a.alerta-sincronizacao { background: var(--alerta-suave); color: var(--alerta); text-decoration: none; }
+a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--alerta); filter: brightness(0.97); text-decoration: none; }
+@media (max-width: 900px) {
+  /* No celular: só os ícones (o texto fica no aria-label e na dica). */
+  .alerta-sincronizacao .rotulo-barra { display: none; }
+}

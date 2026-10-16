@@ -5,7 +5,7 @@
 import {
   ArrowLeftRight, Calculator, CalendarClock, CalendarRange, ChartColumn, ChartLine, ChartPie, Check, ChevronDown, CreditCard,
   Eye, EyeOff, HandCoins, House, Landmark, LayoutDashboard, LogOut, Menu, Monitor, Moon, Palette, PiggyBank, RefreshCw,
-  Settings, Sun, Tags, Target, TrendingUp, Wallet, X
+  Settings, Sun, Tags, Target, TrendingUp, TriangleAlert, Wallet, X
 } from 'lucide-angular';
 
 export const Icones = {
@@ -37,6 +37,7 @@ export const Icones = {
   abrirMenu: ChevronDown,
   menuLateral: Menu,
   sair: LogOut,
+  alerta: TriangleAlert,
   // Marca e indicadores
   marca: PiggyBank,
   patrimonio: Wallet,

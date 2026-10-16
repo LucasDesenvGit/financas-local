@@ -9,7 +9,7 @@ import {
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema
+  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -202,6 +202,9 @@ export class ApiService {
   sincronizar(conexaoId?: number): Observable<ResultadoSincronizacao> {
     return this.http.post<ResultadoSincronizacao>(`${this.base}/open-finance/sincronizar`, {},
       { params: this.params({ conexaoId }) });
+  }
+  statusSincronizacao(): Observable<StatusSincronizacao> {
+    return this.http.get<StatusSincronizacao>(`${this.base}/open-finance/status`);
   }
   logsSincronizacao(): Observable<SincronizacaoLog[]> {
     return this.http.get<SincronizacaoLog[]>(`${this.base}/open-finance/logs`);
