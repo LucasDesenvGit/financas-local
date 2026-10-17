@@ -144,6 +144,8 @@ public class ContaAgendada
     public int? ContaId { get; set; }
     public bool Ativa { get; set; } = true;
     public DateOnly? UltimoPagamentoEm { get; set; }
+    /// <summary>#69: último vencimento que ainda se repete (null = sem fim). Passou dele ao pagar, a conta é encerrada.</summary>
+    public DateOnly? DataLimite { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public Categoria? Categoria { get; set; }

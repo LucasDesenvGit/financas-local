@@ -207,7 +207,9 @@ public record AporteDto([Range(-999999999d, 999999999d)] decimal Valor);
 
 public record ContaAgendadaDto(int Id, string Descricao, decimal Valor, DateOnly ProximoVencimento,
     Recorrencia Recorrencia, int? CategoriaId, string? CategoriaNome, int? ContaId, string? ContaNome,
-    bool Ativa, DateOnly? UltimoPagamentoEm, int DiasParaVencer);
+    bool Ativa, DateOnly? UltimoPagamentoEm, int DiasParaVencer,
+    // #69: até quando se repete; pagamentos que faltam até lá (contando o próximo); encerrada por ter passado dela.
+    DateOnly? DataLimite = null, int? PagamentosRestantes = null, bool Encerrada = false);
 
 public record SalvarContaAgendadaDto(
     [Required, StringLength(150)] string Descricao,
@@ -216,7 +218,8 @@ public record SalvarContaAgendadaDto(
     Recorrencia Recorrencia,
     int? CategoriaId,
     int? ContaId,
-    bool Ativa = true);
+    bool Ativa = true,
+    DateOnly? DataLimite = null);
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 

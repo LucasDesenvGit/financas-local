@@ -373,6 +373,8 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     ContaId             INTEGER NULL,
     Ativa               INTEGER NOT NULL CONSTRAINT DF_ContaAgendada_Ativa DEFAULT 1,
     UltimoPagamentoEm   TEXT    NULL,
+    -- #69: último vencimento que ainda se repete (NULL = sem fim). Ao pagar e passar dele, a conta é encerrada.
+    DataLimite          TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_ContaAgendada_Recorrencia CHECK (Recorrencia IN (0, 1, 2)),
