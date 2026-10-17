@@ -563,7 +563,12 @@ public class SincronizacaoService
                     _db.Ativos.Add(ativo);
                     criados++;
                 }
-                if (ativo.Operacoes.Any(o => o.Origem != OrigemOperacao.OpenFinance))
+                // Ativo só com lançamentos seus: não importa, para não duplicar o que você já lançou. Se a corretora já
+                // mandou movimentações dele, um lançamento seu só completa o que ela não mandou (ex.: uma compra que
+                // faltou no histórico) e as próximas movimentações continuam chegando.
+                var temMovimentoDaCorretora = ativo.Operacoes.Any(EhMovimentoDaCorretora);
+                var lancamentosSeus = ativo.Operacoes.Where(o => o.Origem != OrigemOperacao.OpenFinance).ToList();
+                if (lancamentosSeus.Count > 0 && !temMovimentoDaCorretora)
                 {
                     resultado.ComLancamentoManual.Add(ticker);
                     await _db.SaveChangesAsync(ct);
@@ -607,17 +612,28 @@ public class SincronizacaoService
                     temMovimento = true;
                     var idExterno = Limitar(m.Id, 100)!;
                     if (!jaImportados.Add(idExterno)) continue;
+                    var data = m.TradeDate ?? m.Date;
+                    var dataOperacao = data is { } d ? Relogio.ParaDataLocal(d) : Relogio.Hoje;
+
+                    // A corretora mandou depois uma operação que você já tinha lançado: liga as duas, sem duplicar.
+                    var lancada = lancamentosSeus.FirstOrDefault(o => o.PluggyTransacaoId is null && o.Tipo == operacao
+                        && o.Quantidade == Math.Round(quantidade, 6)
+                        && Math.Abs(o.Data.DayNumber - dataOperacao.DayNumber) <= DiasParaCasarLancamento);
+                    if (lancada is not null)
+                    {
+                        lancada.PluggyTransacaoId = idExterno;
+                        continue;
+                    }
 
                     var preco = m.Value is double pu && pu > 0
                         ? (decimal)pu
                         : m.Amount is double valorTotal && valorTotal != 0 ? Math.Abs((decimal)valorTotal) / quantidade : 0m;
                     var taxas = m.Expenses?.Where(e => e.Key != "incomeTax" && e.Value is > 0d)
                         .Sum(e => (decimal)e.Value!.Value) ?? 0m;
-                    var data = m.TradeDate ?? m.Date;
                     ativo.Operacoes.Add(new OperacaoAtivo
                     {
                         Tipo = operacao.Value,
-                        Data = data is { } d ? Relogio.ParaDataLocal(d) : Relogio.Hoje,
+                        Data = dataOperacao,
                         Quantidade = Math.Round(quantidade, 6),
                         PrecoUnitario = Math.Round(preco, 6),
                         Taxas = Math.Round(taxas, 2),
@@ -637,8 +653,10 @@ public class SincronizacaoService
                     ativo.Operacoes.Remove(posicao);
                     _db.OperacoesAtivo.Remove(posicao);
                 }
-                else if (!temMovimento && inv.Saldo > 0)
+                else if (!temMovimento && !temMovimentoDaCorretora && lancamentosSeus.Count == 0 && inv.Saldo > 0)
                 {
+                    // Só para ativo sem histórico: se a Pluggy falhou ao listar as movimentações de um ativo que já tem
+                    // histórico, a posição inteira não pode virar uma compra a mais.
                     var quantidade = inv.Quantidade is decimal qtd && qtd > 0 ? qtd : (decimal?)null;
                     if (quantidade is null && ativo.PrecoAtual is decimal pa && pa > 0)
                         quantidade = Math.Round(inv.Saldo / pa); // cotas = saldo ÷ cotação
@@ -680,6 +698,14 @@ public class SincronizacaoService
         }
         return resultado with { AtivosCriados = criados, OperacoesImportadas = importadas };
     }
+
+    /// <summary>Até quantos dias de diferença um lançamento seu é a mesma operação que a corretora mandou depois.</summary>
+    private const int DiasParaCasarLancamento = 5;
+
+    /// <summary>Compra ou venda do histórico da corretora (não a posição provisória de um ativo sem histórico).</summary>
+    private static bool EhMovimentoDaCorretora(OperacaoAtivo o)
+        => o.Origem == OrigemOperacao.OpenFinance && o.PluggyTransacaoId is string id
+           && !id.StartsWith("posicao:", StringComparison.Ordinal);
 
     private static TipoAtivo TipoPorPluggy(string tipo, string? subtipo, string ticker, string? emissor, string? nome)
     {
