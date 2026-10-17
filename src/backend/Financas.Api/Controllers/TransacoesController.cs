@@ -16,7 +16,10 @@ public static class ProjecoesTransacao
         t.Estabelecimento, t.Valor, t.Tipo, t.Status, t.CategoriaId,
         t.Categoria != null ? t.Categoria.Nome : null,
         t.Categoria != null ? t.Categoria.Cor : null,
-        t.ParcelaNumero, t.ParcelaTotal, t.IgnorarRelatorios, t.Observacao, t.Emergencia);
+        t.ParcelaNumero, t.ParcelaTotal, t.IgnorarRelatorios, t.Observacao, t.Emergencia,
+        // Calculado no cliente (EF traz as colunas e chama o método na projeção final).
+        TipoLancamentoService.Classificar(t.Valor, t.Descricao, t.DescricaoOriginal, t.MeioPagamento, t.MesmaTitularidade,
+            t.TransferenciaGrupo != null, t.Conta!.Tipo));
 }
 
 [Route("api/transacoes")]
@@ -84,6 +87,18 @@ public class TransacoesController : BaseController
             q = q.Where(t => t.Descricao.Contains(busca)
                              || (t.Estabelecimento != null && t.Estabelecimento.Contains(busca))
                              || (t.Observacao != null && t.Observacao.Contains(busca)));
+        }
+        if (f.Lancamento is { } grupo && TipoLancamentoService.Grupos.TryGetValue(grupo, out var tipos))
+        {
+            // #111: o tipo é calculado (dado do banco ou descrição): a conta é na memória, sobre o que já foi filtrado.
+            var candidatas = await q.Select(t => new
+            {
+                t.Id, t.Valor, t.Descricao, t.DescricaoOriginal, t.MeioPagamento, t.MesmaTitularidade,
+                Sistema = t.TransferenciaGrupo != null, ContaTipo = t.Conta!.Tipo
+            }).ToListAsync(ct);
+            var ids = candidatas.Where(c => tipos.Contains(TipoLancamentoService.Classificar(c.Valor, c.Descricao,
+                c.DescricaoOriginal, c.MeioPagamento, c.MesmaTitularidade, c.Sistema, c.ContaTipo))).Select(c => c.Id).ToList();
+            q = q.Where(t => ids.Contains(t.Id));
         }
         if (f.PoucoInformativa)
         {

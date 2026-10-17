@@ -79,6 +79,15 @@ export interface Transacao {
   status: StatusTransacao; categoriaId: number | null; categoriaNome: string | null; categoriaCor: string | null;
   parcelaNumero: number | null; parcelaTotal: number | null; ignorarRelatorios: boolean; observacao: string | null;
   emergencia: boolean;
+  /** #111: como o dinheiro entrou ou saiu (calculado pela API). */
+  tipoLancamento: TipoLancamento;
+}
+
+/** #111 (ADR 0025): os mesmos números do enum da API. */
+export enum TipoLancamento {
+  Outro = 0, CompraCartao = 1, EstornoCartao = 2, PagamentoFatura = 3, PixEnviado = 4, PixRecebido = 5,
+  TransferenciaEnviada = 6, TransferenciaRecebida = 7, EntreContas = 8, Boleto = 9, CompraDebito = 10, Saque = 11,
+  Deposito = 12, TarifaJuros = 13, Rendimento = 14, AplicacaoResgate = 15, Salario = 16, Credito = 17, Dinheiro = 18
 }
 
 export interface FiltroTransacoes {
@@ -88,6 +97,8 @@ export interface FiltroTransacoes {
   semCategoria?: boolean; somenteEmergencias?: boolean; tipo?: TipoTransacao | null; busca?: string | null; pagina?: number; tamanhoPagina?: number;
   /** #9: só as de descrição pouco informativa ainda não revisadas. */
   poucoInformativa?: boolean;
+  /** #111: grupo do filtro "Lançamento" (pix, cartao, fatura, entre-contas…). */
+  lancamento?: string | null;
 }
 
 export interface PaginaTransacoes {

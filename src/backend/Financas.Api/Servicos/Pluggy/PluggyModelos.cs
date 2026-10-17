@@ -103,6 +103,32 @@ public class PluggyTransacao
     [JsonPropertyName("categoryId")] public string? CategoryId { get; set; }
     [JsonPropertyName("creditCardMetadata")] public PluggyMetadadosCartao? CreditCardMetadata { get; set; }
     [JsonPropertyName("merchant")] public PluggyEstabelecimento? Merchant { get; set; }
+    /// <summary>#111: operação classificada pela instituição (ex.: PIX, TED, BOLETO, CARTAO; no cartão, PAGAMENTO_FATURA).</summary>
+    [JsonPropertyName("operationType")] public string? OperationType { get; set; }
+    /// <summary>#111: dados de pagamentos e transferências. Só o meio e a comparação dos documentos são usados.</summary>
+    [JsonPropertyName("paymentData")] public PluggyDadosPagamento? PaymentData { get; set; }
+}
+
+/// <summary>
+/// Dados de pagamento da Pluggy. Nome e documento de pagador e recebedor são lidos só para saber se é a mesma pessoa
+/// (transferência entre contas suas) e descartados: nada disso é gravado (#111, ADR 0025).
+/// </summary>
+public class PluggyDadosPagamento
+{
+    [JsonPropertyName("paymentMethod")] public string? PaymentMethod { get; set; }
+    [JsonPropertyName("payer")] public PluggyParticipante? Payer { get; set; }
+    [JsonPropertyName("receiver")] public PluggyParticipante? Receiver { get; set; }
+}
+
+public class PluggyParticipante
+{
+    [JsonPropertyName("documentNumber")] public PluggyDocumento? DocumentNumber { get; set; }
+}
+
+public class PluggyDocumento
+{
+    [JsonPropertyName("type")] public string? Type { get; set; }
+    [JsonPropertyName("value")] public string? Value { get; set; }
 }
 
 public class PluggyPagamentoFatura

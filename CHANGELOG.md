@@ -5,6 +5,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- Transações: **tipo de cada lançamento** (#111, ADR 0025).
+  - **Em cada linha:** etiqueta com ícone e texto: compra no cartão, estorno, pagamento de fatura, Pix enviado ou recebido, transferência, **entre suas contas**, boleto ou débito automático, compra no débito, saque, depósito, tarifa ou juros, rendimento, aplicação ou resgate, salário, empréstimo ou crédito, dinheiro, outro.
+  - **De onde vem:** do Open Finance (`operationType`/`paymentMethod` da Pluggy; Pix com o mesmo titular nas duas pontas vira "entre suas contas"); quando o banco não informa, é reconhecido pela descrição.
+  - **Fora dos totais:** "fora dos gastos" quando não entra nos totais. **"Somando nos gastos"** ou **"somando nas receitas"** quando um pagamento de fatura ou uma transferência entre contas suas está contando em dobro.
+  - **Filtro "Lançamento"** com chip e na URL (`?lancamento=pix`), que vale também no "todas do filtro" do modo edição.
+  - **Coluna Conta:** selo do banco e "cartão de crédito" quando é cartão.
+  - **Dados guardados:** só o meio e o "mesmo titular" (nunca nomes ou CPF de terceiros), nas colunas novas `Transacao.MeioPagamento` e `Transacao.MesmaTitularidade` (rodar `scripts/2-criar-banco.sh`). As transações antigas ganham o dado do banco quando a sincronização as relê.
 - **Contas e cartões** reorganizada (ADR 0024).
   - **Banco de cada conta:** selo com a cor e a marca do banco (Nubank, Itaú, Mercado Pago e mais 25), reconhecido pelo nome da conta e da instituição, ou escolhido em "editar" ("Outro" desliga). O cartão pode ser ligado à conta dele e herda o banco dela, e o cartão desenhado fica com a cor do banco. O selo também aparece em "Faturas do mês" no Painel.
   - **Resumo no topo:** saldo em contas, faturas do mês, dívida total nos cartões e limite disponível.
