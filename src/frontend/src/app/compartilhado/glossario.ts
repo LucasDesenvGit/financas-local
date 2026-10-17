@@ -57,6 +57,18 @@ export const GLOSSARIO = {
     termo: 'Patrimônio sem renda variável',
     definicao: 'O patrimônio líquido sem contar ações, FIIs e ETFs, cujo valor sobe e desce todo dia. Mostra a parte mais estável do que você tem.'
   },
+  dividaCartao: {
+    termo: 'Dívida total do cartão',
+    definicao: 'Tudo o que você deve neste cartão hoje, inclusive as parcelas que ainda vão vencer. Não é a fatura do mês.'
+  },
+  faturaDoMes: {
+    termo: 'Fatura do mês',
+    definicao: 'O que entrou no cartão neste mês: compras e a parcela do mês das compras parceladas. Parcelas futuras e o pagamento da fatura ficam de fora.'
+  },
+  melhorDiaCompra: {
+    termo: 'Melhor dia de compra',
+    definicao: 'O dia seguinte ao fechamento da fatura. O que você compra a partir dele só entra na fatura do mês seguinte, e você ganha quase 40 dias para pagar.'
+  },
   dividaCartoes: {
     termo: 'Dívida total nos cartões',
     definicao: 'Tudo o que você deve nos cartões hoje, somando todos, inclusive parcelas que ainda vão vencer. Não é a fatura do mês.'

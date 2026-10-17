@@ -1,64 +1,39 @@
-import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
-import { RouterTestingHarness } from '@angular/router/testing';
-import { of } from 'rxjs';
-import { ApiService } from '../../src/app/core/api.service';
-import { Conta, TipoConta } from '../../src/app/core/modelos';
-import { ContasComponent } from '../../src/app/paginas/contas.component';
-
-const CONTAS = [
-  { id: 1, nome: 'Conta corrente', tipo: TipoConta.ContaCorrente, origem: 1, saldo: 1000, arquivada: false, cor: '#a7a3f5', incluirNoSaldo: true },
-  { id: 2, nome: 'Cartão Roxo', tipo: TipoConta.CartaoCredito, origem: 1, saldo: -1530, limiteCredito: 2000, arquivada: false, cor: '#d4a5e8', incluirNoSaldo: true }
-] as unknown as Conta[];
-
-async function abrir(url: string) {
-  const pedidas: number[] = [];
-  TestBed.configureTestingModule({
-    providers: [
-      provideRouter([{ path: 'contas', component: ContasComponent }]),
-      {
-        provide: ApiService,
-        useValue: {
-          contas: () => of(CONTAS),
-          faturas: (id: number) => { pedidas.push(id); return of([]); }
-        }
-      }
-    ]
-  });
-  const harness = await RouterTestingHarness.create();
-  await harness.navigateByUrl(url, ContasComponent);
-  harness.detectChanges();
-  return { pedidas, raiz: harness.routeNativeElement as HTMLElement, harness, router: TestBed.inject(Router) };
-}
+import { abrirContas, fatura } from '../apoio/contas';
 
 /**
- * Regressão da UX-12 (#88): "Faturas do mês" no Painel leva a /contas?faturas=ID, que abre direto as faturas do
- * cartão (detalhe por navegação, ADR 0018), sem a pessoa procurar o cartão e clicar em "faturas".
+ * Regressão da UX-12 (#88): "Faturas do mês" no Painel leva a /contas?faturas=ID, que abre direto o histórico de
+ * faturas do cartão (detalhe por navegação, ADR 0018), sem a pessoa procurar o cartão. Desde a ADR 0024 o histórico
+ * fica no próprio cartão, recolhido, em vez de numa janela.
  */
 describe('Regressão: link para as faturas de um cartão', () => {
-  it('/contas?faturas=2 abre as faturas do Cartão Roxo', async () => {
-    const t = await abrir('/contas?faturas=2');
-    expect(t.pedidas).toEqual([2]);
-    expect(t.raiz.querySelector('.modal')!.getAttribute('aria-label')).toBe('Faturas · Cartão Roxo');
+  const botao = (raiz: HTMLElement, id: number) =>
+    raiz.querySelector<HTMLButtonElement>(`#cartao-${id} .botao-historico`)!;
+
+  it('/contas?faturas=3 abre o histórico do Cartão Roxo e pede as faturas dele', async () => {
+    const t = await abrirContas('/contas?faturas=3', undefined, { 3: [fatura()] });
+    expect(t.pedidas).toEqual([3]);
+    expect(botao(t.raiz, 3).getAttribute('aria-expanded')).toBe('true');
+    expect(t.cartao(3).querySelector('.tabela-historico')).not.toBeNull();
+    expect(botao(t.raiz, 2).getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('fechar a janela tira o ?faturas= da URL (o F5 não reabre)', async () => {
-    const t = await abrir('/contas?faturas=2');
-    t.raiz.querySelector<HTMLButtonElement>('.modal [aria-label="Fechar"]')!.click();
-    await t.harness.fixture.whenStable();
-    t.harness.detectChanges();
-    expect(t.raiz.querySelector('.modal')).toBeNull();
+  it('fechar o histórico tira o ?faturas= da URL (o F5 não reabre)', async () => {
+    const t = await abrirContas('/contas?faturas=3');
+    botao(t.raiz, 3).click();
+    await t.atualizar();
+    expect(botao(t.raiz, 3).getAttribute('aria-expanded')).toBe('false');
     expect(t.router.url).toBe('/contas');
   });
 
-  it('id que não existe é ignorado e a tela abre normal', async () => {
-    const t = await abrir('/contas?faturas=999');
+  it.each(['/contas?faturas=999', '/contas?faturas=1'])('%s (não existe ou não é cartão) é ignorado e a tela abre normal', async (url) => {
+    const t = await abrirContas(url);
     expect(t.pedidas).toEqual([]);
-    expect(t.raiz.querySelector('.modal')).toBeNull();
+    expect(t.raiz.querySelector('.botao-historico[aria-expanded="true"]')).toBeNull();
   });
 
-  it('sem o parâmetro, nenhuma janela abre sozinha', async () => {
-    const t = await abrir('/contas');
+  it('sem o parâmetro, nenhum histórico abre sozinho', async () => {
+    const t = await abrirContas('/contas');
     expect(t.pedidas).toEqual([]);
+    expect(t.raiz.querySelector('.botao-historico[aria-expanded="true"]')).toBeNull();
   });
 });

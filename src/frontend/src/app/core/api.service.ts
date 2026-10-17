@@ -10,7 +10,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote
+  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -57,6 +57,8 @@ export class ApiService {
   atualizarConta(id: number, dto: SalvarConta): Observable<Conta> { return this.http.put<Conta>(`${this.base}/contas/${id}`, dto); }
   excluirConta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas/${id}`); }
   faturas(contaId: number): Observable<Fatura[]> { return this.http.get<Fatura[]>(`${this.base}/contas/${contaId}/faturas`); }
+  /** ADR 0024: bancos que dá para escolher na conta. */
+  bancos(): Observable<Banco[]> { return this.http.get<Banco[]>(`${this.base}/contas/bancos`); }
 
   // Transações
   transacoes(filtro: FiltroTransacoes): Observable<PaginaTransacoes> {

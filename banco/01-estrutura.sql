@@ -170,6 +170,10 @@ CREATE TABLE IF NOT EXISTS Conta
     Cor                 TEXT    NOT NULL CONSTRAINT DF_Conta_Cor DEFAULT '#0f766e',
     IncluirNoSaldo      INTEGER NOT NULL CONSTRAINT DF_Conta_IncluirNoSaldo DEFAULT 1,
     Arquivada           INTEGER NOT NULL CONSTRAINT DF_Conta_Arquivada DEFAULT 0,
+    -- ADR 0024: banco escolhido pelo usuário (código do BancoService; NULL = detectar pelo nome).
+    Banco               TEXT    NULL,
+    -- ADR 0024: cartão → conta a que pertence (de onde paga a fatura). Sem FK: a API limpa ao excluir a conta.
+    ContaVinculadaId    INTEGER NULL,
     -- CriadoEm/AtualizadoEm preenchidos pela API (DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     AtualizadoEm        TEXT    NOT NULL,

@@ -45,17 +45,33 @@ export interface Conta {
   saldo: number; saldoInicial: number; limiteCredito: number | null; limiteDisponivel: number | null;
   diaFechamento: number | null; diaVencimento: number | null; cor: string; incluirNoSaldo: boolean; arquivada: boolean;
   conexaoBancariaId: number | null; nomeInstituicao: string | null; atualizadoEm: string;
+  /** ADR 0024: banco que vale (escolhido, do cartão herdado da conta ou detectado pelo nome); null = não identificado. */
+  banco: string | null;
+  /** O banco foi escolhido pelo usuário (e não detectado). */
+  bancoDefinido: boolean;
+  /** Cartão: a conta a que ele pertence (de onde paga a fatura). */
+  contaVinculadaId: number | null;
+  /** Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel). */
+  faturaMes: FaturaMes | null;
 }
 
 export interface SalvarConta {
   nome: string; tipo: TipoConta; numero: string | null; saldoInicial: number; limiteCredito: number | null;
   diaFechamento: number | null; diaVencimento: number | null; cor: string; incluirNoSaldo: boolean; arquivada: boolean;
+  /** Código do banco (null = detectar pelo nome; 'outro' = sem banco). */
+  banco: string | null;
+  contaVinculadaId: number | null;
 }
+
+export type SituacaoFatura = 'paga' | 'fechada' | 'aberta';
 
 export interface Fatura {
   id: number; dataVencimento: string; dataFechamento: string | null; valorTotal: number;
-  valorMinimo: number | null; valorPago: number | null; quantidadeTransacoes: number;
+  valorMinimo: number | null; valorPago: number | null; quantidadeTransacoes: number; situacao: SituacaoFatura;
 }
+
+/** Banco que a tela de Contas sabe identificar (ADR 0024). */
+export interface Banco { codigo: string; nome: string; }
 
 export interface Transacao {
   id: number; contaId: number; contaNome: string; openFinance: boolean; data: string; descricao: string;
@@ -273,7 +289,9 @@ export interface Painel {
 export interface FaturaMes {
   contaId: number; cartao: string; valorMes: number; parcelasMes: number;
   /** Fatura com vencimento no mês, só como referência (pode ser null). */
-  faturaId: number | null; vencimento: string | null; situacao: 'paga' | 'fechada' | 'aberta' | null;
+  faturaId: number | null; vencimento: string | null; situacao: SituacaoFatura | null;
+  /** ADR 0024: banco do cartão, para o selo. */
+  banco?: string | null;
 }
 
 export interface Emprestimo {
