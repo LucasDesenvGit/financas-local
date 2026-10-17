@@ -50,7 +50,9 @@ public record TransacaoDto(
     long Id, int ContaId, string ContaNome, bool OpenFinance, DateOnly Data, string Descricao,
     string? DescricaoOriginal, string? Estabelecimento, decimal Valor, TipoTransacao Tipo, StatusTransacao Status,
     int? CategoriaId, string? CategoriaNome, string? CategoriaCor, short? ParcelaNumero, short? ParcelaTotal,
-    bool IgnorarRelatorios, string? Observacao, bool Emergencia);
+    bool IgnorarRelatorios, string? Observacao, bool Emergencia,
+    // #111: como o dinheiro entrou ou saiu (calculado; ADR 0025).
+    TipoLancamento TipoLancamento = TipoLancamento.Outro);
 
 public class FiltroTransacoesDto
 {
@@ -65,6 +67,9 @@ public class FiltroTransacoesDto
     public bool SomenteEmergencias { get; set; }
     /// <summary>#9: só as de descrição pouco informativa ainda não revisadas.</summary>
     public bool PoucoInformativa { get; set; }
+    /// <summary>#111: grupo do filtro "Lançamento" (pix, cartao, fatura, entre-contas…).</summary>
+    [RegularExpression("^(cartao|debito|pix|transferencia|entre-contas|fatura|boleto|saque-deposito|tarifas|investimentos|salario|credito|dinheiro|outros)$")]
+    public string? Lancamento { get; set; }
     public TipoTransacao? Tipo { get; set; }
     [StringLength(100)] public string? Busca { get; set; }
     [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;

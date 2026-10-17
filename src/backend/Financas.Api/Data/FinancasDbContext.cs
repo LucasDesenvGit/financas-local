@@ -159,6 +159,7 @@ public class FinancasDbContext : DbContext
             e.ToTable("Transacao");
             e.HasKey(x => x.Id);
             e.Property(x => x.PluggyTransactionId).HasMaxLength(64);
+            e.Property(x => x.MeioPagamento).HasMaxLength(40);
             e.Property(x => x.Descricao).HasMaxLength(300).IsRequired();
             e.Property(x => x.DescricaoOriginal).HasMaxLength(300);
             e.Property(x => x.Estabelecimento).HasMaxLength(200);

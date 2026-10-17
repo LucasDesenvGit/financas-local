@@ -7,7 +7,7 @@ import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
-  SugestaoCategoria, TipoCorrespondencia, Transacao, TipoTransacao
+  SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
@@ -18,6 +18,9 @@ import {
 } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
+import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../compartilhado/tipos-lancamento';
 
 interface FormTransacao {
   id: number | null;
@@ -48,7 +51,7 @@ interface FormTransferencia {
 
 interface ChipFiltro {
   /** Categoria tem um chip por valor marcado: `categoria:12`, `categoria:sem`. */
-  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'emergencias' | 'generica' | 'busca';
+  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca';
   rotulo: string;
   cor?: string;
 }
@@ -75,7 +78,8 @@ function dataCurta(iso: string, comAno: boolean): string {
 
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
+    IconeComponent, LogoBancoComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -107,6 +111,13 @@ function dataCurta(iso: string, comAno: boolean): string {
           <option [ngValue]="TipoTransacao.Transferencia">Transferências</option>
         </select>
       </label>
+      <div class="filtro-lancamento">
+        <label for="filtro-lancamento">Lançamento <app-termo chave="tipoLancamento" /></label>
+        <select id="filtro-lancamento" name="lancamento" [(ngModel)]="filtro.lancamento" (change)="buscar(1)">
+          <option [ngValue]="null">Todos</option>
+          @for (g of gruposLancamento; track g.valor) { <option [ngValue]="g.valor">{{ g.rotulo }}</option> }
+        </select>
+      </div>
       <label class="checkbox"><input type="checkbox" [(ngModel)]="filtro.somenteEmergencias" (change)="buscar(1)">
         <span class="texto-emergencia">Só emergências</span></label>
       <span class="filtro-generica">
@@ -236,6 +247,12 @@ function dataCurta(iso: string, comAno: boolean): string {
                 <td>
                   <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
                   <div class="detalhe">
+                    <span class="etiqueta etiqueta-lancamento"><app-icone [icone]="iconeLancamento(t)" [tamanho]="13" />{{ rotuloLancamento(t) }}</span>
+                    @if (foraDosGastos(t)) {
+                      <span class="etiqueta etiqueta-suave">fora dos gastos</span>
+                    } @else if (somandoNosTotais(t); as onde) {
+                      <span class="etiqueta etiqueta-alerta">somando {{ onde === 'gastos' ? 'nos gastos' : 'nas receitas' }}</span>
+                    }
                     @if (t.parcelaTotal && t.parcelaTotal > 1) { <span class="etiqueta">{{ t.parcelaNumero }}/{{ t.parcelaTotal }}</span> }
                     @if (t.status === StatusTransacao.Pendente) { <span class="etiqueta etiqueta-alerta">pendente</span> }
                     @if (t.emergencia) { <span class="etiqueta etiqueta-emergencia">emergência</span> }
@@ -267,7 +284,12 @@ function dataCurta(iso: string, comAno: boolean): string {
                     } @else { <span class="texto-suave">—</span> }
                   }
                 </td>
-                <td class="texto-suave">{{ t.contaNome }}</td>
+                <td class="texto-suave">
+                  <span class="conta-transacao">
+                    <app-logo-banco [codigo]="contaDe(t)?.banco" [tamanho]="20" [cartao]="ehDeCartao(t)" />
+                    <span>{{ t.contaNome }} @if (ehDeCartao(t)) {<small class="tipo-conta">cartão de crédito</small>}</span>
+                  </span>
+                </td>
                 <td class="direita valor nowrap" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</td>
               </tr>
             } @empty {
@@ -474,6 +496,11 @@ function dataCurta(iso: string, comAno: boolean): string {
     tr.alterada td { background: var(--alerta-suave); }
     .botao-ativo { background: var(--primaria-suave); color: var(--primaria-forte); }
     .filtro-generica { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 8px; }
+    .filtro-lancamento { display: grid; gap: 6px; min-width: 180px; }
+    .filtro-lancamento label { display: flex; align-items: center; gap: 2px; min-width: 0; font-size: 0.85rem; font-weight: 600; color: var(--texto-suave); }
+    .etiqueta-lancamento { display: inline-flex; align-items: center; gap: 4px; background: var(--primaria-suave); color: var(--primaria-forte); }
+    .conta-transacao { display: inline-flex; align-items: center; gap: 8px; }
+    .conta-transacao .tipo-conta { display: block; font-size: 0.75rem; }
     .filtro-generica label.checkbox { min-width: 0; padding-bottom: 0; }
     .dica-generica { margin: -4px 4px 14px; font-size: 0.88rem; max-width: 90ch; }
     .botao-revisada { min-height: 24px; padding: 0 4px; font-size: 0.82rem; }
@@ -594,6 +621,7 @@ export class TransacoesComponent implements OnInit {
       };
       chips.push({ id: 'tipo', rotulo: nomes[f.tipo] });
     }
+    if (f.lancamento) chips.push({ id: 'lancamento', rotulo: GRUPOS_LANCAMENTO.find((g) => g.valor === f.lancamento)?.rotulo ?? 'Lançamento' });
     if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
     if (f.poucoInformativa) chips.push({ id: 'generica', rotulo: 'Descrição pouco informativa' });
     if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
@@ -613,6 +641,7 @@ export class TransacoesComponent implements OnInit {
       case 'tipo': this.filtro.tipo = null; break;
       case 'emergencias': this.filtro.somenteEmergencias = false; break;
       case 'generica': this.filtro.poucoInformativa = false; break;
+      case 'lancamento': this.filtro.lancamento = null; break;
       case 'busca': this.filtro.busca = ''; break;
     }
     this.buscar(1);
@@ -689,6 +718,8 @@ export class TransacoesComponent implements OnInit {
 
     if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
     if (params.get('generica') === '1') this.filtro.poucoInformativa = true;
+    const lancamento = params.get('lancamento');
+    if (lancamento && GRUPOS_LANCAMENTO.some((g) => g.valor === lancamento)) this.filtro.lancamento = lancamento;
     if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
@@ -763,6 +794,7 @@ export class TransacoesComponent implements OnInit {
     if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
     if (f.poucoInformativa) params['generica'] = '1';
+    if (f.lancamento) params['lancamento'] = f.lancamento;
     if (f.busca?.trim()) params['busca'] = f.busca.trim();
     if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
     if (this.modoEdicao()) params['editar'] = '1';
@@ -830,6 +862,39 @@ export class TransacoesComponent implements OnInit {
 
   marcarRevisadasSelecionadas(): void {
     this.marcarRevisadas([...this.selecionadas()]);
+  }
+
+  /* ------------------------------ #111: tipo de lançamento ------------------------------ */
+  readonly gruposLancamento = GRUPOS_LANCAMENTO;
+
+  rotuloLancamento(t: Transacao): string {
+    return TIPOS_LANCAMENTO[t.tipoLancamento]?.rotulo ?? 'Outro';
+  }
+
+  iconeLancamento(t: Transacao) {
+    return (TIPOS_LANCAMENTO[t.tipoLancamento] ?? TIPOS_LANCAMENTO[TipoLancamento.Outro]).icone;
+  }
+
+  /** Não entra nas despesas nem nas receitas (transferência ou "ignorar nos relatórios"). */
+  foraDosGastos(t: Transacao): boolean {
+    return t.tipo === TipoTransacao.Transferencia || t.ignorarRelatorios;
+  }
+
+  /**
+   * Pagamento de fatura ou transferência entre contas suas que está entrando nos totais: na saída, conta o gasto em
+   * dobro (as compras já estão no cartão); na entrada (o crédito do pagamento no cartão), infla as receitas.
+   */
+  somandoNosTotais(t: Transacao): 'gastos' | 'receitas' | null {
+    if (!NAO_E_GASTO.has(t.tipoLancamento) || t.tipo === TipoTransacao.Transferencia || t.ignorarRelatorios) return null;
+    return t.valor < 0 ? 'gastos' : 'receitas';
+  }
+
+  contaDe(t: Transacao): Conta | undefined {
+    return this.contas().find((c) => c.id === t.contaId);
+  }
+
+  ehDeCartao(t: Transacao): boolean {
+    return this.contaDe(t)?.tipo === TipoConta.CartaoCredito;
   }
 
   /** #9: revisada sai do filtro "Descrição pouco informativa"; o aviso permite desfazer. */
@@ -1199,7 +1264,7 @@ export class TransacoesComponent implements OnInit {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, poucoInformativa: false,
-      tipo: null, busca: '', pagina: 1,
+      lancamento: null, tipo: null, busca: '', pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }

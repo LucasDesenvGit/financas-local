@@ -64,6 +64,8 @@ adicionar_coluna_se_ausente "ContaAgendada" "DataLimite" "TEXT NULL"
 adicionar_coluna_se_ausente "Transacao" "DescricaoRevisada" "INTEGER NOT NULL DEFAULT 0"
 adicionar_coluna_se_ausente "Conta" "Banco" "TEXT NULL"
 adicionar_coluna_se_ausente "Conta" "ContaVinculadaId" "INTEGER NULL"
+adicionar_coluna_se_ausente "Transacao" "MeioPagamento" "TEXT NULL"
+adicionar_coluna_se_ausente "Transacao" "MesmaTitularidade" "INTEGER NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

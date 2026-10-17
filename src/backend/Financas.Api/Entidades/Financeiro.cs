@@ -99,6 +99,10 @@ public class Transacao
     public bool Emergencia { get; set; }
     /// <summary>#9: descrição pouco informativa já revisada pelo usuário (sai do filtro).</summary>
     public bool DescricaoRevisada { get; set; }
+    /// <summary>#111: tipo de operação que o banco informou (ex.: PIX, BOLETO, PAGAMENTO_FATURA); null = não informou.</summary>
+    public string? MeioPagamento { get; set; }
+    /// <summary>#111: pagador e recebedor com o mesmo documento (só o sim/não; o documento não é guardado).</summary>
+    public bool? MesmaTitularidade { get; set; }
     public Guid? TransferenciaGrupo { get; set; }
     public string? Observacao { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;

@@ -57,6 +57,11 @@ export const GLOSSARIO = {
     termo: 'Patrimônio sem renda variável',
     definicao: 'O patrimônio líquido sem contar ações, FIIs e ETFs, cujo valor sobe e desce todo dia. Mostra a parte mais estável do que você tem.'
   },
+  tipoLancamento: {
+    termo: 'Tipo de lançamento',
+    definicao: 'Como o dinheiro entrou ou saiu: compra no cartão, Pix, transferência, pagamento de fatura, boleto… Vem do banco pelo Open Finance; quando ele não informa, é reconhecido pela descrição.',
+    exemplo: 'Pagamento de fatura e transferência entre suas contas não são gasto novo: as compras já entraram no cartão, e o dinheiro só mudou de conta.'
+  },
   dividaCartao: {
     termo: 'Dívida total do cartão',
     definicao: 'Tudo o que você deve neste cartão hoje, inclusive as parcelas que ainda vão vencer. Não é a fatura do mês.'
