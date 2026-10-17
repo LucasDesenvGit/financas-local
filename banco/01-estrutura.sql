@@ -225,6 +225,8 @@ CREATE TABLE IF NOT EXISTS Transacao
     IgnorarRelatorios   INTEGER NOT NULL CONSTRAINT DF_Transacao_Ignorar DEFAULT 0,
     -- Marcação de gasto de emergência (destacado nos relatórios e orçamentos).
     Emergencia          INTEGER NOT NULL CONSTRAINT DF_Transacao_Emergencia DEFAULT 0,
+    -- #9: o usuário já olhou a descrição pouco informativa ("PIX ENVIADO") e ela sai do filtro.
+    DescricaoRevisada   INTEGER NOT NULL CONSTRAINT DF_Transacao_DescricaoRevisada DEFAULT 0,
     -- Guid gerado pela API quando aplicável (Transacao.TransferenciaGrupo); sem DEFAULT no banco.
     TransferenciaGrupo  TEXT    NULL,
     Observacao          TEXT    NULL,

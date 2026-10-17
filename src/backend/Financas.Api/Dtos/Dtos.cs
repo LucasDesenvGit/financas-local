@@ -54,6 +54,8 @@ public class FiltroTransacoesDto
     /// <summary>Sem categoria; junto com categorias, soma as duas coisas (OU).</summary>
     public bool SemCategoria { get; set; }
     public bool SomenteEmergencias { get; set; }
+    /// <summary>#9: só as de descrição pouco informativa ainda não revisadas.</summary>
+    public bool PoucoInformativa { get; set; }
     public TipoTransacao? Tipo { get; set; }
     [StringLength(100)] public string? Busca { get; set; }
     [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
@@ -85,6 +87,9 @@ public record AtualizarTransacaoOpenFinanceDto(
 public record CategorizarLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, int? CategoriaId);
 
 public record EmergenciaLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, bool Emergencia);
+
+/// <summary>#9: marca (ou desmarca) a descrição pouco informativa como revisada.</summary>
+public record RevisadaLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, bool Revisada);
 
 /// <summary>#87: categoria de uma transação no modo edição (Automatica = voltar para as regras).</summary>
 public record AlteracaoCategoriaDto(long Id, int? CategoriaId, bool Automatica);
@@ -353,7 +358,11 @@ public record PainelDto(
     decimal DividaEmprestimos = 0,
     int DiasProximosVencimentos = 15,
     List<FaturaMesDto>? FaturasDoMes = null,
-    decimal TotalFaturasDoMes = 0);
+    decimal TotalFaturasDoMes = 0,
+    // #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto no Painel).
+    int PoucoInformativas = 0,
+    DateOnly? PoucoInformativasDesde = null,
+    string? ExemploPoucoInformativa = null);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>

@@ -70,6 +70,8 @@ export interface FiltroTransacoes {
   /** Várias categorias (cada uma inclui as subcategorias); com semCategoria, soma também as sem categoria. */
   categoriaIds?: number[] | null;
   semCategoria?: boolean; somenteEmergencias?: boolean; tipo?: TipoTransacao | null; busca?: string | null; pagina?: number; tamanhoPagina?: number;
+  /** #9: só as de descrição pouco informativa ainda não revisadas. */
+  poucoInformativa?: boolean;
 }
 
 export interface PaginaTransacoes {
@@ -264,6 +266,8 @@ export interface Painel {
   diasProximosVencimentos: number;
   /** UX-12: o que cada cartão lançou no mês escolhido (só transações do mês, sem parcelas futuras). */
   faturasDoMes: FaturaMes[] | null; totalFaturasDoMes: number;
+  /** #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto). */
+  poucoInformativas: number; poucoInformativasDesde: string | null; exemploPoucoInformativa: string | null;
 }
 
 export interface FaturaMes {

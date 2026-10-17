@@ -74,6 +74,10 @@ public class ParametroService
             "Quanto da sobra prevista do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar.",
             TipoParametro.Inteiro, 10, 0, 50, "% da sobra"),
 
+        new(ConfiguracaoService.MinimoLetrasDescricao, "Transações", "Descrição pouco informativa",
+            "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+            TipoParametro.Inteiro, 3, 1, 20, "letras"),
+
         new(ConfiguracaoService.DiasRetencaoErros, "Erros do sistema", "Guardar erros por",
             "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
             TipoParametro.Inteiro, 90, 7, 365, "dias"),

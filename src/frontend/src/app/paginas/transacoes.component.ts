@@ -17,6 +17,7 @@ import {
   ContextoTransacoes, NOMES_MESES, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
 } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { TermoComponent } from '../compartilhado/termo.component';
 
 interface FormTransacao {
   id: number | null;
@@ -47,7 +48,7 @@ interface FormTransferencia {
 
 interface ChipFiltro {
   /** Categoria tem um chip por valor marcado: `categoria:12`, `categoria:sem`. */
-  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'emergencias' | 'busca';
+  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'emergencias' | 'generica' | 'busca';
   rotulo: string;
   cor?: string;
 }
@@ -74,7 +75,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -108,6 +109,11 @@ function dataCurta(iso: string, comAno: boolean): string {
       </label>
       <label class="checkbox"><input type="checkbox" [(ngModel)]="filtro.somenteEmergencias" (change)="buscar(1)">
         <span class="texto-emergencia">Só emergências</span></label>
+      <span class="filtro-generica">
+        <label class="checkbox"><input type="checkbox" name="poucoInformativa" [(ngModel)]="filtro.poucoInformativa" (change)="buscar(1)">
+          Descrição pouco informativa</label>
+        <app-termo chave="descricaoPoucoInformativa" />
+      </span>
       <label class="cresce">Buscar
         <input type="search" [(ngModel)]="filtro.busca" (keyup.enter)="buscar(1)" placeholder="descrição, estabelecimento…" maxlength="100">
       </label>
@@ -128,6 +134,14 @@ function dataCurta(iso: string, comAno: boolean): string {
           <button type="button" class="link" (click)="limparFiltros()">Limpar filtros</button>
         </section>
       }
+    }
+
+    @if (filtroAplicado().poucoInformativa) {
+      <p class="dica-generica texto-suave">
+        Transações cuja descrição não diz o que foi (PIX ENVIADO, PAGAMENTO, TED, só o nome do banco). Cada uma sai desta
+        lista quando você escolhe a categoria (dá para várias de uma vez em "Editar categorias"), dá um nome mais claro
+        a ela ou marca "revisada".
+      </p>
     }
 
     @if (modoEdicao()) {
@@ -190,6 +204,9 @@ function dataCurta(iso: string, comAno: boolean): string {
           </select>
           <button type="button" class="botao botao-primario" (click)="categorizarLote()">
             {{ modoEdicao() ? 'Trocar nas selecionadas' : 'Aplicar categoria' }}</button>
+          @if (filtroAplicado().poucoInformativa) {
+            <button type="button" class="botao" (click)="marcarRevisadasSelecionadas()">Marcar como revisadas</button>
+          }
           <button type="button" class="botao botao-emergencia" (click)="marcarEmergenciaLote(true)">Marcar emergência</button>
           <button type="button" class="botao" (click)="marcarEmergenciaLote(false)">Desmarcar emergência</button>
           <button type="button" class="link" (click)="limparSelecao()">limpar seleção</button>
@@ -224,6 +241,10 @@ function dataCurta(iso: string, comAno: boolean): string {
                     @if (t.emergencia) { <span class="etiqueta etiqueta-emergencia">emergência</span> }
                     @if (t.openFinance) { <span class="etiqueta">open finance</span> }
                     @if (t.observacao) { <span class="texto-suave truncar">{{ t.observacao }}</span> }
+                    @if (filtroAplicado().poucoInformativa) {
+                      <button type="button" class="link botao-revisada" (click)="$event.stopPropagation(); marcarRevisadas([t.id])"
+                        [attr.aria-label]="'Marcar como revisada: ' + t.descricao">✓ marcar como revisada</button>
+                    }
                   </div>
                 </td>
                 <td>
@@ -452,6 +473,10 @@ function dataCurta(iso: string, comAno: boolean): string {
     .select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
     tr.alterada td { background: var(--alerta-suave); }
     .botao-ativo { background: var(--primaria-suave); color: var(--primaria-forte); }
+    .filtro-generica { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 8px; }
+    .filtro-generica label.checkbox { min-width: 0; padding-bottom: 0; }
+    .dica-generica { margin: -4px 4px 14px; font-size: 0.88rem; max-width: 90ch; }
+    .botao-revisada { min-height: 24px; padding: 0 4px; font-size: 0.82rem; }
     /* Celular no modo edição: cada transação vira um bloco, com o seletor de categoria em largura total (sem rolagem lateral). */
     @media (max-width: 760px) {
       .tabela-edicao thead { display: none; }
@@ -546,7 +571,7 @@ export class TransacoesComponent implements OnInit {
   /** Categorias marcadas no filtro: 'sem' ou o id, na ordem em que foram marcadas. */
   filtroCategorias: string[] = [];
   /** Filtro da última busca (o que está na tela), base dos chips de "Filtrando:". */
-  private readonly filtroAplicado = signal<FiltroTransacoes>(this.filtroInicial());
+  readonly filtroAplicado = signal<FiltroTransacoes>(this.filtroInicial());
 
   /**
    * UX-2: um chip para cada filtro diferente do padrão (mês atual, sem filtros), para quem chega por um link
@@ -570,6 +595,7 @@ export class TransacoesComponent implements OnInit {
       chips.push({ id: 'tipo', rotulo: nomes[f.tipo] });
     }
     if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
+    if (f.poucoInformativa) chips.push({ id: 'generica', rotulo: 'Descrição pouco informativa' });
     if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
     return chips;
   });
@@ -586,6 +612,7 @@ export class TransacoesComponent implements OnInit {
       case 'conta': this.filtro.contaId = null; break;
       case 'tipo': this.filtro.tipo = null; break;
       case 'emergencias': this.filtro.somenteEmergencias = false; break;
+      case 'generica': this.filtro.poucoInformativa = false; break;
       case 'busca': this.filtro.busca = ''; break;
     }
     this.buscar(1);
@@ -661,6 +688,7 @@ export class TransacoesComponent implements OnInit {
     if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
 
     if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
+    if (params.get('generica') === '1') this.filtro.poucoInformativa = true;
     if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
@@ -734,6 +762,7 @@ export class TransacoesComponent implements OnInit {
     });
     if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
+    if (f.poucoInformativa) params['generica'] = '1';
     if (f.busca?.trim()) params['busca'] = f.busca.trim();
     if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
     if (this.modoEdicao()) params['editar'] = '1';
@@ -793,6 +822,29 @@ export class TransacoesComponent implements OnInit {
         this.avisos.sucesso(emergencia
           ? `${r.transacoesAtualizadas} despesa(s) marcada(s) como emergência.`
           : `${r.transacoesAtualizadas} transação(ões) desmarcada(s).`);
+        this.buscar(this.filtro.pagina ?? 1);
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  marcarRevisadasSelecionadas(): void {
+    this.marcarRevisadas([...this.selecionadas()]);
+  }
+
+  /** #9: revisada sai do filtro "Descrição pouco informativa"; o aviso permite desfazer. */
+  marcarRevisadas(ids: number[]): void {
+    if (!ids.length) return;
+    this.api.marcarRevisada(ids, true).subscribe({
+      next: (r) => {
+        this.limparSelecao();
+        this.avisos.sucesso(`${r.transacoesAtualizadas} transação(ões) marcada(s) como revisada(s).`, {
+          rotulo: 'Desfazer',
+          executar: () => this.api.marcarRevisada(ids, false).subscribe({
+            next: () => this.buscar(this.filtro.pagina ?? 1),
+            error: (e) => this.avisos.erro(mensagemDeErro(e))
+          })
+        });
         this.buscar(this.filtro.pagina ?? 1);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
@@ -1146,7 +1198,8 @@ export class TransacoesComponent implements OnInit {
     return {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
-      contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, tipo: null, busca: '', pagina: 1,
+      contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, poucoInformativa: false,
+      tipo: null, busca: '', pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }

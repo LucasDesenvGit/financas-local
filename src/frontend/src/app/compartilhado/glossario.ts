@@ -61,6 +61,11 @@ export const GLOSSARIO = {
     termo: 'Dívida total nos cartões',
     definicao: 'Tudo o que você deve nos cartões hoje, somando todos, inclusive parcelas que ainda vão vencer. Não é a fatura do mês.'
   },
+  descricaoPoucoInformativa: {
+    termo: 'Descrição pouco informativa',
+    definicao: 'Descrição que não diz o que foi, como "PIX ENVIADO", "PAGAMENTO" ou só o nome do banco. As regras não conseguem categorizar essas transações sozinhas.',
+    exemplo: 'Categorize, dê um nome na transação ou marque como revisada para ela sair da lista.'
+  },
   sobraPrevista: {
     termo: 'Sobra prevista',
     definicao: 'Receitas médias menos despesas médias à vista e parcelas do mês: a mesma conta da tela de Projeção. No mês atual, o que já entrou e saiu mais o que falta pela média.'
