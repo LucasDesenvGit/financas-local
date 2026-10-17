@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import {
   OpcaoCategoria, SugestaoCategoria,
   AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
-  SugestaoExtrato,
+  SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
@@ -196,6 +196,15 @@ export class ApiService {
   }
   importarExtrato(itens: ImportarExtratoItem[]): Observable<ResultadoAplicacao> {
     return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/extrato/importar`, { itens });
+  }
+  conferenciaInvestimentos(): Observable<ConferenciaInvestimentos> {
+    return this.http.get<ConferenciaInvestimentos>(`${this.base}/carteira/conferencia`);
+  }
+  corrigirInvestimentos(dto: CorrigirInvestimentos): Observable<ResultadoCorrecaoInvestimentos> {
+    return this.http.post<ResultadoCorrecaoInvestimentos>(`${this.base}/carteira/conferencia/corrigir`, dto);
+  }
+  desfazerCorrecaoInvestimentos(chave: string): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/conferencia/desfazer/${encodeURIComponent(chave)}`, {});
   }
   configuracaoCotacao(): Observable<{ tokenBrapiConfigurado: boolean }> {
     return this.http.get<{ tokenBrapiConfigurado: boolean }>(`${this.base}/carteira/configuracao`);

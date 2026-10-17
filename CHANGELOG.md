@@ -5,6 +5,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- Investimentos: **"Conferir investimentos"** (ADR 0027).
+  - **O que faz:** compara a carteira com a posição da corretora e com o extrato, e mostra as correções já marcadas. Nada muda até "Corrigir selecionados", e o aviso tem **Desfazer** por 10 minutos.
+  - **FII cadastrado como outro tipo:** reconhecido pelo nome do fundo ou pelo emissor da corretora; passa a ser FII.
+  - **Cotas diferentes da corretora:** quando faltam cotas, sugere o débito "Compra de Renda Variável" que nenhuma operação explica. O preço é o débito menos o troco, dividido pelas cotas, comparado com o fechamento do dia. A compra fica ligada ao débito. Sem débito, "Lançar a compra à mão"; com cotas a mais, "Ver as operações".
+  - **Troco ou venda contando como rendimento:** o Nubank usa "Valor recebido de Investimentos" para o troco das compras, para o valor das vendas e para os proventos. Troco e venda vão para "Investimentos", com ⓘ "Troco da compra" no glossário.
+  - **Rendimento contando como investimento:** os outros créditos voltam para a categoria das regras (Rendimentos).
+  - **Aviso no topo de Investimentos** quando a corretora informa outra quantidade de cotas.
+  - **Manual:** seção nova em Investimentos.
+  - API: `GET /api/carteira/conferencia`, `POST /api/carteira/conferencia/corrigir` e `POST /api/carteira/conferencia/desfazer/{chave}`.
 - **Manual do site** (#113, ADR 0026).
   - **Página "Manual"** no menu, com índice de 14 capítulos e busca (sem acento nem maiúscula fazendo diferença, `?busca=` na URL).
   - **Cada seção:** para que serve, passo a passo, "Abrir a tela" (já filtrada quando faz sentido), dicas, erros comuns e termos do glossário.

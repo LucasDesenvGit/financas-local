@@ -467,7 +467,7 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
     decimal TotalInvestimentosManuais, decimal TotalGeral, List<DistribuicaoInvestimentoDto> Distribuicao,
     DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
-    List<string> MoedasSemCotacao, List<ReservaDto> Reservas, decimal TotalReservas);
+    List<string> MoedasSemCotacao, List<ReservaDto> Reservas, decimal TotalReservas, List<string> CotasDiferentes);
 
 /// <summary>
 /// Reserva ("cofrinho") cujo saldo a instituição não informa pelo Open Finance, estimado pelos lançamentos
@@ -581,6 +581,53 @@ public record ImportarExtratoDto([Required, MinLength(1), MaxLength(500)] List<I
 /// <summary>Resultado de "Registrar compras do Open Finance".</summary>
 public record ResultadoImportacaoCarteiraDto(int AtivosCriados, int OperacoesImportadas, List<string> SemHistorico,
     List<string> ComLancamentoManual, List<string> Erros, string? Mensagem);
+
+/* ----------------------------- Conferir investimentos (ADR 0027) ----------------------------- */
+
+/// <summary>O que parece errado na carteira e nas transações de renda variável, com a correção sugerida.</summary>
+public record ConferenciaInvestimentosDto(List<TipoParaCorrigirDto> Tipos, List<CotasDiferentesDto> Cotas,
+    List<CompraSemOperacaoDto> ComprasSemOperacao, List<CreditoDaCorretoraDto> Trocos,
+    List<RendimentoComoInvestimentoDto> Rendimentos, CategoriaDoTrocoDto? CategoriaDoTroco);
+
+/// <summary>Ativo cadastrado como ação ou "outro" que é FII (Motivo: o nome do fundo ou o emissor da corretora).</summary>
+public record TipoParaCorrigirDto(int AtivoId, string Ticker, string? Nome, TipoAtivo TipoAtual, string Motivo);
+
+/// <summary>
+/// Cotas na corretora (posição da última sincronização, em <c>PosicaoEm</c>) × na carteira. Quando faltam cotas, o
+/// débito de compra sem operação sugerido, com o preço (débito − troco ÷ cotas) e o fechamento daquele dia.
+/// </summary>
+public record CotasDiferentesDto(int AtivoId, string Ticker, decimal NaCorretora, decimal NaCarteira, DateTime PosicaoEm,
+    long? DebitoSugeridoId, decimal? PrecoSugerido, decimal? FechamentoNoDia);
+
+/// <summary>Débito de compra de renda variável que nenhuma operação da carteira explica (Troco: o que voltou dele).</summary>
+public record CompraSemOperacaoDto(long TransacaoId, DateOnly Data, decimal Valor, decimal Troco, string Conta, string Descricao);
+
+/// <summary>
+/// Crédito da corretora que é troco de uma compra (<c>Compra*</c>: o débito) ou o valor de uma venda (<c>Venda*</c>),
+/// mas está contando como receita (rendimento).
+/// </summary>
+public record CreditoDaCorretoraDto(long TransacaoId, DateOnly Data, decimal Valor, string Descricao, string Conta,
+    string? Categoria, DateOnly? CompraData, decimal? CompraValor, string? VendaTicker, decimal? VendaQuantidade,
+    DateOnly? VendaData);
+
+/// <summary>Provento (crédito da corretora que não é troco nem venda) numa categoria de transferência.</summary>
+public record RendimentoComoInvestimentoDto(long TransacaoId, DateOnly Data, decimal Valor, string Descricao, string Conta,
+    string? Categoria, string CategoriaAutomatica);
+
+public record CategoriaDoTrocoDto(int Id, string Nome);
+
+/// <summary>
+/// Correções escolhidas: ativos que viram FII, compras que faltaram (ligadas ao débito), trocos e vendas (para a
+/// categoria da compra) e rendimentos (de volta para a categoria automática).
+/// </summary>
+public record CorrigirInvestimentosDto(
+    [MaxLength(200)] List<int>? AtivosParaFii,
+    [MaxLength(200)] List<ImportarExtratoItemDto>? Compras,
+    [MaxLength(2000)] List<long>? Trocos,
+    [MaxLength(2000)] List<long>? Rendimentos);
+
+/// <summary><c>Desfazer</c>: chave para voltar tudo (vale por alguns minutos; null se nada mudou).</summary>
+public record ResultadoCorrecaoInvestimentosDto(int Tipos, int Compras, int Trocos, int Rendimentos, string? Desfazer);
 
 /* ----------------------------- Erros do sistema (#11) ----------------------------- */
 public class FiltroErrosDto

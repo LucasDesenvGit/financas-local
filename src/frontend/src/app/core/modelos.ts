@@ -434,6 +434,8 @@ export interface Carteira {
   openFinance: InvestimentoComparado[]; totalOpenFinance: number; totalInvestimentosManuais: number; totalGeral: number;
   distribuicao: { nome: string; valor: number }[]; cotacoesAtualizadasEm: string | null; cotacoesDesatualizadas: boolean;
   openFinanceNaoRegistrados: number; moedasSemCotacao: string[]; reservas: Reserva[]; totalReservas: number;
+  /** Ativos com cotas diferentes da posição da corretora ("Conferir investimentos" mostra o que fazer). */
+  cotasDiferentes: string[];
 }
 
 /**
@@ -525,6 +527,38 @@ export interface SugestaoExtrato {
 
 export interface ImportarExtratoItem {
   transacaoId: number; ticker: string; tipo: TipoOperacao; quantidade: number; precoUnitario: number; taxas: number;
+}
+
+/* ----------------------------- Conferir investimentos (ADR 0027) ----------------------------- */
+export interface ConferenciaInvestimentos {
+  tipos: TipoParaCorrigir[]; cotas: CotasDiferentes[]; comprasSemOperacao: CompraSemOperacao[];
+  trocos: CreditoDaCorretora[]; rendimentos: RendimentoComoInvestimento[]; categoriaDoTroco: { id: number; nome: string } | null;
+}
+/** Ativo cadastrado como ação ou "outro" que é FII (motivo: o nome do fundo ou o emissor da corretora). */
+export interface TipoParaCorrigir { ativoId: number; ticker: string; nome: string | null; tipoAtual: TipoAtivo; motivo: string; }
+/** Cotas na corretora × na carteira; quando faltam, o débito de compra sugerido e o preço (débito − troco ÷ cotas). */
+export interface CotasDiferentes {
+  ativoId: number; ticker: string; naCorretora: number; naCarteira: number; posicaoEm: string;
+  debitoSugeridoId: number | null; precoSugerido: number | null; fechamentoNoDia: number | null;
+}
+/** Débito de compra de renda variável que nenhuma operação explica (troco: o que voltou dele). */
+export interface CompraSemOperacao { transacaoId: number; data: string; valor: number; troco: number; conta: string; descricao: string; }
+/** Troco de compra (compra*) ou valor de venda (venda*) contando como receita. */
+export interface CreditoDaCorretora {
+  transacaoId: number; data: string; valor: number; descricao: string; conta: string; categoria: string | null;
+  compraData: string | null; compraValor: number | null; vendaTicker: string | null; vendaQuantidade: number | null;
+  vendaData: string | null;
+}
+/** Provento numa categoria de transferência; volta para a categoria automática. */
+export interface RendimentoComoInvestimento {
+  transacaoId: number; data: string; valor: number; descricao: string; conta: string; categoria: string | null;
+  categoriaAutomatica: string;
+}
+export interface CorrigirInvestimentos {
+  ativosParaFii: number[]; compras: ImportarExtratoItem[]; trocos: number[]; rendimentos: number[];
+}
+export interface ResultadoCorrecaoInvestimentos {
+  tipos: number; compras: number; trocos: number; rendimentos: number; desfazer: string | null;
 }
 
 /* ----------------------------- Erros do sistema (#11) ----------------------------- */

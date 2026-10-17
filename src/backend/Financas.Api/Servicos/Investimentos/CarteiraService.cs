@@ -348,12 +348,20 @@ public class CarteiraService
             selic.Vazia ? null : Math.Round((selic.Fator(new DateOnly(hoje.Year, 1, 1), hoje) - 1) * 100, 2),
             selic.UltimaData);
 
+        // Cotas na corretora × na carteira: "Conferir investimentos" mostra a diferença e a correção.
+        var naCorretora = ConferenciaInvestimentosService.CotasNaCorretora(await _db.Investimentos.AsNoTracking()
+            .Where(i => i.ConexaoBancaria!.Ativa && (i.Tipo == "EQUITY" || i.Tipo == "ETF")).ToListAsync(ct));
+        var cotasDiferentes = naCorretora
+            .Where(c => posicoes.FirstOrDefault(p => p.Ticker == c.Key) is { } p
+                        && Math.Abs(p.Quantidade - c.Value.Quantidade) >= 0.000001m)
+            .Select(c => c.Key).OrderBy(t => t, StringComparer.Ordinal).ToList();
+
         return new CarteiraDto(resumoSelic, totais,
             posicoes.OrderByDescending(p => p.Quantidade > 0).ThenByDescending(p => p.ValorMercado).ToList(),
             evolucao, openFinance, totalOpenFinance, totalManuais, mercado + totalOpenFinance + totalManuais + totalReservas,
             distribuicao, cotacaoMaisAntiga, desatualizadas,
             openFinance.Count(i => i.RendaVariavel && !i.JaNaCarteira && CotacaoService.NormalizarTicker(i.Codigo ?? i.Nome) is not null),
-            conversor.MoedasSemCotacao.ToList(), reservas, totalReservas);
+            conversor.MoedasSemCotacao.ToList(), reservas, totalReservas, cotasDiferentes);
     }
 
     /// <summary>Operações de um ativo, cada compra comparada com o preço atual e com a Selic.</summary>
