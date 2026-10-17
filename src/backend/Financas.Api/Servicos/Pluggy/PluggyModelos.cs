@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Financas.Api.Servicos.Pluggy;
@@ -122,13 +123,19 @@ public class PluggyDadosPagamento
 
 public class PluggyParticipante
 {
-    [JsonPropertyName("documentNumber")] public PluggyDocumento? DocumentNumber { get; set; }
-}
+    /// <summary>
+    /// Pela documentação é { type, value }, mas fica como JsonElement: se algum banco mandar só o texto (ou outro
+    /// formato), a leitura da página de transações não pode falhar por causa de um campo opcional.
+    /// </summary>
+    [JsonPropertyName("documentNumber")] public JsonElement DocumentNumber { get; set; }
 
-public class PluggyDocumento
-{
-    [JsonPropertyName("type")] public string? Type { get; set; }
-    [JsonPropertyName("value")] public string? Value { get; set; }
+    /// <summary>O número do documento, venha como objeto ({ value }) ou como texto; null se não der para ler.</summary>
+    public string? Documento() => DocumentNumber.ValueKind switch
+    {
+        JsonValueKind.String => DocumentNumber.GetString(),
+        JsonValueKind.Object when DocumentNumber.TryGetProperty("value", out var v) && v.ValueKind == JsonValueKind.String => v.GetString(),
+        _ => null
+    };
 }
 
 public class PluggyPagamentoFatura

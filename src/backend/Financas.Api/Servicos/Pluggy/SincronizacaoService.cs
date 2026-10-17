@@ -745,7 +745,7 @@ public class SincronizacaoService
     {
         static string? Digitos(PluggyParticipante? p)
         {
-            var valor = p?.DocumentNumber?.Value;
+            var valor = p?.Documento();
             if (string.IsNullOrWhiteSpace(valor) || valor.Contains('*')) return null;
             var digitos = new string(valor.Where(char.IsDigit).ToArray());
             return digitos.Length is 11 or 14 ? digitos : null;
