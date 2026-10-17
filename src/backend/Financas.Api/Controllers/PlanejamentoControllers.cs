@@ -373,12 +373,13 @@ public class ContasAgendadasController : BaseController
         }
 
         c.UltimoPagamentoEm = dataPagamento;
-        switch (c.Recorrencia)
+        if (RelatorioService.ProximoVencimentoApos(c.ProximoVencimento, c.Recorrencia) is { } proximo)
         {
-            case Recorrencia.Mensal: c.ProximoVencimento = c.ProximoVencimento.AddMonths(1); break;
-            case Recorrencia.Anual: c.ProximoVencimento = c.ProximoVencimento.AddYears(1); break;
-            default: c.Ativa = false; break;
+            c.ProximoVencimento = proximo;
+            // #69: passou da data limite, a conta é encerrada (sai do Painel; continua na lista como "encerrada").
+            if (c.DataLimite is { } limite && proximo > limite) c.Ativa = false;
         }
+        else c.Ativa = false;
         await _db.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -387,6 +388,9 @@ public class ContasAgendadasController : BaseController
     {
         if (dto.CategoriaId is { } cat && !await _db.Categorias.AnyAsync(c => c.Id == cat, ct)) return "Categoria inválida.";
         if (dto.ContaId is { } conta && !await _db.Contas.AnyAsync(c => c.Id == conta, ct)) return "Conta inválida.";
+        // Conta encerrada (inativa) pode ser editada sem mexer nas datas; só a ativa precisa de um vencimento até o limite.
+        if (dto.Ativa && dto.Recorrencia != Recorrencia.Unica && dto.DataLimite is { } limite && limite < dto.ProximoVencimento)
+            return $"A data limite (até {limite:dd/MM/yyyy}) não pode ser antes do próximo vencimento ({dto.ProximoVencimento:dd/MM/yyyy}).";
         return null;
     }
 
@@ -399,5 +403,6 @@ public class ContasAgendadasController : BaseController
         c.CategoriaId = dto.CategoriaId;
         c.ContaId = dto.ContaId;
         c.Ativa = dto.Ativa;
+        c.DataLimite = dto.Recorrencia == Recorrencia.Unica ? null : dto.DataLimite;
     }
 }

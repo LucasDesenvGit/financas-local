@@ -60,6 +60,7 @@ adicionar_coluna_se_ausente "Ativo" "Moeda" "TEXT NOT NULL DEFAULT 'BRL'"
 adicionar_coluna_se_ausente "OperacaoAtivo" "Cambio" "TEXT NOT NULL DEFAULT '1'"
 adicionar_coluna_se_ausente "Meta" "ReservaNome" "TEXT NULL"
 adicionar_coluna_se_ausente "Meta" "Prioridade" "INTEGER NOT NULL DEFAULT 0"
+adicionar_coluna_se_ausente "ContaAgendada" "DataLimite" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

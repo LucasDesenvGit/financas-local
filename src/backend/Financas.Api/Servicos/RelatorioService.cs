@@ -163,14 +163,40 @@ public class RelatorioService
                 CategoriaNome = c.Categoria != null ? c.Categoria.Nome : null,
                 c.ContaId,
                 ContaNome = c.Conta != null ? c.Conta.Nome : null,
-                c.Ativa, c.UltimoPagamentoEm
+                c.Ativa, c.UltimoPagamentoEm, c.DataLimite
             })
             .ToListAsync(ct);
 
-        return lista.Select(c => new ContaAgendadaDto(c.Id, c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia,
-                c.CategoriaId, c.CategoriaNome, c.ContaId, c.ContaNome, c.Ativa, c.UltimoPagamentoEm,
-                c.ProximoVencimento.DayNumber - hoje.DayNumber))
+        return lista.Select(c =>
+            {
+                var restantes = c.Ativa ? PagamentosAte(c.ProximoVencimento, c.Recorrencia, c.DataLimite) : null;
+                var encerrada = !c.Ativa && c.DataLimite is { } limite && c.Recorrencia != Recorrencia.Unica
+                    && c.ProximoVencimento > limite;
+                return new ContaAgendadaDto(c.Id, c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia,
+                    c.CategoriaId, c.CategoriaNome, c.ContaId, c.ContaNome, c.Ativa, c.UltimoPagamentoEm,
+                    c.ProximoVencimento.DayNumber - hoje.DayNumber, c.DataLimite, restantes, encerrada);
+            })
             .ToList();
+    }
+
+    /// <summary>
+    /// Próximo vencimento de uma conta recorrente, do mesmo jeito que o pagamento avança (mês a mês ou ano a ano a
+    /// partir do anterior). Única não tem próximo.
+    /// </summary>
+    public static DateOnly? ProximoVencimentoApos(DateOnly vencimento, Recorrencia recorrencia) => recorrencia switch
+    {
+        Recorrencia.Mensal => vencimento.AddMonths(1),
+        Recorrencia.Anual => vencimento.AddYears(1),
+        _ => null
+    };
+
+    /// <summary>#69: quantos pagamentos faltam até a data limite, contando o próximo (null = sem data limite).</summary>
+    public static int? PagamentosAte(DateOnly proximo, Recorrencia recorrencia, DateOnly? limite)
+    {
+        if (limite is not { } fim || recorrencia == Recorrencia.Unica) return null;
+        var n = 0;
+        for (DateOnly? v = proximo; v is { } d && d <= fim && n < 1200; v = ProximoVencimentoApos(d, recorrencia)) n++;
+        return n;
     }
 
     /// <summary>
