@@ -10,7 +10,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros
+  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -82,6 +82,13 @@ export class ApiService {
   }
   categorizarEmLote(ids: number[], categoriaId: number | null): Observable<ResultadoAplicacao> {
     return this.http.put<ResultadoAplicacao>(`${this.base}/transacoes/categoria-em-lote`, { ids, categoriaId });
+  }
+  /** #87: modo edição — por transação ou todas do filtro; devolve a chave do "Desfazer". */
+  alterarCategoriasEmLote(dto: AlterarCategoriasEmLote): Observable<ResultadoCategoriasEmLote> {
+    return this.http.patch<ResultadoCategoriasEmLote>(`${this.base}/transacoes/em-lote`, dto);
+  }
+  desfazerCategoriasEmLote(chave: string): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/transacoes/em-lote/desfazer/${encodeURIComponent(chave)}`, {});
   }
   transferir(dto: Transferencia): Observable<void> { return this.http.post<void>(`${this.base}/transacoes/transferencia`, dto); }
 

@@ -5,6 +5,7 @@ using Financas.Api.Entidades;
 using Financas.Api.Servicos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Financas.Api.Controllers;
 
@@ -21,19 +22,48 @@ public static class ProjecoesTransacao
 [Route("api/transacoes")]
 public class TransacoesController : BaseController
 {
+    /// <summary>#87: "todas do filtro" de uma vez, no máximo (acima disso, restringir o período).</summary>
+    public const int MaximoPorFiltro = 5000;
+    private static readonly TimeSpan PrazoDesfazer = TimeSpan.FromMinutes(10);
+
     private readonly FinancasDbContext _db;
     private readonly CategorizacaoService _categorizacao;
+    private readonly AuditoriaService _auditoria;
+    private readonly IMemoryCache _cache;
 
-    public TransacoesController(FinancasDbContext db, CategorizacaoService categorizacao)
+    public TransacoesController(FinancasDbContext db, CategorizacaoService categorizacao, AuditoriaService auditoria,
+        IMemoryCache cache)
     {
         _db = db;
         _categorizacao = categorizacao;
+        _auditoria = auditoria;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<ActionResult<PaginaTransacoesDto>> Listar([FromQuery] FiltroTransacoesDto f, CancellationToken ct)
     {
-        var q = _db.Transacoes.AsNoTracking().AsQueryable();
+        var q = Filtrar(f, rastrear: false);
+
+        var total = await q.CountAsync(ct);
+        var paraTotais = q.Where(t => !t.IgnorarRelatorios && t.Tipo != TipoTransacao.Transferencia);
+        var receitas = await paraTotais.Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+        var despesas = await paraTotais.Where(t => t.Valor < 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+
+        var itens = await q
+            .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
+            .Skip((f.Pagina - 1) * f.TamanhoPagina)
+            .Take(f.TamanhoPagina)
+            .Select(ProjecoesTransacao.ParaDto)
+            .ToListAsync(ct);
+
+        return new PaginaTransacoesDto(itens, total, f.Pagina, f.TamanhoPagina, receitas, Math.Abs(despesas));
+    }
+
+    /// <summary>Os filtros da busca (a mesma consulta da lista e do "todas do filtro" do modo edição).</summary>
+    private IQueryable<Transacao> Filtrar(FiltroTransacoesDto f, bool rastrear)
+    {
+        var q = rastrear ? _db.Transacoes.AsQueryable() : _db.Transacoes.AsNoTracking();
         if (f.Inicio is { } inicio) q = q.Where(t => t.Data >= inicio);
         if (f.Fim is { } fim) q = q.Where(t => t.Data <= fim);
         if (f.ContaId is { } contaId) q = q.Where(t => t.ContaId == contaId);
@@ -53,20 +83,7 @@ public class TransacoesController : BaseController
                              || (t.Estabelecimento != null && t.Estabelecimento.Contains(busca))
                              || (t.Observacao != null && t.Observacao.Contains(busca)));
         }
-
-        var total = await q.CountAsync(ct);
-        var paraTotais = q.Where(t => !t.IgnorarRelatorios && t.Tipo != TipoTransacao.Transferencia);
-        var receitas = await paraTotais.Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
-        var despesas = await paraTotais.Where(t => t.Valor < 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
-
-        var itens = await q
-            .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
-            .Skip((f.Pagina - 1) * f.TamanhoPagina)
-            .Take(f.TamanhoPagina)
-            .Select(ProjecoesTransacao.ParaDto)
-            .ToListAsync(ct);
-
-        return new PaginaTransacoesDto(itens, total, f.Pagina, f.TamanhoPagina, receitas, Math.Abs(despesas));
+        return q;
     }
 
     [HttpGet("{id:long}")]
@@ -226,6 +243,117 @@ public class TransacoesController : BaseController
         await _db.SaveChangesAsync(ct);
         return new ResultadoAplicacaoDto(transacoes.Count);
     }
+
+    /// <summary>Estado de antes de uma alteração em lote, guardado só na memória da API para o "Desfazer".</summary>
+    private sealed record EstadoAnterior(long Id, int? CategoriaId, bool CategoriaManual, TipoTransacao Tipo,
+        bool IgnorarRelatorios, int? CategoriaAplicada);
+
+    /// <summary>
+    /// #87 (modo edição de Transações): troca só a categoria, por transação (<c>Itens</c>) ou de todas as transações
+    /// do filtro da busca. Mesmas regras do PATCH de uma transação: categoria escolhida fica manual; "automática"
+    /// reaplica as regras; o tipo acompanha a categoria (transferência). O estado anterior fica na memória da API
+    /// por alguns minutos, para o "Desfazer" — o navegador recebe só a chave, não tem como mandar outros campos.
+    /// </summary>
+    [HttpPatch("em-lote")]
+    public async Task<ActionResult<ResultadoCategoriasEmLoteDto>> AlterarCategoriasEmLote(AlterarCategoriasEmLoteDto dto,
+        CancellationToken ct)
+    {
+        var porItens = dto.Itens is { Count: > 0 };
+        if (porItens == (dto.Filtro is not null)) return Erro("Informe as transações ou o filtro (um dos dois).");
+
+        var escolhas = porItens
+            ? dto.Itens!.Select(i => (i.CategoriaId, i.Automatica)).ToList()
+            : [(dto.CategoriaId, dto.Automatica)];
+        if (escolhas.Any(e => !e.Automatica && e.CategoriaId is null))
+            return Erro("Escolha uma categoria ou a categorização automática.");
+        var categorias = escolhas.Where(e => !e.Automatica).Select(e => e.CategoriaId!.Value).Distinct().ToList();
+        if (categorias.Count > 0 && await _db.Categorias.CountAsync(c => categorias.Contains(c.Id), ct) != categorias.Count)
+            return Erro("Categoria inválida.");
+
+        List<Transacao> transacoes;
+        Func<Transacao, (int? CategoriaId, bool Automatica)> escolhaDe;
+        if (porItens)
+        {
+            var ids = dto.Itens!.Select(i => i.Id).Distinct().ToList();
+            if (ids.Count != dto.Itens!.Count) return Erro("Transação repetida na lista.");
+            transacoes = await _db.Transacoes.Where(t => ids.Contains(t.Id)).ToListAsync(ct);
+            if (transacoes.Count != ids.Count) return NaoEncontrado("Alguma transação não existe mais. Atualize a lista.");
+            var porId = dto.Itens!.ToDictionary(i => i.Id, i => (i.CategoriaId, i.Automatica));
+            escolhaDe = t => porId[t.Id];
+        }
+        else
+        {
+            var q = Filtrar(dto.Filtro!, rastrear: true);
+            var total = await q.CountAsync(ct);
+            if (total > MaximoPorFiltro)
+                return Erro($"O filtro tem {total} transações; o limite de uma vez é {MaximoPorFiltro}. Restrinja o período.");
+            transacoes = await q.ToListAsync(ct);
+            escolhaDe = _ => (dto.CategoriaId, dto.Automatica);
+        }
+
+        await _categorizacao.CarregarAsync(ct);
+        var anteriores = new List<EstadoAnterior>();
+        foreach (var t in transacoes)
+        {
+            var antes = new EstadoAnterior(t.Id, t.CategoriaId, t.CategoriaManual, t.Tipo, t.IgnorarRelatorios, null);
+            var (categoriaId, automatica) = escolhaDe(t);
+            if (automatica)
+            {
+                t.CategoriaManual = false;
+                t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+            }
+            else
+            {
+                t.CategoriaManual = true;
+                t.CategoriaId = categoriaId;
+            }
+            _categorizacao.AplicarTipo(t);
+            if (t.CategoriaId == antes.CategoriaId && t.CategoriaManual == antes.CategoriaManual) continue;
+            t.AtualizadoEm = DateTime.UtcNow;
+            anteriores.Add(antes with { CategoriaAplicada = t.CategoriaId });
+        }
+        if (anteriores.Count == 0) return new ResultadoCategoriasEmLoteDto(0, null);
+
+        _auditoria.Registrar($"CategoriaEmLote ({anteriores.Count})", User.Identity?.Name);
+        await _db.SaveChangesAsync(ct);
+        var chave = Guid.NewGuid().ToString("N");
+        _cache.Set(ChaveDesfazer(chave), anteriores, PrazoDesfazer);
+        return new ResultadoCategoriasEmLoteDto(anteriores.Count, chave);
+    }
+
+    /// <summary>
+    /// Desfaz uma alteração em lote: volta categoria, "manual", tipo e "ignorar nos relatórios" de antes. Transação
+    /// que mudou de novo depois disso fica como está (não desfaz por cima de outra edição).
+    /// </summary>
+    [HttpPost("em-lote/desfazer/{chave}")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> DesfazerCategoriasEmLote(string chave, CancellationToken ct)
+    {
+        if (!_cache.TryGetValue(ChaveDesfazer(chave), out List<EstadoAnterior>? anteriores) || anteriores is null)
+            return NaoEncontrado("Não dá mais para desfazer: o prazo passou ou já foi desfeito.");
+        _cache.Remove(ChaveDesfazer(chave));
+
+        var porId = anteriores.ToDictionary(a => a.Id);
+        var ids = porId.Keys.ToList();
+        var transacoes = await _db.Transacoes.Where(t => ids.Contains(t.Id)).ToListAsync(ct);
+        var categoriasExistentes = (await _db.Categorias.Select(c => c.Id).ToListAsync(ct)).ToHashSet();
+        var restauradas = 0;
+        foreach (var t in transacoes)
+        {
+            var a = porId[t.Id];
+            if (t.CategoriaId != a.CategoriaAplicada) continue;
+            t.CategoriaId = a.CategoriaId is int c && !categoriasExistentes.Contains(c) ? null : a.CategoriaId;
+            t.CategoriaManual = a.CategoriaManual;
+            t.Tipo = a.Tipo;
+            t.IgnorarRelatorios = a.IgnorarRelatorios;
+            t.AtualizadoEm = DateTime.UtcNow;
+            restauradas++;
+        }
+        _auditoria.Registrar($"CategoriaEmLoteDesfeita ({restauradas})", User.Identity?.Name);
+        await _db.SaveChangesAsync(ct);
+        return new ResultadoAplicacaoDto(restauradas);
+    }
+
+    private static string ChaveDesfazer(string chave) => "transacoes-em-lote:" + chave;
 
     /// <summary>
     /// Transferência entre contas. Lança somente nas contas manuais: o lado Open Finance chega pela sincronização.

@@ -91,6 +91,8 @@ builder.Services.AddRateLimiter(o =>
 // AddControllersWithViews registra o filtro de validacao antifalsificacao (AddControllers sozinho nao registra).
 builder.Services.AddControllersWithViews(o => o.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 builder.Services.AddHttpContextAccessor();
+// "Desfazer" de alterações em lote (#87): o estado anterior fica só na memória, por alguns minutos.
+builder.Services.AddMemoryCache();
 
 // ---------------------------------------------------------------- Serviços da aplicação
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
