@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import {
-  AlterarCategoriasEmLote, FiltroTransacoes, SalvarRegra, StatusTransacao, TipoTransacao, Transacao
+  AlterarCategoriasEmLote, FiltroTransacoes, SalvarRegra, StatusTransacao, TipoLancamento, TipoTransacao, Transacao
 } from '../../src/app/core/modelos';
 import { abrirTransacoes, paginaVazia } from './transacoes';
 
@@ -10,7 +10,8 @@ export function transacao(campos: Partial<Transacao> = {}): Transacao {
     id: 1, contaId: 3, contaNome: 'Nubank', openFinance: true, data: '2026-10-10', descricao: 'PADARIA PAO QUENTE',
     descricaoOriginal: 'PADARIA PAO QUENTE', estabelecimento: null, valor: -25, tipo: TipoTransacao.Despesa,
     status: StatusTransacao.Efetivada, categoriaId: 12, categoriaNome: 'Mercado', categoriaCor: '#f2d98b',
-    parcelaNumero: null, parcelaTotal: null, ignorarRelatorios: false, observacao: null, emergencia: false, ...campos
+    parcelaNumero: null, parcelaTotal: null, ignorarRelatorios: false, observacao: null, emergencia: false,
+    tipoLancamento: TipoLancamento.CompraDebito, ...campos
   };
 }
 

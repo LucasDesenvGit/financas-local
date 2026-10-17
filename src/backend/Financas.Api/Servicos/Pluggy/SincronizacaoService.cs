@@ -317,6 +317,9 @@ public class SincronizacaoService
             t.ParcelaTotal = (short?)pt.CreditCardMetadata?.TotalInstallments;
             t.FaturaCartaoId = pt.CreditCardMetadata?.BillId is { } billId && mapaFaturas.TryGetValue(billId, out var fid)
                 ? fid : t.FaturaCartaoId;
+            // #111: como foi (Pix, boleto, pagamento de fatura…) e se foi entre contas do mesmo titular.
+            t.MeioPagamento = Limitar((pt.OperationType ?? pt.PaymentData?.PaymentMethod)?.Trim().ToUpperInvariant(), 40);
+            t.MesmaTitularidade = MesmoTitular(pt.PaymentData);
 
             if (!t.CategoriaManual)
                 t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
@@ -734,6 +737,24 @@ public class SincronizacaoService
     /// Normaliza o sinal: no banco local, negativo = saída e positivo = entrada.
     /// Na Pluggy, em cartão de crédito valor positivo é compra (saída); em conta, o tipo DEBIT/CREDIT define o sentido.
     /// </summary>
+    /// <summary>
+    /// #111: pagador e recebedor com o mesmo CPF/CNPJ (só dígitos, completos). Documento mascarado ou ausente dá
+    /// null (não dá para saber). Só o resultado é gravado; os documentos não.
+    /// </summary>
+    private static bool? MesmoTitular(PluggyDadosPagamento? dados)
+    {
+        static string? Digitos(PluggyParticipante? p)
+        {
+            var valor = p?.Documento();
+            if (string.IsNullOrWhiteSpace(valor) || valor.Contains('*')) return null;
+            var digitos = new string(valor.Where(char.IsDigit).ToArray());
+            return digitos.Length is 11 or 14 ? digitos : null;
+        }
+        var pagador = Digitos(dados?.Payer);
+        var recebedor = Digitos(dados?.Receiver);
+        return pagador is null || recebedor is null ? null : pagador == recebedor;
+    }
+
     private static decimal CalcularValor(PluggyTransacao pt, bool ehCartao)
     {
         var valor = Arredondar(pt.AmountInAccountCurrency ?? pt.Amount ?? 0);

@@ -3,9 +3,10 @@
  * nada é baixado da internet (a CSP só permite recursos do próprio site). Para trocar um ícone, mude aqui.
  */
 import {
-  ArrowLeftRight, Calculator, CalendarClock, CalendarRange, ChartColumn, ChartLine, ChartPie, Check, ChevronDown, CreditCard,
-  Eye, EyeOff, HandCoins, House, Landmark, LayoutDashboard, LogOut, Menu, Monitor, Moon, Palette, PiggyBank, RefreshCw,
-  Settings, Sun, Tags, Target, TrendingUp, TriangleAlert, Wallet, X
+  ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Banknote, Briefcase, Calculator, CalendarClock, CalendarRange, ChartColumn,
+  ChartLine, ChartPie, Check, ChevronDown, CircleEllipsis, CreditCard, Eye, EyeOff, HandCoins, House, Landmark,
+  LayoutDashboard, LogOut, Menu, Monitor, Moon, Palette, Percent, PiggyBank, Receipt, ReceiptText, RefreshCw, Repeat2,
+  Settings, ShoppingBag, Sun, Tags, Target, TrendingUp, TriangleAlert, Undo2, Wallet, X
 } from 'lucide-angular';
 
 export const Icones = {
@@ -42,5 +43,17 @@ export const Icones = {
   marca: PiggyBank,
   patrimonio: Wallet,
   banco: Landmark,
-  financiamento: House
+  financiamento: House,
+  // Tipo de lançamento (#111)
+  pixEnviado: ArrowUpRight,
+  pixRecebido: ArrowDownLeft,
+  entreContas: Repeat2,
+  pagamentoFatura: ReceiptText,
+  boleto: Receipt,
+  compraDebito: ShoppingBag,
+  dinheiro: Banknote,
+  tarifa: Percent,
+  estorno: Undo2,
+  salario: Briefcase,
+  outro: CircleEllipsis
 } as const;
