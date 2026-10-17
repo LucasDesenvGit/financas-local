@@ -73,6 +73,10 @@ public class ParametroService
         new(ConfiguracaoService.MetasMargemSeguranca, "Metas", "Margem de segurança",
             "Quanto da sobra prevista do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar.",
             TipoParametro.Inteiro, 10, 0, 50, "% da sobra"),
+
+        new(ConfiguracaoService.DiasRetencaoErros, "Erros do sistema", "Guardar erros por",
+            "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+            TipoParametro.Inteiro, 90, 7, 365, "dias"),
     ];
 
     private static readonly DateTime IniciadoEm = Process.GetCurrentProcess().StartTime.ToUniversalTime();

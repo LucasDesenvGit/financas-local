@@ -85,3 +85,11 @@ public enum Recorrencia : byte
     Mensal = 1,
     Anual = 2
 }
+
+/// <summary>Nível de um erro do sistema; os mesmos números do <c>LogLevel</c> do .NET.</summary>
+public enum NivelErro : byte
+{
+    Aviso = 3,
+    Erro = 4,
+    Critico = 5
+}

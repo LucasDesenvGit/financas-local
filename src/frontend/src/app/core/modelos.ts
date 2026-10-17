@@ -476,3 +476,37 @@ export interface SugestaoExtrato {
 export interface ImportarExtratoItem {
   transacaoId: number; ticker: string; tipo: TipoOperacao; quantidade: number; precoUnitario: number; taxas: number;
 }
+
+/* ----------------------------- Erros do sistema (#11) ----------------------------- */
+/** Os mesmos números do LogLevel do .NET. */
+export enum NivelErro { Aviso = 3, Erro = 4, Critico = 5 }
+
+export const NOMES_NIVEL_ERRO: Record<NivelErro, string> = {
+  [NivelErro.Aviso]: 'Aviso',
+  [NivelErro.Erro]: 'Erro',
+  [NivelErro.Critico]: 'Crítico'
+};
+
+export type SituacaoErros = 'abertos' | 'resolvidos' | 'todos';
+
+export interface FiltroErros {
+  situacao: SituacaoErros; origem: string | null; nivel: NivelErro | null; inicio: string | null; fim: string | null;
+  pagina: number; tamanhoPagina: number;
+}
+
+/** Datas em UTC (com "Z"). */
+export interface ErroSistema {
+  id: number; primeiraEm: string; ultimaEm: string; ocorrencias: number; nivel: NivelErro; origem: string;
+  mensagem: string; rota: string | null; usuario: string | null; resolvido: boolean; resolvidoEm: string | null;
+}
+
+export interface ErroSistemaDetalhe { id: number; categoria: string; detalhe: string | null; }
+
+export interface PaginaErros {
+  itens: ErroSistema[]; total: number; pagina: number; tamanhoPagina: number;
+  /** Total em aberto, sem filtro. */
+  abertos: number;
+  origens: string[];
+}
+
+export interface ErroFrontEnd { mensagem: string; detalhe: string | null; rota: string | null; }

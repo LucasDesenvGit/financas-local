@@ -537,3 +537,36 @@ public record ImportarExtratoDto([Required, MinLength(1), MaxLength(500)] List<I
 /// <summary>Resultado de "Registrar compras do Open Finance".</summary>
 public record ResultadoImportacaoCarteiraDto(int AtivosCriados, int OperacoesImportadas, List<string> SemHistorico,
     List<string> ComLancamentoManual, List<string> Erros, string? Mensagem);
+
+/* ----------------------------- Erros do sistema (#11) ----------------------------- */
+public class FiltroErrosDto
+{
+    public DateOnly? Inicio { get; set; }
+    public DateOnly? Fim { get; set; }
+    [StringLength(30)] public string? Origem { get; set; }
+    public NivelErro? Nivel { get; set; }
+    /// <summary>abertos (padrão), resolvidos ou todos.</summary>
+    [RegularExpression("^(abertos|resolvidos|todos)$")] public string? Situacao { get; set; }
+    [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
+    [Range(1, 100)] public int TamanhoPagina { get; set; } = 25;
+}
+
+/// <summary>Datas em UTC. Sem a pilha (vem por <see cref="ErroSistemaDetalheDto"/>, só ao abrir).</summary>
+public record ErroSistemaDto(long Id, DateTime PrimeiraEm, DateTime UltimaEm, int Ocorrencias, NivelErro Nivel,
+    string Origem, string Mensagem, string? Rota, string? Usuario, bool Resolvido, DateTime? ResolvidoEm);
+
+public record ErroSistemaDetalheDto(long Id, string Categoria, string? Detalhe);
+
+/// <summary><c>Abertos</c>: total em aberto (sem filtro), para o contador da aba.</summary>
+public record PaginaErrosDto(List<ErroSistemaDto> Itens, int Total, int Pagina, int TamanhoPagina, int Abertos,
+    List<string> Origens);
+
+public record SituacaoErroDto(bool Resolvido);
+
+public record QuantidadeDto(int Quantidade);
+
+/// <summary>Erro não tratado no navegador. A API limpa dados sensíveis e limita a quantidade por hora.</summary>
+public record ErroFrontEndDto(
+    [Required, StringLength(1000)] string Mensagem,
+    [StringLength(8000)] string? Detalhe,
+    [StringLength(300)] string? Rota);

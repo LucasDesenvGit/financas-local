@@ -503,3 +503,31 @@ CREATE TABLE IF NOT EXISTS ReservaConferencia
     CONSTRAINT FK_ReservaConferencia_Conta FOREIGN KEY (ContaId) REFERENCES Conta (Id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_ReservaConferencia_Conta_Nome ON ReservaConferencia (ContaId, Nome);
+
+/* Erros e avisos do sistema (#11, ADR 0022), gravados pela API (RegistroErrosLoggerProvider) sem dados sensíveis:
+   tokens, senhas, query strings, CPF e valores em R$ são removidos antes de gravar. A mesma ocorrência
+   repetida enquanto está em aberto vira uma linha só (Ocorrencias/UltimaEm). Apagados depois dos dias definidos em
+   Parametrização (Diagnostico.DiasRetencaoErros). */
+CREATE TABLE IF NOT EXISTS ErroSistema
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_ErroSistema PRIMARY KEY AUTOINCREMENT,
+    -- PrimeiraEm/UltimaEm/ResolvidoEm em UTC, preenchidos pela API; sem DEFAULT no banco.
+    PrimeiraEm   TEXT    NOT NULL,
+    UltimaEm     TEXT    NOT NULL,
+    Ocorrencias  INTEGER NOT NULL CONSTRAINT DF_ErroSistema_Ocorrencias DEFAULT 1,
+    -- 3 Aviso, 4 Erro, 5 Crítico (os mesmos números do LogLevel do .NET).
+    Nivel        INTEGER NOT NULL,
+    Origem       TEXT    NOT NULL,
+    Categoria    TEXT    NOT NULL,
+    Mensagem     TEXT    NOT NULL,
+    Detalhe      TEXT    NULL,
+    Rota         TEXT    NULL,
+    Usuario      TEXT    NULL,
+    Assinatura   TEXT    NOT NULL,
+    Resolvido    INTEGER NOT NULL CONSTRAINT DF_ErroSistema_Resolvido DEFAULT 0,
+    ResolvidoEm  TEXT    NULL,
+    CONSTRAINT CK_ErroSistema_Nivel CHECK (Nivel IN (3, 4, 5)),
+    CONSTRAINT CK_ErroSistema_Ocorrencias CHECK (Ocorrencias >= 1)
+);
+CREATE INDEX IF NOT EXISTS IX_ErroSistema_Resolvido_UltimaEm ON ErroSistema (Resolvido, UltimaEm);
+CREATE INDEX IF NOT EXISTS IX_ErroSistema_Assinatura ON ErroSistema (Assinatura, Resolvido);

@@ -4,6 +4,7 @@ using Financas.Api.Entidades;
 using Financas.Api.Seguranca;
 using Financas.Api.Servicos;
 using Financas.Api.Servicos.Cambio;
+using Financas.Api.Servicos.Diagnostico;
 using Financas.Api.Servicos.Investimentos;
 using Financas.Api.Servicos.Pluggy;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -113,6 +114,11 @@ builder.Services.AddScoped<SincronizacaoService>();
 builder.Services.AddHostedService<SincronizacaoHostedService>();
 builder.Services.AddHostedService<CambioHostedService>();
 
+// Erros e avisos do próprio código vão também para o banco, sem dados sensíveis (#11, ADR 0022).
+builder.Services.AddSingleton<FilaErros>();
+builder.Services.AddSingleton<ILoggerProvider, RegistroErrosLoggerProvider>();
+builder.Services.AddHostedService<GravadorErrosHostedService>();
+
 var urlPluggy = new Uri(cfg["Pluggy:UrlBase"] ?? "https://api.pluggy.ai/");
 if (urlPluggy.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("A URL da Pluggy deve usar HTTPS.");
 builder.Services.AddHttpClient<PluggyClient>(c =>
@@ -168,12 +174,12 @@ else
     {
         ExceptionHandler = async ctx =>
         {
-            // Não expõe detalhes internos; o erro completo vai para o log de eventos do Windows.
+            // Não expõe detalhes internos; o erro completo vai para o log de eventos e para Configurações › Erros.
             var erro = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
             ctx.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("Erro")
-                .LogError(erro, "Erro não tratado em {Caminho}", ctx.Request.Path);
+                .LogError(erro, "Erro não tratado em {Caminho}: {Mensagem}", ctx.Request.Path, erro?.Message);
             ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await ctx.Response.WriteAsJsonAsync(new { mensagem = "Ocorreu um erro interno. Consulte o log de eventos." });
+            await ctx.Response.WriteAsJsonAsync(new { mensagem = "Ocorreu um erro interno. Ele foi registrado em Configurações › Erros." });
         }
     });
     app.UseHsts();
