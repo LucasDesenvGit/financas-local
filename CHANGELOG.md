@@ -69,6 +69,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Nova tabela `ReservaConferencia` (saldo conferido das reservas) em `banco/01-estrutura.sql`: rode `scripts/2-criar-banco.sh`.
 
 ### Correções
+- Investimentos: **FII do Nubank entrava como ação.** Pelo Open Finance, o Nubank manda FII com o subtipo "STOCK", e o ativo novo virava ação, ficando fora do total e da aba de FIIs. Agora o emissor ("... FDO INV IMOB - FII") ou o nome oficial do fundo, que chega com a primeira cotação, faz o ativo virar FII. Os que já entraram errado são corrigidos por "Conferir investimentos".
 - Janelas sobrepostas (ex.: editar uma operação a partir da lista de operações): a aberta por último fica por cima, e o Esc fecha só ela — antes, a edição abria atrás e um Esc fechava todas.
 - Investimentos: a tela não carregava (erro 500) quando o Banco Central ou outra fonte demorava mais que o tempo limite; agora segue sem o dado, como já fazia sem internet. Mesmo ajuste nas cotações, no câmbio, na importação pelo extrato e na sincronização do Open Finance.
 - Publicação no Linux: `scripts/3-publicar.sh` passa a se chamar `scripts/3-publicar-atualizar.sh` e reinicia o serviço quando ele já está rodando (antes, continuava com a versão antiga em memória).
