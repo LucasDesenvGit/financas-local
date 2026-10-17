@@ -11,6 +11,7 @@ import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
@@ -19,7 +20,7 @@ import { Icones } from '../compartilhado/icones';
 @Component({
   selector: 'app-painel',
   imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
-    MaisAnalisesComponent],
+    MaisAnalisesComponent, LogoBancoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -145,7 +146,8 @@ import { Icones } from '../compartilhado/icones';
             <ul class="lista-faturas">
               @for (f of d.faturasDoMes; track f.contaId) {
                 <li>
-                  <a routerLink="/contas" [queryParams]="{ faturas: f.contaId }" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a>
+                  <span class="cartao-fatura"><app-logo-banco [codigo]="f.banco" [tamanho]="20" [cartao]="true" />
+                    <a routerLink="/contas" [queryParams]="{ faturas: f.contaId }" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a></span>
                   <span class="valor">{{ f.valorMes | currency }}</span>
                   @if (f.parcelasMes > 0) { <span class="texto-suave detalhe-fatura">{{ f.parcelasMes | currency }} em parcelas</span> }
                   @if (f.vencimento && f.situacao) {
@@ -249,6 +251,7 @@ import { Icones } from '../compartilhado/icones';
     .lista-faturas { list-style: none; margin: 6px 0 2px; padding: 0; display: grid; gap: 4px; font-size: 0.84rem; }
     .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
     .lista-faturas .valor { margin-left: auto; }
+    .lista-faturas .cartao-fatura { display: inline-flex; align-items: center; gap: 6px; }
     .lista-faturas .detalhe-fatura { flex-basis: 100%; font-size: 0.8rem; }
   `]
 })

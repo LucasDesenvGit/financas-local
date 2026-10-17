@@ -19,7 +19,11 @@ public record ContaDto(
     int Id, string Nome, TipoConta Tipo, OrigemConta Origem, string? Numero, string Moeda,
     decimal Saldo, decimal SaldoInicial, decimal? LimiteCredito, decimal? LimiteDisponivel,
     byte? DiaFechamento, byte? DiaVencimento, string Cor, bool IncluirNoSaldo, bool Arquivada,
-    int? ConexaoBancariaId, string? NomeInstituicao, DateTime AtualizadoEm);
+    int? ConexaoBancariaId, string? NomeInstituicao, DateTime AtualizadoEm,
+    // ADR 0024: banco que vale (escolhido, do cartão herdado da conta ou detectado); BancoDefinido = escolhido.
+    string? Banco = null, bool BancoDefinido = false, int? ContaVinculadaId = null,
+    // Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel).
+    FaturaMesDto? FaturaMes = null);
 
 public record SalvarContaDto(
     [Required, StringLength(120)] string Nome,
@@ -31,10 +35,15 @@ public record SalvarContaDto(
     [Range(1, 31)] byte? DiaVencimento,
     [Required, RegularExpression("^#[0-9a-fA-F]{6}$")] string Cor,
     bool IncluirNoSaldo,
-    bool Arquivada);
+    bool Arquivada,
+    [StringLength(30)] string? Banco = null,
+    int? ContaVinculadaId = null);
 
 public record FaturaDto(int Id, DateOnly DataVencimento, DateOnly? DataFechamento, decimal ValorTotal,
-    decimal? ValorMinimo, decimal? ValorPago, int QuantidadeTransacoes);
+    decimal? ValorMinimo, decimal? ValorPago, int QuantidadeTransacoes, string Situacao = "aberta");
+
+/// <summary>Banco que a tela de Contas sabe identificar (ADR 0024).</summary>
+public record BancoDto(string Codigo, string Nome);
 
 /* ----------------------------- Transações ----------------------------- */
 public record TransacaoDto(
@@ -335,7 +344,7 @@ public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal 
 /// ou venceu sem pagamento informado) ou "aberta" (ainda recebendo compras).
 /// </summary>
 public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
-    DateOnly? Vencimento, string? Situacao);
+    DateOnly? Vencimento, string? Situacao, string? Banco = null);
 
 public record PainelDto(
     decimal SaldoContas,

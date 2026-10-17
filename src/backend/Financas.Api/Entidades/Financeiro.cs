@@ -49,6 +49,10 @@ public class Conta
     public string Cor { get; set; } = "#0f766e";
     public bool IncluirNoSaldo { get; set; } = true;
     public bool Arquivada { get; set; }
+    /// <summary>ADR 0024: banco escolhido (código do <c>BancoService</c>); null = detectar pelo nome.</summary>
+    public string? Banco { get; set; }
+    /// <summary>ADR 0024: para cartão, a conta a que ele pertence (de onde a fatura é paga).</summary>
+    public int? ContaVinculadaId { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 
