@@ -53,6 +53,7 @@ Exemplos:
 - [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
 - [ ] README/CHANGELOG atualizados quando a mudança afeta o uso.
+- [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
 
 ## Convenções de código
 

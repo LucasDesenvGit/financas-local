@@ -3,8 +3,8 @@
  * nada é baixado da internet (a CSP só permite recursos do próprio site). Para trocar um ícone, mude aqui.
  */
 import {
-  ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Banknote, Briefcase, Calculator, CalendarClock, CalendarRange, ChartColumn,
-  ChartLine, ChartPie, Check, ChevronDown, CircleEllipsis, CreditCard, Eye, EyeOff, HandCoins, House, Landmark,
+  ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Banknote, BookOpen, Briefcase, Calculator, CalendarClock, CalendarRange, ChartColumn,
+  ChartLine, ChartPie, Check, ChevronDown, CircleEllipsis, CircleQuestionMark, CreditCard, Eye, EyeOff, HandCoins, House, Landmark,
   LayoutDashboard, LogOut, Menu, Monitor, Moon, Palette, Percent, PiggyBank, Receipt, ReceiptText, RefreshCw, Repeat2,
   Settings, ShoppingBag, Sun, Tags, Target, TrendingUp, TriangleAlert, Undo2, Wallet, X
 } from 'lucide-angular';
@@ -24,7 +24,9 @@ export const Icones = {
   projecao: ChartLine,
   categorias: Tags,
   configuracoes: Settings,
+  manual: BookOpen,
   // Ações e preferências
+  ajuda: CircleQuestionMark,
   sincronizar: RefreshCw,
   mostrar: Eye,
   ocultar: EyeOff,

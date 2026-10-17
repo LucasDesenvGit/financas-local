@@ -79,6 +79,16 @@ export const rotas: Routes = [
         path: 'configuracoes',
         loadComponent: () => import('./paginas/configuracoes.component').then((m) => m.ConfiguracoesComponent),
         title: 'Configurações · Finanças Local'
+      },
+      {
+        path: 'manual',
+        loadComponent: () => import('./paginas/manual.component').then((m) => m.ManualComponent),
+        title: 'Manual · Finanças Local'
+      },
+      {
+        path: 'manual/:capitulo',
+        loadComponent: () => import('./paginas/manual.component').then((m) => m.ManualComponent),
+        title: 'Manual · Finanças Local'
       }
     ]
   },

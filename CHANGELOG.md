@@ -5,6 +5,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **Manual do site** (#113, ADR 0026).
+  - **Página "Manual"** no menu, com índice de 14 capítulos e busca (sem acento nem maiúscula fazendo diferença, `?busca=` na URL).
+  - **Cada seção:** para que serve, passo a passo, "Abrir a tela" (já filtrada quando faz sentido), dicas, erros comuns e termos do glossário.
+  - **Endereço próprio por seção:** `/manual/<capitulo>#<secao>`, com navegação entre capítulos.
+  - **Botão "Ajuda"** na barra de cima: abre a parte do manual que explica a tela aberta.
+  - **Testes que mantêm o manual em dia:** toda tela do menu tem capítulo, e todo link aponta para uma tela que existe.
 - Transações: **tipo de cada lançamento** (#111, ADR 0025).
   - **Em cada linha:** etiqueta com ícone e texto: compra no cartão, estorno, pagamento de fatura, Pix enviado ou recebido, transferência, **entre suas contas**, boleto ou débito automático, compra no débito, saque, depósito, tarifa ou juros, rendimento, aplicação ou resgate, salário, empréstimo ou crédito, dinheiro, outro.
   - **De onde vem:** do Open Finance (`operationType`/`paymentMethod` da Pluggy; Pix com o mesmo titular nas duas pontas vira "entre suas contas"); quando o banco não informa, é reconhecido pela descrição.

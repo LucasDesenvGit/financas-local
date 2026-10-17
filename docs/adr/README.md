@@ -63,3 +63,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0023](0023-edicao-em-massa-no-modo-edicao-de-transacoes.md) | Edição de categorias em massa como "modo edição" de Transações, com desfazer guardado na API | Aceita |
 | [0024](0024-banco-de-cada-conta-com-selo-local.md) | Banco de cada conta e cartão, com selo desenhado no próprio site | Aceita |
 | [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md) | Tipo de lançamento: dado do Open Finance, com a descrição como reserva | Aceita |
+| [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
