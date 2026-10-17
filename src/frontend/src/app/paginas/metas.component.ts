@@ -39,7 +39,9 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
               dividido pela ordem de prioridade das metas.
             </p>
           }
-          <a routerLink="/projecao">Ver projeção →</a>
+          <p class="links-assistente">
+            <app-termo chave="recomendacaoMetas">Como calculei</app-termo> · <a routerLink="/projecao">Ver projeção →</a>
+          </p>
         }
       </section>
     }
@@ -192,6 +194,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     .aviso-cofrinho { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
     .assistente-metas h2 { margin: 0 0 8px; }
     .assistente-metas p { margin: 0 0 8px; }
+    .assistente-metas .links-assistente { margin: 0; }
     .linha-prioridade { display: flex; align-items: center; gap: 6px; }
     .linha-prioridade .botao-icone { width: 28px; height: 28px; }
     .recomendado { margin: 0; }

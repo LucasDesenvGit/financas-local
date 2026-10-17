@@ -70,6 +70,11 @@ export const GLOSSARIO = {
     termo: 'Sobra prevista',
     definicao: 'Receitas médias menos despesas médias à vista e parcelas do mês: a mesma conta da tela de Projeção. No mês atual, o que já entrou e saiu mais o que falta pela média.'
   },
+  recomendacaoMetas: {
+    termo: 'Recomendação de quanto guardar',
+    definicao: 'Sobra prevista (receitas médias − despesas médias à vista − parcelas do mês) menos a margem de segurança. Primeiro vai para cada meta com prazo o necessário para cumpri-lo; o resto, pela ordem de prioridade.',
+    exemplo: 'Dinheiro que vai para cofrinho ou investimento precisa estar como transferência (ou "ignorar nos relatórios"): lançado como despesa, ele entra na média e diminui a sobra prevista.'
+  },
   margemSeguranca: {
     termo: 'Margem de segurança',
     definicao: 'A parte da sobra prevista que o assistente deixa livre para imprevistos antes de recomendar quanto guardar. Ajuste em Configurações › Parametrização.',

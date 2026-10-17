@@ -16,7 +16,11 @@ describe('Usabilidade: assistente de metas', () => {
     const bloco = t.raiz.querySelector('.assistente-metas')!;
     expect(bloco.compareDocumentPosition(t.raiz.querySelector('.grade-cartoes')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const termos = Array.from(bloco.querySelectorAll('.termo-botao')).map((b) => b.getAttribute('aria-label'));
-    expect(termos).toEqual(['O que é Sobra prevista?', 'O que é Margem de segurança?']);
+    expect(termos).toEqual(['O que é Sobra prevista?', 'O que é Margem de segurança?', 'O que é Recomendação de quanto guardar?']);
+    // #90: "Como calculei" com a conta e o aviso de aporte lançado como despesa, por clique e teclado (botão ⓘ).
+    const comoCalculei = bloco.querySelector('.links-assistente app-termo')!;
+    expect(comoCalculei.textContent).toContain('Como calculei');
+    expect(comoCalculei.querySelector('button')!.tagName).toBe('BUTTON');
     expect(bloco.querySelector('a')!.getAttribute('href')).toBe('/projecao');
   });
 
