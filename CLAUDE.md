@@ -43,7 +43,7 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - `Controllers/` — endpoints finos (`BaseController` padroniza erros); um controller pode cobrir múltiplos recursos relacionados (ex.: `PlanejamentoControllers.cs` reúne orçamentos/metas/contas a pagar).
 - `Servicos/` — regra de negócio: `RelatorioService` (painel/orçamentos/projeção/visão anual), `CategorizacaoService` (regras automáticas), `SugestaoCategoriaService`, `ContaService`, `ConfiguracaoService`, `AuditoriaService`, `Relogio` (hora sempre em fuso de Brasília).
 - `Servicos/Pluggy/` — cliente HTTP próprio (sem SDK) para Open Finance; `SincronizacaoHostedService` agenda `SincronizacaoService` periodicamente (endpoint `/v2/transactions`, paginação por cursor).
-- `Servicos/Investimentos/` — carteira de renda variável: `CarteiraService`, `CotacaoService` (Yahoo Finance/brapi), `SelicService` (api.bcb.gov.br), `FiiService`, `ExtratoCarteiraService` (importa compras/vendas a partir da descrição de transações).
+- `Servicos/Investimentos/` — carteira de renda variável: `CarteiraService`, `CotacaoService` (Yahoo Finance/brapi), `SelicService` (api.bcb.gov.br), `FiiService`, `ExtratoCarteiraService` (importa compras/vendas a partir da descrição de transações), `ConferenciaInvestimentosService` ("Conferir investimentos": tipo FII, cotas que faltam, troco × provento; ADR 0027).
 - `Entidades/` — classes mapeadas no EF Core (`Financeiro.cs`, `Carteira.cs`, `OpenFinance.cs`, `Seguranca.cs`, `Enums.cs`).
 - `Data/FinancasDbContext.cs` — único lugar com nomes/tamanhos/precisão/índices das tabelas; deve ficar em sincronia manual com `banco/01-estrutura.sql`.
 - `Dtos/Dtos.cs` — todos os DTOs num arquivo único.

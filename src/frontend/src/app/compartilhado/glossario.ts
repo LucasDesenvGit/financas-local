@@ -101,6 +101,11 @@ export const GLOSSARIO = {
     termo: 'Preço médio',
     definicao: 'Quanto você pagou, em média, por cota, somando todas as compras.',
     exemplo: '10 cotas a R$ 100 e mais 10 a R$ 120: preço médio de R$ 110.'
+  },
+  trocoDeCompra: {
+    termo: 'Troco da compra',
+    definicao: 'Na compra de ações e FIIs, a corretora pode debitar um pouco a mais e devolver a sobra no mesmo dia ou nos seguintes. Esse crédito não é rendimento: é parte do dinheiro da compra que voltou.',
+    exemplo: 'Débito de R$ 592,75 e crédito de R$ 3,60 no mesmo dia: a compra custou R$ 589,15.'
   }
 } satisfies Record<string, DefinicaoTermo>;
 

@@ -753,6 +753,28 @@ export const MANUAL: CapituloManual[] = [
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }]
       },
       {
+        id: 'conferir',
+        titulo: 'Conferir investimentos',
+        paraQueServe: 'Achar e corrigir de uma vez o que costuma sair errado com ações e FIIs vindos do Open Finance.',
+        passos: [
+          'Em Investimentos, clique em “Conferir investimentos”. O site compara a carteira com a posição da corretora e com o extrato.',
+          '“FII cadastrado como outro tipo”: o nome do fundo diz que é FII, mas ele está como ação e fica fora do total de FIIs.',
+          '“Cotas que faltam”: a corretora informa mais cotas do que a carteira tem. Quando um débito de compra do extrato explica a diferença, ele já vem escolhido, com o preço calculado. Confira as cotas e o preço.',
+          '“Troco ou venda contando como rendimento”: créditos da corretora que são troco de uma compra ou o valor de uma venda vão para “Investimentos”.',
+          '“Rendimento contando como investimento”: os outros créditos da corretora são proventos e voltam a contar como receita.',
+          'Desmarque o que não quiser mudar e clique em “Corrigir selecionados”. O aviso tem “Desfazer” por 10 minutos.'
+        ],
+        abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
+        dicas: [
+          'Quando a carteira tem cotas diferentes da corretora, a própria tela de Investimentos avisa no topo.',
+          'A compra lançada por aqui fica ligada ao débito do extrato e não trava as próximas compras que chegam pelo Open Finance.'
+        ],
+        erros: [
+          'Mudar todos os “Valor recebido de Investimentos” para Investimentos de uma vez: os proventos deixam de contar como receita. A conferência separa o troco do rendimento.'
+        ],
+        termos: ['trocoDeCompra']
+      },
+      {
         id: 'selic-fiis',
         titulo: 'Comparação com a Selic e FIIs',
         paraQueServe: 'Saber se a carteira está rendendo mais que a renda fixa.',
