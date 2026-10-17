@@ -60,3 +60,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0020](0020-glossario-unico-com-balao-na-top-layer.md) | Glossário único, com o balão na top layer (Popover API) | Aceita |
 | [0021](0021-componentes-padrao-para-graficos-e-telas-densas.md) | Componentes padrão para gráficos e telas densas | Aceita |
 | [0022](0022-erros-do-sistema-gravados-no-banco.md) | Erros do sistema gravados no banco e vistos no site | Aceita |
+| [0023](0023-edicao-em-massa-no-modo-edicao-de-transacoes.md) | Edição de categorias em massa como "modo edição" de Transações, com desfazer guardado na API | Aceita |

@@ -39,7 +39,9 @@ export interface TelaTransacoes {
  */
 export async function abrirTransacoes(
   url = '/transacoes',
-  resposta: (f: FiltroTransacoes) => PaginaTransacoes = (f) => paginaVazia(f)
+  resposta: (f: FiltroTransacoes) => PaginaTransacoes = (f) => paginaVazia(f),
+  /** Métodos a mais da API falsa (ex.: os do modo edição). */
+  extras: Record<string, unknown> = {}
 ): Promise<TelaTransacoes> {
   const buscas: FiltroTransacoes[] = [];
   const api = {
@@ -48,7 +50,8 @@ export async function abrirTransacoes(
     transacoes: (f: FiltroTransacoes) => {
       buscas.push({ ...f });
       return of(resposta({ ...f }));
-    }
+    },
+    ...extras
   };
   TestBed.configureTestingModule({
     providers: [

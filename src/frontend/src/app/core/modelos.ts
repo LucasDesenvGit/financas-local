@@ -111,6 +111,17 @@ export interface SalvarRegra {
 
 export interface ResultadoAplicacao { transacoesAtualizadas: number; }
 
+/** #87 — categoria de uma transação no modo edição (automatica = voltar para as regras). */
+export interface AlteracaoCategoria { id: number; categoriaId: number | null; automatica: boolean; }
+
+/** Por itens (cada um com a sua categoria) ou todas as transações do filtro (com categoriaId/automatica). */
+export interface AlterarCategoriasEmLote {
+  itens?: AlteracaoCategoria[]; filtro?: FiltroTransacoes; categoriaId?: number | null; automatica?: boolean;
+}
+
+/** desfazer: chave para restaurar (vale por alguns minutos; null quando nada mudou). */
+export interface ResultadoCategoriasEmLote { alteradas: number; desfazer: string | null; }
+
 /** #39 — uso do limite de um cartão (média das últimas faturas fechadas ÷ limite). */
 export interface CartaoUsoLimite { contaId: number; nome: string; limite: number; faturaMedia: number; percentual: number }
 

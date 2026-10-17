@@ -1,13 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, StatusTransacao, SugestaoCategoria,
-  TipoCorrespondencia, Transacao, TipoTransacao
+  Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
+  SugestaoCategoria, TipoCorrespondencia, Transacao, TipoTransacao
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
@@ -52,6 +52,12 @@ interface ChipFiltro {
   cor?: string;
 }
 
+/** #87: categoria escolhida no modo edição: 'auto' (voltar para as regras) ou o id da categoria. */
+type EscolhaCategoria = 'auto' | `${number}`;
+
+/** "Criar regra para as próximas": várias transações iguais foram para a mesma categoria. */
+interface SugestaoRegra { texto: string; categoriaId: number; categoriaNome: string; quantidade: number; }
+
 /** "outubro/2026" quando é o mês cheio; senão "01/09 – 15/10" (com ano se o período cruza anos). */
 function rotuloPeriodo(inicio?: string | null, fim?: string | null): string {
   if (!inicio || !fim) return inicio ? `a partir de ${dataCurta(inicio, true)}` : fim ? `até ${dataCurta(fim, true)}` : 'Todo o período';
@@ -73,6 +79,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
       <div class="acoes">
+        <button type="button" class="botao" [class.botao-ativo]="modoEdicao()" [attr.aria-pressed]="modoEdicao()"
+          (click)="alternarModoEdicao()">✎ {{ modoEdicao() ? 'Sair da edição' : 'Editar categorias' }}</button>
         <button type="button" class="botao" (click)="abrirSugestoes()">✦ Sugestões de categoria</button>
         <button type="button" class="botao" (click)="abrirTransferencia()">⇄ Transferência</button>
         <button type="button" class="botao botao-primario" (click)="novo()">+ Lançamento</button>
@@ -122,6 +130,49 @@ function dataCurta(iso: string, comAno: boolean): string {
       }
     }
 
+    @if (modoEdicao()) {
+      <section class="painel-bloco barra-edicao" aria-labelledby="titulo-edicao">
+        <div class="bloco-titulo">
+          <h2 id="titulo-edicao">Editando categorias</h2>
+          <div class="acoes">
+            <span role="status">{{ quantidadePendentes() ? quantidadePendentes() + ' alteração(ões) não salva(s)' : 'Nenhuma alteração pendente' }}</span>
+            <button type="button" class="botao" [disabled]="!quantidadePendentes()" (click)="descartarPendentes()">Descartar</button>
+            <button type="button" class="botao botao-primario" [disabled]="!quantidadePendentes() || salvando()"
+              (click)="salvarPendentes()">Salvar alterações ({{ quantidadePendentes() }})</button>
+          </div>
+        </div>
+        <p class="texto-suave pequeno-texto">
+          Troque a categoria direto na lista ou marque várias linhas e use a barra de seleção. Nada é gravado até
+          "Salvar alterações"; Esc numa linha desfaz a troca dela. Só a categoria muda por aqui.
+          @if (!soSemCategoriaAtivo()) {
+            <button type="button" class="link" (click)="soSemCategoria()">Ver só as sem categoria</button>
+          }
+        </p>
+        @if (pagina(); as p) {
+          @if (p.total > 0) {
+            <div class="todas-do-filtro">
+              <label>Todas as {{ p.total }} transações do filtro
+                <select [(ngModel)]="categoriaTodas" name="categoriaTodas">
+                  <option [ngValue]="null">— escolher categoria —</option>
+                  <option ngValue="auto">Categorização automática (regras)</option>
+                  @for (c of categorias(); track c.id) { <option [ngValue]="'' + c.id">{{ rotuloCategoria(c) }}</option> }
+                </select>
+              </label>
+              <button type="button" class="botao" [disabled]="!categoriaTodas || salvando()" (click)="aplicarATodasDoFiltro()">
+                Aplicar a todas as {{ p.total }}</button>
+            </div>
+          }
+        }
+        @for (r of sugestoesRegra(); track r.texto + r.categoriaId) {
+          <p class="sugestao-regra" role="status">
+            {{ r.quantidade }} transações “{{ r.texto }}” foram para {{ r.categoriaNome }}. Criar regra para as próximas?
+            <button type="button" class="botao botao-pequeno" (click)="criarRegraSugerida(r)">Criar regra</button>
+            <button type="button" class="link" (click)="dispensarRegra(r)">agora não</button>
+          </p>
+        }
+      </section>
+    }
+
     @if (pagina(); as p) {
       <section class="resumo-filtro">
         <span>{{ p.total }} transação(ões)</span>
@@ -137,7 +188,8 @@ function dataCurta(iso: string, comAno: boolean): string {
             <option [ngValue]="null">Categorização automática</option>
             @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ rotuloCategoria(c) }}</option> }
           </select>
-          <button type="button" class="botao botao-primario" (click)="categorizarLote()">Aplicar categoria</button>
+          <button type="button" class="botao botao-primario" (click)="categorizarLote()">
+            {{ modoEdicao() ? 'Trocar nas selecionadas' : 'Aplicar categoria' }}</button>
           <button type="button" class="botao botao-emergencia" (click)="marcarEmergenciaLote(true)">Marcar emergência</button>
           <button type="button" class="botao" (click)="marcarEmergenciaLote(false)">Desmarcar emergência</button>
           <button type="button" class="link" (click)="limparSelecao()">limpar seleção</button>
@@ -145,7 +197,7 @@ function dataCurta(iso: string, comAno: boolean): string {
       }
 
       <div class="tabela-rolagem">
-        <table class="tabela">
+        <table class="tabela" [class.tabela-edicao]="modoEdicao()">
           <thead>
             <tr>
               <th class="col-check"><input type="checkbox" [checked]="todasSelecionadas()" (change)="alternarTodas()" aria-label="Selecionar todas"></th>
@@ -158,7 +210,8 @@ function dataCurta(iso: string, comAno: boolean): string {
           </thead>
           <tbody>
             @for (t of p.itens; track t.id) {
-              <tr (click)="editar(t)" class="clicavel" [class.ignorada]="t.ignorarRelatorios">
+              <tr (click)="modoEdicao() ? null : editar(t)" [class.clicavel]="!modoEdicao()" [class.ignorada]="t.ignorarRelatorios"
+                [class.alterada]="pendentes().has(t.id)">
                 <td class="col-check" (click)="$event.stopPropagation()">
                   <input type="checkbox" [checked]="selecionadas().has(t.id)" (change)="alternar(t.id)" aria-label="Selecionar">
                 </td>
@@ -174,9 +227,24 @@ function dataCurta(iso: string, comAno: boolean): string {
                   </div>
                 </td>
                 <td>
-                  @if (t.categoriaNome) {
-                    <span class="chip"><span class="ponto" [style.background]="t.categoriaCor"></span>{{ t.categoriaNome }}</span>
-                  } @else { <span class="texto-suave">—</span> }
+                  @if (modoEdicao()) {
+                    <div class="celula-edicao">
+                      <select class="select-categoria" [ngModel]="valorCategoria(t)" (ngModelChange)="mudarCategoria(t, $event)"
+                        (keydown.escape)="desfazerLinha(t)" [attr.aria-label]="'Categoria de ' + t.descricao + ', ' + (t.data | date: 'dd/MM')">
+                        @if (t.categoriaId === null) { <option value="" disabled>Sem categoria</option> }
+                        <option value="auto">Automática (regras)</option>
+                        @if (t.categoriaId !== null && !idsCategoriasOferecidas().has(t.categoriaId)) {
+                          <option [value]="'' + t.categoriaId">{{ t.categoriaNome }} (inativa)</option>
+                        }
+                        @for (c of categorias(); track c.id) { <option [value]="'' + c.id">{{ rotuloCategoria(c) }}</option> }
+                      </select>
+                      @if (pendentes().has(t.id)) { <span class="etiqueta etiqueta-alerta">alterada</span> }
+                    </div>
+                  } @else {
+                    @if (t.categoriaNome) {
+                      <span class="chip"><span class="ponto" [style.background]="t.categoriaCor"></span>{{ t.categoriaNome }}</span>
+                    } @else { <span class="texto-suave">—</span> }
+                  }
                 </td>
                 <td class="texto-suave">{{ t.contaNome }}</td>
                 <td class="direita valor nowrap" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</td>
@@ -373,6 +441,38 @@ function dataCurta(iso: string, comAno: boolean): string {
     .tabela-sugestoes td:first-child { max-width: 280px; }
     .tabela-sugestoes select { min-width: 180px; }
     tr.encerrada td { opacity: 0.55; }
+    .barra-edicao { margin-bottom: 14px; }
+    .barra-edicao .bloco-titulo { flex-wrap: wrap; gap: 10px; }
+    .barra-edicao p { margin: 6px 0; }
+    .todas-do-filtro { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 8px; }
+    .todas-do-filtro label { min-width: 240px; }
+    .sugestao-regra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px;
+      border-radius: var(--raio-pequeno); background: var(--primaria-suave); }
+    .celula-edicao { display: flex; gap: 6px; align-items: center; }
+    .select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
+    tr.alterada td { background: var(--alerta-suave); }
+    .botao-ativo { background: var(--primaria-suave); color: var(--primaria-forte); }
+    /* Celular no modo edição: cada transação vira um bloco, com o seletor de categoria em largura total (sem rolagem lateral). */
+    @media (max-width: 760px) {
+      .tabela-edicao thead { display: none; }
+      .tabela-edicao tbody tr {
+        display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+        grid-template-areas: "check desc valor" "check data conta" "check cat cat";
+        padding: 10px 12px; border-bottom: 1px solid var(--linha);
+      }
+      .tabela-edicao tbody td { padding: 0; border: 0; }
+      .tabela-edicao tbody tr.alterada { background: var(--alerta-suave); }
+      .tabela-edicao tbody tr.alterada td { background: none; }
+      .tabela-edicao tbody td:nth-child(1) { grid-area: check; }
+      .tabela-edicao tbody td:nth-child(2) { grid-area: data; font-size: 0.8rem; color: var(--texto-suave); }
+      .tabela-edicao tbody td:nth-child(3) { grid-area: desc; min-width: 0; }
+      .tabela-edicao tbody td:nth-child(4) { grid-area: cat; }
+      .tabela-edicao tbody td:nth-child(5) { grid-area: conta; font-size: 0.8rem; text-align: right; }
+      .tabela-edicao tbody td:nth-child(6) { grid-area: valor; }
+      .tabela-edicao tbody td.vazio { grid-column: 1 / -1; grid-area: auto; }
+      .tabela-edicao .celula-edicao { width: 100%; }
+      .tabela-edicao .select-categoria { flex: 1; min-width: 0; }
+    }
     :host ::ng-deep .modal:has(.tabela-sugestoes) { width: min(1150px, 96vw); }
   `
 })
@@ -426,6 +526,21 @@ export class TransacoesComponent implements OnInit {
     const itens = this.pagina()?.itens ?? [];
     return itens.length > 0 && itens.every((t) => this.selecionadas().has(t.id));
   });
+
+  /* ------------------------------ #87: modo edição ------------------------------ */
+  /** Modo edição de categorias (?editar=1). */
+  readonly modoEdicao = signal(false);
+  /** Trocas de categoria ainda não gravadas: id da transação → escolha. */
+  readonly pendentes = signal<Map<number, EscolhaCategoria>>(new Map());
+  readonly quantidadePendentes = computed(() => this.pendentes().size);
+  readonly idsCategoriasOferecidas = computed(() => new Set(this.categorias().map((c) => c.id)));
+  readonly sugestoesRegra = signal<SugestaoRegra[]>([]);
+  readonly soSemCategoriaAtivo = computed(() => {
+    const f = this.filtroAplicado();
+    return !!f.semCategoria && !(f.categoriaIds ?? []).length;
+  });
+  /** Escolha para "todas do filtro" (null = nada escolhido). */
+  categoriaTodas: EscolhaCategoria | null = null;
 
   filtro: FiltroTransacoes = this.filtroInicial();
   /** Categorias marcadas no filtro: 'sem' ou o id, na ordem em que foram marcadas. */
@@ -546,6 +661,7 @@ export class TransacoesComponent implements OnInit {
     if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
 
     if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
+    if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
   }
@@ -571,6 +687,14 @@ export class TransacoesComponent implements OnInit {
   }
 
   buscar(pagina: number): void {
+    // #87: trocar de página ou de filtro perde as trocas não salvas; pergunta antes (Nielsen 5).
+    if (this.pendentes().size) {
+      if (!confirm(`Descartar ${this.pendentes().size} alteração(ões) de categoria não salva(s)?`)) {
+        this.voltarAoFiltroAplicado();
+        return;
+      }
+      this.pendentes.set(new Map());
+    }
     this.filtro.pagina = pagina;
     this.filtroAplicado.set({ ...this.filtro });
     this.gravarFiltroNaUrl();
@@ -612,6 +736,7 @@ export class TransacoesComponent implements OnInit {
     if (f.somenteEmergencias) params['emergencias'] = '1';
     if (f.busca?.trim()) params['busca'] = f.busca.trim();
     if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
+    if (this.modoEdicao()) params['editar'] = '1';
     this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
   }
 
@@ -644,6 +769,15 @@ export class TransacoesComponent implements OnInit {
   }
 
   categorizarLote(): void {
+    if (this.modoEdicao()) {
+      // No modo edição a barra de seleção só marca a troca; grava junto com as outras em "Salvar alterações".
+      const escolha: EscolhaCategoria = this.categoriaLote === null ? 'auto' : `${this.categoriaLote}`;
+      const itens = (this.pagina()?.itens ?? []).filter((t) => this.selecionadas().has(t.id));
+      for (const t of itens) this.mudarCategoria(t, escolha);
+      this.avisos.info(`${itens.length} troca(s) marcada(s). Salve para gravar.`);
+      this.limparSelecao();
+      return;
+    }
     this.api.categorizarEmLote([...this.selecionadas()], this.categoriaLote).subscribe({
       next: (r) => {
         this.avisos.sucesso(`${r.transacoesAtualizadas} transação(ões) atualizada(s).`);
@@ -663,6 +797,172 @@ export class TransacoesComponent implements OnInit {
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+  }
+
+  /* ------------------------------ #87: modo edição ------------------------------ */
+
+  alternarModoEdicao(): void {
+    if (this.modoEdicao() && this.pendentes().size
+      && !confirm(`Sair da edição e descartar ${this.pendentes().size} alteração(ões) não salva(s)?`)) return;
+    this.pendentes.set(new Map());
+    this.sugestoesRegra.set([]);
+    this.categoriaTodas = null;
+    this.modoEdicao.update((v) => !v);
+    this.gravarFiltroNaUrl();
+  }
+
+  /** Valor do select da linha: a troca pendente ou a categoria atual ('' = sem categoria). */
+  valorCategoria(t: Transacao): string {
+    return this.pendentes().get(t.id) ?? (t.categoriaId === null ? '' : String(t.categoriaId));
+  }
+
+  mudarCategoria(t: Transacao, valor: string): void {
+    const atual = t.categoriaId === null ? '' : String(t.categoriaId);
+    this.pendentes.update((m) => {
+      const novo = new Map(m);
+      // Voltou para o que já estava gravado: não há o que salvar nessa linha.
+      if (valor === atual || valor === '') novo.delete(t.id);
+      else novo.set(t.id, valor as EscolhaCategoria);
+      return novo;
+    });
+  }
+
+  desfazerLinha(t: Transacao): void {
+    this.pendentes.update((m) => {
+      const novo = new Map(m);
+      novo.delete(t.id);
+      return novo;
+    });
+  }
+
+  descartarPendentes(): void {
+    if (!this.pendentes().size || !confirm(`Descartar ${this.pendentes().size} alteração(ões)?`)) return;
+    this.pendentes.set(new Map());
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  avisarAntesDeSair(evento: BeforeUnloadEvent): void {
+    if (this.pendentes().size) evento.preventDefault();
+  }
+
+  soSemCategoria(): void {
+    this.filtroCategorias = ['sem'];
+    this.sincronizarFiltroCategoria();
+    this.buscar(1);
+  }
+
+  salvarPendentes(): void {
+    const pendentes = this.pendentes();
+    if (!pendentes.size) return;
+    const itens = [...pendentes].map(([id, v]) =>
+      ({ id, categoriaId: v === 'auto' ? null : Number(v), automatica: v === 'auto' }));
+    const sugestoes = this.regrasSugeridas(pendentes);
+    this.salvando.set(true);
+    this.api.alterarCategoriasEmLote({ itens }).subscribe({
+      next: (r) => {
+        this.salvando.set(false);
+        this.pendentes.set(new Map());
+        this.sugestoesRegra.set(sugestoes);
+        this.avisarResultado(r);
+        this.buscar(this.filtro.pagina ?? 1);
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
+  /** "Todas as N do filtro", inclusive as das outras páginas, com confirmação (Nielsen 5). */
+  aplicarATodasDoFiltro(): void {
+    const escolha = this.categoriaTodas;
+    const total = this.pagina()?.total ?? 0;
+    if (!escolha || !total) return;
+    const f = this.filtroAplicado();
+    const nome = escolha === 'auto' ? 'a categorização automática'
+      : `“${this.rotuloCategoriaPorId(Number(escolha))}”`;
+    if (!confirm(`Trocar a categoria das ${total} transações do filtro (${rotuloPeriodo(f.inicio, f.fim)}) para ${nome}?`)) return;
+    this.salvando.set(true);
+    this.api.alterarCategoriasEmLote({
+      filtro: { ...f, pagina: 1 }, categoriaId: escolha === 'auto' ? null : Number(escolha), automatica: escolha === 'auto'
+    }).subscribe({
+      next: (r) => {
+        this.salvando.set(false);
+        this.categoriaTodas = null;
+        this.pendentes.set(new Map());
+        this.avisarResultado(r);
+        this.buscar(this.filtro.pagina ?? 1);
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
+  /** Aviso do que mudou, com "Desfazer" (a API guarda o estado anterior por alguns minutos). */
+  private avisarResultado(r: ResultadoCategoriasEmLote): void {
+    if (!r.alteradas || !r.desfazer) {
+      this.avisos.info('Nada mudou: as transações já estavam com essa categoria.');
+      return;
+    }
+    const chave = r.desfazer;
+    this.avisos.sucesso(`${r.alteradas} transação(ões) atualizada(s).`, {
+      rotulo: 'Desfazer',
+      executar: () => this.api.desfazerCategoriasEmLote(chave).subscribe({
+        next: (d) => {
+          this.sugestoesRegra.set([]);
+          this.avisos.sucesso(`Desfeito: ${d.transacoesAtualizadas} transação(ões) voltaram como estavam.`);
+          this.buscar(this.filtro.pagina ?? 1);
+        },
+        error: (e) => this.avisos.erro(mensagemDeErro(e))
+      })
+    });
+  }
+
+  /** Várias transações com a mesma descrição foram para a mesma categoria: sugere regra (como nas Sugestões). */
+  private regrasSugeridas(pendentes: Map<number, EscolhaCategoria>): SugestaoRegra[] {
+    const grupos = new Map<string, SugestaoRegra>();
+    for (const t of this.pagina()?.itens ?? []) {
+      const escolha = pendentes.get(t.id);
+      if (!escolha || escolha === 'auto') continue;
+      const texto = (t.descricaoOriginal ?? t.descricao).trim().replace(/\s+/g, ' ').slice(0, 100);
+      if (texto.length < 4) continue;
+      const chave = `${texto.toLocaleUpperCase('pt-BR')}|${escolha}`;
+      const g = grupos.get(chave);
+      if (g) g.quantidade++;
+      else grupos.set(chave, { texto, categoriaId: Number(escolha), categoriaNome: this.rotuloCategoriaPorId(Number(escolha)), quantidade: 1 });
+    }
+    return [...grupos.values()].filter((g) => g.quantidade >= 2).slice(0, 3);
+  }
+
+  criarRegraSugerida(r: SugestaoRegra): void {
+    this.api.criarRegra({
+      texto: r.texto, tipoCorrespondencia: TipoCorrespondencia.Contem, categoriaId: r.categoriaId, prioridade: 100, ativa: true
+    }).subscribe({
+      next: () => {
+        this.dispensarRegra(r);
+        this.avisos.sucesso(`Regra criada: as próximas “${r.texto}” entram em ${r.categoriaNome}.`);
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  dispensarRegra(r: SugestaoRegra): void {
+    this.sugestoesRegra.update((lista) => lista.filter((x) => x !== r));
+  }
+
+  private rotuloCategoriaPorId(id: number): string {
+    const c = this.todasCategorias().find((x) => x.id === id);
+    return c ? this.rotuloCategoria(c) : 'categoria';
+  }
+
+  /** Cancelou o descarte: os campos de filtro voltam ao que está na tela. */
+  private voltarAoFiltroAplicado(): void {
+    const f = this.filtroAplicado();
+    this.filtro = { ...f };
+    this.filtroCategorias = [...(f.semCategoria ? ['sem'] : []), ...(f.categoriaIds ?? []).map(String)];
+    this.categoriasFiltradas.set(this.filtroCategorias);
   }
 
   /* ------------------------------ sugestões de categoria ------------------------------ */

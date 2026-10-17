@@ -86,6 +86,24 @@ public record CategorizarLoteDto([Required, MinLength(1), MaxLength(1000)] List<
 
 public record EmergenciaLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, bool Emergencia);
 
+/// <summary>#87: categoria de uma transação no modo edição (Automatica = voltar para as regras).</summary>
+public record AlteracaoCategoriaDto(long Id, int? CategoriaId, bool Automatica);
+
+/// <summary>
+/// #87: alteração de categoria em lote. Ou <c>Itens</c> (cada uma com a sua categoria, até 1000), ou <c>Filtro</c>
+/// (todas as transações da busca, com <c>CategoriaId</c>/<c>Automatica</c>). Só a categoria pode mudar por aqui.
+/// </summary>
+public class AlterarCategoriasEmLoteDto
+{
+    [MaxLength(1000)] public List<AlteracaoCategoriaDto>? Itens { get; set; }
+    public FiltroTransacoesDto? Filtro { get; set; }
+    public int? CategoriaId { get; set; }
+    public bool Automatica { get; set; }
+}
+
+/// <summary><c>Desfazer</c>: chave para restaurar o que mudou (vale por alguns minutos; null se nada mudou).</summary>
+public record ResultadoCategoriasEmLoteDto(int Alteradas, string? Desfazer);
+
 /// <summary>Confiança: "alta" (histórico consistente), "media" (histórico parcial), "baixa" (palavra-chave) ou "nenhuma".</summary>
 public record SugestaoCategoriaDto(string Chave, string Exemplo, int Quantidade, decimal Total, List<long> TransacaoIds,
     int? CategoriaId, string? CategoriaNome, string? CategoriaCor, string Confianca, string? Motivo, string TextoRegra,

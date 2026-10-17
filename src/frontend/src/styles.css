@@ -581,6 +581,10 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 .aviso-erro::before { background: var(--negativo); }
 .aviso-info::before { background: var(--primaria); }
 .aviso-fechar { background: none; border: 0; font-size: 1.1rem; cursor: pointer; color: var(--texto-suave); line-height: 1; }
+.aviso-acao {
+  font: inherit; font-weight: 650; background: none; border: 0; cursor: pointer; color: var(--primaria-forte);
+  padding: 0 4px; min-height: 24px; text-decoration: underline; text-underline-offset: 2px;
+}
 
 /* ---------------------------------------------------------------- Entrada */
 .tela-entrada {
