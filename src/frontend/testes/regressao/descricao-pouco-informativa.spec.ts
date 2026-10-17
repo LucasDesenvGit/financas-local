@@ -4,7 +4,7 @@ import { AvisosService } from '../../src/app/compartilhado/avisos.component';
 import { dataIso } from '../../src/app/compartilhado/utilidades';
 import { abrirTransacoes, paginaVazia, parametrosDaUrl } from '../apoio/transacoes';
 import { transacao } from '../apoio/transacoes-edicao';
-import { abrirPainel, painel } from '../apoio/pouco-informativa';
+import { abrirPainel, painel } from '../apoio/painel';
 
 /** Regressão do filtro "Descrição pouco informativa" (#9): URL, busca, revisada com desfazer e link do Painel. */
 describe('Regressão: descrição pouco informativa', () => {

@@ -1,6 +1,6 @@
 import { abrirTransacoes } from '../apoio/transacoes';
 import { transacao } from '../apoio/transacoes-edicao';
-import { abrirPainel, painel } from '../apoio/pouco-informativa';
+import { abrirPainel, painel } from '../apoio/painel';
 import { paginaVazia } from '../apoio/transacoes';
 
 /**
