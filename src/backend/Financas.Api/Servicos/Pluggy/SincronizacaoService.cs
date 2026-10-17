@@ -555,7 +555,11 @@ public class SincronizacaoService
                 var ativo = await _db.Ativos.Include(a => a.Operacoes).FirstOrDefaultAsync(a => a.Ticker == ticker, ct);
                 if (ativo is null)
                 {
-                    ativo = new Ativo { Ticker = ticker, Tipo = TipoPorPluggy(inv.Tipo.ToUpperInvariant(), inv.Subtipo, ticker) };
+                    ativo = new Ativo
+                    {
+                        Ticker = ticker,
+                        Tipo = TipoPorPluggy(inv.Tipo.ToUpperInvariant(), inv.Subtipo, ticker, inv.Emissor, inv.Nome)
+                    };
                     _db.Ativos.Add(ativo);
                     criados++;
                 }
@@ -677,9 +681,11 @@ public class SincronizacaoService
         return resultado with { AtivosCriados = criados, OperacoesImportadas = importadas };
     }
 
-    private static TipoAtivo TipoPorPluggy(string tipo, string? subtipo, string ticker)
+    private static TipoAtivo TipoPorPluggy(string tipo, string? subtipo, string ticker, string? emissor, string? nome)
     {
         if (tipo == "ETF") return TipoAtivo.Etf;
+        // O Nubank manda FII com o subtipo "STOCK": o nome do emissor ("... FDO INV IMOB - FII") desempata.
+        if (ClassificacaoAtivo.PareceFii(emissor) || ClassificacaoAtivo.PareceFii(nome)) return TipoAtivo.Fii;
         return subtipo?.ToUpperInvariant() switch
         {
             "REAL_ESTATE_FUND" => TipoAtivo.Fii,
