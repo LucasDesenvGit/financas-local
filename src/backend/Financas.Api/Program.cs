@@ -104,6 +104,7 @@ builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
 builder.Services.AddScoped<SugestaoOrcamentoService>();
 builder.Services.AddScoped<AssistenteMetasService>();
+builder.Services.AddScoped<DescricaoPoucoInformativaService>();
 builder.Services.AddScoped<ContaService>();
 builder.Services.AddScoped<CarteiraService>();
 builder.Services.AddScoped<ReservaService>();

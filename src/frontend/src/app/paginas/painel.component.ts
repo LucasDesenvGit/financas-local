@@ -7,7 +7,7 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { Painel, ValorCategoria } from '../core/modelos';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES, NOMES_MESES_CURTOS, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -37,6 +37,13 @@ import { Icones } from '../compartilhado/icones';
         <section class="alertas">
           @for (a of d.alertas; track a) { <p>⚠ {{ a }}</p> }
         </section>
+      }
+      @if (d.poucoInformativas > 0) {
+        <p class="nota-discreta">
+          {{ d.poucoInformativas === 1 ? '1 transação' : d.poucoInformativas + ' transações' }} dos últimos 90 dias com
+          <app-termo chave="descricaoPoucoInformativa">descrição pouco informativa</app-termo>@if (d.exemploPoucoInformativa) { (ex.: “{{ d.exemploPoucoInformativa }}”)}.
+          <a routerLink="/transacoes" [queryParams]="linkPoucoInformativas(d)">Revisar</a>
+        </p>
       }
 
       <section class="secao-painel" aria-labelledby="titulo-hoje">
@@ -263,6 +270,11 @@ export class PainelComponent implements OnInit {
   readonly erro = signal<string | null>(null);
 
   /** UX-3: despesas da categoria no mês selecionado no Painel ("Sem categoria" vai como categoria=sem). */
+  /** #9: Transações filtrada pelas descrições pouco informativas do mesmo período do aviso (até hoje). */
+  linkPoucoInformativas(d: Painel): Record<string, string> {
+    return { generica: '1', ...(d.poucoInformativasDesde ? { inicio: d.poucoInformativasDesde, fim: dataIso() } : {}) };
+  }
+
   linkCategoria(g: ValorCategoria): Record<string, string> {
     const { ano, mes } = this.periodo();
     return paramsTransacoes({ categoriaId: g.categoriaId, inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' });

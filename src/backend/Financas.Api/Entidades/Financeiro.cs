@@ -93,6 +93,8 @@ public class Transacao
     public bool IgnorarRelatorios { get; set; }
     /// <summary>Gasto de emergência (destacado nos relatórios e orçamentos).</summary>
     public bool Emergencia { get; set; }
+    /// <summary>#9: descrição pouco informativa já revisada pelo usuário (sai do filtro).</summary>
+    public bool DescricaoRevisada { get; set; }
     public Guid? TransferenciaGrupo { get; set; }
     public string? Observacao { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;

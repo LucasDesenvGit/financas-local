@@ -29,6 +29,7 @@ public class ConfiguracaoService
     public const string OrcamentoCorteCartao = "Orcamento.CorteCartao";
     public const string MetasMargemSeguranca = "Metas.MargemSeguranca";
     public const string DiasRetencaoErros = "Diagnostico.DiasRetencaoErros";
+    public const string MinimoLetrasDescricao = "Transacoes.MinimoLetrasDescricao";
 
     private readonly FinancasDbContext _db;
     private readonly IDataProtector _protetor;

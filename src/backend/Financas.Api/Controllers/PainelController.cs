@@ -20,10 +20,16 @@ public class PainelController : BaseController
     private readonly EmprestimoService _emprestimos;
     private readonly ReservaService _reservas;
     private readonly ParametroService _parametros;
+    private readonly DescricaoPoucoInformativaService _poucoInformativa;
+
+    /// <summary>#9: o aviso de descrições pouco informativas olha só as transações recentes.</summary>
+    public const int DiasPoucoInformativas = 90;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
-        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros)
+        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros,
+        DescricaoPoucoInformativaService poucoInformativa)
     {
+        _poucoInformativa = poucoInformativa;
         _db = db;
         _contas = contas;
         _relatorios = relatorios;
@@ -178,11 +184,19 @@ public class PainelController : BaseController
             .OrderByDescending(f => f.ValorMes).ThenBy(f => f.Cartao)
             .ToList();
 
+        // #9: aviso discreto (não é alerta) com as descrições pouco informativas dos últimos 90 dias.
+        var desdePoucoInformativas = hoje.AddDays(-(DiasPoucoInformativas - 1));
+        var poucoInformativas = await _poucoInformativa.ListarAsync(
+            _db.Transacoes.AsNoTracking().Where(t => t.Data >= desdePoucoInformativas && t.Data <= hoje), ct);
+        var exemplo = poucoInformativas.GroupBy(x => x.Descricao.Trim().ToUpperInvariant())
+            .OrderByDescending(g => g.Count()).Select(g => g.First().Descricao.Trim()).FirstOrDefault();
+
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
-            faturasDoMes, faturasDoMes.Sum(f => f.ValorMes));
+            faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
+            poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo);
     }
 
     /// <summary>

@@ -30,20 +30,22 @@ public class TransacoesController : BaseController
     private readonly CategorizacaoService _categorizacao;
     private readonly AuditoriaService _auditoria;
     private readonly IMemoryCache _cache;
+    private readonly DescricaoPoucoInformativaService _poucoInformativa;
 
     public TransacoesController(FinancasDbContext db, CategorizacaoService categorizacao, AuditoriaService auditoria,
-        IMemoryCache cache)
+        IMemoryCache cache, DescricaoPoucoInformativaService poucoInformativa)
     {
         _db = db;
         _categorizacao = categorizacao;
         _auditoria = auditoria;
         _cache = cache;
+        _poucoInformativa = poucoInformativa;
     }
 
     [HttpGet]
     public async Task<ActionResult<PaginaTransacoesDto>> Listar([FromQuery] FiltroTransacoesDto f, CancellationToken ct)
     {
-        var q = Filtrar(f, rastrear: false);
+        var q = await FiltrarAsync(f, rastrear: false, ct);
 
         var total = await q.CountAsync(ct);
         var paraTotais = q.Where(t => !t.IgnorarRelatorios && t.Tipo != TipoTransacao.Transferencia);
@@ -61,7 +63,7 @@ public class TransacoesController : BaseController
     }
 
     /// <summary>Os filtros da busca (a mesma consulta da lista e do "todas do filtro" do modo edição).</summary>
-    private IQueryable<Transacao> Filtrar(FiltroTransacoesDto f, bool rastrear)
+    private async Task<IQueryable<Transacao>> FiltrarAsync(FiltroTransacoesDto f, bool rastrear, CancellationToken ct)
     {
         var q = rastrear ? _db.Transacoes.AsQueryable() : _db.Transacoes.AsNoTracking();
         if (f.Inicio is { } inicio) q = q.Where(t => t.Data >= inicio);
@@ -82,6 +84,12 @@ public class TransacoesController : BaseController
             q = q.Where(t => t.Descricao.Contains(busca)
                              || (t.Estabelecimento != null && t.Estabelecimento.Contains(busca))
                              || (t.Observacao != null && t.Observacao.Contains(busca)));
+        }
+        if (f.PoucoInformativa)
+        {
+            // #9: a conta é na memória, sobre o que os outros filtros já restringiram.
+            var ids = (await _poucoInformativa.ListarAsync(q, ct)).Select(x => x.Id).ToList();
+            q = q.Where(t => ids.Contains(t.Id));
         }
         return q;
     }
@@ -171,6 +179,19 @@ public class TransacoesController : BaseController
             .Where(t => ids.Contains(t.Id) && (!dto.Emergencia || t.Valor < 0))
             .ExecuteUpdateAsync(s => s
                 .SetProperty(t => t.Emergencia, dto.Emergencia)
+                .SetProperty(t => t.AtualizadoEm, DateTime.UtcNow), ct);
+        return new ResultadoAplicacaoDto(alteradas);
+    }
+
+    /// <summary>#9: marca as transações de descrição pouco informativa como revisadas (saem do filtro), ou desfaz.</summary>
+    [HttpPut("revisada-em-lote")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> RevisadaEmLote(RevisadaLoteDto dto, CancellationToken ct)
+    {
+        var ids = dto.Ids.Distinct().ToList();
+        var alteradas = await _db.Transacoes
+            .Where(t => ids.Contains(t.Id))
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.DescricaoRevisada, dto.Revisada)
                 .SetProperty(t => t.AtualizadoEm, DateTime.UtcNow), ct);
         return new ResultadoAplicacaoDto(alteradas);
     }
@@ -283,7 +304,7 @@ public class TransacoesController : BaseController
         }
         else
         {
-            var q = Filtrar(dto.Filtro!, rastrear: true);
+            var q = await FiltrarAsync(dto.Filtro!, rastrear: true, ct);
             var total = await q.CountAsync(ct);
             if (total > MaximoPorFiltro)
                 return Erro($"O filtro tem {total} transações; o limite de uma vez é {MaximoPorFiltro}. Restrinja o período.");

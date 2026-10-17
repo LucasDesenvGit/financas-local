@@ -83,6 +83,10 @@ export class ApiService {
   categorizarEmLote(ids: number[], categoriaId: number | null): Observable<ResultadoAplicacao> {
     return this.http.put<ResultadoAplicacao>(`${this.base}/transacoes/categoria-em-lote`, { ids, categoriaId });
   }
+  /** #9: descrição pouco informativa revisada (sai do filtro) ou desfazer. */
+  marcarRevisada(ids: number[], revisada: boolean): Observable<ResultadoAplicacao> {
+    return this.http.put<ResultadoAplicacao>(`${this.base}/transacoes/revisada-em-lote`, { ids, revisada });
+  }
   /** #87: modo edição — por transação ou todas do filtro; devolve a chave do "Desfazer". */
   alterarCategoriasEmLote(dto: AlterarCategoriasEmLote): Observable<ResultadoCategoriasEmLote> {
     return this.http.patch<ResultadoCategoriasEmLote>(`${this.base}/transacoes/em-lote`, dto);
