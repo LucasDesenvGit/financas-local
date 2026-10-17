@@ -169,11 +169,17 @@ export interface ContaAgendada {
   id: number; descricao: string; valor: number; proximoVencimento: string; recorrencia: Recorrencia;
   categoriaId: number | null; categoriaNome: string | null; contaId: number | null; contaNome: string | null;
   ativa: boolean; ultimoPagamentoEm: string | null; diasParaVencer: number;
+  /** #69: até quando se repete (null = sem fim); pagamentos que faltam até lá, contando o próximo. */
+  dataLimite: string | null; pagamentosRestantes: number | null;
+  /** Inativa por ter passado da data limite ao pagar. */
+  encerrada: boolean;
 }
 
 export interface SalvarContaAgendada {
   descricao: string; valor: number; proximoVencimento: string; recorrencia: Recorrencia;
   categoriaId: number | null; contaId: number | null; ativa: boolean;
+  /** #69: último vencimento que ainda se repete (null = sem fim). */
+  dataLimite: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */

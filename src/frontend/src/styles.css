@@ -385,7 +385,8 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 
 /* ---------------------------------------------------------------- Tabelas */
 .tabela-rolagem {
-  overflow-x: auto; background: var(--superficie); border-radius: var(--raio);
+  /* position: o .so-leitor (absolute) do cabeçalho fica preso aqui; sem isso ele escapa da rolagem e alarga a página no celular. */
+  position: relative; overflow-x: auto; background: var(--superficie); border-radius: var(--raio);
   margin-bottom: 16px; box-shadow: var(--sombra);
 }
 .painel-bloco .tabela-rolagem { box-shadow: none; margin: 0; }
