@@ -26,6 +26,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 | Emergências | Marque despesas como emergência (na transação ou em lote). Orçamentos e relatórios mostram em laranja quando o limite ou o mês só estourou por causa delas |
 | Sugestões de categoria | Em Transações › Sugestões de categoria: agrupa transações parecidas, sugere a categoria pelo seu histórico e por palavras-chave e cria regras com um clique |
 | Calculadora | Botão flutuante no canto superior direito (atalho Alt+C) |
+| Manual | Página **Manual** no menu: passo a passo de cada parte do site (14 capítulos: primeiros passos, conectar bancos, contas e cartões, transações, categorização, regras, categorias, orçamentos, metas, contas a pagar, relatórios, investimentos, configurações, privacidade e backup), com link que abre a tela certa, busca e o botão **Ajuda** em cada tela |
 | Erros do sistema | Em Configurações › Erros: avisos e erros da API, da sincronização, das cotações e do câmbio e falhas da tela no navegador, com filtros por período, origem e nível, detalhe (pilha) e "resolvido". Repetições viram uma linha só; os antigos são apagados sozinhos (prazo em Parametrização) |
 
 ## Instalação (uma vez)
