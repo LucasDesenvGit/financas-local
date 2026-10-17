@@ -36,6 +36,7 @@ public class FinancasDbContext : DbContext
     public DbSet<IndiceMensal> IndicesMensais => Set<IndiceMensal>();
     public DbSet<CotacaoMoeda> CotacoesMoeda => Set<CotacaoMoeda>();
     public DbSet<ReservaConferencia> ReservasConferidas => Set<ReservaConferencia>();
+    public DbSet<ErroSistema> ErrosSistema => Set<ErroSistema>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -345,6 +346,21 @@ public class FinancasDbContext : DbContext
             e.HasIndex(x => new { x.ContaId, x.Nome }).IsUnique();
             e.HasOne(x => x.Conta).WithMany()
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<ErroSistema>(e =>
+        {
+            e.ToTable("ErroSistema");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Origem).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Categoria).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Mensagem).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.Detalhe).HasMaxLength(8000);
+            e.Property(x => x.Rota).HasMaxLength(300);
+            e.Property(x => x.Usuario).HasMaxLength(100);
+            e.Property(x => x.Assinatura).HasMaxLength(64).IsRequired();
+            e.HasIndex(x => new { x.Resolvido, x.UltimaEm }).HasDatabaseName("IX_ErroSistema_Resolvido_UltimaEm");
+            e.HasIndex(x => new { x.Assinatura, x.Resolvido }).HasDatabaseName("IX_ErroSistema_Assinatura");
         });
     }
 }

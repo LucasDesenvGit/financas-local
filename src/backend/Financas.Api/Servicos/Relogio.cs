@@ -24,6 +24,10 @@ public static class Relogio
     public static DateOnly ParaDataLocal(DateTimeOffset valor)
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(valor, Fuso).DateTime);
 
+    /// <summary>Instante UTC em que começa o dia (meia-noite em Brasília).</summary>
+    public static DateTime InicioDoDiaUtc(DateOnly dia)
+        => TimeZoneInfo.ConvertTimeToUtc(dia.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), Fuso);
+
     public static DateOnly PrimeiroDiaMes(int ano, int mes) => new(ano, mes, 1);
 
     public static DateOnly UltimoDiaMes(int ano, int mes) => new(ano, mes, DateTime.DaysInMonth(ano, mes));

@@ -118,6 +118,15 @@ public class PainelController : BaseController
                 alertas.Add($"{nome} precisa de uma ação sua no Meu Pluggy para voltar a sincronizar.");
         }
 
+        // #11: erros (não avisos) da última semana ainda não marcados como resolvidos.
+        var desdeErros = DateTime.UtcNow.AddDays(-7);
+        var errosAbertos = await _db.ErrosSistema.AsNoTracking()
+            .CountAsync(e => !e.Resolvido && e.Nivel >= NivelErro.Erro && e.UltimaEm >= desdeErros, ct);
+        if (errosAbertos > 0)
+            alertas.Add(errosAbertos == 1
+                ? "1 erro do sistema nos últimos 7 dias. Veja em Configurações › Erros."
+                : $"{errosAbertos} erros do sistema nos últimos 7 dias. Veja em Configurações › Erros.");
+
         var contratosEmAtraso = await _db.Emprestimos.AsNoTracking()
             .Where(e => e.ConexaoBancaria!.Ativa && e.SaldoDevedor > 0 && e.ParcelasEmAtraso > 0)
             .Select(e => new { e.Produto, e.Natureza, e.ParcelasEmAtraso })

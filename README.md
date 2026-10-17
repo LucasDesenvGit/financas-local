@@ -26,6 +26,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 | Emergências | Marque despesas como emergência (na transação ou em lote). Orçamentos e relatórios mostram em laranja quando o limite ou o mês só estourou por causa delas |
 | Sugestões de categoria | Em Transações › Sugestões de categoria: agrupa transações parecidas, sugere a categoria pelo seu histórico e por palavras-chave e cria regras com um clique |
 | Calculadora | Botão flutuante no canto superior direito (atalho Alt+C) |
+| Erros do sistema | Em Configurações › Erros: avisos e erros da API, da sincronização, das cotações e do câmbio e falhas da tela no navegador, com filtros por período, origem e nível, detalhe (pilha) e "resolvido". Repetições viram uma linha só; os antigos são apagados sozinhos (prazo em Parametrização) |
 
 ## Instalação (uma vez)
 
@@ -122,6 +123,7 @@ Como tudo é local, o objetivo foi manter o sistema simples sem abrir mão do es
 - **Cabeçalhos de segurança:** CSP restritiva (sem scripts de terceiros; nada é carregado da internet), X-Frame-Options, nosniff, Referrer-Policy e `no-store` nas respostas da API.
 - **Validação de host:** só `localhost`/`127.0.0.1`, o que protege contra DNS rebinding.
 - **Auditoria** de logins, falhas, trocas de senha e alterações de credenciais, visível em Configurações.
+- **Erros do sistema** gravados no banco sem dados sensíveis: query strings, tokens, senhas, CPF e valores em R$ são trocados por `[removido]` antes de gravar ([ADR 0022](docs/adr/0022-erros-do-sistema-gravados-no-banco.md)).
 - Consultas ao banco somente via LINQ/EF Core, sem SQL montado a partir de texto do usuário.
 - **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy.
 
@@ -183,5 +185,6 @@ financas-local/
 | Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
 | Windows: o serviço não é registrado/iniciado | Rode o `3-publicar-atualizar.sh` num Git Bash aberto como Administrador |
 | Navegador alerta sobre o certificado | Rode o `3-publicar-atualizar.sh` de novo: ele recoloca o certificado nos confiáveis. Firefox: em `about:config`, ative `security.enterprise_roots.enabled` |
+| Algo deu errado e não sei o quê | Veja Configurações › Erros: a mensagem, quando e quantas vezes aconteceu e, em "detalhe", a pilha do erro |
 | Sincronização falha com 401/403 | Confira o Client ID e o Secret e se o MeuPluggy foi autorizado para aquele banco |
 | O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |

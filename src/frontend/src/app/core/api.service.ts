@@ -9,7 +9,8 @@ import {
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas
+  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
+  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -236,4 +237,19 @@ export class ApiService {
     return this.http.post<void>(`${this.base}/auth/alterar-senha`, { senhaAtual, novaSenha });
   }
   auditoria(): Observable<Auditoria[]> { return this.http.get<Auditoria[]>(`${this.base}/auth/auditoria`); }
+
+  /* ----- Erros do sistema (#11) ----- */
+  erros(filtro: FiltroErros): Observable<PaginaErros> {
+    return this.http.get<PaginaErros>(`${this.base}/erros`, { params: this.params(filtro) });
+  }
+  erroDetalhe(id: number): Observable<ErroSistemaDetalhe> { return this.http.get<ErroSistemaDetalhe>(`${this.base}/erros/${id}`); }
+  situacaoErro(id: number, resolvido: boolean): Observable<void> {
+    return this.http.put<void>(`${this.base}/erros/${id}/situacao`, { resolvido });
+  }
+  /** Marca como resolvidos todos os em aberto do filtro (todas as páginas). */
+  resolverErros(filtro: FiltroErros): Observable<{ quantidade: number }> {
+    const { pagina: _p, tamanhoPagina: _t, ...resto } = filtro;
+    return this.http.post<{ quantidade: number }>(`${this.base}/erros/resolver`, {}, { params: this.params(resto) });
+  }
+  registrarErroFrontEnd(dto: ErroFrontEnd): Observable<void> { return this.http.post<void>(`${this.base}/erros/front-end`, dto); }
 }
