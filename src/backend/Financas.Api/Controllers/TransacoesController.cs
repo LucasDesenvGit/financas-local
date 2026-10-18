@@ -19,7 +19,8 @@ public static class ProjecoesTransacao
         t.ParcelaNumero, t.ParcelaTotal, t.IgnorarRelatorios, t.Observacao, t.Emergencia,
         // Calculado no cliente (EF traz as colunas e chama o método na projeção final).
         TipoLancamentoService.Classificar(t.Valor, t.Descricao, t.DescricaoOriginal, t.MeioPagamento, t.MesmaTitularidade,
-            t.TransferenciaGrupo != null, t.Conta!.Tipo));
+            t.TransferenciaGrupo != null, t.Conta!.Tipo),
+        t.RegraDescricaoId);
 }
 
 [Route("api/transacoes")]
@@ -34,11 +35,14 @@ public class TransacoesController : BaseController
     private readonly AuditoriaService _auditoria;
     private readonly IMemoryCache _cache;
     private readonly DescricaoPoucoInformativaService _poucoInformativa;
+    private readonly RegraDescricaoService _descricoes;
     private readonly TransferenciasService _transferencias;
 
     public TransacoesController(FinancasDbContext db, CategorizacaoService categorizacao, AuditoriaService auditoria,
-        IMemoryCache cache, DescricaoPoucoInformativaService poucoInformativa, TransferenciasService transferencias)
+        IMemoryCache cache, DescricaoPoucoInformativaService poucoInformativa, RegraDescricaoService descricoes,
+        TransferenciasService transferencias)
     {
+        _descricoes = descricoes;
         _transferencias = transferencias;
         _db = db;
         _categorizacao = categorizacao;
@@ -86,7 +90,9 @@ public class TransacoesController : BaseController
         if (!string.IsNullOrWhiteSpace(f.Busca))
         {
             var busca = f.Busca.Trim();
+            // #123: acha pelo nome mostrado e pelo nome que veio do banco.
             q = q.Where(t => t.Descricao.Contains(busca)
+                             || (t.DescricaoOriginal != null && t.DescricaoOriginal.Contains(busca))
                              || (t.Estabelecimento != null && t.Estabelecimento.Contains(busca))
                              || (t.Observacao != null && t.Observacao.Contains(busca)));
         }
@@ -168,7 +174,14 @@ public class TransacoesController : BaseController
             return Erro("Categoria inválida.");
 
         await _categorizacao.CarregarAsync(ct);
-        t.Descricao = dto.Descricao.Trim();
+        var descricao = dto.Descricao.Trim();
+        if (descricao != t.Descricao)
+        {
+            // #123: nome trocado no formulário é escolhido à mão; as regras de descrição não mexem mais nele.
+            t.Descricao = descricao;
+            t.DescricaoManual = true;
+            t.RegraDescricaoId = null;
+        }
         t.Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim();
         if (dto.CategoriaId is null)
         {
@@ -399,6 +412,240 @@ public class TransacoesController : BaseController
     }
 
     private static string ChaveDesfazer(string chave) => "transacoes-em-lote:" + chave;
+
+    /* ------------------------------------------------------------ #123: renomear */
+
+    /// <summary>Prévia de "usar também nas outras" (quantas e quais), para o texto e o tipo escolhidos.</summary>
+    [HttpGet("{id:long}/renomear/previa")]
+    public async Task<ActionResult<PreviaRenomearDto>> PreviaRenomear(long id, [FromQuery] string? texto,
+        [FromQuery] TipoCorrespondencia tipo = TipoCorrespondencia.Igual, CancellationToken ct = default)
+    {
+        var t = await _db.Transacoes.AsNoTracking().Where(x => x.Id == id)
+            .Select(x => new { x.DescricaoOriginal }).FirstOrDefaultAsync(ct);
+        if (t is null) return NaoEncontrado();
+        if (t.DescricaoOriginal is null) return new PreviaRenomearDto(null, "", 0, new());
+        var sugerido = RegraDescricaoService.SugerirTexto(t.DescricaoOriginal);
+        var alvo = !string.IsNullOrWhiteSpace(texto) ? texto.Trim()
+            : tipo == TipoCorrespondencia.Igual ? t.DescricaoOriginal : sugerido;
+        var (quantidade, exemplos) = await _descricoes.PreviaAsync(alvo, tipo, id, ct);
+        return new PreviaRenomearDto(t.DescricaoOriginal, sugerido, quantidade, exemplos);
+    }
+
+    /// <summary>
+    /// Novo nome de uma transação (#123, ADR 0030): só nesta (escolhido à mão), de volta ao do banco, ou como regra que
+    /// vale nas outras de nome automático e nas próximas. O "Desfazer" guarda o estado de antes de cada transação
+    /// que mudou e apaga a regra criada.
+    /// </summary>
+    [HttpPut("{id:long}/descricao")]
+    public async Task<ActionResult<ResultadoRenomearDto>> Renomear(long id, RenomearTransacaoDto dto, CancellationToken ct)
+    {
+        var t = await _db.Transacoes.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (t is null) return NaoEncontrado();
+        var descricao = dto.Descricao?.Trim() ?? "";
+        if (!dto.VoltarOriginal && descricao.Length == 0) return Erro("Escreva a nova descrição.");
+        if (dto.AplicarNasOutras && t.DescricaoOriginal is null)
+            return Erro("Só transações que vieram do banco podem virar regra: esta foi lançada à mão.");
+        if (!Enum.IsDefined(dto.TipoCorrespondencia)) return Erro("Tipo de correspondência inválido.");
+
+        await using var transacao = await _db.Database.BeginTransactionAsync(ct);
+        var anteriores = new List<RegraDescricaoService.EstadoAnterior>
+        {
+            new(t.Id, t.Descricao, t.RegraDescricaoId, t.DescricaoManual)
+        };
+        RegraDescricao? regra = null;
+        if (dto.VoltarOriginal)
+        {
+            t.Descricao = t.DescricaoOriginal ?? t.Descricao;
+            t.DescricaoManual = true;
+            t.RegraDescricaoId = null;
+        }
+        else if (dto.AplicarNasOutras)
+        {
+            var texto = string.IsNullOrWhiteSpace(dto.Texto) ? t.DescricaoOriginal! : dto.Texto.Trim();
+            if (CategorizacaoService.Normalizar(texto).Count(char.IsLetterOrDigit) < 2)
+                return Erro("O texto da regra precisa de pelo menos 2 letras ou números.");
+            regra = new RegraDescricao
+            {
+                Texto = texto, TipoCorrespondencia = dto.TipoCorrespondencia, NovaDescricao = descricao,
+                CriadoEm = DateTime.UtcNow
+            };
+            _db.RegrasDescricao.Add(regra);
+            await _db.SaveChangesAsync(ct);
+
+            // A própria transação passa a ter o nome pela regra, que tem de valer para ela.
+            t.DescricaoManual = false;
+            t.RegraDescricaoId = null;
+            t.Descricao = t.DescricaoOriginal!;
+            anteriores.AddRange((await _descricoes.ReaplicarAsync(ct)).Where(a => a.Id != t.Id));
+            if (t.RegraDescricaoId != regra.Id)
+            {
+                var outra = t.RegraDescricaoId is int idOutra
+                    ? await _db.RegrasDescricao.AsNoTracking().Where(r => r.Id == idOutra).Select(r => r.Texto).FirstOrDefaultAsync(ct)
+                    : null;
+                return Erro(outra is null
+                    ? $"A descrição do banco desta transação (\"{t.DescricaoOriginal}\") não bate com \"{texto}\"."
+                    : $"Já existe uma regra mais específica para esta descrição (\"{outra}\"). Edite-a em Categorias › Regras automáticas.");
+            }
+        }
+        else
+        {
+            t.Descricao = descricao;
+            t.DescricaoManual = true;
+            t.RegraDescricaoId = null;
+        }
+
+        var mudaram = anteriores.Where(a => a.Id != t.Id).ToList();
+        if (anteriores[0].Descricao != t.Descricao || anteriores[0].RegraDescricaoId != t.RegraDescricaoId
+            || anteriores[0].DescricaoManual != t.DescricaoManual)
+        {
+            t.AtualizadoEm = DateTime.UtcNow;
+            mudaram.Insert(0, anteriores[0]);
+        }
+        _auditoria.Registrar(regra is null ? "TransacaoRenomeada" : $"RegraDescricaoCriada ({mudaram.Count})", User.Identity?.Name);
+        await _db.SaveChangesAsync(ct);
+        await transacao.CommitAsync(ct);
+
+        if (mudaram.Count == 0 && regra is null) return new ResultadoRenomearDto(0, null, null);
+        var chave = GuardarDesfazerNome(new DesfazerNome(mudaram, regra is null ? new() : [regra.Id], new()));
+        return new ResultadoRenomearDto(mudaram.Count, regra?.Id, chave);
+    }
+
+    /// <summary>
+    /// O mesmo nome em várias transações de uma vez (#123), só nelas ou como regras "é igual a" por descrição do banco
+    /// (que valem nas outras e nas próximas). Com "Desfazer", como o renomear de uma.
+    /// </summary>
+    [HttpPatch("descricao/em-lote")]
+    public async Task<ActionResult<ResultadoRenomearEmLoteDto>> RenomearEmLote(RenomearEmLoteDto dto, CancellationToken ct)
+    {
+        var ids = dto.Ids.Distinct().ToList();
+        var transacoes = await _db.Transacoes.Where(t => ids.Contains(t.Id)).ToListAsync(ct);
+        if (transacoes.Count != ids.Count) return NaoEncontrado("Alguma transação não existe mais. Atualize a lista.");
+        var nome = dto.Descricao.Trim();
+        if (nome.Length == 0) return Erro("Escreva o novo nome.");
+
+        var originais = dto.CriarRegras
+            ? transacoes.Where(t => t.DescricaoOriginal is not null)
+                .GroupBy(t => CategorizacaoService.Normalizar(t.DescricaoOriginal)).Select(g => g.First().DescricaoOriginal!).ToList()
+            : new List<string>();
+        if (originais.Count > MaximoRegrasPorLote)
+            return Erro($"As selecionadas têm {originais.Count} descrições do banco diferentes; o limite é {MaximoRegrasPorLote} regras de uma vez. "
+                        + "Selecione menos, ou crie uma regra \"contém\" em Categorias › Regras automáticas.");
+
+        await using var transacaoBanco = await _db.Database.BeginTransactionAsync(ct);
+        var anteriores = transacoes.Select(t => new RegraDescricaoService.EstadoAnterior(t.Id, t.Descricao, t.RegraDescricaoId, t.DescricaoManual))
+            .ToDictionary(a => a.Id);
+        var criadas = new List<RegraDescricao>();
+        var alteradas = new List<RegraAntes>();
+        if (originais.Count > 0)
+        {
+            var existentes = await _db.RegrasDescricao.Where(r => r.TipoCorrespondencia == TipoCorrespondencia.Igual).ToListAsync(ct);
+            foreach (var original in originais)
+            {
+                var normalizado = CategorizacaoService.Normalizar(original);
+                var regra = existentes.FirstOrDefault(r => CategorizacaoService.Normalizar(r.Texto) == normalizado);
+                if (regra is null)
+                {
+                    regra = new RegraDescricao
+                    {
+                        Texto = original, TipoCorrespondencia = TipoCorrespondencia.Igual, NovaDescricao = nome, CriadoEm = DateTime.UtcNow
+                    };
+                    _db.RegrasDescricao.Add(regra);
+                    criadas.Add(regra);
+                }
+                else if (regra.NovaDescricao != nome || !regra.Ativa)
+                {
+                    alteradas.Add(new RegraAntes(regra.Id, regra.NovaDescricao, regra.Ativa));
+                    regra.NovaDescricao = nome;
+                    regra.Ativa = true;
+                }
+            }
+            await _db.SaveChangesAsync(ct);
+        }
+
+        foreach (var t in transacoes)
+        {
+            if (originais.Count > 0 && t.DescricaoOriginal is not null)
+            {
+                // O nome vem da regra: a transação volta ao nome automático e a reaplicação abaixo dá o nome.
+                t.DescricaoManual = false;
+                t.RegraDescricaoId = null;
+                t.Descricao = t.DescricaoOriginal;
+            }
+            else
+            {
+                t.Descricao = nome;
+                t.DescricaoManual = true;
+                t.RegraDescricaoId = null;
+            }
+        }
+        var outras = originais.Count > 0 ? await _descricoes.ReaplicarAsync(ct) : new();
+
+        var mudaram = transacoes.Where(t => anteriores[t.Id] is var a
+                && (a.Descricao != t.Descricao || a.RegraDescricaoId != t.RegraDescricaoId || a.DescricaoManual != t.DescricaoManual))
+            .Select(t => anteriores[t.Id]).ToList();
+        mudaram.AddRange(outras.Where(o => !anteriores.ContainsKey(o.Id)));
+        foreach (var t in transacoes.Where(t => mudaram.Any(m => m.Id == t.Id))) t.AtualizadoEm = DateTime.UtcNow;
+        _auditoria.Registrar($"RenomearEmLote ({mudaram.Count}, {criadas.Count} regra)", User.Identity?.Name);
+        await _db.SaveChangesAsync(ct);
+        await transacaoBanco.CommitAsync(ct);
+
+        if (mudaram.Count == 0 && criadas.Count == 0 && alteradas.Count == 0)
+            return new ResultadoRenomearEmLoteDto(0, 0, 0, null);
+        var chave = GuardarDesfazerNome(new DesfazerNome(mudaram, criadas.Select(r => r.Id).ToList(), alteradas));
+        return new ResultadoRenomearEmLoteDto(mudaram.Count, criadas.Count, alteradas.Count, chave);
+    }
+
+    /// <summary>Desfaz um "Renomear": volta o nome de antes de cada transação e apaga a regra criada.</summary>
+    [HttpPost("descricao/desfazer/{chave}")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> DesfazerRenomear(string chave, CancellationToken ct)
+    {
+        if (!_cache.TryGetValue(ChaveDesfazerNome(chave), out DesfazerNome? estado) || estado is null)
+            return NaoEncontrado("Não dá mais para desfazer: o prazo passou ou já foi desfeito.");
+        _cache.Remove(ChaveDesfazerNome(chave));
+
+        var porId = estado.Anteriores.ToDictionary(a => a.Id);
+        var ids = porId.Keys.ToList();
+        var transacoes = await _db.Transacoes.Where(t => ids.Contains(t.Id)).ToListAsync(ct);
+        foreach (var t in transacoes)
+        {
+            var a = porId[t.Id];
+            t.Descricao = a.Descricao;
+            t.RegraDescricaoId = a.RegraDescricaoId;
+            t.DescricaoManual = a.DescricaoManual;
+            t.AtualizadoEm = DateTime.UtcNow;
+        }
+        if (estado.RegrasCriadas.Count > 0)
+            await _db.RegrasDescricao.Where(r => estado.RegrasCriadas.Contains(r.Id)).ExecuteDeleteAsync(ct);
+        foreach (var antes in estado.RegrasAlteradas)
+        {
+            var regra = await _db.RegrasDescricao.FirstOrDefaultAsync(r => r.Id == antes.Id, ct);
+            if (regra is null) continue;
+            regra.NovaDescricao = antes.NovaDescricao;
+            regra.Ativa = antes.Ativa;
+        }
+        _auditoria.Registrar($"RenomearDesfeito ({transacoes.Count})", User.Identity?.Name);
+        await _db.SaveChangesAsync(ct);
+        return new ResultadoAplicacaoDto(transacoes.Count);
+    }
+
+    private static string ChaveDesfazerNome(string chave) => "transacoes-renomear:" + chave;
+
+    /// <summary>No máximo esta quantidade de regras criadas de uma vez pelo renomear em lote.</summary>
+    private const int MaximoRegrasPorLote = 50;
+
+    /// <summary>Regra de descrição que o lote reaproveitou, com o nome e a situação de antes.</summary>
+    private sealed record RegraAntes(int Id, string NovaDescricao, bool Ativa);
+
+    /// <summary>O que o "Desfazer" de um renomear volta: nomes das transações, regras criadas e regras alteradas.</summary>
+    private sealed record DesfazerNome(List<RegraDescricaoService.EstadoAnterior> Anteriores, List<int> RegrasCriadas,
+        List<RegraAntes> RegrasAlteradas);
+
+    private string GuardarDesfazerNome(DesfazerNome estado)
+    {
+        var chave = Guid.NewGuid().ToString("N");
+        _cache.Set(ChaveDesfazerNome(chave), estado, PrazoDesfazer);
+        return chave;
+    }
 
     /// <summary>
     /// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): depois de mudar categoria,

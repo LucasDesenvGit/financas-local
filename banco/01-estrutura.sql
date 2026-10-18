@@ -236,6 +236,10 @@ CREATE TABLE IF NOT EXISTS Transacao
     -- #111: quem pagou e quem recebeu têm o mesmo documento (transferência entre contas suas). Só o sim/não é
     -- guardado, nunca o CPF/CNPJ nem o nome. NULL = o banco não informou.
     MesmaTitularidade   INTEGER NULL,
+    -- #123 (ADR 0030): o nome mostrado em Descricao veio de uma regra de descrição (RegraDescricao.Id) ou foi
+    -- escolhido à mão (DescricaoManual = 1: as regras não mexem mais). DescricaoOriginal continua sendo a do banco.
+    RegraDescricaoId    INTEGER NULL,
+    DescricaoManual     INTEGER NOT NULL CONSTRAINT DF_Transacao_DescricaoManual DEFAULT 0,
     -- Guid gerado pela API quando aplicável (Transacao.TransferenciaGrupo); sem DEFAULT no banco.
     TransferenciaGrupo  TEXT    NULL,
     Observacao          TEXT    NULL,
@@ -544,3 +548,22 @@ CREATE TABLE IF NOT EXISTS ErroSistema
 );
 CREATE INDEX IF NOT EXISTS IX_ErroSistema_Resolvido_UltimaEm ON ErroSistema (Resolvido, UltimaEm);
 CREATE INDEX IF NOT EXISTS IX_ErroSistema_Assinatura ON ErroSistema (Assinatura, Resolvido);
+
+/* ------------------------------------------------------------------ */
+/* Regras de descrição (#123, ADR 0030)                                */
+/* ------------------------------------------------------------------ */
+/* "Quando a descrição do banco for/contiver X, mostrar Y": valem nas transações existentes e nas que chegam pela
+   sincronização, menos nas que tiveram a descrição escolhida à mão. Separadas de RegraCategorizacao porque lá a
+   categoria é obrigatória (NOT NULL) e o SQLite não deixa mudar isso sem recriar a tabela. */
+CREATE TABLE IF NOT EXISTS RegraDescricao
+(
+    Id                  INTEGER NOT NULL CONSTRAINT PK_RegraDescricao PRIMARY KEY AUTOINCREMENT,
+    -- Comparado com a descrição do banco (Transacao.DescricaoOriginal), sem acento e sem diferença de maiúsculas.
+    Texto               TEXT    NOT NULL,
+    TipoCorrespondencia INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_TipoCorrespondencia DEFAULT 3,
+    NovaDescricao       TEXT    NOT NULL,
+    Ativa               INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_Ativa DEFAULT 1,
+    -- Preenchido pela API (RegraDescricao.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    CriadoEm            TEXT    NOT NULL,
+    CONSTRAINT CK_RegraDescricao_TipoCorrespondencia CHECK (TipoCorrespondencia IN (1, 2, 3))
+);

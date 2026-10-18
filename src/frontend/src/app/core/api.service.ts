@@ -5,6 +5,8 @@ import {
   OpcaoCategoria, SugestaoCategoria,
   AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
+  PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
+  RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
@@ -110,6 +112,30 @@ export class ApiService {
   atualizarRegra(id: number, dto: SalvarRegra): Observable<Regra> { return this.http.put<Regra>(`${this.base}/regras/${id}`, dto); }
   excluirRegra(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/regras/${id}`); }
   reaplicarRegras(): Observable<ResultadoAplicacao> { return this.http.post<ResultadoAplicacao>(`${this.base}/regras/reaplicar`, {}); }
+  /* #123: renomear transações e regras de descrição */
+  previaRenomear(id: number, texto: string | null, tipo: TipoCorrespondencia): Observable<PreviaRenomear> {
+    return this.http.get<PreviaRenomear>(`${this.base}/transacoes/${id}/renomear/previa`, { params: this.params({ texto, tipo }) });
+  }
+  renomearTransacao(id: number, dto: RenomearTransacao): Observable<ResultadoRenomear> {
+    return this.http.put<ResultadoRenomear>(`${this.base}/transacoes/${id}/descricao`, dto);
+  }
+  desfazerRenomear(chave: string): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/transacoes/descricao/desfazer/${encodeURIComponent(chave)}`, {});
+  }
+  renomearEmLote(dto: RenomearEmLote): Observable<ResultadoRenomearEmLote> {
+    return this.http.patch<ResultadoRenomearEmLote>(`${this.base}/transacoes/descricao/em-lote`, dto);
+  }
+  regrasDescricao(): Observable<RegraDescricao[]> { return this.http.get<RegraDescricao[]>(`${this.base}/regras-descricao`); }
+  previaRegraDescricao(texto: string, tipo: TipoCorrespondencia): Observable<PreviaRegraDescricao> {
+    return this.http.get<PreviaRegraDescricao>(`${this.base}/regras-descricao/previa`, { params: this.params({ texto, tipo }) });
+  }
+  criarRegraDescricao(dto: SalvarRegraDescricao): Observable<RegraDescricao> {
+    return this.http.post<RegraDescricao>(`${this.base}/regras-descricao`, dto);
+  }
+  salvarRegraDescricao(id: number, dto: SalvarRegraDescricao): Observable<RegraDescricao> {
+    return this.http.put<RegraDescricao>(`${this.base}/regras-descricao/${id}`, dto);
+  }
+  excluirRegraDescricao(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/regras-descricao/${id}`); }
 
   // Orçamentos
   orcamentos(ano: number, mes: number): Observable<Orcamento[]> {

@@ -16,6 +16,19 @@ public class Categoria
     public List<Categoria> Subcategorias { get; set; } = new();
 }
 
+/// <summary>
+/// #123 (ADR 0030): "quando a descrição do banco for/contiver <see cref="Texto"/>, mostrar <see cref="NovaDescricao"/>".
+/// </summary>
+public class RegraDescricao
+{
+    public int Id { get; set; }
+    public string Texto { get; set; } = string.Empty;
+    public TipoCorrespondencia TipoCorrespondencia { get; set; } = TipoCorrespondencia.Igual;
+    public string NovaDescricao { get; set; } = string.Empty;
+    public bool Ativa { get; set; } = true;
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+}
+
 public class RegraCategorizacao
 {
     public int Id { get; set; }
@@ -103,6 +116,10 @@ public class Transacao
     public string? MeioPagamento { get; set; }
     /// <summary>#111: pagador e recebedor com o mesmo documento (só o sim/não; o documento não é guardado).</summary>
     public bool? MesmaTitularidade { get; set; }
+    /// <summary>#123: regra de descrição que deu o nome mostrado (null = nome do banco ou escolhido à mão).</summary>
+    public int? RegraDescricaoId { get; set; }
+    /// <summary>#123: nome escolhido à mão (ou "voltar à do banco"): as regras de descrição não mexem mais.</summary>
+    public bool DescricaoManual { get; set; }
     public Guid? TransferenciaGrupo { get; set; }
     public string? Observacao { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;

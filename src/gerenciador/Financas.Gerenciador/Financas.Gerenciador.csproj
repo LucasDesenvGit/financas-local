@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Gerenciador do Finanças Local (#119, ADR 0028): app pequeno do Windows instalado pelo .msi, ao lado da API.
+    Mostra se o site está no ar, liga/desliga o serviço, faz backup e baixa/instala a versão nova do GitHub.
+    Roda como o usuário; pede administrador (UAC) só nas ações que precisam.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Financas.Gerenciador</RootNamespace>
+    <AssemblyName>Financas.Gerenciador</AssemblyName>
+    <ApplicationIcon>icone.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!-- A solução também é compilada na CI do Linux. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Product>Finanças Local</Product>
+    <Description>Gerenciador do Finanças Local</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Versões flutuantes no patch, como na API. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.*" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="icone.ico" LogicalName="icone.ico" />
+  </ItemGroup>
+
+</Project>

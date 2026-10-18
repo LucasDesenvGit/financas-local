@@ -25,6 +25,17 @@ builder.WebHost.ConfigureKestrel(o =>
 });
 var cfg = builder.Configuration;
 
+// ---------------------------------------------------------------- Pasta de dados da instalação pelo .msi (#119, ADR 0029)
+// "Dados:Pasta" (ex.: %ProgramData%\FinancasLocal\dados, no appsettings.Production.json do .msi) define banco e chaves
+// e traz a configuração local que o instalador grava lá (certificado HTTPS e a senha dele), fora da pasta do programa.
+if (cfg["Dados:Pasta"] is { Length: > 0 } pastaDadosConfig)
+{
+    var pastaDados = Path.GetFullPath(Environment.ExpandEnvironmentVariables(pastaDadosConfig));
+    cfg["Banco:Caminho"] = Path.Combine(pastaDados, "sql", "FinancasLocal.db");
+    cfg["Seguranca:PastaChaves"] = Path.Combine(pastaDados, "chaves");
+    cfg.AddJsonFile(Path.Combine(pastaDados, "configuracao.json"), optional: true, reloadOnChange: false);
+}
+
 // ---------------------------------------------------------------- Banco de dados
 var caminhoBanco = cfg["Banco:Caminho"] ?? Path.Combine(AppContext.BaseDirectory, "dados", "sql", "FinancasLocal.db");
 builder.Services.AddDbContext<FinancasDbContext>(opcoes =>
@@ -100,6 +111,7 @@ builder.Services.AddScoped<ConfiguracaoService>();
 builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
+builder.Services.AddScoped<RegraDescricaoService>();
 builder.Services.AddScoped<TransferenciasService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
@@ -165,6 +177,9 @@ builder.Services.AddHttpClient(CotacaoService.ClienteBrapi, c =>
 });
 
 var app = builder.Build();
+
+// Cria/atualiza o banco antes de atender (ADR 0003): a instalação pelo .msi não tem sqlite3 nem bash.
+EsquemaBanco.Aplicar(caminhoBanco, app.Logger);
 
 // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco.
 try

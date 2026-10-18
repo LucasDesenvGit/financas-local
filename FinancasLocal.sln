@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.Api", "src\backend
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.MigrarSqlite", "src\backend\Financas.MigrarSqlite\Financas.MigrarSqlite.csproj", "{70D47480-4233-4D1E-9E8C-4859B1237002}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.Gerenciador", "src\gerenciador\Financas.Gerenciador\Financas.Gerenciador.csproj", "{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{70D47480-4233-4D1E-9E8C-4859B1237002}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70D47480-4233-4D1E-9E8C-4859B1237002}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70D47480-4233-4D1E-9E8C-4859B1237002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

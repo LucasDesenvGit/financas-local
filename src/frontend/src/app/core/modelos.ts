@@ -37,7 +37,7 @@ export const NOMES_CORRESPONDENCIA: Record<TipoCorrespondencia, string> = {
   [TipoCorrespondencia.Igual]: 'É igual a'
 };
 
-export interface EstadoAutenticacao { configurado: boolean; autenticado: boolean; login: string | null; }
+export interface EstadoAutenticacao { configurado: boolean; autenticado: boolean; login: string | null; versao?: string; }
 export interface Mensagem { mensagem: string; }
 
 export interface Conta {
@@ -81,6 +81,40 @@ export interface Transacao {
   emergencia: boolean;
   /** #111: como o dinheiro entrou ou saiu (calculado pela API). */
   tipoLancamento: TipoLancamento;
+  /** #123: o nome mostrado veio de uma regra de descrição (null = do banco ou escolhido à mão). */
+  regraDescricaoId?: number | null;
+}
+
+/** #123: prévia de "usar também nas outras" (quantas transações de nome automático batem com o texto). */
+export interface PreviaRenomear {
+  descricaoOriginal: string | null; textoSugerido: string; quantidade: number; exemplos: string[];
+}
+
+/** #123: novo nome de uma transação: só nesta, de volta ao do banco, ou como regra para as outras e as próximas. */
+export interface RenomearTransacao {
+  descricao: string | null; voltarOriginal: boolean; aplicarNasOutras: boolean;
+  tipoCorrespondencia: TipoCorrespondencia; texto: string | null;
+}
+
+export interface ResultadoRenomear { alteradas: number; regraId: number | null; desfazer: string | null; }
+
+/** #123: o mesmo nome em várias transações; criarRegras = uma regra "é igual a" por descrição do banco. */
+export interface RenomearEmLote { ids: number[]; descricao: string; criarRegras: boolean; }
+
+export interface ResultadoRenomearEmLote {
+  alteradas: number; regrasCriadas: number; regrasAlteradas: number; desfazer: string | null;
+}
+
+export interface PreviaRegraDescricao { quantidade: number; exemplos: string[]; }
+
+/** #123 (ADR 0030): "quando a descrição do banco for/contiver texto, mostrar novaDescricao". */
+export interface RegraDescricao {
+  id: number; texto: string; tipoCorrespondencia: TipoCorrespondencia; novaDescricao: string; ativa: boolean;
+  transacoes: number;
+}
+
+export interface SalvarRegraDescricao {
+  texto: string; tipoCorrespondencia: TipoCorrespondencia; novaDescricao: string; ativa: boolean;
 }
 
 /** #111 (ADR 0025): os mesmos números do enum da API. */

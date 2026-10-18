@@ -6,6 +6,7 @@
 /publicado/
 /ferramentas/
 /instaladores/
+/saida-instalador/
 /sqlserver/
 /diagnostico-*.txt
 appsettings.Production.json
