@@ -13,6 +13,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Seletor de mês** (Painel, Orçamentos): clicar no nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez. Tem também "Este mês".
 - **Regiões que abrem e fecham no meio da página** abrem e recolhem com animação, sem a tela abaixo pular: a barra do modo edição, os filtros ativos, as dicas, os avisos de formulário e o histórico de faturas.
 - **Metas:** a sobra prevista fica à direita do título, em verde quando sobra e em vermelho quando falta.
+- **Configurações › Conexões:**
+  - a situação aparece em português ("Atualizada", "Erro de login no banco", "Precisa de ação sua"…), não mais o código da Pluggy;
+  - as ações viraram botões ("Sincronizar", "Pausar" e "Remover", este no estilo de perigo);
+  - o campo de adicionar tem rótulo e dica;
+  - o "Histórico de sincronizações" ganhou o visual do "Mais análises".
+- **O calendário abre por cima de tudo:** dentro de um modal, ele não é mais cortado.
 
 ### Correções
 - **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.

@@ -143,7 +143,8 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada banco.',
           'Cada autorização gera um Item ID (aparece no dashboard).',
-          'Em Configurações › Open Finance, cole o Item ID e clique em “Adicionar conexão”.',
+          'Em Configurações › Open Finance, cole o Item ID no campo “Adicionar conexão” e clique em “Adicionar”.',
+          'Cada conexão mostra a situação em português: “Atualizada”, “Desatualizada”, “Erro de login no banco” ou “Precisa de ação sua” (aí é preciso entrar no Meu Pluggy). Os botões “Sincronizar”, “Pausar” e “Remover” ficam na própria linha.',
           'Clique em “Sincronizar agora”. Na primeira vez são buscados os últimos meses de histórico.',
           'Confira em Contas e cartões se as contas e cartões apareceram.'
         ],

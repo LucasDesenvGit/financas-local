@@ -488,13 +488,14 @@ app-campo-data { display: grid; gap: 4px; min-width: 0; position: relative; }
 }
 .campo-data-botao:hover:not(:disabled), .campo-data-botao[aria-expanded="true"] { background: var(--superficie-2); color: var(--texto); }
 .campo-data-botao:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+/* Na camada superior (popover): position fixed com top/left calculados pelo componente; inset/margin zerados porque
+   o navegador centraliza popovers por padrão. */
 .calendario {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; width: 296px; padding: 10px;
+  position: fixed; inset: auto; margin: 0; overflow: visible; z-index: 45; width: 296px; padding: 10px;
   display: grid; gap: 6px; color: var(--texto); font-size: 0.9rem; font-weight: 400;
   background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio); box-shadow: var(--sombra-forte);
   animation: surgir 0.18s ease-out;
 }
-.calendario.acima { top: auto; bottom: calc(100% + 6px); }
 .calendario-topo { display: flex; align-items: center; gap: 2px; }
 .calendario-topo strong {
   flex: 1; text-align: center; font-family: var(--fonte-titulo); font-size: 0.95rem; color: var(--texto-forte);
@@ -972,6 +973,25 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 /* ---------------------------------------------------------------- Guia */
 details { margin-top: 12px; }
 details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 550; margin-bottom: 8px; }
+/* details.detalhes: o mesmo visual do "Mais análises" (botão tracejado com seta que gira), para conteúdo sob demanda. */
+details.detalhes > summary {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-height: 44px; padding: 10px 16px;
+  list-style: none; color: var(--texto-forte); font-weight: 600;
+  border: 1px dashed var(--linha); border-radius: var(--raio-medio);
+}
+details.detalhes > summary::-webkit-details-marker { display: none; }
+details.detalhes > summary::before {
+  content: "›"; color: var(--primaria); display: inline-block; transition: transform 0.15s ease;
+}
+details.detalhes[open] > summary::before { transform: rotate(90deg); }
+details.detalhes > summary:hover { background: var(--superficie-2); border-style: solid; }
+details.detalhes > summary small { font-weight: 400; color: var(--texto-suave); font-size: 0.85rem; }
+details.detalhes[open] > :not(summary) { animation: surgir 0.18s ease-out; }
+.etiqueta-erro { background: var(--negativo-suave); color: var(--negativo); }
+/* Configurações › Conexões */
+.nova-conexao { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 10px; margin-bottom: 16px; }
+.nova-conexao small { flex-basis: 100%; }
+.acoes-conexao { display: inline-flex; gap: 6px; justify-content: flex-end; }
 .guia { background: var(--superficie-2); border-radius: var(--raio-medio); padding: 12px 16px; margin-bottom: 16px; }
 .guia ol { margin: 6px 0 10px; padding-left: 20px; display: grid; gap: 6px; }
 

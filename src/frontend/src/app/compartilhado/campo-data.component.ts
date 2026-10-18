@@ -1,5 +1,5 @@
 import {
-  Component, ElementRef, HostListener, Injector, afterNextRender, booleanAttribute, computed, forwardRef, inject, input, output,
+  Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, booleanAttribute, computed, forwardRef, inject, input, output,
   signal, viewChild
 } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
@@ -101,7 +101,9 @@ let proximoId = 0;
       <span class="campo-valor-mensagem" [id]="idErro" aria-hidden="true" animate.leave="sair">{{ erro() }}</span>
     }
     @if (aberto()) {
-      <div class="calendario" [class.acima]="abrirAcima()" [id]="idCalendario" role="dialog" aria-modal="false"
+      <!-- Na camada superior (popover), com posição fixa: um modal ou uma tabela com rolagem não cortam o calendário. -->
+      <div #calendario class="calendario" [id]="idCalendario" role="dialog" aria-modal="false" popover="manual"
+        [style.top.px]="posicao().top" [style.bottom.px]="posicao().bottom" [style.left.px]="posicao().left"
         [attr.aria-labelledby]="idTitulo" animate.leave="sair" (keydown.escape)="fechar(true); $event.stopPropagation()">
         <div class="calendario-topo">
           <button type="button" class="botao-icone" (click)="mudarMes(-12)" aria-label="Ano anterior">«</button>
@@ -142,6 +144,7 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   private readonly injector = inject(Injector);
   private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly botao = viewChild.required<ElementRef<HTMLButtonElement>>('botao');
+  private readonly calendario = viewChild<ElementRef<HTMLElement>>('calendario');
 
   /** Data mais antiga aceita ('AAAA-MM-DD'); padrão 1900-01-01. */
   readonly minimo = input<string | null | undefined>(null);
@@ -169,7 +172,8 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   readonly texto = signal('');
   readonly desabilitado = signal(false);
   readonly aberto = signal(false);
-  readonly abrirAcima = signal(false);
+  /** Posição fixa do calendário (embaixo do campo; sem espaço, em cima). */
+  readonly posicao = signal<{ top: number | null; bottom: number | null; left: number }>({ top: 0, bottom: null, left: 0 });
   /** Mês mostrado no calendário e o dia com o foco (tabindex 0). */
   readonly mesVisivel = signal({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   readonly foco = signal(this.hoje);
@@ -266,12 +270,45 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
     const d = dataDe(base);
     this.mesVisivel.set({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
     this.foco.set(base);
-    // Sem espaço embaixo (ex.: campo no fim de um modal), abre para cima.
-    const r = this.elemento.nativeElement.getBoundingClientRect();
+    // Posição fixa a partir do campo; sem espaço embaixo (ex.: campo no fim da tela), abre para cima.
+    const caixa = this.elemento.nativeElement.querySelector('.campo-data') ?? this.elemento.nativeElement;
+    const r = caixa.getBoundingClientRect();
     const altura = 340;
-    this.abrirAcima.set(window.innerHeight - r.bottom < altura && r.top > altura);
+    const largura = 296;
+    const acima = window.innerHeight - r.bottom < altura && r.top > altura;
+    this.posicao.set({
+      top: acima ? null : r.bottom + 6,
+      bottom: acima ? window.innerHeight - r.top + 6 : null,
+      left: Math.max(8, Math.min(r.left, window.innerWidth - largura - 8))
+    });
     this.aberto.set(true);
+    afterNextRender(() => {
+      const el = this.calendario()?.nativeElement;
+      try {
+        if (el && !el.matches(':popover-open')) el.showPopover?.();
+      } catch {
+        el?.showPopover?.();   // ambiente sem :popover-open (testes)
+      }
+    }, { injector: this.injector });
     this.focarDia();
+  }
+
+  /**
+   * Rolar (a página ou um modal, por isso em captura no documento) ou redimensionar a janela fecha: a posição fixa
+   * ficaria no lugar errado.
+   */
+  constructor() {
+    const rolar = (e: Event) => this.aoRolar(e);
+    document.addEventListener('scroll', rolar, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('scroll', rolar, true));
+  }
+
+  @HostListener('window:resize', ['$event'])
+  aoRolar(e: Event): void {
+    if (!this.aberto()) return;
+    const alvo = e.target as Node | null;
+    if (alvo instanceof Node && this.calendario()?.nativeElement.contains(alvo)) return;
+    this.fechar(false);
   }
 
   fechar(devolverFoco: boolean): void {

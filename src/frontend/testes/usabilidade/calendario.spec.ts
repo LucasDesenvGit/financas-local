@@ -54,6 +54,25 @@ describe('Usabilidade: calendário do campo de data', () => {
     expect(t.dia('2026-10-19').getAttribute('tabindex')).toBe('-1');
   });
 
+  it('abre na camada superior (popover), com posição fixa: um modal com rolagem não corta o calendário', async () => {
+    const mostrar = jest.spyOn(HTMLElement.prototype, 'showPopover' as never);
+    const t = await abrir();
+    const cal = t.calendario()!;
+    expect(cal.getAttribute('popover')).toBe('manual');
+    expect(mostrar).toHaveBeenCalled();
+    expect(cal.style.top || cal.style.bottom).not.toBe('');
+  });
+
+  it('rolar um modal (scroll em qualquer contêiner) fecha o calendário', async () => {
+    const t = await abrir();
+    const conteiner = document.createElement('div');
+    document.body.appendChild(conteiner);
+    conteiner.dispatchEvent(new Event('scroll'));
+    await t.atualizar();
+    expect(t.calendario()).toBeNull();
+    conteiner.remove();
+  });
+
   it('clicar num dia escolhe, fecha e confirma (alterado)', async () => {
     const t = await abrir();
     t.dia('2026-10-25').click();
