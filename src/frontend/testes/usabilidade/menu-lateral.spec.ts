@@ -72,6 +72,18 @@ describe('Usabilidade: menu lateral recolhível', () => {
       expect(parseFloat(css.height)).toBeGreaterThanOrEqual(24);
     });
 
+    it('a tela aberta pelo roteador entra com animação; o router-outlet em si não anima', async () => {
+      const t = await abrirShell();
+      const pagina = t.raiz.querySelector('main.pagina')!;
+      // O jsdom não interpreta "animation": confere a regra na folha de estilo e quem casa com o seletor dela.
+      const regra = Array.from(estilo.sheet!.cssRules).find(
+        (r): r is CSSStyleRule => r instanceof CSSStyleRule && r.style.cssText.includes('entrar-tela'))!;
+      expect(regra).toBeDefined();
+      const tela = pagina.querySelector(':scope > :not(router-outlet)')!;
+      expect(tela.matches(regra.selectorText)).toBe(true);
+      expect(pagina.querySelector('router-outlet')!.matches(regra.selectorText)).toBe(false);
+    });
+
     it('a marca e o título da barra não aparecem sublinhados', async () => {
       const t = await abrirShell();
       expect(getComputedStyle(t.marca()).textDecoration).toContain('none');

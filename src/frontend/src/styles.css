@@ -193,6 +193,13 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 
 .conteudo { min-width: 0; }
 .pagina { padding: 32px 36px 56px; max-width: 1380px; }
+/* Troca de tela: a tela nova entra com um fade curto e sobe um pouco. O roteador só cria um componente novo ao trocar
+   de tela, então filtro, página da tabela ou âncora (query params, #) não animam. Sem animação com
+   prefers-reduced-motion (regra global acima). Sem "fill" para não deixar transform (que mudaria o position: fixed
+   dos modais) depois do fim. */
+.pagina > :not(router-outlet) { animation: entrar-tela 0.2s ease-out; }
+@keyframes entrar-tela { from { opacity: 0; transform: translateY(8px); } }
+
 .cabecalho-pagina {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   margin-bottom: 24px;

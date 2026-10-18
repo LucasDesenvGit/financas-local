@@ -17,6 +17,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
     - nada disso acontece com movimento reduzido no sistema.
 - **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
   - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
+- **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
+  - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
+  - Sem animação com movimento reduzido no sistema.
+
 ### Funcionalidades
 - **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
   - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
