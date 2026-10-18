@@ -5,6 +5,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **Fatura do mês dos cartões com valor errado** (#144). A fatura do mês somava só as compras de 1 a 31 do mês, então ficava muito abaixo da fatura do banco. Agora ela é a fatura que fecha no mês:
+  - **Já fechada:** vale o total que o banco informou.
+  - **Ainda aberta:** soma as compras desde o fechamento anterior e a parcela do mês, menos os estornos.
+  - **Na tela:** o Painel e Contas e cartões mostram quando a fatura fecha e quando vence.
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades

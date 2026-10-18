@@ -68,7 +68,7 @@ export const GLOSSARIO = {
   },
   faturaDoMes: {
     termo: 'Fatura do mês',
-    definicao: 'O que entrou no cartão neste mês: compras e a parcela do mês das compras parceladas. Parcelas futuras e o pagamento da fatura ficam de fora.'
+    definicao: 'A fatura do cartão que fecha neste mês: compras desde o fechamento anterior e a parcela do mês das parceladas, menos estornos. Depois de fechada, vale o total informado pelo banco.'
   },
   melhorDiaCompra: {
     termo: 'Melhor dia de compra',
