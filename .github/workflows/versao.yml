@@ -99,7 +99,7 @@ jobs:
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
           if ($estado.versao -ne "${{ steps.versao.outputs.versao }}") { throw "versão do site: $($estado.versao)" }
           # Cria o usuário: é o dado que a atualização e a desinstalação não podem perder.
-          '{"login":"teste","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
+          '{"login":"verificador","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
