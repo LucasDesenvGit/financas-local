@@ -336,11 +336,19 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 .kpis-mes { align-items: start; }
 .kpis-mes .kpi { position: relative; overflow: hidden; align-content: start; }
 
-/* Painel: divisórias entre as seções ("Situação hoje", "Mês de …"), abaixo do título de cada bloco e entre os
-   cartões de "Faturas do mês". Linha fina em --linha, nos dois temas. Ficam aqui (e não no componente) porque os
-   testes carregam o styles.css; só valem dentro de app-painel. */
-app-painel .secao-painel + .secao-painel { border-top: 1px solid var(--linha); margin-top: 20px; padding-top: 18px; }
-app-painel .painel-bloco > .bloco-titulo { border-bottom: 1px solid var(--linha); padding-bottom: 12px; margin-bottom: 14px; }
+/* ---------------------------------------------------------------- Divisórias (todas as telas)
+   Linha fina em --linha, nos dois temas, separando título de conteúdo e um assunto do outro:
+   - abaixo do cabeçalho da página (h1);
+   - entre as seções de uma tela (Painel: "Situação hoje" × "Mês de …"; Contas e cartões: "Contas" × "Cartões");
+   - abaixo do título de todo bloco: .bloco-titulo, .cabecalho-bloco (Investimentos/FIIs) ou o h2 solto que abre o
+     bloco (Visão anual, Relatórios, Projeção, Configurações…), sem precisar mudar o HTML de cada tela;
+   - entre os cartões de "Faturas do mês" no Painel.
+   Ficam aqui (e não nos componentes) porque os testes carregam o styles.css. */
+.cabecalho-pagina { padding-bottom: 18px; border-bottom: 1px solid var(--linha); }
+.secao-painel + .secao-painel, .secao-contas + .secao-contas { border-top: 1px solid var(--linha); margin-top: 20px; padding-top: 18px; }
+.painel-bloco > .bloco-titulo, .painel-bloco > .cabecalho-bloco, .painel-bloco > h2:first-child {
+  border-bottom: 1px solid var(--linha); padding-bottom: 12px; margin-bottom: 14px;
+}
 app-painel .lista-faturas { border-top: 1px solid var(--linha); }
 app-painel .lista-faturas li + li { border-top: 1px solid var(--linha); padding-top: 8px; }
 .kpis-mes .kpi::before {
@@ -461,8 +469,7 @@ app-painel .lista-faturas li + li { border-top: 1px solid var(--linha); padding-
 @media (max-width: 760px) { .paginacao { justify-content: center; } .paginacao-info { width: 100%; text-align: center; } }
 
 /* ---------------------------------------------------------------- Contas e metas */
-.grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; margin-top: 10px; }
-.cartao-conta, .cartao-meta {
+.grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; margin-top: 10px; }.cartao-conta, .cartao-meta {
   background: var(--superficie); border-radius: var(--raio);
   padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--sombra);
   position: relative; overflow: hidden;
