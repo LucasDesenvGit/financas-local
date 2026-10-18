@@ -117,6 +117,10 @@ jobs:
           if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
+          # Os arquivos de dados continuam legíveis (permissões herdadas da pasta) depois da segunda configuração.
+          foreach ($p in "sql\FinancasLocal.db", "certificado\financaslocal.pfx", "configuracao.json") {
+            [IO.File]::ReadAllBytes("$env:ProgramData\FinancasLocal\dados\$p") | Out-Null
+          }
 
       - name: Desinstalar (mantém os dados, tira o certificado)
         shell: pwsh
