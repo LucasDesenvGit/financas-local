@@ -141,7 +141,7 @@ import { Icones } from '../compartilhado/icones';
         <article class="kpi kpi-faturas">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Faturas do mês</span>
           <strong [class.negativo]="d.totalFaturasDoMes > 0">{{ d.totalFaturasDoMes | currency }}</strong>
-          <small>compras e parcelas lançadas no mês, sem parcelas futuras</small>
+          <small>a fatura de cada cartão que fecha no mês</small>
           @if (d.faturasDoMes?.length) {
             <ul class="lista-faturas">
               @for (f of d.faturasDoMes; track f.contaId) {
@@ -151,7 +151,8 @@ import { Icones } from '../compartilhado/icones';
                   <span class="valor">{{ f.valorMes | currency }}</span>
                   @if (f.parcelasMes > 0) { <span class="texto-suave detalhe-fatura">{{ f.parcelasMes | currency }} em parcelas</span> }
                   @if (f.vencimento && f.situacao) {
-                    <span class="texto-suave detalhe-fatura">fatura vence {{ f.vencimento | date: 'dd/MM' }}
+                    <span class="texto-suave detalhe-fatura">@if (f.fechamento) {fecha {{ f.fechamento | date: 'dd/MM' }}, vence} @else {fatura vence}
+                      {{ f.vencimento | date: 'dd/MM' }}
                       <span class="etiqueta" [class.etiqueta-sucesso]="f.situacao === 'paga'" [class.etiqueta-alerta]="f.situacao === 'fechada'">{{ rotuloSituacao(f.situacao) }}</span></span>
                   }
                 </li>
