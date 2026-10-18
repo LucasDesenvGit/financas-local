@@ -119,10 +119,13 @@ public class RegrasController : BaseController
     private readonly FinancasDbContext _db;
     private readonly CategorizacaoService _categorizacao;
 
-    public RegrasController(FinancasDbContext db, CategorizacaoService categorizacao)
+    private readonly TransferenciasService _transferencias;
+
+    public RegrasController(FinancasDbContext db, CategorizacaoService categorizacao, TransferenciasService transferencias)
     {
         _db = db;
         _categorizacao = categorizacao;
+        _transferencias = transferencias;
     }
 
     [HttpGet]
@@ -196,6 +199,8 @@ public class RegrasController : BaseController
             await _db.SaveChangesAsync(ct);
             _db.ChangeTracker.Clear();
         }
+        // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
+        if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         return new ResultadoAplicacaoDto(alteradas);
     }
 

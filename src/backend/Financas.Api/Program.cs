@@ -112,6 +112,7 @@ builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
 builder.Services.AddScoped<RegraDescricaoService>();
+builder.Services.AddScoped<TransferenciasService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
 builder.Services.AddScoped<SugestaoOrcamentoService>();
@@ -179,6 +180,18 @@ var app = builder.Build();
 
 // Cria/atualiza o banco antes de atender (ADR 0003): a instalação pelo .msi não tem sqlite3 nem bash.
 EsquemaBanco.Aplicar(caminhoBanco, app.Logger);
+
+// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco.
+try
+{
+    using var escopo = app.Services.CreateScope();
+    if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
+        await escopo.ServiceProvider.GetRequiredService<FinancasDbContext>().SaveChangesAsync();
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Não foi possível conferir as transferências ao iniciar.");
+}
 
 // ---------------------------------------------------------------- Pipeline
 app.UseMiddleware<CabecalhosSegurancaMiddleware>();

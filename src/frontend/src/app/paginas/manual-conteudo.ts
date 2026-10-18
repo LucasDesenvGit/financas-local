@@ -272,7 +272,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
         passos: [
           'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
-          '“fora dos gastos”: a transação não entra nas despesas nem nas receitas (transferência ou “ignorar nos relatórios”).',
+          '“fora dos gastos”: a transação não entra nas despesas nem nas receitas (transferência entre contas suas, pagamento de fatura, investimento ou “ignorar nos relatórios”).',
           '“somando nos gastos” (ou “nas receitas”): um pagamento de fatura ou uma transferência entre contas suas está contando em dobro. Veja como corrigir no capítulo de categorização.',
           '“2/10”: parcela 2 de 10. “pendente”: ainda não efetivada. “emergência”: gasto marcado como emergência. “open finance”: veio do banco.',
           'Na coluna Conta, o selo do banco e “cartão de crédito” quando é cartão.'
@@ -427,7 +427,9 @@ export const MANUAL: CapituloManual[] = [
           'As compras do cartão já entram como gasto. Pagar a fatura não é um gasto novo — só tira dinheiro da conta para o cartão.',
           'Filtre “Lançamento” por “Pagamento de fatura” (ou “Entre suas contas”) e procure a etiqueta “somando nos gastos”.',
           'Entre no “Editar categorias”, use “Todas as N transações do filtro” e escolha a categoria “Pagamento de fatura” (ou “Transferências”).',
-          'Essas categorias são do tipo transferência: as transações passam a ficar “fora dos gastos”.'
+          'Essas categorias são do tipo transferência: as transações passam a ficar “fora dos gastos”.',
+          'Na categoria “Transferências”, só fica fora o que é entre contas suas: o par aparece na outra conta (mesmo valor, até 5 dias), o banco informa o mesmo titular, a transferência foi lançada pelo site ou é dinheiro guardado numa reserva. Pix e TED para outra pessoa (ou recebidos de outra pessoa, como salário) contam como despesa ou receita.',
+          'Mandou dinheiro para uma conta sua que não está conectada? O site não vê o par: crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela. Outras categorias do tipo transferência ficam sempre fora.'
         ],
         abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } }],
         termos: ['tipoLancamento']

@@ -20,13 +20,15 @@ public class SincronizacaoService
     private readonly CategorizacaoService _categorizacao;
     private readonly RegraDescricaoService _descricoes;
     private readonly ContaService _contas;
+    private readonly TransferenciasService _transferencias;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
         CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
-        ILogger<SincronizacaoService> logger)
+        TransferenciasService transferencias, ILogger<SincronizacaoService> logger)
     {
         _descricoes = descricoes;
+        _transferencias = transferencias;
         _db = db;
         _pluggy = pluggy;
         _config = config;
@@ -224,6 +226,8 @@ public class SincronizacaoService
             logDb.TransacoesAtualizadas = atualizadas;
             logDb.Mensagem = $"{contasPluggy.Count} conta(s) processada(s).";
             await _db.SaveChangesAsync(ct);
+            // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
+            if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
 
             return new ResultadoSincronizacaoDto(true, novas, atualizadas, null);
         }
