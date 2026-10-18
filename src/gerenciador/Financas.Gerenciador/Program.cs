@@ -14,7 +14,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         if (args.Length == 2 && args[0] == "--servico" && args[1] is "ligar" or "desligar" or "reiniciar")
-            return AcoesElevadas.Servico(args[1]);
+            return ServicoWindows.Executar(args[1]);
         if (args.Length == 2 && args[0] == "--backup") return AcoesElevadas.Backup(args[1]);
 
         using var unico = new Mutex(true, NomeUnico, out var primeiro);

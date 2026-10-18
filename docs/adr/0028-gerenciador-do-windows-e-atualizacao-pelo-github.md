@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-17 (issue #119)
-- **Relacionadas:** [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (instalador .msi), [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell), [0005](0005-segredos-criptografados-com-data-protection.md) (segredos)
+- **Relacionadas:** [0033](0033-gerenciador-no-linux-com-avalonia.md) (gerenciador no Linux), [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (instalador .msi), [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell), [0005](0005-segredos-criptografados-com-data-protection.md) (segredos)
 
 ## Contexto
 
@@ -70,7 +70,7 @@ A issue #119 pediu um "gerenciadorzinho" para isso.
   - **Saída de rede nova**, só no gerenciador (a API não muda): `api.github.com`, `github.com` e o domínio de download de arquivos do GitHub.
   - **Sem assinatura de código** (decisão em aberto na #119), o SHA256 só prova que o arquivo é o mesmo que foi publicado no Release, e não quem o publicou. Quem tiver acesso de escrita ao repositório pode publicar um instalador. Com assinatura, o gerenciador passa a conferi-la também.
   - **O repositório é fixo** (`Instalacao.Repositorio`): um fork precisa trocá-lo.
-  - **Só Windows.** No Linux continuam os scripts.
+  - **Só Windows.** O Linux ganhou o seu gerenciador na [ADR 0033](0033-gerenciador-no-linux-com-avalonia.md).
   - **Mais um projeto na solução.** O `EnableWindowsTargeting` deixa a CI do Linux compilá-lo, mas não executá-lo.
 - **Atualização de 2026-10-18 (instalação pelos scripts):**
   - O gerenciador acha o site pelo registro do serviço `FinancasLocal` (pasta da API e o `appsettings` dela), e não pela própria pasta. Assim ele funciona também na instalação feita pelo `instalar-windows.cmd` ou pelo `3-publicar-atualizar.sh`.
@@ -83,6 +83,10 @@ A issue #119 pediu um "gerenciadorzinho" para isso.
     - no script, na do usuário, e `-SemAtalhoNaAreaDeTrabalho` não cria.
   - A janela segue as cores do site e o tema claro ou escuro do Windows (`Tema.cs`, `Controles.cs`).
   - Os controles desenhados continuam `Button` e `CheckBox` por baixo, para o teclado e o leitor de tela não mudarem.
+- **Atualização de 2026-10-18 (núcleo comum com o Linux, ADR 0033):**
+  - `Instalacao`, `VerificadorSituacao` e a cópia do banco foram para o `Financas.Gerenciador.Nucleo` (`net10.0`), que o gerenciador do Linux também usa.
+  - O serviço do Windows ficou no `ServicoWindows`: o estado, a pasta da API pelo registro e o `--servico`, que roda elevado.
+  - A janela WinForms e o comportamento no Windows não mudaram. O `.msi` leva o `Financas.Gerenciador.Nucleo.dll` junto, na mesma pasta.
 - **Na prática:**
   - O Release precisa ter o `.msi` e o `SHA256SUMS.txt` (formato do `sha256sum`), gerados pelo workflow de versão (ADR 0029).
   - Sem os dois, o gerenciador diz que não há versão nova para instalar.

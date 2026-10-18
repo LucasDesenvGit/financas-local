@@ -1,0 +1,20 @@
+<!-- "Ver o registro do serviço": as últimas linhas do journald, só para leitura (o que a API escreveu, mesmo sem subir). -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Financas.Gerenciador.JanelaRegistro"
+        Title="Registro do serviço do Finanças Local"
+        Icon="avares://Financas.Gerenciador.Linux/Recursos/icone.png"
+        Width="760" Height="520" MinWidth="420" MinHeight="300"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="16">
+    <TextBlock DockPanel.Dock="Top" Classes="suave" TextWrapping="Wrap" Margin="0,0,0,10"
+               Text="As últimas 200 linhas, da mais antiga para a mais nova. Ao pedir ajuda, copie daqui o trecho do erro." />
+    <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right" ItemSpacing="8" Margin="0,12,0,0">
+      <Button x:Name="BotaoAtualizar" Content="_Atualizar" />
+      <Button x:Name="BotaoFechar" Classes="primario" Content="_Fechar" IsCancel="True" IsDefault="True" />
+    </WrapPanel>
+    <TextBox x:Name="Texto" IsReadOnly="True" TextWrapping="NoWrap" FontFamily="monospace" FontSize="12"
+             AcceptsReturn="True" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+             AutomationProperties.Name="Registro do serviço" />
+  </DockPanel>
+</Window>
