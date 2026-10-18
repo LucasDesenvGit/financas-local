@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -22,7 +23,8 @@ interface LinhaOrcamento {
 
 @Component({
   selector: 'app-orcamentos',
-  imports: [FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent, ModalComponent, SugestaoOrcamentosComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent, ModalComponent, SugestaoOrcamentosComponent,
+    CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Orçamentos</h1>
@@ -68,8 +70,10 @@ interface LinhaOrcamento {
                   <br><small class="texto-emergencia">{{ l.orcamento.gastoEmergencia | currency }} emergência</small>
                 }</td>
               <td>
-                <input type="number" min="0" step="10" [(ngModel)]="l.valorEditado" (change)="salvar(l)" class="input-compacto"
-                  [attr.aria-label]="'Limite de ' + l.categoria.nome">
+                <!-- #132: salva ao sair do campo com o valor mudado, ou com Enter. -->
+                <app-campo-valor compacto enterConfirma [(ngModel)]="l.valorEditado" (confirmado)="salvar(l)"
+                  [rotulo]="'Limite de ' + l.categoria.nome" />
+
               </td>
               <td>
                 @if (l.orcamento; as orc) {

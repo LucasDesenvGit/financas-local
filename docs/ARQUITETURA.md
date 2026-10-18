@@ -46,7 +46,7 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 | Pasta | Responsabilidade |
 |---|---|
 | `src/app/core/` | `ApiService` (todas as chamadas HTTP), modelos (interfaces TypeScript), autenticação, tema, privacidade. |
-| `src/app/compartilhado/` | Componentes reutilizáveis: gráfico (Chart.js), modal, paginação, calculadora, pipe de moeda que respeita "ocultar valores". |
+| `src/app/compartilhado/` | Componentes reutilizáveis: gráfico (Chart.js), modal, paginação, calculadora, pipe de moeda que respeita "ocultar valores", campo de valor em dinheiro (`app-campo-valor`, [ADR 0032](adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)). |
 | `src/app/layout/` | Estrutura da tela (menu lateral). |
 | `src/app/paginas/` | Uma página por rota. |
 | `src/styles.css` | Tema (tokens de cor claros/escuros) e componentes visuais globais. |

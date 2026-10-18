@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -23,7 +24,7 @@ const FATURAS_VISIVEIS = 6;
  */
 @Component({
   selector: 'app-contas',
-  imports: [FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent],
+  imports: [FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
@@ -278,12 +279,12 @@ const FATURAS_VISIVEIS = 6;
                   @for (t of tipos; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
                 </select>
               </label>
-              <label>Saldo inicial (R$)
-                <input type="number" name="saldoInicial" [(ngModel)]="fm.saldoInicial" step="0.01">
+              <label>Saldo inicial
+                <app-campo-valor name="saldoInicial" [(ngModel)]="fm.saldoInicial" negativo />
               </label>
               <label>Número / identificação <input name="numero" [(ngModel)]="fm.numero" maxlength="60"></label>
               @if (fm.tipo === TipoConta.CartaoCredito) {
-                <label>Limite (R$) <input type="number" name="limite" [(ngModel)]="fm.limiteCredito" min="0" step="0.01"></label>
+                <label>Limite <app-campo-valor name="limite" [(ngModel)]="fm.limiteCredito" /></label>
                 <label>Dia de fechamento <input type="number" name="fech" [(ngModel)]="fm.diaFechamento" min="1" max="31"></label>
                 <label>Dia de vencimento <input type="number" name="venc" [(ngModel)]="fm.diaVencimento" min="1" max="31"></label>
               }

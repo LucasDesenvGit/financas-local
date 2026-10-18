@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent, SIMBOLOS_MOEDA } from '../compartilhado/campo-valor.component';
 import { ChartConfiguration } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
@@ -38,7 +39,6 @@ const COR_SELIC = CORES_GRAFICO.selic;
 const COR_MERCADO = '#8fd5b4';
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 /** Símbolo curto para rótulos de campo (o pipe de moeda já formata os valores). */
-const SIMBOLOS_MOEDA: Record<string, string> = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF' };
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
 type Aba = 'resumo' | 'fii' | 'rv' | 'of' | 'reservas';
@@ -52,7 +52,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -422,8 +422,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <div class="grade-campos">
             <label>Data <input type="date" name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" required [max]="hoje"></label>
             <label>Quantidade <input type="number" name="qtd" [(ngModel)]="fo.quantidade" required min="0.000001" step="any"></label>
-            <label>Preço por cota ({{ simbolo(fo.moeda) }}) <input type="number" name="preco" [(ngModel)]="fo.precoUnitario" required min="0" step="any"></label>
-            <label>Taxas/corretagem ({{ simbolo(fo.moeda) }}) <input type="number" name="taxas" [(ngModel)]="fo.taxas" min="0" step="0.01"></label>
+            <label>Preço por cota <app-campo-valor name="preco" [(ngModel)]="fo.precoUnitario" [moeda]="fo.moeda" [casas]="4" obrigatorio /></label>
+            <label>Taxas/corretagem <app-campo-valor name="taxas" [(ngModel)]="fo.taxas" [moeda]="fo.moeda" /></label>
           </div>
           @if (fo.moeda !== 'BRL') {
             <div class="grade-campos">
@@ -535,7 +535,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           }
           <label class="checkbox"><input type="checkbox" name="manual" [(ngModel)]="fa.precoManual"> Informar a cotação manualmente</label>
           @if (fa.precoManual) {
-            <label>Cotação atual ({{ simbolo(ativoEditado?.moeda) }}) <input type="number" name="preco" [(ngModel)]="fa.precoAtual" min="0.0001" step="any" required></label>
+            <label>Cotação atual <app-campo-valor name="preco" [(ngModel)]="fa.precoAtual" [moeda]="ativoEditado?.moeda" [casas]="4"
+              obrigatorio [minimo]="0.0001" /></label>
             <p class="texto-suave">Útil quando a fonte automática não encontra o ativo. Desmarque para voltar à cotação automática.</p>
           }
           <div class="rodape-form">
@@ -588,8 +589,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <td class="direita">{{ l.valor | currency }}</td>
                     <td class="direita"><input type="number" class="campo-curto" [(ngModel)]="l.quantidade" min="0" step="any"
                       [disabled]="l.jaImportada"></td>
-                    <td class="direita"><input type="number" class="campo-curto" [(ngModel)]="l.precoUnitario" min="0" step="any"
-                      [disabled]="l.jaImportada">
+                    <td class="direita"><app-campo-valor class="campo-curto" compacto [(ngModel)]="l.precoUnitario" [casas]="4"
+                      [disabled]="l.jaImportada" [rotulo]="'Preço por cota de ' + (l.ticker || 'ativo')" />
                       @if (l.fechamentoNoDia !== null) { <br><small class="texto-suave">fech. {{ l.fechamentoNoDia | currency }}</small> }</td>
                     <td><small class="texto-suave">{{ l.origem ?? 'preencha' }}</small></td>
                   </tr>
@@ -618,8 +619,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <p class="texto-suave">Abra a reserva no app da instituição e informe o saldo que aparece lá. Os lançamentos até essa
             data já estão nesse valor; os seguintes são somados a ele.</p>
           <div class="grade-campos">
-            <label>Saldo na instituição (R$)
-              <input type="number" name="saldo" [(ngModel)]="fc.saldo" required min="0" step="0.01"></label>
+            <label>Saldo na instituição
+              <app-campo-valor name="saldo" [(ngModel)]="fc.saldo" obrigatorio /></label>
             <label>Conferido em <input type="date" name="data" [(ngModel)]="fc.data" required [max]="hoje"></label>
           </div>
           <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong></p>

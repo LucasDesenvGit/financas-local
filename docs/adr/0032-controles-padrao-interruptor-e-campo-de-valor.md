@@ -33,3 +33,33 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
   - `appearance: none` desenha o controle à mão: o visual depende do CSS do site e precisa ser conferido nos dois temas a cada mudança de tokens de cor;
   - fica a cargo de quem cria uma tela escolher certo entre interruptor e caixa de marcar: um interruptor num formulário com "Salvar" engana.
 - **Na prática:** efeito imediato → `<label class="interruptor"><input type="checkbox" role="switch" …> Rótulo</label>`; formulário com "Salvar" → `label.checkbox`. Teste em `testes/usabilidade/interruptor.spec.ts`.
+
+## Contexto (campo de valor, #132)
+
+Os campos de dinheiro eram `<input type="number">` puros, cada tela com seu `min`/`step`. O campo numérico do navegador não entende o jeito brasileiro: "1.500" podia virar 1,5, colar "R$ 1.234,56" do app do banco deixava o campo vazio, a rodinha do mouse mudava o valor sem querer e as setinhas somavam 0,01.
+
+## Alternativas consideradas (campo de valor)
+
+- **Biblioteca de máscara** — resolve a formatação ao digitar, mas é dependência externa para um caso só.
+- **Manter `type="number"` com `lang="pt-BR"`** — o comportamento com vírgula e ponto varia por navegador e continua sem aceitar o "R$" colado.
+- **Componente próprio `app-campo-valor`** com `<input type="text" inputmode="decimal">`, que formata enquanto se digita e lê do jeito completo o que é colado.
+
+## Decisão (campo de valor)
+
+Todo campo de **dinheiro** usa o **`app-campo-valor`** (`compartilhado/campo-valor.component.ts`), um `ControlValueAccessor` + `Validator` que entrega ao `ngModel` um `number` (ou `null`), como antes — **a API não muda**.
+
+- Lê "1234,56", "1.234,56", "R$ 1.234,56" e "1234.56". Regra do ponto sozinho (*julgamento próprio*): um ponto seguido de exatamente 3 dígitos é milhar ("1.500" = 1500); com outra quantidade é decimal.
+- **Formata enquanto se digita:** os pontos de milhar entram a cada tecla ("124214" vira "124.214"), sem tirar o cursor do lugar (a posição é contada pelos dígitos). Um ponto digitado vira a vírgula decimal, e letras são ignoradas. Backspace/Delete sobre um ponto de milhar apaga o dígito ao lado. **Colar** (ou trocar o texto todo de uma vez) usa a leitura completa. Ao **sair**, completa as casas ("124.214,00").
+- Parâmetros: `moeda` (símbolo dentro do campo, decorativo; o nome acessível diz "em reais"/"em dólares"), `casas` (máximo de casas, mínimo 2; cotação usa 4), `minimo`, `obrigatorio`, `negativo` (saldo inicial, aporte), `compacto` e `rotulo` (célula de tabela), `confirmado` + `enterConfirma` (valor salvo na própria linha, como no orçamento).
+- Erro em texto perto do campo, com `aria-invalid` e `aria-describedby`, só depois de sair do campo (WCAG 3.3.1). O rótulo visível continua (WCAG 3.3.2); o "(R$)" sai do rótulo porque passa para dentro do campo.
+- **Ficam como estão:** quantidade de cotas, câmbio, parâmetros da Parametrização (nem todos são dinheiro), dias e o campo da Sugestão de orçamentos (que esconde o valor com "ocultar valores"). "Ocultar valores" não vale nos campos de edição: quem edita precisa ver o número (*julgamento próprio*).
+
+## Consequências (campo de valor)
+
+- **Positivas:** o mesmo campo em todas as telas; colar do banco funciona; nada de valor mudado pela rodinha; os valores salvos na API são os mesmos números.
+- **Negativas:**
+  - a regra do ponto sozinho tem um caso ambíguo: "12.345" vira doze mil, mesmo numa cotação em dólar que fosse 12,345 — quem digita com vírgula não é afetado;
+  - a conta dentro do campo ("120+35,50"), opcional na issue, ficou de fora;
+  - o componente desenha a "caixa" do campo (fundo, borda, foco) por fora do `<input>`: mudança no visual dos campos precisa olhar os dois;
+  - formatar ao digitar exige controlar o cursor à mão (`formatarDigitando`): um caso de edição não previsto pode deixar o cursor num lugar estranho; os testes cobrem digitar no fim e no meio, apagar o ponto de milhar e colar.
+- **Na prática:** campo de dinheiro novo → `<label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>`. Testes em `testes/regressao/campo-valor.spec.ts` (inclui uma trava que falha se um campo de dinheiro voltar a ser `type="number"`) e `testes/usabilidade/campo-valor.spec.ts`.

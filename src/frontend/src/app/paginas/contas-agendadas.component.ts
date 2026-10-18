@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -15,7 +16,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas a pagar</h1>
@@ -135,7 +136,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Descrição <input name="descricao" [(ngModel)]="fm.descricao" required maxlength="150"></label>
           <div class="grade-campos">
-            <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="fm.valor" required min="0.01" step="0.01"></label>
+            <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
             <label>Próximo vencimento <input type="date" name="venc" [(ngModel)]="fm.proximoVencimento" required></label>
             <label>Recorrência
               <select name="rec" [(ngModel)]="fm.recorrencia">

@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -29,7 +30,7 @@ const LINHAS_VISIVEIS = 8;
  */
 @Component({
   selector: 'app-conferir-investimentos',
-  imports: [FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent],
+  imports: [FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent, CampoValorComponent],
   template: `
     <app-modal [aberto]="aberto()" titulo="Conferir investimentos" (fechar)="fechar.emit()">
       <div class="formulario conferencia">
@@ -89,7 +90,7 @@ const LINHAS_VISIVEIS = 8;
                             (ngModelChange)="recalcular(l)" [disabled]="!l.marcada">
                         </label>
                         <label>Preço por cota
-                          <input type="number" class="campo-curto" min="0" step="any" [(ngModel)]="l.preco" [disabled]="!l.marcada">
+                          <app-campo-valor class="campo-curto" compacto [casas]="4" [(ngModel)]="l.preco" [disabled]="!l.marcada" />
                         </label>
                         @if (l.debitoId !== null && l.debitoId === l.item.debitoSugeridoId && l.item.fechamentoNoDia !== null) {
                           <small class="texto-suave">fechamento do dia: {{ l.item.fechamentoNoDia | currency }}</small>

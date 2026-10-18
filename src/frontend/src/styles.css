@@ -361,6 +361,27 @@ label.interruptor {
 .interruptor input[type="checkbox"]:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
 .interruptor input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Campo de valor em dinheiro (#132, ADR 0032): a caixa com o símbolo da moeda e o texto tem a mesma cara dos outros
+   campos (fundo, borda, foco); o <input> de dentro fica sem borda. */
+app-campo-valor { display: grid; gap: 4px; min-width: 0; }
+.campo-valor {
+  display: flex; align-items: center; gap: 6px; padding: 0 12px; min-width: 0;
+  background: var(--superficie-2); border: 1px solid transparent; border-radius: var(--raio-pequeno);
+  transition: border-color var(--transicao), box-shadow var(--transicao), background-color var(--transicao);
+}
+.campo-valor:hover { border-color: var(--linha); }
+.campo-valor:focus-within { background: var(--superficie); border-color: var(--primaria); box-shadow: 0 0 0 4px var(--primaria-suave); }
+.campo-valor-simbolo { color: var(--texto-suave); font-size: 0.88rem; font-weight: 500; flex-shrink: 0; }
+.campo-valor input {
+  border: 0; background: transparent; padding: 9px 0; min-width: 0; font-variant-numeric: tabular-nums;
+}
+.campo-valor input:hover, .campo-valor input:focus { border-color: transparent; background: transparent; box-shadow: none; }
+.campo-valor.campo-valor-erro { border-color: var(--negativo); }
+.campo-valor-compacto { padding: 0 10px; }
+.campo-valor-compacto input { padding: 6px 0; text-align: right; }
+.campo-valor-mensagem { color: var(--negativo); font-size: 0.8rem; font-weight: 500; }
+.campo-valor:has(input:disabled) { opacity: 0.6; }
+
 .formulario { display: grid; gap: 16px; }
 .grade-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
 .rodape-form { display: flex; gap: 10px; align-items: center; padding-top: 4px; }

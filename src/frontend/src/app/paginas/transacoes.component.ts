@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -81,7 +82,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 @Component({
   selector: 'app-transacoes',
   imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
-    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent],
+    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -339,7 +340,7 @@ function dataCurta(iso: string, comAno: boolean): string {
                 </select>
               </label>
               <label>Data <input type="date" name="data" [(ngModel)]="fm.data" required></label>
-              <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="fm.valor" required min="0.01" step="0.01"></label>
+              <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
             </div>
             @if (!contasManuais().length) {
               <p class="erro">Crie uma conta manual (ex.: "Carteira") em Contas e cartões para lançar manualmente.</p>
@@ -471,7 +472,7 @@ function dataCurta(iso: string, comAno: boolean): string {
               </select>
             </label>
             <label>Data <input type="date" name="data" [(ngModel)]="tf.data" required></label>
-            <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="tf.valor" required min="0.01" step="0.01"></label>
+            <label>Valor <app-campo-valor name="valor" [(ngModel)]="tf.valor" obrigatorio [minimo]="0.01" /></label>
           </div>
           <label>Descrição <input name="descricao" [(ngModel)]="tf.descricao" maxlength="200" placeholder="Transferência"></label>
           <div class="rodape-form">

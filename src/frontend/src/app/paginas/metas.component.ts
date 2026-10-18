@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Meta, PlanoMeta, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
@@ -14,7 +15,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-metas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
@@ -133,7 +134,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
           <div class="grade-campos">
-            <label>Valor alvo (R$) <input type="number" name="alvo" [(ngModel)]="fm.valorAlvo" required min="0.01" step="0.01"></label>
+            <label>Valor alvo <app-campo-valor name="alvo" [(ngModel)]="fm.valorAlvo" obrigatorio [minimo]="0.01" /></label>
             <label>Data alvo <input type="date" name="data" [(ngModel)]="fm.dataAlvo"></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
@@ -142,8 +143,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
               @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
             </select>
           </label>
-          <label>Valor inicial já guardado (R$)
-            <input type="number" name="atual" [(ngModel)]="fm.valorAtual" min="0" step="0.01">
+          <label>Valor inicial já guardado
+            <app-campo-valor name="atual" [(ngModel)]="fm.valorAtual" />
           </label>
           @if (opcoesCofrinho(fm).length) {
             <label>Qual cofrinho (reserva)?
@@ -179,8 +180,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
     <app-modal [aberto]="aporteMeta !== null" [titulo]="'Aporte · ' + (aporteMeta?.nome ?? '')" (fechar)="aporteMeta = null">
       <form (ngSubmit)="salvarAporte()" class="formulario">
-        <label>Valor (R$) — use negativo para retirada
-          <input type="number" name="aporte" [(ngModel)]="valorAporte" required step="0.01">
+        <label>Valor — use negativo para retirada
+          <app-campo-valor name="aporte" [(ngModel)]="valorAporte" obrigatorio negativo />
         </label>
         <div class="rodape-form">
           <span class="cresce"></span>
