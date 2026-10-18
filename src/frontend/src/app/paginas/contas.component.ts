@@ -148,7 +148,8 @@ const FATURAS_VISIVEIS = 6;
                     <span class="texto-suave">Fatura de {{ nomeMesAtual }}</span>
                     <strong class="negativo">{{ faturaDoMes(c) | currency }}</strong>
                     @if (c.faturaMes?.vencimento && c.faturaMes?.situacao; as situacao) {
-                      <small class="texto-suave">vence {{ c.faturaMes!.vencimento | date: 'dd/MM' }}
+                      <small class="texto-suave">@if (c.faturaMes!.fechamento) {fecha {{ c.faturaMes!.fechamento | date: 'dd/MM' }},}
+                        vence {{ c.faturaMes!.vencimento | date: 'dd/MM' }}
                         <span class="etiqueta" [class.etiqueta-sucesso]="situacao === 'paga'"
                           [class.etiqueta-alerta]="situacao === 'fechada'">{{ nomeSituacao(situacao) }}</span></small>
                     } @else {
@@ -430,7 +431,7 @@ export class ContasComponent implements OnInit {
     return digitos.length >= 4 ? digitos.slice(-4) : '••••';
   }
 
-  /** O que entrou no cartão neste mês (compras e a parcela do mês), a mesma conta do Painel (#103). */
+  /** A fatura do cartão que fecha neste mês, a mesma conta do Painel (#144). */
   faturaDoMes(c: Conta): number {
     return c.faturaMes?.valorMes ?? 0;
   }

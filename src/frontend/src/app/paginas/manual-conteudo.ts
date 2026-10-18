@@ -229,8 +229,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Fatura do mês × dívida total',
         paraQueServe: 'Não confundir o que entrou no cartão neste mês com tudo o que você deve nele.',
         passos: [
-          '“Fatura de <mês>” é o que entrou no cartão no mês: compras e a parcela do mês das compras parceladas.',
-          'Abaixo dela aparece quando vence a fatura do mês e a situação (paga, fechada ou em aberto).',
+          '“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela das compras parceladas, menos os estornos. Depois de fechada, vale o total que o banco informou.',
+          'Abaixo dela aparecem quando a fatura fecha, quando vence e a situação (paga, fechada ou em aberto).',
           '“Dívida total” é tudo o que você deve no cartão hoje, inclusive as parcelas que ainda vão vencer.',
           'A barra mostra quanto do limite está em uso e quanto ainda está disponível (ou quanto passou do limite).',
           '“Melhor dia de compra” é o dia seguinte ao fechamento: o que você compra a partir dele só entra na fatura seguinte.'

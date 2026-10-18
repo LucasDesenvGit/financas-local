@@ -325,16 +325,19 @@ export interface Painel {
   despesasEmergenciaMes: number;
   dividaFinanciamentos: number; dividaEmprestimos: number;
   diasProximosVencimentos: number;
-  /** UX-12: o que cada cartão lançou no mês escolhido (só transações do mês, sem parcelas futuras). */
+  /** UX-12/#144: a fatura de cada cartão que fecha no mês escolhido. */
   faturasDoMes: FaturaMes[] | null; totalFaturasDoMes: number;
   /** #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto). */
   poucoInformativas: number; poucoInformativasDesde: string | null; exemploPoucoInformativa: string | null;
 }
 
 export interface FaturaMes {
+  /** #144: <c>valorMes</c> é o total do banco na fatura fechada; na aberta, a soma das transações do ciclo. */
   contaId: number; cartao: string; valorMes: number; parcelasMes: number;
-  /** Fatura com vencimento no mês, só como referência (pode ser null). */
+  /** Fatura que fecha no mês (<c>faturaId</c> só depois de importada; vencimento estimado enquanto não). */
   faturaId: number | null; vencimento: string | null; situacao: SituacaoFatura | null;
+  /** #144: dia em que a fatura fecha; null = cartão sem fechamento conhecido (valor é o do mês do calendário). */
+  fechamento?: string | null;
   /** ADR 0024: banco do cartão, para o selo. */
   banco?: string | null;
 }
