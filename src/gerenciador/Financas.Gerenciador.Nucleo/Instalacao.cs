@@ -1,24 +1,20 @@
 using System.Reflection;
-using System.Security;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using Microsoft.Win32;
 
 namespace Financas.Gerenciador;
 
 /// <summary>
-/// Onde está o site: pasta da API (achada pelo serviço do Windows), banco, endereço e versão. Lê os mesmos
-/// <c>appsettings</c> da API, para não ter uma segunda configuração. Serve para as duas instalações:
+/// Onde está o site: pasta da API (achada pelo serviço do sistema, <see cref="ServicoDoSite"/>), banco, endereço e
+/// versão. Lê os mesmos <c>appsettings</c> da API, para não ter uma segunda configuração. Serve para as instalações:
 /// <list type="bullet">
-/// <item><b>.msi</b>: <c>Dados:Pasta</c> (ex.: %ProgramData%\FinancasLocal\dados) define o banco; atualiza pelo
-/// GitHub.</item>
-/// <item><b>scripts</b> (<c>instalar-windows.cmd</c>/<c>3-publicar-atualizar.sh</c>): <c>Banco:Caminho</c> define o
-/// banco; atualiza pelos scripts, então o gerenciador não oferece o .msi.</item>
+/// <item><b>.msi</b> (Windows): <c>Dados:Pasta</c> (ex.: %ProgramData%\FinancasLocal\dados) define o banco; atualiza
+/// pelo GitHub.</item>
+/// <item><b>scripts</b> (<c>instalar-windows.cmd</c>/<c>instalar.sh</c>/<c>3-publicar-atualizar.sh</c>, Windows ou
+/// Linux): <c>Banco:Caminho</c> define o banco; atualiza pelos scripts, então o gerenciador não oferece o .msi.</item>
 /// </list>
 /// </summary>
-internal sealed partial class Instalacao
+public sealed class Instalacao
 {
-    public const string NomeServico = "FinancasLocal";
     /// <summary>De onde vêm as versões novas (Releases públicos; nada do usuário é enviado).</summary>
     public const string Repositorio = "LucasDesenvGit/financas-local";
     private const string PastaDadosPadrao = @"%ProgramData%\FinancasLocal\dados";
@@ -37,7 +33,7 @@ internal sealed partial class Instalacao
 
     private Instalacao()
     {
-        PastaPrograma = PastaDoServico() ?? AppContext.BaseDirectory;
+        PastaPrograma = ServicoDoSite.Atual.PastaDaApi() ?? AppContext.BaseDirectory;
         var producao = LerJson(Path.Combine(PastaPrograma, "appsettings.Production.json"));
         var geral = LerJson(Path.Combine(PastaPrograma, "appsettings.json"));
 
@@ -63,34 +59,13 @@ internal sealed partial class Instalacao
                   ?? "https://127.0.0.1:5443";
         Site = new Uri(url.TrimEnd('/') + "/");
 
-        VersaoTexto = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+        // A do executável do gerenciador (Directory.Build.props, a mesma do site).
+        VersaoTexto = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion.Split('+')[0] ?? "0.0.0";
         Versao = Version.TryParse(VersaoTexto.Split('-')[0], out var v) ? v : new Version(0, 0, 0);
     }
 
     public Uri Pagina(string caminho) => new(Site, caminho);
-
-    /// <summary>
-    /// Pasta da API pelo registro do serviço: <c>"...\Financas.Api.exe"</c> (.msi) ou
-    /// <c>"...\dotnet.exe" "...\Financas.Api.dll"</c> (scripts). A chave do serviço é legível sem administrador.
-    /// </summary>
-    private static string? PastaDoServico()
-    {
-        try
-        {
-            using var chave = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\" + NomeServico);
-            if (chave?.GetValue("ImagePath") is not string linha) return null;
-            var achado = ExecutavelDaApi().Match(Environment.ExpandEnvironmentVariables(linha));
-            return achado.Success ? Path.GetDirectoryName(achado.Groups[1].Value) : null;
-        }
-        catch (Exception e) when (e is SecurityException or UnauthorizedAccessException or IOException)
-        {
-            return null;
-        }
-    }
-
-    [GeneratedRegex(@"([A-Za-z]:\\[^""]*?Financas\.Api\.(?:dll|exe))", RegexOptions.IgnoreCase)]
-    private static partial Regex ExecutavelDaApi();
 
     private static JsonElement? LerJson(string caminho)
     {

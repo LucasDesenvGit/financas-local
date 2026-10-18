@@ -12,6 +12,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Gerenciador no Linux** (#138, ADR 0033), na instalação pelos scripts.
+  - **Como instalar:** `scripts/instalar-gerenciador.sh`, sem `sudo`. Publica em `publicado/gerenciador` e cria o atalho no menu de aplicativos e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
+  - **Na janela:** a mesma do Windows, nas cores do site e no tema claro ou escuro do sistema. Mostra a situação e a versão; liga, desliga e reinicia o serviço do systemd do usuário, sem senha; copia o banco (o arquivo fica legível só por você).
+  - **Por que não subiu:** "Ver o registro do serviço" mostra as últimas linhas do journald.
+  - **Versão nova:** o comando para atualizar pelos scripts, com **Copiar o comando**. O gerenciador do Linux não acessa a internet.
+  - **Site no ar sem login:** avisa quando o serviço para ao sair da conta e oferece **Manter o site no ar sem login** (`loginctl enable-linger`).
+  - **Iniciar com o sistema:** ícone na bandeja e aviso (`notify-send`) se o site cair.
+  - **No terminal:** `--situacao` mostra a situação sem abrir a janela. A CI do Linux usa esse modo.
+  - **Por dentro:** a lógica comum aos dois gerenciadores foi para o `Financas.Gerenciador.Nucleo`. O do Windows funciona como antes.
 - **Campo de data novo, com calendário do site** (ADR 0032), em todas as telas.
   - **Digitar:** dd/mm/aaaa, com as barras entrando sozinhas. O ano tem sempre 4 dígitos (antes o campo aceitava "275760"), e colar uma data AAAA-MM-DD também funciona.
   - **Calendário:** botão ao lado do campo, no visual do site, com ‹ › para o mês, « » para o ano, "Hoje" e "Limpar". Pelo teclado: setas, PageUp/PageDown e Esc.
