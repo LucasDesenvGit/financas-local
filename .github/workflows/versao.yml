@@ -61,6 +61,13 @@ jobs:
           "versao=$versao" >> $env:GITHUB_OUTPUT
           $p = $versao.Split('.'); "seguinte=$($p[0]).$($p[1]).$([int]$p[2] + 1)" >> $env:GITHUB_OUTPUT
 
+      - name: Sintaxe do configurar.ps1 (Windows PowerShell 5.1, o que o instalador usa)
+        shell: powershell
+        run: |
+          $erros = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD\instalador\configurar.ps1", [ref]$null, [ref]$erros) | Out-Null
+          if (@($erros).Count) { $erros | ForEach-Object { "linha $($_.Extent.StartLineNumber): $($_.Message)" }; exit 1 }
+
       - name: WiX
         shell: pwsh
         run: |

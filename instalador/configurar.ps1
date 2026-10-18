@@ -87,7 +87,7 @@ function Migrar-Instalacao-Antiga {
     $bancoNovo = Join-Path $Dados "sql\FinancasLocal.db"
     if ($bancoAntigo -and (Test-Path -LiteralPath $bancoAntigo)) {
         if (Test-Path -LiteralPath $bancoNovo) {
-            Log "banco ja existe em $bancoNovo: o da instalacao antiga nao foi copiado"
+            Log "banco ja existe em ${bancoNovo}; o da instalacao antiga nao foi copiado"
         } else {
             foreach ($sufixo in "", "-wal", "-shm") {
                 if (Test-Path -LiteralPath ($bancoAntigo + $sufixo)) { Copy-Item -LiteralPath ($bancoAntigo + $sufixo) -Destination ($bancoNovo + $sufixo) -Force }
