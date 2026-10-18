@@ -124,6 +124,17 @@ Ao responder: separar explicitamente o que vem dessas fontes do que é **julgame
 
 Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para fluxo de branches completo). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
 
+**Branch nova sempre a partir da issue**, para o PR já nascer vinculado a ela (painel *Development* e workflow "Pull request linked to issue" do Projects):
+
+```bash
+gh issue develop <número> --base develop --name feature/<assunto> --checkout   # ou fix/<assunto>
+gh pr create --base develop                                                     # o PR sai vinculado à issue
+```
+
+- Não criar branch de trabalho com `git checkout -b`/`git switch -c`. Fazendo isso, o PR fica sem vínculo. `Closes #N` na descrição não resolve: só vale em PR para o branch padrão (`main`), e o trabalho vai para `develop`.
+- Não sabe qual é a issue? Pergunte o número ao usuário antes de criar a branch. Se não existir issue, ofereça criar uma com `gh issue create`.
+- Branch já criada sem vínculo: avise o usuário para vincular o PR à mão, na lateral do PR (*Development*), porque não há comando que faça isso.
+
 ## Segurança (específico deste projeto — não genérico)
 
 Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo Kestrel — sem IIS/proxy). Pontos que afetam como escrever código aqui:
