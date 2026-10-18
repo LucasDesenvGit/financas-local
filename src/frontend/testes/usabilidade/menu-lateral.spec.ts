@@ -103,6 +103,11 @@ describe('Usabilidade: menu lateral recolhível', () => {
       expect(pagina.querySelector('router-outlet')!.matches(regra.selectorText)).toBe(false);
     });
 
+    it('a marca ocupa a largura toda do topo do menu (área clicável inteira, não só o texto)', async () => {
+      const t = await abrirShell();
+      expect(getComputedStyle(t.marca()).flexGrow).toBe('1');
+    });
+
     it('a marca e o título da barra não aparecem sublinhados', async () => {
       const t = await abrirShell();
       expect(getComputedStyle(t.marca()).textDecoration).toContain('none');

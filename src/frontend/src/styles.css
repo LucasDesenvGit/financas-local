@@ -167,6 +167,7 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 
 .marca {
   display: flex; align-items: center; gap: 12px; padding: 6px 10px; min-width: 0;
+  flex: 1;   /* a área clicável ocupa a largura toda do topo do menu (no celular, até o ✕) */
   border-radius: var(--raio-pequeno); color: inherit; text-decoration: none;
   transition: background-color var(--transicao);
 }
