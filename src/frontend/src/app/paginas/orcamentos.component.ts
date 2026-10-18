@@ -51,9 +51,11 @@ interface LinhaOrcamento {
       </article>
     </section>
 
-    <p class="texto-suave">Defina um limite mensal por categoria de despesa. Subcategorias somam no orçamento da categoria pai.
-      Deixe em branco para não orçar.
-      <span class="texto-emergencia">Laranja</span> = passou do limite só por causa de gastos de emergência.</p>
+    <div class="texto-suave explicacao-orcamentos">
+      <p>Defina um limite mensal por categoria de despesa. Subcategorias somam no orçamento da categoria pai.
+        Deixe em branco para não orçar.</p>
+      <p><span class="texto-emergencia">Laranja</span> = passou do limite só por causa de gastos de emergência.</p>
+    </div>
 
     <div class="tabela-rolagem">
       <table class="tabela">
