@@ -395,13 +395,16 @@ public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal 
     decimal SaldoDisponivelAtual, List<ProjecaoMesDto> Meses, List<ProjecaoCategoriaDto> Categorias);
 
 /// <summary>
-/// Um cartão no mês do Painel (UX-12). <c>ValorMes</c> soma só as transações lançadas no mês (compras e a parcela do
-/// mês; parcelas futuras ficam de fora); <c>ParcelasMes</c> é a parte disso que é parcela. Quando há fatura com
-/// vencimento no mês, vêm o vencimento e a situação dela: "paga" (pagamentos cobrem o total), "fechada" (já fechou
-/// ou venceu sem pagamento informado) ou "aberta" (ainda recebendo compras).
+/// Um cartão no mês do Painel (UX-12, #144): a fatura que fecha no mês. <c>ValorMes</c> é o total informado pelo banco
+/// quando a fatura já fechou; aberta, a soma das transações do ciclo (do fechamento anterior a <c>Fechamento</c>:
+/// compras, a parcela que cai nele, estornos descontados). <c>ParcelasMes</c> é a parte do ciclo que é parcela.
+/// <c>FaturaId</c> só vem quando a fatura já foi importada; o vencimento é estimado pelo dia de vencimento enquanto não.
+/// Situação: "paga" (pagamentos cobrem o total), "fechada" (já fechou ou venceu sem pagamento informado) ou "aberta"
+/// (ainda recebendo compras). Sem <c>Fechamento</c>, o cartão não tem dia de fechamento conhecido e o valor é o do mês
+/// do calendário.
 /// </summary>
 public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
-    DateOnly? Vencimento, string? Situacao, string? Banco = null);
+    DateOnly? Vencimento, string? Situacao, string? Banco = null, DateOnly? Fechamento = null);
 
 public record PainelDto(
     decimal SaldoContas,
