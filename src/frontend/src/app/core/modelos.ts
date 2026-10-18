@@ -37,7 +37,7 @@ export const NOMES_CORRESPONDENCIA: Record<TipoCorrespondencia, string> = {
   [TipoCorrespondencia.Igual]: 'É igual a'
 };
 
-export interface EstadoAutenticacao { configurado: boolean; autenticado: boolean; login: string | null; }
+export interface EstadoAutenticacao { configurado: boolean; autenticado: boolean; login: string | null; versao?: string; }
 export interface Mensagem { mensagem: string; }
 
 export interface Conta {
