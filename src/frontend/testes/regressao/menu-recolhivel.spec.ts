@@ -113,6 +113,56 @@ describe('Regressão: menu lateral recolhível e marca levando ao Painel', () =>
     expect(animar).not.toHaveBeenCalled();
   });
 
+  describe('gaveta do celular: dá para sair sem escolher uma tela', () => {
+    async function abrirGaveta() {
+      const t = await abrirShell({ celular: true });
+      t.botao().click();
+      await t.atualizar();
+      expect(t.app().classList).toContain('menu-aberto');
+      return t;
+    }
+
+    it('tocar no fundo escuro fecha a gaveta', async () => {
+      const t = await abrirGaveta();
+      t.fundo().click();
+      await t.atualizar();
+      expect(t.app().classList).not.toContain('menu-aberto');
+    });
+
+    it('o ✕ fecha a gaveta e o foco volta ao ☰', async () => {
+      const t = await abrirGaveta();
+      t.botaoFechar().click();
+      await t.atualizar();
+      expect(t.app().classList).not.toContain('menu-aberto');
+      expect(document.activeElement).toBe(t.botao());
+    });
+
+    it('Esc fecha a gaveta e o foco volta ao ☰', async () => {
+      const t = await abrirGaveta();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await t.atualizar();
+      expect(t.app().classList).not.toContain('menu-aberto');
+      expect(document.activeElement).toBe(t.botao());
+    });
+
+    it('arrastar para a esquerda fecha; arraste curto ou vertical (rolar a lista) não fecha', async () => {
+      const t = await abrirGaveta();
+      await t.arrastar(-30);
+      expect(t.app().classList).toContain('menu-aberto');
+      await t.arrastar(-80, 120);
+      expect(t.app().classList).toContain('menu-aberto');
+      await t.arrastar(-100, 10);
+      expect(t.app().classList).not.toContain('menu-aberto');
+    });
+
+    it('no computador, Esc não mexe no menu', async () => {
+      const t = await abrirShell();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await t.atualizar();
+      expect(t.app().classList).not.toContain('menu-recolhido');
+    });
+  });
+
   it('a marca do menu e o título da barra são links para /painel', async () => {
     const t = await abrirShell();
     expect(t.marca().tagName).toBe('A');

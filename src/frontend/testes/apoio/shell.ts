@@ -54,6 +54,17 @@ export async function abrirShell(opcoes: { celular?: boolean; recolhidoSalvo?: b
     botao: () => raiz.querySelector<HTMLButtonElement>('.barra-superior button.botao-menu')!,
     marca: () => raiz.querySelector<HTMLAnchorElement>('aside .marca')!,
     tituloBarra: () => raiz.querySelector<HTMLAnchorElement>('.barra-superior .barra-titulo')!,
+    botaoFechar: () => raiz.querySelector<HTMLButtonElement>('aside .botao-fechar-menu')!,
+    fundo: () => raiz.querySelector<HTMLElement>('.fundo-gaveta')!,
+    conteudo: () => raiz.querySelector<HTMLElement>('.conteudo')!,
+    /** Arraste na gaveta (pointerdown → pointerup), em px. */
+    async arrastar(dx: number, dy = 0) {
+      const lateral = raiz.querySelector('aside.lateral')!;
+      // jsdom não tem PointerEvent; MouseEvent com o mesmo nome traz clientX/clientY.
+      lateral.dispatchEvent(new MouseEvent('pointerdown', { clientX: 200, clientY: 300, bubbles: true }));
+      lateral.dispatchEvent(new MouseEvent('pointerup', { clientX: 200 + dx, clientY: 300 + dy, bubbles: true }));
+      await atualizar();
+    },
     /** Simula girar o celular ou redimensionar a janela além da quebra de 900 px. */
     async girar(celular: boolean) {
       girar(celular);

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -37,15 +37,23 @@ export const MENU: ItemMenu[] = [
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()" [class.menu-recolhido]="recolhidoNoComputador()">
       <!-- #131: menu escondido (recolhido no computador, gaveta fechada no celular) fica fora do Tab (inert). -->
-      <aside id="menu-lateral" class="lateral" [attr.inert]="menuVisivel() ? null : ''">
-        <!-- #131: a marca leva ao Painel, a tela inicial (convenção da web; Nielsen 3 e 4). -->
-        <a class="marca" routerLink="/painel" aria-label="Finanças, ir para o Painel" (click)="menuAberto.set(false)">
-          <span class="marca-simbolo" aria-hidden="true"><app-icone [icone]="Icones.marca" [tamanho]="22" [traco]="2" /></span>
-          <div>
-            <strong>Finanças</strong>
-            <small>local e privado</small>
-          </div>
-        </a>
+      <aside id="menu-lateral" class="lateral" [attr.inert]="menuVisivel() ? null : ''"
+        (pointerdown)="inicioArraste($event)" (pointerup)="fimArraste($event)">
+        <div class="lateral-topo">
+          <!-- #131: a marca leva ao Painel, a tela inicial (convenção da web; Nielsen 3 e 4). -->
+          <a class="marca" routerLink="/painel" aria-label="Finanças, ir para o Painel" (click)="menuAberto.set(false)">
+            <span class="marca-simbolo" aria-hidden="true"><app-icone [icone]="Icones.marca" [tamanho]="22" [traco]="2" /></span>
+            <div>
+              <strong>Finanças</strong>
+              <small>local e privado</small>
+            </div>
+          </a>
+          <!-- Celular: saída visível da gaveta sem escolher uma tela (Nielsen 3); Esc e tocar fora também fecham. -->
+          <button #botaoFechar type="button" class="botao-barra botao-fechar-menu so-celular" aria-label="Fechar menu"
+            (click)="fecharGaveta()">
+            <app-icone [icone]="Icones.fechar" [tamanho]="20" />
+          </button>
+        </div>
 
         <nav class="menu" aria-label="Menu principal">
           @for (item of menu; track item.rota) {
@@ -61,14 +69,17 @@ export const MENU: ItemMenu[] = [
         </nav>
 
       </aside>
+      <!-- Fundo escuro da gaveta: tocar fora fecha. Para teclado, há o ✕ e o Esc. -->
+      <div class="fundo-gaveta" aria-hidden="true" (click)="fecharGaveta()"></div>
 
-      <div class="conteudo">
+      <!-- Com a gaveta aberta, o conteúdo atrás fica fora do Tab: o foco não se perde embaixo do escurecimento. -->
+      <div class="conteudo" [attr.inert]="celular() && menuAberto() ? '' : null">
         <!-- UX-7: ações globais numa barra só, fixa no topo e na mesma posição no desktop e no celular. -->
         <header class="barra-superior">
           <!-- #131: o mesmo ☰ no computador (esconde/mostra o menu) e no celular (abre a gaveta); nome fixo,
                o estado vai no aria-expanded. -->
           <div #barraInicio class="barra-inicio">
-            <button type="button" class="botao-barra botao-menu" (click)="alternarMenu()"
+            <button #botaoMenu type="button" class="botao-barra botao-menu" (click)="alternarMenu()"
               [attr.aria-expanded]="menuVisivel()" aria-controls="menu-lateral" aria-label="Menu de navegação">
               <app-icone [icone]="Icones.menuLateral" [tamanho]="20" />
             </button>
@@ -116,6 +127,11 @@ export class ShellComponent {
   private readonly injector = inject(Injector);
   private readonly pagina = viewChild.required<ElementRef<HTMLElement>>('pagina');
   private readonly barraInicio = viewChild.required<ElementRef<HTMLElement>>('barraInicio');
+  private readonly botaoMenu = viewChild.required<ElementRef<HTMLButtonElement>>('botaoMenu');
+  private readonly botaoFechar = viewChild.required<ElementRef<HTMLButtonElement>>('botaoFechar');
+  /** Distância (px) que um arraste para a esquerda precisa para fechar a gaveta. */
+  private static readonly ARRASTE_MINIMO = 60;
+  private arraste: { x: number; y: number } | null = null;
   /** Gaveta do celular: sempre começa fechada. */
   readonly menuAberto = signal(false);
   /** Escolha do computador, lembrada no navegador. */
@@ -149,6 +165,8 @@ export class ShellComponent {
   alternarMenu(): void {
     if (this.celular()) {
       this.menuAberto.update((v) => !v);
+      // Gaveta aberta: o foco vai para o ✕ (o conteúdo atrás fica inert).
+      if (this.menuAberto()) afterNextRender(() => this.botaoFechar().nativeElement.focus(), { injector: this.injector });
       return;
     }
     const voltando = this.menuRecolhido();
@@ -176,6 +194,31 @@ export class ShellComponent {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     el.animate([{ transform: `translateX(${deslocamento}px)` }, { transform: 'none' }],
       { duration: ShellComponent.DURACAO_MS, easing: 'ease' });
+  }
+
+  /** Fecha a gaveta do celular (✕, tocar fora, Esc, arrastar) e devolve o foco ao ☰, que abriu a gaveta. */
+  fecharGaveta(): void {
+    if (!this.menuAberto()) return;
+    this.menuAberto.set(false);
+    afterNextRender(() => this.botaoMenu().nativeElement.focus(), { injector: this.injector });
+  }
+
+  @HostListener('document:keydown.escape')
+  aoApertarEsc(): void {
+    if (this.celular()) this.fecharGaveta();
+  }
+
+  /** Arrastar a gaveta para a esquerda fecha, como nos apps de celular. */
+  inicioArraste(e: PointerEvent): void {
+    this.arraste = this.celular() && this.menuAberto() ? { x: e.clientX, y: e.clientY } : null;
+  }
+
+  fimArraste(e: PointerEvent): void {
+    if (!this.arraste) return;
+    const dx = e.clientX - this.arraste.x;
+    const dy = e.clientY - this.arraste.y;
+    this.arraste = null;
+    if (dx < -ShellComponent.ARRASTE_MINIMO && Math.abs(dx) > Math.abs(dy) * 1.5) this.fecharGaveta();
   }
 
   private lerRecolhido(): boolean {

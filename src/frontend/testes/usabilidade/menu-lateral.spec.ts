@@ -48,6 +48,25 @@ describe('Usabilidade: menu lateral recolhível', () => {
     expect(t.lateral().hasAttribute('inert')).toBe(false);
   });
 
+  it('gaveta do celular: o foco vai para o ✕ ("Fechar menu") e o conteúdo atrás sai do Tab', async () => {
+    const t = await abrirShell({ celular: true });
+    expect(t.conteudo().hasAttribute('inert')).toBe(false);
+    t.botao().click();
+    await t.atualizar();
+    expect(t.botaoFechar().getAttribute('aria-label')).toBe('Fechar menu');
+    expect(document.activeElement).toBe(t.botaoFechar());
+    expect(t.conteudo().hasAttribute('inert')).toBe(true);
+    expect(t.fundo().getAttribute('aria-hidden')).toBe('true');   // só para toque; teclado usa o ✕ e o Esc
+    t.botaoFechar().click();
+    await t.atualizar();
+    expect(t.conteudo().hasAttribute('inert')).toBe(false);
+  });
+
+  it('o ✕ é só do celular (no computador, o ☰ da barra já esconde o menu)', async () => {
+    const t = await abrirShell();
+    expect(t.botaoFechar().classList).toContain('so-celular');
+  });
+
   it('a marca se chama "Finanças, ir para o Painel" e o ícone é decorativo', async () => {
     const t = await abrirShell();
     expect(t.marca().getAttribute('aria-label')).toBe('Finanças, ir para o Painel');

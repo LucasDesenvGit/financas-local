@@ -15,13 +15,18 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
     - ao esconder, o menu desliza enquanto a coluna encolhe;
     - ao mostrar, a coluna abre de uma vez e o conteúdo, o ☰ e o título deslizam junto com o menu, só com `transform` (sem o pisca-pisca de refazer o layout a cada quadro);
     - nada disso acontece com movimento reduzido no sistema.
+  - **Gaveta do celular:** dá para fechar sem escolher uma tela. As formas são:
+    - o **✕ "Fechar menu"**;
+    - **tocar no fundo escuro**;
+    - **arrastar para a esquerda**;
+    - **Esc**, que também devolve o foco ao ☰.
+
+    A gaveta ocupa no máximo 85% da tela. Aberta, o foco vai para o ✕ e o conteúdo atrás sai do Tab.
 - **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
   - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
 - **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
   - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
   - Sem animação com movimento reduzido no sistema.
-
-### Funcionalidades
 - **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
   - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
   - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
