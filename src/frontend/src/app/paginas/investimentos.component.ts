@@ -190,8 +190,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             <div class="cabecalho-bloco">
               <h2>Posições</h2>
               <span class="cresce"></span>
-              <label class="checkbox"><input type="checkbox" [checked]="mostrarEncerradas()"
-                (change)="mostrarEncerradas.set(!mostrarEncerradas())"> mostrar encerradas</label>
+              <!-- #130: efeito imediato → interruptor. -->
+              <label class="interruptor"><input type="checkbox" role="switch" [checked]="mostrarEncerradas()"
+                (change)="mostrarEncerradas.set(!mostrarEncerradas())"> Mostrar encerradas</label>
               <button type="button" class="link" (click)="abrirConfiguracao()">fonte das cotações</button>
             </div>
             <div class="tabela-rolagem">

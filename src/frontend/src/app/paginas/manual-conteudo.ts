@@ -191,9 +191,13 @@ export const MANUAL: CapituloManual[] = [
           'Para dinheiro em espécie, banco sem Open Finance ou um controle separado, use “+ Conta manual”.',
           'Na conta manual você informa o tipo, o saldo inicial e, no cartão, limite, dia de fechamento e de vencimento.',
           'Desmarque “Incluir no saldo total” para uma conta não somar no saldo (ex.: conta de outra pessoa).',
-          'Conta que não usa mais: marque “Arquivada” em vez de excluir.'
+          'Conta que não usa mais: marque “Arquivada” em vez de excluir.',
+          'Para ver as arquivadas, ligue o interruptor “Mostrar arquivadas” no topo da tela; elas aparecem com o selo “Arquivada”.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
+        abrir: [
+          { rotulo: 'Abrir Contas e cartões', rota: '/contas' },
+          { rotulo: 'Ver também as arquivadas', rota: '/contas', params: { arquivadas: '1' } }
+        ]
       },
       {
         id: 'banco-da-conta',

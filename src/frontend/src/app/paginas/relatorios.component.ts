@@ -40,7 +40,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <option [ngValue]="TipoTransacao.Receita">Receitas</option>
         </select>
       </label>
-      <label class="checkbox"><input type="checkbox" [(ngModel)]="agrupar" (change)="carregar()"> agrupar subcategorias</label>
+      <!-- #130: efeito imediato → interruptor. -->
+      <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="agrupar" (change)="carregar()"> Agrupar subcategorias</label>
     </section>
 
     <section class="kpis">

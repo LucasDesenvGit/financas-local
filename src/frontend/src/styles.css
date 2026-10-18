@@ -336,6 +336,31 @@ label { display: grid; gap: 6px; font-size: 0.84rem; font-weight: 500; color: va
 label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--texto); font-size: 0.92rem; font-weight: 400; }
 .input-compacto { padding: 6px 10px; }
 
+/* Interruptor (#130, ADR 0032): para o que muda a tela NA HORA (mostrar arquivadas, agrupar subcategorias…). O que
+   depende de "Salvar" continua caixa de marcar (NN/g, Toggle-Switch Guidelines). É o mesmo <input type="checkbox">
+   nativo, com role="switch": teclado (Espaço), ngModel e leitor de tela ("interruptor, ligado") vêm de graça; só a
+   aparência muda. Rótulo fixo, que não troca com o estado (WAI-ARIA APG, Switch). Alvo ≥ 24 px com o rótulo. */
+label.interruptor {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 24px; cursor: pointer;
+  color: var(--texto); font-size: 0.92rem; font-weight: 500;
+}
+.interruptor input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; position: relative; margin: 0; padding: 0;
+  width: 40px; height: 24px; border-radius: 99px; cursor: pointer; box-shadow: none;
+  background: var(--superficie-3); border: 1px solid var(--texto-suave);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.interruptor input[type="checkbox"]::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--texto-suave); transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.interruptor input[type="checkbox"]:checked { background: var(--primaria); border-color: var(--primaria); }
+.interruptor input[type="checkbox"]:checked::before { transform: translateX(16px); background: var(--primaria-texto); }
+.interruptor input[type="checkbox"]:hover:not(:disabled) { border-color: var(--texto); }
+.interruptor input[type="checkbox"]:focus { box-shadow: none; }
+.interruptor input[type="checkbox"]:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+.interruptor input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .formulario { display: grid; gap: 16px; }
 .grade-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
 .rodape-form { display: flex; gap: 10px; align-items: center; padding-top: 4px; }
@@ -347,7 +372,7 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 }
 .filtros label { min-width: 140px; }
 .filtros label.cresce { min-width: 220px; }
-.filtros label.checkbox { min-width: 0; padding-bottom: 8px; }
+.filtros label.checkbox, .filtros label.interruptor { min-width: 0; padding-bottom: 8px; }
 
 .cores { display: flex; gap: 10px; flex-wrap: wrap; }
 .cor {
@@ -497,6 +522,9 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 }
 .etiqueta-alerta { background: var(--alerta-suave); color: var(--alerta); }
 .etiqueta-sucesso { background: var(--positivo-suave); color: var(--positivo); }
+/* #130: conta/cartão arquivado diz "Arquivada" em texto, além do visual apagado (WCAG 1.4.1). */
+.etiqueta-arquivada { background: var(--superficie-3); color: var(--texto-forte); border: 1px dashed var(--texto-suave); }
+.etiquetas-conta { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
 .chip {
   display: inline-flex; align-items: center; font-size: 0.85rem; white-space: nowrap;
   background: var(--superficie-2); padding: 3px 10px 3px 8px; border-radius: 99px;

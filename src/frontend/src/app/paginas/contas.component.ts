@@ -28,7 +28,9 @@ const FATURAS_VISIVEIS = 6;
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
       <div class="acoes">
-        <label class="checkbox"><input type="checkbox" [(ngModel)]="mostrarArquivadas" (change)="carregar()"> mostrar arquivadas</label>
+        <!-- #130: efeito imediato → interruptor; o estado fica na URL (?arquivadas=1). -->
+        <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="mostrarArquivadas"
+          (change)="alternarArquivadas()"> Mostrar arquivadas</label>
         <button type="button" class="botao botao-primario" (click)="nova()">+ Conta manual</button>
       </div>
     </header>
@@ -82,8 +84,12 @@ const FATURAS_VISIVEIS = 6;
                 <strong>{{ c.nome }}</strong>
                 <small class="texto-suave">{{ nomeBanco(c) }} · {{ nomeTipo(c.tipo) }}</small>
               </div>
-              <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
-                {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
+              <span class="etiquetas-conta">
+                <!-- #130: "Arquivada" em texto, não só o visual apagado (WCAG 1.4.1). -->
+                @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
+                <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
+                  {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
+              </span>
             </header>
             <div class="saldo" [class.negativo]="c.saldo < 0">{{ c.saldo | currency }}</div>
             <small class="texto-suave">{{ c.incluirNoSaldo ? 'saldo atual' : 'saldo atual · fora do total' }}</small>
@@ -179,6 +185,7 @@ const FATURAS_VISIVEIS = 6;
                   <small class="texto-suave">da conta {{ conta.nome }}</small>
                 }
                 <footer>
+                  @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
                   <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
                     {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
                   <span class="cresce"></span>
@@ -363,7 +370,8 @@ export class ContasComponent implements OnInit {
   /** Contas que podem ser "a conta do cartão": as que não são cartão (nem o próprio cartão em edição). */
   readonly contasParaVincular = computed(() => this.contasBancarias().filter((c) => c.id !== this.editandoId));
 
-  mostrarArquivadas = false;
+  /** #130: estado na URL (?arquivadas=1): voltar do navegador e link salvo abrem do mesmo jeito (ADR 0018). */
+  mostrarArquivadas = this.rota.snapshot.queryParamMap.get('arquivadas') === '1';
   form: SalvarConta | null = null;
   editandoId: number | null = null;
   editandoOpenFinance = false;
@@ -511,6 +519,14 @@ export class ContasComponent implements OnInit {
         this.avisos.erro(mensagemDeErro(e));
       }
     });
+  }
+
+  alternarArquivadas(): void {
+    this.router.navigate([], {
+      relativeTo: this.rota, queryParams: { arquivadas: this.mostrarArquivadas ? 1 : null },
+      queryParamsHandling: 'merge', replaceUrl: true
+    });
+    this.carregar();
   }
 
   carregar(): void {
