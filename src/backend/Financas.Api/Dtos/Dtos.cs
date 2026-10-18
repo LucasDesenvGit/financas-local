@@ -4,7 +4,11 @@ using Financas.Api.Entidades;
 namespace Financas.Api.Dtos;
 
 /* ---------------------------- Autenticação ---------------------------- */
-public record EstadoAutenticacaoDto(bool Configurado, bool Autenticado, string? Login);
+/// <summary>Versao: a do site, para o gerenciador do Windows mostrar junto com "no ar" (não exige login).</summary>
+public record EstadoAutenticacaoDto(bool Configurado, bool Autenticado, string? Login)
+{
+    public string Versao { get; init; } = Financas.Api.Servicos.VersaoSistema.Atual;
+}
 
 public record CredenciaisDto(
     [Required, StringLength(100, MinimumLength = 3)] string Login,

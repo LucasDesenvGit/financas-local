@@ -24,4 +24,11 @@
     <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
+  <!-- A API cria e atualiza o banco ao iniciar com os mesmos scripts (Data/EsquemaBanco.cs, ADR 0003). -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../../banco/01-estrutura.sql" LogicalName="banco.01-estrutura.sql" />
+    <EmbeddedResource Include="../../../banco/02-dados-iniciais.sql" LogicalName="banco.02-dados-iniciais.sql" />
+    <EmbeddedResource Include="../../../scripts/2-criar-banco.sh" LogicalName="banco.2-criar-banco.sh" />
+  </ItemGroup>
+
 </Project>

@@ -15,6 +15,26 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Onde ficam as regras:** Categorias › Regras automáticas › "Regras de descrição". Lá dá para criar a regra direto com "+ Regra de descrição" (com prévia de quantas transações renomeia), editar, desligar e excluir. Nome escolhido à mão nunca é trocado por regra.
   - **Banco:** tabela nova `RegraDescricao` e colunas `Transacao.RegraDescricaoId` e `Transacao.DescricaoManual` (rodar `scripts/2-criar-banco.sh`).
 - Transações: o **valor do que está "fora dos gastos"** (pagamento de fatura, transferência) aparece em cor neutra, para não parecer receita ou despesa.
+- **Instalador `.msi` para Windows** (#119, ADR 0029).
+  - **Instalação:** dois cliques e "Avançar", sem .NET, Node, Git nem terminal. O site e o gerenciador já vêm compilados para `C:\Program Files\FinancasLocal`.
+  - **Dados:** ficam em `C:\ProgramData\FinancasLocal\dados`, só para o sistema e os administradores.
+  - **O que o instalador configura:** serviço `FinancasLocal` com reinício automático, certificado HTTPS confiável para `127.0.0.1` e `localhost`, atalhos no Menu Iniciar e, no fim, uma caixa para abrir o gerenciador.
+  - **Atualizar:** pelo gerenciador ou abrindo o `.msi` novo; os dados ficam.
+  - **Desinstalar:** mantém os dados (`APAGARDADOS=1` apaga também).
+  - **Migração:** quem instalou pelos scripts é migrado sozinho. Banco e chaves são copiados, a pasta antiga fica.
+  - **Workflow "Versão (instalador .msi)":** gera e testa o pacote num Windows limpo (instalar, atualizar mantendo o usuário, desinstalar mantendo os dados e migrar da instalação pelos scripts). Na tag `vX.Y.Z`, publica o `.msi` e o `SHA256SUMS.txt` no Release. Passo a passo em `CONTRIBUINDO.md`.
+  - **Nova configuração na API:** `Dados:Pasta` define banco e chaves numa pasta só e lê o `configuracao.json` dela (certificado). A instalação pelos scripts não muda.
+- **Gerenciador do Finanças Local** para Windows (#119, ADR 0028). Instalado pelo `.msi`, roda como o usuário e pede administrador só quando precisa.
+  - **Situação do site em palavras:** "no ar" (com a versão do site), "desligado" ou "ligado, mas não responde".
+  - **Ações:** "Abrir o site", "Ligar/Desligar" e "Reiniciar".
+  - **Versão nova:** procura no GitHub, mostra o que mudou e "Atualizar para x.y.z". Baixa, confere o SHA256 e abre o instalador.
+  - **Em "Mais opções":** salvar uma cópia do banco onde você escolher, ver os erros do site, abrir o manual, iniciar com o Windows na área de notificação (com aviso quando o site cai) e procurar versão nova ao abrir.
+- **Versão do site num lugar só:** `Directory.Build.props` (`2.1.0`) vale para a API e o gerenciador. Ela aparece em Configurações › Parametrização › Sistema, em `GET /api/auth/estado` (campo `versao`, sem login, só para o gerenciador mostrar junto de "no ar") e no gerenciador.
+- **A API cria e atualiza o banco sozinha ao iniciar** (#119, ADR 0003 atualizada).
+  - **Os mesmos scripts:** `01-estrutura.sql`, as colunas novas do `2-criar-banco.sh` e, só no banco novo, os dados iniciais, embutidos no build.
+  - **Antes de mudar um banco existente:** cópia em `dados/backups/FinancasLocal-antes-atualizacao-*.db`, com as 5 mais recentes guardadas.
+  - **Reinício sem mudança de scripts:** não faz nada (`PRAGMA user_version`).
+  - **Para que serve:** é a base do instalador `.msi`, que não tem `sqlite3` nem bash. Também deixa o banco pronto no primeiro "F5" do Visual Studio.
 - Investimentos: **"Conferir investimentos"** (ADR 0027).
   - **O que faz:** compara a carteira com a posição da corretora e com o extrato, e mostra as correções já marcadas. Nada muda até "Corrigir selecionados", e o aviso tem **Desfazer** por 10 minutos.
   - **FII cadastrado como outro tipo:** reconhecido pelo nome do fundo ou pelo emissor da corretora; passa a ser FII.

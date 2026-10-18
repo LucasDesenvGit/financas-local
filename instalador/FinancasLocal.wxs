@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Instalador do Finanças Local para Windows (#119, ADR 0029). Gerado pelo instalador/gerar-msi.ps1 com o WiX 5:
+    wix build FinancasLocal.wxs -arch x64 -culture pt-BR -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
+              -d Versao=2.1.0 -bindpath app=<pasta publicada> -o FinancasLocal-2.1.0.msi
+  A pasta publicada tem a API e o gerenciador já compilados (self-contained, sem .NET instalado no computador),
+  o front-end no wwwroot, o appsettings.Production.json com a pasta de dados e o instalador\configurar.ps1.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <!-- UpgradeCode fixo para sempre: é ele que faz uma versão nova substituir a anterior. -->
+  <Package Name="Finanças Local" Manufacturer="Finanças Local" Version="$(Versao)"
+           UpgradeCode="{6F1C2B9E-7A43-4D2E-9B8F-3C5A1E0D4F27}" Scope="perMachine" Language="1046" Codepage="1252">
+
+    <SummaryInformation Description="Finanças Local $(Versao): gerenciamento financeiro pessoal no seu computador" />
+    <MajorUpgrade DowngradeErrorMessage="Uma versão mais nova do Finanças Local já está instalada. Para voltar a uma anterior, desinstale-a antes (seus dados ficam)." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="icone.ico" SourceFile="!(bindpath.app)\instalador\icone.ico" />
+    <Property Id="ARPPRODUCTICON" Value="icone.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/LucasDesenvGit/financas-local" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/LucasDesenvGit/financas-local#readme" />
+    <!-- Desinstalar mantém os dados; "msiexec /x FinancasLocal.msi APAGARDADOS=1" apaga também. -->
+    <Property Id="APAGARDADOS" Secure="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="FinancasLocal" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="PastaMenu" Name="Finanças Local" />
+    </StandardDirectory>
+
+    <Feature Id="Principal" Title="Finanças Local" Level="1">
+      <ComponentGroupRef Id="Arquivos" />
+      <ComponentRef Id="Servico" />
+      <ComponentRef Id="Gerenciador" />
+      <ComponentRef Id="Atalhos" />
+    </Feature>
+
+    <!-- Interface: boas-vindas, pasta e progresso (sem tela de licença); no fim, abrir o gerenciador. -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="99" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="AbrirGerenciador"
+               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+    </UI>
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Abrir o Gerenciador do Finanças Local" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <CustomAction Id="AbrirGerenciador" FileRef="GerenciadorExe" ExeCommand="" Execute="immediate"
+                  Impersonate="yes" Return="asyncNoWait" />
+
+    <!--
+      instalador\configurar.ps1, como SYSTEM: pasta de dados protegida, migração da instalação pelos scripts (antes de
+      registrar o serviço, que tem o mesmo nome) e certificado HTTPS. Na desinstalação de verdade (não na troca de
+      versão), tira o certificado das Autoridades Raiz e, com APAGARDADOS=1, apaga os dados.
+    -->
+    <SetProperty Id="ConfigurarFinancasLocal" Sequence="execute" Before="ConfigurarFinancasLocal"
+                 Value="&quot;[System64Folder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]instalador\configurar.ps1&quot; -Acao instalar" />
+    <CustomAction Id="ConfigurarFinancasLocal" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec"
+                  Execute="deferred" Impersonate="no" Return="check" />
+    <SetProperty Id="LimparFinancasLocal" Sequence="execute" Before="LimparFinancasLocal"
+                 Value="&quot;[System64Folder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]instalador\configurar.ps1&quot; -Acao desinstalar -ApagarDados &quot;[APAGARDADOS]&quot;" />
+    <CustomAction Id="LimparFinancasLocal" BinaryRef="Wix4UtilCA_X64" DllEntry="WixQuietExec"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="ConfigurarFinancasLocal" After="InstallFiles" Condition="NOT REMOVE~=&quot;ALL&quot;" />
+      <Custom Action="LimparFinancasLocal" Before="RemoveFiles" Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+  </Package>
+
+  <Fragment>
+    <!-- Tudo da pasta publicada, menos os dois executáveis, que têm componente próprio (serviço e atalho). -->
+    <ComponentGroup Id="Arquivos" Directory="INSTALLFOLDER">
+      <Files Include="!(bindpath.app)\**">
+        <Exclude Files="!(bindpath.app)\Financas.Api.exe" />
+        <Exclude Files="!(bindpath.app)\Financas.Gerenciador.exe" />
+      </Files>
+    </ComponentGroup>
+
+    <!-- Serviço do Windows: mesma conta (LocalSystem) e mesmo nome da instalação pelos scripts (ADR 0029). -->
+    <Component Id="Servico" Directory="INSTALLFOLDER">
+      <File Id="ApiExe" Source="!(bindpath.app)\Financas.Api.exe" KeyPath="yes" />
+      <ServiceInstall Id="InstalarServico" Name="FinancasLocal" DisplayName="Finanças Local"
+                      Description="Site do Finanças Local em https://127.0.0.1:5443 (só neste computador)."
+                      Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" Vital="yes">
+        <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
+                            ThirdFailureActionType="none" RestartServiceDelayInSeconds="30" ResetPeriodInDays="1" />
+      </ServiceInstall>
+      <ServiceControl Id="ControlarServico" Name="FinancasLocal" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+    </Component>
+
+    <Component Id="Gerenciador" Directory="INSTALLFOLDER">
+      <File Id="GerenciadorExe" Source="!(bindpath.app)\Financas.Gerenciador.exe" KeyPath="yes" />
+    </Component>
+
+    <Component Id="Atalhos" Directory="PastaMenu">
+      <Shortcut Id="AtalhoGerenciador" Name="Gerenciador do Finanças Local" Description="Ver se o site está no ar, ligar, desligar e atualizar"
+                Target="[#GerenciadorExe]" WorkingDirectory="INSTALLFOLDER" />
+      <util:InternetShortcut Id="AtalhoSite" Name="Finanças Local" Target="https://127.0.0.1:5443/" />
+      <RemoveFolder Id="RemoverPastaMenu" On="uninstall" />
+      <RegistryValue Root="HKLM" Key="Software\FinancasLocal" Name="Atalhos" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>

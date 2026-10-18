@@ -31,7 +31,22 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 
 ## Instalação (uma vez)
 
-**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
+**Windows: instalador `.msi` (recomendado para quem só quer usar).**
+1. Baixe o `FinancasLocal-<versão>.msi` da [página de versões](https://github.com/LucasDesenvGit/financas-local/releases/latest).
+2. Dê dois cliques e "Avançar". O site já vem compilado: não precisa de .NET, Node, Git nem terminal.
+3. No fim, o **Gerenciador do Finanças Local** abre e mostra se o site está no ar. Ele fica no Menu Iniciar, junto com o atalho "Finanças Local", que abre o site.
+
+**O que fica onde:**
+- **Programa:** `C:\Program Files\FinancasLocal`.
+- **Dados:** banco, chaves, backups e certificado ficam em `C:\ProgramData\FinancasLocal\dados`, só para o sistema e os administradores.
+
+**Atualizar:** pelo gerenciador ("Atualizar para x.y.z") ou abrindo o `.msi` novo. Antes de mudar o banco, a versão nova guarda uma cópia em `dadosackups`.
+
+**Desinstalar:** em "Aplicativos instalados". Os dados ficam; para apagá-los também, use `msiexec /x FinancasLocal-<versão>.msi APAGARDADOS=1`.
+
+**Já instalou pelos scripts?** O `.msi` encontra o serviço antigo, copia banco e chaves para a pasta nova (a antiga não é apagada) e passa a usar o dele. Detalhes na [ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md). O Windows mostra "Editor desconhecido" ao abrir o `.msi`, porque ele ainda não é assinado. Confira o arquivo pelo `SHA256SUMS.txt` do mesmo Release.
+
+**Windows, a partir do código, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
 
 **Linux (ou Windows pelo Git Bash), com um comando:**
 
@@ -127,7 +142,7 @@ Como tudo é local, o objetivo foi manter o sistema simples sem abrir mão do es
 - **Erros do sistema** gravados no banco sem dados sensíveis: query strings, tokens, senhas, CPF e valores em R$ são trocados por `[removido]` antes de gravar ([ADR 0022](docs/adr/0022-erros-do-sistema-gravados-no-banco.md)).
 - Consultas ao banco somente via LINQ/EF Core, sem SQL montado a partir de texto do usuário.
 - **Dados de pagamento do Open Finance:** do Pix ou da TED, só o meio (PIX, TED…) e se quem pagou e quem recebeu são a mesma pessoa são guardados; nomes e CPF/CNPJ de terceiros não são gravados ([ADR 0025](docs/adr/0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md)).
-- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy.
+- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy. O **Gerenciador do Finanças Local** (Windows, instalado pelo `.msi`) consulta `api.github.com` e baixa do GitHub (`github.com` e o domínio de arquivos do GitHub) a versão nova, conferindo o SHA256 antes de abrir o instalador. Ele não envia nada além do pedido HTTP, e a API não acessa o GitHub ([ADR 0028](docs/adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)).
 
 Recomendações:
 - Ative criptografia de disco (**BitLocker** no Windows, **LUKS**/dm-crypt no Linux), porque o SQLite não criptografa o arquivo do banco.
