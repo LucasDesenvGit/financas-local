@@ -31,7 +31,22 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 
 ## Instalação (uma vez)
 
-**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
+**Windows: instalador `.msi` (recomendado para quem só quer usar).**
+1. Baixe o `FinancasLocal-<versão>.msi` da [página de versões](https://github.com/LucasDesenvGit/financas-local/releases/latest).
+2. Dê dois cliques e "Avançar". O site já vem compilado: não precisa de .NET, Node, Git nem terminal.
+3. No fim, o **Gerenciador do Finanças Local** abre e mostra se o site está no ar. Ele fica no Menu Iniciar, junto com o atalho "Finanças Local", que abre o site.
+
+**O que fica onde:**
+- **Programa:** `C:\Program Files\FinancasLocal`.
+- **Dados:** banco, chaves, backups e certificado ficam em `C:\ProgramData\FinancasLocal\dados`, só para o sistema e os administradores.
+
+**Atualizar:** pelo gerenciador ("Atualizar para x.y.z") ou abrindo o `.msi` novo. Antes de mudar o banco, a versão nova guarda uma cópia em `dadosackups`.
+
+**Desinstalar:** em "Aplicativos instalados". Os dados ficam; para apagá-los também, use `msiexec /x FinancasLocal-<versão>.msi APAGARDADOS=1`.
+
+**Já instalou pelos scripts?** O `.msi` encontra o serviço antigo, copia banco e chaves para a pasta nova (a antiga não é apagada) e passa a usar o dele. Detalhes na [ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md). O Windows mostra "Editor desconhecido" ao abrir o `.msi`, porque ele ainda não é assinado. Confira o arquivo pelo `SHA256SUMS.txt` do mesmo Release.
+
+**Windows, a partir do código, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
 
 **Linux (ou Windows pelo Git Bash), com um comando:**
 

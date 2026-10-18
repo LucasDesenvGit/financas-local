@@ -25,6 +25,17 @@ builder.WebHost.ConfigureKestrel(o =>
 });
 var cfg = builder.Configuration;
 
+// ---------------------------------------------------------------- Pasta de dados da instalação pelo .msi (#119, ADR 0029)
+// "Dados:Pasta" (ex.: %ProgramData%\FinancasLocal\dados, no appsettings.Production.json do .msi) define banco e chaves
+// e traz a configuração local que o instalador grava lá (certificado HTTPS e a senha dele), fora da pasta do programa.
+if (cfg["Dados:Pasta"] is { Length: > 0 } pastaDadosConfig)
+{
+    var pastaDados = Path.GetFullPath(Environment.ExpandEnvironmentVariables(pastaDadosConfig));
+    cfg["Banco:Caminho"] = Path.Combine(pastaDados, "sql", "FinancasLocal.db");
+    cfg["Seguranca:PastaChaves"] = Path.Combine(pastaDados, "chaves");
+    cfg.AddJsonFile(Path.Combine(pastaDados, "configuracao.json"), optional: true, reloadOnChange: false);
+}
+
 // ---------------------------------------------------------------- Banco de dados
 var caminhoBanco = cfg["Banco:Caminho"] ?? Path.Combine(AppContext.BaseDirectory, "dados", "sql", "FinancasLocal.db");
 builder.Services.AddDbContext<FinancasDbContext>(opcoes =>
