@@ -127,6 +127,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Validação do código da B3 volta ao formato estrito (ex.: PETR4, MXRF11); ativos de fora da B3, como AOK, entram escolhendo a moeda (ADR 0009).
 
 ### Documentação
+- README: **instalar pelo `.msi`** (passo a passo, aviso do SmartScreen, conferir o SHA256, o que fica onde, o gerenciador), **atualizar o site** (pelo gerenciador, pelo `.msi` novo, saindo da instalação por scripts para o instalador, ou continuando pelos scripts), **desinstalar** e problemas comuns do instalador. A carteira de renda variável passa a explicar o lançamento manual depois do #117 e o "Conferir investimentos".
 - Pasta `docs/` restaurada (fora apagada por engano na migração para SQLite) e atualizada para SQLite/Kestrel e scripts bash.
 - Decisões de arquitetura passam a ser registradas como ADRs em `docs/adr/`, com as decisões já tomadas registradas retroativamente.
 
