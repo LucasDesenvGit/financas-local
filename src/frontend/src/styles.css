@@ -121,7 +121,7 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 }
 
 /* ---------------------------------------------------------------- Estrutura */
-.app { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; transition: grid-template-columns 0.22s ease; }
 
 .lateral {
   background: var(--superficie);
@@ -132,9 +132,24 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
   position: sticky;
   top: 0;
   height: 100vh;
+  width: 252px;
+  transition: transform 0.22s ease, visibility 0s linear 0s;
 }
 
-.marca { display: flex; align-items: center; gap: 12px; padding: 0 10px 24px; }
+/* #131: menu escondido no computador. A coluna encolhe enquanto o menu desliza para a esquerda; no fim ele fica
+   invisível (e inert no HTML), para o Tab não parar em link escondido. Sem animação com prefers-reduced-motion. */
+@media (min-width: 901px) {
+  .app.menu-recolhido { grid-template-columns: 0 1fr; }
+  .menu-recolhido .lateral { transform: translateX(-100%); visibility: hidden; transition: transform 0.22s ease, visibility 0s linear 0.22s; }
+  .menu-recolhido .barra-titulo.so-celular { display: inline-flex; }
+}
+
+.marca {
+  display: flex; align-items: center; gap: 12px; padding: 6px 10px; margin: -6px 0 18px;
+  border-radius: var(--raio-pequeno); color: inherit; text-decoration: none;
+  transition: background-color var(--transicao);
+}
+.marca:hover { background: var(--superficie-2); text-decoration: none; }
 .marca strong { display: block; font-family: var(--fonte-titulo); font-size: 1.12rem; font-weight: 650; color: var(--texto-forte); }
 .marca small { color: var(--texto-suave); font-size: 0.8rem; }
 .marca-simbolo {
@@ -807,7 +822,13 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 6px;
   height: 56px; padding: 0 24px; background: var(--fundo); border-bottom: 1px solid var(--linha);
 }
-.barra-titulo { font-family: var(--fonte-titulo); color: var(--texto-forte); }
+.barra-titulo {
+  align-items: center; min-height: 36px; padding: 0 8px; border-radius: 10px;
+  font-family: var(--fonte-titulo); font-weight: 650; color: var(--texto-forte); text-decoration: none;
+}
+.barra-titulo:hover { background: var(--superficie-2); text-decoration: none; }
+/* O ☰ fica aberto quase sempre no computador: sem o fundo de "expandido", só no hover. */
+.botao-menu[aria-expanded="true"]:not(:hover) { background: none; color: var(--texto-suave); }
 .barra-acoes { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .botao-barra {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -849,7 +870,6 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
 @media (max-width: 900px) {
   .barra-superior { padding: 0 10px; }
   .so-celular { display: inline-flex; }
-  .barra-titulo.so-celular { display: block; }
   /* No celular o sincronizar mostra só o ícone (o texto fica no aria-label e na dica). */
   .botao-sincronizar .rotulo-barra { display: none; }
 }

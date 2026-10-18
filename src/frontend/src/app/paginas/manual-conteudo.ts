@@ -77,6 +77,8 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber onde ficam o menu, o status da sincronização e as ferramentas que valem em qualquer tela.',
         passos: [
           'À esquerda fica o menu com todas as telas. No celular, ele abre pelo botão ☰ no topo.',
+          'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
+          'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
           'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',
           'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
           'A calculadora abre no botão ao lado ou com Alt+C.',
