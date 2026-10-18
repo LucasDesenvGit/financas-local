@@ -34,10 +34,12 @@ public class TransacoesController : BaseController
     private readonly AuditoriaService _auditoria;
     private readonly IMemoryCache _cache;
     private readonly DescricaoPoucoInformativaService _poucoInformativa;
+    private readonly TransferenciasService _transferencias;
 
     public TransacoesController(FinancasDbContext db, CategorizacaoService categorizacao, AuditoriaService auditoria,
-        IMemoryCache cache, DescricaoPoucoInformativaService poucoInformativa)
+        IMemoryCache cache, DescricaoPoucoInformativaService poucoInformativa, TransferenciasService transferencias)
     {
+        _transferencias = transferencias;
         _db = db;
         _categorizacao = categorizacao;
         _auditoria = auditoria;
@@ -130,6 +132,7 @@ public class TransacoesController : BaseController
         Aplicar(t, dto);
         _db.Transacoes.Add(t);
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         return CreatedAtAction(nameof(Obter), new { id = t.Id }, await ProjetarAsync(t.Id, ct));
     }
 
@@ -151,6 +154,7 @@ public class TransacoesController : BaseController
         t.ContaId = dto.ContaId;
         Aplicar(t, dto);
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         return await ProjetarAsync(id, ct);
     }
 
@@ -182,6 +186,7 @@ public class TransacoesController : BaseController
         t.Emergencia = dto.Emergencia && t.Valor < 0;
         t.AtualizadoEm = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         return await ProjetarAsync(id, ct);
     }
 
@@ -249,6 +254,7 @@ public class TransacoesController : BaseController
             _db.Transacoes.Remove(t);
         }
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         return NoContent();
     }
 
@@ -277,6 +283,7 @@ public class TransacoesController : BaseController
             t.AtualizadoEm = DateTime.UtcNow;
         }
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         return new ResultadoAplicacaoDto(transacoes.Count);
     }
 
@@ -352,6 +359,7 @@ public class TransacoesController : BaseController
 
         _auditoria.Registrar($"CategoriaEmLote ({anteriores.Count})", User.Identity?.Name);
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         var chave = Guid.NewGuid().ToString("N");
         _cache.Set(ChaveDesfazer(chave), anteriores, PrazoDesfazer);
         return new ResultadoCategoriasEmLoteDto(anteriores.Count, chave);
@@ -386,10 +394,20 @@ public class TransacoesController : BaseController
         }
         _auditoria.Registrar($"CategoriaEmLoteDesfeita ({restauradas})", User.Identity?.Name);
         await _db.SaveChangesAsync(ct);
+        await AcertarTransferenciasAsync(ct);
         return new ResultadoAplicacaoDto(restauradas);
     }
 
     private static string ChaveDesfazer(string chave) => "transacoes-em-lote:" + chave;
+
+    /// <summary>
+    /// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): depois de mudar categoria,
+    /// valor ou excluir um lado de um par, a categoria "Transferências" é conferida de novo.
+    /// </summary>
+    private async Task AcertarTransferenciasAsync(CancellationToken ct)
+    {
+        if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+    }
 
     /// <summary>
     /// Transferência entre contas. Lança somente nas contas manuais: o lado Open Finance chega pela sincronização.

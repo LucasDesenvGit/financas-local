@@ -78,6 +78,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - Nova tabela `ReservaConferencia` (saldo conferido das reservas) em `banco/01-estrutura.sql`: rode `scripts/2-criar-banco.sh`.
 
 ### Correções
+- Relatórios: **transferência para outra pessoa conta como despesa ou receita** (ADR 0031). Antes, todo Pix ou TED na categoria "Transferências" ficava fora dos relatórios, inclusive salário e pagamentos a terceiros.
+  - **Continua fora só o que é entre contas suas:** o par aparece na outra conta (mesmo valor, sinal oposto, até 5 dias), o banco informa o mesmo titular, a transferência foi lançada pelo site ou é dinheiro guardado numa reserva.
+  - **Quando roda:** na sincronização, ao iniciar o site e depois de mudar categorias.
+  - **Outras categorias do tipo transferência** (Investimentos, Pagamento de fatura e as criadas por você) continuam sempre fora.
 - Investimentos e Open Finance: **compra lançada à mão não trava mais a importação.** Antes, se você lançasse a compra que faltou no histórico da corretora, aquele ativo parava de receber as próximas compras e vendas do Open Finance. Agora, num ativo que já tem histórico da corretora, o seu lançamento só completa o que faltou. Se a corretora mandar depois a mesma operação (mesmo tipo e quantidade, até 5 dias de diferença), as duas são ligadas, sem duplicar. Ativos só com lançamentos seus continuam fora da importação, como antes. Também deixou de acontecer: uma falha da Pluggy ao listar as movimentações de um ativo com histórico registrava a posição inteira como uma compra a mais.
 - Investimentos: **FII do Nubank entrava como ação.** Pelo Open Finance, o Nubank manda FII com o subtipo "STOCK", e o ativo novo virava ação, ficando fora do total e da aba de FIIs. Agora o emissor ("... FDO INV IMOB - FII") ou o nome oficial do fundo, que chega com a primeira cotação, faz o ativo virar FII. Os que já entraram errado são corrigidos por "Conferir investimentos".
 - Janelas sobrepostas (ex.: editar uma operação a partir da lista de operações): a aberta por último fica por cima, e o Esc fecha só ela — antes, a edição abria atrás e um Esc fechava todas.

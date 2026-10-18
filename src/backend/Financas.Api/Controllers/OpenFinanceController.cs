@@ -213,7 +213,7 @@ public class OpenFinanceController : BaseController
 
     [HttpPut("categorias/{pluggyCategoriaId}")]
     public async Task<ActionResult<ResultadoAplicacaoDto>> MapearCategoria(string pluggyCategoriaId,
-        MapearCategoriaPluggyDto dto, CancellationToken ct)
+        MapearCategoriaPluggyDto dto, [FromServices] TransferenciasService transferencias, CancellationToken ct)
     {
         var registro = await _db.CategoriasPluggy.FirstOrDefaultAsync(c => c.PluggyCategoriaId == pluggyCategoriaId, ct);
         if (registro is null) return NaoEncontrado();
@@ -245,6 +245,8 @@ public class OpenFinanceController : BaseController
                 alteradas++;
             }
             await _db.SaveChangesAsync(ct);
+            // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
+            if (await transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         }
         return new ResultadoAplicacaoDto(alteradas);
     }

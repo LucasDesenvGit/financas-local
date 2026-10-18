@@ -100,6 +100,7 @@ builder.Services.AddScoped<ConfiguracaoService>();
 builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
+builder.Services.AddScoped<TransferenciasService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
 builder.Services.AddScoped<SugestaoOrcamentoService>();
@@ -164,6 +165,18 @@ builder.Services.AddHttpClient(CotacaoService.ClienteBrapi, c =>
 });
 
 var app = builder.Build();
+
+// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco.
+try
+{
+    using var escopo = app.Services.CreateScope();
+    if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
+        await escopo.ServiceProvider.GetRequiredService<FinancasDbContext>().SaveChangesAsync();
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Não foi possível conferir as transferências ao iniciar.");
+}
 
 // ---------------------------------------------------------------- Pipeline
 app.UseMiddleware<CabecalhosSegurancaMiddleware>();

@@ -65,3 +65,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md) | Tipo de lançamento: dado do Open Finance, com a descrição como reserva | Aceita |
 | [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
 | [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita |
+| [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md) | Transferência só fica fora dos relatórios quando é entre contas suas | Aceita |
