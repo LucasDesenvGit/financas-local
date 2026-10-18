@@ -113,6 +113,12 @@ function Migrar-Instalacao-Antiga {
 }
 
 # ------------------------------------------------------------------ 3) Certificado HTTPS
+# So a parte publica interessa aqui: carregar sem gravar a chave privada em nenhum repositorio de chaves do Windows.
+function Ler-Pfx([string]$senha) {
+    $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
+    return New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($Pfx, $senha, $flags)
+}
+
 function Senha-Atual {
     if (-not (Test-Path -LiteralPath $Configuracao)) { return $null }
     try { return (Get-Content -LiteralPath $Configuracao -Raw -Encoding UTF8 | ConvertFrom-Json).Kestrel.Endpoints.Https.Certificate.Password }
@@ -124,7 +130,7 @@ function Preparar-Certificado {
     $reaproveitar = $false
     if ($senha -and (Test-Path -LiteralPath $Pfx)) {
         try {
-            $atual = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($Pfx, $senha)
+            $atual = Ler-Pfx $senha
             $reaproveitar = $atual.NotAfter -gt (Get-Date).AddDays(30)
         } catch { $reaproveitar = $false }
     }
@@ -151,7 +157,7 @@ function Preparar-Certificado {
     }
 
     # Confia so na parte publica, na loja da maquina (vale para todas as contas, como no instalar-windows.ps1).
-    $completo = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($Pfx, $senha)
+    $completo = Ler-Pfx $senha
     $publico = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(, $completo.RawData)
     $publico.FriendlyName = $NomeServico
     $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
@@ -206,5 +212,7 @@ try {
     exit 0
 } catch {
     Write-Output ("[configurar] ERRO: " + $_.Exception.Message)
+    Write-Output ("[configurar] onde: " + $_.InvocationInfo.PositionMessage)
+    Write-Output ("[configurar] pilha: " + $_.ScriptStackTrace)
     exit 1
 }
