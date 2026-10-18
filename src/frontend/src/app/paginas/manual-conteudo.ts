@@ -925,7 +925,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Mostrar a tela a alguém sem mostrar quanto você tem.',
         passos: [
           'Clique no botão do olho na barra de cima.',
-          'Todos os valores ficam escondidos, inclusive nas frases dos gráficos.',
+          'Todos os valores ficam escondidos, inclusive nas frases dos gráficos. O olho fica riscado e o botão destacado enquanto os valores estão escondidos.',
           'Clique de novo para mostrar.'
         ]
       },
