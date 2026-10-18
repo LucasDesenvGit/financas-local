@@ -131,9 +131,10 @@ const LINHAS_VISIVEIS = 8;
                     <th>De onde veio</th><th>Conta</th><th>Categoria hoje</th></tr></thead>
                   <tbody>
                     @for (l of visiveis(trocos(), trocosAbertos()); track l.item.transacaoId) {
-                      <tr>
-                        <td><input type="checkbox" [(ngModel)]="l.marcada" [disabled]="!dados()!.categoriaDoTroco"
-                          [attr.aria-label]="'Corrigir o crédito de ' + (l.item.data | date: 'dd/MM/yyyy')"></td>
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [disabled]="!dados()!.categoriaDoTroco"
+                          [attr.aria-label]="'Corrigir o crédito de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
                         <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
                         <td class="direita">{{ l.item.valor | currency }}</td>
                         <td>{{ origem(l.item) }}</td>
@@ -168,9 +169,9 @@ const LINHAS_VISIVEIS = 8;
                     <th>Descrição</th><th>Conta</th><th>Categoria hoje</th></tr></thead>
                   <tbody>
                     @for (l of visiveis(rendimentos(), rendimentosAbertos()); track l.item.transacaoId) {
-                      <tr>
-                        <td><input type="checkbox" [(ngModel)]="l.marcada"
-                          [attr.aria-label]="'Corrigir o rendimento de ' + (l.item.data | date: 'dd/MM/yyyy')"></td>
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [attr.aria-label]="'Corrigir o rendimento de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
                         <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
                         <td class="direita">{{ l.item.valor | currency }}</td>
                         <td>{{ l.item.descricao }}</td>

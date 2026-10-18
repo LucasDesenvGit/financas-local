@@ -573,9 +573,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               </thead>
               <tbody>
                 @for (l of linhasImportacao(); track l.transacaoId) {
-                  <tr [class.encerrada]="l.jaImportada">
-                    <td><input type="checkbox" [(ngModel)]="l.selecionada" [disabled]="l.jaImportada"
-                      [attr.aria-label]="'Importar ' + l.descricao"></td>
+                  <tr [class.encerrada]="l.jaImportada" [class.selecionada]="l.selecionada && !l.jaImportada">
+                    <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.selecionada"
+                      [disabled]="l.jaImportada" [attr.aria-label]="'Importar ' + l.descricao"></label></td>
                     <td>{{ l.data | date: 'dd/MM/yy' }}</td>
                     <td><small>{{ l.descricao }}</small><br><small class="texto-suave">{{ l.contaNome }}</small>
                       @if (l.jaImportada) { <br><small class="etiqueta etiqueta-sucesso">já importada</small> }

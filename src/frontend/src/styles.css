@@ -330,7 +330,37 @@ input:focus, select:focus, textarea:focus {
   outline: none; background: var(--superficie);
   border-color: var(--primaria); box-shadow: 0 0 0 4px var(--primaria-suave);
 }
-input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--primaria); padding: 0; }
+/* Caixa de marcar (#133): visual próprio, igual em tabelas e formulários, sobre o <input type="checkbox"> nativo
+   (teclado, [checked], [indeterminate] e leitor de tela não mudam). 18 px, borda em --texto-suave (contraste ≥ 3:1,
+   WCAG 1.4.11), marcada em --primaria com o visto; parcial (indeterminate) com um traço. O interruptor (role="switch")
+   tem o seu próprio estilo. */
+input[type="checkbox"]:not([role="switch"]) {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; position: relative; margin: 0; padding: 0;
+  width: 18px; height: 18px; border-radius: 5px; cursor: pointer; box-shadow: none; vertical-align: middle;
+  display: inline-grid; place-content: center;
+  background: var(--superficie); border: 1.5px solid var(--texto-suave);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+input[type="checkbox"]:not([role="switch"])::after {
+  content: ""; width: 5px; height: 9px; border: solid var(--primaria-texto); border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg) scale(0); transition: transform 0.12s ease;
+}
+input[type="checkbox"]:not([role="switch"]):checked,
+input[type="checkbox"]:not([role="switch"]):indeterminate { background: var(--primaria); border-color: var(--primaria); }
+input[type="checkbox"]:not([role="switch"]):checked::after { transform: translateY(-1px) rotate(45deg) scale(1); }
+input[type="checkbox"]:not([role="switch"]):indeterminate::after { width: 9px; height: 0; border-width: 0 0 2px 0; transform: none; }
+input[type="checkbox"]:not([role="switch"]):hover:not(:disabled) { border-color: var(--texto); }
+input[type="checkbox"]:not([role="switch"]):checked:hover:not(:disabled) { border-color: var(--primaria-hover); }
+input[type="checkbox"]:not([role="switch"]):focus { box-shadow: none; }
+input[type="checkbox"]:not([role="switch"]):focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+input[type="checkbox"]:not([role="switch"]):disabled { opacity: 0.5; cursor: not-allowed; }
+/* Célula de seleção numa tabela: a célula inteira é o alvo (≥ 24×24 px, WCAG 2.5.8), não só a caixinha. */
+label.celula-marcar {
+  display: flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px;
+  margin: -6px; padding: 6px; cursor: pointer;
+}
+.col-check { user-select: none; }
+.tabela tbody tr.selecionada td { background: var(--primaria-suave); }
 input.ng-invalid.ng-touched { border-color: var(--negativo); }
 label { display: grid; gap: 6px; font-size: 0.84rem; font-weight: 500; color: var(--texto-suave); }
 label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--texto); font-size: 0.92rem; font-weight: 400; }
@@ -556,10 +586,25 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
   display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
   font-size: 0.92rem; margin: 0 4px 12px; font-variant-numeric: tabular-nums;
 }
+/* Barra de ações em lote (#133): abre e fecha animando a altura (grid 0fr → 1fr), sem empurrar a tabela de uma vez,
+   e fica fixa logo abaixo da barra superior ao rolar uma seleção grande. Fechada, fica invisível e inert. */
+.barra-lote-espaco {
+  display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+  position: sticky; top: 64px; z-index: 6;
+  transition: grid-template-rows 0.2s ease, opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+.barra-lote-espaco.aberta {
+  grid-template-rows: 1fr; opacity: 1; visibility: visible;
+  transition: grid-template-rows 0.2s ease, opacity 0.2s ease, visibility 0s;
+}
+.barra-lote-dentro { min-height: 0; overflow: hidden; }
 .barra-lote {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  background: var(--primaria-suave); border-radius: var(--raio-medio); padding: 10px 16px; margin-bottom: 12px;
+  /* fundo opaco: fixa no topo, a tabela passa por baixo sem aparecer através */
+  background: linear-gradient(var(--primaria-suave), var(--primaria-suave)), var(--superficie);
+  border-radius: var(--raio-medio); padding: 10px 16px; margin-bottom: 12px; box-shadow: var(--sombra);
 }
+.contagem-selecao { font-weight: 600; color: var(--texto-forte); font-variant-numeric: tabular-nums; }
 .barra-lote select { width: auto; min-width: 220px; background: var(--superficie); }
 .paginacao {
   display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;

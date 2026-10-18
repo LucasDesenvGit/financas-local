@@ -350,6 +350,21 @@ export const MANUAL: CapituloManual[] = [
           'Em lote: selecione várias linhas e use “Marcar emergência” na barra que aparece.'
         ],
         abrir: [{ rotulo: 'Ver só as emergências', rota: '/transacoes', params: { emergencias: '1' } }]
+      },
+      {
+        id: 'selecionar-varias',
+        titulo: 'Selecionar várias transações',
+        paraQueServe: 'Aplicar a mesma ação (categoria, nome, emergência…) a várias transações de uma vez.',
+        passos: [
+          'Clique na caixa à esquerda da linha (ou em qualquer lugar daquela célula). A linha fica destacada.',
+          'Para um intervalo: marque uma, segure Shift e clique em outra. Todas entre as duas são marcadas (ou desmarcadas).',
+          'A caixa do cabeçalho seleciona todas desta página. Com só algumas marcadas, ela mostra um traço; clique nela para marcar todas.',
+          'A barra de ações aparece no topo e acompanha a rolagem. Ela diz quantas estão selecionadas e quantas estão em outras páginas.',
+          'Esc ou “limpar seleção” desmarcam tudo.'
+        ],
+        dicas: ['Trocar de página mantém a seleção: dá para juntar transações de várias páginas e aplicar a ação de uma vez.'],
+        erros: ['Trocar o filtro (busca, período, categoria…) limpa a seleção, com um aviso. Assim nenhuma ação em lote pega uma transação que não aparece no filtro atual.'],
+        abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }]
       }
     ]
   },

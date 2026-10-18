@@ -34,6 +34,18 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
   - fica a cargo de quem cria uma tela escolher certo entre interruptor e caixa de marcar: um interruptor num formulário com "Salvar" engana.
 - **Na prática:** efeito imediato → `<label class="interruptor"><input type="checkbox" role="switch" …> Rótulo</label>`; formulário com "Salvar" → `label.checkbox`. Teste em `testes/usabilidade/interruptor.spec.ts`.
 
+## Caixa de marcar e seleção em tabelas (#133)
+
+- **Decisão:** a caixa de marcar ganha visual próprio **em todo o site**, em tabelas e formulários, com CSS sobre o mesmo `<input type="checkbox">` nativo (`appearance: none`). São 18 px, borda em `--texto-suave` (≥ 3:1, WCAG 1.4.11), marcada em `--primaria` com o visto e parcial (`indeterminate`) com um traço. O interruptor (`role="switch"`) fica de fora. A #133 previa manter as caixas de formulário com o visual do navegador; a decisão de aplicar em todo o site foi **do usuário**, por consistência (Nielsen 4).
+- **Seleção em tabelas:**
+  - a célula inteira é o alvo (`label.celula-marcar`, ≥ 24 px) e a linha marcada fica destacada (`tr.selecionada`);
+  - o nome da caixa diz a linha ("Selecionar: descrição, data, valor", respeitando "ocultar valores");
+  - em Transações também há Shift+clique (intervalo), "todas desta página" com estado parcial, Esc para limpar, contagem com "M em outras páginas" (aria-live) e barra de ações que abre animando e fica fixa no topo.
+- **Seleção ao trocar de página × filtro** (*julgamento próprio*, como a issue sugeria): trocar de página **mantém** a seleção; trocar o filtro **limpa**, com aviso, para nenhuma ação em lote pegar transação fora do filtro.
+- **Negativas:**
+  - o visto e o traço são desenhados com `::after`, e o visual depende do CSS do site nos dois temas;
+  - "selecionar todas as N do filtro" (opcional na #133) ficou de fora: pediria à API os ids do filtro.
+
 ## Contexto (campo de valor, #132)
 
 Os campos de dinheiro eram `<input type="number">` puros, cada tela com seu `min`/`step`. O campo numérico do navegador não entende o jeito brasileiro: "1.500" podia virar 1,5, colar "R$ 1.234,56" do app do banco deixava o campo vazio, a rodinha do mouse mudava o valor sem querer e as setinhas somavam 0,01.
