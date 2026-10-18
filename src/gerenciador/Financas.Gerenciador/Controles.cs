@@ -118,6 +118,21 @@ internal sealed class Cartao : Panel
 
 internal enum EstiloBotao { Primario, Secundario, Discreto }
 
+/// <summary>Códigos dos ícones usados nos botões; os mesmos na Segoe Fluent Icons e na Segoe MDL2 Assets.</summary>
+internal static class IconeBotao
+{
+    public const char AbrirSite = '\uE8A7';
+    public const char Ligar = '\uE7E8';
+    public const char Reiniciar = '\uE72C';
+    public const char Baixar = '\uE896';
+    public const char Procurar = '\uE721';
+    public const char Informacao = '\uE946';
+    public const char Cancelar = '\uE711';
+    public const char Erros = '\uE7BA';
+    public const char Manual = '\uE897';
+    public const char Salvar = '\uE74E';
+}
+
 /// <summary>
 /// Botão arredondado nas cores do site. Continua sendo um <see cref="Button"/> (teclado, Enter/Espaço, atalho com &amp;,
 /// leitor de tela); só o desenho muda, com contorno de foco visível (WCAG 2.4.7) e altura de pelo menos 34 px (2.5.8).
@@ -126,6 +141,17 @@ internal sealed class Botao : Button
 {
     private bool _sobre, _apertado;
     private EstiloBotao _estilo;
+    /// <summary>Ícone à esquerda do texto. Só desenho: o nome acessível continua sendo o texto.</summary>
+    private readonly char? _icone;
+
+    /// <summary>Fonte de ícones do próprio Windows (11: Segoe Fluent Icons; 10: Segoe MDL2 Assets); null se nenhuma existir.</summary>
+    private static readonly string? FonteIcones = new[] { "Segoe Fluent Icons", "Segoe MDL2 Assets" }
+        .FirstOrDefault(nome => FontFamily.Families.Any(f => f.Name == nome));
+
+    private Font? _fonteIcone;
+    private Font? FonteIcone => FonteIcones is null ? null : _fonteIcone ??= new Font(FonteIcones, Font.Size + 0.5f);
+    private string? GlifoIcone => _icone is char c && FonteIcones is not null ? c.ToString() : null;
+    private int VaoIcone => LogicalToDeviceUnits(8);
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public EstiloBotao Estilo
@@ -134,8 +160,9 @@ internal sealed class Botao : Button
         set { _estilo = value; Invalidate(); }
     }
 
-    public Botao(string texto, EstiloBotao estilo = EstiloBotao.Secundario)
+    public Botao(string texto, EstiloBotao estilo = EstiloBotao.Secundario, char? icone = null)
     {
+        _icone = icone;
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
         Text = texto;
         Estilo = estilo;
@@ -154,6 +181,8 @@ internal sealed class Botao : Button
     public override Size GetPreferredSize(Size proposto)
     {
         var texto = TextRenderer.MeasureText(Text, Font, Size.Empty, TextFormatFlags.SingleLine);
+        if (GlifoIcone is string glifo)
+            texto.Width += TextRenderer.MeasureText(glifo, FonteIcone, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + VaoIcone;
         return new Size(texto.Width + Padding.Horizontal + LogicalToDeviceUnits(4),
             Math.Max(texto.Height + Padding.Vertical, LogicalToDeviceUnits(34)));
     }
@@ -165,6 +194,14 @@ internal sealed class Botao : Button
     protected override void OnEnabledChanged(EventArgs e) { Invalidate(); base.OnEnabledChanged(e); }
     protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
     protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+
+    protected override void OnFontChanged(EventArgs e) { _fonteIcone?.Dispose(); _fonteIcone = null; base.OnFontChanged(e); }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _fonteIcone?.Dispose();
+        base.Dispose(disposing);
+    }
 
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -219,7 +256,20 @@ internal sealed class Botao : Button
 
         var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine;
         if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
-        TextRenderer.DrawText(g, Text, Font, ClientRectangle, texto, flags);
+        if (GlifoIcone is not string glifo)
+        {
+            TextRenderer.DrawText(g, Text, Font, ClientRectangle, texto, flags);
+            return;
+        }
+        // Ícone + vão + texto, o conjunto centralizado no botão.
+        const TextFormatFlags medir = TextFormatFlags.SingleLine | TextFormatFlags.NoPadding;
+        var tamIcone = TextRenderer.MeasureText(glifo, FonteIcone, Size.Empty, medir);
+        var tamTexto = TextRenderer.MeasureText(Text, Font, Size.Empty, medir | (flags & TextFormatFlags.HidePrefix));
+        var x = (Width - (tamIcone.Width + VaoIcone + tamTexto.Width)) / 2;
+        TextRenderer.DrawText(g, glifo, FonteIcone, new Rectangle(x, 0, tamIcone.Width, Height), texto,
+            TextFormatFlags.VerticalCenter | medir);
+        TextRenderer.DrawText(g, Text, Font, new Rectangle(x + tamIcone.Width + VaoIcone, 0, tamTexto.Width + 2, Height), texto,
+            (flags & ~TextFormatFlags.HorizontalCenter) | TextFormatFlags.NoPadding);
     }
 }
 
