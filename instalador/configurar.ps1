@@ -58,6 +58,12 @@ function Caminho-Do-Servico {
     return $servico.PathName
 }
 
+# Caminho do appsettings antigo: relativo a pasta da API antiga quando nao for absoluto.
+function Caminho-Absoluto([string]$caminho, [string]$base) {
+    if ([IO.Path]::IsPathRooted($caminho)) { return $caminho }
+    return [IO.Path]::GetFullPath((Join-Path $base $caminho))
+}
+
 function Migrar-Instalacao-Antiga {
     $linha = Caminho-Do-Servico
     if (-not $linha) { return }
@@ -73,10 +79,19 @@ function Migrar-Instalacao-Antiga {
         if (Test-Path -LiteralPath $config) {
             try {
                 $json = Get-Content -LiteralPath $config -Raw -Encoding UTF8 | ConvertFrom-Json
-                if ($json.Banco -and $json.Banco.Caminho) { $bancoAntigo = $json.Banco.Caminho -replace '/', '\' }
-                if ($json.Seguranca -and $json.Seguranca.PastaChaves) { $chavesAntigas = $json.Seguranca.PastaChaves -replace '/', '\' }
+                if ($json.Banco -and $json.Banco.Caminho) { $bancoAntigo = Caminho-Absoluto ($json.Banco.Caminho -replace '/', '\') $pastaAntiga }
+                if ($json.Seguranca -and $json.Seguranca.PastaChaves) { $chavesAntigas = Caminho-Absoluto ($json.Seguranca.PastaChaves -replace '/', '\') $pastaAntiga }
             } catch { Log "aviso: nao deu para ler $config ($($_.Exception.Message))" }
         }
+    }
+
+    # Sem o banco antigo, nao remove nada: o servico antigo volta a rodar (o msiexec desfaz a instalacao) e os
+    # dados continuam onde estavam. Melhor do que comecar com um banco vazio sem a pessoa entender por que.
+    $bancoNovo = Join-Path $Dados "sql\FinancasLocal.db"
+    if (-not ($bancoAntigo -and (Test-Path -LiteralPath $bancoAntigo)) -and -not (Test-Path -LiteralPath $bancoNovo)) {
+        throw ("Ha uma instalacao do Financas Local feita pelos scripts ($linha), mas o banco dela nao foi encontrado " +
+               "(procurado em: $bancoAntigo). Nada foi mudado. Confira o appsettings.Production.json da instalacao antiga " +
+               "ou faca um backup do banco e remova o servico antigo antes de instalar.")
     }
 
     $servico = Get-Service -Name $NomeServico -ErrorAction SilentlyContinue
@@ -86,7 +101,6 @@ function Migrar-Instalacao-Antiga {
         Log "servico antigo parado"
     }
 
-    $bancoNovo = Join-Path $Dados "sql\FinancasLocal.db"
     if ($bancoAntigo -and (Test-Path -LiteralPath $bancoAntigo)) {
         if (Test-Path -LiteralPath $bancoNovo) {
             Log "banco ja existe em ${bancoNovo}; o da instalacao antiga nao foi copiado"
@@ -97,7 +111,7 @@ function Migrar-Instalacao-Antiga {
             Log "banco copiado de $bancoAntigo"
         }
     } else {
-        Log "aviso: banco da instalacao antiga nao encontrado (comeca com um banco novo)"
+        Log "banco da instalacao antiga nao encontrado; fica o que ja estava em $bancoNovo"
     }
 
     $chavesNovas = Join-Path $Dados "chaves"
