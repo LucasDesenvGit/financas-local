@@ -30,6 +30,7 @@ internal sealed class FormPrincipal : Form
     private readonly Botao _atualizar = new("A&tualizar", EstiloBotao.Primario);
     private readonly Botao _notas = new("O &que mudou", EstiloBotao.Discreto) { Visible = false };
     private readonly Botao _procurar = new("&Procurar versão nova");
+    private readonly Botao _baixarMsi = new("&Baixar o instalador .msi", EstiloBotao.Discreto);
     private readonly BarraProgresso _progresso = new() { Visible = false };
     private readonly Botao _cancelar = new("&Cancelar download", EstiloBotao.Discreto);
     private readonly Botao _mais = new("&Mais opções ▾", EstiloBotao.Discreto);
@@ -79,7 +80,7 @@ internal sealed class FormPrincipal : Form
         situacao.Conteudo.Controls.AddRange([Linha(_ponto, Coluna(_titulo, _detalhe)), Espaco(14), Linha(_abrir, _ligar, _reiniciar)]);
 
         var versao = new Cartao(LarguraCartao);
-        versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10), Linha(_atualizar, _procurar, _notas),
+        versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10), Linha(_atualizar, _procurar, _notas, _baixarMsi),
             Linha(_progresso, _cancelar)]);
 
         var salvarCopia = new Botao("Salvar uma &cópia do banco…");
@@ -108,8 +109,13 @@ internal sealed class FormPrincipal : Form
         manual.Click += (_, _) => AbrirPagina("manual");
         _iniciarComWindows.Checked = Preferencias.IniciarComWindows;
         _iniciarComWindows.CheckedChanged += (_, _) => Preferencias.IniciarComWindows = _iniciarComWindows.Checked;
-        // Instalação pelos scripts: a versão nova vem pelos scripts, não pelo .msi do GitHub (que trocaria a instalação).
+        // Instalação pelos scripts: o gerenciador não instala o .msi do GitHub sozinho (ele troca a instalação). Mostra
+        // o caminho: rodar os scripts de novo ou baixar o .msi, que traz os dados e passa a se atualizar por aqui.
         _procurar.Visible = _procurarAoAbrir.Visible = _instalacao.PeloMsi;
+        _baixarMsi.Visible = !_instalacao.PeloMsi;
+        _baixarMsi.AccessibleDescription = "Abre a página da versão mais recente no GitHub";
+        _baixarMsi.Click += (_, _) => Process.Start(new ProcessStartInfo(
+            $"https://github.com/{Instalacao.Repositorio}/releases/latest") { UseShellExecute = true });
         _procurarAoAbrir.Checked = Preferencias.ProcurarAoAbrir;
         _procurarAoAbrir.CheckedChanged += (_, _) => Preferencias.ProcurarAoAbrir = _procurarAoAbrir.Checked;
 
@@ -281,7 +287,8 @@ internal sealed class FormPrincipal : Form
         if (!_instalacao.PeloMsi)
         {
             _versao.Text = "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd "
-                           + "(ou o 3-publicar-atualizar.sh) na pasta do projeto.";
+                           + "(ou o 3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi "
+                           + "traz o banco e as chaves, e daí em diante a versão nova chega por aqui.";
             return;
         }
         var instalada = _situacao?.VersaoSite is null ? $"Versão instalada: {_instalacao.VersaoTexto}." : null;

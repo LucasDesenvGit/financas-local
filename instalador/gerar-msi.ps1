@@ -7,14 +7,19 @@
     .\instalador\gerar-msi.ps1 -Versao 2.1.1        # outra versao (ex.: testar a atualizacao)
     .\instalador\gerar-msi.ps1 -PularFront          # front-end ja compilado em src\frontend\dist
     .\instalador\gerar-msi.ps1 -SoPacote            # reaproveita a pasta publicada e so gera o .msi
+    .\instalador\gerar-msi.ps1 -Revisao 57          # versao de desenvolvimento: X.Y.Z-dev.57 no site e no
+                                                    # gerenciador, X.Y.Z.57 no .msi (a CI usa no develop)
 
-    Saida: saida-instalador\FinancasLocal-<versao>.msi e saida-instalador\SHA256SUMS.txt.
+    Saida: saida-instalador\FinancasLocal-<versao>.msi (ou -<versao>-dev.<revisao>.msi) e saida-instalador\SHA256SUMS.txt.
+    O .msi troca qualquer instalacao da mesma versao X.Y.Z (AllowSameVersionUpgrades): a de desenvolvimento e a do
+    Release substituem uma a outra sem ficarem as duas instaladas.
 #>
 param(
     [string]$Versao = "",
     [switch]$PularFront,
     [switch]$SoPacote,
-    [string]$Saida = ""
+    [string]$Saida = "",
+    [int]$Revisao = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,7 +38,11 @@ if (-not $Versao) {
     $Versao = ($props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
 }
 if ($Versao -notmatch '^\d+\.\d+\.\d+$') { throw "Versao invalida: '$Versao' (use X.Y.Z)." }
-Etapa "Financas Local $Versao"
+# O Windows Installer so aceita numeros ate 65535 em cada parte e compara so X.Y.Z (a revisao so identifica o pacote).
+if ($Revisao -lt 0 -or $Revisao -gt 65535) { throw "Revisao invalida: $Revisao (de 1 a 65535)." }
+$Rotulo = if ($Revisao) { "$Versao-dev.$Revisao" } else { $Versao }
+$VersaoMsi = if ($Revisao) { "$Versao.$Revisao" } else { $Versao }
+Etapa "Financas Local $Rotulo"
 
 if (-not $SoPacote) {
     if (Test-Path -LiteralPath $Publicado) { Remove-Item -LiteralPath $Publicado -Recurse -Force }
@@ -56,7 +65,7 @@ if (-not $SoPacote) {
     foreach ($projeto in "src\backend\Financas.Api\Financas.Api.csproj", "src\gerenciador\Financas.Gerenciador\Financas.Gerenciador.csproj") {
         Etapa "Publicando $projeto"
         Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-            "-p:Version=$Versao", "-o", $Publicado, "--nologo")
+            "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
     }
 
     Etapa "Montando a pasta do instalador"
@@ -80,10 +89,10 @@ if (-not $SoPacote) {
 }
 
 Etapa "Gerando o .msi (WiX)"
-$msi = Join-Path $Saida "FinancasLocal-$Versao.msi"
+$msi = Join-Path $Saida "FinancasLocal-$Rotulo.msi"
 Executar "wix" @("build", (Join-Path $PSScriptRoot "FinancasLocal.wxs"), "-arch", "x64", "-culture", "pt-BR",
     "-ext", "WixToolset.UI.wixext", "-ext", "WixToolset.Util.wixext",
-    "-d", "Versao=$Versao", "-bindpath", "app=$Publicado", "-o", $msi)
+    "-d", "Versao=$VersaoMsi", "-bindpath", "app=$Publicado", "-o", $msi)
 
 $hash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
 $somas = Join-Path $Saida "SHA256SUMS.txt"

@@ -15,7 +15,12 @@
            UpgradeCode="{6F1C2B9E-7A43-4D2E-9B8F-3C5A1E0D4F27}" Scope="perMachine" Language="1046" Codepage="1252">
 
     <SummaryInformation Description="Finanças Local $(Versao): gerenciamento financeiro pessoal no seu computador" />
-    <MajorUpgrade DowngradeErrorMessage="Uma versão mais nova do Finanças Local já está instalada. Para voltar a uma anterior, desinstale-a antes (seus dados ficam)." />
+    <!--
+      A mesma versão X.Y.Z também substitui: a de desenvolvimento (X.Y.Z.N, do develop) e a do Release (X.Y.Z) trocam
+      uma pela outra, em vez de ficarem as duas instaladas. O Windows Installer compara só X.Y.Z.
+    -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="Uma versão mais nova do Finanças Local já está instalada. Para voltar a uma anterior, desinstale-a antes (seus dados ficam)." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
     <Icon Id="icone.ico" SourceFile="!(bindpath.app)\instalador\icone.ico" />
