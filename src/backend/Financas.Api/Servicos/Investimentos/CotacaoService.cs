@@ -136,7 +136,12 @@ public partial class CotacaoService
             }
 
             if (string.IsNullOrWhiteSpace(ativo.Nome) && !string.IsNullOrWhiteSpace(cotacao.Nome))
+            {
                 ativo.Nome = Limitar(cotacao.Nome, 150);
+                // FII que veio do Open Finance como "STOCK" e sem emissor (ex.: GARE11): o nome oficial corrige o tipo.
+                if (ativo.Tipo == TipoAtivo.Acao && !exterior && ClassificacaoAtivo.PareceFii(ativo.Nome))
+                    ativo.Tipo = TipoAtivo.Fii;
+            }
 
             if (!ativo.PrecoManual && cotacao.Preco is decimal preco && preco > 0)
             {

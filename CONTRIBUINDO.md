@@ -24,7 +24,17 @@ git push -u origin feature/minha-melhoria
 gh pr create --base develop --fill
 ```
 
-Para publicar uma versão: PR de `develop` para `main`, merge, tag (`git tag v1.1.0; git push --tags`) e `scripts/3-publicar-atualizar.sh`.
+Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
+1. No `develop`, mude a versão no `Directory.Build.props` (ex.: `2.2.0`). No `CHANGELOG.md`, troque `## [Não publicado]` por `## [2.2.0] - AAAA-MM-DD` e abra uma seção `## [Não publicado]` vazia acima.
+2. PR de `develop` para `main` e merge.
+3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
+4. O workflow **Versão (instalador .msi)**:
+   - gera o `.msi`;
+   - testa instalar, atualizar, desinstalar e migrar;
+   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release, com as notas da seção do CHANGELOG.
+5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
+
+Quem instala pelos scripts continua atualizando com `scripts/3-publicar-atualizar.sh` (ou `instalar-windows.cmd`).
 
 ## Mensagens de commit
 
@@ -53,6 +63,7 @@ Exemplos:
 - [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
 - [ ] README/CHANGELOG atualizados quando a mudança afeta o uso.
+- [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
 
 ## Convenções de código
 

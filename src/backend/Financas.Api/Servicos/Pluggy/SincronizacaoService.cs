@@ -18,12 +18,17 @@ public class SincronizacaoService
     private readonly PluggyClient _pluggy;
     private readonly ConfiguracaoService _config;
     private readonly CategorizacaoService _categorizacao;
+    private readonly RegraDescricaoService _descricoes;
     private readonly ContaService _contas;
+    private readonly TransferenciasService _transferencias;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
-        CategorizacaoService categorizacao, ContaService contas, ILogger<SincronizacaoService> logger)
+        CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
+        TransferenciasService transferencias, ILogger<SincronizacaoService> logger)
     {
+        _descricoes = descricoes;
+        _transferencias = transferencias;
         _db = db;
         _pluggy = pluggy;
         _config = config;
@@ -105,6 +110,7 @@ public class SincronizacaoService
             }
 
             await _categorizacao.CarregarAsync(ct);
+            await _descricoes.CarregarAsync(ct);
 
             int novas = 0, atualizadas = 0;
             var erros = new List<string>();
@@ -220,6 +226,8 @@ public class SincronizacaoService
             logDb.TransacoesAtualizadas = atualizadas;
             logDb.Mensagem = $"{contasPluggy.Count} conta(s) processada(s).";
             await _db.SaveChangesAsync(ct);
+            // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
+            if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
 
             return new ResultadoSincronizacaoDto(true, novas, atualizadas, null);
         }
@@ -304,9 +312,16 @@ public class SincronizacaoService
             }
 
             var descricaoRecebida = Limitar(pt.Description?.Trim(), 300) is { Length: > 0 } d ? d : "(sem descrição)";
-            // Mantém a descrição editada pelo usuário; atualiza se ele nunca editou.
-            if (nova || t.Descricao == t.DescricaoOriginal) t.Descricao = descricaoRecebida;
+            // Nome automático (o do banco ou o de uma regra de descrição, #123) acompanha o banco e as regras; nome
+            // escolhido à mão (ou editado antes das regras existirem) fica como está.
+            var nomeAutomatico = nova || RegraDescricaoService.NomeAutomatico(t);
             t.DescricaoOriginal = descricaoRecebida;
+            if (nomeAutomatico)
+            {
+                t.Descricao = descricaoRecebida;
+                t.RegraDescricaoId = null;
+                _descricoes.Aplicar(t);
+            }
             t.Estabelecimento = Limitar(pt.Merchant?.BusinessName ?? pt.Merchant?.Name, 200);
             t.Data = Relogio.ParaDataLocal(pt.Date.Value);
             t.Valor = CalcularValor(pt, ehCartao);
@@ -317,6 +332,9 @@ public class SincronizacaoService
             t.ParcelaTotal = (short?)pt.CreditCardMetadata?.TotalInstallments;
             t.FaturaCartaoId = pt.CreditCardMetadata?.BillId is { } billId && mapaFaturas.TryGetValue(billId, out var fid)
                 ? fid : t.FaturaCartaoId;
+            // #111: como foi (Pix, boleto, pagamento de fatura…) e se foi entre contas do mesmo titular.
+            t.MeioPagamento = Limitar((pt.OperationType ?? pt.PaymentData?.PaymentMethod)?.Trim().ToUpperInvariant(), 40);
+            t.MesmaTitularidade = MesmoTitular(pt.PaymentData);
 
             if (!t.CategoriaManual)
                 t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
@@ -552,11 +570,20 @@ public class SincronizacaoService
                 var ativo = await _db.Ativos.Include(a => a.Operacoes).FirstOrDefaultAsync(a => a.Ticker == ticker, ct);
                 if (ativo is null)
                 {
-                    ativo = new Ativo { Ticker = ticker, Tipo = TipoPorPluggy(inv.Tipo.ToUpperInvariant(), inv.Subtipo, ticker) };
+                    ativo = new Ativo
+                    {
+                        Ticker = ticker,
+                        Tipo = TipoPorPluggy(inv.Tipo.ToUpperInvariant(), inv.Subtipo, ticker, inv.Emissor, inv.Nome)
+                    };
                     _db.Ativos.Add(ativo);
                     criados++;
                 }
-                if (ativo.Operacoes.Any(o => o.Origem != OrigemOperacao.OpenFinance))
+                // Ativo só com lançamentos seus: não importa, para não duplicar o que você já lançou. Se a corretora já
+                // mandou movimentações dele, um lançamento seu só completa o que ela não mandou (ex.: uma compra que
+                // faltou no histórico) e as próximas movimentações continuam chegando.
+                var temMovimentoDaCorretora = ativo.Operacoes.Any(EhMovimentoDaCorretora);
+                var lancamentosSeus = ativo.Operacoes.Where(o => o.Origem != OrigemOperacao.OpenFinance).ToList();
+                if (lancamentosSeus.Count > 0 && !temMovimentoDaCorretora)
                 {
                     resultado.ComLancamentoManual.Add(ticker);
                     await _db.SaveChangesAsync(ct);
@@ -600,17 +627,28 @@ public class SincronizacaoService
                     temMovimento = true;
                     var idExterno = Limitar(m.Id, 100)!;
                     if (!jaImportados.Add(idExterno)) continue;
+                    var data = m.TradeDate ?? m.Date;
+                    var dataOperacao = data is { } d ? Relogio.ParaDataLocal(d) : Relogio.Hoje;
+
+                    // A corretora mandou depois uma operação que você já tinha lançado: liga as duas, sem duplicar.
+                    var lancada = lancamentosSeus.FirstOrDefault(o => o.PluggyTransacaoId is null && o.Tipo == operacao
+                        && o.Quantidade == Math.Round(quantidade, 6)
+                        && Math.Abs(o.Data.DayNumber - dataOperacao.DayNumber) <= DiasParaCasarLancamento);
+                    if (lancada is not null)
+                    {
+                        lancada.PluggyTransacaoId = idExterno;
+                        continue;
+                    }
 
                     var preco = m.Value is double pu && pu > 0
                         ? (decimal)pu
                         : m.Amount is double valorTotal && valorTotal != 0 ? Math.Abs((decimal)valorTotal) / quantidade : 0m;
                     var taxas = m.Expenses?.Where(e => e.Key != "incomeTax" && e.Value is > 0d)
                         .Sum(e => (decimal)e.Value!.Value) ?? 0m;
-                    var data = m.TradeDate ?? m.Date;
                     ativo.Operacoes.Add(new OperacaoAtivo
                     {
                         Tipo = operacao.Value,
-                        Data = data is { } d ? Relogio.ParaDataLocal(d) : Relogio.Hoje,
+                        Data = dataOperacao,
                         Quantidade = Math.Round(quantidade, 6),
                         PrecoUnitario = Math.Round(preco, 6),
                         Taxas = Math.Round(taxas, 2),
@@ -630,8 +668,10 @@ public class SincronizacaoService
                     ativo.Operacoes.Remove(posicao);
                     _db.OperacoesAtivo.Remove(posicao);
                 }
-                else if (!temMovimento && inv.Saldo > 0)
+                else if (!temMovimento && !temMovimentoDaCorretora && lancamentosSeus.Count == 0 && inv.Saldo > 0)
                 {
+                    // Só para ativo sem histórico: se a Pluggy falhou ao listar as movimentações de um ativo que já tem
+                    // histórico, a posição inteira não pode virar uma compra a mais.
                     var quantidade = inv.Quantidade is decimal qtd && qtd > 0 ? qtd : (decimal?)null;
                     if (quantidade is null && ativo.PrecoAtual is decimal pa && pa > 0)
                         quantidade = Math.Round(inv.Saldo / pa); // cotas = saldo ÷ cotação
@@ -674,9 +714,19 @@ public class SincronizacaoService
         return resultado with { AtivosCriados = criados, OperacoesImportadas = importadas };
     }
 
-    private static TipoAtivo TipoPorPluggy(string tipo, string? subtipo, string ticker)
+    /// <summary>Até quantos dias de diferença um lançamento seu é a mesma operação que a corretora mandou depois.</summary>
+    private const int DiasParaCasarLancamento = 5;
+
+    /// <summary>Compra ou venda do histórico da corretora (não a posição provisória de um ativo sem histórico).</summary>
+    private static bool EhMovimentoDaCorretora(OperacaoAtivo o)
+        => o.Origem == OrigemOperacao.OpenFinance && o.PluggyTransacaoId is string id
+           && !id.StartsWith("posicao:", StringComparison.Ordinal);
+
+    private static TipoAtivo TipoPorPluggy(string tipo, string? subtipo, string ticker, string? emissor, string? nome)
     {
         if (tipo == "ETF") return TipoAtivo.Etf;
+        // O Nubank manda FII com o subtipo "STOCK": o nome do emissor ("... FDO INV IMOB - FII") desempata.
+        if (ClassificacaoAtivo.PareceFii(emissor) || ClassificacaoAtivo.PareceFii(nome)) return TipoAtivo.Fii;
         return subtipo?.ToUpperInvariant() switch
         {
             "REAL_ESTATE_FUND" => TipoAtivo.Fii,
@@ -734,6 +784,24 @@ public class SincronizacaoService
     /// Normaliza o sinal: no banco local, negativo = saída e positivo = entrada.
     /// Na Pluggy, em cartão de crédito valor positivo é compra (saída); em conta, o tipo DEBIT/CREDIT define o sentido.
     /// </summary>
+    /// <summary>
+    /// #111: pagador e recebedor com o mesmo CPF/CNPJ (só dígitos, completos). Documento mascarado ou ausente dá
+    /// null (não dá para saber). Só o resultado é gravado; os documentos não.
+    /// </summary>
+    private static bool? MesmoTitular(PluggyDadosPagamento? dados)
+    {
+        static string? Digitos(PluggyParticipante? p)
+        {
+            var valor = p?.Documento();
+            if (string.IsNullOrWhiteSpace(valor) || valor.Contains('*')) return null;
+            var digitos = new string(valor.Where(char.IsDigit).ToArray());
+            return digitos.Length is 11 or 14 ? digitos : null;
+        }
+        var pagador = Digitos(dados?.Payer);
+        var recebedor = Digitos(dados?.Receiver);
+        return pagador is null || recebedor is null ? null : pagador == recebedor;
+    }
+
     private static decimal CalcularValor(PluggyTransacao pt, bool ehCartao)
     {
         var valor = Arredondar(pt.AmountInAccountCurrency ?? pt.Amount ?? 0);

@@ -17,6 +17,10 @@ public class ReservaService
 
     public const int TamanhoMaximoNome = 100;
 
+    /// <summary>Dinheiro indo para uma reserva ou voltando dela ("Dinheiro reservado …", "Dinheiro retirado …").</summary>
+    public static bool EhMovimentoDeReserva(string? descricao)
+        => descricao is not null && Prefixos.Any(p => descricao.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Conferência mais velha que isso é sinalizada para ser refeita.</summary>
     public const int DiasConferenciaAntiga = 30;
 

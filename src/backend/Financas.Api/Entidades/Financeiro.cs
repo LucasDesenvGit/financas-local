@@ -16,6 +16,19 @@ public class Categoria
     public List<Categoria> Subcategorias { get; set; } = new();
 }
 
+/// <summary>
+/// #123 (ADR 0030): "quando a descrição do banco for/contiver <see cref="Texto"/>, mostrar <see cref="NovaDescricao"/>".
+/// </summary>
+public class RegraDescricao
+{
+    public int Id { get; set; }
+    public string Texto { get; set; } = string.Empty;
+    public TipoCorrespondencia TipoCorrespondencia { get; set; } = TipoCorrespondencia.Igual;
+    public string NovaDescricao { get; set; } = string.Empty;
+    public bool Ativa { get; set; } = true;
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+}
+
 public class RegraCategorizacao
 {
     public int Id { get; set; }
@@ -49,6 +62,10 @@ public class Conta
     public string Cor { get; set; } = "#0f766e";
     public bool IncluirNoSaldo { get; set; } = true;
     public bool Arquivada { get; set; }
+    /// <summary>ADR 0024: banco escolhido (código do <c>BancoService</c>); null = detectar pelo nome.</summary>
+    public string? Banco { get; set; }
+    /// <summary>ADR 0024: para cartão, a conta a que ele pertence (de onde a fatura é paga).</summary>
+    public int? ContaVinculadaId { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 
@@ -93,6 +110,16 @@ public class Transacao
     public bool IgnorarRelatorios { get; set; }
     /// <summary>Gasto de emergência (destacado nos relatórios e orçamentos).</summary>
     public bool Emergencia { get; set; }
+    /// <summary>#9: descrição pouco informativa já revisada pelo usuário (sai do filtro).</summary>
+    public bool DescricaoRevisada { get; set; }
+    /// <summary>#111: tipo de operação que o banco informou (ex.: PIX, BOLETO, PAGAMENTO_FATURA); null = não informou.</summary>
+    public string? MeioPagamento { get; set; }
+    /// <summary>#111: pagador e recebedor com o mesmo documento (só o sim/não; o documento não é guardado).</summary>
+    public bool? MesmaTitularidade { get; set; }
+    /// <summary>#123: regra de descrição que deu o nome mostrado (null = nome do banco ou escolhido à mão).</summary>
+    public int? RegraDescricaoId { get; set; }
+    /// <summary>#123: nome escolhido à mão (ou "voltar à do banco"): as regras de descrição não mexem mais.</summary>
+    public bool DescricaoManual { get; set; }
     public Guid? TransferenciaGrupo { get; set; }
     public string? Observacao { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
@@ -122,6 +149,10 @@ public class Meta
     public decimal ValorAtual { get; set; }
     public DateOnly? DataAlvo { get; set; }
     public int? ContaId { get; set; }
+    /// <summary>Cofrinho da conta que guarda o dinheiro da meta (nome, como no ReservaService). Null = saldo da conta.</summary>
+    public string? ReservaNome { get; set; }
+    /// <summary>Ordem de prioridade (1 = primeira) no assistente de metas; 0 = ainda sem ordem (vai para o fim).</summary>
+    public int Prioridade { get; set; }
     public string Cor { get; set; } = "#0f766e";
     public bool Concluida { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
@@ -140,6 +171,8 @@ public class ContaAgendada
     public int? ContaId { get; set; }
     public bool Ativa { get; set; } = true;
     public DateOnly? UltimoPagamentoEm { get; set; }
+    /// <summary>#69: último vencimento que ainda se repete (null = sem fim). Passou dele ao pagar, a conta é encerrada.</summary>
+    public DateOnly? DataLimite { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public Categoria? Categoria { get; set; }

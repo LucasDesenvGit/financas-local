@@ -119,10 +119,13 @@ public class RegrasController : BaseController
     private readonly FinancasDbContext _db;
     private readonly CategorizacaoService _categorizacao;
 
-    public RegrasController(FinancasDbContext db, CategorizacaoService categorizacao)
+    private readonly TransferenciasService _transferencias;
+
+    public RegrasController(FinancasDbContext db, CategorizacaoService categorizacao, TransferenciasService transferencias)
     {
         _db = db;
         _categorizacao = categorizacao;
+        _transferencias = transferencias;
     }
 
     [HttpGet]
@@ -196,6 +199,8 @@ public class RegrasController : BaseController
             await _db.SaveChangesAsync(ct);
             _db.ChangeTracker.Clear();
         }
+        // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
+        if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         return new ResultadoAplicacaoDto(alteradas);
     }
 
@@ -207,4 +212,99 @@ public class RegrasController : BaseController
         r.Prioridade = dto.Prioridade;
         r.Ativa = dto.Ativa;
     }
+}
+
+/// <summary>
+/// #123 (ADR 0030): regras de descrição, "quando a descrição do banco for/contiver X, mostrar Y". Editar, desligar ou
+/// apagar uma regra reaplica as regras nas transações de nome automático (nome escolhido à mão não muda).
+/// </summary>
+[Route("api/regras-descricao")]
+public class RegrasDescricaoController : BaseController
+{
+    private readonly FinancasDbContext _db;
+    private readonly RegraDescricaoService _descricoes;
+
+    public RegrasDescricaoController(FinancasDbContext db, RegraDescricaoService descricoes)
+    {
+        _db = db;
+        _descricoes = descricoes;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<RegraDescricaoDto>>> Listar(CancellationToken ct)
+    {
+        var contagem = await _db.Transacoes.AsNoTracking().Where(t => t.RegraDescricaoId != null)
+            .GroupBy(t => t.RegraDescricaoId!.Value).Select(g => new { g.Key, Quantidade = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Quantidade, ct);
+        var regras = await _db.RegrasDescricao.AsNoTracking().OrderBy(r => r.NovaDescricao).ThenBy(r => r.Id).ToListAsync(ct);
+        return regras.Select(r => ParaDto(r, contagem.GetValueOrDefault(r.Id))).ToList();
+    }
+
+    /// <summary>Quantas transações de nome automático uma regra nova renomearia (e alguns exemplos).</summary>
+    [HttpGet("previa")]
+    public async Task<ActionResult<PreviaRegraDescricaoDto>> Previa([FromQuery] string? texto,
+        [FromQuery] TipoCorrespondencia tipo = TipoCorrespondencia.Contem, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return new PreviaRegraDescricaoDto(0, new());
+        var (quantidade, exemplos) = await _descricoes.PreviaAsync(texto.Trim(), tipo, excetoId: 0, ct);
+        return new PreviaRegraDescricaoDto(quantidade, exemplos);
+    }
+
+    /// <summary>Regra nova pela tela de regras: renomeia de uma vez as transações de nome automático que batem.</summary>
+    [HttpPost]
+    public async Task<ActionResult<RegraDescricaoDto>> Criar(SalvarRegraDescricaoDto dto, CancellationToken ct)
+    {
+        if (!Enum.IsDefined(dto.TipoCorrespondencia)) return Erro("Tipo de correspondência inválido.");
+        var r = new RegraDescricao
+        {
+            Texto = dto.Texto.Trim(), TipoCorrespondencia = dto.TipoCorrespondencia, NovaDescricao = dto.NovaDescricao.Trim(),
+            Ativa = dto.Ativa, CriadoEm = DateTime.UtcNow
+        };
+        _db.RegrasDescricao.Add(r);
+        await _db.SaveChangesAsync(ct);
+        await _descricoes.ReaplicarAsync(ct);
+        await _db.SaveChangesAsync(ct);
+        var quantidade = await _db.Transacoes.CountAsync(t => t.RegraDescricaoId == r.Id, ct);
+        return ParaDto(r, quantidade);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<RegraDescricaoDto>> Atualizar(int id, SalvarRegraDescricaoDto dto, CancellationToken ct)
+    {
+        var r = await _db.RegrasDescricao.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (r is null) return NaoEncontrado();
+        if (!Enum.IsDefined(dto.TipoCorrespondencia)) return Erro("Tipo de correspondência inválido.");
+        r.Texto = dto.Texto.Trim();
+        r.TipoCorrespondencia = dto.TipoCorrespondencia;
+        r.NovaDescricao = dto.NovaDescricao.Trim();
+        r.Ativa = dto.Ativa;
+        await _db.SaveChangesAsync(ct);
+        await _descricoes.ReaplicarAsync(ct);
+        await _db.SaveChangesAsync(ct);
+        var quantidade = await _db.Transacoes.CountAsync(t => t.RegraDescricaoId == id, ct);
+        return ParaDto(r, quantidade);
+    }
+
+    /// <summary>Apaga a regra; as transações com o nome dado por ela voltam ao nome do banco (ou de outra regra).</summary>
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Excluir(int id, CancellationToken ct)
+    {
+        var r = await _db.RegrasDescricao.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (r is null) return NaoEncontrado();
+        var transacoes = await _db.Transacoes.Where(t => t.RegraDescricaoId == id).ToListAsync(ct);
+        foreach (var t in transacoes)
+        {
+            t.Descricao = t.DescricaoOriginal ?? t.Descricao;
+            t.RegraDescricaoId = null;
+            t.AtualizadoEm = DateTime.UtcNow;
+        }
+        _db.RegrasDescricao.Remove(r);
+        await _db.SaveChangesAsync(ct);
+        await _descricoes.ReaplicarAsync(ct);
+        await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    private static RegraDescricaoDto ParaDto(RegraDescricao r, int transacoes)
+        => new(r.Id, r.Texto, r.TipoCorrespondencia, r.NovaDescricao, r.Ativa, transacoes);
 }

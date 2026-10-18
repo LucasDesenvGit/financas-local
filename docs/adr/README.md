@@ -49,7 +49,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0009](0009-ativos-no-exterior-na-carteira-manual.md) | Ativos no exterior na carteira manual | Aceita |
 | [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Aceita |
 | [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita |
-| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita |
+| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029) |
 | [0013](0013-testes-do-front-end-com-jest.md) | Testes automatizados do front-end com Jest | Aceita |
 | [0014](0014-emprestimos-e-financiamentos-pelo-open-finance.md) | Empréstimos e financiamentos pelo Open Finance, separados e fora das despesas | Aceita |
 | [0015](0015-parametros-do-sistema-no-banco-editaveis-pelo-site.md) | Parâmetros do sistema no banco, editáveis pelo site | Aceita |
@@ -59,3 +59,13 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0019](0019-status-da-sincronizacao-por-consulta-periodica.md) | Status da sincronização por consulta periódica a um endpoint leve | Aceita |
 | [0020](0020-glossario-unico-com-balao-na-top-layer.md) | Glossário único, com o balão na top layer (Popover API) | Aceita |
 | [0021](0021-componentes-padrao-para-graficos-e-telas-densas.md) | Componentes padrão para gráficos e telas densas | Aceita |
+| [0022](0022-erros-do-sistema-gravados-no-banco.md) | Erros do sistema gravados no banco e vistos no site | Aceita |
+| [0023](0023-edicao-em-massa-no-modo-edicao-de-transacoes.md) | Edição de categorias em massa como "modo edição" de Transações, com desfazer guardado na API | Aceita |
+| [0024](0024-banco-de-cada-conta-com-selo-local.md) | Banco de cada conta e cartão, com selo desenhado no próprio site | Aceita |
+| [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md) | Tipo de lançamento: dado do Open Finance, com a descrição como reserva | Aceita |
+| [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
+| [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita |
+| [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Aceita |
+| [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita |
+| [0030](0030-regras-de-descricao-em-tabela-propria.md) | Regras de descrição em tabela própria, com o nome do banco sempre guardado | Aceita |
+| [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md) | Transferência só fica fora dos relatórios quando é entre contas suas | Aceita |

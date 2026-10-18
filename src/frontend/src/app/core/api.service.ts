@@ -4,12 +4,15 @@ import { Observable } from 'rxjs';
 import {
   OpcaoCategoria, SugestaoCategoria,
   AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
-  SugestaoExtrato,
+  SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
+  PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
+  RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
   AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
-  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
-  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao
+  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
+  TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
+  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco
 } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
@@ -56,6 +59,8 @@ export class ApiService {
   atualizarConta(id: number, dto: SalvarConta): Observable<Conta> { return this.http.put<Conta>(`${this.base}/contas/${id}`, dto); }
   excluirConta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas/${id}`); }
   faturas(contaId: number): Observable<Fatura[]> { return this.http.get<Fatura[]>(`${this.base}/contas/${contaId}/faturas`); }
+  /** ADR 0024: bancos que dá para escolher na conta. */
+  bancos(): Observable<Banco[]> { return this.http.get<Banco[]>(`${this.base}/contas/bancos`); }
 
   // Transações
   transacoes(filtro: FiltroTransacoes): Observable<PaginaTransacoes> {
@@ -82,6 +87,17 @@ export class ApiService {
   categorizarEmLote(ids: number[], categoriaId: number | null): Observable<ResultadoAplicacao> {
     return this.http.put<ResultadoAplicacao>(`${this.base}/transacoes/categoria-em-lote`, { ids, categoriaId });
   }
+  /** #9: descrição pouco informativa revisada (sai do filtro) ou desfazer. */
+  marcarRevisada(ids: number[], revisada: boolean): Observable<ResultadoAplicacao> {
+    return this.http.put<ResultadoAplicacao>(`${this.base}/transacoes/revisada-em-lote`, { ids, revisada });
+  }
+  /** #87: modo edição — por transação ou todas do filtro; devolve a chave do "Desfazer". */
+  alterarCategoriasEmLote(dto: AlterarCategoriasEmLote): Observable<ResultadoCategoriasEmLote> {
+    return this.http.patch<ResultadoCategoriasEmLote>(`${this.base}/transacoes/em-lote`, dto);
+  }
+  desfazerCategoriasEmLote(chave: string): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/transacoes/em-lote/desfazer/${encodeURIComponent(chave)}`, {});
+  }
   transferir(dto: Transferencia): Observable<void> { return this.http.post<void>(`${this.base}/transacoes/transferencia`, dto); }
 
   // Categorias e regras
@@ -96,6 +112,30 @@ export class ApiService {
   atualizarRegra(id: number, dto: SalvarRegra): Observable<Regra> { return this.http.put<Regra>(`${this.base}/regras/${id}`, dto); }
   excluirRegra(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/regras/${id}`); }
   reaplicarRegras(): Observable<ResultadoAplicacao> { return this.http.post<ResultadoAplicacao>(`${this.base}/regras/reaplicar`, {}); }
+  /* #123: renomear transações e regras de descrição */
+  previaRenomear(id: number, texto: string | null, tipo: TipoCorrespondencia): Observable<PreviaRenomear> {
+    return this.http.get<PreviaRenomear>(`${this.base}/transacoes/${id}/renomear/previa`, { params: this.params({ texto, tipo }) });
+  }
+  renomearTransacao(id: number, dto: RenomearTransacao): Observable<ResultadoRenomear> {
+    return this.http.put<ResultadoRenomear>(`${this.base}/transacoes/${id}/descricao`, dto);
+  }
+  desfazerRenomear(chave: string): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/transacoes/descricao/desfazer/${encodeURIComponent(chave)}`, {});
+  }
+  renomearEmLote(dto: RenomearEmLote): Observable<ResultadoRenomearEmLote> {
+    return this.http.patch<ResultadoRenomearEmLote>(`${this.base}/transacoes/descricao/em-lote`, dto);
+  }
+  regrasDescricao(): Observable<RegraDescricao[]> { return this.http.get<RegraDescricao[]>(`${this.base}/regras-descricao`); }
+  previaRegraDescricao(texto: string, tipo: TipoCorrespondencia): Observable<PreviaRegraDescricao> {
+    return this.http.get<PreviaRegraDescricao>(`${this.base}/regras-descricao/previa`, { params: this.params({ texto, tipo }) });
+  }
+  criarRegraDescricao(dto: SalvarRegraDescricao): Observable<RegraDescricao> {
+    return this.http.post<RegraDescricao>(`${this.base}/regras-descricao`, dto);
+  }
+  salvarRegraDescricao(id: number, dto: SalvarRegraDescricao): Observable<RegraDescricao> {
+    return this.http.put<RegraDescricao>(`${this.base}/regras-descricao/${id}`, dto);
+  }
+  excluirRegraDescricao(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/regras-descricao/${id}`); }
 
   // Orçamentos
   orcamentos(ano: number, mes: number): Observable<Orcamento[]> {
@@ -108,9 +148,18 @@ export class ApiService {
   copiarOrcamentos(ano: number, mes: number): Observable<ResultadoAplicacao> {
     return this.http.post<ResultadoAplicacao>(`${this.base}/orcamentos/copiar-mes-anterior`, { ano, mes });
   }
+  sugestaoOrcamentos(ano: number, mes: number): Observable<SugestaoOrcamento> {
+    return this.http.get<SugestaoOrcamento>(`${this.base}/orcamentos/sugestao`, { params: this.params({ ano, mes }) });
+  }
+  aplicarSugestaoOrcamentos(ano: number, mes: number, itens: { categoriaId: number; valor: number }[]): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/orcamentos/aplicar-sugestao`, { ano, mes, itens });
+  }
 
   // Metas
   metas(): Observable<Meta[]> { return this.http.get<Meta[]>(`${this.base}/metas`); }
+  reservas(): Observable<Reserva[]> { return this.http.get<Reserva[]>(`${this.base}/reservas`); }
+  planoMetas(): Observable<PlanoMetas> { return this.http.get<PlanoMetas>(`${this.base}/metas/plano`); }
+  ordenarMetas(ids: number[]): Observable<void> { return this.http.put<void>(`${this.base}/metas/prioridades`, { ids }); }
   criarMeta(dto: SalvarMeta): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas`, dto); }
   atualizarMeta(id: number, dto: SalvarMeta): Observable<Meta> { return this.http.put<Meta>(`${this.base}/metas/${id}`, dto); }
   aporteMeta(id: number, valor: number): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas/${id}/aporte`, { valor }); }
@@ -174,6 +223,15 @@ export class ApiService {
   importarExtrato(itens: ImportarExtratoItem[]): Observable<ResultadoAplicacao> {
     return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/extrato/importar`, { itens });
   }
+  conferenciaInvestimentos(): Observable<ConferenciaInvestimentos> {
+    return this.http.get<ConferenciaInvestimentos>(`${this.base}/carteira/conferencia`);
+  }
+  corrigirInvestimentos(dto: CorrigirInvestimentos): Observable<ResultadoCorrecaoInvestimentos> {
+    return this.http.post<ResultadoCorrecaoInvestimentos>(`${this.base}/carteira/conferencia/corrigir`, dto);
+  }
+  desfazerCorrecaoInvestimentos(chave: string): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/conferencia/desfazer/${encodeURIComponent(chave)}`, {});
+  }
   configuracaoCotacao(): Observable<{ tokenBrapiConfigurado: boolean }> {
     return this.http.get<{ tokenBrapiConfigurado: boolean }>(`${this.base}/carteira/configuracao`);
   }
@@ -227,4 +285,19 @@ export class ApiService {
     return this.http.post<void>(`${this.base}/auth/alterar-senha`, { senhaAtual, novaSenha });
   }
   auditoria(): Observable<Auditoria[]> { return this.http.get<Auditoria[]>(`${this.base}/auth/auditoria`); }
+
+  /* ----- Erros do sistema (#11) ----- */
+  erros(filtro: FiltroErros): Observable<PaginaErros> {
+    return this.http.get<PaginaErros>(`${this.base}/erros`, { params: this.params(filtro) });
+  }
+  erroDetalhe(id: number): Observable<ErroSistemaDetalhe> { return this.http.get<ErroSistemaDetalhe>(`${this.base}/erros/${id}`); }
+  situacaoErro(id: number, resolvido: boolean): Observable<void> {
+    return this.http.put<void>(`${this.base}/erros/${id}/situacao`, { resolvido });
+  }
+  /** Marca como resolvidos todos os em aberto do filtro (todas as páginas). */
+  resolverErros(filtro: FiltroErros): Observable<{ quantidade: number }> {
+    const { pagina: _p, tamanhoPagina: _t, ...resto } = filtro;
+    return this.http.post<{ quantidade: number }>(`${this.base}/erros/resolver`, {}, { params: this.params(resto) });
+  }
+  registrarErroFrontEnd(dto: ErroFrontEnd): Observable<void> { return this.http.post<void>(`${this.base}/erros/front-end`, dto); }
 }

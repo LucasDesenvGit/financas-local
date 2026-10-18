@@ -11,12 +11,13 @@ import { Auditoria, Conexao, SincronizacaoLog } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ParametrizacaoComponent } from './parametrizacao.component';
 import { AparenciaComponent } from './aparencia.component';
+import { ErrosComponent } from './erros.component';
 
-type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca';
+type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erros';
 
 @Component({
   selector: 'app-configuracoes',
-  imports: [FormsModule, DatePipe, ParametrizacaoComponent, AparenciaComponent],
+  imports: [FormsModule, DatePipe, ParametrizacaoComponent, AparenciaComponent, ErrosComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Configurações</h1>
@@ -33,6 +34,9 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca';
     }
     @case ('aparencia') {
       <app-aparencia />
+    }
+    @case ('erros') {
+      <app-erros />
     }
     @case ('seguranca') {
     <div class="grade-2">
@@ -176,7 +180,8 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'open-finance', rotulo: 'Open Finance' },
     { id: 'parametrizacao', rotulo: 'Parametrização' },
     { id: 'aparencia', rotulo: 'Aparência' },
-    { id: 'seguranca', rotulo: 'Segurança' }
+    { id: 'seguranca', rotulo: 'Segurança' },
+    { id: 'erros', rotulo: 'Erros' }
   ];
   /** Aba atual; vem de ?aba= para dar para abrir direto (ex.: /configuracoes?aba=parametrizacao). */
   readonly aba = signal<Aba>(this.abaDaUrl(this.rota.snapshot.queryParamMap));
@@ -221,7 +226,7 @@ export class ConfiguracoesComponent implements OnInit {
 
   private abaDaUrl(params: ParamMap): Aba {
     const aba = params.get('aba');
-    return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
+    return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca', 'erros'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
   }
 
   carregarConexoes(): void {

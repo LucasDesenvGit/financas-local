@@ -19,6 +19,7 @@ public class FinancasDbContext : DbContext
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<CategoriaPluggy> CategoriasPluggy => Set<CategoriaPluggy>();
     public DbSet<RegraCategorizacao> RegrasCategorizacao => Set<RegraCategorizacao>();
+    public DbSet<RegraDescricao> RegrasDescricao => Set<RegraDescricao>();
     public DbSet<Conta> Contas => Set<Conta>();
     public DbSet<FaturaCartao> FaturasCartao => Set<FaturaCartao>();
     public DbSet<Transacao> Transacoes => Set<Transacao>();
@@ -36,6 +37,7 @@ public class FinancasDbContext : DbContext
     public DbSet<IndiceMensal> IndicesMensais => Set<IndiceMensal>();
     public DbSet<CotacaoMoeda> CotacoesMoeda => Set<CotacaoMoeda>();
     public DbSet<ReservaConferencia> ReservasConferidas => Set<ReservaConferencia>();
+    public DbSet<ErroSistema> ErrosSistema => Set<ErroSistema>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -121,6 +123,14 @@ public class FinancasDbContext : DbContext
                 .HasForeignKey(x => x.CategoriaId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        mb.Entity<RegraDescricao>(e =>
+        {
+            e.ToTable("RegraDescricao");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Texto).HasMaxLength(200).IsRequired();
+            e.Property(x => x.NovaDescricao).HasMaxLength(300).IsRequired();
+        });
+
         mb.Entity<Conta>(e =>
         {
             e.ToTable("Conta");
@@ -134,6 +144,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.LimiteCredito).HasPrecision(18, 2);
             e.Property(x => x.LimiteDisponivel).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
+            e.Property(x => x.Banco).HasMaxLength(30);
             e.HasIndex(x => x.PluggyAccountId).IsUnique().HasFilter("PluggyAccountId IS NOT NULL");
             e.HasOne(x => x.ConexaoBancaria).WithMany(x => x.Contas)
                 .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);
@@ -157,6 +168,7 @@ public class FinancasDbContext : DbContext
             e.ToTable("Transacao");
             e.HasKey(x => x.Id);
             e.Property(x => x.PluggyTransactionId).HasMaxLength(64);
+            e.Property(x => x.MeioPagamento).HasMaxLength(40);
             e.Property(x => x.Descricao).HasMaxLength(300).IsRequired();
             e.Property(x => x.DescricaoOriginal).HasMaxLength(300);
             e.Property(x => x.Estabelecimento).HasMaxLength(200);
@@ -245,6 +257,8 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.ValorAlvo).HasPrecision(18, 2);
             e.Property(x => x.ValorAtual).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
+            // Mesmo tamanho do nome da reserva (ReservaService.TamanhoMaximoNome).
+            e.Property(x => x.ReservaNome).HasMaxLength(100);
             e.HasOne(x => x.Conta).WithMany()
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.SetNull);
         });
@@ -343,6 +357,21 @@ public class FinancasDbContext : DbContext
             e.HasIndex(x => new { x.ContaId, x.Nome }).IsUnique();
             e.HasOne(x => x.Conta).WithMany()
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<ErroSistema>(e =>
+        {
+            e.ToTable("ErroSistema");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Origem).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Categoria).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Mensagem).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.Detalhe).HasMaxLength(8000);
+            e.Property(x => x.Rota).HasMaxLength(300);
+            e.Property(x => x.Usuario).HasMaxLength(100);
+            e.Property(x => x.Assinatura).HasMaxLength(64).IsRequired();
+            e.HasIndex(x => new { x.Resolvido, x.UltimaEm }).HasDatabaseName("IX_ErroSistema_Resolvido_UltimaEm");
+            e.HasIndex(x => new { x.Assinatura, x.Resolvido }).HasDatabaseName("IX_ErroSistema_Assinatura");
         });
     }
 }

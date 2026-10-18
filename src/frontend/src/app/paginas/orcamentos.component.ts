@@ -10,6 +10,8 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
 import { mesAnoDaUrl, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ModalComponent } from '../compartilhado/modal.component';
+import { SugestaoOrcamentosComponent } from './sugestao-orcamentos.component';
 
 interface LinhaOrcamento {
   categoria: Categoria;
@@ -20,13 +22,14 @@ interface LinhaOrcamento {
 
 @Component({
   selector: 'app-orcamentos',
-  imports: [FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent, ModalComponent, SugestaoOrcamentosComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Orçamentos</h1>
       <div class="acoes">
         <app-seletor-mes [valor]="periodo()" (mudou)="mudarPeriodo($event)" />
         <button type="button" class="botao" (click)="copiar()">Copiar do mês anterior</button>
+        <button type="button" class="botao botao-primario" (click)="sugestaoAberta.set(true)">✨ Sugerir orçamentos</button>
       </div>
     </header>
 
@@ -84,6 +87,16 @@ interface LinhaOrcamento {
         </tbody>
       </table>
     </div>
+
+    <app-modal [aberto]="sugestaoAberta()" titulo="✨ Sugestão de orçamentos" (fechar)="sugestaoAberta.set(false)">
+      @if (sugestaoAberta()) {
+        <app-sugestao-orcamentos [ano]="periodo().ano" [mes]="periodo().mes"
+          (aplicado)="sugestaoAplicada($event)" (fechar)="sugestaoAberta.set(false)" />
+      }
+    </app-modal>
+  `,
+  styles: `
+    :host ::ng-deep .modal:has(.tabela-sugestao-orcamento) { width: min(1100px, 96vw); }
   `
 })
 export class OrcamentosComponent implements OnInit {
@@ -94,6 +107,8 @@ export class OrcamentosComponent implements OnInit {
 
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   readonly linhas = signal<LinhaOrcamento[]>([]);
+  /** #39: janela de sugestão de orçamentos. */
+  readonly sugestaoAberta = signal(false);
 
   /** UX-3: despesas da categoria no mês do orçamento. */
   linkCategoria(categoriaId: number): Record<string, string> {
@@ -156,6 +171,12 @@ export class OrcamentosComponent implements OnInit {
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+  }
+
+  sugestaoAplicada(quantidade: number): void {
+    this.sugestaoAberta.set(false);
+    this.avisos.sucesso(`${quantidade} orçamento(s) aplicado(s).`);
+    this.carregar();
   }
 
   private montar(categorias: Categoria[], orcamentos: Orcamento[], gastos: ValorCategoria[]): void {

@@ -4,7 +4,11 @@ using Financas.Api.Entidades;
 namespace Financas.Api.Dtos;
 
 /* ---------------------------- Autenticação ---------------------------- */
-public record EstadoAutenticacaoDto(bool Configurado, bool Autenticado, string? Login);
+/// <summary>Versao: a do site, para o gerenciador do Windows mostrar junto com "no ar" (não exige login).</summary>
+public record EstadoAutenticacaoDto(bool Configurado, bool Autenticado, string? Login)
+{
+    public string Versao { get; init; } = Financas.Api.Servicos.VersaoSistema.Atual;
+}
 
 public record CredenciaisDto(
     [Required, StringLength(100, MinimumLength = 3)] string Login,
@@ -19,7 +23,11 @@ public record ContaDto(
     int Id, string Nome, TipoConta Tipo, OrigemConta Origem, string? Numero, string Moeda,
     decimal Saldo, decimal SaldoInicial, decimal? LimiteCredito, decimal? LimiteDisponivel,
     byte? DiaFechamento, byte? DiaVencimento, string Cor, bool IncluirNoSaldo, bool Arquivada,
-    int? ConexaoBancariaId, string? NomeInstituicao, DateTime AtualizadoEm);
+    int? ConexaoBancariaId, string? NomeInstituicao, DateTime AtualizadoEm,
+    // ADR 0024: banco que vale (escolhido, do cartão herdado da conta ou detectado); BancoDefinido = escolhido.
+    string? Banco = null, bool BancoDefinido = false, int? ContaVinculadaId = null,
+    // Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel).
+    FaturaMesDto? FaturaMes = null);
 
 public record SalvarContaDto(
     [Required, StringLength(120)] string Nome,
@@ -31,17 +39,72 @@ public record SalvarContaDto(
     [Range(1, 31)] byte? DiaVencimento,
     [Required, RegularExpression("^#[0-9a-fA-F]{6}$")] string Cor,
     bool IncluirNoSaldo,
-    bool Arquivada);
+    bool Arquivada,
+    [StringLength(30)] string? Banco = null,
+    int? ContaVinculadaId = null);
 
 public record FaturaDto(int Id, DateOnly DataVencimento, DateOnly? DataFechamento, decimal ValorTotal,
-    decimal? ValorMinimo, decimal? ValorPago, int QuantidadeTransacoes);
+    decimal? ValorMinimo, decimal? ValorPago, int QuantidadeTransacoes, string Situacao = "aberta");
+
+/// <summary>Banco que a tela de Contas sabe identificar (ADR 0024).</summary>
+public record BancoDto(string Codigo, string Nome);
 
 /* ----------------------------- Transações ----------------------------- */
 public record TransacaoDto(
     long Id, int ContaId, string ContaNome, bool OpenFinance, DateOnly Data, string Descricao,
     string? DescricaoOriginal, string? Estabelecimento, decimal Valor, TipoTransacao Tipo, StatusTransacao Status,
     int? CategoriaId, string? CategoriaNome, string? CategoriaCor, short? ParcelaNumero, short? ParcelaTotal,
-    bool IgnorarRelatorios, string? Observacao, bool Emergencia);
+    bool IgnorarRelatorios, string? Observacao, bool Emergencia,
+    // #111: como o dinheiro entrou ou saiu (calculado; ADR 0025).
+    TipoLancamento TipoLancamento = TipoLancamento.Outro,
+    // #123: o nome mostrado veio de uma regra de descrição (null = do banco ou escolhido à mão).
+    int? RegraDescricaoId = null);
+
+/// <summary>
+/// #123: prévia de "usar também nas outras": quantas transações de nome automático (fora esta) têm a descrição do
+/// banco que bate com o texto, com exemplos. TextoSugerido: a descrição do banco sem os pedaços com número.
+/// </summary>
+public record PreviaRenomearDto(string? DescricaoOriginal, string TextoSugerido, int Quantidade, List<string> Exemplos);
+
+/// <summary>
+/// #123: novo nome de uma transação. VoltarOriginal: volta ao nome do banco (e as regras não mexem mais nela).
+/// AplicarNasOutras: cria a regra "quando a descrição do banco for/contiver Texto, mostrar Descricao", que vale nas
+/// outras transações de nome automático e nas próximas. Sem isso, o nome vale só nesta (escolhido à mão).
+/// </summary>
+public record RenomearTransacaoDto(
+    [StringLength(300)] string? Descricao,
+    bool VoltarOriginal,
+    bool AplicarNasOutras,
+    TipoCorrespondencia TipoCorrespondencia = TipoCorrespondencia.Igual,
+    [StringLength(200)] string? Texto = null);
+
+/// <summary><c>Desfazer</c>: chave para voltar tudo (vale por alguns minutos).</summary>
+public record ResultadoRenomearDto(int Alteradas, int? RegraId, string? Desfazer);
+
+/// <summary>
+/// #123: o mesmo nome em várias transações. CriarRegras: uma regra "é igual a" por descrição do banco das
+/// selecionadas (a que já existe com esse texto passa a usar o nome novo), que vale também nas outras de nome
+/// automático e nas próximas. Sem isso (ou para lançamento manual), o nome fica escolhido à mão.
+/// </summary>
+public record RenomearEmLoteDto(
+    [Required, MinLength(1), MaxLength(1000)] List<long> Ids,
+    [Required, StringLength(300, MinimumLength = 1)] string Descricao,
+    bool CriarRegras);
+
+public record ResultadoRenomearEmLoteDto(int Alteradas, int RegrasCriadas, int RegrasAlteradas, string? Desfazer);
+
+/// <summary>#123: prévia de uma regra de descrição nova (quantas transações de nome automático ela renomeia).</summary>
+public record PreviaRegraDescricaoDto(int Quantidade, List<string> Exemplos);
+
+/// <summary>#123: regra de descrição, com quantas transações estão com o nome dado por ela.</summary>
+public record RegraDescricaoDto(int Id, string Texto, TipoCorrespondencia TipoCorrespondencia, string NovaDescricao,
+    bool Ativa, int Transacoes);
+
+public record SalvarRegraDescricaoDto(
+    [Required, StringLength(200, MinimumLength = 2)] string Texto,
+    TipoCorrespondencia TipoCorrespondencia,
+    [Required, StringLength(300, MinimumLength = 1)] string NovaDescricao,
+    bool Ativa = true);
 
 public class FiltroTransacoesDto
 {
@@ -54,6 +117,11 @@ public class FiltroTransacoesDto
     /// <summary>Sem categoria; junto com categorias, soma as duas coisas (OU).</summary>
     public bool SemCategoria { get; set; }
     public bool SomenteEmergencias { get; set; }
+    /// <summary>#9: só as de descrição pouco informativa ainda não revisadas.</summary>
+    public bool PoucoInformativa { get; set; }
+    /// <summary>#111: grupo do filtro "Lançamento" (pix, cartao, fatura, entre-contas…).</summary>
+    [RegularExpression("^(cartao|debito|pix|transferencia|entre-contas|fatura|boleto|saque-deposito|tarifas|investimentos|salario|credito|dinheiro|outros)$")]
+    public string? Lancamento { get; set; }
     public TipoTransacao? Tipo { get; set; }
     [StringLength(100)] public string? Busca { get; set; }
     [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
@@ -85,6 +153,27 @@ public record AtualizarTransacaoOpenFinanceDto(
 public record CategorizarLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, int? CategoriaId);
 
 public record EmergenciaLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, bool Emergencia);
+
+/// <summary>#9: marca (ou desmarca) a descrição pouco informativa como revisada.</summary>
+public record RevisadaLoteDto([Required, MinLength(1), MaxLength(1000)] List<long> Ids, bool Revisada);
+
+/// <summary>#87: categoria de uma transação no modo edição (Automatica = voltar para as regras).</summary>
+public record AlteracaoCategoriaDto(long Id, int? CategoriaId, bool Automatica);
+
+/// <summary>
+/// #87: alteração de categoria em lote. Ou <c>Itens</c> (cada uma com a sua categoria, até 1000), ou <c>Filtro</c>
+/// (todas as transações da busca, com <c>CategoriaId</c>/<c>Automatica</c>). Só a categoria pode mudar por aqui.
+/// </summary>
+public class AlterarCategoriasEmLoteDto
+{
+    [MaxLength(1000)] public List<AlteracaoCategoriaDto>? Itens { get; set; }
+    public FiltroTransacoesDto? Filtro { get; set; }
+    public int? CategoriaId { get; set; }
+    public bool Automatica { get; set; }
+}
+
+/// <summary><c>Desfazer</c>: chave para restaurar o que mudou (vale por alguns minutos; null se nada mudou).</summary>
+public record ResultadoCategoriasEmLoteDto(int Alteradas, string? Desfazer);
 
 /// <summary>Confiança: "alta" (histórico consistente), "media" (histórico parcial), "baixa" (palavra-chave) ou "nenhuma".</summary>
 public record SugestaoCategoriaDto(string Chave, string Exemplo, int Quantidade, decimal Total, List<long> TransacaoIds,
@@ -135,9 +224,63 @@ public record SalvarOrcamentoDto(int CategoriaId, [Range(2000, 2100)] short Ano,
 
 public record CopiarOrcamentoDto([Range(2000, 2100)] short Ano, [Range(1, 12)] byte Mes);
 
+/// <summary>Uso do limite de um cartão: média das últimas faturas fechadas ÷ limite.</summary>
+public record CartaoUsoLimiteDto(int ContaId, string Nome, decimal Limite, decimal FaturaMedia, decimal Percentual);
+
+/// <summary>
+/// Sugestão para uma categoria principal (subcategorias somam nela). <c>Sugerido</c> é null quando não há dados suficientes;
+/// <c>Atual</c> é o orçamento que já existe no mês. <c>Tendencia</c>: "alta", "queda", "estavel" ou null (menos de 6 meses).
+/// </summary>
+public record ItemSugestaoOrcamentoDto(int CategoriaId, string Nome, string Cor, NaturezaGasto? Natureza, decimal Mediana,
+    decimal Media, decimal UltimoMes, string? Tendencia, int MesesComGasto, decimal PagoNoCartaoPercentual,
+    decimal? Sugerido, decimal? Atual, bool Selecionado, List<string> Motivos);
+
+/// <summary>
+/// Sugestão de orçamentos de um mês: o resumo (renda, parcelas, poupança, cartões) e uma linha por categoria.
+/// <c>TotalSugerido</c> é o total do mês ao aplicar a sugestão (categorias que já têm orçamento contam com o atual).
+/// </summary>
+public record SugestaoOrcamentoDto(short Ano, byte Mes, int MesesBase, int MesesRenda, decimal RendaMedia,
+    decimal ParcelasCartao, decimal ParcelasFinanciamentos, decimal ParcelasEmprestimos, decimal PercentualPoupanca,
+    decimal MetaPoupanca, decimal Disponivel, decimal TotalSugerido, decimal? FaltaParaCaber,
+    decimal? UsoLimiteCartoes, string? NivelCartao, decimal LimiteAtencao, decimal LimiteAlerta,
+    List<CartaoUsoLimiteDto> Cartoes, List<string> Avisos, List<ItemSugestaoOrcamentoDto> Itens);
+
+public record ItemAplicarSugestaoDto(int CategoriaId, [Range(0.01d, 999999999d)] decimal Valor);
+
+public record AplicarSugestaoOrcamentoDto([Range(2000, 2100)] short Ano, [Range(1, 12)] byte Mes,
+    [Required, MinLength(1), MaxLength(500)] List<ItemAplicarSugestaoDto> Itens);
+
+/// <summary>
+/// Meta. Com cofrinho (<c>ReservaNome</c>), o progresso é o valor inicial + <c>SaldoReserva</c> (nunca o saldo da
+/// conta junto); <c>ReservaConferir</c> = saldo só estimado, vale conferir; <c>ReservaNaoEncontrada</c> = o cofrinho
+/// não aparece mais no extrato (nada é somado e o vínculo não é apagado).
+/// </summary>
 public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual, DateOnly? DataAlvo,
     int? ContaId, string? ContaNome, string Cor, bool Concluida, decimal Percentual, decimal? AporteMensalSugerido,
-    decimal ValorInicial, decimal SaldoConta);
+    decimal ValorInicial, decimal SaldoConta, string? ReservaNome = null, decimal? SaldoReserva = null,
+    bool ReservaConferir = false, bool ReservaNaoEncontrada = false, int Prioridade = 0);
+
+/// <summary>Nova ordem de prioridade das metas (a primeira da lista é a 1ª prioridade).</summary>
+public record PrioridadesMetasDto([Required, MinLength(1), MaxLength(200)] List<int> Ids);
+
+/// <summary>Um mês do plano de uma meta: sobra prevista (a da Projeção), parcelas do mês e o recomendado para ela.</summary>
+public record PlanoMesMetaDto(short Ano, byte Mes, decimal SobraPrevista, decimal Parcelas, decimal Recomendado);
+
+/// <summary>
+/// Recomendação de uma meta (#90). <c>Recomendado</c>: quanto guardar este mês (null sem histórico suficiente);
+/// <c>PedidoMes</c>: quanto o prazo pede este mês, pela capacidade dos meses até ele; <c>DivisaoIgual</c>: a divisão
+/// linear de antes, como referência; <c>NoPrazo</c>: null sem data-alvo; <c>ParaManterPrazo</c>: quanto os próximos
+/// meses precisam, em média, quando o ritmo recomendado não cumpre o prazo.
+/// </summary>
+public record PlanoMetaDto(int MetaId, decimal Falta, decimal? Recomendado, decimal? PedidoMes, decimal? DivisaoIgual,
+    DateOnly? DataProvavel, bool? NoPrazo, decimal? ParaManterPrazo, List<PlanoMesMetaDto> Plano);
+
+/// <summary>
+/// Plano do mês para as metas. <c>Disponivel</c> = false com menos de 3 meses completos de extrato (só a divisão igual).
+/// </summary>
+public record PlanoMetasDto(bool Disponivel, int MesesConsiderados, short Ano, byte Mes, decimal SobraPrevista,
+    int MargemPercentual, decimal Capacidade, decimal TotalPedido, decimal TotalRecomendado, bool SobraNegativa,
+    List<PlanoMetaDto> Metas);
 
 public record SalvarMetaDto(
     [Required, StringLength(120)] string Nome,
@@ -146,13 +289,16 @@ public record SalvarMetaDto(
     DateOnly? DataAlvo,
     int? ContaId,
     [Required, RegularExpression("^#[0-9a-fA-F]{6}$")] string Cor,
-    bool Concluida);
+    bool Concluida,
+    [StringLength(100)] string? ReservaNome = null);
 
 public record AporteDto([Range(-999999999d, 999999999d)] decimal Valor);
 
 public record ContaAgendadaDto(int Id, string Descricao, decimal Valor, DateOnly ProximoVencimento,
     Recorrencia Recorrencia, int? CategoriaId, string? CategoriaNome, int? ContaId, string? ContaNome,
-    bool Ativa, DateOnly? UltimoPagamentoEm, int DiasParaVencer);
+    bool Ativa, DateOnly? UltimoPagamentoEm, int DiasParaVencer,
+    // #69: até quando se repete; pagamentos que faltam até lá (contando o próximo); encerrada por ter passado dela.
+    DateOnly? DataLimite = null, int? PagamentosRestantes = null, bool Encerrada = false);
 
 public record SalvarContaAgendadaDto(
     [Required, StringLength(150)] string Descricao,
@@ -161,7 +307,8 @@ public record SalvarContaAgendadaDto(
     Recorrencia Recorrencia,
     int? CategoriaId,
     int? ContaId,
-    bool Ativa = true);
+    bool Ativa = true,
+    DateOnly? DataLimite = null);
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 
@@ -247,6 +394,15 @@ public record ProjecaoCategoriaDto(int? CategoriaId, string Nome, string Cor, de
 public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal MediaDespesas,
     decimal SaldoDisponivelAtual, List<ProjecaoMesDto> Meses, List<ProjecaoCategoriaDto> Categorias);
 
+/// <summary>
+/// Um cartão no mês do Painel (UX-12). <c>ValorMes</c> soma só as transações lançadas no mês (compras e a parcela do
+/// mês; parcelas futuras ficam de fora); <c>ParcelasMes</c> é a parte disso que é parcela. Quando há fatura com
+/// vencimento no mês, vêm o vencimento e a situação dela: "paga" (pagamentos cobrem o total), "fechada" (já fechou
+/// ou venceu sem pagamento informado) ou "aberta" (ainda recebendo compras).
+/// </summary>
+public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
+    DateOnly? Vencimento, string? Situacao, string? Banco = null);
+
 public record PainelDto(
     decimal SaldoContas,
     decimal DividaCartoes,
@@ -266,7 +422,13 @@ public record PainelDto(
     decimal DespesasEmergenciaMes = 0,
     decimal DividaFinanciamentos = 0,
     decimal DividaEmprestimos = 0,
-    int DiasProximosVencimentos = 15);
+    int DiasProximosVencimentos = 15,
+    List<FaturaMesDto>? FaturasDoMes = null,
+    decimal TotalFaturasDoMes = 0,
+    // #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto no Painel).
+    int PoucoInformativas = 0,
+    DateOnly? PoucoInformativasDesde = null,
+    string? ExemploPoucoInformativa = null);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>
@@ -357,7 +519,7 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
     decimal TotalInvestimentosManuais, decimal TotalGeral, List<DistribuicaoInvestimentoDto> Distribuicao,
     DateTime? CotacoesAtualizadasEm, bool CotacoesDesatualizadas, int OpenFinanceNaoRegistrados,
-    List<string> MoedasSemCotacao, List<ReservaDto> Reservas, decimal TotalReservas);
+    List<string> MoedasSemCotacao, List<ReservaDto> Reservas, decimal TotalReservas, List<string> CotasDiferentes);
 
 /// <summary>
 /// Reserva ("cofrinho") cujo saldo a instituição não informa pelo Open Finance, estimado pelos lançamentos
@@ -471,3 +633,83 @@ public record ImportarExtratoDto([Required, MinLength(1), MaxLength(500)] List<I
 /// <summary>Resultado de "Registrar compras do Open Finance".</summary>
 public record ResultadoImportacaoCarteiraDto(int AtivosCriados, int OperacoesImportadas, List<string> SemHistorico,
     List<string> ComLancamentoManual, List<string> Erros, string? Mensagem);
+
+/* ----------------------------- Conferir investimentos (ADR 0027) ----------------------------- */
+
+/// <summary>O que parece errado na carteira e nas transações de renda variável, com a correção sugerida.</summary>
+public record ConferenciaInvestimentosDto(List<TipoParaCorrigirDto> Tipos, List<CotasDiferentesDto> Cotas,
+    List<CompraSemOperacaoDto> ComprasSemOperacao, List<CreditoDaCorretoraDto> Trocos,
+    List<RendimentoComoInvestimentoDto> Rendimentos, CategoriaDoTrocoDto? CategoriaDoTroco);
+
+/// <summary>Ativo cadastrado como ação ou "outro" que é FII (Motivo: o nome do fundo ou o emissor da corretora).</summary>
+public record TipoParaCorrigirDto(int AtivoId, string Ticker, string? Nome, TipoAtivo TipoAtual, string Motivo);
+
+/// <summary>
+/// Cotas na corretora (posição da última sincronização, em <c>PosicaoEm</c>) × na carteira. Quando faltam cotas, o
+/// débito de compra sem operação sugerido, com o preço (débito − troco ÷ cotas) e o fechamento daquele dia.
+/// </summary>
+public record CotasDiferentesDto(int AtivoId, string Ticker, decimal NaCorretora, decimal NaCarteira, DateTime PosicaoEm,
+    long? DebitoSugeridoId, decimal? PrecoSugerido, decimal? FechamentoNoDia);
+
+/// <summary>Débito de compra de renda variável que nenhuma operação da carteira explica (Troco: o que voltou dele).</summary>
+public record CompraSemOperacaoDto(long TransacaoId, DateOnly Data, decimal Valor, decimal Troco, string Conta, string Descricao);
+
+/// <summary>
+/// Crédito da corretora que é troco de uma compra (<c>Compra*</c>: o débito) ou o valor de uma venda (<c>Venda*</c>),
+/// mas está contando como receita (rendimento).
+/// </summary>
+public record CreditoDaCorretoraDto(long TransacaoId, DateOnly Data, decimal Valor, string Descricao, string Conta,
+    string? Categoria, DateOnly? CompraData, decimal? CompraValor, string? VendaTicker, decimal? VendaQuantidade,
+    DateOnly? VendaData);
+
+/// <summary>Provento (crédito da corretora que não é troco nem venda) numa categoria de transferência.</summary>
+public record RendimentoComoInvestimentoDto(long TransacaoId, DateOnly Data, decimal Valor, string Descricao, string Conta,
+    string? Categoria, string CategoriaAutomatica);
+
+public record CategoriaDoTrocoDto(int Id, string Nome);
+
+/// <summary>
+/// Correções escolhidas: ativos que viram FII, compras que faltaram (ligadas ao débito), trocos e vendas (para a
+/// categoria da compra) e rendimentos (de volta para a categoria automática).
+/// </summary>
+public record CorrigirInvestimentosDto(
+    [MaxLength(200)] List<int>? AtivosParaFii,
+    [MaxLength(200)] List<ImportarExtratoItemDto>? Compras,
+    [MaxLength(2000)] List<long>? Trocos,
+    [MaxLength(2000)] List<long>? Rendimentos);
+
+/// <summary><c>Desfazer</c>: chave para voltar tudo (vale por alguns minutos; null se nada mudou).</summary>
+public record ResultadoCorrecaoInvestimentosDto(int Tipos, int Compras, int Trocos, int Rendimentos, string? Desfazer);
+
+/* ----------------------------- Erros do sistema (#11) ----------------------------- */
+public class FiltroErrosDto
+{
+    public DateOnly? Inicio { get; set; }
+    public DateOnly? Fim { get; set; }
+    [StringLength(30)] public string? Origem { get; set; }
+    public NivelErro? Nivel { get; set; }
+    /// <summary>abertos (padrão), resolvidos ou todos.</summary>
+    [RegularExpression("^(abertos|resolvidos|todos)$")] public string? Situacao { get; set; }
+    [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
+    [Range(1, 100)] public int TamanhoPagina { get; set; } = 25;
+}
+
+/// <summary>Datas em UTC. Sem a pilha (vem por <see cref="ErroSistemaDetalheDto"/>, só ao abrir).</summary>
+public record ErroSistemaDto(long Id, DateTime PrimeiraEm, DateTime UltimaEm, int Ocorrencias, NivelErro Nivel,
+    string Origem, string Mensagem, string? Rota, string? Usuario, bool Resolvido, DateTime? ResolvidoEm);
+
+public record ErroSistemaDetalheDto(long Id, string Categoria, string? Detalhe);
+
+/// <summary><c>Abertos</c>: total em aberto (sem filtro), para o contador da aba.</summary>
+public record PaginaErrosDto(List<ErroSistemaDto> Itens, int Total, int Pagina, int TamanhoPagina, int Abertos,
+    List<string> Origens);
+
+public record SituacaoErroDto(bool Resolvido);
+
+public record QuantidadeDto(int Quantidade);
+
+/// <summary>Erro não tratado no navegador. A API limpa dados sensíveis e limita a quantidade por hora.</summary>
+public record ErroFrontEndDto(
+    [Required, StringLength(1000)] string Mensagem,
+    [StringLength(8000)] string? Detalhe,
+    [StringLength(300)] string? Rota);

@@ -4,6 +4,7 @@ using Financas.Api.Entidades;
 using Financas.Api.Seguranca;
 using Financas.Api.Servicos;
 using Financas.Api.Servicos.Cambio;
+using Financas.Api.Servicos.Diagnostico;
 using Financas.Api.Servicos.Investimentos;
 using Financas.Api.Servicos.Pluggy;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -23,6 +24,17 @@ builder.WebHost.ConfigureKestrel(o =>
     o.Limits.MaxRequestBodySize = 1_048_576;
 });
 var cfg = builder.Configuration;
+
+// ---------------------------------------------------------------- Pasta de dados da instalação pelo .msi (#119, ADR 0029)
+// "Dados:Pasta" (ex.: %ProgramData%\FinancasLocal\dados, no appsettings.Production.json do .msi) define banco e chaves
+// e traz a configuração local que o instalador grava lá (certificado HTTPS e a senha dele), fora da pasta do programa.
+if (cfg["Dados:Pasta"] is { Length: > 0 } pastaDadosConfig)
+{
+    var pastaDados = Path.GetFullPath(Environment.ExpandEnvironmentVariables(pastaDadosConfig));
+    cfg["Banco:Caminho"] = Path.Combine(pastaDados, "sql", "FinancasLocal.db");
+    cfg["Seguranca:PastaChaves"] = Path.Combine(pastaDados, "chaves");
+    cfg.AddJsonFile(Path.Combine(pastaDados, "configuracao.json"), optional: true, reloadOnChange: false);
+}
 
 // ---------------------------------------------------------------- Banco de dados
 var caminhoBanco = cfg["Banco:Caminho"] ?? Path.Combine(AppContext.BaseDirectory, "dados", "sql", "FinancasLocal.db");
@@ -90,6 +102,8 @@ builder.Services.AddRateLimiter(o =>
 // AddControllersWithViews registra o filtro de validacao antifalsificacao (AddControllers sozinho nao registra).
 builder.Services.AddControllersWithViews(o => o.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 builder.Services.AddHttpContextAccessor();
+// "Desfazer" de alterações em lote (#87): o estado anterior fica só na memória, por alguns minutos.
+builder.Services.AddMemoryCache();
 
 // ---------------------------------------------------------------- Serviços da aplicação
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
@@ -97,19 +111,30 @@ builder.Services.AddScoped<ConfiguracaoService>();
 builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
+builder.Services.AddScoped<RegraDescricaoService>();
+builder.Services.AddScoped<TransferenciasService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
+builder.Services.AddScoped<SugestaoOrcamentoService>();
+builder.Services.AddScoped<AssistenteMetasService>();
+builder.Services.AddScoped<DescricaoPoucoInformativaService>();
 builder.Services.AddScoped<ContaService>();
 builder.Services.AddScoped<CarteiraService>();
 builder.Services.AddScoped<ReservaService>();
 builder.Services.AddScoped<CotacaoService>();
 builder.Services.AddScoped<ExtratoCarteiraService>();
+builder.Services.AddScoped<ConferenciaInvestimentosService>();
 builder.Services.AddScoped<FiiService>();
 builder.Services.AddScoped<EmprestimoService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<SincronizacaoService>();
 builder.Services.AddHostedService<SincronizacaoHostedService>();
 builder.Services.AddHostedService<CambioHostedService>();
+
+// Erros e avisos do próprio código vão também para o banco, sem dados sensíveis (#11, ADR 0022).
+builder.Services.AddSingleton<FilaErros>();
+builder.Services.AddSingleton<ILoggerProvider, RegistroErrosLoggerProvider>();
+builder.Services.AddHostedService<GravadorErrosHostedService>();
 
 var urlPluggy = new Uri(cfg["Pluggy:UrlBase"] ?? "https://api.pluggy.ai/");
 if (urlPluggy.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("A URL da Pluggy deve usar HTTPS.");
@@ -153,6 +178,21 @@ builder.Services.AddHttpClient(CotacaoService.ClienteBrapi, c =>
 
 var app = builder.Build();
 
+// Cria/atualiza o banco antes de atender (ADR 0003): a instalação pelo .msi não tem sqlite3 nem bash.
+EsquemaBanco.Aplicar(caminhoBanco, app.Logger);
+
+// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco.
+try
+{
+    using var escopo = app.Services.CreateScope();
+    if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
+        await escopo.ServiceProvider.GetRequiredService<FinancasDbContext>().SaveChangesAsync();
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Não foi possível conferir as transferências ao iniciar.");
+}
+
 // ---------------------------------------------------------------- Pipeline
 app.UseMiddleware<CabecalhosSegurancaMiddleware>();
 
@@ -166,12 +206,12 @@ else
     {
         ExceptionHandler = async ctx =>
         {
-            // Não expõe detalhes internos; o erro completo vai para o log de eventos do Windows.
+            // Não expõe detalhes internos; o erro completo vai para o log de eventos e para Configurações › Erros.
             var erro = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
             ctx.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("Erro")
-                .LogError(erro, "Erro não tratado em {Caminho}", ctx.Request.Path);
+                .LogError(erro, "Erro não tratado em {Caminho}: {Mensagem}", ctx.Request.Path, erro?.Message);
             ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await ctx.Response.WriteAsJsonAsync(new { mensagem = "Ocorreu um erro interno. Consulte o log de eventos." });
+            await ctx.Response.WriteAsJsonAsync(new { mensagem = "Ocorreu um erro interno. Ele foi registrado em Configurações › Erros." });
         }
     });
     app.UseHsts();

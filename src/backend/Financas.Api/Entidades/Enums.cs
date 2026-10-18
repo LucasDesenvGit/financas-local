@@ -85,3 +85,35 @@ public enum Recorrencia : byte
     Mensal = 1,
     Anual = 2
 }
+
+/// <summary>#111 (ADR 0025): como o dinheiro entrou ou saiu. Calculado pelo <c>TipoLancamentoService</c>, não gravado.</summary>
+public enum TipoLancamento : byte
+{
+    Outro = 0,
+    CompraCartao = 1,
+    EstornoCartao = 2,
+    PagamentoFatura = 3,
+    PixEnviado = 4,
+    PixRecebido = 5,
+    TransferenciaEnviada = 6,
+    TransferenciaRecebida = 7,
+    EntreContas = 8,
+    Boleto = 9,
+    CompraDebito = 10,
+    Saque = 11,
+    Deposito = 12,
+    TarifaJuros = 13,
+    Rendimento = 14,
+    AplicacaoResgate = 15,
+    Salario = 16,
+    Credito = 17,
+    Dinheiro = 18
+}
+
+/// <summary>Nível de um erro do sistema; os mesmos números do <c>LogLevel</c> do .NET.</summary>
+public enum NivelErro : byte
+{
+    Aviso = 3,
+    Erro = 4,
+    Critico = 5
+}

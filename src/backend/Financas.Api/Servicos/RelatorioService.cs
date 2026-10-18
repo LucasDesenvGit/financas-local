@@ -29,7 +29,7 @@ public class RelatorioService
     }
 
     /// <summary>Transações que entram nos relatórios (exclui transferências e itens marcados para ignorar).</summary>
-    private IQueryable<Transacao> Relevantes(DateOnly inicio, DateOnly fim)
+    public IQueryable<Transacao> Relevantes(DateOnly inicio, DateOnly fim)
         => _db.Transacoes.AsNoTracking()
             .Where(t => t.Data >= inicio && t.Data <= fim
                         && !t.IgnorarRelatorios
@@ -163,14 +163,40 @@ public class RelatorioService
                 CategoriaNome = c.Categoria != null ? c.Categoria.Nome : null,
                 c.ContaId,
                 ContaNome = c.Conta != null ? c.Conta.Nome : null,
-                c.Ativa, c.UltimoPagamentoEm
+                c.Ativa, c.UltimoPagamentoEm, c.DataLimite
             })
             .ToListAsync(ct);
 
-        return lista.Select(c => new ContaAgendadaDto(c.Id, c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia,
-                c.CategoriaId, c.CategoriaNome, c.ContaId, c.ContaNome, c.Ativa, c.UltimoPagamentoEm,
-                c.ProximoVencimento.DayNumber - hoje.DayNumber))
+        return lista.Select(c =>
+            {
+                var restantes = c.Ativa ? PagamentosAte(c.ProximoVencimento, c.Recorrencia, c.DataLimite) : null;
+                var encerrada = !c.Ativa && c.DataLimite is { } limite && c.Recorrencia != Recorrencia.Unica
+                    && c.ProximoVencimento > limite;
+                return new ContaAgendadaDto(c.Id, c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia,
+                    c.CategoriaId, c.CategoriaNome, c.ContaId, c.ContaNome, c.Ativa, c.UltimoPagamentoEm,
+                    c.ProximoVencimento.DayNumber - hoje.DayNumber, c.DataLimite, restantes, encerrada);
+            })
             .ToList();
+    }
+
+    /// <summary>
+    /// Próximo vencimento de uma conta recorrente, do mesmo jeito que o pagamento avança (mês a mês ou ano a ano a
+    /// partir do anterior). Única não tem próximo.
+    /// </summary>
+    public static DateOnly? ProximoVencimentoApos(DateOnly vencimento, Recorrencia recorrencia) => recorrencia switch
+    {
+        Recorrencia.Mensal => vencimento.AddMonths(1),
+        Recorrencia.Anual => vencimento.AddYears(1),
+        _ => null
+    };
+
+    /// <summary>#69: quantos pagamentos faltam até a data limite, contando o próximo (null = sem data limite).</summary>
+    public static int? PagamentosAte(DateOnly proximo, Recorrencia recorrencia, DateOnly? limite)
+    {
+        if (limite is not { } fim || recorrencia == Recorrencia.Unica) return null;
+        var n = 0;
+        for (DateOnly? v = proximo; v is { } d && d <= fim && n < 1200; v = ProximoVencimentoApos(d, recorrencia)) n++;
+        return n;
     }
 
     /// <summary>
@@ -447,16 +473,15 @@ public class RelatorioService
     }
 
     /// <summary>
-    /// Indicadores com base nos últimos 12 meses completos. O comprometimento da renda soma as parcelas de cartão
-    /// (último mês) com as parcelas mensais dos contratos de financiamento e de empréstimo, informadas separadamente.
+    /// Os últimos <paramref name="quantidade"/> meses completos antes do mês atual, a partir do primeiro mês completo
+    /// com transações (quem começou a usar há pouco tem menos meses). Meses = 0 quando ainda não há mês completo.
     /// </summary>
-    private async Task<SaudeFinanceiraDto> SaudeFinanceiraAsync(decimal patrimonioAtual, TotaisCreditoDto credito,
-        List<int> categoriasEssenciais, CancellationToken ct)
+    public async Task<(DateOnly Inicio, DateOnly Fim, int Meses)> MesesCompletosAsync(int quantidade, CancellationToken ct)
     {
         var hoje = Relogio.Hoje;
         var inicioMesAtual = new DateOnly(hoje.Year, hoje.Month, 1);
         var fim = inicioMesAtual.AddDays(-1);
-        var inicio = inicioMesAtual.AddMonths(-12);
+        var inicio = inicioMesAtual.AddMonths(-quantidade);
         var primeiraData = await _db.Transacoes.AsNoTracking().MinAsync(t => (DateOnly?)t.Data, ct);
         if (primeiraData is { } pd)
         {
@@ -464,20 +489,41 @@ public class RelatorioService
             if (primeiroMesCompleto > inicio) inicio = primeiroMesCompleto;
         }
         var meses = inicio >= inicioMesAtual ? 0 : (inicioMesAtual.Year - inicio.Year) * 12 + inicioMesAtual.Month - inicio.Month;
+        return (inicio, fim, meses);
+    }
 
+    /// <summary>
+    /// Renda mensal média dos últimos 12 meses completos e parcelas de cartão do último mês: a mesma regra da Saúde
+    /// financeira, usada também pela sugestão de orçamentos.
+    /// </summary>
+    public async Task<(decimal Renda, decimal ParcelasCartao, int Meses)> RendaEParcelasAsync(CancellationToken ct)
+    {
+        var (inicio, fim, meses) = await MesesCompletosAsync(12, ct);
+        if (meses == 0) return (0m, 0m, 0);
+        var renda = (await Relevantes(inicio, fim).Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
+        var parcelas = Math.Abs(await Relevantes(new DateOnly(fim.Year, fim.Month, 1), fim)
+            .Where(t => t.Valor < 0 && t.ParcelaTotal != null && t.ParcelaTotal > 1)
+            .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
+        return (renda, parcelas, meses);
+    }
+
+    /// <summary>
+    /// Indicadores com base nos últimos 12 meses completos. O comprometimento da renda soma as parcelas de cartão
+    /// (último mês) com as parcelas mensais dos contratos de financiamento e de empréstimo, informadas separadamente.
+    /// </summary>
+    private async Task<SaudeFinanceiraDto> SaudeFinanceiraAsync(decimal patrimonioAtual, TotaisCreditoDto credito,
+        List<int> categoriasEssenciais, CancellationToken ct)
+    {
+        var (inicio, fim, meses) = await MesesCompletosAsync(12, ct);
         decimal renda = 0, gasto = 0, gastoEssencial = 0, parcelas = 0;
         if (meses > 0)
         {
+            (renda, parcelas, _) = await RendaEParcelasAsync(ct);
             var periodo = Relevantes(inicio, fim);
-            renda = (await periodo.Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
             gasto = Math.Abs(await periodo.Where(t => t.Valor < 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
             gastoEssencial = Math.Abs(await periodo
                 .Where(t => t.Valor < 0 && t.CategoriaId != null && categoriasEssenciais.Contains(t.CategoriaId.Value))
                 .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
-            var inicioUltimoMes = inicioMesAtual.AddMonths(-1);
-            parcelas = Math.Abs(await Relevantes(inicioUltimoMes, fim)
-                .Where(t => t.Valor < 0 && t.ParcelaTotal != null && t.ParcelaTotal > 1)
-                .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
         }
 
         // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora)

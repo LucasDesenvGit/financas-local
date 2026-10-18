@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Financas.Api.Data;
 using Financas.Api.Dtos;
@@ -53,6 +52,34 @@ public class ParametroService
         new(ConfiguracaoService.MinutosBloqueio, "Segurança", "Tempo de bloqueio",
             "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
             TipoParametro.Inteiro, 15, 1, 1440, "minutos", "Seguranca:MinutosBloqueio"),
+
+        new(ConfiguracaoService.OrcamentoMetaPoupanca, "Orçamentos", "Meta de poupança",
+            "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+            TipoParametro.Inteiro, 20, 0, 60, "% da renda"),
+        new(ConfiguracaoService.OrcamentoFolgaEssenciais, "Orçamentos", "Folga nos gastos essenciais",
+            "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+            TipoParametro.Inteiro, 5, 0, 30, "%"),
+        new(ConfiguracaoService.OrcamentoCartaoAtencao, "Orçamentos", "Uso do limite do cartão: atenção",
+            "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+            TipoParametro.Inteiro, 30, 5, 100, "% do limite"),
+        new(ConfiguracaoService.OrcamentoCartaoAlerta, "Orçamentos", "Uso do limite do cartão: alerta",
+            "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+            TipoParametro.Inteiro, 70, 10, 100, "% do limite"),
+        new(ConfiguracaoService.OrcamentoCorteCartao, "Orçamentos", "Corte por uso do cartão",
+            "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+            TipoParametro.Inteiro, 10, 0, 50, "%"),
+
+        new(ConfiguracaoService.MetasMargemSeguranca, "Metas", "Margem de segurança",
+            "Quanto da sobra prevista do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar.",
+            TipoParametro.Inteiro, 10, 0, 50, "% da sobra"),
+
+        new(ConfiguracaoService.MinimoLetrasDescricao, "Transações", "Descrição pouco informativa",
+            "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+            TipoParametro.Inteiro, 3, 1, 20, "letras"),
+
+        new(ConfiguracaoService.DiasRetencaoErros, "Erros do sistema", "Guardar erros por",
+            "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+            TipoParametro.Inteiro, 90, 7, 365, "dias"),
     ];
 
     private static readonly DateTime IniciadoEm = Process.GetCurrentProcess().StartTime.ToUniversalTime();
@@ -130,10 +157,7 @@ public class ParametroService
             ? Path.GetFullPath(pasta)
             : Path.Combine(AppContext.BaseDirectory, "chaves");
         long? tamanho = File.Exists(caminhoBanco) ? new FileInfo(caminhoBanco).Length : null;
-        var versao = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                     ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "—";
-        var indiceMais = versao.IndexOf('+');
-        if (indiceMais > 0) versao = versao[..indiceMais];
+        var versao = VersaoSistema.Atual;
 
         return new InfoSistemaDto(
             versao,

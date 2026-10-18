@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChartConfiguration } from 'chart.js';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -19,6 +20,7 @@ import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.co
 import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
+import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
   FIXED_INCOME: 'Renda fixa',
@@ -50,7 +52,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -61,6 +63,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
         </span>
       </div>
       <div class="acoes">
+        <button type="button" class="botao" (click)="conferenciaAberta.set(true)">Conferir investimentos</button>
         <button type="button" class="botao" (click)="abrirImportacao()">⇣ Importar do extrato</button>
         <button type="button" class="botao" (click)="atualizarCotacoes()" [disabled]="atualizando()">
           {{ atualizando() ? 'Atualizando…' : '↻ Atualizar cotações' }}
@@ -70,6 +73,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     </header>
 
     @if (dados(); as d) {
+      @if (d.cotasDiferentes.length > 0) {
+        <section class="alertas" role="status">
+          <p>A corretora informa outra quantidade de cotas de {{ listaTickers(d.cotasDiferentes) }}.
+            <button type="button" class="link" (click)="conferenciaAberta.set(true)">Conferir investimentos</button></p>
+        </section>
+      }
       @if (d.moedasSemCotacao.length > 0) {
         <section class="alertas">
           <p>Investimentos em {{ d.moedasSemCotacao.join(', ') }} ficaram fora dos totais: não há cotação de câmbio
@@ -538,6 +547,10 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       }
     </app-modal>
 
+    <app-conferir-investimentos [aberto]="conferenciaAberta()" (fechar)="conferenciaAberta.set(false)"
+      (corrigido)="recarregarDepoisDeAlterar()" (lancarAMao)="lancarCompraQueFaltou($event)"
+      (verOperacoes)="verOperacoesDe($event)" />
+
     <!-- Importar do extrato -->
     <app-modal [aberto]="importacaoAberta()" titulo="Importar compras e vendas do extrato" (fechar)="importacaoAberta.set(false)">
       <div class="formulario">
@@ -681,6 +694,7 @@ export class InvestimentosComponent implements OnInit {
   readonly hoje = dataIso();
 
   readonly dados = signal<Carteira | null>(null);
+  private readonly rota = inject(ActivatedRoute);
   readonly aba = signal<Aba>('resumo');
   readonly mostrarEncerradas = signal(false);
   readonly atualizando = signal(false);
@@ -691,6 +705,7 @@ export class InvestimentosComponent implements OnInit {
   readonly tokenConfigurado = signal(false);
   readonly versaoCarteira = signal(0);
   readonly importacaoAberta = signal(false);
+  readonly conferenciaAberta = signal(false);
   readonly carregandoSugestoes = signal(false);
   readonly linhasImportacao = signal<LinhaImportacao[]>([]);
   readonly reservasAConferir = computed(() =>
@@ -818,6 +833,9 @@ export class InvestimentosComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // #89: /investimentos?aba=reservas abre direto numa aba (link "confira" do cofrinho em Metas).
+    const aba = this.rota.snapshot.queryParamMap.get('aba');
+    if (aba === 'resumo' || aba === 'fii' || aba === 'rv' || aba === 'of' || aba === 'reservas') this.aba.set(aba);
     this.carregar();
   }
 
@@ -1002,7 +1020,31 @@ export class InvestimentosComponent implements OnInit {
     });
   }
 
-  private recarregarDepoisDeAlterar(): void {
+  /* ------------------------------ conferir investimentos ------------------------------ */
+
+  /** "GARE11, XPLG11 e XPML11". */
+  listaTickers(tickers: string[]): string {
+    return tickers.length > 1 ? `${tickers.slice(0, -1).join(', ')} e ${tickers[tickers.length - 1]}` : tickers[0] ?? '';
+  }
+
+  /** Sem débito no extrato que explique a diferença: abre "Lançar compra" com o ativo e as cotas que faltam. */
+  lancarCompraQueFaltou(e: { ticker: string; quantidade: number }): void {
+    this.conferenciaAberta.set(false);
+    this.novaOperacao(e.ticker);
+    if (this.formOp) {
+      this.formOp.quantidade = e.quantidade;
+      this.formOp.observacao = 'Compra que faltou no Open Finance';
+    }
+  }
+
+  verOperacoesDe(ticker: string): void {
+    const posicao = this.dados()?.posicoes.find((p) => p.ticker === ticker);
+    if (!posicao) return;
+    this.conferenciaAberta.set(false);
+    this.abrirOperacoes(posicao);
+  }
+
+  recarregarDepoisDeAlterar(): void {
     this.api.carteira().subscribe({
       next: (c) => {
         this.dados.set(c);

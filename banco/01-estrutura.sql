@@ -170,6 +170,10 @@ CREATE TABLE IF NOT EXISTS Conta
     Cor                 TEXT    NOT NULL CONSTRAINT DF_Conta_Cor DEFAULT '#0f766e',
     IncluirNoSaldo      INTEGER NOT NULL CONSTRAINT DF_Conta_IncluirNoSaldo DEFAULT 1,
     Arquivada           INTEGER NOT NULL CONSTRAINT DF_Conta_Arquivada DEFAULT 0,
+    -- ADR 0024: banco escolhido pelo usuário (código do BancoService; NULL = detectar pelo nome).
+    Banco               TEXT    NULL,
+    -- ADR 0024: cartão → conta a que pertence (de onde paga a fatura). Sem FK: a API limpa ao excluir a conta.
+    ContaVinculadaId    INTEGER NULL,
     -- CriadoEm/AtualizadoEm preenchidos pela API (DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     AtualizadoEm        TEXT    NOT NULL,
@@ -225,6 +229,17 @@ CREATE TABLE IF NOT EXISTS Transacao
     IgnorarRelatorios   INTEGER NOT NULL CONSTRAINT DF_Transacao_Ignorar DEFAULT 0,
     -- Marcação de gasto de emergência (destacado nos relatórios e orçamentos).
     Emergencia          INTEGER NOT NULL CONSTRAINT DF_Transacao_Emergencia DEFAULT 0,
+    -- #9: o usuário já olhou a descrição pouco informativa ("PIX ENVIADO") e ela sai do filtro.
+    DescricaoRevisada   INTEGER NOT NULL CONSTRAINT DF_Transacao_DescricaoRevisada DEFAULT 0,
+    -- #111 (ADR 0025): tipo de operação informado pelo banco no Open Finance (operationType/paymentMethod da Pluggy).
+    MeioPagamento       TEXT    NULL,
+    -- #111: quem pagou e quem recebeu têm o mesmo documento (transferência entre contas suas). Só o sim/não é
+    -- guardado, nunca o CPF/CNPJ nem o nome. NULL = o banco não informou.
+    MesmaTitularidade   INTEGER NULL,
+    -- #123 (ADR 0030): o nome mostrado em Descricao veio de uma regra de descrição (RegraDescricao.Id) ou foi
+    -- escolhido à mão (DescricaoManual = 1: as regras não mexem mais). DescricaoOriginal continua sendo a do banco.
+    RegraDescricaoId    INTEGER NULL,
+    DescricaoManual     INTEGER NOT NULL CONSTRAINT DF_Transacao_DescricaoManual DEFAULT 0,
     -- Guid gerado pela API quando aplicável (Transacao.TransferenciaGrupo); sem DEFAULT no banco.
     TransferenciaGrupo  TEXT    NULL,
     Observacao          TEXT    NULL,
@@ -349,6 +364,12 @@ CREATE TABLE IF NOT EXISTS Meta
     ContaId     INTEGER NULL,
     Cor         TEXT    NOT NULL CONSTRAINT DF_Meta_Cor DEFAULT '#0f766e',
     Concluida   INTEGER NOT NULL CONSTRAINT DF_Meta_Concluida DEFAULT 0,
+    -- Cofrinho (reserva do extrato, ADR 0010) da conta que guarda o dinheiro da meta: identificado pelo nome,
+    -- como no ReservaService. Bancos antigos: coluna via 2-criar-banco.sh.
+    ReservaNome TEXT    NULL,
+    -- Ordem de prioridade (1 = primeira) para o assistente de metas dividir a sobra; 0 = ainda sem ordem.
+    -- Bancos antigos: coluna via 2-criar-banco.sh.
+    Prioridade  INTEGER NOT NULL CONSTRAINT DF_Meta_Prioridade DEFAULT 0,
     -- Preenchido pela API (Meta.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm    TEXT    NOT NULL,
     CONSTRAINT CK_Meta_ValorAlvo CHECK (CAST(ValorAlvo AS REAL) > 0),
@@ -367,6 +388,8 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     ContaId             INTEGER NULL,
     Ativa               INTEGER NOT NULL CONSTRAINT DF_ContaAgendada_Ativa DEFAULT 1,
     UltimoPagamentoEm   TEXT    NULL,
+    -- #69: último vencimento que ainda se repete (NULL = sem fim). Ao pagar e passar dele, a conta é encerrada.
+    DataLimite          TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_ContaAgendada_Recorrencia CHECK (Recorrencia IN (0, 1, 2)),
@@ -497,3 +520,50 @@ CREATE TABLE IF NOT EXISTS ReservaConferencia
     CONSTRAINT FK_ReservaConferencia_Conta FOREIGN KEY (ContaId) REFERENCES Conta (Id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_ReservaConferencia_Conta_Nome ON ReservaConferencia (ContaId, Nome);
+
+/* Erros e avisos do sistema (#11, ADR 0022), gravados pela API (RegistroErrosLoggerProvider) sem dados sensíveis:
+   tokens, senhas, query strings, CPF e valores em R$ são removidos antes de gravar. A mesma ocorrência
+   repetida enquanto está em aberto vira uma linha só (Ocorrencias/UltimaEm). Apagados depois dos dias definidos em
+   Parametrização (Diagnostico.DiasRetencaoErros). */
+CREATE TABLE IF NOT EXISTS ErroSistema
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_ErroSistema PRIMARY KEY AUTOINCREMENT,
+    -- PrimeiraEm/UltimaEm/ResolvidoEm em UTC, preenchidos pela API; sem DEFAULT no banco.
+    PrimeiraEm   TEXT    NOT NULL,
+    UltimaEm     TEXT    NOT NULL,
+    Ocorrencias  INTEGER NOT NULL CONSTRAINT DF_ErroSistema_Ocorrencias DEFAULT 1,
+    -- 3 Aviso, 4 Erro, 5 Crítico (os mesmos números do LogLevel do .NET).
+    Nivel        INTEGER NOT NULL,
+    Origem       TEXT    NOT NULL,
+    Categoria    TEXT    NOT NULL,
+    Mensagem     TEXT    NOT NULL,
+    Detalhe      TEXT    NULL,
+    Rota         TEXT    NULL,
+    Usuario      TEXT    NULL,
+    Assinatura   TEXT    NOT NULL,
+    Resolvido    INTEGER NOT NULL CONSTRAINT DF_ErroSistema_Resolvido DEFAULT 0,
+    ResolvidoEm  TEXT    NULL,
+    CONSTRAINT CK_ErroSistema_Nivel CHECK (Nivel IN (3, 4, 5)),
+    CONSTRAINT CK_ErroSistema_Ocorrencias CHECK (Ocorrencias >= 1)
+);
+CREATE INDEX IF NOT EXISTS IX_ErroSistema_Resolvido_UltimaEm ON ErroSistema (Resolvido, UltimaEm);
+CREATE INDEX IF NOT EXISTS IX_ErroSistema_Assinatura ON ErroSistema (Assinatura, Resolvido);
+
+/* ------------------------------------------------------------------ */
+/* Regras de descrição (#123, ADR 0030)                                */
+/* ------------------------------------------------------------------ */
+/* "Quando a descrição do banco for/contiver X, mostrar Y": valem nas transações existentes e nas que chegam pela
+   sincronização, menos nas que tiveram a descrição escolhida à mão. Separadas de RegraCategorizacao porque lá a
+   categoria é obrigatória (NOT NULL) e o SQLite não deixa mudar isso sem recriar a tabela. */
+CREATE TABLE IF NOT EXISTS RegraDescricao
+(
+    Id                  INTEGER NOT NULL CONSTRAINT PK_RegraDescricao PRIMARY KEY AUTOINCREMENT,
+    -- Comparado com a descrição do banco (Transacao.DescricaoOriginal), sem acento e sem diferença de maiúsculas.
+    Texto               TEXT    NOT NULL,
+    TipoCorrespondencia INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_TipoCorrespondencia DEFAULT 3,
+    NovaDescricao       TEXT    NOT NULL,
+    Ativa               INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_Ativa DEFAULT 1,
+    -- Preenchido pela API (RegraDescricao.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    CriadoEm            TEXT    NOT NULL,
+    CONSTRAINT CK_RegraDescricao_TipoCorrespondencia CHECK (TipoCorrespondencia IN (1, 2, 3))
+);

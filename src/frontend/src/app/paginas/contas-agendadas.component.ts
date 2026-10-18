@@ -10,7 +10,7 @@ import {
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
-import { dataIso, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { dataIso, dataIsoValida, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
@@ -36,7 +36,11 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           @for (c of itens(); track c.id) {
             <tr [class.ignorada]="!c.ativa">
               <td class="nowrap">
-                {{ c.proximoVencimento | date: 'dd/MM/yyyy' }}
+                @if (c.encerrada) {
+                  <span class="etiqueta etiqueta-suave">encerrada</span>
+                } @else {
+                  {{ c.proximoVencimento | date: 'dd/MM/yyyy' }}
+                }
                 @if (c.ativa) {
                   <br><small [class.negativo]="c.diasParaVencer < 0" class="texto-suave">
                     {{ c.diasParaVencer < 0 ? 'vencida há ' + (-c.diasParaVencer) + 'd' : c.diasParaVencer === 0 ? 'vence hoje' : 'em ' + c.diasParaVencer + ' dias' }}
@@ -44,7 +48,14 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
                 }
               </td>
               <td>{{ c.descricao }} @if (c.contaNome) { <small class="texto-suave">· {{ c.contaNome }}</small> }</td>
-              <td>{{ nomeRecorrencia(c.recorrencia) }}</td>
+              <td>{{ nomeRecorrencia(c.recorrencia) }}
+                @if (c.encerrada) {
+                  <br><small class="texto-suave">encerrada@if (c.ultimoPagamentoEm) { em {{ c.ultimoPagamentoEm | date: 'dd/MM/yyyy' }}}</small>
+                } @else if (c.ativa && c.dataLimite) {
+                  <br><small class="texto-suave">até {{ c.dataLimite | date: 'MMM/yyyy' }} ·
+                    {{ c.pagamentosRestantes === 1 ? 'último pagamento' : 'faltam ' + c.pagamentosRestantes }}</small>
+                }
+              </td>
               <td>{{ c.categoriaNome ?? '—' }}</td>
               <td class="direita valor">{{ c.valor | currency }}</td>
               <td class="direita nowrap">
@@ -140,6 +151,21 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
               </select>
             </label>
           </div>
+          @if (fm.recorrencia !== Recorrencia.Unica) {
+            <div class="grade-campos">
+              <label>Até (opcional)
+                <input type="date" name="limite" [(ngModel)]="fm.dataLimite" [min]="fm.proximoVencimento"
+                  aria-describedby="ajuda-limite" [attr.aria-invalid]="limiteInvalido(fm)"></label>
+              <label>ou quantos pagamentos faltam
+                <input type="number" name="restantes" min="1" step="1" [ngModel]="restantesDoForm(fm)"
+                  (ngModelChange)="definirRestantes(fm, $event)" aria-describedby="ajuda-limite"></label>
+            </div>
+            @if (limiteInvalido(fm)) {
+              <p class="negativo pequeno-texto" role="alert">A data limite não pode ser antes do próximo vencimento.</p>
+            }
+            <p class="texto-suave pequeno-texto" id="ajuda-limite">
+              Depois do último pagamento a conta é encerrada sozinha e sai do Painel. Em branco, ela se repete sem fim.</p>
+          }
           <label>Conta de pagamento (opcional)
             <select name="conta" [(ngModel)]="fm.contaId">
               <option [ngValue]="null">—</option>
@@ -151,7 +177,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
             @if (editandoId) { <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button> }
             <span class="cresce"></span>
             <button type="button" class="botao" (click)="form = null">Cancelar</button>
-            <button class="botao botao-primario" [disabled]="f.invalid">Salvar</button>
+            <button class="botao botao-primario" [disabled]="f.invalid || limiteInvalido(fm)">Salvar</button>
           </div>
         </form>
       }
@@ -161,6 +187,9 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
       @if (pagando; as pg) {
         <form (ngSubmit)="confirmarPagamento()" class="formulario">
           <label>Data do pagamento <input type="date" name="data" [(ngModel)]="dataPagamento" required></label>
+          @if (pg.pagamentosRestantes === 1) {
+            <p class="texto-suave" role="status">É o último pagamento (até {{ pg.dataLimite | date: 'dd/MM/yyyy' }}): a conta será encerrada.</p>
+          }
           @if (podeLancar(pg)) {
             <label class="checkbox"><input type="checkbox" name="lancar" [(ngModel)]="lancarTransacao">
               Lançar a despesa na conta {{ pg.contaNome }}</label>
@@ -231,7 +260,7 @@ export class ContasAgendadasComponent implements OnInit {
     this.chaveSugestaoEmCadastro = s.chave;
     this.form = {
       descricao: s.descricao, valor: s.valor, proximoVencimento: s.proximoVencimento, recorrencia: Recorrencia.Mensal,
-      categoriaId: s.categoriaId, contaId: s.contaId, ativa: true
+      categoriaId: s.categoriaId, contaId: s.contaId, ativa: true, dataLimite: null
     };
   }
 
@@ -282,7 +311,8 @@ export class ContasAgendadasComponent implements OnInit {
   nova(): void {
     this.editandoId = null;
     this.chaveSugestaoEmCadastro = null;
-    this.form = { descricao: '', valor: 0, proximoVencimento: dataIso(), recorrencia: Recorrencia.Mensal, categoriaId: null, contaId: null, ativa: true };
+    this.form = { descricao: '', valor: 0, proximoVencimento: dataIso(), recorrencia: Recorrencia.Mensal, categoriaId: null, contaId: null, ativa: true,
+      dataLimite: null };
   }
 
   editar(c: ContaAgendada): void {
@@ -290,13 +320,42 @@ export class ContasAgendadasComponent implements OnInit {
     this.chaveSugestaoEmCadastro = null;
     this.form = {
       descricao: c.descricao, valor: c.valor, proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia,
-      categoriaId: c.categoriaId, contaId: c.contaId, ativa: c.ativa
+      categoriaId: c.categoriaId, contaId: c.contaId, ativa: c.ativa, dataLimite: c.dataLimite
     };
+  }
+
+  /** #69: data limite antes do próximo vencimento (só importa com a conta ativa; a API recusa do mesmo jeito). */
+  limiteInvalido(fm: SalvarContaAgendada): boolean {
+    return fm.ativa && fm.recorrencia !== Recorrencia.Unica && !!fm.dataLimite && !!fm.proximoVencimento
+      && fm.dataLimite < fm.proximoVencimento;
+  }
+
+  /** Pagamentos que faltam pela data limite, contando o próximo (o atalho do formulário mostra os dois jeitos). */
+  restantesDoForm(fm: SalvarContaAgendada): number | null {
+    if (!fm.dataLimite || !dataIsoValida(fm.proximoVencimento) || fm.dataLimite < fm.proximoVencimento) return null;
+    let n = 0;
+    for (let v = fm.proximoVencimento; v <= fm.dataLimite && n < 1200; v = avancarVencimento(v, fm.recorrencia)) n++;
+    return n;
+  }
+
+  /** "Faltam N pagamentos" vira a data do N-ésimo vencimento a partir do próximo. */
+  definirRestantes(fm: SalvarContaAgendada, valor: number | string | null): void {
+    const n = Math.floor(Number(valor));
+    if (!valor || !Number.isFinite(n) || n < 1 || !dataIsoValida(fm.proximoVencimento)) {
+      fm.dataLimite = null;
+      return;
+    }
+    let v = fm.proximoVencimento;
+    for (let i = 1; i < Math.min(n, 1200); i++) v = avancarVencimento(v, fm.recorrencia);
+    fm.dataLimite = v;
   }
 
   salvar(): void {
     if (!this.form) return;
-    const dto = { ...this.form, valor: Number(this.form.valor) };
+    const dto = {
+      ...this.form, valor: Number(this.form.valor),
+      dataLimite: this.form.recorrencia === Recorrencia.Unica || !this.form.dataLimite ? null : this.form.dataLimite
+    };
     const req = this.editandoId ? this.api.atualizarContaAgendada(this.editandoId, dto) : this.api.criarContaAgendada(dto);
     req.subscribe({
       next: () => {
@@ -339,4 +398,16 @@ export class ContasAgendadasComponent implements OnInit {
         error: (e) => this.avisos.erro(mensagemDeErro(e))
       });
   }
+}
+
+/**
+ * Próximo vencimento como a API avança ao pagar (DateOnly.AddMonths/AddYears a partir do anterior): dia que não
+ * existe no mês cai no último dia (31/01 → 28/02 → 28/03).
+ */
+export function avancarVencimento(iso: string, recorrencia: Recorrencia): string {
+  const [a, m, d] = iso.split('-').map(Number);
+  const meses = recorrencia === Recorrencia.Anual ? 12 : 1;
+  const alvo = new Date(a, m - 1 + meses, 1);
+  const ultimo = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+  return dataIso(new Date(alvo.getFullYear(), alvo.getMonth(), Math.min(d, ultimo)));
 }

@@ -2,6 +2,7 @@ using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Investimentos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,11 +13,13 @@ public class OrcamentosController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly RelatorioService _relatorios;
+    private readonly SugestaoOrcamentoService _sugestao;
 
-    public OrcamentosController(FinancasDbContext db, RelatorioService relatorios)
+    public OrcamentosController(FinancasDbContext db, RelatorioService relatorios, SugestaoOrcamentoService sugestao)
     {
         _db = db;
         _relatorios = relatorios;
+        _sugestao = sugestao;
     }
 
     [HttpGet]
@@ -56,6 +59,43 @@ public class OrcamentosController : BaseController
         return apagados == 0 ? NaoEncontrado() : NoContent();
     }
 
+    /// <summary>Sugestão de orçamentos por categoria para o mês (só leitura: nada é gravado). #39</summary>
+    [HttpGet("sugestao")]
+    public async Task<ActionResult<SugestaoOrcamentoDto>> Sugestao([FromQuery] int? ano, [FromQuery] int? mes, CancellationToken ct)
+    {
+        var hoje = Relogio.Hoje;
+        var a = ano ?? hoje.Year;
+        var m = mes ?? hoje.Month;
+        if (a < 2000 || a > 2100 || m < 1 || m > 12) return Erro("Período inválido.");
+        return await _sugestao.SugerirAsync(a, m, ct);
+    }
+
+    /// <summary>Grava os valores escolhidos na sugestão (cria ou altera o orçamento de cada categoria no mês).</summary>
+    [HttpPost("aplicar-sugestao")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> AplicarSugestao(AplicarSugestaoOrcamentoDto dto, CancellationToken ct)
+    {
+        var ids = dto.Itens.Select(i => i.CategoriaId).Distinct().ToList();
+        if (ids.Count != dto.Itens.Count) return Erro("Categoria repetida na sugestão.");
+        var validas = await _db.Categorias.AsNoTracking()
+            .Where(c => ids.Contains(c.Id) && c.Tipo == TipoCategoria.Despesa).Select(c => c.Id).ToListAsync(ct);
+        if (validas.Count != ids.Count) return Erro("Orçamentos são definidos para categorias de despesa.");
+
+        var existentes = await _db.Orcamentos
+            .Where(o => o.Ano == dto.Ano && o.Mes == dto.Mes && ids.Contains(o.CategoriaId)).ToListAsync(ct);
+        foreach (var item in dto.Itens)
+        {
+            var o = existentes.FirstOrDefault(x => x.CategoriaId == item.CategoriaId);
+            if (o is null)
+            {
+                o = new Orcamento { CategoriaId = item.CategoriaId, Ano = dto.Ano, Mes = dto.Mes };
+                _db.Orcamentos.Add(o);
+            }
+            o.Valor = item.Valor;
+        }
+        await _db.SaveChangesAsync(ct);
+        return new ResultadoAplicacaoDto(dto.Itens.Count);
+    }
+
     /// <summary>Copia os orçamentos do mês anterior para o mês informado (sem sobrescrever os existentes).</summary>
     [HttpPost("copiar-mes-anterior")]
     public async Task<ActionResult<ResultadoAplicacaoDto>> CopiarMesAnterior(CopiarOrcamentoDto dto, CancellationToken ct)
@@ -80,31 +120,64 @@ public class MetasController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly ContaService _contas;
+    private readonly ReservaService _reservas;
+    private readonly AssistenteMetasService _assistente;
 
-    public MetasController(FinancasDbContext db, ContaService contas)
+    public MetasController(FinancasDbContext db, ContaService contas, ReservaService reservas, AssistenteMetasService assistente)
     {
         _db = db;
         _contas = contas;
+        _reservas = reservas;
+        _assistente = assistente;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MetaDto>>> Listar(CancellationToken ct)
+    public async Task<ActionResult<List<MetaDto>>> Listar(CancellationToken ct) => await ListarMetasAsync(ct);
+
+    /// <summary>#90: quanto guardar este mês em cada meta, pela sobra prevista e pela ordem de prioridade.</summary>
+    [HttpGet("plano")]
+    public async Task<ActionResult<PlanoMetasDto>> Plano(CancellationToken ct)
+        => await _assistente.PlanejarAsync(await ListarMetasAsync(ct), ct);
+
+    /// <summary>Nova ordem de prioridade: a primeira da lista é a 1ª. Metas fora da lista vão para o fim.</summary>
+    [HttpPut("prioridades")]
+    public async Task<IActionResult> Prioridades(PrioridadesMetasDto dto, CancellationToken ct)
+    {
+        if (dto.Ids.Distinct().Count() != dto.Ids.Count) return Erro("Meta repetida na ordem.");
+        var metas = await _db.Metas.ToListAsync(ct);
+        if (dto.Ids.Any(id => metas.All(m => m.Id != id))) return Erro("Meta inválida.");
+        var proxima = 1;
+        foreach (var id in dto.Ids) metas.First(m => m.Id == id).Prioridade = proxima++;
+        foreach (var m in metas.Where(m => !dto.Ids.Contains(m.Id)).OrderBy(m => m.Prioridade == 0 ? int.MaxValue : m.Prioridade))
+            m.Prioridade = proxima++;
+        await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>Metas com o progresso calculado, em ordem de prioridade (sem ordem definida vão para o fim).</summary>
+    private async Task<List<MetaDto>> ListarMetasAsync(CancellationToken ct)
     {
         var metas = await _db.Metas.AsNoTracking().Include(m => m.Conta)
-            .OrderBy(m => m.Concluida).ThenBy(m => m.DataAlvo).ThenBy(m => m.Nome)
+            .OrderBy(m => m.Concluida).ThenBy(m => m.Prioridade == 0 ? int.MaxValue : m.Prioridade)
+            .ThenBy(m => m.DataAlvo == null).ThenBy(m => m.DataAlvo).ThenBy(m => m.Nome)
             .ToListAsync(ct);
         var saldos = metas.Any(m => m.ContaId != null)
             ? await _contas.CalcularSaldosAsync(ct)
             : new Dictionary<int, decimal>();
-        return metas.Select(m => ParaDto(m, saldos)).ToList();
+        var reservas = metas.Any(m => m.ReservaNome != null) ? await _reservas.ListarAsync(ct) : [];
+        return metas.Select(m => ParaDto(m, saldos, reservas)).ToList();
     }
 
     [HttpPost]
     public async Task<ActionResult<MetaDto>> Criar(SalvarMetaDto dto, CancellationToken ct)
     {
         if (dto.ContaId is { } cid && !await _db.Contas.AnyAsync(c => c.Id == cid, ct)) return Erro("Conta inválida.");
-        var m = new Meta { CriadoEm = DateTime.UtcNow };
-        Aplicar(m, dto);
+        var (erro, cofrinho) = await ValidarCofrinhoAsync(dto, null, ct);
+        if (erro is not null) return Erro(erro);
+        // Meta nova entra no fim da ordem de prioridade.
+        var ultima = await _db.Metas.MaxAsync(x => (int?)x.Prioridade, ct) ?? 0;
+        var m = new Meta { CriadoEm = DateTime.UtcNow, Prioridade = ultima + 1 };
+        Aplicar(m, dto, cofrinho);
         _db.Metas.Add(m);
         await _db.SaveChangesAsync(ct);
         return await ObterDtoAsync(m.Id, ct);
@@ -116,7 +189,9 @@ public class MetasController : BaseController
         var m = await _db.Metas.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (m is null) return NaoEncontrado();
         if (dto.ContaId is { } cid && !await _db.Contas.AnyAsync(c => c.Id == cid, ct)) return Erro("Conta inválida.");
-        Aplicar(m, dto);
+        var (erro, cofrinho) = await ValidarCofrinhoAsync(dto, m, ct);
+        if (erro is not null) return Erro(erro);
+        Aplicar(m, dto, cofrinho);
         await _db.SaveChangesAsync(ct);
         return await ObterDtoAsync(id, ct);
     }
@@ -144,25 +219,52 @@ public class MetasController : BaseController
     {
         var m = await _db.Metas.AsNoTracking().Include(x => x.Conta).FirstAsync(x => x.Id == id, ct);
         var saldos = m.ContaId is null ? new Dictionary<int, decimal>() : await _contas.CalcularSaldosAsync(ct);
-        return ParaDto(m, saldos);
+        var reservas = m.ReservaNome is null ? [] : await _reservas.ListarAsync(ct);
+        return ParaDto(m, saldos, reservas);
     }
 
-    private static void Aplicar(Meta m, SalvarMetaDto dto)
+    /// <summary>
+    /// Cofrinho só com conta, e precisa existir nela (mesma identificação do ReservaService: conta + nome, sem
+    /// diferenciar maiúsculas). Ao editar, manter o cofrinho que já estava gravado é aceito mesmo que ele tenha sumido
+    /// do extrato — o cartão avisa, e a pessoa decide trocar ou não. Devolve o nome como está no extrato.
+    /// </summary>
+    private async Task<(string? Erro, string? Nome)> ValidarCofrinhoAsync(SalvarMetaDto dto, Meta? atual, CancellationToken ct)
+    {
+        var nome = string.IsNullOrWhiteSpace(dto.ReservaNome) ? null : dto.ReservaNome.Trim();
+        if (nome is null) return (null, null);
+        if (dto.ContaId is not int contaId) return ("Escolha a conta do cofrinho.", null);
+        var reserva = (await _reservas.ListarAsync(ct))
+            .FirstOrDefault(r => r.ContaId == contaId && string.Equals(r.Nome, nome, StringComparison.OrdinalIgnoreCase));
+        if (reserva is not null) return (null, reserva.Nome);
+        if (atual is not null && atual.ContaId == contaId
+            && string.Equals(atual.ReservaNome, nome, StringComparison.OrdinalIgnoreCase)) return (null, atual.ReservaNome);
+        return ("Cofrinho inválido para esta conta.", null);
+    }
+
+    private static void Aplicar(Meta m, SalvarMetaDto dto, string? cofrinho)
     {
         m.Nome = dto.Nome.Trim();
         m.ValorAlvo = dto.ValorAlvo;
         m.ValorAtual = dto.ValorAtual;
         m.DataAlvo = dto.DataAlvo;
         m.ContaId = dto.ContaId;
+        m.ReservaNome = dto.ContaId is null ? null : cofrinho;
         m.Cor = dto.Cor;
         m.Concluida = dto.Concluida;
     }
 
-    private static MetaDto ParaDto(Meta m, Dictionary<int, decimal> saldos)
+    private static MetaDto ParaDto(Meta m, Dictionary<int, decimal> saldos, List<ReservaDto> reservas)
     {
-        // O valor inicial (ValorAtual gravado) sempre conta; se houver conta vinculada, soma o saldo dela.
-        var saldoConta = m.ContaId is int cid && saldos.TryGetValue(cid, out var saldo) ? Math.Max(0, saldo) : 0m;
-        var atual = m.ValorAtual + saldoConta;
+        // O valor inicial (ValorAtual gravado) sempre conta. Com cofrinho, soma o saldo dele (nunca o da conta junto,
+        // para não contar duas vezes); sem cofrinho, soma o saldo da conta vinculada, como antes (#89).
+        ReservaDto? reserva = null;
+        var saldoConta = 0m;
+        if (m.ReservaNome is not null)
+            reserva = reservas.FirstOrDefault(r => r.ContaId == m.ContaId
+                && string.Equals(r.Nome, m.ReservaNome, StringComparison.OrdinalIgnoreCase));
+        else if (m.ContaId is int cid && saldos.TryGetValue(cid, out var saldo))
+            saldoConta = Math.Max(0, saldo);
+        var atual = m.ValorAtual + saldoConta + (reserva?.Saldo ?? 0m);
         var percentual = m.ValorAlvo > 0 ? Math.Min(100m, Math.Round(atual / m.ValorAlvo * 100m, 1)) : 0m;
 
         decimal? sugestao = null;
@@ -174,7 +276,10 @@ public class MetasController : BaseController
         }
 
         return new MetaDto(m.Id, m.Nome, m.ValorAlvo, atual, m.DataAlvo, m.ContaId, m.Conta?.Nome, m.Cor,
-            m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta);
+            m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta,
+            reserva?.Nome ?? m.ReservaNome, reserva?.Saldo,
+            reserva is not null && (reserva.PodeTerSaldoAnterior || reserva.ConferenciaAntiga),
+            m.ReservaNome is not null && reserva is null, m.Prioridade);
     }
 }
 
@@ -268,12 +373,13 @@ public class ContasAgendadasController : BaseController
         }
 
         c.UltimoPagamentoEm = dataPagamento;
-        switch (c.Recorrencia)
+        if (RelatorioService.ProximoVencimentoApos(c.ProximoVencimento, c.Recorrencia) is { } proximo)
         {
-            case Recorrencia.Mensal: c.ProximoVencimento = c.ProximoVencimento.AddMonths(1); break;
-            case Recorrencia.Anual: c.ProximoVencimento = c.ProximoVencimento.AddYears(1); break;
-            default: c.Ativa = false; break;
+            c.ProximoVencimento = proximo;
+            // #69: passou da data limite, a conta é encerrada (sai do Painel; continua na lista como "encerrada").
+            if (c.DataLimite is { } limite && proximo > limite) c.Ativa = false;
         }
+        else c.Ativa = false;
         await _db.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -282,6 +388,9 @@ public class ContasAgendadasController : BaseController
     {
         if (dto.CategoriaId is { } cat && !await _db.Categorias.AnyAsync(c => c.Id == cat, ct)) return "Categoria inválida.";
         if (dto.ContaId is { } conta && !await _db.Contas.AnyAsync(c => c.Id == conta, ct)) return "Conta inválida.";
+        // Conta encerrada (inativa) pode ser editada sem mexer nas datas; só a ativa precisa de um vencimento até o limite.
+        if (dto.Ativa && dto.Recorrencia != Recorrencia.Unica && dto.DataLimite is { } limite && limite < dto.ProximoVencimento)
+            return $"A data limite (até {limite:dd/MM/yyyy}) não pode ser antes do próximo vencimento ({dto.ProximoVencimento:dd/MM/yyyy}).";
         return null;
     }
 
@@ -294,5 +403,6 @@ public class ContasAgendadasController : BaseController
         c.CategoriaId = dto.CategoriaId;
         c.ContaId = dto.ContaId;
         c.Ativa = dto.Ativa;
+        c.DataLimite = dto.Recorrencia == Recorrencia.Unica ? null : dto.DataLimite;
     }
 }

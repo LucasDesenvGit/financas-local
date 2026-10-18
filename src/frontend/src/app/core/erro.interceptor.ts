@@ -25,7 +25,7 @@ export function mensagemDeErro(erro: unknown): string {
       const primeiros = Object.values(corpo.errors).flat();
       if (primeiros.length) return primeiros.join(' ');
     }
-    if (erro.status === 0) return 'Não foi possível falar com a API. Verifique se o site está rodando no IIS.';
+    if (erro.status === 0) return 'Não foi possível falar com a API. Verifique se o serviço Financas Local está rodando.';
     if (erro.status === 400 && corpo?.title) return 'Dados inválidos. Revise os campos e tente novamente.';
     if (erro.status === 429) return 'Muitas tentativas em pouco tempo. Aguarde um minuto.';
     if (erro.status === 403) return 'Acesso negado.';

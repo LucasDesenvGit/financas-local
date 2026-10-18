@@ -255,7 +255,8 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 .link:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .segmentado {
-  display: inline-flex; gap: 2px; padding: 3px;
+  /* flex-wrap: no celular, abas que não cabem descem de linha em vez de sair da tela. */
+  display: inline-flex; flex-wrap: wrap; max-width: 100%; gap: 2px; padding: 3px;
   background: var(--superficie-2); border-radius: 12px;
 }
 .segmentado button {
@@ -343,6 +344,9 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
   padding: 12px 18px; margin-bottom: 16px;
 }
 .alertas p { margin: 3px 0; font-size: 0.92rem; }
+/* Aviso discreto (#9): informação que pede atenção sem ser alerta — sem fundo amarelo nem ⚠. */
+.nota-discreta { margin: -6px 4px 16px; font-size: 0.88rem; color: var(--texto-suave); }
+.nota-discreta a { font-weight: 600; margin-left: 4px; }
 
 /* ---------------------------------------------------------------- Blocos e grades */
 .grade-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
@@ -384,7 +388,8 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 
 /* ---------------------------------------------------------------- Tabelas */
 .tabela-rolagem {
-  overflow-x: auto; background: var(--superficie); border-radius: var(--raio);
+  /* position: o .so-leitor (absolute) do cabeçalho fica preso aqui; sem isso ele escapa da rolagem e alarga a página no celular. */
+  position: relative; overflow-x: auto; background: var(--superficie); border-radius: var(--raio);
   margin-bottom: 16px; box-shadow: var(--sombra);
 }
 .painel-bloco .tabela-rolagem { box-shadow: none; margin: 0; }
@@ -497,7 +502,8 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
   color: var(--texto-forte); font-size: 1.1rem;
 }
 
-.grade-cartoes-credito { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+/* align-items: start: o cartão com o histórico de faturas aberto cresce sozinho, sem esticar os vizinhos. */
+.grade-cartoes-credito { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: start; }
 .cartao-credito-bloco {
   background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); overflow: hidden;
   display: flex; flex-direction: column;
@@ -527,7 +533,8 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 .cartao-credito-rodape { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
 .cartao-credito-rodape strong { font-size: 1rem; text-transform: capitalize; }
 .cartao-credito-rodape span { font-variant-numeric: tabular-nums; letter-spacing: 0.08em; font-size: 0.86rem; opacity: 0.85; }
-.cartao-credito-detalhes { padding: 14px 18px 16px; display: grid; gap: 6px; flex: 1; }
+/* Coluna que não estica as linhas quando o cartão vizinho é mais alto (ex.: histórico aberto); o rodapé vai para baixo. */
+.cartao-credito-detalhes { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .linha-valores { display: flex; justify-content: space-between; gap: 12px; }
 .linha-valores div { display: grid; }
 .linha-valores span { font-size: 0.8rem; }
@@ -535,7 +542,7 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
   font-family: var(--fonte-titulo); font-size: 1.3rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--texto-forte);
 }
 .linha-valores strong.negativo { color: var(--negativo); }
-.cartao-credito-detalhes footer { display: flex; align-items: center; gap: 6px; padding-top: 8px; }
+.cartao-credito-detalhes footer { display: flex; align-items: center; gap: 6px; padding-top: 8px; margin-top: auto; }
 
 /* ---------------------------------------------------------------- Seletor de mês */
 .seletor-mes {
@@ -579,6 +586,10 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 .aviso-erro::before { background: var(--negativo); }
 .aviso-info::before { background: var(--primaria); }
 .aviso-fechar { background: none; border: 0; font-size: 1.1rem; cursor: pointer; color: var(--texto-suave); line-height: 1; }
+.aviso-acao {
+  font: inherit; font-weight: 650; background: none; border: 0; cursor: pointer; color: var(--primaria-forte);
+  padding: 0 4px; min-height: 24px; text-decoration: underline; text-underline-offset: 2px;
+}
 
 /* ---------------------------------------------------------------- Entrada */
 .tela-entrada {

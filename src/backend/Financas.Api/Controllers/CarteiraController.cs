@@ -21,11 +21,13 @@ public class CarteiraController : BaseController
     private readonly FiiService _fiis;
     private readonly ExtratoCarteiraService _extrato;
     private readonly CambioService _cambio;
+    private readonly ConferenciaInvestimentosService _conferencia;
 
     public CarteiraController(FinancasDbContext db, CarteiraService carteira, SelicService selic,
         CotacaoService cotacoes, ConfiguracaoService config, FiiService fiis, ExtratoCarteiraService extrato,
-        CambioService cambio)
+        CambioService cambio, ConferenciaInvestimentosService conferencia)
     {
+        _conferencia = conferencia;
         _cambio = cambio;
         _db = db;
         _carteira = carteira;
@@ -81,6 +83,31 @@ public class CarteiraController : BaseController
     {
         var criadas = await _extrato.ImportarAsync(dto.Itens, ct);
         return new ResultadoAplicacaoDto(criadas);
+    }
+
+    /// <summary>
+    /// "Conferir investimentos" (ADR 0027): FII cadastrado como outro tipo, cotas que faltam em relação à corretora
+    /// (com o débito de compra do extrato que explica a diferença) e troco de compra contado como rendimento.
+    /// </summary>
+    [HttpGet("conferencia")]
+    public async Task<ActionResult<ConferenciaInvestimentosDto>> Conferencia(CancellationToken ct)
+        => await _conferencia.ConferirAsync(ct);
+
+    /// <summary>Aplica as correções escolhidas numa gravação só; a resposta traz a chave do "Desfazer".</summary>
+    [HttpPost("conferencia/corrigir")]
+    public async Task<ActionResult<ResultadoCorrecaoInvestimentosDto>> CorrigirConferencia(CorrigirInvestimentosDto dto,
+        CancellationToken ct)
+    {
+        var (resultado, erro) = await _conferencia.CorrigirAsync(dto, User.Identity?.Name, ct);
+        return erro is not null ? Erro(erro) : resultado!;
+    }
+
+    [HttpPost("conferencia/desfazer/{chave}")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> DesfazerConferencia(string chave, CancellationToken ct)
+    {
+        if (await _conferencia.DesfazerAsync(chave, User.Identity?.Name, ct) is not int desfeitas)
+            return NaoEncontrado("Não dá mais para desfazer: o prazo passou ou já foi desfeito.");
+        return new ResultadoAplicacaoDto(desfeitas);
     }
 
     [HttpGet]

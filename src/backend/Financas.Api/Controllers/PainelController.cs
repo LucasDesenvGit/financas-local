@@ -20,10 +20,16 @@ public class PainelController : BaseController
     private readonly EmprestimoService _emprestimos;
     private readonly ReservaService _reservas;
     private readonly ParametroService _parametros;
+    private readonly DescricaoPoucoInformativaService _poucoInformativa;
+
+    /// <summary>#9: o aviso de descrições pouco informativas olha só as transações recentes.</summary>
+    public const int DiasPoucoInformativas = 90;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
-        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros)
+        CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros,
+        DescricaoPoucoInformativaService poucoInformativa)
     {
+        _poucoInformativa = poucoInformativa;
         _db = db;
         _contas = contas;
         _relatorios = relatorios;
@@ -118,6 +124,15 @@ public class PainelController : BaseController
                 alertas.Add($"{nome} precisa de uma ação sua no Meu Pluggy para voltar a sincronizar.");
         }
 
+        // #11: erros (não avisos) da última semana ainda não marcados como resolvidos.
+        var desdeErros = DateTime.UtcNow.AddDays(-7);
+        var errosAbertos = await _db.ErrosSistema.AsNoTracking()
+            .CountAsync(e => !e.Resolvido && e.Nivel >= NivelErro.Erro && e.UltimaEm >= desdeErros, ct);
+        if (errosAbertos > 0)
+            alertas.Add(errosAbertos == 1
+                ? "1 erro do sistema nos últimos 7 dias. Veja em Configurações › Erros."
+                : $"{errosAbertos} erros do sistema nos últimos 7 dias. Veja em Configurações › Erros.");
+
         var contratosEmAtraso = await _db.Emprestimos.AsNoTracking()
             .Where(e => e.ConexaoBancaria!.Ativa && e.SaldoDevedor > 0 && e.ParcelasEmAtraso > 0)
             .Select(e => new { e.Produto, e.Natureza, e.ParcelasEmAtraso })
@@ -133,10 +148,23 @@ public class PainelController : BaseController
 
         var ultimaSincronizacao = await _config.ObterDataAsync(ConfiguracaoService.UltimaSincronizacaoGeral, ct);
 
+        // UX-12/#103: o que cada cartão lançou no mês escolhido (a mesma conta de Contas e cartões).
+        var faturasDoMes = (await _contas.FaturasDoMesAsync(inicio, fim, hoje, ct))
+            .Where(f => f.ValorMes > 0 || f.FaturaId is not null).ToList();
+
+        // #9: aviso discreto (não é alerta) com as descrições pouco informativas dos últimos 90 dias.
+        var desdePoucoInformativas = hoje.AddDays(-(DiasPoucoInformativas - 1));
+        var poucoInformativas = await _poucoInformativa.ListarAsync(
+            _db.Transacoes.AsNoTracking().Where(t => t.Data >= desdePoucoInformativas && t.Data <= hoje), ct);
+        var exemplo = poucoInformativas.GroupBy(x => x.Descricao.Trim().ToUpperInvariant())
+            .OrderByDescending(g => g.Count()).Select(g => g.First().Descricao.Trim()).FirstOrDefault();
+
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
-            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos);
+            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
+            faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
+            poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo);
     }
 }
 
