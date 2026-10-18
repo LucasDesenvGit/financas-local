@@ -12,6 +12,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Relatórios › Maiores despesas clicáveis** (#141): clicar numa despesa abre Transações no dia e na conta dela, com a linha da despesa destacada e o foco nela. Se a despesa não estiver mais lá (apagada, ou mudou de data ou de conta), aparece um aviso. Trocar o filtro tira o destaque.
 - **Gerenciador no Linux** (#138, ADR 0033), na instalação pelos scripts.
   - **Como instalar:** `scripts/instalar-gerenciador.sh`, sem `sudo`. Publica em `publicado/gerenciador` e cria o atalho no menu de aplicativos e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
   - **Na janela:** a mesma do Windows, nas cores do site e no tema claro ou escuro do sistema. Mostra a situação e a versão; liga, desliga e reinicia o serviço do systemd do usuário, sem senha; copia o banco (o arquivo fica legível só por você).

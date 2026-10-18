@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { PrivacidadeService } from '../core/privacidade.service';
@@ -255,7 +255,9 @@ function dataCurta(iso: string, comAno: boolean): string {
           <tbody>
             @for (t of p.itens; track t.id; let i = $index) {
               <tr (click)="modoEdicao() ? null : editar(t)" [class.clicavel]="!modoEdicao()" [class.ignorada]="t.ignorarRelatorios"
-                [class.alterada]="pendentes().has(t.id)" [class.selecionada]="selecionadas().has(t.id)">
+                [class.alterada]="pendentes().has(t.id)" [class.selecionada]="selecionadas().has(t.id)"
+                [class.destacada]="transacaoDestacada() === t.id" [attr.aria-current]="transacaoDestacada() === t.id ? 'true' : null"
+                [attr.tabindex]="transacaoDestacada() === t.id ? -1 : null" [attr.data-transacao]="t.id">
                 <!-- #133: a célula inteira marca (sem abrir a edição); Shift+clique seleciona o intervalo. -->
                 <td class="col-check" (click)="$event.stopPropagation()" (mousedown)="shiftNoClique = $event.shiftKey">
                   <label class="celula-marcar"><input type="checkbox" [checked]="selecionadas().has(t.id)"
@@ -531,6 +533,9 @@ function dataCurta(iso: string, comAno: boolean): string {
     .celula-edicao { display: flex; gap: 6px; align-items: center; }
     .select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
     tr.alterada td { background: var(--alerta-suave); }
+    /* #141: transação aberta por link (Relatórios › Maiores despesas): fundo e faixa à esquerda, diferente da seleção. */
+    tr.destacada td { background: var(--info-suave); }
+    tr.destacada td:first-child { box-shadow: inset 4px 0 0 var(--primaria); }
     .botao-ativo { background: var(--primaria-suave); color: var(--primaria-forte); }
     .filtro-generica { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 8px; }
     .filtro-lancamento { display: grid; gap: 6px; min-width: 180px; }
@@ -571,9 +576,20 @@ export class TransacoesComponent implements OnInit {
   private readonly privacidade = inject(PrivacidadeService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly TipoTransacao = TipoTransacao;
   readonly StatusTransacao = StatusTransacao;
+
+  /**
+   * #141: transação que veio no link (?transacao=id), destacada na lista. Vale só para o filtro e a página com que
+   * a tela abriu: trocar qualquer um tira o destaque (e o parâmetro da URL).
+   */
+  readonly transacaoDestacada = signal<number | null>(null);
+  private filtroDoDestaque: string | null = null;
+  /** Rolar até a linha e pôr o foco nela só na primeira vez, não a cada recarga (ex.: depois de editar). */
+  private destaqueMostrado = false;
 
   readonly contas = signal<Conta[]>([]);
   /** Todas as categorias (inclusive inativas), para validar a categoria que chega pela URL. */
@@ -776,6 +792,8 @@ export class TransacoesComponent implements OnInit {
     if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
+    const transacao = Number(params.get('transacao'));
+    if (Number.isInteger(transacao) && transacao > 0) this.transacaoDestacada.set(transacao);
   }
 
   rotuloCategoria(c: Categoria): string {
@@ -808,6 +826,11 @@ export class TransacoesComponent implements OnInit {
       this.pendentes.set(new Map());
     }
     this.filtro.pagina = pagina;
+    if (this.transacaoDestacada() !== null) {
+      const chave = JSON.stringify(this.filtro);
+      this.filtroDoDestaque ??= chave;
+      if (chave !== this.filtroDoDestaque) this.transacaoDestacada.set(null);
+    }
     // #133: trocar só de página mantém a seleção (dá para juntar transações de várias páginas); trocar o filtro limpa,
     // para nenhuma ação em lote pegar uma transação que não aparece no filtro atual (Nielsen 5).
     const semPagina = (f: FiltroTransacoes) => JSON.stringify({ ...f, pagina: undefined, tamanhoPagina: undefined });
@@ -830,6 +853,7 @@ export class TransacoesComponent implements OnInit {
         this.pagina.set(p);
         this.ultimoMarcado = null;   // o intervalo do Shift vale dentro de uma página
         if (trocouPagina) this.rolarParaTopo();
+        this.mostrarDestaque(p);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
@@ -850,7 +874,8 @@ export class TransacoesComponent implements OnInit {
       inicio: mudouPeriodo ? f.inicio ?? undefined : undefined,
       fim: mudouPeriodo ? f.fim ?? undefined : undefined,
       tipo: f.tipo ? tipos[f.tipo] : undefined,
-      contaId: f.contaId ?? undefined
+      contaId: f.contaId ?? undefined,
+      transacaoId: this.transacaoDestacada() ?? undefined
     });
     if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
@@ -871,6 +896,29 @@ export class TransacoesComponent implements OnInit {
   /** Volta ao topo da lista ao trocar de página. */
   private rolarParaTopo(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * #141: rola até a transação do link e põe o foco nela (teclado e leitor de tela caem direto nela). Se ela não
+   * está na lista, avisa e tira o destaque, para o F5 não repetir o aviso.
+   */
+  private mostrarDestaque(p: PaginaTransacoes): void {
+    const id = this.transacaoDestacada();
+    if (id === null || this.destaqueMostrado) return;
+    this.destaqueMostrado = true;
+    if (!p.itens.some((t) => t.id === id)) {
+      this.transacaoDestacada.set(null);
+      this.gravarFiltroNaUrl();
+      this.avisos.info('A transação do link não aparece neste filtro: ela pode ter sido apagada ou mudado de data ou de conta.');
+      return;
+    }
+    afterNextRender(() => {
+      const linha = this.elemento.nativeElement.querySelector<HTMLElement>(`tr[data-transacao="${id}"]`);
+      if (!linha) return;
+      const semAnimacao = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      linha.scrollIntoView({ block: 'center', behavior: semAnimacao ? 'auto' : 'smooth' });
+      linha.focus({ preventScroll: true });
+    }, { injector: this.injector });
   }
 
   alternar(id: number): void {
