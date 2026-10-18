@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Gerenciador do Finanças Local no Linux (#138, ADR 0032): a mesma janela do gerenciador do Windows (ADR 0028), em
+    Gerenciador do Finanças Local no Linux (#138, ADR 0033): a mesma janela do gerenciador do Windows (ADR 0028), em
     Avalonia, para a instalação pelos scripts (serviço do systemd do usuário). Publicado pelo
     scripts/instalar-gerenciador.sh em publicado/gerenciador, com atalho no menu de aplicativos.
   -->
@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Avalonia com a versão exata (dependência de terceiros; ver ADR 0032 para atualizar). -->
+    <!-- Avalonia com a versão exata (dependência de terceiros; ver ADR 0033 para atualizar). -->
     <PackageReference Include="Avalonia" Version="12.1.3" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />

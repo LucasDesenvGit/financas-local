@@ -1,5 +1,5 @@
 <!--
-  Janela do gerenciador no Linux (ADR 0032), na mesma ordem da do Windows (ADR 0028): primeiro a resposta a "o site está
+  Janela do gerenciador no Linux (ADR 0033), na mesma ordem da do Windows (ADR 0028): primeiro a resposta a "o site está
   funcionando?" e as três ações do dia a dia; a versão e como atualizar logo abaixo; o resto atrás de "Mais opções"
   (Progressive Disclosure). Teclas de atalho com "_" (Alt+letra), foco visível do Fluent, nomes acessíveis.
 -->

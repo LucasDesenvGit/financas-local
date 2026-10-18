@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -12,6 +13,7 @@ import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 /** Quantas faturas o histórico mostra antes de "mostrar mais antigas". */
 const FATURAS_VISIVEIS = 6;
@@ -23,12 +25,14 @@ const FATURAS_VISIVEIS = 6;
  */
 @Component({
   selector: 'app-contas',
-  imports: [FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
       <div class="acoes">
-        <label class="checkbox"><input type="checkbox" [(ngModel)]="mostrarArquivadas" (change)="carregar()"> mostrar arquivadas</label>
+        <!-- #130: efeito imediato → interruptor; o estado fica na URL (?arquivadas=1). -->
+        <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="mostrarArquivadas"
+          (change)="alternarArquivadas()"> Mostrar arquivadas</label>
         <button type="button" class="botao botao-primario" (click)="nova()">+ Conta manual</button>
       </div>
     </header>
@@ -82,8 +86,12 @@ const FATURAS_VISIVEIS = 6;
                 <strong>{{ c.nome }}</strong>
                 <small class="texto-suave">{{ nomeBanco(c) }} · {{ nomeTipo(c.tipo) }}</small>
               </div>
-              <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
-                {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
+              <span class="etiquetas-conta">
+                <!-- #130: "Arquivada" em texto, não só o visual apagado (WCAG 1.4.1). -->
+                @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
+                <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
+                  {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
+              </span>
             </header>
             <div class="saldo" [class.negativo]="c.saldo < 0">{{ c.saldo | currency }}</div>
             <small class="texto-suave">{{ c.incluirNoSaldo ? 'saldo atual' : 'saldo atual · fora do total' }}</small>
@@ -179,6 +187,7 @@ const FATURAS_VISIVEIS = 6;
                   <small class="texto-suave">da conta {{ conta.nome }}</small>
                 }
                 <footer>
+                  @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
                   <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
                     {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
                   <span class="cresce"></span>
@@ -194,7 +203,7 @@ const FATURAS_VISIVEIS = 6;
                   @if (historicoAberto(c.id)) {
                     @if (faturasDe(c.id); as lista) {
                       @if (lista.length) {
-                        <table class="tabela tabela-historico">
+                        <table class="tabela tabela-historico expandir" animate.leave="recolher">
                           <caption class="so-leitor">Faturas de {{ c.nome }}, da mais recente para a mais antiga</caption>
                           <thead><tr><th>Vencimento</th><th class="direita">Total</th><th>Situação</th></tr></thead>
                           <tbody>
@@ -238,7 +247,7 @@ const FATURAS_VISIVEIS = 6;
       @if (form; as fm) {
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           @if (editandoOpenFinance) {
-            <p class="aviso-inline">Conta do Open Finance: saldo, limite e tipo vêm do banco. Você pode alterar nome, banco,
+            <p class="aviso-inline expandir" animate.leave="recolher">Conta do Open Finance: saldo, limite e tipo vêm do banco. Você pode alterar nome, banco,
               cor e visibilidade.</p>
           }
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
@@ -271,12 +280,12 @@ const FATURAS_VISIVEIS = 6;
                   @for (t of tipos; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
                 </select>
               </label>
-              <label>Saldo inicial (R$)
-                <input type="number" name="saldoInicial" [(ngModel)]="fm.saldoInicial" step="0.01">
+              <label>Saldo inicial
+                <app-campo-valor name="saldoInicial" [(ngModel)]="fm.saldoInicial" negativo />
               </label>
               <label>Número / identificação <input name="numero" [(ngModel)]="fm.numero" maxlength="60"></label>
               @if (fm.tipo === TipoConta.CartaoCredito) {
-                <label>Limite (R$) <input type="number" name="limite" [(ngModel)]="fm.limiteCredito" min="0" step="0.01"></label>
+                <label>Limite <app-campo-valor name="limite" [(ngModel)]="fm.limiteCredito" /></label>
                 <label>Dia de fechamento <input type="number" name="fech" [(ngModel)]="fm.diaFechamento" min="1" max="31"></label>
                 <label>Dia de vencimento <input type="number" name="venc" [(ngModel)]="fm.diaVencimento" min="1" max="31"></label>
               }
@@ -363,7 +372,8 @@ export class ContasComponent implements OnInit {
   /** Contas que podem ser "a conta do cartão": as que não são cartão (nem o próprio cartão em edição). */
   readonly contasParaVincular = computed(() => this.contasBancarias().filter((c) => c.id !== this.editandoId));
 
-  mostrarArquivadas = false;
+  /** #130: estado na URL (?arquivadas=1): voltar do navegador e link salvo abrem do mesmo jeito (ADR 0018). */
+  mostrarArquivadas = this.rota.snapshot.queryParamMap.get('arquivadas') === '1';
   form: SalvarConta | null = null;
   editandoId: number | null = null;
   editandoOpenFinance = false;
@@ -511,6 +521,14 @@ export class ContasComponent implements OnInit {
         this.avisos.erro(mensagemDeErro(e));
       }
     });
+  }
+
+  alternarArquivadas(): void {
+    this.router.navigate([], {
+      relativeTo: this.rota, queryParams: { arquivadas: this.mostrarArquivadas ? 1 : null },
+      queryParamsHandling: 'merge', replaceUrl: true
+    });
+    this.carregar();
   }
 
   carregar(): void {

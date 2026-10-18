@@ -110,9 +110,14 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
         <h2>Conexões</h2>
         <button type="button" class="botao" (click)="sincronizarTudo()" [disabled]="ocupado()">⟳ Sincronizar agora</button>
       </div>
-      <form (ngSubmit)="adicionar()" class="linha-flex">
-        <input name="itemId" [(ngModel)]="novoItemId" placeholder="Item ID (ex.: 3f6c1a2b-…)" class="cresce" maxlength="64" required>
-        <button class="botao botao-primario" [disabled]="ocupado() || !novoItemId.trim()">Adicionar conexão</button>
+      <!-- Rótulo visível e dica (WCAG 3.3.2), não só o placeholder. -->
+      <form (ngSubmit)="adicionar()" class="nova-conexao">
+        <label class="cresce">Adicionar conexão
+          <input name="itemId" [(ngModel)]="novoItemId" placeholder="Item ID (ex.: 3f6c1a2b-…)" maxlength="64" required
+            aria-describedby="ajuda-item-id">
+        </label>
+        <button class="botao botao-primario" [disabled]="ocupado() || !novoItemId.trim()">Adicionar</button>
+        <small id="ajuda-item-id" class="texto-suave">O Item ID aparece no dashboard da Pluggy depois que você conecta o banco no Meu Pluggy.</small>
       </form>
 
       <div class="tabela-rolagem">
@@ -126,15 +131,23 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
                   {{ c.nomeInstituicao ?? 'Instituição' }} <small class="texto-suave">{{ c.quantidadeContas }} conta(s)</small>
                   @if (c.ultimoErro) { <div class="erro pequeno">{{ c.ultimoErro }}</div> }
                 </td>
-                <td><span class="etiqueta" [class.etiqueta-sucesso]="c.status === 'UPDATED'"
-                  [class.etiqueta-alerta]="c.status !== 'UPDATED'">{{ c.status ?? '—' }}</span></td>
-                <td>{{ c.ultimaAtualizacaoInstituicao ? (c.ultimaAtualizacaoInstituicao + 'Z' | date: 'dd/MM/yy HH:mm') : '—' }}</td>
-                <td>{{ c.ultimaSincronizacaoEm ? (c.ultimaSincronizacaoEm + 'Z' | date: 'dd/MM/yy HH:mm') : '—' }}</td>
-                <td>{{ c.consentimentoExpiraEm ? (c.consentimentoExpiraEm + 'Z' | date: 'dd/MM/yyyy') : '—' }}</td>
+                <!-- Situação em português (Nielsen 2), com a cor: verde em dia, amarelo atenção, vermelho ação sua. -->
+                <td><span class="etiqueta" [class.etiqueta-sucesso]="situacao(c).tom === 'ok'"
+                  [class.etiqueta-alerta]="situacao(c).tom === 'atencao'" [class.etiqueta-erro]="situacao(c).tom === 'erro'"
+                  [class.etiqueta-suave]="situacao(c).tom === 'neutro'">{{ situacao(c).texto }}</span></td>
+                <td class="nowrap">{{ c.ultimaAtualizacaoInstituicao ? (c.ultimaAtualizacaoInstituicao + 'Z' | date: 'dd/MM/yy HH:mm') : '—' }}</td>
+                <td class="nowrap">{{ c.ultimaSincronizacaoEm ? (c.ultimaSincronizacaoEm + 'Z' | date: 'dd/MM/yy HH:mm') : '—' }}</td>
+                <td class="nowrap">{{ c.consentimentoExpiraEm ? (c.consentimentoExpiraEm + 'Z' | date: 'dd/MM/yyyy') : '—' }}</td>
                 <td class="direita nowrap">
-                  <button type="button" class="link" (click)="sincronizar(c)" [disabled]="ocupado()">sincronizar</button>
-                  <button type="button" class="link" (click)="alternar(c)">{{ c.ativa ? 'pausar' : 'reativar' }}</button>
-                  <button type="button" class="link perigo" (click)="remover(c)">remover</button>
+                  <div class="acoes-conexao">
+                    <button type="button" class="botao botao-pequeno" (click)="sincronizar(c)" [disabled]="ocupado()"
+                      [attr.aria-label]="'Sincronizar ' + (c.nomeInstituicao ?? 'conexão')">⟳ Sincronizar</button>
+                    <button type="button" class="botao botao-pequeno" (click)="alternar(c)"
+                      [attr.aria-label]="(c.ativa ? 'Pausar ' : 'Reativar ') + (c.nomeInstituicao ?? 'conexão')">
+                      {{ c.ativa ? '⏸ Pausar' : '▶ Reativar' }}</button>
+                    <button type="button" class="botao botao-pequeno botao-perigo" (click)="remover(c)"
+                      [attr.aria-label]="'Remover ' + (c.nomeInstituicao ?? 'conexão')">Remover</button>
+                  </div>
                 </td>
               </tr>
             } @empty { <tr><td colspan="6" class="vazio">Nenhuma conexão. Adicione o Item ID gerado no dashboard da Pluggy.</td></tr> }
@@ -142,8 +155,8 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
         </table>
       </div>
 
-      <details>
-        <summary>Histórico de sincronizações</summary>
+      <details class="detalhes">
+        <summary>Histórico de sincronizações <small>últimas execuções, com o que entrou e as falhas</small></summary>
         <div class="tabela-rolagem">
           <table class="tabela">
             <thead><tr><th>Início</th><th>Instituição</th><th>Origem</th><th>Resultado</th><th class="direita">Novas</th><th class="direita">Atualizadas</th><th>Mensagem</th></tr></thead>
@@ -175,6 +188,24 @@ export class ConfiguracoesComponent implements OnInit {
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly statusSincronizacao = inject(StatusSincronizacaoService);
+
+  /**
+   * Situação da conexão em português (o código da Pluggy, ex.: UPDATED, LOGIN_ERROR, não diz nada a quem usa;
+   * Nielsen 2). Tom: ok (em dia), atenção (desatualizada, atualizando) ou erro (precisa de ação sua).
+   */
+  situacao(c: Conexao): { texto: string; tom: 'ok' | 'atencao' | 'erro' | 'neutro' } {
+    if (!c.ativa) return { texto: 'Pausada', tom: 'neutro' };
+    switch (c.status) {
+      case 'UPDATED': return { texto: 'Atualizada', tom: 'ok' };
+      case 'UPDATING': return { texto: 'Atualizando…', tom: 'atencao' };
+      case 'OUTDATED': return { texto: 'Desatualizada', tom: 'atencao' };
+      case 'LOGIN_ERROR': return { texto: 'Erro de login no banco', tom: 'erro' };
+      case 'WAITING_USER_INPUT':
+      case 'WAITING_USER_ACTION': return { texto: 'Precisa de ação sua', tom: 'erro' };
+      case null: case undefined: return { texto: '—', tom: 'neutro' };
+      default: return { texto: c.status, tom: 'atencao' };
+    }
+  }
 
   readonly abas: { id: Aba; rotulo: string }[] = [
     { id: 'open-finance', rotulo: 'Open Finance' },

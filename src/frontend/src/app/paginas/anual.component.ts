@@ -14,6 +14,7 @@ import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.co
 import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { ChaveGlossario } from '../compartilhado/glossario';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 type Status = 'ok' | 'atencao' | 'alerta' | 'neutro';
 
@@ -37,7 +38,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 
 @Component({
   selector: 'app-anual',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>

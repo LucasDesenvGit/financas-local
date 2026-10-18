@@ -1,4 +1,4 @@
-# 0032. Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows
+# 0033. Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows
 
 - **Status:** Aceita
 - **Data:** 2026-10-18 (issue #138)

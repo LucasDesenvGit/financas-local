@@ -86,9 +86,9 @@ interface Fatia { classe: string; rotulo: string; percentual: number; referencia
           </thead>
           <tbody>
             @for (l of linhas(); track l.item.categoriaId) {
-              <tr [class.sem-dados]="l.item.sugerido === null">
-                <td><input type="checkbox" [(ngModel)]="l.marcada" (ngModelChange)="mudou()" [disabled]="l.item.sugerido === null"
-                  [attr.aria-label]="'Aplicar orçamento de ' + l.item.nome"></td>
+              <tr [class.sem-dados]="l.item.sugerido === null" [class.selecionada]="l.marcada">
+                <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada" (ngModelChange)="mudou()"
+                  [disabled]="l.item.sugerido === null" [attr.aria-label]="'Aplicar orçamento de ' + l.item.nome"></label></td>
                 <td class="nowrap categoria"><span class="ponto" [style.background]="l.item.cor"></span>{{ l.item.nome }}
                   <br><small class="texto-suave">{{ rotuloNatureza(l.item.natureza) }}</small></td>
                 <td class="direita">

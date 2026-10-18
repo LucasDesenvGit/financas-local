@@ -81,7 +81,7 @@ jobs:
           systemctl --user is-active --quiet financaslocal.service || { echo "::error::servico nao esta ativo"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
-      # Gerenciador do Linux (ADR 0032): publica, cria o atalho e pergunta a situacao pelo --situacao, que usa o
+      # Gerenciador do Linux (ADR 0033): publica, cria o atalho e pergunta a situacao pelo --situacao, que usa o
       # systemd do usuario e /api/auth/estado sem abrir janela (o runner nao tem tela).
       - name: Gerenciador (instalar-gerenciador.sh)
         run: |

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    O que o gerenciador faz igual no Windows e no Linux (ADR 0032): achar a instalação pelo serviço do sistema, dizer
+    O que o gerenciador faz igual no Windows e no Linux (ADR 0033): achar a instalação pelo serviço do sistema, dizer
     a situação do site e copiar o banco. Cada janela (WinForms no Windows, Avalonia no Linux) fica no próprio projeto.
   -->
   <PropertyGroup>

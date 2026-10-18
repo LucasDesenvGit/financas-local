@@ -20,7 +20,7 @@ import { tempoRelativo } from './utilidades';
   host: { class: 'status-sincronizacao' },
   template: `
     @if (alerta(); as a) {
-      <a class="botao-barra alerta-sincronizacao" routerLink="/configuracoes" [attr.aria-label]="a + ': ver conexões'"
+      <a class="botao-barra alerta-sincronizacao" routerLink="/configuracoes" [attr.aria-label]="a + ': ver conexões'" animate.leave="sair"
         [appDica]="a + ' — ver conexões'" dicaLado="abaixo">
         <app-icone [icone]="Icones.alerta" [tamanho]="18" />
         <span class="rotulo-barra">{{ a }}</span>

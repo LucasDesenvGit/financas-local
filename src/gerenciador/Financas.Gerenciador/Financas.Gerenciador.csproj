@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Instalação, situação, serviço e cópia do banco: os mesmos do gerenciador do Linux (ADR 0032). -->
+    <!-- Instalação, situação, serviço e cópia do banco: os mesmos do gerenciador do Linux (ADR 0033). -->
     <ProjectReference Include="..\Financas.Gerenciador.Nucleo\Financas.Gerenciador.Nucleo.csproj" />
   </ItemGroup>
 

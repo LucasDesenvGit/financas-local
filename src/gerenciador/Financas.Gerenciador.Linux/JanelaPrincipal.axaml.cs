@@ -8,7 +8,7 @@ using Avalonia.Threading;
 namespace Financas.Gerenciador;
 
 /// <summary>
-/// Janela do gerenciador no Linux (ADR 0032). A mesma ordem e as mesmas frases da do Windows (ADR 0028); muda o que o
+/// Janela do gerenciador no Linux (ADR 0033). A mesma ordem e as mesmas frases da do Windows (ADR 0028); muda o que o
 /// sistema muda: ligar e desligar pelo <c>systemctl --user</c>, sem senha; a versão nova vem pelos scripts, então a tela
 /// mostra o comando para atualizar; e avisa quando o site só fica no ar com a sessão aberta.
 /// </summary>

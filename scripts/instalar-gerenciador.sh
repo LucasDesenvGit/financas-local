@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# FinancasLocal - Gerenciador no Linux (#138, ADR 0032)
+# FinancasLocal - Gerenciador no Linux (#138, ADR 0033)
 #
 #  - Publica o gerenciador (Avalonia) em publicado/gerenciador, self-contained
 #  - Cria o atalho no menu de aplicativos e na area de trabalho do usuario

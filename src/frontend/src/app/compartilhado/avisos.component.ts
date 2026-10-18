@@ -60,7 +60,7 @@ export class AvisosService {
   template: `
     <div class="avisos" aria-live="polite">
       @for (a of servico.avisos(); track a.id) {
-        <div class="aviso" [class]="'aviso aviso-' + a.tipo" role="status"
+        <div class="aviso" [class]="'aviso aviso-' + a.tipo" role="status" animate.leave="sair"
           (mouseenter)="servico.pausar(a.id)" (mouseleave)="servico.retomar(a.id)"
           (focusin)="servico.pausar(a.id)" (focusout)="servico.retomar(a.id)">
           <span>{{ a.texto }}</span>

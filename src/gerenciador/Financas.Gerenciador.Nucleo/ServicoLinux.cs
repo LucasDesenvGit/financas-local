@@ -5,7 +5,7 @@ namespace Financas.Gerenciador;
 
 /// <summary>
 /// Unidade <c>financaslocal.service</c> do <c>systemd --user</c>, escrita pelo <c>3-publicar-atualizar.sh</c>. É do
-/// próprio usuário: ligar, desligar e ler o registro não pedem senha nem administrador (ADR 0032).
+/// próprio usuário: ligar, desligar e ler o registro não pedem senha nem administrador (ADR 0033).
 /// </summary>
 [UnsupportedOSPlatform("windows")]
 public sealed partial class ServicoLinux : ServicoDoSite

@@ -2,6 +2,8 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Meta, PlanoMeta, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
@@ -11,10 +13,12 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { CORES_SUGERIDAS } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-metas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent,
+    CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
@@ -27,8 +31,12 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <h2 id="titulo-assistente">Quanto guardar este mês</h2>
           <p>Preciso de pelo menos 3 meses completos de extrato para olhar seus gastos. Por enquanto, cada meta mostra a divisão igual até a data.</p>
         } @else {
-          <h2 id="titulo-assistente">{{ nomeMes(p.mes) }}/{{ p.ano }} ·
-            <app-termo chave="sobraPrevista">sobra prevista</app-termo> {{ p.sobraPrevista | currency }}</h2>
+          <!-- O valor à direita, em verde (sobra) ou vermelho (falta): a resposta do bloco se lê de longe (Nielsen 1). -->
+          <h2 id="titulo-assistente" class="titulo-com-valor">
+            <span>{{ nomeMes(p.mes) }}/{{ p.ano }} · <app-termo chave="sobraPrevista">sobra prevista</app-termo></span>
+            <span class="valor-titulo" [class.positivo]="p.sobraPrevista >= 0" [class.negativo]="p.sobraPrevista < 0">
+              {{ p.sobraPrevista | currency }}</span>
+          </h2>
           @if (p.sobraNegativa) {
             <p class="negativo">A projeção deste mês fecha no vermelho: recomendo guardar R$ 0 agora.</p>
           } @else {
@@ -133,8 +141,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
           <div class="grade-campos">
-            <label>Valor alvo (R$) <input type="number" name="alvo" [(ngModel)]="fm.valorAlvo" required min="0.01" step="0.01"></label>
-            <label>Data alvo <input type="date" name="data" [(ngModel)]="fm.dataAlvo"></label>
+            <label>Valor alvo <app-campo-valor name="alvo" [(ngModel)]="fm.valorAlvo" obrigatorio [minimo]="0.01" /></label>
+            <label>Data alvo <app-campo-data name="data" [(ngModel)]="fm.dataAlvo" /></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
             <select name="conta" [(ngModel)]="fm.contaId" (ngModelChange)="fm.reservaNome = null">
@@ -142,8 +150,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
               @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
             </select>
           </label>
-          <label>Valor inicial já guardado (R$)
-            <input type="number" name="atual" [(ngModel)]="fm.valorAtual" min="0" step="0.01">
+          <label>Valor inicial já guardado
+            <app-campo-valor name="atual" [(ngModel)]="fm.valorAtual" />
           </label>
           @if (opcoesCofrinho(fm).length) {
             <label>Qual cofrinho (reserva)?
@@ -179,8 +187,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
     <app-modal [aberto]="aporteMeta !== null" [titulo]="'Aporte · ' + (aporteMeta?.nome ?? '')" (fechar)="aporteMeta = null">
       <form (ngSubmit)="salvarAporte()" class="formulario">
-        <label>Valor (R$) — use negativo para retirada
-          <input type="number" name="aporte" [(ngModel)]="valorAporte" required step="0.01">
+        <label>Valor — use negativo para retirada
+          <app-campo-valor name="aporte" [(ngModel)]="valorAporte" obrigatorio negativo />
         </label>
         <div class="rodape-form">
           <span class="cresce"></span>
@@ -193,6 +201,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
   styles: `
     .aviso-cofrinho { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
     .assistente-metas h2 { margin: 0 0 8px; }
+    .titulo-com-valor { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
+    .valor-titulo { font-family: var(--fonte-titulo); font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
     .assistente-metas p { margin: 0 0 8px; }
     .assistente-metas .links-assistente { margin: 0; }
     .linha-prioridade { display: flex; align-items: center; gap: 6px; }

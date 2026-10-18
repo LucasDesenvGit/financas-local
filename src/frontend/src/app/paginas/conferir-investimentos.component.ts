@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -12,6 +13,7 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 /** Linha marcável da conferência. */
 interface Marcavel<T> { item: T; marcada: boolean; }
@@ -29,7 +31,7 @@ const LINHAS_VISIVEIS = 8;
  */
 @Component({
   selector: 'app-conferir-investimentos',
-  imports: [FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent],
+  imports: [ListaSuspensaDirective, FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent, CampoValorComponent],
   template: `
     <app-modal [aberto]="aberto()" titulo="Conferir investimentos" (fechar)="fechar.emit()">
       <div class="formulario conferencia">
@@ -89,7 +91,7 @@ const LINHAS_VISIVEIS = 8;
                             (ngModelChange)="recalcular(l)" [disabled]="!l.marcada">
                         </label>
                         <label>Preço por cota
-                          <input type="number" class="campo-curto" min="0" step="any" [(ngModel)]="l.preco" [disabled]="!l.marcada">
+                          <app-campo-valor class="campo-curto" compacto [casas]="4" [(ngModel)]="l.preco" [disabled]="!l.marcada" />
                         </label>
                         @if (l.debitoId !== null && l.debitoId === l.item.debitoSugeridoId && l.item.fechamentoNoDia !== null) {
                           <small class="texto-suave">fechamento do dia: {{ l.item.fechamentoNoDia | currency }}</small>
@@ -130,9 +132,10 @@ const LINHAS_VISIVEIS = 8;
                     <th>De onde veio</th><th>Conta</th><th>Categoria hoje</th></tr></thead>
                   <tbody>
                     @for (l of visiveis(trocos(), trocosAbertos()); track l.item.transacaoId) {
-                      <tr>
-                        <td><input type="checkbox" [(ngModel)]="l.marcada" [disabled]="!dados()!.categoriaDoTroco"
-                          [attr.aria-label]="'Corrigir o crédito de ' + (l.item.data | date: 'dd/MM/yyyy')"></td>
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [disabled]="!dados()!.categoriaDoTroco"
+                          [attr.aria-label]="'Corrigir o crédito de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
                         <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
                         <td class="direita">{{ l.item.valor | currency }}</td>
                         <td>{{ origem(l.item) }}</td>
@@ -167,9 +170,9 @@ const LINHAS_VISIVEIS = 8;
                     <th>Descrição</th><th>Conta</th><th>Categoria hoje</th></tr></thead>
                   <tbody>
                     @for (l of visiveis(rendimentos(), rendimentosAbertos()); track l.item.transacaoId) {
-                      <tr>
-                        <td><input type="checkbox" [(ngModel)]="l.marcada"
-                          [attr.aria-label]="'Corrigir o rendimento de ' + (l.item.data | date: 'dd/MM/yyyy')"></td>
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [attr.aria-label]="'Corrigir o rendimento de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
                         <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
                         <td class="direita">{{ l.item.valor | currency }}</td>
                         <td>{{ l.item.descricao }}</td>

@@ -1,6 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { PrivacidadeService } from '../core/privacidade.service';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -23,6 +26,7 @@ import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../compartilhado/tipos-lancamento';
 import { RenomearTransacaoComponent } from './renomear-transacao.component';
 import { RenomearEmLoteComponent } from './renomear-em-lote.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 interface FormTransacao {
   id: number | null;
@@ -80,8 +84,9 @@ function dataCurta(iso: string, comAno: boolean): string {
 
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
-    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
+    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
+    CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -95,8 +100,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     </header>
 
     <section class="filtros">
-      <label>De <input type="date" [(ngModel)]="filtro.inicio" (change)="buscar(1)"></label>
-      <label>Até <input type="date" [(ngModel)]="filtro.fim" (change)="buscar(1)"></label>
+      <label>De <app-campo-data [(ngModel)]="filtro.inicio" (alterado)="buscar(1)" /></label>
+      <label>Até <app-campo-data [(ngModel)]="filtro.fim" (alterado)="buscar(1)" /></label>
       <label>Conta
         <select [(ngModel)]="filtro.contaId" (change)="buscar(1)">
           <option [ngValue]="null">Todas</option>
@@ -134,7 +139,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 
     @if (chipsFiltro(); as chips) {
       @if (chips.length) {
-        <section class="faixa-filtros" aria-label="Filtros ativos">
+        <section class="faixa-filtros expandir" aria-label="Filtros ativos" animate.leave="recolher">
           <strong>Filtrando:</strong>
           @for (c of chips; track c.id) {
             <span class="chip chip-filtro">
@@ -150,7 +155,7 @@ function dataCurta(iso: string, comAno: boolean): string {
     }
 
     @if (filtroAplicado().poucoInformativa) {
-      <p class="dica-generica texto-suave">
+      <p class="dica-generica texto-suave expandir" animate.leave="recolher">
         Transações cuja descrição não diz o que foi (PIX ENVIADO, PAGAMENTO, TED, só o nome do banco). Cada uma sai desta
         lista quando você escolhe a categoria (dá para várias de uma vez em "Editar categorias"), dá um nome mais claro
         a ela ou marca "revisada".
@@ -158,7 +163,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     }
 
     @if (modoEdicao()) {
-      <section class="painel-bloco barra-edicao" aria-labelledby="titulo-edicao">
+      <!-- Abre e recolhe animando a altura: a lista abaixo não pula de uma vez ao entrar/sair do modo edição. -->
+      <section class="painel-bloco barra-edicao expandir" aria-labelledby="titulo-edicao" animate.leave="recolher">
         <div class="bloco-titulo">
           <h2 id="titulo-edicao">Editando categorias</h2>
           <div class="acoes">
@@ -208,9 +214,13 @@ function dataCurta(iso: string, comAno: boolean): string {
         <span>Resultado <strong>{{ p.totalReceitas - p.totalDespesas | currency }}</strong></span>
       </section>
 
-      @if (selecionadas().size) {
-        <section class="barra-lote">
-          <span>{{ selecionadas().size }} selecionada(s)</span>
+      <!-- #133: a contagem é anunciada quando muda (região aria-live sempre presente). -->
+      <span class="so-leitor" aria-live="polite">{{ textoSelecao() }}</span>
+      <!-- A barra abre e fecha animando a altura (sem empurrar a tabela de uma vez) e fica fixa no topo ao rolar. -->
+      <div class="barra-lote-espaco" [class.aberta]="selecionadas().size > 0" [attr.inert]="selecionadas().size ? null : ''">
+        <div class="barra-lote-dentro">
+        <section class="barra-lote" (keydown.escape)="limparSelecao()" aria-label="Ações nas transações selecionadas">
+          <span class="contagem-selecao">{{ textoSelecao() }}</span>
           <select [(ngModel)]="categoriaLote">
             <option [ngValue]="null">Categorização automática</option>
             @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ rotuloCategoria(c) }}</option> }
@@ -223,15 +233,18 @@ function dataCurta(iso: string, comAno: boolean): string {
           }
           <button type="button" class="botao botao-emergencia" (click)="marcarEmergenciaLote(true)">Marcar emergência</button>
           <button type="button" class="botao" (click)="marcarEmergenciaLote(false)">Desmarcar emergência</button>
-          <button type="button" class="link" (click)="limparSelecao()">limpar seleção</button>
+          <button type="button" class="botao" (click)="limparSelecao()">✕ Limpar seleção</button>
         </section>
-      }
+        </div>
+      </div>
 
-      <div class="tabela-rolagem">
+      <div class="tabela-rolagem" (keydown.escape)="limparSelecao()">
         <table class="tabela" [class.tabela-edicao]="modoEdicao()">
           <thead>
             <tr>
-              <th class="col-check"><input type="checkbox" [checked]="todasSelecionadas()" (change)="alternarTodas()" aria-label="Selecionar todas"></th>
+              <th class="col-check"><label class="celula-marcar"><input type="checkbox" [checked]="todasSelecionadas()"
+                [indeterminate]="algumaSelecionadaNaPagina() && !todasSelecionadas()" (change)="alternarTodas()"
+                aria-label="Selecionar todas desta página"></label></th>
               <th>Data</th>
               <th>Descrição</th>
               <th>Categoria</th>
@@ -240,11 +253,13 @@ function dataCurta(iso: string, comAno: boolean): string {
             </tr>
           </thead>
           <tbody>
-            @for (t of p.itens; track t.id) {
+            @for (t of p.itens; track t.id; let i = $index) {
               <tr (click)="modoEdicao() ? null : editar(t)" [class.clicavel]="!modoEdicao()" [class.ignorada]="t.ignorarRelatorios"
-                [class.alterada]="pendentes().has(t.id)">
-                <td class="col-check" (click)="$event.stopPropagation()">
-                  <input type="checkbox" [checked]="selecionadas().has(t.id)" (change)="alternar(t.id)" aria-label="Selecionar">
+                [class.alterada]="pendentes().has(t.id)" [class.selecionada]="selecionadas().has(t.id)">
+                <!-- #133: a célula inteira marca (sem abrir a edição); Shift+clique seleciona o intervalo. -->
+                <td class="col-check" (click)="$event.stopPropagation()" (mousedown)="shiftNoClique = $event.shiftKey">
+                  <label class="celula-marcar"><input type="checkbox" [checked]="selecionadas().has(t.id)"
+                    (click)="marcar(i, $event)" [attr.aria-label]="nomeSelecao(t)"></label>
                 </td>
                 <td class="nowrap">{{ t.data | date: 'dd/MM/yy' }}</td>
                 <td>
@@ -322,7 +337,7 @@ function dataCurta(iso: string, comAno: boolean): string {
       @if (form; as fm) {
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           @if (fm.openFinance) {
-            <p class="aviso-inline">Transação importada do Open Finance: valor, data e conta vêm do banco.
+            <p class="aviso-inline expandir" animate.leave="recolher">Transação importada do Open Finance: valor, data e conta vêm do banco.
               @if (fm.descricaoOriginal) { <br><small>Original: {{ fm.descricaoOriginal }}</small> }
             </p>
           } @else {
@@ -338,8 +353,8 @@ function dataCurta(iso: string, comAno: boolean): string {
                   @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
                 </select>
               </label>
-              <label>Data <input type="date" name="data" [(ngModel)]="fm.data" required></label>
-              <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="fm.valor" required min="0.01" step="0.01"></label>
+              <label>Data <app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio /></label>
+              <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
             </div>
             @if (!contasManuais().length) {
               <p class="erro">Crie uma conta manual (ex.: "Carteira") em Contas e cartões para lançar manualmente.</p>
@@ -353,7 +368,7 @@ function dataCurta(iso: string, comAno: boolean): string {
             </select>
           </label>
           @if (sugestoesForm().length) {
-            <div class="sugestoes-chips">
+            <div class="sugestoes-chips expandir" animate.leave="recolher">
               <span class="texto-suave">Sugestões:</span>
               @for (o of sugestoesForm(); track o.categoriaId) {
                 <button type="button" class="chip-sugestao" [title]="o.motivo" (click)="fm.categoriaId = o.categoriaId">
@@ -470,8 +485,8 @@ function dataCurta(iso: string, comAno: boolean): string {
                 @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
               </select>
             </label>
-            <label>Data <input type="date" name="data" [(ngModel)]="tf.data" required></label>
-            <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="tf.valor" required min="0.01" step="0.01"></label>
+            <label>Data <app-campo-data name="data" [(ngModel)]="tf.data" obrigatorio /></label>
+            <label>Valor <app-campo-valor name="valor" [(ngModel)]="tf.valor" obrigatorio [minimo]="0.01" /></label>
           </div>
           <label>Descrição <input name="descricao" [(ngModel)]="tf.descricao" maxlength="200" placeholder="Transferência"></label>
           <div class="rodape-form">
@@ -553,6 +568,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 export class TransacoesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly privacidade = inject(PrivacidadeService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -600,6 +616,21 @@ export class TransacoesComponent implements OnInit {
     const itens = this.pagina()?.itens ?? [];
     return itens.length > 0 && itens.every((t) => this.selecionadas().has(t.id));
   });
+  /** #133: quantas das selecionadas estão nesta página (o resto está em outras: a seleção continua ao trocar). */
+  private readonly selecionadasNaPagina = computed(() =>
+    (this.pagina()?.itens ?? []).filter((t) => this.selecionadas().has(t.id)).length);
+  readonly algumaSelecionadaNaPagina = computed(() => this.selecionadasNaPagina() > 0);
+  /** "5 selecionadas (2 em outras páginas)": deixa claro que a ação em lote vale também para as que não aparecem. */
+  readonly textoSelecao = computed(() => {
+    const total = this.selecionadas().size;
+    if (!total) return '';
+    const fora = total - this.selecionadasNaPagina();
+    return `${total} ${total === 1 ? 'selecionada' : 'selecionadas'}`
+      + (fora ? ` (${fora} em ${fora === 1 ? 'outra página' : 'outras páginas'})` : '');
+  });
+  /** Shift+clique: a última caixa marcada/desmarcada (índice na página) e se o clique veio com Shift. */
+  private ultimoMarcado: number | null = null;
+  shiftNoClique = false;
 
   /* ------------------------------ #87: modo edição ------------------------------ */
   /** Modo edição de categorias (?editar=1). */
@@ -777,6 +808,14 @@ export class TransacoesComponent implements OnInit {
       this.pendentes.set(new Map());
     }
     this.filtro.pagina = pagina;
+    // #133: trocar só de página mantém a seleção (dá para juntar transações de várias páginas); trocar o filtro limpa,
+    // para nenhuma ação em lote pegar uma transação que não aparece no filtro atual (Nielsen 5).
+    const semPagina = (f: FiltroTransacoes) => JSON.stringify({ ...f, pagina: undefined, tamanhoPagina: undefined });
+    const trocouFiltro = semPagina(this.filtroAplicado()) !== semPagina(this.filtro);
+    if (trocouFiltro && this.selecionadas().size) {
+      this.limparSelecao();
+      this.avisos.info('Seleção limpa ao trocar o filtro.');
+    }
     this.filtroAplicado.set({ ...this.filtro });
     this.gravarFiltroNaUrl();
     this.api.transacoes(this.filtro).subscribe({
@@ -789,7 +828,7 @@ export class TransacoesComponent implements OnInit {
         }
         const trocouPagina = this.pagina() !== null && this.pagina()!.pagina !== p.pagina;
         this.pagina.set(p);
-        this.limparSelecao();
+        this.ultimoMarcado = null;   // o intervalo do Shift vale dentro de uma página
         if (trocouPagina) this.rolarParaTopo();
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
@@ -842,13 +881,51 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
+  /**
+   * #133: marca/desmarca a caixa da linha `indice`. Com Shift (clique ou Shift+Espaço), aplica o mesmo estado ao
+   * intervalo entre a última caixa usada e esta, como no Gmail e no Explorador de Arquivos.
+   */
+  marcar(indice: number, e: MouseEvent): void {
+    const itens = this.pagina()?.itens ?? [];
+    const marcar = (e.target as HTMLInputElement).checked;
+    const comShift = e.shiftKey || this.shiftNoClique;
+    this.shiftNoClique = false;
+    const de = comShift && this.ultimoMarcado !== null ? Math.min(this.ultimoMarcado, indice) : indice;
+    const ate = comShift && this.ultimoMarcado !== null ? Math.max(this.ultimoMarcado, indice) : indice;
+    this.selecionadas.update((s) => {
+      const novo = new Set(s);
+      for (const t of itens.slice(de, ate + 1)) {
+        if (marcar) novo.add(t.id); else novo.delete(t.id);
+      }
+      return novo;
+    });
+    this.ultimoMarcado = indice;
+  }
+
+  /** "Selecionar todas desta página": parcial ou nenhuma → marca todas as da página; todas → desmarca as da página. */
   alternarTodas(): void {
     const itens = this.pagina()?.itens ?? [];
-    this.selecionadas.set(this.todasSelecionadas() ? new Set() : new Set(itens.map((t) => t.id)));
+    const todas = this.todasSelecionadas();
+    this.selecionadas.update((s) => {
+      const novo = new Set(s);
+      for (const t of itens) { if (todas) novo.delete(t.id); else novo.add(t.id); }
+      return novo;
+    });
+    this.ultimoMarcado = null;
   }
 
   limparSelecao(): void {
     this.selecionadas.set(new Set());
+    this.ultimoMarcado = null;
+  }
+
+  /** Nome acessível da caixa de cada linha: "Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00" (respeita "ocultar valores"). */
+  nomeSelecao(t: Transacao): string {
+    const data = t.data ? paraData(t.data.slice(0, 10)).toLocaleDateString('pt-BR') : '';
+    const valor = this.privacidade.oculto()
+      ? 'valor oculto'
+      : Math.abs(t.valor ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return 'Selecionar: ' + [t.descricao, data, valor].filter(Boolean).join(', ');
   }
 
   categorizarLote(): void {
@@ -864,6 +941,7 @@ export class TransacoesComponent implements OnInit {
     this.api.categorizarEmLote([...this.selecionadas()], this.categoriaLote).subscribe({
       next: (r) => {
         this.avisos.sucesso(`${r.transacoesAtualizadas} transação(ões) atualizada(s).`);
+        this.limparSelecao();
         this.buscar(this.filtro.pagina ?? 1);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
@@ -876,6 +954,7 @@ export class TransacoesComponent implements OnInit {
         this.avisos.sucesso(emergencia
           ? `${r.transacoesAtualizadas} despesa(s) marcada(s) como emergência.`
           : `${r.transacoesAtualizadas} transação(ões) desmarcada(s).`);
+        this.limparSelecao();
         this.buscar(this.filtro.pagina ?? 1);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
