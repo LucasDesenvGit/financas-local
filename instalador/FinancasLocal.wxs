@@ -24,6 +24,8 @@
     <Property Id="ARPHELPLINK" Value="https://github.com/LucasDesenvGit/financas-local#readme" />
     <!-- Desinstalar mantém os dados; "msiexec /x FinancasLocal.msi APAGARDADOS=1" apaga também. -->
     <Property Id="APAGARDADOS" Secure="yes" />
+    <!-- Atalho do gerenciador na área de trabalho (de todos os usuários); "ATALHOAREADETRABALHO=0" instala sem ele. -->
+    <Property Id="ATALHOAREADETRABALHO" Value="1" Secure="yes" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="FinancasLocal" />
@@ -31,12 +33,14 @@
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="PastaMenu" Name="Finanças Local" />
     </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder" />
 
     <Feature Id="Principal" Title="Finanças Local" Level="1">
       <ComponentGroupRef Id="Arquivos" />
       <ComponentRef Id="Servico" />
       <ComponentRef Id="Gerenciador" />
       <ComponentRef Id="Atalhos" />
+      <ComponentRef Id="AtalhoAreaDeTrabalho" />
     </Feature>
 
     <!-- Interface: boas-vindas, pasta e progresso (sem tela de licença); no fim, abrir o gerenciador. -->
@@ -105,6 +109,13 @@
       <util:InternetShortcut Id="AtalhoSite" Name="Finanças Local" Target="https://127.0.0.1:5443/" />
       <RemoveFolder Id="RemoverPastaMenu" On="uninstall" />
       <RegistryValue Root="HKLM" Key="Software\FinancasLocal" Name="Atalhos" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Component Id="AtalhoAreaDeTrabalho" Directory="DesktopFolder" Condition="ATALHOAREADETRABALHO = 1">
+      <Shortcut Id="AtalhoGerenciadorAreaDeTrabalho" Name="Gerenciador do Finanças Local"
+                Description="Ver se o site está no ar, ligar, desligar e atualizar" Target="[#GerenciadorExe]"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKLM" Key="Software\FinancasLocal" Name="AtalhoAreaDeTrabalho" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Fragment>
 </Wix>

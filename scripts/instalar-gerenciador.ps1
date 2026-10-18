@@ -1,17 +1,18 @@
 <#
     Publica o Gerenciador do Financas Local numa instalacao feita pelos scripts (instalar-windows.cmd ou
-    3-publicar-atualizar.sh) e cria o atalho no Menu Iniciar do usuario atual. Nao precisa de administrador.
-    Quem instalou pelo .msi ja tem o gerenciador (ADR 0028).
+    3-publicar-atualizar.sh) e cria os atalhos no Menu Iniciar e na area de trabalho do usuario atual. Nao precisa de
+    administrador. Quem instalou pelo .msi ja tem o gerenciador (ADR 0028).
 
     .\scripts\instalar-gerenciador.ps1                         # publica em publicado\gerenciador
     .\scripts\instalar-gerenciador.ps1 -Destino D:\outra\pasta
+    .\scripts\instalar-gerenciador.ps1 -SemAtalhoNaAreaDeTrabalho
 
     O gerenciador acha o site pelo servico FinancasLocal (a pasta da API e o appsettings dela), entao funciona
     de qualquer pasta. Fica fora de publicado\api porque a publicacao espelha aquela pasta (robocopy /MIR).
     Rode de novo para atualizar o gerenciador; se ele estiver aberto, e fechado antes.
     Compativel com o Windows PowerShell 5.1 e sem acentos no arquivo.
 #>
-param([string]$Destino = "")
+param([string]$Destino = "", [switch]$SemAtalhoNaAreaDeTrabalho)
 
 $ErrorActionPreference = "Stop"
 $Raiz = Split-Path -Parent $PSScriptRoot
@@ -53,15 +54,23 @@ Etapa "Publicando o gerenciador em $Destino"
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou ($LASTEXITCODE)." }
 Get-ChildItem -LiteralPath $Destino -Filter *.pdb -ErrorAction SilentlyContinue | Remove-Item -Force
 
-Etapa "Criando o atalho no Menu Iniciar"
-$pastaMenu = Join-Path ([Environment]::GetFolderPath("Programs")) $Nome
-New-Item -ItemType Directory -Path $pastaMenu -Force | Out-Null
 $shell = New-Object -ComObject WScript.Shell
-$atalho = $shell.CreateShortcut((Join-Path $pastaMenu ("Gerenciador do " + $Nome + ".lnk")))
-$atalho.TargetPath = Join-Path $Destino "Financas.Gerenciador.exe"
-$atalho.WorkingDirectory = $Destino
-$atalho.IconLocation = (Join-Path $Destino "Financas.Gerenciador.exe") + ",0"
-$atalho.Description = "Ver se o site esta no ar, ligar, desligar e copiar o banco"
-$atalho.Save()
+function Criar-Atalho([string]$pasta) {
+    New-Item -ItemType Directory -Path $pasta -Force | Out-Null
+    $atalho = $shell.CreateShortcut((Join-Path $pasta ("Gerenciador do " + $Nome + ".lnk")))
+    $atalho.TargetPath = Join-Path $Destino "Financas.Gerenciador.exe"
+    $atalho.WorkingDirectory = $Destino
+    $atalho.IconLocation = (Join-Path $Destino "Financas.Gerenciador.exe") + ",0"
+    $atalho.Description = "Ver se o site esta no ar, ligar, desligar e copiar o banco"
+    $atalho.Save()
+}
+
+Etapa "Criando o atalho no Menu Iniciar"
+Criar-Atalho (Join-Path ([Environment]::GetFolderPath("Programs")) $Nome)
+if (-not $SemAtalhoNaAreaDeTrabalho) {
+    Etapa "Criando o atalho na area de trabalho"
+    Criar-Atalho ([Environment]::GetFolderPath("Desktop"))
+}
 
 Write-Host ("Pronto: Menu Iniciar > " + $Nome + " > Gerenciador do " + $Nome) -ForegroundColor Green
+if (-not $SemAtalhoNaAreaDeTrabalho) { Write-Host ("e na area de trabalho: Gerenciador do " + $Nome) -ForegroundColor Green }

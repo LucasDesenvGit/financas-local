@@ -77,6 +77,12 @@ A issue #119 pediu um "gerenciadorzinho" para isso.
   - O `scripts/instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` (fora de `publicado\api`, que a publicação espelha) e cria o atalho no Menu Iniciar do usuário, sem administrador.
   - Nessa instalação, o banco vem do `Banco:Caminho`, e o gerenciador **não procura nem instala versões do GitHub**: o `.msi` trocaria a instalação. A tela diz para atualizar pelos scripts.
   - Ele só atualiza quando o script roda de novo; a publicação do site não mexe nele.
+- **Atualização de 2026-10-18 (atalho e visual):**
+  - O gerenciador também ganha um atalho na **área de trabalho**:
+    - no `.msi`, na área de trabalho de todos os usuários, e `ATALHOAREADETRABALHO=0` instala sem ele;
+    - no script, na do usuário, e `-SemAtalhoNaAreaDeTrabalho` não cria.
+  - A janela segue as cores do site e o tema claro ou escuro do Windows (`Tema.cs`, `Controles.cs`).
+  - Os controles desenhados continuam `Button` e `CheckBox` por baixo, para o teclado e o leitor de tela não mudarem.
 - **Na prática:**
   - O Release precisa ter o `.msi` e o `SHA256SUMS.txt` (formato do `sha256sum`), gerados pelo workflow de versão (ADR 0029).
   - Sem os dois, o gerenciador diz que não há versão nova para instalar.

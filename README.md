@@ -45,7 +45,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 4. **Termine.** Deixe marcado **"Abrir o Gerenciador do Finanças Local"** e clique em **Concluir**. O gerenciador mostra **"O site está no ar"**: clique em **Abrir o site** (ou abra **https://127.0.0.1:5443**).
 5. **Primeiro acesso.** Crie o usuário e a senha (mínimo de 8 caracteres) e siga o capítulo **Primeiros passos** do **Manual**, no menu do site. Para trazer os dados do banco, veja [Conectar o Open Finance](#conectar-o-open-finance-meu-pluggy).
 
-No Menu Iniciar ficam dois atalhos: **Finanças Local**, que abre o site, e **Gerenciador do Finanças Local**.
+No Menu Iniciar ficam dois atalhos: **Finanças Local**, que abre o site, e **Gerenciador do Finanças Local**. O gerenciador também ganha um atalho na área de trabalho. Para instalar sem ele, use `msiexec /i FinancasLocal-<versão>.msi ATALHOAREADETRABALHO=0`.
 
 **O que fica onde**
 
@@ -132,7 +132,7 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 powershell -ExecutionPolicy Bypass -File scripts\instalar-gerenciador.ps1
 ```
 
-Ele publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar. O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
+Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
 
 ### De onde vem cada coisa
 
