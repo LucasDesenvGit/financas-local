@@ -469,7 +469,11 @@ app-painel .lista-faturas li + li { border-top: 1px solid var(--linha); padding-
 @media (max-width: 760px) { .paginacao { justify-content: center; } .paginacao-info { width: 100%; text-align: center; } }
 
 /* ---------------------------------------------------------------- Contas e metas */
-.grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; margin-top: 10px; }.cartao-conta, .cartao-meta {
+.grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; margin-top: 10px; }
+/* Lista vazia numa grade de cartões (ex.: Metas sem nenhuma meta): o aviso ocupa a linha toda, numa linha só e
+   centralizado, em vez de ficar preso na 1ª coluna (270 px), quebrado em duas linhas e fora do meio. */
+.grade-cartoes > .vazio { grid-column: 1 / -1; }
+.cartao-conta, .cartao-meta {
   background: var(--superficie); border-radius: var(--raio);
   padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--sombra);
   position: relative; overflow: hidden;

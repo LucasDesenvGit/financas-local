@@ -28,6 +28,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - entre as seções de uma tela ("Situação hoje" e "Mês de …" no Painel; "Contas" e "Cartões de crédito" em Contas e cartões);
   - abaixo do título de cada bloco: os de `.bloco-titulo`, os de Investimentos e FIIs e os que começam com o título solto (Visão anual, Relatórios, Projeção, Configurações, Aparência, Parametrização, Manual…);
   - no Painel, em "Faturas do mês", abaixo do total e entre os cartões.
+- **Lista vazia numa grade de cartões** (ex.: Metas sem nenhuma meta): o aviso ocupa a linha toda, numa linha só e centralizado. Antes ficava preso na primeira coluna, quebrado em duas linhas e fora do meio.
+
 ## [2.1.0] — 2026-10-18
 
 Primeira versão com o instalador `.msi` para Windows e o Gerenciador do Finanças Local.
