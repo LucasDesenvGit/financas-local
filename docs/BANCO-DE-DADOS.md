@@ -7,7 +7,7 @@ O banco é **SQLite**, num arquivo local (`dados/sql/FinancasLocal.db`), criado 
 | `banco/01-estrutura.sql` | Tabelas, índices e restrições, todos com `CREATE TABLE/INDEX IF NOT EXISTS`. |
 | `banco/02-dados-iniciais.sql` | Categorias padrão, configurações e regras de categorização iniciais. |
 
-`scripts/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
+`scripts/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. A API também os aplica ao iniciar (`Data/EsquemaBanco.cs`, embutidos no build; os dados iniciais só no banco novo), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
 
 O `01-estrutura.sql` é uma baseline limpa da troca SQL Server → SQLite: as colunas que antes chegavam por `ALTER TABLE` incremental (blocos `v4`–`v7`) já nascem dentro do `CREATE TABLE`.
 
@@ -41,7 +41,7 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 
    Coluna `NOT NULL` adicionada a uma tabela com dados precisa de `DEFAULT`.
 
-   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/instalar-windows.ps1`) lê essas linhas do `2-criar-banco.sh` em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)).
+   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/instalar-windows.ps1`) e a própria API (`Data/EsquemaBanco.cs`, que embute o `2-criar-banco.sh` no build) leem essas linhas em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
 
 ### Depois de qualquer mudança
 

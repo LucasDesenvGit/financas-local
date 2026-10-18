@@ -5,6 +5,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **A API cria e atualiza o banco sozinha ao iniciar** (#119, ADR 0003 atualizada).
+  - **Os mesmos scripts:** `01-estrutura.sql`, as colunas novas do `2-criar-banco.sh` e, só no banco novo, os dados iniciais, embutidos no build.
+  - **Antes de mudar um banco existente:** cópia em `dados/backups/FinancasLocal-antes-atualizacao-*.db`, com as 5 mais recentes guardadas.
+  - **Reinício sem mudança de scripts:** não faz nada (`PRAGMA user_version`).
+  - **Para que serve:** é a base do instalador `.msi`, que não tem `sqlite3` nem bash. Também deixa o banco pronto no primeiro "F5" do Visual Studio.
 - Investimentos: **"Conferir investimentos"** (ADR 0027).
   - **O que faz:** compara a carteira com a posição da corretora e com o extrato, e mostra as correções já marcadas. Nada muda até "Corrigir selecionados", e o aviso tem **Desfazer** por 10 minutos.
   - **FII cadastrado como outro tipo:** reconhecido pelo nome do fundo ou pelo emissor da corretora; passa a ser FII.

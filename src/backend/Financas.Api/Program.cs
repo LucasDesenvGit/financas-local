@@ -165,6 +165,9 @@ builder.Services.AddHttpClient(CotacaoService.ClienteBrapi, c =>
 
 var app = builder.Build();
 
+// Cria/atualiza o banco antes de atender (ADR 0003): a instalação pelo .msi não tem sqlite3 nem bash.
+EsquemaBanco.Aplicar(caminhoBanco, app.Logger);
+
 // ---------------------------------------------------------------- Pipeline
 app.UseMiddleware<CabecalhosSegurancaMiddleware>();
 
