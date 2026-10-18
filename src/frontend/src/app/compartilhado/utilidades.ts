@@ -43,6 +43,8 @@ export interface ContextoTransacoes {
   fim?: string;
   tipo?: 'despesa' | 'receita' | 'transferencia';
   contaId?: number;
+  /** #141: transação que /transacoes destaca na lista (rola até ela e põe o foco nela). */
+  transacaoId?: number;
 }
 
 /**
@@ -56,6 +58,7 @@ export function paramsTransacoes(c: ContextoTransacoes): Record<string, string> 
   if (c.fim) p['fim'] = c.fim;
   if (c.tipo) p['tipo'] = c.tipo;
   if (c.contaId) p['conta'] = String(c.contaId);
+  if (c.transacaoId) p['transacao'] = String(c.transacaoId);
   return p;
 }
 

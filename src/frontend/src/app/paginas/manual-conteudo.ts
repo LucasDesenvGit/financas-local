@@ -747,7 +747,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Fluxo de caixa mensal: receitas, despesas e o saldo acumulado.',
           'Despesas (ou receitas) por categoria no período.',
-          'Maiores despesas do período.'
+          'Maiores despesas do período. Clique numa delas para abrir Transações no dia e na conta dela, com a despesa destacada.'
         ],
         abrir: [{ rotulo: 'Abrir Relatórios', rota: '/relatorios' }]
       },
