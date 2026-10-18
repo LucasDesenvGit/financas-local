@@ -19,6 +19,7 @@ public class FinancasDbContext : DbContext
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<CategoriaPluggy> CategoriasPluggy => Set<CategoriaPluggy>();
     public DbSet<RegraCategorizacao> RegrasCategorizacao => Set<RegraCategorizacao>();
+    public DbSet<RegraDescricao> RegrasDescricao => Set<RegraDescricao>();
     public DbSet<Conta> Contas => Set<Conta>();
     public DbSet<FaturaCartao> FaturasCartao => Set<FaturaCartao>();
     public DbSet<Transacao> Transacoes => Set<Transacao>();
@@ -120,6 +121,14 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Texto).HasMaxLength(200).IsRequired();
             e.HasOne(x => x.Categoria).WithMany()
                 .HasForeignKey(x => x.CategoriaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<RegraDescricao>(e =>
+        {
+            e.ToTable("RegraDescricao");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Texto).HasMaxLength(200).IsRequired();
+            e.Property(x => x.NovaDescricao).HasMaxLength(300).IsRequired();
         });
 
         mb.Entity<Conta>(e =>
