@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { CampoDataDirective } from '../compartilhado/campo-data.directive';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -16,7 +17,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas a pagar</h1>

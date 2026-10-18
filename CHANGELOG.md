@@ -70,6 +70,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Contas e cartões: cards do mesmo tamanho e alinhados.**
   - **Cartões de crédito:** os da mesma linha têm a mesma altura, com "transações · editar" sempre no rodapé. Abrir o histórico de faturas de um cartão também estica os vizinhos da linha.
   - **Contas:** cabeçalho, saldo, "saldo atual" e rodapé ficam na mesma altura em todos os cards da linha, mesmo quando um nome de banco longo quebra em várias linhas.
+- **Campos de data com ano de 4 dígitos.**
+  - **Antes:** o calendário do navegador aceitava ano com até 6 dígitos ("13/02/275760").
+  - **Agora:** todo campo de data vai de 01/01/1900 a 31/12/2099, ou usa o limite da própria tela (ex.: não aceitar data no futuro em Investimentos). Assim o navegador limita o ano a 4 dígitos.
+  - Data fora do intervalo não deixa salvar.
 - **Lista vazia numa grade de cartões** (ex.: Metas sem nenhuma meta): o aviso ocupa a linha toda, numa linha só e centralizado. Antes ficava preso na primeira coluna, quebrado em duas linhas e fora do meio.
 
 ## [2.1.0] — 2026-10-18

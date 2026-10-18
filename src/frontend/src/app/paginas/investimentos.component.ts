@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent, SIMBOLOS_MOEDA } from '../compartilhado/campo-valor.component';
+import { CampoDataDirective } from '../compartilhado/campo-data.directive';
 import { ChartConfiguration } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
@@ -52,7 +53,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent, CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
       <div>

@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { CampoDataDirective } from '../compartilhado/campo-data.directive';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -82,7 +83,8 @@ function dataCurta(iso: string, comAno: boolean): string {
 @Component({
   selector: 'app-transacoes',
   imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
-    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent],
+    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
+    CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>

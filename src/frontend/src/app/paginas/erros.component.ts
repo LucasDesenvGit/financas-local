@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { CampoDataDirective } from '../compartilhado/campo-data.directive';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -17,7 +18,7 @@ import { dataIsoValida } from '../compartilhado/utilidades';
  */
 @Component({
   selector: 'app-erros',
-  imports: [FormsModule, DatePipe, PaginacaoComponent],
+  imports: [FormsModule, DatePipe, PaginacaoComponent, CampoDataDirective],
   template: `
     <section class="painel-bloco">
       <div class="bloco-titulo">

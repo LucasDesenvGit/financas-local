@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoDataDirective } from '../compartilhado/campo-data.directive';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { forkJoin } from 'rxjs';
@@ -17,7 +18,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 @Component({
   selector: 'app-relatorios',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
+  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Relatórios</h1>
