@@ -119,7 +119,8 @@ jobs:
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
           # Os arquivos de dados continuam legíveis (permissões herdadas da pasta) depois da segunda configuração.
           foreach ($p in "sql\FinancasLocal.db", "certificado\financaslocal.pfx", "configuracao.json") {
-            [IO.File]::ReadAllBytes("$env:ProgramData\FinancasLocal\dados\$p") | Out-Null
+            # Abre só para ler, dividindo com a API (que está com o banco aberto): falha só se faltar permissão.
+            [IO.File]::Open("$env:ProgramData\FinancasLocal\dados\$p", "Open", "Read", "ReadWrite").Dispose()
           }
 
       - name: Desinstalar (mantém os dados, tira o certificado)
