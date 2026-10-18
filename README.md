@@ -45,7 +45,12 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro no seu computador, 
 4. **Termine.** Deixe marcado **"Abrir o Gerenciador do Finanças Local"** e clique em **Concluir**. O gerenciador mostra **"O site está no ar"**: clique em **Abrir o site** (ou abra **https://127.0.0.1:5443**).
 5. **Primeiro acesso.** Crie o usuário e a senha (mínimo de 8 caracteres) e siga o capítulo **Primeiros passos** do **Manual**, no menu do site. Para trazer os dados do banco, veja [Conectar o Open Finance](#conectar-o-open-finance-meu-pluggy).
 
-No Menu Iniciar ficam dois atalhos: **Finanças Local**, que abre o site, e **Gerenciador do Finanças Local**.
+**Versão de desenvolvimento.** Quer testar o que já foi aprovado e ainda não saiu numa versão? Baixe o `FinancasLocal-desenvolvimento.msi` do [pré-lançamento "desenvolvimento"](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento).
+- **Origem:** ele é gerado de novo a cada merge no `develop`, depois de passar nos testes de instalação. O site e o gerenciador mostram a versão como `X.Y.Z-dev.N`.
+- **Instalação:** instala e atualiza igual ao `.msi` da versão, mantendo os dados. Também troca a versão publicada de mesmo número, e vice-versa.
+- **Aviso de versão nova:** o gerenciador só avisa das versões publicadas. Para pegar uma versão de desenvolvimento mais nova, baixe de novo.
+
+No Menu Iniciar ficam dois atalhos: **Finanças Local**, que abre o site, e **Gerenciador do Finanças Local**. O gerenciador também ganha um atalho na área de trabalho. Para instalar sem ele, use `msiexec /i FinancasLocal-<versão>.msi ATALHOAREADETRABALHO=0`.
 
 **O que fica onde**
 
@@ -83,12 +88,12 @@ Nenhuma atualização apaga dados: transações, regras, metas e a conexão com 
 
 ### Instalado pelos scripts e quer passar para o instalador
 
-Vale para quem instalou com o `instalar-windows.cmd` ou o `3-publicar-atualizar.sh`. Baixe o `.msi` e abra. Ele encontra a instalação antiga e:
+Vale para quem instalou com o `instalar-windows.cmd` ou o `3-publicar-atualizar.sh`. Baixe o `.msi` (da versão ou o de desenvolvimento) e abra. Com o gerenciador instalado pelos scripts, o botão **Baixar o instalador .msi** leva à página. O `.msi` encontra a instalação antiga e:
 - **para o site antigo** e **copia o banco e as chaves** para `C:\ProgramData\FinancasLocal\dados`. A pasta antiga **não é apagada**: uma nota com os caminhos fica em `dados\migrado-da-instalacao-por-scripts.txt`;
 - **troca o serviço antigo** pelo do instalador e põe o certificado HTTPS novo;
 - **se não achar o banco antigo, para sem mudar nada**, diz onde procurou, e o site antigo volta a rodar.
 
-O Client Secret da Pluggy continua funcionando, porque as chaves vêm junto. Depois de conferir no site que está tudo lá, a pasta antiga pode ser apagada.
+O Client Secret da Pluggy continua funcionando, porque as chaves vêm junto. Depois de conferir no site que está tudo lá, a pasta antiga pode ser apagada. Daí em diante, a versão nova chega pelo gerenciador, como em [Instalado pelo `.msi`](#instalado-pelo-msi).
 
 ### Continuar pelos scripts (Linux, ou quem compila do código)
 
@@ -125,6 +130,14 @@ cd financas-local/scripts
 ```
 
 Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuário e a senha (mínimo de 8 caracteres).
+
+**Gerenciador (opcional, Windows).** Para ter o Gerenciador do Finanças Local também na instalação pelos scripts, rode, sem precisar de administrador:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\instalar-gerenciador.ps1
+```
+
+Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
 
 ### De onde vem cada coisa
 

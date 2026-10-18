@@ -72,6 +72,17 @@ A issue #119 pediu um "gerenciadorzinho" para isso.
   - **O repositório é fixo** (`Instalacao.Repositorio`): um fork precisa trocá-lo.
   - **Só Windows.** No Linux continuam os scripts.
   - **Mais um projeto na solução.** O `EnableWindowsTargeting` deixa a CI do Linux compilá-lo, mas não executá-lo.
+- **Atualização de 2026-10-18 (instalação pelos scripts):**
+  - O gerenciador acha o site pelo registro do serviço `FinancasLocal` (pasta da API e o `appsettings` dela), e não pela própria pasta. Assim ele funciona também na instalação feita pelo `instalar-windows.cmd` ou pelo `3-publicar-atualizar.sh`.
+  - O `scripts/instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` (fora de `publicado\api`, que a publicação espelha) e cria o atalho no Menu Iniciar do usuário, sem administrador.
+  - Nessa instalação, o banco vem do `Banco:Caminho`, e o gerenciador **não procura nem instala versões do GitHub**: o `.msi` trocaria a instalação. A tela diz para atualizar pelos scripts, ou para passar para o instalador. O botão **Baixar o instalador .msi** abre a página da versão mais recente, e o `.msi` migra a instalação (ADR 0029).
+  - Ele só atualiza quando o script roda de novo; a publicação do site não mexe nele.
+- **Atualização de 2026-10-18 (atalho e visual):**
+  - O gerenciador também ganha um atalho na **área de trabalho**:
+    - no `.msi`, na área de trabalho de todos os usuários, e `ATALHOAREADETRABALHO=0` instala sem ele;
+    - no script, na do usuário, e `-SemAtalhoNaAreaDeTrabalho` não cria.
+  - A janela segue as cores do site e o tema claro ou escuro do Windows (`Tema.cs`, `Controles.cs`).
+  - Os controles desenhados continuam `Button` e `CheckBox` por baixo, para o teclado e o leitor de tela não mudarem.
 - **Na prática:**
   - O Release precisa ter o `.msi` e o `SHA256SUMS.txt` (formato do `sha256sum`), gerados pelo workflow de versão (ADR 0029).
   - Sem os dois, o gerenciador diz que não há versão nova para instalar.

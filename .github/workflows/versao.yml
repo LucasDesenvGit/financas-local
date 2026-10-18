@@ -1,11 +1,15 @@
 # Instalador .msi do Windows (#119, ADR 0029): gera o FinancasLocal-<versao>.msi e testa num Windows limpo
 # (instalação silenciosa, atualização para uma versão seguinte, desinstalação e migração de uma instalação feita pelos
 # scripts). Na tag vX.Y.Z, publica o .msi e o SHA256SUMS.txt no Release, que é de onde o gerenciador baixa.
+# Fora da tag, o .msi é de desenvolvimento (X.Y.Z-dev.<execução>); a cada push no develop, depois de todos os testes,
+# ele vai para o pré-lançamento "desenvolvimento" (link fixo). O gerenciador só olha o Release mais recente
+# (releases/latest), que nunca é um pré-lançamento.
 name: Versão (instalador .msi)
 
 on:
   push:
     tags: ["v*"]
+    branches: [develop]
   pull_request:
     branches: [main, develop]
     paths:
@@ -37,6 +41,7 @@ jobs:
       contents: write   # só usado na tag, para publicar o Release
     outputs:
       versao: ${{ steps.versao.outputs.versao }}
+      rotulo: ${{ steps.versao.outputs.rotulo }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,6 +65,9 @@ jobs:
           }
           "versao=$versao" >> $env:GITHUB_OUTPUT
           $p = $versao.Split('.'); "seguinte=$($p[0]).$($p[1]).$([int]$p[2] + 1)" >> $env:GITHUB_OUTPUT
+          # Rótulo: o que o site e o gerenciador mostram e o nome do .msi. Fora da tag, versão de desenvolvimento.
+          $rotulo = if ("${{ github.ref_type }}" -eq "tag") { $versao } else { "$versao-dev.${{ github.run_number }}" }
+          "rotulo=$rotulo" >> $env:GITHUB_OUTPUT
 
       - name: Sintaxe do configurar.ps1 (Windows PowerShell 5.1, o que o instalador usa)
         shell: powershell
@@ -76,12 +84,14 @@ jobs:
 
       - name: Gerar o .msi
         shell: pwsh
-        run: ./instalador/gerar-msi.ps1
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") { ./instalador/gerar-msi.ps1 }
+          else { ./instalador/gerar-msi.ps1 -Revisao ${{ github.run_number }} }
 
       - name: Instalar (silencioso, como num computador novo)
         shell: pwsh
         run: |
-          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.versao }}.msi"
+          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.rotulo }}.msi"
           $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v instalar.log" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja instalar.log)" }
 
@@ -92,18 +102,34 @@ jobs:
           if (-not $servico -or $servico.State -ne "Running") { throw "serviço FinancasLocal não está rodando" }
           if ($servico.PathName -notlike "*Program Files\FinancasLocal\Financas.Api.exe*") { throw "serviço aponta para $($servico.PathName)" }
           foreach ($p in "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db", "$env:ProgramData\FinancasLocal\dados\configuracao.json",
-                         "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe", "$env:ProgramFiles\FinancasLocal\wwwroot\index.html") {
+                         "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe", "$env:ProgramFiles\FinancasLocal\wwwroot\index.html",
+                         "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") {
             if (-not (Test-Path $p)) { throw "não encontrado: $p" }
           }
           # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
-          if ($estado.versao -ne "${{ steps.versao.outputs.versao }}") { throw "versão do site: $($estado.versao)" }
+          if ($estado.versao -ne "${{ steps.versao.outputs.rotulo }}") { throw "versão do site: $($estado.versao)" }
           # Cria o usuário: é o dado que a atualização e a desinstalação não podem perder.
           '{"login":"verificador","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
+
+      - name: Trocar pela mesma versão do Release (a de desenvolvimento não fica instalada junto)
+        if: github.ref_type != 'tag'
+        shell: pwsh
+        run: |
+          # Mesmo X.Y.Z, outro pacote: como instalar o Release por cima da versão de desenvolvimento.
+          ./instalador/gerar-msi.ps1 -SoPacote -Versao ${{ steps.versao.outputs.versao }}
+          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.versao }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v mesma-versao.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja mesma-versao.log)" }
+          $instalada = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq "Finanças Local" }
+          if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.versao }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
+          if ((Get-Service FinancasLocal).Status -ne "Running") { throw "serviço não voltou depois da troca" }
+          for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
+          if (-not $estado.configurado) { throw "a troca perdeu o usuário" }
 
       - name: Atualizar para a versão seguinte (mantém os dados)
         shell: pwsh
@@ -133,6 +159,7 @@ jobs:
           if (Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.FriendlyName -eq "FinancasLocal" }) { throw "o certificado continua confiável" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
           if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o programa continua instalado" }
+          if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
 
       - name: Logs do msiexec
         if: failure()
@@ -148,7 +175,7 @@ jobs:
         with:
           name: instalador
           path: |
-            saida-instalador/FinancasLocal-${{ steps.versao.outputs.versao }}.msi
+            saida-instalador/FinancasLocal-${{ steps.versao.outputs.rotulo }}.msi
           retention-days: 14
 
       - name: Publicar no Release (só na tag)
@@ -201,7 +228,7 @@ jobs:
       - name: Instalar o .msi por cima
         shell: pwsh
         run: |
-          $msi = "saida-instalador\FinancasLocal-${{ needs.gerar.outputs.versao }}.msi"
+          $msi = "saida-instalador\FinancasLocal-${{ needs.gerar.outputs.rotulo }}.msi"
           $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v migrar.log" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja migrar.log)" }
 
@@ -224,3 +251,44 @@ jobs:
           path: |
             *.log
             instaladores/*.log
+
+  desenvolvimento:
+    name: publicar a versão de desenvolvimento
+    # Só no push do develop (merge de PR) e só depois de instalar, atualizar, desinstalar e migrar sem erro.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: [gerar, migracao]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: instalador
+          path: saida-instalador
+
+      - name: Pré-lançamento "desenvolvimento" (link fixo, trocado a cada push)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ROTULO: ${{ needs.gerar.outputs.rotulo }}
+        run: |
+          # Nome fixo, para o link não mudar; a versão de verdade fica no título, nas notas e no próprio site.
+          cp "saida-instalador/FinancasLocal-$ROTULO.msi" FinancasLocal-desenvolvimento.msi
+          sha256sum FinancasLocal-desenvolvimento.msi > SHA256SUMS.txt
+          {
+            echo "**Versão de desenvolvimento $ROTULO**, gerada do develop no commit $GITHUB_SHA."
+            echo
+            echo "Tem o que já foi aprovado nos PRs e ainda não saiu numa versão. Pode ter coisa ainda não testada no uso real."
+            echo "Para o dia a dia, prefira a [versão mais recente](https://github.com/$GITHUB_REPOSITORY/releases/latest)."
+            echo
+            echo "- **Instalar ou atualizar:** baixe o \`FinancasLocal-desenvolvimento.msi\` e abra. Ele troca a versão instalada (pelo \`.msi\` ou pelos scripts) e mantém os dados."
+            echo "- **Voltar para a versão publicada:** instale o \`.msi\` da versão mais recente por cima; a mesma versão X.Y.Z troca uma pela outra."
+            echo "- **Avisos do gerenciador:** ele só avisa de versões publicadas, não destas."
+            echo
+            awk '/^## \[Não publicado\]/{f=1; next} /^## \[/{if (f) exit} f' CHANGELOG.md
+          } > notas.md
+          gh release delete desenvolvimento --cleanup-tag --yes || true
+          gh release create desenvolvimento FinancasLocal-desenvolvimento.msi SHA256SUMS.txt --prerelease --latest=false \
+            --target "$GITHUB_SHA" --title "Finanças Local $ROTULO (desenvolvimento)" --notes-file notas.md
