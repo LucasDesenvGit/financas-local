@@ -477,6 +477,45 @@ app-campo-valor { display: grid; gap: 4px; min-width: 0; }
 .campo-valor-mensagem { color: var(--negativo); font-size: 0.8rem; font-weight: 500; }
 .campo-valor:has(input:disabled) { opacity: 0.6; }
 
+/* Campo de data (app-campo-data, ADR 0032): a mesma caixa do campo de valor, com o botão do calendário à direita, e o
+   calendário do site por baixo (ou por cima, sem espaço). */
+app-campo-data { display: grid; gap: 4px; min-width: 0; position: relative; }
+.campo-data { padding-right: 4px; }
+.campo-data input { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.campo-data-botao {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0;
+  border: 0; border-radius: 8px; background: none; color: var(--texto-suave); cursor: pointer;
+}
+.campo-data-botao:hover:not(:disabled), .campo-data-botao[aria-expanded="true"] { background: var(--superficie-2); color: var(--texto); }
+.campo-data-botao:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.calendario {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; width: 296px; padding: 10px;
+  display: grid; gap: 6px; color: var(--texto); font-size: 0.9rem; font-weight: 400;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio); box-shadow: var(--sombra-forte);
+  animation: surgir 0.18s ease-out;
+}
+.calendario.acima { top: auto; bottom: calc(100% + 6px); }
+.calendario-topo { display: flex; align-items: center; gap: 2px; }
+.calendario-topo strong {
+  flex: 1; text-align: center; font-family: var(--fonte-titulo); font-size: 0.95rem; color: var(--texto-forte);
+}
+.calendario-topo .botao-icone { width: 30px; height: 30px; background: none; }
+.calendario-topo .botao-icone:hover { background: var(--superficie-2); }
+.calendario-grade { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.calendario-grade th { padding: 4px 0; font-size: 0.75rem; font-weight: 600; color: var(--texto-suave); text-align: center; }
+.calendario-grade td { padding: 1px; text-align: center; }
+.calendario-dia {
+  width: 100%; aspect-ratio: 1; min-height: 32px; border: 0; border-radius: 9px; background: none; cursor: pointer;
+  font: inherit; font-size: 0.88rem; color: var(--texto); font-variant-numeric: tabular-nums;
+}
+.calendario-dia:hover:not(:disabled) { background: var(--superficie-2); }
+.calendario-dia.fora-do-mes { color: var(--texto-suave); opacity: 0.6; }
+.calendario-dia[aria-current="date"] { box-shadow: inset 0 0 0 1px var(--primaria); font-weight: 600; }
+.calendario-dia.escolhido { background: var(--primaria); color: var(--primaria-texto); font-weight: 600; opacity: 1; }
+.calendario-dia:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.calendario-dia:disabled { opacity: 0.3; cursor: not-allowed; }
+.calendario-rodape { display: flex; justify-content: space-between; padding: 2px 4px 0; }
+
 .formulario { display: grid; gap: 16px; }
 .grade-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
 .rodape-form { display: flex; gap: 10px; align-items: center; padding-top: 4px; }

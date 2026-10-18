@@ -3,7 +3,7 @@ import { Component, HostListener, OnInit, computed, inject, signal } from '@angu
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { PrivacidadeService } from '../core/privacidade.service';
-import { CampoDataDirective } from '../compartilhado/campo-data.directive';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -86,7 +86,7 @@ function dataCurta(iso: string, comAno: boolean): string {
   selector: 'app-transacoes',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
     IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
-    CampoDataDirective],
+    CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -100,8 +100,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     </header>
 
     <section class="filtros">
-      <label>De <input type="date" [(ngModel)]="filtro.inicio" (change)="buscar(1)"></label>
-      <label>Até <input type="date" [(ngModel)]="filtro.fim" (change)="buscar(1)"></label>
+      <label>De <app-campo-data [(ngModel)]="filtro.inicio" (alterado)="buscar(1)" /></label>
+      <label>Até <app-campo-data [(ngModel)]="filtro.fim" (alterado)="buscar(1)" /></label>
       <label>Conta
         <select [(ngModel)]="filtro.contaId" (change)="buscar(1)">
           <option [ngValue]="null">Todas</option>
@@ -353,7 +353,7 @@ function dataCurta(iso: string, comAno: boolean): string {
                   @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
                 </select>
               </label>
-              <label>Data <input type="date" name="data" [(ngModel)]="fm.data" required></label>
+              <label>Data <app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio /></label>
               <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
             </div>
             @if (!contasManuais().length) {
@@ -485,7 +485,7 @@ function dataCurta(iso: string, comAno: boolean): string {
                 @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
               </select>
             </label>
-            <label>Data <input type="date" name="data" [(ngModel)]="tf.data" required></label>
+            <label>Data <app-campo-data name="data" [(ngModel)]="tf.data" obrigatorio /></label>
             <label>Valor <app-campo-valor name="valor" [(ngModel)]="tf.valor" obrigatorio [minimo]="0.01" /></label>
           </div>
           <label>Descrição <input name="descricao" [(ngModel)]="tf.descricao" maxlength="200" placeholder="Transferência"></label>

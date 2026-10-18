@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
-import { CampoDataDirective } from '../compartilhado/campo-data.directive';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Meta, PlanoMeta, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
@@ -18,7 +18,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 @Component({
   selector: 'app-metas',
   imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent,
-    CampoDataDirective],
+    CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
@@ -142,7 +142,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
           <div class="grade-campos">
             <label>Valor alvo <app-campo-valor name="alvo" [(ngModel)]="fm.valorAlvo" obrigatorio [minimo]="0.01" /></label>
-            <label>Data alvo <input type="date" name="data" [(ngModel)]="fm.dataAlvo"></label>
+            <label>Data alvo <app-campo-data name="data" [(ngModel)]="fm.dataAlvo" /></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
             <select name="conta" [(ngModel)]="fm.contaId" (ngModelChange)="fm.reservaNome = null">

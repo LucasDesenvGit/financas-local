@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent, SIMBOLOS_MOEDA } from '../compartilhado/campo-valor.component';
-import { CampoDataDirective } from '../compartilhado/campo-data.directive';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ChartConfiguration } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
@@ -54,7 +54,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent, CampoDataDirective],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -422,7 +422,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             }
           </div>
           <div class="grade-campos">
-            <label>Data <input type="date" name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" required [max]="hoje"></label>
+            <label>Data <app-campo-data name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" obrigatorio [maximo]="hoje" /></label>
             <label>Quantidade <input type="number" name="qtd" [(ngModel)]="fo.quantidade" required min="0.000001" step="any"></label>
             <label>Preço por cota <app-campo-valor name="preco" [(ngModel)]="fo.precoUnitario" [moeda]="fo.moeda" [casas]="4" obrigatorio /></label>
             <label>Taxas/corretagem <app-campo-valor name="taxas" [(ngModel)]="fo.taxas" [moeda]="fo.moeda" /></label>
@@ -623,7 +623,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           <div class="grade-campos">
             <label>Saldo na instituição
               <app-campo-valor name="saldo" [(ngModel)]="fc.saldo" obrigatorio /></label>
-            <label>Conferido em <input type="date" name="data" [(ngModel)]="fc.data" required [max]="hoje"></label>
+            <label>Conferido em <app-campo-data name="data" [(ngModel)]="fc.data" obrigatorio [maximo]="hoje" /></label>
           </div>
           <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong></p>
           <div class="rodape-form">

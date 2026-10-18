@@ -5,6 +5,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **Campo de data novo, com calendário do site** (ADR 0032), em todas as telas.
+  - **Digitar:** dd/mm/aaaa, com as barras entrando sozinhas. O ano tem sempre 4 dígitos (antes o campo aceitava "275760"), e colar uma data AAAA-MM-DD também funciona.
+  - **Calendário:** botão ao lado do campo, no visual do site, com ‹ › para o mês, « » para o ano, "Hoje" e "Limpar". Pelo teclado: setas, PageUp/PageDown e Esc.
+  - **Datas fora do intervalo** (1900–2099, ou o limite da tela, como "até hoje") mostram a mensagem em texto e não deixam salvar.
+- **Lista suspensa aberta no visual do site:** no computador, a lista que abre segue o visual do site, com a opção escolhida destacada e as teclas de sempre (↑/↓, Enter, Esc, letra). No celular continua a do sistema.
+- **Seletor de mês** (Painel, Orçamentos): clicar no nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez. Tem também "Este mês".
+- **Regiões que abrem e fecham no meio da página** abrem e recolhem com animação, sem a tela abaixo pular: a barra do modo edição, os filtros ativos, as dicas, os avisos de formulário e o histórico de faturas.
+- **Metas:** a sobra prevista fica à direita do título, em verde quando sobra e em vermelho quando falta.
+
+### Correções
+- **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.
 - **Listas suspensas no visual do site:** o campo fechado ganhou uma seta própria, no lugar da caixa do sistema, e fica numa linha só. A lista que abre continua a do navegador, e o teclado, o leitor de tela e o celular funcionam como antes.
 - **O que aparece depois entra com um fade curto,** em vez de surgir de uma vez: botões, avisos, etiquetas, cards, blocos, menus que abrem, listas vazias e mensagens de erro. Nada anima com "reduzir movimento" no sistema.
 - **Caixa de marcar nova e seleção de várias linhas melhor** (#133, ADR 0032).

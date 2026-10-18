@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { CampoDataDirective } from '../compartilhado/campo-data.directive';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -19,7 +19,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
  */
 @Component({
   selector: 'app-erros',
-  imports: [ListaSuspensaDirective, FormsModule, DatePipe, PaginacaoComponent, CampoDataDirective],
+  imports: [ListaSuspensaDirective, FormsModule, DatePipe, PaginacaoComponent, CampoDataComponent],
   template: `
     <section class="painel-bloco">
       <div class="bloco-titulo">
@@ -52,8 +52,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             @for (n of niveis; track n) { <option [ngValue]="n">{{ nomeNivel(n) }}</option> }
           </select>
         </label>
-        <label>De <input type="date" name="inicio" [ngModel]="filtro().inicio" (ngModelChange)="mudar({ inicio: $event || null })"></label>
-        <label>Até <input type="date" name="fim" [ngModel]="filtro().fim" (ngModelChange)="mudar({ fim: $event || null })"></label>
+        <label>De <app-campo-data name="inicio" [ngModel]="filtro().inicio" (alterado)="mudar({ inicio: $event || null })" /></label>
+        <label>Até <app-campo-data name="fim" [ngModel]="filtro().fim" (alterado)="mudar({ fim: $event || null })" /></label>
         @if (temFiltro()) {
           <button type="button" class="link" (click)="limpar()">Limpar filtros</button>
         }

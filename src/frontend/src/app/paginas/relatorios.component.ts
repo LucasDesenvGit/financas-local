@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CampoDataDirective } from '../compartilhado/campo-data.directive';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { forkJoin } from 'rxjs';
@@ -19,7 +19,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 
 @Component({
   selector: 'app-relatorios',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataDirective],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Relatórios</h1>
@@ -34,8 +34,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     </header>
 
     <section class="filtros">
-      <label>De <input type="date" [(ngModel)]="inicio" (change)="carregar()"></label>
-      <label>Até <input type="date" [(ngModel)]="fim" (change)="carregar()"></label>
+      <label>De <app-campo-data [(ngModel)]="inicio" (alterado)="carregar()" /></label>
+      <label>Até <app-campo-data [(ngModel)]="fim" (alterado)="carregar()" /></label>
       <label>Visão
         <select [(ngModel)]="tipo" (change)="carregar()">
           <option [ngValue]="TipoTransacao.Despesa">Despesas</option>

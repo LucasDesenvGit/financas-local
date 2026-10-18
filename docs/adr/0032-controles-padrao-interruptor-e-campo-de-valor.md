@@ -1,4 +1,4 @@
-# 0032. Controles padrão: interruptor para efeito imediato e campo de valor em reais
+# 0032. Controles padrão: interruptor, caixa de marcar, campo de valor, campo de data e lista suspensa
 
 - **Status:** Aceita
 - **Data:** 2026-10-18
@@ -45,6 +45,27 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
 - **Negativas:**
   - o visto e o traço são desenhados com `::after`, e o visual depende do CSS do site nos dois temas;
   - "selecionar todas as N do filtro" (opcional na #133) ficou de fora: pediria à API os ids do filtro.
+
+## Campo de data, lista suspensa e seletor de mês (pedido do usuário durante a revisão do PR)
+
+- **Campo de data:** `app-campo-data` (`compartilhado/campo-data.component.ts`) no lugar de todo `<input type="date">`.
+  - **Por que:** o campo nativo aceitava ano de 6 dígitos ("13/02/275760"), e o calendário era o do navegador, fora do visual do site.
+  - **Como funciona:** digita-se dd/mm/aaaa, com as barras entrando sozinhas e o ano sempre com 4 dígitos. Colar `AAAA-MM-DD` também funciona.
+  - **Calendário próprio:** segue o padrão *Date Picker Dialog* do WAI-ARIA APG (setas, Home/End, PageUp/PageDown, Shift para o ano, Esc), com « ‹ › », "Hoje" e "Limpar".
+  - **Limites:** 1900–2099 por padrão, ou os da tela (`[maximo]="hoje"`).
+  - **Valor:** entrega o mesmo `'AAAA-MM-DD'` ao `ngModel` (`''` quando vazio). `(alterado)` faz o papel do `(change)` nativo.
+  - **Alternativas descartadas:** só limitar o campo nativo com `max` (resolvia o ano, mas não o visual) e uma biblioteca de calendário (dependência externa).
+- **Lista suspensa:** a `ListaSuspensaDirective` (`compartilhado/lista-suspensa.directive.ts`) mostra, no computador, a lista aberta do site por cima do `<select>` nativo, que continua dono do valor (`ngModel`, `[ngValue]`, `(change)`). No toque fica a lista do sistema. O campo fechado tem a seta desenhada no CSS.
+  - **Descartado:** `appearance: base-select`, porque no Edge 155 o texto escolhido passava por baixo da seta.
+- **Seletor de mês:** o nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez.
+- **Negativas:**
+  - mais código próprio de controle (teclado, posição, foco) para manter, coberto por testes em `testes/usabilidade/calendario.spec.ts`, `lista-suspensa-aberta.spec.ts` e `seletor-mes.spec.ts`;
+  - o calendário e a lista têm de ser conferidos nos dois temas a cada mudança de cor;
+  - no celular, a lista suspensa continua a do sistema (escolha, *julgamento próprio*).
+- **Na prática:**
+  - campo de data novo → `<app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio />`;
+  - tela nova com `<select>` → importar a `ListaSuspensaDirective`;
+  - dois testes falham se uma tela usar `type="date"` ou um `<select>` sem a diretiva.
 
 ## Contexto (campo de valor, #132)
 
