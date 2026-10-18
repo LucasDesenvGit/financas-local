@@ -111,6 +111,7 @@ builder.Services.AddScoped<ConfiguracaoService>();
 builder.Services.AddScoped<ParametroService>();
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<CategorizacaoService>();
+builder.Services.AddScoped<RegraDescricaoService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
 builder.Services.AddScoped<SugestaoOrcamentoService>();

@@ -21,6 +21,8 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../compartilhado/tipos-lancamento';
+import { RenomearTransacaoComponent } from './renomear-transacao.component';
+import { RenomearEmLoteComponent } from './renomear-em-lote.component';
 
 interface FormTransacao {
   id: number | null;
@@ -79,7 +81,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 @Component({
   selector: 'app-transacoes',
   imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
-    IconeComponent, LogoBancoComponent],
+    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -215,6 +217,7 @@ function dataCurta(iso: string, comAno: boolean): string {
           </select>
           <button type="button" class="botao botao-primario" (click)="categorizarLote()">
             {{ modoEdicao() ? 'Trocar nas selecionadas' : 'Aplicar categoria' }}</button>
+          <button type="button" class="botao" (click)="renomearSelecionadas()">✎ Renomear</button>
           @if (filtroAplicado().poucoInformativa) {
             <button type="button" class="botao" (click)="marcarRevisadasSelecionadas()">Marcar como revisadas</button>
           }
@@ -245,7 +248,14 @@ function dataCurta(iso: string, comAno: boolean): string {
                 </td>
                 <td class="nowrap">{{ t.data | date: 'dd/MM/yy' }}</td>
                 <td>
-                  <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                  <div class="linha-descricao">
+                    <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                    <button type="button" class="botao-icone botao-renomear" (click)="$event.stopPropagation(); renomeando.set(t)"
+                      [attr.aria-label]="'Renomear: ' + t.descricao">✎</button>
+                  </div>
+                  @if (t.descricaoOriginal && t.descricaoOriginal !== t.descricao) {
+                    <div class="descricao-original truncar" [title]="t.descricaoOriginal">do banco: {{ t.descricaoOriginal }}</div>
+                  }
                   <div class="detalhe">
                     <span class="etiqueta etiqueta-lancamento"><app-icone [icone]="iconeLancamento(t)" [tamanho]="13" />{{ rotuloLancamento(t) }}</span>
                     @if (foraDosGastos(t)) {
@@ -290,7 +300,9 @@ function dataCurta(iso: string, comAno: boolean): string {
                     <span>{{ t.contaNome }} @if (ehDeCartao(t)) {<small class="tipo-conta">cartão de crédito</small>}</span>
                   </span>
                 </td>
-                <td class="direita valor nowrap" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</td>
+                <!-- Fora dos gastos (pagamento de fatura, transferência): valor em cor neutra, para não parecer receita ou despesa. -->
+                <td class="direita valor nowrap" [class.fora-dos-totais]="foraDosGastos(t)"
+                  [class.positivo]="t.valor > 0 && !foraDosGastos(t)" [class.negativo]="t.valor < 0 && !foraDosGastos(t)">{{ t.valor | currency }}</td>
               </tr>
             } @empty {
               <tr><td colspan="6" class="vazio">Nenhuma transação encontrada para os filtros.</td></tr>
@@ -302,6 +314,9 @@ function dataCurta(iso: string, comAno: boolean): string {
       <app-paginacao [pagina]="p.pagina" [tamanho]="p.tamanhoPagina" [total]="p.total"
         (paginaMudou)="buscar($event)" (tamanhoMudou)="mudarTamanhoPagina($event)" />
     }
+
+    <app-renomear-transacao [transacao]="renomeando()" (fechar)="renomeando.set(null)" (renomeada)="aoRenomear()" />
+    <app-renomear-em-lote [transacoes]="renomeandoLote()" (fechar)="renomeandoLote.set(null)" (renomeada)="aoRenomearLote()" />
 
     <app-modal [aberto]="form !== null" [titulo]="form?.id ? 'Editar transação' : 'Novo lançamento'" (fechar)="form = null">
       @if (form; as fm) {
@@ -469,6 +484,13 @@ function dataCurta(iso: string, comAno: boolean): string {
     </app-modal>
   `,
   styles: `
+    /* #123: nome dado por você em cima; o do banco embaixo, menor (cor suave do tema, com contraste de texto). */
+    .linha-descricao { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .linha-descricao .truncar { min-width: 0; }
+    .botao-renomear { min-width: 24px; min-height: 24px; font-size: 0.85rem; opacity: 0.65; flex: none; }
+    .botao-renomear:hover, .botao-renomear:focus-visible { opacity: 1; }
+    .descricao-original { font-size: 0.78rem; color: var(--texto-suave); margin-top: 1px; }
+    .valor.fora-dos-totais { color: var(--texto-suave); }
     .faixa-filtros {
       display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
       margin: -4px 4px 14px; font-size: 0.9rem;
@@ -876,6 +898,28 @@ export class TransacoesComponent implements OnInit {
   }
 
   /** Não entra nas despesas nem nas receitas (transferência ou "ignorar nos relatórios"). */
+  /** #123: transação na janela "Renomear" (null = fechada). */
+  readonly renomeando = signal<Transacao | null>(null);
+
+  aoRenomear(): void {
+    this.renomeando.set(null);
+    this.buscar(this.filtro.pagina ?? 1);
+  }
+
+  /** #123: o mesmo nome nas selecionadas (as desta página). */
+  readonly renomeandoLote = signal<Transacao[] | null>(null);
+
+  renomearSelecionadas(): void {
+    const selecionadas = (this.pagina()?.itens ?? []).filter((t) => this.selecionadas().has(t.id));
+    if (selecionadas.length) this.renomeandoLote.set(selecionadas);
+  }
+
+  aoRenomearLote(): void {
+    this.renomeandoLote.set(null);
+    this.limparSelecao();
+    this.buscar(this.filtro.pagina ?? 1);
+  }
+
   foraDosGastos(t: Transacao): boolean {
     return t.tipo === TipoTransacao.Transferencia || t.ignorarRelatorios;
   }

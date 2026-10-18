@@ -5,6 +5,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- Transações: **renomear com um nome claro, também para as próximas** (#123, ADR 0030).
+  - **Botão ✎ "Renomear"** em cada transação. A janela mostra a descrição do banco e oferece "Só nesta transação" ou "Também nas outras com esta descrição do banco e nas próximas que chegarem".
+  - **Regra:** a descrição do banco "for igual a", "contiver" ou "começar com" um texto. Para "contiver", o site sugere o texto sem os números que mudam a cada mês.
+  - **Antes de salvar:** prévia com quantas transações vão mudar. Depois, aviso com **Desfazer** e "Voltar à descrição do banco".
+  - **Na lista**, o nome novo fica em cima e a **descrição do banco embaixo**, menor ("do banco: …").
+  - **Busca** pelos dois nomes. A categoria continua vindo da descrição do banco.
+  - **Em massa:** "✎ Renomear" na barra de seleção dá o mesmo nome às selecionadas. Pode ser só nelas, ou com uma regra "é igual a" por descrição do banco, que vale nas outras iguais e nas próximas. O aviso tem "Desfazer".
+  - **Onde ficam as regras:** Categorias › Regras automáticas › "Regras de descrição". Lá dá para criar a regra direto com "+ Regra de descrição" (com prévia de quantas transações renomeia), editar, desligar e excluir. Nome escolhido à mão nunca é trocado por regra.
+  - **Banco:** tabela nova `RegraDescricao` e colunas `Transacao.RegraDescricaoId` e `Transacao.DescricaoManual` (rodar `scripts/2-criar-banco.sh`).
+- Transações: o **valor do que está "fora dos gastos"** (pagamento de fatura, transferência) aparece em cor neutra, para não parecer receita ou despesa.
 - **Instalador `.msi` para Windows** (#119, ADR 0029).
   - **Instalação:** dois cliques e "Avançar", sem .NET, Node, Git nem terminal. O site e o gerenciador já vêm compilados para `C:\Program Files\FinancasLocal`.
   - **Dados:** ficam em `C:\ProgramData\FinancasLocal\dados`, só para o sistema e os administradores.

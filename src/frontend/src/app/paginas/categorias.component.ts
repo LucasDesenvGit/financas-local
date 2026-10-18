@@ -5,6 +5,7 @@ import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   Categoria, CategoriaPluggy, NOMES_CORRESPONDENCIA, NOMES_TIPO_CATEGORIA, Regra, SalvarCategoria, SalvarRegra,
+  RegraDescricao, SalvarRegraDescricao, PreviaRegraDescricao,
   TipoCategoria, TipoCorrespondencia, NaturezaGasto
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
@@ -78,6 +79,34 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                   <td class="texto-suave">{{ r.ativa ? '' : 'inativa' }}</td>
                 </tr>
               } @empty { <tr><td colspan="5" class="vazio">Ex.: descrição contém "UBER" → Transporte.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="linha-flex">
+          <h2 class="titulo-regras-descricao" id="regras-descricao">Regras de descrição</h2>
+          <span class="cresce"></span>
+          <button type="button" class="botao" (click)="novaRegraDescricao()">+ Regra de descrição</button>
+        </div>
+        <p class="texto-suave">Dão um nome mais claro às transações do banco ("PIX ENVIADO 12345" → "Aluguel"). Valem nas
+          transações que já existem e nas próximas; um nome escolhido à mão não muda. Crie aqui ou pelo ✎ "Renomear" em Transações.</p>
+        <div class="tabela-rolagem">
+          <table class="tabela">
+            <thead><tr><th>Quando a descrição do banco</th><th>Texto</th><th>Mostrar</th><th class="direita">Transações</th><th></th></tr></thead>
+            <tbody>
+              @for (r of regrasDescricao(); track r.id) {
+                <tr class="clicavel" (click)="editarRegraDescricao(r)" [class.ignorada]="!r.ativa">
+                  <td>{{ nomeCorrespondencia(r.tipoCorrespondencia) }}</td>
+                  <td><code>{{ r.texto }}</code></td>
+                  <td>{{ r.novaDescricao }}</td>
+                  <td class="direita">{{ r.transacoes }}</td>
+                  <td class="texto-suave">
+                    <button type="button" class="link" (click)="$event.stopPropagation(); editarRegraDescricao(r)"
+                      [attr.aria-label]="'Editar a regra que mostra ' + r.novaDescricao">editar</button>
+                    {{ r.ativa ? '' : ' · desligada' }}
+                  </td>
+                </tr>
+              } @empty { <tr><td colspan="5" class="vazio">Nenhuma ainda. Em Transações, use ✎ "Renomear" e escolha "Também nas outras".</td></tr> }
             </tbody>
           </table>
         </div>
@@ -157,6 +186,36 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
       }
     </app-modal>
 
+    <app-modal [aberto]="formRegraDescricao !== null" [titulo]="regraDescricaoId ? 'Editar regra de descrição' : 'Nova regra de descrição'"
+      (fechar)="formRegraDescricao = null">
+      @if (formRegraDescricao; as frd) {
+        <form (ngSubmit)="salvarRegraDescricao()" #frdf="ngForm" class="formulario">
+          <div class="grade-campos">
+            <label>Quando a descrição do banco
+              <select name="tipo" [(ngModel)]="frd.tipoCorrespondencia" (ngModelChange)="pedirPreviaRegraDescricao()">
+                <option [ngValue]="TipoCorrespondencia.Igual">for igual a</option>
+                <option [ngValue]="TipoCorrespondencia.Contem">contiver</option>
+                <option [ngValue]="TipoCorrespondencia.ComecaCom">começar com</option>
+              </select>
+            </label>
+            <label>Texto <input name="texto" [(ngModel)]="frd.texto" (ngModelChange)="pedirPreviaRegraDescricao()" required minlength="2" maxlength="200"></label>
+          </div>
+          @if (!regraDescricaoId) {
+            <p class="texto-suave" role="status">{{ textoPreviaRegraDescricao() }}</p>
+          }
+          <label>Mostrar como <input name="nova" [(ngModel)]="frd.novaDescricao" required maxlength="300"></label>
+          <p class="texto-suave">Maiúsculas e acentos são ignorados. Ao salvar, as transações de nome automático são renomeadas de novo.</p>
+          <label class="checkbox"><input type="checkbox" name="ativa" [(ngModel)]="frd.ativa"> Ativa</label>
+          <div class="rodape-form">
+            @if (regraDescricaoId) { <button type="button" class="botao botao-perigo" (click)="excluirRegraDescricao()">Excluir</button> }
+            <span class="cresce"></span>
+            <button type="button" class="botao" (click)="formRegraDescricao = null">Cancelar</button>
+            <button class="botao botao-primario" [disabled]="frdf.invalid">Salvar</button>
+          </div>
+        </form>
+      }
+    </app-modal>
+
     <app-modal [aberto]="formRegra !== null" [titulo]="regraId ? 'Editar regra' : 'Nova regra'" (fechar)="formRegra = null">
       @if (formRegra; as frg) {
         <form (ngSubmit)="salvarRegra()" #fr="ngForm" class="formulario">
@@ -187,6 +246,9 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
         </form>
       }
     </app-modal>
+  `,
+  styles: `
+    .titulo-regras-descricao { font-size: 1.05rem; margin: 26px 0 4px; }
   `
 })
 export class CategoriasComponent implements OnInit {
@@ -254,6 +316,7 @@ export class CategoriasComponent implements OnInit {
 
   carregarRegras(): void {
     this.api.regras().subscribe({ next: (r) => this.regras.set(r), error: (e) => this.avisos.erro(mensagemDeErro(e)) });
+    this.carregarRegrasDescricao();
   }
 
   abrirOpenFinance(): void {
@@ -337,6 +400,85 @@ export class CategoriasComponent implements OnInit {
       next: () => {
         this.formRegra = null;
         this.carregarRegras();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /* ------------------------------ #123: regras de descrição ------------------------------ */
+
+  readonly regrasDescricao = signal<RegraDescricao[]>([]);
+  formRegraDescricao: SalvarRegraDescricao | null = null;
+  regraDescricaoId: number | null = null;
+
+  carregarRegrasDescricao(): void {
+    this.api.regrasDescricao().subscribe({
+      next: (r) => this.regrasDescricao.set(r),
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /** Prévia da regra nova: quantas transações de nome automático ela renomeia (Nielsen 5). */
+  readonly previaRegraDescricao = signal<PreviaRegraDescricao | null>(null);
+  private esperaPrevia: ReturnType<typeof setTimeout> | undefined;
+
+  novaRegraDescricao(): void {
+    this.regraDescricaoId = null;
+    this.previaRegraDescricao.set(null);
+    this.formRegraDescricao = { texto: '', tipoCorrespondencia: TipoCorrespondencia.Contem, novaDescricao: '', ativa: true };
+  }
+
+  pedirPreviaRegraDescricao(): void {
+    clearTimeout(this.esperaPrevia);
+    const f = this.formRegraDescricao;
+    if (this.regraDescricaoId || !f || f.texto.trim().length < 2) {
+      this.previaRegraDescricao.set(null);
+      return;
+    }
+    this.esperaPrevia = setTimeout(() => this.api.previaRegraDescricao(f.texto.trim(), f.tipoCorrespondencia).subscribe({
+      next: (p) => this.previaRegraDescricao.set(p),
+      error: () => this.previaRegraDescricao.set(null)
+    }), 300);
+  }
+
+  textoPreviaRegraDescricao(): string {
+    const p = this.previaRegraDescricao();
+    if (!p) return 'Escreva o texto para ver quantas transações a regra renomeia.';
+    if (p.quantidade === 0) return 'Nenhuma transação tem essa descrição do banco agora: a regra vale para as próximas.';
+    const exemplos = p.exemplos.length ? ` (ex.: ${p.exemplos.join('; ')})` : '';
+    return `Vai renomear ${p.quantidade} transação(ões)${exemplos} e as próximas.`;
+  }
+
+  editarRegraDescricao(r: RegraDescricao): void {
+    this.regraDescricaoId = r.id;
+    this.formRegraDescricao = {
+      texto: r.texto, tipoCorrespondencia: r.tipoCorrespondencia, novaDescricao: r.novaDescricao, ativa: r.ativa
+    };
+  }
+
+  salvarRegraDescricao(): void {
+    const id = this.regraDescricaoId;
+    const f = this.formRegraDescricao;
+    if (!f) return;
+    const dto = { ...f, texto: f.texto.trim(), novaDescricao: f.novaDescricao.trim() };
+    (id ? this.api.salvarRegraDescricao(id, dto) : this.api.criarRegraDescricao(dto)).subscribe({
+      next: (r) => {
+        this.formRegraDescricao = null;
+        this.avisos.sucesso(`Regra salva: ${r.transacoes} transação(ões) com o nome "${r.novaDescricao}".`);
+        this.carregarRegrasDescricao();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  excluirRegraDescricao(): void {
+    const id = this.regraDescricaoId;
+    if (!id || !confirm('Excluir esta regra? As transações com o nome dado por ela voltam à descrição do banco.')) return;
+    this.api.excluirRegraDescricao(id).subscribe({
+      next: () => {
+        this.formRegraDescricao = null;
+        this.avisos.sucesso('Regra excluída: as transações voltaram à descrição do banco.');
+        this.carregarRegrasDescricao();
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });

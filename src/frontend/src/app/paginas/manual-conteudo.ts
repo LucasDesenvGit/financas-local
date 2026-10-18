@@ -295,6 +295,33 @@ export const MANUAL: CapituloManual[] = [
         erros: ['Transações do Open Finance não podem ser excluídas (o banco mandaria de novo). Para tirar dos totais, marque “Ignorar nos relatórios”.']
       },
       {
+        id: 'renomear',
+        titulo: 'Renomear: um nome claro, também para as próximas',
+        paraQueServe: 'Trocar descrições como “PIX ENVIADO 12345” por um nome que você entenda daqui a meses, e fazer as próximas iguais já chegarem com ele.',
+        passos: [
+          'Em Transações, clique no ✎ ao lado da descrição (ou use Tab até ele e Enter).',
+          'Escreva o novo nome em “Nova descrição”. A descrição do banco aparece em cima, para comparar.',
+          'Em “Onde usar este nome”, escolha “Só nesta transação” ou “Também nas outras com esta descrição do banco e nas próximas que chegarem”.',
+          'Com “também nas outras”: escolha se a descrição do banco deve “for igual a”, “contiver” ou “começar com” o texto. O site mostra quantas transações vão mudar antes de salvar.',
+          'Salve. O aviso tem “Desfazer”. Na lista, o nome novo fica em cima e a descrição do banco embaixo, menor (“do banco: …”).',
+          'Para voltar, abra o ✎ de novo e use “Voltar à descrição do banco”.',
+          'Várias de uma vez: marque as transações e use “✎ Renomear” na barra de seleção. Com “Nas selecionadas e nas próximas”, o site cria uma regra por descrição do banco.',
+          'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto (com prévia de quantas transações renomeia), e dá para editar, desligar ou excluir.'
+        ],
+        abrir: [
+          { rotulo: 'Ver as descrições pouco informativas', rota: '/transacoes', params: { generica: '1' } },
+          { rotulo: 'Ver as regras de descrição', rota: '/categorias' }
+        ],
+        dicas: [
+          'Para PIX e boletos com número que muda todo mês, use “contiver” e deixe só a parte fixa (o site já sugere o texto sem os números).',
+          'A busca acha a transação pelo nome novo e pela descrição do banco. A categoria continua vindo da descrição do banco (as regras de categoria não mudam).',
+          'Uma transação renomeada sai do filtro “Descrição pouco informativa”.'
+        ],
+        erros: [
+          'Nome trocado à mão (pelo ✎ “Só nesta” ou pelo formulário da transação) não é mudado por nenhuma regra. Para a regra valer nela, use “Também nas outras” de novo a partir dela.'
+        ]
+      },
+      {
         id: 'lancamento-manual',
         titulo: 'Lançamento manual e transferência',
         paraQueServe: 'Registrar o que o banco não informa, como gastos em dinheiro.',

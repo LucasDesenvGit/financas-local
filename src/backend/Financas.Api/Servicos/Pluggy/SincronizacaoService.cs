@@ -18,12 +18,15 @@ public class SincronizacaoService
     private readonly PluggyClient _pluggy;
     private readonly ConfiguracaoService _config;
     private readonly CategorizacaoService _categorizacao;
+    private readonly RegraDescricaoService _descricoes;
     private readonly ContaService _contas;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
-        CategorizacaoService categorizacao, ContaService contas, ILogger<SincronizacaoService> logger)
+        CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
+        ILogger<SincronizacaoService> logger)
     {
+        _descricoes = descricoes;
         _db = db;
         _pluggy = pluggy;
         _config = config;
@@ -105,6 +108,7 @@ public class SincronizacaoService
             }
 
             await _categorizacao.CarregarAsync(ct);
+            await _descricoes.CarregarAsync(ct);
 
             int novas = 0, atualizadas = 0;
             var erros = new List<string>();
@@ -304,9 +308,16 @@ public class SincronizacaoService
             }
 
             var descricaoRecebida = Limitar(pt.Description?.Trim(), 300) is { Length: > 0 } d ? d : "(sem descrição)";
-            // Mantém a descrição editada pelo usuário; atualiza se ele nunca editou.
-            if (nova || t.Descricao == t.DescricaoOriginal) t.Descricao = descricaoRecebida;
+            // Nome automático (o do banco ou o de uma regra de descrição, #123) acompanha o banco e as regras; nome
+            // escolhido à mão (ou editado antes das regras existirem) fica como está.
+            var nomeAutomatico = nova || RegraDescricaoService.NomeAutomatico(t);
             t.DescricaoOriginal = descricaoRecebida;
+            if (nomeAutomatico)
+            {
+                t.Descricao = descricaoRecebida;
+                t.RegraDescricaoId = null;
+                _descricoes.Aplicar(t);
+            }
             t.Estabelecimento = Limitar(pt.Merchant?.BusinessName ?? pt.Merchant?.Name, 200);
             t.Data = Relogio.ParaDataLocal(pt.Date.Value);
             t.Valor = CalcularValor(pt, ehCartao);

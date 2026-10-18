@@ -56,7 +56,55 @@ public record TransacaoDto(
     int? CategoriaId, string? CategoriaNome, string? CategoriaCor, short? ParcelaNumero, short? ParcelaTotal,
     bool IgnorarRelatorios, string? Observacao, bool Emergencia,
     // #111: como o dinheiro entrou ou saiu (calculado; ADR 0025).
-    TipoLancamento TipoLancamento = TipoLancamento.Outro);
+    TipoLancamento TipoLancamento = TipoLancamento.Outro,
+    // #123: o nome mostrado veio de uma regra de descrição (null = do banco ou escolhido à mão).
+    int? RegraDescricaoId = null);
+
+/// <summary>
+/// #123: prévia de "usar também nas outras": quantas transações de nome automático (fora esta) têm a descrição do
+/// banco que bate com o texto, com exemplos. TextoSugerido: a descrição do banco sem os pedaços com número.
+/// </summary>
+public record PreviaRenomearDto(string? DescricaoOriginal, string TextoSugerido, int Quantidade, List<string> Exemplos);
+
+/// <summary>
+/// #123: novo nome de uma transação. VoltarOriginal: volta ao nome do banco (e as regras não mexem mais nela).
+/// AplicarNasOutras: cria a regra "quando a descrição do banco for/contiver Texto, mostrar Descricao", que vale nas
+/// outras transações de nome automático e nas próximas. Sem isso, o nome vale só nesta (escolhido à mão).
+/// </summary>
+public record RenomearTransacaoDto(
+    [StringLength(300)] string? Descricao,
+    bool VoltarOriginal,
+    bool AplicarNasOutras,
+    TipoCorrespondencia TipoCorrespondencia = TipoCorrespondencia.Igual,
+    [StringLength(200)] string? Texto = null);
+
+/// <summary><c>Desfazer</c>: chave para voltar tudo (vale por alguns minutos).</summary>
+public record ResultadoRenomearDto(int Alteradas, int? RegraId, string? Desfazer);
+
+/// <summary>
+/// #123: o mesmo nome em várias transações. CriarRegras: uma regra "é igual a" por descrição do banco das
+/// selecionadas (a que já existe com esse texto passa a usar o nome novo), que vale também nas outras de nome
+/// automático e nas próximas. Sem isso (ou para lançamento manual), o nome fica escolhido à mão.
+/// </summary>
+public record RenomearEmLoteDto(
+    [Required, MinLength(1), MaxLength(1000)] List<long> Ids,
+    [Required, StringLength(300, MinimumLength = 1)] string Descricao,
+    bool CriarRegras);
+
+public record ResultadoRenomearEmLoteDto(int Alteradas, int RegrasCriadas, int RegrasAlteradas, string? Desfazer);
+
+/// <summary>#123: prévia de uma regra de descrição nova (quantas transações de nome automático ela renomeia).</summary>
+public record PreviaRegraDescricaoDto(int Quantidade, List<string> Exemplos);
+
+/// <summary>#123: regra de descrição, com quantas transações estão com o nome dado por ela.</summary>
+public record RegraDescricaoDto(int Id, string Texto, TipoCorrespondencia TipoCorrespondencia, string NovaDescricao,
+    bool Ativa, int Transacoes);
+
+public record SalvarRegraDescricaoDto(
+    [Required, StringLength(200, MinimumLength = 2)] string Texto,
+    TipoCorrespondencia TipoCorrespondencia,
+    [Required, StringLength(300, MinimumLength = 1)] string NovaDescricao,
+    bool Ativa = true);
 
 public class FiltroTransacoesDto
 {
