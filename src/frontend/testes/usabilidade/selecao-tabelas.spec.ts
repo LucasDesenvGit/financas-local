@@ -81,4 +81,17 @@ describe('Usabilidade: seleção nas tabelas', () => {
     caixa.remove();
     interruptor.remove();
   });
+
+  it('radio também tem 18 px e não estica na largura do formulário (regressão: o estilo geral de input o esticava)', () => {
+    const label = document.createElement('label');
+    label.style.display = 'flex';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    label.append(radio, 'Só nesta transação');
+    document.body.appendChild(label);
+    expect(getComputedStyle(radio).width).toBe('18px');
+    expect(getComputedStyle(radio).height).toBe('18px');
+    expect(getComputedStyle(radio).borderRadius).toBe('50%');
+    label.remove();
+  });
 });

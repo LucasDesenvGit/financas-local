@@ -13,10 +13,11 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { CORES_SUGERIDAS } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-metas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent,
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent,
     CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
@@ -30,8 +31,12 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           <h2 id="titulo-assistente">Quanto guardar este mês</h2>
           <p>Preciso de pelo menos 3 meses completos de extrato para olhar seus gastos. Por enquanto, cada meta mostra a divisão igual até a data.</p>
         } @else {
-          <h2 id="titulo-assistente">{{ nomeMes(p.mes) }}/{{ p.ano }} ·
-            <app-termo chave="sobraPrevista">sobra prevista</app-termo> {{ p.sobraPrevista | currency }}</h2>
+          <!-- O valor à direita, em verde (sobra) ou vermelho (falta): a resposta do bloco se lê de longe (Nielsen 1). -->
+          <h2 id="titulo-assistente" class="titulo-com-valor">
+            <span>{{ nomeMes(p.mes) }}/{{ p.ano }} · <app-termo chave="sobraPrevista">sobra prevista</app-termo></span>
+            <span class="valor-titulo" [class.positivo]="p.sobraPrevista >= 0" [class.negativo]="p.sobraPrevista < 0">
+              {{ p.sobraPrevista | currency }}</span>
+          </h2>
           @if (p.sobraNegativa) {
             <p class="negativo">A projeção deste mês fecha no vermelho: recomendo guardar R$ 0 agora.</p>
           } @else {
@@ -196,6 +201,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
   styles: `
     .aviso-cofrinho { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
     .assistente-metas h2 { margin: 0 0 8px; }
+    .titulo-com-valor { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
+    .valor-titulo { font-family: var(--fonte-titulo); font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
     .assistente-metas p { margin: 0 0 8px; }
     .assistente-metas .links-assistente { margin: 0; }
     .linha-prioridade { display: flex; align-items: center; gap: 6px; }

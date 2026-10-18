@@ -13,6 +13,7 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 /** Linha marcável da conferência. */
 interface Marcavel<T> { item: T; marcada: boolean; }
@@ -30,7 +31,7 @@ const LINHAS_VISIVEIS = 8;
  */
 @Component({
   selector: 'app-conferir-investimentos',
-  imports: [FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent, CampoValorComponent],
+  imports: [ListaSuspensaDirective, FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent, CampoValorComponent],
   template: `
     <app-modal [aberto]="aberto()" titulo="Conferir investimentos" (fechar)="fechar.emit()">
       <div class="formulario conferencia">

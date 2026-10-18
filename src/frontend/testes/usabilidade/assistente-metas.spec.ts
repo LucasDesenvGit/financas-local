@@ -24,6 +24,22 @@ describe('Usabilidade: assistente de metas', () => {
     expect(bloco.querySelector('a')!.getAttribute('href')).toBe('/projecao');
   });
 
+  it('a sobra prevista fica à direita do título, verde quando sobra e vermelha quando falta', async () => {
+    const sobra = abrirMetas(METAS, plano());
+    await sobra.atualizar();
+    const valor = sobra.raiz.querySelector('#titulo-assistente .valor-titulo')!;
+    expect(valor.parentElement!.classList).toContain('titulo-com-valor');
+    expect(valor.classList).toContain(plano().sobraPrevista! >= 0 ? 'positivo' : 'negativo');
+  });
+
+  it('com a projeção no vermelho, o valor fica vermelho', async () => {
+    const falta = abrirMetas(METAS, plano({ sobraPrevista: -223.29, sobraNegativa: true }));
+    await falta.atualizar();
+    const valor = falta.raiz.querySelector('#titulo-assistente .valor-titulo')!;
+    expect(valor.classList).toContain('negativo');
+    expect(valor.classList).not.toContain('positivo');
+  });
+
   it('plano mês a mês começa fechado e abre num botão com aria-expanded', async () => {
     const t = abrirMetas(METAS, plano());
     await t.atualizar();

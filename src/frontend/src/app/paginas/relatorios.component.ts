@@ -15,10 +15,11 @@ import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-relatorios',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataDirective],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Relatórios</h1>

@@ -360,7 +360,7 @@ export const MANUAL: CapituloManual[] = [
           'Para um intervalo: marque uma, segure Shift e clique em outra. Todas entre as duas são marcadas (ou desmarcadas).',
           'A caixa do cabeçalho seleciona todas desta página. Com só algumas marcadas, ela mostra um traço; clique nela para marcar todas.',
           'A barra de ações aparece no topo e acompanha a rolagem. Ela diz quantas estão selecionadas e quantas estão em outras páginas.',
-          'Esc ou “limpar seleção” desmarcam tudo.'
+          'Esc ou “✕ Limpar seleção” desmarcam tudo.'
         ],
         dicas: ['Trocar de página mantém a seleção: dá para juntar transações de várias páginas e aplicar a ação de uma vez.'],
         erros: ['Trocar o filtro (busca, período, categoria…) limpa a seleção, com um aviso. Assim nenhuma ação em lote pega uma transação que não aparece no filtro atual.'],

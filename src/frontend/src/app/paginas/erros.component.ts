@@ -10,6 +10,7 @@ import { ErroSistema, ErroSistemaDetalhe, FiltroErros, NOMES_NIVEL_ERRO, NivelEr
 import { AvisosService } from '../compartilhado/avisos.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
 import { dataIsoValida } from '../compartilhado/utilidades';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 /**
  * Erros do sistema (#11, ADR 0022), na aba Configurações › Erros. Shneiderman: a lista primeiro (o que, quando,
@@ -18,7 +19,7 @@ import { dataIsoValida } from '../compartilhado/utilidades';
  */
 @Component({
   selector: 'app-erros',
-  imports: [FormsModule, DatePipe, PaginacaoComponent, CampoDataDirective],
+  imports: [ListaSuspensaDirective, FormsModule, DatePipe, PaginacaoComponent, CampoDataDirective],
   template: `
     <section class="painel-bloco">
       <div class="bloco-titulo">

@@ -26,6 +26,7 @@ import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../compartilhado/tipos-lancamento';
 import { RenomearTransacaoComponent } from './renomear-transacao.component';
 import { RenomearEmLoteComponent } from './renomear-em-lote.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 interface FormTransacao {
   id: number | null;
@@ -83,7 +84,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
     IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
     CampoDataDirective],
   template: `
@@ -138,7 +139,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 
     @if (chipsFiltro(); as chips) {
       @if (chips.length) {
-        <section class="faixa-filtros" aria-label="Filtros ativos">
+        <section class="faixa-filtros expandir" aria-label="Filtros ativos" animate.leave="recolher">
           <strong>Filtrando:</strong>
           @for (c of chips; track c.id) {
             <span class="chip chip-filtro">
@@ -154,7 +155,7 @@ function dataCurta(iso: string, comAno: boolean): string {
     }
 
     @if (filtroAplicado().poucoInformativa) {
-      <p class="dica-generica texto-suave">
+      <p class="dica-generica texto-suave expandir" animate.leave="recolher">
         Transações cuja descrição não diz o que foi (PIX ENVIADO, PAGAMENTO, TED, só o nome do banco). Cada uma sai desta
         lista quando você escolhe a categoria (dá para várias de uma vez em "Editar categorias"), dá um nome mais claro
         a ela ou marca "revisada".
@@ -162,7 +163,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     }
 
     @if (modoEdicao()) {
-      <section class="painel-bloco barra-edicao" aria-labelledby="titulo-edicao">
+      <!-- Abre e recolhe animando a altura: a lista abaixo não pula de uma vez ao entrar/sair do modo edição. -->
+      <section class="painel-bloco barra-edicao expandir" aria-labelledby="titulo-edicao" animate.leave="recolher">
         <div class="bloco-titulo">
           <h2 id="titulo-edicao">Editando categorias</h2>
           <div class="acoes">
@@ -231,7 +233,7 @@ function dataCurta(iso: string, comAno: boolean): string {
           }
           <button type="button" class="botao botao-emergencia" (click)="marcarEmergenciaLote(true)">Marcar emergência</button>
           <button type="button" class="botao" (click)="marcarEmergenciaLote(false)">Desmarcar emergência</button>
-          <button type="button" class="link" (click)="limparSelecao()">limpar seleção</button>
+          <button type="button" class="botao" (click)="limparSelecao()">✕ Limpar seleção</button>
         </section>
         </div>
       </div>
@@ -335,7 +337,7 @@ function dataCurta(iso: string, comAno: boolean): string {
       @if (form; as fm) {
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           @if (fm.openFinance) {
-            <p class="aviso-inline">Transação importada do Open Finance: valor, data e conta vêm do banco.
+            <p class="aviso-inline expandir" animate.leave="recolher">Transação importada do Open Finance: valor, data e conta vêm do banco.
               @if (fm.descricaoOriginal) { <br><small>Original: {{ fm.descricaoOriginal }}</small> }
             </p>
           } @else {
@@ -366,7 +368,7 @@ function dataCurta(iso: string, comAno: boolean): string {
             </select>
           </label>
           @if (sugestoesForm().length) {
-            <div class="sugestoes-chips">
+            <div class="sugestoes-chips expandir" animate.leave="recolher">
               <span class="texto-suave">Sugestões:</span>
               @for (o of sugestoesForm(); track o.categoriaId) {
                 <button type="button" class="chip-sugestao" [title]="o.motivo" (click)="fm.categoriaId = o.categoriaId">

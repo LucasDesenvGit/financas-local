@@ -13,6 +13,7 @@ import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 /** Quantas faturas o histórico mostra antes de "mostrar mais antigas". */
 const FATURAS_VISIVEIS = 6;
@@ -24,7 +25,7 @@ const FATURAS_VISIVEIS = 6;
  */
 @Component({
   selector: 'app-contas',
-  imports: [FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
@@ -202,7 +203,7 @@ const FATURAS_VISIVEIS = 6;
                   @if (historicoAberto(c.id)) {
                     @if (faturasDe(c.id); as lista) {
                       @if (lista.length) {
-                        <table class="tabela tabela-historico">
+                        <table class="tabela tabela-historico expandir" animate.leave="recolher">
                           <caption class="so-leitor">Faturas de {{ c.nome }}, da mais recente para a mais antiga</caption>
                           <thead><tr><th>Vencimento</th><th class="direita">Total</th><th>Situação</th></tr></thead>
                           <tbody>
@@ -246,7 +247,7 @@ const FATURAS_VISIVEIS = 6;
       @if (form; as fm) {
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           @if (editandoOpenFinance) {
-            <p class="aviso-inline">Conta do Open Finance: saldo, limite e tipo vêm do banco. Você pode alterar nome, banco,
+            <p class="aviso-inline expandir" animate.leave="recolher">Conta do Open Finance: saldo, limite e tipo vêm do banco. Você pode alterar nome, banco,
               cor e visibilidade.</p>
           }
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>

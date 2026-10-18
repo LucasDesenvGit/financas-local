@@ -53,6 +53,24 @@ describe('Usabilidade: elementos que aparecem entram com animação', () => {
     }
   });
 
+  it('regiões que abrem e fecham no meio da página animam a altura (expandir/recolher) e vencem o fade comum', () => {
+    const bloco = document.createElement('section');
+    bloco.className = 'painel-bloco barra-edicao expandir';
+    naPagina(bloco);
+    expect(regraCom(bloco, 'expandir')).toBe(true);
+    const css = estilo.textContent!;
+    expect(css.indexOf(':root .expandir')).toBeGreaterThan(css.indexOf('.pagina :is(section'));
+    expect(css).toContain('interpolate-size: allow-keywords');
+    const saindo = document.createElement('section');
+    saindo.className = 'painel-bloco recolher';
+    expect(regraCom(naPagina(saindo), 'recolher')).toBe(true);
+  });
+
+  it('a barra do modo edição de Transações usa expandir/recolher (não fecha de uma vez)', () => {
+    const fonte = readFileSync(join(__dirname, '../../src/app/paginas/transacoes.component.ts'), 'utf8');
+    expect(fonte).toMatch(/class="painel-bloco barra-edicao expandir"[^>]*animate\.leave="recolher"/);
+  });
+
   it('saída: .sair some com fade e vence a regra de entrada (mesma especificidade, vem depois)', () => {
     const el = document.createElement('div');
     el.className = 'botao sair';

@@ -23,6 +23,7 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
   FIXED_INCOME: 'Renda fixa',
@@ -52,7 +53,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
 @Component({
   selector: 'app-investimentos',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
     InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent, CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">

@@ -214,7 +214,7 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 .pagina :is(section, article, li, figure, [class*="cartao"], [class*="bloco"], [class*="kpi"], [class*="indicador"],
   [class*="aviso"], [class*="etiqueta"], [class*="chip"], [class*="botao"], .vazio, .erro, .nota-discreta, .alertas,
   .dica-generica, .campo-valor-mensagem, .filtros-ativos, .sugestoes),
-:is(.menu-flutuante, .seletor-multiplo-painel) {
+:is(.menu-flutuante, .seletor-multiplo-painel, .lista-suspensa-painel) {
   animation: surgir 0.18s ease-out;
 }
 @keyframes surgir { from { opacity: 0; transform: translateY(4px); } }
@@ -356,9 +356,25 @@ select:not([multiple]) {
   background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
 }
 select:not([multiple]):disabled { cursor: not-allowed; opacity: 0.6; }
-/* A lista aberta continua a do sistema. O select personalizável (appearance: base-select) foi testado e descartado:
-   no Edge 155 o texto escolhido passava por baixo da seta, porque fica num elemento interno que o CSS não alcança. */
+/* A lista aberta é a do site (ListaSuspensaDirective, no computador). O select personalizável (appearance:
+   base-select) foi testado e descartado: no Edge 155 o texto escolhido passava por baixo da seta. No celular, fica a
+   lista do sistema; estas cores valem para ela. */
 select:not([multiple]) option { background-color: var(--superficie); color: var(--texto); }
+select[aria-expanded="true"] { border-color: var(--primaria); }
+.lista-suspensa-painel {
+  position: fixed; z-index: 80; max-height: 300px; overflow-y: auto; max-width: min(420px, calc(100vw - 16px));
+  display: grid; gap: 2px; padding: 4px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio);
+  box-shadow: var(--sombra-forte); font-size: 0.92rem;
+}
+.lista-suspensa-opcao {
+  padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--texto); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; min-height: 24px;
+}
+.lista-suspensa-opcao.ativa { background: var(--superficie-2); }
+.lista-suspensa-opcao[aria-selected="true"] { background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 600; }
+.lista-suspensa-opcao[aria-selected="true"].ativa { box-shadow: inset 0 0 0 1px var(--primaria); }
+.lista-suspensa-opcao[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 /* Caixa de marcar (#133): visual próprio, igual em tabelas e formulários, sobre o <input type="checkbox"> nativo
    (teclado, [checked], [indeterminate] e leitor de tela não mudam). 18 px, borda em --texto-suave (contraste ≥ 3:1,
    WCAG 1.4.11), marcada em --primaria com o visto; parcial (indeterminate) com um traço. O interruptor (role="switch")
@@ -383,6 +399,26 @@ input[type="checkbox"]:not([role="switch"]):checked:hover:not(:disabled) { borde
 input[type="checkbox"]:not([role="switch"]):focus { box-shadow: none; }
 input[type="checkbox"]:not([role="switch"]):focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
 input[type="checkbox"]:not([role="switch"]):disabled { opacity: 0.5; cursor: not-allowed; }
+/* Botão de opção (radio): o mesmo visual da caixa de marcar, redondo, com um ponto quando marcado. Sem isto, o estilo
+   geral de input (largura 100%, fundo, padding) esticava o radio na largura toda. */
+input[type="radio"] {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; margin: 0; padding: 0; vertical-align: middle;
+  width: 18px; height: 18px; border-radius: 50%; cursor: pointer; box-shadow: none;
+  display: inline-grid; place-content: center;
+  background: var(--superficie); border: 1.5px solid var(--texto-suave);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+input[type="radio"]::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--primaria-texto);
+  transform: scale(0); transition: transform 0.12s ease;
+}
+input[type="radio"]:checked { background: var(--primaria); border-color: var(--primaria); }
+input[type="radio"]:checked::after { transform: scale(1); }
+input[type="radio"]:hover:not(:disabled) { border-color: var(--texto); }
+input[type="radio"]:checked:hover:not(:disabled) { border-color: var(--primaria-hover); }
+input[type="radio"]:focus { box-shadow: none; }
+input[type="radio"]:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+input[type="radio"]:disabled { opacity: 0.5; cursor: not-allowed; }
 /* Célula de seleção numa tabela: a célula inteira é o alvo (≥ 24×24 px, WCAG 2.5.8), não só a caixinha. */
 label.celula-marcar {
   display: flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px;
@@ -764,12 +800,38 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 
 /* ---------------------------------------------------------------- Seletor de mês */
 .seletor-mes {
-  display: inline-flex; align-items: center; gap: 6px;
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
   background: var(--superficie); border-radius: 12px; padding: 4px; box-shadow: var(--sombra);
 }
 .seletor-mes .botao-icone { background: none; }
 .seletor-mes .botao-icone:hover { background: var(--superficie-2); }
-.seletor-mes-rotulo { font-weight: 600; min-width: 150px; text-align: center; font-size: 0.95rem; color: var(--texto-forte); }
+/* O nome do mês é um botão que abre o quadro de mês e ano. */
+.seletor-mes-rotulo {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 150px; min-height: 34px;
+  padding: 0 10px; border: 0; border-radius: 9px; background: none; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: 0.95rem; color: var(--texto-forte);
+}
+.seletor-mes-rotulo:hover, .seletor-mes-rotulo[aria-expanded="true"] { background: var(--superficie-2); }
+.seletor-mes-rotulo:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.seletor-mes-seta { font-size: 0.7rem; color: var(--texto-suave); }
+.seletor-mes-painel {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 260px; padding: 10px;
+  display: grid; gap: 8px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio); box-shadow: var(--sombra-forte);
+  animation: surgir 0.18s ease-out;
+}
+.seletor-mes-ano { display: flex; align-items: center; justify-content: space-between; }
+.seletor-mes-ano strong { font-family: var(--fonte-titulo); font-size: 1rem; color: var(--texto-forte); font-variant-numeric: tabular-nums; }
+.seletor-mes-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.seletor-mes-opcao {
+  min-height: 36px; border: 0; border-radius: 9px; background: none; cursor: pointer;
+  font: inherit; font-size: 0.9rem; color: var(--texto); text-transform: capitalize;
+}
+.seletor-mes-opcao:hover { background: var(--superficie-2); }
+.seletor-mes-opcao.atual { box-shadow: inset 0 0 0 1px var(--primaria); }
+.seletor-mes-opcao[aria-pressed="true"] { background: var(--primaria); color: var(--primaria-texto); font-weight: 600; }
+.seletor-mes-opcao:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.seletor-mes-hoje { justify-self: center; }
 
 /* ---------------------------------------------------------------- Modal */
 .modal-fundo {
@@ -1172,3 +1234,19 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
 :root .modal.sair { animation: descer-modal 0.15s ease-in forwards; }
 @keyframes sumir { to { opacity: 0; transform: translateY(4px); } }
 @keyframes descer-modal { to { opacity: 0; transform: translate(-50%, 10px); } }
+/* Regiões no meio da página que abrem e fecham (barra do modo edição, filtros ativos, dicas, avisos de formulário,
+   histórico de faturas…): class="expandir" + animate.leave="recolher". Animam a ALTURA, para o conteúdo abaixo
+   descer e subir junto em vez de pular de uma vez. interpolate-size deixa animar até height: auto (Edge/Chrome); onde
+   não há suporte (Firefox), fica só o fade e a altura muda no fim. */
+:root { interpolate-size: allow-keywords; }
+:root .expandir { animation: expandir 0.22s ease-out; }
+:root .recolher { animation: recolher 0.2s ease-in forwards; pointer-events: none; }
+@keyframes expandir {
+  from { height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: clip; }
+}
+@keyframes recolher {
+  to {
+    height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0;
+    border-top-width: 0; border-bottom-width: 0; overflow: clip;
+  }
+}

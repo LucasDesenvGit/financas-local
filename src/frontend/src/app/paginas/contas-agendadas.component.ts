@@ -14,10 +14,11 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { dataIso, dataIsoValida, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataDirective],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas a pagar</h1>
@@ -73,7 +74,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     </div>
 
     @if (sugestoesVisiveis().length || ignoradasNaLista().length) {
-      <section class="painel-bloco sugestoes" aria-labelledby="titulo-sugestoes">
+      <section class="painel-bloco sugestoes expandir" aria-labelledby="titulo-sugestoes" animate.leave="recolher">
         <div class="bloco-titulo">
           <h2 id="titulo-sugestoes">Sugestões do extrato</h2>
         </div>
