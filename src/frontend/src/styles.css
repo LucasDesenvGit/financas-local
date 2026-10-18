@@ -132,9 +132,46 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
   position: sticky;
   top: 0;
   height: 100vh;
+  width: 252px;
+  z-index: 1;   /* acima do conteúdo enquanto ele desliza na volta do menu */
+  transition: transform 0.22s ease, visibility 0s linear 0s;
 }
 
-.marca { display: flex; align-items: center; gap: 12px; padding: 0 10px 24px; }
+/* #131: menu escondido no computador. Ao esconder, a coluna encolhe enquanto o menu desliza para a esquerda; no fim
+   ele fica invisível (e inert no HTML), para o Tab não parar em link escondido. Ao mostrar, a coluna volta de uma
+   vez (o conteúdo se ajusta uma vez só) e só o menu desliza: animar a coluna nessa direção refazia o layout a cada
+   quadro (texto quebrando linha, gráficos redesenhando) e piscava. A transição vale só na regra de destino
+   (.menu-recolhido). Sem animação com prefers-reduced-motion. */
+@media (min-width: 901px) {
+  .app.menu-recolhido { grid-template-columns: 0 1fr; transition: grid-template-columns 0.22s ease; }
+  .menu-recolhido .lateral { transform: translateX(-100%); visibility: hidden; transition: transform 0.22s ease, visibility 0s linear 0.22s; }
+  /* O título "Finanças" da barra entra com fade logo depois que o menu sai (a marca "passa" do menu para a barra) e
+     sai rápido quando o menu volta. Invisível, não recebe clique nem foco. */
+  .barra-titulo.so-celular {
+    display: inline-flex; opacity: 0; visibility: hidden; transform: translateX(-8px);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+  .menu-recolhido .barra-titulo.so-celular {
+    opacity: 1; visibility: visible; transform: none;
+    transition: opacity 0.2s ease 0.14s, transform 0.2s ease 0.14s, visibility 0s linear 0.14s;
+  }
+  /* O conteúdo ganha a largura do menu (1380 + 252 px) e fica centralizado: em tela larga, não encosta à esquerda
+     com um vazio grande à direita. */
+  .menu-recolhido .pagina { max-width: 1632px; margin-inline: auto; }
+}
+
+/* Topo do menu: a marca e, no celular, o ✕ que fecha a gaveta. */
+.lateral-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: -6px 0 18px; }
+.botao-fechar-menu { flex-shrink: 0; }
+.fundo-gaveta { display: none; }
+
+.marca {
+  display: flex; align-items: center; gap: 12px; padding: 6px 10px; min-width: 0;
+  flex: 1;   /* a área clicável ocupa a largura toda do topo do menu (no celular, até o ✕) */
+  border-radius: var(--raio-pequeno); color: inherit; text-decoration: none;
+  transition: background-color var(--transicao);
+}
+.marca:hover { background: var(--superficie-2); text-decoration: none; }
 .marca strong { display: block; font-family: var(--fonte-titulo); font-size: 1.12rem; font-weight: 650; color: var(--texto-forte); }
 .marca small { color: var(--texto-suave); font-size: 0.8rem; }
 .marca-simbolo {
@@ -162,6 +199,26 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 
 .conteudo { min-width: 0; }
 .pagina { padding: 32px 36px 56px; max-width: 1380px; }
+/* Troca de tela: a tela nova entra com um fade curto e sobe um pouco. O roteador só cria um componente novo ao trocar
+   de tela, então filtro, página da tabela ou âncora (query params, #) não animam. Sem animação com
+   prefers-reduced-motion (regra global acima). Sem "fill" para não deixar transform (que mudaria o position: fixed
+   dos modais) depois do fim. */
+.pagina > :not(router-outlet) { animation: entrar-tela 0.2s ease-out; }
+@keyframes entrar-tela { from { opacity: 0; transform: translateY(8px); } }
+/* Entrada: o que aparece depois (um @if que vira verdadeiro, um item novo numa lista, um aviso, um card que chega com
+   os dados, um menu que abre…) entra com um fade curto em vez de surgir de uma vez. Regra ampla, por tipo de elemento
+   e por família de classe (cartao*, bloco*, kpi*, indicador*, aviso*, etiqueta*, chip*, botao*), para valer em todas
+   as telas sem depender de lembrar uma por uma. Linhas de tabela e texto solto ficam de fora (re-render de lista não
+   pisca). `animation` (não `transition`) roda só quando o elemento é criado e não briga com as transições de hover;
+   sem "fill", não sobra transform (que mudaria o position: fixed de modais). Saída: ver "Saída" no fim do arquivo.
+   Sem animação com prefers-reduced-motion (regra global). */
+.pagina :is(section, article, li, figure, [class*="cartao"], [class*="bloco"], [class*="kpi"], [class*="indicador"],
+  [class*="aviso"], [class*="etiqueta"], [class*="chip"], [class*="botao"], .vazio, .erro, .nota-discreta, .alertas,
+  .dica-generica, .campo-valor-mensagem, .filtros-ativos, .sugestoes),
+:is(.menu-flutuante, .seletor-multiplo-painel, .lista-suspensa-painel) {
+  animation: surgir 0.18s ease-out;
+}
+@keyframes surgir { from { opacity: 0; transform: translateY(4px); } }
 
 .cabecalho-pagina {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
@@ -172,11 +229,19 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
+  /* Gaveta: no máximo 85% da tela, para sempre sobrar um pedaço da página à vista (fica claro que é uma gaveta por
+     cima e onde tocar para sair). touch-action: pan-y deixa a lista rolar e o arraste para o lado fechar. */
   .lateral {
-    position: fixed; inset: 0 auto 0 0; width: 272px; z-index: 30;
-    transform: translateX(-100%); transition: transform 0.22s ease;
+    position: fixed; inset: 0 auto 0 0; width: min(272px, 85vw); height: 100dvh; z-index: 30;
+    transform: translateX(-100%); transition: transform 0.22s ease; touch-action: pan-y;
   }
-  .menu-aberto .lateral { transform: none; box-shadow: 0 0 0 100vmax var(--fundo-modal); }
+  .menu-aberto .lateral { transform: none; box-shadow: var(--sombra-forte); }
+  /* Fundo escuro que fecha a gaveta ao tocar fora. */
+  .fundo-gaveta {
+    display: block; position: fixed; inset: 0; z-index: 25; background: var(--fundo-modal);
+    opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+  }
+  .menu-aberto .fundo-gaveta { opacity: 1; pointer-events: auto; }
   .pagina { padding: 20px 16px 40px; }
 }
 
@@ -280,11 +345,178 @@ input:focus, select:focus, textarea:focus {
   outline: none; background: var(--superficie);
   border-color: var(--primaria); box-shadow: 0 0 0 4px var(--primaria-suave);
 }
-input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--primaria); padding: 0; }
+/* Lista suspensa (select): o campo fechado no visual do site em todo navegador, com a seta desenhada aqui (dois
+   gradientes na cor do tema), no lugar da caixa do sistema. Continua o <select> nativo: teclado, leitor de tela e a
+   lista do celular não mudam. Fica depois do :focus para a seta não sumir no foco. */
+select:not([multiple]) {
+  appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;   /* uma linha só, como o select do sistema */
+  background-image: linear-gradient(45deg, transparent 50%, var(--texto-suave) 50%),
+    linear-gradient(135deg, var(--texto-suave) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 52%, calc(100% - 13px) 52%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+select:not([multiple]):disabled { cursor: not-allowed; opacity: 0.6; }
+/* A lista aberta é a do site (ListaSuspensaDirective, no computador). O select personalizável (appearance:
+   base-select) foi testado e descartado: no Edge 155 o texto escolhido passava por baixo da seta. No celular, fica a
+   lista do sistema; estas cores valem para ela. */
+select:not([multiple]) option { background-color: var(--superficie); color: var(--texto); }
+select[aria-expanded="true"] { border-color: var(--primaria); }
+.lista-suspensa-painel {
+  position: fixed; z-index: 80; max-height: 300px; overflow-y: auto; max-width: min(420px, calc(100vw - 16px));
+  display: grid; gap: 2px; padding: 4px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio);
+  box-shadow: var(--sombra-forte); font-size: 0.92rem;
+}
+.lista-suspensa-opcao {
+  padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--texto); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; min-height: 24px;
+}
+.lista-suspensa-opcao.ativa { background: var(--superficie-2); }
+.lista-suspensa-opcao[aria-selected="true"] { background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 600; }
+.lista-suspensa-opcao[aria-selected="true"].ativa { box-shadow: inset 0 0 0 1px var(--primaria); }
+.lista-suspensa-opcao[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+/* Caixa de marcar (#133): visual próprio, igual em tabelas e formulários, sobre o <input type="checkbox"> nativo
+   (teclado, [checked], [indeterminate] e leitor de tela não mudam). 18 px, borda em --texto-suave (contraste ≥ 3:1,
+   WCAG 1.4.11), marcada em --primaria com o visto; parcial (indeterminate) com um traço. O interruptor (role="switch")
+   tem o seu próprio estilo. */
+input[type="checkbox"]:not([role="switch"]) {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; position: relative; margin: 0; padding: 0;
+  width: 18px; height: 18px; border-radius: 5px; cursor: pointer; box-shadow: none; vertical-align: middle;
+  display: inline-grid; place-content: center;
+  background: var(--superficie); border: 1.5px solid var(--texto-suave);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+input[type="checkbox"]:not([role="switch"])::after {
+  content: ""; width: 5px; height: 9px; border: solid var(--primaria-texto); border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg) scale(0); transition: transform 0.12s ease;
+}
+input[type="checkbox"]:not([role="switch"]):checked,
+input[type="checkbox"]:not([role="switch"]):indeterminate { background: var(--primaria); border-color: var(--primaria); }
+input[type="checkbox"]:not([role="switch"]):checked::after { transform: translateY(-1px) rotate(45deg) scale(1); }
+input[type="checkbox"]:not([role="switch"]):indeterminate::after { width: 9px; height: 0; border-width: 0 0 2px 0; transform: none; }
+input[type="checkbox"]:not([role="switch"]):hover:not(:disabled) { border-color: var(--texto); }
+input[type="checkbox"]:not([role="switch"]):checked:hover:not(:disabled) { border-color: var(--primaria-hover); }
+input[type="checkbox"]:not([role="switch"]):focus { box-shadow: none; }
+input[type="checkbox"]:not([role="switch"]):focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+input[type="checkbox"]:not([role="switch"]):disabled { opacity: 0.5; cursor: not-allowed; }
+/* Botão de opção (radio): o mesmo visual da caixa de marcar, redondo, com um ponto quando marcado. Sem isto, o estilo
+   geral de input (largura 100%, fundo, padding) esticava o radio na largura toda. */
+input[type="radio"] {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; margin: 0; padding: 0; vertical-align: middle;
+  width: 18px; height: 18px; border-radius: 50%; cursor: pointer; box-shadow: none;
+  display: inline-grid; place-content: center;
+  background: var(--superficie); border: 1.5px solid var(--texto-suave);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+input[type="radio"]::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--primaria-texto);
+  transform: scale(0); transition: transform 0.12s ease;
+}
+input[type="radio"]:checked { background: var(--primaria); border-color: var(--primaria); }
+input[type="radio"]:checked::after { transform: scale(1); }
+input[type="radio"]:hover:not(:disabled) { border-color: var(--texto); }
+input[type="radio"]:checked:hover:not(:disabled) { border-color: var(--primaria-hover); }
+input[type="radio"]:focus { box-shadow: none; }
+input[type="radio"]:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+input[type="radio"]:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Célula de seleção numa tabela: a célula inteira é o alvo (≥ 24×24 px, WCAG 2.5.8), não só a caixinha. */
+label.celula-marcar {
+  display: flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px;
+  margin: -6px; padding: 6px; cursor: pointer;
+}
+.col-check { user-select: none; }
+.tabela tbody tr.selecionada td { background: var(--primaria-suave); }
 input.ng-invalid.ng-touched { border-color: var(--negativo); }
 label { display: grid; gap: 6px; font-size: 0.84rem; font-weight: 500; color: var(--texto-suave); }
 label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--texto); font-size: 0.92rem; font-weight: 400; }
 .input-compacto { padding: 6px 10px; }
+
+/* Interruptor (#130, ADR 0032): para o que muda a tela NA HORA (mostrar arquivadas, agrupar subcategorias…). O que
+   depende de "Salvar" continua caixa de marcar (NN/g, Toggle-Switch Guidelines). É o mesmo <input type="checkbox">
+   nativo, com role="switch": teclado (Espaço), ngModel e leitor de tela ("interruptor, ligado") vêm de graça; só a
+   aparência muda. Rótulo fixo, que não troca com o estado (WAI-ARIA APG, Switch). Alvo ≥ 24 px com o rótulo. */
+label.interruptor {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 24px; cursor: pointer;
+  color: var(--texto); font-size: 0.92rem; font-weight: 500;
+}
+.interruptor input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; position: relative; margin: 0; padding: 0;
+  width: 40px; height: 24px; border-radius: 99px; cursor: pointer; box-shadow: none;
+  background: var(--superficie-3); border: 1px solid var(--texto-suave);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.interruptor input[type="checkbox"]::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--texto-suave); transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.interruptor input[type="checkbox"]:checked { background: var(--primaria); border-color: var(--primaria); }
+.interruptor input[type="checkbox"]:checked::before { transform: translateX(16px); background: var(--primaria-texto); }
+.interruptor input[type="checkbox"]:hover:not(:disabled) { border-color: var(--texto); }
+.interruptor input[type="checkbox"]:focus { box-shadow: none; }
+.interruptor input[type="checkbox"]:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+.interruptor input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Campo de valor em dinheiro (#132, ADR 0032): a caixa com o símbolo da moeda e o texto tem a mesma cara dos outros
+   campos (fundo, borda, foco); o <input> de dentro fica sem borda. */
+app-campo-valor { display: grid; gap: 4px; min-width: 0; }
+.campo-valor {
+  display: flex; align-items: center; gap: 6px; padding: 0 12px; min-width: 0;
+  background: var(--superficie-2); border: 1px solid transparent; border-radius: var(--raio-pequeno);
+  transition: border-color var(--transicao), box-shadow var(--transicao), background-color var(--transicao);
+}
+.campo-valor:hover { border-color: var(--linha); }
+.campo-valor:focus-within { background: var(--superficie); border-color: var(--primaria); box-shadow: 0 0 0 4px var(--primaria-suave); }
+.campo-valor-simbolo { color: var(--texto-suave); font-size: 0.88rem; font-weight: 500; flex-shrink: 0; }
+.campo-valor input {
+  border: 0; background: transparent; padding: 9px 0; min-width: 0; font-variant-numeric: tabular-nums;
+}
+.campo-valor input:hover, .campo-valor input:focus { border-color: transparent; background: transparent; box-shadow: none; }
+.campo-valor.campo-valor-erro { border-color: var(--negativo); }
+.campo-valor-compacto { padding: 0 10px; }
+.campo-valor-compacto input { padding: 6px 0; text-align: right; }
+.campo-valor-mensagem { color: var(--negativo); font-size: 0.8rem; font-weight: 500; }
+.campo-valor:has(input:disabled) { opacity: 0.6; }
+
+/* Campo de data (app-campo-data, ADR 0032): a mesma caixa do campo de valor, com o botão do calendário à direita, e o
+   calendário do site por baixo (ou por cima, sem espaço). */
+app-campo-data { display: grid; gap: 4px; min-width: 0; position: relative; }
+.campo-data { padding-right: 4px; }
+.campo-data input { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.campo-data-botao {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0;
+  border: 0; border-radius: 8px; background: none; color: var(--texto-suave); cursor: pointer;
+}
+.campo-data-botao:hover:not(:disabled), .campo-data-botao[aria-expanded="true"] { background: var(--superficie-2); color: var(--texto); }
+.campo-data-botao:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+/* Na camada superior (popover): position fixed com top/left calculados pelo componente; inset/margin zerados porque
+   o navegador centraliza popovers por padrão. */
+.calendario {
+  position: fixed; inset: auto; margin: 0; overflow: visible; z-index: 45; width: 296px; padding: 10px;
+  display: grid; gap: 6px; color: var(--texto); font-size: 0.9rem; font-weight: 400;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio); box-shadow: var(--sombra-forte);
+  animation: surgir 0.18s ease-out;
+}
+.calendario-topo { display: flex; align-items: center; gap: 2px; }
+.calendario-topo strong {
+  flex: 1; text-align: center; font-family: var(--fonte-titulo); font-size: 0.95rem; color: var(--texto-forte);
+}
+.calendario-topo .botao-icone { width: 30px; height: 30px; background: none; }
+.calendario-topo .botao-icone:hover { background: var(--superficie-2); }
+.calendario-grade { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.calendario-grade th { padding: 4px 0; font-size: 0.75rem; font-weight: 600; color: var(--texto-suave); text-align: center; }
+.calendario-grade td { padding: 1px; text-align: center; }
+.calendario-dia {
+  width: 100%; aspect-ratio: 1; min-height: 32px; border: 0; border-radius: 9px; background: none; cursor: pointer;
+  font: inherit; font-size: 0.88rem; color: var(--texto); font-variant-numeric: tabular-nums;
+}
+.calendario-dia:hover:not(:disabled) { background: var(--superficie-2); }
+.calendario-dia.fora-do-mes { color: var(--texto-suave); opacity: 0.6; }
+.calendario-dia[aria-current="date"] { box-shadow: inset 0 0 0 1px var(--primaria); font-weight: 600; }
+.calendario-dia.escolhido { background: var(--primaria); color: var(--primaria-texto); font-weight: 600; opacity: 1; }
+.calendario-dia:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.calendario-dia:disabled { opacity: 0.3; cursor: not-allowed; }
+.calendario-rodape { display: flex; justify-content: space-between; padding: 2px 4px 0; }
 
 .formulario { display: grid; gap: 16px; }
 .grade-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
@@ -297,7 +529,7 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 }
 .filtros label { min-width: 140px; }
 .filtros label.cresce { min-width: 220px; }
-.filtros label.checkbox { min-width: 0; padding-bottom: 8px; }
+.filtros label.checkbox, .filtros label.interruptor { min-width: 0; padding-bottom: 8px; }
 
 .cores { display: flex; gap: 10px; flex-wrap: wrap; }
 .cor {
@@ -331,7 +563,41 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 .kpi-destaque span, .kpi-destaque small { color: var(--destaque-suave); }
 .kpi-destaque strong { color: var(--destaque-texto); font-size: 1.85rem; }
 
-.kpis-mes .kpi { position: relative; overflow: hidden; }
+/* Cards do mês no Painel: Receitas, Despesas e Resultado em três colunas iguais e com a mesma altura (a do maior),
+   com o valor logo abaixo do rótulo. "Faturas do mês", que lista os cartões e quase nunca tem a altura dos outros,
+   vai para uma linha própria, na largura toda. Antes os quatro dividiam a linha e os três primeiros esticavam até
+   a altura das faturas, com o valor solto no meio de um card vazio. */
+.kpis-mes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kpis-mes .kpi { position: relative; overflow: hidden; align-content: start; }
+.kpis-mes .kpi-faturas { grid-column: 1 / -1; }
+@media (max-width: 760px) { .kpis-mes { grid-template-columns: 1fr; } }
+
+/* ---------------------------------------------------------------- Divisórias (todas as telas)
+   Linha fina em --linha, nos dois temas, separando título de conteúdo e um assunto do outro:
+   - abaixo do cabeçalho da página (h1);
+   - entre as seções de uma tela (Painel: "Situação hoje" × "Mês de …"; Contas e cartões: "Contas" × "Cartões");
+   - abaixo do título de todo bloco: .bloco-titulo, .cabecalho-bloco (Investimentos/FIIs) ou o h2 solto que abre o
+     bloco (Visão anual, Relatórios, Projeção, Configurações…), sem precisar mudar o HTML de cada tela;
+   - entre os cartões de "Faturas do mês" no Painel (lado a lado, numa linha vertical; no celular, empilhados,
+     numa linha horizontal).
+   Ficam aqui (e não nos componentes) porque os testes carregam o styles.css. */
+.cabecalho-pagina { padding-bottom: 18px; border-bottom: 1px solid var(--linha); }
+.secao-painel + .secao-painel, .secao-contas + .secao-contas { border-top: 1px solid var(--linha); margin-top: 20px; padding-top: 18px; }
+.painel-bloco > .bloco-titulo, .painel-bloco > .cabecalho-bloco, .painel-bloco > h2:first-child {
+  border-bottom: 1px solid var(--linha); padding-bottom: 12px; margin-bottom: 14px;
+}
+app-painel .lista-faturas {
+  border-top: 1px solid var(--linha); padding-top: 12px;
+  /* auto-fit: os cartões dividem a largura toda (2 = metade cada, 3 = um terço…), sem sobra vazia à direita. */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 0;
+}
+app-painel .lista-faturas li { align-content: start; padding-right: 16px; }
+app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding-left: 16px; }
+@media (max-width: 760px) {
+  app-painel .lista-faturas { grid-template-columns: 1fr; }
+  app-painel .lista-faturas li { padding: 0; }
+  app-painel .lista-faturas li + li { border-left: 0; border-top: 1px solid var(--linha); padding-top: 12px; }
+}
 .kpis-mes .kpi::before {
   content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--primaria-suave);
 }
@@ -413,6 +679,9 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 }
 .etiqueta-alerta { background: var(--alerta-suave); color: var(--alerta); }
 .etiqueta-sucesso { background: var(--positivo-suave); color: var(--positivo); }
+/* #130: conta/cartão arquivado diz "Arquivada" em texto, além do visual apagado (WCAG 1.4.1). */
+.etiqueta-arquivada { background: var(--superficie-3); color: var(--texto-forte); border: 1px dashed var(--texto-suave); }
+.etiquetas-conta { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
 .chip {
   display: inline-flex; align-items: center; font-size: 0.85rem; white-space: nowrap;
   background: var(--superficie-2); padding: 3px 10px 3px 8px; border-radius: 99px;
@@ -423,11 +692,26 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
   display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
   font-size: 0.92rem; margin: 0 4px 12px; font-variant-numeric: tabular-nums;
 }
+/* Barra de ações em lote (#133): abre e fecha animando a altura (grid 0fr → 1fr), sem empurrar a tabela de uma vez,
+   e fica fixa logo abaixo da barra superior ao rolar uma seleção grande. Fechada, fica invisível e inert. */
+.barra-lote-espaco {
+  display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+  position: sticky; top: 64px; z-index: 6;
+  transition: grid-template-rows 0.2s ease, opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+.barra-lote-espaco.aberta {
+  grid-template-rows: 1fr; opacity: 1; visibility: visible;
+  transition: grid-template-rows 0.2s ease, opacity 0.2s ease, visibility 0s;
+}
+.barra-lote-dentro { min-height: 0; overflow: hidden; }
 .barra-lote {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  background: var(--primaria-suave); border-radius: var(--raio-medio); padding: 10px 16px; margin-bottom: 12px;
+  /* fundo opaco: fixa no topo, a tabela passa por baixo sem aparecer através */
+  background: linear-gradient(var(--primaria-suave), var(--primaria-suave)), var(--superficie);
+  border-radius: var(--raio-medio); padding: 10px 16px; margin-bottom: 12px; box-shadow: var(--sombra);
 }
-.barra-lote select { width: auto; min-width: 220px; background: var(--superficie); }
+.contagem-selecao { font-weight: 600; color: var(--texto-forte); font-variant-numeric: tabular-nums; }
+.barra-lote select { width: auto; min-width: 220px; background-color: var(--superficie); }
 .paginacao {
   display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   background: var(--superficie); border-radius: var(--raio); padding: 10px 14px; box-shadow: var(--sombra);
@@ -451,6 +735,9 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 
 /* ---------------------------------------------------------------- Contas e metas */
 .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; margin-top: 10px; }
+/* Lista vazia numa grade de cartões (ex.: Metas sem nenhuma meta): o aviso ocupa a linha toda, numa linha só e
+   centralizado, em vez de ficar preso na 1ª coluna (270 px), quebrado em duas linhas e fora do meio. */
+.grade-cartoes > .vazio { grid-column: 1 / -1; }
 .cartao-conta, .cartao-meta {
   background: var(--superficie); border-radius: var(--raio);
   padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--sombra);
@@ -496,14 +783,22 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 .secao-total strong.negativo { color: var(--negativo); }
 
 .cartao-conta header { align-items: center; }
+/* Contas: cabeçalho, saldo, legenda, "Cartões: …" e rodapé ficam na mesma altura em todos os cards da mesma linha
+   da grade (subgrid), mesmo quando um nome de banco longo quebra em várias linhas e empurraria o saldo para baixo.
+   O "Cartões: …" é opcional: o rodapé fica sempre na 5ª linha. Sem suporte a subgrid, o card só não alinha com o
+   vizinho (cada um com as próprias linhas). */
+.cartao-conta { display: grid; grid-row: span 5; grid-template-rows: subgrid; row-gap: 4px; align-content: start; }
+.cartao-conta > footer { grid-row: 5; }
 .conta-icone {
   width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0;
   background: color-mix(in srgb, var(--cor-conta, var(--primaria)) 22%, transparent);
   color: var(--texto-forte); font-size: 1.1rem;
 }
 
-/* align-items: start: o cartão com o histórico de faturas aberto cresce sozinho, sem esticar os vizinhos. */
-.grade-cartoes-credito { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: start; }
+/* Cartões da mesma linha com a mesma altura, com "transações · editar" sempre no rodapé (margin-top: auto).
+   Custo aceito: abrir o histórico de faturas de um cartão também estica os vizinhos da mesma linha (antes era
+   align-items: start, e cada cartão tinha a sua altura). */
+.grade-cartoes-credito { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .cartao-credito-bloco {
   background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); overflow: hidden;
   display: flex; flex-direction: column;
@@ -546,12 +841,38 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 
 /* ---------------------------------------------------------------- Seletor de mês */
 .seletor-mes {
-  display: inline-flex; align-items: center; gap: 6px;
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
   background: var(--superficie); border-radius: 12px; padding: 4px; box-shadow: var(--sombra);
 }
 .seletor-mes .botao-icone { background: none; }
 .seletor-mes .botao-icone:hover { background: var(--superficie-2); }
-.seletor-mes-rotulo { font-weight: 600; min-width: 150px; text-align: center; font-size: 0.95rem; color: var(--texto-forte); }
+/* O nome do mês é um botão que abre o quadro de mês e ano. */
+.seletor-mes-rotulo {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 150px; min-height: 34px;
+  padding: 0 10px; border: 0; border-radius: 9px; background: none; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: 0.95rem; color: var(--texto-forte);
+}
+.seletor-mes-rotulo:hover, .seletor-mes-rotulo[aria-expanded="true"] { background: var(--superficie-2); }
+.seletor-mes-rotulo:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.seletor-mes-seta { font-size: 0.7rem; color: var(--texto-suave); }
+.seletor-mes-painel {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 260px; padding: 10px;
+  display: grid; gap: 8px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-medio); box-shadow: var(--sombra-forte);
+  animation: surgir 0.18s ease-out;
+}
+.seletor-mes-ano { display: flex; align-items: center; justify-content: space-between; }
+.seletor-mes-ano strong { font-family: var(--fonte-titulo); font-size: 1rem; color: var(--texto-forte); font-variant-numeric: tabular-nums; }
+.seletor-mes-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.seletor-mes-opcao {
+  min-height: 36px; border: 0; border-radius: 9px; background: none; cursor: pointer;
+  font: inherit; font-size: 0.9rem; color: var(--texto); text-transform: capitalize;
+}
+.seletor-mes-opcao:hover { background: var(--superficie-2); }
+.seletor-mes-opcao.atual { box-shadow: inset 0 0 0 1px var(--primaria); }
+.seletor-mes-opcao[aria-pressed="true"] { background: var(--primaria); color: var(--primaria-texto); font-weight: 600; }
+.seletor-mes-opcao:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.seletor-mes-hoje { justify-self: center; }
 
 /* ---------------------------------------------------------------- Modal */
 .modal-fundo {
@@ -653,6 +974,29 @@ label.checkbox { display: flex; align-items: center; gap: 9px; color: var(--text
 /* ---------------------------------------------------------------- Guia */
 details { margin-top: 12px; }
 details summary { cursor: pointer; color: var(--primaria-forte); font-weight: 550; margin-bottom: 8px; }
+/* details.detalhes: o mesmo visual do "Mais análises" (botão tracejado com seta que gira), para conteúdo sob demanda. */
+details.detalhes > summary {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-height: 44px; padding: 10px 16px;
+  list-style: none; color: var(--texto-forte); font-weight: 600;
+  border: 1px dashed var(--linha); border-radius: var(--raio-medio);
+}
+details.detalhes > summary::-webkit-details-marker { display: none; }
+details.detalhes > summary::before {
+  content: "›"; color: var(--primaria); display: inline-block; transition: transform 0.15s ease;
+}
+details.detalhes[open] > summary::before { transform: rotate(90deg); }
+details.detalhes > summary:hover { background: var(--superficie-2); border-style: solid; }
+details.detalhes > summary small { font-weight: 400; color: var(--texto-suave); font-size: 0.85rem; }
+details.detalhes[open] > :not(summary) { animation: surgir 0.18s ease-out; }
+.etiqueta-erro { background: var(--negativo-suave); color: var(--negativo); }
+/* Orçamentos: a explicação usa a largura toda (sem o limite de 78ch dos parágrafos) e a legenda da cor fica na linha
+   de baixo. */
+.explicacao-orcamentos { margin-bottom: 14px; }
+.explicacao-orcamentos p { max-width: none; margin: 0 0 4px; }
+/* Configurações › Conexões */
+.nova-conexao { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 10px; margin-bottom: 16px; }
+.nova-conexao small { flex-basis: 100%; }
+.acoes-conexao { display: inline-flex; gap: 6px; justify-content: flex-end; }
 .guia { background: var(--superficie-2); border-radius: var(--raio-medio); padding: 12px 16px; margin-bottom: 16px; }
 .guia ol { margin: 6px 0 10px; padding-left: 20px; display: grid; gap: 6px; }
 
@@ -807,7 +1151,20 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 6px;
   height: 56px; padding: 0 24px; background: var(--fundo); border-bottom: 1px solid var(--linha);
 }
-.barra-titulo { font-family: var(--fonte-titulo); color: var(--texto-forte); }
+.barra-inicio { display: flex; align-items: center; gap: 6px; }
+.barra-titulo {
+  align-items: center; min-height: 36px; padding: 0 8px; border-radius: 10px;
+  font-family: var(--fonte-titulo); font-weight: 650; color: var(--texto-forte); text-decoration: none;
+}
+.barra-titulo:hover { background: var(--superficie-2); text-decoration: none; }
+/* O mesmo símbolo da marca do menu (o cofrinho), menor. */
+.barra-titulo { gap: 8px; }
+.barra-titulo-simbolo {
+  width: 26px; height: 26px; border-radius: 8px; display: inline-grid; place-items: center;
+  background: var(--marca-fundo); color: var(--marca-texto);
+}
+/* O ☰ fica aberto quase sempre no computador: sem o fundo de "expandido", só no hover. */
+.botao-menu[aria-expanded="true"]:not(:hover) { background: none; color: var(--texto-suave); }
 .barra-acoes { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .botao-barra {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -849,7 +1206,6 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
 @media (max-width: 900px) {
   .barra-superior { padding: 0 10px; }
   .so-celular { display: inline-flex; }
-  .barra-titulo.so-celular { display: block; }
   /* No celular o sincronizar mostra só o ícone (o texto fica no aria-label e na dica). */
   .botao-sincronizar .rotulo-barra { display: none; }
 }
@@ -932,3 +1288,29 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
 .seletor-multiplo-opcao { min-height: 32px; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
 .seletor-multiplo-opcao:hover { background: var(--superficie-2); }
 .seletor-multiplo-opcao.sub { padding-left: 32px; }
+
+/* ---------------------------------------------------------------- Saída
+   O que some (modal, menu, aviso, balão, mensagem…) sai com um fade curto em vez de sumir de uma vez. Nos templates:
+   animate.leave="sair" (Angular): o Angular põe a classe e só tira o elemento quando a animação termina. `:root .sair`
+   tem a especificidade da regra de entrada (.pagina :is(…)) e vem depois dela, então vence. Sem animação com
+   prefers-reduced-motion (regra global): aí o elemento sai na hora. */
+:root .sair { animation: sumir 0.15s ease-in forwards; pointer-events: none; }
+:root .modal.sair { animation: descer-modal 0.15s ease-in forwards; }
+@keyframes sumir { to { opacity: 0; transform: translateY(4px); } }
+@keyframes descer-modal { to { opacity: 0; transform: translate(-50%, 10px); } }
+/* Regiões no meio da página que abrem e fecham (barra do modo edição, filtros ativos, dicas, avisos de formulário,
+   histórico de faturas…): class="expandir" + animate.leave="recolher". Animam a ALTURA, para o conteúdo abaixo
+   descer e subir junto em vez de pular de uma vez. interpolate-size deixa animar até height: auto (Edge/Chrome); onde
+   não há suporte (Firefox), fica só o fade e a altura muda no fim. */
+:root { interpolate-size: allow-keywords; }
+:root .expandir { animation: expandir 0.22s ease-out; }
+:root .recolher { animation: recolher 0.2s ease-in forwards; pointer-events: none; }
+@keyframes expandir {
+  from { height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: clip; }
+}
+@keyframes recolher {
+  to {
+    height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0;
+    border-top-width: 0; border-bottom-width: 0; overflow: clip;
+  }
+}

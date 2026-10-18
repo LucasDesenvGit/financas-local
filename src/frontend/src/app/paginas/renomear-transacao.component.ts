@@ -7,6 +7,7 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { PreviaRenomear, RenomearTransacao, ResultadoRenomear, TipoCorrespondencia, Transacao } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 type Escopo = 'so-esta' | 'outras';
 
@@ -18,7 +19,7 @@ type Escopo = 'so-esta' | 'outras';
  */
 @Component({
   selector: 'app-renomear-transacao',
-  imports: [FormsModule, ModalComponent],
+  imports: [ListaSuspensaDirective, FormsModule, ModalComponent],
   template: `
     <app-modal [aberto]="!!transacao()" titulo="Renomear transação" (fechar)="fechar.emit()">
       @if (transacao(); as t) {

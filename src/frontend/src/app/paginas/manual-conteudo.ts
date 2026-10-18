@@ -76,7 +76,9 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Conhecendo a tela',
         paraQueServe: 'Saber onde ficam o menu, o status da sincronização e as ferramentas que valem em qualquer tela.',
         passos: [
-          'À esquerda fica o menu com todas as telas. No celular, ele abre pelo botão ☰ no topo.',
+          'À esquerda fica o menu com todas as telas. No celular, ele abre pelo botão ☰ no topo; para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
+          'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
+          'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
           'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',
           'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
           'A calculadora abre no botão ao lado ou com Alt+C.',
@@ -141,7 +143,8 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada banco.',
           'Cada autorização gera um Item ID (aparece no dashboard).',
-          'Em Configurações › Open Finance, cole o Item ID e clique em “Adicionar conexão”.',
+          'Em Configurações › Open Finance, cole o Item ID no campo “Adicionar conexão” e clique em “Adicionar”.',
+          'Cada conexão mostra a situação em português: “Atualizada”, “Desatualizada”, “Erro de login no banco” ou “Precisa de ação sua” (aí é preciso entrar no Meu Pluggy). Os botões “Sincronizar”, “Pausar” e “Remover” ficam na própria linha.',
           'Clique em “Sincronizar agora”. Na primeira vez são buscados os últimos meses de histórico.',
           'Confira em Contas e cartões se as contas e cartões apareceram.'
         ],
@@ -189,9 +192,13 @@ export const MANUAL: CapituloManual[] = [
           'Para dinheiro em espécie, banco sem Open Finance ou um controle separado, use “+ Conta manual”.',
           'Na conta manual você informa o tipo, o saldo inicial e, no cartão, limite, dia de fechamento e de vencimento.',
           'Desmarque “Incluir no saldo total” para uma conta não somar no saldo (ex.: conta de outra pessoa).',
-          'Conta que não usa mais: marque “Arquivada” em vez de excluir.'
+          'Conta que não usa mais: marque “Arquivada” em vez de excluir.',
+          'Para ver as arquivadas, ligue o interruptor “Mostrar arquivadas” no topo da tela; elas aparecem com o selo “Arquivada”.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
+        abrir: [
+          { rotulo: 'Abrir Contas e cartões', rota: '/contas' },
+          { rotulo: 'Ver também as arquivadas', rota: '/contas', params: { arquivadas: '1' } }
+        ]
       },
       {
         id: 'banco-da-conta',
@@ -344,6 +351,21 @@ export const MANUAL: CapituloManual[] = [
           'Em lote: selecione várias linhas e use “Marcar emergência” na barra que aparece.'
         ],
         abrir: [{ rotulo: 'Ver só as emergências', rota: '/transacoes', params: { emergencias: '1' } }]
+      },
+      {
+        id: 'selecionar-varias',
+        titulo: 'Selecionar várias transações',
+        paraQueServe: 'Aplicar a mesma ação (categoria, nome, emergência…) a várias transações de uma vez.',
+        passos: [
+          'Clique na caixa à esquerda da linha (ou em qualquer lugar daquela célula). A linha fica destacada.',
+          'Para um intervalo: marque uma, segure Shift e clique em outra. Todas entre as duas são marcadas (ou desmarcadas).',
+          'A caixa do cabeçalho seleciona todas desta página. Com só algumas marcadas, ela mostra um traço; clique nela para marcar todas.',
+          'A barra de ações aparece no topo e acompanha a rolagem. Ela diz quantas estão selecionadas e quantas estão em outras páginas.',
+          'Esc ou “✕ Limpar seleção” desmarcam tudo.'
+        ],
+        dicas: ['Trocar de página mantém a seleção: dá para juntar transações de várias páginas e aplicar a ação de uma vez.'],
+        erros: ['Trocar o filtro (busca, período, categoria…) limpa a seleção, com um aviso. Assim nenhuma ação em lote pega uma transação que não aparece no filtro atual.'],
+        abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }]
       }
     ]
   },

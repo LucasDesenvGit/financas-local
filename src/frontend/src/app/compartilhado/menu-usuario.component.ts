@@ -23,7 +23,7 @@ import { Icones } from './icones';
     </button>
 
     @if (aberto()) {
-      <div #menu id="menu-usuario" class="menu-flutuante" role="menu" [attr.aria-label]="'Conta ' + (login() ?? '')"
+      <div #menu id="menu-usuario" class="menu-flutuante" role="menu" [attr.aria-label]="'Conta ' + (login() ?? '')" animate.leave="sair"
         (keydown)="teclado($event)">
         <div class="menu-cabecalho" role="presentation">
           <span class="avatar" aria-hidden="true">{{ iniciais() }}</span>

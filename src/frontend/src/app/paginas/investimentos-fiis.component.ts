@@ -14,6 +14,7 @@ import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.co
 import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { pct, reaisOuNada } from '../compartilhado/utilidades';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 // Paleta dos fundos: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic, que têm significado (UX-9).
 const CORES = ['#a7a3f5', '#92c8f0', '#c3b1e1', '#8fd8d8', '#f3b3d3', '#f2d98b', '#b5cf9a', '#d4a5e8', '#a9b4c6',
@@ -30,7 +31,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 /** Aba de FIIs da página de investimentos (inspirada nos painéis de carteira de sites como o Investidor10). */
 @Component({
   selector: 'app-investimentos-fiis',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
   template: `
     @if (dados(); as d) {
       @if (!d.fiis.length) {

@@ -14,12 +14,13 @@ import { CORES_SUGERIDAS, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from 
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { DicaDirective } from '../compartilhado/dica.directive';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 type Aba = 'categorias' | 'regras' | 'openfinance';
 
 @Component({
   selector: 'app-categorias',
-  imports: [FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective],
   template: `
     <header class="cabecalho-pagina">
       <h1>Categorias e regras</h1>

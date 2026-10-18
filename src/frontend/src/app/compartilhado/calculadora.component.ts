@@ -22,7 +22,7 @@ interface ItemHistorico { expressao: string; resultado: number; }
     </button>
 
     @if (aberta()) {
-      <section id="calc-painel" class="calc-painel" role="dialog" aria-label="Calculadora">
+      <section id="calc-painel" class="calc-painel" role="dialog" aria-label="Calculadora" animate.leave="sair">
         <div class="calc-visor">
           <div class="calc-expressao">{{ expressao() || ' ' }}</div>
           <div class="calc-resultado" aria-live="polite">{{ visor() }}</div>

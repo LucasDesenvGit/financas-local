@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
+import { ListaSuspensaDirective } from './lista-suspensa.directive';
 
 /** Item da barra: número de página ou reticências. */
 type ItemPagina = number | '…';
@@ -10,7 +11,7 @@ type ItemPagina = number | '…';
  */
 @Component({
   selector: 'app-paginacao',
-  imports: [DecimalPipe],
+  imports: [ListaSuspensaDirective, DecimalPipe],
   template: `
     @if (total() > 0) {
       <nav class="paginacao" aria-label="Paginação">

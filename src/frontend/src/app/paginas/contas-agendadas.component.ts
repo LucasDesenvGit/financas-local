@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -12,10 +14,11 @@ import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { dataIso, dataIsoValida, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas a pagar</h1>
@@ -71,7 +74,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     </div>
 
     @if (sugestoesVisiveis().length || ignoradasNaLista().length) {
-      <section class="painel-bloco sugestoes" aria-labelledby="titulo-sugestoes">
+      <section class="painel-bloco sugestoes expandir" aria-labelledby="titulo-sugestoes" animate.leave="recolher">
         <div class="bloco-titulo">
           <h2 id="titulo-sugestoes">Sugestões do extrato</h2>
         </div>
@@ -135,8 +138,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Descrição <input name="descricao" [(ngModel)]="fm.descricao" required maxlength="150"></label>
           <div class="grade-campos">
-            <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="fm.valor" required min="0.01" step="0.01"></label>
-            <label>Próximo vencimento <input type="date" name="venc" [(ngModel)]="fm.proximoVencimento" required></label>
+            <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
+            <label>Próximo vencimento <app-campo-data name="venc" [(ngModel)]="fm.proximoVencimento" obrigatorio /></label>
             <label>Recorrência
               <select name="rec" [(ngModel)]="fm.recorrencia">
                 <option [ngValue]="Recorrencia.Mensal">Mensal</option>
@@ -154,8 +157,8 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
           @if (fm.recorrencia !== Recorrencia.Unica) {
             <div class="grade-campos">
               <label>Até (opcional)
-                <input type="date" name="limite" [(ngModel)]="fm.dataLimite" [min]="fm.proximoVencimento"
-                  aria-describedby="ajuda-limite" [attr.aria-invalid]="limiteInvalido(fm)"></label>
+                <app-campo-data name="limite" [(ngModel)]="fm.dataLimite" [minimo]="fm.proximoVencimento"
+                  ajuda="ajuda-limite" [invalido]="limiteInvalido(fm)" /></label>
               <label>ou quantos pagamentos faltam
                 <input type="number" name="restantes" min="1" step="1" [ngModel]="restantesDoForm(fm)"
                   (ngModelChange)="definirRestantes(fm, $event)" aria-describedby="ajuda-limite"></label>
@@ -186,7 +189,7 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     <app-modal [aberto]="pagando !== null" [titulo]="'Pagar · ' + (pagando?.descricao ?? '')" (fechar)="pagando = null">
       @if (pagando; as pg) {
         <form (ngSubmit)="confirmarPagamento()" class="formulario">
-          <label>Data do pagamento <input type="date" name="data" [(ngModel)]="dataPagamento" required></label>
+          <label>Data do pagamento <app-campo-data name="data" [(ngModel)]="dataPagamento" obrigatorio /></label>
           @if (pg.pagamentosRestantes === 1) {
             <p class="texto-suave" role="status">É o último pagamento (até {{ pg.dataLimite | date: 'dd/MM/yyyy' }}): a conta será encerrada.</p>
           }

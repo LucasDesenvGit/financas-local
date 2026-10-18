@@ -42,13 +42,15 @@ export async function abrirContas(url = '/contas', contas: Conta[] = CONTAS,
   faturasPorConta: Record<number, Fatura[]> = {}) {
   const pedidas: number[] = [];
   const salvas: { id: number | null; dto: SalvarConta }[] = [];
+  /** Cada carga de contas: true quando pediu também as arquivadas. */
+  const cargas: boolean[] = [];
   TestBed.configureTestingModule({
     providers: [
       provideRouter([{ path: 'contas', component: ContasComponent }, { path: 'transacoes', children: [] }]),
       {
         provide: ApiService,
         useValue: {
-          contas: () => of(contas),
+          contas: (arquivadas?: boolean) => { cargas.push(!!arquivadas); return of(contas); },
           bancos: () => of(BANCOS),
           faturas: (id: number) => { pedidas.push(id); return of(faturasPorConta[id] ?? []); },
           criarConta: (dto: SalvarConta) => { salvas.push({ id: null, dto }); return of(conta()); },
@@ -63,5 +65,5 @@ export async function abrirContas(url = '/contas', contas: Conta[] = CONTAS,
   await atualizar();
   const raiz = harness.routeNativeElement as HTMLElement;
   const cartao = (id: number) => raiz.querySelector<HTMLElement>(`#cartao-${id}`)!;
-  return { harness, tela, raiz, atualizar, pedidas, salvas, cartao, router: TestBed.inject(Router) };
+  return { harness, tela, raiz, atualizar, pedidas, salvas, cargas, cartao, router: TestBed.inject(Router) };
 }

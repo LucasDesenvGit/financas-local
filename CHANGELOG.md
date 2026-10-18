@@ -8,6 +8,70 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Campo de data novo, com calendário do site** (ADR 0032), em todas as telas.
+  - **Digitar:** dd/mm/aaaa, com as barras entrando sozinhas. O ano tem sempre 4 dígitos (antes o campo aceitava "275760"), e colar uma data AAAA-MM-DD também funciona.
+  - **Calendário:** botão ao lado do campo, no visual do site, com ‹ › para o mês, « » para o ano, "Hoje" e "Limpar". Pelo teclado: setas, PageUp/PageDown e Esc.
+  - **Datas fora do intervalo** (1900–2099, ou o limite da tela, como "até hoje") mostram a mensagem em texto e não deixam salvar.
+- **Lista suspensa aberta no visual do site:** no computador, a lista que abre segue o visual do site, com a opção escolhida destacada e as teclas de sempre (↑/↓, Enter, Esc, letra). No celular continua a do sistema.
+- **Seletor de mês** (Painel, Orçamentos): clicar no nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez. Tem também "Este mês".
+- **Regiões que abrem e fecham no meio da página** abrem e recolhem com animação, sem a tela abaixo pular: a barra do modo edição, os filtros ativos, as dicas, os avisos de formulário e o histórico de faturas.
+- **Metas:** a sobra prevista fica à direita do título, em verde quando sobra e em vermelho quando falta.
+- **Configurações › Conexões:**
+  - a situação aparece em português ("Atualizada", "Erro de login no banco", "Precisa de ação sua"…), não mais o código da Pluggy;
+  - as ações viraram botões ("Sincronizar", "Pausar" e "Remover", este no estilo de perigo);
+  - o campo de adicionar tem rótulo e dica;
+  - o "Histórico de sincronizações" ganhou o visual do "Mais análises".
+- **O calendário abre por cima de tudo:** dentro de um modal, ele não é mais cortado.
+
+### Correções
+- **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.
+- **Listas suspensas no visual do site:** o campo fechado ganhou uma seta própria, no lugar da caixa do sistema, e fica numa linha só. A lista que abre continua a do navegador, e o teclado, o leitor de tela e o celular funcionam como antes.
+- **O que aparece depois entra com um fade curto,** em vez de surgir de uma vez: botões, avisos, etiquetas, cards, blocos, menus que abrem, listas vazias e mensagens de erro. Nada anima com "reduzir movimento" no sistema.
+- **Caixa de marcar nova e seleção de várias linhas melhor** (#133, ADR 0032).
+  - **Caixa nova em todo o site:** no visual do site, nos temas claro e escuro, com os estados marcada, parcial (traço) e desabilitada.
+  - **Nas tabelas:** a célula inteira é clicável e a linha selecionada fica destacada (Transações, Investimentos › importar do extrato, Sugestão de orçamentos, Conferir investimentos).
+  - **Em Transações:**
+    - Shift+clique seleciona um intervalo; Esc limpa;
+    - "Selecionar todas desta página" mostra o estado parcial;
+    - a barra diz "5 selecionadas (2 em outras páginas)", abre com animação, sem empurrar a tabela de uma vez, e fica fixa no topo ao rolar.
+  - **Trocar de página mantém a seleção;** trocar o filtro limpa, com o aviso "Seleção limpa ao trocar o filtro".
+  - **Leitor de tela:** cada caixa diz qual é a transação ("Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00"), e a contagem é anunciada.
+- **Campo de valor em reais padrão** (#132, ADR 0032), em todos os campos de dinheiro: Transações, Contas e cartões, Contas a pagar, Metas, Orçamentos, Investimentos e Conferir investimentos.
+  - **Entende o jeito brasileiro:** "1.234,56", "1234,56", "R$ 1.234,56" (colado do app do banco) e "1234.56". "1.500" é mil e quinhentos, não 1,5.
+  - **Formata enquanto você digita:** "124214" já aparece como "124.214", com o cursor no lugar. Ao sair do campo, completa as casas ("124.214,00").
+  - O símbolo da moeda fica dentro do campo. Investimentos aceitam outra moeda e até 4 casas.
+  - **No celular**, abre o teclado numérico. **No computador**, a rodinha do mouse não muda mais o valor, e as setinhas saíram.
+  - **Erro em texto, perto do campo:** "Informe um valor maior que zero.".
+  - **Orçamentos:** continua salvando ao sair da linha, e agora também com Enter.
+  - Os valores enviados à API não mudam.
+- **Interruptor para o que muda a tela na hora** (#130, ADR 0032).
+  - "Mostrar arquivadas" (Contas e cartões), "Mostrar encerradas" (Investimentos › Posições) e "Agrupar subcategorias" (Relatórios) viraram interruptores. As caixas de marcar de formulário, com "Salvar", não mudam.
+  - **"Mostrar arquivadas":**
+    - o estado fica na URL (`?arquivadas=1`), e recarregar, voltar ou abrir um link salvo mostra a tela do mesmo jeito;
+    - conta ou cartão arquivado mostra o selo **"Arquivada"** em texto.
+  - Os filtros de Transações continuam caixas de marcar, por consistência com a barra de filtros (o porquê está na ADR 0032).
+- **Esconder o menu lateral no computador** (#131).
+  - **Botão ☰:** o mesmo botão da barra de cima, que antes só aparecia no celular, agora também esconde e mostra o menu no computador. O conteúdo passa a usar a largura toda, e os gráficos se redesenham sozinhos.
+  - **Nome acessível:** fixo, "Menu de navegação", e o leitor de tela ouve pelo `aria-expanded` se o menu está aberto ou fechado.
+  - **Menu escondido:** sai da ordem do Tab (`inert`), tanto no computador quanto com a gaveta do celular fechada.
+  - **A escolha fica salva neste navegador** (`financas.menuRecolhido`, ADR 0017), e o padrão é o menu aberto. No celular a gaveta continua começando fechada.
+  - **Com o menu escondido, a página ganha a largura do menu** (até 1632 px) e fica **centralizada**, sem encostar à esquerda com um vazio grande à direita em tela larga.
+  - **Animação:**
+    - ao esconder, o menu desliza enquanto a coluna encolhe;
+    - ao mostrar, a coluna abre de uma vez e o conteúdo, o ☰ e o título deslizam junto com o menu, só com `transform` (sem o pisca-pisca de refazer o layout a cada quadro);
+    - nada disso acontece com movimento reduzido no sistema.
+  - **Gaveta do celular:** dá para fechar sem escolher uma tela. As formas são:
+    - o **✕ "Fechar menu"**;
+    - **tocar no fundo escuro**;
+    - **arrastar para a esquerda**;
+    - **Esc**, que também devolve o foco ao ☰.
+
+    A gaveta ocupa no máximo 85% da tela. Aberta, o foco vai para o ✕ e o conteúdo atrás sai do Tab.
+- **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
+  - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
+- **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
+  - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
+  - Sem animação com movimento reduzido no sistema.
 - **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
   - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
   - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
@@ -23,6 +87,25 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Atalho do gerenciador na área de trabalho**, para abrir com um clique.
   - **`.msi`:** o atalho vai para a área de trabalho de todos os usuários. Com `ATALHOAREADETRABALHO=0`, instala sem ele. A desinstalação remove o atalho.
   - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
+
+### Correções (layout)
+- **Painel: cards do mês reorganizados.**
+  - **Antes:** Receitas, Despesas e Resultado esticavam até a altura de "Faturas do mês" (que lista os cartões), com o valor solto no meio de um card alto e vazio.
+  - **Agora:** os três ficam em colunas iguais e com a mesma altura, com o valor logo abaixo do título. "Faturas do mês" vai para uma linha própria, na largura toda, e os cartões dividem essa largura lado a lado (2 cartões = metade cada).
+  - **No celular**, tudo fica numa coluna.
+- **Divisórias em todas as telas.** Linhas finas nos dois temas:
+  - abaixo do cabeçalho de cada página;
+  - entre as seções de uma tela ("Situação hoje" e "Mês de …" no Painel; "Contas" e "Cartões de crédito" em Contas e cartões);
+  - abaixo do título de cada bloco: os de `.bloco-titulo`, os de Investimentos e FIIs e os que começam com o título solto (Visão anual, Relatórios, Projeção, Configurações, Aparência, Parametrização, Manual…);
+  - no Painel, em "Faturas do mês", abaixo do total e entre os cartões.
+- **Contas e cartões: cards do mesmo tamanho e alinhados.**
+  - **Cartões de crédito:** os da mesma linha têm a mesma altura, com "transações · editar" sempre no rodapé. Abrir o histórico de faturas de um cartão também estica os vizinhos da linha.
+  - **Contas:** cabeçalho, saldo, "saldo atual" e rodapé ficam na mesma altura em todos os cards da linha, mesmo quando um nome de banco longo quebra em várias linhas.
+- **Campos de data com ano de 4 dígitos.**
+  - **Antes:** o calendário do navegador aceitava ano com até 6 dígitos ("13/02/275760").
+  - **Agora:** todo campo de data vai de 01/01/1900 a 31/12/2099, ou usa o limite da própria tela (ex.: não aceitar data no futuro em Investimentos). Assim o navegador limita o ano a 4 dígitos.
+  - Data fora do intervalo não deixa salvar.
+- **Lista vazia numa grade de cartões** (ex.: Metas sem nenhuma meta): o aviso ocupa a linha toda, numa linha só e centralizado. Antes ficava preso na primeira coluna, quebrado em duas linhas e fora do meio.
 
 ## [2.1.0] — 2026-10-18
 

@@ -69,3 +69,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita |
 | [0030](0030-regras-de-descricao-em-tabela-propria.md) | Regras de descrição em tabela própria, com o nome do banco sempre guardado | Aceita |
 | [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md) | Transferência só fica fora dos relatórios quando é entre contas suas | Aceita |
+| [0032](0032-controles-padrao-interruptor-e-campo-de-valor.md) | Controles padrão: interruptor, caixa de marcar, campo de valor, campo de data e lista suspensa | Aceita |
