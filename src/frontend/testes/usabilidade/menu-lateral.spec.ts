@@ -53,6 +53,7 @@ describe('Usabilidade: menu lateral recolhível', () => {
     expect(t.marca().getAttribute('aria-label')).toBe('Finanças, ir para o Painel');
     expect(t.marca().querySelector('.marca-simbolo')!.getAttribute('aria-hidden')).toBe('true');
     expect(t.tituloBarra().getAttribute('aria-label')).toBe('Finanças, ir para o Painel');
+    expect(t.tituloBarra().querySelector('.barra-titulo-simbolo')!.getAttribute('aria-hidden')).toBe('true');
   });
 
   describe('com o styles.css do site', () => {

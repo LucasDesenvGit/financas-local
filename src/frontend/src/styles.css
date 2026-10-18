@@ -121,7 +121,7 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 }
 
 /* ---------------------------------------------------------------- Estrutura */
-.app { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; transition: grid-template-columns 0.22s ease; }
+.app { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
 
 .lateral {
   background: var(--superficie);
@@ -133,15 +133,31 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
   top: 0;
   height: 100vh;
   width: 252px;
+  z-index: 1;   /* acima do conteúdo enquanto ele desliza na volta do menu */
   transition: transform 0.22s ease, visibility 0s linear 0s;
 }
 
-/* #131: menu escondido no computador. A coluna encolhe enquanto o menu desliza para a esquerda; no fim ele fica
-   invisível (e inert no HTML), para o Tab não parar em link escondido. Sem animação com prefers-reduced-motion. */
+/* #131: menu escondido no computador. Ao esconder, a coluna encolhe enquanto o menu desliza para a esquerda; no fim
+   ele fica invisível (e inert no HTML), para o Tab não parar em link escondido. Ao mostrar, a coluna volta de uma
+   vez (o conteúdo se ajusta uma vez só) e só o menu desliza: animar a coluna nessa direção refazia o layout a cada
+   quadro (texto quebrando linha, gráficos redesenhando) e piscava. A transição vale só na regra de destino
+   (.menu-recolhido). Sem animação com prefers-reduced-motion. */
 @media (min-width: 901px) {
-  .app.menu-recolhido { grid-template-columns: 0 1fr; }
+  .app.menu-recolhido { grid-template-columns: 0 1fr; transition: grid-template-columns 0.22s ease; }
   .menu-recolhido .lateral { transform: translateX(-100%); visibility: hidden; transition: transform 0.22s ease, visibility 0s linear 0.22s; }
-  .menu-recolhido .barra-titulo.so-celular { display: inline-flex; }
+  /* O título "Finanças" da barra entra com fade logo depois que o menu sai (a marca "passa" do menu para a barra) e
+     sai rápido quando o menu volta. Invisível, não recebe clique nem foco. */
+  .barra-titulo.so-celular {
+    display: inline-flex; opacity: 0; visibility: hidden; transform: translateX(-8px);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+  .menu-recolhido .barra-titulo.so-celular {
+    opacity: 1; visibility: visible; transform: none;
+    transition: opacity 0.2s ease 0.14s, transform 0.2s ease 0.14s, visibility 0s linear 0.14s;
+  }
+  /* O conteúdo ganha a largura do menu (1380 + 252 px) e fica centralizado: em tela larga, não encosta à esquerda
+     com um vazio grande à direita. */
+  .menu-recolhido .pagina { max-width: 1632px; margin-inline: auto; }
 }
 
 .marca {
@@ -177,7 +193,6 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 
 .conteudo { min-width: 0; }
 .pagina { padding: 32px 36px 56px; max-width: 1380px; }
-
 .cabecalho-pagina {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   margin-bottom: 24px;
@@ -822,11 +837,18 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 6px;
   height: 56px; padding: 0 24px; background: var(--fundo); border-bottom: 1px solid var(--linha);
 }
+.barra-inicio { display: flex; align-items: center; gap: 6px; }
 .barra-titulo {
   align-items: center; min-height: 36px; padding: 0 8px; border-radius: 10px;
   font-family: var(--fonte-titulo); font-weight: 650; color: var(--texto-forte); text-decoration: none;
 }
 .barra-titulo:hover { background: var(--superficie-2); text-decoration: none; }
+/* O mesmo símbolo da marca do menu (o cofrinho), menor. */
+.barra-titulo { gap: 8px; }
+.barra-titulo-simbolo {
+  width: 26px; height: 26px; border-radius: 8px; display: inline-grid; place-items: center;
+  background: var(--marca-fundo); color: var(--marca-texto);
+}
 /* O ☰ fica aberto quase sempre no computador: sem o fundo de "expandido", só no hover. */
 .botao-menu[aria-expanded="true"]:not(:hover) { background: none; color: var(--texto-suave); }
 .barra-acoes { margin-left: auto; display: flex; align-items: center; gap: 4px; }

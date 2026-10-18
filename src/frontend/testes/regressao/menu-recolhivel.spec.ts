@@ -70,6 +70,49 @@ describe('Regressão: menu lateral recolhível e marca levando ao Painel', () =>
     expect(t.app().classList).toContain('menu-recolhido');
   });
 
+  it('na volta do menu, o conteúdo desliza da posição antiga até a nova (FLIP), sem pulo', async () => {
+    const t = await abrirShell({ recolhidoSalvo: true });
+    const pagina = t.raiz.querySelector<HTMLElement>('main.pagina')!;
+    // jsdom não calcula layout nem tem animate: a posição vem do estado do menu, e animate é espionado.
+    const shell = t.shell;
+    jest.spyOn(pagina, 'getBoundingClientRect')
+      .mockImplementation(() => ({ left: shell.menuRecolhido() ? 133 : 288 }) as DOMRect);
+    const animar = jest.fn();
+    (pagina as unknown as { animate: jest.Mock }).animate = animar;
+    // O ☰ e o título também deslizam com o menu (antes, a barra pulava 252 px de uma vez).
+    const inicio = t.raiz.querySelector<HTMLElement>('.barra-inicio')!;
+    jest.spyOn(inicio, 'getBoundingClientRect')
+      .mockImplementation(() => ({ left: shell.menuRecolhido() ? 0 : 252 }) as DOMRect);
+    const animarBarra = jest.fn();
+    (inicio as unknown as { animate: jest.Mock }).animate = animarBarra;
+
+    t.botao().click();
+    await t.atualizar();
+    expect(animar).toHaveBeenCalledTimes(1);
+    expect(animar.mock.calls[0][0]).toEqual([{ transform: 'translateX(-155px)' }, { transform: 'none' }]);
+    expect(animarBarra.mock.calls[0][0]).toEqual([{ transform: 'translateX(-252px)' }, { transform: 'none' }]);
+
+    t.botao().click();                       // esconder não usa o FLIP (a coluna já anima no CSS)
+    await t.atualizar();
+    expect(animar).toHaveBeenCalledTimes(1);
+  });
+
+  it('com movimento reduzido no sistema, a volta do menu não anima', async () => {
+    const t = await abrirShell({ recolhidoSalvo: true });
+    const pagina = t.raiz.querySelector<HTMLElement>('main.pagina')!;
+    const shell = t.shell;
+    jest.spyOn(pagina, 'getBoundingClientRect')
+      .mockImplementation(() => ({ left: shell.menuRecolhido() ? 133 : 288 }) as DOMRect);
+    const animar = jest.fn();
+    (pagina as unknown as { animate: jest.Mock }).animate = animar;
+    const original = window.matchMedia;
+    window.matchMedia = ((q: string) => (q.includes('reduced-motion') ? { matches: true } : original(q))) as typeof window.matchMedia;
+
+    t.botao().click();
+    await t.atualizar();
+    expect(animar).not.toHaveBeenCalled();
+  });
+
   it('a marca do menu e o título da barra são links para /painel', async () => {
     const t = await abrirShell();
     expect(t.marca().tagName).toBe('A');
