@@ -60,6 +60,16 @@ Migra os dados de uma instalação antiga (SQL Server/IIS) para o SQLite. É seg
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
 ```
 
+## Instalador do Windows — `instalador/`
+
+`.msi` gerado com o WiX 5 pela CI (`.github/workflows/versao.yml`; [ADR 0029](adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
+- **Conteúdo:** API e gerenciador já compilados (self-contained `win-x64`) em `%ProgramFiles%\FinancasLocal`.
+- **Dados:** em `%ProgramData%\FinancasLocal\dados`, que é o `Dados:Pasta` do `appsettings.Production.json` do pacote.
+- **Serviço:** `FinancasLocal` (LocalSystem).
+- **Ação personalizada (`configurar.ps1`):** pasta de dados protegida, migração da instalação pelos scripts, certificado HTTPS e `configuracao.json`.
+- **Gerar o pacote:** `gerar-msi.ps1`.
+- **Gerenciador:** `src/gerenciador/Financas.Gerenciador` ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)).
+
 ## Scripts — `scripts/`
 
 Em bash, para Linux, macOS e Windows (Git Bash/MSYS ou WSL). No Windows, a instalação também tem uma versão em PowerShell que dispensa o bash ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)).

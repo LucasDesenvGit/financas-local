@@ -5,6 +5,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **Instalador `.msi` para Windows** (#119, ADR 0029).
+  - **Instalação:** dois cliques e "Avançar", sem .NET, Node, Git nem terminal. O site e o gerenciador já vêm compilados para `C:\Program Files\FinancasLocal`.
+  - **Dados:** ficam em `C:\ProgramData\FinancasLocal\dados`, só para o sistema e os administradores.
+  - **O que o instalador configura:** serviço `FinancasLocal` com reinício automático, certificado HTTPS confiável para `127.0.0.1` e `localhost`, atalhos no Menu Iniciar e, no fim, uma caixa para abrir o gerenciador.
+  - **Atualizar:** pelo gerenciador ou abrindo o `.msi` novo; os dados ficam.
+  - **Desinstalar:** mantém os dados (`APAGARDADOS=1` apaga também).
+  - **Migração:** quem instalou pelos scripts é migrado sozinho. Banco e chaves são copiados, a pasta antiga fica.
+  - **Workflow "Versão (instalador .msi)":** gera e testa o pacote num Windows limpo (instalar, atualizar mantendo o usuário, desinstalar mantendo os dados e migrar da instalação pelos scripts). Na tag `vX.Y.Z`, publica o `.msi` e o `SHA256SUMS.txt` no Release. Passo a passo em `CONTRIBUINDO.md`.
+  - **Nova configuração na API:** `Dados:Pasta` define banco e chaves numa pasta só e lê o `configuracao.json` dela (certificado). A instalação pelos scripts não muda.
 - **Gerenciador do Finanças Local** para Windows (#119, ADR 0028). Instalado pelo `.msi`, roda como o usuário e pede administrador só quando precisa.
   - **Situação do site em palavras:** "no ar" (com a versão do site), "desligado" ou "ligado, mas não responde".
   - **Ações:** "Abrir o site", "Ligar/Desligar" e "Reiniciar".

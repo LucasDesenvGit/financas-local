@@ -1,0 +1,214 @@
+# Instalador .msi do Windows (#119, ADR 0029): gera o FinancasLocal-<versao>.msi e testa num Windows limpo
+# (instalação silenciosa, atualização para uma versão seguinte, desinstalação e migração de uma instalação feita pelos
+# scripts). Na tag vX.Y.Z, publica o .msi e o SHA256SUMS.txt no Release, que é de onde o gerenciador baixa.
+name: Versão (instalador .msi)
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - instalador/**
+      - src/gerenciador/**
+      - Directory.Build.props
+      - src/backend/Financas.Api/Program.cs
+      - src/backend/Financas.Api/Data/EsquemaBanco.cs
+      - .github/workflows/versao.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: versao-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  WIX_VERSAO: "5.0.2"
+  SITE: https://127.0.0.1:5443
+
+jobs:
+  gerar:
+    name: gerar e testar o .msi
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write   # só usado na tag, para publicar o Release
+    outputs:
+      versao: ${{ steps.versao.outputs.versao }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Versão (Directory.Build.props; na tag, tem de ser igual)
+        id: versao
+        shell: pwsh
+        run: |
+          $versao = ([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version | Select-Object -First 1
+          if ("${{ github.ref_type }}" -eq "tag" -and "${{ github.ref_name }}" -ne "v$versao") {
+            throw "A tag ${{ github.ref_name }} não bate com a versão do Directory.Build.props ($versao)."
+          }
+          "versao=$versao" >> $env:GITHUB_OUTPUT
+          $p = $versao.Split('.'); "seguinte=$($p[0]).$($p[1]).$([int]$p[2] + 1)" >> $env:GITHUB_OUTPUT
+
+      - name: WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version $env:WIX_VERSAO
+          wix extension add -g "WixToolset.UI.wixext/$env:WIX_VERSAO" "WixToolset.Util.wixext/$env:WIX_VERSAO"
+
+      - name: Gerar o .msi
+        shell: pwsh
+        run: ./instalador/gerar-msi.ps1
+
+      - name: Instalar (silencioso, como num computador novo)
+        shell: pwsh
+        run: |
+          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.versao }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v instalar.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja instalar.log)" }
+
+      - name: Conferir a instalação
+        shell: pwsh
+        run: |
+          $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
+          if (-not $servico -or $servico.State -ne "Running") { throw "serviço FinancasLocal não está rodando" }
+          if ($servico.PathName -notlike "*Program Files\FinancasLocal\Financas.Api.exe*") { throw "serviço aponta para $($servico.PathName)" }
+          foreach ($p in "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db", "$env:ProgramData\FinancasLocal\dados\configuracao.json",
+                         "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe", "$env:ProgramFiles\FinancasLocal\wwwroot\index.html") {
+            if (-not (Test-Path $p)) { throw "não encontrado: $p" }
+          }
+          # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
+          $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
+          if ($estado.versao -ne "${{ steps.versao.outputs.versao }}") { throw "versão do site: $($estado.versao)" }
+          # Cria o usuário: é o dado que a atualização e a desinstalação não podem perder.
+          '{"login":"teste","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
+          curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
+          $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
+          curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+          if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
+
+      - name: Atualizar para a versão seguinte (mantém os dados)
+        shell: pwsh
+        run: |
+          ./instalador/gerar-msi.ps1 -SoPacote -Versao ${{ steps.versao.outputs.seguinte }}
+          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v atualizar.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja atualizar.log)" }
+          if ((Get-Service FinancasLocal).Status -ne "Running") { throw "serviço não voltou depois da atualização" }
+          $instalada = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object { $_.DisplayName -eq "Finanças Local" }
+          if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
+          for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
+          if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
+
+      - name: Desinstalar (mantém os dados, tira o certificado)
+        shell: pwsh
+        run: |
+          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/x `"$msi`" /qn /l*v desinstalar.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja desinstalar.log)" }
+          if (Get-Service FinancasLocal -ErrorAction SilentlyContinue) { throw "o serviço continua registrado" }
+          if (Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.FriendlyName -eq "FinancasLocal" }) { throw "o certificado continua confiável" }
+          if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o programa continua instalado" }
+
+      - name: Logs do msiexec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-msiexec
+          path: |
+            *.log
+            C:\ProgramData\FinancasLocal\dados\*.txt
+
+      - name: Guardar o .msi (para testar antes da versão)
+        uses: actions/upload-artifact@v4
+        with:
+          name: instalador
+          path: |
+            saida-instalador/FinancasLocal-${{ steps.versao.outputs.versao }}.msi
+          retention-days: 14
+
+      - name: Publicar no Release (só na tag)
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $versao = "${{ steps.versao.outputs.versao }}"
+          $msi = "saida-instalador\FinancasLocal-$versao.msi"
+          # SHA256SUMS só do .msi da versão (o da versão seguinte foi gerado só para o teste).
+          $hash = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText("$PWD\saida-instalador\SHA256SUMS.txt", "$hash  FinancasLocal-$versao.msi`n")
+          # Notas: a seção da versão no CHANGELOG.md (ou a "Não publicado", se ainda não foi renomeada).
+          $texto = Get-Content CHANGELOG.md -Raw
+          $m = [regex]::Match($texto, "(?ms)^## \[$([regex]::Escape($versao))\].*?(?=^## \[)")
+          if (-not $m.Success) { $m = [regex]::Match($texto, "(?ms)^## \[Não publicado\].*?(?=^## \[)") }
+          $m.Value | Set-Content notas.md
+          gh release view "v$versao" *> $null
+          if ($LASTEXITCODE -ne 0) { gh release create "v$versao" --title "Finanças Local $versao" --notes-file notas.md }
+          gh release upload "v$versao" $msi "saida-instalador\SHA256SUMS.txt" --clobber
+
+  migracao:
+    name: migrar da instalação pelos scripts
+    needs: gerar
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalação antiga (instalar-windows.ps1)
+        shell: powershell
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Usuário na instalação antiga
+        shell: pwsh
+        run: |
+          '{"login":"antigo","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
+          curl.exe -k -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
+          $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
+          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: instalador
+          path: saida-instalador
+
+      - name: Instalar o .msi por cima
+        shell: pwsh
+        run: |
+          $msi = "saida-instalador\FinancasLocal-${{ needs.gerar.outputs.versao }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v migrar.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja migrar.log)" }
+
+      - name: Conferir a migração
+        shell: pwsh
+        run: |
+          $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
+          if ($servico.State -ne "Running" -or $servico.PathName -notlike "*Program Files\FinancasLocal*") { throw "serviço: $($servico.State) $($servico.PathName)" }
+          $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
+          if (-not $estado.configurado) { throw "o banco da instalação antiga não veio" }
+          if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt")) { throw "sem a nota da migração" }
+          if (-not (Test-Path "dados\sql\FinancasLocal.db")) { throw "a migração apagou o banco antigo" }
+          Get-Content "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt"
+
+      - name: Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-migracao
+          path: |
+            *.log
+            instaladores/*.log

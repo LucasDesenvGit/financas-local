@@ -49,7 +49,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0009](0009-ativos-no-exterior-na-carteira-manual.md) | Ativos no exterior na carteira manual | Aceita |
 | [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Aceita |
 | [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita |
-| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita |
+| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029) |
 | [0013](0013-testes-do-front-end-com-jest.md) | Testes automatizados do front-end com Jest | Aceita |
 | [0014](0014-emprestimos-e-financiamentos-pelo-open-finance.md) | Empréstimos e financiamentos pelo Open Finance, separados e fora das despesas | Aceita |
 | [0015](0015-parametros-do-sistema-no-banco-editaveis-pelo-site.md) | Parâmetros do sistema no banco, editáveis pelo site | Aceita |
@@ -66,3 +66,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
 | [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita |
 | [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Aceita |
+| [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita |
