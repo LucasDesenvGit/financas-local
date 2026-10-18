@@ -23,19 +23,23 @@ internal sealed class FormPrincipal : Form
         AutoSize = true, Font = new Font("Segoe UI Semibold", 13f), Margin = new Padding(0, 0, 0, 2)
     };
     private readonly Label _detalhe = new() { AutoSize = true, MaximumSize = new Size(LarguraConteudo - 40, 0), Margin = Padding.Empty };
-    private readonly Botao _abrir = new("&Abrir o site", EstiloBotao.Primario);
-    private readonly Botao _ligar = new("&Ligar");
-    private readonly Botao _reiniciar = new("&Reiniciar");
+    private readonly Botao _abrir = new("&Abrir o site", EstiloBotao.Primario, IconeBotao.AbrirSite);
+    private readonly Botao _ligar = new("&Ligar", icone: IconeBotao.Ligar);
+    private readonly Botao _reiniciar = new("&Reiniciar", icone: IconeBotao.Reiniciar);
     private readonly RotuloAnunciado _versao = new() { AutoSize = true, MaximumSize = new Size(LarguraConteudo, 0), Margin = Padding.Empty };
-    private readonly Botao _atualizar = new("A&tualizar", EstiloBotao.Primario);
-    private readonly Botao _notas = new("O &que mudou", EstiloBotao.Discreto) { Visible = false };
-    private readonly Botao _procurar = new("&Procurar versão nova");
-    private readonly Botao _baixarMsi = new("&Baixar o instalador .msi", EstiloBotao.Discreto);
+    private readonly Botao _atualizar = new("A&tualizar", EstiloBotao.Primario, IconeBotao.Baixar);
+    private readonly Botao _notas = new("O &que mudou", EstiloBotao.Discreto, IconeBotao.Informacao) { Visible = false };
+    private readonly Botao _procurar = new("&Procurar versão nova", icone: IconeBotao.Procurar);
+    private readonly Botao _baixarMsi = new("&Baixar o instalador .msi", EstiloBotao.Discreto, IconeBotao.Baixar);
     private readonly BarraProgresso _progresso = new() { Visible = false };
-    private readonly Botao _cancelar = new("&Cancelar download", EstiloBotao.Discreto);
+    private readonly Botao _cancelar = new("&Cancelar download", EstiloBotao.Discreto, IconeBotao.Cancelar);
     private readonly Botao _mais = new("&Mais opções ▾", EstiloBotao.Discreto);
     private readonly Cartao _painelMais = new(LarguraCartao) { Visible = false };
     private readonly Interruptor _iniciarComWindows = new("&Iniciar com o Windows (fica na área de notificação)");
+    private readonly Botao _erros = new("Ver os &erros do site", icone: IconeBotao.Erros);
+    private readonly Botao _manual = new("Abrir o ma&nual", icone: IconeBotao.Manual);
+    private readonly ToolTip _dica = new() { InitialDelay = 300, AutoPopDelay = 8000 };
+    private const string DicaSiteDesligado = "É preciso ligar o site para ver isto. Use o botão “Ligar” acima.";
     private readonly Interruptor _procurarAoAbrir = new("Procurar &versão nova ao abrir");
     private readonly NotifyIcon _bandeja = new() { Visible = true };
     private readonly System.Windows.Forms.Timer _relogio = new() { Interval = (int)Intervalo.TotalMilliseconds };
@@ -83,10 +87,10 @@ internal sealed class FormPrincipal : Form
         versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10), Linha(_atualizar, _procurar, _notas, _baixarMsi),
             Linha(_progresso, _cancelar)]);
 
-        var salvarCopia = new Botao("Salvar uma &cópia do banco…");
-        var erros = new Botao("Ver os &erros do site");
-        var manual = new Botao("Abrir o ma&nual");
-        _painelMais.Conteudo.Controls.AddRange([Linha(salvarCopia), Linha(erros, manual), Espaco(4),
+        var salvarCopia = new Botao("Salvar uma &cópia do banco…", icone: IconeBotao.Salvar);
+        var linhaSite = Linha(_erros, _manual);
+        DicaQuandoBloqueado(linhaSite);
+        _painelMais.Conteudo.Controls.AddRange([Linha(salvarCopia), linhaSite, Espaco(4),
             _iniciarComWindows, _procurarAoAbrir, Espaco(6),
             new Label { AutoSize = true, ForeColor = _tema.TextoSuave, MaximumSize = new Size(LarguraConteudo, 0),
                 Margin = Padding.Empty, UseMnemonic = false, Text = $"Dados em {_instalacao.PastaDados}. Endereço: {_instalacao.Site}" }]);
@@ -105,8 +109,8 @@ internal sealed class FormPrincipal : Form
         _notas.Click += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
         _mais.Click += (_, _) => AlternarMais();
         salvarCopia.Click += async (_, _) => await SalvarCopiaAsync();
-        erros.Click += (_, _) => AbrirPagina("configuracoes?aba=erros");
-        manual.Click += (_, _) => AbrirPagina("manual");
+        _erros.Click += (_, _) => AbrirPagina("configuracoes?aba=erros");
+        _manual.Click += (_, _) => AbrirPagina("manual");
         _iniciarComWindows.Checked = Preferencias.IniciarComWindows;
         _iniciarComWindows.CheckedChanged += (_, _) => Preferencias.IniciarComWindows = _iniciarComWindows.Checked;
         // Instalação pelos scripts: o gerenciador não instala o .msi do GitHub sozinho (ele troca a instalação). Mostra
@@ -255,6 +259,9 @@ internal sealed class FormPrincipal : Form
         _ligar.Text = desligado ? "&Ligar" : "&Desligar";
         _ligar.Enabled = instalado && situacao.Estado != EstadoSite.Mudando && !_ocupado;
         _reiniciar.Enabled = instalado && situacao.Estado is EstadoSite.NoAr or EstadoSite.SemResposta && !_ocupado;
+        // Manual e erros são páginas do site: com ele fora do ar, ficam bloqueados e a dica diz como liberar.
+        _erros.Enabled = _manual.Enabled = situacao.Estado == EstadoSite.NoAr;
+        _erros.AccessibleDescription = _manual.AccessibleDescription = _manual.Enabled ? null : DicaSiteDesligado;
         _bandeja.Icon = Icones.Bandeja(situacao.Estado);
         _bandeja.Text = Limitar("Finanças Local: " + situacao.Titulo, 127);
     }
@@ -412,6 +419,25 @@ internal sealed class FormPrincipal : Form
 
     private void AbrirPagina(string caminho)
         => Process.Start(new ProcessStartInfo(_instalacao.Pagina(caminho).ToString()) { UseShellExecute = true });
+
+    /// <summary>
+    /// Botão desabilitado não recebe o mouse no WinForms (o Windows manda para o painel em volta), então a dica
+    /// é mostrada pelo painel quando o ponteiro está sobre um botão bloqueado.
+    /// </summary>
+    private void DicaQuandoBloqueado(Control painel)
+    {
+        Control? atual = null;
+        painel.MouseMove += (_, e) =>
+        {
+            var filho = painel.GetChildAtPoint(e.Location);
+            var alvo = filho is { Enabled: false } ? filho : null;
+            if (alvo == atual) return;
+            atual = alvo;
+            if (alvo is null) _dica.Hide(painel);
+            else _dica.Show(DicaSiteDesligado, painel, alvo.Left, alvo.Bottom + 4, 8000);
+        };
+        painel.MouseLeave += (_, _) => { atual = null; _dica.Hide(painel); };
+    }
 
     /* ------------------------------------------------------------ montagem */
 

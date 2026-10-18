@@ -991,7 +991,7 @@ details.detalhes[open] > :not(summary) { animation: surgir 0.18s ease-out; }
 .etiqueta-erro { background: var(--negativo-suave); color: var(--negativo); }
 /* Orçamentos: a explicação usa a largura toda (sem o limite de 78ch dos parágrafos) e a legenda da cor fica na linha
    de baixo. */
-.explicacao-orcamentos { margin-bottom: 14px; }
+.explicacao-orcamentos { margin-bottom: 14px; text-align: center; }
 .explicacao-orcamentos p { max-width: none; margin: 0 0 4px; }
 /* Configurações › Conexões */
 .nova-conexao { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 10px; margin-bottom: 16px; }

@@ -29,7 +29,7 @@ internal sealed class FormNotas : Form
             AccessibleName = $"Notas da versão {versao.Versao}"
         };
         var fechar = new Botao("&Fechar", EstiloBotao.Primario) { DialogResult = DialogResult.OK, Margin = new Padding(8, 0, 0, 0) };
-        var pagina = new Botao("Ver a página da versão no &GitHub", EstiloBotao.Discreto) { Margin = Padding.Empty };
+        var pagina = new Botao("Ver a página da versão no &GitHub", EstiloBotao.Discreto, IconeBotao.AbrirSite) { Margin = Padding.Empty };
         pagina.Click += (_, _) => Process.Start(new ProcessStartInfo(versao.Pagina.ToString()) { UseShellExecute = true });
         var rodape = new FlowLayoutPanel
         {
