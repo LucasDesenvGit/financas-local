@@ -4,6 +4,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+## [2.1.0] — 2026-10-18
+
+Primeira versão com o instalador `.msi` para Windows e o Gerenciador do Finanças Local.
+
 ### Funcionalidades
 - Transações: **renomear com um nome claro, também para as próximas** (#123, ADR 0030).
   - **Botão ✎ "Renomear"** em cada transação. A janela mostra a descrição do banco e oferece "Só nesta transação" ou "Também nas outras com esta descrição do banco e nas próximas que chegarem".
