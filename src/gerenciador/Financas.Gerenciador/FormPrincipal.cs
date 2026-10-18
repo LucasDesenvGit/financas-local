@@ -4,32 +4,38 @@ namespace Financas.Gerenciador;
 
 /// <summary>
 /// Janela do gerenciador (ADR 0028). Primeiro a resposta à pergunta "o site está funcionando?" e as três ações do
-/// dia a dia; a versão nova logo abaixo; o resto atrás de "Mais opções" (Progressive Disclosure). Tudo em botões e
-/// caixas de marcar nativos, com teclas de atalho (&amp;) e nomes acessíveis (WCAG 2.1.1, 4.1.2).
+/// dia a dia; a versão nova logo abaixo; o resto atrás de "Mais opções" (Progressive Disclosure). Nas cores e no
+/// desenho do site (cabeçalho com a marca, cartões, botões arredondados; Nielsen 4), claro ou escuro como o Windows.
+/// Os controles continuam botões e caixas de marcar do Windows por baixo, com teclas de atalho (&amp;), foco visível e
+/// nomes acessíveis (WCAG 2.1.1, 2.4.7, 4.1.2).
 /// </summary>
 internal sealed class FormPrincipal : Form
 {
     private static readonly TimeSpan Intervalo = TimeSpan.FromSeconds(5);
+    /// <summary>Largura dos cartões e do texto dentro deles (em 96 DPI; a janela escala com a tela).</summary>
+    private const int LarguraCartao = 448, LarguraConteudo = LarguraCartao - 32;
 
+    private readonly Tema _tema = Tema.Atual;
     private readonly Instalacao _instalacao = Instalacao.Atual;
-    private readonly RotuloAnunciado _titulo = new() { AutoSize = true, Font = new Font("Segoe UI", 13f, FontStyle.Bold) };
-    private readonly Label _detalhe = new() { AutoSize = true, MaximumSize = new Size(430, 0) };
-    private readonly Button _abrir = Botao("&Abrir o site");
-    private readonly Button _ligar = Botao("&Ligar");
-    private readonly Button _reiniciar = Botao("&Reiniciar");
-    private readonly RotuloAnunciado _versao = new() { AutoSize = true, MaximumSize = new Size(430, 0) };
-    private readonly Button _atualizar = Botao("A&tualizar");
-    private readonly LinkLabel _notas = new() { AutoSize = true, Text = "O que mudou", Visible = false };
-    private readonly Button _procurar = Botao("&Procurar versão nova");
-    private readonly ProgressBar _progresso = new() { Width = 300, Visible = false, AccessibleName = "Progresso do download" };
-    private readonly Button _cancelar = Botao("&Cancelar download");
-    private readonly Button _mais = Botao("&Mais opções ▾");
-    private readonly FlowLayoutPanel _painelMais = new()
+    private readonly PontoSituacao _ponto = new();
+    private readonly RotuloAnunciado _titulo = new()
     {
-        FlowDirection = FlowDirection.TopDown, AutoSize = true, Visible = false, WrapContents = false
+        AutoSize = true, Font = new Font("Segoe UI Semibold", 13f), Margin = new Padding(0, 0, 0, 2)
     };
-    private readonly CheckBox _iniciarComWindows = new() { AutoSize = true, Text = "&Iniciar com o Windows (fica na área de notificação)" };
-    private readonly CheckBox _procurarAoAbrir = new() { AutoSize = true, Text = "Procurar &versão nova ao abrir" };
+    private readonly Label _detalhe = new() { AutoSize = true, MaximumSize = new Size(LarguraConteudo - 40, 0), Margin = Padding.Empty };
+    private readonly Botao _abrir = new("&Abrir o site", EstiloBotao.Primario);
+    private readonly Botao _ligar = new("&Ligar");
+    private readonly Botao _reiniciar = new("&Reiniciar");
+    private readonly RotuloAnunciado _versao = new() { AutoSize = true, MaximumSize = new Size(LarguraConteudo, 0), Margin = Padding.Empty };
+    private readonly Botao _atualizar = new("A&tualizar", EstiloBotao.Primario);
+    private readonly Botao _notas = new("O &que mudou", EstiloBotao.Discreto) { Visible = false };
+    private readonly Botao _procurar = new("&Procurar versão nova");
+    private readonly BarraProgresso _progresso = new() { Visible = false };
+    private readonly Botao _cancelar = new("&Cancelar download", EstiloBotao.Discreto);
+    private readonly Botao _mais = new("&Mais opções ▾", EstiloBotao.Discreto);
+    private readonly Cartao _painelMais = new(LarguraCartao) { Visible = false };
+    private readonly Interruptor _iniciarComWindows = new("&Iniciar com o Windows (fica na área de notificação)");
+    private readonly Interruptor _procurarAoAbrir = new("Procurar &versão nova ao abrir");
     private readonly NotifyIcon _bandeja = new() { Visible = true };
     private readonly System.Windows.Forms.Timer _relogio = new() { Interval = (int)Intervalo.TotalMilliseconds };
 
@@ -48,39 +54,46 @@ internal sealed class FormPrincipal : Form
     public FormPrincipal(bool comecarNaBandeja, EventWaitHandle pedidoParaMostrar)
     {
         _comecarNaBandeja = comecarNaBandeja;
+        SuspendLayout();
         Text = "Gerenciador do Finanças Local";
         Icon = Icones.App;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
+        // Medidas pensadas em 96 DPI e escaladas para a tela (125%, 150%…).
+        AutoScaleDimensions = new SizeF(96f, 96f);
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         Font = new Font("Segoe UI", 9.75f);
         StartPosition = FormStartPosition.CenterScreen;
-        Padding = new Padding(16);
+        BackColor = _tema.Fundo;
+        ForeColor = _tema.Texto;
 
         _titulo.AccessibleRole = AccessibleRole.StaticText;
+        _detalhe.ForeColor = _tema.TextoSuave;
         _cancelar.Visible = false;
         _atualizar.Visible = false;
 
-        var acoes = Linha(_abrir, _ligar, _reiniciar);
-        var linhaVersao = Linha(_atualizar, _procurar, _notas);
-        var linhaDownload = Linha(_progresso, _cancelar);
+        // Situação: o ponto colorido e o título respondem "está funcionando?"; as ações do dia a dia logo embaixo.
+        var situacao = new Cartao(LarguraCartao);
+        situacao.Conteudo.Controls.AddRange([Linha(_ponto, Coluna(_titulo, _detalhe)), Espaco(14), Linha(_abrir, _ligar, _reiniciar)]);
 
-        var salvarCopia = Botao("Salvar uma &cópia do banco…");
-        var erros = Botao("Ver os &erros do site");
-        var manual = Botao("Abrir o ma&nual");
-        _painelMais.Controls.AddRange([salvarCopia, Linha(erros, manual), _iniciarComWindows, _procurarAoAbrir,
-            new Label { AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(430, 0),
-                Text = $"Dados em {_instalacao.PastaDados}. Endereço: {_instalacao.Site}" }]);
+        var versao = new Cartao(LarguraCartao);
+        versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10), Linha(_atualizar, _procurar, _notas),
+            Linha(_progresso, _cancelar)]);
 
-        var coluna = new FlowLayoutPanel
-        {
-            FlowDirection = FlowDirection.TopDown, AutoSize = true, WrapContents = false, Dock = DockStyle.Fill
-        };
-        coluna.Controls.AddRange([_titulo, _detalhe, Espaco(), acoes, Espaco(), Separador(), _versao, linhaVersao,
-            linhaDownload, Espaco(), _mais, _painelMais]);
-        Controls.Add(coluna);
+        var salvarCopia = new Botao("Salvar uma &cópia do banco…");
+        var erros = new Botao("Ver os &erros do site");
+        var manual = new Botao("Abrir o ma&nual");
+        _painelMais.Conteudo.Controls.AddRange([Linha(salvarCopia), Linha(erros, manual), Espaco(4),
+            _iniciarComWindows, _procurarAoAbrir, Espaco(6),
+            new Label { AutoSize = true, ForeColor = _tema.TextoSuave, MaximumSize = new Size(LarguraConteudo, 0),
+                Margin = Padding.Empty, UseMnemonic = false, Text = $"Dados em {_instalacao.PastaDados}. Endereço: {_instalacao.Site}" }]);
+
+        var corpo = Coluna(situacao, versao, _mais, _painelMais);
+        corpo.Padding = new Padding(16, 16, 16, 8);
+        var raiz = Coluna(new Cabecalho { Size = new Size(LarguraCartao + 32, 72) }, corpo);
+        Controls.Add(raiz);
 
         _abrir.Click += (_, _) => AbrirPagina("");
         _ligar.Click += async (_, _) => await ServicoAsync(_situacao?.Estado == EstadoSite.Desligado ? "ligar" : "desligar");
@@ -88,7 +101,7 @@ internal sealed class FormPrincipal : Form
         _procurar.Click += async (_, _) => await ProcurarAsync(silencioso: false);
         _atualizar.Click += async (_, _) => await AtualizarAsync();
         _cancelar.Click += (_, _) => _download?.Cancel();
-        _notas.LinkClicked += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
+        _notas.Click += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
         _mais.Click += (_, _) => AlternarMais();
         salvarCopia.Click += async (_, _) => await SalvarCopiaAsync();
         erros.Click += (_, _) => AbrirPagina("configuracoes?aba=erros");
@@ -115,6 +128,14 @@ internal sealed class FormPrincipal : Form
 
         // Outra cópia do gerenciador aberta pede para mostrar esta (uma só por usuário).
         _esperaPedido = ThreadPool.RegisterWaitForSingleObject(pedidoParaMostrar, (_, _) => PedirParaMostrar(), null, -1, false);
+        ResumeLayout(false);
+        PerformLayout();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        _tema.AplicarBarraDeTitulo(Handle);
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -217,9 +238,15 @@ internal sealed class FormPrincipal : Form
         _detalhe.Text = situacao.Detalhe;
         if (mudou) _titulo.Anunciar();
 
+        _ponto.Cor = _tema.DaSituacao(situacao.Estado);
+
         var instalado = situacao.Estado != EstadoSite.NaoInstalado;
+        var desligado = situacao.Estado == EstadoSite.Desligado;
         _abrir.Enabled = situacao.Estado is EstadoSite.NoAr or EstadoSite.SemResposta;
-        _ligar.Text = situacao.Estado == EstadoSite.Desligado ? "&Ligar" : "&Desligar";
+        // O botão em destaque é a próxima ação provável: abrir o site no ar, ligar o desligado.
+        _abrir.Estilo = desligado ? EstiloBotao.Secundario : EstiloBotao.Primario;
+        _ligar.Estilo = desligado ? EstiloBotao.Primario : EstiloBotao.Secundario;
+        _ligar.Text = desligado ? "&Ligar" : "&Desligar";
         _ligar.Enabled = instalado && situacao.Estado != EstadoSite.Mudando && !_ocupado;
         _reiniciar.Enabled = instalado && situacao.Estado is EstadoSite.NoAr or EstadoSite.SemResposta && !_ocupado;
         _bandeja.Icon = Icones.Bandeja(situacao.Estado);
@@ -312,13 +339,13 @@ internal sealed class FormPrincipal : Form
 
         _download = new CancellationTokenSource();
         _atualizar.Enabled = false;
-        _progresso.Value = 0;
+        _progresso.Valor = 0;
         _progresso.Visible = _cancelar.Visible = true;
         _versao.Text = $"Baixando a versão {versao.Versao}…";
         _versao.Anunciar();
         try
         {
-            var progresso = new Progress<double>(p => _progresso.Value = (int)Math.Clamp(p * 100, 0, 100));
+            var progresso = new Progress<double>(p => _progresso.Valor = (int)(p * 100));
             var msi = await Atualizacoes.BaixarAsync(versao, progresso, _download.Token);
             _versao.Text = "Abrindo o instalador…";
             Atualizacoes.Instalar(msi);
@@ -381,20 +408,36 @@ internal sealed class FormPrincipal : Form
 
     /* ------------------------------------------------------------ montagem */
 
-    private static Button Botao(string texto)
-        => new() { Text = texto, AutoSize = true, MinimumSize = new Size(0, 32), Padding = new Padding(8, 2, 8, 2) };
-
+    /// <summary>Lado a lado, quebrando a linha na largura do cartão.</summary>
     private static FlowLayoutPanel Linha(params Control[] controles)
     {
-        var linha = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = true };
+        var linha = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.LeftToRight, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = true, Margin = Padding.Empty, MaximumSize = new Size(LarguraConteudo, 0)
+        };
         linha.Controls.AddRange(controles);
         return linha;
     }
 
-    private static Control Espaco() => new Panel { Height = 8, Width = 1 };
+    private static FlowLayoutPanel Coluna(params Control[] controles)
+    {
+        var coluna = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.TopDown, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false, Margin = Padding.Empty
+        };
+        coluna.Controls.AddRange(controles);
+        return coluna;
+    }
 
-    private static Control Separador()
-        => new Label { AutoSize = false, Height = 1, Width = 430, BorderStyle = BorderStyle.Fixed3D, Margin = new Padding(0, 4, 0, 8) };
+    private Label Subtitulo(string texto) => new()
+    {
+        AutoSize = true, Text = texto, Font = new Font("Segoe UI Semibold", 9f), ForeColor = _tema.TextoSuave,
+        Margin = new Padding(0, 0, 0, 6), UseMnemonic = false
+    };
+
+    private static Control Espaco(int altura) => new Panel { Height = altura, Width = 1, Margin = Padding.Empty };
 
     private static string Limitar(string texto, int maximo) => texto.Length <= maximo ? texto : texto[..(maximo - 1)] + "…";
 

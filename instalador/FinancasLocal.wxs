@@ -41,6 +41,9 @@
 
     <!-- Interface: boas-vindas, pasta e progresso (sem tela de licença); no fim, abrir o gerenciador. -->
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <!-- Imagens com a identidade do site (degradê da marca e o cofrinho); geradas por imagens\gerar-imagens.ps1. -->
+    <WixVariable Id="WixUIDialogBmp" Value="$(sys.SOURCEFILEDIR)imagens\dialogo.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(sys.SOURCEFILEDIR)imagens\faixa.bmp" />
     <UI>
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="99" />
       <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" />
