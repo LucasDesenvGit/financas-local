@@ -16,7 +16,9 @@ const Z_MAXIMO = 58;
   selector: 'app-modal',
   template: `
     @if (aberto()) {
-      <div class="modal-fundo" [style.z-index]="zIndice()" (click)="fechar.emit()"></div>
+      <!-- Só o fundo sai com fade: o conteúdo do modal é apagado pela tela no mesmo instante (ex.: form = null), e a
+           caixa saindo animada apareceria vazia. -->
+      <div class="modal-fundo" [style.z-index]="zIndice()" (click)="fechar.emit()" animate.leave="sair"></div>
       <section class="modal" [style.z-index]="zIndice() + 1" role="dialog" aria-modal="true" [attr.aria-label]="titulo()">
         <header class="modal-cabecalho">
           <h2>{{ titulo() }}</h2>

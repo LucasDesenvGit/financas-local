@@ -29,7 +29,7 @@ export interface OpcaoMultipla {
       <span class="seletor-multiplo-seta" aria-hidden="true">▾</span>
     </button>
     @if (aberto()) {
-      <div class="seletor-multiplo-painel" [id]="id" role="group" [attr.aria-labelledby]="id + '-rotulo'">
+      <div class="seletor-multiplo-painel" [id]="id" role="group" [attr.aria-labelledby]="id + '-rotulo'" animate.leave="sair">
         <button type="button" class="link seletor-multiplo-limpar" [disabled]="!selecionadas().length" (click)="limpar()">
           {{ rotuloVazio() }}
         </button>

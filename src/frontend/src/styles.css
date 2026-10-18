@@ -204,6 +204,20 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
    dos modais) depois do fim. */
 .pagina > :not(router-outlet) { animation: entrar-tela 0.2s ease-out; }
 @keyframes entrar-tela { from { opacity: 0; transform: translateY(8px); } }
+/* Entrada: o que aparece depois (um @if que vira verdadeiro, um item novo numa lista, um aviso, um card que chega com
+   os dados, um menu que abre…) entra com um fade curto em vez de surgir de uma vez. Regra ampla, por tipo de elemento
+   e por família de classe (cartao*, bloco*, kpi*, indicador*, aviso*, etiqueta*, chip*, botao*), para valer em todas
+   as telas sem depender de lembrar uma por uma. Linhas de tabela e texto solto ficam de fora (re-render de lista não
+   pisca). `animation` (não `transition`) roda só quando o elemento é criado e não briga com as transições de hover;
+   sem "fill", não sobra transform (que mudaria o position: fixed de modais). Saída: ver "Saída" no fim do arquivo.
+   Sem animação com prefers-reduced-motion (regra global). */
+.pagina :is(section, article, li, figure, [class*="cartao"], [class*="bloco"], [class*="kpi"], [class*="indicador"],
+  [class*="aviso"], [class*="etiqueta"], [class*="chip"], [class*="botao"], .vazio, .erro, .nota-discreta, .alertas,
+  .dica-generica, .campo-valor-mensagem, .filtros-ativos, .sugestoes),
+:is(.menu-flutuante, .seletor-multiplo-painel) {
+  animation: surgir 0.18s ease-out;
+}
+@keyframes surgir { from { opacity: 0; transform: translateY(4px); } }
 
 .cabecalho-pagina {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
@@ -330,6 +344,21 @@ input:focus, select:focus, textarea:focus {
   outline: none; background: var(--superficie);
   border-color: var(--primaria); box-shadow: 0 0 0 4px var(--primaria-suave);
 }
+/* Lista suspensa (select): o campo fechado no visual do site em todo navegador, com a seta desenhada aqui (dois
+   gradientes na cor do tema), no lugar da caixa do sistema. Continua o <select> nativo: teclado, leitor de tela e a
+   lista do celular não mudam. Fica depois do :focus para a seta não sumir no foco. */
+select:not([multiple]) {
+  appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;   /* uma linha só, como o select do sistema */
+  background-image: linear-gradient(45deg, transparent 50%, var(--texto-suave) 50%),
+    linear-gradient(135deg, var(--texto-suave) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 52%, calc(100% - 13px) 52%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+select:not([multiple]):disabled { cursor: not-allowed; opacity: 0.6; }
+/* A lista aberta continua a do sistema. O select personalizável (appearance: base-select) foi testado e descartado:
+   no Edge 155 o texto escolhido passava por baixo da seta, porque fica num elemento interno que o CSS não alcança. */
+select:not([multiple]) option { background-color: var(--superficie); color: var(--texto); }
 /* Caixa de marcar (#133): visual próprio, igual em tabelas e formulários, sobre o <input type="checkbox"> nativo
    (teclado, [checked], [indeterminate] e leitor de tela não mudam). 18 px, borda em --texto-suave (contraste ≥ 3:1,
    WCAG 1.4.11), marcada em --primaria com o visto; parcial (indeterminate) com um traço. O interruptor (role="switch")
@@ -605,7 +634,7 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
   border-radius: var(--raio-medio); padding: 10px 16px; margin-bottom: 12px; box-shadow: var(--sombra);
 }
 .contagem-selecao { font-weight: 600; color: var(--texto-forte); font-variant-numeric: tabular-nums; }
-.barra-lote select { width: auto; min-width: 220px; background: var(--superficie); }
+.barra-lote select { width: auto; min-width: 220px; background-color: var(--superficie); }
 .paginacao {
   display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   background: var(--superficie); border-radius: var(--raio); padding: 10px 14px; box-shadow: var(--sombra);
@@ -1133,3 +1162,13 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
 .seletor-multiplo-opcao { min-height: 32px; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
 .seletor-multiplo-opcao:hover { background: var(--superficie-2); }
 .seletor-multiplo-opcao.sub { padding-left: 32px; }
+
+/* ---------------------------------------------------------------- Saída
+   O que some (modal, menu, aviso, balão, mensagem…) sai com um fade curto em vez de sumir de uma vez. Nos templates:
+   animate.leave="sair" (Angular): o Angular põe a classe e só tira o elemento quando a animação termina. `:root .sair`
+   tem a especificidade da regra de entrada (.pagina :is(…)) e vem depois dela, então vence. Sem animação com
+   prefers-reduced-motion (regra global): aí o elemento sai na hora. */
+:root .sair { animation: sumir 0.15s ease-in forwards; pointer-events: none; }
+:root .modal.sair { animation: descer-modal 0.15s ease-in forwards; }
+@keyframes sumir { to { opacity: 0; transform: translateY(4px); } }
+@keyframes descer-modal { to { opacity: 0; transform: translate(-50%, 10px); } }

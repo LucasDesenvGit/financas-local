@@ -113,7 +113,7 @@ let proximoId = 0;
     </span>
     @if (erroVisivel()) {
       <!-- aria-hidden: fora do nome do <label> que envolve o campo; o input aponta para cá pelo aria-describedby. -->
-      <span class="campo-valor-mensagem" [id]="idErro" aria-hidden="true">{{ erro() }}</span>
+      <span class="campo-valor-mensagem" [id]="idErro" aria-hidden="true" animate.leave="sair">{{ erro() }}</span>
     }
   `
 })
