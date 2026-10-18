@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Funcionalidades
+- **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
+  - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
+  - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
+  - **Versão nova:** nessa instalação, ele não oferece o `.msi` e diz como atualizar pelos scripts.
+
 ## [2.1.0] — 2026-10-18
 
 Primeira versão com o instalador `.msi` para Windows e o Gerenciador do Finanças Local.

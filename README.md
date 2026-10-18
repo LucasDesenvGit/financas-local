@@ -126,6 +126,14 @@ cd financas-local/scripts
 
 Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuário e a senha (mínimo de 8 caracteres).
 
+**Gerenciador (opcional, Windows).** Para ter o Gerenciador do Finanças Local também na instalação pelos scripts, rode, sem precisar de administrador:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\instalar-gerenciador.ps1
+```
+
+Ele publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar. O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
+
 ### De onde vem cada coisa
 
 | Componente | Origem | Verificação |

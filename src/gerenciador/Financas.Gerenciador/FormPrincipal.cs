@@ -95,6 +95,8 @@ internal sealed class FormPrincipal : Form
         manual.Click += (_, _) => AbrirPagina("manual");
         _iniciarComWindows.Checked = Preferencias.IniciarComWindows;
         _iniciarComWindows.CheckedChanged += (_, _) => Preferencias.IniciarComWindows = _iniciarComWindows.Checked;
+        // Instalação pelos scripts: a versão nova vem pelos scripts, não pelo .msi do GitHub (que trocaria a instalação).
+        _procurar.Visible = _procurarAoAbrir.Visible = _instalacao.PeloMsi;
         _procurarAoAbrir.Checked = Preferencias.ProcurarAoAbrir;
         _procurarAoAbrir.CheckedChanged += (_, _) => Preferencias.ProcurarAoAbrir = _procurarAoAbrir.Checked;
 
@@ -128,7 +130,7 @@ internal sealed class FormPrincipal : Form
         _iniciado = true;
         await AtualizarSituacaoAsync();
         _relogio.Start();
-        if (Preferencias.ProcurarAoAbrir) await ProcurarAsync(silencioso: true);
+        if (_instalacao.PeloMsi && Preferencias.ProcurarAoAbrir) await ProcurarAsync(silencioso: true);
     }
 
     /// <summary>Começando com o Windows, abre só o ícone da área de notificação.</summary>
@@ -249,6 +251,12 @@ internal sealed class FormPrincipal : Form
     /// </summary>
     private void MostrarVersao()
     {
+        if (!_instalacao.PeloMsi)
+        {
+            _versao.Text = "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd "
+                           + "(ou o 3-publicar-atualizar.sh) na pasta do projeto.";
+            return;
+        }
         var instalada = _situacao?.VersaoSite is null ? $"Versão instalada: {_instalacao.VersaoTexto}." : null;
         var procura = _resultadoProcura ?? (instalada is null ? "Versão nova: clique em “Procurar versão nova”." : null);
         _versao.Text = string.Join(" ", new[] { instalada, procura }.Where(t => !string.IsNullOrEmpty(t)));
