@@ -71,6 +71,16 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 - **Onde baixar:** a versão publicada fica no Release `vX.Y.Z`. A do `develop` fica no pré-lançamento `desenvolvimento`, recriado a cada push depois dos testes. A mesma `X.Y.Z` substitui a instalada (`AllowSameVersionUpgrades`).
 - **Gerenciador:** `src/gerenciador/Financas.Gerenciador` ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)).
 
+## Gerenciador — `src/gerenciador/`
+
+App pequeno que mostra se o site está no ar, liga, desliga e reinicia o serviço e copia o banco. Roda como o usuário, fora da API ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md), [ADR 0032](adr/0032-gerenciador-no-linux-com-avalonia.md)).
+
+| Projeto | O que tem |
+|---|---|
+| `Financas.Gerenciador.Nucleo` (`net10.0`) | O que vale nos dois sistemas: `Instalacao` (pasta da API pelo serviço, banco e endereço pelo `appsettings`), `VerificadorSituacao` (serviço + `GET /api/auth/estado`), `CopiaDoBanco` (`VACUUM INTO`) e o serviço do sistema (`ServicoWindows`, `ServicoLinux`). |
+| `Financas.Gerenciador` (WinForms) | Janela do Windows. Pede administrador (UAC) para ligar, desligar e copiar o banco, e atualiza pelo `.msi` do GitHub Releases. Vai no `.msi` ou pelo `scripts\instalar-gerenciador.ps1`. |
+| `Financas.Gerenciador.Linux` (Avalonia) | Janela do Linux. Usa o `systemctl --user` sem senha, mostra o registro do serviço (journald) e o comando para atualizar pelos scripts. Vai pelo `scripts/instalar-gerenciador.sh`. |
+
 ## Scripts — `scripts/`
 
 Em bash, para Linux, macOS e Windows (Git Bash/MSYS ou WSL). No Windows, a instalação também tem uma versão em PowerShell que dispensa o bash ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)).
@@ -83,6 +93,7 @@ Em bash, para Linux, macOS e Windows (Git Bash/MSYS ou WSL). No Windows, a insta
 | `2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. |
 | `3-publicar-atualizar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
 | `4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |
+| `instalar-gerenciador.sh` / `.ps1` | Opcional, sem root/administrador: publica o gerenciador em `publicado/gerenciador` e cria os atalhos (menu de aplicativos no Linux, Menu Iniciar no Windows, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
 | `comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, caminho nativo no Windows, extração de `.zip`, conferência de hash, helpers de coluna do banco). |
 | `ci/verificar-sql.py` | Usado no CI: confere que `banco/*.sql` é idempotente e não tem sintaxe de T-SQL. |
 | `git/configurar-github.ps1` | Cria o repositório no GitHub, envia as branches e aplica as proteções. |

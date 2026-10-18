@@ -23,9 +23,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Versões flutuantes no patch, como na API. -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.*" />
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.*" />
+    <!-- Instalação, situação, serviço e cópia do banco: os mesmos do gerenciador do Linux (ADR 0032). -->
+    <ProjectReference Include="..\Financas.Gerenciador.Nucleo\Financas.Gerenciador.Nucleo.csproj" />
   </ItemGroup>
 
   <ItemGroup>

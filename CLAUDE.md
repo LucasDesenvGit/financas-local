@@ -50,7 +50,7 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - `Dtos/Dtos.cs` — todos os DTOs num arquivo único.
 - `Seguranca/` — cabeçalhos de segurança, validação de sessão, constantes de cookies.
 
-**Gerenciador** (`src/gerenciador/Financas.Gerenciador`, WinForms, só Windows): situação do site, ligar/desligar (UAC), cópia do banco e versão nova pelo GitHub Releases (ADR 0028). Instalado pelo `.msi` na pasta da API.
+**Gerenciador** (`src/gerenciador/`): situação do site, ligar/desligar, cópia do banco. `Financas.Gerenciador.Nucleo` tem o que vale nos dois sistemas (instalação, situação, serviço, cópia do banco); `Financas.Gerenciador` é a janela do Windows (WinForms, UAC, versão nova pelo GitHub Releases; ADR 0028), instalada pelo `.msi` ou pelo `scripts/instalar-gerenciador.ps1`; `Financas.Gerenciador.Linux` é a do Linux (Avalonia, `systemctl --user`, sem rede; ADR 0032), pelo `scripts/instalar-gerenciador.sh`. Texto ou ação nova vai nas duas janelas.
 
 **Front-end** (`src/frontend/src/app`):
 - `core/` — `ApiService` (único ponto de chamadas HTTP), modelos TS, autenticação, tema, privacidade (ocultar valores).

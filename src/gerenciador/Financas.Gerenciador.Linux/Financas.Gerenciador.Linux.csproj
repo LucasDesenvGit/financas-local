@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Gerenciador do Finanças Local no Linux (#138, ADR 0032): a mesma janela do gerenciador do Windows (ADR 0028), em
+    Avalonia, para a instalação pelos scripts (serviço do systemd do usuário). Publicado pelo
+    scripts/instalar-gerenciador.sh em publicado/gerenciador, com atalho no menu de aplicativos.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Financas.Gerenciador</RootNamespace>
+    <AssemblyName>Financas.Gerenciador.Linux</AssemblyName>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Product>Finanças Local</Product>
+    <Description>Gerenciador do Finanças Local</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Avalonia com a versão exata (dependência de terceiros; ver ADR 0032 para atualizar). -->
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <ProjectReference Include="..\Financas.Gerenciador.Nucleo\Financas.Gerenciador.Nucleo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- O mesmo cofrinho do site, sem cópia do arquivo. -->
+    <AvaloniaResource Include="..\..\frontend\public\icone-512.png" Link="Recursos\icone.png" />
+    <!-- Também solto na pasta publicada: ícone do atalho (.desktop), do início com o sistema e das notificações. -->
+    <None Include="..\..\frontend\public\icone-512.png" Link="icone.png" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

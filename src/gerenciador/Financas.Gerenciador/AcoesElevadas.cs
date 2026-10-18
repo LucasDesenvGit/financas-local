@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.ServiceProcess;
 using Microsoft.Data.Sqlite;
 
 namespace Financas.Gerenciador;
@@ -12,7 +11,6 @@ namespace Financas.Gerenciador;
 internal static class AcoesElevadas
 {
     private const int CanceladoNoUac = 1223;
-    private static readonly TimeSpan Espera = TimeSpan.FromSeconds(60);
 
     public enum Resultado { Feito, Cancelado, Falhou }
 
@@ -32,52 +30,17 @@ internal static class AcoesElevadas
         }
     }
 
-    /// <summary>Modo administrador: <c>--servico ligar|desligar|reiniciar</c>.</summary>
-    public static int Servico(string acao)
-    {
-        try
-        {
-            using var servico = new ServiceController(Instalacao.NomeServico);
-            if (acao is "desligar" or "reiniciar" && servico.Status != ServiceControllerStatus.Stopped)
-            {
-                servico.Stop();
-                servico.WaitForStatus(ServiceControllerStatus.Stopped, Espera);
-            }
-            if (acao is "ligar" or "reiniciar")
-            {
-                servico.Refresh();
-                if (servico.Status != ServiceControllerStatus.Running)
-                {
-                    servico.Start();
-                    servico.WaitForStatus(ServiceControllerStatus.Running, Espera);
-                }
-            }
-            return 0;
-        }
-        catch (Exception e) when (e is InvalidOperationException or System.ServiceProcess.TimeoutException or Win32Exception)
-        {
-            return 1;
-        }
-    }
-
     /// <summary>Modo administrador: <c>--backup "destino.db"</c>. Cópia consistente (VACUUM INTO) com o site no ar.</summary>
     public static int Backup(string destino)
     {
         try
         {
-            var banco = Instalacao.Atual.CaminhoBanco;
-            if (!File.Exists(banco)) return 2;
-            if (File.Exists(destino)) File.Delete(destino);
-            using var conexao = new SqliteConnection(new SqliteConnectionStringBuilder
-            {
-                DataSource = banco, Pooling = false, DefaultTimeout = 30
-            }.ToString());
-            conexao.Open();
-            using var comando = conexao.CreateCommand();
-            comando.CommandText = "VACUUM INTO $destino;";
-            comando.Parameters.AddWithValue("$destino", destino);
-            comando.ExecuteNonQuery();
+            CopiaDoBanco.Salvar(Instalacao.Atual.CaminhoBanco, destino);
             return 0;
+        }
+        catch (FileNotFoundException)
+        {
+            return 2;
         }
         catch (Exception e) when (e is SqliteException or IOException or UnauthorizedAccessException)
         {

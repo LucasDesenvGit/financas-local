@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.MigrarSqlite", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.Gerenciador", "src\gerenciador\Financas.Gerenciador\Financas.Gerenciador.csproj", "{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.Gerenciador.Nucleo", "src\gerenciador\Financas.Gerenciador.Nucleo\Financas.Gerenciador.Nucleo.csproj", "{E07B33B7-76D4-440E-A94A-4AFF7C689CC7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Financas.Gerenciador.Linux", "src\gerenciador\Financas.Gerenciador.Linux\Financas.Gerenciador.Linux.csproj", "{7823FFC3-E9A4-4CAF-B4FF-2DBCF985C35A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EAF5563-4BF9-4C83-ADD4-28A6DFAEA893}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E07B33B7-76D4-440E-A94A-4AFF7C689CC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E07B33B7-76D4-440E-A94A-4AFF7C689CC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E07B33B7-76D4-440E-A94A-4AFF7C689CC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E07B33B7-76D4-440E-A94A-4AFF7C689CC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7823FFC3-E9A4-4CAF-B4FF-2DBCF985C35A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7823FFC3-E9A4-4CAF-B4FF-2DBCF985C35A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7823FFC3-E9A4-4CAF-B4FF-2DBCF985C35A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7823FFC3-E9A4-4CAF-B4FF-2DBCF985C35A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

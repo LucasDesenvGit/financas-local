@@ -100,6 +100,7 @@ O Client Secret da Pluggy continua funcionando, porque as chaves vêm junto. Dep
 ```bash
 git pull
 scripts/3-publicar-atualizar.sh     # no Windows, num Git Bash aberto como Administrador
+scripts/instalar-gerenciador.sh     # só no Linux, se usa o gerenciador
 ```
 
 No Windows sem bash, rode o `instalar-windows.cmd` de novo. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo.
@@ -107,7 +108,7 @@ No Windows sem bash, rode o `instalar-windows.cmd` de novo. Ele atualiza e, se a
 ## Desinstalar
 
 - **Instalado pelo `.msi`:** em **Configurações do Windows › Aplicativos › Aplicativos instalados › Finanças Local › Desinstalar**. Saem o programa, o serviço e o certificado; **os dados ficam** em `C:\ProgramData\FinancasLocal\dados`. Para apagar os dados também: `msiexec /x FinancasLocal-<versão>.msi APAGARDADOS=1`.
-- **Instalado pelos scripts:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela. No Windows, remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`.
+- **Instalado pelos scripts:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/parar.sh --desativar` (Linux) e apague a pasta do projeto. No Linux, com o gerenciador, apague também `~/.local/share/applications/financaslocal-gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela. No Windows, remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`.
 
 ## Instalação a partir do código
 
@@ -138,6 +139,20 @@ powershell -ExecutionPolicy Bypass -File scripts\instalar-gerenciador.ps1
 ```
 
 Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
+
+**Gerenciador (opcional, Linux).** Depois do `instalar.sh`, rode, sem `sudo`:
+
+```bash
+scripts/instalar-gerenciador.sh
+```
+
+- **Onde fica:** publicado em `publicado/gerenciador`, com o atalho **Gerenciador do Finanças Local** no menu de aplicativos e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
+- **O que faz:** mostra se o site está no ar, liga, desliga e reinicia o serviço (sem senha: ele é do seu usuário), copia o banco e mostra o registro do serviço (**Ver o registro do serviço**, quando o site não sobe).
+- **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet.
+- **Ao sair da conta:** o serviço do usuário para, e o site junto. Em **Mais opções**, **Manter o site no ar sem login** liga o *linger* do systemd (`loginctl enable-linger`).
+- **Iniciar com o sistema:** deixa o ícone na bandeja e avisa se o site cair. No GNOME, a bandeja precisa da extensão AppIndicator; sem ela, a janela abre minimizada.
+- **No terminal:** `publicado/gerenciador/Financas.Gerenciador.Linux --situacao` mostra a situação sem abrir a janela.
+- **Atualizar o gerenciador:** rode o mesmo comando de novo.
 
 ### De onde vem cada coisa
 
@@ -216,7 +231,7 @@ Como tudo é local, o objetivo foi manter o sistema simples sem abrir mão do es
 - **Erros do sistema** gravados no banco sem dados sensíveis: query strings, tokens, senhas, CPF e valores em R$ são trocados por `[removido]` antes de gravar ([ADR 0022](docs/adr/0022-erros-do-sistema-gravados-no-banco.md)).
 - Consultas ao banco somente via LINQ/EF Core, sem SQL montado a partir de texto do usuário.
 - **Dados de pagamento do Open Finance:** do Pix ou da TED, só o meio (PIX, TED…) e se quem pagou e quem recebeu são a mesma pessoa são guardados; nomes e CPF/CNPJ de terceiros não são gravados ([ADR 0025](docs/adr/0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md)).
-- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy. O **Gerenciador do Finanças Local** (Windows, instalado pelo `.msi`) consulta `api.github.com` e baixa do GitHub (`github.com` e o domínio de arquivos do GitHub) a versão nova, conferindo o SHA256 antes de abrir o instalador. Ele não envia nada além do pedido HTTP, e a API não acessa o GitHub ([ADR 0028](docs/adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)).
+- **Saídas para a internet** (todas HTTPS): `api.pluggy.ai` (Open Finance), `api.bcb.gov.br` (taxa Selic, só datas são enviadas), `olinda.bcb.gov.br` (cotação PTAX de moedas estrangeiras, só o código da moeda e datas são enviados) e `query1.finance.yahoo.com` / `brapi.dev` (cotações, só o código do ativo é enviado). Quantidades, valores e dados pessoais não saem do computador. O token opcional da brapi fica criptografado como o secret da Pluggy. O **Gerenciador do Finanças Local** (Windows, instalado pelo `.msi`) consulta `api.github.com` e baixa do GitHub (`github.com` e o domínio de arquivos do GitHub) a versão nova, conferindo o SHA256 antes de abrir o instalador. Ele não envia nada além do pedido HTTP, e a API não acessa o GitHub ([ADR 0028](docs/adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)). O gerenciador do Linux não acessa a internet ([ADR 0032](docs/adr/0032-gerenciador-no-linux-com-avalonia.md)).
 
 Recomendações:
 - Ative criptografia de disco (**BitLocker** no Windows, **LUKS**/dm-crypt no Linux), porque o SQLite não criptografa o arquivo do banco.
@@ -254,7 +269,7 @@ financas-local/
 │   └── git/              configuração do repositório no GitHub (PowerShell)
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
 ├── src/frontend/          financas-web (Angular)
-├── src/gerenciador/       Financas.Gerenciador (app do Windows instalado pelo .msi)
+├── src/gerenciador/       Gerenciador: núcleo comum, app do Windows (WinForms, .msi) e do Linux (Avalonia)
 ├── dados/                 [gerado] banco (SQLite), chaves, logs — acesso restrito
 ├── backups/               [gerado] backups do banco
 ├── publicado/             [gerado] aplicação publicada

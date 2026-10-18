@@ -11,12 +11,14 @@ on:
     paths:
       - scripts/*.sh
       - banco/**
+      - src/gerenciador/**
       - .github/workflows/teste-instalacao-linux.yml
   pull_request:
     branches: [main, develop]
     paths:
       - scripts/*.sh
       - banco/**
+      - src/gerenciador/**
       - .github/workflows/teste-instalacao-linux.yml
   workflow_dispatch:
 
@@ -79,6 +81,20 @@ jobs:
           systemctl --user is-active --quiet financaslocal.service || { echo "::error::servico nao esta ativo"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
+      # Gerenciador do Linux (ADR 0032): publica, cria o atalho e pergunta a situacao pelo --situacao, que usa o
+      # systemd do usuario e /api/auth/estado sem abrir janela (o runner nao tem tela).
+      - name: Gerenciador (instalar-gerenciador.sh)
+        run: |
+          env PATH="$PATH_LIMPO" bash scripts/instalar-gerenciador.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-gerenciador.log"
+          exe="$PWD/publicado/gerenciador/Financas.Gerenciador.Linux"
+          atalho="$HOME/.local/share/applications/financaslocal-gerenciador.desktop"
+          for p in "$exe" publicado/gerenciador/icone.png "$atalho"; do
+            [[ -e "$p" ]] || { echo "::error::nao encontrado: $p"; exit 1; }
+          done
+          grep -qF "Exec=\"$exe\"" "$atalho" || { echo "::error::o atalho nao aponta para o gerenciador"; cat "$atalho"; exit 1; }
+          "$exe" --situacao | tee "$RUNNER_TEMP/situacao.txt"
+          grep -q 'O site está no ar' "$RUNNER_TEMP/situacao.txt" || { echo "::error::o gerenciador nao viu o site no ar"; exit 1; }
+
       - name: Atualizacao (instalar.sh --pular-build)
         run: |
           env PATH="$PATH_LIMPO" bash scripts/instalar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-2.log"
@@ -99,6 +115,7 @@ jobs:
           estado="$(systemctl --user is-enabled financaslocal.service || true)"
           [[ "$estado" == disabled ]] || { echo "::error::servico continua habilitado ($estado)"; exit 1; }
           if curl -k -fsS https://127.0.0.1:5443/api/auth/estado; then echo "::error::API continua respondendo"; exit 1; fi
+          if publicado/gerenciador/Financas.Gerenciador.Linux --situacao; then echo "::error::o gerenciador diz que o site esta no ar"; exit 1; fi
 
       - name: Subir de novo (3-publicar-atualizar.sh --pular-build)
         run: |
