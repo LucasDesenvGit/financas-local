@@ -36,6 +36,8 @@ internal sealed class FormPrincipal : Form
     private readonly bool _comecarNaBandeja;
     private bool _janelaJaMostrada;
     private bool _iniciado;
+    private bool _consultando;
+    private RegisteredWaitHandle? _esperaPedido;
     private bool _sair;
     private bool _ocupado;
     private Situacao? _situacao;
@@ -110,7 +112,7 @@ internal sealed class FormPrincipal : Form
         MostrarVersao();
 
         // Outra cópia do gerenciador aberta pede para mostrar esta (uma só por usuário).
-        ThreadPool.RegisterWaitForSingleObject(pedidoParaMostrar, (_, _) => BeginInvoke(new Action(Mostrar)), null, -1, false);
+        _esperaPedido = ThreadPool.RegisterWaitForSingleObject(pedidoParaMostrar, (_, _) => PedirParaMostrar(), null, -1, false);
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -154,8 +156,19 @@ internal sealed class FormPrincipal : Form
         }
         _download?.Cancel();
         _relogio.Stop();
+        _esperaPedido?.Unregister(null);
         _bandeja.Visible = false;
         base.OnFormClosing(e);
+    }
+
+    /// <summary>Chega por outra thread; a janela pode estar fechando, e aí o pedido é ignorado.</summary>
+    private void PedirParaMostrar()
+    {
+        try
+        {
+            if (IsHandleCreated && !IsDisposed) BeginInvoke(new Action(Mostrar));
+        }
+        catch (Exception e) when (e is InvalidOperationException or ObjectDisposedException) { }
     }
 
     private void Mostrar()
@@ -169,7 +182,9 @@ internal sealed class FormPrincipal : Form
 
     private async Task AtualizarSituacaoAsync()
     {
-        if (_ocupado) return;
+        // Uma consulta por vez: com o site demorando, o relógio não empilha pedidos.
+        if (_ocupado || _consultando) return;
+        _consultando = true;
         var anterior = _situacao;
         Situacao nova;
         try
@@ -179,6 +194,10 @@ internal sealed class FormPrincipal : Form
         catch (Exception erro)
         {
             nova = new Situacao(EstadoSite.SemResposta, "Não deu para ver a situação do site.", erro.Message);
+        }
+        finally
+        {
+            _consultando = false;
         }
         Exibir(nova);
         // Escondido na área de notificação: avisa quando o site cai.
