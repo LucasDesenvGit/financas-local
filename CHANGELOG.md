@@ -21,6 +21,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **`.msi`:** o atalho vai para a área de trabalho de todos os usuários. Com `ATALHOAREADETRABALHO=0`, instala sem ele. A desinstalação remove o atalho.
   - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
 
+### Correções (layout)
+- **Painel: cards do mês com a altura do conteúdo.** Receitas, Despesas e Resultado esticavam até a altura de "Faturas do mês" (que lista os cartões) e o valor ficava solto no meio de um card alto e vazio. Agora cada card tem a própria altura e o valor fica logo abaixo do título.
+- **Painel: divisórias.** Linhas finas nos dois temas:
+  - entre as seções "Situação hoje" e "Mês de …";
+  - abaixo do título de cada bloco (Próximos vencimentos, Gastos por categoria, Orçamentos e os de "Mais análises");
+  - em "Faturas do mês", abaixo do total e entre os cartões.
+
 ## [2.1.0] — 2026-10-18
 
 Primeira versão com o instalador `.msi` para Windows e o Gerenciador do Finanças Local.

@@ -165,7 +165,7 @@ import { Icones } from '../compartilhado/icones';
 
       <div class="grade-2">
         <section class="painel-bloco">
-          <h2>Gastos por categoria</h2>
+          <div class="bloco-titulo"><h2>Gastos por categoria</h2></div>
           @if (d.gastosPorCategoria.length) {
             <app-grafico-explicado [resumo]="resumoCategorias()"
               comoLer="Cada fatia é uma categoria, do tamanho da parte dela nas despesas do mês. Clique numa fatia ou no nome da categoria para ver as transações.">
@@ -212,7 +212,7 @@ import { Icones } from '../compartilhado/icones';
         <ng-template>
           <div class="grade-2">
             <section class="painel-bloco">
-              <h2>Receitas × despesas (12 meses)</h2>
+              <div class="bloco-titulo"><h2>Receitas × despesas (12 meses)</h2></div>
               <app-grafico-explicado [resumo]="resumoEvolucao()"
                 comoLer="Verde: receitas; rosa: despesas. Quando a barra rosa passa da verde, o mês fechou no vermelho.">
                 <app-grafico [configuracao]="graficoEvolucao()" [altura]="300" />
@@ -245,10 +245,11 @@ import { Icones } from '../compartilhado/icones';
     .kpi-financiamento::before { background: #8fa8f0; }
     .kpi-emprestimo::before { background: #d9b45a; }
     .secao-painel { margin-bottom: 8px; }
+    /* As divisórias do Painel ficam no styles.css (seção "Painel"), onde os testes conseguem conferi-las. */
     .secao-titulo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 16px; margin: 6px 0 12px; }
     .secao-titulo h2 { margin: 0; font-size: 1.15rem; }
     .secao-titulo p { margin: 0; flex: 1 1 260px; }
-    .lista-faturas { list-style: none; margin: 6px 0 2px; padding: 0; display: grid; gap: 4px; font-size: 0.84rem; }
+    .lista-faturas { list-style: none; margin: 8px 0 2px; padding: 8px 0 0; display: grid; gap: 8px; font-size: 0.84rem; }
     .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
     .lista-faturas .valor { margin-left: auto; }
     .lista-faturas .cartao-fatura { display: inline-flex; align-items: center; gap: 6px; }
