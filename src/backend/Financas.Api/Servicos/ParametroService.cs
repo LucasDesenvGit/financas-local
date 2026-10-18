@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Financas.Api.Data;
 using Financas.Api.Dtos;
@@ -158,10 +157,7 @@ public class ParametroService
             ? Path.GetFullPath(pasta)
             : Path.Combine(AppContext.BaseDirectory, "chaves");
         long? tamanho = File.Exists(caminhoBanco) ? new FileInfo(caminhoBanco).Length : null;
-        var versao = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                     ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "—";
-        var indiceMais = versao.IndexOf('+');
-        if (indiceMais > 0) versao = versao[..indiceMais];
+        var versao = VersaoSistema.Atual;
 
         return new InfoSistemaDto(
             versao,

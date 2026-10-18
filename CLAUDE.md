@@ -49,6 +49,8 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - `Dtos/Dtos.cs` — todos os DTOs num arquivo único.
 - `Seguranca/` — cabeçalhos de segurança, validação de sessão, constantes de cookies.
 
+**Gerenciador** (`src/gerenciador/Financas.Gerenciador`, WinForms, só Windows): situação do site, ligar/desligar (UAC), cópia do banco e versão nova pelo GitHub Releases (ADR 0028). Instalado pelo `.msi` na pasta da API.
+
 **Front-end** (`src/frontend/src/app`):
 - `core/` — `ApiService` (único ponto de chamadas HTTP), modelos TS, autenticação, tema, privacidade (ocultar valores).
 - `compartilhado/` — componentes reutilizáveis (gráfico Chart.js, modal, paginação, calculadora flutuante, pipe de moeda).
@@ -119,4 +121,4 @@ Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto p
 - Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo da API, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
 - Segredos (Client Secret da Pluggy, token da brapi) via ASP.NET Data Protection, chaves em `dados/chaves`: DPAPI no Windows (`OperatingSystem.IsWindows()` em `Program.cs`), permissão de arquivo no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
-- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).
+- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` (API) e `api.github.com`/`github.com` (só o gerenciador do Windows, para versão nova; ADR 0028) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).

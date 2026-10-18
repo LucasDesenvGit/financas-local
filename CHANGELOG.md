@@ -5,6 +5,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **Gerenciador do Finanças Local** para Windows (#119, ADR 0028). Instalado pelo `.msi`, roda como o usuário e pede administrador só quando precisa.
+  - **Situação do site em palavras:** "no ar" (com a versão do site), "desligado" ou "ligado, mas não responde".
+  - **Ações:** "Abrir o site", "Ligar/Desligar" e "Reiniciar".
+  - **Versão nova:** procura no GitHub, mostra o que mudou e "Atualizar para x.y.z". Baixa, confere o SHA256 e abre o instalador.
+  - **Em "Mais opções":** salvar uma cópia do banco onde você escolher, ver os erros do site, abrir o manual, iniciar com o Windows na área de notificação (com aviso quando o site cai) e procurar versão nova ao abrir.
+- **Versão do site num lugar só:** `Directory.Build.props` (`2.1.0`) vale para a API e o gerenciador. Ela aparece em Configurações › Parametrização › Sistema, em `GET /api/auth/estado` (campo `versao`, sem login, só para o gerenciador mostrar junto de "no ar") e no gerenciador.
 - **A API cria e atualiza o banco sozinha ao iniciar** (#119, ADR 0003 atualizada).
   - **Os mesmos scripts:** `01-estrutura.sql`, as colunas novas do `2-criar-banco.sh` e, só no banco novo, os dados iniciais, embutidos no build.
   - **Antes de mudar um banco existente:** cópia em `dados/backups/FinancasLocal-antes-atualizacao-*.db`, com as 5 mais recentes guardadas.
