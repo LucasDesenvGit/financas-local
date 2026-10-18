@@ -23,7 +23,7 @@ describe('Usabilidade: divisórias', () => {
    * O jsdom não calcula "border-top: 1px solid var(--linha)" (atalho com var()), mas guarda a regra: procura uma
    * regra com a linha cujo seletor casa com o elemento.
    */
-  const temLinha = (el: Element, lado: 'top' | 'bottom') =>
+  const temLinha = (el: Element, lado: 'top' | 'bottom' | 'left') =>
     Array.from(document.styleSheets).flatMap((s) => Array.from(s.cssRules)).some((r) =>
       r instanceof CSSStyleRule && r.cssText.includes(`border-${lado}: 1px solid`) && el.matches(r.selectorText));
 
@@ -60,13 +60,14 @@ describe('Usabilidade: divisórias', () => {
       }
     });
 
-    it('em "Faturas do mês", uma linha abaixo do total e entre cada cartão (nada acima do primeiro)', async () => {
+    it('em "Faturas do mês", uma linha abaixo do total e uma linha vertical entre os cartões lado a lado', async () => {
       const t = await abrirPainel(dados);
       const lista = t.raiz.querySelector('.lista-faturas')!;
       expect(temLinha(lista, 'top')).toBe(true);
+      // Regras de computador (fora de @media); no celular os cartões empilham com a linha em cima.
       const [primeiro, segundo] = Array.from(lista.querySelectorAll('li'));
-      expect(temLinha(primeiro, 'top')).toBe(false);
-      expect(temLinha(segundo, 'top')).toBe(true);
+      expect(temLinha(primeiro, 'left')).toBe(false);
+      expect(temLinha(segundo, 'left')).toBe(true);
     });
   });
 

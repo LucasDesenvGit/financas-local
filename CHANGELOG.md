@@ -22,7 +22,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
 
 ### Correções (layout)
-- **Painel: cards do mês com a altura do conteúdo.** Receitas, Despesas e Resultado esticavam até a altura de "Faturas do mês" (que lista os cartões) e o valor ficava solto no meio de um card alto e vazio. Agora cada card tem a própria altura e o valor fica logo abaixo do título.
+- **Painel: cards do mês reorganizados.**
+  - **Antes:** Receitas, Despesas e Resultado esticavam até a altura de "Faturas do mês" (que lista os cartões), com o valor solto no meio de um card alto e vazio.
+  - **Agora:** os três ficam em colunas iguais e com a mesma altura, com o valor logo abaixo do título. "Faturas do mês" vai para uma linha própria, na largura toda, e os cartões dividem essa largura lado a lado (2 cartões = metade cada).
+  - **No celular**, tudo fica numa coluna.
 - **Divisórias em todas as telas.** Linhas finas nos dois temas:
   - abaixo do cabeçalho de cada página;
   - entre as seções de uma tela ("Situação hoje" e "Mês de …" no Painel; "Contas" e "Cartões de crédito" em Contas e cartões);
