@@ -269,24 +269,21 @@ public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual
 /// <summary>Nova ordem de prioridade das metas (a primeira da lista é a 1ª prioridade).</summary>
 public record PrioridadesMetasDto([Required, MinLength(1), MaxLength(200)] List<int> Ids);
 
-/// <summary>Um mês do plano de uma meta: sobra prevista (a da Projeção), parcelas do mês e o recomendado para ela.</summary>
-public record PlanoMesMetaDto(short Ano, byte Mes, decimal SobraPrevista, decimal Parcelas, decimal Recomendado);
+/// <summary>
+/// Um mês do caixa (#149): receitas e despesas das contas de dinheiro, faturas de cartão que vencem no mês (com a parte
+/// que é parcela) e a sobra = receitas − despesas − faturas.
+/// </summary>
+public record MesCaixaDto(short Ano, byte Mes, decimal Receitas, decimal Despesas, decimal Faturas, decimal Parcelas, decimal Sobra);
 
 /// <summary>
-/// Recomendação de uma meta (#90). <c>Recomendado</c>: quanto guardar este mês (null sem histórico suficiente);
-/// <c>PedidoMes</c>: quanto o prazo pede este mês, pela capacidade dos meses até ele; <c>DivisaoIgual</c>: a divisão
-/// linear de antes, como referência; <c>NoPrazo</c>: null sem data-alvo; <c>ParaManterPrazo</c>: quanto os próximos
-/// meses precisam, em média, quando o ritmo recomendado não cumpre o prazo.
+/// O que o plano das metas precisa (#90, #149, ADR 0035); a divisão entre as metas é feita na tela. <c>Disponivel</c> =
+/// false com menos de 3 meses completos de extrato (só a divisão igual). <c>Meses</c>: o caixa a partir do mês atual.
+/// <c>SaldoFimDoMes</c>: saldo previsto nas contas de dinheiro no fim do mês, já pagas as faturas que vencem nele
+/// (<c>FaturaAPagar</c> é a parte delas que ainda não saiu). <c>MelhorMesRecente</c>: a maior sobra de verdade (pelo
+/// caixa) entre os meses completos considerados.
 /// </summary>
-public record PlanoMetaDto(int MetaId, decimal Falta, decimal? Recomendado, decimal? PedidoMes, decimal? DivisaoIgual,
-    DateOnly? DataProvavel, bool? NoPrazo, decimal? ParaManterPrazo, List<PlanoMesMetaDto> Plano);
-
-/// <summary>
-/// Plano do mês para as metas. <c>Disponivel</c> = false com menos de 3 meses completos de extrato (só a divisão igual).
-/// </summary>
-public record PlanoMetasDto(bool Disponivel, int MesesConsiderados, short Ano, byte Mes, decimal SobraPrevista,
-    int MargemPercentual, decimal Capacidade, decimal TotalPedido, decimal TotalRecomendado, bool SobraNegativa,
-    List<PlanoMetaDto> Metas);
+public record PlanoMetasDto(bool Disponivel, int MesesConsiderados, short Ano, byte Mes, int MargemPercentual,
+    decimal SaldoContas, decimal FaturaAPagar, decimal SaldoFimDoMes, decimal MelhorMesRecente, List<MesCaixaDto> Meses);
 
 public record SalvarMetaDto(
     [Required, StringLength(120)] string Nome,

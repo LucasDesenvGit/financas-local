@@ -223,18 +223,20 @@ export interface Meta {
   prioridade: number;
 }
 
-/** #90 — um mês do plano de uma meta. */
-export interface PlanoMesMeta { ano: number; mes: number; sobraPrevista: number; parcelas: number; recomendado: number }
+/**
+ * #149 — um mês do caixa: receitas e despesas das contas de dinheiro, faturas de cartão que vencem no mês (com a parte
+ * que é parcela) e a sobra = receitas − despesas − faturas.
+ */
+export interface MesCaixa { ano: number; mes: number; receitas: number; despesas: number; faturas: number; parcelas: number; sobra: number }
 
-export interface PlanoMeta {
-  metaId: number; falta: number; recomendado: number | null; pedidoMes: number | null; divisaoIgual: number | null;
-  dataProvavel: string | null; noPrazo: boolean | null; paraManterPrazo: number | null; plano: PlanoMesMeta[];
-}
-
-/** #90 — quanto guardar este mês, pela sobra prevista (a da Projeção) e pela ordem de prioridade. */
+/**
+ * #90/#149 — o que o plano das metas precisa (a divisão entre as metas é feita na tela, em `metas-plano.ts`).
+ * `meses` começa no mês atual. `saldoFimDoMes`: saldo previsto nas contas no fim do mês, já pagas as faturas que vencem
+ * nele. `melhorMesRecente`: a maior sobra de verdade entre os meses completos considerados.
+ */
 export interface PlanoMetas {
-  disponivel: boolean; mesesConsiderados: number; ano: number; mes: number; sobraPrevista: number; margemPercentual: number;
-  capacidade: number; totalPedido: number; totalRecomendado: number; sobraNegativa: boolean; metas: PlanoMeta[];
+  disponivel: boolean; mesesConsiderados: number; ano: number; mes: number; margemPercentual: number;
+  saldoContas: number; faturaAPagar: number; saldoFimDoMes: number; melhorMesRecente: number; meses: MesCaixa[];
 }
 
 export interface SalvarMeta {

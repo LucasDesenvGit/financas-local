@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
 import { Conta, Meta, PlanoMetas, Reserva, TipoConta } from '../../src/app/core/modelos';
@@ -24,28 +25,27 @@ export function meta(campos: Partial<Meta>): Meta {
 }
 
 /** Plano sem histórico suficiente (o padrão dos testes que não olham o assistente). */
-export function semPlano(metas: Meta[] = []): PlanoMetas {
-  return { disponivel: false, mesesConsiderados: 1, ano: 2026, mes: 10, sobraPrevista: 0, margemPercentual: 10, capacidade: 0,
-    totalPedido: 0, totalRecomendado: 0, sobraNegativa: false,
-    metas: metas.map((m) => ({ metaId: m.id, falta: m.valorAlvo - m.valorAtual, recomendado: null, pedidoMes: null,
-      divisaoIgual: m.aporteMensalSugerido, dataProvavel: null, noPrazo: null, paraManterPrazo: null, plano: [] })) };
+export function semPlano(): PlanoMetas {
+  return { disponivel: false, mesesConsiderados: 1, ano: 2026, mes: 10, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
+    saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] };
 }
 
-/** Abre Metas com a API falsa; `ordens` guarda cada nova ordem de prioridade enviada. */
-export function abrirMetas(metas: Meta[] = [], plano: PlanoMetas = semPlano(metas)) {
+/** API falsa de Metas; `ordens` guarda cada nova ordem de prioridade e `parametros`, cada parâmetro salvo. */
+function apiFalsa(metas: Meta[], plano: PlanoMetas) {
   const ordens: number[][] = [];
-  TestBed.configureTestingModule({
-    providers: [
-      provideRouter([]),
-      {
-        provide: ApiService,
-        useValue: {
-          metas: () => of(metas), contas: () => of(CONTAS), reservas: () => of(RESERVAS), planoMetas: () => of(plano),
-          ordenarMetas: (ids: number[]) => { ordens.push(ids); return of(undefined); }
-        }
-      }
-    ]
-  });
+  const parametros: Record<string, number>[] = [];
+  const api = {
+    metas: () => of(metas), contas: () => of(CONTAS), reservas: () => of(RESERVAS), planoMetas: () => of(plano),
+    ordenarMetas: (ids: number[]) => { ordens.push(ids); return of(undefined); },
+    salvarParametros: (valores: Record<string, number>) => { parametros.push(valores); return of([]); }
+  };
+  return { api, ordens, parametros };
+}
+
+/** Abre Metas com a API falsa (sem URL). */
+export function abrirMetas(metas: Meta[] = [], plano: PlanoMetas = semPlano()) {
+  const { api, ordens, parametros } = apiFalsa(metas, plano);
+  TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: ApiService, useValue: api }] });
   const fixture = TestBed.createComponent(MetasComponent);
   fixture.detectChanges();
   const raiz = fixture.nativeElement as HTMLElement;
@@ -56,5 +56,19 @@ export function abrirMetas(metas: Meta[] = [], plano: PlanoMetas = semPlano(meta
     sel.dispatchEvent(new Event('change'));
     await atualizar();
   };
-  return { fixture, tela: fixture.componentInstance, raiz, atualizar, escolher, ordens };
+  return { fixture, tela: fixture.componentInstance, raiz, atualizar, escolher, ordens, parametros };
+}
+
+/** Abre /metas pelo roteador de verdade (a URL é lida e gravada como no navegador), com a API falsa. */
+export async function abrirMetasPelaUrl(url: string, metas: Meta[], plano: PlanoMetas) {
+  const { api, parametros } = apiFalsa(metas, plano);
+  TestBed.configureTestingModule({
+    providers: [provideRouter([{ path: 'metas', component: MetasComponent }]), { provide: ApiService, useValue: api }]
+  });
+  const harness = await RouterTestingHarness.create();
+  const tela = await harness.navigateByUrl(url, MetasComponent);
+  const router = TestBed.inject(Router);
+  const atualizar = async () => { await harness.fixture.whenStable(); harness.detectChanges(); };
+  await atualizar();
+  return { harness, tela, router, raiz: harness.routeNativeElement as HTMLElement, atualizar, parametros };
 }

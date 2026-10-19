@@ -200,6 +200,27 @@ public class RelatorioService
     }
 
     /// <summary>
+    /// Meses completos com dados que entram nas médias (no máximo 6, terminando no mês passado), para não diluir a
+    /// média com meses vazios. Usada pela Projeção e pelo assistente de metas.
+    /// </summary>
+    public async Task<(DateOnly Inicio, int Meses)> JanelaHistoricoAsync(CancellationToken ct)
+    {
+        var hoje = Relogio.Hoje;
+        var inicioMesAtual = new DateOnly(hoje.Year, hoje.Month, 1);
+        var primeiraData = await _db.Transacoes.AsNoTracking().MinAsync(t => (DateOnly?)t.Data, ct);
+        var inicio = inicioMesAtual.AddMonths(-6);
+        if (primeiraData is { } pd)
+        {
+            var primeiroMesCompleto = pd.Day == 1 ? new DateOnly(pd.Year, pd.Month, 1) : new DateOnly(pd.Year, pd.Month, 1).AddMonths(1);
+            if (primeiroMesCompleto > inicio) inicio = primeiroMesCompleto;
+        }
+        var meses = inicio >= inicioMesAtual
+            ? 0
+            : (inicioMesAtual.Year - inicio.Year) * 12 + inicioMesAtual.Month - inicio.Month;
+        return (inicio, meses);
+    }
+
+    /// <summary>
     /// Projeção mês a mês com base no histórico:
     /// - receitas futuras = média mensal das receitas dos últimos meses completos (até 6);
     /// - despesas futuras = média mensal das despesas à vista (sem parcelados) + parcelas futuras já contratadas;
@@ -211,18 +232,7 @@ public class RelatorioService
         var hoje = Relogio.Hoje;
         var inicioMesAtual = new DateOnly(hoje.Year, hoje.Month, 1);
         var fimHistorico = inicioMesAtual.AddDays(-1);
-
-        // Meses completos com dados (no máximo 6), para não diluir a média com meses vazios.
-        var primeiraData = await _db.Transacoes.AsNoTracking().MinAsync(t => (DateOnly?)t.Data, ct);
-        var inicioHistorico = inicioMesAtual.AddMonths(-6);
-        if (primeiraData is { } pd)
-        {
-            var primeiroMesCompleto = pd.Day == 1 ? new DateOnly(pd.Year, pd.Month, 1) : new DateOnly(pd.Year, pd.Month, 1).AddMonths(1);
-            if (primeiroMesCompleto > inicioHistorico) inicioHistorico = primeiroMesCompleto;
-        }
-        var mesesConsiderados = inicioHistorico >= inicioMesAtual
-            ? 0
-            : (inicioMesAtual.Year - inicioHistorico.Year) * 12 + inicioMesAtual.Month - inicioHistorico.Month;
+        var (inicioHistorico, mesesConsiderados) = await JanelaHistoricoAsync(ct);
 
         var historico = mesesConsiderados > 0
             ? await FluxoMensalAsync(inicioHistorico, fimHistorico, ct)

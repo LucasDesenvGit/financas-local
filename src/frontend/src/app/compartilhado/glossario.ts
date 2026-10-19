@@ -87,15 +87,25 @@ export const GLOSSARIO = {
     termo: 'Sobra prevista',
     definicao: 'Receitas médias menos despesas médias à vista e parcelas do mês: a mesma conta da tela de Projeção. No mês atual, o que já entrou e saiu mais o que falta pela média.'
   },
+  sobraDoCaixa: {
+    termo: 'Sobra do mês',
+    definicao: 'O dinheiro que entra menos o que sai das suas contas no mês: receitas − fatura do cartão que vence no mês − outras despesas (Pix, débito, boletos). A compra no cartão conta quando a fatura vence, não no dia da compra.',
+    exemplo: 'No mês atual, é o que já entrou e saiu mais a média do que falta. Por isso pode ser diferente da Projeção, que conta a compra no cartão no dia em que foi feita.'
+  },
+  parteDaSobra: {
+    termo: 'Parte da sobra para as metas',
+    definicao: 'Quanto da sobra do mês o assistente pode recomendar guardar; o resto fica livre para imprevistos. É a mesma escolha da "Margem de segurança" em Configurações › Parametrização, vista ao contrário (guardar 90% = margem de 10%).',
+    exemplo: 'Sobra de R$ 1.350 guardando 90%: recomenda até R$ 1.215.'
+  },
   recomendacaoMetas: {
     termo: 'Recomendação de quanto guardar',
-    definicao: 'Sobra prevista (receitas médias − despesas médias à vista − parcelas do mês) menos a margem de segurança. Primeiro vai para cada meta com prazo o necessário para cumpri-lo; o resto, pela ordem de prioridade.',
-    exemplo: 'Dinheiro que vai para cofrinho ou investimento precisa estar como transferência (ou "ignorar nos relatórios"): lançado como despesa, ele entra na média e diminui a sobra prevista.'
+    definicao: 'A sobra do mês vezes a parte que vai para as metas. Cada meta com prazo pede mais nos meses com folga e menos nos apertados (até 2× a divisão igual); o resto vai pela ordem de prioridade.',
+    exemplo: 'Neste mês, nunca mais do que deve sobrar nas contas no fim do mês (já paga a fatura) nem do que sobrou no seu melhor mês recente; havendo sobra e saldo, pelo menos R$ 50. Dinheiro que vai para cofrinho ou investimento precisa estar como transferência: lançado como despesa, ele diminui a sobra.'
   },
   margemSeguranca: {
     termo: 'Margem de segurança',
-    definicao: 'A parte da sobra prevista que o assistente deixa livre para imprevistos antes de recomendar quanto guardar. Ajuste em Configurações › Parametrização.',
-    exemplo: 'Sobra de R$ 1.350 com margem de 10%: recomenda guardar até R$ 1.215. Dinheiro guardado lançado como despesa (e não como transferência) diminui a sobra prevista.'
+    definicao: 'A parte da sobra do mês que o assistente de metas deixa livre para imprevistos antes de recomendar quanto guardar. Também dá para mudar na própria tela de Metas ("guardar X% da sobra").',
+    exemplo: 'Sobra de R$ 1.350 com margem de 10%: recomenda guardar até R$ 1.215.'
   },
   precoMedio: {
     termo: 'Preço médio',
