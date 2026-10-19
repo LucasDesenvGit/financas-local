@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { StatusSincronizacaoService } from '../core/status-sincronizacao.service';
 import { DicaDirective } from './dica.directive';
@@ -18,6 +18,7 @@ import { tempoRelativo } from './utilidades';
   selector: 'app-status-sincronizacao',
   imports: [RouterLink, DicaDirective, IconeComponent],
   host: { class: 'status-sincronizacao' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (alerta(); as a) {
       <a class="botao-barra alerta-sincronizacao" routerLink="/configuracoes" [attr.aria-label]="a + ': ver conexões'" animate.leave="sair"

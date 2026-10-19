@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
@@ -53,6 +53,7 @@ interface Parte503020 {
   selector: 'app-anual',
   imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent,
     MaisAnalisesComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
       <div>

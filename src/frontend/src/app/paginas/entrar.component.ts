@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
@@ -10,6 +10,7 @@ import { Icones } from '../compartilhado/icones';
 @Component({
   selector: 'app-entrar',
   imports: [FormsModule, SeletorTemaComponent, IconeComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="tela-entrada">
       <div class="tela-entrada-tema"><app-seletor-tema /></div>

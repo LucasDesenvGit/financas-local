@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { PrivacidadeService } from '../core/privacidade.service';
@@ -515,6 +515,7 @@ function dataCurta(iso: string, comAno: boolean): string {
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     /* #123: nome dado por você em cima; o do banco embaixo, menor (cor suave do tema, com contraste de texto). */
     .linha-descricao { display: flex; align-items: center; gap: 4px; min-width: 0; }

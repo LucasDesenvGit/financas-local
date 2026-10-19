@@ -1,4 +1,4 @@
-import { Component, Injectable, inject, signal } from '@angular/core';
+import { Component, Injectable, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 /** Ação opcional do aviso (ex.: "Desfazer"); clicar executa e fecha o aviso. */
 export interface AcaoAviso { rotulo: string; executar: () => void; }
@@ -57,6 +57,7 @@ export class AvisosService {
 
 @Component({
   selector: 'app-avisos',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="avisos" aria-live="polite">
       @for (a of servico.avisos(); track a.id) {

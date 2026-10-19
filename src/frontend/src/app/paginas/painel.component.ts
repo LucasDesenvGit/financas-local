@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
@@ -240,6 +240,7 @@ import { Icones } from '../compartilhado/icones';
       <p class="texto-suave">Carregando…</p>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpi-credito { position: relative; overflow: hidden; }
     .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }

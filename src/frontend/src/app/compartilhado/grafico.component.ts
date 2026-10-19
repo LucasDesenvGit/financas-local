@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, Output, effect, inject, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, Output, effect, inject, input, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { TemaService } from '../core/tema.service';
@@ -8,6 +8,7 @@ Chart.register(...registerables);
 /** Envoltório mínimo do Chart.js (renderiza em canvas, compatível com a CSP do site). */
 @Component({
   selector: 'app-grafico',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<div class="grafico" [style.height.px]="altura()"><canvas #canvas></canvas></div>`
 })
 export class GraficoComponent implements AfterViewInit, OnDestroy {

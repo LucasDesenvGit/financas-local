@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -86,6 +86,7 @@ interface GrupoParametros { nome: string; itens: Parametro[]; }
       </section>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .parametros { display: grid; gap: 4px; }
     .parametro {

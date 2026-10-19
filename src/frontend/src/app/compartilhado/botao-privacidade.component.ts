@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { DicaDirective } from './dica.directive';
 import { IconeComponent } from './icone.component';
@@ -14,6 +14,7 @@ import { Icones } from './icones';
 @Component({
   selector: 'app-botao-privacidade',
   imports: [IconeComponent, DicaDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button type="button" class="botao-barra botao-privacidade" (click)="privacidade.alternar()"
       [attr.aria-pressed]="privacidade.oculto()" aria-label="Ocultar valores"

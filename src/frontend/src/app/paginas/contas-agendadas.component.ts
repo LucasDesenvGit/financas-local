@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
@@ -19,6 +19,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 @Component({
   selector: 'app-contas-agendadas',
   imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas a pagar</h1>

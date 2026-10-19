@@ -75,12 +75,12 @@ esac
 
 # index.tab e o mesmo indice do index.json em texto separado por tabulacao
 # (versao, data, arquivos, ..., lts na 10a coluna): da para ler so com awk.
-# Versoes aceitas pelo Angular 20: 20, 22 e 24 (a mais nova vem primeiro).
+# Versoes aceitas pelo Angular 22: 22 e 24 (a mais nova vem primeiro; o 26 ainda nao foi testado aqui).
 indice_node="$(curl -fsSL 'https://nodejs.org/dist/index.tab')" || erro_sai 'Nao foi possivel obter o indice de versoes do Node.js (sem internet?).'
 node_versao="$(awk -F'\t' -v chave="$chave_arquivos_node" '
     NR > 1 && $10 != "-" {
         split($1, partes, "."); maior = substr(partes[1], 2) + 0
-        if (maior != 20 && maior != 22 && maior != 24) next
+        if (maior != 22 && maior != 24) next
         n = split($3, arquivos, ",")
         for (i = 1; i <= n; i++) if (arquivos[i] == chave) { print $1; exit }
     }' <<<"$indice_node")"

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
@@ -122,6 +122,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       }
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .filtros-erros { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 12px 0 16px; }
     .filtros-erros label { min-width: 130px; }

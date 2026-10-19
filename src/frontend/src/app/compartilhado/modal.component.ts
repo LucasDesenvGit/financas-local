@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, computed, effect, input, output, signal, untracked } from '@angular/core';
+import { Component, HostListener, OnDestroy, computed, effect, input, output, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
 
 /** Modais abertos, na ordem em que foram abertos (o último fica por cima). Compartilhado por todas as instâncias. */
 const pilha = signal<ModalComponent[]>([]);
@@ -14,6 +14,7 @@ const Z_MAXIMO = 58;
  */
 @Component({
   selector: 'app-modal',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (aberto()) {
       <!-- Só o fundo sai com fade: o conteúdo do modal é apagado pela tela no mesmo instante (ex.: form = null), e a
