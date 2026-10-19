@@ -6,6 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Correções
 - **Erro de CSP no console em toda página** (#157, ADR 0034). O build do Angular escrevia no `index.html` um script com a conferência de integridade (SRI) das páginas, e a política de segurança do site o bloqueava. O SRI foi desligado: aqui todos os arquivos saem do mesmo programa local, e ele não protegia contra nada realista. A política de segurança continua igual, sem permitir script inline.
+- **Instalação no Windows falhava com "EPERM ... esbuild.exe"** quando o front-end estava aberto em desenvolvimento (`npm start`). O Windows não apaga um programa em execução, e o `npm ci` precisa apagar a pasta `node_modules`. Agora o `instalar-windows.cmd` e o `3-publicar-atualizar.sh` (no Git Bash) encerram antes só os processos que rodam de dentro de `src/frontend/node_modules` e dizem quais foram.
 - **Fatura do mês dos cartões com valor errado** (#144). A fatura do mês somava só as compras de 1 a 31 do mês, então ficava muito abaixo da fatura do banco. Agora ela é a fatura que fecha no mês:
   - **Já fechada:** vale o total que o banco informou.
   - **Ainda aberta:** soma as compras desde o fechamento anterior e a parcela do mês, menos os estornos.
