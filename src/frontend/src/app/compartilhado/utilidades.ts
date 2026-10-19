@@ -45,7 +45,12 @@ export interface ContextoTransacoes {
   contaId?: number;
   /** #141: transação que /transacoes destaca na lista (rola até ela e põe o foco nela). */
   transacaoId?: number;
+  /** Natureza do gasto da regra 50/30/20 (Visão anual); 'sem' = sem classificação. */
+  naturezas?: NaturezaUrl[];
 }
+
+/** Valores de ?natureza= em /transacoes (separados por vírgula). */
+export type NaturezaUrl = 'essencial' | 'estilo-de-vida' | 'sem';
 
 /**
  * Query params de /transacoes (UX-1). Use sempre esta função para montar o link, em vez de string na mão:
@@ -59,6 +64,7 @@ export function paramsTransacoes(c: ContextoTransacoes): Record<string, string> 
   if (c.tipo) p['tipo'] = c.tipo;
   if (c.contaId) p['conta'] = String(c.contaId);
   if (c.transacaoId) p['transacao'] = String(c.transacaoId);
+  if (c.naturezas?.length) p['natureza'] = c.naturezas.join(',');
   return p;
 }
 

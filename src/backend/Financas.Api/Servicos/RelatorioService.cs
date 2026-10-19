@@ -444,11 +444,14 @@ public class RelatorioService
             .OrderByDescending(c => c.Valor).ThenByDescending(c => c.ValorAnterior)
             .ToList();
 
+        // Por categoria de cada despesa (não pela raiz): uma subcategoria com natureza própria conta na dela, e o
+        // total bate com Transações filtrada pela natureza.
+        decimal SomaNatureza(NaturezaGasto? natureza) => despesasAno.Where(d => Raiz(d.Item1).Natureza == natureza).Sum(d => d.Item3);
         var distribuicao = new DistribuicaoRendaDto(
             resumo.Receitas,
-            categorias.Where(c => c.Natureza == NaturezaGasto.Essencial).Sum(c => c.Valor),
-            categorias.Where(c => c.Natureza == NaturezaGasto.EstiloDeVida).Sum(c => c.Valor),
-            categorias.Where(c => c.Natureza == null).Sum(c => c.Valor),
+            SomaNatureza(NaturezaGasto.Essencial),
+            SomaNatureza(NaturezaGasto.EstiloDeVida),
+            SomaNatureza(null),
             resumo.Resultado);
 
         var saude = await SaudeFinanceiraAsync(patrimonioAtual, credito, categoriasInfo.Where(c => c.Value.Natureza == NaturezaGasto.Essencial

@@ -133,6 +133,9 @@ export interface FiltroTransacoes {
   poucoInformativa?: boolean;
   /** #111: grupo do filtro "Lançamento" (pix, cartao, fatura, entre-contas…). */
   lancamento?: string | null;
+  /** Natureza do gasto (50/30/20), da categoria ou da categoria pai; com semNatureza, soma as sem classificação. */
+  naturezas?: NaturezaGasto[] | null;
+  semNatureza?: boolean;
 }
 
 export interface PaginaTransacoes {
