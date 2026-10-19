@@ -364,6 +364,24 @@ function Criar-Banco {
 }
 
 # ================================================================= 3) Publicacao
+# O Windows nao apaga um .exe em execucao: com um "npm start" aberto (ng serve + esbuild.exe de
+# src\frontend\node_modules), o "npm ci" falha com EPERM. Encerra so o que roda de dentro dessa pasta.
+function Encerrar-UsoDoFrontEnd([string]$pastaFront) {
+    $modulos = (Join-Path $pastaFront "node_modules").Replace('/', '\').ToLowerInvariant()
+    $emUso = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $_.ProcessId -ne $PID -and (
+            ($_.ExecutablePath -and $_.ExecutablePath.ToLowerInvariant().StartsWith($modulos)) -or
+            ($_.CommandLine -and $_.CommandLine.ToLowerInvariant().Contains($modulos)))
+    })
+    if ($emUso.Count -eq 0) { return }
+    Aviso "Encerrando $($emUso.Count) processo(s) que usam o front-end (ex.: um 'npm start' aberto); sem isso o 'npm ci' falha:"
+    foreach ($p in $emUso) {
+        Aviso "  PID $($p.ProcessId): $($p.Name)"
+        Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+    Start-Sleep -Seconds 1
+}
+
 function Publicar {
     $pastaFront = Join-Path $Raiz "src\frontend"
     $projetoApi = Join-Path $Raiz "src\backend\Financas.Api\Financas.Api.csproj"
@@ -374,6 +392,7 @@ function Publicar {
 
     if (-not $PularBuild) {
         Etapa "[3/3] Compilando o front-end (Angular)"
+        Encerrar-UsoDoFrontEnd $pastaFront
         Push-Location $pastaFront
         try {
             Executar "npm.cmd" @("ci", "--no-audit", "--no-fund")
