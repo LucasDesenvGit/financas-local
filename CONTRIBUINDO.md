@@ -13,16 +13,23 @@ Projeto pessoal, mas com fluxo de trabalho organizado para facilitar a manutenç
 | `hotfix/<assunto>` | Correção urgente do que está publicado | Sai de `main`, volta para `main` **e** `develop` |
 | `release/<versao>` | (opcional) Ajustes finais antes de publicar | Sai de `develop`, volta para `main` e `develop` |
 
-Fluxo do dia a dia:
+**O branch padrão do GitHub é o `develop`** (#142).
+- **PR novo:** já sugere o `develop` como destino.
+- **`Closes #N` na descrição:** vincula o PR à issue (painel *Development* e o workflow "Pull request linked to issue" do Projects) e fecha a issue quando o PR entra no `develop`.
+- **Fora do branch padrão, o `Closes #N` não vale.** No PR de `develop` para `main`, ele não faz nada, mas a issue já foi fechada antes.
+
+Fluxo do dia a dia, com a branch criada pela issue:
 
 ```powershell
 git switch develop
 git pull
-git switch -c feature/minha-melhoria
+gh issue develop <número> --base develop --name feature/minha-melhoria --checkout   # ou fix/<assunto>
 # ... trabalho e commits ...
-git push -u origin feature/minha-melhoria
-gh pr create --base develop --fill
+git push
+gh pr create --base develop --fill    # na descrição: Closes #<número>
 ```
+
+Não há issue? Crie uma antes (`gh issue create`): todo PR fecha a issue dele.
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
 1. No `develop`, mude a versão no `Directory.Build.props` (ex.: `2.2.0`). No `CHANGELOG.md`, troque `## [Não publicado]` por `## [2.2.0] - AAAA-MM-DD` e abra uma seção `## [Não publicado]` vazia acima.
