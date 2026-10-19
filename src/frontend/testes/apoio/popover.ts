@@ -9,8 +9,9 @@ export function instalarPopoverFalso(): void {
   prototipo.showPopover = function (this: HTMLElement) { this.setAttribute('data-popover-aberto', ''); };
   prototipo.hidePopover = function (this: HTMLElement) { this.removeAttribute('data-popover-aberto'); };
   const matchesOriginal = Element.prototype.matches;
+  // Desde o TypeScript 6 o `matches` da lib DOM tem sobrecargas com predicado de tipo; a troca só muda ':popover-open'.
   Element.prototype.matches = function (this: Element, seletor: string): boolean {
     if (seletor === ':popover-open') return this.hasAttribute('data-popover-aberto');
     return matchesOriginal.call(this, seletor);
-  };
+  } as Element['matches'];
 }

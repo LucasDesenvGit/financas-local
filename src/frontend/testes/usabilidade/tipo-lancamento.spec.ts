@@ -27,7 +27,7 @@ describe('Usabilidade: tipo de lançamento', () => {
     const t = await abrir();
     const etiquetas = Array.from(t.elemento.querySelectorAll('.etiqueta-lancamento')).map((e) => e.textContent!.trim());
     expect(etiquetas).toEqual(['Pix enviado', 'Compra no cartão', 'Pagamento de fatura']);
-    expect(t.elemento.querySelector('.etiqueta-lancamento lucide-icon')!.getAttribute('aria-hidden')).toBe('true');
+    expect(t.elemento.querySelector('.etiqueta-lancamento app-icone svg')!.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('o que não é gasto aparece escrito ("fora dos gastos"), não só na cor', async () => {

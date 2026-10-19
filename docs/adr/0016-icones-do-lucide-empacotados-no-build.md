@@ -13,17 +13,17 @@ Menu, botões e cartões usavam caracteres de texto como ícone (⟳, 👁, ☰)
 - **Continuar com caracteres/emoji** — zero dependência; visual inconsistente entre Windows, Linux e celular.
 - **Fonte de ícones por CDN (Material Icons, Font Awesome)** — muito usada; quebra a CSP e cria saída de rede no front-end.
 - **SVGs desenhados à mão no projeto** — sem dependência; trabalhoso de manter e sem consistência de traço.
-- **`lucide-angular` (licença ISC)** — biblioteca de ícones em SVG, só os usados entram no bundle (tree-shaking), sem acesso à rede.
+- **`lucide-angular` (licença ISC)** — biblioteca de ícones em SVG, só os usados entram no bundle (tree-shaking), sem acesso à rede. Substituído pelo sucessor oficial `@lucide/angular` (mesma licença e mesmos ícones) na subida para o Angular 22 (PR #152): o `lucide-angular` foi descontinuado e só aceita Angular até a 21.
 
 ## Decisão
 
-Usamos `lucide-angular` na versão **fixa** `1.0.0`, empacotado no build. Os ícones usados ficam registrados num lugar só (`compartilhado/icones.ts`) e são desenhados pelo componente `app-icone`, decorativo (`aria-hidden`) e na cor do texto. O nome do botão continua no `aria-label`/texto, não no ícone.
+Usamos `@lucide/angular` na versão **fixa** `1.59.0` (antes, `lucide-angular` `1.0.0`), empacotado no build. Os ícones usados ficam registrados num lugar só (`compartilhado/icones.ts`, como componentes `LucideXxx`) e são desenhados pelo componente `app-icone` (`<svg [lucideIcon]>`), decorativo (`aria-hidden`) e na cor do texto. O nome do botão continua no `aria-label`/texto, não no ícone.
 
 ## Consequências
 
 - **Positivas:** visual consistente; nada baixado de fora (CSP inalterada); trocar um ícone é uma linha em `icones.ts`.
 - **Negativas:**
-  - dependência de terceiros no front-end; o pacote `lucide-angular` foi marcado como descontinuado em favor de `@lucide/angular` (o `npm ci` já avisa) — em algum momento será preciso migrar;
+  - dependência de terceiros no front-end, que acompanha as versões do Angular: o `lucide-angular` foi descontinuado e travou a subida para o Angular 22, o que obrigou a migrar para o `@lucide/angular`;
   - versão fixa: atualizações (inclusive de segurança) dependem de alguém subir a versão à mão;
   - ícone sem texto exige `aria-label` e dica (`appDica`) em cada botão — esquecer deixa o botão sem nome para leitor de tela.
-- **Na prática:** não importar ícone direto do `lucide-angular` nas telas — registrar em `icones.ts` e usar `<app-icone>`. Botão só com ícone leva `aria-label` + `appDica` com o mesmo texto.
+- **Na prática:** não importar ícone direto do `@lucide/angular` nas telas — registrar em `icones.ts` e usar `<app-icone>`. Botão só com ícone leva `aria-label` + `appDica` com o mesmo texto.

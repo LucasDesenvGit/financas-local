@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, output, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ApiService } from '../core/api.service';
@@ -197,6 +197,7 @@ const LINHAS_VISIVEIS = 8;
       </div>
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .conferencia section { margin-top: 18px; }
     .conferencia h3 { margin: 0 0 4px; font-size: 1rem; }

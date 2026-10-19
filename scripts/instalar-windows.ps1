@@ -147,13 +147,13 @@ function Preparar-Ambiente {
     Etapa "[1/3] Verificando o Node.js"
     $destinoNode = Join-Path $Ferramentas "node"
     $chave = "win-$Arch-zip"
-    # index.tab: versao, data, arquivos, ..., lts na 10a coluna. Angular 20 aceita Node 20, 22 e 24.
+    # index.tab: versao, data, arquivos, ..., lts na 10a coluna. Angular 22 aceita Node 22 e 24 (o 26 ainda nao foi testado aqui).
     $versaoNode = $null
     foreach ($linha in ((Obter-Texto "https://nodejs.org/dist/index.tab") -split "`n" | Select-Object -Skip 1)) {
         $col = $linha.TrimEnd("`r") -split "`t"
         if ($col.Count -lt 10 -or $col[9] -eq "-") { continue }
         $maior = [int]($col[0].TrimStart("v").Split(".")[0])
-        if (@(20, 22, 24) -notcontains $maior) { continue }
+        if (@(22, 24) -notcontains $maior) { continue }
         if (($col[2] -split ",") -contains $chave) { $versaoNode = $col[0]; break }
     }
     if (-not $versaoNode) { ErroSai "Nenhuma versao LTS compativel do Node.js encontrada." }

@@ -1,4 +1,4 @@
-import { Component, booleanAttribute, computed, forwardRef, input, output, signal } from '@angular/core';
+import { Component, booleanAttribute, computed, forwardRef, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 
 export const SIMBOLOS_MOEDA: Record<string, string> = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF' };
@@ -101,6 +101,7 @@ let proximoId = 0;
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => CampoValorComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => CampoValorComponent), multi: true }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span class="campo-valor" [class.campo-valor-erro]="erroVisivel()" [class.campo-valor-compacto]="compacto()">
       <span class="campo-valor-simbolo" aria-hidden="true">{{ simbolo() }}</span>

@@ -52,6 +52,8 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 | `src/styles.css` | Tema (tokens de cor claros/escuros) e componentes visuais globais. |
 | `testes/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). Fora do build do Angular. |
 
+Angular 22 com zone.js (`provideZoneChangeDetection`) e componentes standalone. Todo componente declara `changeDetection: ChangeDetectionStrategy.Eager` — o comportamento padrão até o Angular 21 —, porque várias telas guardam estado em campos comuns e não em signals; o padrão OnPush do Angular 22 deixaria essas telas sem atualizar.
+
 ## Ferramentas — `src/backend/Financas.MigrarSqlite`
 
 Migra os dados de uma instalação antiga (SQL Server/IIS) para o SQLite. É seguro rodar sem SQL Server disponível: sem nada para migrar, termina sem erro. O Client Secret da Pluggy e o token da brapi são limpos na migração (foram criptografados com as chaves da instalação antiga) e precisam ser informados de novo.

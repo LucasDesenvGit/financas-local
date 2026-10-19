@@ -556,7 +556,8 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Ver quanto da renda vai para o necessário e quanto para o resto.',
         passos: [
           'Em cada categoria de despesa, escolha a “Natureza do gasto”: essencial (moradia, mercado, saúde) ou estilo de vida (lazer, restaurantes).',
-          'A Visão anual e a sugestão de orçamentos usam isso na divisão 50/30/20: até 50% para essenciais, 30% para estilo de vida e pelo menos 20% para guardar.'
+          'A Visão anual e a sugestão de orçamentos usam isso na divisão 50/30/20: até 50% para essenciais, 30% para estilo de vida e pelo menos 20% para guardar.',
+          'Na Visão anual, clique em Essenciais, Estilo de vida ou Guardado (na barra ou na legenda) para ver em Transações o que forma cada parte.'
         ],
         abrir: [{ rotulo: 'Abrir a Visão anual', rota: '/anual' }],
         termos: ['comprometimento']

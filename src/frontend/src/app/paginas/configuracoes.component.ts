@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,6 +18,7 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
 @Component({
   selector: 'app-configuracoes',
   imports: [FormsModule, DatePipe, ParametrizacaoComponent, AparenciaComponent, ErrosComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
       <h1>Configurações</h1>

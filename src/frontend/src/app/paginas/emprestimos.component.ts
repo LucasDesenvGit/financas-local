@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
@@ -158,6 +158,7 @@ interface Grupo {
       <p class="texto-suave">Carregando…</p>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpi-natureza { position: relative; overflow: hidden; }
     .kpi-natureza::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }

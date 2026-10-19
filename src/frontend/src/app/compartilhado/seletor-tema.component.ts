@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { LucideIconData } from 'lucide-angular';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { LucideIcon } from '@lucide/angular';
 import { PreferenciaTema, TemaService } from '../core/tema.service';
 import { IconeComponent } from './icone.component';
 import { Icones } from './icones';
@@ -7,6 +7,7 @@ import { Icones } from './icones';
 @Component({
   selector: 'app-seletor-tema',
   imports: [IconeComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="seletor-tema" role="radiogroup" aria-label="Tema">
       @for (o of opcoes; track o.valor) {
@@ -21,7 +22,7 @@ import { Icones } from './icones';
 })
 export class SeletorTemaComponent {
   readonly tema = inject(TemaService);
-  readonly opcoes: { valor: PreferenciaTema; rotulo: string; icone: LucideIconData; titulo: string }[] = [
+  readonly opcoes: { valor: PreferenciaTema; rotulo: string; icone: LucideIcon; titulo: string }[] = [
     { valor: 'claro', rotulo: 'Claro', icone: Icones.claro, titulo: 'Tema claro' },
     { valor: 'escuro', rotulo: 'Escuro', icone: Icones.escuro, titulo: 'Tema escuro' },
     { valor: 'sistema', rotulo: 'Auto', icone: Icones.sistema, titulo: 'Seguir o sistema' }

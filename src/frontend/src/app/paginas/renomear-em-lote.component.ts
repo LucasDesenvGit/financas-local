@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -55,6 +55,7 @@ const ORIGINAIS_VISIVEIS = 5;
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .originais ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; overflow-wrap: anywhere; }
     .onde-usar { border: 1px solid var(--borda); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 6px; }

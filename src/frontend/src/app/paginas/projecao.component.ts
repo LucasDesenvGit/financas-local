@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -15,6 +15,7 @@ import { PrivacidadeService } from '../core/privacidade.service';
 @Component({
   selector: 'app-projecao',
   imports: [MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
       <div>

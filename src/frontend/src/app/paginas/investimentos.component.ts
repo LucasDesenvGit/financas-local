@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent, SIMBOLOS_MOEDA } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
@@ -660,6 +660,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       </form>
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .barra-abas { margin-bottom: 16px; }
     .legenda-grafico { margin: -6px 0 10px; font-size: 0.84rem; }

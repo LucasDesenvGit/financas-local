@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, effect, inject, input, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ChaveGlossario, DefinicaoTermo, GLOSSARIO } from './glossario';
 
 let sequencia = 0;
@@ -12,6 +12,7 @@ let sequencia = 0;
 @Component({
   selector: 'app-termo',
   host: { class: 'termo' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<ng-content /><button type="button" class="termo-botao" [attr.aria-label]="'O que é ' + definicao().termo + '?'"
       [attr.aria-expanded]="aberto()" [attr.aria-controls]="id" [attr.aria-describedby]="aberto() ? id : null"
       (click)="alternar($event)">ⓘ</button>@if (aberto()) {
