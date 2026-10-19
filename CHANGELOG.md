@@ -5,6 +5,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **"Sincronizado: X atualizada(s)" com o mesmo X toda vez** (#156). A sincronização marcava de novo como transferência os Pix e TEDs para outra pessoa da categoria "Transferências", e a reclassificação do fim os devolvia para despesa ou receita. Eles contavam como "atualizados" em toda sincronização, mesmo sem nada novo no banco. Agora a sincronização só recalcula o tipo de uma transação nova ou que mudou de categoria, e o número conta só o que mudou de verdade.
+  - **Junto:** "Ignorar nos relatórios" marcado à mão num Pix para outra pessoa não se perde mais na sincronização seguinte.
 - **Fatura do mês dos cartões com valor errado** (#144). A fatura do mês somava só as compras de 1 a 31 do mês, então ficava muito abaixo da fatura do banco. Agora ela é a fatura que fecha no mês:
   - **Já fechada:** vale o total que o banco informou.
   - **Ainda aberta:** soma as compras desde o fechamento anterior e a parcela do mês, menos os estornos.
