@@ -44,6 +44,23 @@ fi
 # ------------------------------------------------------------------ Build
 if [[ "$pular_build" -eq 0 ]]; then
     etapa 'Compilando o front-end (Angular)'
+    # O Windows nao apaga um .exe em execucao: com um "npm start" aberto (ng serve + esbuild.exe de
+    # src/frontend/node_modules), o "npm ci" falha com EPERM. Encerra so o que roda de dentro dessa pasta
+    # (mesma regra do Encerrar-UsoDoFrontEnd do instalar-windows.ps1). No Linux, apagar arquivo em uso funciona.
+    if [[ "$SO" == windows ]]; then
+        MODULOS_FRONT="$(cygpath -w "$pasta_front/node_modules")" powershell.exe -NoProfile -NonInteractive -Command '
+            $modulos = $env:MODULOS_FRONT.ToLowerInvariant()
+            $emUso = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+                ($_.ExecutablePath -and $_.ExecutablePath.ToLowerInvariant().StartsWith($modulos)) -or
+                ($_.CommandLine -and $_.CommandLine.ToLowerInvariant().Contains($modulos)) })
+            if ($emUso.Count -eq 0) { exit 0 }
+            Write-Host "    !!  Encerrando $($emUso.Count) processo(s) que usam o front-end (ex.: um npm start aberto); sem isso o npm ci falha:" -ForegroundColor Yellow
+            foreach ($p in $emUso) {
+                Write-Host "    !!    PID $($p.ProcessId): $($p.Name)" -ForegroundColor Yellow
+                Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+            }
+            Start-Sleep -Seconds 1' || aviso 'Nao deu para conferir processos usando o front-end; se o npm ci falhar com EPERM, feche o "npm start".'
+    fi
     (cd "$pasta_front" && npm ci --no-audit --no-fund && npm run build)
     ok 'front-end compilado'
 
