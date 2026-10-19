@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **Instalação no Windows falhava com "EPERM ... esbuild.exe"** quando o front-end estava aberto em desenvolvimento (`npm start`). O Windows não apaga um programa em execução, e o `npm ci` precisa apagar a pasta `node_modules`. Agora o `instalar-windows.cmd` e o `3-publicar-atualizar.sh` (no Git Bash) encerram antes só os processos que rodam de dentro de `src/frontend/node_modules` e dizem quais foram.
 - **Fatura do mês dos cartões com valor errado** (#144). A fatura do mês somava só as compras de 1 a 31 do mês, então ficava muito abaixo da fatura do banco. Agora ela é a fatura que fecha no mês:
   - **Já fechada:** vale o total que o banco informou.
   - **Ainda aberta:** soma as compras desde o fechamento anterior e a parcela do mês, menos os estornos.
