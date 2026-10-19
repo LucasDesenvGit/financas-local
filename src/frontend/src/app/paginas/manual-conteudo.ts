@@ -641,17 +641,22 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'quanto-guardar',
         titulo: 'Prioridade e quanto guardar por mês',
-        paraQueServe: 'Saber quanto guardar este mês em cada meta, pela sobra prevista de verdade.',
+        paraQueServe: 'Saber quanto guardar este mês em cada meta, pelo dinheiro que de fato entra e sai, contando a fatura do cartão.',
         passos: [
-          'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra prevista do mês e quanto guardar no total.',
+          'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence − outras despesas) e quanto guardar no total.',
+          'Em “Guardar X% da sobra”, escolha quanto da sobra vai para as metas; o resto fica livre para imprevistos.',
           'Use ↑ e ↓ em cada meta para definir a prioridade.',
-          'Cada meta mostra “Este mês: guarde R$ X”; as com prazo recebem primeiro o necessário para cumpri-lo, e o resto vai pela prioridade.',
-          'Quando o prazo não cabe, a meta mostra a data provável e quanto os próximos meses precisariam.',
+          'Cada meta mostra “Este mês: guarde R$ X” e, embaixo, os degraus dos meses seguintes: menos nos meses de fatura alta, mais quando ela cai.',
+          'Em “Consigo guardar outro valor”, diga quanto dá para guardar este mês: o resto do plano é refeito na hora e mostra se ainda fecha no prazo.',
+          'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
           '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
-        termos: ['sobraPrevista', 'margemSeguranca', 'recomendacaoMetas'],
-        dicas: ['Dinheiro que vai para cofrinho ou investimento precisa estar como transferência; lançado como despesa, ele diminui a sobra prevista.']
+        termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],
+        dicas: [
+          'Dinheiro que vai para cofrinho ou investimento precisa estar como transferência; lançado como despesa, ele diminui a sobra.',
+          'O valor de “Consigo guardar” é só uma simulação: para valer, registre o aporte na meta.'
+        ]
       },
       {
         id: 'ideias-de-metas',

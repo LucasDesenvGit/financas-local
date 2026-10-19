@@ -5,6 +5,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **Metas: "quanto guardar este mês" pedia quase tudo de uma vez** (#149, ADR 0035). A sobra do mês não contava a fatura do cartão que vence nele. Num mês de fatura alta, o assistente chegava a pedir ~8× a divisão igual.
+  - **Sobra pelo dinheiro que entra e sai:** receitas − fatura que vence no mês − outras despesas. As faturas futuras são estimadas pelas compras à vista e pelas parcelas que ainda faltam, então aparece a queda quando as parcelas acabam.
+  - **Limites do mês:** o pedido não passa do que deve sobrar nas contas no fim do mês (já paga a fatura), nem do que sobrou no seu melhor mês recente. Havendo sobra, sugere pelo menos R$ 50. Nenhum mês de uma meta com prazo passa de 2× a divisão igual.
+  - **Plano em degraus**, com o motivo: "R$ 510 em nov · R$ 2.290/mês de jan a set (faturas ~R$ 1.500)". Avisa quando o plano conta com a fatura caindo.
+  - **"Guardar X% da sobra"** na própria tela de Metas. É a mesma escolha da margem de segurança, e recalcula na hora.
+  - **"Consigo guardar outro valor"** em cada meta: o resto do plano é refeito na hora e mostra se ainda fecha no prazo. O valor fica na URL até você registrar o aporte.
+  - **Quando não fecha no prazo,** aparecem as saídas: mudar o prazo ou o valor, ver onde cortar (50/30/20) e Orçamentos.
 - **"Sincronizado: X atualizada(s)" com o mesmo X toda vez** (#156). A sincronização marcava de novo como transferência os Pix e TEDs para outra pessoa da categoria "Transferências", e a reclassificação do fim os devolvia para despesa ou receita. Eles contavam como "atualizados" em toda sincronização, mesmo sem nada novo no banco. Agora a sincronização só recalcula o tipo de uma transação nova ou que mudou de categoria, e o número conta só o que mudou de verdade.
   - **Junto:** "Ignorar nos relatórios" marcado à mão num Pix para outra pessoa não se perde mais na sincronização seguinte.
 - **Erro de CSP no console em toda página** (#157, ADR 0034). O build do Angular escrevia no `index.html` um script com a conferência de integridade (SRI) das páginas, e a política de segurança do site o bloqueava. O SRI foi desligado: aqui todos os arquivos saem do mesmo programa local, e ele não protegia contra nada realista. A política de segurança continua igual, sem permitir script inline.

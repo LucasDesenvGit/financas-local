@@ -134,10 +134,10 @@ public class MetasController : BaseController
     [HttpGet]
     public async Task<ActionResult<List<MetaDto>>> Listar(CancellationToken ct) => await ListarMetasAsync(ct);
 
-    /// <summary>#90: quanto guardar este mês em cada meta, pela sobra prevista e pela ordem de prioridade.</summary>
+    /// <summary>#90/#149: o caixa mês a mês para o plano das metas (a divisão entre as metas é feita na tela, ADR 0035).</summary>
     [HttpGet("plano")]
     public async Task<ActionResult<PlanoMetasDto>> Plano(CancellationToken ct)
-        => await _assistente.PlanejarAsync(await ListarMetasAsync(ct), ct);
+        => await _assistente.PlanejarAsync(ct);
 
     /// <summary>Nova ordem de prioridade: a primeira da lista é a 1ª. Metas fora da lista vão para o fim.</summary>
     [HttpPut("prioridades")]

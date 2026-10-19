@@ -70,7 +70,7 @@ public class ParametroService
             TipoParametro.Inteiro, 10, 0, 50, "%"),
 
         new(ConfiguracaoService.MetasMargemSeguranca, "Metas", "Margem de segurança",
-            "Quanto da sobra prevista do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar.",
+            "Quanto da sobra do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar. Também muda na tela de Metas (\"Guardar X% da sobra\").",
             TipoParametro.Inteiro, 10, 0, 50, "% da sobra"),
 
         new(ConfiguracaoService.MinimoLetrasDescricao, "Transações", "Descrição pouco informativa",
