@@ -30,7 +30,7 @@
                 "styles": { "minify": true, "inlineCritical": false },
                 "fonts": false
               },
-              "subresourceIntegrity": true,
+              "subresourceIntegrity": false,
               "budgets": [
                 { "type": "initial", "maximumWarning": "1.5MB", "maximumError": "3MB" },
                 { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "16kB" }
