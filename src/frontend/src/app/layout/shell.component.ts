@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -9,9 +9,9 @@ import { StatusSincronizacaoComponent } from '../compartilhado/status-sincroniza
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
-import { LucideIconData } from 'lucide-angular';
+import { LucideIcon } from '@lucide/angular';
 
-export interface ItemMenu { rota: string; rotulo: string; icone: LucideIconData; }
+export interface ItemMenu { rota: string; rotulo: string; icone: LucideIcon; }
 
 /** Menu lateral. Toda tela daqui precisa de seção no manual (AJUDA_POR_ROTA; teste de regressão). */
 export const MENU: ItemMenu[] = [
@@ -108,6 +108,7 @@ export const MENU: ItemMenu[] = [
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .botao-ajuda { text-decoration: none; }
     .item-manual { margin-top: 10px; border-top: 1px solid var(--linha); padding-top: 12px; }

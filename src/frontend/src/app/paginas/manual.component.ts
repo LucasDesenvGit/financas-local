@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -121,6 +121,7 @@ function normalizar(texto: string): string {
       }
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     /* flex + gap: o Angular tira os espaços entre os elementos (ficaria "Manual›Contas"). */
     .trilha { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.85rem; margin-bottom: 4px; }

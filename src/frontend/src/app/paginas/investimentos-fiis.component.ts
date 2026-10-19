@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
@@ -264,6 +264,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
       <p class="vazio">Carregando FIIs…</p>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .legenda-grafico { margin: -6px 0 10px; font-size: 0.84rem; }
     .cabecalho-bloco { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }

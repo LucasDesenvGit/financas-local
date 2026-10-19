@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 
 let sequencia = 0;
 
@@ -21,6 +21,7 @@ export interface OpcaoMultipla {
 @Component({
   selector: 'app-seletor-multiplo',
   host: { class: 'seletor-multiplo' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span class="seletor-multiplo-rotulo" [id]="id + '-rotulo'">{{ rotulo() }}</span>
     <button type="button" class="seletor-multiplo-botao" [attr.aria-expanded]="aberto()" [attr.aria-controls]="id"

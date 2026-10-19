@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -132,6 +132,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       </section>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .legenda-relatorio { margin: -6px 0 10px; font-size: 0.84rem; }
     .tabela-meses { margin-top: 14px; }

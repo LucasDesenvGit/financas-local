@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, input, output, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NOMES_MESES, NOMES_MESES_CURTOS } from './utilidades';
 
 export interface MesAno { ano: number; mes: number; }
@@ -10,6 +10,7 @@ export interface MesAno { ano: number; mes: number; }
  */
 @Component({
   selector: 'app-seletor-mes',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="seletor-mes" role="group" aria-label="Selecionar mês">
       <button type="button" class="botao-icone" (click)="mover(-1)" aria-label="Mês anterior">‹</button>

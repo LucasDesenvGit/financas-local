@@ -1,6 +1,7 @@
 import {
   Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, booleanAttribute, computed, forwardRef, inject, input, output,
-  signal, viewChild
+  signal, viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { IconeComponent } from './icone.component';
@@ -84,6 +85,7 @@ let proximoId = 0;
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => CampoDataComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => CampoDataComponent), multi: true }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <span class="campo-valor campo-data" [class.campo-valor-erro]="erroVisivel() || invalido()">
       <input type="text" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa"

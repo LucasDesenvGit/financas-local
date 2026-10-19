@@ -1,4 +1,4 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DicaDirective } from './dica.directive';
 import { IconeComponent } from './icone.component';
 import { Icones } from './icones';
@@ -15,6 +15,7 @@ interface ItemHistorico { expressao: string; resultado: number; }
   selector: 'app-calculadora',
   imports: [DicaDirective, IconeComponent],
   host: { class: 'calc' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button type="button" class="botao-barra calc-botao" (click)="alternar()" [attr.aria-expanded]="aberta()"
       aria-controls="calc-painel" aria-label="Calculadora (Alt+C)" appDica="Calculadora (Alt+C)" dicaLado="abaixo">

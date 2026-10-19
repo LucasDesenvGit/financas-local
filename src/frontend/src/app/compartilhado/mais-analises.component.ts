@@ -1,4 +1,4 @@
-import { Component, TemplateRef, contentChild, input, linkedSignal } from '@angular/core';
+import { Component, TemplateRef, contentChild, input, linkedSignal, ChangeDetectionStrategy } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 
 let sequencia = 0;
@@ -18,6 +18,7 @@ let sequencia = 0;
 @Component({
   selector: 'app-mais-analises',
   imports: [NgTemplateOutlet],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="mais-analises" [class.aberta]="aberta()">
       <h2 class="mais-analises-titulo">

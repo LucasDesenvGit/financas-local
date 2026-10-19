@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AvisosComponent } from './compartilhado/avisos.component';
 import { TemaService } from './core/tema.service';
@@ -6,6 +6,7 @@ import { TemaService } from './core/tema.service';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, AvisosComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <router-outlet />
     <app-avisos />

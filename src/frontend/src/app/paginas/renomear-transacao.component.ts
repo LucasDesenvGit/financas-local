@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -71,6 +71,7 @@ type Escopo = 'so-esta' | 'outras';
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .do-banco { margin: 0 0 4px; overflow-wrap: anywhere; }
     .onde-usar { border: 1px solid var(--borda); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 6px; }

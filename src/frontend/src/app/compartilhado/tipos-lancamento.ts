@@ -1,4 +1,4 @@
-import { LucideIconData } from 'lucide-angular';
+import { LucideIcon } from '@lucide/angular';
 import { TipoLancamento } from '../core/modelos';
 import { Icones } from './icones';
 
@@ -6,7 +6,7 @@ import { Icones } from './icones';
  * #111 (ADR 0025): rótulo e ícone de cada tipo de lançamento, na linguagem de quem usa (Nielsen 2): "Pix enviado",
  * não "DEBIT". O ícone é decorativo; o texto sempre aparece junto (WCAG 1.1.1 e 1.4.1).
  */
-export const TIPOS_LANCAMENTO: Record<TipoLancamento, { rotulo: string; icone: LucideIconData }> = {
+export const TIPOS_LANCAMENTO: Record<TipoLancamento, { rotulo: string; icone: LucideIcon }> = {
   [TipoLancamento.Outro]: { rotulo: 'Outro', icone: Icones.outro },
   [TipoLancamento.CompraCartao]: { rotulo: 'Compra no cartão', icone: Icones.contas },
   [TipoLancamento.EstornoCartao]: { rotulo: 'Estorno no cartão', icone: Icones.estorno },
