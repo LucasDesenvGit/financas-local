@@ -116,6 +116,12 @@ public class FiltroTransacoesDto
     [MaxLength(200)] public List<int>? CategoriaIds { get; set; }
     /// <summary>Sem categoria; junto com categorias, soma as duas coisas (OU).</summary>
     public bool SemCategoria { get; set; }
+    /// <summary>
+    /// Natureza do gasto (regra 50/30/20): a da categoria ou, se ela não tem, a da categoria pai (a mesma regra da
+    /// Visão anual). Com <see cref="SemNatureza"/>, soma também as sem classificação (inclusive sem categoria).
+    /// </summary>
+    [MaxLength(2)] public List<NaturezaGasto>? Naturezas { get; set; }
+    public bool SemNatureza { get; set; }
     public bool SomenteEmergencias { get; set; }
     /// <summary>#9: só as de descrição pouco informativa ainda não revisadas.</summary>
     public bool PoucoInformativa { get; set; }

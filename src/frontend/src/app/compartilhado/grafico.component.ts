@@ -23,6 +23,10 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
    * mesmo caminho em HTML (WCAG 2.1.1). Em toque, o primeiro toque mostra o tooltip e não navega (não existe hover).
    */
   @Output() readonly itemClicado = new EventEmitter<number>();
+  /** Como itemClicado, com a série (dataset) do item: para barras empilhadas, em que cada pedaço da barra é uma série. */
+  @Output() readonly serieClicada = new EventEmitter<{ indice: number; serie: number }>();
+  /** Quais itens são clicáveis (cursor, dica e clique); padrão: todos. Ex.: só a barra "Você", não a de referência. */
+  readonly itemClicavel = input<(indice: number, serie: number) => boolean>(() => true);
   /** Tipo do último ponteiro sobre o canvas ("mouse", "pen" ou "touch"). */
   private ultimoPonteiro = 'mouse';
 
@@ -80,7 +84,7 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
         opcoes.scales = escalas;
       }
     }
-    if (this.itemClicado.observed) this.tornarClicavel(opcoes);
+    if (this.itemClicado.observed || this.serieClicada.observed) this.tornarClicavel(opcoes);
     this.grafico = new Chart(this.canvas().nativeElement, { ...cfg, options: opcoes } as ChartConfiguration);
   }
 
@@ -89,20 +93,31 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
   private tornarClicavel(opcoes: any): void {
     const canvas = this.canvas().nativeElement;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clicavel = (itens: any[]) => !!itens.length && this.itemClicavel()(itens[0].index, itens[0].datasetIndex);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     opcoes.onClick = (_: unknown, itens: any[]) => {
-      if (this.ultimoPonteiro === 'touch' || !itens.length) return;
+      if (this.ultimoPonteiro === 'touch' || !clicavel(itens)) return;
       this.itemClicado.emit(itens[0].index);
+      this.serieClicada.emit({ indice: itens[0].index, serie: itens[0].datasetIndex });
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     opcoes.onHover = (_: unknown, itens: any[]) => {
-      canvas.style.cursor = itens.length && this.ultimoPonteiro !== 'touch' ? 'pointer' : 'default';
+      canvas.style.cursor = clicavel(itens) && this.ultimoPonteiro !== 'touch' ? 'pointer' : 'default';
     };
     const dica = this.dicaClique();
     if (dica && opcoes.plugins?.tooltip?.enabled !== false) {
       const tooltip = opcoes.plugins?.tooltip ?? {};
       opcoes.plugins = {
         ...(opcoes.plugins ?? {}),
-        tooltip: { ...tooltip, callbacks: { ...(tooltip.callbacks ?? {}), footer: () => (this.ultimoPonteiro === 'touch' ? '' : dica) } }
+        tooltip: {
+          ...tooltip,
+          callbacks: {
+            ...(tooltip.callbacks ?? {}),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            footer: (itens: any[]) => (this.ultimoPonteiro === 'touch'
+              || !this.itemClicavel()(itens[0]?.dataIndex, itens[0]?.datasetIndex) ? '' : dica)
+          }
+        }
       };
     }
   }

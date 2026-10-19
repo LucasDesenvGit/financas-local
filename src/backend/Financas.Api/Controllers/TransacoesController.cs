@@ -85,6 +85,12 @@ public class TransacoesController : BaseController
             q = q.Where(t => (semCategoria && t.CategoriaId == null)
                              || (t.CategoriaId != null && (categorias.Contains(t.CategoriaId.Value)
                                  || (t.Categoria!.CategoriaPaiId != null && categorias.Contains(t.Categoria.CategoriaPaiId.Value)))));
+        // Natureza da categoria ou, se ela não tem, a da categoria pai; basta atender a uma das marcadas (OU).
+        var naturezas = (f.Naturezas ?? []).Distinct().ToList();
+        var semNatureza = f.SemNatureza;
+        if (semNatureza || naturezas.Count > 0)
+            q = q.Where(t => (semNatureza && (t.Categoria!.Natureza ?? t.Categoria.CategoriaPai!.Natureza) == null)
+                             || naturezas.Contains((t.Categoria!.Natureza ?? t.Categoria.CategoriaPai!.Natureza)!.Value));
         if (f.Tipo is { } tipo) q = q.Where(t => t.Tipo == tipo);
         if (f.SomenteEmergencias) q = q.Where(t => t.Emergencia);
         if (!string.IsNullOrWhiteSpace(f.Busca))

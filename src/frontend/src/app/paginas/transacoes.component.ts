@@ -10,14 +10,14 @@ import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
-  SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao
+  NaturezaGasto, SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
 import { OpcaoMultipla, SeletorMultiploComponent } from '../compartilhado/seletor-multiplo.component';
 import {
-  ContextoTransacoes, NOMES_MESES, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
+  ContextoTransacoes, NOMES_MESES, NaturezaUrl, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
 } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -55,9 +55,24 @@ interface FormTransferencia {
   descricao: string;
 }
 
+/** ?natureza= da URL (Visão anual, regra 50/30/20) e o rótulo do chip: as mesmas palavras do gráfico de lá. */
+const NATUREZAS_URL: Record<NaturezaUrl, { natureza: NaturezaGasto | null; rotulo: string }> = {
+  'essencial': { natureza: NaturezaGasto.Essencial, rotulo: 'Essenciais' },
+  'estilo-de-vida': { natureza: NaturezaGasto.EstiloDeVida, rotulo: 'Estilo de vida' },
+  'sem': { natureza: null, rotulo: 'Sem classificação (essencial/estilo de vida)' }
+};
+
+/** Naturezas do filtro como estão na URL, na ordem fixa de NATUREZAS_URL. */
+function naturezasNaUrl(f: FiltroTransacoes): NaturezaUrl[] {
+  return (Object.keys(NATUREZAS_URL) as NaturezaUrl[]).filter((chave) => {
+    const n = NATUREZAS_URL[chave].natureza;
+    return n === null ? !!f.semNatureza : (f.naturezas ?? []).includes(n);
+  });
+}
+
 interface ChipFiltro {
-  /** Categoria tem um chip por valor marcado: `categoria:12`, `categoria:sem`. */
-  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca';
+  /** Categoria e natureza têm um chip por valor marcado: `categoria:12`, `categoria:sem`, `natureza:essencial`. */
+  id: 'periodo' | `categoria:${string}` | `natureza:${NaturezaUrl}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca';
   rotulo: string;
   cor?: string;
 }
@@ -684,6 +699,7 @@ export class TransacoesComponent implements OnInit {
       const c = this.todasCategorias().find((x) => x.id === id);
       chips.push({ id: `categoria:${id}`, rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
     }
+    for (const n of naturezasNaUrl(f)) chips.push({ id: `natureza:${n}`, rotulo: NATUREZAS_URL[n].rotulo });
     if (f.contaId) chips.push({ id: 'conta', rotulo: this.contas().find((c) => c.id === f.contaId)?.nome ?? 'Conta' });
     if (f.tipo) {
       const nomes: Record<number, string> = {
@@ -700,7 +716,11 @@ export class TransacoesComponent implements OnInit {
 
   removerFiltro(id: ChipFiltro['id']): void {
     const padrao = this.filtroInicial();
-    if (id.startsWith('categoria:')) {
+    if (id.startsWith('natureza:')) {
+      const natureza = NATUREZAS_URL[id.substring('natureza:'.length) as NaturezaUrl].natureza;
+      if (natureza === null) this.filtro.semNatureza = false;
+      else this.filtro.naturezas = (this.filtro.naturezas ?? []).filter((n) => n !== natureza);
+    } else if (id.startsWith('categoria:')) {
       const valor = id.substring('categoria:'.length);
       this.filtroCategorias = this.filtroCategorias.filter((v) => v !== valor);
       this.sincronizarFiltroCategoria();
@@ -785,6 +805,11 @@ export class TransacoesComponent implements OnInit {
 
     const conta = Number(params.get('conta'));
     if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
+
+    const naturezas = (params.get('natureza') ?? '').split(',').map((v) => v.trim())
+      .filter((v): v is NaturezaUrl => Object.hasOwn(NATUREZAS_URL, v));
+    this.filtro.semNatureza = naturezas.includes('sem');
+    this.filtro.naturezas = [...new Set(naturezas.map((v) => NATUREZAS_URL[v].natureza).filter((n) => n !== null))];
 
     if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
     if (params.get('generica') === '1') this.filtro.poucoInformativa = true;
@@ -876,7 +901,8 @@ export class TransacoesComponent implements OnInit {
       fim: mudouPeriodo ? f.fim ?? undefined : undefined,
       tipo: f.tipo ? tipos[f.tipo] : undefined,
       contaId: f.contaId ?? undefined,
-      transacaoId: this.transacaoDestacada() ?? undefined
+      transacaoId: this.transacaoDestacada() ?? undefined,
+      naturezas: naturezasNaUrl(f)
     });
     if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
@@ -1436,7 +1462,7 @@ export class TransacoesComponent implements OnInit {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, poucoInformativa: false,
-      lancamento: null, tipo: null, busca: '', pagina: 1,
+      lancamento: null, naturezas: [], semNatureza: false, tipo: null, busca: '', pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }
