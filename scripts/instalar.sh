@@ -12,7 +12,7 @@
 # como Administrador.
 #
 # Ao migrar de uma instalacao com SQL Server, NAO use este script: siga a
-# secao "Migrar de uma instalacao com SQL Server" do README.
+# secao "Migrar de uma instalacao com SQL Server" de docs/INSTALACAO-PELO-CODIGO.md.
 #
 # Uso:
 #   scripts/instalar.sh

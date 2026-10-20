@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Publicação e documentação
+- **Versões publicadas sempre como "Finanças Local X.Y.Z"** (#187). O workflow de versão acerta o título e as notas mesmo se o Release foi criado à mão antes da tag. As notas começam com **como instalar ou atualizar** e trazem a seção do CHANGELOG sem o cabeçalho repetido.
+- **A versão sobe a cada mudança** (#187, ADR 0039): todo PR para o `develop` sobe o número no `Directory.Build.props`, pelo tipo (funcionalidade → o do meio; correção e ajuste → o último), e a CI confere. A versão de desenvolvimento passa a mostrar o número que vai sair (agora **2.2.0**, contando o que entrou desde a 2.1.0), em vez de "2.1.0-dev.N".
+- **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
+
 ### Correções
 - **Estorno no cartão contava como receita** (#166, ADR 0036). Crédito no cartão (compra devolvida, "crédito de confiança", cashback) virava receita e não descontava o gasto da categoria. Isso inflava a receita, a renda (50/30/20), os orçamentos e o gasto por categoria.
   - **Agora:** o estorno abate o gasto da categoria e não é receita. O pagamento da fatura recebido no cartão fica fora dos gastos mesmo sem a categoria certa.

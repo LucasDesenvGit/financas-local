@@ -24,21 +24,31 @@ Fluxo do dia a dia, com a branch criada pela issue:
 git switch develop
 git pull
 gh issue develop <número> --base develop --name feature/minha-melhoria --checkout   # ou fix/<assunto>
-# ... trabalho e commits ...
+# ... trabalho e commits; suba a versão no Directory.Build.props (ver abaixo) ...
 git push
 gh pr create --base develop --fill    # na descrição: Closes #<número>
 ```
 
 Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --assignee @me`): todo PR fecha a issue dele. Ao começar a trabalhar numa issue, ponha a etiqueta "em progresso" (`gh issue edit <número> --add-label "em progresso"`) e tire ao fechar.
 
+**Todo PR para o `develop` sobe a versão** no `Directory.Build.props`, pelo tipo do título ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)). O check "versão subiu" da CI confere.
+
+| Tipo do PR | Sobe | Exemplo |
+|---|---|---|
+| `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) | o número do meio | 2.2.0 → 2.3.0 |
+| `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` | o último | 2.2.0 → 2.2.1 |
+| Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) | o primeiro | 2.2.0 → 3.0.0 |
+
+Outro PR subiu a versão antes do seu entrar? `git merge origin/develop`, pegue a versão maior e suba de novo pelo tipo do seu PR. O Dependabot não precisa subir.
+
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-1. No `develop`, mude a versão no `Directory.Build.props` (ex.: `2.2.0`). No `CHANGELOG.md`, troque `## [Não publicado]` por `## [2.2.0] - AAAA-MM-DD` e abra uma seção `## [Não publicado]` vazia acima.
+1. No `develop`, no `CHANGELOG.md`, troque `## [Não publicado]` pela versão que está no `Directory.Build.props` (ex.: `## [2.2.0] - AAAA-MM-DD`) e abra uma seção `## [Não publicado]` vazia acima. O número já vem certo dos PRs.
 2. PR de `develop` para `main` e merge.
 3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
    - testa instalar, atualizar, desinstalar e migrar;
-   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release, com as notas da seção do CHANGELOG.
+   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e a seção do CHANGELOG nas notas. Se alguém criou o Release à mão antes, o título e as notas são acertados.
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
 
 Quem instala pelos scripts continua atualizando com `scripts/3-publicar-atualizar.sh` (ou `instalar-windows.cmd`).
@@ -63,6 +73,7 @@ Exemplos:
 
 ## Checklist do pull request
 
+- [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
 - [ ] Compila: `dotnet build FinancasLocal.sln -c Release` e `npm run build` em `src/frontend`.
 - [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/regressao/`; padrão novo de UI/UX, em `testes/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
 - [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/comum.sh`) chamado em `scripts/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)) — e entidades/`FinancasDbContext` ajustados. Sem migrations.
