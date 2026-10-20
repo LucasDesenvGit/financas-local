@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
@@ -6,9 +7,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Financas.Api.Servicos.Investimentos;
 
 /// <summary>
-/// Reservas ("cofrinhos") que a instituição não informa pelo Open Finance — caso do Mercado Pago, que só
-/// compartilha os lançamentos de entrada e saída de cada reserva no extrato da conta. O saldo é estimado
-/// por esses lançamentos e, quando o usuário confere o valor real no app da instituição, parte dessa conferência.
+/// Reservas ("cofrinhos", "caixinhas") das contas. Quando a instituição informa o valor reservado pelo Open Finance
+/// (<c>bankData.reservedBalances</c>, #168), ele vale. Senão, o saldo é estimado pelos lançamentos de entrada e saída de
+/// cada reserva no extrato da conta (caso do Mercado Pago) e, quando o usuário confere o valor real no app da
+/// instituição, parte dessa conferência (ADR 0010).
 /// </summary>
 public class ReservaService
 {
@@ -117,7 +119,107 @@ public class ReservaService
                 podeTerSaldoAnterior, conferenciaAntiga));
         }
 
-        return reservas.OrderByDescending(r => r.Saldo).ThenBy(r => r.Nome).ToList();
+        return SubstituirPeloBanco(reservas, await InformadasPeloBancoAsync(ct))
+            .OrderByDescending(r => r.Saldo).ThenBy(r => r.Nome).ToList();
+    }
+
+    /// <summary>Reserva que a instituição informa pelo Open Finance (#168), na forma gravada em <c>Conta.ReservasInformadas</c>.</summary>
+    public sealed record ReservaInformada(string Nome, decimal Valor);
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// #168: lê o <c>bankData</c> da Pluggy. Devolve o total reservado (null = a instituição não informa; aí vale a
+    /// estimativa pelo extrato), as reservas com nome quando vierem detalhadas e o nome dos campos de cada item (para o
+    /// log: a documentação da Pluggy não descreve esses campos). Sem os detalhes, vale o "investido automaticamente".
+    /// </summary>
+    public static (decimal? Total, string? ReservasJson, string[] Campos) DoOpenFinance(Pluggy.PluggyDadosBancarios? dados)
+    {
+        if (dados is null) return (null, null, []);
+        var reservas = new List<ReservaInformada>();
+        var campos = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var item in dados.ReservedBalances ?? [])
+        {
+            if (item.ValueKind != JsonValueKind.Object) continue;
+            decimal? valor = null;
+            string? nome = null;
+            foreach (var p in item.EnumerateObject())
+            {
+                campos.Add(p.Name);
+                var chave = p.Name.ToLowerInvariant();
+                if (valor is null && chave is "amount" or "balance" or "value" or "total" or "reservedamount" or "reservedbalance")
+                    valor = Numero(p.Value);
+                if (nome is null && p.Value.ValueKind == JsonValueKind.String
+                    && chave is "name" or "description" or "label" or "goal" or "type" or "category")
+                    nome = p.Value.GetString();
+            }
+            if (valor is decimal v)
+                reservas.Add(new ReservaInformada(string.IsNullOrWhiteSpace(nome) ? "Reservado" : nome.Trim()[..Math.Min(nome.Trim().Length, TamanhoMaximoNome)],
+                    Math.Round(v, 2)));
+        }
+        if (reservas.Count > 0) return (reservas.Sum(r => r.Valor), JsonSerializer.Serialize(reservas, Json), campos.ToArray());
+        if (dados.AutomaticallyInvestedBalance is double automatico && automatico > 0)
+            return (Math.Round((decimal)automatico, 2), null, campos.ToArray());
+        return (null, null, campos.ToArray());
+
+        static decimal? Numero(JsonElement e) => e.ValueKind switch
+        {
+            JsonValueKind.Number => e.GetDecimal(),
+            // { "amount": { "value": 10.0, "currency": "BRL" } }
+            JsonValueKind.Object => e.EnumerateObject().Where(q => q.Value.ValueKind == JsonValueKind.Number
+                    && q.Name.ToLowerInvariant() is "value" or "amount").Select(q => (decimal?)q.Value.GetDecimal()).FirstOrDefault(),
+            _ => null
+        };
+    }
+
+    /// <summary>Contas com o reservado informado pela instituição: total e, quando houver, as reservas com nome.</summary>
+    private async Task<Dictionary<int, (string NomeConta, decimal Total, List<ReservaInformada> Reservas)>> InformadasPeloBancoAsync(
+        CancellationToken ct)
+    {
+        var contas = await _db.Contas.AsNoTracking()
+            .Where(c => c.SaldoReservado != null && c.Origem == OrigemConta.OpenFinance && !c.Arquivada && c.IncluirNoSaldo
+                        && (c.ConexaoBancaria == null || c.ConexaoBancaria.Ativa))
+            .Select(c => new { c.Id, c.Nome, c.SaldoReservado, c.ReservasInformadas })
+            .ToListAsync(ct);
+        return contas.ToDictionary(c => c.Id, c => (c.Nome, c.SaldoReservado!.Value,
+            c.ReservasInformadas is { Length: > 0 } j ? JsonSerializer.Deserialize<List<ReservaInformada>>(j, Json) ?? [] : []));
+    }
+
+    /// <summary>
+    /// #168 (ADR 0010): nas contas em que a instituição informa o reservado, ele vale no lugar da estimativa pelo extrato.
+    /// Com as reservas detalhadas, uma por nome (o nome do extrato é mantido quando bate, para as metas ligadas a ele).
+    /// Só com o total, ele vai para a reserva com movimento mais recente e as outras ficam com zero; sem reserva no
+    /// extrato, aparece como "Reservado".
+    /// </summary>
+    private static List<ReservaDto> SubstituirPeloBanco(List<ReservaDto> estimadas,
+        Dictionary<int, (string NomeConta, decimal Total, List<ReservaInformada> Reservas)> doBanco)
+    {
+        if (doBanco.Count == 0) return estimadas;
+        var resultado = estimadas.Where(r => !doBanco.ContainsKey(r.ContaId)).ToList();
+        foreach (var (contaId, (nomeConta, total, informadas)) in doBanco)
+        {
+            var daConta = estimadas.Where(r => r.ContaId == contaId).ToList();
+            ReservaDto DoBanco(string nome, decimal saldo, ReservaDto? estimada) => new(contaId, nomeConta, nome, Math.Round(saldo, 2),
+                estimada?.Guardado ?? 0m, estimada?.Retirado ?? 0m, estimada?.Movimentos ?? 0, estimada?.PrimeiroMovimento,
+                estimada?.UltimoMovimento, null, null, false, false, InformadoPeloBanco: true);
+            if (informadas.Count > 0)
+            {
+                foreach (var i in informadas)
+                {
+                    var estimada = daConta.FirstOrDefault(r => string.Equals(r.Nome, i.Nome, StringComparison.OrdinalIgnoreCase));
+                    resultado.Add(DoBanco(estimada?.Nome ?? i.Nome, i.Valor, estimada));
+                }
+                continue;
+            }
+            var principal = daConta.OrderByDescending(r => r.UltimoMovimento ?? r.DataConferencia ?? DateOnly.MinValue).FirstOrDefault();
+            if (principal is null)
+            {
+                resultado.Add(DoBanco("Reservado", total, null));
+                continue;
+            }
+            foreach (var r in daConta) resultado.Add(DoBanco(r.Nome, r == principal ? total : 0m, r));
+        }
+        return resultado;
     }
 
     /// <summary>Soma dos saldos estimados das reservas (em reais).</summary>

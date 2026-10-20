@@ -72,6 +72,20 @@ public class PluggyConta
     [JsonPropertyName("balance")] public double? Balance { get; set; }
     [JsonPropertyName("currencyCode")] public string? CurrencyCode { get; set; }
     [JsonPropertyName("creditData")] public PluggyDadosCredito? CreditData { get; set; }
+    /// <summary>#168: dados extras das contas bancárias, entre eles o dinheiro separado em reservas ("caixinhas").</summary>
+    [JsonPropertyName("bankData")] public PluggyDadosBancarios? BankData { get; set; }
+}
+
+/// <summary>
+/// #168: <c>Account.bankData</c> da Pluggy. <c>ReservedBalances</c> vem quando <c>HasReservedBalance</c> é verdadeiro e
+/// a instituição informa; a documentação não detalha os campos de cada item, então ele é lido como JSON livre.
+/// </summary>
+public class PluggyDadosBancarios
+{
+    [JsonPropertyName("closingBalance")] public double? ClosingBalance { get; set; }
+    [JsonPropertyName("automaticallyInvestedBalance")] public double? AutomaticallyInvestedBalance { get; set; }
+    [JsonPropertyName("hasReservedBalance")] public bool? HasReservedBalance { get; set; }
+    [JsonPropertyName("reservedBalances")] public List<System.Text.Json.JsonElement>? ReservedBalances { get; set; }
 }
 
 public class PluggyMetadadosCartao

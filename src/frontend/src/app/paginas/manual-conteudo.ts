@@ -845,10 +845,11 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'reservas',
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
-        paraQueServe: 'Contar o dinheiro guardado em cofrinhos, que o Open Finance não informa.',
+        paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos e reservas da conta.',
         passos: [
-          'O saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
-          'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa.',
+          'Quando o banco informa o valor reservado pelo Open Finance, ele vale: a reserva aparece como “informado pelo banco” e não precisa de conferência.',
+          'Sem essa informação, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
+          'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso no Painel.'
         ],
         abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],

@@ -492,6 +492,8 @@ export interface Reserva {
   podeTerSaldoAnterior: boolean;
   /** Conferida há mais de 30 dias. */
   conferenciaAntiga: boolean;
+  /** #168: o valor veio da instituição pelo Open Finance (não é estimado nem precisa de conferência). */
+  informadoPeloBanco?: boolean;
 }
 
 export interface ResultadoImportacaoCarteira {
