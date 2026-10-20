@@ -293,39 +293,44 @@ public partial class ReservaService
             c.ReservasInformadas is { Length: > 0 } j ? JsonSerializer.Deserialize<List<ReservaInformada>>(j, Json) ?? [] : []));
     }
 
+    /// <summary>Nome da linha com a parte do total informado pelo banco que não está em nenhuma reserva (#237).</summary>
+    public const string NomeRestanteDoBanco = "Reservado";
+
     /// <summary>
-    /// #168 (ADR 0010): nas contas em que a instituição informa o reservado, ele vale no lugar da estimativa pelo extrato.
-    /// Com as reservas detalhadas, uma por nome (o nome do extrato é mantido quando bate, para as metas ligadas a ele).
-    /// Só com o total, ele vai para a reserva com movimento mais recente e as outras ficam com zero; sem reserva no
-    /// extrato, aparece como "Reservado".
+    /// #168 (ADR 0037): nas contas em que a instituição informa o reservado, ele vale no lugar da estimativa pelo extrato.
+    /// Só a reserva que veio, pelo nome, na lista detalhada (<c>reservedBalances</c>) é "informada pelo banco" (o nome do
+    /// extrato é mantido quando bate, para as metas ligadas a ele). #237: as outras reservas do extrato continuam com a
+    /// estimativa e a conferência, nunca zeradas: com a lista detalhada, marcadas como fora dela; só com o total, ele
+    /// vira a linha "Reservado" com o que passa da soma das reservas do extrato (o total inteiro, se não houver nenhuma).
     /// </summary>
     private static List<ReservaDto> SubstituirPeloBanco(List<ReservaDto> estimadas,
         Dictionary<int, (string NomeConta, decimal Total, List<ReservaInformada> Reservas)> doBanco)
     {
         if (doBanco.Count == 0) return estimadas;
+        static bool MesmoNome(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
         var resultado = estimadas.Where(r => !doBanco.ContainsKey(r.ContaId)).ToList();
         foreach (var (contaId, (nomeConta, total, informadas)) in doBanco)
         {
             var daConta = estimadas.Where(r => r.ContaId == contaId).ToList();
-            ReservaDto DoBanco(string nome, decimal saldo, ReservaDto? estimada) => new(contaId, nomeConta, nome, Math.Round(saldo, 2),
-                estimada?.Guardado ?? 0m, estimada?.Retirado ?? 0m, estimada?.Movimentos ?? 0, estimada?.PrimeiroMovimento,
-                estimada?.UltimoMovimento, null, null, false, false, InformadoPeloBanco: true);
             if (informadas.Count > 0)
             {
                 foreach (var i in informadas)
                 {
-                    var estimada = daConta.FirstOrDefault(r => string.Equals(r.Nome, i.Nome, StringComparison.OrdinalIgnoreCase));
-                    resultado.Add(DoBanco(estimada?.Nome ?? i.Nome, i.Valor, estimada));
+                    var estimada = daConta.FirstOrDefault(r => MesmoNome(r.Nome, i.Nome));
+                    resultado.Add(new ReservaDto(contaId, nomeConta, estimada?.Nome ?? i.Nome, Math.Round(i.Valor, 2),
+                        estimada?.Guardado ?? 0m, estimada?.Retirado ?? 0m, estimada?.Movimentos ?? 0, estimada?.PrimeiroMovimento,
+                        estimada?.UltimoMovimento, null, null, false, false, InformadoPeloBanco: true));
                 }
+                resultado.AddRange(daConta.Where(r => !informadas.Any(i => MesmoNome(i.Nome, r.Nome)))
+                    .Select(r => r with { ForaDaListaDoBanco = true }));
                 continue;
             }
-            var principal = daConta.OrderByDescending(r => r.UltimoMovimento ?? r.DataConferencia ?? DateOnly.MinValue).FirstOrDefault();
-            if (principal is null)
-            {
-                resultado.Add(DoBanco("Reservado", total, null));
-                continue;
-            }
-            foreach (var r in daConta) resultado.Add(DoBanco(r.Nome, r == principal ? total : 0m, r));
+            resultado.AddRange(daConta);
+            var restante = Math.Round(total - daConta.Sum(r => r.Saldo), 2);
+            if (restante <= 0) continue;
+            var nome = daConta.Any(r => MesmoNome(r.Nome, NomeRestanteDoBanco)) ? $"{NomeRestanteDoBanco} (restante)" : NomeRestanteDoBanco;
+            resultado.Add(new ReservaDto(contaId, nomeConta, nome, restante, 0m, 0m, 0, null, null, null, null, false, false,
+                RestanteDoBanco: true, TotalDoBanco: total));
         }
         return resultado;
     }
