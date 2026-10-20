@@ -759,6 +759,22 @@ export const MANUAL: CapituloManual[] = [
         dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
       },
       {
+        id: 'assinaturas-recorrentes',
+        titulo: 'Assinaturas e recorrentes: onde cada cobrança cai',
+        paraQueServe: 'Ver de uma vez qual assinatura cai em qual cartão e qual débito automático sai de qual conta, e quanto vai por mês.',
+        passos: [
+          'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
+          'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
+          'Embaixo, um bloco por cartão ou conta, com o total por mês e cada cobrança: como é cobrada, o dia, a última cobrança e o valor.',
+          'Para achar onde cai uma assinatura, digite o nome em “Onde cai…?” (ex.: netflix).',
+          'Filtre por conta ou cartão e pela forma de cobrança; “Mostrar as encerradas” traz também as que acabaram. Os filtros aparecem embaixo, com ✕ para tirar.',
+          '“ver as cobranças” abre Transações com as cobranças do último ano, na conta ou cartão dela.',
+          'Em Contas e cartões, cada cartão e conta mostra a linha “N assinaturas · R$ X/mês”, que abre esta aba já filtrada.'
+        ],
+        abrir: [{ rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }],
+        dicas: ['Trocou de cartão? Filtre pelo cartão antigo para ver o que ainda cobra nele e precisa ser trocado nos serviços.']
+      },
+      {
         id: 'pagar',
         titulo: 'Registrar o pagamento',
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',

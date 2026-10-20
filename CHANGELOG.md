@@ -18,6 +18,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Busca de Transações diferenciava maiúsculas** (#158): "netflix" não achava "NETFLIX.COM". Agora a busca ignora a caixa das letras (sem acento), e % e _ digitados contam como texto.
 - **Mais robusto quando o banco manda os dados de outro jeito** (#172):
   - **Pagamento de fatura** que o banco manda como boleto ou "outros" fica fora dos gastos quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem o crédito, fica como está, porque "fatura" também é conta de telefone.
   - **Aplicação e resgate** de RDB, CDB e poupança vão para "Investimentos", por regras padrão novas. Quem já tinha o site as ganha uma vez, e as transações antigas são acertadas, menos as de categoria escolhida à mão.
@@ -59,6 +60,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Assinaturas e recorrentes** (#158, parte 2): aba nova em Contas a pagar com o **de-para** de cada cobrança que se repete.
+  - **Topo:** o total por mês e por ano.
+  - **Um bloco por cartão ou conta:** cada cobrança, como é cobrada, o dia, a última cobrança e o valor.
+  - **Busca e filtros:** "Onde cai…?", conta ou cartão e forma de cobrança, com chips, na URL. "Ver as cobranças" abre Transações filtrada.
+  - **Em Contas e cartões:** a linha "N assinaturas · R$ X/mês" em cada cartão e conta.
+  - **Manual:** seção nova "Assinaturas e recorrentes".
 - **Assinaturas e débitos automáticos em Contas a pagar** (#158, parte 1; ADR 0043):
   - **Como é cobrada:** cada conta a pagar diz se é paga à mão (boleto, Pix), por débito automático ou no cartão de crédito, e onde cai. Também ganha uma observação.
   - **Baixa sozinha:** com o "texto da cobrança" (a descrição do banco contém…), a conta cobrada sozinha se dá como paga quando a cobrança chega no extrato, sem "Pagar". Vale pela descrição original, mesmo depois de renomear.
