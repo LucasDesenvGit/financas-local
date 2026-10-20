@@ -398,6 +398,8 @@ export interface FaturaMes {
   fechamento?: string | null;
   /** ADR 0024: banco do cartão, para o selo. */
   banco?: string | null;
+  /** #251: a fatura seguinte, ainda aberta; só vem quando a do mês já fechou. */
+  proxima?: FaturaMes | null;
 }
 
 export interface Emprestimo {

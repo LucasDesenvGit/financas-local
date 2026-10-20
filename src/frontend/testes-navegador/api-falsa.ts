@@ -45,7 +45,16 @@ const contas = [
     arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
   { id: 2, nome: 'Cartão Exemplo', tipo: 2, origem: 2, numero: null, moeda: 'BRL', saldo: -820.1, saldoInicial: 0,
     limiteCredito: 5000, limiteDisponivel: 4179.9, diaFechamento: 3, diaVencimento: 10, cor: '#92c8f0', incluirNoSaldo: true,
-    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null }
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
+  // #251: cartão de crédito com a fatura do mês já paga e a próxima, ainda aberta.
+  { id: 3, nome: 'Cartão Crédito', tipo: 3, origem: 2, numero: '5555 4444 3333 1234', moeda: 'BRL', saldo: -207.8, saldoInicial: 0,
+    limiteCredito: 3000, limiteDisponivel: 2792.2, diaFechamento: 3, diaVencimento: 10, cor: '#d4a5e8', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null,
+    faturaMes: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 612.3, parcelasMes: 0, faturaId: 9,
+      vencimento: dataIso(new Date(ano, hoje.getMonth(), 10)), situacao: 'paga', fechamento: dataIso(new Date(ano, hoje.getMonth(), 3)),
+      proxima: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 207.8, parcelasMes: 0, faturaId: null,
+        vencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), situacao: 'aberta',
+        fechamento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)) } } }
 ];
 
 const transacoes = [
