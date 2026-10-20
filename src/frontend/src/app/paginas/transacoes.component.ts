@@ -283,7 +283,13 @@ function dataCurta(iso: string, comAno: boolean): string {
                 <td class="nowrap">{{ t.data | date: 'dd/MM/yy' }}</td>
                 <td>
                   <div class="linha-descricao">
-                    <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                    @if (modoEdicao()) {
+                      <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                    } @else {
+                      <!-- WCAG 2.1.1: o clique na linha é atalho de mouse; pelo teclado, a edição abre por este botão. -->
+                      <button type="button" class="botao-texto truncar" [title]="t.descricao"
+                        (click)="$event.stopPropagation(); editar(t)" [attr.aria-label]="'Editar: ' + t.descricao">{{ t.descricao }}</button>
+                    }
                     <button type="button" class="botao-icone botao-renomear" (click)="$event.stopPropagation(); renomeando.set(t)"
                       [attr.aria-label]="'Renomear: ' + t.descricao">✎</button>
                   </div>

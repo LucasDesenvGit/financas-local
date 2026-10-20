@@ -43,7 +43,9 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                 @for (c of grupo.itens; track c.id) {
                   <li class="clicavel" (click)="editarCategoria(c)" [class.ignorada]="!c.ativa">
                     <span class="ponto" [style.background]="c.cor"></span>
-                    <span class="cresce" [class.subcategoria]="c.categoriaPaiId">{{ c.nome }}</span>
+                    <!-- WCAG 2.1.1: o clique na linha é atalho de mouse; pelo teclado, a edição abre por este botão. -->
+                    <button type="button" class="cresce botao-texto" [class.subcategoria]="c.categoriaPaiId"
+                      (click)="$event.stopPropagation(); editarCategoria(c)" [attr.aria-label]="'Editar a categoria ' + c.nome">{{ c.nome }}</button>
                     @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
                     @if (c.natureza === NaturezaGasto.EstiloDeVida) { <span class="etiqueta etiqueta-suave">estilo de vida</span> }
                     @if (!c.ativa) { <small class="texto-suave">inativa</small> }
@@ -77,7 +79,11 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                   <td>{{ nomeCorrespondencia(r.tipoCorrespondencia) }}</td>
                   <td><code>{{ r.texto }}</code></td>
                   <td>{{ r.categoriaNome }}</td>
-                  <td class="texto-suave">{{ r.ativa ? '' : 'inativa' }}</td>
+                  <td class="texto-suave">
+                    <button type="button" class="link" (click)="$event.stopPropagation(); editarRegra(r)"
+                      [attr.aria-label]="'Editar a regra ' + r.texto + ' → ' + r.categoriaNome">editar</button>
+                    {{ r.ativa ? '' : ' · inativa' }}
+                  </td>
                 </tr>
               } @empty { <tr><td colspan="5" class="vazio">Ex.: descrição contém "UBER" → Transporte.</td></tr> }
             </tbody>
@@ -174,7 +180,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
           </div>
           <label class="checkbox"><input type="checkbox" name="ativa" [(ngModel)]="fc.ativa"> Ativa</label>
           @if (categoriaId) {
-            <a routerLink="/transacoes" [queryParams]="linkTransacoes(categoriaId)" (click)="formCategoria = null">
+            <a class="link-alvo" routerLink="/transacoes" [queryParams]="linkTransacoes(categoriaId)" (click)="formCategoria = null">
               Ver transações desta categoria (últimos 12 meses)</a>
           }
           <div class="rodape-form">
