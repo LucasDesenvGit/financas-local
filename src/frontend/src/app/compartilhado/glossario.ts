@@ -47,7 +47,7 @@ export const GLOSSARIO = {
   },
   reservaEmergencia: {
     termo: 'Reserva de emergência',
-    definicao: 'Dinheiro guardado com resgate rápido para imprevistos. Aqui é medida em meses: quantos meses você conseguiria pagar os seus gastos sem renda. Conta o saldo das contas, a renda fixa e as reservas; ações, FIIs e ETFs ficam de fora, porque o preço oscila e a venda leva dias para virar dinheiro.'
+    definicao: 'Dinheiro com resgate rápido para imprevistos, medido em meses de gastos sem renda. Conta as contas, a renda fixa e as reservas; ações, FIIs e ETFs ficam de fora, porque o preço oscila e a venda leva dias.'
   },
   comprometimento: {
     termo: 'Comprometimento com parcelas',
