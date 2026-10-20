@@ -194,7 +194,9 @@ public record ResultadoCategoriasEmLoteDto(int Alteradas, string? Desfazer);
 /// <summary>Confiança: "alta" (histórico consistente), "media" (histórico parcial), "baixa" (palavra-chave) ou "nenhuma".</summary>
 public record SugestaoCategoriaDto(string Chave, string Exemplo, int Quantidade, decimal Total, List<long> TransacaoIds,
     int? CategoriaId, string? CategoriaNome, string? CategoriaCor, string Confianca, string? Motivo, string TextoRegra,
-    List<OpcaoCategoriaDto> Alternativas);
+    List<OpcaoCategoriaDto> Alternativas,
+    // #254: por que não criar a regra sem olhar (já existe, ou o texto pega transações de outras categorias).
+    string? AvisoRegra = null);
 
 public record OpcaoCategoriaDto(int CategoriaId, string Nome, string Cor, string Motivo);
 

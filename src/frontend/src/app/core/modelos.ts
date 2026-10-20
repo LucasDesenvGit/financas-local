@@ -334,6 +334,8 @@ export interface SugestaoCategoria {
   categoriaId: number | null; categoriaNome: string | null; categoriaCor: string | null;
   confianca: 'alta' | 'media' | 'baixa' | 'nenhuma'; motivo: string | null; textoRegra: string;
   alternativas: OpcaoCategoria[];
+  /** #254: por que não criar a regra sem olhar (já existe, ou o texto pega transações de outras categorias). */
+  avisoRegra?: string | null;
 }
 
 export interface ResumoAno { receitas: number; despesas: number; resultado: number; taxaPoupanca: number; }
