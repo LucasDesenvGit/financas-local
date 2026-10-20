@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  AtualizarAtivo, Carteira, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
+  AtualizarAtivo, Carteira, InvestimentoComparado, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
   Reserva, SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
 } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
@@ -296,8 +296,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               <tbody>
                 @for (i of d.openFinance; track i.id) {
                   <tr [class.encerrada]="i.jaNaCarteira">
-                    <td>{{ i.nome }} <span class="etiqueta etiqueta-suave">{{ nomeTipoPluggy(i.tipo, i.subtipo, i.codigo) }}</span>
+                    <!-- #170: o nome que se reconhece (Nielsen 2 e 6), com o do banco embaixo para achar no app. -->
+                    <td>{{ i.nomeExibicao }} <span class="etiqueta etiqueta-suave">{{ nomeTipoPluggy(i.tipo, i.subtipo, i.codigo) }}</span>
                       @if (i.codigo) { <small class="texto-suave">{{ i.codigo }}</small> }
+                      <button type="button" class="link" (click)="abrirRenomear(i)"
+                        [attr.aria-label]="'Renomear ' + i.nomeExibicao">renomear</button>
+                      @if (i.nomeExibicao !== i.nome) { <br><small class="texto-suave">no banco: {{ i.nome }}</small> }
                       @if (i.taxaAnual) { <br><small class="texto-suave">{{ i.taxaAnual | number: '1.2-2' }}% a.a.</small> }
                       @if (i.jaNaCarteira) { <br><small class="etiqueta etiqueta-alerta">já lançado na carteira — não somado de novo</small> }
                     </td>
@@ -619,6 +623,26 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       </div>
     </app-modal>
 
+    <!-- #170: nome do investimento do Open Finance (a sincronização não mexe nele) -->
+    <app-modal [aberto]="formNome !== null" [titulo]="'Renomear · ' + (formNome?.investimento?.nomeExibicao ?? '')"
+      (fechar)="formNome = null">
+      @if (formNome; as fn) {
+        <form (ngSubmit)="salvarNome()" class="formulario">
+          <label>Nome <input name="nome" [(ngModel)]="fn.nome" maxlength="120" placeholder="Ex.: Caixinha viagem"></label>
+          <p class="texto-suave">No banco: {{ fn.investimento.nome }}. A sincronização não muda o nome que você escolher;
+            vazio, volta ao nome automático.</p>
+          <div class="rodape-form">
+            @if (fn.investimento.nomePersonalizado) {
+              <button type="button" class="botao" (click)="fn.nome = ''; salvarNome()">Voltar ao nome automático</button>
+            }
+            <span class="cresce"></span>
+            <button type="button" class="botao" (click)="formNome = null">Cancelar</button>
+            <button class="botao botao-primario" [disabled]="salvando()">Salvar</button>
+          </div>
+        </form>
+      }
+    </app-modal>
+
     <!-- Conferir o saldo real de uma reserva -->
     <app-modal [aberto]="formConferencia !== null" [titulo]="'Conferir saldo · ' + (formConferencia?.reserva?.nome ?? '')"
       (fechar)="formConferencia = null">
@@ -734,6 +758,7 @@ export class InvestimentosComponent implements OnInit {
   ptaxSugerida: { data: string; valor: number; tipo: 'compra' | 'venda' } | null = null;
   formAtivo: AtualizarAtivo | null = null;
   formConferencia: FormConferencia | null = null;
+  formNome: { investimento: InvestimentoComparado; nome: string } | null = null;
   ativoEditado: PosicaoAtivo | null = null;
   tokenBrapi = '';
   private atualizouAutomatico = false;
@@ -847,6 +872,8 @@ export class InvestimentosComponent implements OnInit {
     // #89: /investimentos?aba=reservas abre direto numa aba (link "confira" do cofrinho em Metas).
     const aba = this.rota.snapshot.queryParamMap.get('aba');
     if (aba === 'resumo' || aba === 'fii' || aba === 'rv' || aba === 'of' || aba === 'reservas') this.aba.set(aba);
+    // #170: o aviso de trocos do Painel abre direto em "Conferir investimentos".
+    if (this.rota.snapshot.queryParamMap.get('conferir') === '1') this.conferenciaAberta.set(true);
     this.carregar();
   }
 
@@ -1104,6 +1131,31 @@ export class InvestimentosComponent implements OnInit {
         this.carregar();
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /* ------------------------------ nome (#170) ------------------------------ */
+
+  abrirRenomear(i: InvestimentoComparado): void {
+    this.formNome = { investimento: i, nome: i.nomePersonalizado ?? '' };
+  }
+
+  salvarNome(): void {
+    const f = this.formNome;
+    if (!f) return;
+    const nome = f.nome.trim() || null;
+    this.salvando.set(true);
+    this.api.renomearInvestimento(f.investimento.id, nome).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.formNome = null;
+        this.avisos.sucesso(nome ? 'Investimento renomeado.' : 'O investimento voltou ao nome automático.');
+        this.carregar();
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
     });
   }
 

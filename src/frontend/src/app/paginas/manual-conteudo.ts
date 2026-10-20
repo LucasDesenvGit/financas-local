@@ -146,10 +146,14 @@ export const MANUAL: CapituloManual[] = [
           'Em Configurações › Open Finance, cole o Item ID no campo “Adicionar conexão” e clique em “Adicionar”.',
           'Cada conexão mostra a situação em português: “Atualizada”, “Desatualizada”, “Erro de login no banco” ou “Precisa de ação sua” (aí é preciso entrar no Meu Pluggy). Os botões “Sincronizar”, “Pausar” e “Remover” ficam na própria linha.',
           'Clique em “Sincronizar agora”. Na primeira vez são buscados os últimos meses de histórico.',
-          'Confira em Contas e cartões se as contas e cartões apareceram.'
+          'Confira em Contas e cartões se as contas e cartões apareceram.',
+          'Pelo Meu Pluggy, toda conexão tem o mesmo nome de conector (“MeuPluggy”). O site mostra o banco, tirado das contas da conexão, e o conector ao lado (“via MeuPluggy”).'
         ],
         abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }, { rotulo: 'Ver as contas', rota: '/contas' }],
-        dicas: ['Quanto histórico a primeira carga busca fica em Configurações › Parametrização › Sincronização.']
+        dicas: [
+          'Quanto histórico a primeira carga busca fica em Configurações › Parametrização › Sincronização.',
+          'A conexão aparece com o nome errado? Escolha o banco certo numa das contas dela, em Contas e cartões › editar.'
+        ]
       },
       {
         id: 'sincronizacao',
@@ -838,6 +842,7 @@ export const MANUAL: CapituloManual[] = [
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         dicas: [
           'Quando a carteira tem cotas diferentes da corretora, a própria tela de Investimentos avisa no topo.',
+          'Quando há troco ou venda contando como rendimento (por exemplo, depois de compras novas de FIIs), o Painel avisa e leva direto à conferência. Nada muda sozinho: você vê a prévia e escolhe.',
           'A compra lançada por aqui fica ligada ao débito do extrato e não trava as próximas compras que chegam pelo Open Finance.'
         ],
         erros: [
@@ -855,6 +860,22 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['selic', 'ifix']
+      },
+      {
+        id: 'caixinhas',
+        titulo: 'Caixinhas, CDBs e outros investimentos do banco',
+        paraQueServe: 'Achar a caixinha do Nubank, o CDB do Mercado Pago e o que mais o banco informa pelo Open Finance.',
+        passos: [
+          'Abra Investimentos, na aba Open Finance. Cada investimento que o banco informa é uma linha, com o saldo, a rentabilidade e a comparação com a Selic.',
+          'O nome mostra o produto e o banco: a caixinha do Nubank aparece como “CDB · Nubank”, e o CDB do Mercado Pago como “CDB · Mercado Pago”. Embaixo fica o nome que o banco usa (“no banco: …”), para achar no app.',
+          'Clique em “renomear” para dar o seu nome (ex.: “Caixinha viagem”). A sincronização não muda o nome que você escolher.',
+          'Para voltar ao nome automático, abra “renomear” e clique em “Voltar ao nome automático” (ou salve com o campo vazio).',
+          'A coluna Instituição mostra o banco da conexão.'
+        ],
+        abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }],
+        dicas: [
+          'O rendimento da caixinha fica no saldo dela e não vira lançamento no extrato. Os “Valor recebido de Investimentos” do extrato do Nubank são proventos dos FIIs ou troco das compras (veja “Conferir investimentos”).'
+        ]
       },
       {
         id: 'reservas',

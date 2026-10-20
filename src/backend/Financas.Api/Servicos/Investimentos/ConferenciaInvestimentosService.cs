@@ -103,6 +103,18 @@ public class ConferenciaInvestimentosService
             categoria is null ? null : new CategoriaDoTrocoDto(categoria.Value.Id, categoria.Value.Nome));
     }
 
+    /// <summary>
+    /// #170: trocos e vendas da corretora que ainda contam como receita, para o aviso do Painel. A correção continua
+    /// sendo escolhida pelo usuário, com prévia (ADR 0027): aqui só se conta.
+    /// </summary>
+    public async Task<(int Quantidade, decimal Total)> CreditosComoReceitaAsync(CancellationToken ct)
+    {
+        var ativos = await _db.Ativos.AsNoTracking().Include(a => a.Operacoes).ToListAsync(ct);
+        var creditos = (await AnalisarExtratoAsync(ativos, ct)).DeOperacao
+            .Where(c => c.Credito.Tipo != TipoTransacao.Transferencia).ToList();
+        return (creditos.Count, creditos.Sum(c => c.Credito.Valor));
+    }
+
     /// <summary>FII cadastrado como ação ou "outro" (o nome do fundo ou o emissor informado pela corretora).</summary>
     private static List<TipoParaCorrigirDto> TiposParaCorrigir(List<Ativo> ativos, List<Investimento> investimentos)
     {

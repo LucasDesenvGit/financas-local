@@ -22,7 +22,7 @@ public static partial class BancoService
     [
         new("nubank", "Nubank", ["nubank", "nu pagamentos", "nu financeira", "nuconta", "ultravioleta"]),
         new("itau", "Itaú", ["itau", "itaucard", "unibanco", "personnalite", "uniclass"]),
-        new("mercadopago", "Mercado Pago", ["mercado pago", "mercadopago"]),
+        new("mercadopago", "Mercado Pago", ["mercado pago", "mercadopago", "mercado credito"]),
         new("inter", "Inter", ["banco inter", "inter"]),
         new("bradesco", "Bradesco", ["bradesco", "bradescard"]),
         new("santander", "Santander", ["santander"]),

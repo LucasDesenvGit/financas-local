@@ -181,6 +181,10 @@ export class ApiService {
 
   // Investimentos
   investimentos(): Observable<Investimento[]> { return this.http.get<Investimento[]>(`${this.base}/investimentos`); }
+  /** #170: nome escolhido para o investimento; null volta ao automático (a sincronização não mexe nele). */
+  renomearInvestimento(id: number, nome: string | null): Observable<void> {
+    return this.http.put<void>(`${this.base}/investimentos/${id}/nome`, { nome });
+  }
   emprestimos(): Observable<PainelEmprestimos> { return this.http.get<PainelEmprestimos>(`${this.base}/emprestimos`); }
 
   // Carteira (renda variável + comparação com a Selic)

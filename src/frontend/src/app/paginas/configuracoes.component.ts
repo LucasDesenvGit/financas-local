@@ -129,7 +129,9 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
               <tr [class.ignorada]="!c.ativa">
                 <td>
                   <span class="ponto" [style.background]="c.corPrimaria ?? '#64748b'"></span>
-                  {{ c.nomeInstituicao ?? 'Instituição' }} <small class="texto-suave">{{ c.quantidadeContas }} conta(s)</small>
+                  <!-- #170: o banco, e não o conector ("MeuPluggy"); o conector fica ao lado (Nielsen 2). -->
+                  {{ nomeConexao(c) }} <small class="texto-suave">{{ c.quantidadeContas }} conta(s)
+                    @if (c.nomeInstituicao && c.nomeInstituicao !== nomeConexao(c)) { · via {{ c.nomeInstituicao }} }</small>
                   @if (c.ultimoErro) { <div class="erro pequeno">{{ c.ultimoErro }}</div> }
                 </td>
                 <!-- Situação em português (Nielsen 2), com a cor: verde em dia, amarelo atenção, vermelho ação sua. -->
@@ -142,12 +144,12 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
                 <td class="direita nowrap">
                   <div class="acoes-conexao">
                     <button type="button" class="botao botao-pequeno" (click)="sincronizar(c)" [disabled]="ocupado()"
-                      [attr.aria-label]="'Sincronizar ' + (c.nomeInstituicao ?? 'conexão')">⟳ Sincronizar</button>
+                      [attr.aria-label]="'Sincronizar ' + nomeConexao(c)">⟳ Sincronizar</button>
                     <button type="button" class="botao botao-pequeno" (click)="alternar(c)"
-                      [attr.aria-label]="(c.ativa ? 'Pausar ' : 'Reativar ') + (c.nomeInstituicao ?? 'conexão')">
+                      [attr.aria-label]="(c.ativa ? 'Pausar ' : 'Reativar ') + nomeConexao(c)">
                       {{ c.ativa ? '⏸ Pausar' : '▶ Reativar' }}</button>
                     <button type="button" class="botao botao-pequeno botao-perigo" (click)="remover(c)"
-                      [attr.aria-label]="'Remover ' + (c.nomeInstituicao ?? 'conexão')">Remover</button>
+                      [attr.aria-label]="'Remover ' + nomeConexao(c)">Remover</button>
                   </div>
                 </td>
               </tr>
@@ -189,6 +191,11 @@ export class ConfiguracoesComponent implements OnInit {
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly statusSincronizacao = inject(StatusSincronizacaoService);
+
+  /** #170: o banco da conexão (pelas contas); "MeuPluggy" é o nome do conector, igual em todas. */
+  nomeConexao(c: Conexao): string {
+    return c.nomeExibicao ?? c.nomeInstituicao ?? 'Instituição';
+  }
 
   /**
    * Situação da conexão em português (o código da Pluggy, ex.: UPDATED, LOGIN_ERROR, não diz nada a quem usa;
@@ -336,7 +343,7 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   remover(c: Conexao): void {
-    const nome = c.nomeInstituicao ?? 'esta conexão';
+    const nome = this.nomeConexao(c);
     if (!confirm(`Remover ${nome} e APAGAR todas as contas, transações e investimentos importados dela?`)) return;
     this.api.removerConexao(c.id).subscribe({
       next: () => {

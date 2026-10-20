@@ -328,7 +328,11 @@ public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal V
 /// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
 public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo, string? Emissor,
     string Moeda, decimal Saldo, decimal? SaldoEmReais, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
-    DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
+    DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm, string NomeExibicao,
+    string? NomePersonalizado);
+
+/// <summary>#170: nome escolhido para o investimento; vazio volta ao nome automático.</summary>
+public record RenomearInvestimentoDto([MaxLength(120, ErrorMessage = "O nome pode ter até 120 caracteres.")] string? Nome);
 
 /* ----------------------------- Câmbio ----------------------------- */
 public record MoedaDto(string Codigo, string Nome);
@@ -434,7 +438,10 @@ public record PainelDto(
     // #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto no Painel).
     int PoucoInformativas = 0,
     DateOnly? PoucoInformativasDesde = null,
-    string? ExemploPoucoInformativa = null);
+    string? ExemploPoucoInformativa = null,
+    // #170: trocos e vendas de renda variável contando como receita (aviso com link para "Conferir investimentos").
+    int CreditosCorretoraComoReceita = 0,
+    decimal TotalCreditosCorretoraComoReceita = 0);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>
@@ -461,7 +468,7 @@ public record SalvarConfiguracaoPluggyDto(
 
 public record ConexaoDto(int Id, string PluggyItemId, string? NomeInstituicao, string? CorPrimaria, string? Status,
     string? StatusExecucao, DateTime? UltimaAtualizacaoInstituicao, DateTime? ConsentimentoExpiraEm,
-    DateTime? UltimaSincronizacaoEm, string? UltimoErro, bool Ativa, int QuantidadeContas);
+    DateTime? UltimaSincronizacaoEm, string? UltimoErro, bool Ativa, int QuantidadeContas, string? NomeExibicao = null);
 
 public record AdicionarConexaoDto(
     [Required, RegularExpression("^[0-9a-fA-F-]{20,64}$", ErrorMessage = "Item ID inválido.")] string ItemId);
@@ -519,7 +526,8 @@ public record InvestimentoComparadoDto(int Id, string Nome, string Tipo, string?
     string? Emissor, string? NomeInstituicao, string Moeda, decimal Saldo, decimal? SaldoEmReais,
     decimal? ValorAplicado, DateOnly? DataAplicacao,
     DateOnly? DataVencimento, decimal? TaxaAnual, decimal? Rentabilidade, decimal? SelicNoPeriodo,
-    decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm);
+    decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm, string NomeExibicao,
+    string? NomePersonalizado);
 
 public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVariavel, List<PosicaoAtivoDto> Posicoes,
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,

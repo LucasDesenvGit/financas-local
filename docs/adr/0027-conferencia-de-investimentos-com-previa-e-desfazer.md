@@ -49,6 +49,7 @@ Em Investimentos, **"Conferir investimentos"** abre uma prévia (`GET /api/carte
 - `POST .../corrigir` grava tudo numa gravação só.
 - O estado anterior fica na memória da API por 10 minutos para o "Desfazer" (`POST .../desfazer/{chave}`), como na ADR 0023.
 - A tela de Investimentos avisa no topo quando a posição da corretora tem outra quantidade de cotas (`CarteiraDto.CotasDiferentes`).
+- **Aviso no Painel (#170):** as compras novas trazem trocos novos, que voltavam a contar como receita até alguém lembrar de abrir a conferência. O Painel conta os trocos e vendas ainda como receita (`CreditosComoReceitaAsync`, a mesma análise da conferência) e avisa, com o link `/investimentos?conferir=1`. Rodar a correção sozinha depois da sincronização foi descartado: contrariaria a prévia desta ADR, e um provento menor que o troco do mesmo dia seria mudado sem ninguém ver.
 
 **Na mesma linha (PRs anteriores, sem ADR própria):**
 - O ativo que vem do Open Finance como `STOCK` vira FII pelo emissor ou pelo nome oficial.

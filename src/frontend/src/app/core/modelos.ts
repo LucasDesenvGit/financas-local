@@ -276,6 +276,8 @@ export interface Investimento {
   moeda: string; saldo: number; saldoEmReais: number | null; valorAplicado: number | null; rendimento: number | null;
   taxaAnual: number | null;
   dataVencimento: string | null; status: string | null; nomeInstituicao: string | null; atualizadoEm: string;
+  /** #170: o nome escolhido, ou "produto · banco" no lugar da razão social do emissor. */
+  nomeExibicao: string; nomePersonalizado: string | null;
 }
 
 export interface ValorCategoria { categoriaId: number | null; nome: string; cor: string; valor: number; }
@@ -334,6 +336,8 @@ export interface Painel {
   faturasDoMes: FaturaMes[] | null; totalFaturasDoMes: number;
   /** #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto). */
   poucoInformativas: number; poucoInformativasDesde: string | null; exemploPoucoInformativa: string | null;
+  /** #170: trocos e vendas de renda variável contando como receita (aviso com link para Conferir investimentos). */
+  creditosCorretoraComoReceita: number; totalCreditosCorretoraComoReceita: number;
 }
 
 export interface FaturaMes {
@@ -391,6 +395,8 @@ export interface Conexao {
   id: number; pluggyItemId: string; nomeInstituicao: string | null; corPrimaria: string | null; status: string | null;
   statusExecucao: string | null; ultimaAtualizacaoInstituicao: string | null; consentimentoExpiraEm: string | null;
   ultimaSincronizacaoEm: string | null; ultimoErro: string | null; ativa: boolean; quantidadeContas: number;
+  /** #170: o banco, deduzido das contas da conexão (`nomeInstituicao` é o conector, ex.: "MeuPluggy"). */
+  nomeExibicao: string | null;
 }
 
 export interface SincronizacaoLog {
@@ -469,6 +475,8 @@ export interface InvestimentoComparado {
   valorAplicado: number | null; dataAplicacao: string | null;
   dataVencimento: string | null; taxaAnual: number | null; rentabilidade: number | null; selicNoPeriodo: number | null;
   percentualDaSelic: number | null; rendaVariavel: boolean; jaNaCarteira: boolean; atualizadoEm: string;
+  /** #170: o nome escolhido, ou "produto · banco" no lugar da razão social do emissor (`nome` é o do banco). */
+  nomeExibicao: string; nomePersonalizado: string | null;
 }
 
 export interface Carteira {

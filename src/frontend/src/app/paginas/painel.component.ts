@@ -46,6 +46,15 @@ import { Icones } from '../compartilhado/icones';
           <a routerLink="/transacoes" [queryParams]="linkPoucoInformativas(d)">Revisar</a>
         </p>
       }
+      <!-- #170: a separação troco × provento é com prévia (ADR 0027); aqui só o aviso, com o caminho até ela. -->
+      @if (d.creditosCorretoraComoReceita > 0) {
+        <p class="nota-discreta">
+          {{ d.creditosCorretoraComoReceita === 1 ? '1 crédito' : d.creditosCorretoraComoReceita + ' créditos' }} de
+          <app-termo chave="trocoDeCompra">troco</app-termo> ou venda de FIIs e ações
+          ({{ d.totalCreditosCorretoraComoReceita | currency }}) contando como rendimento.
+          <a routerLink="/investimentos" [queryParams]="{ conferir: 1 }">Conferir investimentos</a>
+        </p>
+      }
 
       <section class="secao-painel" aria-labelledby="titulo-hoje">
         <header class="secao-titulo">
