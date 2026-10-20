@@ -22,6 +22,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Contas e cartões: fatura já paga aparecia como "fechada", e o card não mostrava a fatura seguinte** (#251). O Nubank não manda pelo Open Finance o pagamento da fatura, só o lançamento "Pagamento recebido" no cartão, e esse lançamento não era usado para saber se a fatura foi paga.
+  - A fatura passa a contar como paga também pelo pagamento lançado no cartão entre o vencimento anterior e o vencimento dela (pagar antes do fechamento conta). Vale para o card, o Painel ("Faturas do mês"), o histórico de faturas, "Conferir com o banco" e o "fatura a pagar" do plano das metas.
+  - Depois que a fatura do mês fecha, o card mostra embaixo a **próxima fatura**: o valor que já entrou nela, quando fecha e quando vence.
 - **Contas a pagar: a sugestão do extrato voltava depois de cadastrada com outro nome** (#205). "PIX ENVIADO LIVEPIX LTDA" cadastrada como "Manwha" continuava em "Sugestões do extrato", porque só a descrição ligava as duas.
   - **Cadastrar pela sugestão** grava na conta a pagar de qual pagamento do banco ela veio: o nome pode ser qualquer um.
   - **Conta cadastrada à mão** (ou antes desta versão) tira a sugestão quando o valor (até 15%), o dia do vencimento (até 3 dias) e a conta batem.

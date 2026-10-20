@@ -171,6 +171,13 @@ const FATURAS_VISIVEIS = 6;
                     <small class="texto-suave">com parcelas futuras</small>
                   </div>
                 </div>
+                @if (c.faturaMes?.proxima; as proxima) {
+                  <p class="proxima-fatura texto-suave">Próxima fatura: <b>{{ proxima.valorMes | currency }}</b> ·
+                    fecha {{ proxima.fechamento | date: 'dd/MM' }}@if (proxima.vencimento && proxima.situacao) {,
+                    vence {{ proxima.vencimento | date: 'dd/MM' }}
+                    <span class="etiqueta" [class.etiqueta-sucesso]="proxima.situacao === 'paga'"
+                      [class.etiqueta-alerta]="proxima.situacao === 'fechada'">{{ nomeSituacao(proxima.situacao) }}</span>}</p>
+                }
                 @if (limiteEfetivo(c); as limite) {
                   <div class="trilho" [title]="usoLimite(c) + '% do limite em uso'">
                     <div class="progresso" [style.width.%]="usoLimite(c)"
@@ -391,6 +398,8 @@ const FATURAS_VISIVEIS = 6;
     .linha-recorrentes { display: inline-block; margin-top: 4px; font-size: 0.88rem; min-height: 24px; }
     .cartao-credito-instituicao { display: inline-flex; align-items: center; gap: 8px; }
     .valor-fatura-mes small, .valor-divida small { font-size: 0.78rem; }
+    .proxima-fatura { margin: 0; font-size: 0.8rem; }
+    .proxima-fatura b { color: var(--texto-forte); font-variant-numeric: tabular-nums; }
     .botao-historico {
       font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--primaria-forte); background: none; border: 0;
       cursor: pointer; padding: 8px 0 0; min-height: 32px; text-align: left; border-top: 1px solid var(--linha); margin-top: 6px;

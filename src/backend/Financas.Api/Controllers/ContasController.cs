@@ -126,9 +126,22 @@ public class ContasController : BaseController
             .Select(f => new FaturaDto(f.Id, f.DataVencimento, f.DataFechamento, f.ValorTotal, f.ValorMinimo, f.ValorPago,
                 _db.Transacoes.Count(t => t.FaturaCartaoId == f.Id), "aberta"))
             .ToListAsync(ct);
-        return faturas.Select(f => f with
+        // #251: o banco nem sempre manda os pagamentos da fatura; o lançado no cartão também vale.
+        var desde = faturas.Select(f => f.DataVencimento).DefaultIfEmpty(hoje).Min().AddMonths(-2);
+        var pagamentos = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.ContaId == id && t.Data >= desde)
+            .Where(ContaService.EhPagamentoNoCartao)
+            .Select(t => new ContaService.PagamentoNoCartao(t.ContaId, t.Data, t.Valor))
+            .ToListAsync(ct);
+        var vencimentos = faturas.Select(f => f.DataVencimento).ToList();
+        return faturas.Select(f =>
         {
-            Situacao = ContaService.SituacaoFatura(Math.Abs(f.ValorTotal), f.ValorPago, f.DataFechamento, f.DataVencimento, hoje)
+            var pago = ContaService.Pago(f.ValorPago, ContaService.PagoNasTransacoes(f.DataVencimento, vencimentos, pagamentos));
+            return f with
+            {
+                ValorPago = pago,
+                Situacao = ContaService.SituacaoFatura(Math.Abs(f.ValorTotal), pago, f.DataFechamento, f.DataVencimento, hoje)
+            };
         }).ToList();
     }
 

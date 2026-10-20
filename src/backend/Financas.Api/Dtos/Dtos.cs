@@ -442,10 +442,11 @@ public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal 
 /// <c>FaturaId</c> só vem quando a fatura já foi importada; o vencimento é estimado pelo dia de vencimento enquanto não.
 /// Situação: "paga" (pagamentos cobrem o total), "fechada" (já fechou ou venceu sem pagamento informado) ou "aberta"
 /// (ainda recebendo compras). Sem <c>Fechamento</c>, o cartão não tem dia de fechamento conhecido e o valor é o do mês
-/// do calendário.
+/// do calendário. #251: o pagamento vale o que o banco informou ou o lançado no cartão; <c>Proxima</c> é a fatura
+/// seguinte, ainda aberta, e só vem quando a do mês já fechou.
 /// </summary>
 public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
-    DateOnly? Vencimento, string? Situacao, string? Banco = null, DateOnly? Fechamento = null);
+    DateOnly? Vencimento, string? Situacao, string? Banco = null, DateOnly? Fechamento = null, FaturaMesDto? Proxima = null);
 
 public record PainelDto(
     decimal SaldoContas,
