@@ -23,6 +23,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Painel alinhado** (#246, #258): "posição em … · não muda com o mês escolhido" fica à direita, na linha de "Situação hoje", como o seletor de mês da seção de baixo. Os avisos discretos do topo (descrições pouco informativas, trocos) usam a largura toda e não quebram mais em duas linhas com espaço sobrando.
 - **Contas e cartões: fatura já paga aparecia como "fechada", e o card não mostrava a fatura seguinte** (#251). O Nubank não manda pelo Open Finance o pagamento da fatura, só o lançamento "Pagamento recebido" no cartão, e esse lançamento não era usado para saber se a fatura foi paga.
   - A fatura passa a contar como paga também pelo pagamento lançado no cartão entre o vencimento anterior e o vencimento dela (pagar antes do fechamento conta). Vale para o card, o Painel ("Faturas do mês"), o histórico de faturas, "Conferir com o banco" e o "fatura a pagar" do plano das metas.
   - Depois que a fatura do mês fecha, o card mostra embaixo a **próxima fatura**: o valor que já entrou nela, quando fecha e quando vence.

@@ -270,7 +270,8 @@ import { PainelAvisosComponent } from './painel-avisos.component';
     /* As divisórias do Painel ficam no styles.css (seção "Painel"), onde os testes conseguem conferi-las. */
     .secao-titulo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 16px; margin: 6px 0 12px; }
     .secao-titulo h2 { margin: 0; font-size: 1.15rem; }
-    .secao-titulo p { margin: 0; flex: 1 1 260px; }
+    /* #246: como o seletor de mês em "Mês de …", o texto vai para a direita (sem crescer); quebrando, fica abaixo do título. */
+    .secao-titulo p { margin: 0; text-align: right; }
     .lista-faturas { list-style: none; margin: 8px 0 2px; padding: 8px 0 0; display: grid; gap: 8px; font-size: 0.84rem; }
     .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
     .lista-faturas .valor { margin-left: auto; }

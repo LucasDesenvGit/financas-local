@@ -99,6 +99,36 @@ test.describe('Painel: cards do mês', () => {
     expect(Math.abs(l.x + l.width - (ultimo.x + ultimo.width))).toBeLessThan(3);
   });
 
+  test('#246: "posição em …" fica à direita, na linha do título, como o seletor de mês da seção de baixo', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'no celular o texto desce para baixo do título');
+    await abrir(page, '/painel');
+    const [hoje, mes] = [page.locator('.secao-titulo').first(), page.locator('.secao-titulo').nth(1)];
+    // Mede o texto em si (Range), e não a caixa do <p>: com flex: 1 a caixa ia até a borda e o texto ficava à esquerda.
+    const texto = await hoje.locator('p').evaluate((el) => {
+      const intervalo = document.createRange();
+      intervalo.selectNodeContents(el);
+      const r = intervalo.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    });
+    const [cabecalho, titulo] = [await caixa(hoje), await caixa(hoje.locator('h2'))];
+    const [cabecalhoMes, seletor] = [await caixa(mes), await caixa(mes.locator('app-seletor-mes'))];
+    // Encostado à direita, como o seletor (mesma folga em relação à borda).
+    expect(cabecalho.x + cabecalho.width - (texto.x + texto.width)).toBeLessThanOrEqual(2);
+    expect(cabecalhoMes.x + cabecalhoMes.width - (seletor.x + seletor.width)).toBeLessThanOrEqual(2);
+    // Na mesma linha do título, e não esticado até ele.
+    expect(texto.y).toBeLessThan(titulo.y + titulo.height);
+    expect(texto.x - (titulo.x + titulo.width)).toBeGreaterThan(40);
+  });
+
+  test('#258: o aviso discreto do topo usa a largura toda, sem o limite de 78ch dos parágrafos', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'no celular a tela é mais estreita que 78ch');
+    await abrir(page, '/painel');
+    const aviso = page.locator('.nota-discreta.aviso-trocos');
+    const [nota, secao] = [await caixa(aviso), await caixa(page.locator('.secao-painel').first())];
+    // A nota tem 4 px de margem de cada lado; o limite de 78ch a deixaria bem mais estreita que a seção.
+    expect(nota.width).toBeGreaterThan(secao.width - 12);
+  });
+
   test('as outras linhas de cards não ficam presas em três colunas', async ({ page, isMobile }) => {
     test.skip(isMobile, 'no celular é uma coluna');
     await abrir(page, '/painel');
