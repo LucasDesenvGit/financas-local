@@ -5,6 +5,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **Projeção contava parcelas futuras em dobro** (#165). Quando duas ou mais parcelas da mesma compra estavam nos últimos 31 dias, cada uma projetava o resto da compra. Isso inclui as que o banco já manda com data futura. Exemplo: um 3× de R$ 100 aparecia com R$ 200 no último mês.
+  - **Agora:** de cada compra vale só a parcela mais recente. As que o banco já mandou entram como são, e só o que falta é projetado.
+  - **A mesma compra é reconhecida** mesmo com centavos ou descrição diferentes entre as parcelas.
+  - **Assistente de metas:** passa a usar a mesma regra.
 - **Metas: "quanto guardar este mês" pedia quase tudo de uma vez** (#149, ADR 0035). A sobra do mês não contava a fatura do cartão que vence nele. Num mês de fatura alta, o assistente chegava a pedir ~8× a divisão igual.
   - **Sobra pelo dinheiro que entra e sai:** receitas − fatura que vence no mês − outras despesas. As faturas futuras são estimadas pelas compras à vista e pelas parcelas que ainda faltam, então aparece a queda quando as parcelas acabam.
   - **Limites do mês:** o pedido não passa do que deve sobrar nas contas no fim do mês (já paga a fatura), nem do que sobrou no seu melhor mês recente. Havendo sobra, sugere pelo menos R$ 50. Nenhum mês de uma meta com prazo passa de 2× a divisão igual.
