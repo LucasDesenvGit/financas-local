@@ -107,6 +107,116 @@ export const MANUAL: CapituloManual[] = [
     ]
   },
   {
+    id: 'corrigir-seus-dados',
+    titulo: 'Corrigir seus dados',
+    resumo: 'Depois de atualizar o site: o que já se acertou sozinho e o passo a passo para deixar tudo igual aos apps dos bancos.',
+    secoes: [
+      {
+        id: 'o-que-ja-se-acertou',
+        titulo: 'O que já se acertou sozinho',
+        paraQueServe: 'Saber o que não precisa ser refeito à mão depois da atualização.',
+        passos: [
+          'Estorno no cartão (compra devolvida, cashback) deixou de contar como receita e passou a abater o gasto da categoria.',
+          'Pix e TED para outra pessoa contam como despesa ou receita; os que são entre contas suas ficam fora dos gastos.',
+          'Pagamento de fatura que o banco mandou como boleto ou “outros” saiu dos gastos quando o crédito do mesmo valor aparece no cartão.',
+          'Aplicação e resgate de RDB, CDB e poupança, e a compra e a venda de Méli Dólar, foram para “Investimentos” e não contam mais como gasto nem receita.',
+          'A projeção não conta mais as parcelas em dobro, e a fatura do mês do cartão segue o ciclo do banco.',
+          'O lançamento pendente que o banco efetivou com outro código sai na próxima sincronização.'
+        ],
+        abrir: [{ rotulo: 'Ver as transações', rota: '/transacoes' }],
+        dicas: ['O que você categorizou à mão não foi mexido: as correções só valem para o que veio automático.']
+      },
+      {
+        id: 'passo-1-sincronizar',
+        titulo: '1. Sincronize os bancos',
+        paraQueServe: 'Trazer os dados novos que as correções usam: o valor reservado que o banco informa e as pendências que já viraram compra.',
+        passos: [
+          'Abra Configurações › Open Finance e clique em “Sincronizar agora”.',
+          'Espere a barra de cima mostrar “Atualizado agora”.'
+        ],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
+      },
+      {
+        id: 'passo-2-reservas',
+        titulo: '2. Confira as reservas, as caixinhas e o Méli Dólar',
+        paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
+        passos: [
+          'Abra Investimentos, na aba Reservas.',
+          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada.',
+          'Reserva “estimada” ou “para conferir”: clique em “conferir saldo” e digite o valor que o app do banco mostra, do jeito que aparece lá (ex.: 10.123,42).',
+          'Méli Dólar: em “conferir saldo”, escolha se vai digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
+          'Confira depois o patrimônio no Painel: ele passa a somar essas reservas.'
+        ],
+        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        termos: ['ptax']
+      },
+      {
+        id: 'passo-3-trocos',
+        titulo: '3. Tire os trocos das compras de FIIs dos rendimentos',
+        paraQueServe: 'Fazer os rendimentos dos FIIs baterem com o app da corretora.',
+        passos: [
+          'Se o Painel avisa “N créditos de troco ou venda de FIIs e ações contando como rendimento”, clique em “Conferir investimentos” no aviso (ou no botão de Investimentos).',
+          'Revise a lista “Troco ou venda contando como rendimento” e clique em “Corrigir selecionados”.',
+          'Nada muda sem você confirmar, e o aviso tem “Desfazer” por 10 minutos.'
+        ],
+        abrir: [{ rotulo: 'Abrir Conferir investimentos', rota: '/investimentos', params: { conferir: '1' } }],
+        termos: ['trocoDeCompra']
+      },
+      {
+        id: 'passo-4-limite',
+        titulo: '4. Responda a pergunta do limite do cartão',
+        paraQueServe: 'Não tratar como dívida o limite que você tirou do cartão no app.',
+        passos: [
+          'Abra Contas e cartões.',
+          'O cartão em que você reduziu o limite no app pergunta “Você reduziu o limite no app?”. Clique em “responder” e em “Sim, ajustei o limite”.',
+          'Se a diferença for compra em processamento ou parcela, responda “Não”.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        termos: ['limiteUsado']
+      },
+      {
+        id: 'passo-5-nome',
+        titulo: '5. Informe o seu nome como aparece nos Pix',
+        paraQueServe: 'Separar o Pix para outra conta sua do Pix para outra pessoa, quando o banco não informa.',
+        passos: [
+          'Abra Configurações › Open Finance.',
+          'Em “Seu nome como aparece nos Pix”, digite o primeiro e o último nome (ex.: como aparece no comprovante) e clique em “Salvar nome”.',
+          'As transferências são revistas na hora.'
+        ],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
+      },
+      {
+        id: 'passo-6-assinaturas',
+        titulo: '6. Cadastre as assinaturas e os débitos automáticos',
+        paraQueServe: 'Saber o que cobra em cada cartão e conta todo mês, e ser avisado quando algo muda.',
+        passos: [
+          'Abra Contas a pagar e veja as “Sugestões do extrato”: assinaturas nos cartões, débitos automáticos e contas que se repetem.',
+          'Clique em “Cadastrar” nas que são suas; a forma de cobrança e o texto já vêm preenchidos. “ignorar” tira a sugestão.',
+          'Na aba “Assinaturas e recorrentes”, confira onde cada uma cai e quanto vai por mês.'
+        ],
+        abrir: [
+          { rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' },
+          { rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }
+        ]
+      },
+      {
+        id: 'passo-7-conferir',
+        titulo: '7. Confira com os apps dos bancos',
+        paraQueServe: 'Ter certeza de que o site bate com cada banco, e saber por que quando não bate.',
+        passos: [
+          'Abra Contas e cartões e clique em “Conferir com o banco”.',
+          'Com o app de cada banco aberto, digite o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
+          '“bate”: está certo. Quando não bate, a pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”, com o link “ver” para corrigir.'
+        ],
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        dicas: [
+          'Fatura diferente do app? Veja se o app mostra a dívida total (com as parcelas futuras) ou compras que ainda estão pendentes: as duas aparecem como pista.',
+          'Faça isso logo depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia.'
+        ]
+      }
+    ]
+  },
+  {
     id: 'conectar-bancos',
     titulo: 'Conectar seus bancos (Open Finance)',
     resumo: 'Meu Pluggy, credenciais, conexões, sincronização automática e o que fazer quando dá erro.',

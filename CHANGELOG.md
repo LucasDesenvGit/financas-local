@@ -5,6 +5,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Publicação e documentação
+- **Manual: capítulo novo "Corrigir seus dados"** (#222). Ele vem logo depois de "Primeiros passos" e tem duas partes:
+  - **o que já se acertou sozinho** depois das correções: estornos, transferências, pagamento de fatura, investimentos e parcelas;
+  - **o passo a passo** para deixar o site igual aos apps dos bancos: sincronizar, conferir as reservas e o Méli Dólar, tirar os trocos dos rendimentos, responder a pergunta do limite, informar o nome nos Pix, cadastrar as assinaturas e terminar em "Conferir com o banco".
 - **Skill do projeto `trabalho-longo`** (#217): em `.claude/skills/`, para quem usa o Claude Code no projeto. Ela monta o esquema para um trabalho grande continuar sozinho quando o limite de uso acaba no meio. São três partes:
   - o plano em arquivo, numa pasta ignorada pelo git;
   - o agendamento "continua o plano", da sessão, com as limitações explicadas;
