@@ -24,7 +24,7 @@ import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component'
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
 import { RendimentoInvestimentosOfComponent } from './rendimento-investimentos-of.component';
-import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from './reserva-conferencia';
+import { conferenciaForaDoEsperado, podeConferirReserva, valorEsperadoDaReserva } from './reserva-conferencia';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -367,6 +367,11 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                       @if (r.informadoPeloBanco) {
                         <span class="etiqueta etiqueta-sucesso">informado pelo banco</span>
                         <br><small class="texto-suave">valor que a instituição manda pelo Open Finance</small>
+                      } @else if (r.restanteDoBanco) {
+                        <!-- #237: o banco manda só o total; esta linha é o que ele passa da soma das reservas acima. -->
+                        <span class="etiqueta">restante do total do banco</span>
+                        <br><small class="texto-suave">a instituição informa {{ r.totalDoBanco | currency }} reservados nesta conta;
+                          aqui fica o que não está nas outras reservas. Conferir as outras ajusta este valor.</small>
                       } @else if (r.dataConferencia) {
                         @if (r.conferenciaAntiga) {
                           <span class="etiqueta etiqueta-alerta">conferido há mais de 30 dias</span>
@@ -382,9 +387,13 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                           <br><small class="negativo">Pode haver saldo de antes do 1º lançamento importado. Confira.</small>
                         }
                       }
+                      @if (r.foraDaListaDoBanco) {
+                        <br><small class="texto-suave">não está na lista de reservas que a instituição manda: se ela já aparece
+                          com outro nome, confira esta com zero.</small>
+                      }
                     </td>
                     <td class="direita nowrap">
-                      @if (!r.informadoPeloBanco) {
+                      @if (podeConferir(r)) {
                         <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
                           (click)="abrirConferencia(r)">conferir saldo</button>
                       }
@@ -395,7 +404,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             </table>
           </div>
           <p class="texto-suave nota">
-            Quando a instituição informa o valor reservado pelo Open Finance, vale esse valor ("informado pelo banco"). Senão,
+            Quando a instituição informa, pelo Open Finance, o valor de cada reserva pelo nome, vale esse valor ("informado pelo
+            banco"). Quando ela informa só o total reservado da conta, cada reserva continua estimada e conferível, e o que o
+            total passa da soma delas aparece como "Reservado". Senão,
             ela só manda os lançamentos "Dinheiro reservado" e "Dinheiro retirado" no extrato da conta, e o saldo é estimado. Sem conferência, ele fica abaixo do real
             quando a reserva já tinha dinheiro antes do primeiro lançamento importado e quando o rendimento ainda não foi
             retirado. Confira o valor no app da instituição de vez em quando: os lançamentos seguintes passam a somar a
@@ -1185,6 +1196,11 @@ export class InvestimentosComponent implements OnInit {
   }
 
   /* ------------------------------ reservas ------------------------------ */
+
+  /** #237: "conferir saldo" em toda reserva cujo valor não veio, pelo nome, do banco (reserva-conferencia.ts). */
+  podeConferir(r: Reserva): boolean {
+    return podeConferirReserva(r);
+  }
 
   abrirConferencia(r: Reserva): void {
     // #169: o Méli Dólar começa em reais (o valor do app), com a estimativa atual.

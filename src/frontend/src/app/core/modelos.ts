@@ -540,8 +540,18 @@ export interface Reserva {
   podeTerSaldoAnterior: boolean;
   /** Conferida há mais de 30 dias. */
   conferenciaAntiga: boolean;
-  /** #168: o valor veio da instituição pelo Open Finance (não é estimado nem precisa de conferência). */
+  /**
+   * #168/#237: o valor veio da instituição, pelo nome, na lista detalhada do Open Finance (não é estimado nem precisa de
+   * conferência). Só o total da conta não marca nenhuma reserva.
+   */
   informadoPeloBanco?: boolean;
+  /** #237: a conta tem a lista detalhada do banco e esta reserva do extrato não está nela (continua estimada e conferível). */
+  foraDaListaDoBanco?: boolean;
+  /**
+   * #237: linha "Reservado" com a parte do total que o banco informa (`totalDoBanco`) que não está nas reservas do
+   * extrato. Não se confere: conferir as outras reservas da conta ajusta este valor.
+   */
+  restanteDoBanco?: boolean; totalDoBanco?: number | null;
   /** #169: "USD" no Méli Dólar: `quantidade` e `saldoConferido` em dólar; `saldo` em reais pela `cotacao` (PTAX). */
   moeda?: string; quantidade?: number | null; cotacao?: number | null;
 }

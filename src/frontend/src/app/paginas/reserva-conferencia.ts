@@ -20,3 +20,11 @@ export function conferenciaForaDoEsperado(r: Reserva, saldo: number): boolean {
   const esperado = valorEsperadoDaReserva(r);
   return esperado > 0 && (saldo < esperado / 10 || saldo > esperado * 10);
 }
+
+/**
+ * #237: "conferir saldo" fica em toda reserva cujo valor não veio, pelo nome, da lista detalhada do banco. A linha com
+ * o restante do total informado pelo banco também não se confere: ela é o total menos as outras reservas da conta.
+ */
+export function podeConferirReserva(r: Reserva): boolean {
+  return !r.informadoPeloBanco && !r.restanteDoBanco;
+}

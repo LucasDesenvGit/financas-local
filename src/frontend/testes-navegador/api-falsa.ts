@@ -18,6 +18,12 @@ const hoje = new Date();
 /** "AAAA-MM-DD" na data local. */
 const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const ano = hoje.getFullYear();
+/** Reserva fictícia (aba Reservas de Investimentos). */
+const reserva = (campos: Record<string, unknown>) => ({
+  contaId: 1, nomeConta: 'Banco Fictício', nome: 'Reserva', saldo: 0, guardado: 500, retirado: 100, movimentos: 3,
+  primeiroMovimento: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), ultimoMovimento: dataIso(new Date(ano, hoje.getMonth(), 1)),
+  saldoConferido: null, dataConferencia: null, podeTerSaldoAnterior: false, conferenciaAntiga: false, ...campos
+});
 const mes = hoje.getMonth() + 1;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const mesesAtras = (n: number) => {
@@ -171,8 +177,16 @@ const respostas: Record<string, unknown> = {
       proventos12Meses: 0, resultadoTotal: 0, valorSeFosseSelic: 0, diferencaSelic: 0, resultadoTotalPercentual: null,
       resultadoSelicPercentual: null },
     posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 0, distribuicao: [],
-    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [], reservas: [],
-    totalReservas: 0, cotasDiferentes: []
+    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [],
+    // #237: numa conta, o banco detalha uma reserva pelo nome e outra fica fora da lista; na outra, manda só o total.
+    reservas: [
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Viagem', saldo: 1200, informadoPeloBanco: true }),
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Presentes', saldo: 150, foraDaListaDoBanco: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Carro', saldo: 400, podeTerSaldoAnterior: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Reservado', saldo: 600, guardado: 0, retirado: 0, movimentos: 0,
+        primeiroMovimento: null, ultimoMovimento: null, restanteDoBanco: true, totalDoBanco: 1000 })
+    ],
+    totalReservas: 2350, cotasDiferentes: []
   },
   // #173: um FII fictício e seis meses de "Mês a mês" (aporte, subscrição, venda, rendimentos e valorização dos dois sinais).
   '/api/carteira/fiis': {
