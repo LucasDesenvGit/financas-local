@@ -376,15 +376,16 @@ public class SincronizacaoService
             // escolhido à mão (ou editado antes das regras existirem) fica como está.
             var nomeAutomatico = nova || RegraDescricaoService.NomeAutomatico(t);
             t.DescricaoOriginal = descricaoRecebida;
+            t.Estabelecimento = Limitar(pt.Merchant?.BusinessName ?? pt.Merchant?.Name, 200);
+            t.Data = Relogio.ParaDataLocal(pt.Date.Value);
+            t.Valor = CalcularValor(pt, ehCartao);
+            // Depois do valor: a regra de descrição pode ter faixa de valor (#241).
             if (nomeAutomatico)
             {
                 t.Descricao = descricaoRecebida;
                 t.RegraDescricaoId = null;
                 _descricoes.Aplicar(t);
             }
-            t.Estabelecimento = Limitar(pt.Merchant?.BusinessName ?? pt.Merchant?.Name, 200);
-            t.Data = Relogio.ParaDataLocal(pt.Date.Value);
-            t.Valor = CalcularValor(pt, ehCartao);
             t.Status = string.Equals(pt.Status, "PENDING", StringComparison.OrdinalIgnoreCase)
                 ? StatusTransacao.Pendente : StatusTransacao.Efetivada;
             t.PluggyCategoriaId = Limitar(pt.CategoryId, 20);

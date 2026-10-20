@@ -564,6 +564,9 @@ CREATE TABLE IF NOT EXISTS RegraDescricao
     Texto               TEXT    NOT NULL,
     TipoCorrespondencia INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_TipoCorrespondencia DEFAULT 3,
     NovaDescricao       TEXT    NOT NULL,
+    -- #241: a regra só vale com o valor da transação (sem o sinal) nesta faixa; NULL = sem piso ou sem teto.
+    ValorMinimo         TEXT    NULL,
+    ValorMaximo         TEXT    NULL,
     Ativa               INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_Ativa DEFAULT 1,
     -- Preenchido pela API (RegraDescricao.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,

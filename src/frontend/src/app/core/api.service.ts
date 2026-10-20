@@ -133,8 +133,10 @@ export class ApiService {
     return this.http.patch<ResultadoRenomearEmLote>(`${this.base}/transacoes/descricao/em-lote`, dto);
   }
   regrasDescricao(): Observable<RegraDescricao[]> { return this.http.get<RegraDescricao[]>(`${this.base}/regras-descricao`); }
-  previaRegraDescricao(texto: string, tipo: TipoCorrespondencia): Observable<PreviaRegraDescricao> {
-    return this.http.get<PreviaRegraDescricao>(`${this.base}/regras-descricao/previa`, { params: this.params({ texto, tipo }) });
+  previaRegraDescricao(texto: string, tipo: TipoCorrespondencia, valorMinimo: number | null = null,
+    valorMaximo: number | null = null): Observable<PreviaRegraDescricao> {
+    return this.http.get<PreviaRegraDescricao>(`${this.base}/regras-descricao/previa`,
+      { params: this.params({ texto, tipo, valorMinimo, valorMaximo }) });
   }
   criarRegraDescricao(dto: SalvarRegraDescricao): Observable<RegraDescricao> {
     return this.http.post<RegraDescricao>(`${this.base}/regras-descricao`, dto);

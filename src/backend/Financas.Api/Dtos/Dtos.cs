@@ -103,13 +103,16 @@ public record PreviaRegraDescricaoDto(int Quantidade, List<string> Exemplos);
 
 /// <summary>#123: regra de descrição, com quantas transações estão com o nome dado por ela.</summary>
 public record RegraDescricaoDto(int Id, string Texto, TipoCorrespondencia TipoCorrespondencia, string NovaDescricao,
-    bool Ativa, int Transacoes);
+    bool Ativa, int Transacoes, decimal? ValorMinimo = null, decimal? ValorMaximo = null);
 
+/// <summary>#241: <c>ValorMinimo</c>/<c>ValorMaximo</c> (opcionais): a regra só vale com o valor, sem o sinal, na faixa.</summary>
 public record SalvarRegraDescricaoDto(
     [Required, StringLength(200, MinimumLength = 2)] string Texto,
     TipoCorrespondencia TipoCorrespondencia,
     [Required, StringLength(300, MinimumLength = 1)] string NovaDescricao,
-    bool Ativa = true);
+    bool Ativa = true,
+    [Range(0.01d, 999999999d)] decimal? ValorMinimo = null,
+    [Range(0.01d, 999999999d)] decimal? ValorMaximo = null);
 
 public class FiltroTransacoesDto
 {

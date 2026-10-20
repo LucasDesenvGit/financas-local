@@ -460,7 +460,8 @@ export const MANUAL: CapituloManual[] = [
           'Salve. O aviso tem “Desfazer”. Na lista, o nome novo fica em cima e a descrição do banco embaixo, menor (“do banco: …”).',
           'Para voltar, abra o ✎ de novo e use “Voltar à descrição do banco”.',
           'Várias de uma vez: marque as transações e use “✎ Renomear” na barra de seleção. Com “Nas selecionadas e nas próximas”, o site cria uma regra por descrição do banco.',
-          'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto (com prévia de quantas transações renomeia), e dá para editar, desligar ou excluir.'
+          'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto (com prévia de quantas transações renomeia), e dá para editar, desligar ou excluir.',
+          'Mesma descrição do banco e valores diferentes (ex.: duas contas do condomínio)? Na regra de descrição, preencha “E o valor”: “De” e “Até” (um dos dois basta). Crie uma regra para cada valor, cada uma com o seu nome. A regra com valor vem antes das outras.'
         ],
         abrir: [
           { rotulo: 'Ver as descrições pouco informativas', rota: '/transacoes', params: { generica: '1' } },
@@ -469,7 +470,8 @@ export const MANUAL: CapituloManual[] = [
         dicas: [
           'Para PIX e boletos com número que muda todo mês, use “contiver” e deixe só a parte fixa (o site já sugere o texto sem os números).',
           'A busca acha a transação pelo nome novo e pela descrição do banco. A categoria continua vindo da descrição do banco (as regras de categoria não mudam).',
-          'Uma transação renomeada sai do filtro “Descrição pouco informativa”.'
+          'Uma transação renomeada sai do filtro “Descrição pouco informativa”.',
+          'O valor da regra é sem o sinal: “De R$ 150,00 Até R$ 250,00” pega a despesa de R$ 200,00. Deixe dar uma folga (a conta de R$ 200 pode vir R$ 203 com juros).'
         ],
         erros: [
           'Nome trocado à mão (pelo ✎ “Só nesta” ou pelo formulário da transação) não é mudado por nenhuma regra. Para a regra valer nela, use “Também nas outras” de novo a partir dela.'
@@ -930,6 +932,26 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
         erros: ['Clicou em “é a mesma” por engano? Use “Desfazer” no aviso que aparece logo depois: a sugestão volta. Excluir a conta a pagar também a traz de volta.']
+      },
+      {
+        id: 'mesmo-nome-valores-diferentes',
+        titulo: 'Duas contas com a mesma descrição do banco',
+        paraQueServe: 'Separar cobranças que chegam do banco com o mesmo nome e só mudam no valor, como duas contas do condomínio.',
+        passos: [
+          'Em Categorias e regras › Regras automáticas › “Regras de descrição”, clique em “+ Regra de descrição”.',
+          'Em “Texto”, escreva a descrição do banco (ex.: CONDOMINIO). Em “E o valor”, a faixa da primeira conta (ex.: De R$ 800,00 Até R$ 900,00). Em “Mostrar como”, o nome dela (ex.: “Condomínio — taxa”). Salve.',
+          'Repita para a outra conta, com a faixa e o nome dela (ex.: Até R$ 250,00, “Condomínio — fundo de reserva”).',
+          'Em Contas a pagar, as “Sugestões do extrato” passam a mostrar as duas separadas, cada uma com o seu nome e o texto da cobrança igual a ele.',
+          'Já tinha cadastrado as contas? Abra cada uma e troque o “texto da cobrança” pelo nome da regra (ex.: CONDOMINIO — TAXA). Assim a baixa sozinha e os avisos não confundem uma com a outra.'
+        ],
+        abrir: [
+          { rotulo: 'Abrir Categorias e regras', rota: '/categorias' },
+          { rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }
+        ],
+        erros: [
+          'Com um texto da cobrança que as duas têm (ex.: só CONDOMINIO), a baixa sozinha e o aviso “aumentou” misturam as duas: use o nome inteiro da regra.',
+          'Conta que mudou de valor e saiu da faixa volta ao nome do banco. Edite a faixa da regra: as transações são renomeadas de novo.'
+        ]
       }
     ]
   },

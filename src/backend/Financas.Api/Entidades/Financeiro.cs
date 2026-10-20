@@ -25,6 +25,12 @@ public class RegraDescricao
     public string Texto { get; set; } = string.Empty;
     public TipoCorrespondencia TipoCorrespondencia { get; set; } = TipoCorrespondencia.Igual;
     public string NovaDescricao { get; set; } = string.Empty;
+    /// <summary>
+    /// #241: a regra só vale com o valor da transação (sem o sinal) entre <c>ValorMinimo</c> e <c>ValorMaximo</c>; null =
+    /// sem piso ou sem teto. Separa cobranças com a mesma descrição do banco e valores diferentes (as duas do condomínio).
+    /// </summary>
+    public decimal? ValorMinimo { get; set; }
+    public decimal? ValorMaximo { get; set; }
     public bool Ativa { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 }

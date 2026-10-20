@@ -33,13 +33,15 @@ O site já tinha **Contas a pagar** (`ContaAgendada`): descrição, valor, recor
 - **Baixa sozinha** (`ContaAgendadaService.ConciliarAsync`). Vale para a conta cobrada sozinha que tem o texto da cobrança:
   - quando chega uma transação com o texto, de até 10 dias antes do vencimento esperado e na conta ou cartão dela (se escolhido), a conta se dá como paga, como no "Pagar", e o vencimento avança;
   - a comparação é com a **descrição original** do banco, então o renome (ADR 0030) não atrapalha;
+  - **exceção (#241):** quando o nome veio de uma regra de descrição **com faixa de valor**, a comparação é com esse nome. As duas cobranças têm a mesma descrição do banco, e é o nome que diz qual é qual. Vale também para os avisos e para a sugestão;
   - roda no fim da sincronização, ao iniciar a API e ao salvar uma conta a pagar.
   - Sem o texto, a conta continua com o "Pagar".
 - **Sugestão pelo extrato** (`SugestaoContaAgendadaService`):
   - **cartões:** entram, menos as parcelas (pelos campos de parcela ou "PARC 3/10" no texto). No cartão, assinatura tem **valor fixo: até 5% de diferença nas últimas três cobranças** (decisão do usuário), e o resto (iFood, Uber) é gasto frequente;
   - **anual:** 2 ou 3 cobranças, cada uma de 330 a 400 dias depois da anterior, numa janela de 400 dias;
   - **forma sugerida:** cartão quando cai num cartão; "débito automático" quando o texto diz "DEB AUT"/"DEBITO AUT…"; à mão no resto;
-  - **texto sugerido:** a palavra mais longa da chave (ex.: NETFLIX).
+  - **texto sugerido:** a palavra mais longa da chave (ex.: NETFLIX);
+  - **#241, nome de uma regra com faixa de valor:** a transação é agrupada pelo nome inteiro, sem acento e em maiúsculas, com os números ("Condomínio 1" e "Condomínio 2" são dois), e não pela descrição do banco. O texto sugerido é esse nome inteiro, porque a palavra mais longa (CONDOMINIO) ligaria as duas. Uma conta a pagar com um texto que as duas têm só tira a sugestão de valor parecido (até 15%).
 - **"Não é" (ignorar a sugestão)** continua lembrado no navegador (ADR 0017): é conveniência de tela, não dado financeiro.
 - **Painel:** o que cai no cartão sai dos "Próximos vencimentos", porque já entra na fatura do mês.
 - **Avisos** (`ContaAgendadaService.AvisosAsync`, parte 3), calculados na hora, sem gravar nada. Os limiares são *julgamento próprio*:
@@ -62,6 +64,7 @@ O site já tinha **Contas a pagar** (`ContaAgendada`): descrição, valor, recor
     - uma assinatura que mudou de preço nas três últimas cobranças não é sugerida até as três ficarem iguais;
     - uma assinatura em dólar varia com o câmbio e pode nunca ser sugerida.
   - **Cobrança adiantada em mais de 10 dias** não dá baixa.
+  - **#241:** a conta a pagar cadastrada antes da regra por valor, com um texto que as duas cobranças têm (ex.: CONDOMINIO), continua casando com as duas. O usuário troca o texto pelo nome da regra; o Manual explica.
 - **Na prática:**
   - Coluna nova por `adicionar_coluna_se_ausente`. `FormaCobranca` tem padrão 1, então as contas antigas viram "à mão".
   - Código que mostra "o que vence" deve olhar a forma de cobrança: o que cai no cartão não é conta a pagar à parte.

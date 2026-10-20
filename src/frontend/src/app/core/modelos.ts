@@ -117,14 +117,18 @@ export interface ResultadoRenomearEmLote {
 
 export interface PreviaRegraDescricao { quantidade: number; exemplos: string[]; }
 
-/** #123 (ADR 0030): "quando a descrição do banco for/contiver texto, mostrar novaDescricao". */
+/**
+ * #123 (ADR 0030): "quando a descrição do banco for/contiver texto, mostrar novaDescricao". #241: com `valorMinimo` e
+ * `valorMaximo` (cada um opcional), só quando o valor da transação, sem o sinal, está na faixa.
+ */
 export interface RegraDescricao {
   id: number; texto: string; tipoCorrespondencia: TipoCorrespondencia; novaDescricao: string; ativa: boolean;
-  transacoes: number;
+  transacoes: number; valorMinimo: number | null; valorMaximo: number | null;
 }
 
 export interface SalvarRegraDescricao {
   texto: string; tipoCorrespondencia: TipoCorrespondencia; novaDescricao: string; ativa: boolean;
+  valorMinimo: number | null; valorMaximo: number | null;
 }
 
 /** #111 (ADR 0025): os mesmos números do enum da API. */
