@@ -9,7 +9,7 @@ namespace Financas.Gerenciador;
 /// <list type="bullet">
 /// <item><b>.msi</b> (Windows): <c>Dados:Pasta</c> (ex.: %ProgramData%\FinancasLocal\dados) define o banco; atualiza
 /// pelo GitHub.</item>
-/// <item><b>scripts</b> (<c>instalar-windows.cmd</c>/<c>instalar.sh</c>/<c>3-publicar-atualizar.sh</c>, Windows ou
+/// <item><b>scripts</b> (<c>instalar-windows.cmd</c>/<c>scripts/geral/instalar.sh</c>/<c>3-publicar-atualizar.sh</c>, Windows ou
 /// Linux): <c>Banco:Caminho</c> define o banco; atualiza pelos scripts, então o gerenciador não oferece o .msi.</item>
 /// </list>
 /// </summary>

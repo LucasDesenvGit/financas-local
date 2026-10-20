@@ -1,6 +1,6 @@
 # 0033. Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows
 
-- **Status:** Aceita
+- **Status:** Aceita (em parte substituída pela [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md): na instalação de desenvolvimento, o botão roda o git)
 - **Data:** 2026-10-18 (issue #138)
 - **Relacionadas:** [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) (gerenciador do Windows), [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) (ferramentas portáteis)
 

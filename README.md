@@ -21,7 +21,7 @@ O site liga sozinho com o computador e só responde nele mesmo. No Menu Iniciar 
 
 - **Conferir o arquivo:** baixe também o `SHA256SUMS.txt` e rode `Get-FileHash .\FinancasLocal-<versão>.msi` no PowerShell. O resultado tem de ser igual ao número do arquivo.
 - **Sem o atalho na área de trabalho:** `msiexec /i FinancasLocal-<versão>.msi ATALHOAREADETRABALHO=0`.
-- **Versão de desenvolvimento:** quer testar o que já foi aprovado e ainda não saiu? Baixe o `FinancasLocal-desenvolvimento.msi` do [pré-lançamento "desenvolvimento"](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento). Ele é gerado a cada mudança aprovada, instala e atualiza igual e mantém os dados. O site mostra a versão como `X.Y.Z-dev.N`, e o gerenciador só avisa das versões publicadas.
+- **Versão de desenvolvimento:** quer testar o que já foi aprovado e ainda não saiu? Baixe o `FinancasLocal-desenvolvimento.msi` do [pré-lançamento "desenvolvimento"](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento). Ele é gerado a cada mudança aprovada, instala e atualiza igual e mantém os dados. O site mostra a versão como `X.Y.Z-dev.N`, e o gerenciador dessa instalação avisa e atualiza para a versão de desenvolvimento mais nova (quem instalou uma versão publicada continua recebendo só as publicadas).
 
 </details>
 
@@ -91,7 +91,7 @@ Para só desligar o site por um tempo, use **Desligar** no gerenciador.
 | `api.bcb.gov.br` | taxa Selic | só datas |
 | `olinda.bcb.gov.br` | cotação PTAX de moedas estrangeiras | só o código da moeda e datas |
 | `query1.finance.yahoo.com` / `brapi.dev` | cotações de ações e FIIs (fontes gratuitas e não oficiais) | só o código do ativo |
-| `api.github.com` / `github.com` | só o **Gerenciador** do Windows, para achar e baixar a versão nova, conferindo o SHA256 ([ADR 0028](docs/adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)) | só o pedido da página de versões. O gerenciador do Linux não acessa a internet |
+| `api.github.com` / `github.com` | só o **Gerenciador** do Windows, para achar e baixar a versão nova, conferindo o SHA256 ([ADR 0028](docs/adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)) | só o pedido da página de versões. O gerenciador do Linux não acessa a internet (só na instalação de desenvolvimento, pelo `git`, quando se clica em "Atualizar para a última do develop"; [ADR 0040](docs/adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)) |
 
 **Recomendações:**
 - Ative a criptografia do disco (**BitLocker** no Windows, **LUKS** no Linux): o arquivo do banco não é criptografado.

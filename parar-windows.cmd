@@ -3,7 +3,7 @@ rem =====================================================================
 rem FinancasLocal - para tudo no Windows (duplo clique)
 rem
 rem  - Pede elevacao (Administrador), necessaria para parar o servico
-rem  - Roda scripts\parar-windows.ps1 no Windows PowerShell, que ja vem
+rem  - Roda scripts\windows\parar-windows.ps1 no Windows PowerShell, que ja vem
 rem    com o Windows: nao precisa de Git nem bash
 rem  - Para o servico FinancasLocal, a API e o front de desenvolvimento e
 rem    confere se o banco ficou livre. A janela fica aberta no final.
@@ -32,7 +32,7 @@ if errorlevel 1 (
 cd /d "%~dp0"
 
 rem -ExecutionPolicy Bypass vale so para este processo: nao muda a politica do computador.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\parar-windows.ps1" %*
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\parar-windows.ps1" %*
 set "RESULTADO=%errorlevel%"
 if not "%FINANCAS_SEM_INTERACAO%"=="1" pause
 exit /b %RESULTADO%

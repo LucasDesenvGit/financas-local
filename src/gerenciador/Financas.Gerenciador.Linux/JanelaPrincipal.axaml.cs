@@ -22,6 +22,8 @@ public partial class JanelaPrincipal : Window
     private readonly DispatcherTimer _relogio = new() { Interval = Intervalo };
     private readonly TrayIcon? _bandeja;
     private bool _iniciado, _consultando, _ocupado, _sair;
+    /// <summary>Pasta do clone no develop (instalação de desenvolvimento), ou null (ADR 0040).</summary>
+    private string? _raizDev;
     private Situacao? _situacao;
 
     public JanelaPrincipal()
@@ -32,6 +34,10 @@ public partial class JanelaPrincipal : Window
         BotaoLigar.Click += async (_, _) => await ServicoAsync(_situacao?.Estado == EstadoSite.Desligado ? "ligar" : "desligar");
         BotaoReiniciar.Click += async (_, _) => await ServicoAsync("reiniciar");
         BotaoCopiarComando.Click += async (_, _) => await CopiarComandoAsync();
+        BotaoAtualizarDev.Click += (_, _) => ConfirmacaoDev.IsVisible = true;
+        BotaoCancelarDev.Click += (_, _) => ConfirmacaoDev.IsVisible = false;
+        BotaoConfirmarDev.Click += async (_, _) => await AtualizarPeloGitAsync();
+        BotaoAtualizarGerenciador.Click += (_, _) => AtualizarGerenciadorEReabrir();
         BotaoMais.Click += (_, _) => AlternarMais();
         BotaoCopia.Click += async (_, _) => await SalvarCopiaAsync();
         BotaoErros.Click += async (_, _) => await AbrirPaginaAsync("configuracoes?aba=erros");
@@ -57,6 +63,8 @@ public partial class JanelaPrincipal : Window
         _iniciado = true;
         await AtualizarSituacaoAsync();
         _relogio.Start();
+        _raizDev = await Task.Run(() => DesenvolvimentoPeloGit.Disponivel(_instalacao));
+        if (_raizDev is not null) MostrarComoAtualizar();
     }
 
     public void Mostrar()
@@ -223,17 +231,26 @@ public partial class JanelaPrincipal : Window
     /// </summary>
     private void MostrarComoAtualizar()
     {
-        var raiz = Path.GetFullPath(Path.Combine(_instalacao.PastaPrograma, "..", ".."));
-        if (!File.Exists(Path.Combine(raiz, "scripts", "3-publicar-atualizar.sh")))
+        if (_raizDev is not null)
         {
-            TextoComoAtualizar.Text = "Instalado pelos scripts: para atualizar, rode git pull, scripts/3-publicar-atualizar.sh "
-                                      + "e scripts/instalar-gerenciador.sh na pasta do projeto.";
+            TextoComoAtualizar.Text = $"Instalação de desenvolvimento: a pasta {_raizDev} é um clone na branch develop. "
+                                      + "O botão abaixo traz o develop do GitHub e reinstala (só para quem desenvolve; o site fica "
+                                      + "fora do ar alguns minutos e o banco ganha uma cópia antes).";
+            CaixaComando.IsVisible = BotaoCopiarComando.IsVisible = false;
+            BlocoDesenvolvimento.IsVisible = true;
+            return;
+        }
+        var raiz = Path.GetFullPath(Path.Combine(_instalacao.PastaPrograma, "..", ".."));
+        if (!File.Exists(Path.Combine(raiz, "scripts", "geral", "3-publicar-atualizar.sh")))
+        {
+            TextoComoAtualizar.Text = "Instalado pelos scripts: para atualizar, rode git pull, scripts/geral/3-publicar-atualizar.sh "
+                                      + "e scripts/linux/instalar-gerenciador.sh na pasta do projeto.";
             CaixaComando.IsVisible = BotaoCopiarComando.IsVisible = false;
             return;
         }
         TextoComoAtualizar.Text = "Instalado pelos scripts: a versão nova vem do código. Para atualizar o site e o gerenciador, "
                                   + "rode no terminal (o site fica fora do ar por alguns segundos e o banco ganha uma cópia antes):";
-        Comando.Text = $"cd {AspasShell(raiz)} && git pull && scripts/3-publicar-atualizar.sh && scripts/instalar-gerenciador.sh";
+        Comando.Text = $"cd {AspasShell(raiz)} && git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh";
     }
 
     private async Task CopiarComandoAsync()
@@ -244,6 +261,66 @@ public partial class JanelaPrincipal : Window
     }
 
     private static string AspasShell(string valor) => "'" + valor.Replace("'", "'\\''") + "'";
+
+    /* ------------------------------------------------------------ desenvolvimento pelo git (ADR 0040) */
+
+    /// <summary>
+    /// Roda o <c>scripts/geral/atualizar.sh</c> do clone: confere a pasta, traz o develop e reinstala (o serviço é do
+    /// usuário, então nada pede senha). A saída aparece ao vivo.
+    /// </summary>
+    private async Task AtualizarPeloGitAsync()
+    {
+        if (_raizDev is not string raiz) return;
+        ConfirmacaoDev.IsVisible = false;
+        _ocupado = true;
+        BotaoAtualizarDev.IsEnabled = false;
+        BotaoAtualizarGerenciador.IsVisible = false;
+        SaidaDev.Text = "";
+        SaidaDev.IsVisible = ResultadoDev.IsVisible = true;
+        ResultadoDev.Text = "Buscando o develop no GitHub e reinstalando… o site fica fora do ar por alguns minutos.";
+        void Escrever(string linha) => Dispatcher.UIThread.Post(() =>
+        {
+            SaidaDev.Text += linha + Environment.NewLine;
+            SaidaDev.CaretIndex = SaidaDev.Text.Length;
+        });
+        try
+        {
+            var script = Path.Combine(raiz, "scripts", "geral", "atualizar.sh");
+            var codigo = await Financas.Gerenciador.Comando.RodarAoVivoAsync("bash", [script], Escrever, CancellationToken.None);
+            ResultadoDev.Text = codigo switch
+            {
+                DesenvolvimentoPeloGit.Atualizado => "Pronto: o site está na última versão do develop. O gerenciador continua na "
+                    + "versão de antes; para atualizá-lo também, use o botão abaixo.",
+                DesenvolvimentoPeloGit.SemNovidade => "Já está na última versão do develop. Nada mudou.",
+                DesenvolvimentoPeloGit.Recusado => "Não atualizou, e nada foi mudado: veja o motivo e o que fazer na caixa abaixo.",
+                _ => "A atualização falhou. Veja a caixa abaixo e, se o site não voltar, “Ver o registro do serviço”."
+            };
+            BotaoAtualizarGerenciador.IsVisible = codigo == DesenvolvimentoPeloGit.Atualizado;
+        }
+        finally
+        {
+            _ocupado = false;
+            BotaoAtualizarDev.IsEnabled = true;
+            await AtualizarSituacaoAsync();
+        }
+    }
+
+    /// <summary>
+    /// O gerenciador não se troca enquanto está aberto: sai, roda o instalar-gerenciador.sh e abre de novo, num processo
+    /// à parte (setsid), que continua depois de o gerenciador fechar.
+    /// </summary>
+    private void AtualizarGerenciadorEReabrir()
+    {
+        if (_raizDev is not string raiz || Environment.ProcessPath is not string executavel) return;
+        var script = Path.Combine(raiz, "scripts", "linux", "instalar-gerenciador.sh");
+        var comando = $"sleep 2; bash {AspasShell(script)} && exec {AspasShell(executavel)}";
+        var info = new System.Diagnostics.ProcessStartInfo("setsid") { UseShellExecute = false };
+        foreach (var a in new[] { "bash", "-c", comando }) info.ArgumentList.Add(a);
+        System.Diagnostics.Process.Start(info);
+        _sair = true;
+        Close();
+        (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+    }
 
     /* ------------------------------------------------------------ mais opções */
 
