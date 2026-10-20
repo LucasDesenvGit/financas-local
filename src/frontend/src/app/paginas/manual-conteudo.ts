@@ -436,7 +436,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Abrir e ajustar uma transação',
         paraQueServe: 'Corrigir a categoria, dar um nome melhor ou marcar algo especial numa transação.',
         passos: [
-          'Clique na linha da transação.',
+          'Clique na linha da transação. Pelo teclado, chegue ao nome dela com Tab e aperte Enter.',
           'Mude a “Descrição” para um nome que você reconheça (a original do banco continua guardada e é ela que as regras usam).',
           'Escolha a “Categoria” — ou um dos atalhos em “Sugestões”. “Automática (regras)” volta para a categorização automática.',
           'Use “Observação” para lembrar de algo.',

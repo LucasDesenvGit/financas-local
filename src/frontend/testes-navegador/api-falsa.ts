@@ -109,6 +109,9 @@ const respostas: Record<string, unknown> = {
   },
   '/api/transacoes': { itens: transacoes, total: transacoes.length, pagina: 1, tamanhoPagina: 50, totalReceitas: 5000, totalDespesas: 152.3 },
   '/api/transacoes/sugestoes-categoria': [],
+  // A edição de uma transação pede as sugestões dela (teclado.spec.ts abre a primeira).
+  '/api/transacoes/1/sugestoes-categoria': [],
+  '/api/transacoes/2/sugestoes-categoria': [],
   '/api/categorias': categorias,
   '/api/regras': [],
   '/api/regras-descricao': [],

@@ -21,6 +21,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Acessibilidade achada no teste de ponta a ponta** (varredura de todas as telas no navegador, em computador, celular e tema escuro):
+  - **Contraste do tema claro** (WCAG 1.4.3): texto suave, verde, rosa, alerta e emergência ficavam abaixo de 4,5:1 sobre os fundos. Estão um pouco mais escuros, em todas as paletas; um teste confere a conta.
+  - **Só com o mouse** (WCAG 2.1.1): abrir uma transação, uma categoria ou uma regra de categorização e reutilizar um resultado da calculadora. Agora o nome é um botão (Tab + Enter); o clique na linha continua valendo.
+  - **Alvos menores que 24 px** (WCAG 2.5.8): o ✕ dos avisos, "ver todos" do Painel, os cartões das faturas, a navegação do Manual e os botões com cara de link.
+  - **Categorias rolava 3 px para o lado** no computador: a dica escondida do ícone na borda direita contava na largura. A dica perto da borda agora abre alinhada pelo lado do ícone.
+  - **Metas:** "editar" e "+ aporte" dizem de qual meta são para o leitor de tela.
 - **Busca de Transações diferenciava maiúsculas** (#158): "netflix" não achava "NETFLIX.COM". Agora a busca ignora a caixa das letras (sem acento), e % e _ digitados contam como texto.
 - **Mais robusto quando o banco manda os dados de outro jeito** (#172):
   - **Pagamento de fatura** que o banco manda como boleto ou "outros" fica fora dos gastos quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem o crédito, fica como está, porque "fatura" também é conta de telefone.

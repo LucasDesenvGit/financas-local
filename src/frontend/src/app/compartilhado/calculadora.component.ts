@@ -63,9 +63,11 @@ interface ItemHistorico { expressao: string; resultado: number; }
         @if (historico().length) {
           <ul class="calc-historico" aria-label="Últimos cálculos">
             @for (h of historico(); track $index) {
-              <li (click)="reutilizar(h)" title="Usar este resultado">
+              <!-- WCAG 2.1.1: botão de verdade (o <li> clicável não recebia foco). -->
+              <li><button type="button" class="calc-reutilizar" (click)="reutilizar(h)"
+                [attr.aria-label]="'Usar o resultado ' + formatar(h.resultado) + ' (' + h.expressao + ')'">
                 <span class="truncar">{{ h.expressao }}</span><strong>{{ formatar(h.resultado) }}</strong>
-              </li>
+              </button></li>
             }
           </ul>
         }

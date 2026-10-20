@@ -264,6 +264,7 @@ import { Icones } from '../compartilhado/icones';
     .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
     .lista-faturas .valor { margin-left: auto; }
     .lista-faturas .cartao-fatura { display: inline-flex; align-items: center; gap: 6px; }
+    .lista-faturas .cartao-fatura a { display: inline-flex; align-items: center; min-height: 24px; }
     .lista-faturas .detalhe-fatura { flex-basis: 100%; font-size: 0.8rem; }
   `]
 })
