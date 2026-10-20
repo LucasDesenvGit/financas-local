@@ -35,7 +35,7 @@ A única moeda respeitada pelo sistema é a de **`Investimento.Moeda`**:
 - **Positivas:** nada muda no banco; o escopo da conversão fica limitado aos poucos pontos que somam investimentos; o valor original nunca se perde, e trocar o critério de conversão não exige migrar dados.
 - **Negativas:**
   - o valor em reais de um investimento muda com o câmbio mesmo sem o investimento mudar, e a cotação usada é a última guardada (pode ter até um dia útil de atraso);
-  - uma conta ou empréstimo em moeda estrangeira, se aparecer, é somado como reais sem aviso;
+  - uma conta ou empréstimo em moeda estrangeira, se aparecer, é somado como reais. Desde a #172, a conta em outra moeda gera um **aviso no Painel** (`PainelController`), sugerindo tirá-la do saldo; a conversão continua fora (é o "Quando revisitar" abaixo);
   - investimento em moeda sem PTAX (fora das 10 moedas da [0007](0007-cotacao-de-cambio-pela-ptax-do-banco-central.md)) nunca entra nos totais: o patrimônio fica menor que o real, avisado no painel e na tela de investimentos;
   - rentabilidade e comparação com a Selic são calculadas **na moeda do investimento**, sem a variação do câmbio — um investimento em dólar parado mostra 0% mesmo que o dólar suba.
 - **Na prática:**

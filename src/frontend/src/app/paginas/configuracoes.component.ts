@@ -104,6 +104,19 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
           <button class="botao botao-primario">Salvar</button>
         </div>
       </form>
+
+      <!-- #172 (ADR 0031): para os bancos que não dizem se o Pix foi para outra conta sua (Nielsen 2). -->
+      <form (ngSubmit)="salvarMeuNome()" class="formulario meu-nome">
+        <label>Seu nome como aparece nos Pix
+          <input name="meuNome" [(ngModel)]="meuNome" maxlength="120" autocomplete="name" aria-describedby="ajuda-meu-nome">
+        </label>
+        <small id="ajuda-meu-nome" class="texto-suave">Quando o banco não informa se um Pix ou TED foi para outra conta sua, o que
+          cita este nome (o primeiro e o último) conta como transferência entre contas suas, fora dos gastos. Vazio: não usa o nome.</small>
+        <div class="rodape-form">
+          <span class="cresce"></span>
+          <button class="botao" [disabled]="ocupado()">Salvar nome</button>
+        </div>
+      </form>
     </section>
 
     <section class="painel-bloco">
@@ -239,6 +252,8 @@ export class ConfiguracoesComponent implements OnInit {
   clientId = '';
   clientSecret = '';
   secretConfigurado = false;
+  /** #172: o seu nome como aparece nos Pix. */
+  meuNome = '';
   novoItemId = '';
   senhaAtual = '';
   novaSenha = '';
@@ -249,6 +264,7 @@ export class ConfiguracoesComponent implements OnInit {
       next: (c) => {
         this.clientId = c.clientId ?? '';
         this.secretConfigurado = c.secretConfigurado;
+        this.meuNome = c.meuNome ?? '';
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
@@ -266,6 +282,23 @@ export class ConfiguracoesComponent implements OnInit {
   private abaDaUrl(params: ParamMap): Aba {
     const aba = params.get('aba');
     return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca', 'erros'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
+  }
+
+  /** #172: grava o nome (vazio apaga); a API já reclassifica as transferências. */
+  salvarMeuNome(): void {
+    const nome = this.meuNome.trim() || null;
+    this.ocupado.set(true);
+    this.api.salvarMeuNome(nome).subscribe({
+      next: () => {
+        this.ocupado.set(false);
+        this.meuNome = nome ?? '';
+        this.avisos.sucesso(nome ? 'Nome salvo. As transferências foram revistas.' : 'Nome apagado.');
+      },
+      error: (e) => {
+        this.ocupado.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
   }
 
   carregarConexoes(): void {

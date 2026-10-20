@@ -289,6 +289,39 @@ public class SincronizacaoService
         return existentes.ToDictionary(kv => kv.Key, kv => kv.Value.Id);
     }
 
+    /// <summary>#172: até quantos dias depois da pendente a efetivada igual pode aparecer.</summary>
+    public const int DiasPendenteEfetivada = 10;
+
+    /// <summary>
+    /// #172: pendente de antes da janela relida (a instituição não a manda mais, então ela não sai pelo caminho normal)
+    /// que tem, na mesma conta, uma efetivada do mesmo valor entre 2 dias antes e <see cref="DiasPendenteEfetivada"/>
+    /// dias depois: o banco a efetivou com outro código. A pendente sai, para não contar em dobro.
+    /// </summary>
+    private async Task RemoverPendentesJaEfetivadasAsync(int contaId, DateOnly dataInicial, CancellationToken ct)
+    {
+        var antigas = await _db.Transacoes
+            .Where(t => t.ContaId == contaId && t.Status == StatusTransacao.Pendente && t.PluggyTransactionId != null
+                        && t.Data < dataInicial)
+            .ToListAsync(ct);
+        if (antigas.Count == 0) return;
+        var de = antigas.Min(t => t.Data).AddDays(-2);
+        var ate = antigas.Max(t => t.Data).AddDays(DiasPendenteEfetivada);
+        var efetivadas = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.ContaId == contaId && t.Status == StatusTransacao.Efetivada && t.Data >= de && t.Data <= ate)
+            .Select(t => new { t.Id, t.Data, t.Valor }).ToListAsync(ct);
+        var usadas = new HashSet<long>();
+        foreach (var pendente in antigas.OrderBy(t => t.Data).ThenBy(t => t.Id))
+        {
+            var par = efetivadas.Where(e => e.Valor == pendente.Valor && !usadas.Contains(e.Id)
+                    && e.Data >= pendente.Data.AddDays(-2) && e.Data <= pendente.Data.AddDays(DiasPendenteEfetivada))
+                .OrderBy(e => Math.Abs(e.Data.DayNumber - pendente.Data.DayNumber)).FirstOrDefault();
+            if (par is null) continue;
+            usadas.Add(par.Id);
+            _db.Transacoes.Remove(pendente);
+            _logger.LogInformation("Pendente {Id} removida: o banco a efetivou com outro código ({Efetivada}).", pendente.Id, par.Id);
+        }
+    }
+
     private async Task<(int Novas, int Atualizadas)> SincronizarTransacoesAsync(PluggySessao sessao, Conta conta,
         bool ehCartao, DateOnly dataInicial, Dictionary<string, int> mapaFaturas, CancellationToken ct)
     {
@@ -375,6 +408,7 @@ public class SincronizacaoService
             .Where(t => t.Status == StatusTransacao.Pendente && t.Data >= dataInicial && !idsRecebidos.Contains(t.PluggyTransactionId!))
             .ToList();
         _db.Transacoes.RemoveRange(pendentesRemovidas);
+        await RemoverPendentesJaEfetivadasAsync(conta.Id, dataInicial, ct);
 
         await _db.SaveChangesAsync(ct);
         return (novas, atualizadas);
