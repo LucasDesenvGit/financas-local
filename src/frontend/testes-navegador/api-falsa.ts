@@ -189,7 +189,9 @@ const respostas: Record<string, unknown> = {
     ]
   },
   '/api/carteira/extrato/sugestoes': [],
-  '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null },
+  '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null,
+    taxas: [{ data: dataIso(new Date(ano, hoje.getMonth() - 1, 8)), conta: 'Nubank', debitado: 1010.4, trocos: 10.1, valorDasCotas: 1000,
+      taxa: 0.3, operacoes: [{ operacaoId: 31, ticker: 'MXRF11', quantidade: 100, taxa: 0.3 }] }] },
   '/api/carteira/configuracao': { tokenBrapiConfigurado: false },
   '/api/parametros': [],
   '/api/parametros/sistema': { versao: '0.0.0-teste', dotNet: '10.0', sistemaOperacional: 'Teste', iniciadoEm: hoje.toISOString(),

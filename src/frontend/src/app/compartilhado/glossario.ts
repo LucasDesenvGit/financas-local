@@ -127,6 +127,11 @@ export const GLOSSARIO = {
     definicao: 'Quanto as cotas que você tem ganharam ou perderam de preço no mês, sem contar o dinheiro que entrou (aportes) nem os rendimentos. É o saldo no fim do mês menos o saldo no fim do mês anterior, menos as compras e mais as vendas do mês.',
     exemplo: 'Saldo de R$ 1.000 em setembro, compra de R$ 200 em outubro e saldo de R$ 1.230 no fim de outubro: valorização de R$ 30.'
   },
+  taxaB3: {
+    termo: 'Taxa da B3',
+    definicao: 'O que a bolsa cobra em cada compra ou venda (emolumentos e liquidação): alguns centavos a cada R$ 1.000. Entra no custo da compra e no preço médio.',
+    exemplo: 'Saiu R$ 1.010,40 da conta, voltaram R$ 10,10 de troco e as cotas custaram R$ 1.000,00: a taxa foi de R$ 0,30.'
+  },
   trocoDeCompra: {
     termo: 'Troco da compra',
     definicao: 'Na compra de ações e FIIs, a corretora pode debitar um pouco a mais e devolver a sobra no mesmo dia ou nos seguintes. Esse crédito não é rendimento: é parte do dinheiro da compra que voltou.',
