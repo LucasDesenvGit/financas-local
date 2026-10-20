@@ -75,6 +75,7 @@ Exemplos:
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
 - [ ] Compila: `dotnet build FinancasLocal.sln -c Release` e `npm run build` em `src/frontend`.
+- [ ] Testes no navegador passam: `npm run test:navegador` em `src/frontend` (a CI também roda; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes-navegador/base.ts`); endpoint novo, em `testes-navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
 - [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/regressao/`; padrão novo de UI/UX, em `testes/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
 - [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/comum.sh`) chamado em `scripts/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)) — e entidades/`FinancasDbContext` ajustados. Sem migrations.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.

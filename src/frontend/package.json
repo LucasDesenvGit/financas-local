@@ -9,7 +9,8 @@
     "test": "jest",
     "test:regressao": "jest testes/regressao",
     "test:usabilidade": "jest testes/usabilidade",
-    "test:tipos": "tsc -p tsconfig.spec.json --noEmit"
+    "test:tipos": "tsc -p tsconfig.spec.json --noEmit",
+    "test:navegador": "ng build --configuration production && playwright test"
   },
   "dependencies": {
     "@angular/common": "^22.2.3",
@@ -28,6 +29,7 @@
     "@angular/build": "^22.2.3",
     "@angular/cli": "^22.2.3",
     "@angular/compiler-cli": "^22.2.3",
+    "@playwright/test": "^1.64.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
     "jest": "^30.5.2",

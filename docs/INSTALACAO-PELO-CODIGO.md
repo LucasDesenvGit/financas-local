@@ -107,6 +107,11 @@ A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de lin
 - Sem o .NET 10 e o Node instalados, use as ferramentas portáteis do `1-preparar-ambiente.sh`, pondo-as na frente do PATH (troque o caminho pelo da sua pasta do projeto):
   `$env:PATH = "C:\caminho\financas-local\ferramentas\dotnet;C:\caminho\financas-local\ferramentas\node;$env:PATH"`
 - **Banco:** não há migrations. Toda a estrutura está em `banco/01-estrutura.sql`, que é idempotente. Para mudar o banco, veja [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
+- **Testes do front-end**, em `src/frontend`:
+  - `npm test` e `npm run test:tipos`: Jest, sem navegador ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md));
+  - `npm run test:navegador`: compila o build de produção e abre cada tela num navegador de verdade (o Edge instalado), com a CSP da API e uma API falsa, sem back-end nem dado real. Falha com erro de console, exceção ou bloqueio de CSP ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md));
+  - `FOTOS=painel,metas FOTOS_PASTA=<pasta> npx playwright test fotos`: prints das telas, em claro e escuro, no computador e no celular;
+  - `npx playwright test --ui`: para ver passo a passo.
 - Branches, commits, versão e checklist do PR: [CONTRIBUINDO.md](../CONTRIBUINDO.md). Arquitetura: [ARQUITETURA.md](ARQUITETURA.md). Decisões: [ADRs](adr/README.md).
 
 ### Estrutura
