@@ -66,6 +66,11 @@ export const GLOSSARIO = {
     termo: 'Dívida total do cartão',
     definicao: 'Tudo o que você deve neste cartão hoje, inclusive as parcelas que ainda vão vencer. Não é a fatura do mês.'
   },
+  limiteUsado: {
+    termo: 'Limite usado',
+    definicao: 'O banco informa o limite aprovado e o disponível; a diferença é o limite usado. Em geral é a dívida do cartão, mas fica maior quando você reduz o limite no app ou há compras em processamento.',
+    exemplo: 'Aprovado R$ 10.000, disponível R$ 500 e dívida R$ 500: os outros R$ 9.000 são o limite que você tirou no app, ou compromissos.'
+  },
   faturaDoMes: {
     termo: 'Fatura do mês',
     definicao: 'A fatura do cartão que fecha neste mês: compras desde o fechamento anterior e a parcela do mês das parceladas, menos estornos. Depois de fechada, vale o total informado pelo banco.'

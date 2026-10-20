@@ -257,6 +257,20 @@ export const MANUAL: CapituloManual[] = [
         dicas: ['Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.']
       },
       {
+        id: 'limite-reduzido',
+        titulo: 'Limite reduzido no app do banco',
+        paraQueServe: 'Não confundir o limite que você tirou do cartão no app com dívida.',
+        passos: [
+          'Se você reduz o limite no app do banco (por segurança, enquanto não usa), o “limite usado” que o banco informa fica bem maior que a dívida do cartão.',
+          'Quando isso acontece, o cartão em Contas e cartões pergunta: “Você reduziu o limite no app?”. Clique em “responder” (ou em “editar”).',
+          '“Sim, ajustei o limite”: o site usa o limite que ficou no app, e o cartão mostra “limite reduzido por você no app”.',
+          '“Não”: a diferença conta como compromisso (compras em processamento ou parcelas). A barra passa a usar o limite aprovado e inclui essa diferença.',
+          'Mudou de ideia? Em “editar”, clique em “desfazer”. Depois de um “não”, a pergunta só volta se a diferença mudar bastante.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        termos: ['limiteUsado']
+      },
+      {
         id: 'historico-faturas',
         titulo: 'Histórico de faturas',
         paraQueServe: 'Ver as faturas anteriores de um cartão, sem sair da tela.',
@@ -1030,7 +1044,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Backup',
         paraQueServe: 'Não perder os seus dados se o computador der problema.',
         passos: [
-          'Rode o script scripts/4-backup.sh (de preferência agendado) para copiar o banco para a pasta “backups”.',
+          'Rode o script scripts/geral/4-backup.sh (de preferência agendado) para copiar o banco para a pasta “backups”.',
           'Copie de vez em quando a pasta “backups” para um disco externo ou outro lugar seguro.',
           'Ative a criptografia do disco (BitLocker no Windows, LUKS no Linux): o arquivo do banco não é criptografado.'
         ]
@@ -1040,9 +1054,9 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Atualizar e parar o sistema',
         paraQueServe: 'Manter o site em dia e saber desligar tudo.',
         passos: [
-          'Para atualizar, rode scripts/3-publicar-atualizar.sh (ou o instalador do Windows de novo): ele faz backup do banco antes.',
-          'Para parar tudo: parar-windows.cmd no Windows ou scripts/parar.sh no Linux.',
-          'De tempos em tempos, rode scripts/1-preparar-ambiente.sh para receber as correções de segurança do .NET.'
+          'Para atualizar, rode scripts/geral/3-publicar-atualizar.sh (ou o instalador do Windows de novo): ele faz backup do banco antes.',
+          'Para parar tudo: parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.',
+          'De tempos em tempos, rode scripts/geral/1-preparar-ambiente.sh para receber as correções de segurança do .NET.'
         ]
       },
       {

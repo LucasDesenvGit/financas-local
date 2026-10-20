@@ -143,6 +143,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Saldo).HasPrecision(18, 2);
             e.Property(x => x.LimiteCredito).HasPrecision(18, 2);
             e.Property(x => x.LimiteDisponivel).HasPrecision(18, 2);
+            e.Property(x => x.LimiteDiferencaAvaliada).HasPrecision(18, 2);
             e.Property(x => x.SaldoReservado).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
             e.Property(x => x.Banco).HasMaxLength(30);

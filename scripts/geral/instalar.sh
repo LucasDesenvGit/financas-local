@@ -12,11 +12,11 @@
 # como Administrador.
 #
 # Ao migrar de uma instalacao com SQL Server, NAO use este script: siga a
-# secao "Migrar de uma instalacao com SQL Server" do README.
+# secao "Migrar de uma instalacao com SQL Server" de docs/INSTALACAO-PELO-CODIGO.md.
 #
 # Uso:
-#   scripts/instalar.sh
-#   scripts/instalar.sh --pular-build   # repassado ao 3-publicar-atualizar.sh
+#   scripts/geral/instalar.sh
+#   scripts/geral/instalar.sh --pular-build   # repassado ao 3-publicar-atualizar.sh
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -8,8 +8,8 @@
 #  - Pode ser executado novamente: os scripts SQL sao idempotentes
 #
 # Uso:
-#   scripts/2-criar-banco.sh                           # usa dados/sql/FinancasLocal.db
-#   scripts/2-criar-banco.sh /caminho/outro/banco.db    # caminho customizado
+#   scripts/geral/2-criar-banco.sh                           # usa dados/sql/FinancasLocal.db
+#   scripts/geral/2-criar-banco.sh /caminho/outro/banco.db    # caminho customizado
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -71,6 +71,8 @@ adicionar_coluna_se_ausente "Transacao" "MesmaTitularidade" "INTEGER NULL"
 adicionar_coluna_se_ausente "Transacao" "RegraDescricaoId" "INTEGER NULL"
 adicionar_coluna_se_ausente "Transacao" "DescricaoManual" "INTEGER NOT NULL DEFAULT 0"
 adicionar_coluna_se_ausente "Investimento" "NomePersonalizado" "TEXT NULL"
+adicionar_coluna_se_ausente "Conta" "LimiteAjustadoNoApp" "INTEGER NULL"
+adicionar_coluna_se_ausente "Conta" "LimiteDiferencaAvaliada" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

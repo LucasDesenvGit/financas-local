@@ -30,6 +30,15 @@ internal sealed class FormPrincipal : Form
     private readonly Botao _atualizar = new("A&tualizar", EstiloBotao.Primario, IconeBotao.Baixar);
     private readonly Botao _notas = new("O &que mudou", EstiloBotao.Discreto, IconeBotao.Informacao) { Visible = false };
     private readonly Botao _procurar = new("&Procurar versão nova", icone: IconeBotao.Procurar);
+    // ADR 0040: só na instalação de desenvolvimento pelos scripts (clone git na branch develop).
+    private readonly Botao _atualizarDev = new("Atualizar para a última do de&velop", EstiloBotao.Primario, IconeBotao.Baixar) { Visible = false };
+    private readonly Botao _atualizarGerenciador = new("Atualizar o &gerenciador e reabrir", icone: IconeBotao.Reiniciar) { Visible = false };
+    private readonly TextBox _saida = new()
+    {
+        Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Visible = false, WordWrap = true,
+        Font = new Font("Consolas", 8.5f), Size = new Size(LarguraConteudo, 150), Margin = new Padding(0, 4, 0, 8),
+        AccessibleName = "Saída da atualização"
+    };
     private readonly Botao _baixarMsi = new("&Baixar o instalador .msi", EstiloBotao.Discreto, IconeBotao.Baixar);
     private readonly BarraProgresso _progresso = new() { Visible = false };
     private readonly Botao _cancelar = new("&Cancelar download", EstiloBotao.Discreto, IconeBotao.Cancelar);
@@ -53,6 +62,8 @@ internal sealed class FormPrincipal : Form
     private bool _ocupado;
     private Situacao? _situacao;
     private VersaoDisponivel? _disponivel;
+    /// <summary>Pasta do clone no develop (instalação de desenvolvimento pelos scripts), ou null.</summary>
+    private string? _raizDev;
     private string? _resultadoProcura;
     private CancellationTokenSource? _download;
 
@@ -84,8 +95,11 @@ internal sealed class FormPrincipal : Form
         situacao.Conteudo.Controls.AddRange([Linha(_ponto, Coluna(_titulo, _detalhe)), Espaco(14), Linha(_abrir, _ligar, _reiniciar)]);
 
         var versao = new Cartao(LarguraCartao);
-        versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10), Linha(_atualizar, _procurar, _notas, _baixarMsi),
+        versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10),
+            Linha(_atualizar, _atualizarDev, _procurar, _notas, _baixarMsi), _saida, Linha(_atualizarGerenciador),
             Linha(_progresso, _cancelar)]);
+        _saida.BackColor = _tema.Superficie2;
+        _saida.ForeColor = _tema.Texto;
 
         var salvarCopia = new Botao("Salvar uma &cópia do banco…", icone: IconeBotao.Salvar);
         var linhaSite = Linha(_erros, _manual);
@@ -105,6 +119,8 @@ internal sealed class FormPrincipal : Form
         _reiniciar.Click += async (_, _) => await ServicoAsync("reiniciar");
         _procurar.Click += async (_, _) => await ProcurarAsync(silencioso: false);
         _atualizar.Click += async (_, _) => await AtualizarAsync();
+        _atualizarDev.Click += async (_, _) => await AtualizarPeloGitAsync();
+        _atualizarGerenciador.Click += (_, _) => AtualizarGerenciadorEReabrir();
         _cancelar.Click += (_, _) => _download?.Cancel();
         _notas.Click += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
         _mais.Click += (_, _) => AlternarMais();
@@ -161,6 +177,11 @@ internal sealed class FormPrincipal : Form
         _iniciado = true;
         await AtualizarSituacaoAsync();
         _relogio.Start();
+        if (!_instalacao.PeloMsi)
+        {
+            _raizDev = await Task.Run(() => DesenvolvimentoPeloGit.Disponivel(_instalacao));
+            MostrarVersao();
+        }
         if (_instalacao.PeloMsi && Preferencias.ProcurarAoAbrir) await ProcurarAsync(silencioso: true);
     }
 
@@ -291,21 +312,36 @@ internal sealed class FormPrincipal : Form
     /// </summary>
     private void MostrarVersao()
     {
+        if (_raizDev is not null)
+        {
+            _atualizarDev.Visible = true;
+            _baixarMsi.Visible = false;
+            if (_saida.Visible) return; // durante e depois de uma atualização, o texto é o resultado dela
+            _versao.Text = $"Instalação de desenvolvimento: a pasta {_raizDev} é um clone na branch develop. "
+                           + "O botão abaixo traz o develop do GitHub e reinstala (só para quem desenvolve; o site fica fora "
+                           + "do ar alguns minutos e o banco ganha uma cópia antes).";
+            return;
+        }
         if (!_instalacao.PeloMsi)
         {
             _versao.Text = "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd "
-                           + "(ou o 3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi "
+                           + "(ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi "
                            + "traz o banco e as chaves, e daí em diante a versão nova chega por aqui.";
             return;
         }
-        var instalada = _situacao?.VersaoSite is null ? $"Versão instalada: {_instalacao.VersaoTexto}." : null;
+        var instalada = _situacao?.VersaoSite is null
+            ? $"Versão {(VersaoAtual().EhDesenvolvimento ? "de desenvolvimento " : "")}instalada: {_instalacao.VersaoTexto}." : null;
         var procura = _resultadoProcura ?? (instalada is null ? "Versão nova: clique em “Procurar versão nova”." : null);
         _versao.Text = string.Join(" ", new[] { instalada, procura }.Where(t => !string.IsNullOrEmpty(t)));
     }
 
-    /// <summary>A versão que está rodando (a do site, quando ele responde) é a que conta para "tem versão nova".</summary>
-    private Version VersaoAtual()
-        => _situacao?.VersaoSite is string site && Version.TryParse(site.Split('-')[0], out var v) ? v : _instalacao.Versao;
+    /// <summary>
+    /// A versão que está rodando (a do site, quando ele responde) é a que conta para "tem versão nova". Sendo de
+    /// desenvolvimento (X.Y.Z-dev.N), a procura é no pré-lançamento "desenvolvimento" (ADR 0040).
+    /// </summary>
+    private VersaoDoSistema VersaoAtual()
+        => VersaoDoSistema.Ler(_situacao?.VersaoSite) ?? VersaoDoSistema.Ler(_instalacao.VersaoTexto)
+           ?? new VersaoDoSistema(_instalacao.Versao, null);
 
     private async Task ProcurarAsync(bool silencioso)
     {
@@ -315,9 +351,16 @@ internal sealed class FormPrincipal : Form
         try
         {
             using var limite = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            _disponivel = await Atualizacoes.ProcurarAsync(limite.Token);
-            var nova = _disponivel is not null && _disponivel.Versao > VersaoAtual();
-            _resultadoProcura = nova ? $"Tem versão nova: {_disponivel!.Versao}." : "Você está na versão mais nova.";
+            var desenvolvimento = VersaoAtual().EhDesenvolvimento;
+            _disponivel = await Atualizacoes.ProcurarAsync(desenvolvimento, limite.Token);
+            var nova = _disponivel is not null && _disponivel.Versao.CompareTo(VersaoAtual()) > 0;
+            _resultadoProcura = (nova, desenvolvimento) switch
+            {
+                (true, true) => $"Tem versão de desenvolvimento nova: {_disponivel!.Versao}.",
+                (true, false) => $"Tem versão nova: {_disponivel!.Versao}.",
+                (false, true) => "Você está na última versão de desenvolvimento.",
+                _ => "Você está na versão mais nova."
+            };
             MostrarVersao();
             _atualizar.Text = nova ? $"A&tualizar para {_disponivel!.Versao}" : "A&tualizar";
             _atualizar.Visible = nova;
@@ -384,6 +427,129 @@ internal sealed class FormPrincipal : Form
             _download?.Dispose();
             _download = null;
         }
+    }
+
+    /* ------------------------------------------------------------ desenvolvimento pelo git (ADR 0040) */
+
+    /// <summary>
+    /// Traz o develop pelo <c>atualizar-windows.ps1 -SoCodigo</c>, como o usuário (o git nunca roda como administrador
+    /// na pasta dele), e reinstala pelo <c>instalar-windows.ps1</c>, como administrador (UAC), num passo à parte.
+    /// </summary>
+    private async Task AtualizarPeloGitAsync()
+    {
+        if (_raizDev is not string raiz) return;
+        var confirmar = MessageBox.Show(this,
+            "Atualizar esta instalação de desenvolvimento para a última versão do develop?\n\n" +
+            "O gerenciador traz o código do GitHub e reinstala o site (pede permissão de administrador). O site fica fora " +
+            "do ar por alguns minutos, enquanto o front-end e a API são compilados, e o banco ganha uma cópia em backups " +
+            "antes de mudar.\n\nCom alterações locais ou em outra branch, nada é mudado: a tela diz o motivo.",
+            "Atualizar pelo develop", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+        if (confirmar != DialogResult.OK) return;
+
+        _ocupado = true;
+        _atualizarDev.Enabled = _atualizarGerenciador.Visible = false;
+        _saida.Clear();
+        _saida.Visible = true;
+        void Escrever(string linha) => BeginInvoke(() => _saida.AppendText(linha + Environment.NewLine));
+        try
+        {
+            _versao.Text = "Buscando o develop no GitHub…";
+            _versao.Anunciar();
+            var script = Path.Combine(raiz, "scripts", "windows", "atualizar-windows.ps1");
+            var codigo = await Comando.RodarAoVivoAsync("powershell.exe",
+                ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-SoCodigo"], Escrever, CancellationToken.None);
+            if (codigo == DesenvolvimentoPeloGit.SemNovidade)
+            {
+                _versao.Text = "Já está na última versão do develop. Nada mudou.";
+                return;
+            }
+            if (codigo != DesenvolvimentoPeloGit.Atualizado)
+            {
+                _versao.Text = codigo == DesenvolvimentoPeloGit.Recusado
+                    ? "Não atualizou, e nada foi mudado: veja o motivo e o que fazer na caixa abaixo."
+                    : "Não deu para buscar o develop. Nada foi mudado; veja a caixa abaixo.";
+                return;
+            }
+
+            _versao.Text = "Código atualizado. Reinstalando o site (permita no aviso do Windows)…";
+            _versao.Anunciar();
+            var log = Path.Combine(raiz, "instaladores", "instalacao-windows.log");
+            using var parar = new CancellationTokenSource();
+            var acompanhar = AcompanharLogAsync(log, Escrever, parar.Token);
+            var resultado = await AcoesElevadas.ExecutarAsync("--instalar-pelos-scripts");
+            parar.Cancel();
+            await acompanhar;
+            _versao.Text = resultado switch
+            {
+                AcoesElevadas.Resultado.Feito => "Pronto: o site está na última versão do develop. O gerenciador continua na "
+                    + "versão de antes; para atualizá-lo também, use o botão abaixo.",
+                AcoesElevadas.Resultado.Cancelado => "Reinstalação cancelada no aviso do Windows. O código já está atualizado: "
+                    + "rode o instalar-windows.cmd para terminar.",
+                _ => "A reinstalação falhou; o site da versão anterior volta sozinho. Veja a caixa abaixo e o log em "
+                    + "instaladores\\instalacao-windows.log."
+            };
+            _atualizarGerenciador.Visible = resultado == AcoesElevadas.Resultado.Feito;
+        }
+        finally
+        {
+            _versao.Anunciar();
+            _ocupado = false;
+            _atualizarDev.Enabled = true;
+            await AtualizarSituacaoAsync();
+        }
+    }
+
+    /// <summary>Mostra as linhas novas do log do instalador enquanto ele roda como administrador (sem janela).</summary>
+    private static async Task AcompanharLogAsync(string log, Action<string> linha, CancellationToken ct)
+    {
+        long lidos = File.Exists(log) ? new FileInfo(log).Length : 0;
+        var resto = "";
+        while (true)
+        {
+            var fim = ct.IsCancellationRequested;
+            try
+            {
+                if (File.Exists(log))
+                {
+                    await using var arquivo = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                    if (arquivo.Length > lidos)
+                    {
+                        arquivo.Position = lidos;
+                        using var leitor = new StreamReader(arquivo);
+                        var texto = resto + await leitor.ReadToEndAsync();
+                        lidos = arquivo.Length;
+                        var linhas = texto.Split('\n');
+                        resto = linhas[^1];
+                        foreach (var l in linhas[..^1]) linha(l.TrimEnd('\r'));
+                    }
+                }
+            }
+            catch (IOException) { }
+            if (fim)
+            {
+                if (resto.Length > 0) linha(resto);
+                return;
+            }
+            try { await Task.Delay(1000, ct); } catch (OperationCanceledException) { }
+        }
+    }
+
+    /// <summary>
+    /// O gerenciador não troca o próprio executável enquanto está aberto: fecha, roda o instalar-gerenciador.ps1 e abre
+    /// de novo, numa janela do PowerShell que mostra o andamento.
+    /// </summary>
+    private void AtualizarGerenciadorEReabrir()
+    {
+        if (_raizDev is not string raiz) return;
+        static string Literal(string texto) => "'" + texto.Replace("'", "''") + "'";
+        var script = Path.Combine(raiz, "scripts", "windows", "instalar-gerenciador.ps1");
+        var comando = $"Start-Sleep -Seconds 2; & {Literal(script)}; if ($LASTEXITCODE -eq 0) {{ Start-Process {Literal(Environment.ProcessPath!)} }} "
+                      + "else { Read-Host 'Nao deu para atualizar o gerenciador. Enter para fechar' }";
+        var info = new ProcessStartInfo("powershell.exe") { UseShellExecute = true };
+        foreach (var a in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", comando }) info.ArgumentList.Add(a);
+        Process.Start(info);
+        _sair = true;
+        Close();
     }
 
     /* ------------------------------------------------------------ mais opções */

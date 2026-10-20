@@ -53,6 +53,8 @@ export interface Conta {
   contaVinculadaId: number | null;
   /** Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel). */
   faturaMes: FaturaMes | null;
+  /** #171: "você reduziu o limite no app?" (null = sem resposta) e a diferença (limite usado − dívida) na resposta. */
+  limiteAjustadoNoApp?: boolean | null; limiteDiferencaAvaliada?: number | null;
 }
 
 export interface SalvarConta {

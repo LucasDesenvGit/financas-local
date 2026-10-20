@@ -3,9 +3,9 @@
     3-publicar-atualizar.sh) e cria os atalhos no Menu Iniciar e na area de trabalho do usuario atual. Nao precisa de
     administrador. Quem instalou pelo .msi ja tem o gerenciador (ADR 0028).
 
-    .\scripts\instalar-gerenciador.ps1                         # publica em publicado\gerenciador
-    .\scripts\instalar-gerenciador.ps1 -Destino D:\outra\pasta
-    .\scripts\instalar-gerenciador.ps1 -SemAtalhoNaAreaDeTrabalho
+    .\scripts\windows\instalar-gerenciador.ps1                         # publica em publicado\gerenciador
+    .\scripts\windows\instalar-gerenciador.ps1 -Destino D:\outra\pasta
+    .\scripts\windows\instalar-gerenciador.ps1 -SemAtalhoNaAreaDeTrabalho
 
     O gerenciador acha o site pelo servico FinancasLocal (a pasta da API e o appsettings dela), entao funciona
     de qualquer pasta. Fica fora de publicado\api porque a publicacao espelha aquela pasta (robocopy /MIR).
@@ -15,7 +15,7 @@
 param([string]$Destino = "", [switch]$SemAtalhoNaAreaDeTrabalho)
 
 $ErrorActionPreference = "Stop"
-$Raiz = Split-Path -Parent $PSScriptRoot
+$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 if (-not $Destino) { $Destino = Join-Path $Raiz "publicado\gerenciador" }
 $Projeto = Join-Path $Raiz "src\gerenciador\Financas.Gerenciador\Financas.Gerenciador.csproj"
 $Nome = "Finan" + [char]0x00E7 + "as Local"

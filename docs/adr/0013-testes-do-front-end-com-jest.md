@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-16
-- **Relacionadas:** [0004](0004-front-end-publicado-no-wwwroot-da-api.md) (front-end Angular)
+- **Relacionadas:** [0004](0004-front-end-publicado-no-wwwroot-da-api.md) (front-end Angular); [0041](0041-testes-no-navegador-com-playwright.md) (testes no navegador, que completam estes com o que o jsdom não desenha)
 
 ## Contexto
 

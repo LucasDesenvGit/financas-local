@@ -62,6 +62,10 @@ export class ApiService {
   conferenciaBanco(): Observable<ConferenciaBanco> {
     return this.http.get<ConferenciaBanco>(`${this.base}/conferencia-banco`);
   }
+  /** #171: true = reduzi o limite no app; false = não (a diferença é compromisso); null = desfazer a resposta. */
+  responderLimiteAjustado(id: number, ajustado: boolean | null): Observable<void> {
+    return this.http.put<void>(`${this.base}/contas/${id}/limite-ajustado`, { ajustado });
+  }
   faturas(contaId: number): Observable<Fatura[]> { return this.http.get<Fatura[]>(`${this.base}/contas/${contaId}/faturas`); }
   /** ADR 0024: bancos que dá para escolher na conta. */
   bancos(): Observable<Banco[]> { return this.http.get<Banco[]>(`${this.base}/contas/bancos`); }
