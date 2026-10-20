@@ -8,8 +8,8 @@ import { Icones } from '../compartilhado/icones';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import {
-  CHAVE_AVISOS_OCULTOS, CHAVE_ORCAMENTOS_OCULTOS, ORCAMENTOS_VISIVEIS, avisosContinuamOcultos, chavePeriodo, guardar,
-  impressaoAviso, lerAvisosOcultos, lerOrcamentosOcultos, mostrarOrcamentos, ocultarOrcamentos, orcamentosContinuamOcultos
+  CHAVE_AVISOS_MINIMIZADOS, CHAVE_AVISOS_OCULTOS, CHAVE_ORCAMENTOS_MINIMIZADOS, CHAVE_ORCAMENTOS_OCULTOS, ORCAMENTOS_VISIVEIS, avisosContinuamOcultos, chavePeriodo, guardar,
+  impressaoAviso, lerAvisosOcultos, lerMinimizado, lerOrcamentosOcultos, mostrarOrcamentos, ocultarOrcamentos, orcamentosContinuamOcultos
 } from './painel-avisos';
 
 /**
@@ -130,9 +130,9 @@ export class PainelAvisosComponent {
   readonly periodo = input.required<{ ano: number; mes: number }>();
 
   readonly todos = signal(false);
-  /** "Minimizar": recolhe só enquanto o Painel está aberto; ao voltar a ele, o card vem aberto de novo. */
-  private readonly orcamentosMinimizados = signal(false);
-  private readonly avisosMinimizados = signal(false);
+  /** "Minimizar": lembrado neste navegador, sem prazo; só o "Mostrar" abre de novo (a linha com o título fica). */
+  private readonly orcamentosMinimizados = signal(lerMinimizado(CHAVE_ORCAMENTOS_MINIMIZADOS));
+  private readonly avisosMinimizados = signal(lerMinimizado(CHAVE_AVISOS_MINIMIZADOS));
   private readonly orcamentosOcultos = signal(lerOrcamentosOcultos());
   private readonly avisosOcultos = signal(lerAvisosOcultos());
 
@@ -160,12 +160,12 @@ export class PainelAvisosComponent {
 
   /** As duas opções do menu "Ocultar": só agora, ou lembrado até algo mudar. */
   readonly acoesOrcamentos = computed<AcaoMenu[]>(() => [
-    { id: 'minimizar', rotulo: 'Minimizar', detalhe: 'Volta aberto na próxima vez que abrir o Painel.' },
+    { id: 'minimizar', rotulo: 'Minimizar', detalhe: 'Fica recolhido até você clicar em “Mostrar”.' },
     { id: 'ocultar', rotulo: `Ocultar ${this.ateQuando()}`,
       detalhe: 'Volta antes se outra categoria estourar ou uma piorar de faixa.' }
   ]);
   readonly acoesAvisos: AcaoMenu[] = [
-    { id: 'minimizar', rotulo: 'Minimizar', detalhe: 'Volta aberto na próxima vez que abrir o Painel.' },
+    { id: 'minimizar', rotulo: 'Minimizar', detalhe: 'Fica recolhido até você clicar em “Mostrar”.' },
     { id: 'ocultar', rotulo: 'Ocultar até aparecer um novo', detalhe: 'Fica a linha com a quantidade.' }
   ];
 
@@ -175,8 +175,10 @@ export class PainelAvisosComponent {
   }
 
   ocultarCardOrcamentos(acao: string): void {
-    if (acao === 'minimizar') this.orcamentosMinimizados.set(true);
-    else {
+    if (acao === 'minimizar') {
+      this.orcamentosMinimizados.set(true);
+      guardar(CHAVE_ORCAMENTOS_MINIMIZADOS, true);
+    } else {
       this.orcamentosOcultos.update((salvo) => ocultarOrcamentos(salvo, chavePeriodo(this.periodo()), this.estourados()));
       guardar(CHAVE_ORCAMENTOS_OCULTOS, this.orcamentosOcultos());
     }
@@ -185,13 +187,16 @@ export class PainelAvisosComponent {
 
   mostrarCardOrcamentos(): void {
     this.orcamentosMinimizados.set(false);
+    guardar(CHAVE_ORCAMENTOS_MINIMIZADOS, false);
     this.orcamentosOcultos.update((salvo) => mostrarOrcamentos(salvo, chavePeriodo(this.periodo())));
     guardar(CHAVE_ORCAMENTOS_OCULTOS, this.orcamentosOcultos());
   }
 
   ocultarCardAvisos(acao: string): void {
-    if (acao === 'minimizar') this.avisosMinimizados.set(true);
-    else {
+    if (acao === 'minimizar') {
+      this.avisosMinimizados.set(true);
+      guardar(CHAVE_AVISOS_MINIMIZADOS, true);
+    } else {
       this.avisosOcultos.set(this.alertas().map(impressaoAviso));
       guardar(CHAVE_AVISOS_OCULTOS, this.avisosOcultos());
     }
@@ -200,6 +205,7 @@ export class PainelAvisosComponent {
 
   mostrarCardAvisos(): void {
     this.avisosMinimizados.set(false);
+    guardar(CHAVE_AVISOS_MINIMIZADOS, false);
     this.avisosOcultos.set([]);
     guardar(CHAVE_AVISOS_OCULTOS, this.avisosOcultos());
   }

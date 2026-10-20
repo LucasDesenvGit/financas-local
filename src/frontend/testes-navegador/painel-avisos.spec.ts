@@ -75,3 +75,23 @@ test('Painel: o menu "Ocultar" aparece inteiro, sem ser cortado pelo card, tamb�
   await page.getByRole('heading', { level: 1 }).click();
   await expect(page.getByRole('menu')).toHaveCount(0);
 });
+
+test('Painel: "Minimizar" continua valendo ao recarregar e ao voltar ao Painel, até "Mostrar"', async ({ page }) => {
+  await page.goto('/painel');
+  const card = page.getByRole('region', { name: /orçamentos estourados/ });
+  await card.getByRole('button', { name: 'Ocultar os avisos de orçamento' }).click();
+  await page.getByRole('menuitem', { name: /^Minimizar/ }).click();
+  await expect(card.getByRole('listitem')).toHaveCount(0);
+
+  await page.reload();
+  await expect(card.getByRole('button', { name: 'Mostrar os orçamentos estourados' })).toBeVisible();
+  await expect(card.getByRole('listitem')).toHaveCount(0);
+  await page.goto('/metas');
+  await page.goto('/painel');
+  await expect(card.getByRole('listitem')).toHaveCount(0);
+
+  await card.getByRole('button', { name: 'Mostrar os orçamentos estourados' }).click();
+  await expect(card.getByRole('listitem')).toHaveCount(3);
+  await page.reload();
+  await expect(card.getByRole('listitem')).toHaveCount(3);
+});

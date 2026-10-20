@@ -9,6 +9,9 @@ import { Orcamento } from '../core/modelos';
 export const ORCAMENTOS_VISIVEIS = 3;
 export const CHAVE_ORCAMENTOS_OCULTOS = 'financas.painel.orcamentosOcultos';
 export const CHAVE_AVISOS_OCULTOS = 'financas.painel.avisosOcultos';
+/** "Minimizar": recolhido até a pessoa clicar em "Mostrar", sem voltar sozinho (um por card). */
+export const CHAVE_ORCAMENTOS_MINIMIZADOS = 'financas.painel.orcamentosMinimizados';
+export const CHAVE_AVISOS_MINIMIZADOS = 'financas.painel.avisosMinimizados';
 /** Meses lembrados (o Painel abre outros meses pelo seletor; o resto é descartado). */
 const PERIODOS_LEMBRADOS = 6;
 
@@ -83,6 +86,10 @@ export function lerOrcamentosOcultos(): OrcamentosOcultos {
 export function lerAvisosOcultos(): string[] {
   const valor = lerJson(CHAVE_AVISOS_OCULTOS);
   return Array.isArray(valor) ? valor.filter((v): v is string => typeof v === 'string') : [];
+}
+
+export function lerMinimizado(chave: string): boolean {
+  return lerJson(chave) === true;
 }
 
 export function guardar(chave: string, valor: unknown): void {

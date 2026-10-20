@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Orcamento } from '../../src/app/core/modelos';
 import {
-  CHAVE_AVISOS_OCULTOS, CHAVE_ORCAMENTOS_OCULTOS, avisosContinuamOcultos, impressaoAviso, lerOrcamentosOcultos, nivelOrcamento,
+  CHAVE_AVISOS_MINIMIZADOS, CHAVE_AVISOS_OCULTOS, CHAVE_ORCAMENTOS_MINIMIZADOS, CHAVE_ORCAMENTOS_OCULTOS, avisosContinuamOcultos, impressaoAviso, lerOrcamentosOcultos, nivelOrcamento,
   ocultarOrcamentos, orcamentosContinuamOcultos
 } from '../../src/app/paginas/painel-avisos';
 import { abrirPainel, painel } from '../apoio/painel';
@@ -160,16 +160,38 @@ describe('Painel: card dos orçamentos estourados (#206)', () => {
     expect(localStorage.getItem(CHAVE_ORCAMENTOS_OCULTOS)).toBe('{}');
   });
 
-  it('"Minimizar" recolhe só agora: nada fica guardado, e o card volta aberto ao abrir o Painel de novo', async () => {
+  it('"Minimizar" fica lembrado ao abrir o Painel de novo, mesmo com categoria nova estourada; só "Mostrar" abre', async () => {
     const primeira = await abrirPainel(painel({ orcamentosEstourados: estourados }), urlAtual);
     await escolher(primeira.raiz, '.aviso-orcamentos', 'Minimizar', primeira.atualizar);
     expect(primeira.raiz.querySelector('.lista-estourados')).toBeNull();
     expect(primeira.raiz.querySelector('#mostrar-orcamentos-estourados')).not.toBeNull();
+    expect(localStorage.getItem(CHAVE_ORCAMENTOS_MINIMIZADOS)).toBe('true');
+    // Não mexe no "ocultar até…": são escolhas separadas.
     expect(localStorage.getItem(CHAVE_ORCAMENTOS_OCULTOS)).toBeNull();
 
     primeira.harness.fixture.destroy();
     TestBed.resetTestingModule();
-    const segunda = await abrirPainel(painel({ orcamentosEstourados: estourados }), urlAtual);
+    // Ao contrário do "Ocultar até o mês que vem", uma categoria nova estourada não reabre o card minimizado.
+    const segunda = await abrirPainel(painel({ orcamentosEstourados: [...estourados, orc(9, 101)] }), urlAtual);
+    expect(segunda.raiz.querySelector('.lista-estourados')).toBeNull();
+    expect(segunda.raiz.querySelector('.aviso-orcamentos h2')!.textContent).toContain('5 orçamentos estourados');
+
+    (segunda.raiz.querySelector('#mostrar-orcamentos-estourados') as HTMLButtonElement).click();
+    await segunda.atualizar();
+    expect(segunda.raiz.querySelectorAll('.lista-estourados li')).toHaveLength(3);
+    expect(localStorage.getItem(CHAVE_ORCAMENTOS_MINIMIZADOS)).toBe('false');
+  });
+
+  it('"Minimizar" os outros avisos também fica lembrado, e o card dos orçamentos não é afetado', async () => {
+    const dados = painel({ orcamentosEstourados: estourados, alertas: ['Conta "Aluguel" vencida desde 05/10.'] });
+    const primeira = await abrirPainel(dados, urlAtual);
+    await escolher(primeira.raiz, '.aviso-geral', 'Minimizar', primeira.atualizar);
+    expect(localStorage.getItem(CHAVE_AVISOS_MINIMIZADOS)).toBe('true');
+
+    primeira.harness.fixture.destroy();
+    TestBed.resetTestingModule();
+    const segunda = await abrirPainel(dados, urlAtual);
+    expect(segunda.raiz.querySelectorAll('.aviso-geral li')).toHaveLength(0);
     expect(segunda.raiz.querySelectorAll('.lista-estourados li')).toHaveLength(3);
   });
 
