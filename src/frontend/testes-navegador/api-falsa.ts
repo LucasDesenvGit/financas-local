@@ -132,6 +132,11 @@ const respostas: Record<string, unknown> = {
       ultimoPagamentoEm: null, diasParaVencer: 22, dataLimite: null, pagamentosRestantes: null, encerrada: false,
       formaCobranca: 3, textoCobranca: 'STREAMING', observacao: 'conta da família' }
   ],
+  // #158: um aviso de aumento, com a ação "Atualizar o valor".
+  '/api/contas-agendadas/avisos': [
+    { contaAgendadaId: 3, descricao: 'Streaming', tipo: 'aumentou', texto: 'Streaming aumentou na última cobrança.',
+      valorAnterior: 44.9, valorNovo: 49.9, contaNovaId: null, contaNovaNome: null, data: null }
+  ],
   '/api/contas-agendadas/sugestoes': [
     { chave: 'musica#2', descricao: 'MUSICA APP', valor: 21.9, valorVariavel: false, valorMinimo: 21.9, valorMaximo: 21.9,
       proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,

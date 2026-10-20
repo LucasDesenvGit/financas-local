@@ -60,6 +60,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Avisos das recorrentes** (#158, parte 3), no topo de Contas a pagar:
+  - **"não veio":** a cobrança automática passou 5 dias do vencimento.
+  - **"mudou de cartão":** com "Atualizar o catálogo".
+  - **"aumentou" ou "baixou":** mais de 5%, menos para quem varia todo mês; com "Atualizar o valor".
+  - **"cartão arquivado":** com cobranças ainda nele.
+  - **No Painel:** só "não veio" e "cartão arquivado".
+  - **Ao arquivar** um cartão ou conta, a edição lista o que ainda cobra ali.
 - **Assinaturas e recorrentes** (#158, parte 2): aba nova em Contas a pagar com o **de-para** de cada cobrança que se repete.
   - **Topo:** o total por mês e por ano.
   - **Um bloco por cartão ou conta:** cada cobrança, como é cobrada, o dia, a última cobrança e o valor.

@@ -40,6 +40,7 @@ export function abrirContasAPagar(sugestoes: SugestaoContaAgendada[] | 'erro', i
         provide: ApiService,
         useValue: {
           contasAgendadas: () => of(itens),
+          avisosContasAgendadas: () => of([]),
           criarContaAgendada: (dto: SalvarContaAgendada) => { salvos.push(dto); return of(undefined); },
           atualizarContaAgendada: (_id: number, dto: SalvarContaAgendada) => { salvos.push(dto); return of(undefined); },
           contas: () => of([]),

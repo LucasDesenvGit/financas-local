@@ -276,6 +276,13 @@ export interface SalvarContaAgendada {
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
+/** #158: aviso de uma recorrente; `valorNovo` e `contaNova*` vão com a ação "Atualizar". */
+export interface AvisoContaAgendada {
+  contaAgendadaId: number; descricao: string; tipo: 'nao-veio' | 'mudou-de-cartao' | 'aumentou' | 'cartao-arquivado';
+  texto: string; valorAnterior: number | null; valorNovo: number | null; contaNovaId: number | null;
+  contaNovaNome: string | null; data: string | null;
+}
+
 export interface SugestaoContaAgendada {
   chave: string; descricao: string; valor: number; valorVariavel: boolean; valorMinimo: number; valorMaximo: number;
   proximoVencimento: string; diaHabitual: number; meses: number; pagamentos: number;

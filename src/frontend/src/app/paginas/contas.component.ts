@@ -361,6 +361,13 @@ const FATURAS_VISIVEIS = 6;
           <p class="texto-suave pequeno-texto" id="ajuda-incluir">Fora do saldo, a conta sai do saldo total e do patrimônio, mas as
             transações dela continuam nas receitas e despesas. Para tirá-las dos relatórios, use “Ignorar nos relatórios” nelas.</p>
           <label class="checkbox"><input type="checkbox" name="arquivada" [(ngModel)]="fm.arquivada"> Arquivada</label>
+          <!-- #158: arquivar o cartão não cancela as assinaturas (Nielsen 5: o aviso vem antes de salvar). -->
+          @if (fm.arquivada && contaEditada && !contaEditada.arquivada) {
+            @if (recorrentesDa(contaEditada); as r) {
+              <p class="texto-alerta pequeno-texto" role="status">Ainda cobram aqui: {{ r.nomes }}. Troque
+                {{ contaEditada.tipo === TipoConta.CartaoCredito ? 'o cartão' : 'a conta' }} nos serviços antes de deixar de usar.</p>
+            }
+          }
           <div class="rodape-form">
             @if (editandoId && !editandoOpenFinance) {
               <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button>
@@ -450,9 +457,9 @@ export class ContasComponent implements OnInit {
   readonly recorrentes = signal<ContaAgendada[]>([]);
   private readonly resumoRecorrentes = computed(() => resumoPorConta(this.recorrentes()));
 
-  recorrentesDa(c: Conta): { rotulo: string; porMes: number } | null {
+  recorrentesDa(c: Conta): { rotulo: string; porMes: number; nomes: string } | null {
     const r = this.resumoRecorrentes().get(c.id);
-    return r ? { rotulo: rotuloQuantidade(r.itens), porMes: r.porMes } : null;
+    return r ? { rotulo: rotuloQuantidade(r.itens), porMes: r.porMes, nomes: r.itens.map((i) => i.descricao).join(', ') } : null;
   }
 
   ngOnInit(): void {

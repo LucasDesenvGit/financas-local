@@ -7,7 +7,7 @@ import {
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
-  ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
+  AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
@@ -175,6 +175,10 @@ export class ApiService {
 
   // Contas a pagar
   contasAgendadas(): Observable<ContaAgendada[]> { return this.http.get<ContaAgendada[]>(`${this.base}/contas-agendadas`); }
+  /** #158: avisos das recorrentes (não veio, mudou de cartão, aumentou, cartão arquivado). */
+  avisosContasAgendadas(): Observable<AvisoContaAgendada[]> {
+    return this.http.get<AvisoContaAgendada[]>(`${this.base}/contas-agendadas/avisos`);
+  }
   sugestoesContasAgendadas(): Observable<SugestaoContaAgendada[]> {
     return this.http.get<SugestaoContaAgendada[]>(`${this.base}/contas-agendadas/sugestoes`);
   }

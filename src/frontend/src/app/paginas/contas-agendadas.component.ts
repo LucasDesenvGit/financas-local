@@ -9,7 +9,7 @@ import { AssinaturasRecorrentesComponent } from './assinaturas-recorrentes.compo
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  Categoria, Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, NOMES_RECORRENCIA, OrigemConta, Recorrencia,
+  AvisoContaAgendada, Categoria, Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, NOMES_RECORRENCIA, OrigemConta, Recorrencia,
   SalvarContaAgendada, SugestaoContaAgendada, TipoCategoria
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
@@ -28,6 +28,29 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       <h1>Contas a pagar</h1>
       <button type="button" class="botao botao-primario" (click)="nova()">+ Nova conta</button>
     </header>
+
+    <!-- #158: avisos das recorrentes, com a ação ao lado (Nielsen 1 e 9); "não veio" e "cartão arquivado" também no Painel. -->
+    @if (avisosRecorrentes().length) {
+      <section class="painel-bloco avisos-recorrentes" aria-labelledby="titulo-avisos">
+        <div class="bloco-titulo"><h2 id="titulo-avisos">Avisos das recorrentes</h2></div>
+        <ul class="lista-avisos">
+          @for (a of avisosRecorrentes(); track a.contaAgendadaId + a.tipo) {
+            <li>
+              <span aria-hidden="true">⚠</span> {{ a.texto }}
+              @if (a.tipo === 'aumentou' && a.valorNovo !== null) {
+                <span class="nowrap">({{ a.valorAnterior | currency }} → {{ a.valorNovo | currency }})</span>
+                <button type="button" class="botao botao-pequeno" (click)="atualizarPeloAviso(a)"
+                  [attr.aria-label]="'Atualizar o valor de ' + a.descricao">Atualizar o valor</button>
+              }
+              @if (a.tipo === 'mudou-de-cartao' && a.contaNovaId !== null) {
+                <button type="button" class="botao botao-pequeno" (click)="atualizarPeloAviso(a)"
+                  [attr.aria-label]="'Atualizar o catálogo de ' + a.descricao + ': cobra em ' + a.contaNovaNome">Atualizar o catálogo</button>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
 
     <!-- #158: o de-para das cobranças que se repetem, como aba da mesma tela (Nielsen 4); a aba fica na URL (ADR 0018). -->
     <div class="segmentado barra-abas" role="tablist" aria-label="Contas a pagar">
@@ -287,6 +310,8 @@ export class ContasAgendadasComponent implements OnInit {
   readonly contas = signal<Conta[]>([]);
   readonly categorias = signal<Categoria[]>([]);
   readonly sugestoes = signal<SugestaoContaAgendada[]>([]);
+  /** #158: avisos das recorrentes. */
+  readonly avisosRecorrentes = signal<AvisoContaAgendada[]>([]);
   readonly ignoradas = signal<string[]>(ContasAgendadasComponent.lerIgnoradas());
   readonly sugestoesVisiveis = computed(() => this.sugestoes().filter((s) => !this.ignoradas().includes(s.chave)));
   readonly ignoradasNaLista = computed(() => this.sugestoes().filter((s) => this.ignoradas().includes(s.chave)));
@@ -332,7 +357,8 @@ export class ContasAgendadasComponent implements OnInit {
       next: (i) => this.itens.set(i),
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
-    // Sugestão é complementar: se falhar, a tela segue sem ela.
+    // Sugestão e aviso são complementares: se falharem, a tela segue sem eles.
+    this.api.avisosContasAgendadas().subscribe({ next: (a) => this.avisosRecorrentes.set(a), error: () => this.avisosRecorrentes.set([]) });
     this.api.sugestoesContasAgendadas().subscribe({ next: (s) => this.sugestoes.set(s), error: () => this.sugestoes.set([]) });
   }
 
@@ -344,6 +370,26 @@ export class ContasAgendadasComponent implements OnInit {
       categoriaId: s.categoriaId, contaId: s.contaId, ativa: true, dataLimite: null,
       formaCobranca: s.formaCobranca ?? FormaCobranca.AMao, textoCobranca: s.textoCobranca ?? null, observacao: null
     };
+  }
+
+  /** #158: "Atualizar o valor" ou "Atualizar o catálogo": a conta a pagar fica como a última cobrança. */
+  atualizarPeloAviso(a: AvisoContaAgendada): void {
+    const c = this.itens().find((x) => x.id === a.contaAgendadaId);
+    if (!c) return;
+    const dto: SalvarContaAgendada = {
+      descricao: c.descricao, valor: a.tipo === 'aumentou' && a.valorNovo !== null ? a.valorNovo : c.valor,
+      proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia, categoriaId: c.categoriaId,
+      contaId: a.tipo === 'mudou-de-cartao' && a.contaNovaId !== null ? a.contaNovaId : c.contaId,
+      ativa: c.ativa, dataLimite: c.dataLimite, formaCobranca: c.formaCobranca, textoCobranca: c.textoCobranca,
+      observacao: c.observacao
+    };
+    this.api.atualizarContaAgendada(c.id, dto).subscribe({
+      next: () => {
+        this.avisos.sucesso(a.tipo === 'aumentou' ? 'Valor atualizado.' : `Agora cobra em ${a.contaNovaNome}.`);
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   linkPagamentos(s: SugestaoContaAgendada): Record<string, string> {

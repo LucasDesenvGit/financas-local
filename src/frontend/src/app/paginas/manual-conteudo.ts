@@ -775,6 +775,20 @@ export const MANUAL: CapituloManual[] = [
         dicas: ['Trocou de cartão? Filtre pelo cartão antigo para ver o que ainda cobra nele e precisa ser trocado nos serviços.']
       },
       {
+        id: 'avisos-recorrentes',
+        titulo: 'Avisos das recorrentes',
+        paraQueServe: 'Saber quando uma cobrança que se repete não veio, mudou de cartão, mudou de valor, ou cai num cartão que você arquivou.',
+        passos: [
+          'Os avisos aparecem no topo de Contas a pagar, com a ação ao lado quando dá para resolver no site.',
+          '“Não veio”: a cobrança automática passou 5 dias do vencimento e não apareceu no extrato. Pode ter sido cancelada, ou o cartão recusou. Também aparece no Painel.',
+          '“Mudou de cartão”: a última cobrança veio em outra conta ou cartão. “Atualizar o catálogo” passa a conta a pagar para lá.',
+          '“Aumentou” (ou baixou): a última cobrança passou 5% do valor cadastrado. “Atualizar o valor” grava o novo. Conta que muda de valor todo mês, como a de luz, não gera esse aviso.',
+          '“Cartão arquivado”: a cobrança ainda cai num cartão ou conta que você arquivou. Troque nos serviços. Também aparece no Painel.',
+          'Ao marcar “Arquivada” num cartão ou conta em Contas e cartões, a tela lista o que ainda cobra ali, antes de salvar.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
+      },
+      {
         id: 'pagar',
         titulo: 'Registrar o pagamento',
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',
