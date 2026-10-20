@@ -142,6 +142,8 @@ Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para 
 - **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
 - **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
 
+**Pedido grande demais para uma vez só** (vários PRs, muitas horas): antes de começar, ofereça a skill `trabalho-longo` (`.claude/skills/`). Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento.
+
 ## Segurança (específico deste projeto — não genérico)
 
 Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo Kestrel — sem IIS/proxy). Pontos que afetam como escrever código aqui:
