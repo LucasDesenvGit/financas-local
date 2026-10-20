@@ -68,7 +68,7 @@ export const GLOSSARIO = {
   },
   limiteUsado: {
     termo: 'Limite usado',
-    definicao: 'O banco informa o limite aprovado e o disponível; a diferença é o limite usado. Em geral é a dívida do cartão, mas pode ser bem maior: quando você reduz o limite no app (por segurança) ou quando há compras em processamento e parcelas que ainda não entraram na dívida.',
+    definicao: 'O banco informa o limite aprovado e o disponível; a diferença é o limite usado. Em geral é a dívida do cartão, mas fica maior quando você reduz o limite no app ou há compras em processamento.',
     exemplo: 'Aprovado R$ 10.000, disponível R$ 500 e dívida R$ 500: os outros R$ 9.000 são o limite que você tirou no app, ou compromissos.'
   },
   faturaDoMes: {
