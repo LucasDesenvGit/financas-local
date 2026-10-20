@@ -290,10 +290,12 @@ public class ContasAgendadasController : BaseController
     private readonly RelatorioService _relatorios;
     private readonly CategorizacaoService _categorizacao;
     private readonly SugestaoContaAgendadaService _sugestoes;
+    private readonly ContaAgendadaService _cobrancas;
 
     public ContasAgendadasController(FinancasDbContext db, RelatorioService relatorios, CategorizacaoService categorizacao,
-        SugestaoContaAgendadaService sugestoes)
+        SugestaoContaAgendadaService sugestoes, ContaAgendadaService cobrancas)
     {
+        _cobrancas = cobrancas;
         _db = db;
         _relatorios = relatorios;
         _categorizacao = categorizacao;
@@ -303,6 +305,11 @@ public class ContasAgendadasController : BaseController
     [HttpGet]
     public async Task<ActionResult<List<ContaAgendadaDto>>> Listar(CancellationToken ct)
         => await _relatorios.ContasAgendadasAsync(null, ct);
+
+    /// <summary>#158: avisos das recorrentes (não veio, mudou de cartão, aumentou, cartão arquivado). Só lê.</summary>
+    [HttpGet("avisos")]
+    public async Task<ActionResult<List<AvisoContaAgendadaDto>>> Avisos(CancellationToken ct)
+        => await _cobrancas.AvisosAsync(ct);
 
     /// <summary>Pagamentos mensais do extrato que ainda não estão cadastrados (só sugestão; nada é gravado).</summary>
     [HttpGet("sugestoes")]
@@ -318,6 +325,7 @@ public class ContasAgendadasController : BaseController
         Aplicar(c, dto);
         _db.ContasAgendadas.Add(c);
         await _db.SaveChangesAsync(ct);
+        if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -330,6 +338,7 @@ public class ContasAgendadasController : BaseController
         if (problema is not null) return Erro(problema);
         Aplicar(c, dto);
         await _db.SaveChangesAsync(ct);
+        if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -404,5 +413,9 @@ public class ContasAgendadasController : BaseController
         c.ContaId = dto.ContaId;
         c.Ativa = dto.Ativa;
         c.DataLimite = dto.Recorrencia == Recorrencia.Unica ? null : dto.DataLimite;
+        // #158: o texto da cobrança fica sem acento e em maiúsculas, como a comparação com o extrato.
+        c.FormaCobranca = Enum.IsDefined(dto.FormaCobranca) ? dto.FormaCobranca : FormaCobranca.AMao;
+        c.TextoCobranca = CategorizacaoService.Normalizar(dto.TextoCobranca) is { Length: > 0 } texto ? texto : null;
+        c.Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim();
     }
 }

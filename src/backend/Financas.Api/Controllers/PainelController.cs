@@ -22,14 +22,17 @@ public class PainelController : BaseController
     private readonly ParametroService _parametros;
     private readonly DescricaoPoucoInformativaService _poucoInformativa;
     private readonly ConferenciaInvestimentosService _conferencia;
+    private readonly ContaAgendadaService _cobrancas;
 
     /// <summary>#9: o aviso de descrições pouco informativas olha só as transações recentes.</summary>
     public const int DiasPoucoInformativas = 90;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
         CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros,
-        DescricaoPoucoInformativaService poucoInformativa, ConferenciaInvestimentosService conferencia)
+        DescricaoPoucoInformativaService poucoInformativa, ConferenciaInvestimentosService conferencia,
+        ContaAgendadaService cobrancas)
     {
+        _cobrancas = cobrancas;
         _poucoInformativa = poucoInformativa;
         _conferencia = conferencia;
         _db = db;
@@ -102,6 +105,19 @@ public class PainelController : BaseController
             alertas.Add($"Investimentos em {string.Join(", ", composicao.MoedasSemCotacao)} ficaram fora do patrimônio: "
                 + "não há cotação de câmbio guardada para essa moeda.");
 
+        // #172 (ADR 0008): contas são somadas como reais; conta em outra moeda entraria sem conversão.
+        var contasEmOutraMoeda = await _db.Contas.AsNoTracking()
+            .Where(c => !c.Arquivada && c.Moeda != CambioService.MoedaBase)
+            .Select(c => new { c.Nome, c.Moeda, c.IncluirNoSaldo }).ToListAsync(ct);
+        foreach (var c in contasEmOutraMoeda)
+            alertas.Add($"A conta {c.Nome} é em {c.Moeda}, mas o site trata as contas como reais, sem conversão"
+                + (c.IncluirNoSaldo ? ": o saldo dela entra no total como se fosse em reais. Desmarque \"Incluir no saldo\" em Contas e cartões." : ".")
+                + " As transações dela entram nos relatórios do mesmo jeito.");
+
+        // #158 (decisão do usuário): no Painel, só "não veio" e "cartão arquivado com cobranças"; os outros, na tela.
+        foreach (var aviso in (await _cobrancas.AvisosAsync(ct)).Where(a => a.Tipo is "nao-veio" or "cartao-arquivado"))
+            alertas.Add(aviso.Texto + " Veja em Contas a pagar.");
+
         var reservasAConferir = (await _reservas.ListarAsync(ct))
             .Where(r => r.PodeTerSaldoAnterior || r.ConferenciaAntiga).Select(r => r.Nome).ToList();
         if (reservasAConferir.Count > 0)
@@ -164,6 +180,8 @@ public class PainelController : BaseController
 
         // #170: trocos e vendas da corretora contando como receita (a correção é com prévia, em Conferir investimentos).
         var creditosCorretora = await _conferencia.CreditosComoReceitaAsync(ct);
+        // #173 b): os trocos que a sincronização classificou sozinha.
+        var trocosAutomaticos = await _conferencia.ResumoTrocosAutomaticosAsync(ct);
 
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
@@ -171,7 +189,7 @@ public class PainelController : BaseController
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
             faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
             poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo,
-            creditosCorretora.Quantidade, creditosCorretora.Total);
+            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos);
     }
 }
 
@@ -256,12 +274,19 @@ public class InvestimentosController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly CambioService _cambio;
+    private readonly HistoricoInvestimentosService _historico;
 
-    public InvestimentosController(FinancasDbContext db, CambioService cambio)
+    public InvestimentosController(FinancasDbContext db, CambioService cambio, HistoricoInvestimentosService historico)
     {
         _db = db;
         _cambio = cambio;
+        _historico = historico;
     }
+
+    /// <summary>#173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance, pelo histórico de saldo.</summary>
+    [HttpGet("historico")]
+    public async Task<ActionResult<HistoricoInvestimentosDto>> Historico(CancellationToken ct)
+        => await _historico.MesAMesAsync(ct);
 
     [HttpGet]
     public async Task<ActionResult<List<InvestimentoDto>>> Listar(CancellationToken ct)

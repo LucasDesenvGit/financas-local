@@ -5,7 +5,7 @@ import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Banco, Conta, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../core/modelos';
+import { Banco, Conta, ContaAgendada, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { visualBanco } from '../compartilhado/bancos';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
@@ -15,6 +15,7 @@ import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 import { EstadoLimite, diferencaDoLimite, estadoDoLimite, limiteUsado } from './limite-cartao';
+import { resumoPorConta, rotuloQuantidade } from './recorrentes';
 
 /** Quantas faturas o histórico mostra antes de "mostrar mais antigas". */
 const FATURAS_VISIVEIS = 6;
@@ -34,6 +35,8 @@ const FATURAS_VISIVEIS = 6;
         <!-- #130: efeito imediato → interruptor; o estado fica na URL (?arquivadas=1). -->
         <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="mostrarArquivadas"
           (change)="alternarArquivadas()"> Mostrar arquivadas</label>
+        <!-- #172: comparar com os apps dos bancos (Nielsen 1). -->
+        <a class="botao" routerLink="/conferir-banco">Conferir com o banco</a>
         <button type="button" class="botao botao-primario" (click)="nova()">+ Conta manual</button>
       </div>
     </header>
@@ -98,6 +101,11 @@ const FATURAS_VISIVEIS = 6;
             <small class="texto-suave">{{ c.incluirNoSaldo ? 'saldo atual' : 'saldo atual · fora do total' }}</small>
             @if (cartoesDa(c).length) {
               <small class="texto-suave cartoes-da-conta">Cartões: {{ nomesCartoes(c) }}</small>
+            }
+            <!-- #158: o que cobra aqui todo mês, em uma linha; a lista inteira fica na aba própria (Progressive Disclosure). -->
+            @if (recorrentesDa(c); as r) {
+              <a class="link linha-recorrentes" routerLink="/contas-a-pagar" [queryParams]="{ aba: 'recorrentes', conta: c.id }">
+                {{ r.rotulo }} · {{ r.porMes | currency }}/mês</a>
             }
             <footer>
               <small class="texto-suave">{{ c.numero ?? '' }}</small>
@@ -202,6 +210,10 @@ const FATURAS_VISIVEIS = 6;
                 }
                 @if (contaDoCartao(c); as conta) {
                   <small class="texto-suave">da conta {{ conta.nome }}</small>
+                }
+                @if (recorrentesDa(c); as r) {
+                  <a class="link linha-recorrentes" routerLink="/contas-a-pagar" [queryParams]="{ aba: 'recorrentes', conta: c.id }">
+                    {{ r.rotulo }} · {{ r.porMes | currency }}/mês</a>
                 }
                 <footer>
                   @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
@@ -343,8 +355,19 @@ const FATURAS_VISIVEIS = 6;
               }
             </div>
           </fieldset>
-          <label class="checkbox"><input type="checkbox" name="incluir" [(ngModel)]="fm.incluirNoSaldo"> Incluir no saldo total</label>
+          <label class="checkbox"><input type="checkbox" name="incluir" [(ngModel)]="fm.incluirNoSaldo" aria-describedby="ajuda-incluir">
+            Incluir no saldo total</label>
+          <!-- #172 (ADR 0042): o que muda (e o que não muda) ao tirar a conta do saldo. -->
+          <p class="texto-suave pequeno-texto" id="ajuda-incluir">Fora do saldo, a conta sai do saldo total e do patrimônio, mas as
+            transações dela continuam nas receitas e despesas. Para tirá-las dos relatórios, use “Ignorar nos relatórios” nelas.</p>
           <label class="checkbox"><input type="checkbox" name="arquivada" [(ngModel)]="fm.arquivada"> Arquivada</label>
+          <!-- #158: arquivar o cartão não cancela as assinaturas (Nielsen 5: o aviso vem antes de salvar). -->
+          @if (fm.arquivada && contaEditada && !contaEditada.arquivada) {
+            @if (recorrentesDa(contaEditada); as r) {
+              <p class="texto-alerta pequeno-texto" role="status">Ainda cobram aqui: {{ r.nomes }}. Troque
+                {{ contaEditada.tipo === TipoConta.CartaoCredito ? 'o cartão' : 'a conta' }} nos serviços antes de deixar de usar.</p>
+            }
+          }
           <div class="rodape-form">
             @if (editandoId && !editandoOpenFinance) {
               <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button>
@@ -365,6 +388,7 @@ const FATURAS_VISIVEIS = 6;
     .sugestao-limite p { margin: 0 0 8px; }
     .acoes-limite { display: flex; gap: 8px; flex-wrap: wrap; }
     .cartoes-da-conta { display: block; margin-top: 4px; }
+    .linha-recorrentes { display: inline-block; margin-top: 4px; font-size: 0.88rem; min-height: 24px; }
     .cartao-credito-instituicao { display: inline-flex; align-items: center; gap: 8px; }
     .valor-fatura-mes small, .valor-divida small { font-size: 0.78rem; }
     .botao-historico {
@@ -429,8 +453,19 @@ export class ContasComponent implements OnInit {
   /** Banco que vale hoje para a conta em edição (para o "Detectar pelo nome (Nubank)"). */
   private bancoAtual: string | null = null;
 
+  /** #158: as contas a pagar que se repetem, para a linha "N assinaturas · R$ X/mês" de cada conta e cartão. */
+  readonly recorrentes = signal<ContaAgendada[]>([]);
+  private readonly resumoRecorrentes = computed(() => resumoPorConta(this.recorrentes()));
+
+  recorrentesDa(c: Conta): { rotulo: string; porMes: number; nomes: string } | null {
+    const r = this.resumoRecorrentes().get(c.id);
+    return r ? { rotulo: rotuloQuantidade(r.itens), porMes: r.porMes, nomes: r.itens.map((i) => i.descricao).join(', ') } : null;
+  }
+
   ngOnInit(): void {
     this.carregar();
+    // Complementar: sem a lista, a tela segue sem a linha-resumo.
+    this.api.contasAgendadas().subscribe({ next: (i) => this.recorrentes.set(i), error: () => this.recorrentes.set([]) });
     this.api.bancos().subscribe({ next: (b) => this.bancos.set(b), error: () => this.bancos.set([]) });
   }
 

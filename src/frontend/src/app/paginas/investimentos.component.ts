@@ -23,6 +23,7 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
+import { RendimentoInvestimentosOfComponent } from './rendimento-investimentos-of.component';
 import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from './reserva-conferencia';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
@@ -56,7 +57,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent, CampoValorComponent, CampoDataComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -336,6 +337,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             A comparação usa a data e o valor aplicado informados pela instituição. Em produtos com vários aportes (fundos,
             previdência) a instituição pode informar só o total, e o resultado fica aproximado. Valores brutos, antes do IR.
           </p>
+          <app-rendimento-investimentos-of />
         }
 
         @case ('reservas') {

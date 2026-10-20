@@ -12,7 +12,9 @@ describe('Usabilidade: Manual', () => {
     expect(t.raiz.querySelector('h1')!.textContent!.trim()).toBe('Manual');
     const capitulos = Array.from(t.raiz.querySelectorAll('.grade-capitulos h2 a'));
     expect(capitulos.map((a) => a.textContent!.trim())).toEqual(MANUAL.map((c, i) => `${i + 1}. ${c.titulo}`));
-    expect(capitulos[4].getAttribute('href')).toBe('/manual/categorizar');
+    // Pela posição do capítulo no MANUAL: capítulo novo no meio não quebra o teste.
+    const categorizar = MANUAL.findIndex((c) => c.id === 'categorizar');
+    expect(capitulos[categorizar].getAttribute('href')).toBe('/manual/categorizar');
   });
 
   it('busca com rótulo; acha a seção pelo texto, sem acento nem maiúscula fazendo diferença', async () => {
@@ -32,7 +34,8 @@ describe('Usabilidade: Manual', () => {
   it('o capítulo tem trilha, índice das seções e cada seção no formato do manual', async () => {
     const t = await abrirManual('/manual/categorizar');
     expect(t.raiz.querySelector('.trilha [aria-current="page"]')!.textContent).toBe('Categorizar suas transações');
-    expect(t.raiz.querySelector('h1')!.textContent!.trim()).toBe('5. Categorizar suas transações');
+    const numero = MANUAL.findIndex((c) => c.id === 'categorizar') + 1;
+    expect(t.raiz.querySelector('h1')!.textContent!.trim()).toBe(`${numero}. Categorizar suas transações`);
     const secao = t.raiz.querySelector<HTMLElement>('#modo-edicao')!;
     expect(secao.querySelector('h2')!.textContent).toBe('Várias de uma vez: “Editar categorias”');
     expect(secao.querySelector('.para-que')!.textContent!.length).toBeGreaterThan(20);

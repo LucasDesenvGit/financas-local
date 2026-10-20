@@ -24,6 +24,7 @@ public class FinancasDbContext : DbContext
     public DbSet<FaturaCartao> FaturasCartao => Set<FaturaCartao>();
     public DbSet<Transacao> Transacoes => Set<Transacao>();
     public DbSet<Investimento> Investimentos => Set<Investimento>();
+    public DbSet<HistoricoInvestimento> HistoricosInvestimento => Set<HistoricoInvestimento>();
     public DbSet<Emprestimo> Emprestimos => Set<Emprestimo>();
     public DbSet<PagamentoEmprestimo> PagamentosEmprestimo => Set<PagamentoEmprestimo>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
@@ -209,6 +210,19 @@ public class FinancasDbContext : DbContext
                 .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        mb.Entity<HistoricoInvestimento>(e =>
+        {
+            e.ToTable("HistoricoInvestimento");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.PluggyInvestmentId).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Tipo).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Saldo).HasPrecision(18, 2);
+            e.Property(x => x.ValorAplicado).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.PluggyInvestmentId, x.Data }).IsUnique()
+                .HasDatabaseName("UX_HistoricoInvestimento_Investimento_Data");
+        });
+
         mb.Entity<Emprestimo>(e =>
         {
             e.ToTable("Emprestimo");
@@ -344,6 +358,8 @@ public class FinancasDbContext : DbContext
             e.ToTable("ContaAgendada");
             e.HasKey(x => x.Id);
             e.Property(x => x.Descricao).HasMaxLength(150).IsRequired();
+            e.Property(x => x.TextoCobranca).HasMaxLength(100);
+            e.Property(x => x.Observacao).HasMaxLength(300);
             e.Property(x => x.Valor).HasPrecision(18, 2);
             e.HasOne(x => x.Categoria).WithMany()
                 .HasForeignKey(x => x.CategoriaId).OnDelete(DeleteBehavior.SetNull);

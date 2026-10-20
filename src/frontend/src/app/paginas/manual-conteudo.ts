@@ -107,6 +107,116 @@ export const MANUAL: CapituloManual[] = [
     ]
   },
   {
+    id: 'corrigir-seus-dados',
+    titulo: 'Corrigir seus dados',
+    resumo: 'Depois de atualizar o site: o que já se acertou sozinho e o passo a passo para deixar tudo igual aos apps dos bancos.',
+    secoes: [
+      {
+        id: 'o-que-ja-se-acertou',
+        titulo: 'O que já se acertou sozinho',
+        paraQueServe: 'Saber o que não precisa ser refeito à mão depois da atualização.',
+        passos: [
+          'Estorno no cartão (compra devolvida, cashback) deixou de contar como receita e passou a abater o gasto da categoria.',
+          'Pix e TED para outra pessoa contam como despesa ou receita; os que são entre contas suas ficam fora dos gastos.',
+          'Pagamento de fatura que o banco mandou como boleto ou “outros” saiu dos gastos quando o crédito do mesmo valor aparece no cartão.',
+          'Aplicação e resgate de RDB, CDB e poupança, e a compra e a venda de Méli Dólar, foram para “Investimentos” e não contam mais como gasto nem receita.',
+          'A projeção não conta mais as parcelas em dobro, e a fatura do mês do cartão segue o ciclo do banco.',
+          'O lançamento pendente que o banco efetivou com outro código sai na próxima sincronização.'
+        ],
+        abrir: [{ rotulo: 'Ver as transações', rota: '/transacoes' }],
+        dicas: ['O que você categorizou à mão não foi mexido: as correções só valem para o que veio automático.']
+      },
+      {
+        id: 'passo-1-sincronizar',
+        titulo: '1. Sincronize os bancos',
+        paraQueServe: 'Trazer os dados novos que as correções usam: o valor reservado que o banco informa e as pendências que já viraram compra.',
+        passos: [
+          'Abra Configurações › Open Finance e clique em “Sincronizar agora”.',
+          'Espere a barra de cima mostrar “Atualizado agora”.'
+        ],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
+      },
+      {
+        id: 'passo-2-reservas',
+        titulo: '2. Confira as reservas, as caixinhas e o Méli Dólar',
+        paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
+        passos: [
+          'Abra Investimentos, na aba Reservas.',
+          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada.',
+          'Reserva “estimada” ou “para conferir”: clique em “conferir saldo” e digite o valor que o app do banco mostra, do jeito que aparece lá (ex.: 10.123,42).',
+          'Méli Dólar: em “conferir saldo”, escolha se vai digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
+          'Confira depois o patrimônio no Painel: ele passa a somar essas reservas.'
+        ],
+        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        termos: ['ptax']
+      },
+      {
+        id: 'passo-3-trocos',
+        titulo: '3. Tire os trocos das compras de FIIs dos rendimentos',
+        paraQueServe: 'Fazer os rendimentos dos FIIs baterem com o app da corretora.',
+        passos: [
+          'Se o Painel avisa “N créditos de troco ou venda de FIIs e ações contando como rendimento”, clique em “Conferir investimentos” no aviso (ou no botão de Investimentos).',
+          'Revise a lista “Troco ou venda contando como rendimento” e clique em “Corrigir selecionados”.',
+          'Nada muda sem você confirmar, e o aviso tem “Desfazer” por 10 minutos.'
+        ],
+        abrir: [{ rotulo: 'Abrir Conferir investimentos', rota: '/investimentos', params: { conferir: '1' } }],
+        termos: ['trocoDeCompra']
+      },
+      {
+        id: 'passo-4-limite',
+        titulo: '4. Responda a pergunta do limite do cartão',
+        paraQueServe: 'Não tratar como dívida o limite que você tirou do cartão no app.',
+        passos: [
+          'Abra Contas e cartões.',
+          'O cartão em que você reduziu o limite no app pergunta “Você reduziu o limite no app?”. Clique em “responder” e em “Sim, ajustei o limite”.',
+          'Se a diferença for compra em processamento ou parcela, responda “Não”.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        termos: ['limiteUsado']
+      },
+      {
+        id: 'passo-5-nome',
+        titulo: '5. Informe o seu nome como aparece nos Pix',
+        paraQueServe: 'Separar o Pix para outra conta sua do Pix para outra pessoa, quando o banco não informa.',
+        passos: [
+          'Abra Configurações › Open Finance.',
+          'Em “Seu nome como aparece nos Pix”, digite o primeiro e o último nome (ex.: como aparece no comprovante) e clique em “Salvar nome”.',
+          'As transferências são revistas na hora.'
+        ],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
+      },
+      {
+        id: 'passo-6-assinaturas',
+        titulo: '6. Cadastre as assinaturas e os débitos automáticos',
+        paraQueServe: 'Saber o que cobra em cada cartão e conta todo mês, e ser avisado quando algo muda.',
+        passos: [
+          'Abra Contas a pagar e veja as “Sugestões do extrato”: assinaturas nos cartões, débitos automáticos e contas que se repetem.',
+          'Clique em “Cadastrar” nas que são suas; a forma de cobrança e o texto já vêm preenchidos. “ignorar” tira a sugestão.',
+          'Na aba “Assinaturas e recorrentes”, confira onde cada uma cai e quanto vai por mês.'
+        ],
+        abrir: [
+          { rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' },
+          { rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }
+        ]
+      },
+      {
+        id: 'passo-7-conferir',
+        titulo: '7. Confira com os apps dos bancos',
+        paraQueServe: 'Ter certeza de que o site bate com cada banco, e saber por que quando não bate.',
+        passos: [
+          'Abra Contas e cartões e clique em “Conferir com o banco”.',
+          'Com o app de cada banco aberto, digite o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
+          '“bate”: está certo. Quando não bate, a pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”, com o link “ver” para corrigir.'
+        ],
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        dicas: [
+          'Fatura diferente do app? Veja se o app mostra a dívida total (com as parcelas futuras) ou compras que ainda estão pendentes: as duas aparecem como pista.',
+          'Faça isso logo depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia.'
+        ]
+      }
+    ]
+  },
+  {
     id: 'conectar-bancos',
     titulo: 'Conectar seus bancos (Open Finance)',
     resumo: 'Meu Pluggy, credenciais, conexões, sincronização automática e o que fazer quando dá erro.',
@@ -163,7 +273,9 @@ export const MANUAL: CapituloManual[] = [
           'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
           'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
-          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.'
+          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
+          'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
+          'Conta em outra moeda (ex.: em dólar) gera um aviso no Painel: o site soma as contas como reais, sem conversão.'
         ],
         abrir: [{ rotulo: 'Ajustar a sincronização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
@@ -243,6 +355,20 @@ export const MANUAL: CapituloManual[] = [
         termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
       },
       {
+        id: 'conferir-banco',
+        titulo: 'Conferir com o banco',
+        paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
+        passos: [
+          'Em Contas e cartões, clique em “Conferir com o banco”.',
+          'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
+          'O site compara na hora: “bate”, ou quanto o app (ou o site) mostra a mais.',
+          'Quando não bate, aparecem as pistas: quando o banco atualizou, reservas da conta, lançamentos pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
+          'Cada pista tem o link “ver” para a tela com o detalhe. Nada é gravado: os valores digitados ficam só na tela.'
+        ],
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        dicas: ['Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.']
+      },
+      {
         id: 'limite-reduzido',
         titulo: 'Limite reduzido no app do banco',
         paraQueServe: 'Não confundir o limite que você tirou do cartão no app com dívida.',
@@ -310,7 +436,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Abrir e ajustar uma transação',
         paraQueServe: 'Corrigir a categoria, dar um nome melhor ou marcar algo especial numa transação.',
         passos: [
-          'Clique na linha da transação.',
+          'Clique na linha da transação. Pelo teclado, chegue ao nome dela com Tab e aperte Enter.',
           'Mude a “Descrição” para um nome que você reconheça (a original do banco continua guardada e é ela que as regras usam).',
           'Escolha a “Categoria” — ou um dos atalhos em “Sugestões”. “Automática (regras)” volta para a categorização automática.',
           'Use “Observação” para lembrar de algo.',
@@ -469,9 +595,12 @@ export const MANUAL: CapituloManual[] = [
           'Entre no “Editar categorias”, use “Todas as N transações do filtro” e escolha a categoria “Pagamento de fatura” (ou “Transferências”).',
           'Essas categorias são do tipo transferência: as transações passam a ficar “fora dos gastos”.',
           'Na categoria “Transferências”, só fica fora o que é entre contas suas: o par aparece na outra conta (mesmo valor, até 5 dias), o banco informa o mesmo titular, a transferência foi lançada pelo site ou é dinheiro guardado numa reserva. Pix e TED para outra pessoa (ou recebidos de outra pessoa, como salário) contam como despesa ou receita.',
-          'Mandou dinheiro para uma conta sua que não está conectada? O site não vê o par: crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela. Outras categorias do tipo transferência ficam sempre fora.'
+          'Mandou dinheiro para uma conta sua que não está conectada? O site não vê o par: crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela. Outras categorias do tipo transferência ficam sempre fora.',
+          'Seu banco não informa se o Pix foi para você mesmo? Em Configurações › Open Finance, preencha “Seu nome como aparece nos Pix”: Pix e TED que citam o seu primeiro e último nome passam a contar como entre contas suas.',
+          'Pagamento de fatura que o banco mandou como boleto ou “outros” fica fora dos gastos sozinho quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem esse crédito, ele fica como está: “fatura” também pode ser conta de telefone ou de luz.'
         ],
-        abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } }],
+        abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } },
+          { rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
         termos: ['tipoLancamento']
       },
       {
@@ -709,7 +838,7 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'contas-a-pagar',
     titulo: 'Contas a pagar',
-    resumo: 'Cadastrar vencimentos, pagar, data limite e as sugestões que vêm do extrato.',
+    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos e as sugestões que vêm do extrato.',
     secoes: [
       {
         id: 'cadastrar-conta',
@@ -719,7 +848,53 @@ export const MANUAL: CapituloManual[] = [
           'Abra Contas a pagar e clique em “+ Nova conta”.',
           'Informe a descrição, o valor, o “Próximo vencimento” e a recorrência (mensal, anual ou única).',
           'Para conta que acaba (escola até dezembro, parcelas de um curso), preencha “Até (opcional)” ou “quantos pagamentos faltam”.',
-          'Escolha a categoria e, se quiser, a conta de onde sai o pagamento.'
+          'Escolha a categoria e, se quiser, a conta de onde sai o pagamento.',
+          'Em “Como é cobrada”, diga se você paga à mão (boleto, Pix), se é débito automático ou se cai no cartão de crédito. Escolha também o cartão ou a conta onde cai.',
+          'Use “Observação” para o que quiser lembrar (ex.: “conta da família”, “cancelar em março”).'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
+      },
+      {
+        id: 'cobrada-sozinha',
+        titulo: 'Assinaturas e débitos automáticos (cobrados sozinhos)',
+        paraQueServe: 'Saber qual assinatura cai em qual cartão e qual débito automático sai de qual conta, sem precisar clicar em “Pagar”.',
+        passos: [
+          'No cadastro, escolha “débito automático” ou “no cartão de crédito” e preencha o “Texto da cobrança no extrato”: o que a descrição do banco contém (ex.: NETFLIX).',
+          'Quando a cobrança com esse texto chega no extrato, a conta se dá como paga sozinha: o último pagamento vai para a data dela e o vencimento avança.',
+          'Por isso a conta cobrada sozinha não tem o botão “Pagar”. Sem o texto, ela continua com o “Pagar”.',
+          'A lista mostra, em cada conta, como ela é cobrada e onde cai.',
+          'O que cai no cartão não aparece nos “Próximos vencimentos” do Painel: entra na fatura, que já está lá.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
+      },
+      {
+        id: 'assinaturas-recorrentes',
+        titulo: 'Assinaturas e recorrentes: onde cada cobrança cai',
+        paraQueServe: 'Ver de uma vez qual assinatura cai em qual cartão e qual débito automático sai de qual conta, e quanto vai por mês.',
+        passos: [
+          'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
+          'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
+          'Embaixo, um bloco por cartão ou conta, com o total por mês e cada cobrança: como é cobrada, o dia, a última cobrança e o valor.',
+          'Para achar onde cai uma assinatura, digite o nome em “Onde cai…?” (ex.: netflix).',
+          'Filtre por conta ou cartão e pela forma de cobrança; “Mostrar as encerradas” traz também as que acabaram. Os filtros aparecem embaixo, com ✕ para tirar.',
+          '“ver as cobranças” abre Transações com as cobranças do último ano, na conta ou cartão dela.',
+          'Em Contas e cartões, cada cartão e conta mostra a linha “N assinaturas · R$ X/mês”, que abre esta aba já filtrada.'
+        ],
+        abrir: [{ rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }],
+        dicas: ['Trocou de cartão? Filtre pelo cartão antigo para ver o que ainda cobra nele e precisa ser trocado nos serviços.']
+      },
+      {
+        id: 'avisos-recorrentes',
+        titulo: 'Avisos das recorrentes',
+        paraQueServe: 'Saber quando uma cobrança que se repete não veio, mudou de cartão, mudou de valor, ou cai num cartão que você arquivou.',
+        passos: [
+          'Os avisos aparecem no topo de Contas a pagar, com a ação ao lado quando dá para resolver no site.',
+          '“Não veio”: a cobrança automática passou 5 dias do vencimento e não apareceu no extrato. Pode ter sido cancelada, ou o cartão recusou. Também aparece no Painel.',
+          '“Mudou de cartão”: a última cobrança veio em outra conta ou cartão. “Atualizar o catálogo” passa a conta a pagar para lá.',
+          '“Aumentou” (ou baixou): a última cobrança passou 5% do valor cadastrado. “Atualizar o valor” grava o novo. Conta que muda de valor todo mês, como a de luz, não gera esse aviso.',
+          '“Cartão arquivado”: a cobrança ainda cai num cartão ou conta que você arquivou. Troque nos serviços. Também aparece no Painel.',
+          'Ao marcar “Arquivada” num cartão ou conta em Contas e cartões, a tela lista o que ainda cobra ali, antes de salvar.'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
       },
@@ -737,9 +912,12 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'sugestoes-extrato',
         titulo: 'Sugestões do extrato',
-        paraQueServe: 'Cadastrar em um clique os pagamentos que se repetem todo mês.',
+        paraQueServe: 'Cadastrar em um clique os pagamentos que se repetem todo mês (ou todo ano).',
         passos: [
           'Em “Sugestões do extrato”, aparecem boletos, débitos automáticos e Pix que se repetem e ainda não estão na lista.',
+          'Também aparecem as assinaturas dos cartões: a mesma cobrança, todo mês, com o valor igual (até 5% de diferença nas últimas). Parcelas e gastos frequentes (mercado, aplicativo de corrida) ficam de fora.',
+          'Assinatura anual aparece quando o histórico importado tem as duas últimas cobranças, com um ano de diferença. Se não tiver, cadastre à mão.',
+          'Cada sugestão diz como parece ser cobrada (à mão, débito automático ou no cartão) e já vem com o texto da cobrança.',
           'Use “ver pagamentos” para conferir no extrato.',
           '“Cadastrar” abre o formulário já preenchido; “ignorar” tira a sugestão.'
         ],
@@ -851,18 +1029,20 @@ export const MANUAL: CapituloManual[] = [
           '“Cotas que faltam”: a corretora informa mais cotas do que a carteira tem. Quando um débito de compra do extrato explica a diferença, ele já vem escolhido, com o preço calculado. Confira as cotas e o preço.',
           '“Troco ou venda contando como rendimento”: créditos da corretora que são troco de uma compra ou o valor de uma venda vão para “Investimentos”.',
           '“Rendimento contando como investimento”: os outros créditos da corretora são proventos e voltam a contar como receita.',
+          '“Taxa da B3 que falta nas compras”: em cada dia de compras, o que saiu da conta menos o troco e menos cotas × preço é a taxa da bolsa. Ela entra no custo e no preço médio da compra (o “valor final da compra” do app). Só aparece depois que o troco teve tempo de voltar (5 dias).',
           'Desmarque o que não quiser mudar e clique em “Corrigir selecionados”. O aviso tem “Desfazer” por 10 minutos.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         dicas: [
           'Quando a carteira tem cotas diferentes da corretora, a própria tela de Investimentos avisa no topo.',
-          'Quando há troco ou venda contando como rendimento (por exemplo, depois de compras novas de FIIs), o Painel avisa e leva direto à conferência. Nada muda sozinho: você vê a prévia e escolhe.',
+          'O troco “sem dúvida” vai sozinho para “Investimentos” depois da sincronização: o dia de compras tem pelo menos 5 dias, todas as compras têm operação e a conta do dia sobra só a taxa da B3. O Painel avisa, com “Ver em Transações”, “Desfazer” e “Ok”.',
+          'O resto (troco de compra recente, venda, ou o que não fecha a conta do dia) o Painel avisa e leva à conferência: você vê a prévia e escolhe.',
           'A compra lançada por aqui fica ligada ao débito do extrato e não trava as próximas compras que chegam pelo Open Finance.'
         ],
         erros: [
           'Mudar todos os “Valor recebido de Investimentos” para Investimentos de uma vez: os proventos deixam de contar como receita. A conferência separa o troco do rendimento.'
         ],
-        termos: ['trocoDeCompra']
+        termos: ['trocoDeCompra', 'taxaB3']
       },
       {
         id: 'selic-fiis',
@@ -876,6 +1056,31 @@ export const MANUAL: CapituloManual[] = [
         termos: ['selic', 'ifix']
       },
       {
+        id: 'mes-a-mes',
+        titulo: 'Mês a mês dos FIIs',
+        paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
+        passos: [
+          'Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.',
+          'O gráfico mostra, por mês, os rendimentos e a valorização; os aportes ficam na tabela, para um aporte grande não achatar o resto. A frase acima dele resume o último mês.',
+          'Na tabela, o mês mais recente vem primeiro. “Aportes” são as compras do mês; subscrições e vendas aparecem embaixo, à parte.',
+          '“Rendimentos” são os proventos que caíram na conta. O troco das compras e o valor das vendas, que a corretora credita com a mesma descrição, ficam de fora.',
+          'No mês atual, “a receber (data-com)” é o provento dos fundos com data-com no mês, que costuma cair no mês seguinte.',
+          '“por fundo”, embaixo dos rendimentos, abre quanto cada FII pagou no mês. O crédito que vem sem o código do fundo (“Valor recebido de Investimentos”) é ligado ao fundo pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois); o que não liga aparece como “sem fundo identificado”, sem sumir da soma.',
+          '“Valorização” é quanto as cotas ganharam ou perderam de preço no mês, sem contar aportes nem rendimentos. “Saldo no fim” é quanto a carteira valia no último dia do mês.',
+          '“ver lançamentos”, em Aportes e em Rendimentos, abre Transações no mês e só com os lançamentos que formam aquele número. O filtro aparece em “Filtrando:”; o ✕ o tira, e o voltar do navegador leva de volta aos FIIs. Clicar num mês do gráfico faz o mesmo com os rendimentos.'
+        ],
+        abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
+        dicas: [
+          'Para os rendimentos baterem com o app, confira os créditos da corretora em “Conferir investimentos”: ali o troco e o rendimento aparecem separados.',
+          'Os aportes são cotas × preço, como as “Entradas” do app. A taxa da B3, de alguns centavos por compra, fica no custo e no preço médio: “Conferir investimentos” a calcula pelo extrato e lança com um clique.',
+          'Compras lançadas à mão na carteira entram nos aportes, mas não aparecem em “ver lançamentos”: elas não vieram do banco.'
+        ],
+        erros: [
+          'A valorização pode diferir um pouco da do app: o site usa o fechamento do mês de outra fonte de cotação (no mês atual, a cotação de hoje).'
+        ],
+        termos: ['valorizacaoMes', 'trocoDeCompra']
+      },
+      {
         id: 'caixinhas',
         titulo: 'Caixinhas, CDBs e outros investimentos do banco',
         paraQueServe: 'Achar a caixinha do Nubank, o CDB do Mercado Pago e o que mais o banco informa pelo Open Finance.',
@@ -884,11 +1089,13 @@ export const MANUAL: CapituloManual[] = [
           'O nome mostra o produto e o banco: a caixinha do Nubank aparece como “CDB · Nubank”, e o CDB do Mercado Pago como “CDB · Mercado Pago”. Embaixo fica o nome que o banco usa (“no banco: …”), para achar no app.',
           'Clique em “renomear” para dar o seu nome (ex.: “Caixinha viagem”). A sincronização não muda o nome que você escolher.',
           'Para voltar ao nome automático, abra “renomear” e clique em “Voltar ao nome automático” (ou salve com o campo vazio).',
-          'A coluna Instituição mostra o banco da conexão.'
+          'A coluna Instituição mostra o banco da conexão.',
+          '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). “por investimento” abre o de cada um.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }],
         dicas: [
-          'O rendimento da caixinha fica no saldo dela e não vira lançamento no extrato. Os “Valor recebido de Investimentos” do extrato do Nubank são proventos dos FIIs ou troco das compras (veja “Conferir investimentos”).'
+          'O rendimento da caixinha fica no saldo dela e não vira lançamento no extrato. Os “Valor recebido de Investimentos” do extrato do Nubank são proventos dos FIIs ou troco das compras (veja “Conferir investimentos”).',
+          'O Open Finance manda só o saldo de hoje: o site guarda um por dia desde a atualização que trouxe o “Rendimento por mês”. Os meses de antes não aparecem, e o primeiro conta a partir daquele dia.'
         ]
       },
       {
@@ -1084,5 +1291,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   relatorios: { capitulo: 'relatorios', secao: 'relatorios-tela' },
   projecao: { capitulo: 'relatorios', secao: 'projecao' },
   categorias: { capitulo: 'categorias' },
-  configuracoes: { capitulo: 'configuracoes' }
+  configuracoes: { capitulo: 'configuracoes' },
+  'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

@@ -7,13 +7,12 @@ import {
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
-  AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
+  AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco
-} from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -58,6 +57,10 @@ export class ApiService {
   criarConta(dto: SalvarConta): Observable<Conta> { return this.http.post<Conta>(`${this.base}/contas`, dto); }
   atualizarConta(id: number, dto: SalvarConta): Observable<Conta> { return this.http.put<Conta>(`${this.base}/contas/${id}`, dto); }
   excluirConta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas/${id}`); }
+  /** #172: o valor de cada conta, fatura e investimento no site, com as pistas para comparar com o app do banco. */
+  conferenciaBanco(): Observable<ConferenciaBanco> {
+    return this.http.get<ConferenciaBanco>(`${this.base}/conferencia-banco`);
+  }
   /** #171: true = reduzi o limite no app; false = não (a diferença é compromisso); null = desfazer a resposta. */
   responderLimiteAjustado(id: number, ajustado: boolean | null): Observable<void> {
     return this.http.put<void>(`${this.base}/contas/${id}/limite-ajustado`, { ajustado });
@@ -171,6 +174,10 @@ export class ApiService {
 
   // Contas a pagar
   contasAgendadas(): Observable<ContaAgendada[]> { return this.http.get<ContaAgendada[]>(`${this.base}/contas-agendadas`); }
+  /** #158: avisos das recorrentes (não veio, mudou de cartão, aumentou, cartão arquivado). */
+  avisosContasAgendadas(): Observable<AvisoContaAgendada[]> {
+    return this.http.get<AvisoContaAgendada[]>(`${this.base}/contas-agendadas/avisos`);
+  }
   sugestoesContasAgendadas(): Observable<SugestaoContaAgendada[]> {
     return this.http.get<SugestaoContaAgendada[]>(`${this.base}/contas-agendadas/sugestoes`);
   }
@@ -185,6 +192,10 @@ export class ApiService {
 
   // Investimentos
   investimentos(): Observable<Investimento[]> { return this.http.get<Investimento[]>(`${this.base}/investimentos`); }
+  /** #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance, pelo histórico de saldo. */
+  historicoInvestimentos(): Observable<HistoricoInvestimentos> {
+    return this.http.get<HistoricoInvestimentos>(`${this.base}/investimentos/historico`);
+  }
   /** #170: nome escolhido para o investimento; null volta ao automático (a sincronização não mexe nele). */
   renomearInvestimento(id: number, nome: string | null): Observable<void> {
     return this.http.put<void>(`${this.base}/investimentos/${id}/nome`, { nome });
@@ -241,6 +252,14 @@ export class ApiService {
   desfazerCorrecaoInvestimentos(chave: string): Observable<ResultadoAplicacao> {
     return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/conferencia/desfazer/${encodeURIComponent(chave)}`, {});
   }
+  /** #173 b) (ADR 0044): volta os trocos que a sincronização classificou sozinha. */
+  desfazerTrocosAutomaticos(): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/conferencia/trocos-automaticos/desfazer`, {});
+  }
+  /** #173 b): "Ok" no aviso do Painel (os trocos ficam como estão). */
+  dispensarTrocosAutomaticos(): Observable<void> {
+    return this.http.post<void>(`${this.base}/carteira/conferencia/trocos-automaticos/dispensar`, {});
+  }
   configuracaoCotacao(): Observable<{ tokenBrapiConfigurado: boolean }> {
     return this.http.get<{ tokenBrapiConfigurado: boolean }>(`${this.base}/carteira/configuracao`);
   }
@@ -260,6 +279,10 @@ export class ApiService {
   }
   salvarConfiguracaoPluggy(dto: SalvarConfiguracaoPluggy): Observable<void> {
     return this.http.put<void>(`${this.base}/open-finance/configuracao`, dto);
+  }
+  /** #172: o seu nome como aparece nos Pix; null apaga. */
+  salvarMeuNome(nome: string | null): Observable<void> {
+    return this.http.put<void>(`${this.base}/open-finance/meu-nome`, { nome });
   }
   removerSecretPluggy(): Observable<void> { return this.http.delete<void>(`${this.base}/open-finance/configuracao/secret`); }
   testarPluggy(): Observable<Mensagem> { return this.http.post<Mensagem>(`${this.base}/open-finance/testar`, {}); }

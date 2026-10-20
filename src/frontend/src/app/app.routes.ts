@@ -76,6 +76,11 @@ export const rotas: Routes = [
         title: 'Categorias e regras · Finanças Local'
       },
       {
+        path: 'conferir-banco',
+        loadComponent: () => import('./paginas/conferir-banco.component').then((m) => m.ConferirBancoComponent),
+        title: 'Conferir com o banco · Finanças Local'
+      },
+      {
         path: 'configuracoes',
         loadComponent: () => import('./paginas/configuracoes.component').then((m) => m.ConfiguracoesComponent),
         title: 'Configurações · Finanças Local'

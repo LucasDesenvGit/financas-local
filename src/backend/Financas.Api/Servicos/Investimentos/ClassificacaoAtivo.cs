@@ -20,6 +20,15 @@ public static partial class ClassificacaoAtivo
         return Sigla().IsMatch(texto) || (Fundo().IsMatch(texto) && texto.Contains("IMOB", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Direito ou recibo de subscrição de FII: o código do fundo com final 12 a 15 (ex.: MXRF12). O app da corretora
+    /// não conta a subscrição como aporte do mês, então ela aparece à parte (#173).
+    /// </summary>
+    public static bool EhSubscricao(string ticker) => Subscricao().IsMatch(ticker);
+
+    [GeneratedRegex(@"^[A-Z]{4}1[2-5]$")]
+    private static partial Regex Subscricao();
+
     [GeneratedRegex(@"\b(FII|FIAGRO)\b")]
     private static partial Regex Sigla();
 

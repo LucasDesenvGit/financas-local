@@ -31,6 +31,20 @@ describe('Usabilidade: filtros ativos em Transações', () => {
     expect(parametrosDaUrl(t.router)).toEqual({ busca: 'uber' });
   });
 
+  it('#173 d): a lista vinda de outra tela diz de onde veio e quantos são; o ✕ tira só ela', async () => {
+    const t = await abrirTransacoes('/transacoes?inicio=2026-04-01&fim=2026-04-30&ids=7,8&de=fii-rendimentos');
+    expect(chips(t.elemento)).toEqual(['abril/2026', 'Rendimentos de FIIs: 2 lançamentos']);
+    t.elemento.querySelector<HTMLButtonElement>('[aria-label="Remover filtro: Rendimentos de FIIs: 2 lançamentos"]')!.click();
+    await t.assentar();
+    expect(chips(t.elemento)).toEqual(['abril/2026']);
+    expect(parametrosDaUrl(t.router)).toEqual({ inicio: '2026-04-01', fim: '2026-04-30' });
+  });
+
+  it('sem origem conhecida, o chip diz só quantos', async () => {
+    const t = await abrirTransacoes('/transacoes?ids=7');
+    expect(chips(t.elemento)).toEqual(['Só 1 lançamento escolhido']);
+  });
+
   it('"Limpar filtros" tira todos de uma vez e a faixa some', async () => {
     const t = await abrirTransacoes('/transacoes?tipo=despesa&busca=uber&categoria=sem');
     const limpar = Array.from(t.elemento.querySelectorAll('button')).find((b) => b.textContent!.trim() === 'Limpar filtros')!;
