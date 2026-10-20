@@ -390,6 +390,8 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     UltimoPagamentoEm   TEXT    NULL,
     -- #69: último vencimento que ainda se repete (NULL = sem fim). Ao pagar e passar dele, a conta é encerrada.
     DataLimite          TEXT    NULL,
+    -- #205: chave da descrição do banco (a do agrupamento das sugestões do extrato) do pagamento que é esta conta.
+    ChaveExtrato        TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_ContaAgendada_Recorrencia CHECK (Recorrencia IN (0, 1, 2)),

@@ -342,6 +342,29 @@ public class ContasAgendadasController : BaseController
         return NoContent();
     }
 
+    /// <summary>
+    /// #205: "é a mesma": a sugestão do extrato é esta conta a pagar (cadastrada à mão ou com outro nome). Grava a chave
+    /// da descrição do banco na conta, e a sugestão não volta mais.
+    /// </summary>
+    [HttpPost("{id:int}/ligar-extrato")]
+    public async Task<IActionResult> LigarExtrato(int id, LigarExtratoContaAgendadaDto dto, CancellationToken ct)
+    {
+        var chave = dto.ChaveExtrato.Trim();
+        if (chave.Length == 0) return Erro("Informe a sugestão do extrato.");
+        var alteradas = await _db.ContasAgendadas.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.ChaveExtrato, chave), ct);
+        return alteradas == 0 ? NaoEncontrado() : NoContent();
+    }
+
+    /// <summary>#205: o "Desfazer" do "é a mesma": a conta a pagar volta a não ter ligação, e a sugestão pode voltar.</summary>
+    [HttpDelete("{id:int}/ligar-extrato")]
+    public async Task<IActionResult> DesligarExtrato(int id, CancellationToken ct)
+    {
+        var alteradas = await _db.ContasAgendadas.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.ChaveExtrato, (string?)null), ct);
+        return alteradas == 0 ? NaoEncontrado() : NoContent();
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Excluir(int id, CancellationToken ct)
     {
@@ -417,5 +440,7 @@ public class ContasAgendadasController : BaseController
         c.FormaCobranca = Enum.IsDefined(dto.FormaCobranca) ? dto.FormaCobranca : FormaCobranca.AMao;
         c.TextoCobranca = CategorizacaoService.Normalizar(dto.TextoCobranca) is { Length: > 0 } texto ? texto : null;
         c.Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim();
+        // #205: veio da sugestão do extrato. Na edição o campo vem vazio e a ligação que já existe fica.
+        if (!string.IsNullOrWhiteSpace(dto.ChaveExtrato)) c.ChaveExtrato = dto.ChaveExtrato.Trim();
     }
 }

@@ -919,9 +919,14 @@ export const MANUAL: CapituloManual[] = [
           'Assinatura anual aparece quando o histórico importado tem as duas últimas cobranças, com um ano de diferença. Se não tiver, cadastre à mão.',
           'Cada sugestão diz como parece ser cobrada (à mão, débito automático ou no cartão) e já vem com o texto da cobrança.',
           'Use “ver pagamentos” para conferir no extrato.',
-          '“Cadastrar” abre o formulário já preenchido; “ignorar” tira a sugestão.'
+          '“Cadastrar” abre o formulário já preenchido; “ignorar” tira a sugestão.',
+          'Pode trocar o nome ao cadastrar (ex.: “PIX ENVIADO LIVEPIX LTDA” vira “Manwha”): a conta guarda de qual pagamento do banco ela veio, e a sugestão não volta.',
+          'Conta que você cadastrou à mão também tira a sugestão, quando o valor (até 15% de diferença), o dia do vencimento (até 3 dias) e a conta batem.',
+          'Se não der para ter certeza (duas contas parecidas, ou a conta a pagar sem a conta escolhida), a sugestão mostra “parece ser …”. Clique em “é a mesma” para ligar as duas: a sugestão some e não volta.',
+          'Conta em débito automático ou no cartão que dá baixa sozinha também fica ligada ao pagamento do banco na primeira cobrança.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        erros: ['Clicou em “é a mesma” por engano? Use “Desfazer” no aviso que aparece logo depois: a sugestão volta. Excluir a conta a pagar também a traz de volta.']
       }
     ]
   },

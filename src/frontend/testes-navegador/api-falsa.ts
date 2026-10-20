@@ -152,12 +152,21 @@ const respostas: Record<string, unknown> = {
       proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,
       ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 3)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 3)),
       categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'MUSICA',
-      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1 },
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1,
+      chaveExtrato: 'MUSICA', pareceSerId: null, pareceSerNome: null },
     { chave: 'nuvem', descricao: 'NUVEM ANUAL', valor: 119, valorVariavel: false, valorMinimo: 119, valorMaximo: 119,
       proximoVencimento: dataIso(new Date(ano + 1, hoje.getMonth(), 5)), diaHabitual: 5, meses: 2, pagamentos: 2,
       ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 5)), primeiroPagamento: dataIso(new Date(ano - 1, hoje.getMonth(), 5)),
       categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'NUVEM',
-      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2 }
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2,
+      chaveExtrato: 'NUVEM', pareceSerId: null, pareceSerNome: null },
+    // #205: parecida com "Escola" (valor, dia e conta), com outro nome: "parece ser Escola" e "é a mesma".
+    { chave: 'PESSOA EXEMPLO', descricao: 'PIX ENVIADO PESSOA EXEMPLO', valor: 1450, valorVariavel: false, valorMinimo: 1450,
+      valorMaximo: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), diaHabitual: 10, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 10)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 10)),
+      categoriaId: null, categoriaNome: null, contaId: 1, contaNome: 'Conta Exemplo', termoBusca: 'PESSOA',
+      vencimentoSemPagamento: null, formaCobranca: 1, textoCobranca: 'PESSOA', recorrencia: 1,
+      chaveExtrato: 'PESSOA EXEMPLO', pareceSerId: 1, pareceSerNome: 'Escola' }
   ],
   '/api/investimentos': [],
   '/api/investimentos/historico': {

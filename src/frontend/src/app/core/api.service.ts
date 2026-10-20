@@ -185,6 +185,14 @@ export class ApiService {
   atualizarContaAgendada(id: number, dto: SalvarContaAgendada): Observable<void> {
     return this.http.put<void>(`${this.base}/contas-agendadas/${id}`, dto);
   }
+  /** #205: "é a mesma": a sugestão do extrato é esta conta a pagar (grava a ligação; a sugestão não volta). */
+  ligarExtratoContaAgendada(id: number, chaveExtrato: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/contas-agendadas/${id}/ligar-extrato`, { chaveExtrato });
+  }
+  /** #205: o "Desfazer" do "é a mesma". */
+  desligarExtratoContaAgendada(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/contas-agendadas/${id}/ligar-extrato`);
+  }
   excluirContaAgendada(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas-agendadas/${id}`); }
   pagarContaAgendada(id: number, lancarTransacao: boolean, data: string | null): Observable<void> {
     return this.http.post<void>(`${this.base}/contas-agendadas/${id}/pagar`, { lancarTransacao, data });

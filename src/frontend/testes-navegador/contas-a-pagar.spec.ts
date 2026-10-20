@@ -35,3 +35,16 @@ test('Contas a pagar: aviso de aumento com "Atualizar o valor" (#158)', async ({
   await expect.poll(() => api.chamadas.some((c) => c.startsWith('PUT /api/contas-agendadas/3'))).toBe(true);
   expect(problemas.lista).toEqual([]);
 });
+
+test('Contas a pagar: sugestão parecida com outra conta a pagar tem "é a mesma" (#205)', async ({ page, api, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  const sugestoes = page.locator('section.sugestoes');
+  await expect(sugestoes).toContainText('parece ser Escola, que já está na lista');
+  const botao = sugestoes.getByRole('button', { name: 'é a mesma: PIX ENVIADO PESSOA EXEMPLO é Escola' });
+  // Por teclado (WCAG 2.1.1): foco no botão e Enter.
+  await botao.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => api.chamadas.includes('POST /api/contas-agendadas/1/ligar-extrato')).toBe(true);
+  await expect(sugestoes).not.toContainText('PIX ENVIADO PESSOA EXEMPLO');
+  expect(problemas.lista).toEqual([]);
+});
