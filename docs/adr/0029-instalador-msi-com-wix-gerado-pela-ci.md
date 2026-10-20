@@ -1,6 +1,6 @@
 # 0029. Instalador .msi para Windows, com WiX, gerado e testado pela CI
 
-- **Status:** Aceita
+- **Status:** Aceita (em parte substituída pela [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md): a versão sobe a cada PR, não na hora de publicar)
 - **Data:** 2026-10-17 (issue #119)
 - **Relacionadas:** substitui em parte a [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell); [0003](0003-esquema-por-scripts-sql-idempotentes.md) (a API aplica o esquema); [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) (gerenciador); [0005](0005-segredos-criptografados-com-data-protection.md) (chaves)
 
@@ -78,10 +78,10 @@ O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/Financ
   - **Migração automática:** a pasta antiga fica, mas o serviço antigo é removido. Para voltar, rode o `instalar-windows.cmd` antigo de novo. Se o banco da instalação antiga não for encontrado (caminho do `appsettings.Production.json` dela), a instalação **para sem mudar nada**, em vez de começar com um banco vazio.
   - **Só Windows x64.** No Linux continuam os scripts.
 - **Na prática:**
-  - **Publicar uma versão:**
-    1. mude a versão no `Directory.Build.props` e o título da seção no `CHANGELOG.md`;
+  - **Publicar uma versão** (a versão no `Directory.Build.props` já vem certa dos PRs, ADR 0039):
+    1. troque o título `## [Não publicado]` do `CHANGELOG.md` pela versão do `Directory.Build.props`;
     2. faça o merge em `main`;
-    3. crie a tag `vX.Y.Z`;
+    3. crie a tag `vX.Y.Z`, igual ao `Directory.Build.props`;
     4. o workflow publica o `.msi` no Release.
   - **Testar um pull request:** o `.msi` fica como artefato do workflow "Versão (instalador .msi)".
   - **Mudou serviço, certificado ou pastas?** Ajuste também o `instalar-windows.ps1` (e vice-versa).
@@ -99,15 +99,24 @@ Pedido do usuário: deixar o `.msi` do `develop` à mão e garantir que quem já
 - **Pré-lançamento `desenvolvimento`:**
   - a cada push no `develop`, depois de todos os testes (instalar, trocar, atualizar, desinstalar, migrar dos scripts), o workflow apaga e recria o pré-lançamento com a tag `desenvolvimento`, apontando para o commit;
   - o arquivo tem nome fixo, `FinancasLocal-desenvolvimento.msi`, com o `SHA256SUMS.txt`, então o link não muda;
-  - o gerenciador só consulta `releases/latest`, e pré-lançamento nunca é o "latest": quem está no Release não recebe aviso de versão de desenvolvimento.
+  - o gerenciador só consulta `releases/latest`, e pré-lançamento nunca é o "latest": quem está no Release não recebe aviso de versão de desenvolvimento. *(Ajustado pela ADR 0040: com uma versão de desenvolvimento instalada, o gerenciador consulta o pré-lançamento "desenvolvimento".)*
 - **Gerenciador na instalação pelos scripts (ADR 0028):** continua sem instalar o `.msi` sozinho. Mostra o caminho: rodar os scripts de novo, ou o botão **Baixar o instalador .msi**, que abre a página da versão mais recente. O `.msi` migra a instalação (item 2 da ação personalizada).
 
 **Alternativas consideradas:**
 - **Guardar o `.msi` no repositório:** são ~50 MB por versão no histórico do git, e o arquivo ficaria velho a cada merge.
 - **Só o artefato do workflow:** some em 14 dias, exige login no GitHub para baixar e não tem link fixo.
-- **Versão de desenvolvimento como `X.Y.(Z+1)`:** o Release `X.Y.(Z+1)` depois teria a mesma versão do pacote de desenvolvimento. Isso esbarraria no mesmo problema da troca, e ainda prometeria um número que talvez nem saia.
+- **Versão de desenvolvimento como `X.Y.(Z+1)`:** o Release `X.Y.(Z+1)` depois teria a mesma versão do pacote de desenvolvimento. Isso esbarraria no mesmo problema da troca, e ainda prometeria um número que talvez nem saia. *(Revisto pela ADR 0039: a versão passou a subir a cada PR; a troca de mesma versão já é testada, e os números que não saem foram aceitos.)*
 
 **Consequências negativas:**
 - **Mais tempo de CI:** todo push no `develop` gera e testa o `.msi` num runner Windows (dezenas de minutos), mesmo sem mudança no instalador.
 - **Rebaixamento silencioso:** com `AllowSameVersionUpgrades`, instalar o Release `X.Y.Z` por cima do desenvolvimento `X.Y.Z.N` "volta" funcionalidades do `develop` sem aviso de rebaixamento. O banco fica com as colunas novas, e isso é seguro, porque o esquema só acrescenta (ADR 0003).
 - **Uma janela sem o pré-lançamento:** entre apagar e recriar a tag `desenvolvimento`, por alguns segundos, o link dá 404.
+
+## Atualização de 2026-10-20: título e notas do Release sempre acertados (issue #187)
+
+- **Problema:** o workflow só criava o Release se ele ainda não existia. Criado à mão no site do GitHub antes da tag, ficavam o título e as notas da mão; as versões 1.0.0 e 2.0.0 saíram assim, sem o `.msi`.
+- **Agora:** na tag, o workflow cria **ou edita** o Release, sempre com:
+  - o título **"Finanças Local X.Y.Z"**;
+  - as notas começando por **"Como instalar ou atualizar"** (o `.msi`, o aviso do Windows sobre instalador não assinado e o link para a instalação pelo código) e, em **"O que mudou"**, a seção da versão no `CHANGELOG.md` sem o cabeçalho `## [X.Y.Z] — data`, que repetiria o título;
+  - não é pré-lançamento nem rascunho e fica como o mais recente, que é o que o gerenciador consulta.
+- **Custo:** quem editar as notas de um Release à mão e depois recriar a tag perde a edição. As notas vêm do `CHANGELOG.md`: é lá que se corrige.

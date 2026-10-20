@@ -3,7 +3,7 @@ rem =====================================================================
 rem FinancasLocal - instalador para Windows (duplo clique)
 rem
 rem  - Pede elevacao (Administrador), necessaria para registrar o servico
-rem  - Roda scripts\instalar-windows.ps1 no Windows PowerShell, que ja vem
+rem  - Roda scripts\windows\instalar-windows.ps1 no Windows PowerShell, que ja vem
 rem    com o Windows: nao precisa de Git, bash nem winget
 rem  - Deu certo: abre o site no navegador e fecha sozinho em 10 s.
 rem    Deu errado: a janela fica aberta com o erro.
@@ -34,7 +34,7 @@ if errorlevel 1 (
 cd /d "%~dp0"
 
 rem -ExecutionPolicy Bypass vale so para este processo: nao muda a politica do computador.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\instalar-windows.ps1" %*
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\instalar-windows.ps1" %*
 if errorlevel 1 goto falhou
 
 if "%FINANCAS_SEM_INTERACAO%"=="1" exit /b 0

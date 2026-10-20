@@ -16,7 +16,7 @@
 # Pode ser executado de novo: so baixa o que estiver faltando ou desatualizado.
 #
 # Uso:
-#   scripts/1-preparar-ambiente.sh
+#   scripts/geral/1-preparar-ambiente.sh
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

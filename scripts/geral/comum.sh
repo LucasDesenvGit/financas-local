@@ -28,7 +28,7 @@ case "$(uname -m)" in
 esac
 
 # ---------------------------------------------------------------- Pastas (mesma convencao do antigo comum.ps1)
-Raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+Raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 Ferramentas="$Raiz/ferramentas"
 Instaladores="$Raiz/instaladores"
 Dados="$Raiz/dados"

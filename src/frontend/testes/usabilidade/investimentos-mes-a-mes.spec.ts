@@ -55,6 +55,14 @@ function abrir(mesAMes: MesAMesFii[]) {
 }
 
 describe('Usabilidade: Investimentos › FIIs › Mês a mês (#173)', () => {
+  it('o gráfico mostra só o que a carteira rendeu (rendimentos e valorização), na escala deles; os aportes ficam na tabela', () => {
+    // Com aporte de milhares no mesmo eixo, os rendimentos (dezenas de reais) viravam tracinhos invisíveis.
+    const t = abrir(meses(3, (i) => ({ aportes: i === 0 ? 7000 : 0, rendimentosRecebidos: 60 + i, valorizacao: i === 1 ? -20 : 15 })));
+    const series = t.tela.graficoMesAMes().data.datasets.map((d) => d.label);
+    expect(series).toEqual(['Rendimentos', 'Valorização']);
+    expect(t.linhas().at(-1)!.textContent).toContain('7.000,00');
+  });
+
   it('as colunas têm os nomes do app: Aportes, Rendimentos, Valorização e Saldo no fim', () => {
     const t = abrir(meses(3));
     expect(t.secao()!.querySelector('h2')!.textContent).toBe('Mês a mês');

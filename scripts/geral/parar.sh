@@ -10,16 +10,16 @@
 #     O script apenas confere se algum processo ainda esta com ele aberto.
 #
 # Uso (Linux/macOS):
-#   scripts/parar.sh                 # para agora (o servico volta no proximo login/boot)
-#   scripts/parar.sh --desativar     # para e tira o servico da inicializacao automatica
-#   scripts/parar.sh --compiladores  # tambem encerra os servidores de build do .NET
+#   scripts/geral/parar.sh                 # para agora (o servico volta no proximo login/boot)
+#   scripts/geral/parar.sh --desativar     # para e tira o servico da inicializacao automatica
+#   scripts/geral/parar.sh --compiladores  # tambem encerra os servidores de build do .NET
 #
-# Para subir de novo: scripts/3-publicar-atualizar.sh, ou
+# Para subir de novo: scripts/geral/3-publicar-atualizar.sh, ou
 #   systemctl --user enable --now financaslocal.service
 #
 # Sai com codigo 1 se algo ficou rodando (ou o banco continua aberto).
 # No Windows nao precisa de bash: de dois cliques em parar-windows.cmd, na raiz.
-# Rodado pelo Git Bash, este script repassa para scripts/parar-windows.ps1.
+# Rodado pelo Git Bash, este script repassa para scripts/windows/parar-windows.ps1.
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
@@ -45,7 +45,7 @@ if [[ "$SO" == windows ]]; then
     [[ $desativar -eq 1 ]] && argumentos_ps+=(-Desativar)
     [[ $compiladores -eq 1 ]] && argumentos_ps+=(-Compiladores)
     exec powershell.exe -NoProfile -ExecutionPolicy Bypass \
-        -File "$(caminho_nativo "$Raiz/scripts/parar-windows.ps1")" "${argumentos_ps[@]}"
+        -File "$(caminho_nativo "$Raiz/scripts/windows/parar-windows.ps1")" "${argumentos_ps[@]}"
 fi
 
 # ------------------------------------------------------------------ 1. Servico do sistema (Linux)

@@ -1,4 +1,4 @@
-# Testa o instalador do Windows (instalar-windows.cmd + scripts/instalar-windows.ps1) num
+# Testa o instalador do Windows (instalar-windows.cmd + scripts/windows/instalar-windows.ps1) num
 # Windows de verdade, com o Windows PowerShell 5.1. O PATH e reduzido ao do Windows puro para
 # esconder o dotnet/node/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
 # computador novo. Nao cobre o pedido de elevacao (UAC): o runner ja roda como Administrador.
@@ -9,20 +9,18 @@ on:
     branches: [main, develop]
     paths:
       - instalar-windows.cmd
-      - scripts/instalar-windows.ps1
       - parar-windows.cmd
-      - scripts/parar-windows.ps1
-      - scripts/2-criar-banco.sh
+      - scripts/windows/**
+      - scripts/geral/2-criar-banco.sh
       - banco/**
       - .github/workflows/teste-instalacao-windows.yml
   pull_request:
     branches: [main, develop]
     paths:
       - instalar-windows.cmd
-      - scripts/instalar-windows.ps1
       - parar-windows.cmd
-      - scripts/parar-windows.ps1
-      - scripts/2-criar-banco.sh
+      - scripts/windows/**
+      - scripts/geral/2-criar-banco.sh
       - banco/**
       - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:
@@ -51,7 +49,7 @@ jobs:
         run: |
           $env:PATH = $env:PATH_WINDOWS_PURO
           if (Get-Command dotnet, node, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Conferir instalacao
@@ -113,6 +111,19 @@ jobs:
           if errorlevel 1 exit /b 1
           powershell.exe -NoProfile -Command "if ((Get-Service FinancasLocal).StartType -ne 'Automatic') { exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
+
+      # ADR 0040: o atualizar-windows.ps1 e so para clone no develop. Em PR o checkout fica fora do develop (tem de
+      # recusar, 2); no push do develop ja esta na ultima (10). Nos dois casos, nada pode mudar na pasta.
+      - name: Atualizar pelo develop (atualizar-windows.ps1) sem mexer em nada
+        shell: pwsh
+        run: |
+          $antes = git rev-parse HEAD
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\atualizar-windows.ps1 -SoCodigo
+          $codigo = $LASTEXITCODE
+          if ($codigo -ne 2 -and $codigo -ne 10) { throw "atualizar-windows.ps1 saiu com $codigo (esperado 2 fora do develop ou 10 ja na ultima)" }
+          if ((git rev-parse HEAD) -ne $antes) { throw "atualizar-windows.ps1 mudou o commit" }
+          git diff --quiet; if ($LASTEXITCODE -ne 0) { throw "atualizar-windows.ps1 mexeu em arquivos" }
+          exit 0
 
       - name: Diagnostico
         if: failure()

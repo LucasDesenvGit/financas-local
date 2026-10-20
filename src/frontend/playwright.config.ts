@@ -1,0 +1,38 @@
+import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * Testes no navegador (#185, ADR 0041): o build de produção, servido com a CSP da API, num navegador de verdade e com
+ * a API falsa (testes-navegador/api-falsa.ts). Complementa o Jest (ADR 0013), que não desenha a tela.
+ *   npm run test:navegador          compila e roda tudo (computador e celular)
+ *   npx playwright test --ui        para ver passo a passo
+ * Neste computador usa o Edge instalado (sem baixar navegador); na CI, o Chromium do Playwright.
+ */
+const naCi = !!process.env['CI'];
+const canal = naCi ? undefined : process.env['NAVEGADOR'] ?? 'msedge';
+const porta = Number(process.env['PORTA'] ?? 4300);
+
+export default defineConfig({
+  testDir: 'testes-navegador',
+  outputDir: 'testes-navegador/resultados',
+  fullyParallel: true,
+  forbidOnly: naCi,
+  retries: naCi ? 1 : 0,
+  reporter: naCi ? [['list'], ['html', { open: 'never', outputFolder: 'testes-navegador/relatorio' }]] : 'list',
+  use: {
+    baseURL: `http://127.0.0.1:${porta}`,
+    locale: 'pt-BR',
+    timezoneId: 'America/Sao_Paulo',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure'
+  },
+  projects: [
+    { name: 'computador', use: { ...devices['Desktop Chrome'], channel: canal, viewport: { width: 1366, height: 860 } } },
+    { name: 'celular', use: { ...devices['Pixel 7'], channel: canal } }
+  ],
+  webServer: {
+    command: `node testes-navegador/servidor.mjs ${porta}`,
+    url: `http://127.0.0.1:${porta}`,
+    reuseExistingServer: !naCi,
+    timeout: 30_000
+  }
+});

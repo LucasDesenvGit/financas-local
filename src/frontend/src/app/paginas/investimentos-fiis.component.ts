@@ -111,7 +111,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
               </div>
             </div>
             <app-grafico-explicado [resumo]="resumoMesAMes()"
-              comoLer="Por mês: lilás, o que você aportou (compras); azul, os rendimentos que caíram na conta; e a valorização das cotas, em verde quando subiram e em rosa quando caíram.">
+              comoLer="O que a carteira rendeu em cada mês: em azul, os rendimentos que caíram na conta; a valorização das cotas, em verde quando subiram e em rosa quando caíram. Os aportes estão na tabela abaixo.">
               <app-grafico [configuracao]="graficoMesAMes()" [altura]="260" />
             </app-grafico-explicado>
             <div class="tabela-rolagem">
@@ -396,7 +396,8 @@ export class InvestimentosFiisComponent {
       data: {
         labels: meses.map((m) => rotulo(m.ano, m.mes)),
         datasets: [
-          { label: 'Aportes', data: meses.map((m) => m.aportes), backgroundColor: COR_FII, borderRadius: 4 },
+          // Os aportes ficam na tabela e na frase: no gráfico, um aporte de milhares achatava os rendimentos e a
+          // valorização (dezenas de reais), e o gráfico deixava de mostrar o que a carteira rendeu no mês.
           { label: 'Rendimentos', data: meses.map((m) => m.rendimentosRecebidos), backgroundColor: COR_IFIX, borderRadius: 4 },
           { label: 'Valorização', data: meses.map((m) => m.valorizacao),
             backgroundColor: meses.map((m) => (m.valorizacao >= 0 ? COR_POSITIVO : COR_NEGATIVO)), borderRadius: 4 }
