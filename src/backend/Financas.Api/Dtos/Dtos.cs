@@ -329,6 +329,15 @@ public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 /// Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar. <c>ProximoVencimento</c> nunca é
 /// passado; <c>VencimentoSemPagamento</c> é o vencimento esperado que já passou sem o pagamento aparecer no extrato.
 /// </summary>
+/// <summary>
+/// #158: aviso de uma conta a pagar recorrente. <c>Tipo</c>: "nao-veio", "mudou-de-cartao", "aumentou" ou
+/// "cartao-arquivado". <c>ValorNovo</c> e <c>ContaNova*</c> vão com a ação "Atualizar" (o valor e a conta da última
+/// cobrança). O texto não leva valores em reais (a tela mostra <c>ValorNovo</c> pelo pipe de "ocultar valores").
+/// </summary>
+public record AvisoContaAgendadaDto(int ContaAgendadaId, string Descricao, string Tipo, string Texto,
+    decimal? ValorAnterior = null, decimal? ValorNovo = null, int? ContaNovaId = null, string? ContaNovaNome = null,
+    DateOnly? Data = null);
+
 public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal Valor, bool ValorVariavel,
     decimal ValorMinimo, decimal ValorMaximo, DateOnly ProximoVencimento, int DiaHabitual, int Meses, int Pagamentos,
     DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,
@@ -634,6 +643,14 @@ public record ProventoMesDto(int Ano, int Mes, decimal Total, decimal RecebidoEx
 
 public record EvolucaoFiiMesDto(int Ano, int Mes, decimal Aplicado, decimal? ValorMercado);
 
+/// <summary>
+/// #173: o mês da carteira de FIIs como no app da corretora. Aportes = compras (cotas × preço + taxas), sem as
+/// subscrições, que vêm à parte. Rendimentos recebidos = créditos de provento no extrato, sem os trocos e vendas.
+/// Valorização = saldo no fim − saldo no fim do mês anterior − compras + vendas.
+/// </summary>
+public record MesAMesFiiDto(int Ano, int Mes, decimal Aportes, decimal Subscricoes, decimal Resgates,
+    decimal RendimentosRecebidos, decimal RendimentosEstimados, decimal Valorizacao, decimal Saldo);
+
 public record RentabilidadeMesDto(int Ano, int Mes, decimal Carteira, decimal Selic, decimal? Ifix);
 
 public record ResumoFiisDto(decimal ValorMercado, decimal Custo, decimal Valorizacao, decimal? ValorizacaoPercentual,
@@ -647,7 +664,8 @@ public record HistoricoPrecoDto(string Ticker, List<PontoPrecoDto> Pontos);
 
 public record PainelFiisDto(ResumoFiisDto Resumo, List<FiiDto> Fiis, List<LoteFiiDto> Lotes,
     List<ProventoMesDto> Proventos, List<EvolucaoFiiMesDto> Evolucao, List<RentabilidadeMesDto> Rentabilidade,
-    List<DistribuicaoInvestimentoDto> Segmentos, List<HistoricoPrecoDto> Historicos, List<string> SegmentosDisponiveis);
+    List<DistribuicaoInvestimentoDto> Segmentos, List<HistoricoPrecoDto> Historicos, List<string> SegmentosDisponiveis,
+    List<MesAMesFiiDto> MesAMes);
 
 /* ----------------------------- Importação pelo extrato ----------------------------- */
 /// <summary>Origem: "extrato", "quantidade do extrato", "preço do extrato", "cotação do dia" ou null (preencher).</summary>

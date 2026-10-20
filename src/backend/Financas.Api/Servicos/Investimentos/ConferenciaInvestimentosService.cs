@@ -115,6 +115,18 @@ public class ConferenciaInvestimentosService
         return (creditos.Count, creditos.Sum(c => c.Credito.Valor));
     }
 
+    /// <summary>
+    /// #173: créditos da corretora que são provento — os "Valor recebido de Investimentos" que não são troco de compra
+    /// nem valor de venda. Vale com ou sem a conferência aplicada: a categoria do crédito não entra na conta.
+    /// </summary>
+    public async Task<List<(long Id, DateOnly Data, decimal Valor)>> ProventosDaCorretoraAsync(CancellationToken ct)
+    {
+        var ativos = await _db.Ativos.AsNoTracking().Include(a => a.Operacoes).ToListAsync(ct);
+        var analise = await AnalisarExtratoAsync(ativos, ct);
+        var deOperacao = analise.DeOperacao.Select(c => c.Credito.Id).ToHashSet();
+        return analise.Creditos.Where(c => !deOperacao.Contains(c.Id)).Select(c => (c.Id, c.Data, c.Valor)).ToList();
+    }
+
     /// <summary>FII cadastrado como ação ou "outro" (o nome do fundo ou o emissor informado pela corretora).</summary>
     private static List<TipoParaCorrigirDto> TiposParaCorrigir(List<Ativo> ativos, List<Investimento> investimentos)
     {

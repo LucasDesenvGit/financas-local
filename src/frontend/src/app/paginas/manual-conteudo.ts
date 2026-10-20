@@ -885,6 +885,20 @@ export const MANUAL: CapituloManual[] = [
         dicas: ['Trocou de cartão? Filtre pelo cartão antigo para ver o que ainda cobra nele e precisa ser trocado nos serviços.']
       },
       {
+        id: 'avisos-recorrentes',
+        titulo: 'Avisos das recorrentes',
+        paraQueServe: 'Saber quando uma cobrança que se repete não veio, mudou de cartão, mudou de valor, ou cai num cartão que você arquivou.',
+        passos: [
+          'Os avisos aparecem no topo de Contas a pagar, com a ação ao lado quando dá para resolver no site.',
+          '“Não veio”: a cobrança automática passou 5 dias do vencimento e não apareceu no extrato. Pode ter sido cancelada, ou o cartão recusou. Também aparece no Painel.',
+          '“Mudou de cartão”: a última cobrança veio em outra conta ou cartão. “Atualizar o catálogo” passa a conta a pagar para lá.',
+          '“Aumentou” (ou baixou): a última cobrança passou 5% do valor cadastrado. “Atualizar o valor” grava o novo. Conta que muda de valor todo mês, como a de luz, não gera esse aviso.',
+          '“Cartão arquivado”: a cobrança ainda cai num cartão ou conta que você arquivou. Troque nos serviços. Também aparece no Painel.',
+          'Ao marcar “Arquivada” num cartão ou conta em Contas e cartões, a tela lista o que ainda cobra ali, antes de salvar.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
+      },
+      {
         id: 'pagar',
         titulo: 'Registrar o pagamento',
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',
@@ -1038,6 +1052,28 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['selic', 'ifix']
+      },
+      {
+        id: 'mes-a-mes',
+        titulo: 'Mês a mês dos FIIs',
+        paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
+        passos: [
+          'Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.',
+          'O gráfico mostra, por mês, os aportes, os rendimentos e a valorização; a frase acima dele resume o último mês.',
+          'Na tabela, o mês mais recente vem primeiro. “Aportes” são as compras do mês; subscrições e vendas aparecem embaixo, à parte.',
+          '“Rendimentos” são os proventos que caíram na conta. O troco das compras e o valor das vendas, que a corretora credita com a mesma descrição, ficam de fora.',
+          'No mês atual, “a receber (data-com)” é o provento dos fundos com data-com no mês, que costuma cair no mês seguinte.',
+          '“Valorização” é quanto as cotas ganharam ou perderam de preço no mês, sem contar aportes nem rendimentos. “Saldo no fim” é quanto a carteira valia no último dia do mês.'
+        ],
+        abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
+        dicas: [
+          'Para os rendimentos baterem com o app, confira os créditos da corretora em “Conferir investimentos”: ali o troco e o rendimento aparecem separados.',
+          'A taxa da B3, de alguns centavos por compra, só entra nos aportes quando foi lançada na operação.'
+        ],
+        erros: [
+          'A valorização pode diferir um pouco da do app: o site usa o fechamento do mês de outra fonte de cotação (no mês atual, a cotação de hoje).'
+        ],
+        termos: ['valorizacaoMes', 'trocoDeCompra']
       },
       {
         id: 'caixinhas',

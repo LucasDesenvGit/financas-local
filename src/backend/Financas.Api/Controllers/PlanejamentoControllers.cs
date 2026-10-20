@@ -306,6 +306,11 @@ public class ContasAgendadasController : BaseController
     public async Task<ActionResult<List<ContaAgendadaDto>>> Listar(CancellationToken ct)
         => await _relatorios.ContasAgendadasAsync(null, ct);
 
+    /// <summary>#158: avisos das recorrentes (não veio, mudou de cartão, aumentou, cartão arquivado). Só lê.</summary>
+    [HttpGet("avisos")]
+    public async Task<ActionResult<List<AvisoContaAgendadaDto>>> Avisos(CancellationToken ct)
+        => await _cobrancas.AvisosAsync(ct);
+
     /// <summary>Pagamentos mensais do extrato que ainda não estão cadastrados (só sugestão; nada é gravado).</summary>
     [HttpGet("sugestoes")]
     public async Task<ActionResult<List<SugestaoContaAgendadaDto>>> Sugestoes(CancellationToken ct)

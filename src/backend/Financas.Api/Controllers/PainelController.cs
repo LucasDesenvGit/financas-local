@@ -22,14 +22,17 @@ public class PainelController : BaseController
     private readonly ParametroService _parametros;
     private readonly DescricaoPoucoInformativaService _poucoInformativa;
     private readonly ConferenciaInvestimentosService _conferencia;
+    private readonly ContaAgendadaService _cobrancas;
 
     /// <summary>#9: o aviso de descrições pouco informativas olha só as transações recentes.</summary>
     public const int DiasPoucoInformativas = 90;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
         CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros,
-        DescricaoPoucoInformativaService poucoInformativa, ConferenciaInvestimentosService conferencia)
+        DescricaoPoucoInformativaService poucoInformativa, ConferenciaInvestimentosService conferencia,
+        ContaAgendadaService cobrancas)
     {
+        _cobrancas = cobrancas;
         _poucoInformativa = poucoInformativa;
         _conferencia = conferencia;
         _db = db;
@@ -110,6 +113,10 @@ public class PainelController : BaseController
             alertas.Add($"A conta {c.Nome} é em {c.Moeda}, mas o site trata as contas como reais, sem conversão"
                 + (c.IncluirNoSaldo ? ": o saldo dela entra no total como se fosse em reais. Desmarque \"Incluir no saldo\" em Contas e cartões." : ".")
                 + " As transações dela entram nos relatórios do mesmo jeito.");
+
+        // #158 (decisão do usuário): no Painel, só "não veio" e "cartão arquivado com cobranças"; os outros, na tela.
+        foreach (var aviso in (await _cobrancas.AvisosAsync(ct)).Where(a => a.Tipo is "nao-veio" or "cartao-arquivado"))
+            alertas.Add(aviso.Texto + " Veja em Contas a pagar.");
 
         var reservasAConferir = (await _reservas.ListarAsync(ct))
             .Where(r => r.PodeTerSaldoAnterior || r.ConferenciaAntiga).Select(r => r.Nome).ToList();
