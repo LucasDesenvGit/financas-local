@@ -126,7 +126,8 @@ const respostas: Record<string, unknown> = {
   '/api/relatorios/projecao': {
     mesesConsiderados: 6, mediaReceitas: 5000, mediaDespesas: 3800, saldoDisponivelAtual: 3250.5,
     meses: Array.from({ length: 6 }, (_, i) => ({ ...mesesAtras(-i), receitas: 5000, despesasAVista: 3300, parcelas: 500,
-      despesas: 3800, resultado: 1200, saldoProjetado: 3250 + 1200 * (i + 1), atual: i === 0 })),
+      // #257: saldo negativo largo, o caso em que o "-" quebrava a linha sozinho no celular.
+      despesas: 3800, resultado: 1200, saldoProjetado: -14863.64 + 1200 * i, atual: i === 0 })),
     categorias: []
   },
   '/api/contas': contas,

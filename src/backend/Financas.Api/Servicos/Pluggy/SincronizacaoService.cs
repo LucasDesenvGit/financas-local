@@ -245,6 +245,8 @@ public class SincronizacaoService
             await _db.SaveChangesAsync(ct);
             // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
             if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+            // #257 (ADR 0036): compra parcelada devolvida inteira sai dos relatórios, com o estorno.
+            if (await _categorizacao.IgnorarComprasParceladasEstornadasAsync(ct) > 0) await _db.SaveChangesAsync(ct);
             // #158: a cobrança automática que acabou de chegar dá baixa na conta a pagar.
             if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
             // #173 b) (ADR 0044): o troco sem dúvida das compras de renda variável vai para a categoria da compra. Um

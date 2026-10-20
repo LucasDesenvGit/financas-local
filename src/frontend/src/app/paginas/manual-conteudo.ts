@@ -618,7 +618,8 @@ export const MANUAL: CapituloManual[] = [
           'O estorno abate o gasto da categoria no mês (ex.: compra de R$ 100 em Compras + estorno de R$ 100 = R$ 0 em Compras) e não conta como receita.',
           'O crédito do pagamento da fatura no cartão (“Pagamento recebido”) fica fora dos gastos, mesmo quando chega sem a categoria “Pagamento de fatura”.',
           'Estorno que o banco manda como transferência (ex.: “Estorno de Uber - NuPay”) ganha a categoria do texto (Uber → Transporte) ou fica sem categoria para você escolher.',
-          'Os estornos que já estavam no site foram acertados sozinhos.'
+          'Os estornos que já estavam no site foram acertados sozinhos.',
+          'Compra parcelada devolvida inteira (o estorno do valor total, ex.: 12 × R$ 460 = R$ 5.527) é uma compra cancelada: o estorno e as parcelas dela já lançadas ficam fora dos relatórios, e no total ela não custa nada. Sem isso, o estorno do valor total abatia o gasto de um mês em que só a 1ª parcela tinha sido cobrada, e as despesas do mês ficavam negativas. Estorno de parte da compra continua abatendo o gasto do mês.'
         ],
         abrir: [{ rotulo: 'Ver os estornos', rota: '/transacoes', params: { lancamento: 'cartao' } }],
         termos: ['tipoLancamento']
@@ -1007,6 +1008,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Os meses seguintes usam a média das receitas, a média das despesas à vista e as parcelas já contratadas.',
           'O mês atual junta o que já aconteceu com a média do que falta.',
+          '“Disponível hoje” é o saldo das contas menos as faturas dos cartões. As parcelas que vencem nos meses seguintes ficam fora dele e entram na despesa do mês em que vencem: cada parcela conta uma vez só.',
           'Use o gráfico para ver a tendência e a tabela mês a mês para os números.'
         ],
         abrir: [{ rotulo: 'Abrir a Projeção', rota: '/projecao' }],

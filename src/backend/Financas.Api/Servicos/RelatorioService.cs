@@ -285,19 +285,30 @@ public class RelatorioService
                 t.DescricaoOriginal ?? t.Descricao))
             .ToListAsync(ct);
         var parcelasPorMes = new Dictionary<(int Ano, int Mes), decimal>();
-        foreach (var p in ParcelasFuturas.Projetar(parcelas, hoje))
+        var futuras = ParcelasFuturas.Projetar(parcelas, hoje);
+        foreach (var p in futuras)
         {
             var chave = (p.Data.Year, p.Data.Month);
             parcelasPorMes[chave] = parcelasPorMes.GetValueOrDefault(chave) + p.Valor;
         }
 
-        // Saldo disponível hoje: contas (exceto investimentos) − faturas de cartão.
+        // Saldo disponível hoje: contas (exceto investimentos) − dívida dos cartões.
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
-            .Select(c => new { c.Id, c.Tipo }).ToListAsync(ct);
+            .Select(c => new { c.Id, c.Tipo, c.Origem }).ToListAsync(ct);
         var saldoDisponivel = contas
             .Where(c => c.Tipo != TipoConta.Investimento)
             .Sum(c => saldos.GetValueOrDefault(c.Id));
+        // #257: o saldo do cartão do Open Finance é a dívida toda, com as parcelas que ainda vão vencer, e os meses previstos
+        // abaixo tiram essas parcelas de novo. As dos meses seguintes voltam ao saldo de partida para sair uma vez só, no
+        // mês em que vencem (as do mês atual ficam: o mês em andamento não as tira). O cartão manual não precisa: o saldo
+        // dele é a soma do que já foi lançado.
+        var cartoesOpenFinance = contas.Where(c => c.Tipo == TipoConta.CartaoCredito && c.Origem == OrigemConta.OpenFinance)
+            .Select(c => c.Id).ToHashSet();
+        var inicioProximoMes = inicioMesAtual.AddMonths(1);
+        var parcelasNoSaldoDoCartao = Math.Round(futuras
+            .Where(f => cartoesOpenFinance.Contains(f.ContaId) && f.Data >= inicioProximoMes).Sum(f => f.Valor), 2);
+        saldoDisponivel += parcelasNoSaldoDoCartao;
 
         var meses = historico
             .Select(h => new ProjecaoMesDto(h.Ano, h.Mes, "realizado", h.Receitas, h.Despesas, 0m, h.Receitas - h.Despesas, null))

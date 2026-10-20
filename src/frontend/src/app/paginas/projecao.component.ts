@@ -50,7 +50,7 @@ import { PrivacidadeService } from '../core/privacidade.service';
           <article class="kpi">
             <span>Disponível hoje</span>
             <strong [class.negativo]="d.saldoDisponivelAtual < 0">{{ d.saldoDisponivelAtual | currency }}</strong>
-            <small>contas − faturas de cartão</small>
+            <small>contas − faturas de cartão (as parcelas que vencem depois entram nos meses delas)</small>
           </article>
           <article class="kpi kpi-destaque">
             <span>Saldo previsto em {{ nomeMes(ultimo()?.mes, ultimo()?.ano) }}</span>

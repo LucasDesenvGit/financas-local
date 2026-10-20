@@ -320,6 +320,35 @@ public class CategorizacaoService
         return mudaram;
     }
 
+    /// <summary>
+    /// #257 (ADR 0036): compra parcelada devolvida inteira (o estorno do valor total) fica fora dos relatórios, com o
+    /// estorno e as parcelas dela já lançadas: a compra foi cancelada e, no total, não custou nada. Sem isso, o estorno do
+    /// total abatia o gasto de um mês em que só uma parcela tinha sido cobrada, e as despesas do mês ficavam negativas; e a
+    /// Projeção continuava contando as parcelas que não vão vir. Roda ao iniciar a API e depois de cada sincronização.
+    /// Não salva: chame SaveChangesAsync. Devolve quantas transações mudaram.
+    /// </summary>
+    public async Task<int> IgnorarComprasParceladasEstornadasAsync(CancellationToken ct)
+    {
+        await CarregarAsync(ct);
+        if (_cartoes.Count == 0) return 0;
+        var ids = _cartoes.ToList();
+        var desde = Relogio.Hoje.AddDays(-ParcelasFuturas.DiasEstornoDaCompra - 60);
+        var lancamentos = await _db.Transacoes
+            .Where(t => ids.Contains(t.ContaId) && t.Data >= desde && t.TransferenciaGrupo == null
+                        && t.Tipo == TipoTransacao.Despesa && (t.Valor > 0 || t.ParcelaTotal > 1))
+            .ToListAsync(ct);
+        var fora = ParcelasFuturas.ComprasEstornadas(lancamentos.Select(t => new ParcelasFuturas.Lancamento(
+            t.Id, t.ContaId, t.Data, t.Valor, t.ParcelaNumero, t.ParcelaTotal, t.DescricaoOriginal ?? t.Descricao)));
+        var mudaram = 0;
+        foreach (var t in lancamentos.Where(t => fora.Contains(t.Id) && !t.IgnorarRelatorios))
+        {
+            t.IgnorarRelatorios = true;
+            t.AtualizadoEm = DateTime.UtcNow;
+            mudaram++;
+        }
+        return mudaram;
+    }
+
     public TipoCategoria? TipoDaCategoria(int? categoriaId)
         => categoriaId is int id && _tiposCategoria.TryGetValue(id, out var tipo) ? tipo : null;
 
