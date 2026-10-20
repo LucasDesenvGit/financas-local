@@ -71,6 +71,8 @@ adicionar_coluna_se_ausente "Transacao" "MesmaTitularidade" "INTEGER NULL"
 adicionar_coluna_se_ausente "Transacao" "RegraDescricaoId" "INTEGER NULL"
 adicionar_coluna_se_ausente "Transacao" "DescricaoManual" "INTEGER NOT NULL DEFAULT 0"
 adicionar_coluna_se_ausente "Investimento" "NomePersonalizado" "TEXT NULL"
+adicionar_coluna_se_ausente "Conta" "LimiteAjustadoNoApp" "INTEGER NULL"
+adicionar_coluna_se_ausente "Conta" "LimiteDiferencaAvaliada" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'
