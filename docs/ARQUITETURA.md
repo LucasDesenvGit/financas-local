@@ -102,5 +102,5 @@ Separados pelo sistema em que rodam (#154): `geral/` é o bash que roda nos dois
 | `windows/parar-windows.ps1` | O `parar.sh` em PowerShell; chamado por `parar-windows.cmd` (na raiz). |
 | `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: publicam o gerenciador em `publicado/gerenciador` e criam os atalhos (Menu Iniciar no Windows, menu de aplicativos no Linux, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
 | `windows/configurar-github.ps1` | Cria o repositório no GitHub, envia as branches e aplica as proteções. |
-| `ci/verificar-sql.py`, `ci/verificar-manual.py`, `ci/verificar-versao.py` | Usados na CI: banco idempotente e sem T-SQL, aviso de Manual desatualizado e versão subiu (ADR 0039). |
+| `ci/verificar-sql.py`, `ci/verificar-manual.py`, `ci/verificar-versao.py`, `ci/verificar-tempo-testes.py` | Usados na CI: banco idempotente e sem T-SQL, aviso de Manual desatualizado, versão subiu (ADR 0039) e tempo dos testes do Jest (#204). |
 | `3-publicar-atualizar.sh`, `4-backup.sh`, `instalar-gerenciador.sh` (na raiz de `scripts/`) | **Repasses temporários** para os caminhos novos: o backup agendado antes da mudança e o comando que o gerenciador do Linux antigo mostra continuam funcionando. Podem ser apagados numa versão futura. |

@@ -87,7 +87,12 @@ jobs:
         working-directory: src/frontend
         run: |
           npm run test:tipos
-          npm test -- --ci
+          npm test -- --ci --json --outputFile=jest-resultado.json
+
+      # #204: trava de desempenho. Arquivo de teste acima de 20 s ou suíte acima de 150 s falha (aviso a partir de
+      # 10 s por arquivo). Ver "Testes rápidos" no CONTRIBUINDO.md.
+      - name: Tempo dos testes do Jest
+        run: python3 scripts/ci/verificar-tempo-testes.py src/frontend/jest-resultado.json
 
       # ADR 0041: o build de produção num navegador de verdade, com a CSP da API e a API falsa (sem back-end).
       # #204: o Chromium fica em cache pela versão do Playwright; as bibliotecas do sistema (--with-deps) vêm do apt.
