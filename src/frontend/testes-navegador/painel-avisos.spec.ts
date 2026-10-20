@@ -48,8 +48,9 @@ test('Painel: os outros avisos têm card próprio, e o menu "Ocultar" funciona p
   await expect(botao).toBeFocused();
   await expect(page.getByRole('menu')).toHaveCount(0);
 
-  // ↓ abre, ↓ vai ao 2º item ("Ocultar até aparecer um novo"), Enter escolhe.
+  // ↓ abre (o foco vai ao 1º item logo depois; esperar, senão o 2º ↓ cai no botão de novo), ↓ vai ao 2º item, Enter escolhe.
   await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('menuitem', { name: /^Minimizar/ })).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(page.getByRole('menuitem', { name: /^Ocultar até aparecer um novo/ })).toBeFocused();
   await page.keyboard.press('Enter');
