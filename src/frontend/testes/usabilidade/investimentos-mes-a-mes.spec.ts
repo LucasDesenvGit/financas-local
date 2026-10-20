@@ -66,7 +66,7 @@ describe('Usabilidade: Investimentos › FIIs › Mês a mês (#173)', () => {
     t.atualizar();
     expect(botao.getAttribute('aria-expanded')).toBe('true');
     const lista = t.secao()!.querySelector('#' + botao.getAttribute('aria-controls'))!;
-    expect(lista.textContent!.replace(/\s+/g, ' ')).toMatch(/MXRF11:R\$\s10,00HGLG11:R\$\s12,00sem fundo identificado:R\$\s3,00/);
+    expect(lista.textContent!.replace(/\s+/g, ' ')).toMatch(/MXRF11: R\$\s10,00HGLG11: R\$\s12,00sem fundo identificado: R\$\s3,00/);
     botao.click();
     t.atualizar();
     expect(t.secao()!.querySelector('.linha-por-fii')).toBeNull();

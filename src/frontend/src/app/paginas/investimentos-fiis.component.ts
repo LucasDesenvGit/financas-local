@@ -164,7 +164,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
                         <td colspan="5">
                           <ul class="lista-por-fii" [attr.aria-label]="'Rendimentos por fundo em ' + rotuloMes(m)">
                             @for (r of m.porFii ?? []; track r.ticker ?? 'sem') {
-                              <li><span>{{ r.ticker ?? 'sem fundo identificado' }}:</span> <strong>{{ r.valor | currency }}</strong></li>
+                              <li><span>{{ r.ticker ?? 'sem fundo identificado' }}: </span><strong>{{ r.valor | currency }}</strong></li>
                             }
                           </ul>
                         </td>

@@ -567,3 +567,25 @@ CREATE TABLE IF NOT EXISTS RegraDescricao
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_RegraDescricao_TipoCorrespondencia CHECK (TipoCorrespondencia IN (1, 2, 3))
 );
+
+/* ------------------------------------------------------------------ */
+/* Histórico de saldo dos investimentos do Open Finance (#173 e)       */
+/* ------------------------------------------------------------------ */
+/* ADR 0045: um registro por investimento e dia (a última sincronização do dia vale), para o rendimento de cada mês da
+   caixinha/CDB. Só renda fixa, fundos e outros em reais (a renda variável tem a carteira própria). Sem chave estrangeira
+   para Investimento, de propósito: o investimento resgatado sai de Investimento (a instituição para de mandar) e o
+   histórico dele fica. */
+CREATE TABLE IF NOT EXISTS HistoricoInvestimento
+(
+    Id                  INTEGER NOT NULL CONSTRAINT PK_HistoricoInvestimento PRIMARY KEY AUTOINCREMENT,
+    PluggyInvestmentId  TEXT    NOT NULL,
+    ConexaoBancariaId   INTEGER NOT NULL,
+    Nome                TEXT    NOT NULL,
+    Tipo                TEXT    NOT NULL,
+    Data                TEXT    NOT NULL,
+    Saldo               TEXT    NOT NULL,
+    ValorAplicado       TEXT    NULL,
+    -- Preenchido pela API (HistoricoInvestimento.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    AtualizadoEm        TEXT    NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_HistoricoInvestimento_Investimento_Data ON HistoricoInvestimento (PluggyInvestmentId, Data);

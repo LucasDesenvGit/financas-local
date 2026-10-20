@@ -125,6 +125,7 @@ builder.Services.AddScoped<ReservaService>();
 builder.Services.AddScoped<CotacaoService>();
 builder.Services.AddScoped<ExtratoCarteiraService>();
 builder.Services.AddScoped<ConferenciaInvestimentosService>();
+builder.Services.AddScoped<HistoricoInvestimentosService>();
 builder.Services.AddScoped<ConferenciaBancoService>();
 builder.Services.AddScoped<FiiService>();
 builder.Services.AddScoped<EmprestimoService>();

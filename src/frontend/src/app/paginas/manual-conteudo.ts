@@ -1089,11 +1089,13 @@ export const MANUAL: CapituloManual[] = [
           'O nome mostra o produto e o banco: a caixinha do Nubank aparece como “CDB · Nubank”, e o CDB do Mercado Pago como “CDB · Mercado Pago”. Embaixo fica o nome que o banco usa (“no banco: …”), para achar no app.',
           'Clique em “renomear” para dar o seu nome (ex.: “Caixinha viagem”). A sincronização não muda o nome que você escolher.',
           'Para voltar ao nome automático, abra “renomear” e clique em “Voltar ao nome automático” (ou salve com o campo vazio).',
-          'A coluna Instituição mostra o banco da conexão.'
+          'A coluna Instituição mostra o banco da conexão.',
+          '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). “por investimento” abre o de cada um.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }],
         dicas: [
-          'O rendimento da caixinha fica no saldo dela e não vira lançamento no extrato. Os “Valor recebido de Investimentos” do extrato do Nubank são proventos dos FIIs ou troco das compras (veja “Conferir investimentos”).'
+          'O rendimento da caixinha fica no saldo dela e não vira lançamento no extrato. Os “Valor recebido de Investimentos” do extrato do Nubank são proventos dos FIIs ou troco das compras (veja “Conferir investimentos”).',
+          'O Open Finance manda só o saldo de hoje: o site guarda um por dia desde a atualização que trouxe o “Rendimento por mês”. Os meses de antes não aparecem, e o primeiro conta a partir daquele dia.'
         ]
       },
       {

@@ -154,6 +154,15 @@ const respostas: Record<string, unknown> = {
       vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2 }
   ],
   '/api/investimentos': [],
+  '/api/investimentos/historico': {
+    desde: dataIso(new Date(ano, hoje.getMonth() - 1, 20)),
+    meses: [
+      { ...mesesAtras(1), desde: dataIso(new Date(ano, hoje.getMonth() - 1, 20)), rendimento: 12.3, saldo: 5012.3,
+        porInvestimento: [{ nome: 'Caixinha viagem', rendimento: 10, saldo: 4010 }, { nome: 'CDB · Banco X', rendimento: 2.3, saldo: 1002.3 }] },
+      { ...mesesAtras(0), desde: null, rendimento: 40.5, saldo: 5552.8,
+        porInvestimento: [{ nome: 'Caixinha viagem', rendimento: 33, saldo: 4543 }, { nome: 'Fundo Y', rendimento: null, saldo: 1009.8 }] }
+    ]
+  },
   '/api/emprestimos': { financiamentos: credito(1), emprestimos: credito(2), contratos: [], pagamentosPorMes: [] },
   '/api/cambio/moedas': [],
   '/api/carteira': {
