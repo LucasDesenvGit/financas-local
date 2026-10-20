@@ -23,14 +23,16 @@ public class SincronizacaoService
     private readonly TransferenciasService _transferencias;
     private readonly ContaAgendadaService _cobrancas;
     private readonly ConferenciaInvestimentosService _conferencia;
+    private readonly HistoricoInvestimentosService _historico;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
         CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
         TransferenciasService transferencias, ContaAgendadaService cobrancas, ConferenciaInvestimentosService conferencia,
-        ILogger<SincronizacaoService> logger)
+        HistoricoInvestimentosService historico, ILogger<SincronizacaoService> logger)
     {
         _conferencia = conferencia;
+        _historico = historico;
         _cobrancas = cobrancas;
         _descricoes = descricoes;
         _transferencias = transferencias;
@@ -445,6 +447,7 @@ public class SincronizacaoService
         var existentes = await _db.Investimentos.Where(i => i.ConexaoBancariaId == conexao.Id)
             .ToDictionaryAsync(i => i.PluggyInvestmentId, ct);
         var recebidos = new HashSet<string>();
+        var atuais = new List<Investimento>();
 
         foreach (var pi in investimentosPluggy)
         {
@@ -471,7 +474,10 @@ public class SincronizacaoService
             inv.DataAplicacao = aplicacao is { } da ? Relogio.ParaDataLocal(da) : inv.DataAplicacao;
             inv.Status = Limitar(pi.Status, 30);
             inv.AtualizadoEm = DateTime.UtcNow;
+            atuais.Add(inv);
         }
+        // #173 e) (ADR 0045): o saldo de hoje vai para o histórico (rendimento de cada mês da caixinha/CDB).
+        await _historico.RegistrarAsync(atuais, ct);
 
         _db.Investimentos.RemoveRange(existentes.Values.Where(i => !recebidos.Contains(i.PluggyInvestmentId)));
         await _db.SaveChangesAsync(ct);

@@ -702,6 +702,20 @@ public record ImportarExtratoDto([Required, MinLength(1), MaxLength(500)] List<I
 public record ResultadoImportacaoCarteiraDto(int AtivosCriados, int OperacoesImportadas, List<string> SemHistorico,
     List<string> ComLancamentoManual, List<string> Erros, string? Mensagem);
 
+/* ----------------------------- Histórico dos investimentos do Open Finance (#173 e, ADR 0045) ----------------------------- */
+
+/// <summary>Rendimento de cada mês dos investimentos do Open Finance (renda fixa e fundos); <c>Desde</c>: o primeiro registro.</summary>
+public record HistoricoInvestimentosDto(DateOnly? Desde, List<MesInvestimentosOfDto> Meses);
+
+/// <summary>
+/// Um mês: o rendimento (soma dos investimentos com valor aplicado; null se nenhum tem) e o saldo no fim. <c>Desde</c>:
+/// o mês em que o histórico começou conta a partir desse dia.
+/// </summary>
+public record MesInvestimentosOfDto(int Ano, int Mes, DateOnly? Desde, decimal? Rendimento, decimal Saldo,
+    List<RendimentoInvestimentoMesDto> PorInvestimento);
+
+public record RendimentoInvestimentoMesDto(string Nome, decimal? Rendimento, decimal Saldo);
+
 /* ----------------------------- Conferir investimentos (ADR 0027) ----------------------------- */
 
 /// <summary>O que parece errado na carteira e nas transações de renda variável, com a correção sugerida.</summary>

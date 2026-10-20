@@ -91,6 +91,24 @@ public class Investimento
     public ConexaoBancaria? ConexaoBancaria { get; set; }
 }
 
+/// <summary>
+/// #173 e) (ADR 0045): o saldo de um investimento do Open Finance num dia (a última sincronização do dia vale). Sem
+/// chave estrangeira para <see cref="Investimento"/>: o investimento resgatado some de lá, e o histórico fica.
+/// </summary>
+public class HistoricoInvestimento
+{
+    public int Id { get; set; }
+    public string PluggyInvestmentId { get; set; } = string.Empty;
+    public int ConexaoBancariaId { get; set; }
+    /// <summary>O nome do banco naquele dia (para mostrar depois que o investimento sair de Investimento).</summary>
+    public string Nome { get; set; } = string.Empty;
+    public string Tipo { get; set; } = string.Empty;
+    public DateOnly Data { get; set; }
+    public decimal Saldo { get; set; }
+    public decimal? ValorAplicado { get; set; }
+    public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+}
+
 /// <summary>Contrato de empréstimo ou financiamento (somente leitura, vindo do Open Finance via GET /loans).</summary>
 public class Emprestimo
 {
