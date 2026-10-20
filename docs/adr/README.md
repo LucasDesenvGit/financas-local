@@ -78,3 +78,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0038](0038-meli-dolar-como-reserva-em-dolar.md) | Méli Dólar como reserva em dólar, estimada pelo extrato e convertida pela PTAX | Aceita |
 | [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) | A versão sobe a cada pull request, pelo tipo do commit | Aceita |
 | [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) | Atualizar pelo develop, pelo gerenciador, só na instalação de desenvolvimento | Aceita |
+| [0041](0041-testes-no-navegador-com-playwright.md) | Testes no navegador com Playwright, com a CSP da API e uma API falsa | Aceita |

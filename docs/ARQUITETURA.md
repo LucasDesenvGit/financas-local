@@ -50,6 +50,7 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 | `src/app/layout/` | Estrutura da tela (menu lateral). |
 | `src/app/paginas/` | Uma página por rota. |
 | `src/styles.css` | Tema (tokens de cor claros/escuros) e componentes visuais globais. |
+| `testes-navegador/` | Testes no navegador com Playwright ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)): o build de produção servido com a CSP da API (`servidor.mjs`), a API falsa (`api-falsa.ts`), as fixtures que tratam erro de console, exceção e bloqueio de CSP como falha (`base.ts`) e os prints sob demanda (`fotos.spec.ts`). |
 | `testes/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). Fora do build do Angular. |
 
 Angular 22 com zone.js (`provideZoneChangeDetection`) e componentes standalone. Todo componente declara `changeDetection: ChangeDetectionStrategy.Eager` — o comportamento padrão até o Angular 21 —, porque várias telas guardam estado em campos comuns e não em signals; o padrão OnPush do Angular 22 deixaria essas telas sem atualizar.

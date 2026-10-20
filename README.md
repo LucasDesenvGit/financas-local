@@ -134,7 +134,7 @@ Instalou pelos scripts? Os problemas de lá estão em [Instalar a partir do cód
 
 | Documento | Conteúdo |
 |---|---|
-| [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md) | Instalar, atualizar e parar pelos scripts (Linux e Windows), migrar do SQL Server, Visual Studio e estrutura de pastas |
+| [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md) | Instalar, atualizar e parar pelos scripts (Linux e Windows), migrar do SQL Server, Visual Studio, testes (Jest e no navegador) e estrutura de pastas |
 | [CONTRIBUINDO.md](CONTRIBUINDO.md) | Branches, commits, versão, pull requests e como publicar uma versão |
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, pastas e decisões técnicas |
 | [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md) | Como alterar a estrutura do banco (sem migrations) |
