@@ -58,8 +58,9 @@ public class TransacoesController : BaseController
 
         var total = await q.CountAsync(ct);
         var paraTotais = q.Where(t => !t.IgnorarRelatorios && t.Tipo != TipoTransacao.Transferencia);
-        var receitas = await paraTotais.Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
-        var despesas = await paraTotais.Where(t => t.Valor < 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+        // Pelo tipo, não pelo sinal: estorno no cartão é despesa positiva e abate as despesas (ADR 0036).
+        var receitas = await paraTotais.Where(t => t.Tipo == TipoTransacao.Receita).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+        var despesas = await paraTotais.Where(t => t.Tipo == TipoTransacao.Despesa).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
 
         var itens = await q
             .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
@@ -68,7 +69,7 @@ public class TransacoesController : BaseController
             .Select(ProjecoesTransacao.ParaDto)
             .ToListAsync(ct);
 
-        return new PaginaTransacoesDto(itens, total, f.Pagina, f.TamanhoPagina, receitas, Math.Abs(despesas));
+        return new PaginaTransacoesDto(itens, total, f.Pagina, f.TamanhoPagina, receitas, -despesas);
     }
 
     /// <summary>Os filtros da busca (a mesma consulta da lista e do "todas do filtro" do modo edição).</summary>

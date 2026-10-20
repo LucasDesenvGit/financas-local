@@ -64,9 +64,9 @@ public class AssistenteMetasService
         // Contas de dinheiro: receitas e despesas como nos relatórios (sem transferências nem "ignorar nos relatórios").
         var movimentoCaixa = await _relatorios.Relevantes(inicioHistorico, hoje)
             .Where(t => idsCaixa.Contains(t.ContaId))
-            .Select(t => new { t.Data, t.Valor }).ToListAsync(ct);
-        decimal Receitas(DateOnly de, DateOnly ate) => movimentoCaixa.Where(t => t.Data >= de && t.Data <= ate && t.Valor > 0).Sum(t => t.Valor);
-        decimal Despesas(DateOnly de, DateOnly ate) => -movimentoCaixa.Where(t => t.Data >= de && t.Data <= ate && t.Valor < 0).Sum(t => t.Valor);
+            .Select(t => new { t.Data, t.Valor, t.Tipo }).ToListAsync(ct);
+        decimal Receitas(DateOnly de, DateOnly ate) => movimentoCaixa.Where(t => t.Data >= de && t.Data <= ate && t.Tipo == TipoTransacao.Receita).Sum(t => t.Valor);
+        decimal Despesas(DateOnly de, DateOnly ate) => -movimentoCaixa.Where(t => t.Data >= de && t.Data <= ate && t.Tipo == TipoTransacao.Despesa).Sum(t => t.Valor);
         var mediaReceitas = Receitas(inicioHistorico, fimHistorico) / mesesConsiderados;
         var mediaDespesas = Despesas(inicioHistorico, fimHistorico) / mesesConsiderados;
 

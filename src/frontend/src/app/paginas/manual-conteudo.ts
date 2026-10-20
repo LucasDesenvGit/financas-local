@@ -455,6 +455,20 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } }],
         termos: ['tipoLancamento']
+      },
+      {
+        id: 'estornos',
+        titulo: 'Estornos no cartão',
+        paraQueServe: 'Entender por que um estorno aparece em verde, mas não aumenta a sua receita.',
+        passos: [
+          'No cartão, todo crédito que não é o pagamento da fatura é estorno: compra devolvida, “crédito de confiança”, cashback.',
+          'O estorno abate o gasto da categoria no mês (ex.: compra de R$ 100 em Compras + estorno de R$ 100 = R$ 0 em Compras) e não conta como receita.',
+          'O crédito do pagamento da fatura no cartão (“Pagamento recebido”) fica fora dos gastos, mesmo quando chega sem a categoria “Pagamento de fatura”.',
+          'Estorno que o banco manda como transferência (ex.: “Estorno de Uber - NuPay”) ganha a categoria do texto (Uber → Transporte) ou fica sem categoria para você escolher.',
+          'Os estornos que já estavam no site foram acertados sozinhos.'
+        ],
+        abrir: [{ rotulo: 'Ver os estornos', rota: '/transacoes', params: { lancamento: 'cartao' } }],
+        termos: ['tipoLancamento']
       }
     ]
   },

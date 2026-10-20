@@ -73,3 +73,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0033](0033-gerenciador-no-linux-com-avalonia.md) | Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows | Aceita |
 | [0034](0034-sem-sri-no-build-do-front-end.md) | Build do front-end sem SRI, para manter a CSP sem script inline | Aceita |
 | [0035](0035-plano-das-metas-pelo-caixa-calculado-na-tela.md) | Plano das metas pelo caixa do mês (fatura que vence entra), com a divisão calculada na tela | Aceita |
+| [0036](0036-receita-e-despesa-pelo-tipo-estorno-abate-gasto.md) | Receita e despesa pelo tipo, não pelo sinal; estorno no cartão abate o gasto | Aceita |
