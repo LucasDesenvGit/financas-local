@@ -3,7 +3,9 @@ import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } 
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AssinaturasRecorrentesComponent } from './assinaturas-recorrentes.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
@@ -18,7 +20,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent,
+    AssinaturasRecorrentesComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -26,6 +29,17 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       <button type="button" class="botao botao-primario" (click)="nova()">+ Nova conta</button>
     </header>
 
+    <!-- #158: o de-para das cobranças que se repetem, como aba da mesma tela (Nielsen 4); a aba fica na URL (ADR 0018). -->
+    <div class="segmentado barra-abas" role="tablist" aria-label="Contas a pagar">
+      <button type="button" role="tab" [class.ativo]="aba() === 'contas'" [attr.aria-selected]="aba() === 'contas'"
+        (click)="mudarAba('contas')">Contas a pagar</button>
+      <button type="button" role="tab" [class.ativo]="aba() === 'recorrentes'" [attr.aria-selected]="aba() === 'recorrentes'"
+        (click)="mudarAba('recorrentes')">Assinaturas e recorrentes</button>
+    </div>
+
+    @if (aba() === 'recorrentes') {
+      <app-assinaturas-recorrentes [itens]="itens()" [contas]="contas()" />
+    } @else {
     <section class="kpis">
       <article class="kpi"><span>Vencidas</span><strong class="negativo">{{ totalVencido() | currency }}</strong></article>
       <article class="kpi"><span>Próximos 30 dias</span><strong>{{ total30() | currency }}</strong></article>
@@ -146,6 +160,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
         }
       </section>
     }
+    }
 
     <app-modal [aberto]="form !== null" [titulo]="editandoId ? 'Editar conta' : 'Nova conta a pagar'" (fechar)="form = null">
       @if (form; as fm) {
@@ -246,6 +261,24 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 export class ContasAgendadasComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** #158: aba aberta (?aba=recorrentes). */
+  readonly aba = signal<'contas' | 'recorrentes'>(
+    this.rota.snapshot.queryParamMap.get('aba') === 'recorrentes' ? 'recorrentes' : 'contas');
+
+  constructor() {
+    this.rota.queryParamMap.pipe(takeUntilDestroyed())
+      .subscribe((p) => this.aba.set(p.get('aba') === 'recorrentes' ? 'recorrentes' : 'contas'));
+  }
+
+  /** Trocar de aba limpa os filtros da outra (replaceUrl, para o voltar do navegador não passar por cada clique). */
+  mudarAba(aba: 'contas' | 'recorrentes'): void {
+    this.aba.set(aba);
+    void this.router.navigate([], { relativeTo: this.rota, replaceUrl: true,
+      queryParams: { aba: aba === 'recorrentes' ? 'recorrentes' : null } });
+  }
 
   readonly Recorrencia = Recorrencia;
   readonly FormaCobranca = FormaCobranca;
