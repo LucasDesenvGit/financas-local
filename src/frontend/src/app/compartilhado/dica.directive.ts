@@ -24,6 +24,19 @@ export class DicaDirective {
     });
   }
 
+  /** Perto da borda da tela, a dica alinha pelo lado do elemento, para não sair da tela (nem fazê-la rolar). */
+  @HostListener('mouseenter')
+  @HostListener('focus')
+  alinhar(): void {
+    const el = this.el.nativeElement as HTMLElement;
+    const r = el.getBoundingClientRect();
+    const centro = r.left + r.width / 2;
+    const metade = Math.min(160, this.appDica().length * 3.6 + 10);
+    const alinhar = centro + metade > window.innerWidth - 8 ? 'fim' : centro - metade < 8 ? 'inicio' : null;
+    if (alinhar) el.dataset['dicaAlinhar'] = alinhar;
+    else delete el.dataset['dicaAlinhar'];
+  }
+
   @HostListener('keydown.escape')
   dispensar(): void {
     (this.el.nativeElement as HTMLElement).classList.add('dica-dispensada');

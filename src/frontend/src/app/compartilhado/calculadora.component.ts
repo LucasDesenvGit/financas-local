@@ -1,4 +1,4 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DicaDirective } from './dica.directive';
 import { IconeComponent } from './icone.component';
 import { Icones } from './icones';
@@ -15,6 +15,7 @@ interface ItemHistorico { expressao: string; resultado: number; }
   selector: 'app-calculadora',
   imports: [DicaDirective, IconeComponent],
   host: { class: 'calc' },
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button type="button" class="botao-barra calc-botao" (click)="alternar()" [attr.aria-expanded]="aberta()"
       aria-controls="calc-painel" aria-label="Calculadora (Alt+C)" appDica="Calculadora (Alt+C)" dicaLado="abaixo">
@@ -22,7 +23,7 @@ interface ItemHistorico { expressao: string; resultado: number; }
     </button>
 
     @if (aberta()) {
-      <section id="calc-painel" class="calc-painel" role="dialog" aria-label="Calculadora">
+      <section id="calc-painel" class="calc-painel" role="dialog" aria-label="Calculadora" animate.leave="sair">
         <div class="calc-visor">
           <div class="calc-expressao">{{ expressao() || ' ' }}</div>
           <div class="calc-resultado" aria-live="polite">{{ visor() }}</div>
@@ -62,9 +63,11 @@ interface ItemHistorico { expressao: string; resultado: number; }
         @if (historico().length) {
           <ul class="calc-historico" aria-label="Últimos cálculos">
             @for (h of historico(); track $index) {
-              <li (click)="reutilizar(h)" title="Usar este resultado">
+              <!-- WCAG 2.1.1: botão de verdade (o <li> clicável não recebia foco). -->
+              <li><button type="button" class="calc-reutilizar" (click)="reutilizar(h)"
+                [attr.aria-label]="'Usar o resultado ' + formatar(h.resultado) + ' (' + h.expressao + ')'">
                 <span class="truncar">{{ h.expressao }}</span><strong>{{ formatar(h.resultado) }}</strong>
-              </li>
+              </button></li>
             }
           </ul>
         }

@@ -15,10 +15,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
+  manual:
+    name: manual do site
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Manual atualizado?
+        env:
+          BASE: ${{ github.base_ref }}
+          CORPO_PR: ${{ github.event.pull_request.body }}
+        run: python3 scripts/ci/verificar-manual.py
+
+  # ADR 0039: todo PR para o develop sobe a versão no Directory.Build.props, pelo tipo do título.
+  versao:
+    name: versão subiu
+    if: github.event_name == 'pull_request' && github.base_ref == 'develop' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Versão no Directory.Build.props
+        env:
+          BASE: ${{ github.base_ref }}
+          TITULO_PR: ${{ github.event.pull_request.title }}
+        run: python3 scripts/ci/verificar-versao.py
+
   build:
     name: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +58,14 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      # #204: pacotes NuGet entre execuções (o projeto não tem packages.lock.json; a chave são os .csproj).
+      - name: Cache dos pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
 
       - name: Compilar API
         run: dotnet build FinancasLocal.sln -c Release
@@ -47,7 +87,38 @@ jobs:
         working-directory: src/frontend
         run: |
           npm run test:tipos
-          npm test -- --ci
+          npm test -- --ci --json --outputFile=jest-resultado.json
+
+      # #204: trava de desempenho. Arquivo de teste acima de 20 s ou suíte acima de 150 s falha (aviso a partir de
+      # 10 s por arquivo). Ver "Testes rápidos" no CONTRIBUINDO.md.
+      - name: Tempo dos testes do Jest
+        run: python3 scripts/ci/verificar-tempo-testes.py src/frontend/jest-resultado.json
+
+      # ADR 0041: o build de produção num navegador de verdade, com a CSP da API e a API falsa (sem back-end).
+      # #204: o Chromium fica em cache pela versão do Playwright; as bibliotecas do sistema (--with-deps) vêm do apt.
+      - name: Cache do navegador dos testes
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}
+
+      - name: Navegador dos testes (Chromium do Playwright)
+        working-directory: src/frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes no navegador (Playwright)
+        working-directory: src/frontend
+        run: npx playwright test
+
+      - name: Relatório dos testes no navegador
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testes-navegador
+          path: |
+            src/frontend/testes-navegador/relatorio
+            src/frontend/testes-navegador/resultados
+          if-no-files-found: ignore
 
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py

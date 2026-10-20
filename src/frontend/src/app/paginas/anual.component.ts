@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -8,12 +9,15 @@ import { NaturezaGasto, PainelAnual } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { NOMES_MESES, NOMES_MESES_CURTOS, pct, reaisOuNada } from '../compartilhado/utilidades';
+import {
+  ContextoTransacoes, NOMES_MESES, NOMES_MESES_CURTOS, paramsTransacoes, pct, reaisOuNada, ultimoDiaMes
+} from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { ChaveGlossario } from '../compartilhado/glossario';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 type Status = 'ok' | 'atencao' | 'alerta' | 'neutro';
 
@@ -35,9 +39,21 @@ const COR_RECEITA_ANTERIOR = CORES_GRAFICO.receitaAnterior;
 
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
+/** Uma parte da renda no gráfico 50/30/20 (na ordem das séries do gráfico). */
+interface Parte503020 {
+  rotulo: string;
+  cor: string;
+  /** Percentual da renda (null sem renda no período). */
+  percentual: number | null;
+  /** Query params de /transacoes com as transações que formam esta parte. */
+  link: Record<string, string>;
+}
+
 @Component({
   selector: 'app-anual',
-  imports: [FormsModule, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent,
+    MaisAnalisesComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -117,9 +133,21 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
       <section class="painel-bloco">
         <h2>Para onde vai a sua renda (<app-termo chave="regra503020">regra 50/30/20</app-termo>)</h2>
         <app-grafico-explicado [resumo]="resumo503020()"
-          comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Classifique as categorias em Categorias e regras.">
-          <app-grafico [configuracao]="grafico503020()" [altura]="170" />
+          comoLer="Barra de cima: você; de baixo: a referência (até 50% em essenciais, até 30% em estilo de vida e pelo menos 20% guardados). Clique num pedaço da sua barra ou no nome abaixo para ver as transações; em Guardado, a lista traz as receitas e as despesas do período, e o resultado delas é o que sobrou. Classifique as categorias em Categorias e regras.">
+          <app-grafico [configuracao]="grafico503020()" [altura]="150" dicaClique="Clique para ver as transações"
+            [itemClicavel]="soABarraVoce" (serieClicada)="abrirParte503020($event)" />
         </app-grafico-explicado>
+        <!-- O clique no gráfico é atalho: a legenda é o caminho por teclado e toque (WCAG 2.1.1). -->
+        <ul class="lista-legenda">
+          @for (p of partes503020(); track p.rotulo) {
+            <li>
+              <span class="ponto" [style.background]="p.cor"></span>
+              <a class="cresce link-categoria" routerLink="/transacoes" [queryParams]="p.link">
+                <span class="so-leitor">Ver em Transações:</span>{{ p.rotulo }}</a>
+              @if (p.percentual !== null) { <span class="texto-suave">{{ pctTexto(p.percentual) }} da renda</span> }
+            </li>
+          }
+        </ul>
         @if (d.distribuicao.naoClassificado > 0) {
           <p class="texto-suave pequeno-texto">{{ d.distribuicao.naoClassificado | currency }} em categorias sem classificação.</p>
         }
@@ -224,6 +252,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 export class AnualComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly privacidade = inject(PrivacidadeService);
+  private readonly router = inject(Router);
 
   readonly NaturezaGasto = NaturezaGasto;
   readonly ano = signal(new Date().getFullYear());
@@ -440,27 +469,56 @@ export class AnualComponent implements OnInit {
     };
   });
 
+  /**
+   * Essenciais, estilo de vida (com o que está sem classificação, como no gráfico) e guardado, cada um com o link
+   * para as transações que o formam no mesmo período do gráfico (detalhe por navegação, com o contexto na URL).
+   */
+  readonly partes503020 = computed<Parte503020[]>(() => {
+    const p = this.dados();
+    if (!p) return [];
+    const d = p.distribuicao;
+    const renda = d.receitas > 0 ? d.receitas : 0;
+    const parte = (v: number) => (renda > 0 ? Math.round((v / renda) * 1000) / 10 : null);
+    const periodo: ContextoTransacoes = { inicio: `${p.ano}-01-01`, fim: ultimoDiaMes(p.ano, p.mesLimite || 12) };
+    const despesas = (naturezas: ContextoTransacoes['naturezas']) => paramsTransacoes({ ...periodo, tipo: 'despesa', naturezas });
+    const guardado = parte(d.poupanca);
+    return [
+      { rotulo: 'Essenciais', cor: '#92c8f0', percentual: parte(d.essenciais), link: despesas(['essencial']) },
+      {
+        rotulo: 'Estilo de vida', cor: '#f3b3d3', percentual: parte(d.estiloDeVida + d.naoClassificado),
+        link: despesas(d.naoClassificado > 0 ? ['estilo-de-vida', 'sem'] : ['estilo-de-vida'])
+      },
+      { rotulo: 'Guardado', cor: CORES_GRAFICO.ganhou, percentual: guardado === null ? null : Math.max(0, guardado), link: paramsTransacoes(periodo) }
+    ];
+  });
+
+  /** Só a barra "Você" (índice 0) leva às transações; a de referência não tem transações. */
+  readonly soABarraVoce = (indice: number) => indice === 0;
+
+  abrirParte503020(e: { indice: number; serie: number }): void {
+    const parte = this.partes503020()[e.serie];
+    if (e.indice === 0 && parte) void this.router.navigate(['/transacoes'], { queryParams: parte.link });
+  }
+
+  pctTexto(v: number): string {
+    return pct(v);
+  }
+
   readonly grafico503020 = computed<ChartConfiguration<'bar'>>(() => {
-    const d = this.dados()?.distribuicao;
-    const renda = d && d.receitas > 0 ? d.receitas : 0;
-    const pct = (v: number) => (renda > 0 ? Math.round((v / renda) * 1000) / 10 : 0);
-    const essenciais = d ? pct(d.essenciais) : 0;
-    const estilo = d ? pct(d.estiloDeVida + d.naoClassificado) : 0;
-    const poupanca = d ? Math.max(0, pct(d.poupanca)) : 0;
+    const referencias = [50, 30, 20];
     return {
       type: 'bar',
       data: {
         labels: ['Você', 'Referência'],
-        datasets: [
-          { label: 'Essenciais', data: [essenciais, 50], backgroundColor: '#92c8f0', borderRadius: 6 },
-          { label: 'Estilo de vida', data: [estilo, 30], backgroundColor: '#f3b3d3', borderRadius: 6 },
-          { label: 'Guardado', data: [poupanca, 20], backgroundColor: CORES_GRAFICO.ganhou, borderRadius: 6 }
-        ]
+        datasets: this.partes503020().map((p, i) => ({
+          label: p.rotulo, data: [p.percentual ?? 0, referencias[i]], backgroundColor: p.cor, borderRadius: 6
+        }))
       },
       options: {
         indexAxis: 'y',
         plugins: {
-          legend: { position: 'bottom' },
+          // A legenda é a lista de links abaixo do gráfico (mesmas cores, na mesma ordem).
+          legend: { display: false },
           tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.x}%` } }
         },
         scales: {

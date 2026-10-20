@@ -110,6 +110,19 @@ public class CarteiraController : BaseController
         return new ResultadoAplicacaoDto(desfeitas);
     }
 
+    /// <summary>#173 b) (ADR 0044): volta os trocos que a sincronização classificou sozinha.</summary>
+    [HttpPost("conferencia/trocos-automaticos/desfazer")]
+    public async Task<ActionResult<ResultadoAplicacaoDto>> DesfazerTrocosAutomaticos(CancellationToken ct)
+        => new ResultadoAplicacaoDto(await _conferencia.DesfazerTrocosAutomaticosAsync(User.Identity?.Name, ct));
+
+    /// <summary>#173 b): "Ok" no aviso do Painel (os trocos ficam como estão).</summary>
+    [HttpPost("conferencia/trocos-automaticos/dispensar")]
+    public async Task<IActionResult> DispensarTrocosAutomaticos(CancellationToken ct)
+    {
+        await _conferencia.DispensarTrocosAutomaticosAsync(ct);
+        return NoContent();
+    }
+
     [HttpGet]
     public async Task<ActionResult<CarteiraDto>> Obter(CancellationToken ct)
     {
@@ -392,8 +405,8 @@ public class ReservasController : BaseController
         var data = dto.Data ?? Relogio.Hoje;
         if (data > Relogio.Hoje) return Erro("A data da conferência não pode estar no futuro.");
         if (string.IsNullOrWhiteSpace(dto.Nome)) return Erro("Informe o nome da reserva.");
-        return await _reservas.ConferirAsync(dto.ContaId, dto.Nome, dto.Saldo, data, ct)
-            ? NoContent() : Erro("Conta inválida.");
+        return await _reservas.ConferirAsync(dto.ContaId, dto.Nome, dto.Saldo, data, dto.Moeda, ct) is { } erro
+            ? Erro(erro) : NoContent();
     }
 
     /// <summary>Apaga a conferência: o saldo volta a ser só a soma dos lançamentos do extrato.</summary>

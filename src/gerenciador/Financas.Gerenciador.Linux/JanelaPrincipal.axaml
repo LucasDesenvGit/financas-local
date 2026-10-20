@@ -1,0 +1,123 @@
+<!--
+  Janela do gerenciador no Linux (ADR 0033), na mesma ordem da do Windows (ADR 0028): primeiro a resposta a "o site está
+  funcionando?" e as três ações do dia a dia; a versão e como atualizar logo abaixo; o resto atrás de "Mais opções"
+  (Progressive Disclosure). Teclas de atalho com "_" (Alt+letra), foco visível do Fluent, nomes acessíveis.
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Financas.Gerenciador.JanelaPrincipal"
+        Title="Gerenciador do Finanças Local"
+        Icon="avares://Financas.Gerenciador.Linux/Recursos/icone.png"
+        Width="480" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterScreen">
+  <DockPanel>
+    <!-- Cabeçalho com o degradê e o cofrinho da marca. -->
+    <Border DockPanel.Dock="Top" Height="72" Padding="18,0"
+            AutomationProperties.Name="Finanças Local, gerenciador do site">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+          <GradientStop Color="#b9b6ff" Offset="0" />
+          <GradientStop Color="#9fd2f6" Offset="1" />
+        </LinearGradientBrush>
+      </Border.Background>
+      <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+        <Border Background="#96FFFFFF" CornerRadius="12" Padding="2">
+          <Image Source="avares://Financas.Gerenciador.Linux/Recursos/icone.png" Width="40" Height="40" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Finanças Local" FontSize="19" FontWeight="SemiBold" Foreground="#23214a" />
+          <TextBlock Text="Gerenciador do site" FontSize="13" Foreground="#3c3a66" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <StackPanel Margin="16,16,16,12" Spacing="12">
+      <!-- Situação: o ponto colorido e o título respondem "está funcionando?" (Nielsen 1); a cor sempre vem com o texto (WCAG 1.4.1). -->
+      <Border Classes="cartao">
+        <StackPanel Spacing="14">
+          <Grid ColumnDefinitions="Auto,*">
+            <Ellipse x:Name="Ponto" Width="14" Height="14" Margin="2,6,12,0" VerticalAlignment="Top"
+                     Fill="{DynamicResource TextoSuave}" />
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock x:Name="Titulo" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                         Text="Vendo a situação do site…" AutomationProperties.LiveSetting="Polite" />
+              <SelectableTextBlock x:Name="Detalhe" Classes="suave" TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <Button x:Name="BotaoAbrir" Classes="primario" Content="_Abrir o site" IsEnabled="False" />
+            <Button x:Name="BotaoLigar" Content="_Ligar" IsEnabled="False" />
+            <Button x:Name="BotaoReiniciar" Content="_Reiniciar" IsEnabled="False" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Versão: aqui a versão nova vem pelos scripts, então a tela mostra o comando em vez de baixar algo. -->
+      <Border Classes="cartao">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="subtitulo" Text="Versão" />
+          <TextBlock x:Name="TextoVersao" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+          <TextBlock x:Name="TextoComoAtualizar" Classes="suave" TextWrapping="Wrap" />
+          <Border x:Name="CaixaComando" Classes="comando">
+            <SelectableTextBlock x:Name="Comando" FontFamily="monospace" FontSize="12.5" TextWrapping="Wrap"
+                                 AutomationProperties.Name="Comando para atualizar" />
+          </Border>
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <Button x:Name="BotaoCopiarComando" Content="_Copiar o comando" />
+            <TextBlock x:Name="ComandoCopiado" Classes="suave" VerticalAlignment="Center"
+                       AutomationProperties.LiveSetting="Polite" />
+          </WrapPanel>
+          <!-- ADR 0040: só na instalação de desenvolvimento (clone git na branch develop). -->
+          <StackPanel x:Name="BlocoDesenvolvimento" Spacing="8" IsVisible="False">
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button x:Name="BotaoAtualizarDev" Classes="primario" Content="Atualizar para a última do de_velop" />
+            </WrapPanel>
+            <StackPanel x:Name="ConfirmacaoDev" Spacing="8" IsVisible="False">
+              <TextBlock TextWrapping="Wrap"
+                         Text="Atualizar esta instalação de desenvolvimento para a última versão do develop? O site fica fora do ar por alguns minutos, enquanto o front-end e a API são compilados, e o banco ganha uma cópia em backups antes de mudar. Com alterações locais ou em outra branch, nada é mudado: a tela diz o motivo." />
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <Button x:Name="BotaoConfirmarDev" Classes="primario" Content="_Sim, atualizar" />
+                <Button x:Name="BotaoCancelarDev" Content="Cancelar" />
+              </WrapPanel>
+            </StackPanel>
+            <TextBlock x:Name="ResultadoDev" TextWrapping="Wrap" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
+            <TextBox x:Name="SaidaDev" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="monospace"
+                     FontSize="12" Height="170" IsVisible="False" AutomationProperties.Name="Saída da atualização" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button x:Name="BotaoAtualizarGerenciador" Content="Atualizar o _gerenciador e reabrir" IsVisible="False" />
+            </WrapPanel>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Button x:Name="BotaoMais" Classes="discreto" Content="_Mais opções ▾"
+              AutomationProperties.Name="Mais opções: cópia do banco, erros, registro, manual e preferências" />
+
+      <Border x:Name="PainelMais" Classes="cartao" IsVisible="False">
+        <StackPanel Spacing="10">
+          <StackPanel Spacing="6">
+            <Button x:Name="BotaoCopia" Content="Salvar uma có_pia do banco…" />
+            <TextBlock x:Name="ResultadoCopia" TextWrapping="Wrap" IsVisible="False"
+                       AutomationProperties.LiveSetting="Polite" />
+          </StackPanel>
+          <WrapPanel ItemSpacing="8" LineSpacing="8">
+            <Button x:Name="BotaoErros" Content="Ver os _erros do site" />
+            <Button x:Name="BotaoRegistro" Content="Ver o re_gistro do serviço" />
+            <Button x:Name="BotaoManual" Content="Abrir o ma_nual" />
+          </WrapPanel>
+
+          <ToggleSwitch x:Name="IniciarComSistema" OnContent="" OffContent=""
+                        Content="_Iniciar com o sistema (avisa se o site cair)" />
+
+          <!-- Serviço do usuário: sem o linger, o site só fica no ar com a sessão aberta. -->
+          <StackPanel x:Name="BlocoSemLogin" Spacing="6" IsVisible="False">
+            <TextBlock x:Name="TextoSemLogin" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            <Button x:Name="BotaoSemLogin" Content="Manter o site no ar _sem login" />
+          </StackPanel>
+
+          <SelectableTextBlock x:Name="Local" Classes="suave" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </DockPanel>
+</Window>

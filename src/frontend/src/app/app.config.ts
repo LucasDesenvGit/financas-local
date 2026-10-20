@@ -1,6 +1,6 @@
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
-import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXsrfConfiguration, withXhr } from '@angular/common/http';
 import { ApplicationConfig, DEFAULT_CURRENCY_CODE, ErrorHandler, LOCALE_ID, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { rotas } from './app.routes';
@@ -15,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     // anchorScrolling: /manual/<capitulo>#<secao> rola até a seção (link do botão "Ajuda" e do índice do manual).
     provideRouter(rotas, withComponentInputBinding(), withInMemoryScrolling({ anchorScrolling: 'enabled' })),
     provideHttpClient(
+      withXhr(),
       withInterceptors([erroInterceptor]),
       // O backend emite o cookie __Host-XSRF-TOKEN; o Angular devolve no cabeçalho X-XSRF-TOKEN.
       withXsrfConfiguration({ cookieName: '__Host-XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' })

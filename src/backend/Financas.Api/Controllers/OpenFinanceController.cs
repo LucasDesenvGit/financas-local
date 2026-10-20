@@ -40,7 +40,25 @@ public class OpenFinanceController : BaseController
             await _config.ExisteAsync(ConfiguracaoService.PluggyClientSecret, ct),
             await _config.ObterInteiroAsync(ConfiguracaoService.IntervaloHoras, 6, ct),
             await _config.ObterInteiroAsync(ConfiguracaoService.DiasRetroativos, 30, ct),
-            await _config.ObterBoolAsync(ConfiguracaoService.SincronizacaoHabilitada, true, ct));
+            await _config.ObterBoolAsync(ConfiguracaoService.SincronizacaoHabilitada, true, ct),
+            await _config.ObterAsync(TransferenciasService.ChaveMeuNome, ct));
+
+    /// <summary>
+    /// #172 (ADR 0031): o seu nome como aparece nos Pix. Sem titular informado pelo banco, Pix que cita esse nome é entre
+    /// contas suas. Reclassifica as transferências na hora.
+    /// </summary>
+    [HttpPut("meu-nome")]
+    public async Task<IActionResult> SalvarMeuNome(MeuNomeDto dto, [FromServices] TransferenciasService transferencias,
+        CancellationToken ct)
+    {
+        var nome = string.IsNullOrWhiteSpace(dto.Nome) ? null : dto.Nome.Trim();
+        if (nome is not null && TransferenciasService.PalavrasDoNome(nome) is null)
+            return Erro("Informe pelo menos o primeiro e o último nome, como aparecem nos Pix.");
+        await _config.DefinirAsync(TransferenciasService.ChaveMeuNome, nome, ct: ct);
+        await _db.SaveChangesAsync(ct);
+        if (await transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
 
     /// <summary>Salva as credenciais. O Client Secret é gravado criptografado e nunca é devolvido pela API.</summary>
     [HttpPut("configuracao")]
@@ -83,12 +101,17 @@ public class OpenFinanceController : BaseController
 
     [HttpGet("conexoes")]
     public async Task<ActionResult<List<ConexaoDto>>> ListarConexoes(CancellationToken ct)
-        => await _db.ConexoesBancarias.AsNoTracking()
-            .OrderBy(c => c.NomeInstituicao)
+    {
+        var conexoes = await _db.ConexoesBancarias.AsNoTracking()
             .Select(c => new ConexaoDto(c.Id, c.PluggyItemId, c.NomeInstituicao, c.CorPrimaria, c.Status, c.StatusExecucao,
                 c.UltimaAtualizacaoInstituicao, c.ConsentimentoExpiraEm, c.UltimaSincronizacaoEm, c.UltimoErro, c.Ativa,
-                c.Contas.Count))
+                c.Contas.Count, null))
             .ToListAsync(ct);
+        // #170: o banco (deduzido das contas), e não "MeuPluggy", que é o nome do conector.
+        var nomes = await _contas.NomesDasConexoesAsync(ct);
+        return conexoes.Select(c => c with { NomeExibicao = nomes.GetValueOrDefault(c.Id) })
+            .OrderBy(c => c.NomeExibicao).ToList();
+    }
 
     /// <summary>Cadastra um item do Meu Pluggy (valida na Pluggy antes) e já faz a primeira sincronização.</summary>
     [HttpPost("conexoes")]
@@ -180,13 +203,19 @@ public class OpenFinanceController : BaseController
 
     [HttpGet("logs")]
     public async Task<ActionResult<List<SincronizacaoLogDto>>> Logs(CancellationToken ct)
-        => await _db.SincronizacaoLogs.AsNoTracking()
+    {
+        var logs = await _db.SincronizacaoLogs.AsNoTracking()
             .OrderByDescending(l => l.Id)
             .Take(50)
             .Select(l => new SincronizacaoLogDto(l.Id, l.ConexaoBancariaId,
                 l.ConexaoBancaria != null ? l.ConexaoBancaria.NomeInstituicao : null,
                 l.Origem, l.IniciadoEm, l.FinalizadoEm, l.Sucesso, l.TransacoesNovas, l.TransacoesAtualizadas, l.Mensagem))
             .ToListAsync(ct);
+        // #170: o mesmo nome da lista de conexões.
+        var nomes = await _contas.NomesDasConexoesAsync(ct);
+        return logs.Select(l => l.ConexaoBancariaId is int id && nomes.TryGetValue(id, out var nome)
+            ? l with { NomeInstituicao = nome } : l).ToList();
+    }
 
     /* ---------------------------- Categorias da Pluggy ---------------------------- */
 

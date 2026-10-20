@@ -7,6 +7,8 @@ export enum TipoTransacao { Despesa = 1, Receita = 2, Transferencia = 3 }
 export enum StatusTransacao { Efetivada = 1, Pendente = 2 }
 export enum TipoCorrespondencia { Contem = 1, ComecaCom = 2, Igual = 3 }
 export enum Recorrencia { Unica = 0, Mensal = 1, Anual = 2 }
+/** #158 (ADR 0043): como a conta a pagar é cobrada; só a paga à mão precisa do "Pagar". */
+export enum FormaCobranca { AMao = 1, DebitoAutomatico = 2, CartaoCredito = 3 }
 export enum NaturezaGasto { Essencial = 1, EstiloDeVida = 2 }
 export enum NaturezaCredito { Emprestimo = 1, Financiamento = 2 }
 
@@ -23,6 +25,12 @@ export const NOMES_TIPO_CATEGORIA: Record<TipoCategoria, string> = {
   [TipoCategoria.Despesa]: 'Despesa',
   [TipoCategoria.Receita]: 'Receita',
   [TipoCategoria.Transferencia]: 'Transferência'
+};
+
+export const NOMES_FORMA_COBRANCA: Record<FormaCobranca, string> = {
+  [FormaCobranca.AMao]: 'paga à mão (boleto, Pix)',
+  [FormaCobranca.DebitoAutomatico]: 'débito automático',
+  [FormaCobranca.CartaoCredito]: 'no cartão de crédito'
 };
 
 export const NOMES_RECORRENCIA: Record<Recorrencia, string> = {
@@ -53,6 +61,8 @@ export interface Conta {
   contaVinculadaId: number | null;
   /** Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel). */
   faturaMes: FaturaMes | null;
+  /** #171: "você reduziu o limite no app?" (null = sem resposta) e a diferença (limite usado − dívida) na resposta. */
+  limiteAjustadoNoApp?: boolean | null; limiteDiferencaAvaliada?: number | null;
 }
 
 export interface SalvarConta {
@@ -107,14 +117,18 @@ export interface ResultadoRenomearEmLote {
 
 export interface PreviaRegraDescricao { quantidade: number; exemplos: string[]; }
 
-/** #123 (ADR 0030): "quando a descrição do banco for/contiver texto, mostrar novaDescricao". */
+/**
+ * #123 (ADR 0030): "quando a descrição do banco for/contiver texto, mostrar novaDescricao". #241: com `valorMinimo` e
+ * `valorMaximo` (cada um opcional), só quando o valor da transação, sem o sinal, está na faixa.
+ */
 export interface RegraDescricao {
   id: number; texto: string; tipoCorrespondencia: TipoCorrespondencia; novaDescricao: string; ativa: boolean;
-  transacoes: number;
+  transacoes: number; valorMinimo: number | null; valorMaximo: number | null;
 }
 
 export interface SalvarRegraDescricao {
   texto: string; tipoCorrespondencia: TipoCorrespondencia; novaDescricao: string; ativa: boolean;
+  valorMinimo: number | null; valorMaximo: number | null;
 }
 
 /** #111 (ADR 0025): os mesmos números do enum da API. */
@@ -133,6 +147,11 @@ export interface FiltroTransacoes {
   poucoInformativa?: boolean;
   /** #111: grupo do filtro "Lançamento" (pix, cartao, fatura, entre-contas…). */
   lancamento?: string | null;
+  /** Natureza do gasto (50/30/20), da categoria ou da categoria pai; com semNatureza, soma as sem classificação. */
+  naturezas?: NaturezaGasto[] | null;
+  semNatureza?: boolean;
+  /** #173 d): só estes lançamentos (o detalhe de um número de outra tela). */
+  ids?: number[] | null;
 }
 
 export interface PaginaTransacoes {
@@ -220,18 +239,20 @@ export interface Meta {
   prioridade: number;
 }
 
-/** #90 — um mês do plano de uma meta. */
-export interface PlanoMesMeta { ano: number; mes: number; sobraPrevista: number; parcelas: number; recomendado: number }
+/**
+ * #149 — um mês do caixa: receitas e despesas das contas de dinheiro, faturas de cartão que vencem no mês (com a parte
+ * que é parcela) e a sobra = receitas − despesas − faturas.
+ */
+export interface MesCaixa { ano: number; mes: number; receitas: number; despesas: number; faturas: number; parcelas: number; sobra: number }
 
-export interface PlanoMeta {
-  metaId: number; falta: number; recomendado: number | null; pedidoMes: number | null; divisaoIgual: number | null;
-  dataProvavel: string | null; noPrazo: boolean | null; paraManterPrazo: number | null; plano: PlanoMesMeta[];
-}
-
-/** #90 — quanto guardar este mês, pela sobra prevista (a da Projeção) e pela ordem de prioridade. */
+/**
+ * #90/#149 — o que o plano das metas precisa (a divisão entre as metas é feita na tela, em `metas-plano.ts`).
+ * `meses` começa no mês atual. `saldoFimDoMes`: saldo previsto nas contas no fim do mês, já pagas as faturas que vencem
+ * nele. `melhorMesRecente`: a maior sobra de verdade entre os meses completos considerados.
+ */
 export interface PlanoMetas {
-  disponivel: boolean; mesesConsiderados: number; ano: number; mes: number; sobraPrevista: number; margemPercentual: number;
-  capacidade: number; totalPedido: number; totalRecomendado: number; sobraNegativa: boolean; metas: PlanoMeta[];
+  disponivel: boolean; mesesConsiderados: number; ano: number; mes: number; margemPercentual: number;
+  saldoContas: number; faturaAPagar: number; saldoFimDoMes: number; melhorMesRecente: number; meses: MesCaixa[];
 }
 
 export interface SalvarMeta {
@@ -245,6 +266,8 @@ export interface ContaAgendada {
   ativa: boolean; ultimoPagamentoEm: string | null; diasParaVencer: number;
   /** #69: até quando se repete (null = sem fim); pagamentos que faltam até lá, contando o próximo. */
   dataLimite: string | null; pagamentosRestantes: number | null;
+  /** #158: como é cobrada, o texto que a liga às cobranças ("a descrição do banco contém…") e a observação. */
+  formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** Inativa por ter passado da data limite ao pagar. */
   encerrada: boolean;
 }
@@ -254,9 +277,20 @@ export interface SalvarContaAgendada {
   categoriaId: number | null; contaId: number | null; ativa: boolean;
   /** #69: último vencimento que ainda se repete (null = sem fim). */
   dataLimite: string | null;
+  /** #158 */
+  formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
+  /** #205: a chave da sugestão do extrato que originou o cadastro (vazia na edição: a ligação que já existe fica). */
+  chaveExtrato?: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
+/** #158: aviso de uma recorrente; `valorNovo` e `contaNova*` vão com a ação "Atualizar". */
+export interface AvisoContaAgendada {
+  contaAgendadaId: number; descricao: string; tipo: 'nao-veio' | 'mudou-de-cartao' | 'aumentou' | 'cartao-arquivado';
+  texto: string; valorAnterior: number | null; valorNovo: number | null; contaNovaId: number | null;
+  contaNovaNome: string | null; data: string | null;
+}
+
 export interface SugestaoContaAgendada {
   chave: string; descricao: string; valor: number; valorVariavel: boolean; valorMinimo: number; valorMaximo: number;
   proximoVencimento: string; diaHabitual: number; meses: number; pagamentos: number;
@@ -264,6 +298,21 @@ export interface SugestaoContaAgendada {
   categoriaId: number | null; categoriaNome: string | null; contaId: number; contaNome: string; termoBusca: string;
   /** Vencimento esperado que já passou sem o pagamento aparecer no extrato (null quando não há). */
   vencimentoSemPagamento: string | null;
+  /** #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual. */
+  formaCobranca: FormaCobranca; textoCobranca: string | null; recorrencia: Recorrencia;
+  /**
+   * #205: a chave da descrição do banco (gravada na conta a pagar ao cadastrar ou no "é a mesma") e, quando há uma conta
+   * a pagar ativa parecida (valor, dia e conta) sem dar para ter certeza, qual é ela.
+   */
+  chaveExtrato: string | null; pareceSerId: number | null; pareceSerNome: string | null;
+}
+
+/** #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance; desde: o primeiro registro do histórico. */
+export interface HistoricoInvestimentos { desde: string | null; meses: MesInvestimentosOf[]; }
+/** Um mês: rendimento (null se nenhum investimento informa o valor aplicado) e saldo no fim; desde: o mês começou depois do dia 1. */
+export interface MesInvestimentosOf {
+  ano: number; mes: number; desde: string | null; rendimento: number | null; saldo: number;
+  porInvestimento: { nome: string; rendimento: number | null; saldo: number }[];
 }
 
 export interface Investimento {
@@ -271,6 +320,8 @@ export interface Investimento {
   moeda: string; saldo: number; saldoEmReais: number | null; valorAplicado: number | null; rendimento: number | null;
   taxaAnual: number | null;
   dataVencimento: string | null; status: string | null; nomeInstituicao: string | null; atualizadoEm: string;
+  /** #170: o nome escolhido, ou "produto · banco" no lugar da razão social do emissor. */
+  nomeExibicao: string; nomePersonalizado: string | null;
 }
 
 export interface ValorCategoria { categoriaId: number | null; nome: string; cor: string; valor: number; }
@@ -325,16 +376,26 @@ export interface Painel {
   despesasEmergenciaMes: number;
   dividaFinanciamentos: number; dividaEmprestimos: number;
   diasProximosVencimentos: number;
-  /** UX-12: o que cada cartão lançou no mês escolhido (só transações do mês, sem parcelas futuras). */
+  /** UX-12/#144: a fatura de cada cartão que fecha no mês escolhido. */
   faturasDoMes: FaturaMes[] | null; totalFaturasDoMes: number;
   /** #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto). */
   poucoInformativas: number; poucoInformativasDesde: string | null; exemploPoucoInformativa: string | null;
+  /** #170: trocos e vendas de renda variável contando como receita (aviso com link para Conferir investimentos). */
+  creditosCorretoraComoReceita: number; totalCreditosCorretoraComoReceita: number;
+  /** #173 b) (ADR 0044): trocos que a sincronização classificou sozinha. */
+  trocosAutomaticos?: TrocosAutomaticos | null;
 }
 
+/** #173 b): os trocos classificados na sincronização que continuam como ficaram (desde/ate: as datas deles). */
+export interface TrocosAutomaticos { quantidade: number; total: number; ids: number[]; desde: string; ate: string; }
+
 export interface FaturaMes {
+  /** #144: <c>valorMes</c> é o total do banco na fatura fechada; na aberta, a soma das transações do ciclo. */
   contaId: number; cartao: string; valorMes: number; parcelasMes: number;
-  /** Fatura com vencimento no mês, só como referência (pode ser null). */
+  /** Fatura que fecha no mês (<c>faturaId</c> só depois de importada; vencimento estimado enquanto não). */
   faturaId: number | null; vencimento: string | null; situacao: SituacaoFatura | null;
+  /** #144: dia em que a fatura fecha; null = cartão sem fechamento conhecido (valor é o do mês do calendário). */
+  fechamento?: string | null;
   /** ADR 0024: banco do cartão, para o selo. */
   banco?: string | null;
 }
@@ -359,6 +420,8 @@ export interface PainelEmprestimos {
 
 export interface ConfiguracaoPluggy {
   clientId: string | null; secretConfigurado: boolean; intervaloHoras: number; diasRetroativos: number; habilitada: boolean;
+  /** #172: o seu nome como aparece nos Pix (para os bancos que não informam o titular). */
+  meuNome?: string | null;
 }
 
 export interface SalvarConfiguracaoPluggy {
@@ -383,6 +446,8 @@ export interface Conexao {
   id: number; pluggyItemId: string; nomeInstituicao: string | null; corPrimaria: string | null; status: string | null;
   statusExecucao: string | null; ultimaAtualizacaoInstituicao: string | null; consentimentoExpiraEm: string | null;
   ultimaSincronizacaoEm: string | null; ultimoErro: string | null; ativa: boolean; quantidadeContas: number;
+  /** #170: o banco, deduzido das contas da conexão (`nomeInstituicao` é o conector, ex.: "MeuPluggy"). */
+  nomeExibicao: string | null;
 }
 
 export interface SincronizacaoLog {
@@ -461,6 +526,8 @@ export interface InvestimentoComparado {
   valorAplicado: number | null; dataAplicacao: string | null;
   dataVencimento: string | null; taxaAnual: number | null; rentabilidade: number | null; selicNoPeriodo: number | null;
   percentualDaSelic: number | null; rendaVariavel: boolean; jaNaCarteira: boolean; atualizadoEm: string;
+  /** #170: o nome escolhido, ou "produto · banco" no lugar da razão social do emissor (`nome` é o do banco). */
+  nomeExibicao: string; nomePersonalizado: string | null;
 }
 
 export interface Carteira {
@@ -484,6 +551,20 @@ export interface Reserva {
   podeTerSaldoAnterior: boolean;
   /** Conferida há mais de 30 dias. */
   conferenciaAntiga: boolean;
+  /**
+   * #168/#237: o valor veio da instituição, pelo nome, na lista detalhada do Open Finance (não é estimado nem precisa de
+   * conferência). Só o total da conta não marca nenhuma reserva.
+   */
+  informadoPeloBanco?: boolean;
+  /** #237: a conta tem a lista detalhada do banco e esta reserva do extrato não está nela (continua estimada e conferível). */
+  foraDaListaDoBanco?: boolean;
+  /**
+   * #237: linha "Reservado" com a parte do total que o banco informa (`totalDoBanco`) que não está nas reservas do
+   * extrato. Não se confere: conferir as outras reservas da conta ajusta este valor.
+   */
+  restanteDoBanco?: boolean; totalDoBanco?: number | null;
+  /** #169: "USD" no Méli Dólar: `quantidade` e `saldoConferido` em dólar; `saldo` em reais pela `cotacao` (PTAX). */
+  moeda?: string; quantidade?: number | null; cotacao?: number | null;
 }
 
 export interface ResultadoImportacaoCarteira {
@@ -551,6 +632,18 @@ export interface PainelFiis {
   segmentos: { nome: string; valor: number }[];
   historicos: { ticker: string; pontos: { ano: number; mes: number; fechamento: number }[] }[];
   segmentosDisponiveis: string[];
+  mesAMes: MesAMesFii[];
+}
+
+/** #173: o mês da carteira de FIIs como no app da corretora. */
+export interface MesAMesFii {
+  ano: number; mes: number; aportes: number; subscricoes: number; resgates: number;
+  rendimentosRecebidos: number; rendimentosEstimados: number; valorizacao: number; saldo: number;
+  /** #173 c): os rendimentos recebidos por fundo (ticker null = crédito que não deu para ligar a nenhum fundo). */
+  porFii?: { ticker: string | null; valor: number }[] | null;
+  /** #173 d): os lançamentos que formam os aportes (compras, subscrições e vendas) e os rendimentos do mês. */
+  idsAportes?: number[] | null;
+  idsRendimentos?: number[] | null;
 }
 
 export interface SugestaoExtrato {
@@ -567,6 +660,13 @@ export interface ImportarExtratoItem {
 export interface ConferenciaInvestimentos {
   tipos: TipoParaCorrigir[]; cotas: CotasDiferentes[]; comprasSemOperacao: CompraSemOperacao[];
   trocos: CreditoDaCorretora[]; rendimentos: RendimentoComoInvestimento[]; categoriaDoTroco: { id: number; nome: string } | null;
+  /** #173 a): taxa da B3 que falta nas compras, por dia. */
+  taxas?: TaxaB3[] | null;
+}
+/** #173 a): débito − troco − cotas × preço de um dia de compras = a taxa da B3, dividida entre as compras pelo valor. */
+export interface TaxaB3 {
+  data: string; conta: string; debitado: number; trocos: number; valorDasCotas: number; taxa: number;
+  operacoes: { operacaoId: number; ticker: string; quantidade: number; taxa: number }[];
 }
 /** Ativo cadastrado como ação ou "outro" que é FII (motivo: o nome do fundo ou o emissor da corretora). */
 export interface TipoParaCorrigir { ativoId: number; ticker: string; nome: string | null; tipoAtual: TipoAtivo; motivo: string; }
@@ -590,9 +690,11 @@ export interface RendimentoComoInvestimento {
 }
 export interface CorrigirInvestimentos {
   ativosParaFii: number[]; compras: ImportarExtratoItem[]; trocos: number[]; rendimentos: number[];
+  /** #173 a): operações que recebem a taxa da B3 (a API recalcula o valor). */
+  taxas?: number[];
 }
 export interface ResultadoCorrecaoInvestimentos {
-  tipos: number; compras: number; trocos: number; rendimentos: number; desfazer: string | null;
+  tipos: number; compras: number; trocos: number; rendimentos: number; taxas?: number; desfazer: string | null;
 }
 
 /* ----------------------------- Erros do sistema (#11) ----------------------------- */
@@ -628,3 +730,19 @@ export interface PaginaErros {
 }
 
 export interface ErroFrontEnd { mensagem: string; detalhe: string | null; rota: string | null; }
+
+/** #172: "Conferir com o banco". `valor` (quando há) é comparado com a diferença; `rota` leva ao detalhe. */
+export interface PistaConferencia {
+  texto: string; valor: number | null; rota?: string | null; parametros?: Record<string, string> | null;
+}
+export interface ContaConferencia {
+  id: number; nome: string; banco: string | null; openFinance: boolean; saldo: number; pistas: PistaConferencia[];
+}
+export interface CartaoConferencia {
+  id: number; nome: string; banco: string | null; faturaMes: number; situacao: string | null; fechamento: string | null;
+  vencimento: string | null; dividaTotal: number; pistas: PistaConferencia[];
+}
+export interface InvestimentoConferencia { chave: string; nome: string; origem: string; saldo: number; pistas: PistaConferencia[]; }
+export interface ConferenciaBanco {
+  contas: ContaConferencia[]; cartoes: CartaoConferencia[]; investimentos: InvestimentoConferencia[];
+}

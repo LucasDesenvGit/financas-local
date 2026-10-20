@@ -390,6 +390,8 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     UltimoPagamentoEm   TEXT    NULL,
     -- #69: último vencimento que ainda se repete (NULL = sem fim). Ao pagar e passar dele, a conta é encerrada.
     DataLimite          TEXT    NULL,
+    -- #205: chave da descrição do banco (a do agrupamento das sugestões do extrato) do pagamento que é esta conta.
+    ChaveExtrato        TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_ContaAgendada_Recorrencia CHECK (Recorrencia IN (0, 1, 2)),
@@ -562,8 +564,33 @@ CREATE TABLE IF NOT EXISTS RegraDescricao
     Texto               TEXT    NOT NULL,
     TipoCorrespondencia INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_TipoCorrespondencia DEFAULT 3,
     NovaDescricao       TEXT    NOT NULL,
+    -- #241: a regra só vale com o valor da transação (sem o sinal) nesta faixa; NULL = sem piso ou sem teto.
+    ValorMinimo         TEXT    NULL,
+    ValorMaximo         TEXT    NULL,
     Ativa               INTEGER NOT NULL CONSTRAINT DF_RegraDescricao_Ativa DEFAULT 1,
     -- Preenchido pela API (RegraDescricao.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_RegraDescricao_TipoCorrespondencia CHECK (TipoCorrespondencia IN (1, 2, 3))
 );
+
+/* ------------------------------------------------------------------ */
+/* Histórico de saldo dos investimentos do Open Finance (#173 e)       */
+/* ------------------------------------------------------------------ */
+/* ADR 0045: um registro por investimento e dia (a última sincronização do dia vale), para o rendimento de cada mês da
+   caixinha/CDB. Só renda fixa, fundos e outros em reais (a renda variável tem a carteira própria). Sem chave estrangeira
+   para Investimento, de propósito: o investimento resgatado sai de Investimento (a instituição para de mandar) e o
+   histórico dele fica. */
+CREATE TABLE IF NOT EXISTS HistoricoInvestimento
+(
+    Id                  INTEGER NOT NULL CONSTRAINT PK_HistoricoInvestimento PRIMARY KEY AUTOINCREMENT,
+    PluggyInvestmentId  TEXT    NOT NULL,
+    ConexaoBancariaId   INTEGER NOT NULL,
+    Nome                TEXT    NOT NULL,
+    Tipo                TEXT    NOT NULL,
+    Data                TEXT    NOT NULL,
+    Saldo               TEXT    NOT NULL,
+    ValorAplicado       TEXT    NULL,
+    -- Preenchido pela API (HistoricoInvestimento.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    AtualizadoEm        TEXT    NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_HistoricoInvestimento_Investimento_Data ON HistoricoInvestimento (PluggyInvestmentId, Data);

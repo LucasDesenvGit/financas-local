@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { AvisosService } from '../../src/app/compartilhado/avisos.component';
 import { TipoOperacao } from '../../src/app/core/modelos';
-import { abrirConferencia, conferencia, rendimento, troco } from '../apoio/conferencia';
+import { abrirConferencia, conferencia, rendimento, taxa, troco } from '../apoio/conferencia';
 
 /**
  * Regressão de "Conferir investimentos" (ADR 0027): o GARE11 entrou como ação, a compra de 15/06 ficou fora do
@@ -27,6 +27,16 @@ describe('Regressão: Conferir investimentos', () => {
     t.botao('Corrigir selecionados').click();
     t.fixture.detectChanges();
     expect(t.correcoes[0]).toMatchObject({ trocos: [1, 2], rendimentos: [3], compras: [], ativosParaFii: [] });
+  });
+
+  it('#173 a): a taxa da B3 do dia vai com as operações do dia (o valor a API recalcula); desmarcada não vai', async () => {
+    const vazio = { tipos: [], cotas: [], trocos: [], rendimentos: [] };
+    const t = await abrirConferencia(conferencia({ ...vazio, taxas: [taxa(), taxa({ data: '2026-06-15', operacoes: [
+      { operacaoId: 40, ticker: 'GARE11', quantidade: 72, taxa: 0.18 }] })] }));
+    t.tela.taxas()[1].marcada = false;
+    t.botao('Corrigir selecionados').click();
+    t.fixture.detectChanges();
+    expect(t.correcoes[0]).toMatchObject({ taxas: [31, 32], compras: [], trocos: [], rendimentos: [] });
   });
 
   it('trocar o débito recalcula o preço sem o troco', async () => {

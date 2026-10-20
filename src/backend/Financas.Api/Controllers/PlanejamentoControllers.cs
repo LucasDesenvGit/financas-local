@@ -134,10 +134,10 @@ public class MetasController : BaseController
     [HttpGet]
     public async Task<ActionResult<List<MetaDto>>> Listar(CancellationToken ct) => await ListarMetasAsync(ct);
 
-    /// <summary>#90: quanto guardar este mês em cada meta, pela sobra prevista e pela ordem de prioridade.</summary>
+    /// <summary>#90/#149: o caixa mês a mês para o plano das metas (a divisão entre as metas é feita na tela, ADR 0035).</summary>
     [HttpGet("plano")]
     public async Task<ActionResult<PlanoMetasDto>> Plano(CancellationToken ct)
-        => await _assistente.PlanejarAsync(await ListarMetasAsync(ct), ct);
+        => await _assistente.PlanejarAsync(ct);
 
     /// <summary>Nova ordem de prioridade: a primeira da lista é a 1ª. Metas fora da lista vão para o fim.</summary>
     [HttpPut("prioridades")]
@@ -290,10 +290,12 @@ public class ContasAgendadasController : BaseController
     private readonly RelatorioService _relatorios;
     private readonly CategorizacaoService _categorizacao;
     private readonly SugestaoContaAgendadaService _sugestoes;
+    private readonly ContaAgendadaService _cobrancas;
 
     public ContasAgendadasController(FinancasDbContext db, RelatorioService relatorios, CategorizacaoService categorizacao,
-        SugestaoContaAgendadaService sugestoes)
+        SugestaoContaAgendadaService sugestoes, ContaAgendadaService cobrancas)
     {
+        _cobrancas = cobrancas;
         _db = db;
         _relatorios = relatorios;
         _categorizacao = categorizacao;
@@ -303,6 +305,11 @@ public class ContasAgendadasController : BaseController
     [HttpGet]
     public async Task<ActionResult<List<ContaAgendadaDto>>> Listar(CancellationToken ct)
         => await _relatorios.ContasAgendadasAsync(null, ct);
+
+    /// <summary>#158: avisos das recorrentes (não veio, mudou de cartão, aumentou, cartão arquivado). Só lê.</summary>
+    [HttpGet("avisos")]
+    public async Task<ActionResult<List<AvisoContaAgendadaDto>>> Avisos(CancellationToken ct)
+        => await _cobrancas.AvisosAsync(ct);
 
     /// <summary>Pagamentos mensais do extrato que ainda não estão cadastrados (só sugestão; nada é gravado).</summary>
     [HttpGet("sugestoes")]
@@ -318,6 +325,7 @@ public class ContasAgendadasController : BaseController
         Aplicar(c, dto);
         _db.ContasAgendadas.Add(c);
         await _db.SaveChangesAsync(ct);
+        if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -330,7 +338,31 @@ public class ContasAgendadasController : BaseController
         if (problema is not null) return Erro(problema);
         Aplicar(c, dto);
         await _db.SaveChangesAsync(ct);
+        if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    /// <summary>
+    /// #205: "é a mesma": a sugestão do extrato é esta conta a pagar (cadastrada à mão ou com outro nome). Grava a chave
+    /// da descrição do banco na conta, e a sugestão não volta mais.
+    /// </summary>
+    [HttpPost("{id:int}/ligar-extrato")]
+    public async Task<IActionResult> LigarExtrato(int id, LigarExtratoContaAgendadaDto dto, CancellationToken ct)
+    {
+        var chave = dto.ChaveExtrato.Trim();
+        if (chave.Length == 0) return Erro("Informe a sugestão do extrato.");
+        var alteradas = await _db.ContasAgendadas.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.ChaveExtrato, chave), ct);
+        return alteradas == 0 ? NaoEncontrado() : NoContent();
+    }
+
+    /// <summary>#205: o "Desfazer" do "é a mesma": a conta a pagar volta a não ter ligação, e a sugestão pode voltar.</summary>
+    [HttpDelete("{id:int}/ligar-extrato")]
+    public async Task<IActionResult> DesligarExtrato(int id, CancellationToken ct)
+    {
+        var alteradas = await _db.ContasAgendadas.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.ChaveExtrato, (string?)null), ct);
+        return alteradas == 0 ? NaoEncontrado() : NoContent();
     }
 
     [HttpDelete("{id:int}")]
@@ -404,5 +436,11 @@ public class ContasAgendadasController : BaseController
         c.ContaId = dto.ContaId;
         c.Ativa = dto.Ativa;
         c.DataLimite = dto.Recorrencia == Recorrencia.Unica ? null : dto.DataLimite;
+        // #158: o texto da cobrança fica sem acento e em maiúsculas, como a comparação com o extrato.
+        c.FormaCobranca = Enum.IsDefined(dto.FormaCobranca) ? dto.FormaCobranca : FormaCobranca.AMao;
+        c.TextoCobranca = CategorizacaoService.Normalizar(dto.TextoCobranca) is { Length: > 0 } texto ? texto : null;
+        c.Observacao = string.IsNullOrWhiteSpace(dto.Observacao) ? null : dto.Observacao.Trim();
+        // #205: veio da sugestão do extrato. Na edição o campo vem vazio e a ligação que já existe fica.
+        if (!string.IsNullOrWhiteSpace(dto.ChaveExtrato)) c.ChaveExtrato = dto.ChaveExtrato.Trim();
     }
 }

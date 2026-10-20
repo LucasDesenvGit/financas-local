@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PALETAS, PreferenciaTema, TemaService } from '../core/tema.service';
 import { IconeComponent } from '../compartilhado/icone.component';
@@ -72,6 +72,7 @@ import { Icones } from '../compartilhado/icones';
     </section>
     <p class="texto-suave pequeno">As preferências de aparência ficam salvas neste navegador.</p>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .paletas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 14px 0 10px; }
     .paleta {

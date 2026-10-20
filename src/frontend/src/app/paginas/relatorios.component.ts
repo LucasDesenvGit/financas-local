@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { forkJoin } from 'rxjs';
@@ -14,10 +15,11 @@ import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-relatorios',
-  imports: [FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Relatórios</h1>
@@ -32,15 +34,16 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
     </header>
 
     <section class="filtros">
-      <label>De <input type="date" [(ngModel)]="inicio" (change)="carregar()"></label>
-      <label>Até <input type="date" [(ngModel)]="fim" (change)="carregar()"></label>
+      <label>De <app-campo-data [(ngModel)]="inicio" (alterado)="carregar()" /></label>
+      <label>Até <app-campo-data [(ngModel)]="fim" (alterado)="carregar()" /></label>
       <label>Visão
         <select [(ngModel)]="tipo" (change)="carregar()">
           <option [ngValue]="TipoTransacao.Despesa">Despesas</option>
           <option [ngValue]="TipoTransacao.Receita">Receitas</option>
         </select>
       </label>
-      <label class="checkbox"><input type="checkbox" [(ngModel)]="agrupar" (change)="carregar()"> agrupar subcategorias</label>
+      <!-- #130: efeito imediato → interruptor. -->
+      <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="agrupar" (change)="carregar()"> Agrupar subcategorias</label>
     </section>
 
     <section class="kpis">
@@ -112,25 +115,37 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
       <section class="painel-bloco">
         <h2>Maiores despesas</h2>
-        <ul class="lista-simples">
+        <!-- #141: cada despesa leva a Transações no dia e na conta dela, com a linha destacada (?transacao=id). -->
+        <ul class="lista-simples lista-maiores">
           @for (t of maiores(); track t.id) {
             <li>
-              <span class="data-curta">{{ t.data | date: 'dd/MM/yy' }}</span>
-              <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}
-                @if (t.emergencia) { <span class="etiqueta etiqueta-emergencia">emergência</span> }</span>
-              <span class="valor negativo">{{ t.valor | currency }}</span>
+              <a class="linha-link" routerLink="/transacoes" [queryParams]="linkDespesa(t)">
+                <span class="so-leitor">Ver em Transações:</span>
+                <span class="data-curta">{{ t.data | date: 'dd/MM/yy' }}</span>
+                <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}
+                  @if (t.emergencia) { <span class="etiqueta etiqueta-emergencia">emergência</span> }</span>
+                <span class="valor negativo">{{ t.valor | currency }}</span>
+              </a>
             </li>
           } @empty { <li class="vazio">Sem despesas no período.</li> }
         </ul>
       </section>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .legenda-relatorio { margin: -6px 0 10px; font-size: 0.84rem; }
     .tabela-meses { margin-top: 14px; }
     .tabela-meses tr.linha-emergencia td { background: var(--emergencia-suave); }
     .tabela-meses tr.linha-negativa td:first-child { box-shadow: inset 3px 0 0 var(--negativo); }
     .tabela-meses tr.linha-emergencia td:first-child { box-shadow: inset 3px 0 0 var(--emergencia); }
+    /* A linha inteira é o link (alvo bem maior que 24 px, WCAG 2.5.8); o padding sai do li e vai para o link. */
+    .lista-maiores li { padding: 0; }
+    .linha-link {
+      display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+      padding: 9px 6px; border-radius: 8px; color: inherit; text-decoration: none;
+    }
+    .linha-link:hover { background: var(--superficie-2); text-decoration: none; }
   `
 })
 export class RelatoriosComponent implements OnInit {
@@ -227,6 +242,15 @@ export class RelatoriosComponent implements OnInit {
       categoriaId: c.categoriaId, inicio: this.inicio, fim: this.fim,
       tipo: this.tipo === TipoTransacao.Receita ? 'receita' : 'despesa'
     });
+  }
+
+  /**
+   * #141: dia + conta da despesa, e o id para Transações destacar a linha. Não usa a descrição (busca):
+   * ela pode ter sido renomeada (#123) e não ser o texto que veio do banco.
+   */
+  linkDespesa(t: Transacao): Record<string, string> {
+    const dia = t.data.substring(0, 10);
+    return paramsTransacoes({ inicio: dia, fim: dia, tipo: 'despesa', contaId: t.contaId, transacaoId: t.id });
   }
 
   ngOnInit(): void {

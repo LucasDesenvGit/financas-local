@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
 import {
   CompraSemOperacao, ConferenciaInvestimentos, CorrigirInvestimentos, CreditoDaCorretora, RendimentoComoInvestimento,
-  TipoAtivo
+  TaxaB3, TipoAtivo
 } from '../../src/app/core/modelos';
 import { ConferirInvestimentosComponent } from '../../src/app/paginas/conferir-investimentos.component';
 
@@ -22,6 +22,13 @@ export function troco(campos: Partial<CreditoDaCorretora> = {}): CreditoDaCorret
 export function rendimento(campos: Partial<RendimentoComoInvestimento> = {}): RendimentoComoInvestimento {
   return { transacaoId: 1178, data: '2026-06-15', valor: 5.5, descricao: 'Valor recebido de Investimentos', conta: 'Nubank',
     categoria: 'Investimentos', categoriaAutomatica: 'Rendimentos', ...campos };
+}
+
+/** #173 a): um dia de duas compras (valores fictícios): saiu R$ 1.049,23, voltaram R$ 20,90 de troco e as cotas custaram R$ 1.028,10. */
+export function taxa(campos: Partial<TaxaB3> = {}): TaxaB3 {
+  return { data: '2026-09-14', conta: 'Nubank', debitado: 1049.23, trocos: 20.9, valorDasCotas: 1028.1, taxa: 0.23,
+    operacoes: [{ operacaoId: 31, ticker: 'MXRF11', quantidade: 50, taxa: 0.12 }, { operacaoId: 32, ticker: 'XPLG11', quantidade: 5, taxa: 0.11 }],
+    ...campos };
 }
 
 /** O caso do GARE11: cadastrado como ação, 72 cotas faltando (compra de 15/06 fora do histórico), troco e provento. */
@@ -48,7 +55,7 @@ export async function abrirConferencia(dados: ConferenciaInvestimentos = confere
     corrigirInvestimentos: (dto: CorrigirInvestimentos) => {
       correcoes.push(dto);
       return of({ tipos: dto.ativosParaFii.length, compras: dto.compras.length, trocos: dto.trocos.length,
-        rendimentos: dto.rendimentos.length, desfazer: 'chave-1' });
+        rendimentos: dto.rendimentos.length, taxas: dto.taxas?.length ?? 0, desfazer: 'chave-1' });
     },
     desfazerCorrecaoInvestimentos: (chave: string) => { desfeitas.push(chave); return of({ transacoesAtualizadas: 3 }); }
   };

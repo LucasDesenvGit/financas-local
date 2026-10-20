@@ -24,6 +24,7 @@ public class FinancasDbContext : DbContext
     public DbSet<FaturaCartao> FaturasCartao => Set<FaturaCartao>();
     public DbSet<Transacao> Transacoes => Set<Transacao>();
     public DbSet<Investimento> Investimentos => Set<Investimento>();
+    public DbSet<HistoricoInvestimento> HistoricosInvestimento => Set<HistoricoInvestimento>();
     public DbSet<Emprestimo> Emprestimos => Set<Emprestimo>();
     public DbSet<PagamentoEmprestimo> PagamentosEmprestimo => Set<PagamentoEmprestimo>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
@@ -129,6 +130,8 @@ public class FinancasDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Texto).HasMaxLength(200).IsRequired();
             e.Property(x => x.NovaDescricao).HasMaxLength(300).IsRequired();
+            e.Property(x => x.ValorMinimo).HasPrecision(18, 2);
+            e.Property(x => x.ValorMaximo).HasPrecision(18, 2);
         });
 
         mb.Entity<Conta>(e =>
@@ -143,6 +146,8 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Saldo).HasPrecision(18, 2);
             e.Property(x => x.LimiteCredito).HasPrecision(18, 2);
             e.Property(x => x.LimiteDisponivel).HasPrecision(18, 2);
+            e.Property(x => x.LimiteDiferencaAvaliada).HasPrecision(18, 2);
+            e.Property(x => x.SaldoReservado).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
             e.Property(x => x.Banco).HasMaxLength(30);
             e.HasIndex(x => x.PluggyAccountId).IsUnique().HasFilter("PluggyAccountId IS NOT NULL");
@@ -201,9 +206,23 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Quantidade).HasPrecision(28, 8);
             e.Property(x => x.TaxaAnual).HasPrecision(9, 4);
             e.Property(x => x.Status).HasMaxLength(30);
+            e.Property(x => x.NomePersonalizado).HasMaxLength(120);
             e.HasIndex(x => x.PluggyInvestmentId).IsUnique();
             e.HasOne(x => x.ConexaoBancaria).WithMany(x => x.Investimentos)
                 .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<HistoricoInvestimento>(e =>
+        {
+            e.ToTable("HistoricoInvestimento");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.PluggyInvestmentId).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Tipo).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Saldo).HasPrecision(18, 2);
+            e.Property(x => x.ValorAplicado).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.PluggyInvestmentId, x.Data }).IsUnique()
+                .HasDatabaseName("UX_HistoricoInvestimento_Investimento_Data");
         });
 
         mb.Entity<Emprestimo>(e =>
@@ -341,6 +360,9 @@ public class FinancasDbContext : DbContext
             e.ToTable("ContaAgendada");
             e.HasKey(x => x.Id);
             e.Property(x => x.Descricao).HasMaxLength(150).IsRequired();
+            e.Property(x => x.TextoCobranca).HasMaxLength(100);
+            e.Property(x => x.Observacao).HasMaxLength(300);
+            e.Property(x => x.ChaveExtrato).HasMaxLength(150);
             e.Property(x => x.Valor).HasPrecision(18, 2);
             e.HasOne(x => x.Categoria).WithMany()
                 .HasForeignKey(x => x.CategoriaId).OnDelete(DeleteBehavior.SetNull);

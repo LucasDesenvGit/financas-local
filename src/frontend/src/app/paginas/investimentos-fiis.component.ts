@@ -1,10 +1,11 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Fii, NOMES_ORIGEM_OPERACAO, OrigemOperacao, PainelFiis, TipoAtivo } from '../core/modelos';
+import { Fii, MesAMesFii, NOMES_ORIGEM_OPERACAO, OrigemOperacao, PainelFiis, TipoAtivo } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
@@ -13,7 +14,8 @@ import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
-import { pct, reaisOuNada } from '../compartilhado/utilidades';
+import { OrigemIdsUrl, paramsTransacoes, pct, primeiroDiaMes, reaisOuNada, ultimoDiaMes } from '../compartilhado/utilidades';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 // Paleta dos fundos: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic, que têm significado (UX-9).
 const CORES = ['#a7a3f5', '#92c8f0', '#c3b1e1', '#8fd8d8', '#f3b3d3', '#f2d98b', '#b5cf9a', '#d4a5e8', '#a9b4c6',
@@ -30,7 +32,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 /** Aba de FIIs da página de investimentos (inspirada nos painéis de carteira de sites como o Investidor10). */
 @Component({
   selector: 'app-investimentos-fiis',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent, MaisAnalisesComponent],
   template: `
     @if (dados(); as d) {
       @if (!d.fiis.length) {
@@ -96,6 +98,91 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
             </app-grafico-explicado>
           </section>
         </div>
+
+        @if (mesAMes().length) {
+          <section class="painel-bloco mes-a-mes" aria-labelledby="titulo-mes-a-mes">
+            <div class="cabecalho-bloco">
+              <h2 id="titulo-mes-a-mes">Mês a mês</h2>
+              <span class="cresce"></span>
+              <div class="segmentado" role="group" aria-label="Período do mês a mês">
+                <button type="button" [class.ativo]="mesesMesAMes() === 12" [attr.aria-pressed]="mesesMesAMes() === 12"
+                  (click)="mesesMesAMes.set(12)">12 meses</button>
+                <button type="button" [class.ativo]="mesesMesAMes() === 24" [attr.aria-pressed]="mesesMesAMes() === 24"
+                  (click)="mesesMesAMes.set(24)">24 meses</button>
+              </div>
+            </div>
+            <app-grafico-explicado [resumo]="resumoMesAMes()"
+              comoLer="O que a carteira rendeu em cada mês: em azul, os rendimentos que caíram na conta; a valorização das cotas, em verde quando subiram e em rosa quando caíram. Os aportes estão na tabela abaixo.">
+              <!-- #173 d): o clique no mês é atalho para os rendimentos; o mesmo caminho está nos links da tabela (WCAG 2.1.1). -->
+              <app-grafico [configuracao]="graficoMesAMes()" [altura]="260"
+                dicaClique="Clique para ver os rendimentos em Transações" [itemClicavel]="mesComRendimentos"
+                (itemClicado)="abrirRendimentosDoMes($event)" />
+            </app-grafico-explicado>
+            <div class="tabela-rolagem">
+              <table class="tabela tabela-fiis tabela-mes-a-mes">
+                <caption class="so-leitor">Aportes, rendimentos, valorização e saldo dos FIIs em cada mês, do mais recente ao mais antigo</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Mês</th>
+                    <th scope="col" class="direita">Aportes</th>
+                    <th scope="col" class="direita">Rendimentos</th>
+                    <th scope="col" class="direita"><app-termo chave="valorizacaoMes">Valorização</app-termo></th>
+                    <th scope="col" class="direita">Saldo no fim</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of mesAMesRecentes(); track m.ano * 100 + m.mes; let primeiro = $first) {
+                    <tr>
+                      <th scope="row">{{ rotuloMes(m) }}@if (primeiro && mesAtual(m)) { <br><small class="texto-suave">até hoje</small> }</th>
+                      <td class="direita">{{ m.aportes | currency }}
+                        @if (m.subscricoes > 0) { <br><small class="texto-suave">+ {{ m.subscricoes | currency }} em subscrição</small> }
+                        @if (m.resgates > 0) { <br><small class="texto-suave">− {{ m.resgates | currency }} em vendas</small> }
+                        <!-- #173 d): detalhe por navegação, com o mês e só os lançamentos que formam o número (ADR 0018). -->
+                        @if (m.idsAportes?.length) {
+                          <br><a class="link link-mes" routerLink="/transacoes" [queryParams]="paramsDoMes(m, 'fii-aportes')"
+                            [attr.aria-label]="'Ver em Transações as compras e vendas de FIIs de ' + rotuloMes(m)">ver lançamentos</a>
+                        }</td>
+                      <td class="direita positivo">{{ m.rendimentosRecebidos | currency }}
+                        @if (mesAtual(m) && m.rendimentosEstimados > 0) {
+                          <br><small class="texto-suave">{{ m.rendimentosEstimados | currency }} a receber (data-com)</small>
+                        }
+                        <!-- #173 c): o detalhe por fundo sob demanda (Shneiderman: details-on-demand). -->
+                        @if (m.porFii?.length) {
+                          <br><button type="button" class="link link-mes" [attr.aria-expanded]="abertoPorFii(m)"
+                            [attr.aria-controls]="'por-fii-' + m.ano + '-' + m.mes" (click)="alternarPorFii(m)"
+                            [attr.aria-label]="'Rendimentos por fundo em ' + rotuloMes(m)">por fundo</button>
+                        }
+                        @if (m.idsRendimentos?.length) {
+                          <br><a class="link link-mes" routerLink="/transacoes" [queryParams]="paramsDoMes(m, 'fii-rendimentos')"
+                            [attr.aria-label]="'Ver em Transações os rendimentos de FIIs de ' + rotuloMes(m)">ver lançamentos</a>
+                        }</td>
+                      <td class="direita" [class.positivo]="m.valorizacao >= 0" [class.negativo]="m.valorizacao < 0">{{ m.valorizacao | currency }}</td>
+                      <td class="direita">{{ m.saldo | currency }}</td>
+                    </tr>
+                    @if (abertoPorFii(m)) {
+                      <tr class="linha-por-fii" [id]="'por-fii-' + m.ano + '-' + m.mes">
+                        <td colspan="5">
+                          <ul class="lista-por-fii" [attr.aria-label]="'Rendimentos por fundo em ' + rotuloMes(m)">
+                            @for (r of m.porFii ?? []; track r.ticker ?? 'sem') {
+                              <li><span>{{ r.ticker ?? 'sem fundo identificado' }}: </span><strong>{{ r.valor | currency }}</strong></li>
+                            }
+                          </ul>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="texto-suave nota">
+              Aportes são as compras (cotas × preço), como as “Entradas” do app; a taxa da B3, de centavos por ordem, fica
+              no custo e no preço médio de cada compra (“Conferir investimentos” a calcula pelo extrato).
+              Rendimentos são os créditos de provento no extrato, sem o troco das compras nem o valor das vendas.
+              A valorização usa o fechamento de cada mês (no mês atual, a cotação de hoje); por isso pode diferir um pouco
+              do app da corretora, que usa outra fonte e outro dia de preço.
+            </p>
+          </section>
+        }
 
         <section class="painel-bloco">
           <h2>Meus FIIs</h2>
@@ -263,8 +350,13 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
       <p class="vazio">Carregando FIIs…</p>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .legenda-grafico { margin: -6px 0 10px; font-size: 0.84rem; }
+    .lista-por-fii { list-style: none; margin: 0; padding: 4px 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.88rem; }
+    .lista-por-fii li { display: flex; gap: 6px; }
+    /* WCAG 2.5.8: alvo de 24 px de altura, mesmo sozinho na célula. */
+    .link-mes { display: inline-flex; align-items: center; min-height: 24px; font-size: 0.85rem; }
     .cabecalho-bloco { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
     .cabecalho-bloco h2 { margin: 0; }
     .tabela-fiis td { white-space: nowrap; }
@@ -275,6 +367,7 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 })
 export class InvestimentosFiisComponent {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   private readonly avisos = inject(AvisosService);
   private readonly privacidade = inject(PrivacidadeService);
 
@@ -284,6 +377,38 @@ export class InvestimentosFiisComponent {
 
   readonly dados = signal<PainelFiis | null>(null);
   readonly mesesProventos = signal<12 | 24>(12);
+  readonly mesesMesAMes = signal<12 | 24>(12);
+  /** #173 c): meses com o detalhe por fundo aberto ("ano-mes"). */
+  readonly porFiiAbertos = signal<ReadonlySet<string>>(new Set());
+
+  /** #173 d): /transacoes com o mês e só os lançamentos que formam aportes ou rendimentos. */
+  paramsDoMes(m: MesAMesFii, origem: OrigemIdsUrl): Record<string, string> {
+    return paramsTransacoes({
+      inicio: primeiroDiaMes(m.ano, m.mes), fim: ultimoDiaMes(m.ano, m.mes),
+      ids: (origem === 'fii-aportes' ? m.idsAportes : m.idsRendimentos) ?? [], origemIds: origem
+    });
+  }
+
+  /** O gráfico só é clicável nos meses com rendimento ligado a lançamentos. */
+  readonly mesComRendimentos = (indice: number) => !!this.mesAMes()[indice]?.idsRendimentos?.length;
+
+  abrirRendimentosDoMes(indice: number): void {
+    const m = this.mesAMes()[indice];
+    if (m?.idsRendimentos?.length) this.router.navigate(['/transacoes'], { queryParams: this.paramsDoMes(m, 'fii-rendimentos') });
+  }
+
+  abertoPorFii(m: MesAMesFii): boolean {
+    return this.porFiiAbertos().has(`${m.ano}-${m.mes}`);
+  }
+
+  alternarPorFii(m: MesAMesFii): void {
+    const chave = `${m.ano}-${m.mes}`;
+    this.porFiiAbertos.update((s) => {
+      const novo = new Set(s);
+      if (!novo.delete(chave)) novo.add(chave);
+      return novo;
+    });
+  }
   readonly tickerHistorico = signal<string | null>(null);
   readonly filtroLote = signal<string | null>(null);
 
@@ -310,6 +435,57 @@ export class InvestimentosFiisComponent {
     const lotes = this.dados()?.lotes ?? [];
     return filtro ? lotes.filter((l) => l.ticker === filtro) : lotes;
   });
+
+  /** #173: os meses do período escolhido, do mais antigo ao mais recente (o gráfico lê da esquerda para a direita). */
+  readonly mesAMes = computed(() => (this.dados()?.mesAMes ?? []).slice(-this.mesesMesAMes()));
+  /** Na tabela, o mês mais recente primeiro (como no app). */
+  readonly mesAMesRecentes = computed(() => [...this.mesAMes()].reverse());
+
+  readonly resumoMesAMes = computed(() => {
+    const m = this.mesAMes().at(-1);
+    if (!m) return null;
+    const oculto = this.privacidade.oculto();
+    const quando = `Em ${rotulo(m.ano, m.mes)}${this.mesAtual(m) ? ' (até hoje)' : ''}`;
+    const subiu = m.valorizacao >= 0 ? 'subiram' : 'caíram';
+    if (oculto) {
+      const partes = [m.aportes > 0 ? 'houve aportes' : 'não houve aportes',
+        m.rendimentosRecebidos > 0 ? 'caíram rendimentos' : 'não caíram rendimentos'];
+      return `${quando}, ${partes.join(', ')} e as cotas ${subiu} de preço.`;
+    }
+    const r = (v: number) => reaisOuNada(Math.abs(v), false);
+    return `${quando}: ${r(m.aportes)} de aportes, ${r(m.rendimentosRecebidos)} de rendimentos, e as cotas ${subiu} ${r(m.valorizacao)}.`;
+  });
+
+  readonly graficoMesAMes = computed<ChartConfiguration<'bar'>>(() => {
+    const meses = this.mesAMes();
+    return {
+      type: 'bar',
+      data: {
+        labels: meses.map((m) => rotulo(m.ano, m.mes)),
+        datasets: [
+          // Os aportes ficam na tabela e na frase: no gráfico, um aporte de milhares achatava os rendimentos e a
+          // valorização (dezenas de reais), e o gráfico deixava de mostrar o que a carteira rendeu no mês.
+          { label: 'Rendimentos', data: meses.map((m) => m.rendimentosRecebidos), backgroundColor: COR_IFIX, borderRadius: 4 },
+          { label: 'Valorização', data: meses.map((m) => m.valorizacao),
+            backgroundColor: meses.map((m) => (m.valorizacao >= 0 ? COR_POSITIVO : COR_NEGATIVO)), borderRadius: 4 }
+        ]
+      },
+      options: {
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } },
+        scales: { y: { ticks: { callback: compacto } } }
+      }
+    };
+  });
+
+  rotuloMes(m: { ano: number; mes: number }): string {
+    return rotulo(m.ano, m.mes);
+  }
+
+  mesAtual(m: { ano: number; mes: number }): boolean {
+    const hoje = new Date();
+    return m.ano === hoje.getFullYear() && m.mes === hoje.getMonth() + 1;
+  }
 
   readonly alturaPorFundo = computed(() => Math.max(190, (this.dados()?.fiis.length ?? 0) * 34 + 60));
 

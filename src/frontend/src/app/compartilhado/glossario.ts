@@ -47,7 +47,7 @@ export const GLOSSARIO = {
   },
   reservaEmergencia: {
     termo: 'Reserva de emergência',
-    definicao: 'Dinheiro guardado com resgate rápido para imprevistos. Aqui é medida em meses: quantos meses você conseguiria pagar os seus gastos sem renda.'
+    definicao: 'Dinheiro com resgate rápido para imprevistos, medido em meses de gastos sem renda. Conta as contas, a renda fixa e as reservas; ações, FIIs e ETFs ficam de fora, porque o preço oscila e a venda leva dias.'
   },
   comprometimento: {
     termo: 'Comprometimento com parcelas',
@@ -66,9 +66,14 @@ export const GLOSSARIO = {
     termo: 'Dívida total do cartão',
     definicao: 'Tudo o que você deve neste cartão hoje, inclusive as parcelas que ainda vão vencer. Não é a fatura do mês.'
   },
+  limiteUsado: {
+    termo: 'Limite usado',
+    definicao: 'O banco informa o limite aprovado e o disponível; a diferença é o limite usado. Em geral é a dívida do cartão, mas fica maior quando você reduz o limite no app ou há compras em processamento.',
+    exemplo: 'Aprovado R$ 10.000, disponível R$ 500 e dívida R$ 500: os outros R$ 9.000 são o limite que você tirou no app, ou compromissos.'
+  },
   faturaDoMes: {
     termo: 'Fatura do mês',
-    definicao: 'O que entrou no cartão neste mês: compras e a parcela do mês das compras parceladas. Parcelas futuras e o pagamento da fatura ficam de fora.'
+    definicao: 'A fatura do cartão que fecha neste mês: compras desde o fechamento anterior e a parcela do mês das parceladas, menos estornos. Depois de fechada, vale o total informado pelo banco.'
   },
   melhorDiaCompra: {
     termo: 'Melhor dia de compra',
@@ -87,20 +92,45 @@ export const GLOSSARIO = {
     termo: 'Sobra prevista',
     definicao: 'Receitas médias menos despesas médias à vista e parcelas do mês: a mesma conta da tela de Projeção. No mês atual, o que já entrou e saiu mais o que falta pela média.'
   },
+  sobraDoCaixa: {
+    termo: 'Sobra do mês',
+    definicao: 'O dinheiro que entra menos o que sai das suas contas no mês: receitas − fatura do cartão que vence no mês − outras despesas (Pix, débito, boletos). A compra no cartão conta quando a fatura vence, não no dia da compra.',
+    exemplo: 'No mês atual, é o que já entrou e saiu mais a média do que falta. Por isso pode ser diferente da Projeção, que conta a compra no cartão no dia em que foi feita.'
+  },
+  parteDaSobra: {
+    termo: 'Parte da sobra para as metas',
+    definicao: 'Quanto da sobra do mês o assistente pode recomendar guardar; o resto fica livre para imprevistos. É a mesma escolha da "Margem de segurança" em Configurações › Parametrização, vista ao contrário (guardar 90% = margem de 10%).',
+    exemplo: 'Sobra de R$ 1.350 guardando 90%: recomenda até R$ 1.215.'
+  },
   recomendacaoMetas: {
     termo: 'Recomendação de quanto guardar',
-    definicao: 'Sobra prevista (receitas médias − despesas médias à vista − parcelas do mês) menos a margem de segurança. Primeiro vai para cada meta com prazo o necessário para cumpri-lo; o resto, pela ordem de prioridade.',
-    exemplo: 'Dinheiro que vai para cofrinho ou investimento precisa estar como transferência (ou "ignorar nos relatórios"): lançado como despesa, ele entra na média e diminui a sobra prevista.'
+    definicao: 'A sobra do mês vezes a parte que vai para as metas. Cada meta com prazo pede mais nos meses com folga e menos nos apertados (até 2× a divisão igual); o resto vai pela ordem de prioridade.',
+    exemplo: 'Neste mês, nunca mais do que deve sobrar nas contas no fim do mês (já paga a fatura) nem do que sobrou no seu melhor mês recente; havendo sobra e saldo, pelo menos R$ 50. Dinheiro que vai para cofrinho ou investimento precisa estar como transferência: lançado como despesa, ele diminui a sobra.'
   },
   margemSeguranca: {
     termo: 'Margem de segurança',
-    definicao: 'A parte da sobra prevista que o assistente deixa livre para imprevistos antes de recomendar quanto guardar. Ajuste em Configurações › Parametrização.',
-    exemplo: 'Sobra de R$ 1.350 com margem de 10%: recomenda guardar até R$ 1.215. Dinheiro guardado lançado como despesa (e não como transferência) diminui a sobra prevista.'
+    definicao: 'A parte da sobra do mês que o assistente de metas deixa livre para imprevistos antes de recomendar quanto guardar. Também dá para mudar na própria tela de Metas ("guardar X% da sobra").',
+    exemplo: 'Sobra de R$ 1.350 com margem de 10%: recomenda guardar até R$ 1.215.'
   },
   precoMedio: {
     termo: 'Preço médio',
     definicao: 'Quanto você pagou, em média, por cota, somando todas as compras.',
     exemplo: '10 cotas a R$ 100 e mais 10 a R$ 120: preço médio de R$ 110.'
+  },
+  ptax: {
+    termo: 'PTAX',
+    definicao: 'A cotação oficial do dólar (e de outras moedas) que o Banco Central divulga todo dia útil. O site usa a de compra para passar para reais o que você tem em moeda estrangeira, como o Méli Dólar.',
+    exemplo: 'US$ 10 com a PTAX a 5,05: R$ 50,50.'
+  },
+  valorizacaoMes: {
+    termo: 'Valorização do mês',
+    definicao: 'Quanto as cotas que você tem ganharam ou perderam de preço no mês, sem contar o dinheiro que entrou (aportes) nem os rendimentos. É o saldo no fim do mês menos o saldo no fim do mês anterior, menos as compras e mais as vendas do mês.',
+    exemplo: 'Saldo de R$ 1.000 em setembro, compra de R$ 200 em outubro e saldo de R$ 1.230 no fim de outubro: valorização de R$ 30.'
+  },
+  taxaB3: {
+    termo: 'Taxa da B3',
+    definicao: 'O que a bolsa cobra em cada compra ou venda (emolumentos e liquidação): alguns centavos a cada R$ 1.000. Entra no custo da compra e no preço médio.',
+    exemplo: 'Saiu R$ 1.010,40 da conta, voltaram R$ 10,10 de troco e as cotas custaram R$ 1.000,00: a taxa foi de R$ 0,30.'
   },
   trocoDeCompra: {
     termo: 'Troco da compra',

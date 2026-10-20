@@ -93,6 +93,34 @@ describe('Regressão: filtros de Transações na URL', () => {
     expect(t.router.url).toBe('/transacoes');
   });
 
+  describe('#173 d): só os lançamentos que formam um número de outra tela (?ids=&de=)', () => {
+    it('lê a lista, descarta o que não é id e mantém o resto na URL', async () => {
+      const t = await abrirTransacoes('/transacoes?inicio=2026-04-01&fim=2026-04-30&ids=5,2,abc,5,-1&de=fii-rendimentos');
+      expect(t.buscas[0]).toMatchObject({ inicio: '2026-04-01', fim: '2026-04-30', ids: [5, 2] });
+      expect(parametrosDaUrl(t.router)).toMatchObject({ ids: '5,2', de: 'fii-rendimentos' });
+    });
+
+    it('origem desconhecida não derruba os ids', async () => {
+      const t = await abrirTransacoes('/transacoes?ids=3&de=xyz');
+      expect(t.buscas[0]).toMatchObject({ ids: [3] });
+      expect(parametrosDaUrl(t.router)).toEqual({ ids: '3' });
+    });
+
+    it('sem ids válidos, a origem sai da URL', async () => {
+      const vazio = await abrirTransacoes('/transacoes?ids=abc&de=fii-aportes');
+      expect(vazio.buscas[0].ids ?? []).toEqual([]);
+      expect(vazio.router.url).toBe('/transacoes');
+    });
+
+    it('"Limpar filtros" tira os ids junto', async () => {
+      const t = await abrirTransacoes('/transacoes?ids=3,4&de=fii-aportes&tipo=despesa');
+      t.tela.limparFiltros();
+      await t.assentar();
+      expect(t.buscas.at(-1)!.ids ?? []).toEqual([]);
+      expect(t.router.url).toBe('/transacoes');
+    });
+  });
+
   describe('várias categorias', () => {
     it('lê a lista separada por vírgula, com "sem categoria" junto', async () => {
       const t = await abrirTransacoes('/transacoes?categoria=12,sem,21');

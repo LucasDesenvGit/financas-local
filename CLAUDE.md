@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: API em C#/.NET 10 hospedada via Kestrel (sem IIS — `UseWindowsService`/`UseSystemd` em `Program.cs`), front-end Angular 20, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: API em C#/.NET 10 hospedada via Kestrel (sem IIS — `UseWindowsService`/`UseSystemd` em `Program.cs`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
 
 ## Comandos
 
@@ -13,6 +13,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Wind
 dotnet build FinancasLocal.sln -c Release      # back-end (Financas.Api + Financas.MigrarSqlite)
 cd src/frontend && npm run build                # front-end (produção)
 cd src/frontend && npm test                     # testes do front-end (Jest): test:regressao | test:usabilidade | test:tipos
+cd src/frontend && npm run test:navegador       # testes no navegador (Playwright): build de produção + CSP da API + API falsa (ADR 0041)
 cd src/frontend && npm start                    # front-end em dev (http://localhost:4200, proxy /api -> API)
 
 # CI roda também:
@@ -20,17 +21,21 @@ python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura
 # Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam
 
 # Banco (sem migrations)
-scripts/2-criar-banco.sh                        # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
+scripts/geral/2-criar-banco.sh                  # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
 
 # Publicação
-scripts/3-publicar-atualizar.sh                 # compila front+API, publica, cuida de certificado e do serviço do sistema
-scripts/instalar.sh                             # etapas 1-3 de uma vez (bash)
-instalar-windows.cmd                            # Windows sem bash: eleva e roda scripts/instalar-windows.ps1 (etapas 1-3 em PowerShell 5.1, ADR 0012)
+scripts/geral/3-publicar-atualizar.sh           # compila front+API, publica, cuida de certificado e do serviço do sistema
+scripts/geral/instalar.sh                       # etapas 1-3 de uma vez (bash)
+instalar-windows.cmd                            # Windows sem bash: eleva e roda scripts/windows/instalar-windows.ps1 (etapas 1-3 em PowerShell 5.1, ADR 0012)
 instalador/gerar-msi.ps1                        # gera o FinancasLocal-<versão>.msi (WiX 5; a CI faz isso no workflow "Versão" e publica na tag vX.Y.Z; ADR 0029)
 
 # Migrar dados de uma instalação antiga (SQL Server/IIS) para o SQLite novo — seguro rodar mesmo sem SQL Server disponível
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
 ```
+
+**Testes rápidos (#204):** cada comportamento testado num lugar só: lógica no Jest, desenho/CSS/rota/CSP no navegador. A CI falha com arquivo do Jest acima de 20 s ou suíte acima de 150 s (`scripts/ci/verificar-tempo-testes.py`). Biblioteca pesada no front-end vira substituto leve nos testes do Jest (`testes/apoio/`, `moduleNameMapper`, como o `lucide-falso.js`); antes de pôr uma dependência nova, meça um teste que a use. Mexeu em teste ou em CI: tempo antes e depois no PR. Detalhes em [CONTRIBUINDO.md](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci).
+
+**Testes no navegador** (Playwright, [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)), em `src/frontend/testes-navegador/`: o build de produção com a CSP da API e a API falsa (`api-falsa.ts`, sem dado real); cada tela do menu abre sem erro de console, exceção ou bloqueio de CSP, em computador e celular. **Mudou tela, CSS, rota ou chamada da API no front-end? Use a skill `testar-no-navegador`** (`.claude/skills/`): roda a regressão, tira prints das telas mudadas para olhar e diz o que foi conferido. Tela nova no menu entra em `TELAS` (`base.ts`), e endpoint novo, na API falsa.
 
 Testes automatizados só no front-end, com Jest + `jest-preset-angular` em `src/frontend/testes/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)): `regressao/` (bug corrigido ou comportamento garantido por um PR — cada bug corrigido ganha teste aqui) e `usabilidade/` (critérios de UI/UX desta página verificáveis sem navegador). A CI roda `npm run test:tipos` e `npm test`. O back-end não tem testes automatizados; além disso, vale o checklist manual do PR (ver [CONTRIBUINDO.md](CONTRIBUINDO.md)).
 
@@ -50,22 +55,23 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - `Dtos/Dtos.cs` — todos os DTOs num arquivo único.
 - `Seguranca/` — cabeçalhos de segurança, validação de sessão, constantes de cookies.
 
-**Gerenciador** (`src/gerenciador/Financas.Gerenciador`, WinForms, só Windows): situação do site, ligar/desligar (UAC), cópia do banco e versão nova pelo GitHub Releases (ADR 0028). Instalado pelo `.msi` na pasta da API.
+**Gerenciador** (`src/gerenciador/`): situação do site, ligar/desligar, cópia do banco. `Financas.Gerenciador.Nucleo` tem o que vale nos dois sistemas (instalação, situação, serviço, cópia do banco); `Financas.Gerenciador` é a janela do Windows (WinForms, UAC, versão nova pelo GitHub Releases; ADR 0028), instalada pelo `.msi` ou pelo `scripts/windows/instalar-gerenciador.ps1`; `Financas.Gerenciador.Linux` é a do Linux (Avalonia, `systemctl --user`, sem rede; ADR 0033), pelo `scripts/linux/instalar-gerenciador.sh`. Texto ou ação nova vai nas duas janelas.
 
 **Front-end** (`src/frontend/src/app`):
 - `core/` — `ApiService` (único ponto de chamadas HTTP), modelos TS, autenticação, tema, privacidade (ocultar valores).
 - `compartilhado/` — componentes reutilizáveis (gráfico Chart.js, modal, paginação, calculadora flutuante, pipe de moeda).
 - `layout/` — casca da tela (menu lateral).
 - `paginas/` — uma página por rota.
-- Componentes standalone, signals e control flow (`@if`/`@for`).
+- Componentes standalone, signals e control flow (`@if`/`@for`), com `changeDetection: ChangeDetectionStrategy.Eager`: desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns (não signals) — componente novo sem `Eager` pode não atualizar a tela.
 
 **Banco** (`banco/`) — **sem EF Core Migrations**, de propósito, em SQLite:
 - `01-estrutura.sql` — tabelas/índices/restrições com `CREATE TABLE/INDEX IF NOT EXISTS` (idempotência nativa do SQLite); baseline limpa da troca SQL Server → SQLite, com tabelas novas acrescentadas no fim — verificado pelo CI via `scripts/ci/verificar-sql.py` e aplicado de fato a um banco SQLite descartável no CI. Nunca apagar/renomear coluna em uso sem bloco de transição.
 - `02-dados-iniciais.sql` — categorias/config/regras padrão.
 - A API também aplica esses scripts ao iniciar (`Data/EsquemaBanco.cs`, embutidos no build; cópia em `dados/backups` antes de mudar um banco existente; dados iniciais só no banco novo) — é o que a instalação pelo .msi usa.
-- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/comum.sh`, checa via `PRAGMA table_info`) em `scripts/2-criar-banco.sh`, não no SQL — uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
-- Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/instalar-windows.ps1` precisa da mesma mudança (e vice-versa). Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
-- Versão do sistema: só no `Directory.Build.props` (API e gerenciador); a tag `vX.Y.Z` tem de ser igual.
+- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`, checa via `PRAGMA table_info`) em `scripts/geral/2-criar-banco.sh`, não no SQL — uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
+- **Pastas dos scripts (#154):** `scripts/geral/` é o bash que roda nos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/` têm o que só funciona num deles; `scripts/ci/`, o que só a CI usa. Script novo vai na pasta do sistema em que roda. Os `.cmd` ficam na raiz.
+- Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa). Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
+- Versão do sistema: só no `Directory.Build.props` (API e gerenciador); a tag `vX.Y.Z` tem de ser igual. **Todo PR para o `develop` sobe esse número** (ver Git / commits).
 - Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 
 ## Decisões de arquitetura (ADRs) — obrigatório
@@ -82,6 +88,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Convenções de código
 
+- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
@@ -99,16 +106,28 @@ Ao propor, revisar ou implementar qualquer coisa de UI/UX (telas, navegação, g
 | Nielsen — *Progressive Disclosure* (NN/g, 2006) | Telas densas: mostrar primeiro o essencial, o especializado atrás de um controle secundário ("Mais análises", abas) | [nngroup.com/articles/progressive-disclosure](https://www.nngroup.com/articles/progressive-disclosure/) |
 | WCAG 2.2 — 1.1.1 *Non-text Content* (A) | Todo gráfico (`<canvas>`) tem alternativa em texto: a frase-resumo do bloco serve para isso | [w3.org/WAI/WCAG22/Understanding/non-text-content](https://www.w3.org/WAI/WCAG22/Understanding/non-text-content) |
 | WCAG 2.2 — 2.1.1 *Keyboard* (A) | Toda ação clicável funciona por teclado; clique em `<canvas>` (Chart.js) **nunca** é o único caminho, precisa de equivalente em HTML (`<a>`/`<button>`) | [w3.org/WAI/WCAG22/Understanding/keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboard) |
+| WCAG 2.2 — 1.4.3 *Contrast (Minimum)* (AA) | Texto ≥ 4,5:1 sobre o fundo (3:1 se grande: 18 pt, ou 14 pt em negrito); cores do tema conferidas em `testes/regressao/contraste-tema.spec.ts` | [w3.org/WAI/WCAG22/Understanding/contrast-minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum) |
 | WCAG 2.2 — 2.5.8 *Target Size (Minimum)* (AA) | Alvo de clique/toque ≥ 24×24 CSS px (fatias pequenas de gráfico não atendem) | [w3.org/WAI/WCAG22/Understanding/target-size-minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum) |
 | WCAG 2.2 — 1.4.13 *Content on Hover or Focus* (AA) | Tooltips: dispensável, alcançável e persistente; em toque não existe hover | [w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus) |
+| WCAG 2.2 — 1.4.11 *Non-text Contrast* (AA) | Borda e estados de controles (caixa de marcar, interruptor, foco) com contraste ≥ 3:1 com o que está ao lado | [w3.org/WAI/WCAG22/Understanding/non-text-contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast) |
+| Kendrick — *Toggle-Switch Guidelines* (NN/g, 2018) | Interruptor só para efeito **imediato**; o que depende de "Salvar" fica caixa de marcar; rótulo curto, palavra-chave primeiro (teste: ler com "ligado/desligado" no fim) | [nngroup.com/articles/toggle-switch-guidelines](https://www.nngroup.com/articles/toggle-switch-guidelines/) |
+| WAI-ARIA APG — *Switch Pattern* | Interruptor: `role="switch"` (no checkbox nativo usa o `checked`), Espaço alterna, rótulo **não muda** com o estado | [w3.org/WAI/ARIA/apg/patterns/switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/) |
+| WAI-ARIA APG — *Disclosure (Show/Hide) Pattern* | Mostrar e esconder um bloco (grupo do menu, seção que abre): o controle é `<button>`, Enter e Espaço alternam, `aria-expanded` diz o estado e `aria-controls` aponta para o conteúdo | [w3.org/WAI/ARIA/apg/patterns/disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/) |
+| Huei-Hsin Wang — *Accordions on Desktop: When and How to Use* (NN/g, 2023) | Sanfona: deixar várias seções abertas ao mesmo tempo (fechar as outras sozinho atrapalha quem usa mais de uma) | [nngroup.com/articles/accordions-on-desktop](https://www.nngroup.com/articles/accordions-on-desktop/) |
+| WCAG 2.2 — 3.3.1 *Error Identification* (A) | Erro de entrada detectado: diz qual campo e o que está errado, em texto | [w3.org/WAI/WCAG22/Understanding/error-identification](https://www.w3.org/WAI/WCAG22/Understanding/error-identification) |
+| WCAG 2.2 — 3.3.2 *Labels or Instructions* (A) | Todo campo com rótulo visível (o "R$" dentro do campo não substitui o rótulo) | [w3.org/WAI/WCAG22/Understanding/labels-or-instructions](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions) |
 
 Padrões já adotados a partir delas (seguir, salvo motivo registrado):
 - **Detalhe por navegação, não modal**, quando já existe tela com o detalhe (ex.: total por categoria → `/transacoes` filtrada), levando o contexto completo (categoria + período + tipo) em query params.
 - **Filtro ativo sempre visível** (chips com ✕ e "Limpar filtros") em tela que pode abrir já filtrada.
 - **Estado de tela navegável na URL**: botão voltar do navegador tem que funcionar; atualização de filtro usa `replaceUrl` para não poluir o histórico.
+- **Clique em linha ou bloco é atalho de mouse**: a mesma ação tem `<button>`/`<a>` no template (ex.: o nome da transação abre a edição), conferido em `testes/regressao/clique-com-teclado.spec.ts` (WCAG 2.1.1).
 - **Gráfico se explica**: título + frase-resumo com a conclusão + linha "como ler" + legenda quando há mais de uma série; resumo respeita "ocultar valores".
 - **Termo técnico com definição no contexto** (ⓘ que abre por clique/teclado, vindo de um glossário único) — nunca só em `title=`, que não funciona em toque nem teclado.
 - **Tela densa mostra primeiro a resposta à pergunta principal dela**; análises de apoio vão para `<app-mais-analises>` (botão com `aria-expanded` que diz o que tem dentro, conteúdo em `<ng-template>` criado só ao abrir, escolha lembrada por tela). Nada é removido: tudo a no máximo um clique.
+- **Interruptor** (`label.interruptor` + `role="switch"` no checkbox nativo) para o que muda a tela na hora; caixa de marcar para o que depende de "Salvar" ([ADR 0032](docs/adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)).
+- **Menu lateral em grupos** que abrem e fecham, vários abertos ao mesmo tempo, todos abertos no começo; tela nova entra no grupo do assunto dela em `MENU` ([ADR 0046](docs/adr/0046-menu-lateral-em-grupos-que-abrem-e-fecham.md)).
+- **Seleção em tabela:** a célula inteira é o alvo (`label.celula-marcar`), a linha marcada fica destacada (`tr.selecionada`), e o nome da caixa diz qual linha é ([ADR 0032](docs/adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)).
 - O porquê e o custo aceito de cada padrão acima estão nas ADRs [0017](docs/adr/0017-preferencias-de-exibicao-no-navegador.md) a [0021](docs/adr/0021-componentes-padrao-para-graficos-e-telas-densas.md).
 
 Ao responder: separar explicitamente o que vem dessas fontes do que é **julgamento próprio** (trade-off sem fonte direta), e dizer quando algo não foi validado com uso real. Fonte nova entra nesta tabela com link verificado, não citada de memória.
@@ -117,10 +136,28 @@ Ao responder: separar explicitamente o que vem dessas fontes do que é **julgame
 
 Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para fluxo de branches completo). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
 
+**Todo PR para o `develop` sobe a versão no `Directory.Build.props`, pelo tipo do título** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md); o check "versão subiu" da CI confere):
+- `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) → o número do meio (2.2.0 → 2.3.0);
+- `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` → o último (2.2.0 → 2.2.1);
+- quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
+- Outro PR subiu antes? `git merge origin/develop`, pegue a maior e suba de novo. Diga ao usuário, no fim, de qual para qual versão foi.
+
+**O branch padrão do repositório é o `develop`** (#142). Por isso, todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge. Fora do branch padrão, a palavra-chave é ignorada.
+- **Branch nova:** de preferência criada pela issue, com `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
+- **Issue nova já nasce no nome de quem pediu:** `gh issue create --assignee @me` (a conta do `gh` é a do usuário) ou o login de quem pediu, se for outra pessoa. **Exceção, os épicos:** veja a regra abaixo.
+- **Épico e as histórias dele não são atribuídos a ninguém:** nem ao criar, nem depois, nem ao ligar uma história ao épico (sub-issue). O épico é a demanda inteira, e ninguém "é dono" dela. Só quando uma pessoa **pega uma história**, pedindo aqui, essa história (e só ela) vai para o nome dela, com a etiqueta "em progresso". O épico continua sem ninguém. Se o usuário pedir para não atribuir uma issue a ele, não atribua.
+- **Dependência entre issues vai no GitHub, não só no texto:** quando uma issue só pode começar depois de outra estar pronta, marque com *blocked by* (painel **Relationships**), além do "Depende de: #N" no texto. Assim ninguém pega uma issue que ainda está bloqueada. Vale ao criar uma issue, ao montar as histórias de um épico (inclusive entre elas) e ao descobrir uma dependência nova numa issue que já existe.
+  - Comando: `gh api -X POST repos/LucasDesenvGit/financas-local/issues/<bloqueada>/dependencies/blocked_by -F issue_id=<id>`. O `<id>` é o id numérico da issue que bloqueia (`gh api repos/LucasDesenvGit/financas-local/issues/<N> -q .id`), não o número dela.
+  - Só dependência real: "de preferência antes" não bloqueia. Ligar uma história ao épico (sub-issue, `.../issues/<épico>/sub_issues -F sub_issue_id=<id>`) é outra coisa e não substitui o *blocked by*.
+- **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
+- **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
+
+**Pedido grande demais para uma vez só** (vários PRs, muitas horas): antes de começar, ofereça a skill `trabalho-longo` (`.claude/skills/`). Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento.
+
 ## Segurança (específico deste projeto — não genérico)
 
 Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo Kestrel — sem IIS/proxy). Pontos que afetam como escrever código aqui:
 - Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo da API, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
 - Segredos (Client Secret da Pluggy, token da brapi) via ASP.NET Data Protection, chaves em `dados/chaves`: DPAPI no Windows (`OperatingSystem.IsWindows()` em `Program.cs`), permissão de arquivo no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
-- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` (API) e `api.github.com`/`github.com` (só o gerenciador do Windows, para versão nova; ADR 0028) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).
+- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` (API) e `api.github.com`/`github.com` (só o gerenciador: o do Windows para versão nova, ADR 0028; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop" nas duas janelas, ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).

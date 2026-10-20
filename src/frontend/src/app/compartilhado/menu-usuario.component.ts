@@ -1,6 +1,6 @@
-import { Component, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideIconData } from 'lucide-angular';
+import { LucideIcon } from '@lucide/angular';
 import { AuthService } from '../core/auth.service';
 import { PreferenciaTema, TemaService } from '../core/tema.service';
 import { IconeComponent } from './icone.component';
@@ -23,7 +23,7 @@ import { Icones } from './icones';
     </button>
 
     @if (aberto()) {
-      <div #menu id="menu-usuario" class="menu-flutuante" role="menu" [attr.aria-label]="'Conta ' + (login() ?? '')"
+      <div #menu id="menu-usuario" class="menu-flutuante" role="menu" [attr.aria-label]="'Conta ' + (login() ?? '')" animate.leave="sair"
         (keydown)="teclado($event)">
         <div class="menu-cabecalho" role="presentation">
           <span class="avatar" aria-hidden="true">{{ iniciais() }}</span>
@@ -51,6 +51,7 @@ import { Icones } from './icones';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: { class: 'menu-usuario' }
 })
 export class MenuUsuarioComponent {
@@ -64,7 +65,7 @@ export class MenuUsuarioComponent {
   readonly aberto = signal(false);
   readonly login = computed(() => this.auth.estado()?.login ?? null);
   readonly iniciais = computed(() => (this.login() ?? '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2).toUpperCase() || '?');
-  readonly temas: { valor: PreferenciaTema; rotulo: string; icone: LucideIconData }[] = [
+  readonly temas: { valor: PreferenciaTema; rotulo: string; icone: LucideIcon }[] = [
     { valor: 'claro', rotulo: 'Claro', icone: Icones.claro },
     { valor: 'escuro', rotulo: 'Escuro', icone: Icones.escuro },
     { valor: 'sistema', rotulo: 'Automático (do sistema)', icone: Icones.sistema }

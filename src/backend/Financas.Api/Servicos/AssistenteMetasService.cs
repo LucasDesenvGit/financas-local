@@ -1,135 +1,187 @@
+using Financas.Api.Data;
 using Financas.Api.Dtos;
+using Financas.Api.Entidades;
+using Microsoft.EntityFrameworkCore;
 
 namespace Financas.Api.Servicos;
 
 /// <summary>
-/// Assistente de metas (#90): quanto guardar este mês em cada meta pela sobra prevista (receitas − despesas), e não
-/// pela divisão igual. A sobra de cada mês é a mesma da tela de Projeção (<see cref="RelatorioService.ProjecaoAsync"/>):
-/// mês atual "em andamento" e, nos seguintes, média de receitas − (média de despesas à vista + parcelas do mês).
+/// Assistente de metas (#90, #149, ADR 0035): o dinheiro que entra e sai de cada mês, que é o que dá para guardar. O
+/// plano em si (quanto vai para cada meta, os degraus, o percentual e o ajuste manual) é calculado na tela
+/// (<c>metas-plano.ts</c>), para recalcular na hora quando o usuário mexe.
 ///
-/// Regra, mês a mês, a partir do atual:
-///  1. capacidade = max(0, sobra × (1 − margem de segurança));
-///  2. cada meta com prazo pede o que falta × capacidade do mês ÷ capacidade somada até o prazo — mês apertado pede
-///     menos, mês folgado pede mais. Como o pedido é recalculado todo mês sobre o que ainda falta, o que não coube
-///     num mês vai para os seguintes;
-///  3. se a capacidade cobre todos os pedidos, todas as metas com prazo recebem o pedido, e o que sobra vai para as
-///     metas sem prazo (ou de prazo vencido) pela ordem de prioridade;
-///  4. se não cobre, decide a prioridade (1ª primeiro): meta com prazo recebe até o pedido; meta sem prazo, até uma
-///     parte justa (capacidade ÷ metas em aberto) — para uma meta sem prazo de 1ª prioridade não ficar sem nada;
-///  5. nenhuma meta com prazo recebe mais que o pedido do mês, e nada é negativo.
-/// A prioridade só decide quando falta dinheiro (#90, comentário do usuário). Julgamento próprio: a parte justa das
-/// metas sem prazo no aperto — não validado com uso real.
+/// Sobra do mês pelo caixa (e não pela data da compra, como a Projeção):
+///  - receitas e despesas das contas de dinheiro (corrente, poupança, dinheiro, outras), sem transferências;
+///  - menos as faturas de cartão que <b>vencem</b> no mês. A compra no cartão sai do caixa quando a fatura vence;
+///  - mês atual: o que já entrou e saiu, mais a média do que falta (receitas: o maior entre o recebido e a média);
+///  - meses seguintes: as médias dos últimos meses completos (até 6) e a fatura estimada de cada mês.
+/// Fatura estimada: já fechada, vale o total do banco; aberta, o que já foi lançado mais a média diária de compras à
+/// vista nos dias que faltam; futura, a média de compras à vista. Nas três, mais as parcelas já contratadas que caem
+/// nela (projetadas a partir das parcelas recentes, como na Projeção). É o que mostra a fatura caindo quando as parcelas
+/// acabam.
+///
+/// Limites para o mês atual: o saldo previsto nas contas no fim do mês (depois de pagar a fatura) e o melhor mês recente
+/// (quanto de fato sobrou). Julgamento próprio, não validado com uso real.
 /// </summary>
 public class AssistenteMetasService
 {
     public const int MinimoMesesHistorico = 3;
-    /// <summary>Até onde a data provável é procurada (meta sem prazo ou com capacidade baixa).</summary>
+    /// <summary>Até onde o caixa é estimado (a data provável de uma meta pode estar longe).</summary>
     private const int HorizonteMeses = 120;
-    private const int MesesNoPlano = 12;
+    private const decimal DiasPorMes = 30.44m;
 
+    private static readonly TipoConta[] TiposCaixa = [TipoConta.ContaCorrente, TipoConta.Poupanca, TipoConta.Dinheiro, TipoConta.Outro];
+
+    private readonly FinancasDbContext _db;
     private readonly RelatorioService _relatorios;
+    private readonly ContaService _contas;
     private readonly ParametroService _parametros;
 
-    public AssistenteMetasService(RelatorioService relatorios, ParametroService parametros)
+    public AssistenteMetasService(FinancasDbContext db, RelatorioService relatorios, ContaService contas, ParametroService parametros)
     {
+        _db = db;
         _relatorios = relatorios;
+        _contas = contas;
         _parametros = parametros;
     }
 
-    /// <param name="metas">Metas já com o progresso calculado, na ordem de prioridade (1ª primeiro).</param>
-    public async Task<PlanoMetasDto> PlanejarAsync(IReadOnlyList<MetaDto> metas, CancellationToken ct)
+    public async Task<PlanoMetasDto> PlanejarAsync(CancellationToken ct)
     {
         var hoje = Relogio.Hoje;
         var mesAtual = new DateOnly(hoje.Year, hoje.Month, 1);
         var margem = await _parametros.ObterInteiroAsync(ConfiguracaoService.MetasMargemSeguranca, ct);
-        var ativas = metas.Where(m => !m.Concluida && m.ValorAlvo - m.ValorAtual > 0).ToList();
+        var (inicioHistorico, mesesConsiderados) = await _relatorios.JanelaHistoricoAsync(ct);
+        if (mesesConsiderados < MinimoMesesHistorico)
+            return new PlanoMetasDto(false, mesesConsiderados, (short)mesAtual.Year, (byte)mesAtual.Month, margem, 0, 0, 0, 0, []);
+        var fimHistorico = mesAtual.AddDays(-1);
 
-        var projecao = await _relatorios.ProjecaoAsync(HorizonteMeses, ct);
-        if (projecao.MesesConsiderados < MinimoMesesHistorico)
+        var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada)
+            .Select(c => new { c.Id, c.Tipo, c.IncluirNoSaldo, c.DiaFechamento, c.DiaVencimento }).ToListAsync(ct);
+        var idsCaixa = contas.Where(c => c.IncluirNoSaldo && TiposCaixa.Contains(c.Tipo)).Select(c => c.Id).ToList();
+        var cartoes = contas.Where(c => c.Tipo == TipoConta.CartaoCredito).ToList();
+        var idsCartoes = cartoes.Select(c => c.Id).ToList();
+
+        // Contas de dinheiro: receitas e despesas como nos relatórios (sem transferências nem "ignorar nos relatórios").
+        var movimentoCaixa = await _relatorios.Relevantes(inicioHistorico, hoje)
+            .Where(t => idsCaixa.Contains(t.ContaId))
+            .Select(t => new { t.Data, t.Valor, t.Tipo }).ToListAsync(ct);
+        decimal Receitas(DateOnly de, DateOnly ate) => movimentoCaixa.Where(t => t.Data >= de && t.Data <= ate && t.Tipo == TipoTransacao.Receita).Sum(t => t.Valor);
+        decimal Despesas(DateOnly de, DateOnly ate) => -movimentoCaixa.Where(t => t.Data >= de && t.Data <= ate && t.Tipo == TipoTransacao.Despesa).Sum(t => t.Valor);
+        var mediaReceitas = Receitas(inicioHistorico, fimHistorico) / mesesConsiderados;
+        var mediaDespesas = Despesas(inicioHistorico, fimHistorico) / mesesConsiderados;
+
+        // Cartões: tudo o que entra na fatura (como a "fatura do mês", #144), inclusive o marcado para ignorar nos relatórios
+        // e as parcelas que o banco já mandou com data futura.
+        // Janela larga: a parcela já ligada a uma fatura de cada compra decide em que fatura caem as outras (#167).
+        var desdeCartao = inicioHistorico.AddMonths(-24);
+        var lancamentosCartao = await _db.Transacoes.AsNoTracking()
+            .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desdeCartao
+                        && t.Tipo != TipoTransacao.Transferencia
+                        && (t.MeioPagamento == null || t.MeioPagamento != "PAGAMENTO_FATURA"))
+            .Select(t => new ContaService.LancamentoFatura(t.Id, t.ContaId, t.Data, t.Valor, t.FaturaCartaoId, t.ParcelaNumero,
+                t.ParcelaTotal, t.DescricaoOriginal ?? t.Descricao))
+            .ToListAsync(ct);
+        // Média diária de compras à vista (estornos descontados) de cada cartão, para as faturas ainda abertas ou futuras.
+        var compraAVistaPorDia = lancamentosCartao
+            .Where(t => t.Data >= inicioHistorico && t.Data <= fimHistorico && !t.Parcelado)
+            .GroupBy(t => t.ContaId)
+            .ToDictionary(g => g.Key, g => Math.Max(0m, -g.Sum(t => t.Valor)) / mesesConsiderados / DiasPorMes);
+        // Só as projetadas: as que já estão no banco entram pelo lançamento (#165). A fatura de cada projetada é a da
+        // parcela de origem + os meses projetados (#167).
+        var desdeParcelas = hoje.AddDays(-ParcelasFuturas.DiasRecentes);
+        var parcelasFuturas = ParcelasFuturas.Projetar(lancamentosCartao
+                .Where(t => t.Data >= desdeParcelas && t.Valor < 0 && t.Parcelado && t.ParcelaNumero is not null)
+                .Select(t => new ParcelasFuturas.Parcela(t.Id, t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
+                    t.Descricao)), hoje)
+            .Where(p => !p.JaNoBanco).ToList();
+
+        var faturasImportadas = (await _db.FaturasCartao.AsNoTracking()
+                .Where(f => idsCartoes.Contains(f.ContaId))
+                .Select(f => new ContaService.FaturaDoCiclo(f.Id, f.ContaId, f.DataFechamento, f.DataVencimento, f.ValorTotal, f.ValorPago))
+                .ToListAsync(ct))
+            .ToLookup(f => f.ContaId);
+
+        // Fatura de cada mês, pelo vencimento: soma dos cartões.
+        var faturas = new Dictionary<DateOnly, (decimal Total, decimal Parcelas)>();
+        var faturaAPagar = 0m;
+        foreach (var cartao in cartoes)
         {
-            return new PlanoMetasDto(false, projecao.MesesConsiderados, (short)mesAtual.Year, (byte)mesAtual.Month,
-                0, margem, 0, 0, 0, false, ativas.Select(m => new PlanoMetaDto(m.Id, m.ValorAlvo - m.ValorAtual, null,
-                    null, m.AporteMensalSugerido, null, null, null, [])).ToList());
+            var dele = lancamentosCartao.Where(t => t.ContaId == cartao.Id).ToList();
+            var futurasDele = parcelasFuturas.Where(p => p.ContaId == cartao.Id).ToList();
+            var importadas = faturasImportadas[cartao.Id].ToList();
+            var porDia = compraAVistaPorDia.GetValueOrDefault(cartao.Id);
+            var mesDeCobranca = ContaService.MesesDeCobranca(dele, importadas, cartao.DiaFechamento);
+            for (var mes = inicioHistorico.AddMonths(-1); mes <= mesAtual.AddMonths(HorizonteMeses); mes = mes.AddMonths(1))
+            {
+                var ciclo = ContaService.CicloDaFatura(mes, mes.AddMonths(1).AddDays(-1), cartao.DiaFechamento, cartao.DiaVencimento, importadas);
+                // Sem dia de fechamento conhecido, o ciclo é o mês do calendário e vence no mês seguinte (a fatura
+                // importada que vence no próprio mês é de compras anteriores).
+                var semFechamento = ciclo.Fechamento is null;
+                var fechamento = ciclo.Fechamento ?? ciclo.Fim;
+                var vencimento = semFechamento ? fechamento.AddMonths(1) : ciclo.Vencimento ?? fechamento.AddMonths(1);
+                var importada = semFechamento ? null : ciclo.Fatura;
+                var mesVencimento = new DateOnly(vencimento.Year, vencimento.Month, 1);
+                if (mesVencimento < inicioHistorico) continue;
+
+                var mesDoCiclo = new DateOnly(fechamento.Year, fechamento.Month, 1);
+                var lancado = dele.Where(t => mesDeCobranca[t.Id] == mesDoCiclo).ToList();
+                var parcelasLancadas = Math.Max(0m, -lancado.Where(t => t.Parcelado).Sum(t => t.Valor));
+                decimal total, parcelas;
+                if (fechamento <= hoje)
+                {
+                    var informado = importada is null ? 0m : Math.Abs(importada.ValorTotal);
+                    total = informado > 0 ? informado : Math.Max(0m, -lancado.Sum(t => t.Valor));
+                    parcelas = parcelasLancadas;
+                }
+                else
+                {
+                    var de = ciclo.Inicio > hoje ? ciclo.Inicio : hoje.AddDays(1);
+                    var diasQueFaltam = fechamento.DayNumber - de.DayNumber + 1;
+                    var projetadas = futurasDele
+                        .Where(p => mesDeCobranca.TryGetValue(p.OrigemId, out var m) ? m.AddMonths(p.Passos) == mesDoCiclo
+                            : p.Data >= de && p.Data <= fechamento)
+                        .Sum(p => p.Valor);
+                    total = Math.Max(0m, -lancado.Sum(t => t.Valor)) + porDia * diasQueFaltam + projetadas;
+                    parcelas = parcelasLancadas + projetadas;
+                }
+                faturas[mesVencimento] = (faturas.GetValueOrDefault(mesVencimento).Total + total,
+                    faturas.GetValueOrDefault(mesVencimento).Parcelas + parcelas);
+
+                // O que ainda vai sair da conta este mês: fatura que vence de hoje em diante e não está paga.
+                if (mesVencimento == mesAtual && vencimento >= hoje)
+                    faturaAPagar += Math.Max(0m, total - Math.Abs(importada?.ValorPago ?? 0m));
+            }
         }
 
-        var futuros = projecao.Meses.Where(m => m.Situacao != "realizado").ToList();
-        var n = futuros.Count;
-        var sobra = futuros.Select(m => m.Resultado).ToArray();
-        var capacidade = sobra.Select(s => Math.Max(0m, s * (100 - margem) / 100m)).ToArray();
-        var restante = capacidade.ToArray();
-
-        var falta = ativas.ToDictionary(m => m.Id, m => m.ValorAlvo - m.ValorAtual);
-        var faltaInicial = new Dictionary<int, decimal>(falta);
-        var alocado = ativas.ToDictionary(m => m.Id, _ => new decimal[n]);
-        var pedidoMesAtual = new Dictionary<int, decimal>();
-        int? IndicePrazo(DateOnly? alvo) => alvo is { } a ? (a.Year - mesAtual.Year) * 12 + a.Month - mesAtual.Month : null;
-
-        for (var k = 0; k < n; k++)
+        // Mês atual: o realizado mais a média do que falta; meses seguintes: as médias e a fatura estimada.
+        var diasMes = DateTime.DaysInMonth(hoje.Year, hoje.Month);
+        var fracaoRestante = (decimal)(diasMes - hoje.Day) / diasMes;
+        var recebido = Receitas(mesAtual, hoje);
+        var saido = Despesas(mesAtual, hoje);
+        var receitasMes = Math.Max(recebido, mediaReceitas);
+        var despesasMes = saido + mediaDespesas * fracaoRestante;
+        var meses = new List<MesCaixaDto>(HorizonteMeses);
+        for (var k = 0; k < HorizonteMeses; k++)
         {
-            // Pedido do mês de cada meta com prazo (pela capacidade dos meses até o prazo).
-            var pedidos = new Dictionary<int, decimal>();
-            foreach (var m in ativas)
-            {
-                var f = falta[m.Id];
-                if (f <= 0 || IndicePrazo(m.DataAlvo) is not int prazo || prazo < k) continue;
-                var ate = Math.Min(prazo, n - 1);
-                var soma = 0m;
-                for (var i = k; i <= ate; i++) soma += capacidade[i];
-                pedidos[m.Id] = Math.Min(f, soma > 0 ? f * capacidade[k] / soma : (k == ate ? f : 0m));
-                if (k == 0) pedidoMesAtual[m.Id] = pedidos[m.Id];
-            }
-            // Passo 1: com folga, todas as com prazo recebem o pedido; no aperto, decide a prioridade (sem prazo leva
-            // até uma parte justa).
-            var folga = restante[k] >= pedidos.Values.Sum();
-            var abertas = ativas.Count(m => falta[m.Id] > 0);
-            var parteJusta = abertas > 0 ? capacidade[k] / abertas : 0m;
-            foreach (var m in ativas)
-            {
-                var f = falta[m.Id];
-                if (f <= 0) continue;
-                var limite = pedidos.TryGetValue(m.Id, out var ped) ? ped : folga ? 0m : parteJusta;
-                var dar = Math.Min(Math.Min(limite, restante[k]), f);
-                alocado[m.Id][k] += dar;
-                restante[k] -= dar;
-                falta[m.Id] -= dar;
-            }
-            // Passo 2: o que sobrou do mês vai para as metas sem prazo (ou de prazo vencido), pela prioridade.
-            foreach (var m in ativas)
-            {
-                if (restante[k] <= 0) break;
-                if (falta[m.Id] <= 0 || IndicePrazo(m.DataAlvo) is int p && p >= k) continue;
-                var dar = Math.Min(restante[k], falta[m.Id]);
-                alocado[m.Id][k] += dar;
-                restante[k] -= dar;
-                falta[m.Id] -= dar;
-            }
+            var m = mesAtual.AddMonths(k);
+            var (receitas, despesas) = k == 0 ? (receitasMes, despesasMes) : (mediaReceitas, mediaDespesas);
+            var (fatura, parcelas) = faturas.GetValueOrDefault(m);
+            meses.Add(new MesCaixaDto((short)m.Year, (byte)m.Month, Math.Round(receitas, 2), Math.Round(despesas, 2),
+                Math.Round(fatura, 2), Math.Round(parcelas, 2), Math.Round(receitas - despesas - fatura, 2)));
         }
 
-        var planos = ativas.Select(m =>
-        {
-            var a = alocado[m.Id];
-            DateOnly? provavel = null;
-            var acumulado = 0m;
-            for (var k = 0; k < n; k++)
-            {
-                acumulado += a[k];
-                if (acumulado >= faltaInicial[m.Id] - 0.005m) { provavel = mesAtual.AddMonths(k); break; }
-            }
-            var prazo = IndicePrazo(m.DataAlvo);
-            bool? noPrazo = prazo is int p ? provavel is { } d && (d.Year - mesAtual.Year) * 12 + d.Month - mesAtual.Month <= p : null;
-            decimal? manterPrazo = noPrazo == false && prazo is int pr && pr >= 1
-                ? Math.Round((faltaInicial[m.Id] - a[0]) / pr, 2)
-                : null;
-            var plano = Enumerable.Range(0, Math.Min(MesesNoPlano, n)).Select(k => new PlanoMesMetaDto(
-                (short)futuros[k].Ano, (byte)futuros[k].Mes, Math.Round(sobra[k], 2), futuros[k].Parcelas, Math.Round(a[k], 2))).ToList();
-            return new PlanoMetaDto(m.Id, Math.Round(faltaInicial[m.Id], 2), Math.Round(a[0], 2),
-                pedidoMesAtual.TryGetValue(m.Id, out var ped) ? Math.Round(ped, 2) : null, m.AporteMensalSugerido,
-                provavel, noPrazo, manterPrazo, plano);
-        }).ToList();
+        // Saldo previsto nas contas no fim do mês, depois de pagar a fatura que ainda vence nele.
+        var saldos = await _contas.CalcularSaldosAsync(ct);
+        var saldoContas = idsCaixa.Sum(id => saldos.GetValueOrDefault(id));
+        var saldoFimDoMes = saldoContas + (receitasMes - recebido) - (despesasMes - saido) - faturaAPagar;
 
-        return new PlanoMetasDto(true, projecao.MesesConsiderados, (short)mesAtual.Year, (byte)mesAtual.Month,
-            Math.Round(sobra[0], 2), margem, Math.Round(capacidade[0], 2),
-            Math.Round(planos.Sum(p => p.PedidoMes ?? 0m), 2), Math.Round(planos.Sum(p => p.Recomendado ?? 0m), 2),
-            sobra[0] <= 0, planos);
+        // Teste de realidade: quanto de fato sobrou no melhor dos últimos meses completos.
+        var melhorMes = Enumerable.Range(0, mesesConsiderados)
+            .Select(i => inicioHistorico.AddMonths(i))
+            .Select(m => Receitas(m, m.AddMonths(1).AddDays(-1)) - Despesas(m, m.AddMonths(1).AddDays(-1)) - faturas.GetValueOrDefault(m).Total)
+            .Max();
+
+        return new PlanoMetasDto(true, mesesConsiderados, (short)mesAtual.Year, (byte)mesAtual.Month, margem,
+            Math.Round(saldoContas, 2), Math.Round(faturaAPagar, 2), Math.Round(saldoFimDoMes, 2), Math.Round(melhorMes, 2), meses);
     }
 }

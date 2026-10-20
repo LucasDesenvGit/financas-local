@@ -1,6 +1,6 @@
 # 0027. Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação
 
-- **Status:** Aceita
+- **Status:** Aceita (em parte substituída pela [0044](0044-trocos-sem-duvida-classificados-na-sincronizacao.md): o troco "sem dúvida" vai sozinho na sincronização, com aviso e "Desfazer")
 - **Data:** 2026-10-17
 - **Relacionadas:** [0006](0006-cliente-http-proprio-para-a-pluggy.md) (Pluggy), [0010](0010-reservas-estimadas-pelo-extrato.md) (estimar pelo extrato, conferir à mão), [0023](0023-edicao-em-massa-no-modo-edicao-de-transacoes.md) (desfazer guardado na API)
 
@@ -31,12 +31,13 @@ O usuário pediu um botão que corrija esse tipo de coisa.
 
 ## Decisão
 
-Em Investimentos, **"Conferir investimentos"** abre uma prévia (`GET /api/carteira/conferencia`) com quatro grupos, cada correção já marcada.
+Em Investimentos, **"Conferir investimentos"** abre uma prévia (`GET /api/carteira/conferencia`) com cinco grupos, cada correção já marcada.
 
 **Os grupos (`ConferenciaInvestimentosService`):**
 - **FII cadastrado como outro tipo:** pelo nome do fundo ou pelo emissor (`ClassificacaoAtivo.PareceFii`).
 - **Cotas diferentes da corretora:** quando faltam cotas, sugere o débito de compra sem operação cujo valor, sem o troco, dividido pelas cotas que faltam, fica até 3,5% do fechamento do dia. A compra é lançada ligada a esse débito (`Origem = Extrato`, `TransacaoId`).
 - **Troco ou venda contando como rendimento:** vai para a categoria de transferência "Investimentos", como escolha manual.
+- **Taxa da B3 que falta nas compras (#173 a):** em cada dia em que todos os débitos de compra têm operação, nenhuma operação tem taxa e o dia tem pelo menos 5 dias (o troco já voltou), a taxa é débitos − trocos − cotas × preço. Só é sugerida entre R$ 0,01 e o menor de 1% do valor e R$ 5; é dividida pelas operações do dia pelo valor de cada uma. O valor é recalculado na API ao aplicar (a tela manda só as operações), e o "Desfazer" volta a taxa anterior. A taxa fica no custo e no preço médio (o "valor final da compra" do app: na conferência com a carteira real, valor enviado − valor devolvido − cotas × preço deu, ordem a ordem, a "taxa da bolsa" que o app mostra); o mês a mês dos FIIs continua com cotas × preço, porque as "Entradas" do app não somam a taxa (março e junho batem ao centavo sem ela).
 - **Rendimento contando como investimento:** volta para a categoria automática. Só entram créditos com a mesma descrição dos trocos, e só se as regras derem uma categoria de receita.
 
 **Como o extrato é lido:**
@@ -49,6 +50,7 @@ Em Investimentos, **"Conferir investimentos"** abre uma prévia (`GET /api/carte
 - `POST .../corrigir` grava tudo numa gravação só.
 - O estado anterior fica na memória da API por 10 minutos para o "Desfazer" (`POST .../desfazer/{chave}`), como na ADR 0023.
 - A tela de Investimentos avisa no topo quando a posição da corretora tem outra quantidade de cotas (`CarteiraDto.CotasDiferentes`).
+- **Aviso no Painel (#170):** as compras novas trazem trocos novos, que voltavam a contar como receita até alguém lembrar de abrir a conferência. O Painel conta os trocos e vendas ainda como receita (`CreditosComoReceitaAsync`, a mesma análise da conferência) e avisa, com o link `/investimentos?conferir=1`. Rodar a correção sozinha depois da sincronização foi descartado: contrariaria a prévia desta ADR, e um provento menor que o troco do mesmo dia seria mudado sem ninguém ver.
 
 **Na mesma linha (PRs anteriores, sem ADR própria):**
 - O ativo que vem do Open Finance como `STOCK` vira FII pelo emissor ou pelo nome oficial.

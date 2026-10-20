@@ -7,7 +7,7 @@ O banco é **SQLite**, num arquivo local (`dados/sql/FinancasLocal.db`), criado 
 | `banco/01-estrutura.sql` | Tabelas, índices e restrições, todos com `CREATE TABLE/INDEX IF NOT EXISTS`. |
 | `banco/02-dados-iniciais.sql` | Categorias padrão, configurações e regras de categorização iniciais. |
 
-`scripts/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. A API também os aplica ao iniciar (`Data/EsquemaBanco.cs`, embutidos no build; os dados iniciais só no banco novo), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
+`scripts/geral/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. A API também os aplica ao iniciar (`Data/EsquemaBanco.cs`, embutidos no build; os dados iniciais só no banco novo), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
 
 O `01-estrutura.sql` é uma baseline limpa da troca SQL Server → SQLite: as colunas que antes chegavam por `ALTER TABLE` incremental (blocos `v4`–`v7`) já nascem dentro do `CREATE TABLE`.
 
@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS IX_NovaTabela_Nome ON NovaTabela (Nome);
 O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no script, não no SQL:
 
 1. Inclua a coluna no `CREATE TABLE` de `01-estrutura.sql` (para quem cria o banco do zero).
-2. Em `scripts/2-criar-banco.sh`, depois de aplicar o `01-estrutura.sql`, chame o helper de `comum.sh` (ele consulta `PRAGMA table_info` antes de alterar):
+2. Em `scripts/geral/2-criar-banco.sh`, depois de aplicar o `01-estrutura.sql`, chame o helper de `comum.sh` (ele consulta `PRAGMA table_info` antes de alterar):
 
    ```bash
    adicionar_coluna_se_ausente "Tabela" "NovaColuna" "INTEGER NOT NULL DEFAULT 0"
@@ -41,12 +41,12 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 
    Coluna `NOT NULL` adicionada a uma tabela com dados precisa de `DEFAULT`.
 
-   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/instalar-windows.ps1`) e a própria API (`Data/EsquemaBanco.cs`, que embute o `2-criar-banco.sh` no build) leem essas linhas em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
+   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/windows/instalar-windows.ps1`) e a própria API (`Data/EsquemaBanco.cs`, que embute o `2-criar-banco.sh` no build) leem essas linhas em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
 
 ### Depois de qualquer mudança
 
 1. Atualize a entidade em `Entidades/` e o mapeamento em `Data/FinancasDbContext.cs` (tamanhos e precisão iguais ao SQL).
-2. Rode `scripts/2-criar-banco.sh` e depois `scripts/3-publicar-atualizar.sh`.
+2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
 4. No commit, use `feat(banco)!:` para indicar que é preciso rodar o script do banco.
 

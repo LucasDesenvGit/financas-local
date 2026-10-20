@@ -8,7 +8,7 @@ namespace Financas.Api.Data;
 
 /// <summary>
 /// Cria e atualiza o banco ao iniciar a API (ADR 0003). Usa os mesmos scripts idempotentes de <c>banco/</c> e as
-/// mesmas colunas novas das linhas <c>adicionar_coluna_se_ausente</c> do <c>scripts/2-criar-banco.sh</c>, embutidos no
+/// mesmas colunas novas das linhas <c>adicionar_coluna_se_ausente</c> do <c>scripts/geral/2-criar-banco.sh</c>, embutidos no
 /// build: a lista de colunas continua num lugar só. Banco novo recebe também os dados iniciais. Antes de mexer num
 /// banco que já existe, se os scripts mudaram desde a última vez, faz uma cópia em <c>dados/backups</c>.
 /// Assim a instalação pelo .msi (#119) não precisa de sqlite3 nem de bash; a instalação por scripts continua igual

@@ -28,7 +28,7 @@ public static class Program
     private static readonly MethodInfo MetodoContar =
         typeof(Program).GetMethod(nameof(ContarAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 
-    // Mesma convenção terse de scripts/comum.sh (etapa/ok/aviso/erro_sai), só que sem cores: aqui é
+    // Mesma convenção terse de scripts/geral/comum.sh (etapa/ok/aviso/erro_sai), só que sem cores: aqui é
     // Console.WriteLine simples, já que a saída deste utilitário costuma ir para um terminal qualquer
     // (inclusive no Windows) ou ser redirecionada para log.
     private static void Etapa(string texto)

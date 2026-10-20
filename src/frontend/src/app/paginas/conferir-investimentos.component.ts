@@ -1,17 +1,19 @@
 import { DatePipe } from '@angular/common';
-import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, output, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   CompraSemOperacao, ConferenciaInvestimentos, CotasDiferentes, CreditoDaCorretora, NOMES_TIPO_ATIVO,
-  RendimentoComoInvestimento, ResultadoCorrecaoInvestimentos, TipoOperacao, TipoParaCorrigir
+  RendimentoComoInvestimento, ResultadoCorrecaoInvestimentos, TaxaB3, TipoOperacao, TipoParaCorrigir
 } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 /** Linha marcável da conferência. */
 interface Marcavel<T> { item: T; marcada: boolean; }
@@ -29,7 +31,7 @@ const LINHAS_VISIVEIS = 8;
  */
 @Component({
   selector: 'app-conferir-investimentos',
-  imports: [FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent],
+  imports: [ListaSuspensaDirective, FormsModule, DatePipe, MoedaPipe, ModalComponent, TermoComponent, CampoValorComponent],
   template: `
     <app-modal [aberto]="aberto()" titulo="Conferir investimentos" (fechar)="fechar.emit()">
       <div class="formulario conferencia">
@@ -89,7 +91,7 @@ const LINHAS_VISIVEIS = 8;
                             (ngModelChange)="recalcular(l)" [disabled]="!l.marcada">
                         </label>
                         <label>Preço por cota
-                          <input type="number" class="campo-curto" min="0" step="any" [(ngModel)]="l.preco" [disabled]="!l.marcada">
+                          <app-campo-valor class="campo-curto" compacto [casas]="4" [(ngModel)]="l.preco" [disabled]="!l.marcada" />
                         </label>
                         @if (l.debitoId !== null && l.debitoId === l.item.debitoSugeridoId && l.item.fechamentoNoDia !== null) {
                           <small class="texto-suave">fechamento do dia: {{ l.item.fechamentoNoDia | currency }}</small>
@@ -130,14 +132,49 @@ const LINHAS_VISIVEIS = 8;
                     <th>De onde veio</th><th>Conta</th><th>Categoria hoje</th></tr></thead>
                   <tbody>
                     @for (l of visiveis(trocos(), trocosAbertos()); track l.item.transacaoId) {
-                      <tr>
-                        <td><input type="checkbox" [(ngModel)]="l.marcada" [disabled]="!dados()!.categoriaDoTroco"
-                          [attr.aria-label]="'Corrigir o crédito de ' + (l.item.data | date: 'dd/MM/yyyy')"></td>
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [disabled]="!dados()!.categoriaDoTroco"
+                          [attr.aria-label]="'Corrigir o crédito de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
                         <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
                         <td class="direita">{{ l.item.valor | currency }}</td>
                         <td>{{ origem(l.item) }}</td>
                         <td>{{ l.item.conta }}</td>
                         <td>{{ l.item.categoria ?? 'sem categoria' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+
+          @if (taxas().length) {
+            <section aria-labelledby="conf-taxas">
+              <h3 id="conf-taxas"><app-termo chave="taxaB3">Taxa da B3</app-termo> que falta nas compras ({{ taxas().length }})</h3>
+              <p class="texto-suave">{{ total(taxas()) | currency }} em {{ taxas().length === 1 ? 'um dia' : taxas().length + ' dias' }}
+                de compras: o que saiu da conta, menos o troco que voltou, menos cotas × preço. Entra no custo e no preço médio
+                das compras (o “valor final da compra” do app); o mês a mês continua com cotas × preço.</p>
+              <div class="barra-grupo">
+                <button type="button" class="link" (click)="marcarTodos(taxas(), true)">Marcar todos</button>
+                <button type="button" class="link" (click)="marcarTodos(taxas(), false)">Desmarcar todos</button>
+              </div>
+              <div class="tabela-rolagem">
+                <table class="tabela">
+                  <thead><tr><th><span class="so-leitor">Corrigir</span></th><th>Data</th><th>Compras</th>
+                    <th class="direita">Saiu da conta</th><th class="direita">Troco</th><th class="direita">Cotas × preço</th>
+                    <th class="direita">Taxa</th></tr></thead>
+                  <tbody>
+                    @for (l of taxas(); track l.item.data + l.item.conta) {
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [attr.aria-label]="'Lançar a taxa da B3 das compras de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
+                        <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
+                        <td>{{ compras(l.item) }}</td>
+                        <td class="direita">{{ l.item.debitado | currency }}</td>
+                        <td class="direita">− {{ l.item.trocos | currency }}</td>
+                        <td class="direita">− {{ l.item.valorDasCotas | currency }}</td>
+                        <td class="direita"><strong>{{ l.item.taxa | currency }}</strong></td>
                       </tr>
                     }
                   </tbody>
@@ -167,9 +204,9 @@ const LINHAS_VISIVEIS = 8;
                     <th>Descrição</th><th>Conta</th><th>Categoria hoje</th></tr></thead>
                   <tbody>
                     @for (l of visiveis(rendimentos(), rendimentosAbertos()); track l.item.transacaoId) {
-                      <tr>
-                        <td><input type="checkbox" [(ngModel)]="l.marcada"
-                          [attr.aria-label]="'Corrigir o rendimento de ' + (l.item.data | date: 'dd/MM/yyyy')"></td>
+                      <tr [class.selecionada]="l.marcada">
+                        <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada"
+                          [attr.aria-label]="'Corrigir o rendimento de ' + (l.item.data | date: 'dd/MM/yyyy')"></label></td>
                         <td>{{ l.item.data | date: 'dd/MM/yy' }}</td>
                         <td class="direita">{{ l.item.valor | currency }}</td>
                         <td>{{ l.item.descricao }}</td>
@@ -194,6 +231,7 @@ const LINHAS_VISIVEIS = 8;
       </div>
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .conferencia section { margin-top: 18px; }
     .conferencia h3 { margin: 0 0 4px; font-size: 1rem; }
@@ -234,6 +272,7 @@ export class ConferirInvestimentosComponent {
   readonly cotas = signal<LinhaCotas[]>([]);
   readonly trocos = signal<Marcavel<CreditoDaCorretora>[]>([]);
   readonly rendimentos = signal<Marcavel<RendimentoComoInvestimento>[]>([]);
+  readonly taxas = signal<Marcavel<TaxaB3 & { valor: number }>[]>([]);
   readonly trocosAbertos = signal(false);
   readonly rendimentosAbertos = signal(false);
 
@@ -257,6 +296,7 @@ export class ConferirInvestimentosComponent {
         }));
         this.trocos.set(c.trocos.map((item) => ({ item, marcada: c.categoriaDoTroco !== null })));
         this.rendimentos.set(c.rendimentos.map((item) => ({ item, marcada: true })));
+        this.taxas.set((c.taxas ?? []).map((item) => ({ item: { ...item, valor: item.taxa }, marcada: true })));
         this.trocosAbertos.set(c.trocos.length <= LINHAS_VISIVEIS);
         this.rendimentosAbertos.set(c.rendimentos.length <= LINHAS_VISIVEIS);
         this.carregando.set(false);
@@ -276,7 +316,8 @@ export class ConferirInvestimentosComponent {
     if (this.cotas().length) partes.push(n(this.cotas().length, 'ativo com cotas diferentes da corretora', 'ativos com cotas diferentes da corretora'));
     if (this.trocos().length) partes.push(n(this.trocos().length, 'troco ou venda contando como rendimento', 'trocos ou vendas contando como rendimento'));
     if (this.rendimentos().length) partes.push(n(this.rendimentos().length, 'rendimento contando como investimento', 'rendimentos contando como investimento'));
-    if (!partes.length) return 'Tudo certo: tipos, cotas e créditos da corretora batem com a carteira.';
+    if (this.taxas().length) partes.push(n(this.taxas().length, 'dia de compras sem a taxa da B3', 'dias de compras sem a taxa da B3'));
+    if (!partes.length) return 'Tudo certo: tipos, cotas, taxas e créditos da corretora batem com a carteira.';
     return `Encontrado: ${partes.join(', ')}.`;
   }
 
@@ -314,6 +355,11 @@ export class ConferirInvestimentosComponent {
     return 'crédito da corretora';
   }
 
+  /** As compras do dia: "MXRF11 (10), XPLG11 (5)". */
+  compras(t: TaxaB3): string {
+    return t.operacoes.map((o) => `${o.ticker} (${this.qtd(o.quantidade)})`).join(', ');
+  }
+
   nomeTipo(t: TipoParaCorrigir): string {
     return (NOMES_TIPO_ATIVO[t.tipoAtual] ?? 'outro').toLowerCase();
   }
@@ -337,7 +383,7 @@ export class ConferirInvestimentosComponent {
   }
 
   selecionadas(): number {
-    return [...this.tipos(), ...this.cotas(), ...this.trocos(), ...this.rendimentos()].filter((l) => l.marcada).length;
+    return [...this.tipos(), ...this.cotas(), ...this.trocos(), ...this.rendimentos(), ...this.taxas()].filter((l) => l.marcada).length;
   }
 
   corrigir(): void {
@@ -358,7 +404,8 @@ export class ConferirInvestimentosComponent {
       compras: compras.map((l) => ({ transacaoId: l.debitoId!, ticker: l.item.ticker, tipo: TipoOperacao.Compra,
         quantidade: l.quantidade!, precoUnitario: l.preco!, taxas: 0 })),
       trocos: this.trocos().filter((l) => l.marcada).map((l) => l.item.transacaoId),
-      rendimentos: this.rendimentos().filter((l) => l.marcada).map((l) => l.item.transacaoId)
+      rendimentos: this.rendimentos().filter((l) => l.marcada).map((l) => l.item.transacaoId),
+      taxas: this.taxas().filter((l) => l.marcada).flatMap((l) => l.item.operacoes.map((o) => o.operacaoId))
     }).subscribe({
       next: (r) => {
         this.salvando.set(false);
@@ -380,6 +427,7 @@ export class ConferirInvestimentosComponent {
     if (r.compras) partes.push(`${r.compras} compra(s) lançada(s)`);
     if (r.trocos) partes.push(`${r.trocos} troco(s)/venda(s) em ${this.dados()?.categoriaDoTroco?.nome ?? 'Investimentos'}`);
     if (r.rendimentos) partes.push(`${r.rendimentos} rendimento(s) de volta à receita`);
+    if (r.taxas) partes.push(`taxa da B3 em ${r.taxas} compra(s)`);
     if (!r.desfazer || !partes.length) {
       this.avisos.info('Nada mudou: já estava tudo como sugerido.');
       return;

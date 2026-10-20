@@ -141,7 +141,7 @@ public class CarteiraService
         };
     }
 
-    private static bool EhRendaVariavel(string? tipoPluggy)
+    internal static bool EhRendaVariavel(string? tipoPluggy)
         => tipoPluggy is not null && TiposRendaVariavelPluggy.Contains(tipoPluggy.ToUpperInvariant());
 
     private static bool CodigoNaCarteira(string? codigo, HashSet<string> tickers)
@@ -291,9 +291,10 @@ public class CarteiraService
             .Select(i => new
             {
                 i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor, i.Moeda, i.Saldo, i.ValorAplicado, i.DataAplicacao,
-                i.DataVencimento, i.TaxaAnual, i.AtualizadoEm, Instituicao = i.ConexaoBancaria!.NomeInstituicao
+                i.DataVencimento, i.TaxaAnual, i.AtualizadoEm, i.NomePersonalizado, i.ConexaoBancariaId
             })
             .ToListAsync(ct);
+        var nomesConexoes = await _contas.NomesDasConexoesAsync(ct);
         var openFinance = new List<InvestimentoComparadoDto>();
         foreach (var i in investimentos)
         {
@@ -306,9 +307,10 @@ public class CarteiraService
                 if (rentab is decimal r && selicPeriodo > 0.05m) percentual = Math.Round(r / selicPeriodo.Value * 100, 1);
             }
             openFinance.Add(new InvestimentoComparadoDto(i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor,
-                i.Instituicao, i.Moeda, i.Saldo, conversor.ParaReais(i.Saldo, i.Moeda), i.ValorAplicado, i.DataAplicacao,
+                nomesConexoes.GetValueOrDefault(i.ConexaoBancariaId), i.Moeda, i.Saldo, conversor.ParaReais(i.Saldo, i.Moeda), i.ValorAplicado, i.DataAplicacao,
                 i.DataVencimento, i.TaxaAnual, rentab, selicPeriodo, percentual, EhRendaVariavel(i.Tipo),
-                CodigoNaCarteira(i.Codigo, tickersEmCarteira), i.AtualizadoEm));
+                CodigoNaCarteira(i.Codigo, tickersEmCarteira), i.AtualizadoEm,
+                NomeInvestimento.Exibicao(i.Nome, i.Tipo, i.Emissor, i.NomePersonalizado), i.NomePersonalizado));
         }
         // Totais em reais: investimento em moeda sem cotação fica de fora (avisado em MoedasSemCotacao).
         var totalOpenFinance = openFinance.Where(i => !i.JaNaCarteira).Sum(i => i.SaldoEmReais ?? 0m);

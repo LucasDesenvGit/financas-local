@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 
 let sequencia = 0;
 
@@ -15,6 +15,7 @@ let sequencia = 0;
  */
 @Component({
   selector: 'app-grafico-explicado',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <figure class="grafico-explicado">
       @if (resumo()) { <p class="grafico-resumo" aria-hidden="true">{{ resumo() }}</p> }

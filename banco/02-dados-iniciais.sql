@@ -105,3 +105,24 @@ SELECT Corretoras.Texto, 1, Categoria.Id, 50, 1, strftime('%Y-%m-%d %H:%M:%f', '
 FROM Corretoras
 JOIN Categoria ON Categoria.Nome = 'Investimentos'
 WHERE NOT EXISTS (SELECT 1 FROM RegraCategorizacao r WHERE r.Texto = Corretoras.Texto);
+
+/* #169 (ADR 0038): comprar e vender Méli Dólar (o dólar digital do Mercado Pago) é mover o próprio dinheiro, não gasto
+   nem receita. Quem instalou antes desta regra a ganha uma vez, ao iniciar a API (CategorizacaoService). */
+INSERT INTO RegraCategorizacao (Texto, TipoCorrespondencia, CategoriaId, Prioridade, Ativa, CriadoEm)
+SELECT 'MELI DOLAR', 1, Categoria.Id, 50, 1, strftime('%Y-%m-%d %H:%M:%f', 'now')
+FROM Categoria
+WHERE Categoria.Nome = 'Investimentos'
+  AND NOT EXISTS (SELECT 1 FROM RegraCategorizacao r WHERE r.Texto = 'MELI DOLAR');
+
+/* #172: aplicação e resgate de renda fixa são movimento seu, não gasto nem receita. O produto vai junto no texto,
+   para não pegar "resgate de pontos". Quem instalou antes as ganha uma vez, ao iniciar a API (CategorizacaoService). */
+WITH AplicacaoResgate (Texto) AS (
+    VALUES
+        ('APLICACAO RDB'), ('RESGATE RDB'), ('APLICACAO CDB'), ('RESGATE CDB'), ('APLICACAO POUPANCA'),
+        ('RESGATE POUPANCA'), ('RESGATE DE APLICACAO'), ('RESGATE APLICACAO')
+)
+INSERT INTO RegraCategorizacao (Texto, TipoCorrespondencia, CategoriaId, Prioridade, Ativa, CriadoEm)
+SELECT AplicacaoResgate.Texto, 1, Categoria.Id, 50, 1, strftime('%Y-%m-%d %H:%M:%f', 'now')
+FROM AplicacaoResgate
+JOIN Categoria ON Categoria.Nome = 'Investimentos'
+WHERE NOT EXISTS (SELECT 1 FROM RegraCategorizacao r WHERE r.Texto = AplicacaoResgate.Texto);

@@ -35,7 +35,7 @@ describe('Usabilidade: Painel em "Situação hoje" e "Mês de …"', () => {
   it('"Faturas do mês" explica o que soma e diz quando não há nada no mês', async () => {
     const { raiz } = await abrirPainel(painel());
     const card = raiz.querySelector('.kpi-faturas')!;
-    expect(card.textContent).toContain('compras e parcelas lançadas no mês, sem parcelas futuras');
+    expect(card.textContent).toContain('a fatura de cada cartão que fecha no mês');
     expect(card.textContent).toContain('Nada lançado nos cartões neste mês.');
   });
 });

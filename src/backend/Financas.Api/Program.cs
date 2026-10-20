@@ -115,6 +115,7 @@ builder.Services.AddScoped<RegraDescricaoService>();
 builder.Services.AddScoped<TransferenciasService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
+builder.Services.AddScoped<ContaAgendadaService>();
 builder.Services.AddScoped<SugestaoOrcamentoService>();
 builder.Services.AddScoped<AssistenteMetasService>();
 builder.Services.AddScoped<DescricaoPoucoInformativaService>();
@@ -124,6 +125,8 @@ builder.Services.AddScoped<ReservaService>();
 builder.Services.AddScoped<CotacaoService>();
 builder.Services.AddScoped<ExtratoCarteiraService>();
 builder.Services.AddScoped<ConferenciaInvestimentosService>();
+builder.Services.AddScoped<HistoricoInvestimentosService>();
+builder.Services.AddScoped<ConferenciaBancoService>();
 builder.Services.AddScoped<FiiService>();
 builder.Services.AddScoped<EmprestimoService>();
 builder.Services.AddScoped<RelatorioService>();
@@ -181,16 +184,31 @@ var app = builder.Build();
 // Cria/atualiza o banco antes de atender (ADR 0003): a instalação pelo .msi não tem sqlite3 nem bash.
 EsquemaBanco.Aplicar(caminhoBanco, app.Logger);
 
-// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco.
+// Entrada no cartão é estorno ou pagamento de fatura, nunca receita (ADR 0036), e transferência só fica fora dos
+// relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco, nessa ordem.
 try
 {
     using var escopo = app.Services.CreateScope();
+    var bancoDados = escopo.ServiceProvider.GetRequiredService<FinancasDbContext>();
+    // Regras padrão novas (Méli Dólar, ADR 0038; aplicação e resgate, #172), uma vez, para quem instalou antes delas
+    // (salva a marca mesmo sem mudanças).
+    await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().CriarRegrasPadraoAsync(
+        escopo.ServiceProvider.GetRequiredService<ConfiguracaoService>(), CancellationToken.None);
+    await bancoDados.SaveChangesAsync();
+    if (await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().ReclassificarEntradasNosCartoesAsync(CancellationToken.None) > 0)
+        await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
-        await escopo.ServiceProvider.GetRequiredService<FinancasDbContext>().SaveChangesAsync();
+        await bancoDados.SaveChangesAsync();
+    // #158: cobranças automáticas (débito automático, cartão) que já chegaram dão baixa na conta a pagar.
+    if (await escopo.ServiceProvider.GetRequiredService<ContaAgendadaService>().ConciliarAsync(CancellationToken.None) > 0)
+        await bancoDados.SaveChangesAsync();
+    // #173 b) (ADR 0044): o troco "sem dúvida" das compras de renda variável vai para a categoria da compra (grava sozinho).
+    await escopo.ServiceProvider.GetRequiredService<ConferenciaInvestimentosService>()
+        .ClassificarTrocosSemDuvidaAsync(CancellationToken.None);
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Não foi possível conferir as transferências ao iniciar.");
+    app.Logger.LogWarning(ex, "Não foi possível conferir as entradas nos cartões e as transferências ao iniciar.");
 }
 
 // ---------------------------------------------------------------- Pipeline

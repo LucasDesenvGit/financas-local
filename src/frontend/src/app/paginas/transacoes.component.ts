@@ -1,20 +1,24 @@
 import { DatePipe } from '@angular/common';
-import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { PrivacidadeService } from '../core/privacidade.service';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
-  SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao
+  NaturezaGasto, SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
 import { OpcaoMultipla, SeletorMultiploComponent } from '../compartilhado/seletor-multiplo.component';
 import {
-  ContextoTransacoes, NOMES_MESES, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
+  ContextoTransacoes, NOMES_MESES, NaturezaUrl, ORIGENS_IDS, OrigemIdsUrl, dataIso, dataIsoValida, idsDaUrl, paraData,
+  paramsTransacoes, primeiroDiaMes, ultimoDiaMes
 } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -23,6 +27,7 @@ import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../compartilhado/tipos-lancamento';
 import { RenomearTransacaoComponent } from './renomear-transacao.component';
 import { RenomearEmLoteComponent } from './renomear-em-lote.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 interface FormTransacao {
   id: number | null;
@@ -51,9 +56,25 @@ interface FormTransferencia {
   descricao: string;
 }
 
+/** ?natureza= da URL (Visão anual, regra 50/30/20) e o rótulo do chip: as mesmas palavras do gráfico de lá. */
+const NATUREZAS_URL: Record<NaturezaUrl, { natureza: NaturezaGasto | null; rotulo: string }> = {
+  'essencial': { natureza: NaturezaGasto.Essencial, rotulo: 'Essenciais' },
+  'estilo-de-vida': { natureza: NaturezaGasto.EstiloDeVida, rotulo: 'Estilo de vida' },
+  'sem': { natureza: null, rotulo: 'Sem classificação (essencial/estilo de vida)' }
+};
+
+/** Naturezas do filtro como estão na URL, na ordem fixa de NATUREZAS_URL. */
+function naturezasNaUrl(f: FiltroTransacoes): NaturezaUrl[] {
+  return (Object.keys(NATUREZAS_URL) as NaturezaUrl[]).filter((chave) => {
+    const n = NATUREZAS_URL[chave].natureza;
+    return n === null ? !!f.semNatureza : (f.naturezas ?? []).includes(n);
+  });
+}
+
 interface ChipFiltro {
-  /** Categoria tem um chip por valor marcado: `categoria:12`, `categoria:sem`. */
-  id: 'periodo' | `categoria:${string}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca';
+  /** Categoria e natureza têm um chip por valor marcado: `categoria:12`, `categoria:sem`, `natureza:essencial`. */
+  id: 'periodo' | `categoria:${string}` | `natureza:${NaturezaUrl}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca'
+    | 'ids';
   rotulo: string;
   cor?: string;
 }
@@ -80,8 +101,9 @@ function dataCurta(iso: string, comAno: boolean): string {
 
 @Component({
   selector: 'app-transacoes',
-  imports: [FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
-    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
+    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
+    CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -95,8 +117,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     </header>
 
     <section class="filtros">
-      <label>De <input type="date" [(ngModel)]="filtro.inicio" (change)="buscar(1)"></label>
-      <label>Até <input type="date" [(ngModel)]="filtro.fim" (change)="buscar(1)"></label>
+      <label>De <app-campo-data [(ngModel)]="filtro.inicio" (alterado)="buscar(1)" /></label>
+      <label>Até <app-campo-data [(ngModel)]="filtro.fim" (alterado)="buscar(1)" /></label>
       <label>Conta
         <select [(ngModel)]="filtro.contaId" (change)="buscar(1)">
           <option [ngValue]="null">Todas</option>
@@ -134,7 +156,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 
     @if (chipsFiltro(); as chips) {
       @if (chips.length) {
-        <section class="faixa-filtros" aria-label="Filtros ativos">
+        <section class="faixa-filtros expandir" aria-label="Filtros ativos" animate.leave="recolher">
           <strong>Filtrando:</strong>
           @for (c of chips; track c.id) {
             <span class="chip chip-filtro">
@@ -150,7 +172,7 @@ function dataCurta(iso: string, comAno: boolean): string {
     }
 
     @if (filtroAplicado().poucoInformativa) {
-      <p class="dica-generica texto-suave">
+      <p class="dica-generica texto-suave expandir" animate.leave="recolher">
         Transações cuja descrição não diz o que foi (PIX ENVIADO, PAGAMENTO, TED, só o nome do banco). Cada uma sai desta
         lista quando você escolhe a categoria (dá para várias de uma vez em "Editar categorias"), dá um nome mais claro
         a ela ou marca "revisada".
@@ -158,7 +180,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     }
 
     @if (modoEdicao()) {
-      <section class="painel-bloco barra-edicao" aria-labelledby="titulo-edicao">
+      <!-- Abre e recolhe animando a altura: a lista abaixo não pula de uma vez ao entrar/sair do modo edição. -->
+      <section class="painel-bloco barra-edicao expandir" aria-labelledby="titulo-edicao" animate.leave="recolher">
         <div class="bloco-titulo">
           <h2 id="titulo-edicao">Editando categorias</h2>
           <div class="acoes">
@@ -208,9 +231,13 @@ function dataCurta(iso: string, comAno: boolean): string {
         <span>Resultado <strong>{{ p.totalReceitas - p.totalDespesas | currency }}</strong></span>
       </section>
 
-      @if (selecionadas().size) {
-        <section class="barra-lote">
-          <span>{{ selecionadas().size }} selecionada(s)</span>
+      <!-- #133: a contagem é anunciada quando muda (região aria-live sempre presente). -->
+      <span class="so-leitor" aria-live="polite">{{ textoSelecao() }}</span>
+      <!-- A barra abre e fecha animando a altura (sem empurrar a tabela de uma vez) e fica fixa no topo ao rolar. -->
+      <div class="barra-lote-espaco" [class.aberta]="selecionadas().size > 0" [attr.inert]="selecionadas().size ? null : ''">
+        <div class="barra-lote-dentro">
+        <section class="barra-lote" (keydown.escape)="limparSelecao()" aria-label="Ações nas transações selecionadas">
+          <span class="contagem-selecao">{{ textoSelecao() }}</span>
           <select [(ngModel)]="categoriaLote">
             <option [ngValue]="null">Categorização automática</option>
             @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ rotuloCategoria(c) }}</option> }
@@ -223,15 +250,18 @@ function dataCurta(iso: string, comAno: boolean): string {
           }
           <button type="button" class="botao botao-emergencia" (click)="marcarEmergenciaLote(true)">Marcar emergência</button>
           <button type="button" class="botao" (click)="marcarEmergenciaLote(false)">Desmarcar emergência</button>
-          <button type="button" class="link" (click)="limparSelecao()">limpar seleção</button>
+          <button type="button" class="botao" (click)="limparSelecao()">✕ Limpar seleção</button>
         </section>
-      }
+        </div>
+      </div>
 
-      <div class="tabela-rolagem">
+      <div class="tabela-rolagem" (keydown.escape)="limparSelecao()">
         <table class="tabela" [class.tabela-edicao]="modoEdicao()">
           <thead>
             <tr>
-              <th class="col-check"><input type="checkbox" [checked]="todasSelecionadas()" (change)="alternarTodas()" aria-label="Selecionar todas"></th>
+              <th class="col-check"><label class="celula-marcar"><input type="checkbox" [checked]="todasSelecionadas()"
+                [indeterminate]="algumaSelecionadaNaPagina() && !todasSelecionadas()" (change)="alternarTodas()"
+                aria-label="Selecionar todas desta página"></label></th>
               <th>Data</th>
               <th>Descrição</th>
               <th>Categoria</th>
@@ -240,16 +270,26 @@ function dataCurta(iso: string, comAno: boolean): string {
             </tr>
           </thead>
           <tbody>
-            @for (t of p.itens; track t.id) {
+            @for (t of p.itens; track t.id; let i = $index) {
               <tr (click)="modoEdicao() ? null : editar(t)" [class.clicavel]="!modoEdicao()" [class.ignorada]="t.ignorarRelatorios"
-                [class.alterada]="pendentes().has(t.id)">
-                <td class="col-check" (click)="$event.stopPropagation()">
-                  <input type="checkbox" [checked]="selecionadas().has(t.id)" (change)="alternar(t.id)" aria-label="Selecionar">
+                [class.alterada]="pendentes().has(t.id)" [class.selecionada]="selecionadas().has(t.id)"
+                [class.destacada]="transacaoDestacada() === t.id" [attr.aria-current]="transacaoDestacada() === t.id ? 'true' : null"
+                [attr.tabindex]="transacaoDestacada() === t.id ? -1 : null" [attr.data-transacao]="t.id">
+                <!-- #133: a célula inteira marca (sem abrir a edição); Shift+clique seleciona o intervalo. -->
+                <td class="col-check" (click)="$event.stopPropagation()" (mousedown)="shiftNoClique = $event.shiftKey">
+                  <label class="celula-marcar"><input type="checkbox" [checked]="selecionadas().has(t.id)"
+                    (click)="marcar(i, $event)" [attr.aria-label]="nomeSelecao(t)"></label>
                 </td>
                 <td class="nowrap">{{ t.data | date: 'dd/MM/yy' }}</td>
                 <td>
                   <div class="linha-descricao">
-                    <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                    @if (modoEdicao()) {
+                      <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                    } @else {
+                      <!-- WCAG 2.1.1: o clique na linha é atalho de mouse; pelo teclado, a edição abre por este botão. -->
+                      <button type="button" class="botao-texto truncar" [title]="t.descricao"
+                        (click)="$event.stopPropagation(); editar(t)" [attr.aria-label]="'Editar: ' + t.descricao">{{ t.descricao }}</button>
+                    }
                     <button type="button" class="botao-icone botao-renomear" (click)="$event.stopPropagation(); renomeando.set(t)"
                       [attr.aria-label]="'Renomear: ' + t.descricao">✎</button>
                   </div>
@@ -322,7 +362,7 @@ function dataCurta(iso: string, comAno: boolean): string {
       @if (form; as fm) {
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           @if (fm.openFinance) {
-            <p class="aviso-inline">Transação importada do Open Finance: valor, data e conta vêm do banco.
+            <p class="aviso-inline expandir" animate.leave="recolher">Transação importada do Open Finance: valor, data e conta vêm do banco.
               @if (fm.descricaoOriginal) { <br><small>Original: {{ fm.descricaoOriginal }}</small> }
             </p>
           } @else {
@@ -338,8 +378,8 @@ function dataCurta(iso: string, comAno: boolean): string {
                   @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
                 </select>
               </label>
-              <label>Data <input type="date" name="data" [(ngModel)]="fm.data" required></label>
-              <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="fm.valor" required min="0.01" step="0.01"></label>
+              <label>Data <app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio /></label>
+              <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
             </div>
             @if (!contasManuais().length) {
               <p class="erro">Crie uma conta manual (ex.: "Carteira") em Contas e cartões para lançar manualmente.</p>
@@ -353,7 +393,7 @@ function dataCurta(iso: string, comAno: boolean): string {
             </select>
           </label>
           @if (sugestoesForm().length) {
-            <div class="sugestoes-chips">
+            <div class="sugestoes-chips expandir" animate.leave="recolher">
               <span class="texto-suave">Sugestões:</span>
               @for (o of sugestoesForm(); track o.categoriaId) {
                 <button type="button" class="chip-sugestao" [title]="o.motivo" (click)="fm.categoriaId = o.categoriaId">
@@ -470,8 +510,8 @@ function dataCurta(iso: string, comAno: boolean): string {
                 @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
               </select>
             </label>
-            <label>Data <input type="date" name="data" [(ngModel)]="tf.data" required></label>
-            <label>Valor (R$) <input type="number" name="valor" [(ngModel)]="tf.valor" required min="0.01" step="0.01"></label>
+            <label>Data <app-campo-data name="data" [(ngModel)]="tf.data" obrigatorio /></label>
+            <label>Valor <app-campo-valor name="valor" [(ngModel)]="tf.valor" obrigatorio [minimo]="0.01" /></label>
           </div>
           <label>Descrição <input name="descricao" [(ngModel)]="tf.descricao" maxlength="200" placeholder="Transferência"></label>
           <div class="rodape-form">
@@ -483,6 +523,7 @@ function dataCurta(iso: string, comAno: boolean): string {
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     /* #123: nome dado por você em cima; o do banco embaixo, menor (cor suave do tema, com contraste de texto). */
     .linha-descricao { display: flex; align-items: center; gap: 4px; min-width: 0; }
@@ -516,6 +557,9 @@ function dataCurta(iso: string, comAno: boolean): string {
     .celula-edicao { display: flex; gap: 6px; align-items: center; }
     .select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
     tr.alterada td { background: var(--alerta-suave); }
+    /* #141: transação aberta por link (Relatórios › Maiores despesas): fundo e faixa à esquerda, diferente da seleção. */
+    tr.destacada td { background: var(--info-suave); }
+    tr.destacada td:first-child { box-shadow: inset 4px 0 0 var(--primaria); }
     .botao-ativo { background: var(--primaria-suave); color: var(--primaria-forte); }
     .filtro-generica { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 8px; }
     .filtro-lancamento { display: grid; gap: 6px; min-width: 180px; }
@@ -553,11 +597,25 @@ function dataCurta(iso: string, comAno: boolean): string {
 export class TransacoesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly privacidade = inject(PrivacidadeService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly TipoTransacao = TipoTransacao;
   readonly StatusTransacao = StatusTransacao;
+
+  /**
+   * #141: transação que veio no link (?transacao=id), destacada na lista. Vale só para o filtro e a página com que
+   * a tela abriu: trocar qualquer um tira o destaque (e o parâmetro da URL).
+   */
+  readonly transacaoDestacada = signal<number | null>(null);
+  /** #173 d): de que tela vieram os ?ids= (o chip diz "Rendimentos de FIIs: 2 lançamentos"). */
+  readonly origemIds = signal<OrigemIdsUrl | null>(null);
+  private filtroDoDestaque: string | null = null;
+  /** Rolar até a linha e pôr o foco nela só na primeira vez, não a cada recarga (ex.: depois de editar). */
+  private destaqueMostrado = false;
 
   readonly contas = signal<Conta[]>([]);
   /** Todas as categorias (inclusive inativas), para validar a categoria que chega pela URL. */
@@ -600,6 +658,21 @@ export class TransacoesComponent implements OnInit {
     const itens = this.pagina()?.itens ?? [];
     return itens.length > 0 && itens.every((t) => this.selecionadas().has(t.id));
   });
+  /** #133: quantas das selecionadas estão nesta página (o resto está em outras: a seleção continua ao trocar). */
+  private readonly selecionadasNaPagina = computed(() =>
+    (this.pagina()?.itens ?? []).filter((t) => this.selecionadas().has(t.id)).length);
+  readonly algumaSelecionadaNaPagina = computed(() => this.selecionadasNaPagina() > 0);
+  /** "5 selecionadas (2 em outras páginas)": deixa claro que a ação em lote vale também para as que não aparecem. */
+  readonly textoSelecao = computed(() => {
+    const total = this.selecionadas().size;
+    if (!total) return '';
+    const fora = total - this.selecionadasNaPagina();
+    return `${total} ${total === 1 ? 'selecionada' : 'selecionadas'}`
+      + (fora ? ` (${fora} em ${fora === 1 ? 'outra página' : 'outras páginas'})` : '');
+  });
+  /** Shift+clique: a última caixa marcada/desmarcada (índice na página) e se o clique veio com Shift. */
+  private ultimoMarcado: number | null = null;
+  shiftNoClique = false;
 
   /* ------------------------------ #87: modo edição ------------------------------ */
   /** Modo edição de categorias (?editar=1). */
@@ -636,6 +709,7 @@ export class TransacoesComponent implements OnInit {
       const c = this.todasCategorias().find((x) => x.id === id);
       chips.push({ id: `categoria:${id}`, rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
     }
+    for (const n of naturezasNaUrl(f)) chips.push({ id: `natureza:${n}`, rotulo: NATUREZAS_URL[n].rotulo });
     if (f.contaId) chips.push({ id: 'conta', rotulo: this.contas().find((c) => c.id === f.contaId)?.nome ?? 'Conta' });
     if (f.tipo) {
       const nomes: Record<number, string> = {
@@ -647,12 +721,23 @@ export class TransacoesComponent implements OnInit {
     if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
     if (f.poucoInformativa) chips.push({ id: 'generica', rotulo: 'Descrição pouco informativa' });
     if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
+    if (f.ids?.length) {
+      const n = f.ids.length;
+      const quantos = `${n} ${n === 1 ? 'lançamento' : 'lançamentos'}`;
+      const origem = this.origemIds();
+      const escolhidos = n === 1 ? 'Só 1 lançamento escolhido' : `Só ${n} lançamentos escolhidos`;
+      chips.push({ id: 'ids', rotulo: origem ? `${ORIGENS_IDS[origem]}: ${quantos}` : escolhidos });
+    }
     return chips;
   });
 
   removerFiltro(id: ChipFiltro['id']): void {
     const padrao = this.filtroInicial();
-    if (id.startsWith('categoria:')) {
+    if (id.startsWith('natureza:')) {
+      const natureza = NATUREZAS_URL[id.substring('natureza:'.length) as NaturezaUrl].natureza;
+      if (natureza === null) this.filtro.semNatureza = false;
+      else this.filtro.naturezas = (this.filtro.naturezas ?? []).filter((n) => n !== natureza);
+    } else if (id.startsWith('categoria:')) {
       const valor = id.substring('categoria:'.length);
       this.filtroCategorias = this.filtroCategorias.filter((v) => v !== valor);
       this.sincronizarFiltroCategoria();
@@ -665,12 +750,14 @@ export class TransacoesComponent implements OnInit {
       case 'generica': this.filtro.poucoInformativa = false; break;
       case 'lancamento': this.filtro.lancamento = null; break;
       case 'busca': this.filtro.busca = ''; break;
+      case 'ids': this.filtro.ids = []; this.origemIds.set(null); break;
     }
     this.buscar(1);
   }
 
   limparFiltros(): void {
     this.filtro = this.filtroInicial();
+    this.origemIds.set(null);
     this.filtroCategorias = [];
     this.sincronizarFiltroCategoria();
     this.buscar(1);
@@ -738,6 +825,11 @@ export class TransacoesComponent implements OnInit {
     const conta = Number(params.get('conta'));
     if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
 
+    const naturezas = (params.get('natureza') ?? '').split(',').map((v) => v.trim())
+      .filter((v): v is NaturezaUrl => Object.hasOwn(NATUREZAS_URL, v));
+    this.filtro.semNatureza = naturezas.includes('sem');
+    this.filtro.naturezas = [...new Set(naturezas.map((v) => NATUREZAS_URL[v].natureza).filter((n) => n !== null))];
+
     if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
     if (params.get('generica') === '1') this.filtro.poucoInformativa = true;
     const lancamento = params.get('lancamento');
@@ -745,6 +837,14 @@ export class TransacoesComponent implements OnInit {
     if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
+    const ids = idsDaUrl(params.get('ids'));
+    if (ids.length) {
+      this.filtro.ids = ids;
+      const de = params.get('de');
+      this.origemIds.set(de && Object.hasOwn(ORIGENS_IDS, de) ? de as OrigemIdsUrl : null);
+    }
+    const transacao = Number(params.get('transacao'));
+    if (Number.isInteger(transacao) && transacao > 0) this.transacaoDestacada.set(transacao);
   }
 
   rotuloCategoria(c: Categoria): string {
@@ -777,6 +877,19 @@ export class TransacoesComponent implements OnInit {
       this.pendentes.set(new Map());
     }
     this.filtro.pagina = pagina;
+    if (this.transacaoDestacada() !== null) {
+      const chave = JSON.stringify(this.filtro);
+      this.filtroDoDestaque ??= chave;
+      if (chave !== this.filtroDoDestaque) this.transacaoDestacada.set(null);
+    }
+    // #133: trocar só de página mantém a seleção (dá para juntar transações de várias páginas); trocar o filtro limpa,
+    // para nenhuma ação em lote pegar uma transação que não aparece no filtro atual (Nielsen 5).
+    const semPagina = (f: FiltroTransacoes) => JSON.stringify({ ...f, pagina: undefined, tamanhoPagina: undefined });
+    const trocouFiltro = semPagina(this.filtroAplicado()) !== semPagina(this.filtro);
+    if (trocouFiltro && this.selecionadas().size) {
+      this.limparSelecao();
+      this.avisos.info('Seleção limpa ao trocar o filtro.');
+    }
     this.filtroAplicado.set({ ...this.filtro });
     this.gravarFiltroNaUrl();
     this.api.transacoes(this.filtro).subscribe({
@@ -789,8 +902,9 @@ export class TransacoesComponent implements OnInit {
         }
         const trocouPagina = this.pagina() !== null && this.pagina()!.pagina !== p.pagina;
         this.pagina.set(p);
-        this.limparSelecao();
+        this.ultimoMarcado = null;   // o intervalo do Shift vale dentro de uma página
         if (trocouPagina) this.rolarParaTopo();
+        this.mostrarDestaque(p);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
@@ -811,7 +925,11 @@ export class TransacoesComponent implements OnInit {
       inicio: mudouPeriodo ? f.inicio ?? undefined : undefined,
       fim: mudouPeriodo ? f.fim ?? undefined : undefined,
       tipo: f.tipo ? tipos[f.tipo] : undefined,
-      contaId: f.contaId ?? undefined
+      contaId: f.contaId ?? undefined,
+      transacaoId: this.transacaoDestacada() ?? undefined,
+      naturezas: naturezasNaUrl(f),
+      ids: f.ids ?? undefined,
+      origemIds: this.origemIds() ?? undefined
     });
     if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
@@ -834,6 +952,29 @@ export class TransacoesComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /**
+   * #141: rola até a transação do link e põe o foco nela (teclado e leitor de tela caem direto nela). Se ela não
+   * está na lista, avisa e tira o destaque, para o F5 não repetir o aviso.
+   */
+  private mostrarDestaque(p: PaginaTransacoes): void {
+    const id = this.transacaoDestacada();
+    if (id === null || this.destaqueMostrado) return;
+    this.destaqueMostrado = true;
+    if (!p.itens.some((t) => t.id === id)) {
+      this.transacaoDestacada.set(null);
+      this.gravarFiltroNaUrl();
+      this.avisos.info('A transação do link não aparece neste filtro: ela pode ter sido apagada ou mudado de data ou de conta.');
+      return;
+    }
+    afterNextRender(() => {
+      const linha = this.elemento.nativeElement.querySelector<HTMLElement>(`tr[data-transacao="${id}"]`);
+      if (!linha) return;
+      const semAnimacao = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      linha.scrollIntoView({ block: 'center', behavior: semAnimacao ? 'auto' : 'smooth' });
+      linha.focus({ preventScroll: true });
+    }, { injector: this.injector });
+  }
+
   alternar(id: number): void {
     this.selecionadas.update((s) => {
       const novo = new Set(s);
@@ -842,13 +983,51 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
+  /**
+   * #133: marca/desmarca a caixa da linha `indice`. Com Shift (clique ou Shift+Espaço), aplica o mesmo estado ao
+   * intervalo entre a última caixa usada e esta, como no Gmail e no Explorador de Arquivos.
+   */
+  marcar(indice: number, e: MouseEvent): void {
+    const itens = this.pagina()?.itens ?? [];
+    const marcar = (e.target as HTMLInputElement).checked;
+    const comShift = e.shiftKey || this.shiftNoClique;
+    this.shiftNoClique = false;
+    const de = comShift && this.ultimoMarcado !== null ? Math.min(this.ultimoMarcado, indice) : indice;
+    const ate = comShift && this.ultimoMarcado !== null ? Math.max(this.ultimoMarcado, indice) : indice;
+    this.selecionadas.update((s) => {
+      const novo = new Set(s);
+      for (const t of itens.slice(de, ate + 1)) {
+        if (marcar) novo.add(t.id); else novo.delete(t.id);
+      }
+      return novo;
+    });
+    this.ultimoMarcado = indice;
+  }
+
+  /** "Selecionar todas desta página": parcial ou nenhuma → marca todas as da página; todas → desmarca as da página. */
   alternarTodas(): void {
     const itens = this.pagina()?.itens ?? [];
-    this.selecionadas.set(this.todasSelecionadas() ? new Set() : new Set(itens.map((t) => t.id)));
+    const todas = this.todasSelecionadas();
+    this.selecionadas.update((s) => {
+      const novo = new Set(s);
+      for (const t of itens) { if (todas) novo.delete(t.id); else novo.add(t.id); }
+      return novo;
+    });
+    this.ultimoMarcado = null;
   }
 
   limparSelecao(): void {
     this.selecionadas.set(new Set());
+    this.ultimoMarcado = null;
+  }
+
+  /** Nome acessível da caixa de cada linha: "Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00" (respeita "ocultar valores"). */
+  nomeSelecao(t: Transacao): string {
+    const data = t.data ? paraData(t.data.slice(0, 10)).toLocaleDateString('pt-BR') : '';
+    const valor = this.privacidade.oculto()
+      ? 'valor oculto'
+      : Math.abs(t.valor ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return 'Selecionar: ' + [t.descricao, data, valor].filter(Boolean).join(', ');
   }
 
   categorizarLote(): void {
@@ -864,6 +1043,7 @@ export class TransacoesComponent implements OnInit {
     this.api.categorizarEmLote([...this.selecionadas()], this.categoriaLote).subscribe({
       next: (r) => {
         this.avisos.sucesso(`${r.transacoesAtualizadas} transação(ões) atualizada(s).`);
+        this.limparSelecao();
         this.buscar(this.filtro.pagina ?? 1);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
@@ -876,6 +1056,7 @@ export class TransacoesComponent implements OnInit {
         this.avisos.sucesso(emergencia
           ? `${r.transacoesAtualizadas} despesa(s) marcada(s) como emergência.`
           : `${r.transacoesAtualizadas} transação(ões) desmarcada(s).`);
+        this.limparSelecao();
         this.buscar(this.filtro.pagina ?? 1);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
@@ -1308,7 +1489,7 @@ export class TransacoesComponent implements OnInit {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, poucoInformativa: false,
-      lancamento: null, tipo: null, busca: '', pagina: 1,
+      lancamento: null, naturezas: [], semNatureza: false, tipo: null, busca: '', ids: [], pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }

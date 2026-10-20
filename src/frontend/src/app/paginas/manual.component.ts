@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -121,9 +121,11 @@ function normalizar(texto: string): string {
       }
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     /* flex + gap: o Angular tira os espaços entre os elementos (ficaria "Manual›Contas"). */
-    .trilha { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.85rem; margin-bottom: 4px; }
+    .trilha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.85rem; margin-bottom: 4px; }
+    .trilha a, .navegacao-capitulos a { display: inline-flex; align-items: center; min-height: 24px; }
     .resumo-capitulo { max-width: 80ch; margin: -8px 0 18px; }
     .indice-secoes ol { margin: 6px 0 0; padding-left: 22px; columns: 2 260px; }
     .indice-secoes li { margin: 3px 0; }
@@ -141,7 +143,15 @@ function normalizar(texto: string): string {
     .busca-manual label { font-weight: 600; }
     .grade-capitulos { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px;
       grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
-    .grade-capitulos li { margin: 0; }
+    /* O card inteiro é o alvo do link (o ::after cobre o card), com o mesmo realce no hover e no foco. */
+    .grade-capitulos li { margin: 0; position: relative; cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
+    .grade-capitulos li:hover, .grade-capitulos li:focus-within {
+      transform: translateY(-2px); border-color: var(--primaria); box-shadow: var(--sombra-forte); }
+    .grade-capitulos a::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+    .grade-capitulos a:focus-visible { outline: none; }
+    .grade-capitulos li:has(a:focus-visible) { outline: 2px solid var(--primaria); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { .grade-capitulos li { transition: none; } .grade-capitulos li:hover { transform: none; } }
     .grade-capitulos h2 { font-size: 1.05rem; margin: 0 0 6px; }
     .grade-capitulos p { margin: 0 0 6px; }
     .resultados-busca { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }

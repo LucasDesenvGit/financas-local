@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -7,6 +7,7 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { PreviaRenomear, RenomearTransacao, ResultadoRenomear, TipoCorrespondencia, Transacao } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 type Escopo = 'so-esta' | 'outras';
 
@@ -18,7 +19,7 @@ type Escopo = 'so-esta' | 'outras';
  */
 @Component({
   selector: 'app-renomear-transacao',
-  imports: [FormsModule, ModalComponent],
+  imports: [ListaSuspensaDirective, FormsModule, ModalComponent],
   template: `
     <app-modal [aberto]="!!transacao()" titulo="Renomear transação" (fechar)="fechar.emit()">
       @if (transacao(); as t) {
@@ -70,6 +71,7 @@ type Escopo = 'so-esta' | 'outras';
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .do-banco { margin: 0 0 4px; overflow-wrap: anywhere; }
     .onde-usar { border: 1px solid var(--borda); border-radius: 10px; padding: 8px 12px 10px; margin: 0; display: grid; gap: 6px; }

@@ -27,7 +27,12 @@ public record ContaDto(
     // ADR 0024: banco que vale (escolhido, do cartão herdado da conta ou detectado); BancoDefinido = escolhido.
     string? Banco = null, bool BancoDefinido = false, int? ContaVinculadaId = null,
     // Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel).
-    FaturaMesDto? FaturaMes = null);
+    FaturaMesDto? FaturaMes = null,
+    // #171: "você reduziu o limite no app?" (null = sem resposta) e a diferença avaliada na resposta.
+    bool? LimiteAjustadoNoApp = null, decimal? LimiteDiferencaAvaliada = null);
+
+/// <summary>#171: true = reduzi o limite no app; false = não reduzi (a diferença é compromisso); null = desfazer.</summary>
+public record ResponderLimiteAjustadoDto(bool? Ajustado);
 
 public record SalvarContaDto(
     [Required, StringLength(120)] string Nome,
@@ -98,13 +103,16 @@ public record PreviaRegraDescricaoDto(int Quantidade, List<string> Exemplos);
 
 /// <summary>#123: regra de descrição, com quantas transações estão com o nome dado por ela.</summary>
 public record RegraDescricaoDto(int Id, string Texto, TipoCorrespondencia TipoCorrespondencia, string NovaDescricao,
-    bool Ativa, int Transacoes);
+    bool Ativa, int Transacoes, decimal? ValorMinimo = null, decimal? ValorMaximo = null);
 
+/// <summary>#241: <c>ValorMinimo</c>/<c>ValorMaximo</c> (opcionais): a regra só vale com o valor, sem o sinal, na faixa.</summary>
 public record SalvarRegraDescricaoDto(
     [Required, StringLength(200, MinimumLength = 2)] string Texto,
     TipoCorrespondencia TipoCorrespondencia,
     [Required, StringLength(300, MinimumLength = 1)] string NovaDescricao,
-    bool Ativa = true);
+    bool Ativa = true,
+    [Range(0.01d, 999999999d)] decimal? ValorMinimo = null,
+    [Range(0.01d, 999999999d)] decimal? ValorMaximo = null);
 
 public class FiltroTransacoesDto
 {
@@ -116,6 +124,12 @@ public class FiltroTransacoesDto
     [MaxLength(200)] public List<int>? CategoriaIds { get; set; }
     /// <summary>Sem categoria; junto com categorias, soma as duas coisas (OU).</summary>
     public bool SemCategoria { get; set; }
+    /// <summary>
+    /// Natureza do gasto (regra 50/30/20): a da categoria ou, se ela não tem, a da categoria pai (a mesma regra da
+    /// Visão anual). Com <see cref="SemNatureza"/>, soma também as sem classificação (inclusive sem categoria).
+    /// </summary>
+    [MaxLength(2)] public List<NaturezaGasto>? Naturezas { get; set; }
+    public bool SemNatureza { get; set; }
     public bool SomenteEmergencias { get; set; }
     /// <summary>#9: só as de descrição pouco informativa ainda não revisadas.</summary>
     public bool PoucoInformativa { get; set; }
@@ -124,6 +138,8 @@ public class FiltroTransacoesDto
     public string? Lancamento { get; set; }
     public TipoTransacao? Tipo { get; set; }
     [StringLength(100)] public string? Busca { get; set; }
+    /// <summary>#173 d): só estes lançamentos (?ids=1&amp;ids=2), vindos do detalhe de outra tela.</summary>
+    [MaxLength(200)] public List<long>? Ids { get; set; }
     [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
     [Range(1, 500)] public int TamanhoPagina { get; set; } = 50;
 }
@@ -263,24 +279,21 @@ public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual
 /// <summary>Nova ordem de prioridade das metas (a primeira da lista é a 1ª prioridade).</summary>
 public record PrioridadesMetasDto([Required, MinLength(1), MaxLength(200)] List<int> Ids);
 
-/// <summary>Um mês do plano de uma meta: sobra prevista (a da Projeção), parcelas do mês e o recomendado para ela.</summary>
-public record PlanoMesMetaDto(short Ano, byte Mes, decimal SobraPrevista, decimal Parcelas, decimal Recomendado);
+/// <summary>
+/// Um mês do caixa (#149): receitas e despesas das contas de dinheiro, faturas de cartão que vencem no mês (com a parte
+/// que é parcela) e a sobra = receitas − despesas − faturas.
+/// </summary>
+public record MesCaixaDto(short Ano, byte Mes, decimal Receitas, decimal Despesas, decimal Faturas, decimal Parcelas, decimal Sobra);
 
 /// <summary>
-/// Recomendação de uma meta (#90). <c>Recomendado</c>: quanto guardar este mês (null sem histórico suficiente);
-/// <c>PedidoMes</c>: quanto o prazo pede este mês, pela capacidade dos meses até ele; <c>DivisaoIgual</c>: a divisão
-/// linear de antes, como referência; <c>NoPrazo</c>: null sem data-alvo; <c>ParaManterPrazo</c>: quanto os próximos
-/// meses precisam, em média, quando o ritmo recomendado não cumpre o prazo.
+/// O que o plano das metas precisa (#90, #149, ADR 0035); a divisão entre as metas é feita na tela. <c>Disponivel</c> =
+/// false com menos de 3 meses completos de extrato (só a divisão igual). <c>Meses</c>: o caixa a partir do mês atual.
+/// <c>SaldoFimDoMes</c>: saldo previsto nas contas de dinheiro no fim do mês, já pagas as faturas que vencem nele
+/// (<c>FaturaAPagar</c> é a parte delas que ainda não saiu). <c>MelhorMesRecente</c>: a maior sobra de verdade (pelo
+/// caixa) entre os meses completos considerados.
 /// </summary>
-public record PlanoMetaDto(int MetaId, decimal Falta, decimal? Recomendado, decimal? PedidoMes, decimal? DivisaoIgual,
-    DateOnly? DataProvavel, bool? NoPrazo, decimal? ParaManterPrazo, List<PlanoMesMetaDto> Plano);
-
-/// <summary>
-/// Plano do mês para as metas. <c>Disponivel</c> = false com menos de 3 meses completos de extrato (só a divisão igual).
-/// </summary>
-public record PlanoMetasDto(bool Disponivel, int MesesConsiderados, short Ano, byte Mes, decimal SobraPrevista,
-    int MargemPercentual, decimal Capacidade, decimal TotalPedido, decimal TotalRecomendado, bool SobraNegativa,
-    List<PlanoMetaDto> Metas);
+public record PlanoMetasDto(bool Disponivel, int MesesConsiderados, short Ano, byte Mes, int MargemPercentual,
+    decimal SaldoContas, decimal FaturaAPagar, decimal SaldoFimDoMes, decimal MelhorMesRecente, List<MesCaixaDto> Meses);
 
 public record SalvarMetaDto(
     [Required, StringLength(120)] string Nome,
@@ -298,7 +311,9 @@ public record ContaAgendadaDto(int Id, string Descricao, decimal Valor, DateOnly
     Recorrencia Recorrencia, int? CategoriaId, string? CategoriaNome, int? ContaId, string? ContaNome,
     bool Ativa, DateOnly? UltimoPagamentoEm, int DiasParaVencer,
     // #69: até quando se repete; pagamentos que faltam até lá (contando o próximo); encerrada por ter passado dela.
-    DateOnly? DataLimite = null, int? PagamentosRestantes = null, bool Encerrada = false);
+    DateOnly? DataLimite = null, int? PagamentosRestantes = null, bool Encerrada = false,
+    // #158: como é cobrada, o texto que a liga às cobranças e a observação.
+    FormaCobranca FormaCobranca = FormaCobranca.AMao, string? TextoCobranca = null, string? Observacao = null);
 
 public record SalvarContaAgendadaDto(
     [Required, StringLength(150)] string Descricao,
@@ -308,24 +323,50 @@ public record SalvarContaAgendadaDto(
     int? CategoriaId,
     int? ContaId,
     bool Ativa = true,
-    DateOnly? DataLimite = null);
+    DateOnly? DataLimite = null,
+    FormaCobranca FormaCobranca = FormaCobranca.AMao,
+    [StringLength(100, ErrorMessage = "O texto da cobrança pode ter até 100 caracteres.")] string? TextoCobranca = null,
+    [StringLength(300, ErrorMessage = "A observação pode ter até 300 caracteres.")] string? Observacao = null,
+    // #205: a chave da sugestão do extrato que originou o cadastro. Vazia na edição: a ligação que já existe fica.
+    [StringLength(150)] string? ChaveExtrato = null);
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
+
+/// <summary>#205: "é a mesma": liga a conta a pagar à sugestão do extrato (a <c>ChaveExtrato</c> da sugestão).</summary>
+public record LigarExtratoContaAgendadaDto([Required, StringLength(150)] string ChaveExtrato);
 
 /// <summary>
 /// Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar. <c>ProximoVencimento</c> nunca é
 /// passado; <c>VencimentoSemPagamento</c> é o vencimento esperado que já passou sem o pagamento aparecer no extrato.
 /// </summary>
+/// <summary>
+/// #158: aviso de uma conta a pagar recorrente. <c>Tipo</c>: "nao-veio", "mudou-de-cartao", "aumentou" ou
+/// "cartao-arquivado". <c>ValorNovo</c> e <c>ContaNova*</c> vão com a ação "Atualizar" (o valor e a conta da última
+/// cobrança). O texto não leva valores em reais (a tela mostra <c>ValorNovo</c> pelo pipe de "ocultar valores").
+/// </summary>
+public record AvisoContaAgendadaDto(int ContaAgendadaId, string Descricao, string Tipo, string Texto,
+    decimal? ValorAnterior = null, decimal? ValorNovo = null, int? ContaNovaId = null, string? ContaNovaNome = null,
+    DateOnly? Data = null);
+
 public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal Valor, bool ValorVariavel,
     decimal ValorMinimo, decimal ValorMaximo, DateOnly ProximoVencimento, int DiaHabitual, int Meses, int Pagamentos,
     DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,
-    string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento);
+    string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento,
+    // #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual.
+    FormaCobranca FormaCobranca = FormaCobranca.AMao, string? TextoCobranca = null, Recorrencia Recorrencia = Recorrencia.Mensal,
+    // #205: a chave da descrição do banco (gravada na conta a pagar ao cadastrar ou no "é a mesma") e, quando há uma
+    // conta a pagar ativa parecida (valor, dia e conta) mas não dá para ter certeza, qual é ela.
+    string? ChaveExtrato = null, int? PareceSerId = null, string? PareceSerNome = null);
 
 /* ----------------------------- Investimentos ----------------------------- */
 /// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
 public record InvestimentoDto(int Id, string Nome, string Tipo, string? Subtipo, string? Codigo, string? Emissor,
     string Moeda, decimal Saldo, decimal? SaldoEmReais, decimal? ValorAplicado, decimal? Rendimento, decimal? TaxaAnual,
-    DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm);
+    DateOnly? DataVencimento, string? Status, string? NomeInstituicao, DateTime AtualizadoEm, string NomeExibicao,
+    string? NomePersonalizado);
+
+/// <summary>#170: nome escolhido para o investimento; vazio volta ao nome automático.</summary>
+public record RenomearInvestimentoDto([MaxLength(120, ErrorMessage = "O nome pode ter até 120 caracteres.")] string? Nome);
 
 /* ----------------------------- Câmbio ----------------------------- */
 public record MoedaDto(string Codigo, string Nome);
@@ -395,13 +436,16 @@ public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal 
     decimal SaldoDisponivelAtual, List<ProjecaoMesDto> Meses, List<ProjecaoCategoriaDto> Categorias);
 
 /// <summary>
-/// Um cartão no mês do Painel (UX-12). <c>ValorMes</c> soma só as transações lançadas no mês (compras e a parcela do
-/// mês; parcelas futuras ficam de fora); <c>ParcelasMes</c> é a parte disso que é parcela. Quando há fatura com
-/// vencimento no mês, vêm o vencimento e a situação dela: "paga" (pagamentos cobrem o total), "fechada" (já fechou
-/// ou venceu sem pagamento informado) ou "aberta" (ainda recebendo compras).
+/// Um cartão no mês do Painel (UX-12, #144): a fatura que fecha no mês. <c>ValorMes</c> é o total informado pelo banco
+/// quando a fatura já fechou; aberta, a soma das transações do ciclo (do fechamento anterior a <c>Fechamento</c>:
+/// compras, a parcela que cai nele, estornos descontados). <c>ParcelasMes</c> é a parte do ciclo que é parcela.
+/// <c>FaturaId</c> só vem quando a fatura já foi importada; o vencimento é estimado pelo dia de vencimento enquanto não.
+/// Situação: "paga" (pagamentos cobrem o total), "fechada" (já fechou ou venceu sem pagamento informado) ou "aberta"
+/// (ainda recebendo compras). Sem <c>Fechamento</c>, o cartão não tem dia de fechamento conhecido e o valor é o do mês
+/// do calendário.
 /// </summary>
 public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
-    DateOnly? Vencimento, string? Situacao, string? Banco = null);
+    DateOnly? Vencimento, string? Situacao, string? Banco = null, DateOnly? Fechamento = null);
 
 public record PainelDto(
     decimal SaldoContas,
@@ -428,7 +472,15 @@ public record PainelDto(
     // #9: transações recentes com descrição pouco informativa ainda não revisadas (aviso discreto no Painel).
     int PoucoInformativas = 0,
     DateOnly? PoucoInformativasDesde = null,
-    string? ExemploPoucoInformativa = null);
+    string? ExemploPoucoInformativa = null,
+    // #170: trocos e vendas de renda variável contando como receita (aviso com link para "Conferir investimentos").
+    int CreditosCorretoraComoReceita = 0,
+    decimal TotalCreditosCorretoraComoReceita = 0,
+    // #173 b) (ADR 0044): trocos que a sincronização classificou sozinha (aviso com "Ver", "Desfazer" e "Ok").
+    TrocosAutomaticosDto? TrocosAutomaticos = null);
+
+/// <summary>#173 b): os trocos classificados na sincronização que ainda estão como ficaram (Desde/Ate: as datas deles).</summary>
+public record TrocosAutomaticosDto(int Quantidade, decimal Total, List<long> Ids, DateOnly Desde, DateOnly Ate);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>
@@ -443,7 +495,12 @@ public record InfoSistemaDto(string Versao, string DotNet, string SistemaOperaci
 
 /* ----------------------------- Open Finance (Pluggy) ----------------------------- */
 public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, int IntervaloHoras,
-    int DiasRetroativos, bool Habilitada);
+    int DiasRetroativos, bool Habilitada,
+    // #172: o seu nome como aparece nos Pix (para os bancos que não informam o titular).
+    string? MeuNome = null);
+
+/// <summary>#172: o seu nome como aparece nos Pix; vazio apaga.</summary>
+public record MeuNomeDto([StringLength(120, ErrorMessage = "O nome pode ter até 120 caracteres.")] string? Nome);
 
 public record SalvarConfiguracaoPluggyDto(
     [Required, StringLength(100)] string ClientId,
@@ -455,7 +512,7 @@ public record SalvarConfiguracaoPluggyDto(
 
 public record ConexaoDto(int Id, string PluggyItemId, string? NomeInstituicao, string? CorPrimaria, string? Status,
     string? StatusExecucao, DateTime? UltimaAtualizacaoInstituicao, DateTime? ConsentimentoExpiraEm,
-    DateTime? UltimaSincronizacaoEm, string? UltimoErro, bool Ativa, int QuantidadeContas);
+    DateTime? UltimaSincronizacaoEm, string? UltimoErro, bool Ativa, int QuantidadeContas, string? NomeExibicao = null);
 
 public record AdicionarConexaoDto(
     [Required, RegularExpression("^[0-9a-fA-F-]{20,64}$", ErrorMessage = "Item ID inválido.")] string ItemId);
@@ -513,7 +570,8 @@ public record InvestimentoComparadoDto(int Id, string Nome, string Tipo, string?
     string? Emissor, string? NomeInstituicao, string Moeda, decimal Saldo, decimal? SaldoEmReais,
     decimal? ValorAplicado, DateOnly? DataAplicacao,
     DateOnly? DataVencimento, decimal? TaxaAnual, decimal? Rentabilidade, decimal? SelicNoPeriodo,
-    decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm);
+    decimal? PercentualDaSelic, bool RendaVariavel, bool JaNaCarteira, DateTime AtualizadoEm, string NomeExibicao,
+    string? NomePersonalizado);
 
 public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVariavel, List<PosicaoAtivoDto> Posicoes,
     List<EvolucaoCarteiraDto> Evolucao, List<InvestimentoComparadoDto> OpenFinance, decimal TotalOpenFinance,
@@ -533,14 +591,22 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
 /// </summary>
 public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Saldo, decimal Guardado, decimal Retirado,
     int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
-    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga);
+    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga, bool InformadoPeloBanco = false,
+    // #169: o Méli Dólar é uma reserva em dólar: Quantidade (e SaldoConferido) em US$, Saldo em reais pela Cotacao (PTAX).
+    string Moeda = "BRL", decimal? Quantidade = null, decimal? Cotacao = null,
+    // #237: a conta tem a lista detalhada do banco e esta reserva do extrato não está nela (continua estimada e conferível).
+    bool ForaDaListaDoBanco = false,
+    // #237: linha com a parte do total reservado informado pelo banco (TotalDoBanco) que não está nas reservas do extrato.
+    bool RestanteDoBanco = false, decimal? TotalDoBanco = null);
 
 /// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
 public record ConferirReservaDto(
     int ContaId,
     [Required, StringLength(100)] string Nome,
     [Range(0, 999999999999)] decimal Saldo,
-    DateOnly? Data);
+    DateOnly? Data,
+    // #169: no Méli Dólar, "BRL" quando o saldo foi informado em reais (convertido pela PTAX da data); senão, em dólar.
+    [RegularExpression("^(BRL|USD)$", ErrorMessage = "Moeda inválida: use BRL ou USD.")] string? Moeda = null);
 
 /// <summary>Preço, taxas e preço atual na moeda do ativo; <c>ValorTotal</c>, <c>ValorAtual</c> e Selic em reais.</summary>
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,
@@ -599,6 +665,22 @@ public record ProventoMesDto(int Ano, int Mes, decimal Total, decimal RecebidoEx
 
 public record EvolucaoFiiMesDto(int Ano, int Mes, decimal Aplicado, decimal? ValorMercado);
 
+/// <summary>
+/// #173: o mês da carteira de FIIs como no app da corretora. Aportes = compras (cotas × preço + taxas), sem as
+/// subscrições, que vêm à parte. Rendimentos recebidos = créditos de provento no extrato, sem os trocos e vendas.
+/// Valorização = saldo no fim − saldo no fim do mês anterior − compras + vendas.
+/// </summary>
+public record MesAMesFiiDto(int Ano, int Mes, decimal Aportes, decimal Subscricoes, decimal Resgates,
+    decimal RendimentosRecebidos, decimal RendimentosEstimados, decimal Valorizacao, decimal Saldo,
+    // #173 c): os rendimentos recebidos por fundo (Ticker null = crédito que não deu para ligar a nenhum fundo).
+    List<RendimentoPorFiiDto>? PorFii = null,
+    // #173 d): os lançamentos que formam os aportes (compras, subscrições e vendas ligadas a um lançamento do banco) e
+    // os rendimentos do mês, para o detalhe em Transações.
+    List<long>? IdsAportes = null, List<long>? IdsRendimentos = null);
+
+/// <summary>#173 c): quanto um fundo pagou no mês (Ticker null: "sem fundo identificado").</summary>
+public record RendimentoPorFiiDto(string? Ticker, decimal Valor);
+
 public record RentabilidadeMesDto(int Ano, int Mes, decimal Carteira, decimal Selic, decimal? Ifix);
 
 public record ResumoFiisDto(decimal ValorMercado, decimal Custo, decimal Valorizacao, decimal? ValorizacaoPercentual,
@@ -612,7 +694,8 @@ public record HistoricoPrecoDto(string Ticker, List<PontoPrecoDto> Pontos);
 
 public record PainelFiisDto(ResumoFiisDto Resumo, List<FiiDto> Fiis, List<LoteFiiDto> Lotes,
     List<ProventoMesDto> Proventos, List<EvolucaoFiiMesDto> Evolucao, List<RentabilidadeMesDto> Rentabilidade,
-    List<DistribuicaoInvestimentoDto> Segmentos, List<HistoricoPrecoDto> Historicos, List<string> SegmentosDisponiveis);
+    List<DistribuicaoInvestimentoDto> Segmentos, List<HistoricoPrecoDto> Historicos, List<string> SegmentosDisponiveis,
+    List<MesAMesFiiDto> MesAMes);
 
 /* ----------------------------- Importação pelo extrato ----------------------------- */
 /// <summary>Origem: "extrato", "quantidade do extrato", "preço do extrato", "cotação do dia" ou null (preencher).</summary>
@@ -634,12 +717,35 @@ public record ImportarExtratoDto([Required, MinLength(1), MaxLength(500)] List<I
 public record ResultadoImportacaoCarteiraDto(int AtivosCriados, int OperacoesImportadas, List<string> SemHistorico,
     List<string> ComLancamentoManual, List<string> Erros, string? Mensagem);
 
+/* ----------------------------- Histórico dos investimentos do Open Finance (#173 e, ADR 0045) ----------------------------- */
+
+/// <summary>Rendimento de cada mês dos investimentos do Open Finance (renda fixa e fundos); <c>Desde</c>: o primeiro registro.</summary>
+public record HistoricoInvestimentosDto(DateOnly? Desde, List<MesInvestimentosOfDto> Meses);
+
+/// <summary>
+/// Um mês: o rendimento (soma dos investimentos com valor aplicado; null se nenhum tem) e o saldo no fim. <c>Desde</c>:
+/// o mês em que o histórico começou conta a partir desse dia.
+/// </summary>
+public record MesInvestimentosOfDto(int Ano, int Mes, DateOnly? Desde, decimal? Rendimento, decimal Saldo,
+    List<RendimentoInvestimentoMesDto> PorInvestimento);
+
+public record RendimentoInvestimentoMesDto(string Nome, decimal? Rendimento, decimal Saldo);
+
 /* ----------------------------- Conferir investimentos (ADR 0027) ----------------------------- */
 
 /// <summary>O que parece errado na carteira e nas transações de renda variável, com a correção sugerida.</summary>
 public record ConferenciaInvestimentosDto(List<TipoParaCorrigirDto> Tipos, List<CotasDiferentesDto> Cotas,
     List<CompraSemOperacaoDto> ComprasSemOperacao, List<CreditoDaCorretoraDto> Trocos,
-    List<RendimentoComoInvestimentoDto> Rendimentos, CategoriaDoTrocoDto? CategoriaDoTroco);
+    List<RendimentoComoInvestimentoDto> Rendimentos, CategoriaDoTrocoDto? CategoriaDoTroco, List<TaxaB3Dto> Taxas);
+
+/// <summary>
+/// #173 a): a taxa da B3 de um dia de compras, pelo extrato: o que saiu da conta (<c>Debitado</c>) menos o troco que
+/// voltou (<c>Trocos</c>) menos cotas × preço (<c>ValorDasCotas</c>). Dividida entre as compras do dia pelo valor.
+/// </summary>
+public record TaxaB3Dto(DateOnly Data, string Conta, decimal Debitado, decimal Trocos, decimal ValorDasCotas, decimal Taxa,
+    List<TaxaB3OperacaoDto> Operacoes);
+
+public record TaxaB3OperacaoDto(int OperacaoId, string Ticker, decimal Quantidade, decimal Taxa);
 
 /// <summary>Ativo cadastrado como ação ou "outro" que é FII (Motivo: o nome do fundo ou o emissor da corretora).</summary>
 public record TipoParaCorrigirDto(int AtivoId, string Ticker, string? Nome, TipoAtivo TipoAtual, string Motivo);
@@ -670,16 +776,18 @@ public record CategoriaDoTrocoDto(int Id, string Nome);
 
 /// <summary>
 /// Correções escolhidas: ativos que viram FII, compras que faltaram (ligadas ao débito), trocos e vendas (para a
-/// categoria da compra) e rendimentos (de volta para a categoria automática).
+/// categoria da compra), rendimentos (de volta para a categoria automática) e, #173 a), as operações que recebem a
+/// taxa da B3 (o valor é recalculado na API, não vem da tela).
 /// </summary>
 public record CorrigirInvestimentosDto(
     [MaxLength(200)] List<int>? AtivosParaFii,
     [MaxLength(200)] List<ImportarExtratoItemDto>? Compras,
     [MaxLength(2000)] List<long>? Trocos,
-    [MaxLength(2000)] List<long>? Rendimentos);
+    [MaxLength(2000)] List<long>? Rendimentos,
+    [MaxLength(2000)] List<int>? Taxas = null);
 
 /// <summary><c>Desfazer</c>: chave para voltar tudo (vale por alguns minutos; null se nada mudou).</summary>
-public record ResultadoCorrecaoInvestimentosDto(int Tipos, int Compras, int Trocos, int Rendimentos, string? Desfazer);
+public record ResultadoCorrecaoInvestimentosDto(int Tipos, int Compras, int Trocos, int Rendimentos, int Taxas, string? Desfazer);
 
 /* ----------------------------- Erros do sistema (#11) ----------------------------- */
 public class FiltroErrosDto
@@ -713,3 +821,24 @@ public record ErroFrontEndDto(
     [Required, StringLength(1000)] string Mensagem,
     [StringLength(8000)] string? Detalhe,
     [StringLength(300)] string? Rota);
+
+/* ----------------------------- Conferir com o banco (#172) ----------------------------- */
+
+/// <summary>
+/// O que pode explicar a diferença entre o site e o app do banco. <c>Valor</c>, quando há, é comparado com a diferença
+/// na tela; <c>Rota</c> e <c>Parametros</c> levam à tela que mostra o detalhe.
+/// </summary>
+public record PistaConferenciaDto(string Texto, decimal? Valor, string? Rota = null, Dictionary<string, string>? Parametros = null);
+
+public record ContaConferenciaDto(int Id, string Nome, string? Banco, bool OpenFinance, decimal Saldo,
+    List<PistaConferenciaDto> Pistas);
+
+/// <summary>A fatura que fecha no mês (a mesma do Painel) e a dívida total do cartão.</summary>
+public record CartaoConferenciaDto(int Id, string Nome, string? Banco, decimal FaturaMes, string? Situacao,
+    DateOnly? Fechamento, DateOnly? Vencimento, decimal DividaTotal, List<PistaConferenciaDto> Pistas);
+
+/// <summary>Investimento do Open Finance, reserva ou a carteira lançada por você; <c>Saldo</c> em reais.</summary>
+public record InvestimentoConferenciaDto(string Chave, string Nome, string Origem, decimal Saldo, List<PistaConferenciaDto> Pistas);
+
+public record ConferenciaBancoDto(List<ContaConferenciaDto> Contas, List<CartaoConferenciaDto> Cartoes,
+    List<InvestimentoConferenciaDto> Investimentos);

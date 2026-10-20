@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { visualBanco } from './bancos';
 import { IconeComponent } from './icone.component';
 import { Icones } from './icones';
@@ -31,6 +31,7 @@ import { Icones } from './icones';
       </span>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host { display: inline-flex; flex-shrink: 0; line-height: 0; }
     .logo-banco { display: block; border-radius: 22%; }

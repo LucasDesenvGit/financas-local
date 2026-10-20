@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Banco, Conta, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../core/modelos';
+import { Banco, Conta, ContaAgendada, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { visualBanco } from '../compartilhado/bancos';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
@@ -12,6 +13,9 @@ import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
+import { EstadoLimite, diferencaDoLimite, estadoDoLimite, limiteUsado } from './limite-cartao';
+import { resumoPorConta, rotuloQuantidade } from './recorrentes';
 
 /** Quantas faturas o histórico mostra antes de "mostrar mais antigas". */
 const FATURAS_VISIVEIS = 6;
@@ -23,12 +27,16 @@ const FATURAS_VISIVEIS = 6;
  */
 @Component({
   selector: 'app-contas',
-  imports: [FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
       <div class="acoes">
-        <label class="checkbox"><input type="checkbox" [(ngModel)]="mostrarArquivadas" (change)="carregar()"> mostrar arquivadas</label>
+        <!-- #130: efeito imediato → interruptor; o estado fica na URL (?arquivadas=1). -->
+        <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="mostrarArquivadas"
+          (change)="alternarArquivadas()"> Mostrar arquivadas</label>
+        <!-- #172: comparar com os apps dos bancos (Nielsen 1). -->
+        <a class="botao" routerLink="/conferir-banco">Conferir com o banco</a>
         <button type="button" class="botao botao-primario" (click)="nova()">+ Conta manual</button>
       </div>
     </header>
@@ -82,13 +90,22 @@ const FATURAS_VISIVEIS = 6;
                 <strong>{{ c.nome }}</strong>
                 <small class="texto-suave">{{ nomeBanco(c) }} · {{ nomeTipo(c.tipo) }}</small>
               </div>
-              <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
-                {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
+              <span class="etiquetas-conta">
+                <!-- #130: "Arquivada" em texto, não só o visual apagado (WCAG 1.4.1). -->
+                @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
+                <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
+                  {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
+              </span>
             </header>
             <div class="saldo" [class.negativo]="c.saldo < 0">{{ c.saldo | currency }}</div>
             <small class="texto-suave">{{ c.incluirNoSaldo ? 'saldo atual' : 'saldo atual · fora do total' }}</small>
             @if (cartoesDa(c).length) {
               <small class="texto-suave cartoes-da-conta">Cartões: {{ nomesCartoes(c) }}</small>
+            }
+            <!-- #158: o que cobra aqui todo mês, em uma linha; a lista inteira fica na aba própria (Progressive Disclosure). -->
+            @if (recorrentesDa(c); as r) {
+              <a class="link linha-recorrentes" routerLink="/contas-a-pagar" [queryParams]="{ aba: 'recorrentes', conta: c.id }">
+                {{ r.rotulo }} · {{ r.porMes | currency }}/mês</a>
             }
             <footer>
               <small class="texto-suave">{{ c.numero ?? '' }}</small>
@@ -140,7 +157,8 @@ const FATURAS_VISIVEIS = 6;
                     <span class="texto-suave">Fatura de {{ nomeMesAtual }}</span>
                     <strong class="negativo">{{ faturaDoMes(c) | currency }}</strong>
                     @if (c.faturaMes?.vencimento && c.faturaMes?.situacao; as situacao) {
-                      <small class="texto-suave">vence {{ c.faturaMes!.vencimento | date: 'dd/MM' }}
+                      <small class="texto-suave">@if (c.faturaMes!.fechamento) {fecha {{ c.faturaMes!.fechamento | date: 'dd/MM' }},}
+                        vence {{ c.faturaMes!.vencimento | date: 'dd/MM' }}
                         <span class="etiqueta" [class.etiqueta-sucesso]="situacao === 'paga'"
                           [class.etiqueta-alerta]="situacao === 'fechada'">{{ nomeSituacao(situacao) }}</span></small>
                     } @else {
@@ -165,6 +183,21 @@ const FATURAS_VISIVEIS = 6;
                     @if (limiteAprovadoMaior(c)) { · aprovado pelo banco: {{ c.limiteCredito | currency }} }
                   </small>
                 }
+                <!-- #171: a diferença entre o limite usado e a dívida em texto (WCAG 1.4.1), com a pergunta no card (Nielsen 1). -->
+                @switch (estadoLimite(c)) {
+                  @case ('perguntar') {
+                    <small class="aviso-limite">O <app-termo chave="limiteUsado">limite usado</app-termo>
+                      ({{ limiteUsadoDe(c) | currency }}) é bem maior que a dívida. Você reduziu o limite no app?
+                      <button type="button" class="link" (click)="editar(c)" [attr.aria-label]="'Responder sobre o limite de ' + c.nome">responder</button></small>
+                  }
+                  @case ('ajustado') { <small class="texto-suave">limite reduzido por você no app</small> }
+                  @case ('nao') {
+                    @if ((diferencaLimite(c) ?? 0) > 0) {
+                      <small class="texto-suave">inclui {{ diferencaLimite(c) | currency }} comprometidos além da dívida
+                        (compras em processamento ou parcelas)</small>
+                    }
+                  }
+                }
                 @if (c.diaFechamento || c.diaVencimento) {
                   <small class="texto-suave">
                     @if (c.diaFechamento) { fecha dia {{ c.diaFechamento }} }
@@ -178,7 +211,12 @@ const FATURAS_VISIVEIS = 6;
                 @if (contaDoCartao(c); as conta) {
                   <small class="texto-suave">da conta {{ conta.nome }}</small>
                 }
+                @if (recorrentesDa(c); as r) {
+                  <a class="link linha-recorrentes" routerLink="/contas-a-pagar" [queryParams]="{ aba: 'recorrentes', conta: c.id }">
+                    {{ r.rotulo }} · {{ r.porMes | currency }}/mês</a>
+                }
                 <footer>
+                  @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
                   <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
                     {{ c.origem === OrigemConta.OpenFinance ? 'open finance' : 'manual' }}</span>
                   <span class="cresce"></span>
@@ -194,7 +232,7 @@ const FATURAS_VISIVEIS = 6;
                   @if (historicoAberto(c.id)) {
                     @if (faturasDe(c.id); as lista) {
                       @if (lista.length) {
-                        <table class="tabela tabela-historico">
+                        <table class="tabela tabela-historico expandir" animate.leave="recolher">
                           <caption class="so-leitor">Faturas de {{ c.nome }}, da mais recente para a mais antiga</caption>
                           <thead><tr><th>Vencimento</th><th class="direita">Total</th><th>Situação</th></tr></thead>
                           <tbody>
@@ -238,7 +276,7 @@ const FATURAS_VISIVEIS = 6;
       @if (form; as fm) {
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           @if (editandoOpenFinance) {
-            <p class="aviso-inline">Conta do Open Finance: saldo, limite e tipo vêm do banco. Você pode alterar nome, banco,
+            <p class="aviso-inline expandir" animate.leave="recolher">Conta do Open Finance: saldo, limite e tipo vêm do banco. Você pode alterar nome, banco,
               cor e visibilidade.</p>
           }
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
@@ -264,6 +302,29 @@ const FATURAS_VISIVEIS = 6;
             </label>
             <p class="texto-suave pequeno-texto" id="ajuda-conta-cartao">A conta do mesmo banco, de onde a fatura é paga.</p>
           }
+          <!-- #171: limite reduzido no app (Nielsen 5: não tratar como dívida), perguntado onde o cartão é editado (Nielsen 6). -->
+          @if (contaEditada; as ce) {
+            @switch (estadoLimite(ce)) {
+              @case ('perguntar') {
+                <div class="sugestao-limite" role="group" aria-labelledby="pergunta-limite">
+                  <p id="pergunta-limite">O <app-termo chave="limiteUsado">limite usado</app-termo> ({{ limiteUsadoDe(ce) | currency }})
+                    é bem maior que a dívida do cartão ({{ dividaTotal(ce) | currency }}). Você reduziu o limite no app do banco?</p>
+                  <div class="acoes-limite">
+                    <button type="button" class="botao botao-pequeno" (click)="responderLimite(true)">Sim, ajustei o limite</button>
+                    <button type="button" class="botao botao-pequeno" (click)="responderLimite(false)">Não</button>
+                  </div>
+                </div>
+              }
+              @case ('ajustado') {
+                <p class="texto-suave pequeno-texto">Você marcou que reduziu o limite no app: o site usa o limite que ficou lá
+                  ({{ limiteEfetivo(ce) | currency }}). <button type="button" class="link" (click)="responderLimite(null)">desfazer</button></p>
+              }
+              @case ('nao') {
+                <p class="texto-suave pequeno-texto">Você marcou que não reduziu o limite: os {{ diferencaLimite(ce) | currency }} além da
+                  dívida contam como compromisso. <button type="button" class="link" (click)="responderLimite(null)">desfazer</button></p>
+              }
+            }
+          }
           @if (!editandoOpenFinance) {
             <div class="grade-campos">
               <label>Tipo
@@ -271,12 +332,12 @@ const FATURAS_VISIVEIS = 6;
                   @for (t of tipos; track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
                 </select>
               </label>
-              <label>Saldo inicial (R$)
-                <input type="number" name="saldoInicial" [(ngModel)]="fm.saldoInicial" step="0.01">
+              <label>Saldo inicial
+                <app-campo-valor name="saldoInicial" [(ngModel)]="fm.saldoInicial" negativo />
               </label>
               <label>Número / identificação <input name="numero" [(ngModel)]="fm.numero" maxlength="60"></label>
               @if (fm.tipo === TipoConta.CartaoCredito) {
-                <label>Limite (R$) <input type="number" name="limite" [(ngModel)]="fm.limiteCredito" min="0" step="0.01"></label>
+                <label>Limite <app-campo-valor name="limite" [(ngModel)]="fm.limiteCredito" /></label>
                 <label>Dia de fechamento <input type="number" name="fech" [(ngModel)]="fm.diaFechamento" min="1" max="31"></label>
                 <label>Dia de vencimento <input type="number" name="venc" [(ngModel)]="fm.diaVencimento" min="1" max="31"></label>
               }
@@ -294,8 +355,19 @@ const FATURAS_VISIVEIS = 6;
               }
             </div>
           </fieldset>
-          <label class="checkbox"><input type="checkbox" name="incluir" [(ngModel)]="fm.incluirNoSaldo"> Incluir no saldo total</label>
+          <label class="checkbox"><input type="checkbox" name="incluir" [(ngModel)]="fm.incluirNoSaldo" aria-describedby="ajuda-incluir">
+            Incluir no saldo total</label>
+          <!-- #172 (ADR 0042): o que muda (e o que não muda) ao tirar a conta do saldo. -->
+          <p class="texto-suave pequeno-texto" id="ajuda-incluir">Fora do saldo, a conta sai do saldo total e do patrimônio, mas as
+            transações dela continuam nas receitas e despesas. Para tirá-las dos relatórios, use “Ignorar nos relatórios” nelas.</p>
           <label class="checkbox"><input type="checkbox" name="arquivada" [(ngModel)]="fm.arquivada"> Arquivada</label>
+          <!-- #158: arquivar o cartão não cancela as assinaturas (Nielsen 5: o aviso vem antes de salvar). -->
+          @if (fm.arquivada && contaEditada && !contaEditada.arquivada) {
+            @if (recorrentesDa(contaEditada); as r) {
+              <p class="texto-alerta pequeno-texto" role="status">Ainda cobram aqui: {{ r.nomes }}. Troque
+                {{ contaEditada.tipo === TipoConta.CartaoCredito ? 'o cartão' : 'a conta' }} nos serviços antes de deixar de usar.</p>
+            }
+          }
           <div class="rodape-form">
             @if (editandoId && !editandoOpenFinance) {
               <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button>
@@ -308,9 +380,15 @@ const FATURAS_VISIVEIS = 6;
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .kpis-contas { margin-bottom: 10px; }
+    .aviso-limite { display: block; color: var(--texto); }
+    .sugestao-limite { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; margin: 4px 0 8px; }
+    .sugestao-limite p { margin: 0 0 8px; }
+    .acoes-limite { display: flex; gap: 8px; flex-wrap: wrap; }
     .cartoes-da-conta { display: block; margin-top: 4px; }
+    .linha-recorrentes { display: inline-block; margin-top: 4px; font-size: 0.88rem; min-height: 24px; }
     .cartao-credito-instituicao { display: inline-flex; align-items: center; gap: 8px; }
     .valor-fatura-mes small, .valor-divida small { font-size: 0.78rem; }
     .botao-historico {
@@ -363,17 +441,31 @@ export class ContasComponent implements OnInit {
   /** Contas que podem ser "a conta do cartão": as que não são cartão (nem o próprio cartão em edição). */
   readonly contasParaVincular = computed(() => this.contasBancarias().filter((c) => c.id !== this.editandoId));
 
-  mostrarArquivadas = false;
+  /** #130: estado na URL (?arquivadas=1): voltar do navegador e link salvo abrem do mesmo jeito (ADR 0018). */
+  mostrarArquivadas = this.rota.snapshot.queryParamMap.get('arquivadas') === '1';
   form: SalvarConta | null = null;
   editandoId: number | null = null;
+  /** #171: o cartão aberto na edição (para a pergunta do limite). */
+  contaEditada: Conta | null = null;
   editandoOpenFinance = false;
   /** Tipo da conta do Open Finance em edição (o formulário não mostra o campo, mas o cartão tem conta vinculada). */
   private tipoEditando: TipoConta | null = null;
   /** Banco que vale hoje para a conta em edição (para o "Detectar pelo nome (Nubank)"). */
   private bancoAtual: string | null = null;
 
+  /** #158: as contas a pagar que se repetem, para a linha "N assinaturas · R$ X/mês" de cada conta e cartão. */
+  readonly recorrentes = signal<ContaAgendada[]>([]);
+  private readonly resumoRecorrentes = computed(() => resumoPorConta(this.recorrentes()));
+
+  recorrentesDa(c: Conta): { rotulo: string; porMes: number; nomes: string } | null {
+    const r = this.resumoRecorrentes().get(c.id);
+    return r ? { rotulo: rotuloQuantidade(r.itens), porMes: r.porMes, nomes: r.itens.map((i) => i.descricao).join(', ') } : null;
+  }
+
   ngOnInit(): void {
     this.carregar();
+    // Complementar: sem a lista, a tela segue sem a linha-resumo.
+    this.api.contasAgendadas().subscribe({ next: (i) => this.recorrentes.set(i), error: () => this.recorrentes.set([]) });
     this.api.bancos().subscribe({ next: (b) => this.bancos.set(b), error: () => this.bancos.set([]) });
   }
 
@@ -420,7 +512,7 @@ export class ContasComponent implements OnInit {
     return digitos.length >= 4 ? digitos.slice(-4) : '••••';
   }
 
-  /** O que entrou no cartão neste mês (compras e a parcela do mês), a mesma conta do Painel (#103). */
+  /** A fatura do cartão que fecha neste mês, a mesma conta do Painel (#144). */
   faturaDoMes(c: Conta): number {
     return c.faturaMes?.valorMes ?? 0;
   }
@@ -434,11 +526,39 @@ export class ContasComponent implements OnInit {
     return c.limiteDisponivel;
   }
 
+  estadoLimite(c: Conta): EstadoLimite {
+    return estadoDoLimite(c);
+  }
+
+  limiteUsadoDe(c: Conta): number | null {
+    return limiteUsado(c);
+  }
+
+  diferencaLimite(c: Conta): number | null {
+    return diferencaDoLimite(c);
+  }
+
+  /** #171: guarda a resposta e atualiza o cartão aberto e a lista. */
+  responderLimite(ajustado: boolean | null): void {
+    const c = this.contaEditada;
+    if (!c) return;
+    this.api.responderLimiteAjustado(c.id, ajustado).subscribe({
+      next: () => {
+        this.contaEditada = { ...c, limiteAjustadoNoApp: ajustado, limiteDiferencaAvaliada: ajustado === null ? null : diferencaDoLimite(c) };
+        this.avisos.sucesso(ajustado === null ? 'Resposta desfeita.' : ajustado ? 'Marcado: limite reduzido por você no app.'
+          : 'Marcado: a diferença conta como compromisso.');
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
   /**
    * Limite realmente em uso. Muitos bancos informam pelo Open Finance o limite APROVADO (ex.: R$ 10.150),
    * mas o disponível já reflete o limite que você ajustou no app. Por isso usamos dívida + disponível.
    */
   limiteEfetivo(c: Conta): number | null {
+    if (estadoDoLimite(c) === 'nao') return c.limiteCredito;
     if (c.limiteDisponivel !== null) {
       const efetivo = this.dividaTotal(c) + Math.max(0, c.limiteDisponivel);
       if (efetivo > 0) return c.limiteCredito ? Math.min(efetivo, c.limiteCredito) : efetivo;
@@ -449,7 +569,9 @@ export class ContasComponent implements OnInit {
   usoLimite(c: Conta): number {
     const limite = this.limiteEfetivo(c);
     if (!limite) return 0;
-    return Math.round(Math.min(100, Math.max(0, (this.dividaTotal(c) / limite) * 100)));
+    // #171: com "não reduzi o limite", o que está comprometido além da dívida também está em uso.
+    const emUso = estadoDoLimite(c) === 'nao' ? limite - (c.limiteDisponivel ?? limite) : this.dividaTotal(c);
+    return Math.round(Math.min(100, Math.max(0, (emUso / limite) * 100)));
   }
 
   limiteAprovadoMaior(c: Conta): boolean {
@@ -513,6 +635,14 @@ export class ContasComponent implements OnInit {
     });
   }
 
+  alternarArquivadas(): void {
+    this.router.navigate([], {
+      relativeTo: this.rota, queryParams: { arquivadas: this.mostrarArquivadas ? 1 : null },
+      queryParamsHandling: 'merge', replaceUrl: true
+    });
+    this.carregar();
+  }
+
   carregar(): void {
     this.api.contas(this.mostrarArquivadas).subscribe({
       next: (c) => {
@@ -554,6 +684,7 @@ export class ContasComponent implements OnInit {
 
   nova(): void {
     this.editandoId = null;
+    this.contaEditada = null;
     this.editandoOpenFinance = false;
     this.tipoEditando = null;
     this.bancoAtual = null;
@@ -565,6 +696,7 @@ export class ContasComponent implements OnInit {
 
   editar(c: Conta): void {
     this.editandoId = c.id;
+    this.contaEditada = c;
     this.editandoOpenFinance = c.origem === OrigemConta.OpenFinance;
     this.tipoEditando = c.tipo;
     this.bancoAtual = c.bancoDefinido ? null : c.banco;

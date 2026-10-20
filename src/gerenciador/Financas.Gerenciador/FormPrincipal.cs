@@ -4,32 +4,52 @@ namespace Financas.Gerenciador;
 
 /// <summary>
 /// Janela do gerenciador (ADR 0028). Primeiro a resposta à pergunta "o site está funcionando?" e as três ações do
-/// dia a dia; a versão nova logo abaixo; o resto atrás de "Mais opções" (Progressive Disclosure). Tudo em botões e
-/// caixas de marcar nativos, com teclas de atalho (&amp;) e nomes acessíveis (WCAG 2.1.1, 4.1.2).
+/// dia a dia; a versão nova logo abaixo; o resto atrás de "Mais opções" (Progressive Disclosure). Nas cores e no
+/// desenho do site (cabeçalho com a marca, cartões, botões arredondados; Nielsen 4), claro ou escuro como o Windows.
+/// Os controles continuam botões e caixas de marcar do Windows por baixo, com teclas de atalho (&amp;), foco visível e
+/// nomes acessíveis (WCAG 2.1.1, 2.4.7, 4.1.2).
 /// </summary>
 internal sealed class FormPrincipal : Form
 {
     private static readonly TimeSpan Intervalo = TimeSpan.FromSeconds(5);
+    /// <summary>Largura dos cartões e do texto dentro deles (em 96 DPI; a janela escala com a tela).</summary>
+    private const int LarguraCartao = 448, LarguraConteudo = LarguraCartao - 32;
 
+    private readonly Tema _tema = Tema.Atual;
     private readonly Instalacao _instalacao = Instalacao.Atual;
-    private readonly RotuloAnunciado _titulo = new() { AutoSize = true, Font = new Font("Segoe UI", 13f, FontStyle.Bold) };
-    private readonly Label _detalhe = new() { AutoSize = true, MaximumSize = new Size(430, 0) };
-    private readonly Button _abrir = Botao("&Abrir o site");
-    private readonly Button _ligar = Botao("&Ligar");
-    private readonly Button _reiniciar = Botao("&Reiniciar");
-    private readonly RotuloAnunciado _versao = new() { AutoSize = true, MaximumSize = new Size(430, 0) };
-    private readonly Button _atualizar = Botao("A&tualizar");
-    private readonly LinkLabel _notas = new() { AutoSize = true, Text = "O que mudou", Visible = false };
-    private readonly Button _procurar = Botao("&Procurar versão nova");
-    private readonly ProgressBar _progresso = new() { Width = 300, Visible = false, AccessibleName = "Progresso do download" };
-    private readonly Button _cancelar = Botao("&Cancelar download");
-    private readonly Button _mais = Botao("&Mais opções ▾");
-    private readonly FlowLayoutPanel _painelMais = new()
+    private readonly PontoSituacao _ponto = new();
+    private readonly RotuloAnunciado _titulo = new()
     {
-        FlowDirection = FlowDirection.TopDown, AutoSize = true, Visible = false, WrapContents = false
+        AutoSize = true, Font = new Font("Segoe UI Semibold", 13f), Margin = new Padding(0, 0, 0, 2)
     };
-    private readonly CheckBox _iniciarComWindows = new() { AutoSize = true, Text = "&Iniciar com o Windows (fica na área de notificação)" };
-    private readonly CheckBox _procurarAoAbrir = new() { AutoSize = true, Text = "Procurar &versão nova ao abrir" };
+    private readonly Label _detalhe = new() { AutoSize = true, MaximumSize = new Size(LarguraConteudo - 40, 0), Margin = Padding.Empty };
+    private readonly Botao _abrir = new("&Abrir o site", EstiloBotao.Primario, IconeBotao.AbrirSite);
+    private readonly Botao _ligar = new("&Ligar", icone: IconeBotao.Ligar);
+    private readonly Botao _reiniciar = new("&Reiniciar", icone: IconeBotao.Reiniciar);
+    private readonly RotuloAnunciado _versao = new() { AutoSize = true, MaximumSize = new Size(LarguraConteudo, 0), Margin = Padding.Empty };
+    private readonly Botao _atualizar = new("A&tualizar", EstiloBotao.Primario, IconeBotao.Baixar);
+    private readonly Botao _notas = new("O &que mudou", EstiloBotao.Discreto, IconeBotao.Informacao) { Visible = false };
+    private readonly Botao _procurar = new("&Procurar versão nova", icone: IconeBotao.Procurar);
+    // ADR 0040: só na instalação de desenvolvimento pelos scripts (clone git na branch develop).
+    private readonly Botao _atualizarDev = new("Atualizar para a última do de&velop", EstiloBotao.Primario, IconeBotao.Baixar) { Visible = false };
+    private readonly Botao _atualizarGerenciador = new("Atualizar o &gerenciador e reabrir", icone: IconeBotao.Reiniciar) { Visible = false };
+    private readonly TextBox _saida = new()
+    {
+        Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Visible = false, WordWrap = true,
+        Font = new Font("Consolas", 8.5f), Size = new Size(LarguraConteudo, 150), Margin = new Padding(0, 4, 0, 8),
+        AccessibleName = "Saída da atualização"
+    };
+    private readonly Botao _baixarMsi = new("&Baixar o instalador .msi", EstiloBotao.Discreto, IconeBotao.Baixar);
+    private readonly BarraProgresso _progresso = new() { Visible = false };
+    private readonly Botao _cancelar = new("&Cancelar download", EstiloBotao.Discreto, IconeBotao.Cancelar);
+    private readonly Botao _mais = new("&Mais opções ▾", EstiloBotao.Discreto);
+    private readonly Cartao _painelMais = new(LarguraCartao) { Visible = false };
+    private readonly Interruptor _iniciarComWindows = new("&Iniciar com o Windows (fica na área de notificação)");
+    private readonly Botao _erros = new("Ver os &erros do site", icone: IconeBotao.Erros);
+    private readonly Botao _manual = new("Abrir o ma&nual", icone: IconeBotao.Manual);
+    private readonly ToolTip _dica = new() { InitialDelay = 300, AutoPopDelay = 8000 };
+    private const string DicaSiteDesligado = "É preciso ligar o site para ver isto. Use o botão “Ligar” acima.";
+    private readonly Interruptor _procurarAoAbrir = new("Procurar &versão nova ao abrir");
     private readonly NotifyIcon _bandeja = new() { Visible = true };
     private readonly System.Windows.Forms.Timer _relogio = new() { Interval = (int)Intervalo.TotalMilliseconds };
 
@@ -42,59 +62,80 @@ internal sealed class FormPrincipal : Form
     private bool _ocupado;
     private Situacao? _situacao;
     private VersaoDisponivel? _disponivel;
+    /// <summary>Pasta do clone no develop (instalação de desenvolvimento pelos scripts), ou null.</summary>
+    private string? _raizDev;
     private string? _resultadoProcura;
     private CancellationTokenSource? _download;
 
     public FormPrincipal(bool comecarNaBandeja, EventWaitHandle pedidoParaMostrar)
     {
         _comecarNaBandeja = comecarNaBandeja;
+        SuspendLayout();
         Text = "Gerenciador do Finanças Local";
         Icon = Icones.App;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
+        // Medidas pensadas em 96 DPI e escaladas para a tela (125%, 150%…).
+        AutoScaleDimensions = new SizeF(96f, 96f);
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         Font = new Font("Segoe UI", 9.75f);
         StartPosition = FormStartPosition.CenterScreen;
-        Padding = new Padding(16);
+        BackColor = _tema.Fundo;
+        ForeColor = _tema.Texto;
 
         _titulo.AccessibleRole = AccessibleRole.StaticText;
+        _detalhe.ForeColor = _tema.TextoSuave;
         _cancelar.Visible = false;
         _atualizar.Visible = false;
 
-        var acoes = Linha(_abrir, _ligar, _reiniciar);
-        var linhaVersao = Linha(_atualizar, _procurar, _notas);
-        var linhaDownload = Linha(_progresso, _cancelar);
+        // Situação: o ponto colorido e o título respondem "está funcionando?"; as ações do dia a dia logo embaixo.
+        var situacao = new Cartao(LarguraCartao);
+        situacao.Conteudo.Controls.AddRange([Linha(_ponto, Coluna(_titulo, _detalhe)), Espaco(14), Linha(_abrir, _ligar, _reiniciar)]);
 
-        var salvarCopia = Botao("Salvar uma &cópia do banco…");
-        var erros = Botao("Ver os &erros do site");
-        var manual = Botao("Abrir o ma&nual");
-        _painelMais.Controls.AddRange([salvarCopia, Linha(erros, manual), _iniciarComWindows, _procurarAoAbrir,
-            new Label { AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(430, 0),
-                Text = $"Dados em {_instalacao.PastaDados}. Endereço: {_instalacao.Site}" }]);
+        var versao = new Cartao(LarguraCartao);
+        versao.Conteudo.Controls.AddRange([Subtitulo("Versão"), _versao, Espaco(10),
+            Linha(_atualizar, _atualizarDev, _procurar, _notas, _baixarMsi), _saida, Linha(_atualizarGerenciador),
+            Linha(_progresso, _cancelar)]);
+        _saida.BackColor = _tema.Superficie2;
+        _saida.ForeColor = _tema.Texto;
 
-        var coluna = new FlowLayoutPanel
-        {
-            FlowDirection = FlowDirection.TopDown, AutoSize = true, WrapContents = false, Dock = DockStyle.Fill
-        };
-        coluna.Controls.AddRange([_titulo, _detalhe, Espaco(), acoes, Espaco(), Separador(), _versao, linhaVersao,
-            linhaDownload, Espaco(), _mais, _painelMais]);
-        Controls.Add(coluna);
+        var salvarCopia = new Botao("Salvar uma &cópia do banco…", icone: IconeBotao.Salvar);
+        var linhaSite = Linha(_erros, _manual);
+        DicaQuandoBloqueado(linhaSite);
+        _painelMais.Conteudo.Controls.AddRange([Linha(salvarCopia), linhaSite, Espaco(4),
+            _iniciarComWindows, _procurarAoAbrir, Espaco(6),
+            new Label { AutoSize = true, ForeColor = _tema.TextoSuave, MaximumSize = new Size(LarguraConteudo, 0),
+                Margin = Padding.Empty, UseMnemonic = false, Text = $"Dados em {_instalacao.PastaDados}. Endereço: {_instalacao.Site}" }]);
+
+        var corpo = Coluna(situacao, versao, _mais, _painelMais);
+        corpo.Padding = new Padding(16, 16, 16, 8);
+        var raiz = Coluna(new Cabecalho { Size = new Size(LarguraCartao + 32, 72) }, corpo);
+        Controls.Add(raiz);
 
         _abrir.Click += (_, _) => AbrirPagina("");
         _ligar.Click += async (_, _) => await ServicoAsync(_situacao?.Estado == EstadoSite.Desligado ? "ligar" : "desligar");
         _reiniciar.Click += async (_, _) => await ServicoAsync("reiniciar");
         _procurar.Click += async (_, _) => await ProcurarAsync(silencioso: false);
         _atualizar.Click += async (_, _) => await AtualizarAsync();
+        _atualizarDev.Click += async (_, _) => await AtualizarPeloGitAsync();
+        _atualizarGerenciador.Click += (_, _) => AtualizarGerenciadorEReabrir();
         _cancelar.Click += (_, _) => _download?.Cancel();
-        _notas.LinkClicked += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
+        _notas.Click += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
         _mais.Click += (_, _) => AlternarMais();
         salvarCopia.Click += async (_, _) => await SalvarCopiaAsync();
-        erros.Click += (_, _) => AbrirPagina("configuracoes?aba=erros");
-        manual.Click += (_, _) => AbrirPagina("manual");
+        _erros.Click += (_, _) => AbrirPagina("configuracoes?aba=erros");
+        _manual.Click += (_, _) => AbrirPagina("manual");
         _iniciarComWindows.Checked = Preferencias.IniciarComWindows;
         _iniciarComWindows.CheckedChanged += (_, _) => Preferencias.IniciarComWindows = _iniciarComWindows.Checked;
+        // Instalação pelos scripts: o gerenciador não instala o .msi do GitHub sozinho (ele troca a instalação). Mostra
+        // o caminho: rodar os scripts de novo ou baixar o .msi, que traz os dados e passa a se atualizar por aqui.
+        _procurar.Visible = _procurarAoAbrir.Visible = _instalacao.PeloMsi;
+        _baixarMsi.Visible = !_instalacao.PeloMsi;
+        _baixarMsi.AccessibleDescription = "Abre a página da versão mais recente no GitHub";
+        _baixarMsi.Click += (_, _) => Process.Start(new ProcessStartInfo(
+            $"https://github.com/{Instalacao.Repositorio}/releases/latest") { UseShellExecute = true });
         _procurarAoAbrir.Checked = Preferencias.ProcurarAoAbrir;
         _procurarAoAbrir.CheckedChanged += (_, _) => Preferencias.ProcurarAoAbrir = _procurarAoAbrir.Checked;
 
@@ -113,6 +154,14 @@ internal sealed class FormPrincipal : Form
 
         // Outra cópia do gerenciador aberta pede para mostrar esta (uma só por usuário).
         _esperaPedido = ThreadPool.RegisterWaitForSingleObject(pedidoParaMostrar, (_, _) => PedirParaMostrar(), null, -1, false);
+        ResumeLayout(false);
+        PerformLayout();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        _tema.AplicarBarraDeTitulo(Handle);
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -128,7 +177,12 @@ internal sealed class FormPrincipal : Form
         _iniciado = true;
         await AtualizarSituacaoAsync();
         _relogio.Start();
-        if (Preferencias.ProcurarAoAbrir) await ProcurarAsync(silencioso: true);
+        if (!_instalacao.PeloMsi)
+        {
+            _raizDev = await Task.Run(() => DesenvolvimentoPeloGit.Disponivel(_instalacao));
+            MostrarVersao();
+        }
+        if (_instalacao.PeloMsi && Preferencias.ProcurarAoAbrir) await ProcurarAsync(silencioso: true);
     }
 
     /// <summary>Começando com o Windows, abre só o ícone da área de notificação.</summary>
@@ -215,11 +269,20 @@ internal sealed class FormPrincipal : Form
         _detalhe.Text = situacao.Detalhe;
         if (mudou) _titulo.Anunciar();
 
+        _ponto.Cor = _tema.DaSituacao(situacao.Estado);
+
         var instalado = situacao.Estado != EstadoSite.NaoInstalado;
+        var desligado = situacao.Estado == EstadoSite.Desligado;
         _abrir.Enabled = situacao.Estado is EstadoSite.NoAr or EstadoSite.SemResposta;
-        _ligar.Text = situacao.Estado == EstadoSite.Desligado ? "&Ligar" : "&Desligar";
+        // O botão em destaque é a próxima ação provável: abrir o site no ar, ligar o desligado.
+        _abrir.Estilo = desligado ? EstiloBotao.Secundario : EstiloBotao.Primario;
+        _ligar.Estilo = desligado ? EstiloBotao.Primario : EstiloBotao.Secundario;
+        _ligar.Text = desligado ? "&Ligar" : "&Desligar";
         _ligar.Enabled = instalado && situacao.Estado != EstadoSite.Mudando && !_ocupado;
         _reiniciar.Enabled = instalado && situacao.Estado is EstadoSite.NoAr or EstadoSite.SemResposta && !_ocupado;
+        // Manual e erros são páginas do site: com ele fora do ar, ficam bloqueados e a dica diz como liberar.
+        _erros.Enabled = _manual.Enabled = situacao.Estado == EstadoSite.NoAr;
+        _erros.AccessibleDescription = _manual.AccessibleDescription = _manual.Enabled ? null : DicaSiteDesligado;
         _bandeja.Icon = Icones.Bandeja(situacao.Estado);
         _bandeja.Text = Limitar("Finanças Local: " + situacao.Titulo, 127);
     }
@@ -249,14 +312,36 @@ internal sealed class FormPrincipal : Form
     /// </summary>
     private void MostrarVersao()
     {
-        var instalada = _situacao?.VersaoSite is null ? $"Versão instalada: {_instalacao.VersaoTexto}." : null;
+        if (_raizDev is not null)
+        {
+            _atualizarDev.Visible = true;
+            _baixarMsi.Visible = false;
+            if (_saida.Visible) return; // durante e depois de uma atualização, o texto é o resultado dela
+            _versao.Text = $"Instalação de desenvolvimento: a pasta {_raizDev} é um clone na branch develop. "
+                           + "O botão abaixo traz o develop do GitHub e reinstala (só para quem desenvolve; o site fica fora "
+                           + "do ar alguns minutos e o banco ganha uma cópia antes).";
+            return;
+        }
+        if (!_instalacao.PeloMsi)
+        {
+            _versao.Text = "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd "
+                           + "(ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi "
+                           + "traz o banco e as chaves, e daí em diante a versão nova chega por aqui.";
+            return;
+        }
+        var instalada = _situacao?.VersaoSite is null
+            ? $"Versão {(VersaoAtual().EhDesenvolvimento ? "de desenvolvimento " : "")}instalada: {_instalacao.VersaoTexto}." : null;
         var procura = _resultadoProcura ?? (instalada is null ? "Versão nova: clique em “Procurar versão nova”." : null);
         _versao.Text = string.Join(" ", new[] { instalada, procura }.Where(t => !string.IsNullOrEmpty(t)));
     }
 
-    /// <summary>A versão que está rodando (a do site, quando ele responde) é a que conta para "tem versão nova".</summary>
-    private Version VersaoAtual()
-        => _situacao?.VersaoSite is string site && Version.TryParse(site.Split('-')[0], out var v) ? v : _instalacao.Versao;
+    /// <summary>
+    /// A versão que está rodando (a do site, quando ele responde) é a que conta para "tem versão nova". Sendo de
+    /// desenvolvimento (X.Y.Z-dev.N), a procura é no pré-lançamento "desenvolvimento" (ADR 0040).
+    /// </summary>
+    private VersaoDoSistema VersaoAtual()
+        => VersaoDoSistema.Ler(_situacao?.VersaoSite) ?? VersaoDoSistema.Ler(_instalacao.VersaoTexto)
+           ?? new VersaoDoSistema(_instalacao.Versao, null);
 
     private async Task ProcurarAsync(bool silencioso)
     {
@@ -266,9 +351,16 @@ internal sealed class FormPrincipal : Form
         try
         {
             using var limite = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            _disponivel = await Atualizacoes.ProcurarAsync(limite.Token);
-            var nova = _disponivel is not null && _disponivel.Versao > VersaoAtual();
-            _resultadoProcura = nova ? $"Tem versão nova: {_disponivel!.Versao}." : "Você está na versão mais nova.";
+            var desenvolvimento = VersaoAtual().EhDesenvolvimento;
+            _disponivel = await Atualizacoes.ProcurarAsync(desenvolvimento, limite.Token);
+            var nova = _disponivel is not null && _disponivel.Versao.CompareTo(VersaoAtual()) > 0;
+            _resultadoProcura = (nova, desenvolvimento) switch
+            {
+                (true, true) => $"Tem versão de desenvolvimento nova: {_disponivel!.Versao}.",
+                (true, false) => $"Tem versão nova: {_disponivel!.Versao}.",
+                (false, true) => "Você está na última versão de desenvolvimento.",
+                _ => "Você está na versão mais nova."
+            };
             MostrarVersao();
             _atualizar.Text = nova ? $"A&tualizar para {_disponivel!.Versao}" : "A&tualizar";
             _atualizar.Visible = nova;
@@ -304,13 +396,13 @@ internal sealed class FormPrincipal : Form
 
         _download = new CancellationTokenSource();
         _atualizar.Enabled = false;
-        _progresso.Value = 0;
+        _progresso.Valor = 0;
         _progresso.Visible = _cancelar.Visible = true;
         _versao.Text = $"Baixando a versão {versao.Versao}…";
         _versao.Anunciar();
         try
         {
-            var progresso = new Progress<double>(p => _progresso.Value = (int)Math.Clamp(p * 100, 0, 100));
+            var progresso = new Progress<double>(p => _progresso.Valor = (int)(p * 100));
             var msi = await Atualizacoes.BaixarAsync(versao, progresso, _download.Token);
             _versao.Text = "Abrindo o instalador…";
             Atualizacoes.Instalar(msi);
@@ -335,6 +427,129 @@ internal sealed class FormPrincipal : Form
             _download?.Dispose();
             _download = null;
         }
+    }
+
+    /* ------------------------------------------------------------ desenvolvimento pelo git (ADR 0040) */
+
+    /// <summary>
+    /// Traz o develop pelo <c>atualizar-windows.ps1 -SoCodigo</c>, como o usuário (o git nunca roda como administrador
+    /// na pasta dele), e reinstala pelo <c>instalar-windows.ps1</c>, como administrador (UAC), num passo à parte.
+    /// </summary>
+    private async Task AtualizarPeloGitAsync()
+    {
+        if (_raizDev is not string raiz) return;
+        var confirmar = MessageBox.Show(this,
+            "Atualizar esta instalação de desenvolvimento para a última versão do develop?\n\n" +
+            "O gerenciador traz o código do GitHub e reinstala o site (pede permissão de administrador). O site fica fora " +
+            "do ar por alguns minutos, enquanto o front-end e a API são compilados, e o banco ganha uma cópia em backups " +
+            "antes de mudar.\n\nCom alterações locais ou em outra branch, nada é mudado: a tela diz o motivo.",
+            "Atualizar pelo develop", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+        if (confirmar != DialogResult.OK) return;
+
+        _ocupado = true;
+        _atualizarDev.Enabled = _atualizarGerenciador.Visible = false;
+        _saida.Clear();
+        _saida.Visible = true;
+        void Escrever(string linha) => BeginInvoke(() => _saida.AppendText(linha + Environment.NewLine));
+        try
+        {
+            _versao.Text = "Buscando o develop no GitHub…";
+            _versao.Anunciar();
+            var script = Path.Combine(raiz, "scripts", "windows", "atualizar-windows.ps1");
+            var codigo = await Comando.RodarAoVivoAsync("powershell.exe",
+                ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-SoCodigo"], Escrever, CancellationToken.None);
+            if (codigo == DesenvolvimentoPeloGit.SemNovidade)
+            {
+                _versao.Text = "Já está na última versão do develop. Nada mudou.";
+                return;
+            }
+            if (codigo != DesenvolvimentoPeloGit.Atualizado)
+            {
+                _versao.Text = codigo == DesenvolvimentoPeloGit.Recusado
+                    ? "Não atualizou, e nada foi mudado: veja o motivo e o que fazer na caixa abaixo."
+                    : "Não deu para buscar o develop. Nada foi mudado; veja a caixa abaixo.";
+                return;
+            }
+
+            _versao.Text = "Código atualizado. Reinstalando o site (permita no aviso do Windows)…";
+            _versao.Anunciar();
+            var log = Path.Combine(raiz, "instaladores", "instalacao-windows.log");
+            using var parar = new CancellationTokenSource();
+            var acompanhar = AcompanharLogAsync(log, Escrever, parar.Token);
+            var resultado = await AcoesElevadas.ExecutarAsync("--instalar-pelos-scripts");
+            parar.Cancel();
+            await acompanhar;
+            _versao.Text = resultado switch
+            {
+                AcoesElevadas.Resultado.Feito => "Pronto: o site está na última versão do develop. O gerenciador continua na "
+                    + "versão de antes; para atualizá-lo também, use o botão abaixo.",
+                AcoesElevadas.Resultado.Cancelado => "Reinstalação cancelada no aviso do Windows. O código já está atualizado: "
+                    + "rode o instalar-windows.cmd para terminar.",
+                _ => "A reinstalação falhou; o site da versão anterior volta sozinho. Veja a caixa abaixo e o log em "
+                    + "instaladores\\instalacao-windows.log."
+            };
+            _atualizarGerenciador.Visible = resultado == AcoesElevadas.Resultado.Feito;
+        }
+        finally
+        {
+            _versao.Anunciar();
+            _ocupado = false;
+            _atualizarDev.Enabled = true;
+            await AtualizarSituacaoAsync();
+        }
+    }
+
+    /// <summary>Mostra as linhas novas do log do instalador enquanto ele roda como administrador (sem janela).</summary>
+    private static async Task AcompanharLogAsync(string log, Action<string> linha, CancellationToken ct)
+    {
+        long lidos = File.Exists(log) ? new FileInfo(log).Length : 0;
+        var resto = "";
+        while (true)
+        {
+            var fim = ct.IsCancellationRequested;
+            try
+            {
+                if (File.Exists(log))
+                {
+                    await using var arquivo = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                    if (arquivo.Length > lidos)
+                    {
+                        arquivo.Position = lidos;
+                        using var leitor = new StreamReader(arquivo);
+                        var texto = resto + await leitor.ReadToEndAsync();
+                        lidos = arquivo.Length;
+                        var linhas = texto.Split('\n');
+                        resto = linhas[^1];
+                        foreach (var l in linhas[..^1]) linha(l.TrimEnd('\r'));
+                    }
+                }
+            }
+            catch (IOException) { }
+            if (fim)
+            {
+                if (resto.Length > 0) linha(resto);
+                return;
+            }
+            try { await Task.Delay(1000, ct); } catch (OperationCanceledException) { }
+        }
+    }
+
+    /// <summary>
+    /// O gerenciador não troca o próprio executável enquanto está aberto: fecha, roda o instalar-gerenciador.ps1 e abre
+    /// de novo, numa janela do PowerShell que mostra o andamento.
+    /// </summary>
+    private void AtualizarGerenciadorEReabrir()
+    {
+        if (_raizDev is not string raiz) return;
+        static string Literal(string texto) => "'" + texto.Replace("'", "''") + "'";
+        var script = Path.Combine(raiz, "scripts", "windows", "instalar-gerenciador.ps1");
+        var comando = $"Start-Sleep -Seconds 2; & {Literal(script)}; if ($LASTEXITCODE -eq 0) {{ Start-Process {Literal(Environment.ProcessPath!)} }} "
+                      + "else { Read-Host 'Nao deu para atualizar o gerenciador. Enter para fechar' }";
+        var info = new ProcessStartInfo("powershell.exe") { UseShellExecute = true };
+        foreach (var a in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", comando }) info.ArgumentList.Add(a);
+        Process.Start(info);
+        _sair = true;
+        Close();
     }
 
     /* ------------------------------------------------------------ mais opções */
@@ -371,22 +586,57 @@ internal sealed class FormPrincipal : Form
     private void AbrirPagina(string caminho)
         => Process.Start(new ProcessStartInfo(_instalacao.Pagina(caminho).ToString()) { UseShellExecute = true });
 
+    /// <summary>
+    /// Botão desabilitado não recebe o mouse no WinForms (o Windows manda para o painel em volta), então a dica
+    /// é mostrada pelo painel quando o ponteiro está sobre um botão bloqueado.
+    /// </summary>
+    private void DicaQuandoBloqueado(Control painel)
+    {
+        Control? atual = null;
+        painel.MouseMove += (_, e) =>
+        {
+            var filho = painel.GetChildAtPoint(e.Location);
+            var alvo = filho is { Enabled: false } ? filho : null;
+            if (alvo == atual) return;
+            atual = alvo;
+            if (alvo is null) _dica.Hide(painel);
+            else _dica.Show(DicaSiteDesligado, painel, alvo.Left, alvo.Bottom + 4, 8000);
+        };
+        painel.MouseLeave += (_, _) => { atual = null; _dica.Hide(painel); };
+    }
+
     /* ------------------------------------------------------------ montagem */
 
-    private static Button Botao(string texto)
-        => new() { Text = texto, AutoSize = true, MinimumSize = new Size(0, 32), Padding = new Padding(8, 2, 8, 2) };
-
+    /// <summary>Lado a lado, quebrando a linha na largura do cartão.</summary>
     private static FlowLayoutPanel Linha(params Control[] controles)
     {
-        var linha = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = true };
+        var linha = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.LeftToRight, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = true, Margin = Padding.Empty, MaximumSize = new Size(LarguraConteudo, 0)
+        };
         linha.Controls.AddRange(controles);
         return linha;
     }
 
-    private static Control Espaco() => new Panel { Height = 8, Width = 1 };
+    private static FlowLayoutPanel Coluna(params Control[] controles)
+    {
+        var coluna = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.TopDown, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false, Margin = Padding.Empty
+        };
+        coluna.Controls.AddRange(controles);
+        return coluna;
+    }
 
-    private static Control Separador()
-        => new Label { AutoSize = false, Height = 1, Width = 430, BorderStyle = BorderStyle.Fixed3D, Margin = new Padding(0, 4, 0, 8) };
+    private Label Subtitulo(string texto) => new()
+    {
+        AutoSize = true, Text = texto, Font = new Font("Segoe UI Semibold", 9f), ForeColor = _tema.TextoSuave,
+        Margin = new Padding(0, 0, 0, 6), UseMnemonic = false
+    };
+
+    private static Control Espaco(int altura) => new Panel { Height = altura, Width = 1, Margin = Padding.Empty };
 
     private static string Limitar(string texto, int maximo) => texto.Length <= maximo ? texto : texto[..(maximo - 1)] + "…";
 

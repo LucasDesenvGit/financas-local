@@ -7,15 +7,17 @@ internal static class Program
 
     /// <summary>
     /// Sem argumentos: a janela. <c>--bandeja</c>: só o ícone da área de notificação (início com o Windows).
-    /// <c>--servico ligar|desligar|reiniciar</c> e <c>--backup "destino"</c>: ações que o próprio gerenciador
+    /// <c>--servico ligar|desligar|reiniciar</c>, <c>--backup "destino"</c> e <c>--instalar-pelos-scripts</c> (só na
+    /// instalação de desenvolvimento, ADR 0040): ações que o próprio gerenciador
     /// roda como administrador (UAC), sem janela.
     /// </summary>
     [STAThread]
     private static int Main(string[] args)
     {
         if (args.Length == 2 && args[0] == "--servico" && args[1] is "ligar" or "desligar" or "reiniciar")
-            return AcoesElevadas.Servico(args[1]);
+            return ServicoWindows.Executar(args[1]);
         if (args.Length == 2 && args[0] == "--backup") return AcoesElevadas.Backup(args[1]);
+        if (args is ["--instalar-pelos-scripts"]) return AcoesElevadas.InstalarPelosScripts();
 
         using var unico = new Mutex(true, NomeUnico, out var primeiro);
         if (!primeiro)

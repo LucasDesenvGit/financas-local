@@ -1,18 +1,16 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.ServiceProcess;
 using Microsoft.Data.Sqlite;
 
 namespace Financas.Gerenciador;
 
 /// <summary>
-/// O que precisa de administrador: ligar/desligar o serviço e copiar o banco (a pasta de dados é só de SYSTEM e
+/// O que precisa de administrador: ligar/desligar o serviço, copiar o banco e reinstalar pelos scripts (a pasta de dados é só de SYSTEM e
 /// Administradores). O gerenciador reabre a si mesmo com "runas" (o UAC mostra o que vai rodar) e espera terminar.
 /// </summary>
 internal static class AcoesElevadas
 {
     private const int CanceladoNoUac = 1223;
-    private static readonly TimeSpan Espera = TimeSpan.FromSeconds(60);
 
     public enum Resultado { Feito, Cancelado, Falhou }
 
@@ -32,57 +30,39 @@ internal static class AcoesElevadas
         }
     }
 
-    /// <summary>Modo administrador: <c>--servico ligar|desligar|reiniciar</c>.</summary>
-    public static int Servico(string acao)
-    {
-        try
-        {
-            using var servico = new ServiceController(Instalacao.NomeServico);
-            if (acao is "desligar" or "reiniciar" && servico.Status != ServiceControllerStatus.Stopped)
-            {
-                servico.Stop();
-                servico.WaitForStatus(ServiceControllerStatus.Stopped, Espera);
-            }
-            if (acao is "ligar" or "reiniciar")
-            {
-                servico.Refresh();
-                if (servico.Status != ServiceControllerStatus.Running)
-                {
-                    servico.Start();
-                    servico.WaitForStatus(ServiceControllerStatus.Running, Espera);
-                }
-            }
-            return 0;
-        }
-        catch (Exception e) when (e is InvalidOperationException or System.ServiceProcess.TimeoutException or Win32Exception)
-        {
-            return 1;
-        }
-    }
-
     /// <summary>Modo administrador: <c>--backup "destino.db"</c>. Cópia consistente (VACUUM INTO) com o site no ar.</summary>
     public static int Backup(string destino)
     {
         try
         {
-            var banco = Instalacao.Atual.CaminhoBanco;
-            if (!File.Exists(banco)) return 2;
-            if (File.Exists(destino)) File.Delete(destino);
-            using var conexao = new SqliteConnection(new SqliteConnectionStringBuilder
-            {
-                DataSource = banco, Pooling = false, DefaultTimeout = 30
-            }.ToString());
-            conexao.Open();
-            using var comando = conexao.CreateCommand();
-            comando.CommandText = "VACUUM INTO $destino;";
-            comando.Parameters.AddWithValue("$destino", destino);
-            comando.ExecuteNonQuery();
+            CopiaDoBanco.Salvar(Instalacao.Atual.CaminhoBanco, destino);
             return 0;
+        }
+        catch (FileNotFoundException)
+        {
+            return 2;
         }
         catch (Exception e) when (e is SqliteException or IOException or UnauthorizedAccessException)
         {
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Modo administrador: <c>--instalar-pelos-scripts</c> (ADR 0040). Roda o <c>instalar-windows.ps1</c> do clone da
+    /// instalação de desenvolvimento, depois de o <c>atualizar-windows.ps1</c> ter trazido o código como o usuário. A pasta
+    /// vem da própria instalação (nunca da linha de comando), e o git não roda aqui. A saída vai para o log do instalador
+    /// (instaladores\instalacao-windows.log), que a janela acompanha.
+    /// </summary>
+    public static int InstalarPelosScripts()
+    {
+        if (DesenvolvimentoPeloGit.Raiz(Instalacao.Atual) is not string raiz) return 3;
+        var script = Path.Combine(raiz, "scripts", "windows", "instalar-windows.ps1");
+        var info = new ProcessStartInfo("powershell.exe") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = raiz };
+        foreach (var a in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script }) info.ArgumentList.Add(a);
+        using var processo = Process.Start(info)!;
+        processo.WaitForExit();
+        return processo.ExitCode;
     }
 
     /// <summary>Argumento entre aspas para a linha de comando (caminhos do Windows não têm aspas).</summary>

@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -68,7 +68,7 @@ interface GrupoParametros { nome: string; itens: Parametro[]; }
         <h2>Sistema</h2>
         <p class="texto-suave">
           Somente leitura. Caminho do banco, pasta das chaves, porta e certificado ficam no
-          <code>appsettings.Production.json</code>, gerado pelo <code>scripts/3-publicar-atualizar.sh</code>,
+          <code>appsettings.Production.json</code>, gerado pelo <code>scripts/geral/3-publicar-atualizar.sh</code>,
           porque são necessários antes de o banco ser aberto.
         </p>
         <dl class="info-sistema">
@@ -86,6 +86,7 @@ interface GrupoParametros { nome: string; itens: Parametro[]; }
       </section>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .parametros { display: grid; gap: 4px; }
     .parametro {

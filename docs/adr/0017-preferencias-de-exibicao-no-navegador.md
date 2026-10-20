@@ -15,7 +15,7 @@ Várias escolhas só mudam **como a tela aparece**, não o que o sistema faz: te
 
 ## Decisão
 
-Preferência de **exibição** fica no `localStorage`, com chaves `financas.*` (`financas.tema`, `financas.paleta`, `financas.cor`, `financas.ocultarValores`, `financas.tamanhoPagina`, `financas.maisAnalises.<tela>`). Toda leitura e escrita fica em `try/catch`: sem armazenamento (modo privado, bloqueado), a tela funciona com o padrão e só não lembra. O que muda o **comportamento do sistema** vai para a Parametrização no banco (ADR 0015).
+Preferência de **exibição** fica no `localStorage`, com chaves `financas.*` (`financas.tema`, `financas.paleta`, `financas.cor`, `financas.ocultarValores`, `financas.tamanhoPagina`, `financas.maisAnalises.<tela>`, `financas.menuRecolhido`, `financas.menuGrupos` — os grupos do menu fechados, ADR 0046). Toda leitura e escrita fica em `try/catch`: sem armazenamento (modo privado, bloqueado), a tela funciona com o padrão e só não lembra. O que muda o **comportamento do sistema** vai para a Parametrização no banco (ADR 0015).
 
 ## Consequências
 

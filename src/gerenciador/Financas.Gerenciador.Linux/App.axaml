@@ -1,0 +1,126 @@
+<!--
+  As cores do site (src/frontend/src/styles.css), as mesmas do Tema.cs do gerenciador do Windows (Nielsen 4). Claro ou
+  escuro conforme o sistema (RequestedThemeVariant="Default" segue a preferência do portal freedesktop). O texto suave
+  é um pouco mais escuro que o do site, para manter 4,5:1 no texto pequeno (WCAG 1.4.3).
+-->
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Financas.Gerenciador.App"
+             RequestedThemeVariant="Default">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="Fundo" Color="#f5f4fa" />
+          <SolidColorBrush x:Key="Superficie" Color="#ffffff" />
+          <SolidColorBrush x:Key="Superficie2" Color="#f4f3fa" />
+          <SolidColorBrush x:Key="Linha" Color="#e2dfee" />
+          <SolidColorBrush x:Key="Texto" Color="#2b2939" />
+          <SolidColorBrush x:Key="TextoSuave" Color="#66637e" />
+          <SolidColorBrush x:Key="Primaria" Color="#6267da" />
+          <SolidColorBrush x:Key="PrimariaHover" Color="#575bcc" />
+          <SolidColorBrush x:Key="PrimariaTexto" Color="#ffffff" />
+          <SolidColorBrush x:Key="PrimariaSuave" Color="#edecfe" />
+          <SolidColorBrush x:Key="Positivo" Color="#2a9a6a" />
+          <SolidColorBrush x:Key="Negativo" Color="#d2546b" />
+          <SolidColorBrush x:Key="Alerta" Color="#b27612" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="Fundo" Color="#13121a" />
+          <SolidColorBrush x:Key="Superficie" Color="#1b1a25" />
+          <SolidColorBrush x:Key="Superficie2" Color="#22212e" />
+          <SolidColorBrush x:Key="Linha" Color="#2e2d3e" />
+          <SolidColorBrush x:Key="Texto" Color="#e4e2f0" />
+          <SolidColorBrush x:Key="TextoSuave" Color="#a9a6c2" />
+          <SolidColorBrush x:Key="Primaria" Color="#a3a6ff" />
+          <SolidColorBrush x:Key="PrimariaHover" Color="#b3b6ff" />
+          <SolidColorBrush x:Key="PrimariaTexto" Color="#16152a" />
+          <SolidColorBrush x:Key="PrimariaSuave" Color="#2a2950" />
+          <SolidColorBrush x:Key="Positivo" Color="#7fd9ad" />
+          <SolidColorBrush x:Key="Negativo" Color="#ff9db0" />
+          <SolidColorBrush x:Key="Alerta" Color="#f3c56f" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#6267da" RegionColor="#f5f4fa" />
+        <ColorPaletteResources x:Key="Dark" Accent="#a3a6ff" RegionColor="#13121a" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{DynamicResource Fundo}" />
+      <Setter Property="Foreground" Value="{DynamicResource Texto}" />
+      <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <!-- Cartão: superfície com borda fina e cantos arredondados, como os do site. -->
+    <Style Selector="Border.cartao">
+      <Setter Property="Background" Value="{DynamicResource Superficie}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Linha}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="16" />
+    </Style>
+    <Style Selector="Border.comando">
+      <Setter Property="Background" Value="{DynamicResource Superficie2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Linha}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="10,8" />
+    </Style>
+
+    <Style Selector="TextBlock.suave, SelectableTextBlock.suave">
+      <Setter Property="Foreground" Value="{DynamicResource TextoSuave}" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style Selector="TextBlock.subtitulo">
+      <Setter Property="Foreground" Value="{DynamicResource TextoSuave}" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- Botões nas cores do site: primário (a próxima ação provável), secundário e discreto. Alvo ≥ 34 px (WCAG 2.5.8). -->
+    <Style Selector="Button">
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Padding" Value="14,6" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Background" Value="{DynamicResource Superficie2}" />
+      <Setter Property="Foreground" Value="{DynamicResource Texto}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Linha}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource PrimariaSuave}" />
+      <Setter Property="Foreground" Value="{DynamicResource Texto}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Primaria}" />
+    </Style>
+    <Style Selector="Button.primario">
+      <Setter Property="Background" Value="{DynamicResource Primaria}" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimariaTexto}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Primaria}" />
+    </Style>
+    <Style Selector="Button.primario:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource PrimariaHover}" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimariaTexto}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimariaHover}" />
+    </Style>
+    <Style Selector="Button.discreto">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Primaria}" />
+    </Style>
+    <Style Selector="Button.discreto:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource PrimariaSuave}" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Primaria}" />
+    </Style>
+    <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Opacity" Value="0.55" />
+    </Style>
+  </Application.Styles>
+</Application>

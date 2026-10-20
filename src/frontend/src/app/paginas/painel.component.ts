@@ -1,10 +1,11 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Painel, ValorCategoria } from '../core/modelos';
+import { Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
 import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
@@ -44,6 +45,27 @@ import { Icones } from '../compartilhado/icones';
           {{ d.poucoInformativas === 1 ? '1 transação' : d.poucoInformativas + ' transações' }} dos últimos 90 dias com
           <app-termo chave="descricaoPoucoInformativa">descrição pouco informativa</app-termo>@if (d.exemploPoucoInformativa) { (ex.: “{{ d.exemploPoucoInformativa }}”)}.
           <a routerLink="/transacoes" [queryParams]="linkPoucoInformativas(d)">Revisar</a>
+        </p>
+      }
+      <!-- #170: a separação troco × provento é com prévia (ADR 0027); aqui só o aviso, com o caminho até ela. -->
+      @if (d.creditosCorretoraComoReceita > 0) {
+        <p class="nota-discreta">
+          {{ d.creditosCorretoraComoReceita === 1 ? '1 crédito' : d.creditosCorretoraComoReceita + ' créditos' }} de
+          <app-termo chave="trocoDeCompra">troco</app-termo> ou venda de FIIs e ações
+          ({{ d.totalCreditosCorretoraComoReceita | currency }}) contando como rendimento.
+          <a routerLink="/investimentos" [queryParams]="{ conferir: 1 }">Conferir investimentos</a>
+        </p>
+      }
+      <!-- #173 b) (ADR 0044): o que a sincronização mudou sozinha, com o caminho para ver e para desfazer (Nielsen 1 e 3). -->
+      @if (d.trocosAutomaticos; as t) {
+        <p class="nota-discreta aviso-trocos" role="status">
+          {{ t.quantidade === 1 ? '1 crédito' : t.quantidade + ' créditos' }} de
+          <app-termo chave="trocoDeCompra">troco</app-termo> das compras de FIIs e ações ({{ t.total | currency }})
+          foram para “Investimentos” na sincronização: a conta do dia fechou só com a taxa da B3.
+          <a class="link-alvo" routerLink="/transacoes" [queryParams]="paramsTrocos(t)">Ver em Transações</a>
+          <button type="button" class="link" [disabled]="mexendoTrocos()" (click)="desfazerTrocos()">Desfazer</button>
+          <button type="button" class="link" [disabled]="mexendoTrocos()" (click)="dispensarTrocos()"
+            aria-label="Ok, os trocos ficam em Investimentos">Ok</button>
         </p>
       }
 
@@ -141,7 +163,7 @@ import { Icones } from '../compartilhado/icones';
         <article class="kpi kpi-faturas">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Faturas do mês</span>
           <strong [class.negativo]="d.totalFaturasDoMes > 0">{{ d.totalFaturasDoMes | currency }}</strong>
-          <small>compras e parcelas lançadas no mês, sem parcelas futuras</small>
+          <small>a fatura de cada cartão que fecha no mês</small>
           @if (d.faturasDoMes?.length) {
             <ul class="lista-faturas">
               @for (f of d.faturasDoMes; track f.contaId) {
@@ -151,7 +173,8 @@ import { Icones } from '../compartilhado/icones';
                   <span class="valor">{{ f.valorMes | currency }}</span>
                   @if (f.parcelasMes > 0) { <span class="texto-suave detalhe-fatura">{{ f.parcelasMes | currency }} em parcelas</span> }
                   @if (f.vencimento && f.situacao) {
-                    <span class="texto-suave detalhe-fatura">fatura vence {{ f.vencimento | date: 'dd/MM' }}
+                    <span class="texto-suave detalhe-fatura">@if (f.fechamento) {fecha {{ f.fechamento | date: 'dd/MM' }}, vence} @else {fatura vence}
+                      {{ f.vencimento | date: 'dd/MM' }}
                       <span class="etiqueta" [class.etiqueta-sucesso]="f.situacao === 'paga'" [class.etiqueta-alerta]="f.situacao === 'fechada'">{{ rotuloSituacao(f.situacao) }}</span></span>
                   }
                 </li>
@@ -165,7 +188,7 @@ import { Icones } from '../compartilhado/icones';
 
       <div class="grade-2">
         <section class="painel-bloco">
-          <h2>Gastos por categoria</h2>
+          <div class="bloco-titulo"><h2>Gastos por categoria</h2></div>
           @if (d.gastosPorCategoria.length) {
             <app-grafico-explicado [resumo]="resumoCategorias()"
               comoLer="Cada fatia é uma categoria, do tamanho da parte dela nas despesas do mês. Clique numa fatia ou no nome da categoria para ver as transações.">
@@ -212,7 +235,7 @@ import { Icones } from '../compartilhado/icones';
         <ng-template>
           <div class="grade-2">
             <section class="painel-bloco">
-              <h2>Receitas × despesas (12 meses)</h2>
+              <div class="bloco-titulo"><h2>Receitas × despesas (12 meses)</h2></div>
               <app-grafico-explicado [resumo]="resumoEvolucao()"
                 comoLer="Verde: receitas; rosa: despesas. Quando a barra rosa passa da verde, o mês fechou no vermelho.">
                 <app-grafico [configuracao]="graficoEvolucao()" [altura]="300" />
@@ -239,25 +262,31 @@ import { Icones } from '../compartilhado/icones';
       <p class="texto-suave">Carregando…</p>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpi-credito { position: relative; overflow: hidden; }
     .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
     .kpi-financiamento::before { background: #8fa8f0; }
     .kpi-emprestimo::before { background: #d9b45a; }
     .secao-painel { margin-bottom: 8px; }
+    /* As divisórias do Painel ficam no styles.css (seção "Painel"), onde os testes conseguem conferi-las. */
     .secao-titulo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 16px; margin: 6px 0 12px; }
     .secao-titulo h2 { margin: 0; font-size: 1.15rem; }
     .secao-titulo p { margin: 0; flex: 1 1 260px; }
-    .lista-faturas { list-style: none; margin: 6px 0 2px; padding: 0; display: grid; gap: 4px; font-size: 0.84rem; }
+    .lista-faturas { list-style: none; margin: 8px 0 2px; padding: 8px 0 0; display: grid; gap: 8px; font-size: 0.84rem; }
     .lista-faturas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
     .lista-faturas .valor { margin-left: auto; }
     .lista-faturas .cartao-fatura { display: inline-flex; align-items: center; gap: 6px; }
+    .lista-faturas .cartao-fatura a { display: inline-flex; align-items: center; min-height: 24px; }
     .lista-faturas .detalhe-fatura { flex-basis: 100%; font-size: 0.8rem; }
   `]
 })
 export class PainelComponent implements OnInit {
   readonly Icones = Icones;
   private readonly api = inject(ApiService);
+  private readonly avisos = inject(AvisosService);
+  /** #173 b): um clique em "Desfazer" ou "Ok" por vez. */
+  readonly mexendoTrocos = signal(false);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -338,6 +367,31 @@ export class PainelComponent implements OnInit {
     if (positivos === 0) return `As despesas passaram as receitas em todos os ${meses.length} meses.`;
     return `Você gastou menos do que recebeu em ${positivos} dos ${meses.length} meses.`;
   });
+
+  /** #173 b): /transacoes com as datas e só os trocos classificados na sincronização. */
+  paramsTrocos(t: TrocosAutomaticos): Record<string, string> {
+    return paramsTransacoes({ inicio: t.desde, fim: t.ate, ids: t.ids, origemIds: 'trocos-automaticos' });
+  }
+
+  desfazerTrocos(): void {
+    this.mexendoTrocos.set(true);
+    this.api.desfazerTrocosAutomaticos().subscribe({
+      next: (r) => {
+        this.mexendoTrocos.set(false);
+        this.avisos.sucesso(`Desfeito: ${r.transacoesAtualizadas} crédito(s) voltaram para a categoria de antes, e a sincronização não os muda de novo.`);
+        this.carregar();
+      },
+      error: (e) => { this.mexendoTrocos.set(false); this.avisos.erro(mensagemDeErro(e)); }
+    });
+  }
+
+  dispensarTrocos(): void {
+    this.mexendoTrocos.set(true);
+    this.api.dispensarTrocosAutomaticos().subscribe({
+      next: () => { this.mexendoTrocos.set(false); this.carregar(); },
+      error: (e) => { this.mexendoTrocos.set(false); this.avisos.erro(mensagemDeErro(e)); }
+    });
+  }
 
   ngOnInit(): void {
     const daUrl = mesAnoDaUrl(this.rota.snapshot.queryParamMap);

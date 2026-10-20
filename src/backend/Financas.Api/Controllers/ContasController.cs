@@ -132,6 +132,26 @@ public class ContasController : BaseController
         }).ToList();
     }
 
+    /// <summary>
+    /// #171: resposta a "você reduziu o limite no app?" (null desfaz). Guarda a diferença de agora entre o limite usado
+    /// (aprovado − disponível) e a dívida, para o "não" voltar a perguntar só quando ela mudar.
+    /// </summary>
+    [HttpPut("{id:int}/limite-ajustado")]
+    public async Task<IActionResult> ResponderLimiteAjustado(int id, ResponderLimiteAjustadoDto dto, CancellationToken ct)
+    {
+        var conta = await _db.Contas.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (conta is null) return NaoEncontrado();
+        if (conta.Tipo != TipoConta.CartaoCredito) return Erro("Só cartão de crédito tem limite.");
+        conta.LimiteAjustadoNoApp = dto.Ajustado;
+        conta.LimiteDiferencaAvaliada = dto.Ajustado is not null && conta.LimiteCredito is decimal limite
+                                        && conta.LimiteDisponivel is decimal disponivel
+            ? limite - disponivel - Math.Max(0, -conta.Saldo)
+            : null;
+        conta.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     private static void Aplicar(Conta conta, SalvarContaDto dto, bool manual)
     {
         // Campos de preferência visual valem para qualquer conta.
@@ -169,6 +189,22 @@ public class ContasController : BaseController
         return new ContaDto(c.Id, c.Nome, c.Tipo, c.Origem, c.Numero, c.Moeda, saldo, c.SaldoInicial, c.LimiteCredito,
             limiteDisponivel, c.DiaFechamento, c.DiaVencimento, c.Cor, c.IncluirNoSaldo, c.Arquivada,
             c.ConexaoBancariaId, instituicao, c.AtualizadoEm, banco, c.Banco is not null, c.ContaVinculadaId,
-            c.Tipo == TipoConta.CartaoCredito ? extras.FaturasDoMes.GetValueOrDefault(c.Id) : null);
+            c.Tipo == TipoConta.CartaoCredito ? extras.FaturasDoMes.GetValueOrDefault(c.Id) : null,
+            c.LimiteAjustadoNoApp, c.LimiteDiferencaAvaliada);
     }
+}
+
+/// <summary>
+/// #172: "Conferir com o banco": o valor de cada conta, fatura e investimento no site, com as pistas do que pode
+/// explicar uma diferença para o app do banco. Só leitura; a comparação é feita na tela.
+/// </summary>
+[Route("api/conferencia-banco")]
+public class ConferenciaBancoController : BaseController
+{
+    private readonly ConferenciaBancoService _conferencia;
+
+    public ConferenciaBancoController(ConferenciaBancoService conferencia) => _conferencia = conferencia;
+
+    [HttpGet]
+    public Task<ConferenciaBancoDto> Obter(CancellationToken ct) => _conferencia.MontarAsync(ct);
 }

@@ -1,16 +1,23 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
+using Financas.Api.Servicos.Cambio;
 using Microsoft.EntityFrameworkCore;
 
 namespace Financas.Api.Servicos.Investimentos;
 
 /// <summary>
-/// Reservas ("cofrinhos") que a instituição não informa pelo Open Finance — caso do Mercado Pago, que só
-/// compartilha os lançamentos de entrada e saída de cada reserva no extrato da conta. O saldo é estimado
-/// por esses lançamentos e, quando o usuário confere o valor real no app da instituição, parte dessa conferência.
+/// Reservas ("cofrinhos", "caixinhas") das contas. Quando a instituição informa o valor reservado pelo Open Finance
+/// (<c>bankData.reservedBalances</c>, #168), ele vale. Senão, o saldo é estimado pelos lançamentos de entrada e saída de
+/// cada reserva no extrato da conta (caso do Mercado Pago) e, quando o usuário confere o valor real no app da
+/// instituição, parte dessa conferência (ADR 0010).
+/// O Méli Dólar do Mercado Pago (#169, ADR 0038) entra aqui como uma reserva em dólar: estimado pelas compras e
+/// vendas do extrato, conferível, e convertido para reais pela PTAX.
 /// </summary>
-public class ReservaService
+public partial class ReservaService
 {
     /// <summary>Prefixos (do extrato) que identificam o dinheiro indo para uma reserva ou voltando dela.</summary>
     private static readonly string[] Prefixos = { "Dinheiro reservado ", "Dinheiro retirado " };
@@ -30,9 +37,41 @@ public class ReservaService
     /// </summary>
     private const int ToleranciaInicioJanela = 7;
 
-    private readonly FinancasDbContext _db;
+    /// <summary>#169: o Méli Dólar (dólar digital do Mercado Pago), que o Open Finance não informa (ADR 0038).</summary>
+    public const string NomeMeliDolar = "Méli Dólar";
+    public const string MoedaMeliDolar = "USD";
 
-    public ReservaService(FinancasDbContext db) => _db = db;
+    private readonly FinancasDbContext _db;
+    private readonly CambioService _cambio;
+
+    public ReservaService(FinancasDbContext db, CambioService cambio)
+    {
+        _db = db;
+        _cambio = cambio;
+    }
+
+    /// <summary>Compra ou venda de Méli Dólar ("Compra de Meli Dólar", com ou sem acento).</summary>
+    public static bool EhMeliDolar(string? descricao)
+        => CategorizacaoService.Normalizar(descricao).Contains("MELI DOLAR", StringComparison.Ordinal);
+
+    private static bool EhNomeMeliDolar(string? nome) => CategorizacaoService.Normalizar(nome) == "MELI DOLAR";
+
+    /// <summary>
+    /// Dólares que a descrição informa ("Venda de Meli Dólar MUSD 32,09161263"), ou null. Vírgula é a casa decimal;
+    /// sem vírgula, um ponto seguido de 3 dígitos é de milhar.
+    /// </summary>
+    public static decimal? QuantidadeNaDescricao(string? descricao)
+    {
+        var m = descricao is null ? null : QuantidadeMusd().Match(descricao);
+        if (m is not { Success: true }) return null;
+        var texto = m.Groups[1].Value;
+        if (texto.Contains(',')) texto = texto.Replace(".", "").Replace(',', '.');
+        else if (texto.Count(c => c == '.') != 1 || texto.Length - texto.IndexOf('.') - 1 == 3) texto = texto.Replace(".", "");
+        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out var q) && q > 0 ? q : null;
+    }
+
+    [GeneratedRegex(@"MUSD\s*(\d(?:[\d.,]*\d)?)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex QuantidadeMusd();
 
     /// <summary>Nome da reserva a partir da descrição do lançamento, ou null se não for movimento de reserva.</summary>
     public static string? ExtrairNome(string? descricao)
@@ -84,7 +123,7 @@ public class ReservaService
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var chaves = grupos.Keys
-            .Concat(conferencias.Select(c => (c.ContaId, Chave: c.Nome.ToUpperInvariant())))
+            .Concat(conferencias.Where(c => !EhNomeMeliDolar(c.Nome)).Select(c => (c.ContaId, Chave: c.Nome.ToUpperInvariant())))
             .Distinct();
 
         var reservas = new List<ReservaDto>();
@@ -117,18 +156,209 @@ public class ReservaService
                 podeTerSaldoAnterior, conferenciaAntiga));
         }
 
-        return reservas.OrderByDescending(r => r.Saldo).ThenBy(r => r.Nome).ToList();
+        // O reservado que o banco informa é em reais e não inclui o Méli Dólar: ele entra depois da substituição.
+        return SubstituirPeloBanco(reservas, await InformadasPeloBancoAsync(ct))
+            .Concat(await MeliDolarAsync(ct))
+            .OrderByDescending(r => r.Saldo).ThenBy(r => r.Nome).ToList();
+    }
+
+    /// <summary>
+    /// #169 (ADR 0038): Méli Dólar de cada conta. A quantidade em dólar vem da descrição ("MUSD 32,09") ou do valor em
+    /// reais pela PTAX do dia; compra soma, venda subtrai. A conferência guarda a quantidade em dólar e os lançamentos
+    /// seguintes somam a partir dela. O saldo em reais é a quantidade pela última PTAX guardada.
+    /// </summary>
+    private async Task<List<ReservaDto>> MeliDolarAsync(CancellationToken ct)
+    {
+        var movimentos = (await _db.Transacoes.AsNoTracking()
+                .Where(t => t.Status == StatusTransacao.Efetivada
+                            && t.Conta!.Origem == OrigemConta.OpenFinance
+                            && !t.Conta.Arquivada && t.Conta.IncluirNoSaldo
+                            && (t.Conta.ConexaoBancaria == null || t.Conta.ConexaoBancaria.Ativa)
+                            && EF.Functions.Like(t.DescricaoOriginal ?? t.Descricao, "%meli d_lar%"))
+                .Select(t => new { t.ContaId, NomeConta = t.Conta!.Nome, Descricao = t.DescricaoOriginal ?? t.Descricao, t.Data, t.Valor })
+                .ToListAsync(ct))
+            .Where(m => EhMeliDolar(m.Descricao)).ToList();
+        var conferencias = (await _db.ReservasConferidas.AsNoTracking()
+                .Where(r => !r.Conta!.Arquivada && r.Conta.IncluirNoSaldo)
+                .Select(r => new { r.ContaId, NomeConta = r.Conta!.Nome, r.Nome, r.SaldoConferido, r.DataConferencia })
+                .ToListAsync(ct))
+            .Where(r => EhNomeMeliDolar(r.Nome)).ToList();
+        if (movimentos.Count == 0 && conferencias.Count == 0) return [];
+
+        var hoje = Relogio.Hoje;
+        var desde = movimentos.Count > 0 ? movimentos.Min(m => m.Data) : hoje;
+        await _cambio.GarantirHistoricoAsync(MoedaMeliDolar, desde, ct);
+        var conversor = await _cambio.ObterConversorAsync(ct, desde);
+        var cotacao = conversor.Taxa(MoedaMeliDolar);
+        decimal Dolares(decimal valor, string descricao, DateOnly data)
+            => QuantidadeNaDescricao(descricao)
+               ?? (conversor.ParaReais(1m, MoedaMeliDolar, data) is decimal taxa && taxa > 0 ? Math.Abs(valor) / taxa : 0m);
+
+        var idsContas = movimentos.Select(m => m.ContaId).Concat(conferencias.Select(c => c.ContaId)).Distinct().ToList();
+        var inicioJanela = await _db.Transacoes.AsNoTracking()
+            .Where(t => idsContas.Contains(t.ContaId))
+            .GroupBy(t => t.ContaId)
+            .Select(g => new { ContaId = g.Key, Inicio = g.Min(t => t.Data) })
+            .ToDictionaryAsync(x => x.ContaId, x => x.Inicio, ct);
+
+        var resultado = new List<ReservaDto>();
+        foreach (var contaId in idsContas)
+        {
+            var lista = movimentos.Where(m => m.ContaId == contaId).ToList();
+            var conferencia = conferencias.Where(c => c.ContaId == contaId).MaxBy(c => c.DataConferencia);
+            var considerados = conferencia is null ? lista : lista.Where(m => m.Data > conferencia.DataConferencia).ToList();
+            // Valor negativo na conta = compra de dólar; positivo = venda.
+            var quantidade = (conferencia?.SaldoConferido ?? 0m)
+                + considerados.Sum(m => (m.Valor < 0 ? 1 : -1) * Dolares(m.Valor, m.Descricao, m.Data));
+            quantidade = Math.Max(0, quantidade);
+            var guardado = considerados.Where(m => m.Valor < 0).Sum(m => -m.Valor);
+            var retirado = considerados.Where(m => m.Valor > 0).Sum(m => m.Valor);
+            // Sem nenhuma cotação do dólar guardada (nunca houve internet), vale o que entrou menos o que saiu.
+            var saldo = cotacao is decimal c ? quantidade * c : Math.Max(0, guardado - retirado);
+
+            DateOnly? primeiro = lista.Count > 0 ? lista.Min(m => m.Data) : null;
+            var podeTerSaldoAnterior = conferencia is null && primeiro is DateOnly p
+                && inicioJanela.TryGetValue(contaId, out var inicio)
+                && p.DayNumber - inicio.DayNumber <= ToleranciaInicioJanela;
+            var conferenciaAntiga = conferencia is not null
+                && hoje.DayNumber - conferencia.DataConferencia.DayNumber > DiasConferenciaAntiga;
+            resultado.Add(new ReservaDto(contaId, conferencia?.NomeConta ?? lista[0].NomeConta, NomeMeliDolar,
+                Math.Round(saldo, 2), Math.Round(guardado, 2), Math.Round(retirado, 2), lista.Count, primeiro,
+                lista.Count > 0 ? lista.Max(m => m.Data) : null, conferencia?.SaldoConferido, conferencia?.DataConferencia,
+                podeTerSaldoAnterior, conferenciaAntiga, Moeda: MoedaMeliDolar, Quantidade: Math.Round(quantidade, 2),
+                Cotacao: cotacao));
+        }
+        return resultado;
+    }
+
+    /// <summary>Reserva que a instituição informa pelo Open Finance (#168), na forma gravada em <c>Conta.ReservasInformadas</c>.</summary>
+    public sealed record ReservaInformada(string Nome, decimal Valor);
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// #168: lê o <c>bankData</c> da Pluggy. Devolve o total reservado (null = a instituição não informa; aí vale a
+    /// estimativa pelo extrato), as reservas com nome quando vierem detalhadas e o nome dos campos de cada item (para o
+    /// log: a documentação da Pluggy não descreve esses campos). Sem os detalhes, vale o "investido automaticamente".
+    /// </summary>
+    public static (decimal? Total, string? ReservasJson, string[] Campos) DoOpenFinance(Pluggy.PluggyDadosBancarios? dados)
+    {
+        if (dados is null) return (null, null, []);
+        var reservas = new List<ReservaInformada>();
+        var campos = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var item in dados.ReservedBalances ?? [])
+        {
+            if (item.ValueKind != JsonValueKind.Object) continue;
+            decimal? valor = null;
+            string? nome = null;
+            foreach (var p in item.EnumerateObject())
+            {
+                campos.Add(p.Name);
+                var chave = p.Name.ToLowerInvariant();
+                if (valor is null && chave is "amount" or "balance" or "value" or "total" or "reservedamount" or "reservedbalance")
+                    valor = Numero(p.Value);
+                if (nome is null && p.Value.ValueKind == JsonValueKind.String
+                    && chave is "name" or "description" or "label" or "goal" or "type" or "category")
+                    nome = p.Value.GetString();
+            }
+            if (valor is decimal v)
+                reservas.Add(new ReservaInformada(string.IsNullOrWhiteSpace(nome) ? "Reservado" : nome.Trim()[..Math.Min(nome.Trim().Length, TamanhoMaximoNome)],
+                    Math.Round(v, 2)));
+        }
+        if (reservas.Count > 0) return (reservas.Sum(r => r.Valor), JsonSerializer.Serialize(reservas, Json), campos.ToArray());
+        if (dados.AutomaticallyInvestedBalance is double automatico && automatico > 0)
+            return (Math.Round((decimal)automatico, 2), null, campos.ToArray());
+        return (null, null, campos.ToArray());
+
+        static decimal? Numero(JsonElement e) => e.ValueKind switch
+        {
+            JsonValueKind.Number => e.GetDecimal(),
+            // { "amount": { "value": 10.0, "currency": "BRL" } }
+            JsonValueKind.Object => e.EnumerateObject().Where(q => q.Value.ValueKind == JsonValueKind.Number
+                    && q.Name.ToLowerInvariant() is "value" or "amount").Select(q => (decimal?)q.Value.GetDecimal()).FirstOrDefault(),
+            _ => null
+        };
+    }
+
+    /// <summary>Contas com o reservado informado pela instituição: total e, quando houver, as reservas com nome.</summary>
+    private async Task<Dictionary<int, (string NomeConta, decimal Total, List<ReservaInformada> Reservas)>> InformadasPeloBancoAsync(
+        CancellationToken ct)
+    {
+        var contas = await _db.Contas.AsNoTracking()
+            .Where(c => c.SaldoReservado != null && c.Origem == OrigemConta.OpenFinance && !c.Arquivada && c.IncluirNoSaldo
+                        && (c.ConexaoBancaria == null || c.ConexaoBancaria.Ativa))
+            .Select(c => new { c.Id, c.Nome, c.SaldoReservado, c.ReservasInformadas })
+            .ToListAsync(ct);
+        return contas.ToDictionary(c => c.Id, c => (c.Nome, c.SaldoReservado!.Value,
+            c.ReservasInformadas is { Length: > 0 } j ? JsonSerializer.Deserialize<List<ReservaInformada>>(j, Json) ?? [] : []));
+    }
+
+    /// <summary>Nome da linha com a parte do total informado pelo banco que não está em nenhuma reserva (#237).</summary>
+    public const string NomeRestanteDoBanco = "Reservado";
+
+    /// <summary>
+    /// #168 (ADR 0037): nas contas em que a instituição informa o reservado, ele vale no lugar da estimativa pelo extrato.
+    /// Só a reserva que veio, pelo nome, na lista detalhada (<c>reservedBalances</c>) é "informada pelo banco" (o nome do
+    /// extrato é mantido quando bate, para as metas ligadas a ele). #237: as outras reservas do extrato continuam com a
+    /// estimativa e a conferência, nunca zeradas: com a lista detalhada, marcadas como fora dela; só com o total, ele
+    /// vira a linha "Reservado" com o que passa da soma das reservas do extrato (o total inteiro, se não houver nenhuma).
+    /// </summary>
+    private static List<ReservaDto> SubstituirPeloBanco(List<ReservaDto> estimadas,
+        Dictionary<int, (string NomeConta, decimal Total, List<ReservaInformada> Reservas)> doBanco)
+    {
+        if (doBanco.Count == 0) return estimadas;
+        static bool MesmoNome(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        var resultado = estimadas.Where(r => !doBanco.ContainsKey(r.ContaId)).ToList();
+        foreach (var (contaId, (nomeConta, total, informadas)) in doBanco)
+        {
+            var daConta = estimadas.Where(r => r.ContaId == contaId).ToList();
+            if (informadas.Count > 0)
+            {
+                foreach (var i in informadas)
+                {
+                    var estimada = daConta.FirstOrDefault(r => MesmoNome(r.Nome, i.Nome));
+                    resultado.Add(new ReservaDto(contaId, nomeConta, estimada?.Nome ?? i.Nome, Math.Round(i.Valor, 2),
+                        estimada?.Guardado ?? 0m, estimada?.Retirado ?? 0m, estimada?.Movimentos ?? 0, estimada?.PrimeiroMovimento,
+                        estimada?.UltimoMovimento, null, null, false, false, InformadoPeloBanco: true));
+                }
+                resultado.AddRange(daConta.Where(r => !informadas.Any(i => MesmoNome(i.Nome, r.Nome)))
+                    .Select(r => r with { ForaDaListaDoBanco = true }));
+                continue;
+            }
+            resultado.AddRange(daConta);
+            var restante = Math.Round(total - daConta.Sum(r => r.Saldo), 2);
+            if (restante <= 0) continue;
+            var nome = daConta.Any(r => MesmoNome(r.Nome, NomeRestanteDoBanco)) ? $"{NomeRestanteDoBanco} (restante)" : NomeRestanteDoBanco;
+            resultado.Add(new ReservaDto(contaId, nomeConta, nome, restante, 0m, 0m, 0, null, null, null, null, false, false,
+                RestanteDoBanco: true, TotalDoBanco: total));
+        }
+        return resultado;
     }
 
     /// <summary>Soma dos saldos estimados das reservas (em reais).</summary>
     public async Task<decimal> TotalAsync(CancellationToken ct)
         => (await ListarAsync(ct)).Sum(r => r.Saldo);
 
-    /// <summary>Grava (ou substitui) o saldo conferido de uma reserva. Retorna false se a conta não existir.</summary>
-    public async Task<bool> ConferirAsync(int contaId, string nome, decimal saldo, DateOnly data, CancellationToken ct)
+    /// <summary>
+    /// Grava (ou substitui) o saldo conferido de uma reserva. Devolve o erro, ou null quando gravou. O Méli Dólar (#169)
+    /// guarda a quantidade em dólar: informado em reais (<paramref name="moedaInformada"/> = "BRL"), é convertido pela
+    /// PTAX da data.
+    /// </summary>
+    public async Task<string?> ConferirAsync(int contaId, string nome, decimal saldo, DateOnly data, string? moedaInformada,
+        CancellationToken ct)
     {
-        if (!await _db.Contas.AnyAsync(c => c.Id == contaId, ct)) return false;
+        if (!await _db.Contas.AnyAsync(c => c.Id == contaId, ct)) return "Conta inválida.";
         nome = nome.Trim();
+        if (EhNomeMeliDolar(nome))
+        {
+            nome = NomeMeliDolar;
+            if (moedaInformada == CambioService.MoedaBase)
+            {
+                if (await _cambio.ObterCotacaoAsync(MoedaMeliDolar, data, ct) is not { Compra: > 0 } cotacao)
+                    return "Não há cotação do dólar para essa data. Informe o saldo em dólares (US$).";
+                saldo /= cotacao.Compra;
+            }
+        }
         var conferencia = (await _db.ReservasConferidas.Where(r => r.ContaId == contaId).ToListAsync(ct))
             .FirstOrDefault(r => string.Equals(r.Nome, nome, StringComparison.OrdinalIgnoreCase));
         if (conferencia is null)
@@ -136,11 +366,12 @@ public class ReservaService
             conferencia = new ReservaConferencia { ContaId = contaId, Nome = nome };
             _db.ReservasConferidas.Add(conferencia);
         }
-        conferencia.SaldoConferido = Math.Round(saldo, 2);
+        // Em dólar, a quantidade guarda mais casas: convertida de volta pela mesma PTAX, dá o valor informado em reais.
+        conferencia.SaldoConferido = Math.Round(saldo, nome == NomeMeliDolar ? 8 : 2);
         conferencia.DataConferencia = data;
         conferencia.AtualizadoEm = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
-        return true;
+        return null;
     }
 
     /// <summary>Apaga a conferência: o saldo volta a ser só a soma dos movimentos do extrato.</summary>

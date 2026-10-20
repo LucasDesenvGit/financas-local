@@ -21,15 +21,20 @@ public class PainelController : BaseController
     private readonly ReservaService _reservas;
     private readonly ParametroService _parametros;
     private readonly DescricaoPoucoInformativaService _poucoInformativa;
+    private readonly ConferenciaInvestimentosService _conferencia;
+    private readonly ContaAgendadaService _cobrancas;
 
     /// <summary>#9: o aviso de descrições pouco informativas olha só as transações recentes.</summary>
     public const int DiasPoucoInformativas = 90;
 
     public PainelController(FinancasDbContext db, ContaService contas, RelatorioService relatorios, ConfiguracaoService config,
         CarteiraService carteira, EmprestimoService emprestimos, ReservaService reservas, ParametroService parametros,
-        DescricaoPoucoInformativaService poucoInformativa)
+        DescricaoPoucoInformativaService poucoInformativa, ConferenciaInvestimentosService conferencia,
+        ContaAgendadaService cobrancas)
     {
+        _cobrancas = cobrancas;
         _poucoInformativa = poucoInformativa;
+        _conferencia = conferencia;
         _db = db;
         _contas = contas;
         _relatorios = relatorios;
@@ -100,6 +105,19 @@ public class PainelController : BaseController
             alertas.Add($"Investimentos em {string.Join(", ", composicao.MoedasSemCotacao)} ficaram fora do patrimônio: "
                 + "não há cotação de câmbio guardada para essa moeda.");
 
+        // #172 (ADR 0008): contas são somadas como reais; conta em outra moeda entraria sem conversão.
+        var contasEmOutraMoeda = await _db.Contas.AsNoTracking()
+            .Where(c => !c.Arquivada && c.Moeda != CambioService.MoedaBase)
+            .Select(c => new { c.Nome, c.Moeda, c.IncluirNoSaldo }).ToListAsync(ct);
+        foreach (var c in contasEmOutraMoeda)
+            alertas.Add($"A conta {c.Nome} é em {c.Moeda}, mas o site trata as contas como reais, sem conversão"
+                + (c.IncluirNoSaldo ? ": o saldo dela entra no total como se fosse em reais. Desmarque \"Incluir no saldo\" em Contas e cartões." : ".")
+                + " As transações dela entram nos relatórios do mesmo jeito.");
+
+        // #158 (decisão do usuário): no Painel, só "não veio" e "cartão arquivado com cobranças"; os outros, na tela.
+        foreach (var aviso in (await _cobrancas.AvisosAsync(ct)).Where(a => a.Tipo is "nao-veio" or "cartao-arquivado"))
+            alertas.Add(aviso.Texto + " Veja em Contas a pagar.");
+
         var reservasAConferir = (await _reservas.ListarAsync(ct))
             .Where(r => r.PodeTerSaldoAnterior || r.ConferenciaAntiga).Select(r => r.Nome).ToList();
         if (reservasAConferir.Count > 0)
@@ -109,11 +127,12 @@ public class PainelController : BaseController
         var limiteConsentimento = DateTime.UtcNow.AddDays(
             await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasAvisoConsentimento, ct));
         var conexoes = await _db.ConexoesBancarias.AsNoTracking().Where(c => c.Ativa)
-            .Select(c => new { c.NomeInstituicao, c.ConsentimentoExpiraEm, c.UltimoErro, c.Status })
+            .Select(c => new { c.Id, c.ConsentimentoExpiraEm, c.UltimoErro, c.Status })
             .ToListAsync(ct);
+        var nomesConexoes = await _contas.NomesDasConexoesAsync(ct);
         foreach (var c in conexoes)
         {
-            var nome = c.NomeInstituicao ?? "Instituição";
+            var nome = nomesConexoes.GetValueOrDefault(c.Id, "Instituição");
             if (c.ConsentimentoExpiraEm is { } exp && exp <= limiteConsentimento)
                 alertas.Add(exp <= DateTime.UtcNow
                     ? $"O consentimento do Open Finance de {nome} expirou. Renove no Meu Pluggy."
@@ -159,12 +178,18 @@ public class PainelController : BaseController
         var exemplo = poucoInformativas.GroupBy(x => x.Descricao.Trim().ToUpperInvariant())
             .OrderByDescending(g => g.Count()).Select(g => g.First().Descricao.Trim()).FirstOrDefault();
 
+        // #170: trocos e vendas da corretora contando como receita (a correção é com prévia, em Conferir investimentos).
+        var creditosCorretora = await _conferencia.CreditosComoReceitaAsync(ct);
+        // #173 b): os trocos que a sincronização classificou sozinha.
+        var trocosAutomaticos = await _conferencia.ResumoTrocosAutomaticosAsync(ct);
+
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
             receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
             faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
-            poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo);
+            poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo,
+            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos);
     }
 }
 
@@ -249,12 +274,19 @@ public class InvestimentosController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly CambioService _cambio;
+    private readonly HistoricoInvestimentosService _historico;
 
-    public InvestimentosController(FinancasDbContext db, CambioService cambio)
+    public InvestimentosController(FinancasDbContext db, CambioService cambio, HistoricoInvestimentosService historico)
     {
         _db = db;
         _cambio = cambio;
+        _historico = historico;
     }
+
+    /// <summary>#173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance, pelo histórico de saldo.</summary>
+    [HttpGet("historico")]
+    public async Task<ActionResult<HistoricoInvestimentosDto>> Historico(CancellationToken ct)
+        => await _historico.MesAMesAsync(ct);
 
     [HttpGet]
     public async Task<ActionResult<List<InvestimentoDto>>> Listar(CancellationToken ct)
@@ -263,9 +295,23 @@ public class InvestimentosController : BaseController
             .OrderBy(i => i.Tipo).ThenByDescending(i => i.Saldo)
             .Select(i => new InvestimentoDto(i.Id, i.Nome, i.Tipo, i.Subtipo, i.Codigo, i.Emissor, i.Moeda, i.Saldo, null,
                 i.ValorAplicado, i.Rendimento, i.TaxaAnual, i.DataVencimento, i.Status,
-                i.ConexaoBancaria!.NomeInstituicao, i.AtualizadoEm))
+                i.ConexaoBancaria!.NomeInstituicao, i.AtualizadoEm, i.Nome, i.NomePersonalizado))
             .ToListAsync(ct);
         var conversor = await _cambio.ObterConversorAsync(ct);
-        return lista.Select(i => i with { SaldoEmReais = conversor.ParaReais(i.Saldo, i.Moeda) }).ToList();
+        return lista.Select(i => i with
+        {
+            SaldoEmReais = conversor.ParaReais(i.Saldo, i.Moeda),
+            NomeExibicao = NomeInvestimento.Exibicao(i.Nome, i.Tipo, i.Emissor, i.NomePersonalizado)
+        }).ToList();
+    }
+
+    /// <summary>#170: dá um nome ao investimento ("Caixinha viagem"); vazio volta ao automático. A sincronização não mexe.</summary>
+    [HttpPut("{id:int}/nome")]
+    public async Task<IActionResult> Renomear(int id, RenomearInvestimentoDto dto, CancellationToken ct)
+    {
+        var nome = string.IsNullOrWhiteSpace(dto.Nome) ? null : dto.Nome.Trim();
+        var alterados = await _db.Investimentos.Where(i => i.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.NomePersonalizado, nome), ct);
+        return alterados == 0 ? NaoEncontrado("Investimento não encontrado.") : NoContent();
     }
 }

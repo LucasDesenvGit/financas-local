@@ -1,12 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CampoValorComponent, SIMBOLOS_MOEDA } from '../compartilhado/campo-valor.component';
+import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ChartConfiguration } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  AtualizarAtivo, Carteira, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
+  AtualizarAtivo, Carteira, InvestimentoComparado, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
   Reserva, SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
 } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
@@ -21,6 +23,9 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
+import { RendimentoInvestimentosOfComponent } from './rendimento-investimentos-of.component';
+import { conferenciaForaDoEsperado, podeConferirReserva, valorEsperadoDaReserva } from './reserva-conferencia';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
   FIXED_INCOME: 'Renda fixa',
@@ -38,21 +43,21 @@ const COR_SELIC = CORES_GRAFICO.selic;
 const COR_MERCADO = '#8fd5b4';
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 /** Símbolo curto para rótulos de campo (o pipe de moeda já formata os valores). */
-const SIMBOLOS_MOEDA: Record<string, string> = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£', JPY: '¥', CHF: 'CHF' };
 const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { notation: 'compact' });
 
 type Aba = 'resumo' | 'fii' | 'rv' | 'of' | 'reservas';
 
 /** Formulário de conferência do saldo real de uma reserva. */
-interface FormConferencia { reserva: Reserva; saldo: number | null; data: string }
+/** #169: `moeda` só conta no Méli Dólar (o saldo pode ser informado em reais ou em dólares). */
+interface FormConferencia { reserva: Reserva; saldo: number | null; data: string; moeda: 'BRL' | 'USD' }
 
 /** Linha editável da importação pelo extrato. */
 interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas: number }
 
 @Component({
   selector: 'app-investimentos',
-  imports: [FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent],
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -190,8 +195,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             <div class="cabecalho-bloco">
               <h2>Posições</h2>
               <span class="cresce"></span>
-              <label class="checkbox"><input type="checkbox" [checked]="mostrarEncerradas()"
-                (change)="mostrarEncerradas.set(!mostrarEncerradas())"> mostrar encerradas</label>
+              <!-- #130: efeito imediato → interruptor. -->
+              <label class="interruptor"><input type="checkbox" role="switch" [checked]="mostrarEncerradas()"
+                (change)="mostrarEncerradas.set(!mostrarEncerradas())"> Mostrar encerradas</label>
               <button type="button" class="link" (click)="abrirConfiguracao()">fonte das cotações</button>
             </div>
             <div class="tabela-rolagem">
@@ -292,8 +298,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               <tbody>
                 @for (i of d.openFinance; track i.id) {
                   <tr [class.encerrada]="i.jaNaCarteira">
-                    <td>{{ i.nome }} <span class="etiqueta etiqueta-suave">{{ nomeTipoPluggy(i.tipo, i.subtipo, i.codigo) }}</span>
+                    <!-- #170: o nome que se reconhece (Nielsen 2 e 6), com o do banco embaixo para achar no app. -->
+                    <td>{{ i.nomeExibicao }} <span class="etiqueta etiqueta-suave">{{ nomeTipoPluggy(i.tipo, i.subtipo, i.codigo) }}</span>
                       @if (i.codigo) { <small class="texto-suave">{{ i.codigo }}</small> }
+                      <button type="button" class="link" (click)="abrirRenomear(i)"
+                        [attr.aria-label]="'Renomear ' + i.nomeExibicao">renomear</button>
+                      @if (i.nomeExibicao !== i.nome) { <br><small class="texto-suave">no banco: {{ i.nome }}</small> }
                       @if (i.taxaAnual) { <br><small class="texto-suave">{{ i.taxaAnual | number: '1.2-2' }}% a.a.</small> }
                       @if (i.jaNaCarteira) { <br><small class="etiqueta etiqueta-alerta">já lançado na carteira — não somado de novo</small> }
                     </td>
@@ -327,6 +337,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             A comparação usa a data e o valor aplicado informados pela instituição. Em produtos com vários aportes (fundos,
             previdência) a instituição pode informar só o total, e o resultado fica aproximado. Valores brutos, antes do IR.
           </p>
+          <app-rendimento-investimentos-of />
         }
 
         @case ('reservas') {
@@ -342,19 +353,32 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <td><strong>{{ r.nome }}</strong>
                       <br><small class="texto-suave">{{ r.movimentos }} lançamento(s)
                         @if (r.primeiroMovimento) { de {{ r.primeiroMovimento | date: 'dd/MM/yy' }} a {{ r.ultimoMovimento | date: 'dd/MM/yy' }} }
-                      </small></td>
+                      </small>
+                      <!-- #169: o Méli Dólar mostra a quantidade em dólar e a PTAX que deu o valor em reais (Nielsen 1). -->
+                      @if (r.moeda === 'USD') {
+                        <br><small class="texto-suave">{{ r.quantidade | currency: 'USD' }}
+                          @if (r.cotacao) { × <app-termo chave="ptax">PTAX</app-termo> {{ r.cotacao | number: '1.4-4' }} }</small>
+                      }</td>
                     <td class="texto-suave">{{ r.nomeConta }}</td>
                     <td class="direita">{{ r.guardado | currency }}</td>
                     <td class="direita">{{ r.retirado | currency }}</td>
                     <td class="direita valor">{{ r.saldo | currency }}</td>
                     <td>
-                      @if (r.dataConferencia) {
+                      @if (r.informadoPeloBanco) {
+                        <span class="etiqueta etiqueta-sucesso">informado pelo banco</span>
+                        <br><small class="texto-suave">valor que a instituição manda pelo Open Finance</small>
+                      } @else if (r.restanteDoBanco) {
+                        <!-- #237: o banco manda só o total; esta linha é o que ele passa da soma das reservas acima. -->
+                        <span class="etiqueta">restante do total do banco</span>
+                        <br><small class="texto-suave">a instituição informa {{ r.totalDoBanco | currency }} reservados nesta conta;
+                          aqui fica o que não está nas outras reservas. Conferir as outras ajusta este valor.</small>
+                      } @else if (r.dataConferencia) {
                         @if (r.conferenciaAntiga) {
                           <span class="etiqueta etiqueta-alerta">conferido há mais de 30 dias</span>
                         } @else {
                           <span class="etiqueta etiqueta-sucesso">conferido</span>
                         }
-                        <br><small class="texto-suave">{{ r.saldoConferido | currency }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
+                        <br><small class="texto-suave">{{ r.saldoConferido | currency: (r.moeda ?? 'BRL') }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
                           + lançamentos depois</small>
                       } @else {
                         <span class="etiqueta etiqueta-alerta">estimado</span>
@@ -363,10 +387,16 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                           <br><small class="negativo">Pode haver saldo de antes do 1º lançamento importado. Confira.</small>
                         }
                       }
+                      @if (r.foraDaListaDoBanco) {
+                        <br><small class="texto-suave">não está na lista de reservas que a instituição manda: se ela já aparece
+                          com outro nome, confira esta com zero.</small>
+                      }
                     </td>
                     <td class="direita nowrap">
-                      <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
-                        (click)="abrirConferencia(r)">conferir saldo</button>
+                      @if (podeConferir(r)) {
+                        <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
+                          (click)="abrirConferencia(r)">conferir saldo</button>
+                      }
                     </td>
                   </tr>
                 }
@@ -374,11 +404,15 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             </table>
           </div>
           <p class="texto-suave nota">
-            A instituição não informa o saldo destas reservas pelo Open Finance, só os lançamentos "Dinheiro reservado" e
-            "Dinheiro retirado" no extrato da conta. Por isso o saldo é estimado. Sem conferência, ele fica abaixo do real
+            Quando a instituição informa, pelo Open Finance, o valor de cada reserva pelo nome, vale esse valor ("informado pelo
+            banco"). Quando ela informa só o total reservado da conta, cada reserva continua estimada e conferível, e o que o
+            total passa da soma delas aparece como "Reservado". Senão,
+            ela só manda os lançamentos "Dinheiro reservado" e "Dinheiro retirado" no extrato da conta, e o saldo é estimado. Sem conferência, ele fica abaixo do real
             quando a reserva já tinha dinheiro antes do primeiro lançamento importado e quando o rendimento ainda não foi
             retirado. Confira o valor no app da instituição de vez em quando: os lançamentos seguintes passam a somar a
             partir dele. O total entra no patrimônio, no total investido e na reserva de emergência.
+            O Méli Dólar do Mercado Pago também aparece aqui: a quantidade em dólar vem das compras e vendas do extrato
+            (pelo "MUSD" da descrição ou pela PTAX do dia) e o saldo em reais é essa quantidade pela última PTAX.
           </p>
         }
       }
@@ -419,10 +453,10 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             }
           </div>
           <div class="grade-campos">
-            <label>Data <input type="date" name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" required [max]="hoje"></label>
+            <label>Data <app-campo-data name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" obrigatorio [maximo]="hoje" /></label>
             <label>Quantidade <input type="number" name="qtd" [(ngModel)]="fo.quantidade" required min="0.000001" step="any"></label>
-            <label>Preço por cota ({{ simbolo(fo.moeda) }}) <input type="number" name="preco" [(ngModel)]="fo.precoUnitario" required min="0" step="any"></label>
-            <label>Taxas/corretagem ({{ simbolo(fo.moeda) }}) <input type="number" name="taxas" [(ngModel)]="fo.taxas" min="0" step="0.01"></label>
+            <label>Preço por cota <app-campo-valor name="preco" [(ngModel)]="fo.precoUnitario" [moeda]="fo.moeda" [casas]="4" obrigatorio /></label>
+            <label>Taxas/corretagem <app-campo-valor name="taxas" [(ngModel)]="fo.taxas" [moeda]="fo.moeda" /></label>
           </div>
           @if (fo.moeda !== 'BRL') {
             <div class="grade-campos">
@@ -534,7 +568,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           }
           <label class="checkbox"><input type="checkbox" name="manual" [(ngModel)]="fa.precoManual"> Informar a cotação manualmente</label>
           @if (fa.precoManual) {
-            <label>Cotação atual ({{ simbolo(ativoEditado?.moeda) }}) <input type="number" name="preco" [(ngModel)]="fa.precoAtual" min="0.0001" step="any" required></label>
+            <label>Cotação atual <app-campo-valor name="preco" [(ngModel)]="fa.precoAtual" [moeda]="ativoEditado?.moeda" [casas]="4"
+              obrigatorio [minimo]="0.0001" /></label>
             <p class="texto-suave">Útil quando a fonte automática não encontra o ativo. Desmarque para voltar à cotação automática.</p>
           }
           <div class="rodape-form">
@@ -570,9 +605,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               </thead>
               <tbody>
                 @for (l of linhasImportacao(); track l.transacaoId) {
-                  <tr [class.encerrada]="l.jaImportada">
-                    <td><input type="checkbox" [(ngModel)]="l.selecionada" [disabled]="l.jaImportada"
-                      [attr.aria-label]="'Importar ' + l.descricao"></td>
+                  <tr [class.encerrada]="l.jaImportada" [class.selecionada]="l.selecionada && !l.jaImportada">
+                    <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.selecionada"
+                      [disabled]="l.jaImportada" [attr.aria-label]="'Importar ' + l.descricao"></label></td>
                     <td>{{ l.data | date: 'dd/MM/yy' }}</td>
                     <td><small>{{ l.descricao }}</small><br><small class="texto-suave">{{ l.contaNome }}</small>
                       @if (l.jaImportada) { <br><small class="etiqueta etiqueta-sucesso">já importada</small> }
@@ -587,8 +622,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <td class="direita">{{ l.valor | currency }}</td>
                     <td class="direita"><input type="number" class="campo-curto" [(ngModel)]="l.quantidade" min="0" step="any"
                       [disabled]="l.jaImportada"></td>
-                    <td class="direita"><input type="number" class="campo-curto" [(ngModel)]="l.precoUnitario" min="0" step="any"
-                      [disabled]="l.jaImportada">
+                    <td class="direita"><app-campo-valor class="campo-curto" compacto [(ngModel)]="l.precoUnitario" [casas]="4"
+                      [disabled]="l.jaImportada" [rotulo]="'Preço por cota de ' + (l.ticker || 'ativo')" />
                       @if (l.fechamentoNoDia !== null) { <br><small class="texto-suave">fech. {{ l.fechamentoNoDia | currency }}</small> }</td>
                     <td><small class="texto-suave">{{ l.origem ?? 'preencha' }}</small></td>
                   </tr>
@@ -609,19 +644,54 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       </div>
     </app-modal>
 
+    <!-- #170: nome do investimento do Open Finance (a sincronização não mexe nele) -->
+    <app-modal [aberto]="formNome !== null" [titulo]="'Renomear · ' + (formNome?.investimento?.nomeExibicao ?? '')"
+      (fechar)="formNome = null">
+      @if (formNome; as fn) {
+        <form (ngSubmit)="salvarNome()" class="formulario">
+          <label>Nome <input name="nome" [(ngModel)]="fn.nome" maxlength="120" placeholder="Ex.: Caixinha viagem"></label>
+          <p class="texto-suave">No banco: {{ fn.investimento.nome }}. A sincronização não muda o nome que você escolher;
+            vazio, volta ao nome automático.</p>
+          <div class="rodape-form">
+            @if (fn.investimento.nomePersonalizado) {
+              <button type="button" class="botao" (click)="fn.nome = ''; salvarNome()">Voltar ao nome automático</button>
+            }
+            <span class="cresce"></span>
+            <button type="button" class="botao" (click)="formNome = null">Cancelar</button>
+            <button class="botao botao-primario" [disabled]="salvando()">Salvar</button>
+          </div>
+        </form>
+      }
+    </app-modal>
+
     <!-- Conferir o saldo real de uma reserva -->
     <app-modal [aberto]="formConferencia !== null" [titulo]="'Conferir saldo · ' + (formConferencia?.reserva?.nome ?? '')"
       (fechar)="formConferencia = null">
       @if (formConferencia; as fc) {
         <form (ngSubmit)="salvarConferencia()" #fcf="ngForm" class="formulario">
-          <p class="texto-suave">Abra a reserva no app da instituição e informe o saldo que aparece lá. Os lançamentos até essa
-            data já estão nesse valor; os seguintes são somados a ele.</p>
+          <p class="texto-suave">
+            @if (fc.reserva.moeda === 'USD') {
+              Abra o Méli Dólar no app do Mercado Pago e informe o saldo que aparece lá, em reais ou em dólares. Em reais,
+              ele é convertido pela PTAX do dia da conferência.
+            } @else {
+              Abra a reserva no app da instituição e informe o saldo que aparece lá.
+            }
+            Os lançamentos até essa data já estão nesse valor; os seguintes são somados a ele.</p>
           <div class="grade-campos">
-            <label>Saldo na instituição (R$)
-              <input type="number" name="saldo" [(ngModel)]="fc.saldo" required min="0" step="0.01"></label>
-            <label>Conferido em <input type="date" name="data" [(ngModel)]="fc.data" required [max]="hoje"></label>
+            @if (fc.reserva.moeda === 'USD') {
+              <label>Informado em
+                <select name="moeda" [(ngModel)]="fc.moeda">
+                  <option value="BRL">reais (R$)</option>
+                  <option value="USD">dólares (US$)</option>
+                </select>
+              </label>
+            }
+            <label>Saldo na instituição
+              <app-campo-valor name="saldo" [(ngModel)]="fc.saldo" [moeda]="fc.moeda" obrigatorio /></label>
+            <label>Conferido em <app-campo-data name="data" [(ngModel)]="fc.data" obrigatorio [maximo]="hoje" /></label>
           </div>
-          <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong></p>
+          <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong>
+            @if (fc.reserva.moeda === 'USD' && fc.reserva.quantidade !== null) { ({{ fc.reserva.quantidade | currency: 'USD' }}) }</p>
           <div class="rodape-form">
             @if (fc.reserva.dataConferencia) {
               <button type="button" class="botao botao-perigo" (click)="removerConferencia()">Voltar a estimar</button>
@@ -656,6 +726,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       </form>
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .barra-abas { margin-bottom: 16px; }
     .legenda-grafico { margin: -6px 0 10px; font-size: 0.84rem; }
@@ -723,6 +794,7 @@ export class InvestimentosComponent implements OnInit {
   ptaxSugerida: { data: string; valor: number; tipo: 'compra' | 'venda' } | null = null;
   formAtivo: AtualizarAtivo | null = null;
   formConferencia: FormConferencia | null = null;
+  formNome: { investimento: InvestimentoComparado; nome: string } | null = null;
   ativoEditado: PosicaoAtivo | null = null;
   tokenBrapi = '';
   private atualizouAutomatico = false;
@@ -836,6 +908,8 @@ export class InvestimentosComponent implements OnInit {
     // #89: /investimentos?aba=reservas abre direto numa aba (link "confira" do cofrinho em Metas).
     const aba = this.rota.snapshot.queryParamMap.get('aba');
     if (aba === 'resumo' || aba === 'fii' || aba === 'rv' || aba === 'of' || aba === 'reservas') this.aba.set(aba);
+    // #170: o aviso de trocos do Painel abre direto em "Conferir investimentos".
+    if (this.rota.snapshot.queryParamMap.get('conferir') === '1') this.conferenciaAberta.set(true);
     this.carregar();
   }
 
@@ -1096,17 +1170,54 @@ export class InvestimentosComponent implements OnInit {
     });
   }
 
+  /* ------------------------------ nome (#170) ------------------------------ */
+
+  abrirRenomear(i: InvestimentoComparado): void {
+    this.formNome = { investimento: i, nome: i.nomePersonalizado ?? '' };
+  }
+
+  salvarNome(): void {
+    const f = this.formNome;
+    if (!f) return;
+    const nome = f.nome.trim() || null;
+    this.salvando.set(true);
+    this.api.renomearInvestimento(f.investimento.id, nome).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.formNome = null;
+        this.avisos.sucesso(nome ? 'Investimento renomeado.' : 'O investimento voltou ao nome automático.');
+        this.carregar();
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
   /* ------------------------------ reservas ------------------------------ */
 
+  /** #237: "conferir saldo" em toda reserva cujo valor não veio, pelo nome, do banco (reserva-conferencia.ts). */
+  podeConferir(r: Reserva): boolean {
+    return podeConferirReserva(r);
+  }
+
   abrirConferencia(r: Reserva): void {
-    this.formConferencia = { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje };
+    // #169: o Méli Dólar começa em reais (o valor do app), com a estimativa atual.
+    this.formConferencia = r.moeda === 'USD'
+      ? { reserva: r, saldo: r.saldo, data: this.hoje, moeda: 'BRL' }
+      : { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje, moeda: 'BRL' };
   }
 
   salvarConferencia(): void {
     const f = this.formConferencia;
     if (!f || f.saldo === null) return;
+    const emDolar = f.reserva.moeda === 'USD';
+    // A comparação com o esperado é em reais; em dólar sem cotação conhecida, não dá para comparar.
+    const emReais = emDolar && f.moeda === 'USD' ? (f.reserva.cotacao ? f.saldo * f.reserva.cotacao : null) : f.saldo;
+    if (emReais !== null && !this.conferenciaPlausivel(f.reserva, emReais)) return;
     this.salvando.set(true);
-    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data).subscribe({
+    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data, emDolar ? f.moeda : undefined).subscribe({
       next: () => {
         this.salvando.set(false);
         this.formConferencia = null;
@@ -1118,6 +1229,14 @@ export class InvestimentosComponent implements OnInit {
         this.avisos.erro(mensagemDeErro(e));
       }
     });
+  }
+
+  /** #168: valor muito diferente do esperado pede confirmação antes de salvar (reserva-conferencia.ts). */
+  conferenciaPlausivel(r: Reserva, saldo: number): boolean {
+    if (!conferenciaForaDoEsperado(r, saldo)) return true;
+    const moeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return confirm(`Você informou ${moeda(saldo)}, mas o esperado para "${r.nome}" é perto de ${moeda(valorEsperadoDaReserva(r))}. `
+      + 'Confere com o app da instituição? (OK salva assim mesmo.)');
   }
 
   removerConferencia(): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
@@ -14,12 +14,16 @@ import { CORES_SUGERIDAS, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from 
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { DicaDirective } from '../compartilhado/dica.directive';
+import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
+import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { MoedaPipe } from '../compartilhado/moeda.pipe';
 
 type Aba = 'categorias' | 'regras' | 'openfinance';
 
 @Component({
   selector: 'app-categorias',
-  imports: [FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective, CampoValorComponent,
+    MoedaPipe],
   template: `
     <header class="cabecalho-pagina">
       <h1>Categorias e regras</h1>
@@ -42,7 +46,9 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                 @for (c of grupo.itens; track c.id) {
                   <li class="clicavel" (click)="editarCategoria(c)" [class.ignorada]="!c.ativa">
                     <span class="ponto" [style.background]="c.cor"></span>
-                    <span class="cresce" [class.subcategoria]="c.categoriaPaiId">{{ c.nome }}</span>
+                    <!-- WCAG 2.1.1: o clique na linha é atalho de mouse; pelo teclado, a edição abre por este botão. -->
+                    <button type="button" class="cresce botao-texto" [class.subcategoria]="c.categoriaPaiId"
+                      (click)="$event.stopPropagation(); editarCategoria(c)" [attr.aria-label]="'Editar a categoria ' + c.nome">{{ c.nome }}</button>
                     @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
                     @if (c.natureza === NaturezaGasto.EstiloDeVida) { <span class="etiqueta etiqueta-suave">estilo de vida</span> }
                     @if (!c.ativa) { <small class="texto-suave">inativa</small> }
@@ -76,7 +82,11 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                   <td>{{ nomeCorrespondencia(r.tipoCorrespondencia) }}</td>
                   <td><code>{{ r.texto }}</code></td>
                   <td>{{ r.categoriaNome }}</td>
-                  <td class="texto-suave">{{ r.ativa ? '' : 'inativa' }}</td>
+                  <td class="texto-suave">
+                    <button type="button" class="link" (click)="$event.stopPropagation(); editarRegra(r)"
+                      [attr.aria-label]="'Editar a regra ' + r.texto + ' → ' + r.categoriaNome">editar</button>
+                    {{ r.ativa ? '' : ' · inativa' }}
+                  </td>
                 </tr>
               } @empty { <tr><td colspan="5" class="vazio">Ex.: descrição contém "UBER" → Transporte.</td></tr> }
             </tbody>
@@ -89,15 +99,22 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
           <button type="button" class="botao" (click)="novaRegraDescricao()">+ Regra de descrição</button>
         </div>
         <p class="texto-suave">Dão um nome mais claro às transações do banco ("PIX ENVIADO 12345" → "Aluguel"). Valem nas
-          transações que já existem e nas próximas; um nome escolhido à mão não muda. Crie aqui ou pelo ✎ "Renomear" em Transações.</p>
+          transações que já existem e nas próximas; um nome escolhido à mão não muda. Crie aqui ou pelo ✎ "Renomear" em Transações.
+          Com a mesma descrição do banco e valores diferentes (as duas contas do condomínio), use o valor para separar.</p>
         <div class="tabela-rolagem">
           <table class="tabela">
-            <thead><tr><th>Quando a descrição do banco</th><th>Texto</th><th>Mostrar</th><th class="direita">Transações</th><th></th></tr></thead>
+            <thead><tr><th>Quando a descrição do banco</th><th>Texto</th><th>Valor</th><th>Mostrar</th><th class="direita">Transações</th><th></th></tr></thead>
             <tbody>
               @for (r of regrasDescricao(); track r.id) {
                 <tr class="clicavel" (click)="editarRegraDescricao(r)" [class.ignorada]="!r.ativa">
                   <td>{{ nomeCorrespondencia(r.tipoCorrespondencia) }}</td>
                   <td><code>{{ r.texto }}</code></td>
+                  <td class="faixa-valor">
+                    @if (r.valorMinimo != null && r.valorMaximo != null) { de {{ r.valorMinimo | currency }} a {{ r.valorMaximo | currency }} }
+                    @else if (r.valorMinimo != null) { a partir de {{ r.valorMinimo | currency }} }
+                    @else if (r.valorMaximo != null) { até {{ r.valorMaximo | currency }} }
+                    @else { <span class="texto-suave">qualquer</span> }
+                  </td>
                   <td>{{ r.novaDescricao }}</td>
                   <td class="direita">{{ r.transacoes }}</td>
                   <td class="texto-suave">
@@ -106,7 +123,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
                     {{ r.ativa ? '' : ' · desligada' }}
                   </td>
                 </tr>
-              } @empty { <tr><td colspan="5" class="vazio">Nenhuma ainda. Em Transações, use ✎ "Renomear" e escolha "Também nas outras".</td></tr> }
+              } @empty { <tr><td colspan="6" class="vazio">Nenhuma ainda. Em Transações, use ✎ "Renomear" e escolha "Também nas outras".</td></tr> }
             </tbody>
           </table>
         </div>
@@ -173,7 +190,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
           </div>
           <label class="checkbox"><input type="checkbox" name="ativa" [(ngModel)]="fc.ativa"> Ativa</label>
           @if (categoriaId) {
-            <a routerLink="/transacoes" [queryParams]="linkTransacoes(categoriaId)" (click)="formCategoria = null">
+            <a class="link-alvo" routerLink="/transacoes" [queryParams]="linkTransacoes(categoriaId)" (click)="formCategoria = null">
               Ver transações desta categoria (últimos 12 meses)</a>
           }
           <div class="rodape-form">
@@ -200,6 +217,21 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
             </label>
             <label>Texto <input name="texto" [(ngModel)]="frd.texto" (ngModelChange)="pedirPreviaRegraDescricao()" required minlength="2" maxlength="200"></label>
           </div>
+          <fieldset class="faixa-regra" aria-describedby="dica-faixa-regra">
+            <legend>E o valor (opcional)</legend>
+            <div class="grade-campos">
+              <label>De <app-campo-valor name="valorMinimo" [(ngModel)]="frd.valorMinimo" [minimo]="0.01"
+                (ngModelChange)="pedirPreviaRegraDescricao()" /></label>
+              <label>Até <app-campo-valor name="valorMaximo" [(ngModel)]="frd.valorMaximo" [minimo]="0.01"
+                (ngModelChange)="pedirPreviaRegraDescricao()" /></label>
+            </div>
+            @if (faixaInvertida(frd)) {
+              <p class="erro pequeno" role="alert">O valor "De" é maior que o "Até": troque os dois.</p>
+            }
+            <p class="texto-suave" id="dica-faixa-regra">Para separar cobranças com a mesma descrição do banco e valores
+              diferentes, como duas contas do condomínio: uma regra para cada faixa, cada uma com o seu nome. Vale o valor sem
+              o sinal; deixe em branco para qualquer valor. Em Contas a pagar, cada nome vira uma conta.</p>
+          </fieldset>
           @if (!regraDescricaoId) {
             <p class="texto-suave" role="status">{{ textoPreviaRegraDescricao() }}</p>
           }
@@ -210,7 +242,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
             @if (regraDescricaoId) { <button type="button" class="botao botao-perigo" (click)="excluirRegraDescricao()">Excluir</button> }
             <span class="cresce"></span>
             <button type="button" class="botao" (click)="formRegraDescricao = null">Cancelar</button>
-            <button class="botao botao-primario" [disabled]="frdf.invalid">Salvar</button>
+            <button class="botao botao-primario" [disabled]="frdf.invalid || faixaInvertida(frd)">Salvar</button>
           </div>
         </form>
       }
@@ -247,8 +279,13 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
       }
     </app-modal>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .titulo-regras-descricao { font-size: 1.05rem; margin: 26px 0 4px; }
+    .faixa-regra { border: 1px solid var(--linha); border-radius: 10px; padding: 8px 12px 4px; margin: 0; }
+    .faixa-regra legend { font-weight: 600; padding: 0 4px; }
+    .faixa-regra .texto-suave { margin: 6px 0; }
+    .faixa-valor { white-space: nowrap; }
   `
 })
 export class CategoriasComponent implements OnInit {
@@ -425,17 +462,25 @@ export class CategoriasComponent implements OnInit {
   novaRegraDescricao(): void {
     this.regraDescricaoId = null;
     this.previaRegraDescricao.set(null);
-    this.formRegraDescricao = { texto: '', tipoCorrespondencia: TipoCorrespondencia.Contem, novaDescricao: '', ativa: true };
+    this.formRegraDescricao = {
+      texto: '', tipoCorrespondencia: TipoCorrespondencia.Contem, novaDescricao: '', ativa: true, valorMinimo: null, valorMaximo: null
+    };
+  }
+
+  /** #241: as duas pontas preenchidas e a de baixo acima da de cima (WCAG 3.3.1: o erro diz o campo e o que fazer). */
+  faixaInvertida(f: SalvarRegraDescricao): boolean {
+    return f.valorMinimo != null && f.valorMaximo != null && f.valorMinimo > f.valorMaximo;
   }
 
   pedirPreviaRegraDescricao(): void {
     clearTimeout(this.esperaPrevia);
     const f = this.formRegraDescricao;
-    if (this.regraDescricaoId || !f || f.texto.trim().length < 2) {
+    if (this.regraDescricaoId || !f || f.texto.trim().length < 2 || this.faixaInvertida(f)) {
       this.previaRegraDescricao.set(null);
       return;
     }
-    this.esperaPrevia = setTimeout(() => this.api.previaRegraDescricao(f.texto.trim(), f.tipoCorrespondencia).subscribe({
+    this.esperaPrevia = setTimeout(() => this.api.previaRegraDescricao(f.texto.trim(), f.tipoCorrespondencia,
+      f.valorMinimo ?? null, f.valorMaximo ?? null).subscribe({
       next: (p) => this.previaRegraDescricao.set(p),
       error: () => this.previaRegraDescricao.set(null)
     }), 300);
@@ -443,8 +488,16 @@ export class CategoriasComponent implements OnInit {
 
   textoPreviaRegraDescricao(): string {
     const p = this.previaRegraDescricao();
+    if (!p && this.formRegraDescricao && this.faixaInvertida(this.formRegraDescricao)) {
+      return 'Acerte o valor para ver quantas transações a regra renomeia.';
+    }
     if (!p) return 'Escreva o texto para ver quantas transações a regra renomeia.';
-    if (p.quantidade === 0) return 'Nenhuma transação tem essa descrição do banco agora: a regra vale para as próximas.';
+    if (p.quantidade === 0) {
+      const f = this.formRegraDescricao;
+      return f && (f.valorMinimo != null || f.valorMaximo != null)
+        ? 'Nenhuma transação tem essa descrição do banco com esse valor agora: a regra vale para as próximas.'
+        : 'Nenhuma transação tem essa descrição do banco agora: a regra vale para as próximas.';
+    }
     const exemplos = p.exemplos.length ? ` (ex.: ${p.exemplos.join('; ')})` : '';
     return `Vai renomear ${p.quantidade} transação(ões)${exemplos} e as próximas.`;
   }
@@ -452,15 +505,19 @@ export class CategoriasComponent implements OnInit {
   editarRegraDescricao(r: RegraDescricao): void {
     this.regraDescricaoId = r.id;
     this.formRegraDescricao = {
-      texto: r.texto, tipoCorrespondencia: r.tipoCorrespondencia, novaDescricao: r.novaDescricao, ativa: r.ativa
+      texto: r.texto, tipoCorrespondencia: r.tipoCorrespondencia, novaDescricao: r.novaDescricao, ativa: r.ativa,
+      valorMinimo: r.valorMinimo ?? null, valorMaximo: r.valorMaximo ?? null
     };
   }
 
   salvarRegraDescricao(): void {
     const id = this.regraDescricaoId;
     const f = this.formRegraDescricao;
-    if (!f) return;
-    const dto = { ...f, texto: f.texto.trim(), novaDescricao: f.novaDescricao.trim() };
+    if (!f || this.faixaInvertida(f)) return;
+    const dto: SalvarRegraDescricao = {
+      ...f, texto: f.texto.trim(), novaDescricao: f.novaDescricao.trim(), valorMinimo: f.valorMinimo ?? null,
+      valorMaximo: f.valorMaximo ?? null
+    };
     (id ? this.api.salvarRegraDescricao(id, dto) : this.api.criarRegraDescricao(dto)).subscribe({
       next: (r) => {
         this.formRegraDescricao = null;
