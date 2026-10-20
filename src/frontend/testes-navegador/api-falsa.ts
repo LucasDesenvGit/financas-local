@@ -175,7 +175,8 @@ const respostas: Record<string, unknown> = {
       { ...mesesAtras(3), aportes: 0, subscricoes: 15, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: -5.5, saldo: 985 },
       { ...mesesAtras(2), aportes: 0, subscricoes: 0, resgates: 20, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 15, saldo: 980 },
       { ...mesesAtras(1), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 22, saldo: 1002 },
-      { ...mesesAtras(0), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 10, valorizacao: 18, saldo: 1020 }
+      { ...mesesAtras(0), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 10, valorizacao: 18, saldo: 1020,
+        porFii: [{ ticker: 'MXRF11', valor: 8 }, { ticker: null, valor: 2 }] }
     ]
   },
   '/api/carteira/extrato/sugestoes': [],

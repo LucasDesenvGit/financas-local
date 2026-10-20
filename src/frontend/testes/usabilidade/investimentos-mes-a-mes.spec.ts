@@ -55,6 +55,25 @@ function abrir(mesAMes: MesAMesFii[]) {
 }
 
 describe('Usabilidade: Investimentos › FIIs › Mês a mês (#173)', () => {
+  it('#173 c): "por fundo" abre e fecha o detalhe do mês, com aria-expanded; o crédito sem fundo aparece como tal', () => {
+    const t = abrir(meses(2, (i) => (i === 1 ? {
+      rendimentosRecebidos: 25, porFii: [{ ticker: 'MXRF11', valor: 10 }, { ticker: 'HGLG11', valor: 12 }, { ticker: null, valor: 3 }]
+    } : {})));
+    const botao = t.linhas()[0].querySelector<HTMLButtonElement>('button.link')!;
+    expect(botao.textContent!.trim()).toBe('por fundo');
+    expect(botao.getAttribute('aria-expanded')).toBe('false');
+    botao.click();
+    t.atualizar();
+    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    const lista = t.secao()!.querySelector('#' + botao.getAttribute('aria-controls'))!;
+    expect(lista.textContent!.replace(/\s+/g, ' ')).toMatch(/MXRF11:R\$\s10,00HGLG11:R\$\s12,00sem fundo identificado:R\$\s3,00/);
+    botao.click();
+    t.atualizar();
+    expect(t.secao()!.querySelector('.linha-por-fii')).toBeNull();
+    // Mês sem o detalhe não tem o botão.
+    expect(t.linhas()[1].querySelector('button.link')).toBeNull();
+  });
+
   it('o gráfico mostra só o que a carteira rendeu (rendimentos e valorização), na escala deles; os aportes ficam na tabela', () => {
     // Com aporte de milhares no mesmo eixo, os rendimentos (dezenas de reais) viravam tracinhos invisíveis.
     const t = abrir(meses(3, (i) => ({ aportes: i === 0 ? 7000 : 0, rendimentosRecebidos: 60 + i, valorizacao: i === 1 ? -20 : 15 })));

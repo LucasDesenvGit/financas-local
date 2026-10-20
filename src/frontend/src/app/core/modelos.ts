@@ -596,6 +596,8 @@ export interface PainelFiis {
 export interface MesAMesFii {
   ano: number; mes: number; aportes: number; subscricoes: number; resgates: number;
   rendimentosRecebidos: number; rendimentosEstimados: number; valorizacao: number; saldo: number;
+  /** #173 c): os rendimentos recebidos por fundo (ticker null = crédito que não deu para ligar a nenhum fundo). */
+  porFii?: { ticker: string | null; valor: number }[] | null;
 }
 
 export interface SugestaoExtrato {
