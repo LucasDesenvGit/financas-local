@@ -224,41 +224,75 @@ public class CategorizacaoService
     /// <summary>Marca que a regra padrão do Méli Dólar já foi criada (#169): apagada por você, ela não volta.</summary>
     public const string ChaveRegraMeliDolar = "Regras.MeliDolarCriada";
     public const string TextoRegraMeliDolar = "MELI DOLAR";
+    /// <summary>Marca que as regras padrão de aplicação e resgate já foram criadas (#172).</summary>
+    public const string ChaveRegrasAplicacaoResgate = "Regras.AplicacaoResgateCriadas";
 
     /// <summary>
-    /// #169 (ADR 0038): uma vez por banco, cria a regra padrão "MELI DOLAR" → Investimentos (a mesma do
-    /// 02-dados-iniciais.sql, para quem instalou antes) e passa para ela a compra e a venda de Méli Dólar já importadas
-    /// cuja categoria você não escolheu. Comprar e vender dólar é mover o próprio dinheiro, não gasto nem receita.
+    /// Regras padrão (→ Investimentos) que chegaram depois da instalação: a marca em <c>Configuracao</c> faz cada grupo ser
+    /// criado uma vez só, e uma regra apagada por você não volta. Os mesmos textos estão no 02-dados-iniciais.sql.
+    /// <c>Filtros</c> é o LIKE que acha os candidatos no banco; a comparação certa é pelo texto normalizado.
+    /// </summary>
+    private static readonly (string Chave, string[] Textos, string[] Filtros)[] RegrasPadraoNovas =
+    [
+        // #169 (ADR 0038): comprar e vender dólar é mover o próprio dinheiro, não gasto nem receita.
+        (ChaveRegraMeliDolar, new[] { TextoRegraMeliDolar }, new[] { "%meli d_lar%" }),
+        // #172: aplicação e resgate de renda fixa são movimento seu. O produto vai junto no texto para não pegar
+        // "resgate de pontos" ou "resgate de cashback"; "aplicação financeira" sozinha ficou de fora porque também aparece
+        // em "rendimento de aplicação financeira", que é receita.
+        (ChaveRegrasAplicacaoResgate,
+            new[] { "APLICACAO RDB", "RESGATE RDB", "APLICACAO CDB", "RESGATE CDB", "APLICACAO POUPANCA", "RESGATE POUPANCA",
+                "RESGATE DE APLICACAO", "RESGATE APLICACAO" },
+            new[] { "%aplica%", "%resgat%" })
+    ];
+
+    /// <summary>
+    /// Cria, uma vez por banco, as regras padrão novas (<see cref="RegrasPadraoNovas"/>) para quem instalou antes delas e
+    /// passa para "Investimentos" as transações já importadas que batem com elas e cuja categoria você não escolheu.
     /// Roda ao iniciar a API. Não salva: chame SaveChangesAsync. Devolve quantas transações mudaram.
     /// </summary>
-    public async Task<int> CriarRegraMeliDolarAsync(ConfiguracaoService config, CancellationToken ct)
+    public async Task<int> CriarRegrasPadraoAsync(ConfiguracaoService config, CancellationToken ct)
     {
-        if (await config.ExisteAsync(ChaveRegraMeliDolar, ct)) return 0;
-        await config.DefinirAsync(ChaveRegraMeliDolar, DateTime.UtcNow.ToString("O"), ct: ct);
-        var investimentos = (await _db.Categorias.AsNoTracking().Where(x => x.Tipo == TipoCategoria.Transferencia)
-                .Select(x => new { x.Id, x.Nome }).ToListAsync(ct))
-            .FirstOrDefault(x => Normalizar(x.Nome) == "INVESTIMENTOS")?.Id;
-        if (investimentos is not int categoria) return 0;
-        if (!await _db.RegrasCategorizacao.AnyAsync(r => r.Texto == TextoRegraMeliDolar, ct))
-            _db.RegrasCategorizacao.Add(new RegraCategorizacao
-            {
-                Texto = TextoRegraMeliDolar, TipoCorrespondencia = TipoCorrespondencia.Contem, CategoriaId = categoria,
-                Prioridade = 50
-            });
-
-        await CarregarAsync(ct);
-        var lancamentos = (await _db.Transacoes
-                .Where(t => !t.CategoriaManual && t.TransferenciaGrupo == null && t.CategoriaId != categoria
-                            && EF.Functions.Like(t.DescricaoOriginal ?? t.Descricao, "%meli d_lar%"))
-                .ToListAsync(ct))
-            .Where(t => Investimentos.ReservaService.EhMeliDolar(t.DescricaoOriginal ?? t.Descricao)).ToList();
-        foreach (var t in lancamentos)
+        int? investimentos = null;
+        var carregado = false;
+        var mudaram = 0;
+        foreach (var (chave, textos, filtros) in RegrasPadraoNovas)
         {
-            t.CategoriaId = categoria;
-            AplicarTipo(t);
-            t.AtualizadoEm = DateTime.UtcNow;
+            if (await config.ExisteAsync(chave, ct)) continue;
+            await config.DefinirAsync(chave, DateTime.UtcNow.ToString("O"), ct: ct);
+            investimentos ??= (await _db.Categorias.AsNoTracking().Where(x => x.Tipo == TipoCategoria.Transferencia)
+                    .Select(x => new { x.Id, x.Nome }).ToListAsync(ct))
+                .FirstOrDefault(x => Normalizar(x.Nome) == "INVESTIMENTOS")?.Id;
+            if (investimentos is not int categoria) continue;
+            foreach (var regra in textos)
+                if (!await _db.RegrasCategorizacao.AnyAsync(r => r.Texto == regra, ct))
+                    _db.RegrasCategorizacao.Add(new RegraCategorizacao
+                    {
+                        Texto = regra, TipoCorrespondencia = TipoCorrespondencia.Contem, CategoriaId = categoria, Prioridade = 50
+                    });
+
+            if (!carregado)
+            {
+                await CarregarAsync(ct);
+                carregado = true;
+            }
+            var candidatos = new Dictionary<long, Transacao>();
+            foreach (var filtro in filtros)
+                foreach (var achada in await _db.Transacoes
+                             .Where(x => !x.CategoriaManual && x.TransferenciaGrupo == null && x.CategoriaId != categoria
+                                         && EF.Functions.Like(x.DescricaoOriginal ?? x.Descricao, filtro))
+                             .ToListAsync(ct))
+                    candidatos[achada.Id] = achada;
+            foreach (var t in candidatos.Values)
+            {
+                var texto = Normalizar(t.DescricaoOriginal ?? t.Descricao);
+                if (!textos.Any(x => texto.Contains(x, StringComparison.Ordinal))) continue;
+                t.CategoriaId = categoria;
+                AplicarTipo(t);
+                t.AtualizadoEm = DateTime.UtcNow;
+                mudaram++;
+            }
         }
-        return lancamentos.Count;
+        return mudaram;
     }
 
     /// <summary>

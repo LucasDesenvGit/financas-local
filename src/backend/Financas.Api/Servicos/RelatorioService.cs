@@ -542,16 +542,17 @@ public class RelatorioService
                 .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m)) / meses;
         }
 
-        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora)
-        // + reservas ("cofrinhos") estimadas pelo extrato.
+        // Reserva líquida: contas (exceto cartões e investimentos) + investimentos de renda fixa (em reais; sem cotação
+        // fica de fora) + reservas ("cofrinhos"). #172: ações, FIIs e ETFs ficam de fora, também os do Open Finance (como
+        // a carteira): o preço oscila e a venda leva dias para virar dinheiro. O ⓘ da reserva de emergência explica.
         var saldos = await _contas.CalcularSaldosAsync(ct);
         var contas = await _db.Contas.AsNoTracking().Where(c => !c.Arquivada && c.IncluirNoSaldo)
             .Select(c => new { c.Id, c.Tipo }).ToListAsync(ct);
         var conversor = await _cambio.ObterConversorAsync(ct);
         var investimentos = await _db.Investimentos.AsNoTracking().Where(i => i.ConexaoBancaria!.Ativa)
-            .Select(i => new { i.Saldo, i.Moeda }).ToListAsync(ct);
+            .Select(i => new { i.Saldo, i.Moeda, i.Tipo }).ToListAsync(ct);
         var reserva = contas.Where(c => c.Tipo != TipoConta.CartaoCredito).Sum(c => Math.Max(0, saldos.GetValueOrDefault(c.Id)))
-            + investimentos.Sum(i => conversor.ParaReais(i.Saldo, i.Moeda) ?? 0m)
+            + investimentos.Where(i => !CarteiraService.EhRendaVariavel(i.Tipo)).Sum(i => conversor.ParaReais(i.Saldo, i.Moeda) ?? 0m)
             + await _reservas.TotalAsync(ct);
 
         var totalParcelas = parcelas + credito.ParcelaMensalFinanciamentos + credito.ParcelaMensalEmprestimos;

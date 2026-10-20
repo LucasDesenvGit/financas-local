@@ -53,6 +53,8 @@ public static partial class TipoLancamentoService
         var informado = operacao switch
         {
             "PIX" => saida ? TipoLancamento.PixEnviado : TipoLancamento.PixRecebido,
+            // #172: o banco pode mandar a operação "pagamento de fatura" também do lado da conta.
+            "PAGAMENTO_FATURA" => saida ? TipoLancamento.PagamentoFatura : TipoLancamento.Outro,
             "TED" or "DOC" or "TEF" or "TRANSFERENCIA_MESMA_INSTITUICAO" =>
                 saida ? TipoLancamento.TransferenciaEnviada : TipoLancamento.TransferenciaRecebida,
             "BOLETO" or "CONVENIO_ARRECADACAO" => TipoLancamento.Boleto,

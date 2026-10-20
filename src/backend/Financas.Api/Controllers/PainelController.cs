@@ -102,6 +102,15 @@ public class PainelController : BaseController
             alertas.Add($"Investimentos em {string.Join(", ", composicao.MoedasSemCotacao)} ficaram fora do patrimônio: "
                 + "não há cotação de câmbio guardada para essa moeda.");
 
+        // #172 (ADR 0008): contas são somadas como reais; conta em outra moeda entraria sem conversão.
+        var contasEmOutraMoeda = await _db.Contas.AsNoTracking()
+            .Where(c => !c.Arquivada && c.Moeda != CambioService.MoedaBase)
+            .Select(c => new { c.Nome, c.Moeda, c.IncluirNoSaldo }).ToListAsync(ct);
+        foreach (var c in contasEmOutraMoeda)
+            alertas.Add($"A conta {c.Nome} é em {c.Moeda}, mas o site trata as contas como reais, sem conversão"
+                + (c.IncluirNoSaldo ? ": o saldo dela entra no total como se fosse em reais. Desmarque \"Incluir no saldo\" em Contas e cartões." : ".")
+                + " As transações dela entram nos relatórios do mesmo jeito.");
+
         var reservasAConferir = (await _reservas.ListarAsync(ct))
             .Where(r => r.PodeTerSaldoAnterior || r.ConferenciaAntiga).Select(r => r.Nome).ToList();
         if (reservasAConferir.Count > 0)

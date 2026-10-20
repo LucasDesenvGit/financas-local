@@ -265,6 +265,10 @@ export class ApiService {
   salvarConfiguracaoPluggy(dto: SalvarConfiguracaoPluggy): Observable<void> {
     return this.http.put<void>(`${this.base}/open-finance/configuracao`, dto);
   }
+  /** #172: o seu nome como aparece nos Pix; null apaga. */
+  salvarMeuNome(nome: string | null): Observable<void> {
+    return this.http.put<void>(`${this.base}/open-finance/meu-nome`, { nome });
+  }
   removerSecretPluggy(): Observable<void> { return this.http.delete<void>(`${this.base}/open-finance/configuracao/secret`); }
   testarPluggy(): Observable<Mensagem> { return this.http.post<Mensagem>(`${this.base}/open-finance/testar`, {}); }
   conexoes(): Observable<Conexao[]> { return this.http.get<Conexao[]>(`${this.base}/open-finance/conexoes`); }
