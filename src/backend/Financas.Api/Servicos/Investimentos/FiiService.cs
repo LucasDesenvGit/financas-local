@@ -227,6 +227,7 @@ public class FiiService
                 var fim = Ultimo(mes);
                 if (fim > hoje) fim = hoje;
                 decimal aplicado = 0, valor = 0, fluxo = 0, proventos = 0, aportes = 0, subscricoes = 0, resgates = 0;
+                var idsAportes = new HashSet<long>();
                 foreach (var f in fundos)
                 {
                     var posicao = CarteiraService.Calcular(f.Operacoes, fim);
@@ -235,6 +236,7 @@ public class FiiService
                     var subscricao = ClassificacaoAtivo.EhSubscricao(f.Ativo.Ticker);
                     foreach (var o in f.Operacoes.Where(x => x.Data >= mes && x.Data <= fim))
                     {
+                        if (o.TransacaoId is long transacaoId) idsAportes.Add(transacaoId);
                         if (o.Tipo == TipoOperacao.Compra)
                         {
                             var pago = o.Quantidade * o.PrecoUnitario + o.Taxas;
@@ -264,7 +266,8 @@ public class FiiService
                     .OrderBy(r => r.Ticker is null).ThenByDescending(r => r.Valor).ToList();
                 mesAMes.Add(new MesAMesFiiDto(mes.Year, mes.Month, Math.Round(aportes, 2), Math.Round(subscricoes, 2),
                     Math.Round(resgates, 2), Math.Round(creditosDoMes.Sum(r => r.Valor), 2),
-                    Math.Round(proventos, 2), Math.Round(valor - basePeriodo, 2), Math.Round(valor, 2), porFii));
+                    Math.Round(proventos, 2), Math.Round(valor - basePeriodo, 2), Math.Round(valor, 2), porFii,
+                    [.. idsAportes.Order()], [.. creditosDoMes.Select(r => r.Id).Distinct().Order()]));
                 valorAnterior = valor;
 
                 var ateSelic = fim == hoje ? hoje : fim.AddDays(1);

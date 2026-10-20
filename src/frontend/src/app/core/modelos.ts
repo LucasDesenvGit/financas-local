@@ -146,6 +146,8 @@ export interface FiltroTransacoes {
   /** Natureza do gasto (50/30/20), da categoria ou da categoria pai; com semNatureza, soma as sem classificação. */
   naturezas?: NaturezaGasto[] | null;
   semNatureza?: boolean;
+  /** #173 d): só estes lançamentos (o detalhe de um número de outra tela). */
+  ids?: number[] | null;
 }
 
 export interface PaginaTransacoes {
@@ -605,6 +607,9 @@ export interface MesAMesFii {
   rendimentosRecebidos: number; rendimentosEstimados: number; valorizacao: number; saldo: number;
   /** #173 c): os rendimentos recebidos por fundo (ticker null = crédito que não deu para ligar a nenhum fundo). */
   porFii?: { ticker: string | null; valor: number }[] | null;
+  /** #173 d): os lançamentos que formam os aportes (compras, subscrições e vendas) e os rendimentos do mês. */
+  idsAportes?: number[] | null;
+  idsRendimentos?: number[] | null;
 }
 
 export interface SugestaoExtrato {

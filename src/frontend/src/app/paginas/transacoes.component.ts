@@ -17,7 +17,8 @@ import { ModalComponent } from '../compartilhado/modal.component';
 import { PaginacaoComponent } from '../compartilhado/paginacao.component';
 import { OpcaoMultipla, SeletorMultiploComponent } from '../compartilhado/seletor-multiplo.component';
 import {
-  ContextoTransacoes, NOMES_MESES, NaturezaUrl, dataIso, dataIsoValida, paraData, paramsTransacoes, primeiroDiaMes, ultimoDiaMes
+  ContextoTransacoes, NOMES_MESES, NaturezaUrl, ORIGENS_IDS, OrigemIdsUrl, dataIso, dataIsoValida, idsDaUrl, paraData,
+  paramsTransacoes, primeiroDiaMes, ultimoDiaMes
 } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -72,7 +73,8 @@ function naturezasNaUrl(f: FiltroTransacoes): NaturezaUrl[] {
 
 interface ChipFiltro {
   /** Categoria e natureza têm um chip por valor marcado: `categoria:12`, `categoria:sem`, `natureza:essencial`. */
-  id: 'periodo' | `categoria:${string}` | `natureza:${NaturezaUrl}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca';
+  id: 'periodo' | `categoria:${string}` | `natureza:${NaturezaUrl}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca'
+    | 'ids';
   rotulo: string;
   cor?: string;
 }
@@ -603,6 +605,8 @@ export class TransacoesComponent implements OnInit {
    * a tela abriu: trocar qualquer um tira o destaque (e o parâmetro da URL).
    */
   readonly transacaoDestacada = signal<number | null>(null);
+  /** #173 d): de que tela vieram os ?ids= (o chip diz "Rendimentos de FIIs: 2 lançamentos"). */
+  readonly origemIds = signal<OrigemIdsUrl | null>(null);
   private filtroDoDestaque: string | null = null;
   /** Rolar até a linha e pôr o foco nela só na primeira vez, não a cada recarga (ex.: depois de editar). */
   private destaqueMostrado = false;
@@ -711,6 +715,13 @@ export class TransacoesComponent implements OnInit {
     if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
     if (f.poucoInformativa) chips.push({ id: 'generica', rotulo: 'Descrição pouco informativa' });
     if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
+    if (f.ids?.length) {
+      const n = f.ids.length;
+      const quantos = `${n} ${n === 1 ? 'lançamento' : 'lançamentos'}`;
+      const origem = this.origemIds();
+      const escolhidos = n === 1 ? 'Só 1 lançamento escolhido' : `Só ${n} lançamentos escolhidos`;
+      chips.push({ id: 'ids', rotulo: origem ? `${ORIGENS_IDS[origem]}: ${quantos}` : escolhidos });
+    }
     return chips;
   });
 
@@ -733,12 +744,14 @@ export class TransacoesComponent implements OnInit {
       case 'generica': this.filtro.poucoInformativa = false; break;
       case 'lancamento': this.filtro.lancamento = null; break;
       case 'busca': this.filtro.busca = ''; break;
+      case 'ids': this.filtro.ids = []; this.origemIds.set(null); break;
     }
     this.buscar(1);
   }
 
   limparFiltros(): void {
     this.filtro = this.filtroInicial();
+    this.origemIds.set(null);
     this.filtroCategorias = [];
     this.sincronizarFiltroCategoria();
     this.buscar(1);
@@ -818,6 +831,12 @@ export class TransacoesComponent implements OnInit {
     if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
+    const ids = idsDaUrl(params.get('ids'));
+    if (ids.length) {
+      this.filtro.ids = ids;
+      const de = params.get('de');
+      this.origemIds.set(de && Object.hasOwn(ORIGENS_IDS, de) ? de as OrigemIdsUrl : null);
+    }
     const transacao = Number(params.get('transacao'));
     if (Number.isInteger(transacao) && transacao > 0) this.transacaoDestacada.set(transacao);
   }
@@ -902,7 +921,9 @@ export class TransacoesComponent implements OnInit {
       tipo: f.tipo ? tipos[f.tipo] : undefined,
       contaId: f.contaId ?? undefined,
       transacaoId: this.transacaoDestacada() ?? undefined,
-      naturezas: naturezasNaUrl(f)
+      naturezas: naturezasNaUrl(f),
+      ids: f.ids ?? undefined,
+      origemIds: this.origemIds() ?? undefined
     });
     if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
     if (f.somenteEmergencias) params['emergencias'] = '1';
@@ -1462,7 +1483,7 @@ export class TransacoesComponent implements OnInit {
       inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
       contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, poucoInformativa: false,
-      lancamento: null, naturezas: [], semNatureza: false, tipo: null, busca: '', pagina: 1,
+      lancamento: null, naturezas: [], semNatureza: false, tipo: null, busca: '', ids: [], pagina: 1,
       tamanhoPagina: this.tamanhoSalvo()
     };
   }

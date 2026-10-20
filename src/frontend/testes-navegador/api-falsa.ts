@@ -175,13 +175,14 @@ const respostas: Record<string, unknown> = {
     lotes: [], proventos: [], evolucao: [], rentabilidade: [], segmentos: [{ nome: 'Papel (recebíveis)', valor: 1020 }],
     historicos: [], segmentosDisponiveis: ['Papel (recebíveis)'],
     mesAMes: [
-      { ...mesesAtras(5), aportes: 980, subscricoes: 0, resgates: 0, rendimentosRecebidos: 0, rendimentosEstimados: 0, valorizacao: -12.5, saldo: 967.5 },
+      { ...mesesAtras(5), aportes: 980, subscricoes: 0, resgates: 0, rendimentosRecebidos: 0, rendimentosEstimados: 0, valorizacao: -12.5, saldo: 967.5,
+        idsAportes: [101] },
       { ...mesesAtras(4), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 8, saldo: 975.5 },
       { ...mesesAtras(3), aportes: 0, subscricoes: 15, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: -5.5, saldo: 985 },
       { ...mesesAtras(2), aportes: 0, subscricoes: 0, resgates: 20, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 15, saldo: 980 },
       { ...mesesAtras(1), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 22, saldo: 1002 },
       { ...mesesAtras(0), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 10, valorizacao: 18, saldo: 1020,
-        porFii: [{ ticker: 'MXRF11', valor: 8 }, { ticker: null, valor: 2 }] }
+        porFii: [{ ticker: 'MXRF11', valor: 8 }, { ticker: null, valor: 2 }], idsRendimentos: [201, 202] }
     ]
   },
   '/api/carteira/extrato/sugestoes': [],

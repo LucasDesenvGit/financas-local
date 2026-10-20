@@ -79,6 +79,7 @@ public class TransacoesController : BaseController
         if (f.Inicio is { } inicio) q = q.Where(t => t.Data >= inicio);
         if (f.Fim is { } fim) q = q.Where(t => t.Data <= fim);
         if (f.ContaId is { } contaId) q = q.Where(t => t.ContaId == contaId);
+        if (f.Ids is { Count: > 0 } escolhidas) q = q.Where(t => escolhidas.Contains(t.Id));
         // Categorias marcadas (cada uma com as subcategorias) e/ou "sem categoria": basta atender a uma delas.
         var categorias = (f.CategoriaIds ?? []).Concat(f.CategoriaId is { } c ? [c] : []).Distinct().ToList();
         var semCategoria = f.SemCategoria;

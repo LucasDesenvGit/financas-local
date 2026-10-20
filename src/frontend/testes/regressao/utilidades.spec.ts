@@ -1,5 +1,5 @@
 import {
-  dataIsoValida, mesAnoDaUrl, paraData, paramsTransacoes, pct, reaisOuNada, tempoRelativo, ultimoDiaMes
+  MAXIMO_IDS_URL, dataIsoValida, idsDaUrl, mesAnoDaUrl, paraData, paramsTransacoes, pct, reaisOuNada, tempoRelativo, ultimoDiaMes
 } from '../../src/app/compartilhado/utilidades';
 
 /**
@@ -20,6 +20,21 @@ describe('Regressão: utilidades', () => {
 
     it('não leva conta 0 nem campos vazios', () => {
       expect(paramsTransacoes({ contaId: 0, inicio: '', tipo: undefined })).toEqual({});
+    });
+
+    it('#173 d): leva só os lançamentos que formam o número, com a origem para o chip', () => {
+      expect(paramsTransacoes({ inicio: '2026-04-01', fim: '2026-04-30', ids: [7, 3], origemIds: 'fii-rendimentos' }))
+        .toEqual({ inicio: '2026-04-01', fim: '2026-04-30', ids: '7,3', de: 'fii-rendimentos' });
+      // Sem ids, a origem sozinha não vai (o chip não teria o que dizer).
+      expect(paramsTransacoes({ ids: [], origemIds: 'fii-aportes' })).toEqual({});
+      const muitos = Array.from({ length: MAXIMO_IDS_URL + 5 }, (_, i) => i + 1);
+      expect(paramsTransacoes({ ids: muitos })['ids'].split(',')).toHaveLength(MAXIMO_IDS_URL);
+    });
+
+    it('#173 d): idsDaUrl aceita só inteiros positivos, sem repetir, até o máximo', () => {
+      expect(idsDaUrl('5, 2,5,abc,-1,0,1.5,,9')).toEqual([5, 2, 9]);
+      expect(idsDaUrl(null)).toEqual([]);
+      expect(idsDaUrl(Array.from({ length: 300 }, (_, i) => i + 1).join(','))).toHaveLength(MAXIMO_IDS_URL);
     });
   });
 

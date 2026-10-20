@@ -63,6 +63,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Do mês a mês dos FIIs para os lançamentos** (#173 d, ADR 0018): "ver lançamentos", em Aportes e em Rendimentos de cada mês, abre Transações no mês e só com os lançamentos que formam o número. O filtro aparece num chip ("Rendimentos de FIIs: 2 lançamentos") com ✕, e o voltar do navegador leva de volta aos FIIs. Clicar num mês do gráfico abre os rendimentos dele.
 - **Rendimentos por FII no mês a mês** (#173 c): "por fundo", embaixo dos rendimentos de cada mês, abre quanto cada FII pagou. O crédito sem o código do fundo é ligado pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois). O que não liga aparece como "sem fundo identificado", sem sumir da soma.
 - **Avisos das recorrentes** (#158, parte 3), no topo de Contas a pagar:
   - **"não veio":** a cobrança automática passou 5 dias do vencimento.
