@@ -4,6 +4,19 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+## [2.17.0] — 2026-10-20
+
+Primeira versão publicada desde a 2.1.0. O número saltou porque, desde a ADR 0039, cada mudança sobe a versão; as 2.2.0 a 2.16.0 só existiram como versões de desenvolvimento.
+
+### Destaques
+- **Os números batem com o app do banco:** fatura do mês pelo ciclo do cartão, estorno abatendo o gasto em vez de virar receita, projeção sem parcelas em dobro, trocos das compras de FII fora dos rendimentos e a tela nova **Conferir com o banco**, que mostra as pistas quando algo não bate.
+- **Contas a pagar com assinaturas e débitos automáticos:** como cada conta é cobrada, baixa sozinha quando a cobrança chega, aba **Assinaturas e recorrentes** com o de-para por cartão, avisos de "não veio", "aumentou" e "mudou de cartão", e regras de descrição por valor para separar cobranças de mesmo nome.
+- **Investimentos mais completos:** **Mês a mês dos FIIs** (aportes, rendimentos por fundo, valorização e saldo), rendimento por mês da caixinha e dos CDBs, taxa da B3 pelo extrato, Méli Dólar no patrimônio, reservas pelo valor que o banco informa e nomes que se reconhecem ("CDB · Nubank").
+- **Metas que cabem no mês:** "quanto guardar" pela sobra real (contando a fatura que vence), plano em degraus e "consigo guardar outro valor".
+- **Navegação e visual:** menu lateral em grupos que abrem e fecham, menu que se esconde no computador, campos de valor, data e seleção padronizados, e acessibilidade revisada em todas as telas (contraste, teclado, alvos de toque).
+- **Gerenciador também no Linux** e, nas duas janelas, "Atualizar para a última do develop" na instalação de desenvolvimento.
+- **Banco:** a API acrescenta sozinha as tabelas e colunas novas ao iniciar (com cópia de segurança antes). Quem instala pelos scripts roda `scripts/geral/2-criar-banco.sh`. Os scripts mudaram de pasta (`scripts/geral/`, `scripts/windows/`, `scripts/linux/`); veja "Scripts separados por sistema" abaixo.
+
 ### Publicação e documentação
 - **Manual: capítulo novo "Corrigir seus dados"** (#222). Ele vem logo depois de "Primeiros passos" e tem duas partes:
   - **o que já se acertou sozinho** depois das correções: estornos, transferências, pagamento de fatura, investimentos e parcelas;
@@ -18,7 +31,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Quem instalou pelos scripts:** os comandos passam a ser, por exemplo, `scripts/geral/3-publicar-atualizar.sh` e `scripts/linux/instalar-gerenciador.sh`. O backup diário já agendado e o comando que o gerenciador do Linux mostrava continuam funcionando por repasses temporários; para gravar o caminho novo no agendamento, rode `scripts/geral/4-backup.sh --agendar` de novo.
 - **Testes no navegador** (#185, ADR 0041): a cada PR, a CI abre cada tela do site num navegador de verdade (o build de produção, com a mesma política de segurança da API e dados de exemplo, sem nenhum dado real), no computador e no celular, e falha com erro no console, exceção ou bloqueio da política de segurança. Pega, por exemplo, o erro da #157. Para quem desenvolve: `npm run test:navegador`, prints com `FOTOS=…`, e a skill `testar-no-navegador` do Claude Code.
 - **Versões publicadas sempre como "Finanças Local X.Y.Z"** (#187). O workflow de versão acerta o título e as notas mesmo se o Release foi criado à mão antes da tag. As notas começam com **como instalar ou atualizar** e trazem a seção do CHANGELOG sem o cabeçalho repetido.
-- **A versão sobe a cada mudança** (#187, ADR 0039): todo PR para o `develop` sobe o número no `Directory.Build.props`, pelo tipo (funcionalidade → o do meio; correção e ajuste → o último), e a CI confere. A versão de desenvolvimento passa a mostrar o número que vai sair (agora **2.2.0**, contando o que entrou desde a 2.1.0), em vez de "2.1.0-dev.N".
+- **A versão sobe a cada mudança** (#187, ADR 0039): todo PR para o `develop` sobe o número no `Directory.Build.props`, pelo tipo (funcionalidade → o do meio; correção e ajuste → o último), e a CI confere. A versão de desenvolvimento passa a mostrar o número que vai sair, em vez de "2.1.0-dev.N".
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
