@@ -70,7 +70,8 @@ const respostas: Record<string, unknown> = {
     orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes, alertas: [], ultimaSincronizacao: hoje.toISOString(),
     despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7, faturasDoMes: [],
     totalFaturasDoMes: 0, poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null,
-    creditosCorretoraComoReceita: 0, totalCreditosCorretoraComoReceita: 0
+    creditosCorretoraComoReceita: 0, totalCreditosCorretoraComoReceita: 0,
+    trocosAutomaticos: { quantidade: 2, total: 5.4, ids: [1, 2], desde: dataIso(new Date(ano, hoje.getMonth(), 1)), ate: dataIso(hoje) }
   },
   '/api/relatorios/categorias': porCategoria,
   '/api/relatorios/fluxo': evolucao,

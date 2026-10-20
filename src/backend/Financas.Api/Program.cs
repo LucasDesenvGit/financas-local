@@ -202,6 +202,9 @@ try
     // #158: cobranças automáticas (débito automático, cartão) que já chegaram dão baixa na conta a pagar.
     if (await escopo.ServiceProvider.GetRequiredService<ContaAgendadaService>().ConciliarAsync(CancellationToken.None) > 0)
         await bancoDados.SaveChangesAsync();
+    // #173 b) (ADR 0044): o troco "sem dúvida" das compras de renda variável vai para a categoria da compra (grava sozinho).
+    await escopo.ServiceProvider.GetRequiredService<ConferenciaInvestimentosService>()
+        .ClassificarTrocosSemDuvidaAsync(CancellationToken.None);
 }
 catch (Exception ex)
 {

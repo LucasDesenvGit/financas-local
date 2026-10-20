@@ -22,14 +22,16 @@ public class SincronizacaoService
     private readonly ContaService _contas;
     private readonly TransferenciasService _transferencias;
     private readonly ContaAgendadaService _cobrancas;
+    private readonly ConferenciaInvestimentosService _conferencia;
     private readonly HistoricoInvestimentosService _historico;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
         CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
-        TransferenciasService transferencias, ContaAgendadaService cobrancas, HistoricoInvestimentosService historico,
-        ILogger<SincronizacaoService> logger)
+        TransferenciasService transferencias, ContaAgendadaService cobrancas, ConferenciaInvestimentosService conferencia,
+        HistoricoInvestimentosService historico, ILogger<SincronizacaoService> logger)
     {
+        _conferencia = conferencia;
         _historico = historico;
         _cobrancas = cobrancas;
         _descricoes = descricoes;
@@ -245,6 +247,14 @@ public class SincronizacaoService
             if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
             // #158: a cobrança automática que acabou de chegar dá baixa na conta a pagar.
             if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+            // #173 b) (ADR 0044): o troco sem dúvida das compras de renda variável vai para a categoria da compra. Um
+            // erro aqui não desfaz a sincronização: o troco continua na conferência.
+            try { await _conferencia.ClassificarTrocosSemDuvidaAsync(ct); }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                _logger.LogWarning(ex, "Não deu para classificar os trocos da corretora depois da sincronização.");
+                _db.ChangeTracker.Clear();
+            }
 
             return new ResultadoSincronizacaoDto(true, novas, atualizadas, null);
         }

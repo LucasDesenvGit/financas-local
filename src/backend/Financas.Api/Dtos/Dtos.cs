@@ -464,7 +464,12 @@ public record PainelDto(
     string? ExemploPoucoInformativa = null,
     // #170: trocos e vendas de renda variável contando como receita (aviso com link para "Conferir investimentos").
     int CreditosCorretoraComoReceita = 0,
-    decimal TotalCreditosCorretoraComoReceita = 0);
+    decimal TotalCreditosCorretoraComoReceita = 0,
+    // #173 b) (ADR 0044): trocos que a sincronização classificou sozinha (aviso com "Ver", "Desfazer" e "Ok").
+    TrocosAutomaticosDto? TrocosAutomaticos = null);
+
+/// <summary>#173 b): os trocos classificados na sincronização que ainda estão como ficaram (Desde/Ate: as datas deles).</summary>
+public record TrocosAutomaticosDto(int Quantidade, decimal Total, List<long> Ids, DateOnly Desde, DateOnly Ate);
 
 /* ----------------------------- Parametrização ----------------------------- */
 /// <summary>Booleanos usam 0/1 em Valor e Padrao.</summary>

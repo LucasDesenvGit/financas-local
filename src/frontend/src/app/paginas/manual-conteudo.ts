@@ -1035,7 +1035,8 @@ export const MANUAL: CapituloManual[] = [
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         dicas: [
           'Quando a carteira tem cotas diferentes da corretora, a própria tela de Investimentos avisa no topo.',
-          'Quando há troco ou venda contando como rendimento (por exemplo, depois de compras novas de FIIs), o Painel avisa e leva direto à conferência. Nada muda sozinho: você vê a prévia e escolhe.',
+          'O troco “sem dúvida” vai sozinho para “Investimentos” depois da sincronização: o dia de compras tem pelo menos 5 dias, todas as compras têm operação e a conta do dia sobra só a taxa da B3. O Painel avisa, com “Ver em Transações”, “Desfazer” e “Ok”.',
+          'O resto (troco de compra recente, venda, ou o que não fecha a conta do dia) o Painel avisa e leva à conferência: você vê a prévia e escolhe.',
           'A compra lançada por aqui fica ligada ao débito do extrato e não trava as próximas compras que chegam pelo Open Finance.'
         ],
         erros: [

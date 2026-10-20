@@ -4,7 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Painel, ValorCategoria } from '../core/modelos';
+import { Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
 import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
@@ -53,6 +54,18 @@ import { Icones } from '../compartilhado/icones';
           <app-termo chave="trocoDeCompra">troco</app-termo> ou venda de FIIs e ações
           ({{ d.totalCreditosCorretoraComoReceita | currency }}) contando como rendimento.
           <a routerLink="/investimentos" [queryParams]="{ conferir: 1 }">Conferir investimentos</a>
+        </p>
+      }
+      <!-- #173 b) (ADR 0044): o que a sincronização mudou sozinha, com o caminho para ver e para desfazer (Nielsen 1 e 3). -->
+      @if (d.trocosAutomaticos; as t) {
+        <p class="nota-discreta aviso-trocos" role="status">
+          {{ t.quantidade === 1 ? '1 crédito' : t.quantidade + ' créditos' }} de
+          <app-termo chave="trocoDeCompra">troco</app-termo> das compras de FIIs e ações ({{ t.total | currency }})
+          foram para “Investimentos” na sincronização: a conta do dia fechou só com a taxa da B3.
+          <a class="link-alvo" routerLink="/transacoes" [queryParams]="paramsTrocos(t)">Ver em Transações</a>
+          <button type="button" class="link" [disabled]="mexendoTrocos()" (click)="desfazerTrocos()">Desfazer</button>
+          <button type="button" class="link" [disabled]="mexendoTrocos()" (click)="dispensarTrocos()"
+            aria-label="Ok, os trocos ficam em Investimentos">Ok</button>
         </p>
       }
 
@@ -271,6 +284,9 @@ import { Icones } from '../compartilhado/icones';
 export class PainelComponent implements OnInit {
   readonly Icones = Icones;
   private readonly api = inject(ApiService);
+  private readonly avisos = inject(AvisosService);
+  /** #173 b): um clique em "Desfazer" ou "Ok" por vez. */
+  readonly mexendoTrocos = signal(false);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -351,6 +367,31 @@ export class PainelComponent implements OnInit {
     if (positivos === 0) return `As despesas passaram as receitas em todos os ${meses.length} meses.`;
     return `Você gastou menos do que recebeu em ${positivos} dos ${meses.length} meses.`;
   });
+
+  /** #173 b): /transacoes com as datas e só os trocos classificados na sincronização. */
+  paramsTrocos(t: TrocosAutomaticos): Record<string, string> {
+    return paramsTransacoes({ inicio: t.desde, fim: t.ate, ids: t.ids, origemIds: 'trocos-automaticos' });
+  }
+
+  desfazerTrocos(): void {
+    this.mexendoTrocos.set(true);
+    this.api.desfazerTrocosAutomaticos().subscribe({
+      next: (r) => {
+        this.mexendoTrocos.set(false);
+        this.avisos.sucesso(`Desfeito: ${r.transacoesAtualizadas} crédito(s) voltaram para a categoria de antes, e a sincronização não os muda de novo.`);
+        this.carregar();
+      },
+      error: (e) => { this.mexendoTrocos.set(false); this.avisos.erro(mensagemDeErro(e)); }
+    });
+  }
+
+  dispensarTrocos(): void {
+    this.mexendoTrocos.set(true);
+    this.api.dispensarTrocosAutomaticos().subscribe({
+      next: () => { this.mexendoTrocos.set(false); this.carregar(); },
+      error: (e) => { this.mexendoTrocos.set(false); this.avisos.erro(mensagemDeErro(e)); }
+    });
+  }
 
   ngOnInit(): void {
     const daUrl = mesAnoDaUrl(this.rota.snapshot.queryParamMap);

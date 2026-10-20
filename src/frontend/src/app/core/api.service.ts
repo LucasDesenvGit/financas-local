@@ -252,6 +252,14 @@ export class ApiService {
   desfazerCorrecaoInvestimentos(chave: string): Observable<ResultadoAplicacao> {
     return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/conferencia/desfazer/${encodeURIComponent(chave)}`, {});
   }
+  /** #173 b) (ADR 0044): volta os trocos que a sincronização classificou sozinha. */
+  desfazerTrocosAutomaticos(): Observable<ResultadoAplicacao> {
+    return this.http.post<ResultadoAplicacao>(`${this.base}/carteira/conferencia/trocos-automaticos/desfazer`, {});
+  }
+  /** #173 b): "Ok" no aviso do Painel (os trocos ficam como estão). */
+  dispensarTrocosAutomaticos(): Observable<void> {
+    return this.http.post<void>(`${this.base}/carteira/conferencia/trocos-automaticos/dispensar`, {});
+  }
   configuracaoCotacao(): Observable<{ tokenBrapiConfigurado: boolean }> {
     return this.http.get<{ tokenBrapiConfigurado: boolean }>(`${this.base}/carteira/configuracao`);
   }

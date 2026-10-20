@@ -180,6 +180,8 @@ public class PainelController : BaseController
 
         // #170: trocos e vendas da corretora contando como receita (a correção é com prévia, em Conferir investimentos).
         var creditosCorretora = await _conferencia.CreditosComoReceitaAsync(ct);
+        // #173 b): os trocos que a sincronização classificou sozinha.
+        var trocosAutomaticos = await _conferencia.ResumoTrocosAutomaticosAsync(ct);
 
         return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
             composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
@@ -187,7 +189,7 @@ public class PainelController : BaseController
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
             faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
             poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo,
-            creditosCorretora.Quantidade, creditosCorretora.Total);
+            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos);
     }
 }
 
