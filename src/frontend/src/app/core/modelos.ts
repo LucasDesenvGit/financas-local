@@ -7,6 +7,8 @@ export enum TipoTransacao { Despesa = 1, Receita = 2, Transferencia = 3 }
 export enum StatusTransacao { Efetivada = 1, Pendente = 2 }
 export enum TipoCorrespondencia { Contem = 1, ComecaCom = 2, Igual = 3 }
 export enum Recorrencia { Unica = 0, Mensal = 1, Anual = 2 }
+/** #158 (ADR 0043): como a conta a pagar é cobrada; só a paga à mão precisa do "Pagar". */
+export enum FormaCobranca { AMao = 1, DebitoAutomatico = 2, CartaoCredito = 3 }
 export enum NaturezaGasto { Essencial = 1, EstiloDeVida = 2 }
 export enum NaturezaCredito { Emprestimo = 1, Financiamento = 2 }
 
@@ -23,6 +25,12 @@ export const NOMES_TIPO_CATEGORIA: Record<TipoCategoria, string> = {
   [TipoCategoria.Despesa]: 'Despesa',
   [TipoCategoria.Receita]: 'Receita',
   [TipoCategoria.Transferencia]: 'Transferência'
+};
+
+export const NOMES_FORMA_COBRANCA: Record<FormaCobranca, string> = {
+  [FormaCobranca.AMao]: 'paga à mão (boleto, Pix)',
+  [FormaCobranca.DebitoAutomatico]: 'débito automático',
+  [FormaCobranca.CartaoCredito]: 'no cartão de crédito'
 };
 
 export const NOMES_RECORRENCIA: Record<Recorrencia, string> = {
@@ -252,6 +260,8 @@ export interface ContaAgendada {
   ativa: boolean; ultimoPagamentoEm: string | null; diasParaVencer: number;
   /** #69: até quando se repete (null = sem fim); pagamentos que faltam até lá, contando o próximo. */
   dataLimite: string | null; pagamentosRestantes: number | null;
+  /** #158: como é cobrada, o texto que a liga às cobranças ("a descrição do banco contém…") e a observação. */
+  formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** Inativa por ter passado da data limite ao pagar. */
   encerrada: boolean;
 }
@@ -261,6 +271,8 @@ export interface SalvarContaAgendada {
   categoriaId: number | null; contaId: number | null; ativa: boolean;
   /** #69: último vencimento que ainda se repete (null = sem fim). */
   dataLimite: string | null;
+  /** #158 */
+  formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
@@ -271,6 +283,8 @@ export interface SugestaoContaAgendada {
   categoriaId: number | null; categoriaNome: string | null; contaId: number; contaNome: string; termoBusca: string;
   /** Vencimento esperado que já passou sem o pagamento aparecer no extrato (null quando não há). */
   vencimentoSemPagamento: string | null;
+  /** #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual. */
+  formaCobranca: FormaCobranca; textoCobranca: string | null; recorrencia: Recorrencia;
 }
 
 export interface Investimento {

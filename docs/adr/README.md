@@ -80,3 +80,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) | Atualizar pelo develop, pelo gerenciador, só na instalação de desenvolvimento | Aceita |
 | [0041](0041-testes-no-navegador-com-playwright.md) | Testes no navegador com Playwright, com a CSP da API e uma API falsa | Aceita |
 | [0042](0042-contas-fora-do-saldo-continuam-nos-relatorios.md) | Contas fora do saldo e arquivadas continuam nos relatórios | Aceita |
+| [0043](0043-assinaturas-e-recorrentes-em-contas-a-pagar.md) | Assinaturas e cobranças recorrentes estendendo Contas a pagar | Aceita |

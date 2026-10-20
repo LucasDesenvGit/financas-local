@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
@@ -9,11 +10,22 @@ namespace Financas.Api.Servicos;
 /// Sugere contas a pagar a partir do extrato: pagamentos que se repetem todo mês (boleto, débito automático, Pix
 /// para a mesma pessoa...) e que ainda não estão cadastrados em Contas a pagar. Só sugere — quem cadastra é o usuário.
 /// O Open Finance não informa boletos futuros (DDA), então o próximo vencimento é estimado pelo dia habitual.
+/// #158 (ADR 0043): os cartões também entram (assinaturas: valor fixo, ±5%), a assinatura anual é reconhecida, e cada
+/// sugestão diz como é cobrada (à mão, débito automático ou cartão) e o texto que a liga às cobranças.
 /// </summary>
-public class SugestaoContaAgendadaService
+public partial class SugestaoContaAgendadaService
 {
-    /// <summary>Janela do histórico analisado (~7 meses).</summary>
+    /// <summary>Janela do histórico analisado para as mensais (~7 meses).</summary>
     private const int DiasHistorico = 210;
+    /// <summary>#158: janela das anuais (um pouco mais de um ano, para ver duas cobranças).</summary>
+    private const int DiasHistoricoAnual = 400;
+    /// <summary>#158: entre duas cobranças de uma assinatura anual (um ano, com folga para o dia variar).</summary>
+    private const int MinimoDiasAnual = 330, MaximoDiasAnual = 400;
+    /// <summary>
+    /// #158: no cartão, assinatura tem valor fixo. Valor que varia mais que isso nas últimas cobranças é gasto frequente
+    /// (iFood, Uber), não assinatura (decisão do usuário: ±5%).
+    /// </summary>
+    private const decimal VariacaoCartao = 0.05m;
     /// <summary>Meses distintos com pagamento para considerar recorrente.</summary>
     private const int MinimoMeses = 3;
     /// <summary>Último pagamento há mais que isso: a conta provavelmente acabou.</summary>
@@ -24,7 +36,7 @@ public class SugestaoContaAgendadaService
     private const decimal CoberturaMinima = 0.6m;
     /// <summary>Variação de valor acima disso é sinalizada como "valor variável" (luz, gás...).</summary>
     private const decimal VariacaoValorFixo = 0.15m;
-    private const int MaximoSugestoes = 20;
+    private const int MaximoSugestoes = 30;
 
     private readonly FinancasDbContext _db;
 
@@ -33,75 +45,172 @@ public class SugestaoContaAgendadaService
     public async Task<List<SugestaoContaAgendadaDto>> SugerirAsync(CancellationToken ct)
     {
         var hoje = Relogio.Hoje;
-        var desde = hoje.AddDays(-DiasHistorico);
+        var desde = hoje.AddDays(-DiasHistoricoAnual);
+        var desdeMensal = hoje.AddDays(-DiasHistorico);
 
-        // Fatura de cartão já entra no sistema por outro caminho; compra parcelada não é conta mensal.
+        // Compra parcelada não é conta recorrente. #158: os cartões entram (assinaturas); o pagamento da fatura não
+        // aparece aqui porque é transferência.
         var transacoes = await _db.Transacoes.AsNoTracking()
             .Where(t => t.Data >= desde && t.Data <= hoje && t.Valor < 0 && t.Tipo == TipoTransacao.Despesa
                 && t.TransferenciaGrupo == null && !t.IgnorarRelatorios && t.ParcelaTotal == null
-                && t.Conta!.Tipo != TipoConta.CartaoCredito && t.Conta.Tipo != TipoConta.Investimento && !t.Conta.Arquivada)
+                && t.Conta!.Tipo != TipoConta.Investimento && !t.Conta.Arquivada)
             .OrderByDescending(t => t.Data)
-            .Select(t => new
-            {
-                t.Data, t.Descricao, t.DescricaoOriginal, t.Estabelecimento, t.Valor, t.CategoriaId,
-                CategoriaNome = t.Categoria != null ? t.Categoria.Nome : null, t.ContaId, ContaNome = t.Conta!.Nome
-            })
-            .Take(10000)
+            .Select(t => new Lancamento(t.Data, t.Descricao, t.DescricaoOriginal, t.Estabelecimento, t.Valor, t.CategoriaId,
+                t.Categoria != null ? t.Categoria.Nome : null, t.ContaId, t.Conta!.Nome, t.Conta.Tipo))
+            .Take(20000)
             .ToListAsync(ct);
 
-        var descricoesCadastradas = await _db.ContasAgendadas.AsNoTracking().Select(c => c.Descricao).ToListAsync(ct);
-        var jaCadastradas = descricoesCadastradas.Select(ChaveDe)
+        var cadastradas = await _db.ContasAgendadas.AsNoTracking()
+            .Select(c => new { c.Descricao, c.TextoCobranca }).ToListAsync(ct);
+        var jaCadastradas = cadastradas.Select(c => ChaveDe(c.Descricao))
             .Where(k => k.Length > 0).ToHashSet(StringComparer.Ordinal);
+        // #158: a que já tem o texto da cobrança também não volta como sugestão.
+        var textosCadastrados = cadastradas.Select(c => CategorizacaoService.Normalizar(c.TextoCobranca))
+            .Where(t => t.Length > 0).ToList();
 
         var resultado = new List<SugestaoContaAgendadaDto>();
         var grupos = transacoes
+            .Where(t => t.ContaTipo != TipoConta.CartaoCredito || !ParcelaNoTexto(t.DescricaoOriginal ?? t.Descricao))
             .Select(t => new { T = t, Chave = ChaveDe(t.Estabelecimento ?? t.DescricaoOriginal ?? t.Descricao) })
             .Where(x => x.Chave.Length > 0)
             .GroupBy(x => x.Chave, x => x.T);
 
         foreach (var g in grupos)
         {
-            var itens = g.ToList(); // mais recente primeiro
-            var recente = itens[0];
+            var todos = g.ToList(); // mais recente primeiro
+            var recente = todos[0];
             if (jaCadastradas.Contains(g.Key) || jaCadastradas.Contains(ChaveDe(recente.Descricao))) continue;
-            if (recente.Data < hoje.AddDays(-DiasSemPagamento)) continue;
+            var textoRecente = CategorizacaoService.Normalizar(recente.DescricaoOriginal ?? recente.Descricao);
+            if (textosCadastrados.Any(t => textoRecente.Contains(t, StringComparison.Ordinal))) continue;
 
-            var meses = itens.Select(t => t.Data.Year * 12 + t.Data.Month - 1).Distinct().ToList();
-            if (meses.Count < MinimoMeses || itens.Count > meses.Count * MaximoPorMes) continue;
-            var mesesNoIntervalo = meses.Max() - meses.Min() + 1;
-            if ((decimal)meses.Count / mesesNoIntervalo < CoberturaMinima) continue;
-
-            var valores = itens.Select(t => -t.Valor).ToList();
-            var valor = Mediana(valores.Take(3).ToList());
-            var minimo = valores.Min();
-            var maximo = valores.Max();
-            var variavel = valor > 0 && (maximo - minimo) / valor > VariacaoValorFixo;
-
-            var dia = (int)Mediana(itens.Select(t => (decimal)t.Data.Day).ToList());
-            // Vencimento esperado no mês seguinte ao último pagamento. Se já passou sem o pagamento aparecer (o último
-            // pode ter até DiasSemPagamento dias), a sugestão avisa e propõe o próximo que ainda vai vencer: cadastrar
-            // não pode criar uma conta já vencida.
-            var esperado = NoDia(new DateOnly(recente.Data.Year, recente.Data.Month, 1).AddMonths(1), dia);
-            var proximo = esperado;
-            while (proximo < hoje) proximo = NoDia(new DateOnly(proximo.Year, proximo.Month, 1).AddMonths(1), dia);
-            DateOnly? semPagamento = esperado < hoje ? esperado : null;
-
-            var categoria = itens.Where(t => t.CategoriaId != null).GroupBy(t => t.CategoriaId)
-                .OrderByDescending(c => c.Count()).Select(c => c.First()).FirstOrDefault();
-            var conta = itens.GroupBy(t => t.ContaId).OrderByDescending(c => c.Count()).First().First();
-            var descricao = recente.Descricao.Trim();
-            var termoBusca = TermoBusca(g.Key, recente.Estabelecimento, descricao);
-
-            resultado.Add(new SugestaoContaAgendadaDto(g.Key,
-                descricao.Length > 150 ? descricao[..150] : descricao,
-                Math.Round(valor, 2), variavel, Math.Round(minimo, 2), Math.Round(maximo, 2),
-                proximo, dia, meses.Count, itens.Count, recente.Data, itens[^1].Data,
-                categoria?.CategoriaId, categoria?.CategoriaNome, conta.ContaId, conta.ContaNome,
-                termoBusca, semPagamento));
+            // #158: cada conta ou cartão primeiro (a mesma marca pode aparecer em dois lugares, com valores diferentes);
+            // juntas só se nenhuma passar sozinha, o que cobre a assinatura que trocou de cartão no meio do caminho.
+            var porConta = todos.GroupBy(t => t.ContaId).ToList();
+            var achadas = porConta.Count > 1
+                ? porConta.Select(c => Avaliar($"{g.Key}#{c.Key}", g.Key, c.ToList(), hoje, desdeMensal))
+                    .OfType<SugestaoContaAgendadaDto>().ToList()
+                : new List<SugestaoContaAgendadaDto>();
+            if (achadas.Count == 0 && Avaliar(g.Key, g.Key, todos, hoje, desdeMensal) is { } juntas) achadas.Add(juntas);
+            resultado.AddRange(achadas);
         }
 
         return resultado.OrderBy(s => s.ProximoVencimento).ThenByDescending(s => s.Valor).Take(MaximoSugestoes).ToList();
     }
+
+    /// <summary>Um lançamento do extrato, como a sugestão precisa dele.</summary>
+    private sealed record Lancamento(DateOnly Data, string Descricao, string? DescricaoOriginal, string? Estabelecimento,
+        decimal Valor, int? CategoriaId, string? CategoriaNome, int ContaId, string ContaNome, TipoConta ContaTipo);
+
+    /// <summary>
+    /// A sugestão de um grupo de lançamentos (mais recente primeiro), ou null se ele não for conta recorrente.
+    /// <paramref name="chave"/> identifica a sugestão na tela; <paramref name="chaveTexto"/> dá o texto da cobrança.
+    /// </summary>
+    private static SugestaoContaAgendadaDto? Avaliar(string chave, string chaveTexto, List<Lancamento> todos, DateOnly hoje,
+        DateOnly desdeMensal)
+    {
+        var recente = todos[0];
+        var conta = todos.GroupBy(t => t.ContaId).OrderByDescending(c => c.Count()).First().First();
+        var noCartao = conta.ContaTipo == TipoConta.CartaoCredito;
+
+        var recorrencia = Recorrencia.Mensal;
+        var itens = todos.Where(t => t.Data >= desdeMensal).ToList();
+        if (!EhMensal(itens.Select(t => t.Data).ToList(), hoje))
+        {
+            // #158: assinatura anual, uma cobrança por ano (o histórico importado precisa ter as duas).
+            if (!EhAnual(todos.Select(t => t.Data).ToList())) return null;
+            recorrencia = Recorrencia.Anual;
+            itens = todos;
+        }
+
+        var valores = itens.Select(t => -t.Valor).ToList();
+        var valor = Mediana(valores.Take(3).ToList());
+        var minimo = valores.Min();
+        var maximo = valores.Max();
+        var variavel = valor > 0 && (maximo - minimo) / valor > VariacaoValorFixo;
+        // No cartão, só as últimas cobranças contam para o valor fixo: um aumento de preço antigo não tira a assinatura.
+        var ultimos = valores.Take(3).ToList();
+        if (noCartao && valor > 0 && (ultimos.Max() - ultimos.Min()) / valor > VariacaoCartao) return null;
+
+        var dia = (int)Mediana(itens.Select(t => (decimal)t.Data.Day).ToList());
+        DateOnly esperado, proximo;
+        if (recorrencia == Recorrencia.Anual)
+        {
+            esperado = recente.Data.AddYears(1);
+            proximo = esperado;
+            while (proximo < hoje) proximo = proximo.AddYears(1);
+        }
+        else
+        {
+            // Vencimento esperado no mês seguinte ao último pagamento. Se já passou sem o pagamento aparecer (o último pode
+            // ter até DiasSemPagamento dias), a sugestão avisa e propõe o próximo que ainda vai vencer: cadastrar não pode
+            // criar uma conta já vencida.
+            esperado = NoDia(new DateOnly(recente.Data.Year, recente.Data.Month, 1).AddMonths(1), dia);
+            proximo = esperado;
+            while (proximo < hoje) proximo = NoDia(new DateOnly(proximo.Year, proximo.Month, 1).AddMonths(1), dia);
+        }
+        DateOnly? semPagamento = esperado < hoje ? esperado : null;
+
+        var categoria = itens.Where(t => t.CategoriaId != null).GroupBy(t => t.CategoriaId)
+            .OrderByDescending(c => c.Count()).Select(c => c.First()).FirstOrDefault();
+        var descricao = recente.Descricao.Trim();
+        var termoBusca = TermoBusca(chaveTexto, recente.Estabelecimento, descricao);
+        var forma = noCartao ? FormaCobranca.CartaoCredito
+            : itens.Any(t => EhDebitoAutomatico(t.DescricaoOriginal ?? t.Descricao)) ? FormaCobranca.DebitoAutomatico
+            : FormaCobranca.AMao;
+        // O texto que liga a conta às cobranças: a palavra mais longa da chave (ex.: "NETFLIX").
+        var textoCobranca = SugestaoCategoriaService.Palavras(chaveTexto).OrderByDescending(p => p.Length).FirstOrDefault()
+            ?? chaveTexto;
+
+        return new SugestaoContaAgendadaDto(chave,
+            descricao.Length > 150 ? descricao[..150] : descricao,
+            Math.Round(valor, 2), variavel, Math.Round(minimo, 2), Math.Round(maximo, 2),
+            proximo, dia, itens.Select(t => t.Data.Year * 12 + t.Data.Month - 1).Distinct().Count(), itens.Count,
+            recente.Data, itens[^1].Data,
+            categoria?.CategoriaId, categoria?.CategoriaNome, conta.ContaId, conta.ContaNome,
+            termoBusca, semPagamento, forma, textoCobranca, recorrencia);
+    }
+
+    /// <summary>
+    /// Mensal: pago recentemente, em pelo menos <see cref="MinimoMeses"/> meses distintos, sem ser gasto frequente
+    /// (mais de ~1,5 por mês) e cobrindo a maior parte dos meses do intervalo. <paramref name="datas"/>: mais recente
+    /// primeiro.
+    /// </summary>
+    private static bool EhMensal(List<DateOnly> datas, DateOnly hoje)
+    {
+        if (datas.Count == 0 || datas[0] < hoje.AddDays(-DiasSemPagamento)) return false;
+        var meses = datas.Select(d => d.Year * 12 + d.Month - 1).Distinct().ToList();
+        if (meses.Count < MinimoMeses || datas.Count > meses.Count * MaximoPorMes) return false;
+        var mesesNoIntervalo = meses.Max() - meses.Min() + 1;
+        return (decimal)meses.Count / mesesNoIntervalo >= CoberturaMinima;
+    }
+
+    /// <summary>#158: anual: 2 ou 3 cobranças, cada uma de 330 a 400 dias depois da anterior (mais recente primeiro).</summary>
+    private static bool EhAnual(List<DateOnly> datas)
+    {
+        if (datas.Count is < 2 or > 3) return false;
+        for (var i = 0; i < datas.Count - 1; i++)
+        {
+            var dias = datas[i].DayNumber - datas[i + 1].DayNumber;
+            if (dias < MinimoDiasAnual || dias > MaximoDiasAnual) return false;
+        }
+        return true;
+    }
+
+    /// <summary>#158: "DEB AUT", "DEBITO AUTOMATICO", "DEB.AUT." — a conta é debitada sozinha, sem você pagar.</summary>
+    private static bool EhDebitoAutomatico(string? descricao)
+    {
+        var texto = " " + SoLetrasENumeros().Replace(CategorizacaoService.Normalizar(descricao), " ") + " ";
+        return texto.Contains(" DEB AUT", StringComparison.Ordinal) || texto.Contains(" DEBITO AUT", StringComparison.Ordinal);
+    }
+
+    /// <summary>#158: compra parcelada no cartão que veio sem os campos de parcela ("PARC 3/10", "3/10").</summary>
+    private static bool ParcelaNoTexto(string? descricao) => descricao is not null && Parcela().IsMatch(descricao);
+
+    [GeneratedRegex(@"\b\d{1,2}\s*/\s*\d{1,2}\b|\bPARC(ELA)?\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex Parcela();
+
+    [GeneratedRegex("[^A-Z0-9]+")]
+    private static partial Regex SoLetrasENumeros();
 
     /// <summary>O dia habitual dentro do mês (dia 31 vira o último dia em meses mais curtos).</summary>
     private static DateOnly NoDia(DateOnly inicioDoMes, int dia)
