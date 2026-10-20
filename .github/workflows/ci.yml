@@ -31,6 +31,22 @@ jobs:
           CORPO_PR: ${{ github.event.pull_request.body }}
         run: python3 scripts/ci/verificar-manual.py
 
+  # ADR 0039: todo PR para o develop sobe a versão no Directory.Build.props, pelo tipo do título.
+  versao:
+    name: versão subiu
+    if: github.event_name == 'pull_request' && github.base_ref == 'develop' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Versão no Directory.Build.props
+        env:
+          BASE: ${{ github.base_ref }}
+          TITULO_PR: ${{ github.event.pull_request.title }}
+        run: python3 scripts/ci/verificar-versao.py
+
   build:
     name: build
     runs-on: ubuntu-latest

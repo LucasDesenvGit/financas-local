@@ -18,7 +18,7 @@
     atualizacao, o banco e copiado para backups\ antes de mudar a estrutura, e a versao publicada
     anterior volta sozinha se a nova nao subir.
 
-    Ao migrar de uma instalacao com SQL Server, NAO use este script: siga o README.
+    Ao migrar de uma instalacao com SQL Server, NAO use este script: siga docs/INSTALACAO-PELO-CODIGO.md.
 
 .EXAMPLE
     .\instalar-windows.ps1

@@ -189,13 +189,30 @@ jobs:
           # SHA256SUMS só do .msi da versão (o da versão seguinte foi gerado só para o teste).
           $hash = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLowerInvariant()
           [IO.File]::WriteAllText("$PWD\saida-instalador\SHA256SUMS.txt", "$hash  FinancasLocal-$versao.msi`n")
-          # Notas: a seção da versão no CHANGELOG.md (ou a "Não publicado", se ainda não foi renomeada).
+          # Notas: como instalar e, depois, a seção da versão no CHANGELOG.md (ou a "Não publicado", se ainda não foi
+          # renomeada), sem o cabeçalho "## [X.Y.Z] — data", que repetiria o título.
           $texto = Get-Content CHANGELOG.md -Raw
-          $m = [regex]::Match($texto, "(?ms)^## \[$([regex]::Escape($versao))\].*?(?=^## \[)")
-          if (-not $m.Success) { $m = [regex]::Match($texto, "(?ms)^## \[Não publicado\].*?(?=^## \[)") }
-          $m.Value | Set-Content notas.md
+          $m = [regex]::Match($texto, "(?ms)^## \[$([regex]::Escape($versao))\][^\n]*\n(.*?)(?=^## \[)")
+          if (-not $m.Success) { $m = [regex]::Match($texto, "(?ms)^## \[Não publicado\][^\n]*\n(.*?)(?=^## \[)") }
+          $notas = @"
+          ## Como instalar ou atualizar
+
+          - **Windows:** baixe o ``FinancasLocal-$versao.msi`` (em **Assets**, abaixo) e abra. Ele instala ou atualiza a versão que você tem e **mantém os seus dados**. Quem já tem o Gerenciador do Finanças Local recebe o aviso e atualiza por ele.
+          - **"O Windows protegeu o computador":** o instalador ainda não é assinado. Clique em **Mais informações › Executar assim mesmo**. Para conferir o arquivo, compare o ``Get-FileHash`` dele com o ``SHA256SUMS.txt``.
+          - **Linux, ou instalado pelos scripts:** veja [Instalar a partir do código](https://github.com/${{ github.repository }}/blob/v$versao/docs/INSTALACAO-PELO-CODIGO.md).
+
+          ## O que mudou
+
+          $($m.Groups[1].Value.Trim())
+          "@
+          $notas | Set-Content notas.md -Encoding utf8
+          # Título e notas sempre acertados: se alguém criou o Release à mão antes da tag, ele é corrigido aqui.
           gh release view "v$versao" *> $null
-          if ($LASTEXITCODE -ne 0) { gh release create "v$versao" --title "Finanças Local $versao" --notes-file notas.md }
+          if ($LASTEXITCODE -ne 0) {
+            gh release create "v$versao" --title "Finanças Local $versao" --notes-file notas.md --latest
+          } else {
+            gh release edit "v$versao" --title "Finanças Local $versao" --notes-file notas.md --prerelease=false --draft=false --latest
+          }
           gh release upload "v$versao" $msi "saida-instalador\SHA256SUMS.txt" --clobber
 
   migracao:
