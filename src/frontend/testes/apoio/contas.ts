@@ -52,6 +52,7 @@ export async function abrirContas(url = '/contas', contas: Conta[] = CONTAS,
         useValue: {
           contas: (arquivadas?: boolean) => { cargas.push(!!arquivadas); return of(contas); },
           bancos: () => of(BANCOS),
+          contasAgendadas: () => of([]),
           faturas: (id: number) => { pedidas.push(id); return of(faturasPorConta[id] ?? []); },
           criarConta: (dto: SalvarConta) => { salvas.push({ id: null, dto }); return of(conta()); },
           atualizarConta: (id: number, dto: SalvarConta) => { salvas.push({ id, dto }); return of(conta()); },
