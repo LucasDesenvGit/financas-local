@@ -72,24 +72,26 @@ public class AssistenteMetasService
 
         // Cartões: tudo o que entra na fatura (como a "fatura do mês", #144), inclusive o marcado para ignorar nos relatórios
         // e as parcelas que o banco já mandou com data futura.
-        var desdeCartao = inicioHistorico.AddDays(-62);
+        // Janela larga: a parcela já ligada a uma fatura de cada compra decide em que fatura caem as outras (#167).
+        var desdeCartao = inicioHistorico.AddMonths(-24);
         var lancamentosCartao = await _db.Transacoes.AsNoTracking()
             .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desdeCartao
                         && t.Tipo != TipoTransacao.Transferencia
                         && (t.MeioPagamento == null || t.MeioPagamento != "PAGAMENTO_FATURA"))
-            .Select(t => new LancamentoCartao(t.ContaId, t.Data, t.Valor, t.ParcelaNumero, t.ParcelaTotal,
-                t.DescricaoOriginal ?? t.Descricao))
+            .Select(t => new ContaService.LancamentoFatura(t.Id, t.ContaId, t.Data, t.Valor, t.FaturaCartaoId, t.ParcelaNumero,
+                t.ParcelaTotal, t.DescricaoOriginal ?? t.Descricao))
             .ToListAsync(ct);
         // Média diária de compras à vista (estornos descontados) de cada cartão, para as faturas ainda abertas ou futuras.
         var compraAVistaPorDia = lancamentosCartao
             .Where(t => t.Data >= inicioHistorico && t.Data <= fimHistorico && !t.Parcelado)
             .GroupBy(t => t.ContaId)
             .ToDictionary(g => g.Key, g => Math.Max(0m, -g.Sum(t => t.Valor)) / mesesConsiderados / DiasPorMes);
-        // Só as projetadas: as que já estão no banco entram pelo lançamento, no ciclo da data delas (#165).
+        // Só as projetadas: as que já estão no banco entram pelo lançamento (#165). A fatura de cada projetada é a da
+        // parcela de origem + os meses projetados (#167).
         var desdeParcelas = hoje.AddDays(-ParcelasFuturas.DiasRecentes);
         var parcelasFuturas = ParcelasFuturas.Projetar(lancamentosCartao
                 .Where(t => t.Data >= desdeParcelas && t.Valor < 0 && t.Parcelado && t.ParcelaNumero is not null)
-                .Select(t => new ParcelasFuturas.Parcela(t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
+                .Select(t => new ParcelasFuturas.Parcela(t.Id, t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
                     t.Descricao)), hoje)
             .Where(p => !p.JaNoBanco).ToList();
 
@@ -108,6 +110,7 @@ public class AssistenteMetasService
             var futurasDele = parcelasFuturas.Where(p => p.ContaId == cartao.Id).ToList();
             var importadas = faturasImportadas[cartao.Id].ToList();
             var porDia = compraAVistaPorDia.GetValueOrDefault(cartao.Id);
+            var mesDeCobranca = ContaService.MesesDeCobranca(dele, importadas, cartao.DiaFechamento);
             for (var mes = inicioHistorico.AddMonths(-1); mes <= mesAtual.AddMonths(HorizonteMeses); mes = mes.AddMonths(1))
             {
                 var ciclo = ContaService.CicloDaFatura(mes, mes.AddMonths(1).AddDays(-1), cartao.DiaFechamento, cartao.DiaVencimento, importadas);
@@ -120,7 +123,8 @@ public class AssistenteMetasService
                 var mesVencimento = new DateOnly(vencimento.Year, vencimento.Month, 1);
                 if (mesVencimento < inicioHistorico) continue;
 
-                var lancado = dele.Where(t => t.Data >= ciclo.Inicio && t.Data <= fechamento).ToList();
+                var mesDoCiclo = new DateOnly(fechamento.Year, fechamento.Month, 1);
+                var lancado = dele.Where(t => mesDeCobranca[t.Id] == mesDoCiclo).ToList();
                 var parcelasLancadas = Math.Max(0m, -lancado.Where(t => t.Parcelado).Sum(t => t.Valor));
                 decimal total, parcelas;
                 if (fechamento <= hoje)
@@ -133,7 +137,10 @@ public class AssistenteMetasService
                 {
                     var de = ciclo.Inicio > hoje ? ciclo.Inicio : hoje.AddDays(1);
                     var diasQueFaltam = fechamento.DayNumber - de.DayNumber + 1;
-                    var projetadas = futurasDele.Where(p => p.Data >= de && p.Data <= fechamento).Sum(p => p.Valor);
+                    var projetadas = futurasDele
+                        .Where(p => mesDeCobranca.TryGetValue(p.OrigemId, out var m) ? m.AddMonths(p.Passos) == mesDoCiclo
+                            : p.Data >= de && p.Data <= fechamento)
+                        .Sum(p => p.Valor);
                     total = Math.Max(0m, -lancado.Sum(t => t.Valor)) + porDia * diasQueFaltam + projetadas;
                     parcelas = parcelasLancadas + projetadas;
                 }
@@ -176,11 +183,5 @@ public class AssistenteMetasService
 
         return new PlanoMetasDto(true, mesesConsiderados, (short)mesAtual.Year, (byte)mesAtual.Month, margem,
             Math.Round(saldoContas, 2), Math.Round(faturaAPagar, 2), Math.Round(saldoFimDoMes, 2), Math.Round(melhorMes, 2), meses);
-    }
-
-    private sealed record LancamentoCartao(int ContaId, DateOnly Data, decimal Valor, short? ParcelaNumero, short? ParcelaTotal,
-        string Descricao)
-    {
-        public bool Parcelado => ParcelaTotal is > 1;
     }
 }

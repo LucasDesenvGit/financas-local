@@ -5,6 +5,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **Fatura do mês do cartão (ciclo aberto) diferente do app do banco** (#167). Duas causas:
+  - **Lançamento da fatura anterior contado de novo:** o banco às vezes manda, datado depois do fechamento, um lançamento que já cobrou na fatura anterior, e ele entrava também na fatura aberta. Agora o que o banco ligou a uma fatura fica nela.
+  - **Parcela futura na fatura errada:** o Open Finance pode datar as parcelas futuras um dia depois do fechamento, e cada uma ia para a fatura seguinte. Agora a parcela k vai para a fatura da parcela já cobrada mais a diferença de número.
+  - **Onde vale:** Painel (Faturas do mês), Contas e cartões e a sobra das Metas.
 - **Projeção contava parcelas futuras em dobro** (#165). Quando duas ou mais parcelas da mesma compra estavam nos últimos 31 dias, cada uma projetava o resto da compra. Isso inclui as que o banco já manda com data futura. Exemplo: um 3× de R$ 100 aparecia com R$ 200 no último mês.
   - **Agora:** de cada compra vale só a parcela mais recente. As que o banco já mandou entram como são, e só o que falta é projetado.
   - **A mesma compra é reconhecida** mesmo com centavos ou descrição diferentes entre as parcelas.

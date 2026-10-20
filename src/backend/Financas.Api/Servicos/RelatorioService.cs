@@ -275,7 +275,7 @@ public class RelatorioService
         var parcelas = await _db.Transacoes.AsNoTracking()
             .Where(t => t.Data >= limiteParcelas && t.Valor < 0 && !t.IgnorarRelatorios
                         && t.ParcelaTotal != null && t.ParcelaTotal > 1 && t.ParcelaNumero != null)
-            .Select(t => new ParcelasFuturas.Parcela(t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
+            .Select(t => new ParcelasFuturas.Parcela(t.Id, t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
                 t.DescricaoOriginal ?? t.Descricao))
             .ToListAsync(ct);
         var parcelasPorMes = new Dictionary<(int Ano, int Mes), decimal>();
