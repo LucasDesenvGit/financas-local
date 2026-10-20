@@ -59,6 +59,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # #204: pacotes NuGet entre execuções (o projeto não tem packages.lock.json; a chave são os .csproj).
+      - name: Cache dos pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
       - name: Compilar API
         run: dotnet build FinancasLocal.sln -c Release
 
@@ -82,6 +90,13 @@ jobs:
           npm test -- --ci
 
       # ADR 0041: o build de produção num navegador de verdade, com a CSP da API e a API falsa (sem back-end).
+      # #204: o Chromium fica em cache pela versão do Playwright; as bibliotecas do sistema (--with-deps) vêm do apt.
+      - name: Cache do navegador dos testes
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}
+
       - name: Navegador dos testes (Chromium do Playwright)
         working-directory: src/frontend
         run: npx playwright install --with-deps chromium

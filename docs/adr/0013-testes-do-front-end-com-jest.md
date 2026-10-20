@@ -32,3 +32,11 @@ Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`,
   - se o Angular padronizar o Vitest, migrar os testes será trabalho extra (a API do Vitest é quase igual à do Jest);
   - o back-end (.NET) continua sem testes automatizados.
 - **Na prática:** bug corrigido ganha teste em `testes/regressao/` no mesmo PR; padrão novo de UI/UX do CLAUDE.md ganha teste em `testes/usabilidade/`. Telas que usam o roteador são abertas com `RouterTestingHarness` (veja `testes/apoio/transacoes.ts`), sempre com a API falsa (nunca HTTP de verdade). O `import` do `jest-preset-angular/setup-env/zone` tem de ser o primeiro do `testes/configurar-jest.ts`.
+
+## Atualização de 2026-10-20: ícones substituídos nos testes (issue #204)
+
+- **Problema medido:** o Jest levava ~7,5 min na CI (350 s de um job de 7,7 min) e ~200 s aqui, com dezenas de arquivos de teste levando ~46 s cada, qualquer que fosse o número de testes. A causa: o `@lucide/angular` é **um arquivo só, de 10,6 MB, com ~1.900 componentes** declarados de forma parcial, e o Angular em JIT (o modo dos testes) compila todos ao carregar o pacote. Todo arquivo de teste que encosta num ícone, direta ou indiretamente (ex.: o selo do banco), pagava ~15 s. O build de produção não paga isso: ele compila antes e leva só os ícones usados.
+- **Decisão:** nos testes do Jest, o `@lucide/angular` é trocado por um substituto (`moduleNameMapper` → `testes/apoio/lucide-falso.js`): a mesma diretiva `[lucideIcon]`, sem desenhar o ícone, e um objeto fixo por nome de ícone (dá para conferir **qual** ícone a tela usa, como no teste do #135).
+- **Resultado:** 199 s → **22 s** aqui (26 s com 2 workers, como o runner da CI); soma dos tempos por arquivo de 2.059 s para 171 s; os 537 testes continuam passando.
+- **Custo:** o Jest não confere o desenho do ícone (o `<svg>` gerado pela Lucide). Isso fica com os testes no navegador (ADR 0041), que usam o pacote de verdade.
+- **Descartado:** `isolatedModules` (transpilar sem checar tipos): medido, não mudou nada (o tempo não era a checagem de tipos).
