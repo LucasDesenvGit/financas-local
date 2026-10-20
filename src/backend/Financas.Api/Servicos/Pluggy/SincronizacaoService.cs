@@ -21,12 +21,14 @@ public class SincronizacaoService
     private readonly RegraDescricaoService _descricoes;
     private readonly ContaService _contas;
     private readonly TransferenciasService _transferencias;
+    private readonly ContaAgendadaService _cobrancas;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
         CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
-        TransferenciasService transferencias, ILogger<SincronizacaoService> logger)
+        TransferenciasService transferencias, ContaAgendadaService cobrancas, ILogger<SincronizacaoService> logger)
     {
+        _cobrancas = cobrancas;
         _descricoes = descricoes;
         _transferencias = transferencias;
         _db = db;
@@ -238,6 +240,8 @@ public class SincronizacaoService
             await _db.SaveChangesAsync(ct);
             // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
             if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+            // #158: a cobrança automática que acabou de chegar dá baixa na conta a pagar.
+            if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
 
             return new ResultadoSincronizacaoDto(true, novas, atualizadas, null);
         }

@@ -344,6 +344,8 @@ public class FinancasDbContext : DbContext
             e.ToTable("ContaAgendada");
             e.HasKey(x => x.Id);
             e.Property(x => x.Descricao).HasMaxLength(150).IsRequired();
+            e.Property(x => x.TextoCobranca).HasMaxLength(100);
+            e.Property(x => x.Observacao).HasMaxLength(300);
             e.Property(x => x.Valor).HasPrecision(18, 2);
             e.HasOne(x => x.Categoria).WithMany()
                 .HasForeignKey(x => x.CategoriaId).OnDelete(DeleteBehavior.SetNull);

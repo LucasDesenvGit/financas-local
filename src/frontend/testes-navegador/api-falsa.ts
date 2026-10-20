@@ -15,6 +15,8 @@ export interface ApiFalsa {
 }
 
 const hoje = new Date();
+/** "AAAA-MM-DD" na data local. */
+const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const ano = hoje.getFullYear();
 const mes = hoje.getMonth() + 1;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -115,8 +117,33 @@ const respostas: Record<string, unknown> = {
   '/api/reservas': [],
   '/api/metas/plano': { disponivel: false, mesesConsiderados: 1, ano, mes, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
     saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] },
-  '/api/contas-agendadas': [],
-  '/api/contas-agendadas/sugestoes': [],
+  // #158: uma conta paga à mão, um débito automático e uma assinatura no cartão (baixa sozinha), e duas sugestões.
+  '/api/contas-agendadas': [
+    { id: 1, descricao: 'Escola', valor: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Educação', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 20, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 1, textoCobranca: null, observacao: null },
+    { id: 2, descricao: 'Luz', valor: 180, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 15)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Moradia', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 25, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 2, textoCobranca: 'ENERGIA', observacao: null },
+    { id: 3, descricao: 'Streaming', valor: 44.9, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 12)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Lazer', contaId: 2, contaNome: 'Cartão Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 22, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 3, textoCobranca: 'STREAMING', observacao: 'conta da família' }
+  ],
+  '/api/contas-agendadas/sugestoes': [
+    { chave: 'musica#2', descricao: 'MUSICA APP', valor: 21.9, valorVariavel: false, valorMinimo: 21.9, valorMaximo: 21.9,
+      proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 3)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 3)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'MUSICA',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1 },
+    { chave: 'nuvem', descricao: 'NUVEM ANUAL', valor: 119, valorVariavel: false, valorMinimo: 119, valorMaximo: 119,
+      proximoVencimento: dataIso(new Date(ano + 1, hoje.getMonth(), 5)), diaHabitual: 5, meses: 2, pagamentos: 2,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 5)), primeiroPagamento: dataIso(new Date(ano - 1, hoje.getMonth(), 5)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'NUVEM',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2 }
+  ],
   '/api/investimentos': [],
   '/api/emprestimos': { financiamentos: credito(1), emprestimos: credito(2), contratos: [], pagamentosPorMes: [] },
   '/api/cambio/moedas': [],

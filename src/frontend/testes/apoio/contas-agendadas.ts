@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
-import { ContaAgendada, Recorrencia, SalvarContaAgendada, SugestaoContaAgendada } from '../../src/app/core/modelos';
+import { ContaAgendada, FormaCobranca, Recorrencia, SalvarContaAgendada, SugestaoContaAgendada } from '../../src/app/core/modelos';
 import { ContasAgendadasComponent } from '../../src/app/paginas/contas-agendadas.component';
 
 /** Sugestão de exemplo: escola paga todo dia 10, valor fixo. Os testes mudam só o que importa para cada caso. */
@@ -12,7 +12,8 @@ export function sugestao(campos: Partial<SugestaoContaAgendada> = {}): SugestaoC
     proximoVencimento: '2026-11-10', diaHabitual: 10, meses: 6, pagamentos: 6,
     ultimoPagamento: '2026-10-10', primeiroPagamento: '2026-05-10',
     categoriaId: 5, categoriaNome: 'Educação', contaId: 3, contaNome: 'Itaú', termoBusca: 'FIAP',
-    vencimentoSemPagamento: null, ...campos
+    vencimentoSemPagamento: null, formaCobranca: FormaCobranca.AMao, textoCobranca: 'FIAP', recorrencia: Recorrencia.Mensal,
+    ...campos
   };
 }
 
@@ -21,7 +22,8 @@ export function contaAgendada(campos: Partial<ContaAgendada> = {}): ContaAgendad
   return {
     id: 1, descricao: 'Escola', valor: 1450, proximoVencimento: '2026-11-10', recorrencia: Recorrencia.Mensal,
     categoriaId: null, categoriaNome: null, contaId: null, contaNome: null, ativa: true, ultimoPagamentoEm: null,
-    diasParaVencer: 25, dataLimite: null, pagamentosRestantes: null, encerrada: false, ...campos
+    diasParaVencer: 25, dataLimite: null, pagamentosRestantes: null, encerrada: false, formaCobranca: FormaCobranca.AMao,
+    textoCobranca: null, observacao: null, ...campos
   };
 }
 

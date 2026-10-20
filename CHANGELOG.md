@@ -59,6 +59,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Assinaturas e débitos automáticos em Contas a pagar** (#158, parte 1; ADR 0043):
+  - **Como é cobrada:** cada conta a pagar diz se é paga à mão (boleto, Pix), por débito automático ou no cartão de crédito, e onde cai. Também ganha uma observação.
+  - **Baixa sozinha:** com o "texto da cobrança" (a descrição do banco contém…), a conta cobrada sozinha se dá como paga quando a cobrança chega no extrato, sem "Pagar". Vale pela descrição original, mesmo depois de renomear.
+  - **Sugestões do extrato** agora acham as **assinaturas nos cartões** (valor igual, até 5% de diferença; sem parcelas nem gastos frequentes), as **anuais** e os **débitos automáticos**, já com a forma e o texto preenchidos.
+  - **Painel:** o que cai no cartão sai dos "Próximos vencimentos", porque entra na fatura.
+  - **Manual:** seção nova "Assinaturas e débitos automáticos".
 - **Conferir com o banco** (#172), tela nova aberta por Contas e cartões.
   - **O que faz:** você digita o que o app de cada banco mostra (saldo de cada conta, fatura do mês de cada cartão, valor de cada investimento e reserva), e o site compara na hora.
   - **Quando não bate,** mostra as pistas: quando o banco atualizou, reservas, pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, com o link para o detalhe.
