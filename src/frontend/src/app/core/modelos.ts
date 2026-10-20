@@ -386,6 +386,8 @@ export interface Painel {
   creditosCorretoraComoReceita: number; totalCreditosCorretoraComoReceita: number;
   /** #173 b) (ADR 0044): trocos que a sincronização classificou sozinha. */
   trocosAutomaticos?: TrocosAutomaticos | null;
+  /** #206: todos os orçamentos do mês acima de 100%, os piores primeiro (card agrupado; não vêm mais em `alertas`). */
+  orcamentosEstourados?: Orcamento[] | null;
 }
 
 /** #173 b): os trocos classificados na sincronização que continuam como ficaram (desde/ate: as datas deles). */

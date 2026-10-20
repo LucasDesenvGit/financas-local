@@ -17,11 +17,12 @@ import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component'
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
+import { PainelAvisosComponent } from './painel-avisos.component';
 
 @Component({
   selector: 'app-painel',
   imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
-    MaisAnalisesComponent, LogoBancoComponent],
+    MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -35,11 +36,8 @@ import { Icones } from '../compartilhado/icones';
     @if (erro()) { <p class="erro">{{ erro() }}</p> }
 
     @if (dados(); as d) {
-      @if (d.alertas.length) {
-        <section class="alertas">
-          @for (a of d.alertas; track a) { <p>⚠ {{ a }}</p> }
-        </section>
-      }
+      <!-- #206: orçamentos estourados agrupados e os outros avisos, os dois com "Ocultar". -->
+      <app-painel-avisos [estourados]="d.orcamentosEstourados ?? []" [alertas]="d.alertas" [periodo]="periodo()" />
       @if (d.poucoInformativas > 0) {
         <p class="nota-discreta">
           {{ d.poucoInformativas === 1 ? '1 transação' : d.poucoInformativas + ' transações' }} dos últimos 90 dias com

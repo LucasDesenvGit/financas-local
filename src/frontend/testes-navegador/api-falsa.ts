@@ -96,6 +96,16 @@ const sugestoesCategoria = [
   sugestao('MERCADOLIVRE MERCADOLI', 'MERCADOLIVRE*MERCADOLI', 3, 'Lazer', 'MERCADOLIVRE'),
   sugestao('IFOOD AGENCIA', 'IFD*iFood', 1, 'Alimentação', 'IFOOD')
 ];
+/** #206: quatro estourados (um por emergência), para o card mostrar os 3 piores e o "Ver todos". */
+const orcamento = (id: number, categoriaId: number, categoriaNome: string, valor: number, gasto: number,
+  situacao: 'estourado' | 'emergencia' = 'estourado') => ({
+  id, categoriaId, categoriaNome, categoriaCor: '#f2b880', ano, mes, valor, gasto,
+  percentual: Math.round(gasto / valor * 1000) / 10, gastoEmergencia: situacao === 'emergencia' ? gasto - valor : 0, situacao
+});
+const orcamentosEstourados = [
+  orcamento(1, 3, 'Lazer', 100, 348), orcamento(2, 1, 'Alimentação', 1000, 1200),
+  orcamento(3, 2, 'Transporte', 400, 450, 'emergencia'), orcamento(4, 4, 'Seguros', 200, 210)
+];
 const resumoAno = { receitas: 50000, despesas: 38000, resultado: 12000, taxaPoupanca: 24 };
 const credito = (natureza: number) => ({ natureza, contratosAbertos: 0, contratosQuitados: 0, saldoDevedor: 0, valorContratado: 0,
   parcelaMensal: 0, totalPago: 0, parcelasEmAtraso: 0 });
@@ -106,7 +116,8 @@ const respostas: Record<string, unknown> = {
   '/api/painel': {
     saldoContas: 3250.5, dividaCartoes: 820.1, totalInvestido: 10000, patrimonioLiquido: 12430.4, rendaVariavel: 4000,
     patrimonioSemRendaVariavel: 8430.4, receitasMes: 5000, despesasMes: 1950, gastosPorCategoria: porCategoria, evolucao,
-    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes, alertas: [], ultimaSincronizacao: hoje.toISOString(),
+    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes, alertas: ['Conta "Aluguel" vencida desde 05/10.'],
+    ultimaSincronizacao: hoje.toISOString(), orcamentosEstourados,
     despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7,
     faturasDoMes: [
       { contaId: 2, cartao: 'Cartão Exemplo', valorMes: 820.1, parcelasMes: 0, faturaId: null, vencimento: null, situacao: null },
