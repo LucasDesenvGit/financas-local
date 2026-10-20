@@ -296,6 +296,14 @@ export interface SugestaoContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; recorrencia: Recorrencia;
 }
 
+/** #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance; desde: o primeiro registro do histórico. */
+export interface HistoricoInvestimentos { desde: string | null; meses: MesInvestimentosOf[]; }
+/** Um mês: rendimento (null se nenhum investimento informa o valor aplicado) e saldo no fim; desde: o mês começou depois do dia 1. */
+export interface MesInvestimentosOf {
+  ano: number; mes: number; desde: string | null; rendimento: number | null; saldo: number;
+  porInvestimento: { nome: string; rendimento: number | null; saldo: number }[];
+}
+
 export interface Investimento {
   id: number; nome: string; tipo: string; subtipo: string | null; codigo: string | null; emissor: string | null;
   moeda: string; saldo: number; saldoEmReais: number | null; valorAplicado: number | null; rendimento: number | null;

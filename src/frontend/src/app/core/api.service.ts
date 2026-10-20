@@ -12,8 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco
-} from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -193,6 +192,10 @@ export class ApiService {
 
   // Investimentos
   investimentos(): Observable<Investimento[]> { return this.http.get<Investimento[]>(`${this.base}/investimentos`); }
+  /** #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance, pelo histórico de saldo. */
+  historicoInvestimentos(): Observable<HistoricoInvestimentos> {
+    return this.http.get<HistoricoInvestimentos>(`${this.base}/investimentos/historico`);
+  }
   /** #170: nome escolhido para o investimento; null volta ao automático (a sincronização não mexe nele). */
   renomearInvestimento(id: number, nome: string | null): Observable<void> {
     return this.http.put<void>(`${this.base}/investimentos/${id}/nome`, { nome });

@@ -272,12 +272,19 @@ public class InvestimentosController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly CambioService _cambio;
+    private readonly HistoricoInvestimentosService _historico;
 
-    public InvestimentosController(FinancasDbContext db, CambioService cambio)
+    public InvestimentosController(FinancasDbContext db, CambioService cambio, HistoricoInvestimentosService historico)
     {
         _db = db;
         _cambio = cambio;
+        _historico = historico;
     }
+
+    /// <summary>#173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance, pelo histórico de saldo.</summary>
+    [HttpGet("historico")]
+    public async Task<ActionResult<HistoricoInvestimentosDto>> Historico(CancellationToken ct)
+        => await _historico.MesAMesAsync(ct);
 
     [HttpGet]
     public async Task<ActionResult<List<InvestimentoDto>>> Listar(CancellationToken ct)
