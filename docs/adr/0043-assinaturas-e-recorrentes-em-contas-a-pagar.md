@@ -42,6 +42,12 @@ O site já tinha **Contas a pagar** (`ContaAgendada`): descrição, valor, recor
   - **texto sugerido:** a palavra mais longa da chave (ex.: NETFLIX).
 - **"Não é" (ignorar a sugestão)** continua lembrado no navegador (ADR 0017): é conveniência de tela, não dado financeiro.
 - **Painel:** o que cai no cartão sai dos "Próximos vencimentos", porque já entra na fatura do mês.
+- **Avisos** (`ContaAgendadaService.AvisosAsync`, parte 3), calculados na hora, sem gravar nada. Os limiares são *julgamento próprio*:
+  - **"não veio":** cobrada sozinha, com o texto, e 5 dias depois do vencimento ainda sem a baixa;
+  - **"mudou de cartão":** a última cobrança com o texto veio em outra conta;
+  - **"aumentou" (ou baixou):** a última cobrança passou 5% do valor. Não vale quando as três últimas variam mais de 15% entre si (luz, água);
+  - **"cartão arquivado":** a conta a pagar ativa cai numa conta ou num cartão arquivado.
+  - **Onde aparecem:** no Painel, só "não veio" e "cartão arquivado" (decisão do usuário); os outros, na tela, com a ação "Atualizar" (o PUT da conta a pagar).
 
 ## Consequências
 
@@ -59,4 +65,4 @@ O site já tinha **Contas a pagar** (`ContaAgendada`): descrição, valor, recor
 - **Na prática:**
   - Coluna nova por `adicionar_coluna_se_ausente`. `FormaCobranca` tem padrão 1, então as contas antigas viram "à mão".
   - Código que mostra "o que vence" deve olhar a forma de cobrança: o que cai no cartão não é conta a pagar à parte.
-  - Os avisos (mudou de cartão, aumento, não veio, cartão arquivado com cobranças) e a tela "Assinaturas e recorrentes" vêm nos próximos PRs da #158.
+  - A tela "Assinaturas e recorrentes" (aba de Contas a pagar) e a linha-resumo de Contas e cartões vieram na parte 2. Os avisos vieram na parte 3.

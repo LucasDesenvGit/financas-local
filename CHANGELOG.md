@@ -5,6 +5,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Publicação e documentação
+- **Manual: capítulo novo "Corrigir seus dados"** (#222). Ele vem logo depois de "Primeiros passos" e tem duas partes:
+  - **o que já se acertou sozinho** depois das correções: estornos, transferências, pagamento de fatura, investimentos e parcelas;
+  - **o passo a passo** para deixar o site igual aos apps dos bancos: sincronizar, conferir as reservas e o Méli Dólar, tirar os trocos dos rendimentos, responder a pergunta do limite, informar o nome nos Pix, cadastrar as assinaturas e terminar em "Conferir com o banco".
 - **Skill do projeto `trabalho-longo`** (#217): em `.claude/skills/`, para quem usa o Claude Code no projeto. Ela monta o esquema para um trabalho grande continuar sozinho quando o limite de uso acaba no meio. São três partes:
   - o plano em arquivo, numa pasta ignorada pelo git;
   - o agendamento "continua o plano", da sessão, com as limitações explicadas;
@@ -62,6 +65,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Funcionalidades
 - **Do mês a mês dos FIIs para os lançamentos** (#173 d, ADR 0018): "ver lançamentos", em Aportes e em Rendimentos de cada mês, abre Transações no mês e só com os lançamentos que formam o número. O filtro aparece num chip ("Rendimentos de FIIs: 2 lançamentos") com ✕, e o voltar do navegador leva de volta aos FIIs. Clicar num mês do gráfico abre os rendimentos dele.
 - **Rendimentos por FII no mês a mês** (#173 c): "por fundo", embaixo dos rendimentos de cada mês, abre quanto cada FII pagou. O crédito sem o código do fundo é ligado pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois). O que não liga aparece como "sem fundo identificado", sem sumir da soma.
+- **Avisos das recorrentes** (#158, parte 3), no topo de Contas a pagar:
+  - **"não veio":** a cobrança automática passou 5 dias do vencimento.
+  - **"mudou de cartão":** com "Atualizar o catálogo".
+  - **"aumentou" ou "baixou":** mais de 5%, menos para quem varia todo mês; com "Atualizar o valor".
+  - **"cartão arquivado":** com cobranças ainda nele.
+  - **No Painel:** só "não veio" e "cartão arquivado".
+  - **Ao arquivar** um cartão ou conta, a edição lista o que ainda cobra ali.
 - **Investimentos › FIIs › Mês a mês** (#173), como no app da corretora: por mês, os **aportes** (compras), os **rendimentos** que caíram na conta, a **valorização** das cotas e o **saldo no fim**, num gráfico com a frase-resumo do último mês e numa tabela com o mês mais recente primeiro.
   - **Rendimentos:** os créditos de provento do extrato, sem o troco das compras nem o valor das vendas (a mesma separação da "Conferir investimentos"), valendo mesmo sem a conferência aplicada. No mês atual, o provento com data-com no mês aparece como "a receber".
   - **Subscrição e vendas** aparecem à parte, embaixo dos aportes.
