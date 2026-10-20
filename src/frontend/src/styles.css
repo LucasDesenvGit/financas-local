@@ -196,6 +196,38 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em; bac
 .menu a.ativo { background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 600; }
 .menu-icone { width: 18px; display: inline-flex; justify-content: center; opacity: 0.85; }
 .menu a.ativo .menu-icone { opacity: 1; }
+
+/* #227 (ADR 0046): grupos do menu que abrem e fecham. O cabeçalho é um botão com a altura de um item (alvo ≥ 24 px,
+   WCAG 2.5.8); a seta em --texto-suave tem ≥ 3:1 com o fundo do menu, e o foco é o contorno padrão em --primaria
+   (WCAG 1.4.11, conferido em contraste-tema.spec.ts). As telas ficam um pouco recuadas, para ler como "dentro" do
+   grupo. Abre e fecha deslizando (grid-template-rows 0fr ↔ 1fr); fechado, fica invisível (fora do Tab, junto com o
+   inert do HTML). Sem animação com prefers-reduced-motion (regra global). */
+.grupo-menu { display: flex; flex-direction: column; }
+.grupo-menu + .grupo-menu, a + .grupo-menu { margin-top: 2px; }
+.grupo-cabecalho {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 38px;
+  padding: 9px 12px; border: 0; border-radius: var(--raio-pequeno); background: none; cursor: pointer;
+  font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--texto); text-align: left;
+  transition: background-color var(--transicao), color var(--transicao);
+}
+.grupo-cabecalho:hover { background: var(--superficie-2); }
+.grupo-nome { flex: 1; min-width: 0; }
+.grupo-seta { color: var(--texto-suave); transition: transform 0.2s ease; }
+.grupo-cabecalho[aria-expanded="true"] .grupo-seta { transform: rotate(90deg); }
+/* Grupo fechado com a tela aberta dentro: cor da tela ativa e um ponto, para a pessoa não se perder (Nielsen 1). */
+.grupo-cabecalho.contem-atual { color: var(--primaria-forte); }
+.grupo-cabecalho.contem-atual .grupo-seta { color: var(--primaria-forte); }
+.grupo-marca-atual { width: 8px; height: 8px; border-radius: 50%; background: var(--primaria-forte); flex-shrink: 0; }
+.grupo-telas {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows 0.2s ease, visibility 0s linear 0s;
+}
+.grupo-telas.fechado {
+  grid-template-rows: 0fr; visibility: hidden;
+  transition: grid-template-rows 0.2s ease, visibility 0s linear 0.2s;
+}
+.grupo-telas-dentro { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+.grupo-telas-dentro a { padding-left: 24px; }
 .kpi-rotulo { display: inline-flex; align-items: center; gap: 6px; }
 
 

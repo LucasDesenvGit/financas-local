@@ -83,3 +83,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0043](0043-assinaturas-e-recorrentes-em-contas-a-pagar.md) | Assinaturas e cobranças recorrentes estendendo Contas a pagar | Aceita |
 | [0044](0044-trocos-sem-duvida-classificados-na-sincronizacao.md) | Trocos "sem dúvida" classificados na sincronização, com aviso e "Desfazer" | Aceita |
 | [0045](0045-historico-de-saldo-dos-investimentos-do-open-finance.md) | Histórico de saldo dos investimentos do Open Finance, um registro por dia | Aceita |
+| [0046](0046-menu-lateral-em-grupos-que-abrem-e-fecham.md) | Menu lateral em grupos que abrem e fecham (sanfona), vários abertos ao mesmo tempo | Aceita |
