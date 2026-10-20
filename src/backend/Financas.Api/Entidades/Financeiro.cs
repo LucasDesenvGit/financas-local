@@ -25,6 +25,12 @@ public class RegraDescricao
     public string Texto { get; set; } = string.Empty;
     public TipoCorrespondencia TipoCorrespondencia { get; set; } = TipoCorrespondencia.Igual;
     public string NovaDescricao { get; set; } = string.Empty;
+    /// <summary>
+    /// #241: a regra só vale com o valor da transação (sem o sinal) entre <c>ValorMinimo</c> e <c>ValorMaximo</c>; null =
+    /// sem piso ou sem teto. Separa cobranças com a mesma descrição do banco e valores diferentes (as duas do condomínio).
+    /// </summary>
+    public decimal? ValorMinimo { get; set; }
+    public decimal? ValorMaximo { get; set; }
     public bool Ativa { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 }
@@ -188,6 +194,18 @@ public class ContaAgendada
     public DateOnly? UltimoPagamentoEm { get; set; }
     /// <summary>#69: último vencimento que ainda se repete (null = sem fim). Passou dele ao pagar, a conta é encerrada.</summary>
     public DateOnly? DataLimite { get; set; }
+    /// <summary>#158 (ADR 0043): à mão (boleto, Pix), débito automático ou cartão de crédito.</summary>
+    public FormaCobranca FormaCobranca { get; set; } = FormaCobranca.AMao;
+    /// <summary>#158: "a descrição do banco contém" isto (ex.: NETFLIX), sem acento e em maiúsculas; liga às cobranças.</summary>
+    public string? TextoCobranca { get; set; }
+    /// <summary>#158: observação livre (ex.: "conta da família", "cancelar em março").</summary>
+    public string? Observacao { get; set; }
+    /// <summary>
+    /// #205: a chave da descrição do banco (a mesma do agrupamento das sugestões do extrato) do pagamento que é esta
+    /// conta. Gravada ao cadastrar pela sugestão, no "é a mesma" e quando a cobrança automática dá baixa: a sugestão
+    /// some por ela, qualquer que seja o nome escolhido.
+    /// </summary>
+    public string? ChaveExtrato { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public Categoria? Categoria { get; set; }

@@ -21,12 +21,19 @@ public class SincronizacaoService
     private readonly RegraDescricaoService _descricoes;
     private readonly ContaService _contas;
     private readonly TransferenciasService _transferencias;
+    private readonly ContaAgendadaService _cobrancas;
+    private readonly ConferenciaInvestimentosService _conferencia;
+    private readonly HistoricoInvestimentosService _historico;
     private readonly ILogger<SincronizacaoService> _logger;
 
     public SincronizacaoService(FinancasDbContext db, PluggyClient pluggy, ConfiguracaoService config,
         CategorizacaoService categorizacao, RegraDescricaoService descricoes, ContaService contas,
-        TransferenciasService transferencias, ILogger<SincronizacaoService> logger)
+        TransferenciasService transferencias, ContaAgendadaService cobrancas, ConferenciaInvestimentosService conferencia,
+        HistoricoInvestimentosService historico, ILogger<SincronizacaoService> logger)
     {
+        _conferencia = conferencia;
+        _historico = historico;
+        _cobrancas = cobrancas;
         _descricoes = descricoes;
         _transferencias = transferencias;
         _db = db;
@@ -238,6 +245,16 @@ public class SincronizacaoService
             await _db.SaveChangesAsync(ct);
             // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031).
             if (await _transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+            // #158: a cobrança automática que acabou de chegar dá baixa na conta a pagar.
+            if (await _cobrancas.ConciliarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+            // #173 b) (ADR 0044): o troco sem dúvida das compras de renda variável vai para a categoria da compra. Um
+            // erro aqui não desfaz a sincronização: o troco continua na conferência.
+            try { await _conferencia.ClassificarTrocosSemDuvidaAsync(ct); }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                _logger.LogWarning(ex, "Não deu para classificar os trocos da corretora depois da sincronização.");
+                _db.ChangeTracker.Clear();
+            }
 
             return new ResultadoSincronizacaoDto(true, novas, atualizadas, null);
         }
@@ -289,6 +306,39 @@ public class SincronizacaoService
         return existentes.ToDictionary(kv => kv.Key, kv => kv.Value.Id);
     }
 
+    /// <summary>#172: até quantos dias depois da pendente a efetivada igual pode aparecer.</summary>
+    public const int DiasPendenteEfetivada = 10;
+
+    /// <summary>
+    /// #172: pendente de antes da janela relida (a instituição não a manda mais, então ela não sai pelo caminho normal)
+    /// que tem, na mesma conta, uma efetivada do mesmo valor entre 2 dias antes e <see cref="DiasPendenteEfetivada"/>
+    /// dias depois: o banco a efetivou com outro código. A pendente sai, para não contar em dobro.
+    /// </summary>
+    private async Task RemoverPendentesJaEfetivadasAsync(int contaId, DateOnly dataInicial, CancellationToken ct)
+    {
+        var antigas = await _db.Transacoes
+            .Where(t => t.ContaId == contaId && t.Status == StatusTransacao.Pendente && t.PluggyTransactionId != null
+                        && t.Data < dataInicial)
+            .ToListAsync(ct);
+        if (antigas.Count == 0) return;
+        var de = antigas.Min(t => t.Data).AddDays(-2);
+        var ate = antigas.Max(t => t.Data).AddDays(DiasPendenteEfetivada);
+        var efetivadas = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.ContaId == contaId && t.Status == StatusTransacao.Efetivada && t.Data >= de && t.Data <= ate)
+            .Select(t => new { t.Id, t.Data, t.Valor }).ToListAsync(ct);
+        var usadas = new HashSet<long>();
+        foreach (var pendente in antigas.OrderBy(t => t.Data).ThenBy(t => t.Id))
+        {
+            var par = efetivadas.Where(e => e.Valor == pendente.Valor && !usadas.Contains(e.Id)
+                    && e.Data >= pendente.Data.AddDays(-2) && e.Data <= pendente.Data.AddDays(DiasPendenteEfetivada))
+                .OrderBy(e => Math.Abs(e.Data.DayNumber - pendente.Data.DayNumber)).FirstOrDefault();
+            if (par is null) continue;
+            usadas.Add(par.Id);
+            _db.Transacoes.Remove(pendente);
+            _logger.LogInformation("Pendente {Id} removida: o banco a efetivou com outro código ({Efetivada}).", pendente.Id, par.Id);
+        }
+    }
+
     private async Task<(int Novas, int Atualizadas)> SincronizarTransacoesAsync(PluggySessao sessao, Conta conta,
         bool ehCartao, DateOnly dataInicial, Dictionary<string, int> mapaFaturas, CancellationToken ct)
     {
@@ -326,15 +376,16 @@ public class SincronizacaoService
             // escolhido à mão (ou editado antes das regras existirem) fica como está.
             var nomeAutomatico = nova || RegraDescricaoService.NomeAutomatico(t);
             t.DescricaoOriginal = descricaoRecebida;
+            t.Estabelecimento = Limitar(pt.Merchant?.BusinessName ?? pt.Merchant?.Name, 200);
+            t.Data = Relogio.ParaDataLocal(pt.Date.Value);
+            t.Valor = CalcularValor(pt, ehCartao);
+            // Depois do valor: a regra de descrição pode ter faixa de valor (#241).
             if (nomeAutomatico)
             {
                 t.Descricao = descricaoRecebida;
                 t.RegraDescricaoId = null;
                 _descricoes.Aplicar(t);
             }
-            t.Estabelecimento = Limitar(pt.Merchant?.BusinessName ?? pt.Merchant?.Name, 200);
-            t.Data = Relogio.ParaDataLocal(pt.Date.Value);
-            t.Valor = CalcularValor(pt, ehCartao);
             t.Status = string.Equals(pt.Status, "PENDING", StringComparison.OrdinalIgnoreCase)
                 ? StatusTransacao.Pendente : StatusTransacao.Efetivada;
             t.PluggyCategoriaId = Limitar(pt.CategoryId, 20);
@@ -375,6 +426,7 @@ public class SincronizacaoService
             .Where(t => t.Status == StatusTransacao.Pendente && t.Data >= dataInicial && !idsRecebidos.Contains(t.PluggyTransactionId!))
             .ToList();
         _db.Transacoes.RemoveRange(pendentesRemovidas);
+        await RemoverPendentesJaEfetivadasAsync(conta.Id, dataInicial, ct);
 
         await _db.SaveChangesAsync(ct);
         return (novas, atualizadas);
@@ -396,6 +448,7 @@ public class SincronizacaoService
         var existentes = await _db.Investimentos.Where(i => i.ConexaoBancariaId == conexao.Id)
             .ToDictionaryAsync(i => i.PluggyInvestmentId, ct);
         var recebidos = new HashSet<string>();
+        var atuais = new List<Investimento>();
 
         foreach (var pi in investimentosPluggy)
         {
@@ -422,7 +475,10 @@ public class SincronizacaoService
             inv.DataAplicacao = aplicacao is { } da ? Relogio.ParaDataLocal(da) : inv.DataAplicacao;
             inv.Status = Limitar(pi.Status, 30);
             inv.AtualizadoEm = DateTime.UtcNow;
+            atuais.Add(inv);
         }
+        // #173 e) (ADR 0045): o saldo de hoje vai para o histórico (rendimento de cada mês da caixinha/CDB).
+        await _historico.RegistrarAsync(atuais, ct);
 
         _db.Investimentos.RemoveRange(existentes.Values.Where(i => !recebidos.Contains(i.PluggyInvestmentId)));
         await _db.SaveChangesAsync(ct);

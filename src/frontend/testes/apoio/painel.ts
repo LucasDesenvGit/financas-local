@@ -22,13 +22,15 @@ export function painel(campos: Partial<Painel> = {}): Painel {
  * Abre o Painel pelo roteador de verdade (o mês vai para a URL), com a API falsa (só GET /painel). `dados` pode ser
  * fixo ou depender do mês pedido; `chamadas` guarda cada (ano, mês) buscado.
  */
-export async function abrirPainel(dados: Painel | ((ano: number, mes: number) => Painel), url = '/painel') {
+export async function abrirPainel(dados: Painel | ((ano: number, mes: number) => Painel), url = '/painel',
+  outras: Record<string, unknown> = {}) {
   const chamadas: [number, number][] = [];
   const responder = typeof dados === 'function' ? dados : () => dados;
   TestBed.configureTestingModule({
     providers: [
       provideRouter([{ path: 'painel', component: PainelComponent }]),
-      { provide: ApiService, useValue: { painel: (ano: number, mes: number) => { chamadas.push([ano, mes]); return of(responder(ano, mes)); } } }
+      { provide: ApiService, useValue: {
+        painel: (ano: number, mes: number) => { chamadas.push([ano, mes]); return of(responder(ano, mes)); }, ...outras } }
     ]
   });
   const harness = await RouterTestingHarness.create();

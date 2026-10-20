@@ -126,9 +126,22 @@ public class ContasController : BaseController
             .Select(f => new FaturaDto(f.Id, f.DataVencimento, f.DataFechamento, f.ValorTotal, f.ValorMinimo, f.ValorPago,
                 _db.Transacoes.Count(t => t.FaturaCartaoId == f.Id), "aberta"))
             .ToListAsync(ct);
-        return faturas.Select(f => f with
+        // #251: o banco nem sempre manda os pagamentos da fatura; o lançado no cartão também vale.
+        var desde = faturas.Select(f => f.DataVencimento).DefaultIfEmpty(hoje).Min().AddMonths(-2);
+        var pagamentos = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.ContaId == id && t.Data >= desde)
+            .Where(ContaService.EhPagamentoNoCartao)
+            .Select(t => new ContaService.PagamentoNoCartao(t.ContaId, t.Data, t.Valor))
+            .ToListAsync(ct);
+        var vencimentos = faturas.Select(f => f.DataVencimento).ToList();
+        return faturas.Select(f =>
         {
-            Situacao = ContaService.SituacaoFatura(Math.Abs(f.ValorTotal), f.ValorPago, f.DataFechamento, f.DataVencimento, hoje)
+            var pago = ContaService.Pago(f.ValorPago, ContaService.PagoNasTransacoes(f.DataVencimento, vencimentos, pagamentos));
+            return f with
+            {
+                ValorPago = pago,
+                Situacao = ContaService.SituacaoFatura(Math.Abs(f.ValorTotal), pago, f.DataFechamento, f.DataVencimento, hoje)
+            };
         }).ToList();
     }
 
@@ -192,4 +205,19 @@ public class ContasController : BaseController
             c.Tipo == TipoConta.CartaoCredito ? extras.FaturasDoMes.GetValueOrDefault(c.Id) : null,
             c.LimiteAjustadoNoApp, c.LimiteDiferencaAvaliada);
     }
+}
+
+/// <summary>
+/// #172: "Conferir com o banco": o valor de cada conta, fatura e investimento no site, com as pistas do que pode
+/// explicar uma diferença para o app do banco. Só leitura; a comparação é feita na tela.
+/// </summary>
+[Route("api/conferencia-banco")]
+public class ConferenciaBancoController : BaseController
+{
+    private readonly ConferenciaBancoService _conferencia;
+
+    public ConferenciaBancoController(ConferenciaBancoService conferencia) => _conferencia = conferencia;
+
+    [HttpGet]
+    public Task<ConferenciaBancoDto> Obter(CancellationToken ct) => _conferencia.MontarAsync(ct);
 }

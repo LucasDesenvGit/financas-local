@@ -47,7 +47,7 @@ export const GLOSSARIO = {
   },
   reservaEmergencia: {
     termo: 'Reserva de emergência',
-    definicao: 'Dinheiro guardado com resgate rápido para imprevistos. Aqui é medida em meses: quantos meses você conseguiria pagar os seus gastos sem renda.'
+    definicao: 'Dinheiro com resgate rápido para imprevistos, medido em meses de gastos sem renda. Conta as contas, a renda fixa e as reservas; ações, FIIs e ETFs ficam de fora, porque o preço oscila e a venda leva dias.'
   },
   comprometimento: {
     termo: 'Comprometimento com parcelas',
@@ -121,6 +121,16 @@ export const GLOSSARIO = {
     termo: 'PTAX',
     definicao: 'A cotação oficial do dólar (e de outras moedas) que o Banco Central divulga todo dia útil. O site usa a de compra para passar para reais o que você tem em moeda estrangeira, como o Méli Dólar.',
     exemplo: 'US$ 10 com a PTAX a 5,05: R$ 50,50.'
+  },
+  valorizacaoMes: {
+    termo: 'Valorização do mês',
+    definicao: 'Quanto as cotas que você tem ganharam ou perderam de preço no mês, sem contar o dinheiro que entrou (aportes) nem os rendimentos. É o saldo no fim do mês menos o saldo no fim do mês anterior, menos as compras e mais as vendas do mês.',
+    exemplo: 'Saldo de R$ 1.000 em setembro, compra de R$ 200 em outubro e saldo de R$ 1.230 no fim de outubro: valorização de R$ 30.'
+  },
+  taxaB3: {
+    termo: 'Taxa da B3',
+    definicao: 'O que a bolsa cobra em cada compra ou venda (emolumentos e liquidação): alguns centavos a cada R$ 1.000. Entra no custo da compra e no preço médio.',
+    exemplo: 'Saiu R$ 1.010,40 da conta, voltaram R$ 10,10 de troco e as cotas custaram R$ 1.000,00: a taxa foi de R$ 0,30.'
   },
   trocoDeCompra: {
     termo: 'Troco da compra',

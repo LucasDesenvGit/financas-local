@@ -73,6 +73,12 @@ adicionar_coluna_se_ausente "Transacao" "DescricaoManual" "INTEGER NOT NULL DEFA
 adicionar_coluna_se_ausente "Investimento" "NomePersonalizado" "TEXT NULL"
 adicionar_coluna_se_ausente "Conta" "LimiteAjustadoNoApp" "INTEGER NULL"
 adicionar_coluna_se_ausente "Conta" "LimiteDiferencaAvaliada" "TEXT NULL"
+adicionar_coluna_se_ausente "ContaAgendada" "FormaCobranca" "INTEGER NOT NULL DEFAULT 1"
+adicionar_coluna_se_ausente "ContaAgendada" "TextoCobranca" "TEXT NULL"
+adicionar_coluna_se_ausente "ContaAgendada" "Observacao" "TEXT NULL"
+adicionar_coluna_se_ausente "ContaAgendada" "ChaveExtrato" "TEXT NULL"
+adicionar_coluna_se_ausente "RegraDescricao" "ValorMinimo" "TEXT NULL"
+adicionar_coluna_se_ausente "RegraDescricao" "ValorMaximo" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

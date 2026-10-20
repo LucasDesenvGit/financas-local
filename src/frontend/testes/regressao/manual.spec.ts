@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 import { rotas } from '../../src/app/app.routes';
 import { GLOSSARIO } from '../../src/app/compartilhado/glossario';
-import { MENU } from '../../src/app/layout/shell.component';
+import { telasDoMenu } from '../../src/app/layout/shell.component';
 import { AJUDA_POR_ROTA, MANUAL, ajudaDaUrl } from '../../src/app/paginas/manual-conteudo';
 import { abrirManual } from '../apoio/manual';
 
@@ -13,8 +13,10 @@ describe('Regressão: Manual acompanha o site', () => {
   const telas = (rotas.find((r) => r.path === '' && r.children)!.children as Route[])
     .map((r) => r.path!).filter((p) => p && !p.startsWith('manual'));
 
-  it('toda tela do menu tem capítulo (e seção, quando indicada) no manual', () => {
-    for (const item of MENU) {
+  it('toda tela do menu tem capítulo (e seção, quando indicada) no manual, também as de dentro dos grupos', () => {
+    const itens = telasDoMenu();
+    expect(itens.length).toBe(13);   // #227: as 13 telas de antes continuam no menu, agora em grupos
+    for (const item of itens) {
       const ajuda = AJUDA_POR_ROTA[item.rota.slice(1)];
       expect(ajuda).toBeDefined();
       const capitulo = MANUAL.find((c) => c.id === ajuda.capitulo);

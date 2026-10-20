@@ -3,12 +3,14 @@ import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } 
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AssinaturasRecorrentesComponent } from './assinaturas-recorrentes.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
-  Categoria, Conta, ContaAgendada, NOMES_RECORRENCIA, OrigemConta, Recorrencia, SalvarContaAgendada,
-  SugestaoContaAgendada, TipoCategoria
+  AvisoContaAgendada, Categoria, Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, NOMES_RECORRENCIA, OrigemConta, Recorrencia,
+  SalvarContaAgendada, SugestaoContaAgendada, TipoCategoria
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
@@ -18,7 +20,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 
 @Component({
   selector: 'app-contas-agendadas',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent,
+    AssinaturasRecorrentesComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -26,6 +29,40 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       <button type="button" class="botao botao-primario" (click)="nova()">+ Nova conta</button>
     </header>
 
+    <!-- #158: avisos das recorrentes, com a ação ao lado (Nielsen 1 e 9); "não veio" e "cartão arquivado" também no Painel. -->
+    @if (avisosRecorrentes().length) {
+      <section class="painel-bloco avisos-recorrentes" aria-labelledby="titulo-avisos">
+        <div class="bloco-titulo"><h2 id="titulo-avisos">Avisos das recorrentes</h2></div>
+        <ul class="lista-avisos">
+          @for (a of avisosRecorrentes(); track a.contaAgendadaId + a.tipo) {
+            <li>
+              <span aria-hidden="true">⚠</span> {{ a.texto }}
+              @if (a.tipo === 'aumentou' && a.valorNovo !== null) {
+                <span class="nowrap">({{ a.valorAnterior | currency }} → {{ a.valorNovo | currency }})</span>
+                <button type="button" class="botao botao-pequeno" (click)="atualizarPeloAviso(a)"
+                  [attr.aria-label]="'Atualizar o valor de ' + a.descricao">Atualizar o valor</button>
+              }
+              @if (a.tipo === 'mudou-de-cartao' && a.contaNovaId !== null) {
+                <button type="button" class="botao botao-pequeno" (click)="atualizarPeloAviso(a)"
+                  [attr.aria-label]="'Atualizar o catálogo de ' + a.descricao + ': cobra em ' + a.contaNovaNome">Atualizar o catálogo</button>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- #158: o de-para das cobranças que se repetem, como aba da mesma tela (Nielsen 4); a aba fica na URL (ADR 0018). -->
+    <div class="segmentado barra-abas" role="tablist" aria-label="Contas a pagar">
+      <button type="button" role="tab" [class.ativo]="aba() === 'contas'" [attr.aria-selected]="aba() === 'contas'"
+        (click)="mudarAba('contas')">Contas a pagar</button>
+      <button type="button" role="tab" [class.ativo]="aba() === 'recorrentes'" [attr.aria-selected]="aba() === 'recorrentes'"
+        (click)="mudarAba('recorrentes')">Assinaturas e recorrentes</button>
+    </div>
+
+    @if (aba() === 'recorrentes') {
+      <app-assinaturas-recorrentes [itens]="itens()" [contas]="contas()" />
+    } @else {
     <section class="kpis">
       <article class="kpi"><span>Vencidas</span><strong class="negativo">{{ totalVencido() | currency }}</strong></article>
       <article class="kpi"><span>Próximos 30 dias</span><strong>{{ total30() | currency }}</strong></article>
@@ -51,7 +88,11 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                   </small>
                 }
               </td>
-              <td>{{ c.descricao }} @if (c.contaNome) { <small class="texto-suave">· {{ c.contaNome }}</small> }</td>
+              <td>{{ c.descricao }} @if (c.contaNome) { <small class="texto-suave">· {{ c.contaNome }}</small> }
+                <!-- #158: como é cobrada, em texto (Nielsen 6: onde cai fica escrito na tela). -->
+                <br><small class="texto-suave">{{ nomeForma(c.formaCobranca) }}
+                  @if (baixaSozinha(c)) { · baixa sozinha quando a cobrança com “{{ c.textoCobranca }}” chega }</small>
+                @if (c.observacao) { <br><small class="texto-suave">{{ c.observacao }}</small> }</td>
               <td>{{ nomeRecorrencia(c.recorrencia) }}
                 @if (c.encerrada) {
                   <br><small class="texto-suave">encerrada@if (c.ultimoPagamentoEm) { em {{ c.ultimoPagamentoEm | date: 'dd/MM/yyyy' }}}</small>
@@ -63,7 +104,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
               <td>{{ c.categoriaNome ?? '—' }}</td>
               <td class="direita valor">{{ c.valor | currency }}</td>
               <td class="direita nowrap">
-                @if (c.ativa) { <button type="button" class="botao botao-pequeno" (click)="abrirPagamento(c)">Pagar</button> }
+                @if (c.ativa && !baixaSozinha(c)) {
+                  <button type="button" class="botao botao-pequeno" (click)="abrirPagamento(c)"
+                    [attr.aria-label]="'Pagar ' + c.descricao">Pagar</button>
+                }
                 <button type="button" class="link" (click)="editar(c)">editar</button>
               </td>
             </tr>
@@ -80,8 +124,9 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           <h2 id="titulo-sugestoes">Sugestões do extrato</h2>
         </div>
         <p class="texto-suave pequeno-texto">
-          Pagamentos que se repetem todo mês nas suas contas e ainda não estão nesta lista. O banco não informa
-          boletos futuros, então o vencimento é estimado pelo dia em que você costuma pagar. Confira antes de salvar.
+          Pagamentos que se repetem todo mês (ou todo ano) nas suas contas e cartões, e ainda não estão nesta lista:
+          contas, débitos automáticos e assinaturas. O banco não informa boletos futuros, então o vencimento é estimado
+          pelo dia em que você costuma pagar. Confira antes de salvar.
         </p>
         @if (sugestoesVisiveis().length) {
           <div class="tabela-rolagem">
@@ -98,7 +143,19 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                         <br><small class="texto-alerta">o de {{ s.vencimentoSemPagamento | date: 'dd/MM' }} ainda não apareceu no extrato</small>
                       }</td>
                     <td>{{ s.descricao }}<br>
-                      <small class="texto-suave">pago em {{ s.meses }} meses@if (s.pagamentos !== s.meses) { ({{ s.pagamentos }} pagamentos) } · último em {{ s.ultimoPagamento | date: 'dd/MM' }} · {{ s.contaNome }}</small></td>
+                      @if (s.recorrencia === Recorrencia.Anual) {
+                        <small class="texto-suave">anual: pago em {{ s.primeiroPagamento | date: 'MM/yyyy' }} e {{ s.ultimoPagamento | date: 'MM/yyyy' }} · {{ s.contaNome }}</small>
+                      } @else {
+                        <small class="texto-suave">pago em {{ s.meses }} meses@if (s.pagamentos !== s.meses) { ({{ s.pagamentos }} pagamentos) } · último em {{ s.ultimoPagamento | date: 'dd/MM' }} · {{ s.contaNome }}</small>
+                      }
+                      <br><small class="texto-suave">{{ nomeForma(s.formaCobranca) }}</small>
+                      <!-- #205: conta a pagar parecida (valor, dia e conta) com outro nome: a pergunta e a resposta juntas
+                           (Nielsen 6, reconhecer em vez de lembrar), num botão de verdade (WCAG 2.1.1). -->
+                      @if (s.pareceSerId !== null && s.chaveExtrato) {
+                        <br><small class="parece-ser">parece ser <strong>{{ s.pareceSerNome }}</strong>, que já está na lista</small>
+                        <button type="button" class="botao botao-pequeno nowrap" (click)="eAMesma(s)"
+                          [attr.aria-label]="'é a mesma: ' + s.descricao + ' é ' + s.pareceSerNome">é a mesma</button>
+                      }</td>
                     <td>{{ s.categoriaNome ?? '—' }}</td>
                     <td class="direita valor nowrap">
                       @if (s.valorVariavel) {
@@ -132,6 +189,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           </p>
         }
       </section>
+    }
     }
 
     <app-modal [aberto]="form !== null" [titulo]="editandoId ? 'Editar conta' : 'Nova conta a pagar'" (fechar)="form = null">
@@ -170,12 +228,32 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             <p class="texto-suave pequeno-texto" id="ajuda-limite">
               Depois do último pagamento a conta é encerrada sozinha e sai do Painel. Em branco, ela se repete sem fim.</p>
           }
-          <label>Conta de pagamento (opcional)
+          <label>Como é cobrada
+            <select name="forma" [(ngModel)]="fm.formaCobranca" aria-describedby="ajuda-forma">
+              @for (f of formas; track f) { <option [ngValue]="f">{{ nomeForma(f) }}</option> }
+            </select>
+          </label>
+          <label>{{ fm.formaCobranca === FormaCobranca.CartaoCredito ? 'Cartão onde cai' : 'Conta de pagamento' }} (opcional)
             <select name="conta" [(ngModel)]="fm.contaId">
               <option [ngValue]="null">—</option>
               @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
             </select>
           </label>
+          @if (fm.formaCobranca !== FormaCobranca.AMao) {
+            <label>Texto da cobrança no extrato
+              <input name="textoCobranca" [(ngModel)]="fm.textoCobranca" maxlength="100" placeholder="ex.: NETFLIX"
+                aria-describedby="ajuda-forma"></label>
+          }
+          <p class="texto-suave pequeno-texto" id="ajuda-forma">
+            @if (fm.formaCobranca === FormaCobranca.AMao) {
+              Boleto ou Pix que você paga: use “Pagar” quando pagar.
+            } @else {
+              Cobrada sozinha: com o texto (a descrição do banco contém…), ela se dá como paga quando a cobrança chega
+              no extrato. Sem o texto, use “Pagar”.
+            }
+          </p>
+          <label>Observação (opcional)
+            <input name="observacao" [(ngModel)]="fm.observacao" maxlength="300" placeholder="ex.: conta da família, cancelar em março"></label>
           <label class="checkbox"><input type="checkbox" name="ativa" [(ngModel)]="fm.ativa"> Ativa</label>
           <div class="rodape-form">
             @if (editandoId) { <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button> }
@@ -213,12 +291,34 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 export class ContasAgendadasComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** #158: aba aberta (?aba=recorrentes). */
+  readonly aba = signal<'contas' | 'recorrentes'>(
+    this.rota.snapshot.queryParamMap.get('aba') === 'recorrentes' ? 'recorrentes' : 'contas');
+
+  constructor() {
+    this.rota.queryParamMap.pipe(takeUntilDestroyed())
+      .subscribe((p) => this.aba.set(p.get('aba') === 'recorrentes' ? 'recorrentes' : 'contas'));
+  }
+
+  /** Trocar de aba limpa os filtros da outra (replaceUrl, para o voltar do navegador não passar por cada clique). */
+  mudarAba(aba: 'contas' | 'recorrentes'): void {
+    this.aba.set(aba);
+    void this.router.navigate([], { relativeTo: this.rota, replaceUrl: true,
+      queryParams: { aba: aba === 'recorrentes' ? 'recorrentes' : null } });
+  }
 
   readonly Recorrencia = Recorrencia;
+  readonly FormaCobranca = FormaCobranca;
+  readonly formas = [FormaCobranca.AMao, FormaCobranca.DebitoAutomatico, FormaCobranca.CartaoCredito];
   readonly itens = signal<ContaAgendada[]>([]);
   readonly contas = signal<Conta[]>([]);
   readonly categorias = signal<Categoria[]>([]);
   readonly sugestoes = signal<SugestaoContaAgendada[]>([]);
+  /** #158: avisos das recorrentes. */
+  readonly avisosRecorrentes = signal<AvisoContaAgendada[]>([]);
   readonly ignoradas = signal<string[]>(ContasAgendadasComponent.lerIgnoradas());
   readonly sugestoesVisiveis = computed(() => this.sugestoes().filter((s) => !this.ignoradas().includes(s.chave)));
   readonly ignoradasNaLista = computed(() => this.sugestoes().filter((s) => this.ignoradas().includes(s.chave)));
@@ -246,6 +346,15 @@ export class ContasAgendadasComponent implements OnInit {
     return NOMES_RECORRENCIA[r];
   }
 
+  nomeForma(f: FormaCobranca): string {
+    return NOMES_FORMA_COBRANCA[f] ?? NOMES_FORMA_COBRANCA[FormaCobranca.AMao];
+  }
+
+  /** #158: cobrada sozinha e com o texto da cobrança: dá baixa quando a cobrança chega, sem "Pagar". */
+  baixaSozinha(c: ContaAgendada): boolean {
+    return c.formaCobranca !== FormaCobranca.AMao && !!c.textoCobranca;
+  }
+
   podeLancar(c: ContaAgendada): boolean {
     return this.contas().some((x) => x.id === c.contaId && x.origem === OrigemConta.Manual);
   }
@@ -255,7 +364,8 @@ export class ContasAgendadasComponent implements OnInit {
       next: (i) => this.itens.set(i),
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
-    // Sugestão é complementar: se falhar, a tela segue sem ela.
+    // Sugestão e aviso são complementares: se falharem, a tela segue sem eles.
+    this.api.avisosContasAgendadas().subscribe({ next: (a) => this.avisosRecorrentes.set(a), error: () => this.avisosRecorrentes.set([]) });
     this.api.sugestoesContasAgendadas().subscribe({ next: (s) => this.sugestoes.set(s), error: () => this.sugestoes.set([]) });
   }
 
@@ -263,9 +373,54 @@ export class ContasAgendadasComponent implements OnInit {
     this.editandoId = null;
     this.chaveSugestaoEmCadastro = s.chave;
     this.form = {
-      descricao: s.descricao, valor: s.valor, proximoVencimento: s.proximoVencimento, recorrencia: Recorrencia.Mensal,
-      categoriaId: s.categoriaId, contaId: s.contaId, ativa: true, dataLimite: null
+      descricao: s.descricao, valor: s.valor, proximoVencimento: s.proximoVencimento, recorrencia: s.recorrencia ?? Recorrencia.Mensal,
+      categoriaId: s.categoriaId, contaId: s.contaId, ativa: true, dataLimite: null,
+      formaCobranca: s.formaCobranca ?? FormaCobranca.AMao, textoCobranca: s.textoCobranca ?? null, observacao: null,
+      // #205: a conta a pagar guarda de que sugestão veio; renomear não a traz de volta.
+      chaveExtrato: s.chaveExtrato ?? null
     };
+  }
+
+  /**
+   * #205: "é a mesma": grava a ligação da sugestão com a conta a pagar parecida, e a sugestão sai da lista. O aviso tem
+   * "Desfazer" (Nielsen 3: saída clara para o clique por engano).
+   */
+  eAMesma(s: SugestaoContaAgendada): void {
+    const id = s.pareceSerId;
+    if (id === null || !s.chaveExtrato) return;
+    this.api.ligarExtratoContaAgendada(id, s.chaveExtrato).subscribe({
+      next: () => {
+        this.sugestoes.update((lista) => lista.filter((x) => x.chaveExtrato !== s.chaveExtrato));
+        this.avisos.sucesso(`Ligada a ${s.pareceSerNome}: essa sugestão não aparece mais.`, {
+          rotulo: 'Desfazer',
+          executar: () => this.api.desligarExtratoContaAgendada(id).subscribe({
+            next: () => this.carregar(),
+            error: (e) => this.avisos.erro(mensagemDeErro(e))
+          })
+        });
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /** #158: "Atualizar o valor" ou "Atualizar o catálogo": a conta a pagar fica como a última cobrança. */
+  atualizarPeloAviso(a: AvisoContaAgendada): void {
+    const c = this.itens().find((x) => x.id === a.contaAgendadaId);
+    if (!c) return;
+    const dto: SalvarContaAgendada = {
+      descricao: c.descricao, valor: a.tipo === 'aumentou' && a.valorNovo !== null ? a.valorNovo : c.valor,
+      proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia, categoriaId: c.categoriaId,
+      contaId: a.tipo === 'mudou-de-cartao' && a.contaNovaId !== null ? a.contaNovaId : c.contaId,
+      ativa: c.ativa, dataLimite: c.dataLimite, formaCobranca: c.formaCobranca, textoCobranca: c.textoCobranca,
+      observacao: c.observacao
+    };
+    this.api.atualizarContaAgendada(c.id, dto).subscribe({
+      next: () => {
+        this.avisos.sucesso(a.tipo === 'aumentou' ? 'Valor atualizado.' : `Agora cobra em ${a.contaNovaNome}.`);
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   linkPagamentos(s: SugestaoContaAgendada): Record<string, string> {
@@ -316,7 +471,7 @@ export class ContasAgendadasComponent implements OnInit {
     this.editandoId = null;
     this.chaveSugestaoEmCadastro = null;
     this.form = { descricao: '', valor: 0, proximoVencimento: dataIso(), recorrencia: Recorrencia.Mensal, categoriaId: null, contaId: null, ativa: true,
-      dataLimite: null };
+      dataLimite: null, formaCobranca: FormaCobranca.AMao, textoCobranca: null, observacao: null };
   }
 
   editar(c: ContaAgendada): void {
@@ -324,7 +479,8 @@ export class ContasAgendadasComponent implements OnInit {
     this.chaveSugestaoEmCadastro = null;
     this.form = {
       descricao: c.descricao, valor: c.valor, proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia,
-      categoriaId: c.categoriaId, contaId: c.contaId, ativa: c.ativa, dataLimite: c.dataLimite
+      categoriaId: c.categoriaId, contaId: c.contaId, ativa: c.ativa, dataLimite: c.dataLimite,
+      formaCobranca: c.formaCobranca ?? FormaCobranca.AMao, textoCobranca: c.textoCobranca, observacao: c.observacao
     };
   }
 
@@ -358,7 +514,10 @@ export class ContasAgendadasComponent implements OnInit {
     if (!this.form) return;
     const dto = {
       ...this.form, valor: Number(this.form.valor),
-      dataLimite: this.form.recorrencia === Recorrencia.Unica || !this.form.dataLimite ? null : this.form.dataLimite
+      dataLimite: this.form.recorrencia === Recorrencia.Unica || !this.form.dataLimite ? null : this.form.dataLimite,
+      // #158: o texto só vale para a cobrada sozinha.
+      textoCobranca: this.form.formaCobranca === FormaCobranca.AMao ? null : this.form.textoCobranca?.trim() || null,
+      observacao: this.form.observacao?.trim() || null
     };
     const req = this.editandoId ? this.api.atualizarContaAgendada(this.editandoId, dto) : this.api.criarContaAgendada(dto);
     req.subscribe({

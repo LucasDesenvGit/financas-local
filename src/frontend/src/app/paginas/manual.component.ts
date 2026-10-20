@@ -124,7 +124,8 @@ function normalizar(texto: string): string {
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     /* flex + gap: o Angular tira os espaços entre os elementos (ficaria "Manual›Contas"). */
-    .trilha { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.85rem; margin-bottom: 4px; }
+    .trilha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.85rem; margin-bottom: 4px; }
+    .trilha a, .navegacao-capitulos a { display: inline-flex; align-items: center; min-height: 24px; }
     .resumo-capitulo { max-width: 80ch; margin: -8px 0 18px; }
     .indice-secoes ol { margin: 6px 0 0; padding-left: 22px; columns: 2 260px; }
     .indice-secoes li { margin: 3px 0; }

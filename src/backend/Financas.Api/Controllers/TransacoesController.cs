@@ -79,6 +79,7 @@ public class TransacoesController : BaseController
         if (f.Inicio is { } inicio) q = q.Where(t => t.Data >= inicio);
         if (f.Fim is { } fim) q = q.Where(t => t.Data <= fim);
         if (f.ContaId is { } contaId) q = q.Where(t => t.ContaId == contaId);
+        if (f.Ids is { Count: > 0 } escolhidas) q = q.Where(t => escolhidas.Contains(t.Id));
         // Categorias marcadas (cada uma com as subcategorias) e/ou "sem categoria": basta atender a uma delas.
         var categorias = (f.CategoriaIds ?? []).Concat(f.CategoriaId is { } c ? [c] : []).Distinct().ToList();
         var semCategoria = f.SemCategoria;
@@ -96,12 +97,13 @@ public class TransacoesController : BaseController
         if (f.SomenteEmergencias) q = q.Where(t => t.Emergencia);
         if (!string.IsNullOrWhiteSpace(f.Busca))
         {
-            var busca = f.Busca.Trim();
-            // #123: acha pelo nome mostrado e pelo nome que veio do banco.
-            q = q.Where(t => t.Descricao.Contains(busca)
-                             || (t.DescricaoOriginal != null && t.DescricaoOriginal.Contains(busca))
-                             || (t.Estabelecimento != null && t.Estabelecimento.Contains(busca))
-                             || (t.Observacao != null && t.Observacao.Contains(busca)));
+            // #123: acha pelo nome mostrado e pelo nome que veio do banco. #158: sem diferenciar maiúsculas ("netflix"
+            // acha "NETFLIX.COM"): o LIKE do SQLite ignora a caixa das letras sem acento; % e _ digitados valem como texto.
+            var padrao = "%" + f.Busca.Trim().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+            q = q.Where(t => EF.Functions.Like(t.Descricao, padrao, "\\")
+                             || (t.DescricaoOriginal != null && EF.Functions.Like(t.DescricaoOriginal, padrao, "\\"))
+                             || (t.Estabelecimento != null && EF.Functions.Like(t.Estabelecimento, padrao, "\\"))
+                             || (t.Observacao != null && EF.Functions.Like(t.Observacao, padrao, "\\")));
         }
         if (f.Lancamento is { } grupo && TipoLancamentoService.Grupos.TryGetValue(grupo, out var tipos))
         {
@@ -545,7 +547,10 @@ public class TransacoesController : BaseController
         var alteradas = new List<RegraAntes>();
         if (originais.Count > 0)
         {
-            var existentes = await _db.RegrasDescricao.Where(r => r.TipoCorrespondencia == TipoCorrespondencia.Igual).ToListAsync(ct);
+            // #241: a regra com faixa de valor vale só para parte das transações com o texto; não é reaproveitada aqui.
+            var existentes = await _db.RegrasDescricao
+                .Where(r => r.TipoCorrespondencia == TipoCorrespondencia.Igual && r.ValorMinimo == null && r.ValorMaximo == null)
+                .ToListAsync(ct);
             foreach (var original in originais)
             {
                 var normalizado = CategorizacaoService.Normalizar(original);

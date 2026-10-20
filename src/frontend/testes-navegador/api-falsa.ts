@@ -15,7 +15,15 @@ export interface ApiFalsa {
 }
 
 const hoje = new Date();
+/** "AAAA-MM-DD" na data local. */
+const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const ano = hoje.getFullYear();
+/** Reserva fictícia (aba Reservas de Investimentos). */
+const reserva = (campos: Record<string, unknown>) => ({
+  contaId: 1, nomeConta: 'Banco Fictício', nome: 'Reserva', saldo: 0, guardado: 500, retirado: 100, movimentos: 3,
+  primeiroMovimento: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), ultimoMovimento: dataIso(new Date(ano, hoje.getMonth(), 1)),
+  saldoConferido: null, dataConferencia: null, podeTerSaldoAnterior: false, conferenciaAntiga: false, ...campos
+});
 const mes = hoje.getMonth() + 1;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const mesesAtras = (n: number) => {
@@ -38,7 +46,16 @@ const contas = [
   { id: 2, nome: 'Cartão Exemplo', tipo: 3, origem: 2, numero: null, moeda: 'BRL', saldo: -820.1, saldoInicial: 0,
     limiteCredito: 5000, limiteDisponivel: 4179.9, diaFechamento: 3, diaVencimento: 10, cor: '#92c8f0', incluirNoSaldo: true,
     arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
-  { id: 3, nome: 'Poupança Exemplo com um nome bem comprido, que quebra em duas linhas', tipo: 1, origem: 1, numero: null, moeda: 'BRL', saldo: 12000, saldoInicial: 12000,
+  // #251: cartão de crédito com a fatura do mês já paga e a próxima, ainda aberta.
+  { id: 3, nome: 'Cartão Crédito', tipo: 3, origem: 2, numero: '5555 4444 3333 1234', moeda: 'BRL', saldo: -207.8, saldoInicial: 0,
+    limiteCredito: 3000, limiteDisponivel: 2792.2, diaFechamento: 3, diaVencimento: 10, cor: '#d4a5e8', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null,
+    faturaMes: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 612.3, parcelasMes: 0, faturaId: 9,
+      vencimento: dataIso(new Date(ano, hoje.getMonth(), 10)), situacao: 'paga', fechamento: dataIso(new Date(ano, hoje.getMonth(), 3)),
+      proxima: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 207.8, parcelasMes: 0, faturaId: null,
+        vencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), situacao: 'aberta',
+        fechamento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)) } } },
+  { id: 5, nome: 'Poupança Exemplo com um nome bem comprido, que quebra em duas linhas', tipo: 1, origem: 1, numero: null, moeda: 'BRL', saldo: 12000, saldoInicial: 12000,
     limiteCredito: null, limiteDisponivel: null, diaFechamento: null, diaVencimento: null, cor: '#8fd8b0', incluirNoSaldo: true,
     arquivada: false, conexaoBancariaId: null, nomeInstituicao: null, atualizadoEm: hoje.toISOString(), banco: null },
   { id: 4, nome: 'Cartão Segundo com um nome bem comprido, que quebra em duas linhas', tipo: 3, origem: 1, numero: null, moeda: 'BRL', saldo: -150, saldoInicial: 0,
@@ -78,7 +95,8 @@ const respostas: Record<string, unknown> = {
       { contaId: 4, cartao: 'Cartão Segundo com um nome bem comprido, que quebra em duas linhas', valorMes: 150, parcelasMes: 0, faturaId: null, vencimento: null, situacao: null }
     ],
     totalFaturasDoMes: 970.1, poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null,
-    creditosCorretoraComoReceita: 0, totalCreditosCorretoraComoReceita: 0
+    creditosCorretoraComoReceita: 0, totalCreditosCorretoraComoReceita: 0,
+    trocosAutomaticos: { quantidade: 2, total: 5.4, ids: [1, 2], desde: dataIso(new Date(ano, hoje.getMonth(), 1)), ate: dataIso(hoje) }
   },
   '/api/relatorios/categorias': porCategoria,
   '/api/relatorios/fluxo': evolucao,
@@ -102,19 +120,90 @@ const respostas: Record<string, unknown> = {
   },
   '/api/contas': contas,
   '/api/contas/bancos': [],
+  // #172: "Conferir com o banco".
+  '/api/conferencia-banco': {
+    contas: [{ id: 1, nome: 'Conta Corrente', banco: 'nubank', openFinance: true, saldo: 1000, pistas: [
+      { texto: 'O saldo vem do banco, atualizado em 19/10/2026. O que entrou ou saiu depois ainda não chegou.', valor: null },
+      { texto: 'Reservas e caixinhas desta conta (o app pode mostrar o saldo com elas)', valor: 2000, rota: '/investimentos',
+        parametros: { aba: 'reservas' } }
+    ] }],
+    cartoes: [{ id: 2, nome: 'Cartão Roxo', banco: 'nubank', faturaMes: 511.72, situacao: 'aberta', fechamento: null,
+      vencimento: '2026-11-10', dividaTotal: 1200, pistas: [
+        { texto: 'Parcelas nesta fatura (o app pode mostrá-las à parte)', valor: 59.9 }
+      ] }],
+    investimentos: [{ chave: 'of-1', nome: 'CDB · Nubank', origem: 'Open Finance', saldo: 1500, pistas: [] }]
+  },
   '/api/transacoes': { itens: transacoes, total: transacoes.length, pagina: 1, tamanhoPagina: 50, totalReceitas: 5000, totalDespesas: 152.3 },
   '/api/transacoes/sugestoes-categoria': [],
+  // A edição de uma transação pede as sugestões dela (teclado.spec.ts abre a primeira).
+  '/api/transacoes/1/sugestoes-categoria': [],
+  '/api/transacoes/2/sugestoes-categoria': [],
   '/api/categorias': categorias,
   '/api/regras': [],
-  '/api/regras-descricao': [],
+  // #241: as duas contas do condomínio, separadas pelo valor.
+  '/api/regras-descricao': [
+    { id: 1, texto: 'CONDOMINIO', tipoCorrespondencia: 1, novaDescricao: 'Condomínio — taxa', ativa: true, transacoes: 6,
+      valorMinimo: 800, valorMaximo: 900 },
+    { id: 2, texto: 'CONDOMINIO', tipoCorrespondencia: 1, novaDescricao: 'Condomínio — fundo de reserva', ativa: true,
+      transacoes: 6, valorMinimo: null, valorMaximo: 250 }
+  ],
+  '/api/regras-descricao/previa': { quantidade: 6, exemplos: ['PAGAMENTO CONDOMINIO EDIF SOLAR'] },
   '/api/orcamentos': [],
   '/api/metas': [],
   '/api/reservas': [],
   '/api/metas/plano': { disponivel: false, mesesConsiderados: 1, ano, mes, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
     saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] },
-  '/api/contas-agendadas': [],
-  '/api/contas-agendadas/sugestoes': [],
+  // #158: uma conta paga à mão, um débito automático e uma assinatura no cartão (baixa sozinha), e duas sugestões.
+  '/api/contas-agendadas': [
+    { id: 1, descricao: 'Escola', valor: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Educação', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 20, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 1, textoCobranca: null, observacao: null },
+    { id: 2, descricao: 'Luz', valor: 180, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 15)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Moradia', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 25, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 2, textoCobranca: 'ENERGIA', observacao: null },
+    { id: 3, descricao: 'Streaming', valor: 44.9, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 12)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Lazer', contaId: 2, contaNome: 'Cartão Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 22, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 3, textoCobranca: 'STREAMING', observacao: 'conta da família' }
+  ],
+  // #158: um aviso de aumento, com a ação "Atualizar o valor".
+  '/api/contas-agendadas/avisos': [
+    { contaAgendadaId: 3, descricao: 'Streaming', tipo: 'aumentou', texto: 'Streaming aumentou na última cobrança.',
+      valorAnterior: 44.9, valorNovo: 49.9, contaNovaId: null, contaNovaNome: null, data: null }
+  ],
+  '/api/contas-agendadas/sugestoes': [
+    { chave: 'musica#2', descricao: 'MUSICA APP', valor: 21.9, valorVariavel: false, valorMinimo: 21.9, valorMaximo: 21.9,
+      proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 3)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 3)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'MUSICA',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1,
+      chaveExtrato: 'MUSICA', pareceSerId: null, pareceSerNome: null },
+    { chave: 'nuvem', descricao: 'NUVEM ANUAL', valor: 119, valorVariavel: false, valorMinimo: 119, valorMaximo: 119,
+      proximoVencimento: dataIso(new Date(ano + 1, hoje.getMonth(), 5)), diaHabitual: 5, meses: 2, pagamentos: 2,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 5)), primeiroPagamento: dataIso(new Date(ano - 1, hoje.getMonth(), 5)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'NUVEM',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2,
+      chaveExtrato: 'NUVEM', pareceSerId: null, pareceSerNome: null },
+    // #205: parecida com "Escola" (valor, dia e conta), com outro nome: "parece ser Escola" e "é a mesma".
+    { chave: 'PESSOA EXEMPLO', descricao: 'PIX ENVIADO PESSOA EXEMPLO', valor: 1450, valorVariavel: false, valorMinimo: 1450,
+      valorMaximo: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), diaHabitual: 10, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 10)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 10)),
+      categoriaId: null, categoriaNome: null, contaId: 1, contaNome: 'Conta Exemplo', termoBusca: 'PESSOA',
+      vencimentoSemPagamento: null, formaCobranca: 1, textoCobranca: 'PESSOA', recorrencia: 1,
+      chaveExtrato: 'PESSOA EXEMPLO', pareceSerId: 1, pareceSerNome: 'Escola' }
+  ],
   '/api/investimentos': [],
+  '/api/investimentos/historico': {
+    desde: dataIso(new Date(ano, hoje.getMonth() - 1, 20)),
+    meses: [
+      { ...mesesAtras(1), desde: dataIso(new Date(ano, hoje.getMonth() - 1, 20)), rendimento: 12.3, saldo: 5012.3,
+        porInvestimento: [{ nome: 'Caixinha viagem', rendimento: 10, saldo: 4010 }, { nome: 'CDB · Banco X', rendimento: 2.3, saldo: 1002.3 }] },
+      { ...mesesAtras(0), desde: null, rendimento: 40.5, saldo: 5552.8,
+        porInvestimento: [{ nome: 'Caixinha viagem', rendimento: 33, saldo: 4543 }, { nome: 'Fundo Y', rendimento: null, saldo: 1009.8 }] }
+    ]
+  },
   '/api/emprestimos': { financiamentos: credito(1), emprestimos: credito(2), contratos: [], pagamentosPorMes: [] },
   '/api/cambio/moedas': [],
   '/api/carteira': {
@@ -123,18 +212,45 @@ const respostas: Record<string, unknown> = {
       proventos12Meses: 0, resultadoTotal: 0, valorSeFosseSelic: 0, diferencaSelic: 0, resultadoTotalPercentual: null,
       resultadoSelicPercentual: null },
     posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 0, distribuicao: [],
-    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [], reservas: [],
-    totalReservas: 0, cotasDiferentes: []
+    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [],
+    // #237: numa conta, o banco detalha uma reserva pelo nome e outra fica fora da lista; na outra, manda só o total.
+    reservas: [
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Viagem', saldo: 1200, informadoPeloBanco: true }),
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Presentes', saldo: 150, foraDaListaDoBanco: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Carro', saldo: 400, podeTerSaldoAnterior: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Reservado', saldo: 600, guardado: 0, retirado: 0, movimentos: 0,
+        primeiroMovimento: null, ultimoMovimento: null, restanteDoBanco: true, totalDoBanco: 1000 })
+    ],
+    totalReservas: 2350, cotasDiferentes: []
   },
+  // #173: um FII fictício e seis meses de "Mês a mês" (aporte, subscrição, venda, rendimentos e valorização dos dois sinais).
   '/api/carteira/fiis': {
-    resumo: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, renda12Meses: 0, rendaMediaMensal: 0,
-      rendaMensalEstimada: 0, dy12Meses: null, yieldOnCost12Meses: null, recebidoExtrato12Meses: 0, rentabilidadeTotal: null,
-      rentabilidadeSelic: null, rentabilidadeIfix: null, quantidadeFiis: 0 },
-    fiis: [], lotes: [], proventos: [], evolucao: [], rentabilidade: [], segmentos: [], historicos: [], segmentosDisponiveis: [],
-    mesAMes: []
+    resumo: { valorMercado: 1020, custo: 980, valorizacao: 40, valorizacaoPercentual: 4.08, renda12Meses: 60, rendaMediaMensal: 10,
+      rendaMensalEstimada: 10, dy12Meses: 5.9, yieldOnCost12Meses: 6.1, recebidoExtrato12Meses: 60, rentabilidadeTotal: 10.2,
+      rentabilidadeSelic: 8.5, rentabilidadeIfix: 3.1, quantidadeFiis: 1 },
+    fiis: [{ id: 1, ticker: 'MXRF11', nome: 'Fundo de Teste', segmento: 'Papel (recebíveis)', segmentoSugerido: false,
+      quantidade: 100, precoMedio: 9.8, custo: 980, precoAtual: 10.2, variacaoDia: 0.3, valorMercado: 1020, valorizacao: 40,
+      valorizacaoPercentual: 4.08, ultimoRendimento: 0.1, dataComUltimo: '2026-09-30', rendimentosPorCota12Meses: 0.6,
+      dyMensal: 0.98, dy12Meses: 5.9, yieldOnCost12Meses: 6.1, yieldOnCostMensal: 1.02, rendaMensalEstimada: 10,
+      proventos12Meses: 60, proventosTotal: 60, recebidoExtrato12Meses: 60, pesoCarteira: 100, fonteCotacao: 'Yahoo',
+      precoManual: false }],
+    lotes: [], proventos: [], evolucao: [], rentabilidade: [], segmentos: [{ nome: 'Papel (recebíveis)', valor: 1020 }],
+    historicos: [], segmentosDisponiveis: ['Papel (recebíveis)'],
+    mesAMes: [
+      { ...mesesAtras(5), aportes: 980, subscricoes: 0, resgates: 0, rendimentosRecebidos: 0, rendimentosEstimados: 0, valorizacao: -12.5, saldo: 967.5,
+        idsAportes: [101] },
+      { ...mesesAtras(4), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 8, saldo: 975.5 },
+      { ...mesesAtras(3), aportes: 0, subscricoes: 15, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: -5.5, saldo: 985 },
+      { ...mesesAtras(2), aportes: 0, subscricoes: 0, resgates: 20, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 15, saldo: 980 },
+      { ...mesesAtras(1), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 22, saldo: 1002 },
+      { ...mesesAtras(0), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 10, valorizacao: 18, saldo: 1020,
+        porFii: [{ ticker: 'MXRF11', valor: 8 }, { ticker: null, valor: 2 }], idsRendimentos: [201, 202] }
+    ]
   },
   '/api/carteira/extrato/sugestoes': [],
-  '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null },
+  '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null,
+    taxas: [{ data: dataIso(new Date(ano, hoje.getMonth() - 1, 8)), conta: 'Nubank', debitado: 1010.4, trocos: 10.1, valorDasCotas: 1000,
+      taxa: 0.3, operacoes: [{ operacaoId: 31, ticker: 'MXRF11', quantidade: 100, taxa: 0.3 }] }] },
   '/api/carteira/configuracao': { tokenBrapiConfigurado: false },
   '/api/parametros': [],
   '/api/parametros/sistema': { versao: '0.0.0-teste', dotNet: '10.0', sistemaOperacional: 'Teste', iniciadoEm: hoje.toISOString(),

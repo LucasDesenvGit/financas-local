@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { PrivacidadeService } from '../../src/app/core/privacidade.service';
-import { abrirConferencia, conferencia, troco } from '../apoio/conferencia';
+import { abrirConferencia, conferencia, taxa, troco } from '../apoio/conferencia';
 
 /**
  * Usabilidade de "Conferir investimentos" (ADR 0027). Shneiderman (o total antes do detalhe); Nielsen 1 (o que foi
@@ -23,6 +23,19 @@ describe('Usabilidade: Conferir investimentos', () => {
     const t = await abrirConferencia(conferencia({ tipos: [], cotas: [], trocos: [], rendimentos: [], comprasSemOperacao: [] }));
     expect(t.raiz.querySelector('.resumo-conferencia')!.textContent).toContain('Tudo certo');
     expect(t.botao('Corrigir selecionados').disabled).toBe(true);
+  });
+
+  it('#173 a): a taxa da B3 mostra a conta (saiu − troco − cotas = taxa), com ⓘ e o nome das compras', async () => {
+    const t = await abrirConferencia(conferencia({ tipos: [], cotas: [], trocos: [], rendimentos: [], taxas: [taxa()] }));
+    expect(t.raiz.querySelector('.resumo-conferencia')!.textContent!.trim()).toBe('Encontrado: 1 dia de compras sem a taxa da B3.');
+    expect(t.raiz.querySelector('#conf-taxas')!.textContent!.replace(/ⓘ/g, '').replace(/\s+/g, ' ').trim())
+      .toBe('Taxa da B3 que falta nas compras (1)');
+    expect(t.raiz.querySelector('#conf-taxas .termo-botao')!.getAttribute('aria-label')).toBe('O que é Taxa da B3?');
+    const celulas = Array.from(t.raiz.querySelectorAll('section[aria-labelledby="conf-taxas"] tbody td'))
+      .map((td) => td.textContent!.replace(/\s/g, ' ').trim());
+    expect(celulas.slice(1)).toEqual(['14/09/26', 'MXRF11 (50), XPLG11 (5)', 'R$ 1.049,23', '− R$ 20,90', '− R$ 1.028,10', 'R$ 0,23']);
+    expect(t.raiz.querySelector('section[aria-labelledby="conf-taxas"] input[type=checkbox]')!.getAttribute('aria-label'))
+      .toBe('Lançar a taxa da B3 das compras de 14/09/2026');
   });
 
   it('o troco tem ⓘ do glossário e cada linha diz de onde veio', async () => {

@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { abrirShell } from '../apoio/shell';
 
 /**
@@ -10,6 +12,10 @@ import { abrirShell } from '../apoio/shell';
  * - WCAG 2.1.1 (Keyboard): o Tab não para em link escondido (inert).
  * - WCAG 2.5.8 (Target Size), a marca na largura toda e a animação de entrada da tela: no navegador, com o
  *   tamanho e o estilo calculados de verdade (testes-navegador/estilos.spec.ts, #204).
+ * Grupos que abrem e fecham (#227, ADR 0046):
+ * - WAI-ARIA APG, Disclosure Pattern: cabeçalho é botão com aria-expanded e aria-controls apontando para as telas.
+ * - WCAG 2.1.1 (Keyboard): tela de grupo fechado fica fora do Tab (inert e invisível).
+ * - WCAG 2.5.8 (Target Size): o cabeçalho tem pelo menos 24 px de altura e ocupa a largura do menu.
  */
 describe('Usabilidade: menu lateral recolhível', () => {
   it('o ☰ tem nome acessível fixo, que não muda com o estado, e controla o menu lateral', async () => {
@@ -66,11 +72,56 @@ describe('Usabilidade: menu lateral recolhível', () => {
     expect(t.botaoFechar().classList).toContain('so-celular');
   });
 
+  it('cabeçalho do grupo controla a lista de telas, que se apresenta como grupo com o nome dele', async () => {
+    const t = await abrirShell();
+    const botao = t.cabecalho('analises');
+    const lista = document.getElementById(botao.getAttribute('aria-controls')!)!;
+    expect(lista).toBe(t.telasDoGrupo('analises'));
+    expect(lista.getAttribute('role')).toBe('group');
+    expect(document.getElementById(lista.getAttribute('aria-labelledby')!)).toBe(botao);
+    // Nome fixo (o estado vai no aria-expanded) e os ícones decorativos.
+    botao.click();
+    await t.atualizar();
+    expect(botao.textContent!.trim()).toBe('Análises');
+    botao.querySelectorAll('svg').forEach((svg) => expect(svg.getAttribute('aria-hidden')).toBe('true'));
+  });
+
   it('a marca se chama "Finanças, ir para o Painel" e o ícone é decorativo', async () => {
     const t = await abrirShell();
     expect(t.marca().getAttribute('aria-label')).toBe('Finanças, ir para o Painel');
     expect(t.marca().querySelector('.marca-simbolo')!.getAttribute('aria-hidden')).toBe('true');
     expect(t.tituloBarra().getAttribute('aria-label')).toBe('Finanças, ir para o Painel');
     expect(t.tituloBarra().querySelector('.barra-titulo-simbolo')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  describe('com o styles.css do site', () => {
+    let estilo: HTMLStyleElement;
+    beforeAll(() => {
+      estilo = document.createElement('style');
+      estilo.textContent = readFileSync(join(__dirname, '../../src/styles.css'), 'utf8');
+      document.head.appendChild(estilo);
+    });
+    afterAll(() => estilo.remove());
+
+
+
+    it('cabeçalho do grupo: alvo de pelo menos 24 px de altura, na largura toda do menu', async () => {
+      const t = await abrirShell();
+      const css = getComputedStyle(t.cabecalho('movimentacao'));
+      expect(parseFloat(css.minHeight)).toBeGreaterThanOrEqual(24);
+      expect(css.width).toBe('100%');
+    });
+
+    it('grupo fechado fica invisível (fora do Tab e do leitor de tela); aberto, as telas voltam', async () => {
+      const t = await abrirShell({ url: '/painel' });
+      expect(getComputedStyle(t.telasDoGrupo('ajustes')).visibility).toBe('visible');
+      t.cabecalho('ajustes').click();
+      await t.atualizar();
+      expect(getComputedStyle(t.telasDoGrupo('ajustes')).visibility).toBe('hidden');
+      expect(getComputedStyle(t.linkDaTela('/categorias')).visibility).toBe('hidden');
+    });
+
+
+
   });
 });

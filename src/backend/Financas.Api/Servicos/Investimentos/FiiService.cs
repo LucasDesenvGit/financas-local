@@ -13,14 +13,57 @@ public class FiiService
 {
     private const int MesesProventos = 24;
     private const int MaximoMeses = 180;
+    /// <summary>#173 c): o provento cai até tantos dias depois da data-com.</summary>
+    private const int DiasPagamentoProvento = 40;
+    /// <summary>#173 c): diferença aceita entre o crédito e cotas × valor por cota (arredondamento do banco).</summary>
+    private const decimal ToleranciaProvento = 0.05m;
 
     private readonly FinancasDbContext _db;
     private readonly ExtratoCarteiraService _extrato;
+    private readonly ConferenciaInvestimentosService _conferencia;
 
-    public FiiService(FinancasDbContext db, ExtratoCarteiraService extrato)
+    public FiiService(FinancasDbContext db, ExtratoCarteiraService extrato, ConferenciaInvestimentosService conferencia)
     {
         _db = db;
         _extrato = extrato;
+        _conferencia = conferencia;
+    }
+
+    /// <summary>
+    /// #173 c): de que fundo é cada crédito de provento. O crédito com o código do fundo já diz. O "Valor recebido de
+    /// Investimentos" (sem código) é ligado ao provento cotas na data-com × valor por cota que dá o mesmo valor (até
+    /// <see cref="ToleranciaProvento"/>), pago até <see cref="DiasPagamentoProvento"/> dias depois da data-com. Cada provento
+    /// esperado serve a um crédito só. O que não liga fica sem fundo (null), sem sumir da soma do mês.
+    /// </summary>
+    private static Dictionary<long, string?> FundoDeCadaCredito(List<Fundo> fundos,
+        List<(long Id, string Ticker, DateOnly Data, decimal Valor)> comCodigo, List<(long Id, DateOnly Data, decimal Valor)> creditos)
+    {
+        var esperados = fundos.SelectMany(f => f.Proventos.Select(p => (Ticker: f.Ativo.Ticker, p.DataCom,
+                Valor: Math.Round(f.QuantidadeEm(p.DataCom) * p.ValorPorCota, 2))))
+            .Where(e => e.Valor > 0).ToList();
+        var usados = new HashSet<int>();
+        var resultado = new Dictionary<long, string?>();
+        int? Melhor(DateOnly data, decimal valor, string? ticker) => esperados
+            .Select((e, i) => (e, i))
+            .Where(x => !usados.Contains(x.i) && (ticker is null || x.e.Ticker == ticker)
+                        && x.e.DataCom <= data && data <= x.e.DataCom.AddDays(DiasPagamentoProvento)
+                        && Math.Abs(x.e.Valor - valor) <= ToleranciaProvento)
+            .OrderBy(x => Math.Abs(x.e.Valor - valor)).ThenBy(x => data.DayNumber - x.e.DataCom.DayNumber)
+            .Select(x => (int?)x.i).FirstOrDefault();
+
+        // Primeiro os que já dizem o fundo, para os sem código não pegarem o provento deles.
+        foreach (var c in comCodigo.OrderBy(c => c.Data))
+        {
+            resultado[c.Id] = c.Ticker;
+            if (Melhor(c.Data, c.Valor, c.Ticker) is int i) usados.Add(i);
+        }
+        foreach (var c in creditos.Where(c => !resultado.ContainsKey(c.Id)).OrderBy(c => c.Data))
+        {
+            var i = Melhor(c.Data, c.Valor, null);
+            if (i is int achado) usados.Add(achado);
+            resultado[c.Id] = i is int j ? esperados[j].Ticker : null;
+        }
+        return resultado;
     }
 
     private sealed class Fundo
@@ -71,6 +114,13 @@ public class FiiService
 
         var tickers = fundos.Select(f => f.Ativo.Ticker).ToHashSet();
         var recebidos = (await _extrato.ProventosRecebidosAsync(ct)).Where(r => tickers.Contains(r.Ticker)).ToList();
+        // #173: provento recebido no mês = crédito com o código do fundo ou crédito da corretora que não é troco nem
+        // venda ("Valor recebido de Investimentos", sem código). O mesmo crédito conta uma vez só.
+        var creditosProvento = recebidos.Select(r => (r.Id, r.Data, r.Valor))
+            .Concat(fundos.Count > 0 ? await _conferencia.ProventosDaCorretoraAsync(ct) : [])
+            .DistinctBy(r => r.Id).ToList();
+
+        var fundoDoCredito = FundoDeCadaCredito(fundos, recebidos, creditosProvento);
 
         var abertos = fundos.Where(f => f.Posicao.Quantidade > 0).ToList();
         var totalMercado = abertos.Sum(f => f.Posicao.Quantidade * (f.Ativo.PrecoAtual ?? f.Posicao.PrecoMedio));
@@ -160,6 +210,7 @@ public class FiiService
         /* ---------------- evolução e rentabilidade (mensal) ---------------- */
         var evolucao = new List<EvolucaoFiiMesDto>();
         var rentabilidade = new List<RentabilidadeMesDto>();
+        var mesAMes = new List<MesAMesFiiDto>();
         var ifix = await _db.IndicesMensais.AsNoTracking().Where(i => i.Codigo == CotacaoService.CodigoIfix)
             .ToDictionaryAsync(i => i.Mes, i => i.Fechamento, ct);
         if (fundos.Count > 0)
@@ -175,16 +226,32 @@ public class FiiService
             {
                 var fim = Ultimo(mes);
                 if (fim > hoje) fim = hoje;
-                decimal aplicado = 0, valor = 0, fluxo = 0, proventos = 0;
+                decimal aplicado = 0, valor = 0, fluxo = 0, proventos = 0, aportes = 0, subscricoes = 0, resgates = 0;
+                var idsAportes = new HashSet<long>();
                 foreach (var f in fundos)
                 {
                     var posicao = CarteiraService.Calcular(f.Operacoes, fim);
                     aplicado += posicao.Custo;
                     if (posicao.Quantidade > 0) valor += posicao.Quantidade * f.PrecoNoMes(mes, mesAtual);
+                    var subscricao = ClassificacaoAtivo.EhSubscricao(f.Ativo.Ticker);
                     foreach (var o in f.Operacoes.Where(x => x.Data >= mes && x.Data <= fim))
-                        fluxo += o.Tipo == TipoOperacao.Compra
-                            ? o.Quantidade * o.PrecoUnitario + o.Taxas
-                            : -(o.Quantidade * o.PrecoUnitario - o.Taxas);
+                    {
+                        if (o.TransacaoId is long transacaoId) idsAportes.Add(transacaoId);
+                        // #173 a): cotas × preço, sem a taxa da B3, como as "Entradas" do app (a taxa fica no custo e no
+                        // preço médio da operação, o "valor final da compra").
+                        if (o.Tipo == TipoOperacao.Compra)
+                        {
+                            var pago = o.Quantidade * o.PrecoUnitario;
+                            fluxo += pago;
+                            if (subscricao) subscricoes += pago; else aportes += pago;
+                        }
+                        else
+                        {
+                            var recebido = o.Quantidade * o.PrecoUnitario;
+                            fluxo -= recebido;
+                            resgates += recebido;
+                        }
+                    }
                     proventos += f.Proventos.Where(x => x.DataCom >= mes && x.DataCom <= fim)
                         .Sum(x => f.QuantidadeEm(x.DataCom) * x.ValorPorCota);
                 }
@@ -194,6 +261,15 @@ public class FiiService
                 var retorno = basePeriodo > 0 ? (valor + proventos - basePeriodo) / basePeriodo : 0m;
                 if (retorno < -0.95m) retorno = -0.95m;
                 acumulado *= 1 + retorno;
+                var mesFim = Ultimo(mes);
+                var creditosDoMes = creditosProvento.Where(r => r.Data >= mes && r.Data <= mesFim).ToList();
+                var porFii = creditosDoMes.GroupBy(r => fundoDoCredito.GetValueOrDefault(r.Id))
+                    .Select(g => new RendimentoPorFiiDto(g.Key, Math.Round(g.Sum(r => r.Valor), 2)))
+                    .OrderBy(r => r.Ticker is null).ThenByDescending(r => r.Valor).ToList();
+                mesAMes.Add(new MesAMesFiiDto(mes.Year, mes.Month, Math.Round(aportes, 2), Math.Round(subscricoes, 2),
+                    Math.Round(resgates, 2), Math.Round(creditosDoMes.Sum(r => r.Valor), 2),
+                    Math.Round(proventos, 2), Math.Round(valor - basePeriodo, 2), Math.Round(valor, 2), porFii,
+                    [.. idsAportes.Order()], [.. creditosDoMes.Select(r => r.Id).Distinct().Order()]));
                 valorAnterior = valor;
 
                 var ateSelic = fim == hoje ? hoje : fim.AddDays(1);
@@ -238,7 +314,7 @@ public class FiiService
         }).Where(h => h.Pontos.Count > 0).ToList();
 
         return new PainelFiisDto(resumo, lista, lotes, proventosMes, evolucao, rentabilidade, segmentos, historicos,
-            SegmentosFii.Todos.ToList());
+            SegmentosFii.Todos.ToList(), mesAMes);
     }
 
     private static decimal? Pct(decimal? parte, decimal? total)

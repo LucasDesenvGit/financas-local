@@ -189,10 +189,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           }
           <footer>
             @if (!m.concluida) {
-              <button type="button" class="link" (click)="abrirAporte(m)">+ aporte</button>
+              <button type="button" class="link" (click)="abrirAporte(m)" [attr.aria-label]="'Aporte na meta ' + m.nome">+ aporte</button>
             }
             <span class="cresce"></span>
-            <button type="button" class="link" (click)="editar(m)">editar</button>
+            <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">editar</button>
           </footer>
         </article>
       } @empty {

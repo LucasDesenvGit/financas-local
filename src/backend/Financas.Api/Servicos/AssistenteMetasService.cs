@@ -100,6 +100,14 @@ public class AssistenteMetasService
                 .Select(f => new ContaService.FaturaDoCiclo(f.Id, f.ContaId, f.DataFechamento, f.DataVencimento, f.ValorTotal, f.ValorPago))
                 .ToListAsync(ct))
             .ToLookup(f => f.ContaId);
+        // #251: pagamento lançado no cartão, para o banco que não manda os pagamentos da fatura.
+        var desdePagamentos = hoje.AddMonths(-2);
+        var pagamentosCartao = (await _db.Transacoes.AsNoTracking()
+                .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desdePagamentos)
+                .Where(ContaService.EhPagamentoNoCartao)
+                .Select(t => new ContaService.PagamentoNoCartao(t.ContaId, t.Data, t.Valor))
+                .ToListAsync(ct))
+            .ToLookup(p => p.ContaId);
 
         // Fatura de cada mês, pelo vencimento: soma dos cartões.
         var faturas = new Dictionary<DateOnly, (decimal Total, decimal Parcelas)>();
@@ -149,7 +157,8 @@ public class AssistenteMetasService
 
                 // O que ainda vai sair da conta este mês: fatura que vence de hoje em diante e não está paga.
                 if (mesVencimento == mesAtual && vencimento >= hoje)
-                    faturaAPagar += Math.Max(0m, total - Math.Abs(importada?.ValorPago ?? 0m));
+                    faturaAPagar += Math.Max(0m, total - (ContaService.Pago(importada?.ValorPago, ContaService.PagoNasTransacoes(
+                        vencimento, importadas.Select(f => f.DataVencimento), pagamentosCartao[cartao.Id])) ?? 0m));
             }
         }
 
