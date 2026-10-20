@@ -891,6 +891,24 @@ export const MANUAL: CapituloManual[] = [
         termos: ['reservaEmergencia']
       },
       {
+        id: 'meli-dolar',
+        titulo: 'Méli Dólar (dólar do Mercado Pago)',
+        paraQueServe: 'Contar no patrimônio os dólares comprados no Mercado Pago, que o Open Finance não informa.',
+        passos: [
+          'Abra Investimentos, na aba Reservas. O Méli Dólar aparece como uma reserva da conta do Mercado Pago, com a quantidade em dólar e a PTAX do dia.',
+          'A quantidade vem das compras e vendas do extrato: pelo “MUSD” da descrição, quando o banco manda, ou pelo valor em reais dividido pela PTAX do dia.',
+          'O saldo em reais é essa quantidade pela última PTAX. Ele entra no patrimônio e no total investido.',
+          'Para acertar o valor, clique em “conferir saldo” e informe o que o app do Mercado Pago mostra. Pode ser em reais ou em dólares: escolha em “Informado em”.',
+          'Compra e venda de Méli Dólar ficam na categoria Investimentos e não contam como gasto nem receita.'
+        ],
+        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        dicas: [
+          'A PTAX é a cotação do Banco Central, um pouco diferente da cotação do Mercado Pago. Por isso a estimativa pode ter alguns centavos de diferença; a conferência acerta.',
+          'Uma compra ou venda que você colocou à mão em outra categoria continua como está. Para mudar, edite a transação ou use “Reaplicar regras” em Categorias e regras.'
+        ],
+        termos: ['ptax']
+      },
+      {
         id: 'exterior',
         titulo: 'Ativos e moeda no exterior',
         paraQueServe: 'Somar investimentos em dólar e outras moedas no patrimônio em reais.',

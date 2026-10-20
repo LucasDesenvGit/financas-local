@@ -502,6 +502,8 @@ export interface Reserva {
   conferenciaAntiga: boolean;
   /** #168: o valor veio da instituição pelo Open Finance (não é estimado nem precisa de conferência). */
   informadoPeloBanco?: boolean;
+  /** #169: "USD" no Méli Dólar: `quantidade` e `saldoConferido` em dólar; `saldo` em reais pela `cotacao` (PTAX). */
+  moeda?: string; quantidade?: number | null; cotacao?: number | null;
 }
 
 export interface ResultadoImportacaoCarteira {

@@ -112,6 +112,11 @@ export const GLOSSARIO = {
     definicao: 'Quanto você pagou, em média, por cota, somando todas as compras.',
     exemplo: '10 cotas a R$ 100 e mais 10 a R$ 120: preço médio de R$ 110.'
   },
+  ptax: {
+    termo: 'PTAX',
+    definicao: 'A cotação oficial do dólar (e de outras moedas) que o Banco Central divulga todo dia útil. O site usa a de compra para passar para reais o que você tem em moeda estrangeira, como o Méli Dólar.',
+    exemplo: 'US$ 10 com a PTAX a 5,05: R$ 50,50.'
+  },
   trocoDeCompra: {
     termo: 'Troco da compra',
     definicao: 'Na compra de ações e FIIs, a corretora pode debitar um pouco a mais e devolver a sobra no mesmo dia ou nos seguintes. Esse crédito não é rendimento: é parte do dinheiro da compra que voltou.',
