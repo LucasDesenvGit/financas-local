@@ -352,11 +352,12 @@ public class SincronizacaoService
             // #156: com a categoria igual, o tipo já foi decidido (inclusive pela ReclassificarAsync, no fim, para a
             // categoria "Transferências"). Reaplicar marcaria de novo como transferência o que ela devolveu para
             // despesa/receita: a transação contava como "atualizada" a cada sincronização e perdia o "ignorar nos
-            // relatórios" escolhido à mão. Só o sinal do valor ainda pode mudar o tipo de uma despesa/receita.
+            // relatórios" escolhido à mão. Só o sinal do valor ainda pode mudar o tipo de uma despesa/receita (no
+            // cartão, entrada é estorno: despesa, ADR 0036).
             if (nova || t.CategoriaId != categoriaAnterior)
                 _categorizacao.AplicarTipo(t);
             else if (t.Tipo != TipoTransacao.Transferencia && t.TransferenciaGrupo is null)
-                t.Tipo = t.Valor < 0 ? TipoTransacao.Despesa : TipoTransacao.Receita;
+                t.Tipo = CategorizacaoService.TipoPeloSinal(t.Valor, ehCartao);
 
             if (nova)
             {

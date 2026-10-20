@@ -51,6 +51,8 @@ public class TransferenciasService
         if (lancamentos.Count == 0) return 0;
 
         var pareados = await PareadosAsync(lancamentos, ct);
+        var cartoes = (await _db.Contas.AsNoTracking().Where(c => c.Tipo == TipoConta.CartaoCredito).Select(c => c.Id)
+            .ToListAsync(ct)).ToHashSet();
         var mudaram = 0;
         foreach (var t in lancamentos)
         {
@@ -65,7 +67,7 @@ public class TransferenciasService
                 // Só muda o que ainda está como transferência (a categorização acabou de marcar): um lançamento que
                 // você mandou ignorar nos relatórios depois de reclassificado continua ignorado.
                 if (t.Tipo != TipoTransacao.Transferencia) continue;
-                t.Tipo = t.Valor < 0 ? TipoTransacao.Despesa : TipoTransacao.Receita;
+                t.Tipo = CategorizacaoService.TipoPeloSinal(t.Valor, cartoes.Contains(t.ContaId));
                 t.IgnorarRelatorios = false;
             }
             t.AtualizadoEm = DateTime.UtcNow;

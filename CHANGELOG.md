@@ -5,6 +5,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Correções
+- **Estorno no cartão contava como receita** (#166, ADR 0036). Crédito no cartão (compra devolvida, "crédito de confiança", cashback) virava receita e não descontava o gasto da categoria. Isso inflava a receita, a renda (50/30/20), os orçamentos e o gasto por categoria.
+  - **Agora:** o estorno abate o gasto da categoria e não é receita. O pagamento da fatura recebido no cartão fica fora dos gastos mesmo sem a categoria certa.
+  - **Estorno do NuPay** que chega como transferência ganha a categoria do texto ("Estorno de Uber" → Transporte).
+  - **Relatórios:** passam a somar receita e despesa pelo tipo da transação, e não pelo sinal.
+  - **Transações antigas:** as que já existiam são acertadas sozinhas ao iniciar o site.
+  - **Manual:** seção nova "Estornos no cartão".
 - **Fatura do mês do cartão (ciclo aberto) diferente do app do banco** (#167). Duas causas:
   - **Lançamento da fatura anterior contado de novo:** o banco às vezes manda, datado depois do fechamento, um lançamento que já cobrou na fatura anterior, e ele entrava também na fatura aberta. Agora o que o banco ligou a uma fatura fica nela.
   - **Parcela futura na fatura errada:** o Open Finance pode datar as parcelas futuras um dia depois do fechamento, e cada uma ia para a fatura seguinte. Agora a parcela k vai para a fatura da parcela já cobrada mais a diferença de número.

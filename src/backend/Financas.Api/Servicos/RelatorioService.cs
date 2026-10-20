@@ -54,7 +54,8 @@ public class RelatorioService
         decimal semCategoria = 0;
         foreach (var b in brutos)
         {
-            var valor = Math.Abs(b.Soma);
+            // Despesa é negativa e o estorno, positivo: a soma já sai líquida (ADR 0036).
+            var valor = tipo == TipoTransacao.Despesa ? -b.Soma : b.Soma;
             if (b.CategoriaId is not int id || !categorias.TryGetValue(id, out var cat))
             {
                 semCategoria += valor;
@@ -70,7 +71,9 @@ public class RelatorioService
                 : (cat.Nome, cat.Cor, valor);
         }
 
-        var lista = resultado.Select(kv => new ValorCategoriaDto(kv.Key, kv.Value.Nome, kv.Value.Cor, kv.Value.Valor)).ToList();
+        // Categoria só com estorno no período (a compra foi antes) fica de fora: não existe gasto negativo no gráfico.
+        var lista = resultado.Where(kv => kv.Value.Valor > 0)
+            .Select(kv => new ValorCategoriaDto(kv.Key, kv.Value.Nome, kv.Value.Cor, kv.Value.Valor)).ToList();
         if (semCategoria > 0) lista.Add(new ValorCategoriaDto(null, "Sem categoria", "#94a3b8", semCategoria));
         return lista.OrderByDescending(x => x.Valor).ToList();
     }
@@ -78,9 +81,10 @@ public class RelatorioService
     public async Task<(decimal Receitas, decimal Despesas)> TotaisAsync(DateOnly inicio, DateOnly fim, CancellationToken ct)
     {
         var q = Relevantes(inicio, fim);
-        var receitas = await q.Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
-        var despesas = await q.Where(t => t.Valor < 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
-        return (receitas, Math.Abs(despesas));
+        // Pelo tipo, não pelo sinal (ADR 0036): estorno no cartão é despesa positiva e abate as despesas.
+        var receitas = await q.Where(t => t.Tipo == TipoTransacao.Receita).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+        var despesas = await q.Where(t => t.Tipo == TipoTransacao.Despesa).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+        return (receitas, -despesas);
     }
 
     /// <summary>Receitas e despesas mês a mês (inclui meses sem movimento).</summary>
@@ -92,8 +96,8 @@ public class RelatorioService
             {
                 g.Key.Year,
                 g.Key.Month,
-                Receitas = g.Sum(t => t.Valor > 0 ? t.Valor : 0m),
-                Despesas = g.Sum(t => t.Valor < 0 ? t.Valor : 0m),
+                Receitas = g.Sum(t => t.Tipo == TipoTransacao.Receita ? t.Valor : 0m),
+                Despesas = g.Sum(t => t.Tipo == TipoTransacao.Despesa ? t.Valor : 0m),
                 Emergencia = g.Sum(t => t.Valor < 0 && t.Emergencia ? t.Valor : 0m)
             })
             .ToListAsync(ct);
@@ -102,7 +106,7 @@ public class RelatorioService
         for (var m = new DateOnly(inicio.Year, inicio.Month, 1); m <= fim; m = m.AddMonths(1))
         {
             var d = dados.FirstOrDefault(x => x.Year == m.Year && x.Month == m.Month);
-            lista.Add(new MesValoresDto(m.Year, m.Month, d?.Receitas ?? 0m, Math.Abs(d?.Despesas ?? 0m),
+            lista.Add(new MesValoresDto(m.Year, m.Month, d?.Receitas ?? 0m, -(d?.Despesas ?? 0m),
                 Math.Abs(d?.Emergencia ?? 0m)));
         }
         return lista;
@@ -243,11 +247,11 @@ public class RelatorioService
         if (mesesConsiderados > 0)
         {
             var periodo = Relevantes(inicioHistorico, fimHistorico);
-            var somaReceitas = await periodo.Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
-            var aVista = periodo.Where(t => t.Valor < 0 && (t.ParcelaTotal == null || t.ParcelaTotal <= 1));
+            var somaReceitas = await periodo.Where(t => t.Tipo == TipoTransacao.Receita).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
+            var aVista = periodo.Where(t => t.Tipo == TipoTransacao.Despesa && (t.ParcelaTotal == null || t.ParcelaTotal <= 1));
             var somaDespesas = await aVista.SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
             mediaReceitas = Math.Round(somaReceitas / mesesConsiderados, 2);
-            mediaDespesasAVista = Math.Round(Math.Abs(somaDespesas) / mesesConsiderados, 2);
+            mediaDespesasAVista = Math.Round(Math.Max(0m, -somaDespesas) / mesesConsiderados, 2);
 
             // Média por categoria (despesas à vista) e valor do último mês completo.
             var porCategoria = await aVista.GroupBy(t => t.CategoriaId)
@@ -332,7 +336,7 @@ public class RelatorioService
         decimal semCategoria = 0;
         foreach (var (categoriaId, soma) in brutos)
         {
-            var valor = Math.Abs(soma);
+            var valor = -soma; // despesas líquidas de estornos (ADR 0036)
             if (categoriaId is not int id || !categorias.TryGetValue(id, out var cat))
             {
                 semCategoria += valor;
@@ -347,7 +351,8 @@ public class RelatorioService
                 ? (atual.Nome, atual.Cor, atual.Valor + valor)
                 : (cat.Nome, cat.Cor, valor);
         }
-        var lista = resultado.Select(kv => new ValorCategoriaDto(kv.Key, kv.Value.Nome, kv.Value.Cor, kv.Value.Valor)).ToList();
+        var lista = resultado.Where(kv => kv.Value.Valor > 0)
+            .Select(kv => new ValorCategoriaDto(kv.Key, kv.Value.Nome, kv.Value.Cor, kv.Value.Valor)).ToList();
         if (semCategoria > 0) lista.Add(new ValorCategoriaDto(null, "Sem categoria", "#a9b4c6", semCategoria));
         return lista;
     }
@@ -415,18 +420,18 @@ public class RelatorioService
         var despesasAno = mesLimite == 0
             ? new List<(int? CategoriaId, int Mes, decimal Soma)>()
             : (await Relevantes(new DateOnly(ano, 1, 1), fimAno)
-                .Where(t => t.Valor < 0)
+                .Where(t => t.Tipo == TipoTransacao.Despesa)
                 .GroupBy(t => new { t.CategoriaId, t.Data.Month })
                 .Select(g => new { g.Key.CategoriaId, g.Key.Month, Soma = g.Sum(t => t.Valor) })
                 .ToListAsync(ct))
-                .Select(x => (x.CategoriaId, x.Month, Math.Abs(x.Soma))).ToList();
+                .Select(x => (x.CategoriaId, x.Month, -x.Soma)).ToList();
         var fimAnterior = Relogio.UltimoDiaMes(anoComparacao, Math.Max(mesLimite, 1));
         var despesasAnterior = (await Relevantes(new DateOnly(anoComparacao, 1, 1), fimAnterior)
-                .Where(t => t.Valor < 0)
+                .Where(t => t.Tipo == TipoTransacao.Despesa)
                 .GroupBy(t => t.CategoriaId)
                 .Select(g => new { CategoriaId = g.Key, Soma = g.Sum(t => t.Valor) })
                 .ToListAsync(ct))
-            .Select(x => (x.CategoriaId, Math.Abs(x.Soma))).ToList();
+            .Select(x => (x.CategoriaId, -x.Soma)).ToList();
 
         var porRaiz = new Dictionary<string, (int? Id, string Nome, string Cor, NaturezaGasto? Natureza, decimal Valor, decimal Anterior, decimal[] Meses)>();
         string Chave((int? Id, string Nome, string Cor, NaturezaGasto? Natureza) r) => r.Id?.ToString() ?? "sem";
@@ -511,10 +516,10 @@ public class RelatorioService
     {
         var (inicio, fim, meses) = await MesesCompletosAsync(12, ct);
         if (meses == 0) return (0m, 0m, 0);
-        var renda = (await Relevantes(inicio, fim).Where(t => t.Valor > 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
-        var parcelas = Math.Abs(await Relevantes(new DateOnly(fim.Year, fim.Month, 1), fim)
-            .Where(t => t.Valor < 0 && t.ParcelaTotal != null && t.ParcelaTotal > 1)
-            .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
+        var renda = (await Relevantes(inicio, fim).Where(t => t.Tipo == TipoTransacao.Receita).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
+        var parcelas = Math.Max(0m, -(await Relevantes(new DateOnly(fim.Year, fim.Month, 1), fim)
+            .Where(t => t.Tipo == TipoTransacao.Despesa && t.ParcelaTotal != null && t.ParcelaTotal > 1)
+            .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m));
         return (renda, parcelas, meses);
     }
 
@@ -531,10 +536,10 @@ public class RelatorioService
         {
             (renda, parcelas, _) = await RendaEParcelasAsync(ct);
             var periodo = Relevantes(inicio, fim);
-            gasto = Math.Abs(await periodo.Where(t => t.Valor < 0).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
-            gastoEssencial = Math.Abs(await periodo
-                .Where(t => t.Valor < 0 && t.CategoriaId != null && categoriasEssenciais.Contains(t.CategoriaId.Value))
-                .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m) / meses;
+            gasto = Math.Max(0m, -(await periodo.Where(t => t.Tipo == TipoTransacao.Despesa).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m)) / meses;
+            gastoEssencial = Math.Max(0m, -(await periodo
+                .Where(t => t.Tipo == TipoTransacao.Despesa && t.CategoriaId != null && categoriasEssenciais.Contains(t.CategoriaId.Value))
+                .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m)) / meses;
         }
 
         // Reserva líquida: contas (exceto cartões e investimentos) + investimentos (em reais; sem cotação fica de fora)
