@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { RouterLink } from '@angular/router';
 import { Orcamento } from '../core/modelos';
 import { IconeComponent } from '../compartilhado/icone.component';
+import { AcaoMenu, MenuAcoesComponent } from '../compartilhado/menu-acoes.component';
 import { Icones } from '../compartilhado/icones';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
@@ -19,7 +20,7 @@ import {
  */
 @Component({
   selector: 'app-painel-avisos',
-  imports: [DecimalPipe, RouterLink, IconeComponent, MoedaPipe],
+  imports: [DecimalPipe, RouterLink, IconeComponent, MenuAcoesComponent, MoedaPipe],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (estourados().length) {
@@ -28,11 +29,13 @@ import {
           <app-icone [icone]="Icones.orcamentos" [tamanho]="18" />
           <!-- O span anuncia a mudança sem tirar o papel de título do h2. -->
           <h2 id="titulo-orcamentos-estourados"><span role="status">{{ tituloOrcamentos() }}</span></h2>
-          <button type="button" class="link aviso-painel-alternar" aria-controls="lista-orcamentos-estourados"
-            [attr.aria-expanded]="!orcamentosRecolhidos()" (click)="alternarOrcamentos()"
-            [attr.aria-label]="orcamentosRecolhidos() ? 'Mostrar os orçamentos estourados' : 'Ocultar os avisos de orçamento ' + ateQuando()">
-            {{ orcamentosRecolhidos() ? 'Mostrar' : 'Ocultar ' + ateQuando() }}
-          </button>
+          @if (orcamentosRecolhidos()) {
+            <button type="button" id="mostrar-orcamentos-estourados" class="link aviso-painel-alternar" aria-controls="lista-orcamentos-estourados"
+              aria-expanded="false" aria-label="Mostrar os orçamentos estourados" (click)="mostrarCardOrcamentos()">Mostrar</button>
+          } @else {
+            <app-menu-acoes rotulo="Ocultar" rotuloAcessivel="Ocultar os avisos de orçamento" [acoes]="acoesOrcamentos()"
+              (escolhida)="ocultarCardOrcamentos($event)" />
+          }
         </header>
         <div id="lista-orcamentos-estourados">
           @if (!orcamentosRecolhidos()) {
@@ -75,11 +78,13 @@ import {
           <h2 id="titulo-avisos-painel"><span role="status">
             {{ alertas().length === 1 ? '1 aviso pede atenção' : alertas().length + ' avisos pedem atenção' }}</span>
           </h2>
-          <button type="button" class="link aviso-painel-alternar" aria-controls="lista-avisos-painel"
-            [attr.aria-expanded]="!avisosRecolhidos()" (click)="alternarAvisos()"
-            [attr.aria-label]="avisosRecolhidos() ? 'Mostrar os avisos' : 'Ocultar os avisos até aparecer um novo'">
-            {{ avisosRecolhidos() ? 'Mostrar' : 'Ocultar até aparecer um novo' }}
-          </button>
+          @if (avisosRecolhidos()) {
+            <button type="button" id="mostrar-avisos-painel" class="link aviso-painel-alternar" aria-controls="lista-avisos-painel"
+              aria-expanded="false" aria-label="Mostrar os avisos" (click)="mostrarCardAvisos()">Mostrar</button>
+          } @else {
+            <app-menu-acoes rotulo="Ocultar" rotuloAcessivel="Ocultar os avisos" [acoes]="acoesAvisos"
+              (escolhida)="ocultarCardAvisos($event)" />
+          }
         </header>
         <div id="lista-avisos-painel">
           @if (!avisosRecolhidos()) {
@@ -92,12 +97,12 @@ import {
     }
   `,
   styles: [`
+    /* A faixa da esquerda é sombra interna (e não ::before com overflow: hidden), para o menu "Ocultar" não ser cortado. */
     .aviso-painel {
-      position: relative; overflow: hidden; background: var(--superficie); border-radius: var(--raio);
-      box-shadow: var(--sombra); padding: 14px 18px 14px 22px; margin-bottom: 16px;
+      position: relative; background: var(--superficie); border-radius: var(--raio);
+      box-shadow: inset 5px 0 0 var(--negativo), var(--sombra); padding: 14px 18px 14px 22px; margin-bottom: 16px;
     }
-    .aviso-painel::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--negativo); }
-    .aviso-geral::before { background: var(--alerta); }
+    .aviso-geral { box-shadow: inset 5px 0 0 var(--alerta), var(--sombra); }
     .aviso-painel-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
     .aviso-painel-topo app-icone { color: var(--negativo); display: inline-flex; }
     .aviso-geral .aviso-painel-topo app-icone { color: var(--alerta); }
@@ -125,6 +130,9 @@ export class PainelAvisosComponent {
   readonly periodo = input.required<{ ano: number; mes: number }>();
 
   readonly todos = signal(false);
+  /** "Minimizar": recolhe só enquanto o Painel está aberto; ao voltar a ele, o card vem aberto de novo. */
+  private readonly orcamentosMinimizados = signal(false);
+  private readonly avisosMinimizados = signal(false);
   private readonly orcamentosOcultos = signal(lerOrcamentosOcultos());
   private readonly avisosOcultos = signal(lerAvisosOcultos());
 
@@ -145,25 +153,59 @@ export class PainelAvisosComponent {
   });
 
   readonly orcamentosVisiveis = computed(() => this.todos() ? this.estourados() : this.estourados().slice(0, this.visiveis));
-  readonly orcamentosRecolhidos = computed(() =>
-    orcamentosContinuamOcultos(this.orcamentosOcultos(), chavePeriodo(this.periodo()), this.estourados()));
-  readonly avisosRecolhidos = computed(() => avisosContinuamOcultos(this.avisosOcultos(), this.alertas()));
+  readonly orcamentosRecolhidos = computed(() => this.orcamentosMinimizados()
+    || orcamentosContinuamOcultos(this.orcamentosOcultos(), chavePeriodo(this.periodo()), this.estourados()));
+  readonly avisosRecolhidos = computed(() => this.avisosMinimizados()
+    || avisosContinuamOcultos(this.avisosOcultos(), this.alertas()));
+
+  /** As duas opções do menu "Ocultar": só agora, ou lembrado até algo mudar. */
+  readonly acoesOrcamentos = computed<AcaoMenu[]>(() => [
+    { id: 'minimizar', rotulo: 'Minimizar', detalhe: 'Volta aberto na próxima vez que abrir o Painel.' },
+    { id: 'ocultar', rotulo: `Ocultar ${this.ateQuando()}`,
+      detalhe: 'Volta antes se outra categoria estourar ou uma piorar de faixa.' }
+  ]);
+  readonly acoesAvisos: AcaoMenu[] = [
+    { id: 'minimizar', rotulo: 'Minimizar', detalhe: 'Volta aberto na próxima vez que abrir o Painel.' },
+    { id: 'ocultar', rotulo: 'Ocultar até aparecer um novo', detalhe: 'Fica a linha com a quantidade.' }
+  ];
 
   linkTransacoes(o: Orcamento): Record<string, string> {
     const { ano, mes } = this.periodo();
     return paramsTransacoes({ categoriaId: o.categoriaId, inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' });
   }
 
-  alternarOrcamentos(): void {
-    const periodo = chavePeriodo(this.periodo());
-    this.orcamentosOcultos.update((salvo) => this.orcamentosRecolhidos()
-      ? mostrarOrcamentos(salvo, periodo)
-      : ocultarOrcamentos(salvo, periodo, this.estourados()));
+  ocultarCardOrcamentos(acao: string): void {
+    if (acao === 'minimizar') this.orcamentosMinimizados.set(true);
+    else {
+      this.orcamentosOcultos.update((salvo) => ocultarOrcamentos(salvo, chavePeriodo(this.periodo()), this.estourados()));
+      guardar(CHAVE_ORCAMENTOS_OCULTOS, this.orcamentosOcultos());
+    }
+    focarDepois('mostrar-orcamentos-estourados');
+  }
+
+  mostrarCardOrcamentos(): void {
+    this.orcamentosMinimizados.set(false);
+    this.orcamentosOcultos.update((salvo) => mostrarOrcamentos(salvo, chavePeriodo(this.periodo())));
     guardar(CHAVE_ORCAMENTOS_OCULTOS, this.orcamentosOcultos());
   }
 
-  alternarAvisos(): void {
-    this.avisosOcultos.set(this.avisosRecolhidos() ? [] : this.alertas().map(impressaoAviso));
+  ocultarCardAvisos(acao: string): void {
+    if (acao === 'minimizar') this.avisosMinimizados.set(true);
+    else {
+      this.avisosOcultos.set(this.alertas().map(impressaoAviso));
+      guardar(CHAVE_AVISOS_OCULTOS, this.avisosOcultos());
+    }
+    focarDepois('mostrar-avisos-painel');
+  }
+
+  mostrarCardAvisos(): void {
+    this.avisosMinimizados.set(false);
+    this.avisosOcultos.set([]);
     guardar(CHAVE_AVISOS_OCULTOS, this.avisosOcultos());
   }
+}
+
+/** O menu some ao recolher o card; o foco vai para o "Mostrar" que entra no lugar, e não se perde (WCAG 2.4.3). */
+function focarDepois(id: string): void {
+  setTimeout(() => document.getElementById(id)?.focus());
 }

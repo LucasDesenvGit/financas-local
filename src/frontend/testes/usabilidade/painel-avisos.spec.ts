@@ -15,6 +15,17 @@ function orc(categoriaId: number, percentual: number, situacao: Orcamento['situa
     valor: 100, gasto: percentual, percentual, gastoEmergencia: 0, situacao };
 }
 
+/** Abre o menu "Ocultar" do card e escolhe a opção pelo rótulo. */
+async function escolher(raiz: HTMLElement, card: string, opcao: string, atualizar: () => Promise<void>) {
+  (raiz.querySelector(`${card} .menu-acoes-botao`) as HTMLButtonElement).click();
+  await atualizar();
+  const item = [...raiz.querySelectorAll<HTMLButtonElement>(`${card} [role="menuitem"]`)]
+    .find((b) => b.querySelector('.menu-acoes-rotulo')!.textContent!.trim() === opcao);
+  if (!item) throw new Error(`opção "${opcao}" não encontrada no menu de ${card}`);
+  item.click();
+  await atualizar();
+}
+
 const hoje = new Date();
 const periodoAtual = { ano: hoje.getFullYear(), mes: hoje.getMonth() + 1 };
 const urlAtual = `/painel?ano=${periodoAtual.ano}&mes=${periodoAtual.mes}`;
@@ -115,32 +126,56 @@ describe('Painel: card dos orçamentos estourados (#206)', () => {
     expect(link.getAttribute('aria-label')).toMatch(/^Ver as despesas de Categoria 1 em /);
   });
 
-  it('"Ocultar até o mês que vem" recolhe numa linha, é lembrado e "Mostrar" abre de novo', async () => {
+  it('"Ocultar" é um menu (Menu Button do WAI-ARIA) com "Minimizar" e "Ocultar até o mês que vem"', async () => {
     const { raiz, atualizar } = await abrirPainel(painel({ orcamentosEstourados: estourados }), urlAtual);
-    const botao = raiz.querySelector('.aviso-orcamentos .aviso-painel-alternar') as HTMLButtonElement;
-    expect(botao.textContent!.trim()).toBe('Ocultar até o mês que vem');
-    expect(botao.getAttribute('aria-expanded')).toBe('true');
-    expect(botao.getAttribute('aria-controls')).toBe('lista-orcamentos-estourados');
-    expect(raiz.querySelector('#lista-orcamentos-estourados')).not.toBeNull();
-
+    const botao = raiz.querySelector('.aviso-orcamentos .menu-acoes-botao') as HTMLButtonElement;
+    expect(botao.textContent!.trim()).toBe('Ocultar');
+    expect(botao.getAttribute('aria-haspopup')).toBe('menu');
+    expect(botao.getAttribute('aria-label')).toBe('Ocultar os avisos de orçamento');
+    expect(botao.getAttribute('aria-expanded')).toBe('false');
     botao.click();
     await atualizar();
+    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    const menu = raiz.querySelector(`#${botao.getAttribute('aria-controls')}`)!;
+    expect(menu.getAttribute('role')).toBe('menu');
+    expect([...menu.querySelectorAll('[role="menuitem"] .menu-acoes-rotulo')].map((e) => e.textContent!.trim()))
+      .toEqual(['Minimizar', 'Ocultar até o mês que vem']);
+  });
+
+  it('"Ocultar até o mês que vem" recolhe numa linha, é lembrado e "Mostrar" abre de novo', async () => {
+    const { raiz, atualizar } = await abrirPainel(painel({ orcamentosEstourados: estourados }), urlAtual);
+    await escolher(raiz, '.aviso-orcamentos', 'Ocultar até o mês que vem', atualizar);
     expect(raiz.querySelector('.lista-estourados')).toBeNull();
     // O título continua: nada some de vez (Nielsen 1).
     expect(raiz.querySelector('.aviso-orcamentos h2')!.textContent).toContain('4 orçamentos estourados');
-    expect(botao.textContent!.trim()).toBe('Mostrar');
-    expect(botao.getAttribute('aria-expanded')).toBe('false');
+    const mostrar = raiz.querySelector('#mostrar-orcamentos-estourados') as HTMLButtonElement;
+    expect(mostrar.textContent!.trim()).toBe('Mostrar');
+    expect(mostrar.getAttribute('aria-expanded')).toBe('false');
+    expect(mostrar.getAttribute('aria-controls')).toBe('lista-orcamentos-estourados');
     expect(localStorage.getItem(CHAVE_ORCAMENTOS_OCULTOS)).toContain(`${periodoAtual.ano}-`);
 
-    botao.click();
+    mostrar.click();
     await atualizar();
     expect(raiz.querySelectorAll('.lista-estourados li').length).toBeGreaterThan(0);
+    expect(localStorage.getItem(CHAVE_ORCAMENTOS_OCULTOS)).toBe('{}');
+  });
+
+  it('"Minimizar" recolhe só agora: nada fica guardado, e o card volta aberto ao abrir o Painel de novo', async () => {
+    const primeira = await abrirPainel(painel({ orcamentosEstourados: estourados }), urlAtual);
+    await escolher(primeira.raiz, '.aviso-orcamentos', 'Minimizar', primeira.atualizar);
+    expect(primeira.raiz.querySelector('.lista-estourados')).toBeNull();
+    expect(primeira.raiz.querySelector('#mostrar-orcamentos-estourados')).not.toBeNull();
+    expect(localStorage.getItem(CHAVE_ORCAMENTOS_OCULTOS)).toBeNull();
+
+    primeira.harness.fixture.destroy();
+    TestBed.resetTestingModule();
+    const segunda = await abrirPainel(painel({ orcamentosEstourados: estourados }), urlAtual);
+    expect(segunda.raiz.querySelectorAll('.lista-estourados li')).toHaveLength(3);
   });
 
   it('ocultos, voltam abertos ao recarregar com uma categoria nova estourada', async () => {
     const primeira = await abrirPainel(painel({ orcamentosEstourados: [orc(1, 130)] }), urlAtual);
-    (primeira.raiz.querySelector('.aviso-orcamentos .aviso-painel-alternar') as HTMLButtonElement).click();
-    await primeira.atualizar();
+    await escolher(primeira.raiz, '.aviso-orcamentos', 'Ocultar até o mês que vem', primeira.atualizar);
     expect(primeira.raiz.querySelector('.lista-estourados')).toBeNull();
 
     primeira.harness.fixture.destroy();
@@ -166,10 +201,7 @@ describe('Painel: card dos outros avisos (#206)', () => {
     expect(card.querySelector('h2')!.textContent).toContain('2 avisos pedem atenção');
     expect(card.querySelectorAll('li')).toHaveLength(2);
 
-    const botao = card.querySelector('.aviso-painel-alternar') as HTMLButtonElement;
-    expect(botao.textContent!.trim()).toBe('Ocultar até aparecer um novo');
-    botao.click();
-    await atualizar();
+    await escolher(raiz, '.aviso-geral', 'Ocultar até aparecer um novo', atualizar);
     expect(card.querySelectorAll('li')).toHaveLength(0);
     expect(card.querySelector('h2')!.textContent).toContain('2 avisos pedem atenção');
     // Guarda só a impressão de cada aviso, não o texto (nomes de contas ficam fora do localStorage, ADR 0017).

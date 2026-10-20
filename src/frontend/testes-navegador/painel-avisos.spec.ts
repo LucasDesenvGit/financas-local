@@ -24,21 +24,54 @@ test('Painel: card dos orçamentos estourados leva a Transações e fica oculto 
   await expect(page).toHaveURL(/\/transacoes\?.*categoria=3/);
   await page.goBack();
 
-  await page.getByRole('button', { name: 'Ocultar os avisos de orçamento até o mês que vem' }).click();
+  await card.getByRole('button', { name: 'Ocultar os avisos de orçamento' }).click();
+  await page.getByRole('menuitem', { name: /^Ocultar até o mês que vem/ }).click();
   await expect(card.getByRole('listitem')).toHaveCount(0);
+  // O foco vai para o "Mostrar" que entra no lugar do menu (WCAG 2.4.3).
+  await expect(card.getByRole('button', { name: 'Mostrar os orçamentos estourados' })).toBeFocused();
   await page.reload();
   await expect(page.getByRole('region', { name: /4 orçamentos estourados/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Mostrar os orçamentos estourados' })).toHaveAttribute('aria-expanded', 'false');
   expect(problemas.lista).toEqual([]);
 });
 
-test('Painel: os outros avisos têm card próprio, e o "Ocultar" funciona pelo teclado', async ({ page }) => {
+test('Painel: os outros avisos têm card próprio, e o menu "Ocultar" funciona pelo teclado', async ({ page }) => {
   await page.goto('/painel');
   const card = page.getByRole('region', { name: '1 aviso pede atenção' });
   await expect(card).toContainText('Conta "Aluguel" vencida');
-  const botao = card.getByRole('button', { name: 'Ocultar os avisos até aparecer um novo' });
+  const botao = card.getByRole('button', { name: 'Ocultar os avisos' });
   await botao.focus();
+  await page.keyboard.press('Enter');
+  // Enter abre o menu com o foco no 1º item; Esc fecha e devolve o foco ao botão.
+  await expect(page.getByRole('menuitem', { name: /^Minimizar/ })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(botao).toBeFocused();
+  await expect(page.getByRole('menu')).toHaveCount(0);
+
+  // ↓ abre, ↓ vai ao 2º item ("Ocultar até aparecer um novo"), Enter escolhe.
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('menuitem', { name: /^Ocultar até aparecer um novo/ })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(card.getByRole('listitem')).toHaveCount(0);
   await expect(card.getByRole('button', { name: 'Mostrar os avisos' })).toBeFocused();
+});
+
+test('Painel: o menu "Ocultar" aparece inteiro, sem ser cortado pelo card, também no celular', async ({ page }) => {
+  await page.goto('/painel');
+  const card = page.getByRole('region', { name: /orçamentos estourados/ });
+  await card.getByRole('button', { name: 'Ocultar os avisos de orçamento' }).click();
+  const menu = page.getByRole('menu');
+  await expect(menu).toBeVisible();
+  const caixa = (await menu.boundingBox())!;
+  expect(caixa.x).toBeGreaterThanOrEqual(0);
+  expect(caixa.x + caixa.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  // O último item é clicável no ponto dele: nada por cima, nada cortado.
+  await page.getByRole('menuitem', { name: /^Ocultar até o mês que vem/ }).click();
+  await expect(card.getByRole('listitem')).toHaveCount(0);
+  // Clique fora fecha um menu aberto.
+  await page.getByRole('region', { name: '1 aviso pede atenção' }).getByRole('button', { name: 'Ocultar os avisos' }).click();
+  await expect(page.getByRole('menu')).toBeVisible();
+  await page.getByRole('heading', { level: 1 }).click();
+  await expect(page.getByRole('menu')).toHaveCount(0);
 });

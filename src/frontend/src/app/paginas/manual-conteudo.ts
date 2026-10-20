@@ -769,7 +769,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'A barra de cada categoria mostra quanto do limite já foi.',
           'Laranja quer dizer que passou do limite só por causa de gastos de emergência.',
-          'O Painel junta os orçamentos estourados num card, com o link para as despesas de cada categoria. Dá para ocultar até o mês que vem.',
+          'O Painel junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
           'Clique no gasto de uma categoria para ver as transações por trás dele.'
         ],
         abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }, { rotulo: 'Abrir o Painel', rota: '/painel' }]
@@ -970,7 +970,7 @@ export const MANUAL: CapituloManual[] = [
           '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor.',
           'No topo, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
           'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros).',
-          '“Ocultar até o mês que vem” recolhe o card dos orçamentos numa linha só. Ele abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos. Fica a linha com a quantidade, e “Mostrar” abre de novo.',
+          'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” recolhe só agora: o card volta aberto na próxima vez que você abrir o Painel. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
           '“Mais análises” abre a evolução de 12 meses e as últimas transações.',
           'Clique num total por categoria para ver as transações por trás dele.'
         ],
