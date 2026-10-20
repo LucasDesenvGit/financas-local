@@ -86,6 +86,17 @@ public enum Recorrencia : byte
     Anual = 2
 }
 
+/// <summary>
+/// #158 (ADR 0043): como a conta a pagar é cobrada. Só a paga à mão (boleto, Pix) precisa do "Pagar"; as outras se dão
+/// como pagas sozinhas quando a cobrança chega no extrato (pelo texto da cobrança).
+/// </summary>
+public enum FormaCobranca : byte
+{
+    AMao = 1,
+    DebitoAutomatico = 2,
+    CartaoCredito = 3
+}
+
 /// <summary>#111 (ADR 0025): como o dinheiro entrou ou saiu. Calculado pelo <c>TipoLancamentoService</c>, não gravado.</summary>
 public enum TipoLancamento : byte
 {

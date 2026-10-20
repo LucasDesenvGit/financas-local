@@ -306,7 +306,9 @@ public record ContaAgendadaDto(int Id, string Descricao, decimal Valor, DateOnly
     Recorrencia Recorrencia, int? CategoriaId, string? CategoriaNome, int? ContaId, string? ContaNome,
     bool Ativa, DateOnly? UltimoPagamentoEm, int DiasParaVencer,
     // #69: até quando se repete; pagamentos que faltam até lá (contando o próximo); encerrada por ter passado dela.
-    DateOnly? DataLimite = null, int? PagamentosRestantes = null, bool Encerrada = false);
+    DateOnly? DataLimite = null, int? PagamentosRestantes = null, bool Encerrada = false,
+    // #158: como é cobrada, o texto que a liga às cobranças e a observação.
+    FormaCobranca FormaCobranca = FormaCobranca.AMao, string? TextoCobranca = null, string? Observacao = null);
 
 public record SalvarContaAgendadaDto(
     [Required, StringLength(150)] string Descricao,
@@ -316,7 +318,10 @@ public record SalvarContaAgendadaDto(
     int? CategoriaId,
     int? ContaId,
     bool Ativa = true,
-    DateOnly? DataLimite = null);
+    DateOnly? DataLimite = null,
+    FormaCobranca FormaCobranca = FormaCobranca.AMao,
+    [StringLength(100, ErrorMessage = "O texto da cobrança pode ter até 100 caracteres.")] string? TextoCobranca = null,
+    [StringLength(300, ErrorMessage = "A observação pode ter até 300 caracteres.")] string? Observacao = null);
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 
@@ -327,7 +332,9 @@ public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal Valor, bool ValorVariavel,
     decimal ValorMinimo, decimal ValorMaximo, DateOnly ProximoVencimento, int DiaHabitual, int Meses, int Pagamentos,
     DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,
-    string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento);
+    string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento,
+    // #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual.
+    FormaCobranca FormaCobranca = FormaCobranca.AMao, string? TextoCobranca = null, Recorrencia Recorrencia = Recorrencia.Mensal);
 
 /* ----------------------------- Investimentos ----------------------------- */
 /// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>

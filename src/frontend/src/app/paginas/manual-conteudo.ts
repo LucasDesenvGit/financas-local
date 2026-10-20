@@ -728,7 +728,7 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'contas-a-pagar',
     titulo: 'Contas a pagar',
-    resumo: 'Cadastrar vencimentos, pagar, data limite e as sugestões que vêm do extrato.',
+    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos e as sugestões que vêm do extrato.',
     secoes: [
       {
         id: 'cadastrar-conta',
@@ -738,9 +738,25 @@ export const MANUAL: CapituloManual[] = [
           'Abra Contas a pagar e clique em “+ Nova conta”.',
           'Informe a descrição, o valor, o “Próximo vencimento” e a recorrência (mensal, anual ou única).',
           'Para conta que acaba (escola até dezembro, parcelas de um curso), preencha “Até (opcional)” ou “quantos pagamentos faltam”.',
-          'Escolha a categoria e, se quiser, a conta de onde sai o pagamento.'
+          'Escolha a categoria e, se quiser, a conta de onde sai o pagamento.',
+          'Em “Como é cobrada”, diga se você paga à mão (boleto, Pix), se é débito automático ou se cai no cartão de crédito. Escolha também o cartão ou a conta onde cai.',
+          'Use “Observação” para o que quiser lembrar (ex.: “conta da família”, “cancelar em março”).'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
+      },
+      {
+        id: 'cobrada-sozinha',
+        titulo: 'Assinaturas e débitos automáticos (cobrados sozinhos)',
+        paraQueServe: 'Saber qual assinatura cai em qual cartão e qual débito automático sai de qual conta, sem precisar clicar em “Pagar”.',
+        passos: [
+          'No cadastro, escolha “débito automático” ou “no cartão de crédito” e preencha o “Texto da cobrança no extrato”: o que a descrição do banco contém (ex.: NETFLIX).',
+          'Quando a cobrança com esse texto chega no extrato, a conta se dá como paga sozinha: o último pagamento vai para a data dela e o vencimento avança.',
+          'Por isso a conta cobrada sozinha não tem o botão “Pagar”. Sem o texto, ela continua com o “Pagar”.',
+          'A lista mostra, em cada conta, como ela é cobrada e onde cai.',
+          'O que cai no cartão não aparece nos “Próximos vencimentos” do Painel: entra na fatura, que já está lá.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
       },
       {
         id: 'pagar',
@@ -756,9 +772,12 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'sugestoes-extrato',
         titulo: 'Sugestões do extrato',
-        paraQueServe: 'Cadastrar em um clique os pagamentos que se repetem todo mês.',
+        paraQueServe: 'Cadastrar em um clique os pagamentos que se repetem todo mês (ou todo ano).',
         passos: [
           'Em “Sugestões do extrato”, aparecem boletos, débitos automáticos e Pix que se repetem e ainda não estão na lista.',
+          'Também aparecem as assinaturas dos cartões: a mesma cobrança, todo mês, com o valor igual (até 5% de diferença nas últimas). Parcelas e gastos frequentes (mercado, aplicativo de corrida) ficam de fora.',
+          'Assinatura anual aparece quando o histórico importado tem as duas últimas cobranças, com um ano de diferença. Se não tiver, cadastre à mão.',
+          'Cada sugestão diz como parece ser cobrada (à mão, débito automático ou no cartão) e já vem com o texto da cobrança.',
           'Use “ver pagamentos” para conferir no extrato.',
           '“Cadastrar” abre o formulário já preenchido; “ignorar” tira a sugestão.'
         ],

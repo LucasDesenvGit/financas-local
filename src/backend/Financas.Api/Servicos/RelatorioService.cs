@@ -157,7 +157,8 @@ public class RelatorioService
         if (proximosDias is int dias)
         {
             var limite = hoje.AddDays(dias);
-            q = q.Where(c => c.Ativa && c.ProximoVencimento <= limite);
+            // #158: no Painel, o que cai no cartão não é conta a pagar: entra na fatura, que já está lá.
+            q = q.Where(c => c.Ativa && c.ProximoVencimento <= limite && c.FormaCobranca != FormaCobranca.CartaoCredito);
         }
 
         var lista = await q.OrderBy(c => c.ProximoVencimento)
@@ -167,7 +168,7 @@ public class RelatorioService
                 CategoriaNome = c.Categoria != null ? c.Categoria.Nome : null,
                 c.ContaId,
                 ContaNome = c.Conta != null ? c.Conta.Nome : null,
-                c.Ativa, c.UltimoPagamentoEm, c.DataLimite
+                c.Ativa, c.UltimoPagamentoEm, c.DataLimite, c.FormaCobranca, c.TextoCobranca, c.Observacao
             })
             .ToListAsync(ct);
 
@@ -178,7 +179,8 @@ public class RelatorioService
                     && c.ProximoVencimento > limite;
                 return new ContaAgendadaDto(c.Id, c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia,
                     c.CategoriaId, c.CategoriaNome, c.ContaId, c.ContaNome, c.Ativa, c.UltimoPagamentoEm,
-                    c.ProximoVencimento.DayNumber - hoje.DayNumber, c.DataLimite, restantes, encerrada);
+                    c.ProximoVencimento.DayNumber - hoje.DayNumber, c.DataLimite, restantes, encerrada,
+                    c.FormaCobranca, c.TextoCobranca, c.Observacao);
             })
             .ToList();
     }

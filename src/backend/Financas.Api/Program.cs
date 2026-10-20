@@ -115,6 +115,7 @@ builder.Services.AddScoped<RegraDescricaoService>();
 builder.Services.AddScoped<TransferenciasService>();
 builder.Services.AddScoped<SugestaoCategoriaService>();
 builder.Services.AddScoped<SugestaoContaAgendadaService>();
+builder.Services.AddScoped<ContaAgendadaService>();
 builder.Services.AddScoped<SugestaoOrcamentoService>();
 builder.Services.AddScoped<AssistenteMetasService>();
 builder.Services.AddScoped<DescricaoPoucoInformativaService>();
@@ -196,6 +197,9 @@ try
     if (await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().ReclassificarEntradasNosCartoesAsync(CancellationToken.None) > 0)
         await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
+        await bancoDados.SaveChangesAsync();
+    // #158: cobranças automáticas (débito automático, cartão) que já chegaram dão baixa na conta a pagar.
+    if (await escopo.ServiceProvider.GetRequiredService<ContaAgendadaService>().ConciliarAsync(CancellationToken.None) > 0)
         await bancoDados.SaveChangesAsync();
 }
 catch (Exception ex)

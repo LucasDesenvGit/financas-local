@@ -64,6 +64,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Subscrição e vendas** aparecem à parte, embaixo dos aportes.
   - **Valorização:** pelo fechamento de cada mês (no mês atual, a cotação de hoje); pode diferir um pouco do app, que usa outra fonte de preço. O termo tem ⓘ com a definição.
   - **Ainda não:** o rendimento das caixinhas (precisa guardar o histórico do saldo) e a taxa da B3 calculada pelo extrato ficam para os próximos passos da #173.
+- **Assinaturas e débitos automáticos em Contas a pagar** (#158, parte 1; ADR 0043):
+  - **Como é cobrada:** cada conta a pagar diz se é paga à mão (boleto, Pix), por débito automático ou no cartão de crédito, e onde cai. Também ganha uma observação.
+  - **Baixa sozinha:** com o "texto da cobrança" (a descrição do banco contém…), a conta cobrada sozinha se dá como paga quando a cobrança chega no extrato, sem "Pagar". Vale pela descrição original, mesmo depois de renomear.
+  - **Sugestões do extrato** agora acham as **assinaturas nos cartões** (valor igual, até 5% de diferença; sem parcelas nem gastos frequentes), as **anuais** e os **débitos automáticos**, já com a forma e o texto preenchidos.
+  - **Painel:** o que cai no cartão sai dos "Próximos vencimentos", porque entra na fatura.
+  - **Manual:** seção nova "Assinaturas e débitos automáticos".
 - **Conferir com o banco** (#172), tela nova aberta por Contas e cartões.
   - **O que faz:** você digita o que o app de cada banco mostra (saldo de cada conta, fatura do mês de cada cartão, valor de cada investimento e reserva), e o site compara na hora.
   - **Quando não bate,** mostra as pistas: quando o banco atualizou, reservas, pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, com o link para o detalhe.

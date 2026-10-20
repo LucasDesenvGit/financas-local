@@ -188,6 +188,12 @@ public class ContaAgendada
     public DateOnly? UltimoPagamentoEm { get; set; }
     /// <summary>#69: último vencimento que ainda se repete (null = sem fim). Passou dele ao pagar, a conta é encerrada.</summary>
     public DateOnly? DataLimite { get; set; }
+    /// <summary>#158 (ADR 0043): à mão (boleto, Pix), débito automático ou cartão de crédito.</summary>
+    public FormaCobranca FormaCobranca { get; set; } = FormaCobranca.AMao;
+    /// <summary>#158: "a descrição do banco contém" isto (ex.: NETFLIX), sem acento e em maiúsculas; liga às cobranças.</summary>
+    public string? TextoCobranca { get; set; }
+    /// <summary>#158: observação livre (ex.: "conta da família", "cancelar em março").</summary>
+    public string? Observacao { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public Categoria? Categoria { get; set; }
