@@ -46,6 +46,61 @@ public static partial class ParcelasFuturas
         return futuras;
     }
 
+    /// <summary>Um lançamento no cartão para casar estorno com compra parcelada (#257).</summary>
+    public sealed record Lancamento(long Id, int ContaId, DateOnly Data, decimal Valor, short? Numero, short? Total, string Descricao);
+
+    /// <summary>Até quantos dias depois da compra um estorno ainda é casado com ela.</summary>
+    public const int DiasEstornoDaCompra = 400;
+
+    /// <summary>
+    /// #257 (ADR 0036): estorno que devolve uma compra parcelada inteira (o valor da parcela × o número de parcelas) casa
+    /// com a 1ª parcela dessa compra; a compra foi cancelada. Devolve os ids que ficam fora dos relatórios: o estorno, a 1ª
+    /// parcela e as outras parcelas dela já lançadas (até 35 dias depois do estorno, para as que o banco antecipa).
+    /// <para>Com várias compras iguais (mesma conta, valor e descrição), cada estorno fica com a mais antiga ainda não
+    /// casada: o resultado nos totais é o mesmo, qualquer que seja a escolhida.</para>
+    /// <para>Estorno de parte da compra (uma parcela, um item) não casa e continua abatendo o gasto do mês.</para>
+    /// </summary>
+    public static HashSet<long> ComprasEstornadas(IEnumerable<Lancamento> lancamentos)
+    {
+        var lista = lancamentos.ToList();
+        var parcelas = lista.Where(p => p.Valor < 0 && p.Total > 1 && p.Numero >= 1 && p.Numero <= p.Total).ToList();
+        var fora = new HashSet<long>();
+        foreach (var e in lista.Where(x => x.Valor > 0).OrderBy(x => x.Data).ThenBy(x => x.Id))
+        {
+            var compra = Compra(SemEstorno(e.Descricao));
+            var primeira = parcelas
+                .Where(p => p.Numero == 1 && p.ContaId == e.ContaId && !fora.Contains(p.Id) && p.Data <= e.Data
+                            && e.Data.DayNumber - p.Data.DayNumber <= DiasEstornoDaCompra && Compra(p.Descricao) == compra
+                            && Math.Abs(e.Valor - Math.Abs(p.Valor) * p.Total!.Value) <= p.Total.Value * 0.10m + 0.05m)
+                .OrderBy(p => p.Data).ThenBy(p => p.Id)
+                .FirstOrDefault();
+            if (primeira is null) continue;
+            fora.Add(e.Id);
+            fora.Add(primeira.Id);
+            var valor = Math.Round(Math.Abs(primeira.Valor), 0);
+            for (var n = 2; n <= primeira.Total!.Value; n++)
+            {
+                var outra = parcelas
+                    .Where(p => p.Numero == n && p.Total == primeira.Total && p.ContaId == primeira.ContaId && !fora.Contains(p.Id)
+                                && p.Data >= primeira.Data && p.Data <= e.Data.AddDays(35)
+                                && Math.Abs(Math.Round(Math.Abs(p.Valor), 0) - valor) <= 1 && Compra(p.Descricao) == compra)
+                    .OrderBy(p => p.Data).ThenBy(p => p.Id)
+                    .FirstOrDefault();
+                if (outra is not null) fora.Add(outra.Id);
+            }
+        }
+        return fora;
+    }
+
+    /// <summary>A descrição do estorno sem "Estorno de" na frente (alguns bancos repetem a da compra assim).</summary>
+    private static string SemEstorno(string descricao)
+    {
+        var texto = descricao.Trim();
+        foreach (var prefixo in new[] { "ESTORNO DE ", "ESTORNO DA ", "ESTORNO DO ", "ESTORNO " })
+            if (texto.StartsWith(prefixo, StringComparison.OrdinalIgnoreCase)) return texto[prefixo.Length..];
+        return texto;
+    }
+
     private static (int, short, decimal, string) Chave(Parcela p)
         => (p.ContaId, p.Total, Math.Round(Math.Abs(p.Valor), 0), Compra(p.Descricao));
 

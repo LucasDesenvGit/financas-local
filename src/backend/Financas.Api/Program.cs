@@ -197,6 +197,9 @@ try
     await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().ReclassificarEntradasNosCartoesAsync(CancellationToken.None) > 0)
         await bancoDados.SaveChangesAsync();
+    // #257 (ADR 0036): compra parcelada devolvida inteira sai dos relatórios, com o estorno.
+    if (await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().IgnorarComprasParceladasEstornadasAsync(CancellationToken.None) > 0)
+        await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
         await bancoDados.SaveChangesAsync();
     // #158: cobranças automáticas (débito automático, cartão) que já chegaram dão baixa na conta a pagar.
