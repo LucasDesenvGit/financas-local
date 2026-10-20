@@ -16,11 +16,13 @@ public class FiiService
 
     private readonly FinancasDbContext _db;
     private readonly ExtratoCarteiraService _extrato;
+    private readonly ConferenciaInvestimentosService _conferencia;
 
-    public FiiService(FinancasDbContext db, ExtratoCarteiraService extrato)
+    public FiiService(FinancasDbContext db, ExtratoCarteiraService extrato, ConferenciaInvestimentosService conferencia)
     {
         _db = db;
         _extrato = extrato;
+        _conferencia = conferencia;
     }
 
     private sealed class Fundo
@@ -71,6 +73,11 @@ public class FiiService
 
         var tickers = fundos.Select(f => f.Ativo.Ticker).ToHashSet();
         var recebidos = (await _extrato.ProventosRecebidosAsync(ct)).Where(r => tickers.Contains(r.Ticker)).ToList();
+        // #173: provento recebido no mês = crédito com o código do fundo ou crédito da corretora que não é troco nem
+        // venda ("Valor recebido de Investimentos", sem código). O mesmo crédito conta uma vez só.
+        var creditosProvento = recebidos.Select(r => (r.Id, r.Data, r.Valor))
+            .Concat(fundos.Count > 0 ? await _conferencia.ProventosDaCorretoraAsync(ct) : [])
+            .DistinctBy(r => r.Id).ToList();
 
         var abertos = fundos.Where(f => f.Posicao.Quantidade > 0).ToList();
         var totalMercado = abertos.Sum(f => f.Posicao.Quantidade * (f.Ativo.PrecoAtual ?? f.Posicao.PrecoMedio));
@@ -160,6 +167,7 @@ public class FiiService
         /* ---------------- evolução e rentabilidade (mensal) ---------------- */
         var evolucao = new List<EvolucaoFiiMesDto>();
         var rentabilidade = new List<RentabilidadeMesDto>();
+        var mesAMes = new List<MesAMesFiiDto>();
         var ifix = await _db.IndicesMensais.AsNoTracking().Where(i => i.Codigo == CotacaoService.CodigoIfix)
             .ToDictionaryAsync(i => i.Mes, i => i.Fechamento, ct);
         if (fundos.Count > 0)
@@ -175,16 +183,28 @@ public class FiiService
             {
                 var fim = Ultimo(mes);
                 if (fim > hoje) fim = hoje;
-                decimal aplicado = 0, valor = 0, fluxo = 0, proventos = 0;
+                decimal aplicado = 0, valor = 0, fluxo = 0, proventos = 0, aportes = 0, subscricoes = 0, resgates = 0;
                 foreach (var f in fundos)
                 {
                     var posicao = CarteiraService.Calcular(f.Operacoes, fim);
                     aplicado += posicao.Custo;
                     if (posicao.Quantidade > 0) valor += posicao.Quantidade * f.PrecoNoMes(mes, mesAtual);
+                    var subscricao = ClassificacaoAtivo.EhSubscricao(f.Ativo.Ticker);
                     foreach (var o in f.Operacoes.Where(x => x.Data >= mes && x.Data <= fim))
-                        fluxo += o.Tipo == TipoOperacao.Compra
-                            ? o.Quantidade * o.PrecoUnitario + o.Taxas
-                            : -(o.Quantidade * o.PrecoUnitario - o.Taxas);
+                    {
+                        if (o.Tipo == TipoOperacao.Compra)
+                        {
+                            var pago = o.Quantidade * o.PrecoUnitario + o.Taxas;
+                            fluxo += pago;
+                            if (subscricao) subscricoes += pago; else aportes += pago;
+                        }
+                        else
+                        {
+                            var recebido = o.Quantidade * o.PrecoUnitario - o.Taxas;
+                            fluxo -= recebido;
+                            resgates += recebido;
+                        }
+                    }
                     proventos += f.Proventos.Where(x => x.DataCom >= mes && x.DataCom <= fim)
                         .Sum(x => f.QuantidadeEm(x.DataCom) * x.ValorPorCota);
                 }
@@ -194,6 +214,11 @@ public class FiiService
                 var retorno = basePeriodo > 0 ? (valor + proventos - basePeriodo) / basePeriodo : 0m;
                 if (retorno < -0.95m) retorno = -0.95m;
                 acumulado *= 1 + retorno;
+                var mesFim = Ultimo(mes);
+                mesAMes.Add(new MesAMesFiiDto(mes.Year, mes.Month, Math.Round(aportes, 2), Math.Round(subscricoes, 2),
+                    Math.Round(resgates, 2),
+                    Math.Round(creditosProvento.Where(r => r.Data >= mes && r.Data <= mesFim).Sum(r => r.Valor), 2),
+                    Math.Round(proventos, 2), Math.Round(valor - basePeriodo, 2), Math.Round(valor, 2)));
                 valorAnterior = valor;
 
                 var ateSelic = fim == hoje ? hoje : fim.AddDays(1);
@@ -238,7 +263,7 @@ public class FiiService
         }).Where(h => h.Pontos.Count > 0).ToList();
 
         return new PainelFiisDto(resumo, lista, lotes, proventosMes, evolucao, rentabilidade, segmentos, historicos,
-            SegmentosFii.Todos.ToList());
+            SegmentosFii.Todos.ToList(), mesAMes);
     }
 
     private static decimal? Pct(decimal? parte, decimal? total)

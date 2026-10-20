@@ -98,6 +98,61 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
           </section>
         </div>
 
+        @if (mesAMes().length) {
+          <section class="painel-bloco mes-a-mes" aria-labelledby="titulo-mes-a-mes">
+            <div class="cabecalho-bloco">
+              <h2 id="titulo-mes-a-mes">Mês a mês</h2>
+              <span class="cresce"></span>
+              <div class="segmentado" role="group" aria-label="Período do mês a mês">
+                <button type="button" [class.ativo]="mesesMesAMes() === 12" [attr.aria-pressed]="mesesMesAMes() === 12"
+                  (click)="mesesMesAMes.set(12)">12 meses</button>
+                <button type="button" [class.ativo]="mesesMesAMes() === 24" [attr.aria-pressed]="mesesMesAMes() === 24"
+                  (click)="mesesMesAMes.set(24)">24 meses</button>
+              </div>
+            </div>
+            <app-grafico-explicado [resumo]="resumoMesAMes()"
+              comoLer="O que a carteira rendeu em cada mês: em azul, os rendimentos que caíram na conta; a valorização das cotas, em verde quando subiram e em rosa quando caíram. Os aportes estão na tabela abaixo.">
+              <app-grafico [configuracao]="graficoMesAMes()" [altura]="260" />
+            </app-grafico-explicado>
+            <div class="tabela-rolagem">
+              <table class="tabela tabela-fiis tabela-mes-a-mes">
+                <caption class="so-leitor">Aportes, rendimentos, valorização e saldo dos FIIs em cada mês, do mais recente ao mais antigo</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Mês</th>
+                    <th scope="col" class="direita">Aportes</th>
+                    <th scope="col" class="direita">Rendimentos</th>
+                    <th scope="col" class="direita"><app-termo chave="valorizacaoMes">Valorização</app-termo></th>
+                    <th scope="col" class="direita">Saldo no fim</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of mesAMesRecentes(); track m.ano * 100 + m.mes; let primeiro = $first) {
+                    <tr>
+                      <th scope="row">{{ rotuloMes(m) }}@if (primeiro && mesAtual(m)) { <br><small class="texto-suave">até hoje</small> }</th>
+                      <td class="direita">{{ m.aportes | currency }}
+                        @if (m.subscricoes > 0) { <br><small class="texto-suave">+ {{ m.subscricoes | currency }} em subscrição</small> }
+                        @if (m.resgates > 0) { <br><small class="texto-suave">− {{ m.resgates | currency }} em vendas</small> }</td>
+                      <td class="direita positivo">{{ m.rendimentosRecebidos | currency }}
+                        @if (mesAtual(m) && m.rendimentosEstimados > 0) {
+                          <br><small class="texto-suave">{{ m.rendimentosEstimados | currency }} a receber (data-com)</small>
+                        }</td>
+                      <td class="direita" [class.positivo]="m.valorizacao >= 0" [class.negativo]="m.valorizacao < 0">{{ m.valorizacao | currency }}</td>
+                      <td class="direita">{{ m.saldo | currency }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="texto-suave nota">
+              Aportes são as compras (cotas × preço); a taxa da B3, de centavos por ordem, só entra quando foi lançada.
+              Rendimentos são os créditos de provento no extrato, sem o troco das compras nem o valor das vendas.
+              A valorização usa o fechamento de cada mês (no mês atual, a cotação de hoje); por isso pode diferir um pouco
+              do app da corretora, que usa outra fonte e outro dia de preço.
+            </p>
+          </section>
+        }
+
         <section class="painel-bloco">
           <h2>Meus FIIs</h2>
           <div class="tabela-rolagem">
@@ -286,6 +341,7 @@ export class InvestimentosFiisComponent {
 
   readonly dados = signal<PainelFiis | null>(null);
   readonly mesesProventos = signal<12 | 24>(12);
+  readonly mesesMesAMes = signal<12 | 24>(12);
   readonly tickerHistorico = signal<string | null>(null);
   readonly filtroLote = signal<string | null>(null);
 
@@ -312,6 +368,57 @@ export class InvestimentosFiisComponent {
     const lotes = this.dados()?.lotes ?? [];
     return filtro ? lotes.filter((l) => l.ticker === filtro) : lotes;
   });
+
+  /** #173: os meses do período escolhido, do mais antigo ao mais recente (o gráfico lê da esquerda para a direita). */
+  readonly mesAMes = computed(() => (this.dados()?.mesAMes ?? []).slice(-this.mesesMesAMes()));
+  /** Na tabela, o mês mais recente primeiro (como no app). */
+  readonly mesAMesRecentes = computed(() => [...this.mesAMes()].reverse());
+
+  readonly resumoMesAMes = computed(() => {
+    const m = this.mesAMes().at(-1);
+    if (!m) return null;
+    const oculto = this.privacidade.oculto();
+    const quando = `Em ${rotulo(m.ano, m.mes)}${this.mesAtual(m) ? ' (até hoje)' : ''}`;
+    const subiu = m.valorizacao >= 0 ? 'subiram' : 'caíram';
+    if (oculto) {
+      const partes = [m.aportes > 0 ? 'houve aportes' : 'não houve aportes',
+        m.rendimentosRecebidos > 0 ? 'caíram rendimentos' : 'não caíram rendimentos'];
+      return `${quando}, ${partes.join(', ')} e as cotas ${subiu} de preço.`;
+    }
+    const r = (v: number) => reaisOuNada(Math.abs(v), false);
+    return `${quando}: ${r(m.aportes)} de aportes, ${r(m.rendimentosRecebidos)} de rendimentos, e as cotas ${subiu} ${r(m.valorizacao)}.`;
+  });
+
+  readonly graficoMesAMes = computed<ChartConfiguration<'bar'>>(() => {
+    const meses = this.mesAMes();
+    return {
+      type: 'bar',
+      data: {
+        labels: meses.map((m) => rotulo(m.ano, m.mes)),
+        datasets: [
+          // Os aportes ficam na tabela e na frase: no gráfico, um aporte de milhares achatava os rendimentos e a
+          // valorização (dezenas de reais), e o gráfico deixava de mostrar o que a carteira rendeu no mês.
+          { label: 'Rendimentos', data: meses.map((m) => m.rendimentosRecebidos), backgroundColor: COR_IFIX, borderRadius: 4 },
+          { label: 'Valorização', data: meses.map((m) => m.valorizacao),
+            backgroundColor: meses.map((m) => (m.valorizacao >= 0 ? COR_POSITIVO : COR_NEGATIVO)), borderRadius: 4 }
+        ]
+      },
+      options: {
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } },
+        scales: { y: { ticks: { callback: compacto } } }
+      }
+    };
+  });
+
+  rotuloMes(m: { ano: number; mes: number }): string {
+    return rotulo(m.ano, m.mes);
+  }
+
+  mesAtual(m: { ano: number; mes: number }): boolean {
+    const hoje = new Date();
+    return m.ano === hoje.getFullYear() && m.mes === hoje.getMonth() + 1;
+  }
 
   readonly alturaPorFundo = computed(() => Math.max(190, (this.dados()?.fiis.length ?? 0) * 34 + 60));
 

@@ -67,6 +67,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **"cartão arquivado":** com cobranças ainda nele.
   - **No Painel:** só "não veio" e "cartão arquivado".
   - **Ao arquivar** um cartão ou conta, a edição lista o que ainda cobra ali.
+- **Investimentos › FIIs › Mês a mês** (#173), como no app da corretora: por mês, os **aportes** (compras), os **rendimentos** que caíram na conta, a **valorização** das cotas e o **saldo no fim**, num gráfico com a frase-resumo do último mês e numa tabela com o mês mais recente primeiro.
+  - **Rendimentos:** os créditos de provento do extrato, sem o troco das compras nem o valor das vendas (a mesma separação da "Conferir investimentos"), valendo mesmo sem a conferência aplicada. No mês atual, o provento com data-com no mês aparece como "a receber".
+  - **Subscrição e vendas** aparecem à parte, embaixo dos aportes.
+  - **Valorização:** pelo fechamento de cada mês (no mês atual, a cotação de hoje); pode diferir um pouco do app, que usa outra fonte de preço. O termo tem ⓘ com a definição.
+  - **Ainda não:** o rendimento das caixinhas (precisa guardar o histórico do saldo) e a taxa da B3 calculada pelo extrato ficam para os próximos passos da #173.
 - **Assinaturas e recorrentes** (#158, parte 2): aba nova em Contas a pagar com o **de-para** de cada cobrança que se repete.
   - **Topo:** o total por mês e por ano.
   - **Um bloco por cartão ou conta:** cada cobrança, como é cobrada, o dia, a última cobrança e o valor.

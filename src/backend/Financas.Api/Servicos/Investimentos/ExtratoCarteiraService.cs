@@ -97,9 +97,9 @@ public partial class ExtratoCarteiraService
     }
 
     /// <summary>Proventos creditados no extrato, por ativo (para comparar com o estimado pela data-com).</summary>
-    public async Task<List<(string Ticker, DateOnly Data, decimal Valor)>> ProventosRecebidosAsync(CancellationToken ct)
+    public async Task<List<(long Id, string Ticker, DateOnly Data, decimal Valor)>> ProventosRecebidosAsync(CancellationToken ct)
         => (await LocalizarAsync(true, ct)).Where(x => x.Provento)
-            .Select(x => (x.Ticker, x.T.Data, x.T.Valor)).ToList();
+            .Select(x => (x.T.Id, x.Ticker, x.T.Data, x.T.Valor)).ToList();
 
     public async Task<List<SugestaoExtratoDto>> SugestoesAsync(CancellationToken ct)
     {
