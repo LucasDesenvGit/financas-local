@@ -392,8 +392,8 @@ public class ReservasController : BaseController
         var data = dto.Data ?? Relogio.Hoje;
         if (data > Relogio.Hoje) return Erro("A data da conferência não pode estar no futuro.");
         if (string.IsNullOrWhiteSpace(dto.Nome)) return Erro("Informe o nome da reserva.");
-        return await _reservas.ConferirAsync(dto.ContaId, dto.Nome, dto.Saldo, data, ct)
-            ? NoContent() : Erro("Conta inválida.");
+        return await _reservas.ConferirAsync(dto.ContaId, dto.Nome, dto.Saldo, data, dto.Moeda, ct) is { } erro
+            ? Erro(erro) : NoContent();
     }
 
     /// <summary>Apaga a conferência: o saldo volta a ser só a soma dos lançamentos do extrato.</summary>

@@ -218,8 +218,9 @@ export class ApiService {
   importarOpenFinance(): Observable<ResultadoImportacaoCarteira> {
     return this.http.post<ResultadoImportacaoCarteira>(`${this.base}/carteira/importar-open-finance`, {});
   }
-  conferirReserva(contaId: number, nome: string, saldo: number, data: string): Observable<void> {
-    return this.http.put<void>(`${this.base}/reservas/conferencia`, { contaId, nome, saldo, data });
+  /** #169: `moeda` só no Méli Dólar: "BRL" quando o saldo foi informado em reais (a API converte pela PTAX). */
+  conferirReserva(contaId: number, nome: string, saldo: number, data: string, moeda?: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/reservas/conferencia`, { contaId, nome, saldo, data, moeda });
   }
   removerConferenciaReserva(contaId: number, nome: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/reservas/conferencia`, { params: this.params({ contaId, nome }) });

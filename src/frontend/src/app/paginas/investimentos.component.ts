@@ -47,7 +47,8 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
 type Aba = 'resumo' | 'fii' | 'rv' | 'of' | 'reservas';
 
 /** Formulário de conferência do saldo real de uma reserva. */
-interface FormConferencia { reserva: Reserva; saldo: number | null; data: string }
+/** #169: `moeda` só conta no Méli Dólar (o saldo pode ser informado em reais ou em dólares). */
+interface FormConferencia { reserva: Reserva; saldo: number | null; data: string; moeda: 'BRL' | 'USD' }
 
 /** Linha editável da importação pelo extrato. */
 interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas: number }
@@ -350,7 +351,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <td><strong>{{ r.nome }}</strong>
                       <br><small class="texto-suave">{{ r.movimentos }} lançamento(s)
                         @if (r.primeiroMovimento) { de {{ r.primeiroMovimento | date: 'dd/MM/yy' }} a {{ r.ultimoMovimento | date: 'dd/MM/yy' }} }
-                      </small></td>
+                      </small>
+                      <!-- #169: o Méli Dólar mostra a quantidade em dólar e a PTAX que deu o valor em reais (Nielsen 1). -->
+                      @if (r.moeda === 'USD') {
+                        <br><small class="texto-suave">{{ r.quantidade | currency: 'USD' }}
+                          @if (r.cotacao) { × <app-termo chave="ptax">PTAX</app-termo> {{ r.cotacao | number: '1.4-4' }} }</small>
+                      }</td>
                     <td class="texto-suave">{{ r.nomeConta }}</td>
                     <td class="direita">{{ r.guardado | currency }}</td>
                     <td class="direita">{{ r.retirado | currency }}</td>
@@ -365,7 +371,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                         } @else {
                           <span class="etiqueta etiqueta-sucesso">conferido</span>
                         }
-                        <br><small class="texto-suave">{{ r.saldoConferido | currency }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
+                        <br><small class="texto-suave">{{ r.saldoConferido | currency: (r.moeda ?? 'BRL') }} em {{ r.dataConferencia | date: 'dd/MM/yyyy' }}
                           + lançamentos depois</small>
                       } @else {
                         <span class="etiqueta etiqueta-alerta">estimado</span>
@@ -392,6 +398,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             quando a reserva já tinha dinheiro antes do primeiro lançamento importado e quando o rendimento ainda não foi
             retirado. Confira o valor no app da instituição de vez em quando: os lançamentos seguintes passam a somar a
             partir dele. O total entra no patrimônio, no total investido e na reserva de emergência.
+            O Méli Dólar do Mercado Pago também aparece aqui: a quantidade em dólar vem das compras e vendas do extrato
+            (pelo "MUSD" da descrição ou pela PTAX do dia) e o saldo em reais é essa quantidade pela última PTAX.
           </p>
         }
       }
@@ -648,14 +656,29 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
       (fechar)="formConferencia = null">
       @if (formConferencia; as fc) {
         <form (ngSubmit)="salvarConferencia()" #fcf="ngForm" class="formulario">
-          <p class="texto-suave">Abra a reserva no app da instituição e informe o saldo que aparece lá. Os lançamentos até essa
-            data já estão nesse valor; os seguintes são somados a ele.</p>
+          <p class="texto-suave">
+            @if (fc.reserva.moeda === 'USD') {
+              Abra o Méli Dólar no app do Mercado Pago e informe o saldo que aparece lá, em reais ou em dólares. Em reais,
+              ele é convertido pela PTAX do dia da conferência.
+            } @else {
+              Abra a reserva no app da instituição e informe o saldo que aparece lá.
+            }
+            Os lançamentos até essa data já estão nesse valor; os seguintes são somados a ele.</p>
           <div class="grade-campos">
+            @if (fc.reserva.moeda === 'USD') {
+              <label>Informado em
+                <select name="moeda" [(ngModel)]="fc.moeda">
+                  <option value="BRL">reais (R$)</option>
+                  <option value="USD">dólares (US$)</option>
+                </select>
+              </label>
+            }
             <label>Saldo na instituição
-              <app-campo-valor name="saldo" [(ngModel)]="fc.saldo" obrigatorio /></label>
+              <app-campo-valor name="saldo" [(ngModel)]="fc.saldo" [moeda]="fc.moeda" obrigatorio /></label>
             <label>Conferido em <app-campo-data name="data" [(ngModel)]="fc.data" obrigatorio [maximo]="hoje" /></label>
           </div>
-          <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong></p>
+          <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong>
+            @if (fc.reserva.moeda === 'USD' && fc.reserva.quantidade !== null) { ({{ fc.reserva.quantidade | currency: 'USD' }}) }</p>
           <div class="rodape-form">
             @if (fc.reserva.dataConferencia) {
               <button type="button" class="botao botao-perigo" (click)="removerConferencia()">Voltar a estimar</button>
@@ -1162,15 +1185,21 @@ export class InvestimentosComponent implements OnInit {
   /* ------------------------------ reservas ------------------------------ */
 
   abrirConferencia(r: Reserva): void {
-    this.formConferencia = { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje };
+    // #169: o Méli Dólar começa em reais (o valor do app), com a estimativa atual.
+    this.formConferencia = r.moeda === 'USD'
+      ? { reserva: r, saldo: r.saldo, data: this.hoje, moeda: 'BRL' }
+      : { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje, moeda: 'BRL' };
   }
 
   salvarConferencia(): void {
     const f = this.formConferencia;
     if (!f || f.saldo === null) return;
-    if (!this.conferenciaPlausivel(f.reserva, f.saldo)) return;
+    const emDolar = f.reserva.moeda === 'USD';
+    // A comparação com o esperado é em reais; em dólar sem cotação conhecida, não dá para comparar.
+    const emReais = emDolar && f.moeda === 'USD' ? (f.reserva.cotacao ? f.saldo * f.reserva.cotacao : null) : f.saldo;
+    if (emReais !== null && !this.conferenciaPlausivel(f.reserva, emReais)) return;
     this.salvando.set(true);
-    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data).subscribe({
+    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data, emDolar ? f.moeda : undefined).subscribe({
       next: () => {
         this.salvando.set(false);
         this.formConferencia = null;

@@ -187,6 +187,10 @@ try
 {
     using var escopo = app.Services.CreateScope();
     var bancoDados = escopo.ServiceProvider.GetRequiredService<FinancasDbContext>();
+    // #169 (ADR 0038): a regra padrão do Méli Dólar, uma vez, para quem instalou antes dela (salva a marca mesmo sem mudanças).
+    await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().CriarRegraMeliDolarAsync(
+        escopo.ServiceProvider.GetRequiredService<ConfiguracaoService>(), CancellationToken.None);
+    await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().ReclassificarEntradasNosCartoesAsync(CancellationToken.None) > 0)
         await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)

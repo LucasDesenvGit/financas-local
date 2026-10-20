@@ -6,7 +6,9 @@ import { Reserva } from '../core/modelos';
  * passou por ela (o total guardado).
  */
 export function valorEsperadoDaReserva(r: Reserva): number {
-  const esperado = Math.max(r.saldo, r.saldoConferido ?? 0, r.guardado - r.retirado);
+  // #169: no Méli Dólar a conferência é em dólar; aqui tudo é comparado em reais.
+  const conferido = (r.saldoConferido ?? 0) * (r.moeda === 'USD' ? (r.cotacao ?? 0) : 1);
+  const esperado = Math.max(r.saldo, conferido, r.guardado - r.retirado);
   return esperado > 0 ? esperado : r.guardado;
 }
 
