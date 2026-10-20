@@ -573,6 +573,13 @@ export interface PainelFiis {
   segmentos: { nome: string; valor: number }[];
   historicos: { ticker: string; pontos: { ano: number; mes: number; fechamento: number }[] }[];
   segmentosDisponiveis: string[];
+  mesAMes: MesAMesFii[];
+}
+
+/** #173: o mês da carteira de FIIs como no app da corretora. */
+export interface MesAMesFii {
+  ano: number; mes: number; aportes: number; subscricoes: number; resgates: number;
+  rendimentosRecebidos: number; rendimentosEstimados: number; valorizacao: number; saldo: number;
 }
 
 export interface SugestaoExtrato {
