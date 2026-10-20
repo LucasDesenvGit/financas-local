@@ -66,6 +66,13 @@ public class Conta
     public string? Banco { get; set; }
     /// <summary>ADR 0024: para cartão, a conta a que ele pertence (de onde a fatura é paga).</summary>
     public int? ContaVinculadaId { get; set; }
+    /// <summary>
+    /// #168 (ADR 0010): dinheiro separado em reservas/caixinhas que a instituição informa pelo Open Finance
+    /// (<c>bankData</c>); null = não informa, e as reservas são estimadas pelo extrato.
+    /// </summary>
+    public decimal? SaldoReservado { get; set; }
+    /// <summary>#168: reservas com nome e valor, quando a instituição detalha (JSON: [{"nome":"…","valor":0.0}]).</summary>
+    public string? ReservasInformadas { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 

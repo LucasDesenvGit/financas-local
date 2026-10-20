@@ -38,6 +38,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Reservas e caixinhas pelo valor que o banco informa** (#168, ADR 0037). Quando a instituição manda o valor reservado pelo Open Finance (é o "Reservado" que o MeuPluggy mostra), ele vale no lugar da estimativa pelo extrato. A reserva aparece como "informado pelo banco" e entra certa no patrimônio, sem conferência.
+  - Os bancos que não informam continuam com a estimativa e a conferência.
+  - **Conferência com valor fora do esperado** (ex.: "10.123,42" gravado como 10,12) pede confirmação antes de salvar.
 - **Visão anual › 50/30/20 clicável** (#150): clicar em Essenciais, Estilo de vida ou Guardado (na barra ou na legenda abaixo do gráfico) abre Transações com o que forma aquela parte, de janeiro até o mês do gráfico.
   - **Essenciais e Estilo de vida:** as despesas pela natureza do gasto da categoria (ou da categoria pai, se a subcategoria não tiver). Estilo de vida leva junto o que está sem classificação, como a barra; cada um aparece como filtro removível em "Filtrando:".
   - **Guardado:** as receitas e as despesas do período; o "Resultado" de Transações é o que sobrou.

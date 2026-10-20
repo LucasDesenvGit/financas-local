@@ -23,6 +23,7 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
+import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from './reserva-conferencia';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -351,7 +352,10 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                     <td class="direita">{{ r.retirado | currency }}</td>
                     <td class="direita valor">{{ r.saldo | currency }}</td>
                     <td>
-                      @if (r.dataConferencia) {
+                      @if (r.informadoPeloBanco) {
+                        <span class="etiqueta etiqueta-sucesso">informado pelo banco</span>
+                        <br><small class="texto-suave">valor que a instituição manda pelo Open Finance</small>
+                      } @else if (r.dataConferencia) {
                         @if (r.conferenciaAntiga) {
                           <span class="etiqueta etiqueta-alerta">conferido há mais de 30 dias</span>
                         } @else {
@@ -368,8 +372,10 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                       }
                     </td>
                     <td class="direita nowrap">
-                      <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
-                        (click)="abrirConferencia(r)">conferir saldo</button>
+                      @if (!r.informadoPeloBanco) {
+                        <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
+                          (click)="abrirConferencia(r)">conferir saldo</button>
+                      }
                     </td>
                   </tr>
                 }
@@ -377,8 +383,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             </table>
           </div>
           <p class="texto-suave nota">
-            A instituição não informa o saldo destas reservas pelo Open Finance, só os lançamentos "Dinheiro reservado" e
-            "Dinheiro retirado" no extrato da conta. Por isso o saldo é estimado. Sem conferência, ele fica abaixo do real
+            Quando a instituição informa o valor reservado pelo Open Finance, vale esse valor ("informado pelo banco"). Senão,
+            ela só manda os lançamentos "Dinheiro reservado" e "Dinheiro retirado" no extrato da conta, e o saldo é estimado. Sem conferência, ele fica abaixo do real
             quando a reserva já tinha dinheiro antes do primeiro lançamento importado e quando o rendimento ainda não foi
             retirado. Confira o valor no app da instituição de vez em quando: os lançamentos seguintes passam a somar a
             partir dele. O total entra no patrimônio, no total investido e na reserva de emergência.
@@ -1110,6 +1116,7 @@ export class InvestimentosComponent implements OnInit {
   salvarConferencia(): void {
     const f = this.formConferencia;
     if (!f || f.saldo === null) return;
+    if (!this.conferenciaPlausivel(f.reserva, f.saldo)) return;
     this.salvando.set(true);
     this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data).subscribe({
       next: () => {
@@ -1123,6 +1130,14 @@ export class InvestimentosComponent implements OnInit {
         this.avisos.erro(mensagemDeErro(e));
       }
     });
+  }
+
+  /** #168: valor muito diferente do esperado pede confirmação antes de salvar (reserva-conferencia.ts). */
+  conferenciaPlausivel(r: Reserva, saldo: number): boolean {
+    if (!conferenciaForaDoEsperado(r, saldo)) return true;
+    const moeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return confirm(`Você informou ${moeda(saldo)}, mas o esperado para "${r.nome}" é perto de ${moeda(valorEsperadoDaReserva(r))}. `
+      + 'Confere com o app da instituição? (OK salva assim mesmo.)');
   }
 
   removerConferencia(): void {

@@ -539,7 +539,7 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
 /// </summary>
 public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Saldo, decimal Guardado, decimal Retirado,
     int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
-    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga);
+    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga, bool InformadoPeloBanco = false);
 
 /// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
 public record ConferirReservaDto(

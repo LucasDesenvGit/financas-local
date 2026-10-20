@@ -1,6 +1,6 @@
 # 0010. Reservas estimadas pelo extrato, com conferência manual
 
-- **Status:** Aceita
+- **Status:** Substituída por [0037](0037-reservas-pelo-valor-do-open-finance.md) (a estimativa continua para os bancos que não informam o reservado)
 - **Data:** 2026-10-16
 - **Relacionadas:** [0006](0006-cliente-http-proprio-para-a-pluggy.md) (a sincronização com a Pluggy não muda)
 

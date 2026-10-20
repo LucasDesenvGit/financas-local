@@ -195,6 +195,16 @@ public class SincronizacaoService
                     if (pc.CreditData.BalanceCloseDate is { } fech) conta.DiaFechamento = (byte)Relogio.ParaDataLocal(fech).Day;
                     if (pc.CreditData.BalanceDueDate is { } venc) conta.DiaVencimento = (byte)Relogio.ParaDataLocal(venc).Day;
                 }
+                if (!ehCartao)
+                {
+                    // #168: o dinheiro separado em reservas/caixinhas, quando a instituição informa.
+                    var (reservado, reservas, campos) = ReservaService.DoOpenFinance(pc.BankData);
+                    conta.SaldoReservado = reservado;
+                    conta.ReservasInformadas = reservas;
+                    if (campos.Length > 0)
+                        _logger.LogInformation("Reservas informadas pela instituição na conta {Conta}: campos {Campos}.",
+                            conta.Id, string.Join(", ", campos));
+                }
                 conta.AtualizadoEm = DateTime.UtcNow;
                 await _db.SaveChangesAsync(ct);
 

@@ -47,7 +47,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0007](0007-cotacao-de-cambio-pela-ptax-do-banco-central.md) | Cotação de câmbio pela PTAX do Banco Central, guardada para uso offline | Aceita |
 | [0008](0008-moeda-estrangeira-somente-em-investimentos.md) | Moeda estrangeira só em investimentos; demais registros em reais | Aceita (em parte substituída pela 0009) |
 | [0009](0009-ativos-no-exterior-na-carteira-manual.md) | Ativos no exterior na carteira manual | Aceita |
-| [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Aceita |
+| [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Substituída por 0037 |
 | [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita |
 | [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029) |
 | [0013](0013-testes-do-front-end-com-jest.md) | Testes automatizados do front-end com Jest | Aceita |
@@ -74,3 +74,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0034](0034-sem-sri-no-build-do-front-end.md) | Build do front-end sem SRI, para manter a CSP sem script inline | Aceita |
 | [0035](0035-plano-das-metas-pelo-caixa-calculado-na-tela.md) | Plano das metas pelo caixa do mês (fatura que vence entra), com a divisão calculada na tela | Aceita |
 | [0036](0036-receita-e-despesa-pelo-tipo-estorno-abate-gasto.md) | Receita e despesa pelo tipo, não pelo sinal; estorno no cartão abate o gasto | Aceita |
+| [0037](0037-reservas-pelo-valor-do-open-finance.md) | Reservas pelo valor que o Open Finance informa; a estimativa pelo extrato fica para o resto | Aceita |
