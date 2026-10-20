@@ -18,6 +18,7 @@
 - [ ] Consultas só com LINQ/lambda
 - [ ] Nenhum dado pessoal, senha, chave ou `appsettings.Production.json`
 - [ ] README/CHANGELOG atualizados, se necessário
+- [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado se mudou algo que o usuário vê; se não precisa, escreva aqui "Manual: não se aplica" (a CI avisa quando falta)
 
 ## Depois do merge
 

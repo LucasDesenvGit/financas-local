@@ -82,6 +82,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Convenções de código
 
+- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
@@ -126,6 +127,8 @@ Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para 
 
 **O branch padrão do repositório é o `develop`** (#142). Por isso, todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge. Fora do branch padrão, a palavra-chave é ignorada.
 - **Branch nova:** de preferência criada pela issue, com `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
+- **Issue nova já nasce no nome de quem pediu:** `gh issue create --assignee @me` (a conta do `gh` é a do usuário) ou o login de quem pediu, se for outra pessoa.
+- **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
 - **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
 
 ## Segurança (específico deste projeto — não genérico)

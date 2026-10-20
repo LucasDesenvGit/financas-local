@@ -15,6 +15,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
+  manual:
+    name: manual do site
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Manual atualizado?
+        env:
+          BASE: ${{ github.base_ref }}
+          CORPO_PR: ${{ github.event.pull_request.body }}
+        run: python3 scripts/ci/verificar-manual.py
+
   build:
     name: build
     runs-on: ubuntu-latest

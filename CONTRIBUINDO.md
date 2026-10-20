@@ -29,7 +29,7 @@ git push
 gh pr create --base develop --fill    # na descrição: Closes #<número>
 ```
 
-Não há issue? Crie uma antes (`gh issue create`): todo PR fecha a issue dele.
+Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --assignee @me`): todo PR fecha a issue dele. Ao começar a trabalhar numa issue, ponha a etiqueta "em progresso" (`gh issue edit <número> --add-label "em progresso"`) e tire ao fechar.
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
 1. No `develop`, mude a versão no `Directory.Build.props` (ex.: `2.2.0`). No `CHANGELOG.md`, troque `## [Não publicado]` por `## [2.2.0] - AAAA-MM-DD` e abra uma seção `## [Não publicado]` vazia acima.
@@ -70,6 +70,7 @@ Exemplos:
 - [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
 - [ ] README/CHANGELOG atualizados quando a mudança afeta o uso.
+- [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
 - [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
 
 ## Convenções de código
