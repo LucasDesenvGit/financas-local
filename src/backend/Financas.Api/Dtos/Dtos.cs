@@ -741,3 +741,24 @@ public record ErroFrontEndDto(
     [Required, StringLength(1000)] string Mensagem,
     [StringLength(8000)] string? Detalhe,
     [StringLength(300)] string? Rota);
+
+/* ----------------------------- Conferir com o banco (#172) ----------------------------- */
+
+/// <summary>
+/// O que pode explicar a diferença entre o site e o app do banco. <c>Valor</c>, quando há, é comparado com a diferença
+/// na tela; <c>Rota</c> e <c>Parametros</c> levam à tela que mostra o detalhe.
+/// </summary>
+public record PistaConferenciaDto(string Texto, decimal? Valor, string? Rota = null, Dictionary<string, string>? Parametros = null);
+
+public record ContaConferenciaDto(int Id, string Nome, string? Banco, bool OpenFinance, decimal Saldo,
+    List<PistaConferenciaDto> Pistas);
+
+/// <summary>A fatura que fecha no mês (a mesma do Painel) e a dívida total do cartão.</summary>
+public record CartaoConferenciaDto(int Id, string Nome, string? Banco, decimal FaturaMes, string? Situacao,
+    DateOnly? Fechamento, DateOnly? Vencimento, decimal DividaTotal, List<PistaConferenciaDto> Pistas);
+
+/// <summary>Investimento do Open Finance, reserva ou a carteira lançada por você; <c>Saldo</c> em reais.</summary>
+public record InvestimentoConferenciaDto(string Chave, string Nome, string Origem, decimal Saldo, List<PistaConferenciaDto> Pistas);
+
+public record ConferenciaBancoDto(List<ContaConferenciaDto> Contas, List<CartaoConferenciaDto> Cartoes,
+    List<InvestimentoConferenciaDto> Investimentos);

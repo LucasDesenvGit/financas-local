@@ -652,3 +652,19 @@ export interface PaginaErros {
 }
 
 export interface ErroFrontEnd { mensagem: string; detalhe: string | null; rota: string | null; }
+
+/** #172: "Conferir com o banco". `valor` (quando há) é comparado com a diferença; `rota` leva ao detalhe. */
+export interface PistaConferencia {
+  texto: string; valor: number | null; rota?: string | null; parametros?: Record<string, string> | null;
+}
+export interface ContaConferencia {
+  id: number; nome: string; banco: string | null; openFinance: boolean; saldo: number; pistas: PistaConferencia[];
+}
+export interface CartaoConferencia {
+  id: number; nome: string; banco: string | null; faturaMes: number; situacao: string | null; fechamento: string | null;
+  vencimento: string | null; dividaTotal: number; pistas: PistaConferencia[];
+}
+export interface InvestimentoConferencia { chave: string; nome: string; origem: string; saldo: number; pistas: PistaConferencia[]; }
+export interface ConferenciaBanco {
+  contas: ContaConferencia[]; cartoes: CartaoConferencia[]; investimentos: InvestimentoConferencia[];
+}
