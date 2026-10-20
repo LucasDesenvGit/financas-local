@@ -38,6 +38,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Conferir com o banco** (#172), tela nova aberta por Contas e cartões.
+  - **O que faz:** você digita o que o app de cada banco mostra (saldo de cada conta, fatura do mês de cada cartão, valor de cada investimento e reserva), e o site compara na hora.
+  - **Quando não bate,** mostra as pistas: quando o banco atualizou, reservas, pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, com o link para o detalhe.
+  - **Nada é gravado.**
+  - **Manual:** seção nova "Conferir com o banco".
 - **Méli Dólar no patrimônio** (#169, ADR 0038). O dólar digital do Mercado Pago não aparecia em lugar nenhum, porque o Open Finance não o informa.
   - **Em Investimentos › Reservas:** a linha "Méli Dólar", com a quantidade em dólar estimada pelas compras e vendas do extrato (pelo "MUSD" da descrição ou pela PTAX do dia), e o saldo em reais pela última PTAX. Entra no patrimônio e no total investido.
   - **Conferir saldo:** em reais ou em dólares; em reais, convertido pela PTAX da data.

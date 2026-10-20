@@ -33,6 +33,8 @@ const FATURAS_VISIVEIS = 6;
         <!-- #130: efeito imediato → interruptor; o estado fica na URL (?arquivadas=1). -->
         <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="mostrarArquivadas"
           (change)="alternarArquivadas()"> Mostrar arquivadas</label>
+        <!-- #172: comparar com os apps dos bancos (Nielsen 1). -->
+        <a class="botao" routerLink="/conferir-banco">Conferir com o banco</a>
         <button type="button" class="botao botao-primario" (click)="nova()">+ Conta manual</button>
       </div>
     </header>

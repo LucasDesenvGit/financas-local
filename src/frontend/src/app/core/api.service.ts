@@ -7,7 +7,7 @@ import {
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
-  AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
+  ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
@@ -58,6 +58,10 @@ export class ApiService {
   criarConta(dto: SalvarConta): Observable<Conta> { return this.http.post<Conta>(`${this.base}/contas`, dto); }
   atualizarConta(id: number, dto: SalvarConta): Observable<Conta> { return this.http.put<Conta>(`${this.base}/contas/${id}`, dto); }
   excluirConta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas/${id}`); }
+  /** #172: o valor de cada conta, fatura e investimento no site, com as pistas para comparar com o app do banco. */
+  conferenciaBanco(): Observable<ConferenciaBanco> {
+    return this.http.get<ConferenciaBanco>(`${this.base}/conferencia-banco`);
+  }
   faturas(contaId: number): Observable<Fatura[]> { return this.http.get<Fatura[]>(`${this.base}/contas/${contaId}/faturas`); }
   /** ADR 0024: bancos que dá para escolher na conta. */
   bancos(): Observable<Banco[]> { return this.http.get<Banco[]>(`${this.base}/contas/bancos`); }

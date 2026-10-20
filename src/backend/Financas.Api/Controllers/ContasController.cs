@@ -172,3 +172,18 @@ public class ContasController : BaseController
             c.Tipo == TipoConta.CartaoCredito ? extras.FaturasDoMes.GetValueOrDefault(c.Id) : null);
     }
 }
+
+/// <summary>
+/// #172: "Conferir com o banco": o valor de cada conta, fatura e investimento no site, com as pistas do que pode
+/// explicar uma diferença para o app do banco. Só leitura; a comparação é feita na tela.
+/// </summary>
+[Route("api/conferencia-banco")]
+public class ConferenciaBancoController : BaseController
+{
+    private readonly ConferenciaBancoService _conferencia;
+
+    public ConferenciaBancoController(ConferenciaBancoService conferencia) => _conferencia = conferencia;
+
+    [HttpGet]
+    public Task<ConferenciaBancoDto> Obter(CancellationToken ct) => _conferencia.MontarAsync(ct);
+}

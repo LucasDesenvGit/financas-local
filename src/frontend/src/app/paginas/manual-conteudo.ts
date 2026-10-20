@@ -243,6 +243,20 @@ export const MANUAL: CapituloManual[] = [
         termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
       },
       {
+        id: 'conferir-banco',
+        titulo: 'Conferir com o banco',
+        paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
+        passos: [
+          'Em Contas e cartões, clique em “Conferir com o banco”.',
+          'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
+          'O site compara na hora: “bate”, ou quanto o app (ou o site) mostra a mais.',
+          'Quando não bate, aparecem as pistas: quando o banco atualizou, reservas da conta, lançamentos pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
+          'Cada pista tem o link “ver” para a tela com o detalhe. Nada é gravado: os valores digitados ficam só na tela.'
+        ],
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        dicas: ['Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.']
+      },
+      {
         id: 'historico-faturas',
         titulo: 'Histórico de faturas',
         paraQueServe: 'Ver as faturas anteriores de um cartão, sem sair da tela.',
@@ -1070,5 +1084,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   relatorios: { capitulo: 'relatorios', secao: 'relatorios-tela' },
   projecao: { capitulo: 'relatorios', secao: 'projecao' },
   categorias: { capitulo: 'categorias' },
-  configuracoes: { capitulo: 'configuracoes' }
+  configuracoes: { capitulo: 'configuracoes' },
+  'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };
