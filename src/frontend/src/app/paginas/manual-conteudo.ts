@@ -163,7 +163,9 @@ export const MANUAL: CapituloManual[] = [
           'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
           'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
-          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.'
+          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
+          'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
+          'Conta em outra moeda (ex.: em dólar) gera um aviso no Painel: o site soma as contas como reais, sem conversão.'
         ],
         abrir: [{ rotulo: 'Ajustar a sincronização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
@@ -241,6 +243,20 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
         termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
+      },
+      {
+        id: 'conferir-banco',
+        titulo: 'Conferir com o banco',
+        paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
+        passos: [
+          'Em Contas e cartões, clique em “Conferir com o banco”.',
+          'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
+          'O site compara na hora: “bate”, ou quanto o app (ou o site) mostra a mais.',
+          'Quando não bate, aparecem as pistas: quando o banco atualizou, reservas da conta, lançamentos pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
+          'Cada pista tem o link “ver” para a tela com o detalhe. Nada é gravado: os valores digitados ficam só na tela.'
+        ],
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        dicas: ['Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.']
       },
       {
         id: 'limite-reduzido',
@@ -469,9 +485,12 @@ export const MANUAL: CapituloManual[] = [
           'Entre no “Editar categorias”, use “Todas as N transações do filtro” e escolha a categoria “Pagamento de fatura” (ou “Transferências”).',
           'Essas categorias são do tipo transferência: as transações passam a ficar “fora dos gastos”.',
           'Na categoria “Transferências”, só fica fora o que é entre contas suas: o par aparece na outra conta (mesmo valor, até 5 dias), o banco informa o mesmo titular, a transferência foi lançada pelo site ou é dinheiro guardado numa reserva. Pix e TED para outra pessoa (ou recebidos de outra pessoa, como salário) contam como despesa ou receita.',
-          'Mandou dinheiro para uma conta sua que não está conectada? O site não vê o par: crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela. Outras categorias do tipo transferência ficam sempre fora.'
+          'Mandou dinheiro para uma conta sua que não está conectada? O site não vê o par: crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela. Outras categorias do tipo transferência ficam sempre fora.',
+          'Seu banco não informa se o Pix foi para você mesmo? Em Configurações › Open Finance, preencha “Seu nome como aparece nos Pix”: Pix e TED que citam o seu primeiro e último nome passam a contar como entre contas suas.',
+          'Pagamento de fatura que o banco mandou como boleto ou “outros” fica fora dos gastos sozinho quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem esse crédito, ele fica como está: “fatura” também pode ser conta de telefone ou de luz.'
         ],
-        abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } }],
+        abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } },
+          { rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
         termos: ['tipoLancamento']
       },
       {
@@ -1106,5 +1125,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   relatorios: { capitulo: 'relatorios', secao: 'relatorios-tela' },
   projecao: { capitulo: 'relatorios', secao: 'projecao' },
   categorias: { capitulo: 'categorias' },
-  configuracoes: { capitulo: 'configuracoes' }
+  configuracoes: { capitulo: 'configuracoes' },
+  'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

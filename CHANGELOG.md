@@ -5,6 +5,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Publicação e documentação
+- **Skill do projeto `trabalho-longo`** (#217): em `.claude/skills/`, para quem usa o Claude Code no projeto. Ela monta o esquema para um trabalho grande continuar sozinho quando o limite de uso acaba no meio. São três partes:
+  - o plano em arquivo, numa pasta ignorada pelo git;
+  - o agendamento "continua o plano", da sessão, com as limitações explicadas;
+  - o fechamento.
+  - Antes só existia na máquina de quem pediu.
 - **Scripts separados por sistema** (#154): `scripts/geral/` (bash dos dois sistemas: `instalar.sh`, `1-` a `4-`, `parar.sh`, `comum.sh`), `scripts/windows/` (`instalar-windows.ps1`, `parar-windows.ps1`, `instalar-gerenciador.ps1`) e `scripts/linux/` (`instalar-gerenciador.sh`). O `instalar-windows.cmd` e o `parar-windows.cmd` continuam na raiz e funcionam como antes.
   - **Quem instalou pelos scripts:** os comandos passam a ser, por exemplo, `scripts/geral/3-publicar-atualizar.sh` e `scripts/linux/instalar-gerenciador.sh`. O backup diário já agendado e o comando que o gerenciador do Linux mostrava continuam funcionando por repasses temporários; para gravar o caminho novo no agendamento, rode `scripts/geral/4-backup.sh --agendar` de novo.
 - **Testes no navegador** (#185, ADR 0041): a cada PR, a CI abre cada tela do site num navegador de verdade (o build de produção, com a mesma política de segurança da API e dados de exemplo, sem nenhum dado real), no computador e no celular, e falha com erro no console, exceção ou bloqueio da política de segurança. Pega, por exemplo, o erro da #157. Para quem desenvolve: `npm run test:navegador`, prints com `FOTOS=…`, e a skill `testar-no-navegador` do Claude Code.
@@ -13,6 +18,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Mais robusto quando o banco manda os dados de outro jeito** (#172):
+  - **Pagamento de fatura** que o banco manda como boleto ou "outros" fica fora dos gastos quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem o crédito, fica como está, porque "fatura" também é conta de telefone.
+  - **Aplicação e resgate** de RDB, CDB e poupança vão para "Investimentos", por regras padrão novas. Quem já tinha o site as ganha uma vez, e as transações antigas são acertadas, menos as de categoria escolhida à mão.
+  - **Pendente antiga** que o banco efetivou com outro código sai sozinha, mesmo antes dos dias relidos, para não contar em dobro.
+  - **Seu nome nos Pix:** campo novo em Configurações › Open Finance. Quando o banco não informa o titular, Pix e TED que citam o seu nome contam como entre contas suas (ADR 0031).
+  - **Conta em outra moeda** gera um aviso no Painel: o site soma as contas como reais (ADR 0008).
+  - **Reserva de emergência** sem ações, FIIs e ETFs, também os do Open Finance, igual à carteira. O ⓘ explica por quê.
+  - **Contas fora do saldo e arquivadas** continuam nos relatórios (ADR 0042), e a edição da conta diz isso.
 - **Estorno no cartão contava como receita** (#166, ADR 0036). Crédito no cartão (compra devolvida, "crédito de confiança", cashback) virava receita e não descontava o gasto da categoria. Isso inflava a receita, a renda (50/30/20), os orçamentos e o gasto por categoria.
   - **Agora:** o estorno abate o gasto da categoria e não é receita. O pagamento da fatura recebido no cartão fica fora dos gastos mesmo sem a categoria certa.
   - **Estorno do NuPay** que chega como transferência ganha a categoria do texto ("Estorno de Uber" → Transporte).
@@ -51,6 +64,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Subscrição e vendas** aparecem à parte, embaixo dos aportes.
   - **Valorização:** pelo fechamento de cada mês (no mês atual, a cotação de hoje); pode diferir um pouco do app, que usa outra fonte de preço. O termo tem ⓘ com a definição.
   - **Ainda não:** o rendimento das caixinhas (precisa guardar o histórico do saldo) e a taxa da B3 calculada pelo extrato ficam para os próximos passos da #173.
+- **Conferir com o banco** (#172), tela nova aberta por Contas e cartões.
+  - **O que faz:** você digita o que o app de cada banco mostra (saldo de cada conta, fatura do mês de cada cartão, valor de cada investimento e reserva), e o site compara na hora.
+  - **Quando não bate,** mostra as pistas: quando o banco atualizou, reservas, pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, com o link para o detalhe.
+  - **Nada é gravado.**
+  - **Manual:** seção nova "Conferir com o banco".
 - **Gerenciador: "Atualizar para a última do develop", só na instalação de desenvolvimento** (#154, ADR 0040). Quem instalou uma versão publicada não vê nada novo.
   - **`.msi` de desenvolvimento** (versão `X.Y.Z-dev.N`): o gerenciador procura o pré-lançamento "desenvolvimento", avisa quando tem um mais novo e atualiza como na versão publicada, conferindo o SHA256.
   - **Pelos scripts, num clone na branch `develop`:** o botão traz o `develop` do GitHub e reinstala, mostrando a saída ao vivo. Com alteração local, outra branch ou commits que não estão no GitHub, recusa e diz o motivo, sem mexer em nada. No Windows, o git roda como você e só a reinstalação pede permissão de administrador. No fim, "Atualizar o gerenciador e reabrir".

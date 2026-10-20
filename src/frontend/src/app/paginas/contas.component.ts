@@ -34,6 +34,8 @@ const FATURAS_VISIVEIS = 6;
         <!-- #130: efeito imediato → interruptor; o estado fica na URL (?arquivadas=1). -->
         <label class="interruptor"><input type="checkbox" role="switch" [(ngModel)]="mostrarArquivadas"
           (change)="alternarArquivadas()"> Mostrar arquivadas</label>
+        <!-- #172: comparar com os apps dos bancos (Nielsen 1). -->
+        <a class="botao" routerLink="/conferir-banco">Conferir com o banco</a>
         <button type="button" class="botao botao-primario" (click)="nova()">+ Conta manual</button>
       </div>
     </header>
@@ -343,7 +345,11 @@ const FATURAS_VISIVEIS = 6;
               }
             </div>
           </fieldset>
-          <label class="checkbox"><input type="checkbox" name="incluir" [(ngModel)]="fm.incluirNoSaldo"> Incluir no saldo total</label>
+          <label class="checkbox"><input type="checkbox" name="incluir" [(ngModel)]="fm.incluirNoSaldo" aria-describedby="ajuda-incluir">
+            Incluir no saldo total</label>
+          <!-- #172 (ADR 0042): o que muda (e o que não muda) ao tirar a conta do saldo. -->
+          <p class="texto-suave pequeno-texto" id="ajuda-incluir">Fora do saldo, a conta sai do saldo total e do patrimônio, mas as
+            transações dela continuam nas receitas e despesas. Para tirá-las dos relatórios, use “Ignorar nos relatórios” nelas.</p>
           <label class="checkbox"><input type="checkbox" name="arquivada" [(ngModel)]="fm.arquivada"> Arquivada</label>
           <div class="rodape-form">
             @if (editandoId && !editandoOpenFinance) {

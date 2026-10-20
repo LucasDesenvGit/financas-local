@@ -92,6 +92,19 @@ const respostas: Record<string, unknown> = {
   },
   '/api/contas': contas,
   '/api/contas/bancos': [],
+  // #172: "Conferir com o banco".
+  '/api/conferencia-banco': {
+    contas: [{ id: 1, nome: 'Conta Corrente', banco: 'nubank', openFinance: true, saldo: 1000, pistas: [
+      { texto: 'O saldo vem do banco, atualizado em 19/10/2026. O que entrou ou saiu depois ainda não chegou.', valor: null },
+      { texto: 'Reservas e caixinhas desta conta (o app pode mostrar o saldo com elas)', valor: 2000, rota: '/investimentos',
+        parametros: { aba: 'reservas' } }
+    ] }],
+    cartoes: [{ id: 2, nome: 'Cartão Roxo', banco: 'nubank', faturaMes: 511.72, situacao: 'aberta', fechamento: null,
+      vencimento: '2026-11-10', dividaTotal: 1200, pistas: [
+        { texto: 'Parcelas nesta fatura (o app pode mostrá-las à parte)', valor: 59.9 }
+      ] }],
+    investimentos: [{ chave: 'of-1', nome: 'CDB · Nubank', origem: 'Open Finance', saldo: 1500, pistas: [] }]
+  },
   '/api/transacoes': { itens: transacoes, total: transacoes.length, pagina: 1, tamanhoPagina: 50, totalReceitas: 5000, totalDespesas: 152.3 },
   '/api/transacoes/sugestoes-categoria': [],
   '/api/categorias': categorias,

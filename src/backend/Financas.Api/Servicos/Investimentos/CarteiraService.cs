@@ -141,7 +141,7 @@ public class CarteiraService
         };
     }
 
-    private static bool EhRendaVariavel(string? tipoPluggy)
+    internal static bool EhRendaVariavel(string? tipoPluggy)
         => tipoPluggy is not null && TiposRendaVariavelPluggy.Contains(tipoPluggy.ToUpperInvariant());
 
     private static bool CodigoNaCarteira(string? codigo, HashSet<string> tickers)
