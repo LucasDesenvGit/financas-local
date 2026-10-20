@@ -4,19 +4,19 @@ Para quem usa **Linux**, quer mexer no código ou prefere os scripts ao instalad
 
 ## Instalar
 
-**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
+**Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/windows/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
 
 **Linux (ou Windows pelo Git Bash), com um comando:**
 
 ```bash
-cd financas-local/scripts
+cd financas-local/scripts/geral
 ./instalar.sh                # roda 1, 2 e 3 em sequência e para no primeiro erro
 ```
 
 **Etapa por etapa (bash).** Abra um terminal com bash (no Linux, o do sistema; no Windows, o **Git Bash**, que vem com o [Git for Windows](https://git-scm.com/download/win), ou o WSL). No Windows, abra o Git Bash **como Administrador** para o `3-publicar-atualizar.sh`, que registra o serviço. O backup (`4-backup.sh`) continua precisando de bash no Windows.
 
 ```bash
-cd financas-local/scripts
+cd financas-local/scripts/geral
 ./1-preparar-ambiente.sh     # .NET 10 SDK, Node.js e sqlite3 (poucos minutos)
 ./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
 ./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
@@ -29,7 +29,7 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 **Windows**, sem precisar de administrador:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\instalar-gerenciador.ps1
+powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1
 ```
 
 Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
@@ -37,7 +37,7 @@ Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu I
 **Linux**, depois do `instalar.sh`, sem `sudo`:
 
 ```bash
-scripts/instalar-gerenciador.sh
+scripts/linux/instalar-gerenciador.sh
 ```
 
 - **Onde fica:** publicado em `publicado/gerenciador`, com o atalho **Gerenciador do Finanças Local** no menu de aplicativos e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
@@ -61,8 +61,8 @@ scripts/instalar-gerenciador.sh
 
 ```bash
 git pull
-scripts/3-publicar-atualizar.sh     # no Windows, num Git Bash aberto como Administrador
-scripts/instalar-gerenciador.sh     # só no Linux, se usa o gerenciador
+scripts/geral/3-publicar-atualizar.sh     # no Windows, num Git Bash aberto como Administrador
+scripts/linux/instalar-gerenciador.sh     # só no Linux, se usa o gerenciador
 ```
 
 No Windows sem bash, rode o `instalar-windows.cmd` de novo. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
@@ -74,11 +74,11 @@ No Windows, dá para passar desta instalação para o `.msi` a qualquer momento:
 O sistema instalado é **um processo só**: a API, rodando como serviço do sistema. O front-end (Angular) é publicado dentro dela e roda no navegador, e o banco (SQLite) é só o arquivo `dados/sql/FinancasLocal.db`, aberto pela própria API, sem serviço nem porta.
 
 - **Parar no Windows:** dê dois cliques em `parar-windows.cmd`, na raiz (pede permissão de Administrador; não precisa de bash).
-- **Parar no Linux/macOS:** `scripts/parar.sh`.
+- **Parar no Linux/macOS:** `scripts/geral/parar.sh`.
 
 Os dois param o serviço, a API rodando fora dele (`dotnet run`, Visual Studio) e o front de desenvolvimento (`npm start`), e avisam se algum programa ainda está com o banco aberto. Opções: `--desativar` / `-Desativar` (não sobe sozinho no próximo login/boot) e `--compiladores` / `-Compiladores` (encerra também os servidores de build do .NET). Para subir de novo, rode a publicação (`3-publicar-atualizar.sh` ou `instalar-windows.cmd`).
 
-**Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela. No Windows, remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. No Linux, com o gerenciador, apague também `~/.local/share/applications/financaslocal-gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho.
+**Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/geral/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela. No Windows, remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. No Linux, com o gerenciador, apague também `~/.local/share/applications/financaslocal-gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho.
 
 ## Migrar de uma instalação com SQL Server
 
@@ -93,7 +93,7 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- \
   'Server=.\FINANCAS;Database=FinancasLocal;Integrated Security=True;Encrypt=True;TrustServerCertificate=True' \
   dados/sql/FinancasLocal.db
 # 4. Publique normalmente:
-scripts/3-publicar-atualizar.sh
+scripts/geral/3-publicar-atualizar.sh
 ```
 
 A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de linhas de cada tabela no final. A pasta `dados\sql` da instalação antiga só é acessível por Administradores, então no Windows rode esses comandos num Git Bash aberto como Administrador.

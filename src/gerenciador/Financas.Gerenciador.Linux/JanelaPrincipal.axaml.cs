@@ -224,16 +224,16 @@ public partial class JanelaPrincipal : Window
     private void MostrarComoAtualizar()
     {
         var raiz = Path.GetFullPath(Path.Combine(_instalacao.PastaPrograma, "..", ".."));
-        if (!File.Exists(Path.Combine(raiz, "scripts", "3-publicar-atualizar.sh")))
+        if (!File.Exists(Path.Combine(raiz, "scripts", "geral", "3-publicar-atualizar.sh")))
         {
-            TextoComoAtualizar.Text = "Instalado pelos scripts: para atualizar, rode git pull, scripts/3-publicar-atualizar.sh "
-                                      + "e scripts/instalar-gerenciador.sh na pasta do projeto.";
+            TextoComoAtualizar.Text = "Instalado pelos scripts: para atualizar, rode git pull, scripts/geral/3-publicar-atualizar.sh "
+                                      + "e scripts/linux/instalar-gerenciador.sh na pasta do projeto.";
             CaixaComando.IsVisible = BotaoCopiarComando.IsVisible = false;
             return;
         }
         TextoComoAtualizar.Text = "Instalado pelos scripts: a versão nova vem do código. Para atualizar o site e o gerenciador, "
                                   + "rode no terminal (o site fica fora do ar por alguns segundos e o banco ganha uma cópia antes):";
-        Comando.Text = $"cd {AspasShell(raiz)} && git pull && scripts/3-publicar-atualizar.sh && scripts/instalar-gerenciador.sh";
+        Comando.Text = $"cd {AspasShell(raiz)} && git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh";
     }
 
     private async Task CopiarComandoAsync()

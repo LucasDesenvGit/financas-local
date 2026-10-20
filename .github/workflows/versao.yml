@@ -226,7 +226,7 @@ jobs:
       - name: Instalação antiga (instalar-windows.ps1)
         shell: powershell
         run: |
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Usuário na instalação antiga

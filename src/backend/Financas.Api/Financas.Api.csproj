@@ -28,7 +28,7 @@
   <ItemGroup>
     <EmbeddedResource Include="../../../banco/01-estrutura.sql" LogicalName="banco.01-estrutura.sql" />
     <EmbeddedResource Include="../../../banco/02-dados-iniciais.sql" LogicalName="banco.02-dados-iniciais.sql" />
-    <EmbeddedResource Include="../../../scripts/2-criar-banco.sh" LogicalName="banco.2-criar-banco.sh" />
+    <EmbeddedResource Include="../../../scripts/geral/2-criar-banco.sh" LogicalName="banco.2-criar-banco.sh" />
   </ItemGroup>
 
 </Project>

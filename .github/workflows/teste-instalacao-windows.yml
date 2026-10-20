@@ -1,4 +1,4 @@
-# Testa o instalador do Windows (instalar-windows.cmd + scripts/instalar-windows.ps1) num
+# Testa o instalador do Windows (instalar-windows.cmd + scripts/windows/instalar-windows.ps1) num
 # Windows de verdade, com o Windows PowerShell 5.1. O PATH e reduzido ao do Windows puro para
 # esconder o dotnet/node/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
 # computador novo. Nao cobre o pedido de elevacao (UAC): o runner ja roda como Administrador.
@@ -9,20 +9,18 @@ on:
     branches: [main, develop]
     paths:
       - instalar-windows.cmd
-      - scripts/instalar-windows.ps1
       - parar-windows.cmd
-      - scripts/parar-windows.ps1
-      - scripts/2-criar-banco.sh
+      - scripts/windows/**
+      - scripts/geral/2-criar-banco.sh
       - banco/**
       - .github/workflows/teste-instalacao-windows.yml
   pull_request:
     branches: [main, develop]
     paths:
       - instalar-windows.cmd
-      - scripts/instalar-windows.ps1
       - parar-windows.cmd
-      - scripts/parar-windows.ps1
-      - scripts/2-criar-banco.sh
+      - scripts/windows/**
+      - scripts/geral/2-criar-banco.sh
       - banco/**
       - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:
@@ -51,7 +49,7 @@ jobs:
         run: |
           $env:PATH = $env:PATH_WINDOWS_PURO
           if (Get-Command dotnet, node, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Conferir instalacao
