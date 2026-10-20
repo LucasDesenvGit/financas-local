@@ -82,6 +82,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Convenções de código
 
+- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
