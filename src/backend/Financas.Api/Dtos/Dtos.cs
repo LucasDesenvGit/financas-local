@@ -702,7 +702,16 @@ public record ResultadoImportacaoCarteiraDto(int AtivosCriados, int OperacoesImp
 /// <summary>O que parece errado na carteira e nas transações de renda variável, com a correção sugerida.</summary>
 public record ConferenciaInvestimentosDto(List<TipoParaCorrigirDto> Tipos, List<CotasDiferentesDto> Cotas,
     List<CompraSemOperacaoDto> ComprasSemOperacao, List<CreditoDaCorretoraDto> Trocos,
-    List<RendimentoComoInvestimentoDto> Rendimentos, CategoriaDoTrocoDto? CategoriaDoTroco);
+    List<RendimentoComoInvestimentoDto> Rendimentos, CategoriaDoTrocoDto? CategoriaDoTroco, List<TaxaB3Dto> Taxas);
+
+/// <summary>
+/// #173 a): a taxa da B3 de um dia de compras, pelo extrato: o que saiu da conta (<c>Debitado</c>) menos o troco que
+/// voltou (<c>Trocos</c>) menos cotas × preço (<c>ValorDasCotas</c>). Dividida entre as compras do dia pelo valor.
+/// </summary>
+public record TaxaB3Dto(DateOnly Data, string Conta, decimal Debitado, decimal Trocos, decimal ValorDasCotas, decimal Taxa,
+    List<TaxaB3OperacaoDto> Operacoes);
+
+public record TaxaB3OperacaoDto(int OperacaoId, string Ticker, decimal Quantidade, decimal Taxa);
 
 /// <summary>Ativo cadastrado como ação ou "outro" que é FII (Motivo: o nome do fundo ou o emissor da corretora).</summary>
 public record TipoParaCorrigirDto(int AtivoId, string Ticker, string? Nome, TipoAtivo TipoAtual, string Motivo);
@@ -733,16 +742,18 @@ public record CategoriaDoTrocoDto(int Id, string Nome);
 
 /// <summary>
 /// Correções escolhidas: ativos que viram FII, compras que faltaram (ligadas ao débito), trocos e vendas (para a
-/// categoria da compra) e rendimentos (de volta para a categoria automática).
+/// categoria da compra), rendimentos (de volta para a categoria automática) e, #173 a), as operações que recebem a
+/// taxa da B3 (o valor é recalculado na API, não vem da tela).
 /// </summary>
 public record CorrigirInvestimentosDto(
     [MaxLength(200)] List<int>? AtivosParaFii,
     [MaxLength(200)] List<ImportarExtratoItemDto>? Compras,
     [MaxLength(2000)] List<long>? Trocos,
-    [MaxLength(2000)] List<long>? Rendimentos);
+    [MaxLength(2000)] List<long>? Rendimentos,
+    [MaxLength(2000)] List<int>? Taxas = null);
 
 /// <summary><c>Desfazer</c>: chave para voltar tudo (vale por alguns minutos; null se nada mudou).</summary>
-public record ResultadoCorrecaoInvestimentosDto(int Tipos, int Compras, int Trocos, int Rendimentos, string? Desfazer);
+public record ResultadoCorrecaoInvestimentosDto(int Tipos, int Compras, int Trocos, int Rendimentos, int Taxas, string? Desfazer);
 
 /* ----------------------------- Erros do sistema (#11) ----------------------------- */
 public class FiltroErrosDto

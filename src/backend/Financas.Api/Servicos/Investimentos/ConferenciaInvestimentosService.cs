@@ -17,6 +17,8 @@ namespace Financas.Api.Servicos.Investimentos;
 /// <item>Créditos da corretora: o Nubank usa a mesma descrição ("Valor recebido de Investimentos") para o troco das
 /// compras (debita um pouco a mais e devolve a sobra), para o valor de uma venda e para os proventos. Troco e venda
 /// vão para a categoria da compra; provento conta como receita.</item>
+/// <item>#173 a): taxa da B3 que falta nas compras. O débito da compra menos o troco que voltou menos cotas × preço é
+/// a taxa (alguns centavos por ordem); ela entra no custo da compra, como no app da corretora.</item>
 /// </list>
 /// </summary>
 public class ConferenciaInvestimentosService
@@ -36,6 +38,12 @@ public class ConferenciaInvestimentosService
     private const decimal FolgaVenda = 0.02m;
     /// <summary>Preço de uma compra que faltou: até 3,5% de diferença da cotação de fechamento daquele dia.</summary>
     private const decimal FolgaPreco = 0.035m;
+    /// <summary>
+    /// #173 a): taxa da B3 sugerida só até 1% do valor das cotas e R$ 5 (a de verdade é de centavos a cada R$ 1.000);
+    /// acima disso é troco que não voltou ou outra coisa, e nada é sugerido.
+    /// </summary>
+    private const decimal TaxaMaxima = 0.01m;
+    private const decimal TaxaMaximaReais = 5m;
     private static readonly TimeSpan PrazoDesfazer = TimeSpan.FromMinutes(10);
 
     private readonly FinancasDbContext _db;
@@ -66,12 +74,17 @@ public class ConferenciaInvestimentosService
     /// <summary>Crédito da corretora que não é provento: troco da <c>Compra</c> ou valor da <c>Venda</c>.</summary>
     private sealed record CreditoDeOperacao(Movimento Credito, Movimento? Compra, (string Ticker, OperacaoAtivo Op)? Venda);
 
+    /// <summary>#173 a): a taxa da B3 de um dia de compras e a parte de cada operação.</summary>
+    private sealed record TaxaDoDia(DateOnly Data, string Conta, decimal Debitado, decimal Trocos, decimal ValorDasCotas,
+        decimal Taxa, List<(OperacaoAtivo Op, string Ticker, decimal Taxa)> Operacoes);
+
     private sealed record Analise(List<CompraSemOperacao> SemOperacao, List<CreditoDeOperacao> DeOperacao,
-        List<Movimento> Creditos);
+        List<Movimento> Creditos, List<TaxaDoDia> Taxas);
 
     /// <summary>Estado de antes da correção, guardado só na memória da API para o "Desfazer".</summary>
     private sealed record EstadoAnterior(List<(int AtivoId, TipoAtivo Tipo)> Tipos, List<int> OperacoesCriadas,
-        List<(long Id, int? CategoriaId, bool CategoriaManual, TipoTransacao Tipo, bool IgnorarRelatorios, int? Aplicada)> Transacoes);
+        List<(long Id, int? CategoriaId, bool CategoriaManual, TipoTransacao Tipo, bool IgnorarRelatorios, int? Aplicada)> Transacoes,
+        List<(int OperacaoId, decimal Antes, decimal Aplicada)> Taxas);
 
     /* ============================== Conferir ============================== */
 
@@ -99,8 +112,11 @@ public class ConferenciaInvestimentosService
             .Select(c => new CompraSemOperacaoDto(c.Debito.Id, c.Debito.Data, c.Debito.Valor, c.Troco?.Valor ?? 0m,
                 c.Debito.Conta, c.Debito.Descricao))
             .ToList();
+        var taxas = analise.Taxas.Select(t => new TaxaB3Dto(t.Data, t.Conta, t.Debitado, t.Trocos, t.ValorDasCotas, t.Taxa,
+                t.Operacoes.Select(o => new TaxaB3OperacaoDto(o.Op.Id, o.Ticker, o.Op.Quantidade, o.Taxa)).ToList()))
+            .ToList();
         return new ConferenciaInvestimentosDto(tipos, cotas, compras, trocos, rendimentos,
-            categoria is null ? null : new CategoriaDoTrocoDto(categoria.Value.Id, categoria.Value.Nome));
+            categoria is null ? null : new CategoriaDoTrocoDto(categoria.Value.Id, categoria.Value.Nome), taxas);
     }
 
     /// <summary>
@@ -240,20 +256,27 @@ public class ConferenciaInvestimentosService
     /// <item>Sobra de centavos devolvida depois: com todas as compras do dia ligadas a operações, os créditos menores
     /// entram enquanto a soma dos trocos não passa do que os débitos tiveram a mais que o custo.</item>
     /// <item>Venda: crédito com o valor da venda (quantidade × preço − taxas) até 3 dias depois do pregão.</item>
+    /// <item>#173 a): taxa da B3 do dia, quando todos os débitos do dia têm operação, nenhuma operação tem taxa lançada e o
+    /// troco já teve tempo de voltar: débitos − trocos − cotas × preço, se ficar entre R$ 0,01 e o máximo.</item>
     /// </list>
     /// </summary>
     private async Task<Analise> AnalisarExtratoAsync(List<Ativo> ativos, CancellationToken ct)
     {
         var semOperacao = new List<CompraSemOperacao>();
         var deOperacao = new List<CreditoDeOperacao>();
+        var taxas = new List<TaxaDoDia>();
         var operacoes = ativos.Where(a => a.Moeda == CambioService.MoedaBase)
             .SelectMany(a => a.Operacoes.Select(o => (Ativo: a, Op: o))).ToList();
-        if (operacoes.Count == 0) return new Analise(semOperacao, deOperacao, new());
+        if (operacoes.Count == 0) return new Analise(semOperacao, deOperacao, new(), taxas);
+        var tickerDoAtivo = ativos.ToDictionary(a => a.Id, a => a.Ticker);
         var compras = operacoes.Where(x => x.Op.Tipo == TipoOperacao.Compra).Select(x => x.Op).ToList();
 
         var desde = operacoes.Min(x => x.Op.Data).AddDays(-7);
         var ligadas = operacoes.Where(x => x.Op.TransacaoId != null).GroupBy(x => x.Op.TransacaoId!.Value)
             .ToDictionary(g => g.Key, g => g.First().Op);
+        // A corretora pode dividir a execução: várias operações ligadas ao mesmo débito.
+        var operacoesDoDebito = operacoes.Where(x => x.Op.TransacaoId != null).GroupBy(x => x.Op.TransacaoId!.Value)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Op).ToList());
         var idsLigadas = ligadas.Keys.ToList();
         var movimentos = await _db.Transacoes.AsNoTracking()
             .Where(t => t.Data >= desde && t.TransferenciaGrupo == null
@@ -275,8 +298,9 @@ public class ConferenciaInvestimentosService
         foreach (var dia in debitos.GroupBy(d => (d.ContaId, d.Data)).OrderBy(g => g.Key.Data))
         {
             var (contaId, data) = dia.Key;
-            var pares = new List<(Movimento Debito, decimal Custo)>();
-            foreach (var d in dia.Where(d => ligadas.ContainsKey(d.Id))) pares.Add((d, Custo(ligadas[d.Id])));
+            var pares = new List<(Movimento Debito, decimal Custo, List<OperacaoAtivo> Operacoes)>();
+            foreach (var d in dia.Where(d => ligadas.ContainsKey(d.Id)))
+                pares.Add((d, operacoesDoDebito[d.Id].Sum(Custo), operacoesDoDebito[d.Id]));
 
             // 1) Débito × ordem.
             var semLigacao = dia.Where(d => !ligadas.ContainsKey(d.Id)).ToList();
@@ -293,7 +317,7 @@ public class ConferenciaInvestimentosService
                 if (debitosLigados.Contains(d.Id) || !ordem.Operacoes.All(livres.Contains)) continue;
                 debitosLigados.Add(d.Id);
                 livres.ExceptWith(ordem.Operacoes);
-                pares.Add((d, ordem.Custo));
+                pares.Add((d, ordem.Custo, ordem.Operacoes));
             }
             var soltos = semLigacao.Where(d => !debitosLigados.Contains(d.Id)).ToList();
 
@@ -314,6 +338,7 @@ public class ConferenciaInvestimentosService
             }
 
             // 3) Sobra de centavos.
+            var sobras = 0m;
             if (pares.Count == dia.Count())
             {
                 var restante = pares.Sum(p => -p.Debito.Valor - p.Custo) - trocoDe.Values.Sum(c => c.Valor);
@@ -322,9 +347,23 @@ public class ConferenciaInvestimentosService
                 {
                     if (c.Valor > restante) break;
                     restante -= c.Valor;
+                    sobras += c.Valor;
                     creditosUsados.Add(c.Id);
                     deOperacao.Add(new CreditoDeOperacao(c, maior, null));
                 }
+            }
+
+            // 5) #173 a): a taxa da B3 do dia (o troco já teve os dias dele para voltar).
+            if (pares.Count == dia.Count() && data <= Relogio.Hoje.AddDays(-DiasDaSobra))
+            {
+                var ops = pares.SelectMany(p => p.Operacoes).Distinct().ToList();
+                var debitado = pares.Sum(p => -p.Debito.Valor);
+                var trocos = trocoDe.Values.Sum(c => c.Valor) + sobras;
+                var cotas = ops.Sum(o => o.Quantidade * o.PrecoUnitario);
+                var taxa = Math.Round(debitado - trocos - cotas, 2);
+                if (ops.All(o => o.Taxas == 0) && taxa >= 0.01m && taxa <= Math.Min(cotas * TaxaMaxima, TaxaMaximaReais))
+                    taxas.Add(new TaxaDoDia(data, dia.First().Conta, debitado, trocos, Math.Round(cotas, 2), taxa,
+                        DividirTaxa(ops, taxa).Select(p => (p.Op, tickerDoAtivo[p.Op.AtivoId], p.Taxa)).ToList()));
             }
             foreach (var d in soltos) semOperacao.Add(new CompraSemOperacao(d, trocoDe.GetValueOrDefault(d.Id)));
         }
@@ -343,7 +382,18 @@ public class ConferenciaInvestimentosService
             creditosUsados.Add(credito.Id);
             deOperacao.Add(new CreditoDeOperacao(credito, null, (ativo.Ticker, venda)));
         }
-        return new Analise(semOperacao, deOperacao, creditos);
+        return new Analise(semOperacao, deOperacao, creditos, taxas);
+    }
+
+    /// <summary>#173 a): a taxa do dia dividida pelas operações, pelo valor de cada uma (o resto de centavos na maior).</summary>
+    private static List<(OperacaoAtivo Op, decimal Taxa)> DividirTaxa(List<OperacaoAtivo> ops, decimal taxa)
+    {
+        var total = ops.Sum(o => o.Quantidade * o.PrecoUnitario);
+        var partes = ops.Select(o => (Op: o, Taxa: total > 0 ? Math.Round(taxa * o.Quantidade * o.PrecoUnitario / total, 2) : 0m))
+            .ToList();
+        var maior = partes.IndexOf(partes.MaxBy(p => p.Op.Quantidade * p.Op.PrecoUnitario));
+        partes[maior] = (partes[maior].Op, partes[maior].Taxa + taxa - partes.Sum(p => p.Taxa));
+        return partes.Where(p => p.Taxa > 0).ToList();
     }
 
     /// <summary>
@@ -425,7 +475,7 @@ public class ConferenciaInvestimentosService
     public async Task<(ResultadoCorrecaoInvestimentosDto? Resultado, string? Erro)> CorrigirAsync(CorrigirInvestimentosDto dto,
         string? login, CancellationToken ct)
     {
-        var anterior = new EstadoAnterior(new(), new(), new());
+        var anterior = new EstadoAnterior(new(), new(), new(), new());
 
         var idsAtivos = (dto.AtivosParaFii ?? new()).Distinct().ToList();
         var ativos = await _db.Ativos.Where(a => idsAtivos.Contains(a.Id)).ToListAsync(ct);
@@ -435,6 +485,22 @@ public class ConferenciaInvestimentosService
             if (a.Moeda != CambioService.MoedaBase) return (null, $"{a.Ticker} é do exterior: não pode ser FII.");
             anterior.Tipos.Add((a.Id, a.Tipo));
             a.Tipo = TipoAtivo.Fii;
+        }
+
+        // #173 a): a taxa é recalculada aqui (não vem da tela) e só vale para a operação que ainda a tem sugerida.
+        var idsTaxas = (dto.Taxas ?? new()).Distinct().ToList();
+        if (idsTaxas.Count > 0)
+        {
+            var todos = await _db.Ativos.AsNoTracking().Include(a => a.Operacoes).ToListAsync(ct);
+            var sugeridas = (await AnalisarExtratoAsync(todos, ct)).Taxas.SelectMany(t => t.Operacoes)
+                .ToDictionary(o => o.Op.Id, o => o.Taxa);
+            if (idsTaxas.Any(id => !sugeridas.ContainsKey(id)))
+                return (null, "Alguma taxa da B3 mudou desde a conferência. Confira de novo.");
+            foreach (var o in await _db.OperacoesAtivo.Where(o => idsTaxas.Contains(o.Id)).ToListAsync(ct))
+            {
+                anterior.Taxas.Add((o.Id, o.Taxas, sugeridas[o.Id]));
+                o.Taxas = sugeridas[o.Id];
+            }
         }
 
         var novas = new List<OperacaoAtivo>();
@@ -510,21 +576,22 @@ public class ConferenciaInvestimentosService
             }
         }
 
-        if (anterior.Tipos.Count == 0 && novas.Count == 0 && anterior.Transacoes.Count == 0)
-            return (new ResultadoCorrecaoInvestimentosDto(0, 0, 0, 0, null), null);
+        if (anterior.Tipos.Count == 0 && novas.Count == 0 && anterior.Transacoes.Count == 0 && anterior.Taxas.Count == 0)
+            return (new ResultadoCorrecaoInvestimentosDto(0, 0, 0, 0, 0, null), null);
         _auditoria.Registrar(
-            $"ConferenciaInvestimentos ({anterior.Tipos.Count} tipo, {novas.Count} compra, {trocos} troco, {rendimentos} rendimento)",
-            login);
+            $"ConferenciaInvestimentos ({anterior.Tipos.Count} tipo, {novas.Count} compra, {trocos} troco, {rendimentos} rendimento, "
+            + $"{anterior.Taxas.Count} taxa)", login);
         await _db.SaveChangesAsync(ct);
         anterior.OperacoesCriadas.AddRange(novas.Select(o => o.Id));
         var chave = Guid.NewGuid().ToString("N");
         _cache.Set(ChaveDesfazer(chave), anterior, PrazoDesfazer);
-        return (new ResultadoCorrecaoInvestimentosDto(anterior.Tipos.Count, novas.Count, trocos, rendimentos, chave), null);
+        return (new ResultadoCorrecaoInvestimentosDto(anterior.Tipos.Count, novas.Count, trocos, rendimentos,
+            anterior.Taxas.Count, chave), null);
     }
 
     /// <summary>
-    /// Desfaz uma correção: volta o tipo, apaga as compras lançadas e volta categoria, "manual", tipo e "ignorar nos
-    /// relatórios" dos créditos. O que mudou de novo depois disso fica como está.
+    /// Desfaz uma correção: volta o tipo, apaga as compras lançadas, volta categoria, "manual", tipo e "ignorar nos
+    /// relatórios" dos créditos e a taxa das operações. O que mudou de novo depois disso fica como está.
     /// </summary>
     public async Task<int?> DesfazerAsync(string chave, string? login, CancellationToken ct)
     {
@@ -544,6 +611,15 @@ public class ConferenciaInvestimentosService
         var operacoes = await _db.OperacoesAtivo.Where(o => anterior.OperacoesCriadas.Contains(o.Id)).ToListAsync(ct);
         _db.OperacoesAtivo.RemoveRange(operacoes);
         desfeitas += operacoes.Count;
+
+        var idsTaxas = anterior.Taxas.Select(t => t.OperacaoId).ToList();
+        var comTaxa = await _db.OperacoesAtivo.Where(o => idsTaxas.Contains(o.Id)).ToDictionaryAsync(o => o.Id, ct);
+        foreach (var (id, antes, aplicada) in anterior.Taxas)
+        {
+            if (!comTaxa.TryGetValue(id, out var o) || o.Taxas != aplicada) continue;
+            o.Taxas = antes;
+            desfeitas++;
+        }
 
         var idsTransacoes = anterior.Transacoes.Select(t => t.Id).ToList();
         var transacoes = await _db.Transacoes.Where(t => idsTransacoes.Contains(t.Id)).ToDictionaryAsync(t => t.Id, ct);

@@ -626,6 +626,13 @@ export interface ImportarExtratoItem {
 export interface ConferenciaInvestimentos {
   tipos: TipoParaCorrigir[]; cotas: CotasDiferentes[]; comprasSemOperacao: CompraSemOperacao[];
   trocos: CreditoDaCorretora[]; rendimentos: RendimentoComoInvestimento[]; categoriaDoTroco: { id: number; nome: string } | null;
+  /** #173 a): taxa da B3 que falta nas compras, por dia. */
+  taxas?: TaxaB3[] | null;
+}
+/** #173 a): débito − troco − cotas × preço de um dia de compras = a taxa da B3, dividida entre as compras pelo valor. */
+export interface TaxaB3 {
+  data: string; conta: string; debitado: number; trocos: number; valorDasCotas: number; taxa: number;
+  operacoes: { operacaoId: number; ticker: string; quantidade: number; taxa: number }[];
 }
 /** Ativo cadastrado como ação ou "outro" que é FII (motivo: o nome do fundo ou o emissor da corretora). */
 export interface TipoParaCorrigir { ativoId: number; ticker: string; nome: string | null; tipoAtual: TipoAtivo; motivo: string; }
@@ -649,9 +656,11 @@ export interface RendimentoComoInvestimento {
 }
 export interface CorrigirInvestimentos {
   ativosParaFii: number[]; compras: ImportarExtratoItem[]; trocos: number[]; rendimentos: number[];
+  /** #173 a): operações que recebem a taxa da B3 (a API recalcula o valor). */
+  taxas?: number[];
 }
 export interface ResultadoCorrecaoInvestimentos {
-  tipos: number; compras: number; trocos: number; rendimentos: number; desfazer: string | null;
+  tipos: number; compras: number; trocos: number; rendimentos: number; taxas?: number; desfazer: string | null;
 }
 
 /* ----------------------------- Erros do sistema (#11) ----------------------------- */

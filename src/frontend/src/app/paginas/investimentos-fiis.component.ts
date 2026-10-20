@@ -175,7 +175,8 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
               </table>
             </div>
             <p class="texto-suave nota">
-              Aportes são as compras (cotas × preço); a taxa da B3, de centavos por ordem, só entra quando foi lançada.
+              Aportes são as compras (cotas × preço), como as “Entradas” do app; a taxa da B3, de centavos por ordem, fica
+              no custo e no preço médio de cada compra (“Conferir investimentos” a calcula pelo extrato).
               Rendimentos são os créditos de provento no extrato, sem o troco das compras nem o valor das vendas.
               A valorização usa o fechamento de cada mês (no mês atual, a cotação de hoje); por isso pode diferir um pouco
               do app da corretora, que usa outra fonte e outro dia de preço.

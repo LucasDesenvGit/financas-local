@@ -31,12 +31,13 @@ O usuário pediu um botão que corrija esse tipo de coisa.
 
 ## Decisão
 
-Em Investimentos, **"Conferir investimentos"** abre uma prévia (`GET /api/carteira/conferencia`) com quatro grupos, cada correção já marcada.
+Em Investimentos, **"Conferir investimentos"** abre uma prévia (`GET /api/carteira/conferencia`) com cinco grupos, cada correção já marcada.
 
 **Os grupos (`ConferenciaInvestimentosService`):**
 - **FII cadastrado como outro tipo:** pelo nome do fundo ou pelo emissor (`ClassificacaoAtivo.PareceFii`).
 - **Cotas diferentes da corretora:** quando faltam cotas, sugere o débito de compra sem operação cujo valor, sem o troco, dividido pelas cotas que faltam, fica até 3,5% do fechamento do dia. A compra é lançada ligada a esse débito (`Origem = Extrato`, `TransacaoId`).
 - **Troco ou venda contando como rendimento:** vai para a categoria de transferência "Investimentos", como escolha manual.
+- **Taxa da B3 que falta nas compras (#173 a):** em cada dia em que todos os débitos de compra têm operação, nenhuma operação tem taxa e o dia tem pelo menos 5 dias (o troco já voltou), a taxa é débitos − trocos − cotas × preço. Só é sugerida entre R$ 0,01 e o menor de 1% do valor e R$ 5; é dividida pelas operações do dia pelo valor de cada uma. O valor é recalculado na API ao aplicar (a tela manda só as operações), e o "Desfazer" volta a taxa anterior. A taxa fica no custo e no preço médio (o "valor final da compra" do app: na conferência com a carteira real, valor enviado − valor devolvido − cotas × preço deu, ordem a ordem, a "taxa da bolsa" que o app mostra); o mês a mês dos FIIs continua com cotas × preço, porque as "Entradas" do app não somam a taxa (março e junho batem ao centavo sem ela).
 - **Rendimento contando como investimento:** volta para a categoria automática. Só entram créditos com a mesma descrição dos trocos, e só se as regras derem uma categoria de receita.
 
 **Como o extrato é lido:**

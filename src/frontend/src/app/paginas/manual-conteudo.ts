@@ -1029,6 +1029,7 @@ export const MANUAL: CapituloManual[] = [
           '“Cotas que faltam”: a corretora informa mais cotas do que a carteira tem. Quando um débito de compra do extrato explica a diferença, ele já vem escolhido, com o preço calculado. Confira as cotas e o preço.',
           '“Troco ou venda contando como rendimento”: créditos da corretora que são troco de uma compra ou o valor de uma venda vão para “Investimentos”.',
           '“Rendimento contando como investimento”: os outros créditos da corretora são proventos e voltam a contar como receita.',
+          '“Taxa da B3 que falta nas compras”: em cada dia de compras, o que saiu da conta menos o troco e menos cotas × preço é a taxa da bolsa. Ela entra no custo e no preço médio da compra (o “valor final da compra” do app). Só aparece depois que o troco teve tempo de voltar (5 dias).',
           'Desmarque o que não quiser mudar e clique em “Corrigir selecionados”. O aviso tem “Desfazer” por 10 minutos.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
@@ -1040,7 +1041,7 @@ export const MANUAL: CapituloManual[] = [
         erros: [
           'Mudar todos os “Valor recebido de Investimentos” para Investimentos de uma vez: os proventos deixam de contar como receita. A conferência separa o troco do rendimento.'
         ],
-        termos: ['trocoDeCompra']
+        termos: ['trocoDeCompra', 'taxaB3']
       },
       {
         id: 'selic-fiis',
@@ -1070,7 +1071,7 @@ export const MANUAL: CapituloManual[] = [
         abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
         dicas: [
           'Para os rendimentos baterem com o app, confira os créditos da corretora em “Conferir investimentos”: ali o troco e o rendimento aparecem separados.',
-          'A taxa da B3, de alguns centavos por compra, só entra nos aportes quando foi lançada na operação.',
+          'Os aportes são cotas × preço, como as “Entradas” do app. A taxa da B3, de alguns centavos por compra, fica no custo e no preço médio: “Conferir investimentos” a calcula pelo extrato e lança com um clique.',
           'Compras lançadas à mão na carteira entram nos aportes, mas não aparecem em “ver lançamentos”: elas não vieram do banco.'
         ],
         erros: [

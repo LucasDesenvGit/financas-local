@@ -237,15 +237,17 @@ public class FiiService
                     foreach (var o in f.Operacoes.Where(x => x.Data >= mes && x.Data <= fim))
                     {
                         if (o.TransacaoId is long transacaoId) idsAportes.Add(transacaoId);
+                        // #173 a): cotas × preço, sem a taxa da B3, como as "Entradas" do app (a taxa fica no custo e no
+                        // preço médio da operação, o "valor final da compra").
                         if (o.Tipo == TipoOperacao.Compra)
                         {
-                            var pago = o.Quantidade * o.PrecoUnitario + o.Taxas;
+                            var pago = o.Quantidade * o.PrecoUnitario;
                             fluxo += pago;
                             if (subscricao) subscricoes += pago; else aportes += pago;
                         }
                         else
                         {
-                            var recebido = o.Quantidade * o.PrecoUnitario - o.Taxas;
+                            var recebido = o.Quantidade * o.PrecoUnitario;
                             fluxo -= recebido;
                             resgates += recebido;
                         }
