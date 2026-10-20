@@ -76,7 +76,10 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Conhecendo a tela',
         paraQueServe: 'Saber onde ficam o menu, o status da sincronização e as ferramentas que valem em qualquer tela.',
         passos: [
-          'À esquerda fica o menu com todas as telas. No celular, ele abre pelo botão ☰ no topo; para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
+          'À esquerda fica o menu com todas as telas, separadas por assunto: o Painel no topo; Movimentação (Transações, Contas e cartões, Contas a pagar); Planejamento (Orçamentos, Metas); Patrimônio (Investimentos, Empréstimos e financiamentos); Análises (Relatórios, Visão anual, Projeção); Ajustes (Categorias e regras, Configurações); e o Manual no rodapé.',
+          'Clique no nome de um grupo (ou use Enter ou Espaço) para mostrar ou esconder as telas dele. A seta indica se o grupo está aberto (para baixo) ou fechado (para o lado), e vários grupos podem ficar abertos ao mesmo tempo. Na primeira vez, todos vêm abertos; feche os que você não usa. A escolha fica salva neste navegador.',
+          'Ao entrar numa tela, o grupo dela abre sozinho. Se você fechar o grupo da tela em que está, o nome dele fica destacado, com um ponto, para mostrar onde você está.',
+          'No celular, o menu abre pelo botão ☰ no topo. Tocar no nome de um grupo só mostra ou esconde as telas dele; tocar numa tela leva até ela e fecha o menu. Para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
           'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
           'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
           'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',

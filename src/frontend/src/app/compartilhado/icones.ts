@@ -4,11 +4,13 @@
  */
 import {
   LucideArrowDownLeft, LucideArrowLeftRight, LucideArrowUpRight, LucideBanknote, LucideBookOpen, LucideBriefcase, LucideCalculator,
-  LucideCalendar, LucideCalendarClock, LucideCalendarRange, LucideChartColumn, LucideChartLine, LucideChartPie, LucideCheck,
-  LucideChevronDown, LucideCircleEllipsis, LucideCircleQuestionMark, LucideCreditCard, LucideEye, LucideEyeOff, LucideHandCoins,
+  LucideCalendar, LucideCalendarClock, LucideCalendarRange, LucideChartColumn, LucideChartLine, LucideChartNoAxesCombined,
+  LucideChartPie, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCircleEllipsis, LucideCircleQuestionMark,
+  LucideClipboardList, LucideCoins, LucideCreditCard, LucideEye, LucideEyeOff, LucideHandCoins,
   LucideHouse, LucideLandmark, LucideLayoutDashboard, LucideLogOut, LucideMenu, LucideMonitor, LucideMoon, LucidePalette, LucidePercent,
-  LucidePiggyBank, LucideReceipt, LucideReceiptText, LucideRefreshCw, LucideRepeat2, LucideSettings, LucideShoppingBag, LucideSun,
-  LucideTags, LucideTarget, LucideTrendingUp, LucideTriangleAlert, LucideUndo2, LucideWallet, LucideX
+  LucidePiggyBank, LucideReceipt, LucideReceiptText, LucideRefreshCw, LucideRepeat2, LucideSettings, LucideShoppingBag,
+  LucideSlidersHorizontal, LucideSun, LucideTags, LucideTarget, LucideTrendingUp, LucideTriangleAlert, LucideUndo2,
+  LucideWallet, LucideX
 } from '@lucide/angular';
 
 export const Icones = {
@@ -28,6 +30,13 @@ export const Icones = {
   categorias: LucideTags,
   configuracoes: LucideSettings,
   manual: LucideBookOpen,
+  // Grupos do menu (#227) e a seta que mostra se o grupo está aberto
+  grupoMovimentacao: LucideWallet,
+  grupoPlanejamento: LucideClipboardList,
+  grupoPatrimonio: LucideCoins,
+  grupoAnalises: LucideChartNoAxesCombined,
+  grupoAjustes: LucideSlidersHorizontal,
+  setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,
   sincronizar: LucideRefreshCw,

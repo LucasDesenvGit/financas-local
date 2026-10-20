@@ -11,6 +11,10 @@ import { abrirShell } from '../apoio/shell';
  * - WCAG 4.1.2 (Name, Role, Value): nome fixo e o estado em aria-expanded, com aria-controls para o menu.
  * - WCAG 2.1.1 (Keyboard): o Tab não para em link escondido (inert).
  * - WCAG 2.5.8 (Target Size): o botão tem pelo menos 24×24 px. O jsdom não calcula layout, mas aplica a cascata.
+ * Grupos que abrem e fecham (#227, ADR 0046):
+ * - WAI-ARIA APG, Disclosure Pattern: cabeçalho é botão com aria-expanded e aria-controls apontando para as telas.
+ * - WCAG 2.1.1 (Keyboard): tela de grupo fechado fica fora do Tab (inert e invisível).
+ * - WCAG 2.5.8 (Target Size): o cabeçalho tem pelo menos 24 px de altura e ocupa a largura do menu.
  */
 describe('Usabilidade: menu lateral recolhível', () => {
   it('o ☰ tem nome acessível fixo, que não muda com o estado, e controla o menu lateral', async () => {
@@ -67,6 +71,20 @@ describe('Usabilidade: menu lateral recolhível', () => {
     expect(t.botaoFechar().classList).toContain('so-celular');
   });
 
+  it('cabeçalho do grupo controla a lista de telas, que se apresenta como grupo com o nome dele', async () => {
+    const t = await abrirShell();
+    const botao = t.cabecalho('analises');
+    const lista = document.getElementById(botao.getAttribute('aria-controls')!)!;
+    expect(lista).toBe(t.telasDoGrupo('analises'));
+    expect(lista.getAttribute('role')).toBe('group');
+    expect(document.getElementById(lista.getAttribute('aria-labelledby')!)).toBe(botao);
+    // Nome fixo (o estado vai no aria-expanded) e os ícones decorativos.
+    botao.click();
+    await t.atualizar();
+    expect(botao.textContent!.trim()).toBe('Análises');
+    botao.querySelectorAll('svg').forEach((svg) => expect(svg.getAttribute('aria-hidden')).toBe('true'));
+  });
+
   it('a marca se chama "Finanças, ir para o Painel" e o ícone é decorativo', async () => {
     const t = await abrirShell();
     expect(t.marca().getAttribute('aria-label')).toBe('Finanças, ir para o Painel');
@@ -101,6 +119,28 @@ describe('Usabilidade: menu lateral recolhível', () => {
       const tela = pagina.querySelector(':scope > :not(router-outlet)')!;
       expect(tela.matches(regra.selectorText)).toBe(true);
       expect(pagina.querySelector('router-outlet')!.matches(regra.selectorText)).toBe(false);
+    });
+
+    it('cabeçalho do grupo: alvo de pelo menos 24 px de altura, na largura toda do menu', async () => {
+      const t = await abrirShell();
+      const css = getComputedStyle(t.cabecalho('movimentacao'));
+      expect(parseFloat(css.minHeight)).toBeGreaterThanOrEqual(24);
+      expect(css.width).toBe('100%');
+    });
+
+    it('grupo fechado fica invisível (fora do Tab e do leitor de tela); aberto, as telas voltam', async () => {
+      const t = await abrirShell({ url: '/painel' });
+      expect(getComputedStyle(t.telasDoGrupo('ajustes')).visibility).toBe('visible');
+      t.cabecalho('ajustes').click();
+      await t.atualizar();
+      expect(getComputedStyle(t.telasDoGrupo('ajustes')).visibility).toBe('hidden');
+      expect(getComputedStyle(t.linkDaTela('/categorias')).visibility).toBe('hidden');
+    });
+
+    it('com movimento reduzido no sistema, abrir e fechar o grupo não anima (regra global sem transição)', () => {
+      const regra = Array.from(estilo.sheet!.cssRules).find(
+        (r): r is CSSMediaRule => r instanceof CSSMediaRule && r.conditionText.includes('prefers-reduced-motion'))!;
+      expect(regra.cssText).toMatch(/\*.*transition: none !important/s);
     });
 
     it('a marca ocupa a largura toda do topo do menu (área clicável inteira, não só o texto)', async () => {

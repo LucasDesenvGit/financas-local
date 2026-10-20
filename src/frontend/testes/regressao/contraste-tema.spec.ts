@@ -36,7 +36,8 @@ const FUNDOS = ['fundo', 'superficie', 'superficie-2', 'superficie-3', 'primaria
   'alerta-suave', 'emergencia-suave', 'info-suave'];
 const PALETAS = ['oceano', 'floresta', 'grafite', 'por-do-sol'];
 
-describe('Regressão: contraste das cores de texto do tema (WCAG 1.4.3)', () => {
+/** As cores de cada tema (claro, escuro) em cada paleta, para conferir as contas em todas as combinações. */
+function casosDosTemas(): [string, Record<string, string>][] {
   const casos: [string, Record<string, string>][] = [];
   for (const tema of ['claro', 'escuro']) {
     const base = variaveis(new RegExp(`^\\s*(:root,\\s*)?:root\\[data-tema="${tema}"\\]\\s*$`));
@@ -44,6 +45,11 @@ describe('Regressão: contraste das cores de texto do tema (WCAG 1.4.3)', () => 
     for (const p of PALETAS)
       casos.push([`${tema} (${p})`, { ...base, ...variaveis(new RegExp(`:root\\[data-paleta="${p}"\\]\\[data-tema="${tema}"\\]`)) }]);
   }
+  return casos;
+}
+
+describe('Regressão: contraste das cores de texto do tema (WCAG 1.4.3)', () => {
+  const casos = casosDosTemas();
 
   it.each(casos)('%s: todo texto tem pelo menos 4,5:1 sobre todo fundo', (_, cores) => {
     const abaixo: string[] = [];
@@ -54,5 +60,30 @@ describe('Regressão: contraste das cores de texto do tema (WCAG 1.4.3)', () => 
         if (razao < 4.5) abaixo.push(`--${t} sobre --${f}: ${razao.toFixed(2)}`);
       }
     expect(abaixo).toEqual([]);
+  });
+});
+
+/**
+ * #227: a seta do grupo do menu (--texto-suave, ou --primaria-forte quando a tela atual está no grupo fechado) e o
+ * contorno de foco (--primaria) precisam de 3:1 com o fundo do menu e com o fundo do cabeçalho sob o mouse
+ * (WCAG 2.2 — 1.4.11 Non-text Contrast, AA), nos dois temas e em todas as paletas.
+ */
+describe('Regressão: contraste da seta e do foco do menu em grupos (WCAG 1.4.11)', () => {
+  const casos = casosDosTemas();
+
+  it.each(casos)('%s: seta e foco com pelo menos 3:1 sobre o menu', (_, cores) => {
+    const abaixo: string[] = [];
+    for (const t of ['texto-suave', 'primaria-forte', 'primaria'])
+      for (const f of ['superficie', 'superficie-2']) {
+        const razao = contraste(cores[t], cores[f]);
+        if (razao < 3) abaixo.push(`--${t} sobre --${f}: ${razao.toFixed(2)}`);
+      }
+    expect(abaixo).toEqual([]);
+  });
+
+  it('a seta usa --texto-suave e o foco do cabeçalho é o contorno padrão em --primaria', () => {
+    expect(css).toMatch(/\.grupo-seta\s*\{[^}]*color:\s*var\(--texto-suave\)/);
+    expect(css).toMatch(/:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--primaria\)/);
+    expect(css).not.toMatch(/\.grupo-cabecalho[^{]*:focus[^{]*\{[^}]*outline:\s*(none|0)/);
   });
 });
