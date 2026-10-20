@@ -16,8 +16,8 @@ Os resumos (Painel, Orçamentos, Visão anual, Categorias) mostravam totais por 
 
 ## Decisão
 
-- **Detalhe por navegação:** totais por categoria (gráficos, listas, orçamentos, categorias) levam a `/transacoes` filtrada, com o contexto completo — categoria, período, tipo e conta — montado **sempre** por `paramsTransacoes()` (`compartilhado/utilidades.ts`), nunca string na mão. Clique em gráfico (canvas) tem equivalente em `<a>`/`<button>` (WCAG 2.1.1).
-- **Estado na URL:** Transações lê e grava o filtro em query params (`categoria` — uma ou várias, separadas por vírgula, cada valor validado sozinho —, `conta`, `tipo`, `inicio`, `fim`, `emergencias`, `busca`, `pagina`), só o que difere do padrão. Cada parâmetro é validado sozinho; inválido é ignorado e a URL se corrige. Atualização de filtro usa `replaceUrl`, para o voltar levar à tela anterior e não ao filtro anterior (*julgamento próprio*: é a convenção mais comum, mas há apps que empilham). Busca textual vai para a URL só no Enter.
+- **Detalhe por navegação:** totais por categoria (gráficos, listas, orçamentos, categorias) levam a `/transacoes` filtrada, com o contexto completo — categoria, período, tipo e conta — montado **sempre** por `paramsTransacoes()` (`compartilhado/utilidades.ts`), nunca string na mão. Clique em gráfico (canvas) tem equivalente em `<a>`/`<button>` (WCAG 2.1.1). Quando o número não é um total por categoria (#173 d: aportes ou rendimentos dos FIIs num mês), o link leva o mês e a lista dos lançamentos que o formam (`ids`, até 200, com `de` dizendo de onde veio, para o chip).
+- **Estado na URL:** Transações lê e grava o filtro em query params (`categoria` — uma ou várias, separadas por vírgula, cada valor validado sozinho —, `conta`, `tipo`, `inicio`, `fim`, `emergencias`, `busca`, `ids` e `de`, `pagina`), só o que difere do padrão. Cada parâmetro é validado sozinho; inválido é ignorado e a URL se corrige. Atualização de filtro usa `replaceUrl`, para o voltar levar à tela anterior e não ao filtro anterior (*julgamento próprio*: é a convenção mais comum, mas há apps que empilham). Busca textual vai para a URL só no Enter.
 - **Filtro ativo sempre visível:** tela que pode abrir filtrada mostra chips com ✕ e "Limpar filtros" (Nielsen 1 e 3).
 
 ## Consequências
@@ -26,5 +26,6 @@ Os resumos (Painel, Orçamentos, Visão anual, Categorias) mostravam totais por 
 - **Negativas:**
   - o nome dos parâmetros vira contrato público: link salvo quebra se um nome mudar — renomear exige aceitar o nome antigo por um tempo;
   - parâmetro inválido é descartado em silêncio (só a URL se corrige): quem colou um link errado não recebe mensagem;
-  - com `replaceUrl`, não dá para "voltar" ao filtro anterior pelo navegador.
+  - com `replaceUrl`, não dá para "voltar" ao filtro anterior pelo navegador;
+  - a lista de `ids` é uma foto do momento do clique: link salvo com ela não acompanha lançamentos novos daquele número (*inferido*, aceito porque o link nasce de um clique e é usado na hora).
 - **Na prática:** link para Transações usa `paramsTransacoes()`; filtro novo em Transações precisa de leitura validada em `aplicarParametrosDaUrl`, gravação em `gravarFiltroNaUrl`, chip em `chipsFiltro` e teste de regressão.

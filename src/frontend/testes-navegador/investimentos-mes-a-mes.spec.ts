@@ -31,3 +31,35 @@ test('Investimentos › FIIs › Mês a mês: gráfico com frase-resumo, tabela 
   expect(larguras.pagina).toBeLessThanOrEqual(larguras.janela);
   expect(problemas.lista).toEqual([]);
 });
+
+/**
+ * #173 d): detalhe por navegação (ADR 0018). "ver lançamentos" nos rendimentos do mês abre Transações com o mês e só os
+ * lançamentos que formam o número; o filtro aparece num chip removível (Nielsen 1 e 3) e o voltar leva de novo aos FIIs.
+ */
+test('Investimentos › FIIs › Mês a mês: "ver lançamentos" abre Transações filtrada e o voltar funciona', async ({ page, problemas }) => {
+  await page.goto('/investimentos?aba=fii');
+  const tabela = page.locator('section.mes-a-mes').getByRole('table');
+  // O mês mais recente (primeira linha) tem dois créditos de rendimento.
+  const pedido = page.waitForRequest((r) => r.url().includes('/api/transacoes?') && r.url().includes('ids=201') && r.url().includes('ids=202'));
+  await tabela.getByRole('link', { name: /^Ver em Transações os rendimentos de FIIs de/ }).first().click();
+  await pedido;
+
+  // O mês é o atual (o período padrão de Transações): na URL, só os ids e a origem.
+  await expect(page).toHaveURL(/\/transacoes\?.*ids=201(,|%2C)202/);
+  await expect(page).toHaveURL(/de=fii-rendimentos/);
+  const filtros = page.getByRole('region', { name: 'Filtros ativos' });
+  await expect(filtros).toContainText('Rendimentos de FIIs: 2 lançamentos');
+
+  // O ✕ tira só esse filtro (o mês continua), e a URL acompanha.
+  await filtros.getByRole('button', { name: 'Remover filtro: Rendimentos de FIIs: 2 lançamentos' }).click();
+  await expect(page).not.toHaveURL(/ids=/);
+  // Era o único filtro: a faixa "Filtrando:" some junto (Nielsen 8).
+  await expect(filtros).toHaveCount(0);
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/investimentos\?aba=fii/);
+  // O mês dos aportes também tem o link (compras e vendas daquele mês).
+  await expect(page.locator('section.mes-a-mes').getByRole('link', { name: /^Ver em Transações as compras e vendas de FIIs de/ }))
+    .toHaveCount(1);
+  expect(problemas.lista).toEqual([]);
+});

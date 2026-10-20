@@ -935,17 +935,19 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
         passos: [
           'Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.',
-          'O gráfico mostra, por mês, os aportes, os rendimentos e a valorização; a frase acima dele resume o último mês.',
+          'O gráfico mostra, por mês, os rendimentos e a valorização; os aportes ficam na tabela, para um aporte grande não achatar o resto. A frase acima dele resume o último mês.',
           'Na tabela, o mês mais recente vem primeiro. “Aportes” são as compras do mês; subscrições e vendas aparecem embaixo, à parte.',
           '“Rendimentos” são os proventos que caíram na conta. O troco das compras e o valor das vendas, que a corretora credita com a mesma descrição, ficam de fora.',
           'No mês atual, “a receber (data-com)” é o provento dos fundos com data-com no mês, que costuma cair no mês seguinte.',
           '“por fundo”, embaixo dos rendimentos, abre quanto cada FII pagou no mês. O crédito que vem sem o código do fundo (“Valor recebido de Investimentos”) é ligado ao fundo pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois); o que não liga aparece como “sem fundo identificado”, sem sumir da soma.',
-          '“Valorização” é quanto as cotas ganharam ou perderam de preço no mês, sem contar aportes nem rendimentos. “Saldo no fim” é quanto a carteira valia no último dia do mês.'
+          '“Valorização” é quanto as cotas ganharam ou perderam de preço no mês, sem contar aportes nem rendimentos. “Saldo no fim” é quanto a carteira valia no último dia do mês.',
+          '“ver lançamentos”, em Aportes e em Rendimentos, abre Transações no mês e só com os lançamentos que formam aquele número. O filtro aparece em “Filtrando:”; o ✕ o tira, e o voltar do navegador leva de volta aos FIIs. Clicar num mês do gráfico faz o mesmo com os rendimentos.'
         ],
         abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
         dicas: [
           'Para os rendimentos baterem com o app, confira os créditos da corretora em “Conferir investimentos”: ali o troco e o rendimento aparecem separados.',
-          'A taxa da B3, de alguns centavos por compra, só entra nos aportes quando foi lançada na operação.'
+          'A taxa da B3, de alguns centavos por compra, só entra nos aportes quando foi lançada na operação.',
+          'Compras lançadas à mão na carteira entram nos aportes, mas não aparecem em “ver lançamentos”: elas não vieram do banco.'
         ],
         erros: [
           'A valorização pode diferir um pouco da do app: o site usa o fechamento do mês de outra fonte de cotação (no mês atual, a cotação de hoje).'

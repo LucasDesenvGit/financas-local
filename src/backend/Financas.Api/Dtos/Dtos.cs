@@ -135,6 +135,8 @@ public class FiltroTransacoesDto
     public string? Lancamento { get; set; }
     public TipoTransacao? Tipo { get; set; }
     [StringLength(100)] public string? Busca { get; set; }
+    /// <summary>#173 d): só estes lançamentos (?ids=1&amp;ids=2), vindos do detalhe de outra tela.</summary>
+    [MaxLength(200)] public List<long>? Ids { get; set; }
     [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
     [Range(1, 500)] public int TamanhoPagina { get; set; } = 50;
 }
@@ -642,7 +644,10 @@ public record EvolucaoFiiMesDto(int Ano, int Mes, decimal Aplicado, decimal? Val
 public record MesAMesFiiDto(int Ano, int Mes, decimal Aportes, decimal Subscricoes, decimal Resgates,
     decimal RendimentosRecebidos, decimal RendimentosEstimados, decimal Valorizacao, decimal Saldo,
     // #173 c): os rendimentos recebidos por fundo (Ticker null = crédito que não deu para ligar a nenhum fundo).
-    List<RendimentoPorFiiDto>? PorFii = null);
+    List<RendimentoPorFiiDto>? PorFii = null,
+    // #173 d): os lançamentos que formam os aportes (compras, subscrições e vendas ligadas a um lançamento do banco) e
+    // os rendimentos do mês, para o detalhe em Transações.
+    List<long>? IdsAportes = null, List<long>? IdsRendimentos = null);
 
 /// <summary>#173 c): quanto um fundo pagou no mês (Ticker null: "sem fundo identificado").</summary>
 public record RendimentoPorFiiDto(string? Ticker, decimal Valor);

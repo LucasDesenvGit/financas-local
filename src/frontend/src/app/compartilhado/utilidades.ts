@@ -47,7 +47,23 @@ export interface ContextoTransacoes {
   transacaoId?: number;
   /** Natureza do gasto da regra 50/30/20 (Visão anual); 'sem' = sem classificação. */
   naturezas?: NaturezaUrl[];
+  /** #173 d): só estes lançamentos (até {@link MAXIMO_IDS_URL}), os que formam um número de outra tela. */
+  ids?: number[];
+  /** De onde vêm os `ids`, para o chip de /transacoes dizer o que a lista é. */
+  origemIds?: OrigemIdsUrl;
 }
+
+/** #173 d): valores de ?de= em /transacoes, junto com ?ids=. */
+export type OrigemIdsUrl = 'fii-aportes' | 'fii-rendimentos';
+
+/** O que o chip de /transacoes diz de cada origem dos `ids` (Nielsen 2: as palavras da tela de onde se veio). */
+export const ORIGENS_IDS: Record<OrigemIdsUrl, string> = {
+  'fii-aportes': 'Compras e vendas de FIIs',
+  'fii-rendimentos': 'Rendimentos de FIIs'
+};
+
+/** Máximo de lançamentos em ?ids= (o mesmo limite da API), para a URL não crescer sem fim. */
+export const MAXIMO_IDS_URL = 200;
 
 /** Valores de ?natureza= em /transacoes (separados por vírgula). */
 export type NaturezaUrl = 'essencial' | 'estilo-de-vida' | 'sem';
@@ -65,7 +81,17 @@ export function paramsTransacoes(c: ContextoTransacoes): Record<string, string> 
   if (c.contaId) p['conta'] = String(c.contaId);
   if (c.transacaoId) p['transacao'] = String(c.transacaoId);
   if (c.naturezas?.length) p['natureza'] = c.naturezas.join(',');
+  if (c.ids?.length) {
+    p['ids'] = c.ids.slice(0, MAXIMO_IDS_URL).join(',');
+    if (c.origemIds) p['de'] = c.origemIds;
+  }
   return p;
+}
+
+/** Os ids de ?ids= (separados por vírgula): só inteiros positivos, sem repetir, até {@link MAXIMO_IDS_URL}. */
+export function idsDaUrl(valor: string | null): number[] {
+  const ids = (valor ?? '').split(',').map((v) => Number(v.trim())).filter((n) => Number.isSafeInteger(n) && n > 0);
+  return [...new Set(ids)].slice(0, MAXIMO_IDS_URL);
 }
 
 /** Mês/ano vindo da URL (?ano=2026&mes=9), para o voltar do navegador reabrir a tela no mesmo período. */
