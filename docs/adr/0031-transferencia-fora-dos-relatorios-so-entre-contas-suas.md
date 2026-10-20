@@ -42,6 +42,13 @@ Adotada a terceira opção (`TransferenciasService`).
 - ao iniciar a API (acerta o que já está no banco);
 - depois de mudar categoria, valor ou excluir (formulário, lote, desfazer, reaplicar regras, mapear categoria do Open Finance).
 
+**Seu nome nos Pix (#172, 2026-10-20):** quando o banco não informa o titular (`MesmaTitularidade` vazio), um Pix ou TED que cita o nome que o usuário escreveu em Configurações › Open Finance ("Seu nome como aparece nos Pix", `Configuracao` `Transferencias.MeuNome`) também é entre contas suas.
+- Vale o primeiro e o último nome como palavras inteiras, porque os bancos abreviam o meio ("LUCAS F SILVA").
+- Um nome só não é aceito: pegaria Pix de qualquer xará.
+- O titular informado pelo banco continua valendo acima do nome.
+
+**Pagamento de fatura sem a categoria certa (#172):** antes desta regra, `ReclassificarAsync` acerta os débitos que o `TipoLancamentoService` reconhece como pagamento de fatura e que têm o crédito do mesmo valor num cartão, em até `DiasDoPar` dias. Eles vão para "Pagamento de fatura" (fora dos relatórios), mesmo que o banco tenha mandado como boleto ou "outros". Sem esse crédito, ficam como estão: "fatura" também é conta de telefone e de luz.
+
 **Como muda o lançamento:**
 - **Entre contas suas:** `Tipo = Transferência` e `IgnorarRelatorios`.
 - **Para ou de outra pessoa:** `Tipo` pelo sinal (despesa ou receita) e conta nos relatórios.
@@ -54,6 +61,7 @@ Adotada a terceira opção (`TransferenciasService`).
   - nada muda nas outras categorias de transferência.
 - **Negativas:**
   - **Transferência para uma conta sua que não está conectada** não tem par e passa a contar como despesa. Saída: uma categoria do tipo transferência própria, como "Entre minhas contas" (explicado no Manual).
+  - **O nome é estimado (*inferido*):** um Pix para um xará com o mesmo primeiro e último nome conta como seu. Só vale sem titular informado e só para quem preencheu o nome.
   - **O par é estimado:** duas transferências de terceiros com o mesmo valor, em contas diferentes e com até 5 dias de diferença, podem ser tomadas como par. O dado de titular, quando existe, prevalece.
   - **Identificação por nome:** a categoria genérica é achada pelo nome ("Transferências"). Se for renomeada, volta o comportamento antigo (tudo fora).
   - **"Ignorar nos relatórios" marcado à mão** numa transferência para terceiros é desfeito na próxima categorização, como já acontecia com as transferências.

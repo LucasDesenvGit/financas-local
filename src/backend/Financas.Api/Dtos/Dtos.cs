@@ -456,7 +456,12 @@ public record InfoSistemaDto(string Versao, string DotNet, string SistemaOperaci
 
 /* ----------------------------- Open Finance (Pluggy) ----------------------------- */
 public record ConfiguracaoPluggyDto(string? ClientId, bool SecretConfigurado, int IntervaloHoras,
-    int DiasRetroativos, bool Habilitada);
+    int DiasRetroativos, bool Habilitada,
+    // #172: o seu nome como aparece nos Pix (para os bancos que não informam o titular).
+    string? MeuNome = null);
+
+/// <summary>#172: o seu nome como aparece nos Pix; vazio apaga.</summary>
+public record MeuNomeDto([StringLength(120, ErrorMessage = "O nome pode ter até 120 caracteres.")] string? Nome);
 
 public record SalvarConfiguracaoPluggyDto(
     [Required, StringLength(100)] string ClientId,

@@ -371,6 +371,8 @@ export interface PainelEmprestimos {
 
 export interface ConfiguracaoPluggy {
   clientId: string | null; secretConfigurado: boolean; intervaloHoras: number; diasRetroativos: number; habilitada: boolean;
+  /** #172: o seu nome como aparece nos Pix (para os bancos que não informam o titular). */
+  meuNome?: string | null;
 }
 
 export interface SalvarConfiguracaoPluggy {

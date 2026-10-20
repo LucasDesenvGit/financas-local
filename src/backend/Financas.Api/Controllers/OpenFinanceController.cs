@@ -40,7 +40,25 @@ public class OpenFinanceController : BaseController
             await _config.ExisteAsync(ConfiguracaoService.PluggyClientSecret, ct),
             await _config.ObterInteiroAsync(ConfiguracaoService.IntervaloHoras, 6, ct),
             await _config.ObterInteiroAsync(ConfiguracaoService.DiasRetroativos, 30, ct),
-            await _config.ObterBoolAsync(ConfiguracaoService.SincronizacaoHabilitada, true, ct));
+            await _config.ObterBoolAsync(ConfiguracaoService.SincronizacaoHabilitada, true, ct),
+            await _config.ObterAsync(TransferenciasService.ChaveMeuNome, ct));
+
+    /// <summary>
+    /// #172 (ADR 0031): o seu nome como aparece nos Pix. Sem titular informado pelo banco, Pix que cita esse nome é entre
+    /// contas suas. Reclassifica as transferências na hora.
+    /// </summary>
+    [HttpPut("meu-nome")]
+    public async Task<IActionResult> SalvarMeuNome(MeuNomeDto dto, [FromServices] TransferenciasService transferencias,
+        CancellationToken ct)
+    {
+        var nome = string.IsNullOrWhiteSpace(dto.Nome) ? null : dto.Nome.Trim();
+        if (nome is not null && TransferenciasService.PalavrasDoNome(nome) is null)
+            return Erro("Informe pelo menos o primeiro e o último nome, como aparecem nos Pix.");
+        await _config.DefinirAsync(TransferenciasService.ChaveMeuNome, nome, ct: ct);
+        await _db.SaveChangesAsync(ct);
+        if (await transferencias.ReclassificarAsync(ct) > 0) await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
 
     /// <summary>Salva as credenciais. O Client Secret é gravado criptografado e nunca é devolvido pela API.</summary>
     [HttpPut("configuracao")]
