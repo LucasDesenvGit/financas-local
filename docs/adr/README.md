@@ -64,7 +64,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0024](0024-banco-de-cada-conta-com-selo-local.md) | Banco de cada conta e cartão, com selo desenhado no próprio site | Aceita |
 | [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md) | Tipo de lançamento: dado do Open Finance, com a descrição como reserva | Aceita |
 | [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
-| [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita |
+| [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita (em parte substituída pela 0044) |
 | [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Aceita (em parte substituída pela 0040) |
 | [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita (em parte substituída pela 0039) |
 | [0030](0030-regras-de-descricao-em-tabela-propria.md) | Regras de descrição em tabela própria, com o nome do banco sempre guardado | Aceita |
@@ -81,3 +81,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0041](0041-testes-no-navegador-com-playwright.md) | Testes no navegador com Playwright, com a CSP da API e uma API falsa | Aceita |
 | [0042](0042-contas-fora-do-saldo-continuam-nos-relatorios.md) | Contas fora do saldo e arquivadas continuam nos relatórios | Aceita |
 | [0043](0043-assinaturas-e-recorrentes-em-contas-a-pagar.md) | Assinaturas e cobranças recorrentes estendendo Contas a pagar | Aceita |
+| [0044](0044-trocos-sem-duvida-classificados-na-sincronizacao.md) | Trocos "sem dúvida" classificados na sincronização, com aviso e "Desfazer" | Aceita |
