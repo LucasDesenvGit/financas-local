@@ -181,16 +181,20 @@ var app = builder.Build();
 // Cria/atualiza o banco antes de atender (ADR 0003): a instalação pelo .msi não tem sqlite3 nem bash.
 EsquemaBanco.Aplicar(caminhoBanco, app.Logger);
 
-// Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco.
+// Entrada no cartão é estorno ou pagamento de fatura, nunca receita (ADR 0036), e transferência só fica fora dos
+// relatórios quando é entre contas suas (ADR 0031): acerta o que já está no banco, nessa ordem.
 try
 {
     using var escopo = app.Services.CreateScope();
+    var bancoDados = escopo.ServiceProvider.GetRequiredService<FinancasDbContext>();
+    if (await escopo.ServiceProvider.GetRequiredService<CategorizacaoService>().ReclassificarEntradasNosCartoesAsync(CancellationToken.None) > 0)
+        await bancoDados.SaveChangesAsync();
     if (await escopo.ServiceProvider.GetRequiredService<TransferenciasService>().ReclassificarAsync(CancellationToken.None) > 0)
-        await escopo.ServiceProvider.GetRequiredService<FinancasDbContext>().SaveChangesAsync();
+        await bancoDados.SaveChangesAsync();
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Não foi possível conferir as transferências ao iniciar.");
+    app.Logger.LogWarning(ex, "Não foi possível conferir as entradas nos cartões e as transferências ao iniciar.");
 }
 
 // ---------------------------------------------------------------- Pipeline

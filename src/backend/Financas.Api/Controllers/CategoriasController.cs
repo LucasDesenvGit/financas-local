@@ -58,9 +58,11 @@ public class CategoriasController : BaseController
             }
             else
             {
+                // No cartão, entrada é estorno: despesa (ADR 0036).
                 await _db.Transacoes.Where(t => t.CategoriaId == id && t.TransferenciaGrupo == null)
                     .ExecuteUpdateAsync(s => s
-                        .SetProperty(t => t.Tipo, t => t.Valor < 0 ? TipoTransacao.Despesa : TipoTransacao.Receita)
+                        .SetProperty(t => t.Tipo, t => t.Valor < 0 || t.Conta!.Tipo == TipoConta.CartaoCredito
+                            ? TipoTransacao.Despesa : TipoTransacao.Receita)
                         .SetProperty(t => t.IgnorarRelatorios, false), ct);
             }
         }
