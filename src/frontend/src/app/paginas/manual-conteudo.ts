@@ -1063,6 +1063,7 @@ export const MANUAL: CapituloManual[] = [
           'Na tabela, o mês mais recente vem primeiro. “Aportes” são as compras do mês; subscrições e vendas aparecem embaixo, à parte.',
           '“Rendimentos” são os proventos que caíram na conta. O troco das compras e o valor das vendas, que a corretora credita com a mesma descrição, ficam de fora.',
           'No mês atual, “a receber (data-com)” é o provento dos fundos com data-com no mês, que costuma cair no mês seguinte.',
+          '“por fundo”, embaixo dos rendimentos, abre quanto cada FII pagou no mês. O crédito que vem sem o código do fundo (“Valor recebido de Investimentos”) é ligado ao fundo pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois); o que não liga aparece como “sem fundo identificado”, sem sumir da soma.',
           '“Valorização” é quanto as cotas ganharam ou perderam de preço no mês, sem contar aportes nem rendimentos. “Saldo no fim” é quanto a carteira valia no último dia do mês.'
         ],
         abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],

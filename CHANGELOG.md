@@ -63,6 +63,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Rendimentos por FII no mês a mês** (#173 c): "por fundo", embaixo dos rendimentos de cada mês, abre quanto cada FII pagou. O crédito sem o código do fundo é ligado pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois). O que não liga aparece como "sem fundo identificado", sem sumir da soma.
 - **Avisos das recorrentes** (#158, parte 3), no topo de Contas a pagar:
   - **"não veio":** a cobrança automática passou 5 dias do vencimento.
   - **"mudou de cartão":** com "Atualizar o catálogo".

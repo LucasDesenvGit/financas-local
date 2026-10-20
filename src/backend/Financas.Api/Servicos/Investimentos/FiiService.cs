@@ -13,6 +13,10 @@ public class FiiService
 {
     private const int MesesProventos = 24;
     private const int MaximoMeses = 180;
+    /// <summary>#173 c): o provento cai até tantos dias depois da data-com.</summary>
+    private const int DiasPagamentoProvento = 40;
+    /// <summary>#173 c): diferença aceita entre o crédito e cotas × valor por cota (arredondamento do banco).</summary>
+    private const decimal ToleranciaProvento = 0.05m;
 
     private readonly FinancasDbContext _db;
     private readonly ExtratoCarteiraService _extrato;
@@ -23,6 +27,43 @@ public class FiiService
         _db = db;
         _extrato = extrato;
         _conferencia = conferencia;
+    }
+
+    /// <summary>
+    /// #173 c): de que fundo é cada crédito de provento. O crédito com o código do fundo já diz. O "Valor recebido de
+    /// Investimentos" (sem código) é ligado ao provento cotas na data-com × valor por cota que dá o mesmo valor (até
+    /// <see cref="ToleranciaProvento"/>), pago até <see cref="DiasPagamentoProvento"/> dias depois da data-com. Cada provento
+    /// esperado serve a um crédito só. O que não liga fica sem fundo (null), sem sumir da soma do mês.
+    /// </summary>
+    private static Dictionary<long, string?> FundoDeCadaCredito(List<Fundo> fundos,
+        List<(long Id, string Ticker, DateOnly Data, decimal Valor)> comCodigo, List<(long Id, DateOnly Data, decimal Valor)> creditos)
+    {
+        var esperados = fundos.SelectMany(f => f.Proventos.Select(p => (Ticker: f.Ativo.Ticker, p.DataCom,
+                Valor: Math.Round(f.QuantidadeEm(p.DataCom) * p.ValorPorCota, 2))))
+            .Where(e => e.Valor > 0).ToList();
+        var usados = new HashSet<int>();
+        var resultado = new Dictionary<long, string?>();
+        int? Melhor(DateOnly data, decimal valor, string? ticker) => esperados
+            .Select((e, i) => (e, i))
+            .Where(x => !usados.Contains(x.i) && (ticker is null || x.e.Ticker == ticker)
+                        && x.e.DataCom <= data && data <= x.e.DataCom.AddDays(DiasPagamentoProvento)
+                        && Math.Abs(x.e.Valor - valor) <= ToleranciaProvento)
+            .OrderBy(x => Math.Abs(x.e.Valor - valor)).ThenBy(x => data.DayNumber - x.e.DataCom.DayNumber)
+            .Select(x => (int?)x.i).FirstOrDefault();
+
+        // Primeiro os que já dizem o fundo, para os sem código não pegarem o provento deles.
+        foreach (var c in comCodigo.OrderBy(c => c.Data))
+        {
+            resultado[c.Id] = c.Ticker;
+            if (Melhor(c.Data, c.Valor, c.Ticker) is int i) usados.Add(i);
+        }
+        foreach (var c in creditos.Where(c => !resultado.ContainsKey(c.Id)).OrderBy(c => c.Data))
+        {
+            var i = Melhor(c.Data, c.Valor, null);
+            if (i is int achado) usados.Add(achado);
+            resultado[c.Id] = i is int j ? esperados[j].Ticker : null;
+        }
+        return resultado;
     }
 
     private sealed class Fundo
@@ -78,6 +119,8 @@ public class FiiService
         var creditosProvento = recebidos.Select(r => (r.Id, r.Data, r.Valor))
             .Concat(fundos.Count > 0 ? await _conferencia.ProventosDaCorretoraAsync(ct) : [])
             .DistinctBy(r => r.Id).ToList();
+
+        var fundoDoCredito = FundoDeCadaCredito(fundos, recebidos, creditosProvento);
 
         var abertos = fundos.Where(f => f.Posicao.Quantidade > 0).ToList();
         var totalMercado = abertos.Sum(f => f.Posicao.Quantidade * (f.Ativo.PrecoAtual ?? f.Posicao.PrecoMedio));
@@ -215,10 +258,13 @@ public class FiiService
                 if (retorno < -0.95m) retorno = -0.95m;
                 acumulado *= 1 + retorno;
                 var mesFim = Ultimo(mes);
+                var creditosDoMes = creditosProvento.Where(r => r.Data >= mes && r.Data <= mesFim).ToList();
+                var porFii = creditosDoMes.GroupBy(r => fundoDoCredito.GetValueOrDefault(r.Id))
+                    .Select(g => new RendimentoPorFiiDto(g.Key, Math.Round(g.Sum(r => r.Valor), 2)))
+                    .OrderBy(r => r.Ticker is null).ThenByDescending(r => r.Valor).ToList();
                 mesAMes.Add(new MesAMesFiiDto(mes.Year, mes.Month, Math.Round(aportes, 2), Math.Round(subscricoes, 2),
-                    Math.Round(resgates, 2),
-                    Math.Round(creditosProvento.Where(r => r.Data >= mes && r.Data <= mesFim).Sum(r => r.Valor), 2),
-                    Math.Round(proventos, 2), Math.Round(valor - basePeriodo, 2), Math.Round(valor, 2)));
+                    Math.Round(resgates, 2), Math.Round(creditosDoMes.Sum(r => r.Valor), 2),
+                    Math.Round(proventos, 2), Math.Round(valor - basePeriodo, 2), Math.Round(valor, 2), porFii));
                 valorAnterior = valor;
 
                 var ateSelic = fim == hoje ? hoje : fim.AddDays(1);

@@ -20,6 +20,12 @@ test('Investimentos › FIIs › Mês a mês: gráfico com frase-resumo, tabela 
   await vinteQuatro.click();
   await expect(vinteQuatro).toHaveAttribute('aria-pressed', 'true');
 
+  // #173 c): o detalhe por fundo do mês, sob demanda.
+  const porFundo = tabela.getByRole('button', { name: /^Rendimentos por fundo em/ }).first();
+  await porFundo.click();
+  await expect(porFundo).toHaveAttribute('aria-expanded', 'true');
+  await expect(secao.locator('.linha-por-fii')).toContainText('sem fundo identificado');
+
   // Nada passa da largura da tela (WCAG 1.4.10), também no celular.
   const larguras = await page.evaluate(() => ({ pagina: document.documentElement.scrollWidth, janela: window.innerWidth }));
   expect(larguras.pagina).toBeLessThanOrEqual(larguras.janela);

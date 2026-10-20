@@ -649,7 +649,12 @@ public record EvolucaoFiiMesDto(int Ano, int Mes, decimal Aplicado, decimal? Val
 /// Valorização = saldo no fim − saldo no fim do mês anterior − compras + vendas.
 /// </summary>
 public record MesAMesFiiDto(int Ano, int Mes, decimal Aportes, decimal Subscricoes, decimal Resgates,
-    decimal RendimentosRecebidos, decimal RendimentosEstimados, decimal Valorizacao, decimal Saldo);
+    decimal RendimentosRecebidos, decimal RendimentosEstimados, decimal Valorizacao, decimal Saldo,
+    // #173 c): os rendimentos recebidos por fundo (Ticker null = crédito que não deu para ligar a nenhum fundo).
+    List<RendimentoPorFiiDto>? PorFii = null);
+
+/// <summary>#173 c): quanto um fundo pagou no mês (Ticker null: "sem fundo identificado").</summary>
+public record RendimentoPorFiiDto(string? Ticker, decimal Valor);
 
 public record RentabilidadeMesDto(int Ano, int Mes, decimal Carteira, decimal Selic, decimal? Ifix);
 

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Fii, NOMES_ORIGEM_OPERACAO, OrigemOperacao, PainelFiis, TipoAtivo } from '../core/modelos';
+import { Fii, MesAMesFii, NOMES_ORIGEM_OPERACAO, OrigemOperacao, PainelFiis, TipoAtivo } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
@@ -136,10 +136,27 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
                       <td class="direita positivo">{{ m.rendimentosRecebidos | currency }}
                         @if (mesAtual(m) && m.rendimentosEstimados > 0) {
                           <br><small class="texto-suave">{{ m.rendimentosEstimados | currency }} a receber (data-com)</small>
+                        }
+                        <!-- #173 c): o detalhe por fundo sob demanda (Shneiderman: details-on-demand). -->
+                        @if (m.porFii?.length) {
+                          <br><button type="button" class="link" [attr.aria-expanded]="abertoPorFii(m)"
+                            [attr.aria-controls]="'por-fii-' + m.ano + '-' + m.mes" (click)="alternarPorFii(m)"
+                            [attr.aria-label]="'Rendimentos por fundo em ' + rotuloMes(m)">por fundo</button>
                         }</td>
                       <td class="direita" [class.positivo]="m.valorizacao >= 0" [class.negativo]="m.valorizacao < 0">{{ m.valorizacao | currency }}</td>
                       <td class="direita">{{ m.saldo | currency }}</td>
                     </tr>
+                    @if (abertoPorFii(m)) {
+                      <tr class="linha-por-fii" [id]="'por-fii-' + m.ano + '-' + m.mes">
+                        <td colspan="5">
+                          <ul class="lista-por-fii" [attr.aria-label]="'Rendimentos por fundo em ' + rotuloMes(m)">
+                            @for (r of m.porFii ?? []; track r.ticker ?? 'sem') {
+                              <li><span>{{ r.ticker ?? 'sem fundo identificado' }}:</span> <strong>{{ r.valor | currency }}</strong></li>
+                            }
+                          </ul>
+                        </td>
+                      </tr>
+                    }
                   }
                 </tbody>
               </table>
@@ -322,6 +339,8 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .legenda-grafico { margin: -6px 0 10px; font-size: 0.84rem; }
+    .lista-por-fii { list-style: none; margin: 0; padding: 4px 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.88rem; }
+    .lista-por-fii li { display: flex; gap: 6px; }
     .cabecalho-bloco { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
     .cabecalho-bloco h2 { margin: 0; }
     .tabela-fiis td { white-space: nowrap; }
@@ -342,6 +361,21 @@ export class InvestimentosFiisComponent {
   readonly dados = signal<PainelFiis | null>(null);
   readonly mesesProventos = signal<12 | 24>(12);
   readonly mesesMesAMes = signal<12 | 24>(12);
+  /** #173 c): meses com o detalhe por fundo aberto ("ano-mes"). */
+  readonly porFiiAbertos = signal<ReadonlySet<string>>(new Set());
+
+  abertoPorFii(m: MesAMesFii): boolean {
+    return this.porFiiAbertos().has(`${m.ano}-${m.mes}`);
+  }
+
+  alternarPorFii(m: MesAMesFii): void {
+    const chave = `${m.ano}-${m.mes}`;
+    this.porFiiAbertos.update((s) => {
+      const novo = new Set(s);
+      if (!novo.delete(chave)) novo.add(chave);
+      return novo;
+    });
+  }
   readonly tickerHistorico = signal<string | null>(null);
   readonly filtroLote = signal<string | null>(null);
 
