@@ -47,8 +47,9 @@ public class ContaService
     /// <summary>
     /// #144: a fatura de cada cartão que fecha no mês — o ciclo vai do fechamento anterior até o deste mês, não do dia
     /// 1 ao fim do mês (que pegava só parte das compras e misturava duas faturas). Fatura já fechada e importada do
-    /// banco vale o total que ele informou; fatura ainda aberta é a soma das transações do ciclo: compras, a parcela
-    /// que cai nele e estornos descontados (parcelas futuras têm data futura e ficam de fora, #103). Pagamento de
+    /// banco vale o total que ele informou; fatura ainda aberta é a soma das transações cobradas nela: compras, a parcela
+    /// que cai nela e estornos descontados. "Cobradas nela" segue <see cref="MesesDeCobranca"/> (#167): o que o banco
+    /// já ligou à fatura anterior não entra de novo, e a parcela vai para a fatura da 1ª mais (k − 1). Pagamento de
     /// fatura e transferências não entram; despesa marcada para ignorar nos relatórios entra (ela continua na conta do
     /// cartão). Cartão sem fechamento conhecido (manual sem "Dia de fechamento") fica com o mês do calendário.
     /// Usado pelo Painel ("Faturas do mês") e por Contas e cartões.
@@ -67,13 +68,15 @@ public class ContaService
         var ciclos = cartoes.ToDictionary(c => c.Id,
             c => CicloDaFatura(inicio, fim, c.DiaFechamento, c.DiaVencimento, faturas[c.Id].ToList()));
 
-        var desde = ciclos.Values.Select(c => c.Inicio).DefaultIfEmpty(inicio).Min();
-        var ate = ciclos.Values.Select(c => c.Fim).DefaultIfEmpty(fim).Max();
+        // #167: os lançamentos vão para a fatura em que o banco cobra, e não só pela data. Carrega uma janela larga
+        // para achar a parcela já ligada a uma fatura de cada compra (até 24 meses) e as parcelas com data futura.
+        var desde = ciclos.Values.Select(c => c.Inicio).DefaultIfEmpty(inicio).Min().AddMonths(-24);
         var transacoes = (await _db.Transacoes.AsNoTracking()
-                .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desde && t.Data <= ate
+                .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desde
                             && t.Tipo != TipoTransacao.Transferencia
                             && (t.MeioPagamento == null || t.MeioPagamento != "PAGAMENTO_FATURA"))
-                .Select(t => new { t.ContaId, t.Data, t.Valor, Parcela = t.ParcelaTotal != null && t.ParcelaTotal > 1 })
+                .Select(t => new LancamentoFatura(t.Id, t.ContaId, t.Data, t.Valor, t.FaturaCartaoId, t.ParcelaNumero,
+                    t.ParcelaTotal, t.DescricaoOriginal ?? t.Descricao))
                 .ToListAsync(ct))
             .ToLookup(t => t.ContaId);
         var bancos = await BancosAsync(ct);
@@ -81,9 +84,12 @@ public class ContaService
             .Select(c =>
             {
                 var ciclo = ciclos[c.Id];
-                var doCiclo = transacoes[c.Id].Where(t => t.Data >= ciclo.Inicio && t.Data <= ciclo.Fim).ToList();
+                var deste = transacoes[c.Id].ToList();
+                var meses = MesesDeCobranca(deste, faturas[c.Id].ToList(), c.DiaFechamento);
+                var mesDoCiclo = PrimeiroDia(ciclo.Fechamento ?? ciclo.Fim);
+                var doCiclo = deste.Where(t => meses[t.Id] == mesDoCiclo).ToList();
                 var lancado = Math.Max(0m, -doCiclo.Sum(t => t.Valor));
-                var parcelas = Math.Max(0m, -doCiclo.Where(t => t.Parcela).Sum(t => t.Valor));
+                var parcelas = Math.Max(0m, -doCiclo.Where(t => t.Parcelado).Sum(t => t.Valor));
                 var fatura = ciclo.Fatura;
                 var totalInformado = fatura is null ? 0m : Math.Abs(fatura.ValorTotal);
                 // Fatura fechada vale o total do banco; sem ele (aberta, ou o banco mandou zero), a soma do ciclo.
@@ -98,6 +104,62 @@ public class ContaService
             .OrderByDescending(f => f.ValorMes).ThenBy(f => f.Cartao)
             .ToList();
     }
+
+    /// <summary>Lançamento do cartão, com o que é preciso para saber em que fatura ele é cobrado (#167).</summary>
+    internal sealed record LancamentoFatura(long Id, int ContaId, DateOnly Data, decimal Valor, int? FaturaCartaoId,
+        short? ParcelaNumero, short? ParcelaTotal, string Descricao)
+    {
+        public bool Parcelado => ParcelaTotal is > 1;
+    }
+
+    /// <summary>
+    /// #167: o mês de fechamento da fatura em que cada lançamento de um cartão é cobrado (dia 1 do mês).
+    /// <list type="number">
+    /// <item>Ligado pelo banco a uma fatura importada (<c>FaturaCartaoId</c>): o mês do fechamento dela. Um lançamento
+    /// datado depois do fechamento mas já cobrado na fatura anterior não entra de novo na fatura aberta.</item>
+    /// <item>Parcela de uma compra que tem outra parcela já ligada a uma fatura: o mês dessa fatura mais a diferença de
+    /// número. A data que o Open Finance manda para parcelas futuras pode cair do outro lado do fechamento.</item>
+    /// <item>O resto, pela data: o primeiro fechamento a partir dela (o de uma fatura importada até 40 dias depois ou,
+    /// sem ela, o dia de fechamento do cartão). Sem dia de fechamento conhecido, o mês do calendário.</item>
+    /// </list>
+    /// A mesma compra é reconhecida como em <see cref="ParcelasFuturas"/>: total de parcelas, valor em reais inteiros e
+    /// as 8 primeiras letras da descrição.
+    /// </summary>
+    internal static Dictionary<long, DateOnly> MesesDeCobranca(IReadOnlyList<LancamentoFatura> lancamentos,
+        IReadOnlyList<FaturaDoCiclo> faturas, byte? diaFechamento)
+    {
+        // Sem data de fechamento, a fatura fecha uns 10 dias antes do vencimento.
+        var mesDaFatura = faturas.ToDictionary(f => f.Id, f => PrimeiroDia(f.DataFechamento ?? f.DataVencimento.AddDays(-10)));
+        var fechamentos = faturas.Where(f => f.DataFechamento is not null).Select(f => f.DataFechamento!.Value)
+            .Distinct().Order().ToList();
+        int? dia = diaFechamento ?? (fechamentos.Count > 0 ? fechamentos[^1].Day : (int?)null);
+        DateOnly PelaData(DateOnly data)
+        {
+            var importado = fechamentos.FirstOrDefault(f => f >= data && f.DayNumber - data.DayNumber <= 40);
+            if (importado != default) return PrimeiroDia(importado);
+            if (dia is not int d) return PrimeiroDia(data);
+            var noMes = DiaNoMes(data, d);
+            return PrimeiroDia(data <= noMes ? noMes : DiaNoMes(data.AddMonths(1), d));
+        }
+
+        var meses = new Dictionary<long, DateOnly>();
+        foreach (var t in lancamentos)
+            if (t.FaturaCartaoId is int f && mesDaFatura.TryGetValue(f, out var mes))
+                meses[t.Id] = mes;
+        foreach (var compra in lancamentos.Where(t => t.Parcelado && t.ParcelaNumero is not null)
+                     .GroupBy(t => (t.ParcelaTotal, Math.Round(Math.Abs(t.Valor), 0), ParcelasFuturas.Compra(t.Descricao))))
+        {
+            var ancora = compra.Where(t => meses.ContainsKey(t.Id)).MaxBy(t => t.ParcelaNumero);
+            if (ancora is null) continue;
+            foreach (var t in compra.Where(t => !meses.ContainsKey(t.Id)))
+                meses[t.Id] = meses[ancora.Id].AddMonths(t.ParcelaNumero!.Value - ancora.ParcelaNumero!.Value);
+        }
+        foreach (var t in lancamentos)
+            if (!meses.ContainsKey(t.Id)) meses[t.Id] = PelaData(t.Data);
+        return meses;
+    }
+
+    private static DateOnly PrimeiroDia(DateOnly data) => new(data.Year, data.Month, 1);
 
     /// <summary>Fatura importada, só com o que o ciclo precisa.</summary>
     internal sealed record FaturaDoCiclo(int Id, int ContaId, DateOnly? DataFechamento, DateOnly DataVencimento,

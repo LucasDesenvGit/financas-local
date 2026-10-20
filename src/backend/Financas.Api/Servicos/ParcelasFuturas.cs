@@ -19,10 +19,13 @@ public static partial class ParcelasFuturas
     /// <summary>Até quantos dias para trás uma parcela conta como "recente" (base da projeção).</summary>
     public const int DiasRecentes = 45;
 
-    public sealed record Parcela(int ContaId, DateOnly Data, decimal Valor, short Numero, short Total, string Descricao);
+    public sealed record Parcela(long Id, int ContaId, DateOnly Data, decimal Valor, short Numero, short Total, string Descricao);
 
-    /// <summary>Uma parcela por vir. <c>JaNoBanco</c>: o banco já mandou (data futura); senão, foi projetada.</summary>
-    public sealed record Futura(int ContaId, DateOnly Data, decimal Valor, bool JaNoBanco);
+    /// <summary>
+    /// Uma parcela por vir. <c>JaNoBanco</c>: o banco já mandou (data futura); senão, foi projetada <c>Passos</c> meses
+    /// depois da parcela <c>OrigemId</c> (a fatura dela + <c>Passos</c>, #167).
+    /// </summary>
+    public sealed record Futura(int ContaId, DateOnly Data, decimal Valor, bool JaNoBanco, long OrigemId, int Passos);
 
     /// <param name="parcelas">Parcelas (de qualquer conta) com data a partir de hoje − <see cref="DiasRecentes"/>, incluindo
     /// as de data futura.</param>
@@ -30,14 +33,14 @@ public static partial class ParcelasFuturas
     {
         var validas = parcelas.Where(p => p.Total > 1 && p.Numero >= 1 && p.Numero <= p.Total && p.Valor != 0).ToList();
         var futuras = validas.Where(p => p.Data > hoje)
-            .Select(p => new Futura(p.ContaId, p.Data, Math.Abs(p.Valor), true)).ToList();
+            .Select(p => new Futura(p.ContaId, p.Data, Math.Abs(p.Valor), true, p.Id, 0)).ToList();
         foreach (var compra in validas.GroupBy(Chave))
         {
             var ultima = compra.MaxBy(p => p.Numero)!;
             for (var k = 1; k <= ultima.Total - ultima.Numero; k++)
             {
                 var data = ultima.Data.AddMonths(k);
-                if (data > hoje) futuras.Add(new Futura(ultima.ContaId, data, Math.Abs(ultima.Valor), false));
+                if (data > hoje) futuras.Add(new Futura(ultima.ContaId, data, Math.Abs(ultima.Valor), false, ultima.Id, k));
             }
         }
         return futuras;
