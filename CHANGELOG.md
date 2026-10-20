@@ -13,6 +13,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Mais robusto quando o banco manda os dados de outro jeito** (#172):
+  - **Pagamento de fatura** que o banco manda como boleto ou "outros" fica fora dos gastos quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem o crédito, fica como está, porque "fatura" também é conta de telefone.
+  - **Aplicação e resgate** de RDB, CDB e poupança vão para "Investimentos", por regras padrão novas. Quem já tinha o site as ganha uma vez, e as transações antigas são acertadas, menos as de categoria escolhida à mão.
+  - **Pendente antiga** que o banco efetivou com outro código sai sozinha, mesmo antes dos dias relidos, para não contar em dobro.
+  - **Seu nome nos Pix:** campo novo em Configurações › Open Finance. Quando o banco não informa o titular, Pix e TED que citam o seu nome contam como entre contas suas (ADR 0031).
+  - **Conta em outra moeda** gera um aviso no Painel: o site soma as contas como reais (ADR 0008).
+  - **Reserva de emergência** sem ações, FIIs e ETFs, também os do Open Finance, igual à carteira. O ⓘ explica por quê.
+  - **Contas fora do saldo e arquivadas** continuam nos relatórios (ADR 0042), e a edição da conta diz isso.
 - **Estorno no cartão contava como receita** (#166, ADR 0036). Crédito no cartão (compra devolvida, "crédito de confiança", cashback) virava receita e não descontava o gasto da categoria. Isso inflava a receita, a renda (50/30/20), os orçamentos e o gasto por categoria.
   - **Agora:** o estorno abate o gasto da categoria e não é receita. O pagamento da fatura recebido no cartão fica fora dos gastos mesmo sem a categoria certa.
   - **Estorno do NuPay** que chega como transferência ganha a categoria do texto ("Estorno de Uber" → Transporte).
