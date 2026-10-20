@@ -22,6 +22,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
+- **Contas a pagar: a sugestão do extrato voltava depois de cadastrada com outro nome** (#205). "PIX ENVIADO LIVEPIX LTDA" cadastrada como "Manwha" continuava em "Sugestões do extrato", porque só a descrição ligava as duas.
+  - **Cadastrar pela sugestão** grava na conta a pagar de qual pagamento do banco ela veio: o nome pode ser qualquer um.
+  - **Conta cadastrada à mão** (ou antes desta versão) tira a sugestão quando o valor (até 15%), o dia do vencimento (até 3 dias) e a conta batem.
+  - **Na dúvida** (duas contas parecidas, conta a pagar sem a conta escolhida ou com outro texto da cobrança), a sugestão mostra "parece ser *nome*" e o botão **"é a mesma"**, que grava a ligação. O aviso tem "Desfazer".
+  - **Baixa sozinha** (débito automático e cartão) também grava a ligação na primeira cobrança casada.
+  - **Banco:** coluna nova `ContaAgendada.ChaveExtrato`. A API acrescenta sozinha ao iniciar; quem instala pelos scripts roda `scripts/geral/2-criar-banco.sh`.
 - **Acessibilidade achada no teste de ponta a ponta** (varredura de todas as telas no navegador, em computador, celular e tema escuro):
   - **Contraste do tema claro** (WCAG 1.4.3): texto suave, verde, rosa, alerta e emergência ficavam abaixo de 4,5:1 sobre os fundos. Estão um pouco mais escuros, em todas as paletas; um teste confere a conta.
   - **Só com o mouse** (WCAG 2.1.1): abrir uma transação, uma categoria ou uma regra de categorização e reutilizar um resultado da calculadora. Agora o nome é um botão (Tab + Enter); o clique na linha continua valendo.

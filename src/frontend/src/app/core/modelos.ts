@@ -275,6 +275,8 @@ export interface SalvarContaAgendada {
   dataLimite: string | null;
   /** #158 */
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
+  /** #205: a chave da sugestão do extrato que originou o cadastro (vazia na edição: a ligação que já existe fica). */
+  chaveExtrato?: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
@@ -294,6 +296,11 @@ export interface SugestaoContaAgendada {
   vencimentoSemPagamento: string | null;
   /** #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual. */
   formaCobranca: FormaCobranca; textoCobranca: string | null; recorrencia: Recorrencia;
+  /**
+   * #205: a chave da descrição do banco (gravada na conta a pagar ao cadastrar ou no "é a mesma") e, quando há uma conta
+   * a pagar ativa parecida (valor, dia e conta) sem dar para ter certeza, qual é ela.
+   */
+  chaveExtrato: string | null; pareceSerId: number | null; pareceSerNome: string | null;
 }
 
 /** #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance; desde: o primeiro registro do histórico. */

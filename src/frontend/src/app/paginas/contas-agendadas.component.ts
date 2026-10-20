@@ -148,7 +148,14 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                       } @else {
                         <small class="texto-suave">pago em {{ s.meses }} meses@if (s.pagamentos !== s.meses) { ({{ s.pagamentos }} pagamentos) } · último em {{ s.ultimoPagamento | date: 'dd/MM' }} · {{ s.contaNome }}</small>
                       }
-                      <br><small class="texto-suave">{{ nomeForma(s.formaCobranca) }}</small></td>
+                      <br><small class="texto-suave">{{ nomeForma(s.formaCobranca) }}</small>
+                      <!-- #205: conta a pagar parecida (valor, dia e conta) com outro nome: a pergunta e a resposta juntas
+                           (Nielsen 6, reconhecer em vez de lembrar), num botão de verdade (WCAG 2.1.1). -->
+                      @if (s.pareceSerId !== null && s.chaveExtrato) {
+                        <br><small class="parece-ser">parece ser <strong>{{ s.pareceSerNome }}</strong>, que já está na lista</small>
+                        <button type="button" class="botao botao-pequeno nowrap" (click)="eAMesma(s)"
+                          [attr.aria-label]="'é a mesma: ' + s.descricao + ' é ' + s.pareceSerNome">é a mesma</button>
+                      }</td>
                     <td>{{ s.categoriaNome ?? '—' }}</td>
                     <td class="direita valor nowrap">
                       @if (s.valorVariavel) {
@@ -368,8 +375,32 @@ export class ContasAgendadasComponent implements OnInit {
     this.form = {
       descricao: s.descricao, valor: s.valor, proximoVencimento: s.proximoVencimento, recorrencia: s.recorrencia ?? Recorrencia.Mensal,
       categoriaId: s.categoriaId, contaId: s.contaId, ativa: true, dataLimite: null,
-      formaCobranca: s.formaCobranca ?? FormaCobranca.AMao, textoCobranca: s.textoCobranca ?? null, observacao: null
+      formaCobranca: s.formaCobranca ?? FormaCobranca.AMao, textoCobranca: s.textoCobranca ?? null, observacao: null,
+      // #205: a conta a pagar guarda de que sugestão veio; renomear não a traz de volta.
+      chaveExtrato: s.chaveExtrato ?? null
     };
+  }
+
+  /**
+   * #205: "é a mesma": grava a ligação da sugestão com a conta a pagar parecida, e a sugestão sai da lista. O aviso tem
+   * "Desfazer" (Nielsen 3: saída clara para o clique por engano).
+   */
+  eAMesma(s: SugestaoContaAgendada): void {
+    const id = s.pareceSerId;
+    if (id === null || !s.chaveExtrato) return;
+    this.api.ligarExtratoContaAgendada(id, s.chaveExtrato).subscribe({
+      next: () => {
+        this.sugestoes.update((lista) => lista.filter((x) => x.chaveExtrato !== s.chaveExtrato));
+        this.avisos.sucesso(`Ligada a ${s.pareceSerNome}: essa sugestão não aparece mais.`, {
+          rotulo: 'Desfazer',
+          executar: () => this.api.desligarExtratoContaAgendada(id).subscribe({
+            next: () => this.carregar(),
+            error: (e) => this.avisos.erro(mensagemDeErro(e))
+          })
+        });
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   /** #158: "Atualizar o valor" ou "Atualizar o catálogo": a conta a pagar fica como a última cobrança. */

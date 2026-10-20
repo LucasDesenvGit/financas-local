@@ -37,6 +37,11 @@ public partial class SugestaoContaAgendadaService
     /// <summary>Variação de valor acima disso é sinalizada como "valor variável" (luz, gás...).</summary>
     private const decimal VariacaoValorFixo = 0.15m;
     private const int MaximoSugestoes = 30;
+    /// <summary>
+    /// #205: conta a pagar com dia de vencimento até tantos dias do dia habitual da sugestão pode ser a mesma (o valor
+    /// usa a mesma folga de <see cref="VariacaoValorFixo"/>).
+    /// </summary>
+    private const int FolgaDiasParecida = 3;
 
     private readonly FinancasDbContext _db;
 
@@ -61,8 +66,12 @@ public partial class SugestaoContaAgendadaService
             .ToListAsync(ct);
 
         var cadastradas = await _db.ContasAgendadas.AsNoTracking()
-            .Select(c => new { c.Descricao, c.TextoCobranca }).ToListAsync(ct);
+            .Select(c => new Cadastrada(c.Id, c.Descricao, c.TextoCobranca, c.ChaveExtrato, c.Ativa, c.Valor,
+                c.ProximoVencimento, c.Recorrencia, c.ContaId))
+            .ToListAsync(ct);
+        // #205: a chave gravada ao cadastrar pela sugestão (ou no "é a mesma") vale qualquer que seja o nome escolhido.
         var jaCadastradas = cadastradas.Select(c => ChaveDe(c.Descricao))
+            .Concat(cadastradas.Select(c => c.ChaveExtrato ?? ""))
             .Where(k => k.Length > 0).ToHashSet(StringComparer.Ordinal);
         // #158: a que já tem o texto da cobrança também não volta como sugestão.
         var textosCadastrados = cadastradas.Select(c => CategorizacaoService.Normalizar(c.TextoCobranca))
@@ -94,7 +103,76 @@ public partial class SugestaoContaAgendadaService
             resultado.AddRange(achadas);
         }
 
+        resultado = SemAsParecidas(resultado, cadastradas);
         return resultado.OrderBy(s => s.ProximoVencimento).ThenByDescending(s => s.Valor).Take(MaximoSugestoes).ToList();
+    }
+
+    /// <summary>#205: a conta a pagar como a comparação com as sugestões precisa dela.</summary>
+    private sealed record Cadastrada(int Id, string Descricao, string? TextoCobranca, string? ChaveExtrato, bool Ativa,
+        decimal Valor, DateOnly ProximoVencimento, Recorrencia Recorrencia, int? ContaId);
+
+    /// <summary>
+    /// #205: contas a pagar cadastradas à mão (ou antes da <c>ChaveExtrato</c>) com outro nome. Uma conta a pagar ativa,
+    /// ainda sem ligação, com valor parecido (folga de <see cref="VariacaoValorFixo"/>), dia de vencimento a até
+    /// <see cref="FolgaDiasParecida"/> dias e a mesma conta é a sugestão:
+    /// - certeza (some): ela é a única candidata da sugestão, tem a mesma conta, não tem texto da cobrança (que a ligaria a
+    ///   outra cobrança) e não serve para nenhuma outra sugestão;
+    /// - dúvida (fica, com "parece ser"): mais de uma candidata, a mesma conta a pagar serve para mais de uma sugestão,
+    ///   a conta a pagar não diz a conta ou já tem outro texto da cobrança. "É a mesma" grava a ligação.
+    /// </summary>
+    private static List<SugestaoContaAgendadaDto> SemAsParecidas(List<SugestaoContaAgendadaDto> sugestoes,
+        List<Cadastrada> cadastradas)
+    {
+        var livres = cadastradas.Where(c => c.Ativa && c.ChaveExtrato == null).ToList();
+        if (livres.Count == 0 || sugestoes.Count == 0) return sugestoes;
+
+        var candidatas = sugestoes.Select(s => (Sugestao: s, Lista: livres.Where(c => Parecida(s, c)).ToList())).ToList();
+        var usos = candidatas.SelectMany(x => x.Lista).GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.Count());
+        var resultado = new List<SugestaoContaAgendadaDto>();
+        foreach (var (s, lista) in candidatas)
+        {
+            if (lista.Count == 0)
+            {
+                resultado.Add(s);
+                continue;
+            }
+            if (lista.Count == 1 && Certeza(s, lista[0]) && usos[lista[0].Id] == 1) continue;
+            var melhor = lista.OrderByDescending(c => Certeza(s, c))
+                .ThenBy(c => Math.Abs(c.Valor - s.Valor))
+                .ThenBy(c => DistanciaDias(c, s))
+                .First();
+            resultado.Add(s with { PareceSerId = melhor.Id, PareceSerNome = melhor.Descricao });
+        }
+        return resultado;
+    }
+
+    /// <summary>#205: valor, dia e conta parecidos (a conta a pagar sem conta serve para qualquer uma, mas só com dúvida).</summary>
+    private static bool Parecida(SugestaoContaAgendadaDto s, Cadastrada c)
+    {
+        if (c.ContaId is int contaId && contaId != s.ContaId) return false;
+        // Anual com anual; a mensal pode ter sido cadastrada como mensal ou única.
+        if ((s.Recorrencia == Recorrencia.Anual) != (c.Recorrencia == Recorrencia.Anual)) return false;
+        var referencia = Math.Max(s.Valor, c.Valor);
+        var valorPerto = referencia > 0 && Math.Abs(s.Valor - c.Valor) <= referencia * VariacaoValorFixo;
+        var naFaixa = s.ValorVariavel && c.Valor >= s.ValorMinimo && c.Valor <= s.ValorMaximo;
+        return (valorPerto || naFaixa) && DistanciaDias(c, s) <= FolgaDiasParecida;
+    }
+
+    /// <summary>#205: a mesma conta informada e nenhum texto da cobrança que a ligue a outra coisa.</summary>
+    private static bool Certeza(SugestaoContaAgendadaDto s, Cadastrada c)
+        => c.ContaId == s.ContaId && string.IsNullOrWhiteSpace(c.TextoCobranca);
+
+    /// <summary>
+    /// #205: dias entre o vencimento da conta a pagar e o da sugestão. Mensal: pelo dia do mês, dando a volta (dia 30 e
+    /// dia 1 estão a 2 dias). Anual: pelo dia do ano.
+    /// </summary>
+    private static int DistanciaDias(Cadastrada c, SugestaoContaAgendadaDto s)
+    {
+        var (a, b, ciclo) = s.Recorrencia == Recorrencia.Anual
+            ? (c.ProximoVencimento.DayOfYear, s.ProximoVencimento.DayOfYear, 365)
+            : (c.ProximoVencimento.Day, s.DiaHabitual, 31);
+        var d = Math.Abs(a - b);
+        return Math.Min(d, ciclo - d);
     }
 
     /// <summary>Um lançamento do extrato, como a sugestão precisa dele.</summary>
@@ -167,7 +245,7 @@ public partial class SugestaoContaAgendadaService
             proximo, dia, itens.Select(t => t.Data.Year * 12 + t.Data.Month - 1).Distinct().Count(), itens.Count,
             recente.Data, itens[^1].Data,
             categoria?.CategoriaId, categoria?.CategoriaNome, conta.ContaId, conta.ContaNome,
-            termoBusca, semPagamento, forma, textoCobranca, recorrencia);
+            termoBusca, semPagamento, forma, textoCobranca, recorrencia, chaveTexto);
     }
 
     /// <summary>
@@ -220,7 +298,7 @@ public partial class SugestaoContaAgendadaService
     /// Mesma chave da sugestão de categorias; se a descrição não tiver palavra significativa (ex.: "BOLETO F I A P"),
     /// usa o texto todo sem números, para não perder o pagamento.
     /// </summary>
-    private static string ChaveDe(string? descricao)
+    internal static string ChaveDe(string? descricao)
     {
         var chave = SugestaoCategoriaService.Chave(descricao);
         if (chave.Length > 0) return chave;
