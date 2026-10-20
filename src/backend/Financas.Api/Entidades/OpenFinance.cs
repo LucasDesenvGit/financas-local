@@ -84,6 +84,8 @@ public class Investimento
     public DateOnly? DataVencimento { get; set; }
     public DateOnly? DataAplicacao { get; set; }
     public string? Status { get; set; }
+    /// <summary>#170: nome escolhido pelo usuário ("Caixinha viagem"); a sincronização não mexe nele.</summary>
+    public string? NomePersonalizado { get; set; }
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 
     public ConexaoBancaria? ConexaoBancaria { get; set; }

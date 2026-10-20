@@ -13,7 +13,8 @@ export function painel(campos: Partial<Painel> = {}): Painel {
     patrimonioSemRendaVariavel: 0, receitasMes: 0, despesasMes: 0, gastosPorCategoria: [], evolucao: [], orcamentos: [],
     proximasContas: [], ultimasTransacoes: [], alertas: [], ultimaSincronizacao: null, despesasEmergenciaMes: 0,
     dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 15, faturasDoMes: [], totalFaturasDoMes: 0,
-    poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null, ...campos
+    poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null, creditosCorretoraComoReceita: 0,
+    totalCreditosCorretoraComoReceita: 0, ...campos
   };
 }
 

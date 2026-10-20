@@ -38,6 +38,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Investimentos com nome que se reconhece** (#170). A caixinha do Nubank aparecia como "CDB - NU FINANCEIRA S.A. - SOCIEDADE…", e o CDB do Mercado Pago como "CDB - MERCADO CREDITO…".
+  - **Agora:** "CDB · Nubank" e "CDB · Mercado Pago", com o nome do banco embaixo, para achar no app.
+  - **Renomear:** cada investimento do Open Finance pode ganhar o seu nome ("Caixinha viagem"), e a sincronização não muda esse nome.
+  - **Conexões com o nome do banco:** pelo Meu Pluggy todas se chamavam "MeuPluggy". Agora mostram o banco, tirado das contas da conexão, em Configurações, no histórico de sincronizações e nos avisos do Painel.
+  - **Aviso de troco no Painel:** os trocos das compras de FII contando como rendimento geram um aviso, com o link para "Conferir investimentos". A correção continua com prévia (ADR 0027).
+  - **Manual:** seção nova "Caixinhas, CDBs e outros investimentos do banco".
 - **Reservas e caixinhas pelo valor que o banco informa** (#168, ADR 0037). Quando a instituição manda o valor reservado pelo Open Finance (é o "Reservado" que o MeuPluggy mostra), ele vale no lugar da estimativa pelo extrato. A reserva aparece como "informado pelo banco" e entra certa no patrimônio, sem conferência.
   - Os bancos que não informam continuam com a estimativa e a conferência.
   - **Conferência com valor fora do esperado** (ex.: "10.123,42" gravado como 10,12) pede confirmação antes de salvar.

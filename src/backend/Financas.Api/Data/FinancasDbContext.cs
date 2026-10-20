@@ -202,6 +202,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Quantidade).HasPrecision(28, 8);
             e.Property(x => x.TaxaAnual).HasPrecision(9, 4);
             e.Property(x => x.Status).HasMaxLength(30);
+            e.Property(x => x.NomePersonalizado).HasMaxLength(120);
             e.HasIndex(x => x.PluggyInvestmentId).IsUnique();
             e.HasOne(x => x.ConexaoBancaria).WithMany(x => x.Investimentos)
                 .HasForeignKey(x => x.ConexaoBancariaId).OnDelete(DeleteBehavior.Cascade);

@@ -45,6 +45,29 @@ public class ContaService
     }
 
     /// <summary>
+    /// #170: nome de cada conexão para mostrar. Pelo Meu Pluggy todas se chamam "MeuPluggy" (o conector); vale o banco
+    /// das contas dela (escolhido ou detectado), depois o emissor dos investimentos, e o nome do conector por último.
+    /// </summary>
+    public async Task<Dictionary<int, string>> NomesDasConexoesAsync(CancellationToken ct = default)
+    {
+        var bancos = await BancosAsync(ct);
+        var contas = await _db.Contas.AsNoTracking().Where(c => c.ConexaoBancariaId != null)
+            .Select(c => new { c.Id, ConexaoId = c.ConexaoBancariaId!.Value }).ToListAsync(ct);
+        var investimentos = await _db.Investimentos.AsNoTracking()
+            .Select(i => new { i.ConexaoBancariaId, i.Emissor, i.Nome }).ToListAsync(ct);
+        var conexoes = await _db.ConexoesBancarias.AsNoTracking().Select(c => new { c.Id, c.NomeInstituicao }).ToListAsync(ct);
+        return conexoes.ToDictionary(c => c.Id, c =>
+        {
+            var nomes = contas.Where(x => x.ConexaoId == c.Id).Select(x => BancoService.Nome(bancos.GetValueOrDefault(x.Id)))
+                .OfType<string>().Distinct().ToList();
+            if (nomes.Count == 0)
+                nomes = investimentos.Where(i => i.ConexaoBancariaId == c.Id)
+                    .Select(i => BancoService.Nome(BancoService.Detectar(i.Emissor, i.Nome))).OfType<string>().Distinct().ToList();
+            return nomes.Count > 0 ? string.Join(" + ", nomes) : c.NomeInstituicao ?? "Instituição";
+        });
+    }
+
+    /// <summary>
     /// #144: a fatura de cada cartão que fecha no mês — o ciclo vai do fechamento anterior até o deste mês, não do dia
     /// 1 ao fim do mês (que pegava só parte das compras e misturava duas faturas). Fatura já fechada e importada do
     /// banco vale o total que ele informou; fatura ainda aberta é a soma das transações cobradas nela: compras, a parcela
