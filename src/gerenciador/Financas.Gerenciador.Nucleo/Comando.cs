@@ -16,7 +16,7 @@ public sealed record Saida(int Codigo, string Texto, string Erro)
 /// Roda um programa com argumentos separados (sem shell: nada é interpretado), espera e devolve a saída. Usado só com
 /// argumentos fixos do próprio gerenciador.
 /// </summary>
-public static class Comando
+public static partial class Comando
 {
     public static Saida Rodar(string programa, params string[] argumentos)
         => Rodar(TimeSpan.FromSeconds(30), programa, argumentos);

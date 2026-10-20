@@ -125,6 +125,19 @@ jobs:
           systemctl --user is-enabled --quiet financaslocal.service || { echo "::error::servico nao voltou a ser habilitado"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
+      # ADR 0040: o atualizar.sh e so para clone no develop. Em PR o checkout fica fora do develop (tem de recusar, 2);
+      # no push do develop ja esta na ultima (10). Nos dois casos, nada pode mudar na pasta.
+      - name: Atualizar pelo develop (atualizar.sh) sem mexer em nada
+        run: |
+          antes="$(git rev-parse HEAD)"
+          set +e
+          env PATH="$PATH_LIMPO" bash scripts/geral/atualizar.sh 2>&1 | tee "$RUNNER_TEMP/atualizar.log"
+          codigo=${PIPESTATUS[0]}
+          set -e
+          [[ $codigo -eq 2 || $codigo -eq 10 ]] || { echo "::error::atualizar.sh saiu com $codigo (esperado 2 fora do develop ou 10 ja na ultima)"; exit 1; }
+          [[ "$(git rev-parse HEAD)" == "$antes" ]] || { echo "::error::atualizar.sh mudou o commit"; exit 1; }
+          git diff --quiet || { echo "::error::atualizar.sh mexeu em arquivos"; exit 1; }
+
       - name: Diagnostico
         if: failure()
         run: |

@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 namespace Financas.Gerenciador;
 
 /// <summary>
-/// O que precisa de administrador: ligar/desligar o serviço e copiar o banco (a pasta de dados é só de SYSTEM e
+/// O que precisa de administrador: ligar/desligar o serviço, copiar o banco e reinstalar pelos scripts (a pasta de dados é só de SYSTEM e
 /// Administradores). O gerenciador reabre a si mesmo com "runas" (o UAC mostra o que vai rodar) e espera terminar.
 /// </summary>
 internal static class AcoesElevadas
@@ -46,6 +46,23 @@ internal static class AcoesElevadas
         {
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Modo administrador: <c>--instalar-pelos-scripts</c> (ADR 0040). Roda o <c>instalar-windows.ps1</c> do clone da
+    /// instalação de desenvolvimento, depois de o <c>atualizar-windows.ps1</c> ter trazido o código como o usuário. A pasta
+    /// vem da própria instalação (nunca da linha de comando), e o git não roda aqui. A saída vai para o log do instalador
+    /// (instaladores\instalacao-windows.log), que a janela acompanha.
+    /// </summary>
+    public static int InstalarPelosScripts()
+    {
+        if (DesenvolvimentoPeloGit.Raiz(Instalacao.Atual) is not string raiz) return 3;
+        var script = Path.Combine(raiz, "scripts", "windows", "instalar-windows.ps1");
+        var info = new ProcessStartInfo("powershell.exe") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = raiz };
+        foreach (var a in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script }) info.ArgumentList.Add(a);
+        using var processo = Process.Start(info)!;
+        processo.WaitForExit();
+        return processo.ExitCode;
     }
 
     /// <summary>Argumento entre aspas para a linha de comando (caminhos do Windows não têm aspas).</summary>
