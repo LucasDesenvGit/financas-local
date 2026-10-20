@@ -156,12 +156,27 @@ const respostas: Record<string, unknown> = {
     cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [], reservas: [],
     totalReservas: 0, cotasDiferentes: []
   },
+  // #173: um FII fictício e seis meses de "Mês a mês" (aporte, subscrição, venda, rendimentos e valorização dos dois sinais).
   '/api/carteira/fiis': {
-    resumo: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, renda12Meses: 0, rendaMediaMensal: 0,
-      rendaMensalEstimada: 0, dy12Meses: null, yieldOnCost12Meses: null, recebidoExtrato12Meses: 0, rentabilidadeTotal: null,
-      rentabilidadeSelic: null, rentabilidadeIfix: null, quantidadeFiis: 0 },
-    fiis: [], lotes: [], proventos: [], evolucao: [], rentabilidade: [], segmentos: [], historicos: [], segmentosDisponiveis: [],
-    mesAMes: []
+    resumo: { valorMercado: 1020, custo: 980, valorizacao: 40, valorizacaoPercentual: 4.08, renda12Meses: 60, rendaMediaMensal: 10,
+      rendaMensalEstimada: 10, dy12Meses: 5.9, yieldOnCost12Meses: 6.1, recebidoExtrato12Meses: 60, rentabilidadeTotal: 10.2,
+      rentabilidadeSelic: 8.5, rentabilidadeIfix: 3.1, quantidadeFiis: 1 },
+    fiis: [{ id: 1, ticker: 'MXRF11', nome: 'Fundo de Teste', segmento: 'Papel (recebíveis)', segmentoSugerido: false,
+      quantidade: 100, precoMedio: 9.8, custo: 980, precoAtual: 10.2, variacaoDia: 0.3, valorMercado: 1020, valorizacao: 40,
+      valorizacaoPercentual: 4.08, ultimoRendimento: 0.1, dataComUltimo: '2026-09-30', rendimentosPorCota12Meses: 0.6,
+      dyMensal: 0.98, dy12Meses: 5.9, yieldOnCost12Meses: 6.1, yieldOnCostMensal: 1.02, rendaMensalEstimada: 10,
+      proventos12Meses: 60, proventosTotal: 60, recebidoExtrato12Meses: 60, pesoCarteira: 100, fonteCotacao: 'Yahoo',
+      precoManual: false }],
+    lotes: [], proventos: [], evolucao: [], rentabilidade: [], segmentos: [{ nome: 'Papel (recebíveis)', valor: 1020 }],
+    historicos: [], segmentosDisponiveis: ['Papel (recebíveis)'],
+    mesAMes: [
+      { ...mesesAtras(5), aportes: 980, subscricoes: 0, resgates: 0, rendimentosRecebidos: 0, rendimentosEstimados: 0, valorizacao: -12.5, saldo: 967.5 },
+      { ...mesesAtras(4), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 8, saldo: 975.5 },
+      { ...mesesAtras(3), aportes: 0, subscricoes: 15, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: -5.5, saldo: 985 },
+      { ...mesesAtras(2), aportes: 0, subscricoes: 0, resgates: 20, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 15, saldo: 980 },
+      { ...mesesAtras(1), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 22, saldo: 1002 },
+      { ...mesesAtras(0), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 10, valorizacao: 18, saldo: 1020 }
+    ]
   },
   '/api/carteira/extrato/sugestoes': [],
   '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null },

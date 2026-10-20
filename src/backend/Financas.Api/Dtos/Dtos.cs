@@ -634,6 +634,14 @@ public record ProventoMesDto(int Ano, int Mes, decimal Total, decimal RecebidoEx
 
 public record EvolucaoFiiMesDto(int Ano, int Mes, decimal Aplicado, decimal? ValorMercado);
 
+/// <summary>
+/// #173: o mês da carteira de FIIs como no app da corretora. Aportes = compras (cotas × preço + taxas), sem as
+/// subscrições, que vêm à parte. Rendimentos recebidos = créditos de provento no extrato, sem os trocos e vendas.
+/// Valorização = saldo no fim − saldo no fim do mês anterior − compras + vendas.
+/// </summary>
+public record MesAMesFiiDto(int Ano, int Mes, decimal Aportes, decimal Subscricoes, decimal Resgates,
+    decimal RendimentosRecebidos, decimal RendimentosEstimados, decimal Valorizacao, decimal Saldo);
+
 public record RentabilidadeMesDto(int Ano, int Mes, decimal Carteira, decimal Selic, decimal? Ifix);
 
 public record ResumoFiisDto(decimal ValorMercado, decimal Custo, decimal Valorizacao, decimal? ValorizacaoPercentual,
@@ -647,7 +655,8 @@ public record HistoricoPrecoDto(string Ticker, List<PontoPrecoDto> Pontos);
 
 public record PainelFiisDto(ResumoFiisDto Resumo, List<FiiDto> Fiis, List<LoteFiiDto> Lotes,
     List<ProventoMesDto> Proventos, List<EvolucaoFiiMesDto> Evolucao, List<RentabilidadeMesDto> Rentabilidade,
-    List<DistribuicaoInvestimentoDto> Segmentos, List<HistoricoPrecoDto> Historicos, List<string> SegmentosDisponiveis);
+    List<DistribuicaoInvestimentoDto> Segmentos, List<HistoricoPrecoDto> Historicos, List<string> SegmentosDisponiveis,
+    List<MesAMesFiiDto> MesAMes);
 
 /* ----------------------------- Importação pelo extrato ----------------------------- */
 /// <summary>Origem: "extrato", "quantidade do extrato", "preço do extrato", "cotação do dia" ou null (preencher).</summary>

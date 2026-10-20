@@ -122,6 +122,11 @@ export const GLOSSARIO = {
     definicao: 'A cotação oficial do dólar (e de outras moedas) que o Banco Central divulga todo dia útil. O site usa a de compra para passar para reais o que você tem em moeda estrangeira, como o Méli Dólar.',
     exemplo: 'US$ 10 com a PTAX a 5,05: R$ 50,50.'
   },
+  valorizacaoMes: {
+    termo: 'Valorização do mês',
+    definicao: 'Quanto as cotas que você tem ganharam ou perderam de preço no mês, sem contar o dinheiro que entrou (aportes) nem os rendimentos. É o saldo no fim do mês menos o saldo no fim do mês anterior, menos as compras e mais as vendas do mês.',
+    exemplo: 'Saldo de R$ 1.000 em setembro, compra de R$ 200 em outubro e saldo de R$ 1.230 no fim de outubro: valorização de R$ 30.'
+  },
   trocoDeCompra: {
     termo: 'Troco da compra',
     definicao: 'Na compra de ações e FIIs, a corretora pode debitar um pouco a mais e devolver a sobra no mesmo dia ou nos seguintes. Esse crédito não é rendimento: é parte do dinheiro da compra que voltou.',
