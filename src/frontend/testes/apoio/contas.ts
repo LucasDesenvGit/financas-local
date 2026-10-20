@@ -39,7 +39,7 @@ export function fatura(campos: Partial<Fatura> = {}): Fatura {
 
 /** Abre /contas pelo roteador (a URL é lida e gravada), com a API falsa; guarda faturas pedidas e contas salvas. */
 export async function abrirContas(url = '/contas', contas: Conta[] = CONTAS,
-  faturasPorConta: Record<number, Fatura[]> = {}) {
+  faturasPorConta: Record<number, Fatura[]> = {}, extras: Record<string, unknown> = {}) {
   const pedidas: number[] = [];
   const salvas: { id: number | null; dto: SalvarConta }[] = [];
   /** Cada carga de contas: true quando pediu também as arquivadas. */
@@ -54,7 +54,8 @@ export async function abrirContas(url = '/contas', contas: Conta[] = CONTAS,
           bancos: () => of(BANCOS),
           faturas: (id: number) => { pedidas.push(id); return of(faturasPorConta[id] ?? []); },
           criarConta: (dto: SalvarConta) => { salvas.push({ id: null, dto }); return of(conta()); },
-          atualizarConta: (id: number, dto: SalvarConta) => { salvas.push({ id, dto }); return of(conta()); }
+          atualizarConta: (id: number, dto: SalvarConta) => { salvas.push({ id, dto }); return of(conta()); },
+          ...extras
         }
       }
     ]

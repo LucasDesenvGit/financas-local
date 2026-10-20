@@ -38,6 +38,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Limite do cartão reduzido no app** (#171). Quem reduz o limite no app do banco, por segurança, via o "limite usado" muito maior que a dívida do cartão, e o site não sabia por quê.
+  - **Agora o cartão pergunta**, no card e na edição: "Você reduziu o limite no app?".
+  - **"Sim":** vale o limite que ficou no app.
+  - **"Não":** a diferença conta como compromisso, com o limite aprovado. A pergunta só volta se a diferença mudar.
+  - **A diferença aparece em texto**, com o termo "limite usado" explicado.
+  - **Manual:** seção nova "Limite reduzido no app do banco".
 - **Investimentos com nome que se reconhece** (#170). A caixinha do Nubank aparecia como "CDB - NU FINANCEIRA S.A. - SOCIEDADE…", e o CDB do Mercado Pago como "CDB - MERCADO CREDITO…".
   - **Agora:** "CDB · Nubank" e "CDB · Mercado Pago", com o nome do banco embaixo, para achar no app.
   - **Renomear:** cada investimento do Open Finance pode ganhar o seu nome ("Caixinha viagem"), e a sincronização não muda esse nome.

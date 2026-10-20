@@ -27,7 +27,12 @@ public record ContaDto(
     // ADR 0024: banco que vale (escolhido, do cartão herdado da conta ou detectado); BancoDefinido = escolhido.
     string? Banco = null, bool BancoDefinido = false, int? ContaVinculadaId = null,
     // Cartão: o que foi lançado no mês atual e a fatura que vence nele (mesma conta do Painel).
-    FaturaMesDto? FaturaMes = null);
+    FaturaMesDto? FaturaMes = null,
+    // #171: "você reduziu o limite no app?" (null = sem resposta) e a diferença avaliada na resposta.
+    bool? LimiteAjustadoNoApp = null, decimal? LimiteDiferencaAvaliada = null);
+
+/// <summary>#171: true = reduzi o limite no app; false = não reduzi (a diferença é compromisso); null = desfazer.</summary>
+public record ResponderLimiteAjustadoDto(bool? Ajustado);
 
 public record SalvarContaDto(
     [Required, StringLength(120)] string Nome,

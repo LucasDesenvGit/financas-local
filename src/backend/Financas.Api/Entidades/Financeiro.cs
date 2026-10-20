@@ -57,6 +57,14 @@ public class Conta
     public decimal Saldo { get; set; }
     public decimal? LimiteCredito { get; set; }
     public decimal? LimiteDisponivel { get; set; }
+    /// <summary>
+    /// #171: resposta a "você reduziu o limite no app?" quando o limite usado (aprovado − disponível) é bem maior que a
+    /// dívida. true = a diferença é limite tirado por você; false = é compromisso (compras em processamento,
+    /// parcelas); null = ainda sem resposta.
+    /// </summary>
+    public bool? LimiteAjustadoNoApp { get; set; }
+    /// <summary>#171: a diferença (limite usado − dívida) quando você respondeu; o "não" volta a perguntar se ela mudar.</summary>
+    public decimal? LimiteDiferencaAvaliada { get; set; }
     public byte? DiaFechamento { get; set; }
     public byte? DiaVencimento { get; set; }
     public string Cor { get; set; } = "#0f766e";
