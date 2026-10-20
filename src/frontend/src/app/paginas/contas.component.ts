@@ -14,6 +14,7 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
+import { EstadoLimite, diferencaDoLimite, estadoDoLimite, limiteUsado } from './limite-cartao';
 
 /** Quantas faturas o histórico mostra antes de "mostrar mais antigas". */
 const FATURAS_VISIVEIS = 6;
@@ -174,6 +175,21 @@ const FATURAS_VISIVEIS = 6;
                     @if (limiteAprovadoMaior(c)) { · aprovado pelo banco: {{ c.limiteCredito | currency }} }
                   </small>
                 }
+                <!-- #171: a diferença entre o limite usado e a dívida em texto (WCAG 1.4.1), com a pergunta no card (Nielsen 1). -->
+                @switch (estadoLimite(c)) {
+                  @case ('perguntar') {
+                    <small class="aviso-limite">O <app-termo chave="limiteUsado">limite usado</app-termo>
+                      ({{ limiteUsadoDe(c) | currency }}) é bem maior que a dívida. Você reduziu o limite no app?
+                      <button type="button" class="link" (click)="editar(c)" [attr.aria-label]="'Responder sobre o limite de ' + c.nome">responder</button></small>
+                  }
+                  @case ('ajustado') { <small class="texto-suave">limite reduzido por você no app</small> }
+                  @case ('nao') {
+                    @if ((diferencaLimite(c) ?? 0) > 0) {
+                      <small class="texto-suave">inclui {{ diferencaLimite(c) | currency }} comprometidos além da dívida
+                        (compras em processamento ou parcelas)</small>
+                    }
+                  }
+                }
                 @if (c.diaFechamento || c.diaVencimento) {
                   <small class="texto-suave">
                     @if (c.diaFechamento) { fecha dia {{ c.diaFechamento }} }
@@ -274,6 +290,29 @@ const FATURAS_VISIVEIS = 6;
             </label>
             <p class="texto-suave pequeno-texto" id="ajuda-conta-cartao">A conta do mesmo banco, de onde a fatura é paga.</p>
           }
+          <!-- #171: limite reduzido no app (Nielsen 5: não tratar como dívida), perguntado onde o cartão é editado (Nielsen 6). -->
+          @if (contaEditada; as ce) {
+            @switch (estadoLimite(ce)) {
+              @case ('perguntar') {
+                <div class="sugestao-limite" role="group" aria-labelledby="pergunta-limite">
+                  <p id="pergunta-limite">O <app-termo chave="limiteUsado">limite usado</app-termo> ({{ limiteUsadoDe(ce) | currency }})
+                    é bem maior que a dívida do cartão ({{ dividaTotal(ce) | currency }}). Você reduziu o limite no app do banco?</p>
+                  <div class="acoes-limite">
+                    <button type="button" class="botao botao-pequeno" (click)="responderLimite(true)">Sim, ajustei o limite</button>
+                    <button type="button" class="botao botao-pequeno" (click)="responderLimite(false)">Não</button>
+                  </div>
+                </div>
+              }
+              @case ('ajustado') {
+                <p class="texto-suave pequeno-texto">Você marcou que reduziu o limite no app: o site usa o limite que ficou lá
+                  ({{ limiteEfetivo(ce) | currency }}). <button type="button" class="link" (click)="responderLimite(null)">desfazer</button></p>
+              }
+              @case ('nao') {
+                <p class="texto-suave pequeno-texto">Você marcou que não reduziu o limite: os {{ diferencaLimite(ce) | currency }} além da
+                  dívida contam como compromisso. <button type="button" class="link" (click)="responderLimite(null)">desfazer</button></p>
+              }
+            }
+          }
           @if (!editandoOpenFinance) {
             <div class="grade-campos">
               <label>Tipo
@@ -325,6 +364,10 @@ const FATURAS_VISIVEIS = 6;
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .kpis-contas { margin-bottom: 10px; }
+    .aviso-limite { display: block; color: var(--texto); }
+    .sugestao-limite { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; margin: 4px 0 8px; }
+    .sugestao-limite p { margin: 0 0 8px; }
+    .acoes-limite { display: flex; gap: 8px; flex-wrap: wrap; }
     .cartoes-da-conta { display: block; margin-top: 4px; }
     .cartao-credito-instituicao { display: inline-flex; align-items: center; gap: 8px; }
     .valor-fatura-mes small, .valor-divida small { font-size: 0.78rem; }
@@ -382,6 +425,8 @@ export class ContasComponent implements OnInit {
   mostrarArquivadas = this.rota.snapshot.queryParamMap.get('arquivadas') === '1';
   form: SalvarConta | null = null;
   editandoId: number | null = null;
+  /** #171: o cartão aberto na edição (para a pergunta do limite). */
+  contaEditada: Conta | null = null;
   editandoOpenFinance = false;
   /** Tipo da conta do Open Finance em edição (o formulário não mostra o campo, mas o cartão tem conta vinculada). */
   private tipoEditando: TipoConta | null = null;
@@ -450,11 +495,39 @@ export class ContasComponent implements OnInit {
     return c.limiteDisponivel;
   }
 
+  estadoLimite(c: Conta): EstadoLimite {
+    return estadoDoLimite(c);
+  }
+
+  limiteUsadoDe(c: Conta): number | null {
+    return limiteUsado(c);
+  }
+
+  diferencaLimite(c: Conta): number | null {
+    return diferencaDoLimite(c);
+  }
+
+  /** #171: guarda a resposta e atualiza o cartão aberto e a lista. */
+  responderLimite(ajustado: boolean | null): void {
+    const c = this.contaEditada;
+    if (!c) return;
+    this.api.responderLimiteAjustado(c.id, ajustado).subscribe({
+      next: () => {
+        this.contaEditada = { ...c, limiteAjustadoNoApp: ajustado, limiteDiferencaAvaliada: ajustado === null ? null : diferencaDoLimite(c) };
+        this.avisos.sucesso(ajustado === null ? 'Resposta desfeita.' : ajustado ? 'Marcado: limite reduzido por você no app.'
+          : 'Marcado: a diferença conta como compromisso.');
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
   /**
    * Limite realmente em uso. Muitos bancos informam pelo Open Finance o limite APROVADO (ex.: R$ 10.150),
    * mas o disponível já reflete o limite que você ajustou no app. Por isso usamos dívida + disponível.
    */
   limiteEfetivo(c: Conta): number | null {
+    if (estadoDoLimite(c) === 'nao') return c.limiteCredito;
     if (c.limiteDisponivel !== null) {
       const efetivo = this.dividaTotal(c) + Math.max(0, c.limiteDisponivel);
       if (efetivo > 0) return c.limiteCredito ? Math.min(efetivo, c.limiteCredito) : efetivo;
@@ -465,7 +538,9 @@ export class ContasComponent implements OnInit {
   usoLimite(c: Conta): number {
     const limite = this.limiteEfetivo(c);
     if (!limite) return 0;
-    return Math.round(Math.min(100, Math.max(0, (this.dividaTotal(c) / limite) * 100)));
+    // #171: com "não reduzi o limite", o que está comprometido além da dívida também está em uso.
+    const emUso = estadoDoLimite(c) === 'nao' ? limite - (c.limiteDisponivel ?? limite) : this.dividaTotal(c);
+    return Math.round(Math.min(100, Math.max(0, (emUso / limite) * 100)));
   }
 
   limiteAprovadoMaior(c: Conta): boolean {
@@ -578,6 +653,7 @@ export class ContasComponent implements OnInit {
 
   nova(): void {
     this.editandoId = null;
+    this.contaEditada = null;
     this.editandoOpenFinance = false;
     this.tipoEditando = null;
     this.bancoAtual = null;
@@ -589,6 +665,7 @@ export class ContasComponent implements OnInit {
 
   editar(c: Conta): void {
     this.editandoId = c.id;
+    this.contaEditada = c;
     this.editandoOpenFinance = c.origem === OrigemConta.OpenFinance;
     this.tipoEditando = c.tipo;
     this.bancoAtual = c.bancoDefinido ? null : c.banco;

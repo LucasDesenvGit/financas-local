@@ -245,6 +245,20 @@ export const MANUAL: CapituloManual[] = [
         termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
       },
       {
+        id: 'limite-reduzido',
+        titulo: 'Limite reduzido no app do banco',
+        paraQueServe: 'Não confundir o limite que você tirou do cartão no app com dívida.',
+        passos: [
+          'Se você reduz o limite no app do banco (por segurança, enquanto não usa), o “limite usado” que o banco informa fica bem maior que a dívida do cartão.',
+          'Quando isso acontece, o cartão em Contas e cartões pergunta: “Você reduziu o limite no app?”. Clique em “responder” (ou em “editar”).',
+          '“Sim, ajustei o limite”: o site usa o limite que ficou no app, e o cartão mostra “limite reduzido por você no app”.',
+          '“Não”: a diferença conta como compromisso (compras em processamento ou parcelas). A barra passa a usar o limite aprovado e inclui essa diferença.',
+          'Mudou de ideia? Em “editar”, clique em “desfazer”. Depois de um “não”, a pergunta só volta se a diferença mudar bastante.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        termos: ['limiteUsado']
+      },
+      {
         id: 'historico-faturas',
         titulo: 'Histórico de faturas',
         paraQueServe: 'Ver as faturas anteriores de um cartão, sem sair da tela.',

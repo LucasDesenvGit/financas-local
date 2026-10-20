@@ -58,6 +58,10 @@ export class ApiService {
   criarConta(dto: SalvarConta): Observable<Conta> { return this.http.post<Conta>(`${this.base}/contas`, dto); }
   atualizarConta(id: number, dto: SalvarConta): Observable<Conta> { return this.http.put<Conta>(`${this.base}/contas/${id}`, dto); }
   excluirConta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas/${id}`); }
+  /** #171: true = reduzi o limite no app; false = não (a diferença é compromisso); null = desfazer a resposta. */
+  responderLimiteAjustado(id: number, ajustado: boolean | null): Observable<void> {
+    return this.http.put<void>(`${this.base}/contas/${id}/limite-ajustado`, { ajustado });
+  }
   faturas(contaId: number): Observable<Fatura[]> { return this.http.get<Fatura[]>(`${this.base}/contas/${contaId}/faturas`); }
   /** ADR 0024: bancos que dá para escolher na conta. */
   bancos(): Observable<Banco[]> { return this.http.get<Banco[]>(`${this.base}/contas/bancos`); }
