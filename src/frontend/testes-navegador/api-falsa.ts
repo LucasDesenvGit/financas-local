@@ -18,6 +18,12 @@ const hoje = new Date();
 /** "AAAA-MM-DD" na data local. */
 const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const ano = hoje.getFullYear();
+/** Reserva fictícia (aba Reservas de Investimentos). */
+const reserva = (campos: Record<string, unknown>) => ({
+  contaId: 1, nomeConta: 'Banco Fictício', nome: 'Reserva', saldo: 0, guardado: 500, retirado: 100, movimentos: 3,
+  primeiroMovimento: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), ultimoMovimento: dataIso(new Date(ano, hoje.getMonth(), 1)),
+  saldoConferido: null, dataConferencia: null, podeTerSaldoAnterior: false, conferenciaAntiga: false, ...campos
+});
 const mes = hoje.getMonth() + 1;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const mesesAtras = (n: number) => {
@@ -146,12 +152,21 @@ const respostas: Record<string, unknown> = {
       proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,
       ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 3)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 3)),
       categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'MUSICA',
-      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1 },
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1,
+      chaveExtrato: 'MUSICA', pareceSerId: null, pareceSerNome: null },
     { chave: 'nuvem', descricao: 'NUVEM ANUAL', valor: 119, valorVariavel: false, valorMinimo: 119, valorMaximo: 119,
       proximoVencimento: dataIso(new Date(ano + 1, hoje.getMonth(), 5)), diaHabitual: 5, meses: 2, pagamentos: 2,
       ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 5)), primeiroPagamento: dataIso(new Date(ano - 1, hoje.getMonth(), 5)),
       categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'NUVEM',
-      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2 }
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2,
+      chaveExtrato: 'NUVEM', pareceSerId: null, pareceSerNome: null },
+    // #205: parecida com "Escola" (valor, dia e conta), com outro nome: "parece ser Escola" e "é a mesma".
+    { chave: 'PESSOA EXEMPLO', descricao: 'PIX ENVIADO PESSOA EXEMPLO', valor: 1450, valorVariavel: false, valorMinimo: 1450,
+      valorMaximo: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), diaHabitual: 10, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 10)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 10)),
+      categoriaId: null, categoriaNome: null, contaId: 1, contaNome: 'Conta Exemplo', termoBusca: 'PESSOA',
+      vencimentoSemPagamento: null, formaCobranca: 1, textoCobranca: 'PESSOA', recorrencia: 1,
+      chaveExtrato: 'PESSOA EXEMPLO', pareceSerId: 1, pareceSerNome: 'Escola' }
   ],
   '/api/investimentos': [],
   '/api/investimentos/historico': {
@@ -171,8 +186,16 @@ const respostas: Record<string, unknown> = {
       proventos12Meses: 0, resultadoTotal: 0, valorSeFosseSelic: 0, diferencaSelic: 0, resultadoTotalPercentual: null,
       resultadoSelicPercentual: null },
     posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 0, distribuicao: [],
-    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [], reservas: [],
-    totalReservas: 0, cotasDiferentes: []
+    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [],
+    // #237: numa conta, o banco detalha uma reserva pelo nome e outra fica fora da lista; na outra, manda só o total.
+    reservas: [
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Viagem', saldo: 1200, informadoPeloBanco: true }),
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Presentes', saldo: 150, foraDaListaDoBanco: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Carro', saldo: 400, podeTerSaldoAnterior: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Reservado', saldo: 600, guardado: 0, retirado: 0, movimentos: 0,
+        primeiroMovimento: null, ultimoMovimento: null, restanteDoBanco: true, totalDoBanco: 1000 })
+    ],
+    totalReservas: 2350, cotasDiferentes: []
   },
   // #173: um FII fictício e seis meses de "Mês a mês" (aporte, subscrição, venda, rendimentos e valorização dos dois sinais).
   '/api/carteira/fiis': {

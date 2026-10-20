@@ -323,9 +323,14 @@ public record SalvarContaAgendadaDto(
     DateOnly? DataLimite = null,
     FormaCobranca FormaCobranca = FormaCobranca.AMao,
     [StringLength(100, ErrorMessage = "O texto da cobrança pode ter até 100 caracteres.")] string? TextoCobranca = null,
-    [StringLength(300, ErrorMessage = "A observação pode ter até 300 caracteres.")] string? Observacao = null);
+    [StringLength(300, ErrorMessage = "A observação pode ter até 300 caracteres.")] string? Observacao = null,
+    // #205: a chave da sugestão do extrato que originou o cadastro. Vazia na edição: a ligação que já existe fica.
+    [StringLength(150)] string? ChaveExtrato = null);
 
 public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
+
+/// <summary>#205: "é a mesma": liga a conta a pagar à sugestão do extrato (a <c>ChaveExtrato</c> da sugestão).</summary>
+public record LigarExtratoContaAgendadaDto([Required, StringLength(150)] string ChaveExtrato);
 
 /// <summary>
 /// Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar. <c>ProximoVencimento</c> nunca é
@@ -345,7 +350,10 @@ public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal V
     DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,
     string ContaNome, string TermoBusca, DateOnly? VencimentoSemPagamento,
     // #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual.
-    FormaCobranca FormaCobranca = FormaCobranca.AMao, string? TextoCobranca = null, Recorrencia Recorrencia = Recorrencia.Mensal);
+    FormaCobranca FormaCobranca = FormaCobranca.AMao, string? TextoCobranca = null, Recorrencia Recorrencia = Recorrencia.Mensal,
+    // #205: a chave da descrição do banco (gravada na conta a pagar ao cadastrar ou no "é a mesma") e, quando há uma
+    // conta a pagar ativa parecida (valor, dia e conta) mas não dá para ter certeza, qual é ela.
+    string? ChaveExtrato = null, int? PareceSerId = null, string? PareceSerNome = null);
 
 /* ----------------------------- Investimentos ----------------------------- */
 /// <summary>Valores na moeda do investimento; <c>SaldoEmReais</c> é null quando não há cotação guardada da moeda.</summary>
@@ -582,7 +590,11 @@ public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Sal
     int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
     DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga, bool InformadoPeloBanco = false,
     // #169: o Méli Dólar é uma reserva em dólar: Quantidade (e SaldoConferido) em US$, Saldo em reais pela Cotacao (PTAX).
-    string Moeda = "BRL", decimal? Quantidade = null, decimal? Cotacao = null);
+    string Moeda = "BRL", decimal? Quantidade = null, decimal? Cotacao = null,
+    // #237: a conta tem a lista detalhada do banco e esta reserva do extrato não está nela (continua estimada e conferível).
+    bool ForaDaListaDoBanco = false,
+    // #237: linha com a parte do total reservado informado pelo banco (TotalDoBanco) que não está nas reservas do extrato.
+    bool RestanteDoBanco = false, decimal? TotalDoBanco = null);
 
 /// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
 public record ConferirReservaDto(

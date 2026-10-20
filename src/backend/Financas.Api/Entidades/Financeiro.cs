@@ -194,6 +194,12 @@ public class ContaAgendada
     public string? TextoCobranca { get; set; }
     /// <summary>#158: observação livre (ex.: "conta da família", "cancelar em março").</summary>
     public string? Observacao { get; set; }
+    /// <summary>
+    /// #205: a chave da descrição do banco (a mesma do agrupamento das sugestões do extrato) do pagamento que é esta
+    /// conta. Gravada ao cadastrar pela sugestão, no "é a mesma" e quando a cobrança automática dá baixa: a sugestão
+    /// some por ela, qualquer que seja o nome escolhido.
+    /// </summary>
+    public string? ChaveExtrato { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public Categoria? Categoria { get; set; }

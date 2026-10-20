@@ -275,6 +275,8 @@ export interface SalvarContaAgendada {
   dataLimite: string | null;
   /** #158 */
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
+  /** #205: a chave da sugestão do extrato que originou o cadastro (vazia na edição: a ligação que já existe fica). */
+  chaveExtrato?: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
@@ -294,6 +296,11 @@ export interface SugestaoContaAgendada {
   vencimentoSemPagamento: string | null;
   /** #158: como parece ser cobrada, o texto que a ligaria às cobranças e se é mensal ou anual. */
   formaCobranca: FormaCobranca; textoCobranca: string | null; recorrencia: Recorrencia;
+  /**
+   * #205: a chave da descrição do banco (gravada na conta a pagar ao cadastrar ou no "é a mesma") e, quando há uma conta
+   * a pagar ativa parecida (valor, dia e conta) sem dar para ter certeza, qual é ela.
+   */
+  chaveExtrato: string | null; pareceSerId: number | null; pareceSerNome: string | null;
 }
 
 /** #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance; desde: o primeiro registro do histórico. */
@@ -540,8 +547,18 @@ export interface Reserva {
   podeTerSaldoAnterior: boolean;
   /** Conferida há mais de 30 dias. */
   conferenciaAntiga: boolean;
-  /** #168: o valor veio da instituição pelo Open Finance (não é estimado nem precisa de conferência). */
+  /**
+   * #168/#237: o valor veio da instituição, pelo nome, na lista detalhada do Open Finance (não é estimado nem precisa de
+   * conferência). Só o total da conta não marca nenhuma reserva.
+   */
   informadoPeloBanco?: boolean;
+  /** #237: a conta tem a lista detalhada do banco e esta reserva do extrato não está nela (continua estimada e conferível). */
+  foraDaListaDoBanco?: boolean;
+  /**
+   * #237: linha "Reservado" com a parte do total que o banco informa (`totalDoBanco`) que não está nas reservas do
+   * extrato. Não se confere: conferir as outras reservas da conta ajusta este valor.
+   */
+  restanteDoBanco?: boolean; totalDoBanco?: number | null;
   /** #169: "USD" no Méli Dólar: `quantidade` e `saldoConferido` em dólar; `saldo` em reais pela `cotacao` (PTAX). */
   moeda?: string; quantidade?: number | null; cotacao?: number | null;
 }

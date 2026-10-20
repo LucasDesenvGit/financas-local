@@ -76,6 +76,7 @@ adicionar_coluna_se_ausente "Conta" "LimiteDiferencaAvaliada" "TEXT NULL"
 adicionar_coluna_se_ausente "ContaAgendada" "FormaCobranca" "INTEGER NOT NULL DEFAULT 1"
 adicionar_coluna_se_ausente "ContaAgendada" "TextoCobranca" "TEXT NULL"
 adicionar_coluna_se_ausente "ContaAgendada" "Observacao" "TEXT NULL"
+adicionar_coluna_se_ausente "ContaAgendada" "ChaveExtrato" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

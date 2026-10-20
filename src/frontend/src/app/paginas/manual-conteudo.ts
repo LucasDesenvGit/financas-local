@@ -145,7 +145,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
         passos: [
           'Abra Investimentos, na aba Reservas.',
-          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada.',
+          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada. A linha “Reservado” com “restante do total do banco” também não se confere: ela se ajusta quando você confere as outras.',
           'Reserva “estimada” ou “para conferir”: clique em “conferir saldo” e digite o valor que o app do banco mostra, do jeito que aparece lá (ex.: 10.123,42).',
           'Méli Dólar: em “conferir saldo”, escolha se vai digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
           'Confira depois o patrimônio no Painel: ele passa a somar essas reservas.'
@@ -922,9 +922,14 @@ export const MANUAL: CapituloManual[] = [
           'Assinatura anual aparece quando o histórico importado tem as duas últimas cobranças, com um ano de diferença. Se não tiver, cadastre à mão.',
           'Cada sugestão diz como parece ser cobrada (à mão, débito automático ou no cartão) e já vem com o texto da cobrança.',
           'Use “ver pagamentos” para conferir no extrato.',
-          '“Cadastrar” abre o formulário já preenchido; “ignorar” tira a sugestão.'
+          '“Cadastrar” abre o formulário já preenchido; “ignorar” tira a sugestão.',
+          'Pode trocar o nome ao cadastrar (ex.: “PIX ENVIADO LIVEPIX LTDA” vira “Manwha”): a conta guarda de qual pagamento do banco ela veio, e a sugestão não volta.',
+          'Conta que você cadastrou à mão também tira a sugestão, quando o valor (até 15% de diferença), o dia do vencimento (até 3 dias) e a conta batem.',
+          'Se não der para ter certeza (duas contas parecidas, ou a conta a pagar sem a conta escolhida), a sugestão mostra “parece ser …”. Clique em “é a mesma” para ligar as duas: a sugestão some e não volta.',
+          'Conta em débito automático ou no cartão que dá baixa sozinha também fica ligada ao pagamento do banco na primeira cobrança.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        erros: ['Clicou em “é a mesma” por engano? Use “Desfazer” no aviso que aparece logo depois: a sugestão volta. Excluir a conta a pagar também a traz de volta.']
       }
     ]
   },
@@ -1106,8 +1111,10 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos e reservas da conta.',
         passos: [
-          'Quando o banco informa o valor reservado pelo Open Finance, ele vale: a reserva aparece como “informado pelo banco” e não precisa de conferência.',
-          'Sem essa informação, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
+          'Quando o banco informa pelo Open Finance o valor de uma reserva, pelo nome, ele vale: só essa reserva aparece como “informado pelo banco” e não precisa de conferência.',
+          'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
+          'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
+          'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso no Painel.'
         ],
