@@ -9,5 +9,8 @@ module.exports = {
   ...createCjsPreset({ tsconfig: '<rootDir>/tsconfig.spec.json' }),
   roots: ['<rootDir>/testes'],
   testMatch: ['**/*.spec.ts'],
-  setupFilesAfterEnv: ['<rootDir>/testes/configurar-jest.ts']
+  setupFilesAfterEnv: ['<rootDir>/testes/configurar-jest.ts'],
+  // #204: o @lucide/angular de verdade (10,6 MB, ~1.900 componentes compilados em JIT a cada arquivo) levava ~15 s por
+  // arquivo de teste. Nos testes do Jest vale um substituto leve; o build e os testes no navegador usam o de verdade.
+  moduleNameMapper: { '^@lucide/angular$': '<rootDir>/testes/apoio/lucide-falso.js' }
 };

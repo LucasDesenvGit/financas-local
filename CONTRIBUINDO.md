@@ -71,6 +71,38 @@ Exemplos:
 - `fix(open-finance): não duplicar transações ao renovar o consentimento`
 - `feat(banco)!: nova coluna Transacao.Emergencia` (o `!` indica que é preciso rodar `2-criar-banco.sh`)
 
+## Testes rápidos (padrões de CI)
+
+Em outubro de 2026 o Jest chegou a levar ~6 min na CI (#204): um pacote pesado importado nos testes custava ~15 s em **cada** arquivo de teste. Para não voltar:
+
+**Onde cada teste mora** (um comportamento testado num lugar só):
+
+| O que testar | Onde | Por quê |
+|---|---|---|
+| Lógica, cálculo, componente isolado, texto, atributo de acessibilidade | **Jest** (`testes/regressao`, `testes/usabilidade`) | rápido, sem navegador ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)) |
+| Desenho, CSS calculado (`var()`, grid, tamanho de alvo), rota de verdade, CSP, console, celular | **Navegador** (`testes-navegador/`) | o jsdom não calcula estilo nem aplica a CSP ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
+
+Não repita no Jest o que o navegador já confere, e vice-versa. Teste do Jest que lê o `styles.css` por `cssRules` para adivinhar o estilo é candidato a ir para o navegador.
+
+**Limites de tempo (a CI confere):**
+- **Jest:** cada arquivo de teste até **10 s** (passou disso, a CI avisa) e no máximo **20 s** (passou, falha); a suíte inteira até **150 s** (`scripts/ci/verificar-tempo-testes.py`). Referência hoje: ~34 s a suíte, 6 s o arquivo mais lento, 0,7 s a mediana (2 workers, como a CI).
+- **Navegador:** cada teste até 30 s (padrão do Playwright); a suíte hoje leva ~30 s.
+
+**Importação pesada é a causa nº 1 de teste lento.** Um arquivo de teste importa a tela, que importa os componentes dela, que importam bibliotecas. Biblioteca grande (ícones, gráficos, editores…) carregada no Jest custa em todo arquivo que encosta nela:
+- **antes de pôr uma dependência nova no front-end**, rode um teste que a use e veja o tempo (`npx jest testes/<arquivo>.spec.ts`);
+- **se pesar**, troque-a nos testes do Jest por um substituto leve em `testes/apoio/`, ligado no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js` (ícones). O build e os testes no navegador continuam com a de verdade.
+
+**Como medir quando algo ficou lento:**
+1. `npx jest --ci --json --outputFile=jest-resultado.json` e `python3 ../../scripts/ci/verificar-tempo-testes.py jest-resultado.json`: os arquivos mais lentos;
+2. **um teste vazio** mostra o custo fixo do ambiente (hoje ~3 s, contando a partida do Jest);
+3. **importar peça por peça** num teste temporário (`await import(...)` com o tempo de cada um) acha a importação que pesa. Foi assim que o #204 achou os 15 s do `@lucide/angular`.
+
+**Workflows da CI:**
+- todo workflow de PR tem `concurrency` com `cancel-in-progress`;
+- filtros `paths:` por pasta (`scripts/geral/**`), não por nome de arquivo, para um arquivo novo também disparar;
+- cache do que é baixado sempre igual (npm, NuGet, navegador do Playwright), menos quando baixar do zero é justamente o que se testa (os testes de instalação);
+- **mexeu em teste ou em CI? Ponha no PR o tempo antes e depois**, por job e pelos passos mais caros.
+
 ## Checklist do pull request
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
