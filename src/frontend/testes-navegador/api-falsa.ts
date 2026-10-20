@@ -78,6 +78,24 @@ const porCategoria = [
   { categoriaId: 3, nome: 'Lazer', cor: '#c3b1e1', valor: 300 }
 ];
 const evolucao = Array.from({ length: 12 }, (_, i) => ({ ...mesesAtras(11 - i), receitas: 5000, despesas: 3500 + i * 40 }));
+/**
+ * #254: as sugestões do print da issue. Duas linhas pedem a mesma regra ("MERCADOLIVRE") com categorias diferentes, uma
+ * tem aviso da API, e o motivo longo com chips embaixo é o caso em que os chips cobriam o texto.
+ */
+const sugestao = (chave: string, exemplo: string, categoriaId: number, categoriaNome: string, textoRegra: string,
+  avisoRegra: string | null = null) => ({
+  chave, exemplo, quantidade: 17, total: -1234.5, transacaoIds: [1, 2], categoriaId, categoriaNome, categoriaCor: '#f2b880',
+  confianca: 'alta', motivo: 'Você já usou para transações iguais (73% das 77 parecidas)', textoRegra, avisoRegra,
+  alternativas: [{ categoriaId: 2, nome: 'Transporte', cor: '#92c8f0', motivo: 'outra' },
+    { categoriaId: 3, nome: 'Lazer', cor: '#c3b1e1', motivo: 'outra' }]
+});
+const sugestoesCategoria = [
+  sugestao('MERCADOLIVRE MERCADOLIVRE', 'MERCADOLIVRE*MERCADOLIVRE', 1, 'Alimentação', 'MERCADOLIVRE'),
+  sugestao('PAGAMENTO CARTAO CREDITO', 'PAGAMENTO CARTAO CREDITO BCE', 5, 'Transferências', 'PAGAMENTO CARTAO CREDITO BCE',
+    '"PAGAMENTO CARTAO CREDITO BCE" também aparece em 4 transações de outras categorias (Lazer).'),
+  sugestao('MERCADOLIVRE MERCADOLI', 'MERCADOLIVRE*MERCADOLI', 3, 'Lazer', 'MERCADOLIVRE'),
+  sugestao('IFOOD AGENCIA', 'IFD*iFood', 1, 'Alimentação', 'IFOOD')
+];
 /** #206: quatro estourados (um por emergência), para o card mostrar os 3 piores e o "Ver todos". */
 const orcamento = (id: number, categoriaId: number, categoriaNome: string, valor: number, gasto: number,
   situacao: 'estourado' | 'emergencia' = 'estourado') => ({
@@ -146,7 +164,7 @@ const respostas: Record<string, unknown> = {
     investimentos: [{ chave: 'of-1', nome: 'CDB · Nubank', origem: 'Open Finance', saldo: 1500, pistas: [] }]
   },
   '/api/transacoes': { itens: transacoes, total: transacoes.length, pagina: 1, tamanhoPagina: 50, totalReceitas: 5000, totalDespesas: 152.3 },
-  '/api/transacoes/sugestoes-categoria': [],
+  '/api/transacoes/sugestoes-categoria': sugestoesCategoria,
   // A edição de uma transação pede as sugestões dela (teclado.spec.ts abre a primeira).
   '/api/transacoes/1/sugestoes-categoria': [],
   '/api/transacoes/2/sugestoes-categoria': [],

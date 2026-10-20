@@ -29,6 +29,21 @@ public class SugestaoCategoriaService
         "SAO", "PAULO", "SP", "RJ", "MG", "PR", "SC", "RS", "BR"
     };
 
+    /// <summary>
+    /// #254: palavras que aparecem em descrições de todo tipo. Servem para agrupar, mas sozinhas viram regra "contém" que
+    /// pega o que não devia (ex.: "BANCO" levava Pix, tarifas e transferências para "Pagamento de fatura").
+    /// </summary>
+    private static readonly HashSet<string> GenericasParaRegra = new(StringComparer.Ordinal)
+    {
+        "BANCO", "BCO", "BANK", "FATURA", "PAGAMENTOS", "RECEBIMENTO", "DEPOSITO", "APLICACAO", "RESGATE", "SALDO",
+        "LOJA", "LOJAS", "MENSALIDADE", "SERVICO", "CENTRO", "GRUPO", "INSTITUICAO", "PAGADORA", "CLIENTE", "TITULAR",
+        "MESMA", "TITULARIDADE", "OUTRA", "OUTROS", "DIVERSOS", "ESTORNO", "TAXA"
+    };
+
+    /// <summary>Uma regra sugerida que pegaria pelo menos isto de transações de outras categorias ganha um aviso.</summary>
+    private const int ConflitosParaAviso = 3;
+    private const double FracaoConflitosParaAviso = 0.2;
+
     /// <summary>Palavra-chave (sem acento, maiúscula) → nome da categoria padrão.</summary>
     private static readonly (string Palavra, string Categoria)[] PalavrasChave =
     {
@@ -93,6 +108,10 @@ public class SugestaoCategoriaService
         public Dictionary<string, Dictionary<int, double>> PorPalavra { get; } = new();
         public Dictionary<int, Categoria> Categorias { get; init; } = new();
         public Dictionary<string, int> PorNome { get; init; } = new();
+        /// <summary>#254: o texto que as regras testam (descrição do banco, normalizada) e a categoria de cada transação.</summary>
+        public List<(string Texto, int CategoriaId)> Textos { get; } = new();
+        /// <summary>#254: regras "contém" que já existem: texto normalizado → categoria.</summary>
+        public Dictionary<string, int> Regras { get; init; } = new();
     }
 
     /* ------------------------------ normalização ------------------------------ */
@@ -121,11 +140,16 @@ public class SugestaoCategoriaService
     {
         var categorias = await _db.Categorias.AsNoTracking()
             .Select(c => new Categoria(c.Id, c.Nome, c.Cor, c.Tipo)).ToListAsync(ct);
+        var regras = await _db.RegrasCategorizacao.AsNoTracking()
+            .Where(r => r.TipoCorrespondencia == TipoCorrespondencia.Contem)
+            .Select(r => new { r.Texto, r.CategoriaId }).ToListAsync(ct);
         var indice = new Indice
         {
             Categorias = categorias.ToDictionary(c => c.Id),
             PorNome = categorias.GroupBy(c => CategorizacaoService.Normalizar(c.Nome))
-                .ToDictionary(g => g.Key, g => g.First().Id)
+                .ToDictionary(g => g.Key, g => g.First().Id),
+            Regras = regras.GroupBy(r => CategorizacaoService.Normalizar(r.Texto))
+                .ToDictionary(g => g.Key, g => g.First().CategoriaId)
         };
 
         var desde = Relogio.Hoje.AddDays(-DiasHistorico);
@@ -142,6 +166,7 @@ public class SugestaoCategoriaService
             if (chave.Length > 0) Somar(indice.PorChave, chave, h.CategoriaId, peso);
             var primeira = Palavras(texto).FirstOrDefault();
             if (primeira is not null && primeira.Length >= 4) Somar(indice.PorPalavra, primeira, h.CategoriaId, peso);
+            indice.Textos.Add((CategorizacaoService.Normalizar(h.DescricaoOriginal ?? h.Descricao), h.CategoriaId));
         }
         return indice;
     }
@@ -244,10 +269,12 @@ public class SugestaoCategoriaService
             if (!somenteSemCategoria && (opcoes.Count == 0 || opcoes[0].CategoriaId == categoriaAtual)) continue;
 
             var principal = opcoes.FirstOrDefault();
+            // #254: a regra testa a descrição do banco (CategorizacaoService.Resolver), e não o estabelecimento da chave.
+            var textoRegra = TextoRegra(g.Itens.Select(t => t.DescricaoOriginal ?? t.Descricao));
             resultado.Add(new SugestaoCategoriaDto(g.Chave, exemplo.Descricao, g.Itens.Count,
                 Math.Round(g.Itens.Sum(t => t.Valor), 2), g.Itens.Select(t => t.Id).Take(1000).ToList(),
                 principal?.CategoriaId, principal?.Nome, principal?.Cor, confianca, principal?.Motivo,
-                TextoRegra(g.Chave), opcoes.Skip(1).ToList()));
+                textoRegra, opcoes.Skip(1).ToList(), AvisoRegra(indice, textoRegra, principal?.CategoriaId)));
         }
 
         // Primeiro o que dá para aplicar com segurança; depois os grupos maiores.
@@ -266,12 +293,74 @@ public class SugestaoCategoriaService
         return opcoes;
     }
 
-    /// <summary>Texto sugerido para criar uma regra "contém" (a palavra mais característica do grupo).</summary>
-    private static string TextoRegra(string chave)
+    /// <summary>
+    /// Texto sugerido para a regra "contém", tirado das descrições do banco do grupo (o que a regra testa, #254): a primeira
+    /// palavra que identifica (não genérica, com 4 letras ou mais) presente em quase todas; curta, vai junto com a seguinte
+    /// (ex.: "UBER EATS"). Sem palavra assim, o começo comum das descrições, se for longo e tiver alguma palavra que
+    /// identifique (ex.: "PAGAMENTO CARTAO CREDITO BCE"); senão, vazio (sem regra).
+    /// </summary>
+    public static string TextoRegra(IEnumerable<string?> descricoes)
     {
-        var palavras = chave.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (palavras.Length == 0) return chave;
-        // Duas primeiras palavras quando a primeira é curta (ex.: "POSTO SHELL"), senão só a primeira.
-        return palavras[0].Length <= 4 && palavras.Length > 1 ? $"{palavras[0]} {palavras[1]}" : palavras[0];
+        var textos = descricoes.Select(CategorizacaoService.Normalizar).Where(t => t.Length > 0).Distinct().ToList();
+        if (textos.Count == 0) return string.Empty;
+        var listas = textos.Select(Palavras).ToList();
+        var minimo = Math.Max(1, (int)Math.Ceiling(textos.Count * 0.8));
+        var primeiras = listas[0];
+        var palavra = primeiras
+            .Where(p => p.Length >= 4 && !GenericasParaRegra.Contains(p))
+            .FirstOrDefault(p => listas.Count(l => l.Contains(p)) >= minimo);
+        if (palavra is not null)
+        {
+            var i = primeiras.IndexOf(palavra);
+            if (palavra.Length <= 4 && i + 1 < primeiras.Count)
+            {
+                var dupla = $"{palavra} {primeiras[i + 1]}";
+                if (textos.Count(t => t.Contains(dupla, StringComparison.Ordinal)) >= minimo) return dupla;
+            }
+            return palavra;
+        }
+        // O começo comum só serve se tiver alguma palavra que identifique: "PIX ENVIADO" sozinho pegaria todo Pix.
+        var prefixo = PrefixoComum(textos);
+        return prefixo.Length >= 10 && Palavras(prefixo).Any(p => !GenericasParaRegra.Contains(p)) ? prefixo : string.Empty;
     }
+
+    /// <summary>Começo comum dos textos, cortado no fim da última palavra inteira.</summary>
+    private static string PrefixoComum(List<string> textos)
+    {
+        var tamanho = textos.Min(t => t.Length);
+        var n = 0;
+        while (n < tamanho && textos.All(t => t[n] == textos[0][n])) n++;
+        var prefixo = textos[0][..n];
+        if (n < textos[0].Length && char.IsLetterOrDigit(textos[0][n]) && textos.All(t => t.Length > n))
+            prefixo = prefixo[..Math.Max(0, prefixo.LastIndexOf(' '))];
+        return prefixo.Trim();
+    }
+
+    /// <summary>
+    /// #254: por que não criar a regra sugerida sem olhar: ela já existe, ou o texto também aparece em transações de
+    /// outras categorias (a regra mudaria as próximas assim). Nulo quando não há nada a avisar.
+    /// </summary>
+    private static string? AvisoRegra(Indice indice, string texto, int? categoria)
+    {
+        if (texto.Length == 0) return null;
+        if (indice.Regras.TryGetValue(texto, out var existente))
+            return existente == categoria
+                ? $"A regra \"{texto}\" já existe."
+                : $"Já existe a regra \"{texto}\" para {NomeCategoria(indice, existente)}.";
+        var achadas = 0;
+        var outras = new Dictionary<int, int>();
+        foreach (var (t, c) in indice.Textos)
+        {
+            if (!t.Contains(texto, StringComparison.Ordinal)) continue;
+            achadas++;
+            if (c != categoria) outras[c] = outras.GetValueOrDefault(c) + 1;
+        }
+        var conflitos = outras.Values.Sum();
+        if (conflitos < ConflitosParaAviso || conflitos < achadas * FracaoConflitosParaAviso) return null;
+        var exemplos = string.Join(", ", outras.OrderByDescending(o => o.Value).Take(2).Select(o => NomeCategoria(indice, o.Key)));
+        return $"\"{texto}\" também aparece em {conflitos} transações de outras categorias ({exemplos}).";
+    }
+
+    private static string NomeCategoria(Indice indice, int id) =>
+        indice.Categorias.TryGetValue(id, out var c) ? c.Nome : "outra categoria";
 }

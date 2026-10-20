@@ -571,8 +571,10 @@ export const MANUAL: CapituloManual[] = [
           'Escolha “Sem categoria” ou “Revisar automáticas”.',
           'Cada grupo mostra quantas transações tem, a sugestão e a confiança (alta, média, palavra-chave).',
           'Ajuste a categoria se precisar, marque a caixa da coluna “Regra” se quiser que as próximas venham sozinhas, e clique em “Aplicar”.',
-          '“Aplicar as N de confiança alta” resolve de uma vez os grupos mais certos.'
+          '“Aplicar as N de confiança alta” resolve de uma vez os grupos mais certos.',
+          'O texto da regra sai da descrição do banco, que é o que a regra confere. A caixa vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. Sem um texto que identifique só aquele grupo (ex.: Pix para pessoas diferentes), não há regra: categorize sem ela.'
         ],
+        erros: ['Duas linhas com a mesma regra (ex.: “contém MERCADOLIVRE”) e categorias diferentes: só uma regra pode valer. “Aplicar as N de confiança alta” categoriza as duas, mas não cria essa regra; escolha a categoria certa e crie a regra numa das linhas, ou em Categorias e regras.'],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }]
       },
       {

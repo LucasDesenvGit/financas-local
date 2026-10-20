@@ -474,8 +474,20 @@ function dataCurta(iso: string, comAno: boolean): string {
                         @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ rotuloCategoria(c) }}</option> }
                       </select>
                     </td>
-                    <td><label class="checkbox"><input type="checkbox" [(ngModel)]="l.criarRegra" [disabled]="l.aplicada">
-                      <small>contém "{{ l.textoRegra }}"</small></label></td>
+                    <td>
+                      @if (l.textoRegra) {
+                        <label class="checkbox"><input type="checkbox" [(ngModel)]="l.criarRegra" [disabled]="l.aplicada">
+                          <small>contém "{{ l.textoRegra }}"</small></label>
+                        <!-- #254: o porquê de a regra vir desmarcada, em texto (WCAG 3.3.1), sem esconder a escolha. -->
+                        @if (conflitoRegra(l); as outra) {
+                          <small class="aviso-regra texto-alerta">Outra linha cria esta regra para {{ outra }}: só uma pode valer.</small>
+                        } @else if (l.avisoRegra) {
+                          <small class="aviso-regra texto-alerta">{{ l.avisoRegra }}</small>
+                        }
+                      } @else {
+                        <small class="texto-suave">Sem texto que identifique só estas transações: categorize sem regra.</small>
+                      }
+                    </td>
                     <td>
                       @if (l.aplicada) {
                         <span class="etiqueta etiqueta-sucesso">aplicada</span>
@@ -546,6 +558,9 @@ function dataCurta(iso: string, comAno: boolean): string {
     .tabela-sugestoes td { vertical-align: top; }
     .tabela-sugestoes td:first-child { max-width: 280px; }
     .tabela-sugestoes select { min-width: 180px; }
+    /* #254: o margin-top negativo dos chips (feito para o formulário) puxava os chips para cima do motivo. */
+    .tabela-sugestoes .sugestoes-chips { margin-top: 6px; }
+    .tabela-sugestoes .aviso-regra { display: block; max-width: 240px; margin-top: 4px; font-size: 0.78rem; }
     tr.encerrada td { opacity: 0.55; }
     .barra-edicao { margin-bottom: 14px; }
     .barra-edicao .bloco-titulo { flex-wrap: wrap; gap: 10px; }
@@ -647,6 +662,8 @@ export class TransacoesComponent implements OnInit {
   readonly carregandoSugestoes = signal(false);
   readonly somenteSemCategoria = signal(true);
   readonly linhasSugestao = signal<LinhaSugestao[]>([]);
+  /** #254: regras criadas nesta janela de sugestões (texto em maiúsculas → categoria), para não criar outra igual. */
+  private readonly regrasCriadas = new Map<string, number>();
   private sugestoesAlteraram = false;
 
   readonly contasManuais = computed(() => this.contas().filter((c) => c.origem === OrigemConta.Manual));
@@ -1328,9 +1345,18 @@ export class TransacoesComponent implements OnInit {
     this.api.sugestoesCategoria(this.somenteSemCategoria(), 365).subscribe({
       next: (s) => {
         this.carregandoSugestoes.set(false);
+        // #254: mesmo texto de regra com categorias diferentes em linhas diferentes: nenhuma vem marcada.
+        const categoriasPorTexto = new Map<string, Set<number | null>>();
+        for (const x of s) {
+          if (!x.textoRegra) continue;
+          const chave = x.textoRegra.toUpperCase();
+          categoriasPorTexto.set(chave, (categoriasPorTexto.get(chave) ?? new Set()).add(x.categoriaId));
+        }
+        this.regrasCriadas.clear();
         this.linhasSugestao.set(s.map((x) => ({
           ...x, escolhida: x.categoriaId, aplicada: false,
-          criarRegra: x.confianca === 'alta' && x.quantidade >= 3 && x.textoRegra.length >= 4
+          criarRegra: x.confianca === 'alta' && x.quantidade >= 3 && x.textoRegra.length >= 4 && !x.avisoRegra
+            && (categoriasPorTexto.get(x.textoRegra.toUpperCase())?.size ?? 0) <= 1
         })));
       },
       error: (e) => {
@@ -1356,7 +1382,11 @@ export class TransacoesComponent implements OnInit {
         this.salvando.set(false);
         this.sugestoesAlteraram = true;
         this.linhasSugestao.update((linhas) => linhas.map((x) => (x.chave === l.chave ? { ...x, aplicada: true } : x)));
-        if (l.criarRegra && l.textoRegra.trim()) {
+        const conflito = this.conflitoRegra({ ...l, criarRegra: true });
+        if (l.criarRegra && l.textoRegra.trim() && conflito) {
+          this.avisos.erro(`A regra "${l.textoRegra}" não foi criada: outra linha a usa para ${conflito}. Categorize sem regra, ou crie a regra certa em Categorias e regras.`);
+        } else if (l.criarRegra && l.textoRegra.trim()) {
+          this.regrasCriadas.set(l.textoRegra.trim().toUpperCase(), categoriaId);
           this.api.criarRegra({
             texto: l.textoRegra.trim(), tipoCorrespondencia: TipoCorrespondencia.Contem, categoriaId, prioridade: 100, ativa: true
           }).subscribe({ error: (e) => this.avisos.erro(`Regra "${l.textoRegra}": ${mensagemDeErro(e)}`) });
@@ -1372,9 +1402,33 @@ export class TransacoesComponent implements OnInit {
 
   aplicarConfiancaAlta(): void {
     const linhas = this.linhasSugestao().filter((l) => !l.aplicada && l.confianca === 'alta' && l.escolhida);
-    if (!linhas.length || !confirm(`Aplicar ${linhas.length} sugestão(ões) de confiança alta?`)) return;
-    for (const l of linhas) this.aplicarSugestao(l, true);
-    this.avisos.sucesso(`${linhas.length} grupo(s) categorizado(s).`);
+    if (!linhas.length) return;
+    // #254: duas linhas com a mesma regra e categorias diferentes: categoriza as duas, mas nenhuma cria a regra.
+    const semRegra = linhas.filter((l) => l.criarRegra && this.conflitoRegra(l));
+    const nota = semRegra.length
+      ? `\n\nSem regra (o mesmo texto com categorias diferentes): ${[...new Set(semRegra.map((l) => `"${l.textoRegra}"`))].join(', ')}.`
+      : '';
+    if (!confirm(`Aplicar ${linhas.length} sugestão(ões) de confiança alta?${nota}`)) return;
+    for (const l of linhas) this.aplicarSugestao(semRegra.includes(l) ? { ...l, criarRegra: false } : l, true);
+    this.avisos.sucesso(`${linhas.length} grupo(s) categorizado(s)` + (semRegra.length ? `; ${semRegra.length} sem regra, por conflito.` : '.'));
+  }
+
+  /**
+   * #254: o nome da outra categoria quando a regra desta linha ("contém X") também é pedida, com categoria diferente,
+   * por outra linha marcada ou já foi criada nesta janela. Duas regras iguais com categorias diferentes: só uma vale.
+   */
+  conflitoRegra(l: LinhaSugestao): string | null {
+    if (!l.criarRegra || !l.textoRegra) return null;
+    const texto = l.textoRegra.trim().toUpperCase();
+    const criada = this.regrasCriadas.get(texto);
+    if (criada !== undefined && criada !== l.escolhida) return this.nomeCategoria(criada);
+    const outra = this.linhasSugestao().find((x) => x.chave !== l.chave && !x.aplicada && x.criarRegra
+      && x.textoRegra.trim().toUpperCase() === texto && x.escolhida !== l.escolhida);
+    return outra ? this.nomeCategoria(outra.escolhida) : null;
+  }
+
+  private nomeCategoria(id: number | null): string {
+    return this.categorias().find((c) => c.id === id)?.nome ?? 'outra categoria';
   }
 
   fecharSugestoes(): void {
