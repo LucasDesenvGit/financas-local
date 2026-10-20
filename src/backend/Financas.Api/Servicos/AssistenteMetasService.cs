@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Financas.Api.Data;
 using Financas.Api.Dtos;
 using Financas.Api.Entidades;
@@ -24,7 +23,7 @@ namespace Financas.Api.Servicos;
 /// Limites para o mês atual: o saldo previsto nas contas no fim do mês (depois de pagar a fatura) e o melhor mês recente
 /// (quanto de fato sobrou). Julgamento próprio, não validado com uso real.
 /// </summary>
-public partial class AssistenteMetasService
+public class AssistenteMetasService
 {
     public const int MinimoMesesHistorico = 3;
     /// <summary>Até onde o caixa é estimado (a data provável de uma meta pode estar longe).</summary>
@@ -71,10 +70,11 @@ public partial class AssistenteMetasService
         var mediaReceitas = Receitas(inicioHistorico, fimHistorico) / mesesConsiderados;
         var mediaDespesas = Despesas(inicioHistorico, fimHistorico) / mesesConsiderados;
 
-        // Cartões: tudo o que entra na fatura (como a "fatura do mês", #144), inclusive o marcado para ignorar nos relatórios.
+        // Cartões: tudo o que entra na fatura (como a "fatura do mês", #144), inclusive o marcado para ignorar nos relatórios
+        // e as parcelas que o banco já mandou com data futura.
         var desdeCartao = inicioHistorico.AddDays(-62);
         var lancamentosCartao = await _db.Transacoes.AsNoTracking()
-            .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desdeCartao && t.Data <= hoje
+            .Where(t => idsCartoes.Contains(t.ContaId) && t.Data >= desdeCartao
                         && t.Tipo != TipoTransacao.Transferencia
                         && (t.MeioPagamento == null || t.MeioPagamento != "PAGAMENTO_FATURA"))
             .Select(t => new LancamentoCartao(t.ContaId, t.Data, t.Valor, t.ParcelaNumero, t.ParcelaTotal,
@@ -85,7 +85,13 @@ public partial class AssistenteMetasService
             .Where(t => t.Data >= inicioHistorico && t.Data <= fimHistorico && !t.Parcelado)
             .GroupBy(t => t.ContaId)
             .ToDictionary(g => g.Key, g => Math.Max(0m, -g.Sum(t => t.Valor)) / mesesConsiderados / DiasPorMes);
-        var parcelasFuturas = ParcelasFuturas(lancamentosCartao, hoje);
+        // Só as projetadas: as que já estão no banco entram pelo lançamento, no ciclo da data delas (#165).
+        var desdeParcelas = hoje.AddDays(-ParcelasFuturas.DiasRecentes);
+        var parcelasFuturas = ParcelasFuturas.Projetar(lancamentosCartao
+                .Where(t => t.Data >= desdeParcelas && t.Valor < 0 && t.Parcelado && t.ParcelaNumero is not null)
+                .Select(t => new ParcelasFuturas.Parcela(t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
+                    t.Descricao)), hoje)
+            .Where(p => !p.JaNoBanco).ToList();
 
         var faturasImportadas = (await _db.FaturasCartao.AsNoTracking()
                 .Where(f => idsCartoes.Contains(f.ContaId))
@@ -177,31 +183,4 @@ public partial class AssistenteMetasService
     {
         public bool Parcelado => ParcelaTotal is > 1;
     }
-
-    private sealed record ParcelaFutura(int ContaId, DateOnly Data, decimal Valor);
-
-    /// <summary>
-    /// Parcelas que ainda vão cair nos cartões, a partir das lançadas nos últimos 45 dias (uma parcela por mês, como na
-    /// Projeção). De cada compra parcelada vale só a parcela mais recente: com duas parcelas da mesma compra na janela,
-    /// projetar as duas contaria o resto em dobro.
-    /// </summary>
-    private static List<ParcelaFutura> ParcelasFuturas(IEnumerable<LancamentoCartao> lancamentos, DateOnly hoje)
-    {
-        var desde = hoje.AddDays(-45);
-        return lancamentos
-            .Where(t => t.Data >= desde && t.Valor < 0 && t.Parcelado && t.ParcelaNumero is { } n && n < t.ParcelaTotal)
-            .GroupBy(t => (t.ContaId, t.ParcelaTotal, Valor: Math.Round(t.Valor, 2), Compra: SemNumeroDaParcela(t.Descricao)))
-            .Select(g => g.MaxBy(t => t.ParcelaNumero)!)
-            .SelectMany(t => Enumerable.Range(1, t.ParcelaTotal!.Value - t.ParcelaNumero!.Value)
-                .Select(k => new ParcelaFutura(t.ContaId, t.Data.AddMonths(k), Math.Abs(t.Valor))))
-            .Where(p => p.Data > hoje)
-            .ToList();
-    }
-
-    /// <summary>Descrição sem o "03/10" ou "PARC 3 DE 10" de cada parcela, para juntar as parcelas da mesma compra.</summary>
-    private static string SemNumeroDaParcela(string descricao)
-        => NumeroDaParcela().Replace(descricao.ToUpperInvariant(), " ").Trim();
-
-    [GeneratedRegex(@"\bPARC(ELA)?\b\.?|\d{1,3}\s*(/|DE)\s*\d{1,3}|\s+")]
-    private static partial Regex NumeroDaParcela();
 }

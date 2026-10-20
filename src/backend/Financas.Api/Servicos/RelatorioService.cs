@@ -269,22 +269,20 @@ public class RelatorioService
                 .ToList();
         }
 
-        // Parcelas futuras: a partir das parcelas lançadas nos últimos 31 dias, projeta as que faltam.
-        var limiteParcelas = hoje.AddDays(-31);
+        // Parcelas futuras (#165): as que o banco já mandou com data futura e, depois da última de cada compra, as
+        // projetadas. Uma compra só uma vez, mesmo com várias parcelas recentes.
+        var limiteParcelas = hoje.AddDays(-ParcelasFuturas.DiasRecentes);
         var parcelas = await _db.Transacoes.AsNoTracking()
             .Where(t => t.Data >= limiteParcelas && t.Valor < 0 && !t.IgnorarRelatorios
-                        && t.ParcelaTotal != null && t.ParcelaNumero != null && t.ParcelaNumero < t.ParcelaTotal)
-            .Select(t => new { t.Data, t.Valor, Numero = t.ParcelaNumero!.Value, Total = t.ParcelaTotal!.Value })
+                        && t.ParcelaTotal != null && t.ParcelaTotal > 1 && t.ParcelaNumero != null)
+            .Select(t => new ParcelasFuturas.Parcela(t.ContaId, t.Data, t.Valor, t.ParcelaNumero!.Value, t.ParcelaTotal!.Value,
+                t.DescricaoOriginal ?? t.Descricao))
             .ToListAsync(ct);
         var parcelasPorMes = new Dictionary<(int Ano, int Mes), decimal>();
-        foreach (var p in parcelas)
+        foreach (var p in ParcelasFuturas.Projetar(parcelas, hoje))
         {
-            for (var k = 1; k <= p.Total - p.Numero; k++)
-            {
-                var d = p.Data.AddMonths(k);
-                var chave = (d.Year, d.Month);
-                parcelasPorMes[chave] = parcelasPorMes.GetValueOrDefault(chave) + Math.Abs(p.Valor);
-            }
+            var chave = (p.Data.Year, p.Data.Month);
+            parcelasPorMes[chave] = parcelasPorMes.GetValueOrDefault(chave) + p.Valor;
         }
 
         // Saldo disponível hoje: contas (exceto investimentos) − faturas de cartão.
