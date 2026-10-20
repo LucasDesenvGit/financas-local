@@ -99,7 +99,7 @@ Pedido do usuário: deixar o `.msi` do `develop` à mão e garantir que quem já
 - **Pré-lançamento `desenvolvimento`:**
   - a cada push no `develop`, depois de todos os testes (instalar, trocar, atualizar, desinstalar, migrar dos scripts), o workflow apaga e recria o pré-lançamento com a tag `desenvolvimento`, apontando para o commit;
   - o arquivo tem nome fixo, `FinancasLocal-desenvolvimento.msi`, com o `SHA256SUMS.txt`, então o link não muda;
-  - o gerenciador só consulta `releases/latest`, e pré-lançamento nunca é o "latest": quem está no Release não recebe aviso de versão de desenvolvimento.
+  - o gerenciador só consulta `releases/latest`, e pré-lançamento nunca é o "latest": quem está no Release não recebe aviso de versão de desenvolvimento. *(Ajustado pela ADR 0040: com uma versão de desenvolvimento instalada, o gerenciador consulta o pré-lançamento "desenvolvimento".)*
 - **Gerenciador na instalação pelos scripts (ADR 0028):** continua sem instalar o `.msi` sozinho. Mostra o caminho: rodar os scripts de novo, ou o botão **Baixar o instalador .msi**, que abre a página da versão mais recente. O `.msi` migra a instalação (item 2 da ação personalizada).
 
 **Alternativas consideradas:**

@@ -226,7 +226,7 @@ jobs:
       - name: Instalação antiga (instalar-windows.ps1)
         shell: powershell
         run: |
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\instalar-windows.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Usuário na instalação antiga
@@ -302,7 +302,7 @@ jobs:
             echo
             echo "- **Instalar ou atualizar:** baixe o \`FinancasLocal-desenvolvimento.msi\` e abra. Ele troca a versão instalada (pelo \`.msi\` ou pelos scripts) e mantém os dados."
             echo "- **Voltar para a versão publicada:** instale o \`.msi\` da versão mais recente por cima; a mesma versão X.Y.Z troca uma pela outra."
-            echo "- **Avisos do gerenciador:** ele só avisa de versões publicadas, não destas."
+            echo "- **Avisos do gerenciador:** instalado este \`.msi\`, o gerenciador avisa e atualiza para a versão de desenvolvimento mais nova (ADR 0040). Quem tem uma versão publicada não recebe aviso destas."
             echo
             awk '/^## \[Não publicado\]/{f=1; next} /^## \[/{if (f) exit} f' CHANGELOG.md
           } > notas.md

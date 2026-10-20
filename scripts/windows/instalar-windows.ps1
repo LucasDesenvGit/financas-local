@@ -3,7 +3,7 @@
     Instala ou atualiza o FinancasLocal no Windows, sem bash: ambiente, banco e publicacao.
 
 .DESCRIPTION
-    Equivalente, no Windows, a scripts/instalar.sh (etapas 1, 2 e 3). Usa so o que vem com o
+    Equivalente, no Windows, a scripts/geral/instalar.sh (etapas 1, 2 e 3). Usa so o que vem com o
     Windows (Windows PowerShell 5.1) e baixa o resto para ferramentas\:
       1) Node.js LTS, .NET 10 SDK e sqlite3 portateis (reaproveita dotnet 10.x e sqlite3 do PATH),
          todos por HTTPS e conferidos pelo hash publicado pela origem
@@ -38,8 +38,7 @@ $ProgressPreference = "SilentlyContinue"   # a barra de progresso deixa o Invoke
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # ---------------------------------------------------------------- Pastas (mesma convencao do comum.sh)
-$PastaScripts = $PSScriptRoot
-$Raiz = Split-Path -Parent $PastaScripts
+$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Ferramentas = Join-Path $Raiz "ferramentas"
 $Instaladores = Join-Path $Raiz "instaladores"
 $Dados = Join-Path $Raiz "dados"
@@ -336,7 +335,7 @@ function Criar-Banco {
     # A lista de colunas novas fica so no 2-criar-banco.sh (linhas adicionar_coluna_se_ausente),
     # para nao precisar manter duas copias.
     Etapa "[2/3] Adicionando colunas novas em tabelas existentes"
-    $scriptBanco = Join-Path $PastaScripts "2-criar-banco.sh"
+    $scriptBanco = Join-Path $Raiz "scripts\geral\2-criar-banco.sh"
     $padrao = '^\s*adicionar_coluna_se_ausente\s+"([A-Za-z0-9_]+)"\s+"([A-Za-z0-9_]+)"\s+"([^"]+)"'
     $total = 0
     foreach ($linha in (Get-Content -LiteralPath $scriptBanco)) {

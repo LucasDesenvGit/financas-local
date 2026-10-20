@@ -3,7 +3,7 @@
     Para tudo o que o FinancasLocal deixou rodando no Windows, sem bash.
 
 .DESCRIPTION
-    Equivalente, no Windows, a scripts/parar.sh (que repassa para este script quando roda no Git Bash):
+    Equivalente, no Windows, a scripts/geral/parar.sh (que repassa para este script quando roda no Git Bash):
       1) Servico do Windows "FinancasLocal", que hospeda a API e o front publicado
       2) API rodando fora do servico (dotnet run, Visual Studio, publicado\api na mao)
       3) Front em desenvolvimento (npm start / ng serve e seus processos filhos)
@@ -30,7 +30,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Raiz = Split-Path -Parent $PSScriptRoot
+$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Ferramentas = Join-Path $Raiz "ferramentas"
 $PastaSql = Join-Path (Join-Path $Raiz "dados") "sql"
 $NomeServico = "FinancasLocal"

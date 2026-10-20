@@ -8,8 +8,8 @@
 #  - Pode ser executado novamente: os scripts SQL sao idempotentes
 #
 # Uso:
-#   scripts/2-criar-banco.sh                           # usa dados/sql/FinancasLocal.db
-#   scripts/2-criar-banco.sh /caminho/outro/banco.db    # caminho customizado
+#   scripts/geral/2-criar-banco.sh                           # usa dados/sql/FinancasLocal.db
+#   scripts/geral/2-criar-banco.sh /caminho/outro/banco.db    # caminho customizado
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
