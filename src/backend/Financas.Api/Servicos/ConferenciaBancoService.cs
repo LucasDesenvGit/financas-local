@@ -171,6 +171,11 @@ public class ConferenciaBancoService
             var pistas = new List<PistaConferenciaDto>();
             if (r.InformadoPeloBanco)
                 pistas.Add(new PistaConferenciaDto("Valor que o banco informa pelo Open Finance.", null));
+            else if (r.RestanteDoBanco)
+                pistas.Add(new PistaConferenciaDto(
+                    "Parte do total reservado que o banco informa pelo Open Finance e que não está nas outras reservas da conta. " +
+                    "Conferir as outras ajusta este valor.",
+                    null, "/investimentos", Parametro("aba", "reservas")));
             else if (r.DataConferencia is DateOnly conferida)
                 pistas.Add(new PistaConferenciaDto(
                     $"Conferido em {conferida.ToString("dd/MM/yyyy", PtBr)} e, depois, estimado pelos lançamentos. O rendimento " +
@@ -178,6 +183,10 @@ public class ConferenciaBancoService
             else
                 pistas.Add(new PistaConferenciaDto(
                     "Estimado pelo extrato, sem conferência: pode faltar o dinheiro de antes do primeiro lançamento e o rendimento.",
+                    null, "/investimentos", Parametro("aba", "reservas")));
+            if (r.ForaDaListaDoBanco)
+                pistas.Add(new PistaConferenciaDto(
+                    "Não está na lista de reservas que o banco informa. Se ela já aparece com outro nome, confira esta com zero.",
                     null, "/investimentos", Parametro("aba", "reservas")));
             if (r.Moeda != CambioService.MoedaBase && r.Cotacao is decimal cotacao)
                 pistas.Add(new PistaConferenciaDto(

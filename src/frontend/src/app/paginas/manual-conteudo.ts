@@ -142,7 +142,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
         passos: [
           'Abra Investimentos, na aba Reservas.',
-          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada.',
+          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada. A linha “Reservado” com “restante do total do banco” também não se confere: ela se ajusta quando você confere as outras.',
           'Reserva “estimada” ou “para conferir”: clique em “conferir saldo” e digite o valor que o app do banco mostra, do jeito que aparece lá (ex.: 10.123,42).',
           'Méli Dólar: em “conferir saldo”, escolha se vai digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
           'Confira depois o patrimônio no Painel: ele passa a somar essas reservas.'
@@ -1108,8 +1108,10 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos e reservas da conta.',
         passos: [
-          'Quando o banco informa o valor reservado pelo Open Finance, ele vale: a reserva aparece como “informado pelo banco” e não precisa de conferência.',
-          'Sem essa informação, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
+          'Quando o banco informa pelo Open Finance o valor de uma reserva, pelo nome, ele vale: só essa reserva aparece como “informado pelo banco” e não precisa de conferência.',
+          'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
+          'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
+          'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso no Painel.'
         ],

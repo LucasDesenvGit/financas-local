@@ -590,7 +590,11 @@ public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Sal
     int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
     DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga, bool InformadoPeloBanco = false,
     // #169: o Méli Dólar é uma reserva em dólar: Quantidade (e SaldoConferido) em US$, Saldo em reais pela Cotacao (PTAX).
-    string Moeda = "BRL", decimal? Quantidade = null, decimal? Cotacao = null);
+    string Moeda = "BRL", decimal? Quantidade = null, decimal? Cotacao = null,
+    // #237: a conta tem a lista detalhada do banco e esta reserva do extrato não está nela (continua estimada e conferível).
+    bool ForaDaListaDoBanco = false,
+    // #237: linha com a parte do total reservado informado pelo banco (TotalDoBanco) que não está nas reservas do extrato.
+    bool RestanteDoBanco = false, decimal? TotalDoBanco = null);
 
 /// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
 public record ConferirReservaDto(

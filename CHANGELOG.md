@@ -28,6 +28,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Na dúvida** (duas contas parecidas, conta a pagar sem a conta escolhida ou com outro texto da cobrança), a sugestão mostra "parece ser *nome*" e o botão **"é a mesma"**, que grava a ligação. O aviso tem "Desfazer".
   - **Baixa sozinha** (débito automático e cartão) também grava a ligação na primeira cobrança casada.
   - **Banco:** coluna nova `ContaAgendada.ChaveExtrato`. A API acrescenta sozinha ao iniciar; quem instala pelos scripts roda `scripts/geral/2-criar-banco.sh`.
+- **Investimentos › Reservas: "conferir saldo" voltou nas reservas que o banco não detalha** (#237). Desde a #168, quando a conta tinha o reservado informado pelo Open Finance, todas as reservas dela apareciam como "informado pelo banco" e sem "conferir saldo"; com o banco mandando só o total, as que não eram a de movimento mais recente ficavam com zero. Agora:
+  - "informado pelo banco" só na reserva cujo valor veio, pelo nome, da lista detalhada do banco;
+  - as outras continuam estimadas e com "conferir saldo". A que não está na lista detalhada avisa que pode estar com outro nome;
+  - com só o total, o que ele passa da soma das reservas aparece na linha "Reservado" ("restante do total do banco"), que se ajusta quando você confere as outras.
 - **Acessibilidade achada no teste de ponta a ponta** (varredura de todas as telas no navegador, em computador, celular e tema escuro):
   - **Contraste do tema claro** (WCAG 1.4.3): texto suave, verde, rosa, alerta e emergência ficavam abaixo de 4,5:1 sobre os fundos. Estão um pouco mais escuros, em todas as paletas; um teste confere a conta.
   - **Só com o mouse** (WCAG 2.1.1): abrir uma transação, uma categoria ou uma regra de categorização e reutilizar um resultado da calculadora. Agora o nome é um botão (Tab + Enter); o clique na linha continua valendo.
