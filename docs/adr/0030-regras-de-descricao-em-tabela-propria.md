@@ -1,7 +1,7 @@
 # 0030. Regras de descrição em tabela própria, com o nome do banco sempre guardado
 
 - **Status:** Aceita
-- **Data:** 2026-10-18 (issue #123)
+- **Data:** 2026-10-18 (issue #123); faixa de valor em 2026-10-20 (issue #241)
 - **Relacionadas:** [0003](0003-esquema-por-scripts-sql-idempotentes.md) (esquema por scripts), [0023](0023-edicao-em-massa-no-modo-edicao-de-transacoes.md) (desfazer guardado na API)
 
 ## Contexto
@@ -40,11 +40,19 @@ A regra de descrição precisa de três coisas:
 - Lançamentos manuais não têm `DescricaoOriginal` e nunca entram.
 
 **Qual regra vale** (`RegraDescricaoService`):
-1. a mais específica: "é igual a", depois "começa com", depois "contém";
-2. com o mesmo tipo, o texto mais longo;
-3. com o mesmo texto, a mais antiga.
+1. #241: a que tem faixa de valor, antes das outras;
+2. a mais específica: "é igual a", depois "começa com", depois "contém";
+3. com o mesmo tipo, o texto mais longo;
+4. com o mesmo texto, a mais antiga.
 
 A comparação é com a descrição do banco, sem acento e sem diferença de maiúsculas.
+
+**Faixa de valor** (#241, 20/10/2026): `RegraDescricao.ValorMinimo` e `ValorMaximo`, cada um opcional. Com eles, a regra só vale quando o valor da transação, **sem o sinal**, está na faixa (as duas pontas valem).
+- **Para quê:** separar cobranças com a mesma descrição do banco e valores diferentes, como duas contas do condomínio. Uma regra por faixa, cada uma com o seu nome.
+- **Onde fica:** na regra de descrição, e não na de categoria. Escolha do usuário: o objetivo era ter as duas separadas em Contas a pagar (ADR 0043), e quem diz qual é qual é o nome.
+- **Sincronização:** a regra passa a rodar depois que o valor da transação é gravado.
+- **Renomear em massa:** não reaproveita uma regra "é igual a" que tem faixa, porque ela vale só para parte das transações com aquele texto.
+- **Validação:** "De" maior que "Até" é recusado, na tela (erro em texto, WCAG 3.3.1) e na API.
 
 **Onde as regras valem:**
 - **Sincronização:** a transação de nome automático recebe o nome do banco e passa pelas regras.
@@ -75,6 +83,8 @@ A comparação é com a descrição do banco, sem acento e sem diferença de mai
   - Duas listas de regras na mesma tela (categoria e descrição). A ordem de cada uma tem critério próprio: prioridade na de categoria, especificidade na de descrição.
   - Reaplicar percorre as transações de nome automático em memória (milhares, num computador só): aceitável aqui, mas não é o que se faria com milhões.
   - O "Desfazer" se perde se a API reiniciar nesses 10 minutos.
+  - #241: uma cobrança que muda de valor e sai da faixa volta ao nome do banco, ou ao de outra regra, até a faixa ser editada. Duas faixas que se sobrepõem são aceitas, e vale a ordem acima.
+  - #241: o "Renomear" de uma transação (✎) ainda não cria regra com faixa: ela é criada em Categorias e regras.
 - **Na prática:**
   - Não grave `Transacao.Descricao` direto em código novo de sincronização ou importação: deixe o `RegraDescricaoService.Aplicar` decidir.
   - Ao trocar o nome por uma ação do usuário, marque `DescricaoManual`.

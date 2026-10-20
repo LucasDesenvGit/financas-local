@@ -121,7 +121,14 @@ const respostas: Record<string, unknown> = {
   '/api/transacoes/2/sugestoes-categoria': [],
   '/api/categorias': categorias,
   '/api/regras': [],
-  '/api/regras-descricao': [],
+  // #241: as duas contas do condomínio, separadas pelo valor.
+  '/api/regras-descricao': [
+    { id: 1, texto: 'CONDOMINIO', tipoCorrespondencia: 1, novaDescricao: 'Condomínio — taxa', ativa: true, transacoes: 6,
+      valorMinimo: 800, valorMaximo: 900 },
+    { id: 2, texto: 'CONDOMINIO', tipoCorrespondencia: 1, novaDescricao: 'Condomínio — fundo de reserva', ativa: true,
+      transacoes: 6, valorMinimo: null, valorMaximo: 250 }
+  ],
+  '/api/regras-descricao/previa': { quantidade: 6, exemplos: ['PAGAMENTO CONDOMINIO EDIF SOLAR'] },
   '/api/orcamentos': [],
   '/api/metas': [],
   '/api/reservas': [],

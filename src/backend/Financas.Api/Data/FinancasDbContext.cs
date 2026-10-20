@@ -130,6 +130,8 @@ public class FinancasDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Texto).HasMaxLength(200).IsRequired();
             e.Property(x => x.NovaDescricao).HasMaxLength(300).IsRequired();
+            e.Property(x => x.ValorMinimo).HasPrecision(18, 2);
+            e.Property(x => x.ValorMaximo).HasPrecision(18, 2);
         });
 
         mb.Entity<Conta>(e =>

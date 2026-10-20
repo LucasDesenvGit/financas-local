@@ -12,6 +12,8 @@ namespace Financas.Api.Servicos;
 /// O Open Finance não informa boletos futuros (DDA), então o próximo vencimento é estimado pelo dia habitual.
 /// #158 (ADR 0043): os cartões também entram (assinaturas: valor fixo, ±5%), a assinatura anual é reconhecida, e cada
 /// sugestão diz como é cobrada (à mão, débito automático ou cartão) e o texto que a liga às cobranças.
+/// #241: a transação com o nome de uma regra de descrição com faixa de valor é agrupada por esse nome, e não pela
+/// descrição do banco: duas cobranças com a mesma descrição e valores diferentes viram duas sugestões.
 /// </summary>
 public partial class SugestaoContaAgendadaService
 {
@@ -61,9 +63,10 @@ public partial class SugestaoContaAgendadaService
                 && t.Conta!.Tipo != TipoConta.Investimento && !t.Conta.Arquivada)
             .OrderByDescending(t => t.Data)
             .Select(t => new Lancamento(t.Data, t.Descricao, t.DescricaoOriginal, t.Estabelecimento, t.Valor, t.CategoriaId,
-                t.Categoria != null ? t.Categoria.Nome : null, t.ContaId, t.Conta!.Nome, t.Conta.Tipo))
+                t.Categoria != null ? t.Categoria.Nome : null, t.ContaId, t.Conta!.Nome, t.Conta.Tipo, t.RegraDescricaoId))
             .Take(20000)
             .ToListAsync(ct);
+        var regrasPorValor = await RegraDescricaoService.RegrasPorValorAsync(_db, ct);
 
         var cadastradas = await _db.ContasAgendadas.AsNoTracking()
             .Select(c => new Cadastrada(c.Id, c.Descricao, c.TextoCobranca, c.ChaveExtrato, c.Ativa, c.Valor,
@@ -76,30 +79,47 @@ public partial class SugestaoContaAgendadaService
         // #158: a que já tem o texto da cobrança também não volta como sugestão.
         var textosCadastrados = cadastradas.Select(c => CategorizacaoService.Normalizar(c.TextoCobranca))
             .Where(t => t.Length > 0).ToList();
+        // #241: o nome inteiro, para comparar com o grupo de uma regra com valor ("Condomínio 1" e "Condomínio 2" têm a
+        // mesma chave de três palavras).
+        var nomesCadastrados = cadastradas.Select(c => ChaveDaRegra(c.Descricao)).ToHashSet(StringComparer.Ordinal);
 
         var resultado = new List<SugestaoContaAgendadaDto>();
         var grupos = transacoes
             .Where(t => t.ContaTipo != TipoConta.CartaoCredito || !ParcelaNoTexto(t.DescricaoOriginal ?? t.Descricao))
-            .Select(t => new { T = t, Chave = ChaveDe(t.Estabelecimento ?? t.DescricaoOriginal ?? t.Descricao) })
+            .Select(t =>
+            {
+                var daRegra = t.RegraDescricaoId is int r && regrasPorValor.Contains(r);
+                var chave = daRegra ? ChaveDaRegra(t.Descricao) : ChaveDe(t.Estabelecimento ?? t.DescricaoOriginal ?? t.Descricao);
+                return new { T = t, DaRegra = daRegra, Chave = chave };
+            })
             .Where(x => x.Chave.Length > 0)
-            .GroupBy(x => x.Chave, x => x.T);
+            .GroupBy(x => (x.Chave, x.DaRegra), x => x.T);
 
         foreach (var g in grupos)
         {
+            var (chave, daRegra) = g.Key;
             var todos = g.ToList(); // mais recente primeiro
             var recente = todos[0];
-            if (jaCadastradas.Contains(g.Key) || jaCadastradas.Contains(ChaveDe(recente.Descricao))) continue;
-            var textoRecente = CategorizacaoService.Normalizar(recente.DescricaoOriginal ?? recente.Descricao);
-            if (textosCadastrados.Any(t => textoRecente.Contains(t, StringComparison.Ordinal))) continue;
+            var textoBanco = CategorizacaoService.Normalizar(recente.DescricaoOriginal ?? recente.Descricao);
+            if (jaCadastradas.Contains(chave)) continue;
+            if (daRegra ? nomesCadastrados.Contains(chave)
+                : jaCadastradas.Contains(ChaveDe(recente.Descricao)) || textosCadastrados.Any(t => textoBanco.Contains(t, StringComparison.Ordinal)))
+                continue;
 
             // #158: cada conta ou cartão primeiro (a mesma marca pode aparecer em dois lugares, com valores diferentes);
             // juntas só se nenhuma passar sozinha, o que cobre a assinatura que trocou de cartão no meio do caminho.
             var porConta = todos.GroupBy(t => t.ContaId).ToList();
             var achadas = porConta.Count > 1
-                ? porConta.Select(c => Avaliar($"{g.Key}#{c.Key}", g.Key, c.ToList(), hoje, desdeMensal))
+                ? porConta.Select(c => Avaliar($"{chave}#{c.Key}", chave, c.ToList(), hoje, desdeMensal, daRegra))
                     .OfType<SugestaoContaAgendadaDto>().ToList()
                 : new List<SugestaoContaAgendadaDto>();
-            if (achadas.Count == 0 && Avaliar(g.Key, g.Key, todos, hoje, desdeMensal) is { } juntas) achadas.Add(juntas);
+            if (achadas.Count == 0 && Avaliar(chave, chave, todos, hoje, desdeMensal, daRegra) is { } juntas) achadas.Add(juntas);
+            // #241: uma conta a pagar com o texto da cobrança mais geral (ex.: CONDOMINIO, que está nas duas) só é a
+            // cadastrada de uma delas, a de valor parecido.
+            if (daRegra)
+                achadas.RemoveAll(s => cadastradas.Any(c => CategorizacaoService.Normalizar(c.TextoCobranca) is { Length: > 0 } t
+                    && (chave.Contains(t, StringComparison.Ordinal) || textoBanco.Contains(t, StringComparison.Ordinal))
+                    && ValorPerto(s.Valor, c.Valor)));
             resultado.AddRange(achadas);
         }
 
@@ -152,10 +172,15 @@ public partial class SugestaoContaAgendadaService
         if (c.ContaId is int contaId && contaId != s.ContaId) return false;
         // Anual com anual; a mensal pode ter sido cadastrada como mensal ou única.
         if ((s.Recorrencia == Recorrencia.Anual) != (c.Recorrencia == Recorrencia.Anual)) return false;
-        var referencia = Math.Max(s.Valor, c.Valor);
-        var valorPerto = referencia > 0 && Math.Abs(s.Valor - c.Valor) <= referencia * VariacaoValorFixo;
         var naFaixa = s.ValorVariavel && c.Valor >= s.ValorMinimo && c.Valor <= s.ValorMaximo;
-        return (valorPerto || naFaixa) && DistanciaDias(c, s) <= FolgaDiasParecida;
+        return (ValorPerto(s.Valor, c.Valor) || naFaixa) && DistanciaDias(c, s) <= FolgaDiasParecida;
+    }
+
+    /// <summary>#205: valores a até <see cref="VariacaoValorFixo"/> um do outro.</summary>
+    private static bool ValorPerto(decimal a, decimal b)
+    {
+        var referencia = Math.Max(a, b);
+        return referencia > 0 && Math.Abs(a - b) <= referencia * VariacaoValorFixo;
     }
 
     /// <summary>#205: a mesma conta informada e nenhum texto da cobrança que a ligue a outra coisa.</summary>
@@ -177,14 +202,17 @@ public partial class SugestaoContaAgendadaService
 
     /// <summary>Um lançamento do extrato, como a sugestão precisa dele.</summary>
     private sealed record Lancamento(DateOnly Data, string Descricao, string? DescricaoOriginal, string? Estabelecimento,
-        decimal Valor, int? CategoriaId, string? CategoriaNome, int ContaId, string ContaNome, TipoConta ContaTipo);
+        decimal Valor, int? CategoriaId, string? CategoriaNome, int ContaId, string ContaNome, TipoConta ContaTipo,
+        int? RegraDescricaoId);
 
     /// <summary>
     /// A sugestão de um grupo de lançamentos (mais recente primeiro), ou null se ele não for conta recorrente.
     /// <paramref name="chave"/> identifica a sugestão na tela; <paramref name="chaveTexto"/> dá o texto da cobrança.
+    /// <paramref name="daRegra"/> (#241): o grupo é o nome de uma regra com faixa de valor, e o texto da cobrança é ele
+    /// inteiro (a palavra mais longa, CONDOMINIO, ligaria as duas).
     /// </summary>
     private static SugestaoContaAgendadaDto? Avaliar(string chave, string chaveTexto, List<Lancamento> todos, DateOnly hoje,
-        DateOnly desdeMensal)
+        DateOnly desdeMensal, bool daRegra = false)
     {
         var recente = todos[0];
         var conta = todos.GroupBy(t => t.ContaId).OrderByDescending(c => c.Count()).First().First();
@@ -231,13 +259,13 @@ public partial class SugestaoContaAgendadaService
         var categoria = itens.Where(t => t.CategoriaId != null).GroupBy(t => t.CategoriaId)
             .OrderByDescending(c => c.Count()).Select(c => c.First()).FirstOrDefault();
         var descricao = recente.Descricao.Trim();
-        var termoBusca = TermoBusca(chaveTexto, recente.Estabelecimento, descricao);
+        var termoBusca = daRegra ? descricao[..Math.Min(descricao.Length, 100)] : TermoBusca(chaveTexto, recente.Estabelecimento, descricao);
         var forma = noCartao ? FormaCobranca.CartaoCredito
             : itens.Any(t => EhDebitoAutomatico(t.DescricaoOriginal ?? t.Descricao)) ? FormaCobranca.DebitoAutomatico
             : FormaCobranca.AMao;
         // O texto que liga a conta às cobranças: a palavra mais longa da chave (ex.: "NETFLIX").
-        var textoCobranca = SugestaoCategoriaService.Palavras(chaveTexto).OrderByDescending(p => p.Length).FirstOrDefault()
-            ?? chaveTexto;
+        var textoCobranca = daRegra ? chaveTexto[..Math.Min(chaveTexto.Length, 100)]
+            : SugestaoCategoriaService.Palavras(chaveTexto).OrderByDescending(p => p.Length).FirstOrDefault() ?? chaveTexto;
 
         return new SugestaoContaAgendadaDto(chave,
             descricao.Length > 150 ? descricao[..150] : descricao,
@@ -304,6 +332,16 @@ public partial class SugestaoContaAgendadaService
         if (chave.Length > 0) return chave;
         var texto = CategorizacaoService.Normalizar(descricao);
         return string.Join(' ', texto.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(p => p.All(char.IsLetter)));
+    }
+
+    /// <summary>
+    /// #241: a chave do grupo de uma regra com faixa de valor: o nome inteiro, sem acento e em maiúsculas (com os números:
+    /// "Condomínio 1" e "Condomínio 2" são dois).
+    /// </summary>
+    internal static string ChaveDaRegra(string? nome)
+    {
+        var chave = CategorizacaoService.Normalizar(nome);
+        return chave.Length > 150 ? chave[..150].TrimEnd() : chave;
     }
 
     /// <summary>

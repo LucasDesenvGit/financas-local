@@ -242,13 +242,17 @@ public class RegrasDescricaoController : BaseController
         return regras.Select(r => ParaDto(r, contagem.GetValueOrDefault(r.Id))).ToList();
     }
 
-    /// <summary>Quantas transações de nome automático uma regra nova renomearia (e alguns exemplos).</summary>
+    /// <summary>
+    /// Quantas transações de nome automático uma regra nova renomearia (e alguns exemplos); #241: com a faixa de valor,
+    /// só as que têm o valor nela.
+    /// </summary>
     [HttpGet("previa")]
     public async Task<ActionResult<PreviaRegraDescricaoDto>> Previa([FromQuery] string? texto,
-        [FromQuery] TipoCorrespondencia tipo = TipoCorrespondencia.Contem, CancellationToken ct = default)
+        [FromQuery] TipoCorrespondencia tipo = TipoCorrespondencia.Contem, [FromQuery] decimal? valorMinimo = null,
+        [FromQuery] decimal? valorMaximo = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(texto)) return new PreviaRegraDescricaoDto(0, new());
-        var (quantidade, exemplos) = await _descricoes.PreviaAsync(texto.Trim(), tipo, excetoId: 0, ct);
+        var (quantidade, exemplos) = await _descricoes.PreviaAsync(texto.Trim(), tipo, excetoId: 0, ct, valorMinimo, valorMaximo);
         return new PreviaRegraDescricaoDto(quantidade, exemplos);
     }
 
@@ -256,11 +260,11 @@ public class RegrasDescricaoController : BaseController
     [HttpPost]
     public async Task<ActionResult<RegraDescricaoDto>> Criar(SalvarRegraDescricaoDto dto, CancellationToken ct)
     {
-        if (!Enum.IsDefined(dto.TipoCorrespondencia)) return Erro("Tipo de correspondência inválido.");
+        if (Invalida(dto) is { } erro) return Erro(erro);
         var r = new RegraDescricao
         {
             Texto = dto.Texto.Trim(), TipoCorrespondencia = dto.TipoCorrespondencia, NovaDescricao = dto.NovaDescricao.Trim(),
-            Ativa = dto.Ativa, CriadoEm = DateTime.UtcNow
+            ValorMinimo = dto.ValorMinimo, ValorMaximo = dto.ValorMaximo, Ativa = dto.Ativa, CriadoEm = DateTime.UtcNow
         };
         _db.RegrasDescricao.Add(r);
         await _db.SaveChangesAsync(ct);
@@ -275,10 +279,12 @@ public class RegrasDescricaoController : BaseController
     {
         var r = await _db.RegrasDescricao.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (r is null) return NaoEncontrado();
-        if (!Enum.IsDefined(dto.TipoCorrespondencia)) return Erro("Tipo de correspondência inválido.");
+        if (Invalida(dto) is { } erro) return Erro(erro);
         r.Texto = dto.Texto.Trim();
         r.TipoCorrespondencia = dto.TipoCorrespondencia;
         r.NovaDescricao = dto.NovaDescricao.Trim();
+        r.ValorMinimo = dto.ValorMinimo;
+        r.ValorMaximo = dto.ValorMaximo;
         r.Ativa = dto.Ativa;
         await _db.SaveChangesAsync(ct);
         await _descricoes.ReaplicarAsync(ct);
@@ -307,6 +313,15 @@ public class RegrasDescricaoController : BaseController
         return NoContent();
     }
 
+    private static string? Invalida(SalvarRegraDescricaoDto dto)
+    {
+        if (!Enum.IsDefined(dto.TipoCorrespondencia)) return "Tipo de correspondência inválido.";
+        // #241: as duas pontas são opcionais, mas a de baixo não pode passar a de cima.
+        if (dto.ValorMinimo is { } minimo && dto.ValorMaximo is { } maximo && minimo > maximo)
+            return "O valor \"de\" é maior que o valor \"até\": troque os dois.";
+        return null;
+    }
+
     private static RegraDescricaoDto ParaDto(RegraDescricao r, int transacoes)
-        => new(r.Id, r.Texto, r.TipoCorrespondencia, r.NovaDescricao, r.Ativa, transacoes);
+        => new(r.Id, r.Texto, r.TipoCorrespondencia, r.NovaDescricao, r.Ativa, transacoes, r.ValorMinimo, r.ValorMaximo);
 }

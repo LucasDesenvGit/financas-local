@@ -80,6 +80,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Regras de descrição por valor** (#241, ADR 0030 e 0043): separam cobranças que chegam do banco com a mesma descrição e só mudam no valor, como duas contas do condomínio.
+  - **Em Categorias e regras › Regras de descrição**, o grupo novo **"E o valor (opcional)"**: "De" e "Até", um dos dois basta. A regra só vale com o valor, sem o sinal, na faixa, e vem antes das regras sem valor. A lista ganhou a coluna "Valor", e a prévia já conta só as transações da faixa.
+  - **Em Contas a pagar**, o nome dado por uma regra com valor é o que liga as cobranças: as "Sugestões do extrato" mostram as duas separadas, com o texto da cobrança igual ao nome, e a baixa sozinha e os avisos não misturam mais uma com a outra.
+  - **Já tinha cadastrado as contas?** Troque o texto da cobrança de cada uma pelo nome da regra (ex.: CONDOMINIO — TAXA). Um texto que as duas têm (só CONDOMINIO) continua ligando as duas.
+  - **Banco:** colunas novas `RegraDescricao.ValorMinimo` e `ValorMaximo`. A API acrescenta sozinha ao iniciar; quem instala pelos scripts roda `scripts/geral/2-criar-banco.sh`.
 - **Menu lateral em grupos que abrem e fecham** (#227, ADR 0046). As telas ficam juntas por assunto, com os mesmos nomes do roteiro de primeiro uso: o Painel no topo; **Movimentação** (Transações, Contas e cartões, Contas a pagar); **Planejamento** (Orçamentos, Metas); **Patrimônio** (Investimentos, Empréstimos e financiamentos); **Análises** (Relatórios, Visão anual, Projeção); **Ajustes** (Categorias e regras, Configurações); e o Manual no rodapé.
   - Clique (ou Enter e Espaço) no nome do grupo mostra ou esconde as telas dele. Vários grupos podem ficar abertos; na primeira vez, todos vêm abertos.
   - A escolha fica salva neste navegador. Ao entrar numa tela, o grupo dela abre sozinho; com o grupo fechado, o nome dele fica destacado, para mostrar onde você está.

@@ -547,7 +547,10 @@ public class TransacoesController : BaseController
         var alteradas = new List<RegraAntes>();
         if (originais.Count > 0)
         {
-            var existentes = await _db.RegrasDescricao.Where(r => r.TipoCorrespondencia == TipoCorrespondencia.Igual).ToListAsync(ct);
+            // #241: a regra com faixa de valor vale só para parte das transações com o texto; não é reaproveitada aqui.
+            var existentes = await _db.RegrasDescricao
+                .Where(r => r.TipoCorrespondencia == TipoCorrespondencia.Igual && r.ValorMinimo == null && r.ValorMaximo == null)
+                .ToListAsync(ct);
             foreach (var original in originais)
             {
                 var normalizado = CategorizacaoService.Normalizar(original);

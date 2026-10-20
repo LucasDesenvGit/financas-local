@@ -10,6 +10,7 @@ namespace Financas.Api.Servicos;
 /// como paga quando a transação chega no extrato: o último pagamento vai para a data dela e o próximo vencimento
 /// avança, como no "Pagar". Roda no fim da sincronização, ao iniciar a API e ao salvar uma conta a pagar.
 /// #205: a cobrança casada também grava a chave do extrato na conta a pagar (a sugestão dela não volta).
+/// #241: a transação com o nome de uma regra de descrição com faixa de valor é reconhecida por esse nome (<see cref="TextoDaCobranca"/>).
 /// </summary>
 public class ContaAgendadaService
 {
@@ -20,6 +21,15 @@ public class ContaAgendadaService
 
     public ContaAgendadaService(FinancasDbContext db) => _db = db;
 
+    /// <summary>
+    /// O texto da transação que o texto da cobrança procura: a descrição do banco (o nome que você deu, #123, não
+    /// atrapalha), menos quando o nome veio de uma regra com faixa de valor (#241). Aí as duas cobranças têm a mesma
+    /// descrição do banco, e é o nome da regra que diz qual é qual.
+    /// </summary>
+    public static string TextoDaCobranca(string descricao, string? descricaoOriginal, int? regraDescricaoId,
+        HashSet<int> regrasPorValor)
+        => regraDescricaoId is int id && regrasPorValor.Contains(id) ? descricao : descricaoOriginal ?? descricao;
+
     /// <summary>Não salva: chame SaveChangesAsync. Devolve quantas contas a pagar mudaram.</summary>
     public async Task<int> ConciliarAsync(CancellationToken ct)
     {
@@ -28,17 +38,23 @@ public class ContaAgendadaService
             .Where(c => c.Ativa && c.FormaCobranca != FormaCobranca.AMao && c.TextoCobranca != null)
             .ToListAsync(ct);
         var mudaram = 0;
+        var regrasPorValor = itens.Count > 0 ? await RegraDescricaoService.RegrasPorValorAsync(_db, ct) : [];
         foreach (var c in itens)
         {
             var texto = CategorizacaoService.Normalizar(c.TextoCobranca);
             if (texto.Length == 0) continue;
             var desde = c.ProximoVencimento.AddDays(-DiasAntesDoVencimento);
             var contaId = c.ContaId;
-            // A descrição original do banco: o nome que você deu à transação (#123) não atrapalha.
-            var candidatas = await _db.Transacoes.AsNoTracking()
+            var candidatas = (await _db.Transacoes.AsNoTracking()
                 .Where(t => t.Valor < 0 && t.Data >= desde && t.Data <= hoje && (contaId == null || t.ContaId == contaId))
-                .Select(t => new { t.Data, Texto = t.DescricaoOriginal ?? t.Descricao, t.Estabelecimento })
-                .ToListAsync(ct);
+                .Select(t => new { t.Data, t.Descricao, t.DescricaoOriginal, t.RegraDescricaoId, t.Estabelecimento })
+                .ToListAsync(ct))
+                .Select(t => new
+                {
+                    t.Data, t.Estabelecimento,
+                    Texto = TextoDaCobranca(t.Descricao, t.DescricaoOriginal, t.RegraDescricaoId, regrasPorValor),
+                    PorValor = t.RegraDescricaoId is int r && regrasPorValor.Contains(r)
+                });
             var casada = candidatas
                 .Where(x => CategorizacaoService.Normalizar(x.Texto).Contains(texto, StringComparison.Ordinal))
                 .OrderByDescending(x => x.Data).FirstOrDefault();
@@ -47,8 +63,10 @@ public class ContaAgendadaService
 
             var antes = (c.UltimoPagamentoEm, c.ProximoVencimento, c.Ativa, c.ChaveExtrato);
             // #205: a cobrança casada liga a conta a pagar à sugestão do extrato (a mesma chave do agrupamento de lá).
-            if (c.ChaveExtrato is null && SugestaoContaAgendadaService.ChaveDe(casada.Estabelecimento ?? casada.Texto) is
-                { Length: > 0 and <= 150 } chave)
+            var chave = casada.PorValor
+                ? SugestaoContaAgendadaService.ChaveDaRegra(casada.Texto)
+                : SugestaoContaAgendadaService.ChaveDe(casada.Estabelecimento ?? casada.Texto);
+            if (c.ChaveExtrato is null && chave is { Length: > 0 and <= 150 })
                 c.ChaveExtrato = chave;
             c.UltimoPagamentoEm = data;
             while (c.Ativa && c.ProximoVencimento <= data.AddDays(DiasAntesDoVencimento))
@@ -96,14 +114,17 @@ public class ContaAgendadaService
             })
             .ToListAsync(ct);
         var desde = hoje.AddDays(-DiasAvisos);
-        var cobrancas = itens.Any(c => c.TextoCobranca != null)
+        var comTexto = itens.Any(c => c.TextoCobranca != null);
+        var cobrancas = comTexto
             ? await _db.Transacoes.AsNoTracking()
                 .Where(t => t.Valor < 0 && t.Data >= desde && t.Data <= hoje)
-                .Select(t => new { t.Data, t.Valor, t.ContaId, ContaNome = t.Conta!.Nome, Texto = t.DescricaoOriginal ?? t.Descricao })
+                .Select(t => new { t.Data, t.Valor, t.ContaId, ContaNome = t.Conta!.Nome, t.Descricao, t.DescricaoOriginal, t.RegraDescricaoId })
                 .ToListAsync(ct)
             : [];
+        var regrasPorValor = comTexto ? await RegraDescricaoService.RegrasPorValorAsync(_db, ct) : [];
         var normalizadas = cobrancas.Select(t => (t.Data, Valor: -t.Valor, t.ContaId, t.ContaNome,
-            Texto: CategorizacaoService.Normalizar(t.Texto))).ToList();
+            Texto: CategorizacaoService.Normalizar(TextoDaCobranca(t.Descricao, t.DescricaoOriginal, t.RegraDescricaoId, regrasPorValor))))
+            .ToList();
 
         var avisos = new List<AvisoContaAgendadaDto>();
         foreach (var c in itens)
