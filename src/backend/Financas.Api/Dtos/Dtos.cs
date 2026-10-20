@@ -329,6 +329,15 @@ public record PagarContaAgendadaDto(bool LancarTransacao, DateOnly? Data);
 /// Pagamento mensal encontrado no extrato que ainda não está em Contas a pagar. <c>ProximoVencimento</c> nunca é
 /// passado; <c>VencimentoSemPagamento</c> é o vencimento esperado que já passou sem o pagamento aparecer no extrato.
 /// </summary>
+/// <summary>
+/// #158: aviso de uma conta a pagar recorrente. <c>Tipo</c>: "nao-veio", "mudou-de-cartao", "aumentou" ou
+/// "cartao-arquivado". <c>ValorNovo</c> e <c>ContaNova*</c> vão com a ação "Atualizar" (o valor e a conta da última
+/// cobrança). O texto não leva valores em reais (a tela mostra <c>ValorNovo</c> pelo pipe de "ocultar valores").
+/// </summary>
+public record AvisoContaAgendadaDto(int ContaAgendadaId, string Descricao, string Tipo, string Texto,
+    decimal? ValorAnterior = null, decimal? ValorNovo = null, int? ContaNovaId = null, string? ContaNovaNome = null,
+    DateOnly? Data = null);
+
 public record SugestaoContaAgendadaDto(string Chave, string Descricao, decimal Valor, bool ValorVariavel,
     decimal ValorMinimo, decimal ValorMaximo, DateOnly ProximoVencimento, int DiaHabitual, int Meses, int Pagamentos,
     DateOnly UltimoPagamento, DateOnly PrimeiroPagamento, int? CategoriaId, string? CategoriaNome, int ContaId,

@@ -26,3 +26,12 @@ test('Contas a pagar: forma de cobrança, baixa sozinha e sugestões do cartão'
   await expect(dialogo.getByLabel('Texto da cobrança no extrato')).toHaveCount(0);
   expect(problemas.lista).toEqual([]);
 });
+
+test('Contas a pagar: aviso de aumento com "Atualizar o valor" (#158)', async ({ page, api, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  const avisos = page.locator('section.avisos-recorrentes');
+  await expect(avisos).toContainText('Streaming aumentou na última cobrança.');
+  await avisos.getByRole('button', { name: 'Atualizar o valor de Streaming' }).click();
+  await expect.poll(() => api.chamadas.some((c) => c.startsWith('PUT /api/contas-agendadas/3'))).toBe(true);
+  expect(problemas.lista).toEqual([]);
+});
