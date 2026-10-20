@@ -41,3 +41,7 @@ Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`,
 - **Custo:** o Jest não confere o desenho do ícone (o `<svg>` gerado pela Lucide). Isso fica com os testes no navegador (ADR 0041), que usam o pacote de verdade.
 - **Descartado:** `isolatedModules` (transpilar sem checar tipos): medido, não mudou nada (o tempo não era a checagem de tipos).
 - **Para não voltar:** a CI falha com arquivo de teste acima de 20 s ou suíte acima de 150 s, e avisa a partir de 10 s por arquivo (`scripts/ci/verificar-tempo-testes.py`, lendo o JSON do Jest). Os limites, a regra de onde cada teste mora (Jest × navegador) e como medir estão em "Testes rápidos", no `CONTRIBUINDO.md`.
+
+## Atualização de 2026-10-20: testes de estilo saíram do Jest (issue #204)
+
+Os 43 casos que liam o `styles.css` por `cssRules` ou pela ordem das regras foram para o navegador (ADR 0041, `testes-navegador/estilos.spec.ts`), que mede o efeito de verdade. No Jest ficam a lógica, o componente, o texto, a acessibilidade e as propriedades simples que o jsdom calcula (`width`, `min-height`, `visibility`), além do contraste do tema calculado a partir das cores.

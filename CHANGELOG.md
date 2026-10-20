@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Publicação e documentação
+- **Testes de estilo no navegador** (#204): o visual que os testes antigos só adivinhavam lendo o CSS (cards do mesmo tamanho, colunas, divisórias, avisos centralizados, a seta das listas, as animações e "reduzir movimento") agora é medido na tela de verdade, e cada teste foi conferido estragando a regra de propósito. Os testes antigos saíram (nada ficou sem cobertura). A CI também confirmou que não dá para juntar os testes de instalação do Windows nem reaproveitar o build no instalador; o motivo está na ADR 0029.
 - **Manual: capítulo novo "Corrigir seus dados"** (#222). Ele vem logo depois de "Primeiros passos" e tem duas partes:
   - **o que já se acertou sozinho** depois das correções: estornos, transferências, pagamento de fatura, investimentos e parcelas;
   - **o passo a passo** para deixar o site igual aos apps dos bancos: sincronizar, conferir as reservas e o Méli Dólar, tirar os trocos dos rendimentos, responder a pergunta do limite, informar o nome nos Pix, cadastrar as assinaturas e terminar em "Conferir com o banco".

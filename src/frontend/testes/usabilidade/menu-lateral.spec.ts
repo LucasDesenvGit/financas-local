@@ -10,7 +10,8 @@ import { abrirShell } from '../apoio/shell';
  *   tela inicial.
  * - WCAG 4.1.2 (Name, Role, Value): nome fixo e o estado em aria-expanded, com aria-controls para o menu.
  * - WCAG 2.1.1 (Keyboard): o Tab não para em link escondido (inert).
- * - WCAG 2.5.8 (Target Size): o botão tem pelo menos 24×24 px. O jsdom não calcula layout, mas aplica a cascata.
+ * - WCAG 2.5.8 (Target Size), a marca na largura toda e a animação de entrada da tela: no navegador, com o
+ *   tamanho e o estilo calculados de verdade (testes-navegador/estilos.spec.ts, #204).
  * Grupos que abrem e fecham (#227, ADR 0046):
  * - WAI-ARIA APG, Disclosure Pattern: cabeçalho é botão com aria-expanded e aria-controls apontando para as telas.
  * - WCAG 2.1.1 (Keyboard): tela de grupo fechado fica fora do Tab (inert e invisível).
@@ -102,24 +103,7 @@ describe('Usabilidade: menu lateral recolhível', () => {
     });
     afterAll(() => estilo.remove());
 
-    it('o ☰ tem alvo de pelo menos 24×24 px', async () => {
-      const t = await abrirShell();
-      const css = getComputedStyle(t.botao());
-      expect(parseFloat(css.minWidth)).toBeGreaterThanOrEqual(24);
-      expect(parseFloat(css.height)).toBeGreaterThanOrEqual(24);
-    });
 
-    it('a tela aberta pelo roteador entra com animação; o router-outlet em si não anima', async () => {
-      const t = await abrirShell();
-      const pagina = t.raiz.querySelector('main.pagina')!;
-      // O jsdom não interpreta "animation": confere a regra na folha de estilo e quem casa com o seletor dela.
-      const regra = Array.from(estilo.sheet!.cssRules).find(
-        (r): r is CSSStyleRule => r instanceof CSSStyleRule && r.style.cssText.includes('entrar-tela'))!;
-      expect(regra).toBeDefined();
-      const tela = pagina.querySelector(':scope > :not(router-outlet)')!;
-      expect(tela.matches(regra.selectorText)).toBe(true);
-      expect(pagina.querySelector('router-outlet')!.matches(regra.selectorText)).toBe(false);
-    });
 
     it('cabeçalho do grupo: alvo de pelo menos 24 px de altura, na largura toda do menu', async () => {
       const t = await abrirShell();
@@ -137,21 +121,7 @@ describe('Usabilidade: menu lateral recolhível', () => {
       expect(getComputedStyle(t.linkDaTela('/categorias')).visibility).toBe('hidden');
     });
 
-    it('com movimento reduzido no sistema, abrir e fechar o grupo não anima (regra global sem transição)', () => {
-      const regra = Array.from(estilo.sheet!.cssRules).find(
-        (r): r is CSSMediaRule => r instanceof CSSMediaRule && r.conditionText.includes('prefers-reduced-motion'))!;
-      expect(regra.cssText).toMatch(/\*.*transition: none !important/s);
-    });
 
-    it('a marca ocupa a largura toda do topo do menu (área clicável inteira, não só o texto)', async () => {
-      const t = await abrirShell();
-      expect(getComputedStyle(t.marca()).flexGrow).toBe('1');
-    });
 
-    it('a marca e o título da barra não aparecem sublinhados', async () => {
-      const t = await abrirShell();
-      expect(getComputedStyle(t.marca()).textDecoration).toContain('none');
-      expect(getComputedStyle(t.tituloBarra()).textDecoration).toContain('none');
-    });
   });
 });

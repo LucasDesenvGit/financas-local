@@ -120,3 +120,14 @@ Pedido do usuário: deixar o `.msi` do `develop` à mão e garantir que quem já
   - as notas começando por **"Como instalar ou atualizar"** (o `.msi`, o aviso do Windows sobre instalador não assinado e o link para a instalação pelo código) e, em **"O que mudou"**, a seção da versão no `CHANGELOG.md` sem o cabeçalho `## [X.Y.Z] — data`, que repetiria o título;
   - não é pré-lançamento nem rascunho e fica como o mais recente, que é o que o gerenciador consulta.
 - **Custo:** quem editar as notas de um Release à mão e depois recriar a tag perde a edição. As notas vêm do `CHANGELOG.md`: é lá que se corrige.
+
+## Avaliação de 2026-10-20: tempo de CI do instalador (issue #204)
+
+Avaliado sem mudança, com o motivo registrado:
+- **A instalação pelos scripts roda em dois workflows** (`teste-instalacao-windows.yml`, ~111 s, e o job "migrar da instalação pelos scripts" do `versao.yml`, ~88 s). Os objetivos são diferentes:
+  - o primeiro instala, atualiza, para e sobe de novo **pelos scripts**;
+  - o segundo instala pelos scripts e **migra para o `.msi`**.
+
+  Juntar exigiria levar a instalação de um runner para outro. Os triggers também são diferentes, e os dois rodam em paralelo, sem somar no tempo do PR.
+- **O "Versão" não reaproveita o build da CI:** o `.msi` precisa da API e do gerenciador publicados **self-contained para win-x64**, e a CI compila em Linux, sem isso. Não é o mesmo artefato.
+- **O "Versão" continua em todo push do `develop`:** é ele que publica o pré-lançamento "desenvolvimento", de onde a instalação de desenvolvimento se atualiza pelo gerenciador (ADR 0040).

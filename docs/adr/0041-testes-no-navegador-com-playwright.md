@@ -49,3 +49,23 @@ A eficácia foi provada recolocando de propósito o bug da #157 (SRI ligado): o 
   - `npm run test:navegador` (compila e roda) e `npx playwright test` (só roda) em `src/frontend`;
   - tela nova no menu: uma linha em `TELAS` (`base.ts`) e as respostas dela em `api-falsa.ts`;
   - mudou tela ou CSS: rodar a skill (testes + prints) antes de dizer que terminou, e dizer no PR o que foi conferido no navegador e o que não foi.
+
+## Atualização de 2026-10-20: estilos conferidos no navegador (issue #204)
+
+- **O que mudou:** os testes do Jest que adivinhavam o estilo lendo o `styles.css` (`cssRules`, ordem das regras) foram para o navegador, em `testes-navegador/estilos.spec.ts`, medindo o efeito na tela:
+  - cards do mês em três colunas iguais;
+  - "Faturas do mês" na linha toda e dividindo a largura;
+  - contas e cartões com a mesma altura e o rodapé alinhado (subgrid);
+  - divisórias;
+  - largura de leitura;
+  - aviso de vazio centralizado;
+  - tabela com rolagem;
+  - seta da lista suspensa, inclusive com foco;
+  - animações e quem vence na cascata;
+  - "reduzir movimento";
+  - a marca e o alvo do ☰.
+- **Saíram do Jest 43 casos**, nenhum sem cobertura (a lista "removido → coberto em" está no PR).
+- **Prova:** cada teste novo foi conferido estragando a regra no CSS do build. Os 23 casos falham, e o CSS volta ao normal no fim.
+  - **A prova achou dois testes que passavam com o CSS quebrado:** as contas e os cartões da API falsa tinham conteúdos do mesmo tamanho. Corrigido com conteúdos de tamanhos diferentes.
+- **API falsa:** os cartões de crédito estavam com o tipo 2 (Poupança) em vez de 3. As telas nunca tinham sido abertas com um cartão de verdade. O `develop` já tinha corrigido um; este trabalho corrigiu o outro e acrescentou duas faturas no mês e contas de tamanhos diferentes.
+- **Na prática:** estilo calculado se testa aqui, e não no Jest; teste novo de estilo prova que falha (CONTRIBUINDO.md, "Testes rápidos").

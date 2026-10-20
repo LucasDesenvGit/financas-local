@@ -43,7 +43,7 @@ const contas = [
   { id: 1, nome: 'Conta Exemplo', tipo: 1, origem: 2, numero: null, moeda: 'BRL', saldo: 3250.5, saldoInicial: 0,
     limiteCredito: null, limiteDisponivel: null, diaFechamento: null, diaVencimento: null, cor: '#a7a3f5', incluirNoSaldo: true,
     arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
-  { id: 2, nome: 'Cartão Exemplo', tipo: 2, origem: 2, numero: null, moeda: 'BRL', saldo: -820.1, saldoInicial: 0,
+  { id: 2, nome: 'Cartão Exemplo', tipo: 3, origem: 2, numero: null, moeda: 'BRL', saldo: -820.1, saldoInicial: 0,
     limiteCredito: 5000, limiteDisponivel: 4179.9, diaFechamento: 3, diaVencimento: 10, cor: '#92c8f0', incluirNoSaldo: true,
     arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
   // #251: cartão de crédito com a fatura do mês já paga e a próxima, ainda aberta.
@@ -54,7 +54,13 @@ const contas = [
       vencimento: dataIso(new Date(ano, hoje.getMonth(), 10)), situacao: 'paga', fechamento: dataIso(new Date(ano, hoje.getMonth(), 3)),
       proxima: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 207.8, parcelasMes: 0, faturaId: null,
         vencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), situacao: 'aberta',
-        fechamento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)) } } }
+        fechamento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)) } } },
+  { id: 5, nome: 'Poupança Exemplo com um nome bem comprido, que quebra em duas linhas', tipo: 1, origem: 1, numero: null, moeda: 'BRL', saldo: 12000, saldoInicial: 12000,
+    limiteCredito: null, limiteDisponivel: null, diaFechamento: null, diaVencimento: null, cor: '#8fd8b0', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: null, nomeInstituicao: null, atualizadoEm: hoje.toISOString(), banco: null },
+  { id: 4, nome: 'Cartão Segundo com um nome bem comprido, que quebra em duas linhas', tipo: 3, origem: 1, numero: null, moeda: 'BRL', saldo: -150, saldoInicial: 0,
+    limiteCredito: null, limiteDisponivel: null, diaFechamento: 20, diaVencimento: 28, cor: '#f2b880', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: null, nomeInstituicao: null, atualizadoEm: hoje.toISOString(), banco: null }
 ];
 
 const transacoes = [
@@ -83,8 +89,12 @@ const respostas: Record<string, unknown> = {
     saldoContas: 3250.5, dividaCartoes: 820.1, totalInvestido: 10000, patrimonioLiquido: 12430.4, rendaVariavel: 4000,
     patrimonioSemRendaVariavel: 8430.4, receitasMes: 5000, despesasMes: 1950, gastosPorCategoria: porCategoria, evolucao,
     orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes, alertas: [], ultimaSincronizacao: hoje.toISOString(),
-    despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7, faturasDoMes: [],
-    totalFaturasDoMes: 0, poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null,
+    despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7,
+    faturasDoMes: [
+      { contaId: 2, cartao: 'Cartão Exemplo', valorMes: 820.1, parcelasMes: 0, faturaId: null, vencimento: null, situacao: null },
+      { contaId: 4, cartao: 'Cartão Segundo com um nome bem comprido, que quebra em duas linhas', valorMes: 150, parcelasMes: 0, faturaId: null, vencimento: null, situacao: null }
+    ],
+    totalFaturasDoMes: 970.1, poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null,
     creditosCorretoraComoReceita: 0, totalCreditosCorretoraComoReceita: 0,
     trocosAutomaticos: { quantidade: 2, total: 5.4, ids: [1, 2], desde: dataIso(new Date(ano, hoje.getMonth(), 1)), ate: dataIso(hoje) }
   },

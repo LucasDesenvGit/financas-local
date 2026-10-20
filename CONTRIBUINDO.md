@@ -82,7 +82,11 @@ Em outubro de 2026 o Jest chegou a levar ~6 min na CI (#204): um pacote pesado i
 | Lógica, cálculo, componente isolado, texto, atributo de acessibilidade | **Jest** (`testes/regressao`, `testes/usabilidade`) | rápido, sem navegador ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)) |
 | Desenho, CSS calculado (`var()`, grid, tamanho de alvo), rota de verdade, CSP, console, celular | **Navegador** (`testes-navegador/`) | o jsdom não calcula estilo nem aplica a CSP ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
 
-Não repita no Jest o que o navegador já confere, e vice-versa. Teste do Jest que lê o `styles.css` por `cssRules` para adivinhar o estilo é candidato a ir para o navegador.
+Não repita no Jest o que o navegador já confere, e vice-versa.
+
+- **Estilo calculado se testa no navegador**, em `testes-navegador/estilos.spec.ts`: layout (alturas, colunas, largura), borda, grid/subgrid, `var()`, quem vence na cascata, animação, "reduzir movimento", tamanho de alvo. **Não escreva teste do Jest que procura a regra no `styles.css`** (`cssRules`, ordem das regras no arquivo): ele quebra quando a regra é reescrita com o mesmo efeito e passa quando outra regra a anula. Propriedade simples que o jsdom calcula (`width`, `min-height`, `visibility`) pode ficar no Jest.
+- **Meça o efeito, não a regra:** "os três cards têm a mesma altura" (`boundingBox`), não "existe `align-items: stretch`".
+- **Teste novo de estilo prova que falha:** estrague a regra no CSS do build (`dist/…/styles-*.css`), rode o teste, veja falhar e restaure. Se não falhar, os dados da API falsa provavelmente não exercitam o caso (ex.: dois cards com o mesmo conteúdo ficam iguais mesmo sem a regra): use conteúdos de tamanhos diferentes.
 
 **Limites de tempo (a CI confere):**
 - **Jest:** cada arquivo de teste até **10 s** (passou disso, a CI avisa) e no máximo **20 s** (passou, falha); a suíte inteira até **150 s** (`scripts/ci/verificar-tempo-testes.py`). Referência hoje: ~34 s a suíte, 6 s o arquivo mais lento, 0,7 s a mediana (2 workers, como a CI).
