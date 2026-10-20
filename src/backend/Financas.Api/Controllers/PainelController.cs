@@ -93,12 +93,11 @@ public class PainelController : BaseController
             .Select(ProjecoesTransacao.ParaDto)
             .ToListAsync(ct);
 
+        // #206: os orçamentos estourados vão em lista própria (card agrupado no Painel), os piores primeiro.
+        var orcamentosEstourados = orcamentos.Where(o => o.Percentual > 100).OrderByDescending(o => o.Percentual).ToList();
+
         // Alertas
         var alertas = new List<string>();
-        foreach (var o in orcamentos.Where(o => o.Percentual > 100))
-            alertas.Add(o.Situacao == "emergencia"
-                ? $"Orçamento de {o.CategoriaNome} passou do limite ({o.Percentual:0}%) por gastos de emergência."
-                : $"Orçamento de {o.CategoriaNome} estourado ({o.Percentual:0}%).");
         foreach (var p in proximas.Where(p => p.DiasParaVencer < 0))
             alertas.Add($"Conta \"{p.Descricao}\" vencida desde {p.ProximoVencimento:dd/MM}.");
         if (composicao.MoedasSemCotacao.Count > 0)
@@ -189,7 +188,7 @@ public class PainelController : BaseController
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
             faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
             poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo,
-            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos);
+            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos, orcamentosEstourados);
     }
 }
 

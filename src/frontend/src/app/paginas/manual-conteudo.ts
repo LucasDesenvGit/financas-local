@@ -769,7 +769,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'A barra de cada categoria mostra quanto do limite já foi.',
           'Laranja quer dizer que passou do limite só por causa de gastos de emergência.',
-          'O Painel avisa os orçamentos estourados.',
+          'O Painel junta os orçamentos estourados num card, com o link para as despesas de cada categoria. Dá para ocultar até o mês que vem.',
           'Clique no gasto de uma categoria para ver as transações por trás dele.'
         ],
         abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }, { rotulo: 'Abrir o Painel', rota: '/painel' }]
@@ -968,7 +968,9 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
           '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor.',
-          'Os avisos no topo mostram o que precisa de atenção (orçamento estourado, conta vencida, consentimento expirando, erros).',
+          'No topo, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
+          'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros).',
+          '“Ocultar até o mês que vem” recolhe o card dos orçamentos numa linha só. Ele abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos. Fica a linha com a quantidade, e “Mostrar” abre de novo.',
           '“Mais análises” abre a evolução de 12 meses e as últimas transações.',
           'Clique num total por categoria para ver as transações por trás dele.'
         ],
