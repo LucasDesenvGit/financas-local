@@ -38,6 +38,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Méli Dólar no patrimônio** (#169, ADR 0038). O dólar digital do Mercado Pago não aparecia em lugar nenhum, porque o Open Finance não o informa.
+  - **Em Investimentos › Reservas:** a linha "Méli Dólar", com a quantidade em dólar estimada pelas compras e vendas do extrato (pelo "MUSD" da descrição ou pela PTAX do dia), e o saldo em reais pela última PTAX. Entra no patrimônio e no total investido.
+  - **Conferir saldo:** em reais ou em dólares; em reais, convertido pela PTAX da data.
+  - **Compra e venda de Méli Dólar vão para "Investimentos"** e deixam de contar como despesa ou receita. É uma regra padrão nova, criada uma vez para quem já tinha o site, e as transações já importadas são acertadas, menos as de categoria escolhida à mão.
+  - **Manual:** seção nova "Méli Dólar (dólar do Mercado Pago)" e o termo "PTAX" no glossário.
 - **Investimentos com nome que se reconhece** (#170). A caixinha do Nubank aparecia como "CDB - NU FINANCEIRA S.A. - SOCIEDADE…", e o CDB do Mercado Pago como "CDB - MERCADO CREDITO…".
   - **Agora:** "CDB · Nubank" e "CDB · Mercado Pago", com o nome do banco embaixo, para achar no app.
   - **Renomear:** cada investimento do Open Finance pode ganhar o seu nome ("Caixinha viagem"), e a sincronização não muda esse nome.

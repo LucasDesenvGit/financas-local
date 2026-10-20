@@ -547,14 +547,18 @@ public record CarteiraDto(SelicResumoDto Selic, TotaisRendaVariavelDto RendaVari
 /// </summary>
 public record ReservaDto(int ContaId, string NomeConta, string Nome, decimal Saldo, decimal Guardado, decimal Retirado,
     int Movimentos, DateOnly? PrimeiroMovimento, DateOnly? UltimoMovimento, decimal? SaldoConferido,
-    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga, bool InformadoPeloBanco = false);
+    DateOnly? DataConferencia, bool PodeTerSaldoAnterior, bool ConferenciaAntiga, bool InformadoPeloBanco = false,
+    // #169: o Méli Dólar é uma reserva em dólar: Quantidade (e SaldoConferido) em US$, Saldo em reais pela Cotacao (PTAX).
+    string Moeda = "BRL", decimal? Quantidade = null, decimal? Cotacao = null);
 
 /// <summary>Saldo real da reserva conferido no app da instituição. <c>Data</c> vazia = hoje.</summary>
 public record ConferirReservaDto(
     int ContaId,
     [Required, StringLength(100)] string Nome,
     [Range(0, 999999999999)] decimal Saldo,
-    DateOnly? Data);
+    DateOnly? Data,
+    // #169: no Méli Dólar, "BRL" quando o saldo foi informado em reais (convertido pela PTAX da data); senão, em dólar.
+    [RegularExpression("^(BRL|USD)$", ErrorMessage = "Moeda inválida: use BRL ou USD.")] string? Moeda = null);
 
 /// <summary>Preço, taxas e preço atual na moeda do ativo; <c>ValorTotal</c>, <c>ValorAtual</c> e Selic em reais.</summary>
 public record OperacaoAtivoDto(int Id, int AtivoId, string Ticker, TipoOperacao Tipo, DateOnly Data,

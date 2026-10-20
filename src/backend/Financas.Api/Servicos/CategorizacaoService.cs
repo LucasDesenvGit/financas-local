@@ -221,6 +221,46 @@ public class CategorizacaoService
         return Resolver(texto.Trim(), null) is int c && !EhTransferencia(c) ? c : null;
     }
 
+    /// <summary>Marca que a regra padrão do Méli Dólar já foi criada (#169): apagada por você, ela não volta.</summary>
+    public const string ChaveRegraMeliDolar = "Regras.MeliDolarCriada";
+    public const string TextoRegraMeliDolar = "MELI DOLAR";
+
+    /// <summary>
+    /// #169 (ADR 0038): uma vez por banco, cria a regra padrão "MELI DOLAR" → Investimentos (a mesma do
+    /// 02-dados-iniciais.sql, para quem instalou antes) e passa para ela a compra e a venda de Méli Dólar já importadas
+    /// cuja categoria você não escolheu. Comprar e vender dólar é mover o próprio dinheiro, não gasto nem receita.
+    /// Roda ao iniciar a API. Não salva: chame SaveChangesAsync. Devolve quantas transações mudaram.
+    /// </summary>
+    public async Task<int> CriarRegraMeliDolarAsync(ConfiguracaoService config, CancellationToken ct)
+    {
+        if (await config.ExisteAsync(ChaveRegraMeliDolar, ct)) return 0;
+        await config.DefinirAsync(ChaveRegraMeliDolar, DateTime.UtcNow.ToString("O"), ct: ct);
+        var investimentos = (await _db.Categorias.AsNoTracking().Where(x => x.Tipo == TipoCategoria.Transferencia)
+                .Select(x => new { x.Id, x.Nome }).ToListAsync(ct))
+            .FirstOrDefault(x => Normalizar(x.Nome) == "INVESTIMENTOS")?.Id;
+        if (investimentos is not int categoria) return 0;
+        if (!await _db.RegrasCategorizacao.AnyAsync(r => r.Texto == TextoRegraMeliDolar, ct))
+            _db.RegrasCategorizacao.Add(new RegraCategorizacao
+            {
+                Texto = TextoRegraMeliDolar, TipoCorrespondencia = TipoCorrespondencia.Contem, CategoriaId = categoria,
+                Prioridade = 50
+            });
+
+        await CarregarAsync(ct);
+        var lancamentos = (await _db.Transacoes
+                .Where(t => !t.CategoriaManual && t.TransferenciaGrupo == null && t.CategoriaId != categoria
+                            && EF.Functions.Like(t.DescricaoOriginal ?? t.Descricao, "%meli d_lar%"))
+                .ToListAsync(ct))
+            .Where(t => Investimentos.ReservaService.EhMeliDolar(t.DescricaoOriginal ?? t.Descricao)).ToList();
+        foreach (var t in lancamentos)
+        {
+            t.CategoriaId = categoria;
+            AplicarTipo(t);
+            t.AtualizadoEm = DateTime.UtcNow;
+        }
+        return lancamentos.Count;
+    }
+
     /// <summary>
     /// #166: acerta as entradas nos cartões que já estão no banco (estornos que contavam como receita, pagamentos sem a
     /// categoria certa). Roda ao iniciar a API, antes das transferências. Não salva: chame SaveChangesAsync.
