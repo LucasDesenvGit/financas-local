@@ -1,6 +1,6 @@
 # 0027. Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação
 
-- **Status:** Aceita
+- **Status:** Aceita (em parte substituída pela [0044](0044-trocos-sem-duvida-classificados-na-sincronizacao.md): o troco "sem dúvida" vai sozinho na sincronização, com aviso e "Desfazer")
 - **Data:** 2026-10-17
 - **Relacionadas:** [0006](0006-cliente-http-proprio-para-a-pluggy.md) (Pluggy), [0010](0010-reservas-estimadas-pelo-extrato.md) (estimar pelo extrato, conferir à mão), [0023](0023-edicao-em-massa-no-modo-edicao-de-transacoes.md) (desfazer guardado na API)
 

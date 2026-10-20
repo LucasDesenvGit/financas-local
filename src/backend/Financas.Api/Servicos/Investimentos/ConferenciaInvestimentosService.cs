@@ -4,6 +4,7 @@ using Financas.Api.Entidades;
 using Financas.Api.Servicos.Cambio;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Text.Json;
 
 namespace Financas.Api.Servicos.Investimentos;
 
@@ -20,6 +21,8 @@ namespace Financas.Api.Servicos.Investimentos;
 /// <item>#173 a): taxa da B3 que falta nas compras. O débito da compra menos o troco que voltou menos cotas × preço é
 /// a taxa (alguns centavos por ordem); ela entra no custo da compra, como no app da corretora.</item>
 /// </list>
+/// #173 b) (ADR 0044): depois da sincronização, o troco "sem dúvida" vai sozinho para a categoria da compra, com aviso
+/// e "Desfazer" no Painel; o resto continua só com prévia e confirmação.
 /// </summary>
 public class ConferenciaInvestimentosService
 {
@@ -45,16 +48,21 @@ public class ConferenciaInvestimentosService
     private const decimal TaxaMaxima = 0.01m;
     private const decimal TaxaMaximaReais = 5m;
     private static readonly TimeSpan PrazoDesfazer = TimeSpan.FromMinutes(10);
+    /// <summary>#173 b): os trocos classificados na sincronização, para o aviso e o "Desfazer" do Painel.</summary>
+    public const string ChaveTrocosAutomaticos = "Investimentos.TrocosAutomaticos";
+    private const int MaximoTrocosGuardados = 500;
 
     private readonly FinancasDbContext _db;
     private readonly CotacaoService _cotacoes;
     private readonly CategorizacaoService _categorizacao;
     private readonly IMemoryCache _cache;
     private readonly AuditoriaService _auditoria;
+    private readonly ConfiguracaoService _config;
 
     public ConferenciaInvestimentosService(FinancasDbContext db, CotacaoService cotacoes,
-        CategorizacaoService categorizacao, IMemoryCache cache, AuditoriaService auditoria)
+        CategorizacaoService categorizacao, IMemoryCache cache, AuditoriaService auditoria, ConfiguracaoService config)
     {
+        _config = config;
         _db = db;
         _cotacoes = cotacoes;
         _categorizacao = categorizacao;
@@ -64,7 +72,8 @@ public class ConferenciaInvestimentosService
 
     /// <summary>Débito ou crédito do extrato que pode ser compra de renda variável, troco, venda ou provento.</summary>
     private sealed record Movimento(long Id, int ContaId, string Conta, DateOnly Data, string Descricao,
-        string? DescricaoOriginal, string? PluggyCategoriaId, decimal Valor, TipoTransacao Tipo, string? Categoria);
+        string? DescricaoOriginal, string? PluggyCategoriaId, decimal Valor, TipoTransacao Tipo, string? Categoria,
+        bool CategoriaManual);
 
     /// <summary>Uma ordem de compra: uma operação ou, quando a corretora divide a execução, as do mesmo ativo e dia.</summary>
     private sealed record Ordem(List<OperacaoAtivo> Operacoes, decimal Custo);
@@ -78,8 +87,13 @@ public class ConferenciaInvestimentosService
     private sealed record TaxaDoDia(DateOnly Data, string Conta, decimal Debitado, decimal Trocos, decimal ValorDasCotas,
         decimal Taxa, List<(OperacaoAtivo Op, string Ticker, decimal Taxa)> Operacoes);
 
+    /// <summary><c>TrocosSemDuvida</c> (#173 b): os trocos dos dias em que a conta fecha (só sobra a taxa da B3).</summary>
     private sealed record Analise(List<CompraSemOperacao> SemOperacao, List<CreditoDeOperacao> DeOperacao,
-        List<Movimento> Creditos, List<TaxaDoDia> Taxas);
+        List<Movimento> Creditos, List<TaxaDoDia> Taxas, HashSet<long> TrocosSemDuvida);
+
+    /// <summary>#173 b): troco classificado na sincronização, com o que ele era antes (para o "Desfazer").</summary>
+    private sealed record TrocoAutomatico(long Id, int? CategoriaId, bool CategoriaManual, TipoTransacao Tipo,
+        bool IgnorarRelatorios, int Aplicada);
 
     /// <summary>Estado de antes da correção, guardado só na memória da API para o "Desfazer".</summary>
     private sealed record EstadoAnterior(List<(int AtivoId, TipoAtivo Tipo)> Tipos, List<int> OperacoesCriadas,
@@ -265,9 +279,10 @@ public class ConferenciaInvestimentosService
         var semOperacao = new List<CompraSemOperacao>();
         var deOperacao = new List<CreditoDeOperacao>();
         var taxas = new List<TaxaDoDia>();
+        var semDuvida = new HashSet<long>();
         var operacoes = ativos.Where(a => a.Moeda == CambioService.MoedaBase)
             .SelectMany(a => a.Operacoes.Select(o => (Ativo: a, Op: o))).ToList();
-        if (operacoes.Count == 0) return new Analise(semOperacao, deOperacao, new(), taxas);
+        if (operacoes.Count == 0) return new Analise(semOperacao, deOperacao, new(), taxas, semDuvida);
         var tickerDoAtivo = ativos.ToDictionary(a => a.Id, a => a.Ticker);
         var compras = operacoes.Where(x => x.Op.Tipo == TipoOperacao.Compra).Select(x => x.Op).ToList();
 
@@ -285,7 +300,7 @@ public class ConferenciaInvestimentosService
                     || (t.Valor > 0 && (EF.Functions.Like(t.Descricao, "%invest%")
                         || (t.DescricaoOriginal != null && EF.Functions.Like(t.DescricaoOriginal, "%invest%"))))))
             .Select(t => new Movimento(t.Id, t.ContaId, t.Conta!.Nome, t.Data, t.Descricao, t.DescricaoOriginal,
-                t.PluggyCategoriaId, t.Valor, t.Tipo, t.Categoria != null ? t.Categoria.Nome : null))
+                t.PluggyCategoriaId, t.Valor, t.Tipo, t.Categoria != null ? t.Categoria.Nome : null, t.CategoriaManual))
             .ToListAsync(ct);
 
         var debitos = movimentos.Where(m => m.Valor < 0
@@ -338,7 +353,7 @@ public class ConferenciaInvestimentosService
             }
 
             // 3) Sobra de centavos.
-            var sobras = 0m;
+            var sobras = new List<Movimento>();
             if (pares.Count == dia.Count())
             {
                 var restante = pares.Sum(p => -p.Debito.Valor - p.Custo) - trocoDe.Values.Sum(c => c.Valor);
@@ -347,21 +362,27 @@ public class ConferenciaInvestimentosService
                 {
                     if (c.Valor > restante) break;
                     restante -= c.Valor;
-                    sobras += c.Valor;
+                    sobras.Add(c);
                     creditosUsados.Add(c.Id);
                     deOperacao.Add(new CreditoDeOperacao(c, maior, null));
                 }
             }
 
-            // 5) #173 a): a taxa da B3 do dia (o troco já teve os dias dele para voltar).
+            // 5) A conta do dia, quando todas as compras têm operação e o troco já teve os dias dele para voltar.
             if (pares.Count == dia.Count() && data <= Relogio.Hoje.AddDays(-DiasDaSobra))
             {
                 var ops = pares.SelectMany(p => p.Operacoes).Distinct().ToList();
                 var debitado = pares.Sum(p => -p.Debito.Valor);
-                var trocos = trocoDe.Values.Sum(c => c.Valor) + sobras;
+                var trocosDoDia = trocoDe.Values.Concat(sobras).ToList();
+                var trocos = trocosDoDia.Sum(c => c.Valor);
                 var cotas = ops.Sum(o => o.Quantidade * o.PrecoUnitario);
+                var maximo = Math.Min(cotas * TaxaMaxima, TaxaMaximaReais);
+                // #173 b): sobra só a taxa da B3 (a lançada ou a que falta): os trocos do dia são sem dúvida.
+                var semTaxa = Math.Round(debitado - trocos - cotas - ops.Sum(o => o.Taxas), 2);
+                if (semTaxa >= 0 && semTaxa <= maximo) semDuvida.UnionWith(trocosDoDia.Select(c => c.Id));
+                // #173 a): a taxa da B3 que falta.
                 var taxa = Math.Round(debitado - trocos - cotas, 2);
-                if (ops.All(o => o.Taxas == 0) && taxa >= 0.01m && taxa <= Math.Min(cotas * TaxaMaxima, TaxaMaximaReais))
+                if (ops.All(o => o.Taxas == 0) && taxa >= 0.01m && taxa <= maximo)
                     taxas.Add(new TaxaDoDia(data, dia.First().Conta, debitado, trocos, Math.Round(cotas, 2), taxa,
                         DividirTaxa(ops, taxa).Select(p => (p.Op, tickerDoAtivo[p.Op.AtivoId], p.Taxa)).ToList()));
             }
@@ -382,7 +403,7 @@ public class ConferenciaInvestimentosService
             creditosUsados.Add(credito.Id);
             deOperacao.Add(new CreditoDeOperacao(credito, null, (ativo.Ticker, venda)));
         }
-        return new Analise(semOperacao, deOperacao, creditos, taxas);
+        return new Analise(semOperacao, deOperacao, creditos, taxas, semDuvida);
     }
 
     /// <summary>#173 a): a taxa do dia dividida pelas operações, pelo valor de cada uma (o resto de centavos na maior).</summary>
@@ -640,4 +661,97 @@ public class ConferenciaInvestimentosService
     }
 
     private static string ChaveDesfazer(string chave) => "conferencia-investimentos:" + chave;
+
+    /* ============================== #173 b): trocos na sincronização (ADR 0044) ============================== */
+
+    /// <summary>
+    /// Depois da sincronização: o troco de compra "sem dúvida" — de um dia em que todas as compras têm operação, o troco
+    /// já teve 5 dias para voltar e débitos − trocos − custo das cotas sobra só a taxa da B3 — que ainda conta como
+    /// receita vai para a categoria da compra, como escolha manual. Crédito com categoria escolhida à mão e valor de venda
+    /// ficam de fora. O que mudou fica guardado para o aviso e o "Desfazer" do Painel.
+    /// </summary>
+    public async Task<int> ClassificarTrocosSemDuvidaAsync(CancellationToken ct)
+    {
+        var ativos = await _db.Ativos.AsNoTracking().Include(a => a.Operacoes).ToListAsync(ct);
+        var analise = await AnalisarExtratoAsync(ativos, ct);
+        var ids = analise.DeOperacao
+            .Where(c => c.Compra is not null && analise.TrocosSemDuvida.Contains(c.Credito.Id)
+                && c.Credito.Tipo != TipoTransacao.Transferencia && !c.Credito.CategoriaManual)
+            .Select(c => c.Credito.Id).ToList();
+        if (ids.Count == 0 || await CategoriaDoTrocoAsync(ct) is not { } categoria) return 0;
+
+        var guardados = await TrocosGuardadosAsync(ct);
+        foreach (var t in await _db.Transacoes.Where(t => ids.Contains(t.Id)).ToListAsync(ct))
+        {
+            guardados.Add(new TrocoAutomatico(t.Id, t.CategoriaId, t.CategoriaManual, t.Tipo, t.IgnorarRelatorios, categoria.Id));
+            t.CategoriaId = categoria.Id;
+            t.CategoriaManual = true; // como na conferência: as regras não trocam de volta
+            _categorizacao.AplicarTipo(t);
+            t.AtualizadoEm = DateTime.UtcNow;
+        }
+        await GuardarTrocosAsync(guardados.TakeLast(MaximoTrocosGuardados).ToList(), ct);
+        _auditoria.Registrar($"TrocosAutomaticos ({ids.Count})", null);
+        await _db.SaveChangesAsync(ct);
+        return ids.Count;
+    }
+
+    /// <summary>Os trocos classificados na sincronização que ainda estão na categoria aplicada (para o aviso do Painel).</summary>
+    public async Task<TrocosAutomaticosDto?> ResumoTrocosAutomaticosAsync(CancellationToken ct)
+    {
+        var guardados = await TrocosGuardadosAsync(ct);
+        if (guardados.Count == 0) return null;
+        var ids = guardados.Select(g => g.Id).ToList();
+        var aplicada = guardados.ToDictionary(g => g.Id, g => g.Aplicada);
+        var atuais = (await _db.Transacoes.AsNoTracking().Where(t => ids.Contains(t.Id))
+                .Select(t => new { t.Id, t.Data, t.Valor, t.CategoriaId }).ToListAsync(ct))
+            .Where(t => t.CategoriaId == aplicada[t.Id]).OrderBy(t => t.Data).ToList();
+        return atuais.Count == 0 ? null
+            : new TrocosAutomaticosDto(atuais.Count, atuais.Sum(t => t.Valor), atuais.Select(t => t.Id).ToList(),
+                atuais[0].Data, atuais[^1].Data);
+    }
+
+    /// <summary>
+    /// Volta os trocos classificados na sincronização para a categoria de antes. A categoria de antes fica como escolha
+    /// manual, para a próxima sincronização não classificar de novo o que você disse que não é troco.
+    /// </summary>
+    public async Task<int> DesfazerTrocosAutomaticosAsync(string? login, CancellationToken ct)
+    {
+        var guardados = await TrocosGuardadosAsync(ct);
+        var ids = guardados.Select(g => g.Id).ToList();
+        var transacoes = await _db.Transacoes.Where(t => ids.Contains(t.Id)).ToDictionaryAsync(t => t.Id, ct);
+        var categorias = (await _db.Categorias.Select(c => c.Id).ToListAsync(ct)).ToHashSet();
+        var desfeitos = 0;
+        foreach (var g in guardados)
+        {
+            if (!transacoes.TryGetValue(g.Id, out var t) || t.CategoriaId != g.Aplicada) continue;
+            t.CategoriaId = g.CategoriaId is int c && !categorias.Contains(c) ? null : g.CategoriaId;
+            t.CategoriaManual = true;
+            t.Tipo = g.Tipo;
+            t.IgnorarRelatorios = g.IgnorarRelatorios;
+            t.AtualizadoEm = DateTime.UtcNow;
+            desfeitos++;
+        }
+        await GuardarTrocosAsync(new(), ct);
+        _auditoria.Registrar($"TrocosAutomaticosDesfeitos ({desfeitos})", login);
+        await _db.SaveChangesAsync(ct);
+        return desfeitos;
+    }
+
+    /// <summary>"Ok" no aviso do Painel: os trocos continuam como estão e o aviso some.</summary>
+    public async Task DispensarTrocosAutomaticosAsync(CancellationToken ct)
+    {
+        await GuardarTrocosAsync(new(), ct);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task<List<TrocoAutomatico>> TrocosGuardadosAsync(CancellationToken ct)
+    {
+        var texto = await _config.ObterAsync(ChaveTrocosAutomaticos, ct);
+        if (string.IsNullOrWhiteSpace(texto)) return new();
+        try { return JsonSerializer.Deserialize<List<TrocoAutomatico>>(texto) ?? new(); }
+        catch (JsonException) { return new(); }
+    }
+
+    private Task GuardarTrocosAsync(List<TrocoAutomatico> itens, CancellationToken ct)
+        => _config.DefinirAsync(ChaveTrocosAutomaticos, itens.Count == 0 ? null : JsonSerializer.Serialize(itens), ct: ct);
 }

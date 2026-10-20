@@ -363,7 +363,12 @@ export interface Painel {
   poucoInformativas: number; poucoInformativasDesde: string | null; exemploPoucoInformativa: string | null;
   /** #170: trocos e vendas de renda variável contando como receita (aviso com link para Conferir investimentos). */
   creditosCorretoraComoReceita: number; totalCreditosCorretoraComoReceita: number;
+  /** #173 b) (ADR 0044): trocos que a sincronização classificou sozinha. */
+  trocosAutomaticos?: TrocosAutomaticos | null;
 }
+
+/** #173 b): os trocos classificados na sincronização que continuam como ficaram (desde/ate: as datas deles). */
+export interface TrocosAutomaticos { quantidade: number; total: number; ids: number[]; desde: string; ate: string; }
 
 export interface FaturaMes {
   /** #144: <c>valorMes</c> é o total do banco na fatura fechada; na aberta, a soma das transações do ciclo. */
