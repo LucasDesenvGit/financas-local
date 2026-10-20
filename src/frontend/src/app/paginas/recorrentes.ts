@@ -12,6 +12,28 @@ export interface FiltroRecorrentes {
 export const FILTRO_RECORRENTES_PADRAO: FiltroRecorrentes = { contaId: null, forma: null, todas: false, busca: '' };
 
 /** Um grupo do de-para: uma conta ou um cartão e o que cobra nele. */
+/** #242: grupos fechados da aba Assinaturas e recorrentes, neste navegador (ADR 0017): o id da conta ou "sem". */
+export const CHAVE_GRUPOS_FECHADOS = 'financas.recorrentesFechados';
+
+export function chaveGrupo(contaId: number | null): string {
+  return contaId === null ? 'sem' : String(contaId);
+}
+
+export function lerGruposFechados(): Set<string> {
+  try {
+    const valor: unknown = JSON.parse(localStorage.getItem(CHAVE_GRUPOS_FECHADOS) ?? '[]');
+    return new Set(Array.isArray(valor) ? valor.filter((v): v is string => typeof v === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function guardarGruposFechados(fechados: Set<string>): void {
+  try {
+    localStorage.setItem(CHAVE_GRUPOS_FECHADOS, JSON.stringify([...fechados]));
+  } catch { /* navegador sem armazenamento: só não lembra */ }
+}
+
 export interface GrupoRecorrentes {
   contaId: number | null;
   nome: string;

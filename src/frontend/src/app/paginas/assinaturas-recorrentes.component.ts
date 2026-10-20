@@ -3,13 +3,16 @@ import { Component, computed, inject, input, signal, ChangeDetectionStrategy } f
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
-import { Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, Recorrencia } from '../core/modelos';
+import { Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, Recorrencia, TipoConta } from '../core/modelos';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { Icones } from '../compartilhado/icones';
+import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 import { dataIso } from '../compartilhado/utilidades';
 import {
-  FILTRO_RECORRENTES_PADRAO, FiltroRecorrentes, GrupoRecorrentes, agruparRecorrentes, filtrarRecorrentes, rotuloQuantidade,
-  valorPorMes
+  FILTRO_RECORRENTES_PADRAO, FiltroRecorrentes, GrupoRecorrentes, agruparRecorrentes, chaveGrupo, filtrarRecorrentes,
+  guardarGruposFechados, lerGruposFechados, rotuloQuantidade, valorPorMes
 } from './recorrentes';
 
 interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
@@ -21,10 +24,14 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
  *   (as cobranças) por navegação, em Transações filtrada.
  * - Nielsen 6: onde cada cobrança cai fica escrito na tela, e a busca "onde cai…?" responde sem lembrar.
  * - Filtro ativo sempre visível (chips com ✕ e "Limpar filtros") e na URL, com replaceUrl (ADR 0018).
+ * - #242: cada conta ou cartão é uma sanfona (APG Disclosure; NN/g, Accordions on Desktop): o título é um botão com
+ *   aria-expanded; fechado, ainda mostra o selo, o nome, a quantidade e o total por mês (overview first). Vários
+ *   abertos ao mesmo tempo, todos abertos no começo, como o menu lateral (ADR 0046); os fechados ficam lembrados neste
+ *   navegador (ADR 0017). O selo do banco é decorativo: o nome vem escrito ao lado (ADR 0024).
  */
 @Component({
   selector: 'app-assinaturas-recorrentes',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, LogoBancoComponent, IconeComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="kpis" aria-label="Resumo das assinaturas e recorrentes">
@@ -78,12 +85,27 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
       </section>
     }
 
+    @if (grupos().length > 1) {
+      <div class="acoes-grupos">
+        <button type="button" class="link" (click)="alternarTodos()">{{ algumAberto() ? 'Fechar todos' : 'Abrir todos' }}</button>
+      </div>
+    }
+
     @for (g of grupos(); track g.contaId) {
-      <section class="painel-bloco grupo-recorrentes" [attr.aria-labelledby]="'grupo-' + (g.contaId ?? 'sem')">
-        <div class="bloco-titulo">
-          <h2 [id]="'grupo-' + (g.contaId ?? 'sem')">{{ g.nome }}</h2>
-          <span class="texto-suave">{{ rotulo(g) }} · {{ g.porMes | currency }}/mês</span>
-        </div>
+      <section class="painel-bloco grupo-recorrentes" [class.fechado]="!aberto(g)" [attr.aria-labelledby]="'grupo-' + chave(g)">
+        <h2 class="grupo-recorrentes-titulo">
+          <button type="button" class="grupo-recorrentes-botao" [id]="'grupo-' + chave(g)" [attr.aria-expanded]="aberto(g)"
+            [attr.aria-controls]="'grupo-' + chave(g) + '-conteudo'" (click)="alternar(g)">
+            <app-logo-banco [codigo]="bancoDe(g.contaId)" [cartao]="ehCartao(g.contaId)" [tamanho]="26" />
+            <span class="grupo-recorrentes-nome">{{ g.nome }}</span>
+            <span class="texto-suave grupo-recorrentes-resumo">{{ rotulo(g) }} · {{ g.porMes | currency }}/mês</span>
+            <app-icone class="grupo-seta" [icone]="Icones.setaGrupo" [tamanho]="16" />
+          </button>
+        </h2>
+        <!-- Fechado: fora do Tab e do leitor de tela (inert + visibility), sem sair do DOM, para animar a altura. -->
+        <div class="grupo-recorrentes-conteudo" [id]="'grupo-' + chave(g) + '-conteudo'" [class.fechado]="!aberto(g)"
+          [attr.inert]="aberto(g) ? null : ''">
+        <div class="grupo-recorrentes-dentro">
         <div class="tabela-rolagem">
           <table class="tabela">
             <thead>
@@ -112,6 +134,8 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
             </tbody>
           </table>
         </div>
+        </div>
+        </div>
       </section>
     } @empty {
       <p class="vazio">
@@ -125,6 +149,28 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
     .filtros-recorrentes label { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
     .filtros-recorrentes label.interruptor { flex-direction: row; align-items: center; min-width: 0; }
     .grupo-recorrentes { margin-top: 12px; }
+    .acoes-grupos { display: flex; justify-content: flex-end; margin: 4px 0 -4px; }
+    .grupo-recorrentes-titulo { font-size: 1rem; }
+    .grupo-recorrentes-botao {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; min-height: 44px; padding: 4px 6px;
+      margin: -4px -6px; box-sizing: content-box; border: 0; border-radius: var(--raio-pequeno); background: none;
+      font: inherit; font-weight: 600; color: var(--texto-forte); text-align: left; cursor: pointer;
+      transition: background-color var(--transicao);
+    }
+    .grupo-recorrentes-botao:hover { background: var(--superficie-2); }
+    .grupo-recorrentes-nome { flex: 1 1 160px; min-width: 0; }
+    .grupo-recorrentes-resumo { font-weight: 400; font-size: 0.88rem; }
+    .grupo-recorrentes-botao .grupo-seta { color: var(--texto-suave); transition: transform 0.2s ease; }
+    .grupo-recorrentes-botao[aria-expanded="true"] .grupo-seta { transform: rotate(90deg); }
+    /* Fechado, o título não tem conteúdo embaixo: sem a linha e a folga do título de bloco (styles.css, "Divisórias"). */
+    .grupo-recorrentes.fechado > .grupo-recorrentes-titulo { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+    .grupo-recorrentes-conteudo {
+      display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.2s ease, visibility 0s linear 0s;
+    }
+    .grupo-recorrentes-conteudo.fechado {
+      grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.2s ease, visibility 0s linear 0.2s;
+    }
+    .grupo-recorrentes-dentro { min-height: 0; overflow: hidden; }
   `
 })
 export class AssinaturasRecorrentesComponent {
@@ -135,6 +181,9 @@ export class AssinaturasRecorrentesComponent {
   readonly contas = input<Conta[]>([]);
 
   readonly Recorrencia = Recorrencia;
+  readonly Icones = Icones;
+  /** #242: grupos fechados (por conta ou cartão), lembrados neste navegador. */
+  private readonly fechados = signal(lerGruposFechados());
   readonly formas = [FormaCobranca.AMao, FormaCobranca.DebitoAutomatico, FormaCobranca.CartaoCredito];
   readonly filtro = signal<FiltroRecorrentes>(this.filtroDaUrl(this.rota.snapshot.queryParamMap));
 
@@ -174,6 +223,48 @@ export class AssinaturasRecorrentesComponent {
 
   rotulo(g: GrupoRecorrentes): string {
     return rotuloQuantidade(g.itens);
+  }
+
+  chave(g: GrupoRecorrentes): string {
+    return chaveGrupo(g.contaId);
+  }
+
+  aberto(g: GrupoRecorrentes): boolean {
+    return !this.fechados().has(chaveGrupo(g.contaId));
+  }
+
+  readonly algumAberto = computed(() => this.grupos().some((g) => !this.fechados().has(chaveGrupo(g.contaId))));
+
+  alternar(g: GrupoRecorrentes): void {
+    const chave = chaveGrupo(g.contaId);
+    this.fechados.update((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(chave)) novo.delete(chave); else novo.add(chave);
+      return novo;
+    });
+    guardarGruposFechados(this.fechados());
+  }
+
+  /** "Fechar todos" com algum aberto; "Abrir todos" com todos fechados (Nielsen 3). */
+  alternarTodos(): void {
+    const fechar = this.algumAberto();
+    this.fechados.update((atual) => {
+      const novo = new Set(atual);
+      for (const g of this.grupos()) {
+        if (fechar) novo.add(chaveGrupo(g.contaId)); else novo.delete(chaveGrupo(g.contaId));
+      }
+      return novo;
+    });
+    guardarGruposFechados(this.fechados());
+  }
+
+  /** ADR 0024: o banco que vale para a conta (null = selo neutro). */
+  bancoDe(contaId: number | null): string | null {
+    return this.contas().find((c) => c.id === contaId)?.banco ?? null;
+  }
+
+  ehCartao(contaId: number | null): boolean {
+    return this.contas().find((c) => c.id === contaId)?.tipo === TipoConta.CartaoCredito;
   }
 
   porMes(c: ContaAgendada): number {
