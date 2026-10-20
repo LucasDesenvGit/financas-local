@@ -46,3 +46,8 @@ npm-debug.log*
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Testes no navegador (Playwright, ADR 0041): resultados, relatório e prints gerados
+src/frontend/testes-navegador/resultados/
+src/frontend/testes-navegador/relatorio/
+src/frontend/testes-navegador/fotos/

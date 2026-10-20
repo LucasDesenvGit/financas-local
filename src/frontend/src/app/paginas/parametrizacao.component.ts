@@ -68,7 +68,7 @@ interface GrupoParametros { nome: string; itens: Parametro[]; }
         <h2>Sistema</h2>
         <p class="texto-suave">
           Somente leitura. Caminho do banco, pasta das chaves, porta e certificado ficam no
-          <code>appsettings.Production.json</code>, gerado pelo <code>scripts/3-publicar-atualizar.sh</code>,
+          <code>appsettings.Production.json</code>, gerado pelo <code>scripts/geral/3-publicar-atualizar.sh</code>,
           porque são necessários antes de o banco ser aberto.
         </p>
         <dl class="info-sistema">

@@ -1035,7 +1035,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Backup',
         paraQueServe: 'Não perder os seus dados se o computador der problema.',
         passos: [
-          'Rode o script scripts/4-backup.sh (de preferência agendado) para copiar o banco para a pasta “backups”.',
+          'Rode o script scripts/geral/4-backup.sh (de preferência agendado) para copiar o banco para a pasta “backups”.',
           'Copie de vez em quando a pasta “backups” para um disco externo ou outro lugar seguro.',
           'Ative a criptografia do disco (BitLocker no Windows, LUKS no Linux): o arquivo do banco não é criptografado.'
         ]
@@ -1045,9 +1045,9 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Atualizar e parar o sistema',
         paraQueServe: 'Manter o site em dia e saber desligar tudo.',
         passos: [
-          'Para atualizar, rode scripts/3-publicar-atualizar.sh (ou o instalador do Windows de novo): ele faz backup do banco antes.',
-          'Para parar tudo: parar-windows.cmd no Windows ou scripts/parar.sh no Linux.',
-          'De tempos em tempos, rode scripts/1-preparar-ambiente.sh para receber as correções de segurança do .NET.'
+          'Para atualizar, rode scripts/geral/3-publicar-atualizar.sh (ou o instalador do Windows de novo): ele faz backup do banco antes.',
+          'Para parar tudo: parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.',
+          'De tempos em tempos, rode scripts/geral/1-preparar-ambiente.sh para receber as correções de segurança do .NET.'
         ]
       },
       {

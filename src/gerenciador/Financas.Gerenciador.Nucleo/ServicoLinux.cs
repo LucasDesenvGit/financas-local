@@ -12,7 +12,7 @@ public sealed partial class ServicoLinux : ServicoDoSite
 {
     public const string Unidade = "financaslocal.service";
 
-    public override string ComoInstalar => "Instale pelos scripts: rode scripts/instalar.sh na pasta do projeto.";
+    public override string ComoInstalar => "Instale pelos scripts: rode scripts/geral/instalar.sh na pasta do projeto.";
 
     public override EstadoServico Estado()
     {

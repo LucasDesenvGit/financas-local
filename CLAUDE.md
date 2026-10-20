@@ -13,6 +13,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Wind
 dotnet build FinancasLocal.sln -c Release      # back-end (Financas.Api + Financas.MigrarSqlite)
 cd src/frontend && npm run build                # front-end (produção)
 cd src/frontend && npm test                     # testes do front-end (Jest): test:regressao | test:usabilidade | test:tipos
+cd src/frontend && npm run test:navegador       # testes no navegador (Playwright): build de produção + CSP da API + API falsa (ADR 0041)
 cd src/frontend && npm start                    # front-end em dev (http://localhost:4200, proxy /api -> API)
 
 # CI roda também:
@@ -20,17 +21,19 @@ python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura
 # Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam
 
 # Banco (sem migrations)
-scripts/2-criar-banco.sh                        # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
+scripts/geral/2-criar-banco.sh                  # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
 
 # Publicação
-scripts/3-publicar-atualizar.sh                 # compila front+API, publica, cuida de certificado e do serviço do sistema
-scripts/instalar.sh                             # etapas 1-3 de uma vez (bash)
-instalar-windows.cmd                            # Windows sem bash: eleva e roda scripts/instalar-windows.ps1 (etapas 1-3 em PowerShell 5.1, ADR 0012)
+scripts/geral/3-publicar-atualizar.sh           # compila front+API, publica, cuida de certificado e do serviço do sistema
+scripts/geral/instalar.sh                       # etapas 1-3 de uma vez (bash)
+instalar-windows.cmd                            # Windows sem bash: eleva e roda scripts/windows/instalar-windows.ps1 (etapas 1-3 em PowerShell 5.1, ADR 0012)
 instalador/gerar-msi.ps1                        # gera o FinancasLocal-<versão>.msi (WiX 5; a CI faz isso no workflow "Versão" e publica na tag vX.Y.Z; ADR 0029)
 
 # Migrar dados de uma instalação antiga (SQL Server/IIS) para o SQLite novo — seguro rodar mesmo sem SQL Server disponível
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
 ```
+
+**Testes no navegador** (Playwright, [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)), em `src/frontend/testes-navegador/`: o build de produção com a CSP da API e a API falsa (`api-falsa.ts`, sem dado real); cada tela do menu abre sem erro de console, exceção ou bloqueio de CSP, em computador e celular. **Mudou tela, CSS, rota ou chamada da API no front-end? Use a skill `testar-no-navegador`** (`.claude/skills/`): roda a regressão, tira prints das telas mudadas para olhar e diz o que foi conferido. Tela nova no menu entra em `TELAS` (`base.ts`), e endpoint novo, na API falsa.
 
 Testes automatizados só no front-end, com Jest + `jest-preset-angular` em `src/frontend/testes/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)): `regressao/` (bug corrigido ou comportamento garantido por um PR — cada bug corrigido ganha teste aqui) e `usabilidade/` (critérios de UI/UX desta página verificáveis sem navegador). A CI roda `npm run test:tipos` e `npm test`. O back-end não tem testes automatizados; além disso, vale o checklist manual do PR (ver [CONTRIBUINDO.md](CONTRIBUINDO.md)).
 
@@ -50,7 +53,7 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - `Dtos/Dtos.cs` — todos os DTOs num arquivo único.
 - `Seguranca/` — cabeçalhos de segurança, validação de sessão, constantes de cookies.
 
-**Gerenciador** (`src/gerenciador/`): situação do site, ligar/desligar, cópia do banco. `Financas.Gerenciador.Nucleo` tem o que vale nos dois sistemas (instalação, situação, serviço, cópia do banco); `Financas.Gerenciador` é a janela do Windows (WinForms, UAC, versão nova pelo GitHub Releases; ADR 0028), instalada pelo `.msi` ou pelo `scripts/instalar-gerenciador.ps1`; `Financas.Gerenciador.Linux` é a do Linux (Avalonia, `systemctl --user`, sem rede; ADR 0033), pelo `scripts/instalar-gerenciador.sh`. Texto ou ação nova vai nas duas janelas.
+**Gerenciador** (`src/gerenciador/`): situação do site, ligar/desligar, cópia do banco. `Financas.Gerenciador.Nucleo` tem o que vale nos dois sistemas (instalação, situação, serviço, cópia do banco); `Financas.Gerenciador` é a janela do Windows (WinForms, UAC, versão nova pelo GitHub Releases; ADR 0028), instalada pelo `.msi` ou pelo `scripts/windows/instalar-gerenciador.ps1`; `Financas.Gerenciador.Linux` é a do Linux (Avalonia, `systemctl --user`, sem rede; ADR 0033), pelo `scripts/linux/instalar-gerenciador.sh`. Texto ou ação nova vai nas duas janelas.
 
 **Front-end** (`src/frontend/src/app`):
 - `core/` — `ApiService` (único ponto de chamadas HTTP), modelos TS, autenticação, tema, privacidade (ocultar valores).
@@ -63,9 +66,10 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - `01-estrutura.sql` — tabelas/índices/restrições com `CREATE TABLE/INDEX IF NOT EXISTS` (idempotência nativa do SQLite); baseline limpa da troca SQL Server → SQLite, com tabelas novas acrescentadas no fim — verificado pelo CI via `scripts/ci/verificar-sql.py` e aplicado de fato a um banco SQLite descartável no CI. Nunca apagar/renomear coluna em uso sem bloco de transição.
 - `02-dados-iniciais.sql` — categorias/config/regras padrão.
 - A API também aplica esses scripts ao iniciar (`Data/EsquemaBanco.cs`, embutidos no build; cópia em `dados/backups` antes de mudar um banco existente; dados iniciais só no banco novo) — é o que a instalação pelo .msi usa.
-- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/comum.sh`, checa via `PRAGMA table_info`) em `scripts/2-criar-banco.sh`, não no SQL — uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
-- Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/instalar-windows.ps1` precisa da mesma mudança (e vice-versa). Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
-- Versão do sistema: só no `Directory.Build.props` (API e gerenciador); a tag `vX.Y.Z` tem de ser igual.
+- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`, checa via `PRAGMA table_info`) em `scripts/geral/2-criar-banco.sh`, não no SQL — uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
+- **Pastas dos scripts (#154):** `scripts/geral/` é o bash que roda nos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/` têm o que só funciona num deles; `scripts/ci/`, o que só a CI usa. Script novo vai na pasta do sistema em que roda. Os `.cmd` ficam na raiz.
+- Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa). Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
+- Versão do sistema: só no `Directory.Build.props` (API e gerenciador); a tag `vX.Y.Z` tem de ser igual. **Todo PR para o `develop` sobe esse número** (ver Git / commits).
 - Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 
 ## Decisões de arquitetura (ADRs) — obrigatório
@@ -125,9 +129,16 @@ Ao responder: separar explicitamente o que vem dessas fontes do que é **julgame
 
 Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para fluxo de branches completo). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
 
+**Todo PR para o `develop` sobe a versão no `Directory.Build.props`, pelo tipo do título** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md); o check "versão subiu" da CI confere):
+- `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) → o número do meio (2.2.0 → 2.3.0);
+- `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` → o último (2.2.0 → 2.2.1);
+- quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
+- Outro PR subiu antes? `git merge origin/develop`, pegue a maior e suba de novo. Diga ao usuário, no fim, de qual para qual versão foi.
+
 **O branch padrão do repositório é o `develop`** (#142). Por isso, todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge. Fora do branch padrão, a palavra-chave é ignorada.
 - **Branch nova:** de preferência criada pela issue, com `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
-- **Issue nova já nasce no nome de quem pediu:** `gh issue create --assignee @me` (a conta do `gh` é a do usuário) ou o login de quem pediu, se for outra pessoa.
+- **Issue nova já nasce no nome de quem pediu:** `gh issue create --assignee @me` (a conta do `gh` é a do usuário) ou o login de quem pediu, se for outra pessoa. **Exceção, os épicos:** veja a regra abaixo.
+- **Épico e as histórias dele não são atribuídos a ninguém:** nem ao criar, nem depois, nem ao ligar uma história ao épico (sub-issue). O épico é a demanda inteira, e ninguém "é dono" dela. Só quando uma pessoa **pega uma história**, pedindo aqui, essa história (e só ela) vai para o nome dela, com a etiqueta "em progresso". O épico continua sem ninguém. Se o usuário pedir para não atribuir uma issue a ele, não atribua.
 - **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
 - **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
 
@@ -137,4 +148,4 @@ Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto p
 - Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo da API, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
 - Segredos (Client Secret da Pluggy, token da brapi) via ASP.NET Data Protection, chaves em `dados/chaves`: DPAPI no Windows (`OperatingSystem.IsWindows()` em `Program.cs`), permissão de arquivo no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
-- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` (API) e `api.github.com`/`github.com` (só o gerenciador do Windows, para versão nova; ADR 0028) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).
+- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` (API) e `api.github.com`/`github.com` (só o gerenciador: o do Windows para versão nova, ADR 0028; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop" nas duas janelas, ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).

@@ -67,6 +67,26 @@
             <TextBlock x:Name="ComandoCopiado" Classes="suave" VerticalAlignment="Center"
                        AutomationProperties.LiveSetting="Polite" />
           </WrapPanel>
+          <!-- ADR 0040: só na instalação de desenvolvimento (clone git na branch develop). -->
+          <StackPanel x:Name="BlocoDesenvolvimento" Spacing="8" IsVisible="False">
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button x:Name="BotaoAtualizarDev" Classes="primario" Content="Atualizar para a última do de_velop" />
+            </WrapPanel>
+            <StackPanel x:Name="ConfirmacaoDev" Spacing="8" IsVisible="False">
+              <TextBlock TextWrapping="Wrap"
+                         Text="Atualizar esta instalação de desenvolvimento para a última versão do develop? O site fica fora do ar por alguns minutos, enquanto o front-end e a API são compilados, e o banco ganha uma cópia em backups antes de mudar. Com alterações locais ou em outra branch, nada é mudado: a tela diz o motivo." />
+              <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <Button x:Name="BotaoConfirmarDev" Classes="primario" Content="_Sim, atualizar" />
+                <Button x:Name="BotaoCancelarDev" Content="Cancelar" />
+              </WrapPanel>
+            </StackPanel>
+            <TextBlock x:Name="ResultadoDev" TextWrapping="Wrap" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
+            <TextBox x:Name="SaidaDev" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="monospace"
+                     FontSize="12" Height="170" IsVisible="False" AutomationProperties.Name="Saída da atualização" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+              <Button x:Name="BotaoAtualizarGerenciador" Content="Atualizar o _gerenciador e reabrir" IsVisible="False" />
+            </WrapPanel>
+          </StackPanel>
         </StackPanel>
       </Border>
 

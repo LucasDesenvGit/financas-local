@@ -3,7 +3,7 @@
   <!--
     Gerenciador do Finanças Local no Linux (#138, ADR 0033): a mesma janela do gerenciador do Windows (ADR 0028), em
     Avalonia, para a instalação pelos scripts (serviço do systemd do usuário). Publicado pelo
-    scripts/instalar-gerenciador.sh em publicado/gerenciador, com atalho no menu de aplicativos.
+    scripts/linux/instalar-gerenciador.sh em publicado/gerenciador, com atalho no menu de aplicativos.
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>

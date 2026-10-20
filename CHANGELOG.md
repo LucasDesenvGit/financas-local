@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Publicação e documentação
+- **Scripts separados por sistema** (#154): `scripts/geral/` (bash dos dois sistemas: `instalar.sh`, `1-` a `4-`, `parar.sh`, `comum.sh`), `scripts/windows/` (`instalar-windows.ps1`, `parar-windows.ps1`, `instalar-gerenciador.ps1`) e `scripts/linux/` (`instalar-gerenciador.sh`). O `instalar-windows.cmd` e o `parar-windows.cmd` continuam na raiz e funcionam como antes.
+  - **Quem instalou pelos scripts:** os comandos passam a ser, por exemplo, `scripts/geral/3-publicar-atualizar.sh` e `scripts/linux/instalar-gerenciador.sh`. O backup diário já agendado e o comando que o gerenciador do Linux mostrava continuam funcionando por repasses temporários; para gravar o caminho novo no agendamento, rode `scripts/geral/4-backup.sh --agendar` de novo.
+- **Testes no navegador** (#185, ADR 0041): a cada PR, a CI abre cada tela do site num navegador de verdade (o build de produção, com a mesma política de segurança da API e dados de exemplo, sem nenhum dado real), no computador e no celular, e falha com erro no console, exceção ou bloqueio da política de segurança. Pega, por exemplo, o erro da #157. Para quem desenvolve: `npm run test:navegador`, prints com `FOTOS=…`, e a skill `testar-no-navegador` do Claude Code.
+- **Versões publicadas sempre como "Finanças Local X.Y.Z"** (#187). O workflow de versão acerta o título e as notas mesmo se o Release foi criado à mão antes da tag. As notas começam com **como instalar ou atualizar** e trazem a seção do CHANGELOG sem o cabeçalho repetido.
+- **A versão sobe a cada mudança** (#187, ADR 0039): todo PR para o `develop` sobe o número no `Directory.Build.props`, pelo tipo (funcionalidade → o do meio; correção e ajuste → o último), e a CI confere. A versão de desenvolvimento passa a mostrar o número que vai sair (agora **2.2.0**, contando o que entrou desde a 2.1.0), em vez de "2.1.0-dev.N".
+- **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
+
 ### Correções
 - **Mais robusto quando o banco manda os dados de outro jeito** (#172):
   - **Pagamento de fatura** que o banco manda como boleto ou "outros" fica fora dos gastos quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem o crédito, fica como está, porque "fatura" também é conta de telefone.
@@ -12,7 +20,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Seu nome nos Pix:** campo novo em Configurações › Open Finance. Quando o banco não informa o titular, Pix e TED que citam o seu nome contam como entre contas suas (ADR 0031).
   - **Conta em outra moeda** gera um aviso no Painel: o site soma as contas como reais (ADR 0008).
   - **Reserva de emergência** sem ações, FIIs e ETFs, também os do Open Finance, igual à carteira. O ⓘ explica por quê.
-  - **Contas fora do saldo e arquivadas** continuam nos relatórios (ADR 0039), e a edição da conta diz isso.
+  - **Contas fora do saldo e arquivadas** continuam nos relatórios (ADR 0042), e a edição da conta diz isso.
 - **Estorno no cartão contava como receita** (#166, ADR 0036). Crédito no cartão (compra devolvida, "crédito de confiança", cashback) virava receita e não descontava o gasto da categoria. Isso inflava a receita, a renda (50/30/20), os orçamentos e o gasto por categoria.
   - **Agora:** o estorno abate o gasto da categoria e não é receita. O pagamento da fatura recebido no cartão fica fora dos gastos mesmo sem a categoria certa.
   - **Estorno do NuPay** que chega como transferência ganha a categoria do texto ("Estorno de Uber" → Transporte).
@@ -46,6 +54,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
 
 ### Funcionalidades
+- **Gerenciador: "Atualizar para a última do develop", só na instalação de desenvolvimento** (#154, ADR 0040). Quem instalou uma versão publicada não vê nada novo.
+  - **`.msi` de desenvolvimento** (versão `X.Y.Z-dev.N`): o gerenciador procura o pré-lançamento "desenvolvimento", avisa quando tem um mais novo e atualiza como na versão publicada, conferindo o SHA256.
+  - **Pelos scripts, num clone na branch `develop`:** o botão traz o `develop` do GitHub e reinstala, mostrando a saída ao vivo. Com alteração local, outra branch ou commits que não estão no GitHub, recusa e diz o motivo, sem mexer em nada. No Windows, o git roda como você e só a reinstalação pede permissão de administrador. No fim, "Atualizar o gerenciador e reabrir".
+  - **No terminal:** `scripts/geral/atualizar.sh` e `scripts/windows/atualizar-windows.ps1` fazem o mesmo.
 - **Limite do cartão reduzido no app** (#171). Quem reduz o limite no app do banco, por segurança, via o "limite usado" muito maior que a dívida do cartão, e o site não sabia por quê.
   - **Agora o cartão pergunta**, no card e na edição: "Você reduziu o limite no app?".
   - **"Sim":** vale o limite que ficou no app.

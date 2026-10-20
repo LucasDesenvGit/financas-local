@@ -1,4 +1,4 @@
-# 0039. Contas fora do saldo e arquivadas continuam nos relatórios
+# 0042. Contas fora do saldo e arquivadas continuam nos relatórios
 
 - **Status:** Aceita
 - **Data:** 2026-10-20 (issue #172)

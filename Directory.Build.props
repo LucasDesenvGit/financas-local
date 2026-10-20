@@ -2,9 +2,11 @@
   <!--
     Versão do Finanças Local: site (API + front-end) e gerenciador saem sempre com o mesmo número.
     Aparece em Configurações › Parametrização › Sistema, em GET /api/auth/estado e no gerenciador.
-    Ao publicar uma versão nova, mude aqui e no CHANGELOG.md e crie a tag vX.Y.Z igual: o workflow de versão confere.
+    Todo PR para o develop sobe este número pelo tipo do commit (ADR 0039; a CI confere): feat → o do meio (2.2.0 → 2.3.0),
+    correção e ajuste → o último (2.2.0 → 2.2.1), quebra de verdade → o primeiro (3.0.0).
+    Para publicar, a tag vX.Y.Z tem de ser igual a este número: o workflow de versão confere.
   -->
   <PropertyGroup>
-    <Version>2.1.0</Version>
+    <Version>2.4.2</Version>
   </PropertyGroup>
 </Project>

@@ -5,13 +5,15 @@ using System.Text.Json;
 
 namespace Financas.Gerenciador;
 
-/// <summary>Versão publicada no GitHub com instalador (.msi) e somas de verificação (SHA256SUMS.txt).</summary>
-internal sealed record VersaoDisponivel(Version Versao, string Tag, string Notas, Uri Msi, string NomeMsi, Uri? Somas,
+/// <summary>Versão no GitHub com instalador (.msi) e somas de verificação (SHA256SUMS.txt).</summary>
+internal sealed record VersaoDisponivel(VersaoDoSistema Versao, string Tag, string Notas, Uri Msi, string NomeMsi, Uri? Somas,
     Uri Pagina);
 
 /// <summary>
 /// Versão nova pelo GitHub Releases (ADR 0028): só leitura de release público, por HTTPS, sem enviar nada do usuário.
-/// O .msi baixado só é aberto se o SHA256 bater com o publicado junto.
+/// O .msi baixado só é aberto se o SHA256 bater com o publicado junto. O .msi de desenvolvimento (X.Y.Z-dev.N) procura
+/// no pré-lançamento "desenvolvimento", gerado do develop e testado pela CI; o da versão publicada, só no Release mais
+/// recente (ADR 0040).
 /// </summary>
 internal static class Atualizacoes
 {
@@ -24,11 +26,15 @@ internal static class Atualizacoes
         return http;
     }
 
-    /// <summary>A última versão publicada, ou null se não houver nenhuma com instalador.</summary>
-    public static async Task<VersaoDisponivel?> ProcurarAsync(CancellationToken ct)
+    /// <summary>
+    /// A última versão publicada (ou, com <paramref name="desenvolvimento"/>, a última de desenvolvimento), ou null se
+    /// não houver nenhuma com instalador.
+    /// </summary>
+    public static async Task<VersaoDisponivel?> ProcurarAsync(bool desenvolvimento, CancellationToken ct)
     {
+        var endereco = desenvolvimento ? "releases/tags/desenvolvimento" : "releases/latest";
         using var requisicao = new HttpRequestMessage(HttpMethod.Get,
-            $"https://api.github.com/repos/{Instalacao.Repositorio}/releases/latest");
+            $"https://api.github.com/repos/{Instalacao.Repositorio}/{endereco}");
         requisicao.Headers.Accept.ParseAdd("application/vnd.github+json");
         using var resposta = await Http.SendAsync(requisicao, ct);
         if (resposta.StatusCode == HttpStatusCode.NotFound) return null;
@@ -37,7 +43,10 @@ internal static class Atualizacoes
         using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync(ct));
         var raiz = doc.RootElement;
         var tag = raiz.GetProperty("tag_name").GetString() ?? "";
-        if (!Version.TryParse(tag.TrimStart('v', 'V').Split('-')[0], out var versao)) return null;
+        // A de desenvolvimento tem tag fixa ("desenvolvimento"): o número vem do título, "Finanças Local 2.2.1-dev.60 (…)".
+        var titulo = raiz.TryGetProperty("name", out var nomeRelease) ? nomeRelease.GetString() ?? "" : "";
+        var versao = desenvolvimento ? VersaoDoSistema.Ler(titulo.Replace("Finanças Local", "").Trim()) : VersaoDoSistema.Ler(tag);
+        if (versao is null || versao.EhDesenvolvimento != desenvolvimento) return null;
 
         Uri? msi = null, somas = null;
         string? nomeMsi = null;
