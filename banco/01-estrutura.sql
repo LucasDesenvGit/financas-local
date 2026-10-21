@@ -613,3 +613,20 @@ CREATE TABLE IF NOT EXISTS CotacaoCripto
     AtualizadoEm TEXT NOT NULL,
     CONSTRAINT PK_CotacaoCripto PRIMARY KEY (Moeda, DataHora)
 );
+
+/* ------------------------------------------------------------------ */
+/* Aportes das metas (#318)                                            */
+/* ------------------------------------------------------------------ */
+/* Um registro por "+ aporte" (ou retirada, valor negativo), com a data em Brasília: é o histórico do gráfico "Como
+   está indo" da meta. Meta.ValorAtual continua sendo o total; antes desta tabela, os aportes não tinham data. */
+CREATE TABLE IF NOT EXISTS MetaAporte
+(
+    Id       INTEGER NOT NULL CONSTRAINT PK_MetaAporte PRIMARY KEY AUTOINCREMENT,
+    MetaId   INTEGER NOT NULL,
+    Data     TEXT    NOT NULL,
+    Valor    TEXT    NOT NULL,
+    -- Preenchido pela API (MetaAporte.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    CriadoEm TEXT    NOT NULL,
+    CONSTRAINT FK_MetaAporte_Meta FOREIGN KEY (MetaId) REFERENCES Meta (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_MetaAporte_Meta_Data ON MetaAporte (MetaId, Data);

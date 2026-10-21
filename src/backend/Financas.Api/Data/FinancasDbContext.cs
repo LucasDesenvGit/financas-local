@@ -29,6 +29,7 @@ public class FinancasDbContext : DbContext
     public DbSet<PagamentoEmprestimo> PagamentosEmprestimo => Set<PagamentoEmprestimo>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
     public DbSet<Meta> Metas => Set<Meta>();
+    public DbSet<MetaAporte> MetaAportes => Set<MetaAporte>();
     public DbSet<ContaAgendada> ContasAgendadas => Set<ContaAgendada>();
     public DbSet<Ativo> Ativos => Set<Ativo>();
     public DbSet<OperacaoAtivo> OperacoesAtivo => Set<OperacaoAtivo>();
@@ -282,6 +283,16 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.ReservaNome).HasMaxLength(100);
             e.HasOne(x => x.Conta).WithMany()
                 .HasForeignKey(x => x.ContaId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // #318: histórico dos aportes de cada meta.
+        mb.Entity<MetaAporte>(e =>
+        {
+            e.ToTable("MetaAporte");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Valor).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.MetaId, x.Data }).HasDatabaseName("IX_MetaAporte_Meta_Data");
+            e.HasOne<Meta>().WithMany().HasForeignKey(x => x.MetaId).OnDelete(DeleteBehavior.Cascade);
         });
 
         mb.Entity<Ativo>(e =>

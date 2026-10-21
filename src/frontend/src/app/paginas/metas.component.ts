@@ -6,7 +6,7 @@ import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Conta, Meta, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
+import { Conta, Meta, MetaAporte, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
 import { Degrau, PlanoDaMeta, planejarMetas } from './metas-plano';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { NOMES_MESES } from '../compartilhado/utilidades';
@@ -16,12 +16,17 @@ import { CORES_SUGERIDAS, NOMES_CORES } from '../compartilhado/utilidades';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { IconesMeta, iconeDaMeta } from '../compartilhado/icones';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { ChartConfiguration } from 'chart.js';
+import { GraficoComponent } from '../compartilhado/grafico.component';
+import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
+import { PrivacidadeService } from '../core/privacidade.service';
+import { evolucaoDaMeta, resumoEvolucao } from './metas-evolucao';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-metas',
   imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent,
-    CampoDataComponent, IconeComponent],
+    CampoDataComponent, IconeComponent, GraficoComponent, GraficoExplicadoComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
@@ -203,6 +208,31 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           } @else if (m.contaNome) {
             <p class="texto-suave">{{ m.valorInicial | currency }} guardados + {{ m.saldoConta | currency }} em {{ m.contaNome }}</p>
           }
+          <!-- #318: como a meta está indo, até o alvo; muda a cada aporte. Disclosure, como o "Plano mês a mês". -->
+          <button type="button" class="link botao-evolucao" [attr.aria-expanded]="evolucaoAberta() === m.id"
+            [attr.aria-controls]="'evolucao-meta-' + m.id" (click)="alternarEvolucao(m.id)">
+            <span aria-hidden="true">{{ evolucaoAberta() === m.id ? '▾' : '▸' }}</span> Como está indo</button>
+          <div [id]="'evolucao-meta-' + m.id">
+            @if (evolucaoAberta() === m.id) {
+              @if (evolucao(); as ev) {
+                <app-grafico-explicado [resumo]="resumoDaEvolucao()"
+                  comoLer="Linha cheia: o total guardado no fim de cada mês; cada aporte muda o mês dele. Tracejada: o plano até o alvo. Pontilhada: o valor alvo.">
+                  <app-grafico [configuracao]="graficoEvolucao()!" [altura]="200" />
+                </app-grafico-explicado>
+                @if (ev.aportes.length) {
+                  <h3 class="titulo-aportes">Últimos aportes</h3>
+                  <ul class="lista-aportes">
+                    @for (a of ev.aportes.slice(0, 5); track $index) {
+                      <li><span class="texto-suave">{{ a.data | date: 'dd/MM/yyyy' }}</span>
+                        <strong>{{ a.valor > 0 ? '+' : '' }}{{ a.valor | currency }}</strong></li>
+                    }
+                  </ul>
+                }
+              } @else {
+                <p class="texto-suave" role="status">Carregando os aportes…</p>
+              }
+            }
+          </div>
           <footer>
             @if (!m.concluida) {
               <button type="button" class="link" (click)="abrirAporte(m)" [attr.aria-label]="'Aporte na meta ' + m.nome">+ aporte</button>
@@ -313,9 +343,13 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     /* #316: divisórias no cartão (o progresso, o plano do mês e as ações), na cor de linha do site. */
     .recomendado { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--linha); }
     .cartao-meta > footer { border-top: 1px solid var(--linha); }
+    /* #318: "Como está indo": a lista dos últimos aportes, data à esquerda e valor à direita. */
+    .titulo-aportes { margin: 8px 0 4px; font-size: 0.86rem; font-weight: 600; color: var(--texto-suave); }
+    .lista-aportes { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+    .lista-aportes li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
     .cartao-meta > :has(+ footer) { margin-bottom: 8px; }
     .aviso-prazo { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
-    .botao-plano, .botao-ajuste { justify-self: start; padding-left: 0; }
+    .botao-plano, .botao-ajuste, .botao-evolucao { justify-self: start; padding-left: 0; }
     .conta-sobra { font-size: 0.85rem; }
     .parte-sobra { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; font-weight: 400; }
     .parte-sobra select { width: auto; }
@@ -367,6 +401,10 @@ export class MetasComponent implements OnInit {
   /** #90/#149: o caixa que vem da API; o plano das metas é calculado aqui (metas-plano.ts). */
   readonly plano = signal<PlanoMetas | null>(null);
   readonly planoAberto = signal<number | null>(null);
+  /** #318: o gráfico "Como está indo" aberto (uma meta por vez) e os aportes dela. */
+  readonly evolucaoAberta = signal<number | null>(null);
+  readonly aportesDaMeta = signal<{ metaId: number; aportes: MetaAporte[] } | null>(null);
+  private readonly privacidade = inject(PrivacidadeService);
   /** #149 (C): quanto da sobra vai para as metas (100 − margem de segurança). */
   readonly percentual = signal(90);
   /** #149 (D): quanto o usuário diz que consegue guardar este mês, por meta. Fica na URL (?guardar=id:valor). */
@@ -423,6 +461,49 @@ export class MetasComponent implements OnInit {
       error: () => this.plano.set(null)
     });
   }
+
+  /** #318: o guardado mês a mês e o plano até o alvo da meta aberta (null enquanto os aportes carregam). */
+  readonly evolucao = computed(() => {
+    const id = this.evolucaoAberta();
+    const dados = this.aportesDaMeta();
+    const meta = this.metas().find((m) => m.id === id);
+    if (!meta || !dados || dados.metaId !== id) return null;
+    const caixa = this.plano();
+    const agora = new Date();
+    const hoje = caixa ? { ano: caixa.ano, mes: caixa.mes } : { ano: agora.getFullYear(), mes: agora.getMonth() + 1 };
+    return evolucaoDaMeta(meta, dados.aportes, this.planoDe(meta), hoje);
+  });
+  readonly resumoDaEvolucao = computed(() => {
+    const ev = this.evolucao();
+    const meta = this.metas().find((m) => m.id === this.evolucaoAberta());
+    return ev && meta ? resumoEvolucao(meta, ev, this.planoDe(meta), this.privacidade.oculto()) : null;
+  });
+  readonly graficoEvolucao = computed((): ChartConfiguration<'line'> | null => {
+    const ev = this.evolucao();
+    const meta = this.metas().find((m) => m.id === this.evolucaoAberta());
+    if (!ev || !meta) return null;
+    // O <app-grafico> põe a linha cheia no padrão (preenchida até a base, com pontos) e as tracejadas sem nada (#292).
+    return {
+      type: 'line',
+      data: {
+        labels: ev.rotulos,
+        datasets: [
+          { label: 'Guardado', data: ev.guardado, borderColor: meta.cor, tension: 0.25 },
+          // Sem plano (meta concluída, ou sem histórico de caixa), a série sai: a legenda não mostra linha que não existe.
+          ...(ev.plano.some((v) => v !== null)
+            ? [{ label: 'Plano', data: ev.plano, borderColor: meta.cor, borderDash: [6, 4], tension: 0.25 }] : []),
+          { label: 'Alvo', data: ev.rotulos.map(() => ev.alvo), borderColor: '#a9b4c6', borderDash: [2, 3], borderWidth: 1.5 }
+        ]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          x: { ticks: { maxTicksLimit: 6, maxRotation: 0 } },
+          y: { beginAtZero: true, ticks: { callback: (v) => Number(v).toLocaleString('pt-BR', { notation: 'compact' }) } }
+        }
+      }
+    };
+  });
 
   /** Recomendação da meta (null sem histórico suficiente: o cartão mostra a divisão igual). */
   planoDe(m: Meta): PlanoDaMeta | null {
@@ -500,6 +581,21 @@ export class MetasComponent implements OnInit {
     this.api.ordenarMetas(ordem).subscribe({
       next: () => this.carregar(),
       error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  alternarEvolucao(id: number): void {
+    const abrir = this.evolucaoAberta() !== id;
+    this.evolucaoAberta.set(abrir ? id : null);
+    if (abrir) this.carregarAportes(id);
+  }
+
+  private carregarAportes(id: number): void {
+    this.aportesDaMeta.set(null);
+    this.api.aportesMeta(id).subscribe({
+      next: (aportes) => this.aportesDaMeta.set({ metaId: id, aportes }),
+      // Sem os aportes, o gráfico parte do total de hoje (como antes do histórico).
+      error: () => this.aportesDaMeta.set({ metaId: id, aportes: [] })
     });
   }
 
@@ -592,11 +688,14 @@ export class MetasComponent implements OnInit {
 
   salvarAporte(): void {
     if (!this.aporteMeta || !this.valorAporte) return;
-    this.api.aporteMeta(this.aporteMeta.id, Number(this.valorAporte)).subscribe({
+    const id = this.aporteMeta.id;
+    this.api.aporteMeta(id, Number(this.valorAporte)).subscribe({
       next: () => {
         this.aporteMeta = null;
         this.avisos.sucesso('Aporte registrado.');
         this.carregar();
+        // #318: o gráfico aberto ganha o ponto do aporte.
+        if (this.evolucaoAberta() === id) this.carregarAportes(id);
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });

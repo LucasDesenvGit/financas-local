@@ -7,6 +7,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+
+## [2.31.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Metas: gráfico "Como está indo"** (#318). Em cada meta, um botão abre o gráfico com o total guardado no fim de cada mês, o caminho do plano até o valor alvo e o próprio alvo. Cada "+ aporte" muda o gráfico, e embaixo ficam os últimos aportes. **Banco:** tabela nova `MetaAporte`, criada sozinha ao atualizar. Ela guarda a data e o valor de cada aporte; antes, o aporte só somava no total. O histórico começa a partir desta versão.
+
 ## [2.30.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades

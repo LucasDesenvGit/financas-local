@@ -823,7 +823,8 @@ export const MANUAL: CapituloManual[] = [
           'Cada meta mostra “Este mês: guarde R$ X” e, embaixo, os degraus dos meses seguintes: menos nos meses de fatura alta, mais quando ela cai.',
           'Em “Consigo guardar outro valor”, diga quanto dá para guardar este mês: o resto do plano é refeito na hora e mostra se ainda fecha no prazo.',
           'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
-          '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.'
+          '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.',
+          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ aporte” muda o gráfico, e embaixo ficam os últimos aportes. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
         termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],

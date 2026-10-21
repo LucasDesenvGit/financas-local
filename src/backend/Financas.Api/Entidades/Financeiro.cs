@@ -183,6 +183,17 @@ public class Meta
     public Conta? Conta { get; set; }
 }
 
+/// <summary>#318: um "+ aporte" (ou retirada, negativo) numa meta, com a data: o histórico do gráfico da meta.</summary>
+public class MetaAporte
+{
+    public int Id { get; set; }
+    public int MetaId { get; set; }
+    public DateOnly Data { get; set; }
+    /// <summary>O que de fato mudou no total (a retirada para no zero).</summary>
+    public decimal Valor { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+}
+
 public class ContaAgendada
 {
     public int Id { get; set; }

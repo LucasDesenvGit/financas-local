@@ -8,7 +8,7 @@ import {
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
   AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
-  Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
+  Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
@@ -172,6 +172,7 @@ export class ApiService {
   criarMeta(dto: SalvarMeta): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas`, dto); }
   atualizarMeta(id: number, dto: SalvarMeta): Observable<Meta> { return this.http.put<Meta>(`${this.base}/metas/${id}`, dto); }
   aporteMeta(id: number, valor: number): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas/${id}/aporte`, { valor }); }
+  aportesMeta(id: number): Observable<MetaAporte[]> { return this.http.get<MetaAporte[]>(`${this.base}/metas/${id}/aportes`); }
   excluirMeta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/metas/${id}`); }
 
   // Contas a pagar

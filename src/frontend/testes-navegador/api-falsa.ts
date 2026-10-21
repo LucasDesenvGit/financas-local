@@ -207,6 +207,14 @@ const respostas: Record<string, unknown> = {
       reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 0, icone: null }
   ],
   '/api/reservas': [],
+  // #318: aportes fictícios da Viagem nos últimos meses (o gráfico "Como está indo"); a RESERVA não tem nenhum.
+  '/api/metas/1/aportes': [
+    { data: dataIso(new Date(ano, hoje.getMonth() - 3, 5)), valor: 500 },
+    { data: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), valor: 600 },
+    { data: dataIso(new Date(ano, hoje.getMonth() - 1, 5)), valor: 600 },
+    { data: dataIso(new Date(ano, hoje.getMonth(), 2)), valor: 700 }
+  ],
+  '/api/metas/2/aportes': [],
   '/api/metas/plano': { disponivel: false, mesesConsiderados: 1, ano, mes, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
     saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] },
   // #158: uma conta paga à mão, um débito automático e uma assinatura no cartão (baixa sozinha), e duas sugestões.

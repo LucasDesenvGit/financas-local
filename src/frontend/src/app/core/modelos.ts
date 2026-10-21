@@ -247,6 +247,9 @@ export interface Meta {
   icone?: string | null;
 }
 
+/** #318: um aporte da meta (data AAAA-MM-DD; valor negativo é retirada), para o gráfico "Como está indo". */
+export interface MetaAporte { data: string; valor: number }
+
 /**
  * #149 — um mês do caixa: receitas e despesas das contas de dinheiro, faturas de cartão que vencem no mês (com a parte
  * que é parcela) e a sobra = receitas − despesas − faturas.
