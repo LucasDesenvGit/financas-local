@@ -63,10 +63,23 @@ describe('Usabilidade: calendário do campo de data', () => {
     expect(cal.style.top || cal.style.bottom).not.toBe('');
   });
 
-  it('rolar um modal (scroll em qualquer contêiner) fecha o calendário', async () => {
+  it('rolar (em qualquer contêiner) faz o calendário acompanhar o campo; só fecha se o campo saiu da tela', async () => {
     const t = await abrir();
+    const campo = t.raiz.querySelector<HTMLElement>('.campo-data')!;
+    const caixa = (top: number) => ({ top, bottom: top + 40, left: 20, right: 300, width: 280, height: 40, x: 20, y: top,
+      toJSON: () => ({}) }) as DOMRect;
     const conteiner = document.createElement('div');
     document.body.appendChild(conteiner);
+
+    // #264: a rolagem que vem com o toque no celular fechava o calendário antes de ele aparecer. Agora ele segue o campo.
+    jest.spyOn(campo, 'getBoundingClientRect').mockReturnValue(caixa(100));
+    conteiner.dispatchEvent(new Event('scroll'));
+    await t.atualizar();
+    expect(t.calendario()).not.toBeNull();
+    expect(t.calendario()!.style.top).toBe('146px');   // 100 + 40 de altura + 6
+
+    // O campo saiu da tela (rolou para cima): fecha.
+    jest.spyOn(campo, 'getBoundingClientRect').mockReturnValue(caixa(-200));
     conteiner.dispatchEvent(new Event('scroll'));
     await t.atualizar();
     expect(t.calendario()).toBeNull();

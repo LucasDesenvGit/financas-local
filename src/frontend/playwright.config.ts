@@ -6,9 +6,11 @@ import { defineConfig, devices } from '@playwright/test';
  *   npm run test:navegador          compila e roda tudo (computador e celular)
  *   npx playwright test --ui        para ver passo a passo
  * Neste computador usa o Edge instalado (sem baixar navegador); na CI, o Chromium do Playwright.
+ * NAVEGADOR=chromium usa aqui o mesmo Chromium da CI (`npx playwright install chromium` uma vez): rode assim antes de
+ * subir (push). O Edge deixou passar um teste que falhou na CI (#264).
  */
 const naCi = !!process.env['CI'];
-const canal = naCi ? undefined : process.env['NAVEGADOR'] ?? 'msedge';
+const canal = naCi || process.env['NAVEGADOR'] === 'chromium' ? undefined : process.env['NAVEGADOR'] ?? 'msedge';
 const porta = Number(process.env['PORTA'] ?? 4300);
 
 export default defineConfig({

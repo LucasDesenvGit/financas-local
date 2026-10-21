@@ -375,17 +375,7 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
     this.mesVisivel.set({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
     this.foco.set(base);
     this.visao.set('dias');
-    // Posição fixa a partir do campo; sem espaço embaixo (ex.: campo no fim da tela), abre para cima.
-    const caixa = this.elemento.nativeElement.querySelector('.campo-data') ?? this.elemento.nativeElement;
-    const r = caixa.getBoundingClientRect();
-    const altura = 340;
-    const largura = 296;
-    const acima = window.innerHeight - r.bottom < altura && r.top > altura;
-    this.posicao.set({
-      top: acima ? null : r.bottom + 6,
-      bottom: acima ? window.innerHeight - r.top + 6 : null,
-      left: Math.max(8, Math.min(r.left, window.innerWidth - largura - 8))
-    });
+    this.posicionar();
     this.aberto.set(true);
     afterNextRender(() => {
       const el = this.calendario()?.nativeElement;
@@ -399,8 +389,9 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   }
 
   /**
-   * Rolar (a página ou um modal, por isso em captura no documento) ou redimensionar a janela fecha: a posição fixa
-   * ficaria no lugar errado.
+   * Rolar (a página ou um modal, por isso em captura no documento) ou redimensionar a janela: o calendário acompanha o
+   * campo (a posição é fixa e seria a errada) e só fecha se o campo saiu da tela. Antes fechava a qualquer rolagem, e no
+   * celular a rolagem que vem junto com o toque no botão fechava o calendário antes de ele aparecer (#264, CI).
    */
   constructor() {
     const rolar = (e: Event) => this.aoRolar(e);
@@ -413,7 +404,32 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
     if (!this.aberto()) return;
     const alvo = e.target as Node | null;
     if (alvo instanceof Node && this.calendario()?.nativeElement.contains(alvo)) return;
-    this.fechar(false);
+    const r = this.caixaDoCampo().getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) {
+      this.fechar(false);
+      return;
+    }
+    this.posicionar();
+  }
+
+  /**
+   * Posição fixa a partir do campo, embaixo dele; sem espaço embaixo (ex.: campo no fim da tela), em cima. A altura é a
+   * do calendário na tela, quando já está aberto (a fonte muda a altura de um sistema para outro).
+   */
+  private posicionar(): void {
+    const r = this.caixaDoCampo().getBoundingClientRect();
+    const altura = this.calendario()?.nativeElement.offsetHeight || 360;
+    const largura = 296;
+    const acima = window.innerHeight - r.bottom < altura && r.top > altura;
+    this.posicao.set({
+      top: acima ? null : r.bottom + 6,
+      bottom: acima ? window.innerHeight - r.top + 6 : null,
+      left: Math.max(8, Math.min(r.left, window.innerWidth - largura - 8))
+    });
+  }
+
+  private caixaDoCampo(): HTMLElement {
+    return this.elemento.nativeElement.querySelector<HTMLElement>('.campo-data') ?? this.elemento.nativeElement;
   }
 
   fechar(devolverFoco: boolean): void {
@@ -587,13 +603,15 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
     afterNextRender(() => {
       const raiz = this.elemento.nativeElement;
       const alvo = raiz.querySelector<HTMLButtonElement>(`.calendario-celula[data-valor="${this.focoLargo()}"]`);
-      (alvo && !alvo.disabled ? alvo : raiz.querySelector<HTMLButtonElement>('.calendario-celula:not(:disabled)'))?.focus();
+      (alvo && !alvo.disabled ? alvo : raiz.querySelector<HTMLButtonElement>('.calendario-celula:not(:disabled)'))
+        ?.focus({ preventScroll: true });
     }, { injector: this.injector });
   }
 
   private focarDia(): void {
     afterNextRender(() => {
-      this.elemento.nativeElement.querySelector<HTMLButtonElement>(`.calendario-dia[data-iso="${this.foco()}"]`)?.focus();
+      this.elemento.nativeElement.querySelector<HTMLButtonElement>(`.calendario-dia[data-iso="${this.foco()}"]`)
+        ?.focus({ preventScroll: true });
     }, { injector: this.injector });
   }
 

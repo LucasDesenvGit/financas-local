@@ -23,6 +23,16 @@ npx playwright test -g metas    # só os testes com "metas" no nome
 
 Cada tela do menu tem de abrir **sem**: erro no console, exceção, bloqueio da CSP, erro mandado para `/api/erros/front-end` e chamada da API sem simulação. Neste computador usa o Edge instalado (`NAVEGADOR=chrome` troca); na CI, o Chromium do Playwright.
 
+**Antes de subir (push), rode também com o navegador da CI** (#264: passou no Edge e falhou na CI, só no celular):
+
+```bash
+npx playwright install chromium                         # uma vez
+NAVEGADOR=chromium npx playwright test                  # tudo, com o Chromium da CI
+NAVEGADOR=chromium npx playwright test <arquivo> --repeat-each=5   # teste novo: 5 vezes, computador e celular
+```
+
+Falhou só na CI? `gh run download <run> -n testes-navegador` e olhe o print e o `error-context.md` antes de mexer; não suba tentativas para ver se passa.
+
 **Falhou?** Leia `testes-navegador/resultados/<teste>/error-context.md` (a árvore da página no momento da falha) e o `test-failed-1.png` antes de mexer. Não "conserte" o teste para passar: descubra se a tela quebrou.
 
 - **"chamadas da API sem simulação"**: a tela chama um endpoint novo. Acrescente a resposta em `api-falsa.ts`, com o formato do modelo em `src/app/core/modelos.ts`.

@@ -88,6 +88,12 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - **Meça o efeito, não a regra:** "os três cards têm a mesma altura" (`boundingBox`), não "existe `align-items: stretch`".
 - **Teste novo de estilo prova que falha:** estrague a regra no CSS do build (`dist/…/styles-*.css`), rode o teste, veja falhar e restaure. Se não falhar, os dados da API falsa provavelmente não exercitam o caso (ex.: dois cards com o mesmo conteúdo ficam iguais mesmo sem a regra): use conteúdos de tamanhos diferentes.
 
+**Antes de subir (push) mudança no front-end, rode os testes no navegador com o mesmo navegador da CI** (#264: passou no Edge daqui e falhou na CI):
+- `npx playwright install chromium` uma vez; depois `NAVEGADOR=chromium npx playwright test` (o Chromium do Playwright, o mesmo da CI). O Edge do computador continua para o dia a dia.
+- **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
+- **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
+- No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).
+
 **Limites de tempo (a CI confere):**
 - **Jest:** cada arquivo de teste até **10 s** (passou disso, a CI avisa) e no máximo **20 s** (passou, falha); a suíte inteira até **150 s** (`scripts/ci/verificar-tempo-testes.py`). Referência hoje: ~34 s a suíte, 6 s o arquivo mais lento, 0,7 s a mediana (2 workers, como a CI).
 - **Navegador:** cada teste até 30 s (padrão do Playwright); a suíte hoje leva ~30 s.
