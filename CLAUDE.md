@@ -165,7 +165,12 @@ Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para 
 - **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
 - **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
 
-**Pedido grande demais para uma vez só** (vários PRs, muitas horas): antes de começar, ofereça a skill `trabalho-longo` (`.claude/skills/`). Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento.
+**Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` (`.claude/skills/`) em uma frase. Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento. Ofereça quando **qualquer um** destes for verdade, e não só quando o pedido "parecer grande" (#280: numa sessão de muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou no limite):
+- o pedido cita **mais de uma issue ou PR**, ou um **épico**;
+- é a **2ª issue ou PR na mesma conversa**, ou a conversa **já foi resumida** (sessão longa);
+- a pessoa fala em "deixar rodando", "continuar depois" ou "quando o limite voltar".
+
+Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou nesta conversa. O hook `.claude/hooks/lembrar-trabalho-longo.sh` (em `.claude/settings.json`, vale para todos do projeto) lembra automaticamente quando o pedido tem link de issue/PR ou a sessão fica longa; o lembrete chega como contexto e deve ser seguido.
 
 ## Segurança (específico deste projeto — não genérico)
 
