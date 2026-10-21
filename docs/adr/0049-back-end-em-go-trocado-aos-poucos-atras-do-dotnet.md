@@ -113,6 +113,10 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - SQL só pelo `sqlc` ou com `?`, nunca com texto do usuário concatenado;
     - dinheiro só em decimal, e nada de `SUM`, `ORDER BY` ou `<`/`>` no SQL em coluna de dinheiro;
     - `gofmt`, `go vet` e `go test -race` limpos.
+  - **Banco (#74; detalhes no `src/backend-go/internal/banco/README.md`):**
+    - os tipos `Decimal`, `Data`, `DataHora` e `Guid` (pacote `internal/tipos`) gravam e leem no formato do EF Core. O formato foi confirmado por uma sonda que grava pelo mesmo EF Core da API (`internal/tipos/testdata/sonda-efcore`), e o resultado é o gabarito dos testes;
+    - o `Abrir` liga `foreign_keys` como o EF Core, espera até 30 s com o banco ocupado e começa as transações com `BEGIN IMMEDIATE`. Não muda o `journal_mode`;
+    - o `sqlc` roda pelo `go run` numa versão fixa, sem entrar no `go.mod`, e precisa de cgo só para quem gera. Ele lê um esquema reescrito pelo próprio SQLite (o parser dele não entende `TEXT NULL` e passa para minúsculas os nomes do `CREATE TABLE`). Nas consultas, os nomes vão entre aspas duplas e não pode haver acento.
   - **Versão:** entra no executável por `-ldflags -X`, lida do `Directory.Build.props` (a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) continua valendo).
   - **CSP:** os testes no navegador ([0041](0041-testes-no-navegador-com-playwright.md)) e o `testes-afetados.py` ([0047](0047-ci-paralela-so-testes-afetados-no-pr.md)) leem a CSP do `Seguranca.cs`. Ela ganha uma fonte única antes de o Go servir o front-end (#73).
   - **Esquema do banco** ([0003](0003-esquema-por-scripts-sql-idempotentes.md)): continua nos scripts de `banco/` mais as linhas `adicionar_coluna_se_ausente`, aplicado pelo .NET até a inversão e depois pelo Go (#297). Erros ([0022](0022-erros-do-sistema-gravados-no-banco.md)): registrados pelo .NET até a inversão, e depois por um handler do `slog` (#298).

@@ -1,0 +1,263 @@
+{
+  "efCore": "10.0.13.0",
+  "pragmas": {
+    "foreign_keys": "1",
+    "journal_mode": "wal",
+    "busy_timeout": "0",
+    "synchronous": "2"
+  },
+  "casos": [
+    {
+      "caso": "zero",
+      "noBanco": {
+        "Valor": "0.0",
+        "Preciso": "0.0",
+        "Opcional": "0.0",
+        "Momento": "2026-10-15 22:55:31.3481471",
+        "Dia": "2026-10-01",
+        "Identificador": "2F00DEFB-672E-45EF-87D0-702995AE8D2E",
+        "Ativo": "1",
+        "Tipo": "0",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 1,
+        "nome": "zero",
+        "valor": 0.0,
+        "preciso": 0.0,
+        "opcional": 0.0,
+        "momento": "2026-10-15T22:55:31.3481471",
+        "dia": "2026-10-01",
+        "identificador": "2f00defb-672e-45ef-87d0-702995ae8d2e",
+        "ativo": true,
+        "tipo": 0
+      }
+    },
+    {
+      "caso": "inteiro-negativo",
+      "noBanco": {
+        "Valor": "-5000.0",
+        "Preciso": "-5000.0",
+        "Opcional": "-5000.0",
+        "Momento": "2026-01-01 00:00:00",
+        "Dia": "2026-10-02",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "0",
+        "Tipo": "1",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 2,
+        "nome": "inteiro-negativo",
+        "valor": -5000.0,
+        "preciso": -5000.0,
+        "opcional": -5000.0,
+        "momento": "2026-01-01T00:00:00",
+        "dia": "2026-10-02",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": false,
+        "tipo": 1
+      }
+    },
+    {
+      "caso": "uma-casa",
+      "noBanco": {
+        "Valor": "4864.5",
+        "Preciso": "4864.5",
+        "Opcional": "4864.5",
+        "Momento": "2026-10-15 12:00:00.5",
+        "Dia": "2026-10-03",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "1",
+        "Tipo": "2",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 3,
+        "nome": "uma-casa",
+        "valor": 4864.5,
+        "preciso": 4864.5,
+        "opcional": 4864.5,
+        "momento": "2026-10-15T12:00:00.5",
+        "dia": "2026-10-03",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": true,
+        "tipo": 2
+      }
+    },
+    {
+      "caso": "zero-a-direita",
+      "noBanco": {
+        "Valor": "1.5",
+        "Preciso": "1.5",
+        "Opcional": "1.5",
+        "Momento": "2026-02-28 23:59:59.1",
+        "Dia": "2026-10-04",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "0",
+        "Tipo": "0",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 4,
+        "nome": "zero-a-direita",
+        "valor": 1.5,
+        "preciso": 1.5,
+        "opcional": 1.5,
+        "momento": "2026-02-28T23:59:59.1",
+        "dia": "2026-10-04",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": false,
+        "tipo": 0
+      }
+    },
+    {
+      "caso": "meio-centavo",
+      "noBanco": {
+        "Valor": "0.125",
+        "Preciso": "0.125",
+        "Opcional": "0.125",
+        "Momento": "2026-10-15 22:55:31.3481471",
+        "Dia": "2026-10-05",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "1",
+        "Tipo": "1",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 5,
+        "nome": "meio-centavo",
+        "valor": 0.125,
+        "preciso": 0.125,
+        "opcional": 0.125,
+        "momento": "2026-10-15T22:55:31.3481471",
+        "dia": "2026-10-05",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": true,
+        "tipo": 1
+      }
+    },
+    {
+      "caso": "oito-casas",
+      "noBanco": {
+        "Valor": "12345678.12345678",
+        "Preciso": "12345678.12345678",
+        "Opcional": "12345678.12345678",
+        "Momento": "2026-01-01 00:00:00",
+        "Dia": "2026-10-06",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "0",
+        "Tipo": "2",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 6,
+        "nome": "oito-casas",
+        "valor": 12345678.12345678,
+        "preciso": 12345678.12345678,
+        "opcional": 12345678.12345678,
+        "momento": "2026-01-01T00:00:00",
+        "dia": "2026-10-06",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": false,
+        "tipo": 2
+      }
+    },
+    {
+      "caso": "centavo-negativo",
+      "noBanco": {
+        "Valor": "-0.01",
+        "Preciso": "-0.01",
+        "Opcional": "-0.01",
+        "Momento": "2026-10-15 12:00:00.5",
+        "Dia": "2026-10-07",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "1",
+        "Tipo": "0",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 7,
+        "nome": "centavo-negativo",
+        "valor": -0.01,
+        "preciso": -0.01,
+        "opcional": -0.01,
+        "momento": "2026-10-15T12:00:00.5",
+        "dia": "2026-10-07",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": true,
+        "tipo": 0
+      }
+    },
+    {
+      "caso": "cem-sem-casas",
+      "noBanco": {
+        "Valor": "100.0",
+        "Preciso": "100.0",
+        "Opcional": "100.0",
+        "Momento": "2026-02-28 23:59:59.1",
+        "Dia": "2026-10-08",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "0",
+        "Tipo": "1",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 8,
+        "nome": "cem-sem-casas",
+        "valor": 100.0,
+        "preciso": 100.0,
+        "opcional": 100.0,
+        "momento": "2026-02-28T23:59:59.1",
+        "dia": "2026-10-08",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": false,
+        "tipo": 1
+      }
+    },
+    {
+      "caso": "nulo",
+      "noBanco": {
+        "Valor": "7.0",
+        "Preciso": "0.0",
+        "Opcional": null,
+        "Momento": "2026-10-15 22:55:31.3481471",
+        "Dia": "2026-10-09",
+        "Identificador": "00000000-0000-0000-0000-000000000000",
+        "Ativo": "1",
+        "Tipo": "2",
+        "typeof(Valor)": "text",
+        "typeof(Momento)": "text",
+        "typeof(Identificador)": "text"
+      },
+      "json": {
+        "id": 9,
+        "nome": "nulo",
+        "valor": 7.0,
+        "preciso": 0.0,
+        "opcional": null,
+        "momento": "2026-10-15T22:55:31.3481471",
+        "dia": "2026-10-09",
+        "identificador": "00000000-0000-0000-0000-000000000000",
+        "ativo": true,
+        "tipo": 2
+      }
+    }
+  ]
+}

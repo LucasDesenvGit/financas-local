@@ -3,6 +3,15 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+## [2.27.3] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **Go: camada de banco compatível com o EF Core** (#74, épico #70). Primeiro código Go do projeto, em `src/backend-go/`; ainda não roda no site. Para quem desenvolve:
+  - tipos `Decimal`, `Data`, `DataHora` e `Guid`, que gravam e leem o banco no mesmo formato do .NET, conferidos contra um gabarito gerado pelo próprio EF Core;
+  - abertura do banco com os mesmos ajustes do .NET, transação que desfaz sozinha em caso de erro, e o relógio no fuso de Brasília;
+  - `sqlc` lendo o esquema do `banco/` (com as colunas novas do `2-criar-banco.sh`) e as primeiras consultas, da `Configuracao`;
+  - lida uma cópia do banco real inteira sem nenhum erro de formato.
+
 ## [2.27.2] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
