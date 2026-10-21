@@ -885,6 +885,7 @@ export const MANUAL: CapituloManual[] = [
           'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
           'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
           'Embaixo, um bloco por cartão ou conta, com o selo do banco, o total por mês e cada cobrança: como é cobrada, o dia, a última cobrança e o valor.',
+          'Cada cobrança tem um selo antes do nome: o do serviço quando o site o reconhece pelo texto do extrato (YouTube, Netflix, iFood, TIM…), senão o ícone da categoria (Moradia, Educação…) ou um recibo. O mesmo selo aparece na aba Contas a pagar e nas sugestões do extrato.',
           'Clique no nome do cartão ou da conta para fechar o bloco (ou abrir de novo); fechado, ele ainda mostra quantas cobranças tem e quanto vai por mês. Dá para deixar vários abertos, e “Fechar todos” / “Abrir todos” faz de uma vez. O site lembra, neste navegador, quais você fechou.',
           'Para achar onde cai uma assinatura, digite o nome em “Onde cai…?” (ex.: netflix).',
           'Filtre por conta ou cartão e pela forma de cobrança; “Mostrar as encerradas” traz também as que acabaram. Os filtros aparecem embaixo, com ✕ para tirar.',

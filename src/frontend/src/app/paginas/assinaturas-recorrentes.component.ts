@@ -8,6 +8,7 @@ import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { SeloCobrancaComponent } from '../compartilhado/selo-cobranca.component';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 import { dataIso } from '../compartilhado/utilidades';
 import {
@@ -31,7 +32,7 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
  */
 @Component({
   selector: 'app-assinaturas-recorrentes',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, LogoBancoComponent, IconeComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, LogoBancoComponent, IconeComponent, SeloCobrancaComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="kpis" aria-label="Resumo das assinaturas e recorrentes">
@@ -115,7 +116,8 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
             <tbody>
               @for (c of g.itens; track c.id) {
                 <tr [class.ignorada]="!c.ativa">
-                  <td><strong>{{ c.descricao }}</strong>
+                  <td><span class="nome-cobranca"><app-selo-cobranca [texto]="c.textoCobranca" [nome]="c.descricao"
+                    [categoria]="c.categoriaNome" [tamanho]="24" /><strong>{{ c.descricao }}</strong></span>
                     @if (!c.ativa) { <span class="etiqueta etiqueta-suave">encerrada</span> }
                     @if (c.observacao) { <br><small class="texto-suave">{{ c.observacao }}</small> }</td>
                   <td>{{ nomeForma(c.formaCobranca) }}</td>
@@ -149,6 +151,8 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
     .filtros-recorrentes label { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
     .filtros-recorrentes label.interruptor { flex-direction: row; align-items: center; min-width: 0; }
     .grupo-recorrentes { margin-top: 12px; }
+    /* #265: o selo da cobrança antes do nome. */
+    .nome-cobranca { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
     .acoes-grupos { display: flex; justify-content: flex-end; margin: 4px 0 -4px; }
     .grupo-recorrentes-titulo { font-size: 1rem; }
     .grupo-recorrentes-botao {

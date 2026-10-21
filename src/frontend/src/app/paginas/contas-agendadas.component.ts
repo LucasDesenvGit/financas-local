@@ -13,6 +13,7 @@ import {
   SalvarContaAgendada, SugestaoContaAgendada, TipoCategoria, TipoConta
 } from '../core/modelos';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
+import { SeloCobrancaComponent } from '../compartilhado/selo-cobranca.component';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { dataIso, dataIsoValida, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
@@ -22,7 +23,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 @Component({
   selector: 'app-contas-agendadas',
   imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, ModalComponent, CampoValorComponent, CampoDataComponent,
-    AssinaturasRecorrentesComponent, LogoBancoComponent],
+    AssinaturasRecorrentesComponent, LogoBancoComponent, SeloCobrancaComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -89,7 +90,9 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                   </small>
                 }
               </td>
-              <td>{{ c.descricao }}
+              <!-- #265: selo do serviço (ou ícone da categoria) ao lado do nome da cobrança. -->
+              <td><span class="nome-cobranca"><app-selo-cobranca [texto]="c.textoCobranca" [nome]="c.descricao"
+                [categoria]="c.categoriaNome" [tamanho]="24" />{{ c.descricao }}</span>
                 <!-- #242: selo do banco ou do cartão ao lado do nome (decorativo: o nome está escrito, ADR 0024). -->
                 @if (c.contaNome) {
                   <small class="texto-suave conta-da-cobranca"><app-logo-banco [codigo]="bancoDe(c.contaId)"
@@ -148,7 +151,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                       @if (s.vencimentoSemPagamento) {
                         <br><small class="texto-alerta">o de {{ s.vencimentoSemPagamento | date: 'dd/MM' }} ainda não apareceu no extrato</small>
                       }</td>
-                    <td>{{ s.descricao }}<br>
+                    <td><span class="nome-cobranca"><app-selo-cobranca [texto]="s.textoCobranca ?? s.termoBusca" [nome]="s.descricao"
+                      [categoria]="s.categoriaNome" [tamanho]="24" />{{ s.descricao }}</span><br>
                       @if (s.recorrencia === Recorrencia.Anual) {
                         <small class="texto-suave">anual: pago em {{ s.primeiroPagamento | date: 'MM/yyyy' }} e {{ s.ultimoPagamento | date: 'MM/yyyy' }} ·
                           <span class="conta-da-cobranca"><app-logo-banco [codigo]="bancoDe(s.contaId)" [cartao]="ehCartao(s.contaId)" [tamanho]="16" />{{ s.contaNome }}</span></small>
@@ -298,6 +302,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
   styles: `
     /* #242: o selo do banco junto do nome da conta, na mesma linha. */
     .conta-da-cobranca { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+    /* #265: o selo da cobrança antes do nome, alinhado ao texto. */
+    .nome-cobranca { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
   `
 })
 export class ContasAgendadasComponent implements OnInit {

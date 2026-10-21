@@ -48,3 +48,21 @@ test('Contas a pagar: sugestão parecida com outra conta a pagar tem "é a mesma
   await expect(sugestoes).not.toContainText('PIX ENVIADO PESSOA EXEMPLO');
   expect(problemas.lista).toEqual([]);
 });
+
+/**
+ * #265: cada cobrança tem um selo antes do nome: o da marca, quando o serviço é conhecido (YouTube, na API falsa), ou o
+ * ícone da categoria num quadrado neutro. Sem imagem de fora (a CSP continua; erro de CSP derruba o teste).
+ */
+test('Contas a pagar: selo de cada cobrança, da marca ou da categoria', async ({ page, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  const linhas = page.locator('table').first().locator('tbody tr');
+  await expect(linhas.first()).toBeVisible();
+  for (const linha of await linhas.all()) await expect(linha.locator('app-selo-cobranca')).toBeVisible();
+
+  const youtube = page.locator('section.sugestoes tbody tr').filter({ hasText: 'Google YouTubePremium' });
+  await expect(youtube.locator('app-selo-cobranca svg.logo-banco rect')).toHaveAttribute('fill', '#FF0000');
+
+  await page.getByRole('tab', { name: 'Assinaturas e recorrentes' }).click();
+  await expect(page.locator('.grupo-recorrentes tbody tr app-selo-cobranca').first()).toBeVisible();
+  expect(problemas.lista).toEqual([]);
+});

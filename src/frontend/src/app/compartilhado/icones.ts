@@ -6,12 +6,14 @@ import {
   LucideArrowDownLeft, LucideArrowLeftRight, LucideArrowUpRight, LucideBanknote, LucideBookOpen, LucideBriefcase, LucideCalculator,
   LucideCalendar, LucideCalendarClock, LucideCalendarRange, LucideChartColumn, LucideChartLine, LucideChartNoAxesCombined,
   LucideChartPie, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCircleEllipsis, LucideCircleQuestionMark,
-  LucideClipboardList, LucideCoins, LucideCreditCard, LucideEye, LucideEyeOff, LucideHandCoins,
-  LucideHouse, LucideLandmark, LucideLayoutDashboard, LucideLogOut, LucideMenu, LucideMonitor, LucideMoon, LucidePalette, LucidePercent,
+  LucideCar, LucideClapperboard, LucideClipboardList, LucideCoins, LucideCreditCard, LucideEye, LucideEyeOff,
+  LucideGraduationCap, LucideHandCoins, LucideHandHeart, LucideHeartPulse, LucideHouse, LucideLandmark, LucidePawPrint,
+  LucidePlane, LucideShieldCheck, LucideShoppingCart, LucideSparkles, LucideTv, LucideUtensils, LucideLayoutDashboard, LucideLogOut, LucideMenu, LucideMonitor, LucideMoon, LucidePalette, LucidePercent,
   LucidePiggyBank, LucideReceipt, LucideReceiptText, LucideRefreshCw, LucideRepeat2, LucideSettings, LucideShoppingBag,
   LucideSlidersHorizontal, LucideSun, LucideTags, LucideTarget, LucideTrendingUp, LucideTriangleAlert, LucideUndo2,
   LucideWallet, LucideX
 } from '@lucide/angular';
+import type { LucideIcon } from '@lucide/angular';
 
 export const Icones = {
   // Menu
@@ -71,3 +73,28 @@ export const Icones = {
   salario: LucideBriefcase,
   outro: LucideCircleEllipsis
 } as const;
+
+/**
+ * #265: ícone de cada categoria padrão (banco/02-dados-iniciais.sql), pelo nome sem acento e em maiúsculas. Usado
+ * quando a cobrança não é de um serviço conhecido (compartilhado/servicos.ts). Categoria criada por você: o recibo.
+ */
+export const IconesCategoria: Record<string, LucideIcon> = {
+  ALIMENTACAO: LucideUtensils,
+  MERCADO: LucideShoppingCart,
+  MORADIA: LucideHouse,
+  TRANSPORTE: LucideCar,
+  SAUDE: LucideHeartPulse,
+  EDUCACAO: LucideGraduationCap,
+  LAZER: LucideClapperboard,
+  COMPRAS: LucideShoppingBag,
+  'SERVICOS E ASSINATURAS': LucideTv,
+  VIAGENS: LucidePlane,
+  'IMPOSTOS E TAXAS': LucideLandmark,
+  'TARIFAS BANCARIAS': LucidePercent,
+  SEGUROS: LucideShieldCheck,
+  DOACOES: LucideHandHeart,
+  PETS: LucidePawPrint,
+  'CUIDADOS PESSOAIS': LucideSparkles,
+  'JUROS E EMPRESTIMOS': LucideHandCoins
+};
+export const IconeCobrancaPadrao: LucideIcon = LucideReceipt;
