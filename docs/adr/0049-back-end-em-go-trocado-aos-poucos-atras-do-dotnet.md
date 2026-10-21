@@ -75,7 +75,7 @@ Reescrevemos o back-end em **Go**, num módulo em `src/backend-go/`, e o trocamo
 | Dinheiro | [`github.com/shopspring/decimal`](https://pkg.go.dev/github.com/shopspring/decimal) | Go não tem decimal nativo, e `float64` erra centavos. Tem `RoundBank`, o arredondamento padrão do `Math.Round` do C#. |
 | Serviço do Windows | [`golang.org/x/sys/windows/svc`](https://pkg.go.dev/golang.org/x/sys/windows/svc) | Mantido pelo time do Go. |
 | Logs | `log/slog` da biblioteca padrão | Log estruturado sem dependência ([blog do Go](https://go.dev/blog/slog)). |
-| Certificado `.pfx` | [`software.sslmate.com/src/go-pkcs12`](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12) (#73) | A biblioteca padrão não lê PKCS#12, e o `golang.org/x/crypto/pkcs12` só lê o formato antigo (3DES). O `.pfx` que os scripts e o `.msi` já geram vem cifrado com AES. Conferido: o Go leu o `.pfx` do `dotnet dev-certs` e serviu o mesmo certificado do .NET. |
+| Certificado `.pfx` | [`software.sslmate.com/src/go-pkcs12`](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12) (#73) | A biblioteca padrão não lê PKCS#12. Os geradores de hoje (`dotnet dev-certs` e `Export-PfxCertificate`) usam o formato antigo (3DES), que o `golang.org/x/crypto/pkcs12` também lê. Mas ele [está congelado](https://pkg.go.dev/golang.org/x/crypto/pkcs12) e não lê o `.pfx` cifrado com AES (testado: falha no SHA-256), que o OpenSSL 3 gera por padrão. O `go-pkcs12`, um fork mantido, lê os dois. Conferido: o Go leu o `.pfx` do `dotnet dev-certs` e serviu o mesmo certificado do .NET. *Julgamento a revisar:* trocar pelo `x/crypto/pkcs12` tira uma dependência de terceiro, ao custo de quebrar com um `.pfx` AES. |
 
 Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR nova.
 

@@ -17,8 +17,9 @@ import (
 )
 
 // CarregarPFX lê o certificado .pfx que os scripts e o .msi já geram (dotnet dev-certs no Linux,
-// Export-PfxCertificate no Windows). A biblioteca padrão do Go não lê PKCS#12, e o golang.org/x/crypto/pkcs12 só
-// lê o formato antigo (3DES): o .pfx do .NET de hoje vem cifrado com AES, que o go-pkcs12 lê (ADR 0049).
+// Export-PfxCertificate no Windows). A biblioteca padrão do Go não lê PKCS#12. Os dois geradores de hoje usam o
+// formato antigo (3DES), que o golang.org/x/crypto/pkcs12 também lê; mas ele está congelado e não lê o .pfx com
+// AES (OpenSSL 3, ou Export-PfxCertificate -CryptoAlgorithmOption AES256_SHA256). O go-pkcs12 lê os dois (ADR 0049).
 func CarregarPFX(caminho, senha string) (tls.Certificate, error) {
 	dados, err := os.ReadFile(caminho)
 	if err != nil {

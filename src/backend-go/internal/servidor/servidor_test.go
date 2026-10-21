@@ -215,7 +215,10 @@ func TestCarregarPFX(t *testing.T) {
 	}
 	chave, certificado := temporario.PrivateKey.(*ecdsa.PrivateKey), temporario.Leaf
 
-	for nome, codificador := range map[string]*pkcs12.Encoder{"AES (o .NET de hoje)": pkcs12.Modern2023, "3DES (formato antigo)": pkcs12.LegacyDES} {
+	for nome, codificador := range map[string]*pkcs12.Encoder{
+		"3DES (o que o dotnet dev-certs e o .msi geram hoje)": pkcs12.LegacyDES,
+		"AES (OpenSSL 3, Export-PfxCertificate com AES256_SHA256)": pkcs12.Modern2023,
+	} {
 		t.Run(nome, func(t *testing.T) {
 			pfx, err := codificador.Encode(chave, certificado, nil, "senha-de-teste")
 			if err != nil {
