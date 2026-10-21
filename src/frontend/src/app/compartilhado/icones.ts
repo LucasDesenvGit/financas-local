@@ -11,7 +11,8 @@ import {
   LucidePlane, LucideShieldCheck, LucideShoppingCart, LucideSparkles, LucideTv, LucideUtensils, LucideLayoutDashboard, LucideLogOut, LucideMenu, LucideMonitor, LucideMoon, LucidePalette, LucidePercent,
   LucidePiggyBank, LucideReceipt, LucideReceiptText, LucideRefreshCw, LucideRepeat2, LucideSettings, LucideShoppingBag,
   LucideSlidersHorizontal, LucideSun, LucideTags, LucideTarget, LucideTrendingUp, LucideTriangleAlert, LucideUndo2,
-  LucideWallet, LucideX
+  LucideWallet, LucideX,
+  LucideLuggage, LucideGift, LucideBaby, LucideGem, LucideLaptop, LucideSmartphone, LucideBike
 } from '@lucide/angular';
 import type { LucideIcon } from '@lucide/angular';
 
@@ -107,3 +108,33 @@ export const IconesCategoria: Record<string, LucideIcon> = {
   INVESTIMENTOS: LucidePiggyBank
 };
 export const IconeCobrancaPadrao: LucideIcon = LucideReceipt;
+
+/**
+ * #316: os ícones que a pessoa escolhe para cada meta (Meta.Icone guarda a chave). Ajudam a achar a meta de olho
+ * (Nielsen 6, Recognition Rather than Recall). Lucide, como os das categorias (ADR 0016); o nome vai no aria-label.
+ * Chave nova: só letras minúsculas e hífen (a API confere) e nunca trocar a de uma que já existe.
+ */
+export const IconesMeta: readonly { chave: string; nome: string; icone: LucideIcon }[] = [
+  { chave: 'cofrinho', nome: 'Cofrinho', icone: LucidePiggyBank },
+  { chave: 'reserva', nome: 'Reserva de emergência', icone: LucideShieldCheck },
+  { chave: 'casa', nome: 'Casa', icone: LucideHouse },
+  { chave: 'carro', nome: 'Carro', icone: LucideCar },
+  { chave: 'viagem', nome: 'Viagem', icone: LucidePlane },
+  { chave: 'mala', nome: 'Férias', icone: LucideLuggage },
+  { chave: 'estudo', nome: 'Estudo', icone: LucideGraduationCap },
+  { chave: 'saude', nome: 'Saúde', icone: LucideHeartPulse },
+  { chave: 'presente', nome: 'Presente', icone: LucideGift },
+  { chave: 'bebe', nome: 'Bebê', icone: LucideBaby },
+  { chave: 'casamento', nome: 'Casamento', icone: LucideGem },
+  { chave: 'notebook', nome: 'Notebook', icone: LucideLaptop },
+  { chave: 'celular', nome: 'Celular', icone: LucideSmartphone },
+  { chave: 'bicicleta', nome: 'Bicicleta', icone: LucideBike },
+  { chave: 'pet', nome: 'Pet', icone: LucidePawPrint },
+  { chave: 'sonho', nome: 'Sonho', icone: LucideSparkles }
+];
+
+/** O ícone da meta pela chave gravada; sem chave (ou uma que não existe mais), o cofrinho. */
+export function iconeDaMeta(chave: string | null | undefined): { chave: string; nome: string; icone: LucideIcon } {
+  return IconesMeta.find((i) => i.chave === chave) ?? IconesMeta[0];
+}
+

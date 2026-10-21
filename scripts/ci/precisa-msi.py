@@ -5,7 +5,12 @@ dentro dele ou no jeito de instalar. O Directory.Build.props muda em todo PR (a 
 mudança nele é a linha <Version>, ele não conta. No push do develop e na tag, o .msi roda sempre (o workflow não chama
 este script).
 
+#307: PR com título "ci:" ou "ci(...)" (Conventional Commits) não gera o .msi: mexe só na CI, e o instalador não muda.
+Salvaguarda: se ele mexer de fato no produto (instalador, gerenciador, inicialização da API), o .msi roda, e o resumo
+diz que o título não combina com o que mudou.
+
 Uso: python3 scripts/ci/precisa-msi.py --base origin/develop   (escreve msi=true|false em $GITHUB_OUTPUT)
+     TITULO_PR="ci: ..." python3 scripts/ci/precisa-msi.py --base origin/develop
 """
 import argparse
 import os
@@ -19,6 +24,12 @@ RELEVANTES = [
     r'^src/backend/Financas\.Api/Data/EsquemaBanco\.cs$', r'^\.github/workflows/versao\.yml$',
     r'^scripts/ci/precisa-msi\.py$',
 ]
+# O que vai dentro do .msi ou muda o jeito de instalar: num PR "ci:", só isto faz o .msi rodar (#307).
+DO_PRODUTO = [
+    r'^instalador/', r'^src/gerenciador/', r'^src/backend/Financas\.Api/Program\.cs$',
+    r'^src/backend/Financas\.Api/Data/EsquemaBanco\.cs$',
+]
+TITULO_CI = re.compile(r'^ci(\([^)]*\))?!?:', re.IGNORECASE)
 
 
 def git(*args):
@@ -37,11 +48,21 @@ def main():
                   if l[:1] in '+-' and not l.startswith(('+++', '---'))]
         if any('<Version>' not in l for l in linhas):
             motivos.append('Directory.Build.props (além da versão)')
-    msi = bool(motivos)
-    texto = ('## Instalador (.msi) neste PR\n\n' +
-             (f'**Gera e testa**, porque mudou: {", ".join(motivos[:6])}.' if msi else
-              'Pulado: o PR não mexe no instalador, no gerenciador nem na inicialização da API (só a versão no '
-              'Directory.Build.props, que não conta). O .msi roda no push do develop e na tag.'))
+    titulo = os.environ.get('TITULO_PR', '').strip()
+    if TITULO_CI.match(titulo):
+        do_produto = [m for m in mudados if any(re.search(r, m) for r in DO_PRODUTO)]
+        msi = bool(do_produto)
+        texto = ('## Instalador (.msi) neste PR\n\n' +
+                 (f'**Gera e testa**, mesmo com o título "ci:", porque o PR mexe no produto: {", ".join(do_produto[:6])}. '
+                  'Confira o título: mudança no instalador, no gerenciador ou na API não é só de CI.' if msi else
+                  'Pulado: PR de CI (título "ci:"), e o instalador não muda (#307). O .msi roda no push do develop e '
+                  'na tag.'))
+    else:
+        msi = bool(motivos)
+        texto = ('## Instalador (.msi) neste PR\n\n' +
+                 (f'**Gera e testa**, porque mudou: {", ".join(motivos[:6])}.' if msi else
+                  'Pulado: o PR não mexe no instalador, no gerenciador nem na inicialização da API (só a versão no '
+                  'Directory.Build.props, que não conta). O .msi roda no push do develop e na tag.'))
     print(texto)
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:

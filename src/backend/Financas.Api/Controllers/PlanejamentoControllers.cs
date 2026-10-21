@@ -202,10 +202,24 @@ public class MetasController : BaseController
     {
         var m = await _db.Metas.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (m is null) return NaoEncontrado();
+        var antes = m.ValorAtual;
         m.ValorAtual = Math.Max(0, m.ValorAtual + dto.Valor);
         if (m.ValorAtual >= m.ValorAlvo) m.Concluida = true;
+        // #318: guarda o aporte com a data, para o gráfico da meta (o que de fato mudou: a retirada para no zero).
+        if (m.ValorAtual != antes)
+            _db.MetaAportes.Add(new MetaAporte { MetaId = id, Data = Relogio.Hoje, Valor = m.ValorAtual - antes });
         await _db.SaveChangesAsync(ct);
         return await ObterDtoAsync(id, ct);
+    }
+
+    /// <summary>#318: os aportes da meta, do mais antigo ao mais novo (o gráfico "Como está indo").</summary>
+    [HttpGet("{id:int}/aportes")]
+    public async Task<ActionResult<List<MetaAporteDto>>> Aportes(int id, CancellationToken ct)
+    {
+        if (!await _db.Metas.AnyAsync(m => m.Id == id, ct)) return NaoEncontrado();
+        return await _db.MetaAportes.AsNoTracking().Where(a => a.MetaId == id)
+            .OrderBy(a => a.Data).ThenBy(a => a.Id)
+            .Select(a => new MetaAporteDto(a.Data, a.Valor)).ToListAsync(ct);
     }
 
     [HttpDelete("{id:int}")]
@@ -250,6 +264,7 @@ public class MetasController : BaseController
         m.ContaId = dto.ContaId;
         m.ReservaNome = dto.ContaId is null ? null : cofrinho;
         m.Cor = dto.Cor;
+        m.Icone = dto.Icone;
         m.Concluida = dto.Concluida;
     }
 
@@ -279,7 +294,7 @@ public class MetasController : BaseController
             m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta,
             reserva?.Nome ?? m.ReservaNome, reserva?.Saldo,
             reserva is not null && (reserva.PodeTerSaldoAnterior || reserva.ConferenciaAntiga),
-            m.ReservaNome is not null && reserva is null, m.Prioridade);
+            m.ReservaNome is not null && reserva is null, m.Prioridade, m.Icone);
     }
 }
 

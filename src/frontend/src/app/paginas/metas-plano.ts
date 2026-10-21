@@ -50,6 +50,8 @@ export interface PlanoDaMeta {
   /** Quanto os meses seguintes precisam, em média, para cumprir o prazo quando o plano não cumpre. */
   paraManterPrazo: number | null;
   meses: MesDoPlano[];
+  /** #318: quanto guardar em cada mês, do atual até o da data provável (ou o horizonte inteiro): o gráfico da meta. */
+  ateOAlvo: number[];
   degraus: Degrau[];
   /** O plano conta com as faturas caindo: o degrau maior começa em `aPartir`, com faturas bem menores. */
   dependeDaFatura: { aPartir: MesRef; antes: number; depois: number } | null;
@@ -189,6 +191,7 @@ export function planejarMetas(caixa: PlanoMetas, metas: readonly Meta[], percent
       meses: caixa.meses.slice(0, MESES_NA_TABELA).map((x, k) => ({
         ano: x.ano, mes: x.mes, sobra: x.sobra, faturas: x.faturas, guardar: centavos(a[k])
       })),
+      ateOAlvo: a.slice(0, indiceProvavel === null ? n : indiceProvavel + 1).map(centavos),
       degraus,
       dependeDaFatura: dependeDaFatura(degraus)
     };
