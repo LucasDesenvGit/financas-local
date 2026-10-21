@@ -136,6 +136,8 @@ const FATURAS_VISIVEIS = 6;
         <div class="grade-cartoes grade-cartoes-credito">
           @for (c of cartoes(); track c.id) {
             <article class="cartao-credito-bloco" [class.arquivada]="c.arquivada" [id]="'cartao-' + c.id">
+              <!-- #245: a frente alinha com os vizinhos; o histórico (embaixo) cresce só neste cartão. -->
+              <div class="cartao-credito-frente">
               <div class="cartao-credito" [style.--cor-conta]="corDe(c)">
                 <div class="cartao-credito-topo">
                   <span class="cartao-credito-instituicao">
@@ -230,7 +232,10 @@ const FATURAS_VISIVEIS = 6;
                   <a class="link" routerLink="/transacoes" [queryParams]="{ conta: c.id }" [attr.aria-label]="'Ver transações de ' + c.nome">transações</a>
                   <button type="button" class="link" (click)="editar(c)" [attr.aria-label]="'Editar ' + c.nome">editar</button>
                 </footer>
+              </div>
+              </div>
 
+              <div class="cartao-credito-historico">
                 <button type="button" class="botao-historico" [attr.aria-expanded]="historicoAberto(c.id)"
                   [attr.aria-controls]="'historico-' + c.id" (click)="alternarHistorico(c)">
                   <span aria-hidden="true">{{ historicoAberto(c.id) ? '▾' : '▸' }}</span> Histórico de faturas
@@ -402,7 +407,7 @@ const FATURAS_VISIVEIS = 6;
     .proxima-fatura b { color: var(--texto-forte); font-variant-numeric: tabular-nums; }
     .botao-historico {
       font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--primaria-forte); background: none; border: 0;
-      cursor: pointer; padding: 8px 0 0; min-height: 32px; text-align: left; border-top: 1px solid var(--linha); margin-top: 6px;
+      cursor: pointer; padding: 8px 0 0; min-height: 32px; width: 100%; text-align: left; border-top: 1px solid var(--linha);
     }
     .tabela-historico { font-size: 0.85rem; }
     .tabela-historico th, .tabela-historico td { padding: 6px 8px; }
