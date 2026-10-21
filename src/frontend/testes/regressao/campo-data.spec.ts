@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import {
-  CampoDataComponent, DATA_MAXIMA, formatarDataDigitando, isoParaTexto, textoParaIso
+  CampoDataComponent, DATA_MAXIMA, dataInicialDoCalendario, formatarDataDigitando, isoParaTexto, textoParaIso
 } from '../../src/app/compartilhado/campo-data.component';
 
 /**
@@ -104,5 +104,50 @@ describe('Regressão: campo de data', () => {
     const comDate = readdirSync(pasta).filter((f) => f.endsWith('.ts'))
       .filter((f) => readFileSync(join(pasta, f), 'utf8').includes('type="date"'));
     expect(comDate).toEqual([]);
+  });
+
+  /**
+   * #263: o calendário de um campo vazio abre na data aceita mais perto de hoje. O "Até (opcional)" de Contas a pagar
+   * (mínimo no próximo vencimento, sem máximo) abria em dezembro de 2099.
+   */
+  describe('mês em que o calendário abre (#263)', () => {
+    it('com valor, no valor; vazio, hoje, o mínimo (hoje antes dele) ou o máximo (hoje depois dele)', () => {
+      expect(dataInicialDoCalendario('2026-03-05', '2026-10-20', '2026-11-15', DATA_MAXIMA)).toBe('2026-03-05');
+      expect(dataInicialDoCalendario(null, '2026-10-20', '2000-01-01', DATA_MAXIMA)).toBe('2026-10-20');
+      expect(dataInicialDoCalendario(null, '2026-10-20', '2026-11-15', DATA_MAXIMA)).toBe('2026-11-15');
+      expect(dataInicialDoCalendario(null, '2026-10-20', '2000-01-01', '2025-06-30')).toBe('2025-06-30');
+    });
+
+    function abrirCampo(minimo: string | null, maximo: string | null) {
+      const fixture = TestBed.createComponent(CampoDataComponent);
+      if (minimo) fixture.componentRef.setInput('minimo', minimo);
+      if (maximo) fixture.componentRef.setInput('maximo', maximo);
+      fixture.detectChanges();
+      fixture.componentInstance.abrir();
+      fixture.detectChanges();
+      return fixture.componentInstance.mesVisivel();
+    }
+
+    const deslocado = (meses: number) => {
+      const d = new Date();
+      d.setDate(15);
+      d.setMonth(d.getMonth() + meses);
+      return { iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-15`, ano: d.getFullYear(), mes: d.getMonth() + 1 };
+    };
+
+    it('"Até" vazio com mínimo daqui a 2 meses e sem máximo: abre no mês do mínimo, não em 2099', () => {
+      const minimo = deslocado(2);
+      expect(abrirCampo(minimo.iso, null)).toEqual({ ano: minimo.ano, mes: minimo.mes });
+    });
+
+    it('vazio com máximo 3 meses atrás: continua abrindo no mês do máximo', () => {
+      const maximo = deslocado(-3);
+      expect(abrirCampo(null, maximo.iso)).toEqual({ ano: maximo.ano, mes: maximo.mes });
+    });
+
+    it('vazio e hoje dentro do intervalo: abre no mês de hoje', () => {
+      const hoje = new Date();
+      expect(abrirCampo(deslocado(-1).iso, deslocado(1).iso)).toEqual({ ano: hoje.getFullYear(), mes: hoje.getMonth() + 1 });
+    });
   });
 });

@@ -16,6 +16,19 @@ const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira',
 const INICIAIS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 /** 'AAAA-MM-DD' → 'dd/mm/aaaa' ('' se vazio ou fora do formato). */
+/**
+ * #263: em que data o calendário abre. Com valor, nele. Vazio: hoje, se hoje pode ser escolhido; senão, a data aceita
+ * mais perto de hoje (o mínimo, quando hoje vem antes dele: "Até" com o mínimo no próximo vencimento; o máximo,
+ * quando hoje vem depois: campo com máximo no passado). Antes abria sempre no máximo, e o "Até" sem máximo ia para
+ * dezembro de 2099.
+ */
+export function dataInicialDoCalendario(valor: string | null, hoje: string, minimo: string, maximo: string): string {
+  if (valor) return valor;
+  if (hoje < minimo) return minimo;
+  if (hoje > maximo) return maximo;
+  return hoje;
+}
+
 export function isoParaTexto(iso: string | null | undefined): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
   return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
@@ -268,7 +281,7 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   abrir(e?: Event): void {
     e?.preventDefault();
     if (this.desabilitado()) return;
-    const base = this.valorIso() ?? (this.foraDoIntervalo(this.hoje) ? this.maximoEfetivo() : this.hoje);
+    const base = dataInicialDoCalendario(this.valorIso(), this.hoje, this.minimoEfetivo(), this.maximoEfetivo());
     const d = dataDe(base);
     this.mesVisivel.set({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
     this.foco.set(base);
