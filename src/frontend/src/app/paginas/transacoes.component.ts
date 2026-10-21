@@ -10,7 +10,7 @@ import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import {
   Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
-  NaturezaGasto, SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao
+  NaturezaGasto, SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao, OrdemTransacoes
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
@@ -47,6 +47,9 @@ interface FormTransacao {
 }
 
 /** Linha editável do assistente de sugestões. */
+/** #244: a direção mais útil de cada coluna ao clicar nela pela primeira vez. */
+const DIRECAO_PADRAO: Record<OrdemTransacoes, 'asc' | 'desc'> = { data: 'desc', valor: 'desc', categoria: 'asc', conta: 'asc' };
+
 interface LinhaSugestao extends SugestaoCategoria { escolhida: number | null; criarRegra: boolean; aplicada: boolean }
 
 interface FormTransferencia {
@@ -263,11 +266,17 @@ function dataCurta(iso: string, comAno: boolean): string {
               <th class="col-check"><label class="celula-marcar"><input type="checkbox" [checked]="todasSelecionadas()"
                 [indeterminate]="algumaSelecionadaNaPagina() && !todasSelecionadas()" (change)="alternarTodas()"
                 aria-label="Selecionar todas desta página"></label></th>
-              <th>Data</th>
+              <!-- #244: ordenar pelo cabeçalho (WAI-ARIA APG, Sortable Table): botão no th, aria-sort só na coluna que vale. -->
+              @for (col of colunasOrdenaveis.slice(0, 1); track col.chave) {
+                <th [attr.aria-sort]="ariaSort(col.chave)"><button type="button" class="botao-ordenar" (click)="ordenar(col.chave)">
+                  {{ col.rotulo }}<span class="seta-ordem" [class.ativa]="ordemAtual() === col.chave" aria-hidden="true">{{ seta(col.chave) }}</span></button></th>
+              }
               <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Conta</th>
-              <th class="direita">Valor</th>
+              @for (col of colunasOrdenaveis.slice(1); track col.chave) {
+                <th [class.direita]="col.chave === 'valor'" [attr.aria-sort]="ariaSort(col.chave)"><button type="button" class="botao-ordenar"
+                  (click)="ordenar(col.chave)">{{ col.rotulo }}<span class="seta-ordem" [class.ativa]="ordemAtual() === col.chave"
+                  aria-hidden="true">{{ seta(col.chave) }}</span></button></th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -543,6 +552,15 @@ function dataCurta(iso: string, comAno: boolean): string {
   styles: `
     /* #123: nome dado por você em cima; o do banco embaixo, menor (cor suave do tema, com contraste de texto). */
     .linha-descricao { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    /* #244: cabeçalho que ordena: o texto do th, com alvo de 24 px (WCAG 2.5.8) e a seta da direção. */
+    .botao-ordenar {
+      display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0; border: 0; background: none;
+      font: inherit; color: inherit; cursor: pointer; text-align: inherit;
+    }
+    .botao-ordenar:hover { color: var(--texto-forte); }
+    .botao-ordenar:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; border-radius: 4px; }
+    .seta-ordem { font-size: 0.7rem; opacity: 0.35; min-width: 0.8em; }
+    .seta-ordem.ativa { opacity: 1; color: var(--primaria-forte); }
     .linha-descricao .truncar { min-width: 0; }
     /* #265: o selo do serviço antes do nome, um pouco mais afastado que o ✎. */
     .linha-descricao app-selo-servico { margin-right: 6px; }
@@ -860,6 +878,13 @@ export class TransacoesComponent implements OnInit {
     if (params.get('editar') === '1') this.modoEdicao.set(true);
     const busca = params.get('busca')?.trim();
     if (busca) this.filtro.busca = busca.slice(0, 100);
+    // #244: ordenação da URL, só das colunas da lista fixa; sem ela (ou inválida), o padrão (data, mais recente primeiro).
+    const ordem = params.get('ordem');
+    if (ordem && this.colunasOrdenaveis.some((c) => c.chave === ordem)) {
+      this.filtro.ordem = ordem as OrdemTransacoes;
+      const direcao = params.get('direcao');
+      this.filtro.direcao = direcao === 'asc' || direcao === 'desc' ? direcao : DIRECAO_PADRAO[this.filtro.ordem];
+    }
     const ids = idsDaUrl(params.get('ids'));
     if (ids.length) {
       this.filtro.ids = ids;
@@ -907,7 +932,8 @@ export class TransacoesComponent implements OnInit {
     }
     // #133: trocar só de página mantém a seleção (dá para juntar transações de várias páginas); trocar o filtro limpa,
     // para nenhuma ação em lote pegar uma transação que não aparece no filtro atual (Nielsen 5).
-    const semPagina = (f: FiltroTransacoes) => JSON.stringify({ ...f, pagina: undefined, tamanhoPagina: undefined });
+    const semPagina = (f: FiltroTransacoes) =>
+      JSON.stringify({ ...f, pagina: undefined, tamanhoPagina: undefined, ordem: undefined, direcao: undefined });
     const trocouFiltro = semPagina(this.filtroAplicado()) !== semPagina(this.filtro);
     if (trocouFiltro && this.selecionadas().size) {
       this.limparSelecao();
@@ -960,8 +986,50 @@ export class TransacoesComponent implements OnInit {
     if (f.lancamento) params['lancamento'] = f.lancamento;
     if (f.busca?.trim()) params['busca'] = f.busca.trim();
     if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
+    if (f.ordem && !(f.ordem === 'data' && (f.direcao ?? 'desc') === 'desc')) {
+      params['ordem'] = f.ordem;
+      params['direcao'] = f.direcao ?? DIRECAO_PADRAO[f.ordem];
+    }
     if (this.modoEdicao()) params['editar'] = '1';
     this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
+  }
+
+  /* ------------------------------ #244: ordenar pelo cabeçalho ------------------------------ */
+
+  readonly colunasOrdenaveis: { chave: OrdemTransacoes; rotulo: string }[] = [
+    { chave: 'data', rotulo: 'Data' }, { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'conta', rotulo: 'Conta' },
+    { chave: 'valor', rotulo: 'Valor' }
+  ];
+
+  ordemAtual(): OrdemTransacoes {
+    return this.filtroAplicado().ordem ?? 'data';
+  }
+
+  direcaoAtual(): 'asc' | 'desc' {
+    const f = this.filtroAplicado();
+    return f.direcao ?? DIRECAO_PADRAO[f.ordem ?? 'data'];
+  }
+
+  /** Só a coluna que vale tem aria-sort (WAI-ARIA APG, Sortable Table). */
+  ariaSort(coluna: OrdemTransacoes): 'ascending' | 'descending' | null {
+    if (this.ordemAtual() !== coluna) return null;
+    return this.direcaoAtual() === 'asc' ? 'ascending' : 'descending';
+  }
+
+  /** ▲ crescente, ▼ decrescente; ↕ apagado nas outras, para mostrar que dá para ordenar (Nielsen 1). */
+  seta(coluna: OrdemTransacoes): string {
+    if (this.ordemAtual() !== coluna) return '↕';
+    return this.direcaoAtual() === 'asc' ? '▲' : '▼';
+  }
+
+  /** Clicar na coluna ordena por ela (na direção mais útil dela); clicar de novo inverte. Volta para a página 1. */
+  ordenar(coluna: OrdemTransacoes): void {
+    const direcao = this.ordemAtual() === coluna
+      ? (this.direcaoAtual() === 'asc' ? 'desc' : 'asc')
+      : DIRECAO_PADRAO[coluna];
+    this.filtro.ordem = coluna;
+    this.filtro.direcao = direcao;
+    this.buscar(1);
   }
 
   mudarTamanhoPagina(tamanho: number): void {

@@ -43,7 +43,7 @@ test('sanfona das recorrentes: teclado, lembrada ao recarregar, alvo de 24 px e 
   const cartao = page.getByRole('button', { name: /Cartão Exemplo/ }).and(page.locator('.grupo-recorrentes-botao'));
   await expect(cartao).toHaveAttribute('aria-expanded', 'true');
   const caixa = (await cartao.boundingBox())!;
-  expect(caixa.height).toBeGreaterThanOrEqual(24);
+  expect(caixa.height).toBeGreaterThanOrEqual(23.5);
   await expect(cartao.locator('app-logo-banco')).toBeVisible();
 
   await cartao.focus();

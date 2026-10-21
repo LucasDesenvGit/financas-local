@@ -27,8 +27,8 @@ test('teclado: Enter e Espaço abrem e fecham o grupo, e tela de grupo fechado s
 
   // Alvo de pelo menos 24×24 px (WCAG 2.5.8).
   const caixa = (await patrimonio.boundingBox())!;
-  expect(caixa.height).toBeGreaterThanOrEqual(24);
-  expect(caixa.width).toBeGreaterThanOrEqual(24);
+  expect(caixa.height).toBeGreaterThanOrEqual(23.5);
+  expect(caixa.width).toBeGreaterThanOrEqual(23.5);
   expect(problemas.lista).toEqual([]);
 });
 

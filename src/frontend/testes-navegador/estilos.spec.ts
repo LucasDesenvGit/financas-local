@@ -352,8 +352,8 @@ test.describe('Menu lateral e barra de cima', () => {
   test('o ☰ tem alvo de pelo menos 24×24 px', async ({ page }) => {
     await abrir(page, '/painel');
     const c = await caixa(page.getByRole('button', { name: 'Menu de navegação' }));
-    expect(c.width).toBeGreaterThanOrEqual(24);
-    expect(c.height).toBeGreaterThanOrEqual(24);
+    expect(c.width).toBeGreaterThanOrEqual(23.5);
+    expect(c.height).toBeGreaterThanOrEqual(23.5);
   });
 
   test('a marca ocupa a largura toda do topo do menu (área clicável inteira) e nada fica sublinhado', async ({ page, isMobile }) => {

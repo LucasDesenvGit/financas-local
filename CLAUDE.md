@@ -42,6 +42,8 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 - **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
 - **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
 - No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).
+- **Medida em px tem folga de 0,5:** com as fontes do Linux da CI, uma caixa de 24 px no CSS mede 23,99997 (#271). Alvo mínimo se confere com `toBeGreaterThanOrEqual(23.5)`, nunca `(24)`; igualdade de tamanho, com `toBeLessThan(2)` na diferença.
+- **Não leia o que vai mudar antes de esperar a mudança:** depois de um clique que troca o conteúdo, espere o sinal da troca (`await expect(titulo).not.toHaveText(antes)`) antes de ler; na CI, mais lenta, a leitura pegava o estado anterior (#271, calendário).
 
 Testes automatizados só no front-end, com Jest + `jest-preset-angular` em `src/frontend/testes/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)): `regressao/` (bug corrigido ou comportamento garantido por um PR — cada bug corrigido ganha teste aqui) e `usabilidade/` (critérios de UI/UX desta página verificáveis sem navegador). A CI roda `npm run test:tipos` e `npm test`. O back-end não tem testes automatizados; além disso, vale o checklist manual do PR (ver [CONTRIBUINDO.md](CONTRIBUINDO.md)).
 

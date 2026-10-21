@@ -62,14 +62,43 @@ public class TransacoesController : BaseController
         var receitas = await paraTotais.Where(t => t.Tipo == TipoTransacao.Receita).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
         var despesas = await paraTotais.Where(t => t.Tipo == TipoTransacao.Despesa).SumAsync(t => (decimal?)t.Valor, ct) ?? 0m;
 
-        var itens = await q
-            .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
+        var itens = await Ordenar(q, f.Ordem, f.Direcao)
             .Skip((f.Pagina - 1) * f.TamanhoPagina)
             .Take(f.TamanhoPagina)
             .Select(ProjecoesTransacao.ParaDto)
             .ToListAsync(ct);
 
         return new PaginaTransacoesDto(itens, total, f.Pagina, f.TamanhoPagina, receitas, -despesas);
+    }
+
+    /// <summary>
+    /// #244: a ordem da lista, antes de paginar (ordenar só a página no navegador daria um resultado errado). Coluna e
+    /// direção de uma lista fixa (o DTO valida); desempate sempre pela data mais recente e pelo id, para a paginação não
+    /// repetir nem pular linha. Sem categoria fica no fim nas duas direções. Valor: sem o sinal (o maior lançamento).
+    /// </summary>
+    public static IOrderedQueryable<Transacao> Ordenar(IQueryable<Transacao> q, string? ordem, string? direcao)
+    {
+        var crescente = direcao == "asc";
+        IOrderedQueryable<Transacao> o;
+        switch (ordem)
+        {
+            case "categoria":
+                o = q.OrderBy(t => t.CategoriaId == null);
+                o = crescente ? o.ThenBy(t => EF.Functions.Collate(t.Categoria!.Nome, "NOCASE"))
+                    : o.ThenByDescending(t => EF.Functions.Collate(t.Categoria!.Nome, "NOCASE"));
+                break;
+            case "conta":
+                // Sem diferenciar maiúscula de minúscula (o SQLite compara pelo código das letras).
+                o = crescente ? q.OrderBy(t => EF.Functions.Collate(t.Conta!.Nome, "NOCASE"))
+                    : q.OrderByDescending(t => EF.Functions.Collate(t.Conta!.Nome, "NOCASE"));
+                break;
+            case "valor":
+                o = crescente ? q.OrderBy(t => t.Valor < 0 ? -t.Valor : t.Valor) : q.OrderByDescending(t => t.Valor < 0 ? -t.Valor : t.Valor);
+                break;
+            default:
+                return crescente ? q.OrderBy(t => t.Data).ThenBy(t => t.Id) : q.OrderByDescending(t => t.Data).ThenByDescending(t => t.Id);
+        }
+        return o.ThenByDescending(t => t.Data).ThenByDescending(t => t.Id);
     }
 
     /// <summary>Os filtros da busca (a mesma consulta da lista e do "todas do filtro" do modo edição).</summary>
