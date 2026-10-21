@@ -108,6 +108,10 @@ jobs:
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py
 
+      # #305: a regra do cache longo (Program.cs) aceita o hash do build do Angular, e não o que não tem hash.
+      - name: Conferir o cache dos arquivos do build
+        run: python3 scripts/ci/verificar-cache-estaticos.py
+
       - name: Aplicar schema num banco SQLite descartável
         run: |
           rm -f /tmp/ci-financaslocal.db

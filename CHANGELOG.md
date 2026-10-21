@@ -9,6 +9,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Publicação e documentação
 - **A CI liga a API de verdade em todo PR de back-end** (#309). Antes, a API só era ligada no teste do instalador do Windows, que roda em poucos PRs: um erro que só aparece ao iniciar (serviço sem registro, configuração, esquema do banco) passava batido. Agora o job "API e banco" liga a API num banco temporário e espera ela responder (`scripts/ci/ligar-api.sh`, ~10 s).
 
+## [2.27.3] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **PR só de CI não roda o instalador do Windows** (#307). PR com título `ci:` não gera nem testa o `.msi` (~7 min), mesmo mexendo no `versao.yml`. Se ele mexer de fato no instalador, no gerenciador ou na inicialização da API, o `.msi` roda, e a CI avisa que o título não combina. Registrado no `CLAUDE.md` e na ADR 0047.
+
+## [2.27.2] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **O site abre mais rápido: cache longo em todos os arquivos do build** (#305). Os arquivos com hash no nome (que nunca mudam de conteúdo) ficam um ano no cache do navegador, mas a regra só aceitava maiúsculas e números, e o hash do Angular de hoje tem minúsculas, "_" e "-": só 3 dos 35 arquivos recebiam o cache longo, e o navegador perguntava de novo pelos outros 32 a cada abertura. Agora os 35 recebem; `index.html`, favicon, manifesto e ícones continuam sendo conferidos a cada abertura. A CI confere a regra contra nomes de um build de verdade (`scripts/ci/verificar-cache-estaticos.py`).
+
 ## [2.27.1] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
