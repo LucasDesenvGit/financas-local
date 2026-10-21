@@ -1,6 +1,6 @@
 # 0005. Segredos criptografados no banco com ASP.NET Data Protection
 
-- **Status:** Aceita
+- **Status:** Aceita (vai ser substituída pela [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) na troca dos segredos: o esquema novo em Go, AES-256-GCM com prefixo `v2:`, #76; até lá, o Data Protection continua sendo a fonte dos segredos)
 - **Data:** 2026-10-15
 - **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md)
 

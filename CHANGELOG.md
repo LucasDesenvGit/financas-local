@@ -3,6 +3,16 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+## [2.27.1] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0049: o back-end vai para Go, trocado aos poucos atrás do .NET** (#71, épico #70). Nada muda no site ainda; a ADR registra como a migração vai ser feita:
+  - o .NET continua na frente (login, segredos, esquema do banco) e repassa ao Go, um assunto de cada vez, as rotas que já foram migradas; voltar um assunto é tirar a rota da lista;
+  - o C# de cada assunto é apagado depois de uma versão publicada com ele no Go;
+  - o esquema novo dos segredos é feito em Go, mas só é usado na troca; nesse dia, o Client Secret da Pluggy e o token da brapi são informados de novo, uma vez;
+  - bibliotecas: `net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal` e `log/slog`;
+  - as ADRs 0002, 0005, 0011 e 0012 apontam o que a 0049 vai substituir, e o `CLAUDE.md` ganhou as convenções do código Go.
+
 ## [2.27.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades

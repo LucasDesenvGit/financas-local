@@ -108,6 +108,13 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 - **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
+- **Código Go** (`src/backend-go/`, migração do épico #70, [ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)):
+  - **Bibliotecas:** só as da ADR (`net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal`, `log/slog`, `x/sys/windows/svc`); outra dependência atualiza a ADR.
+  - **Consultas:** SQL só pelo código do `sqlc` ou com parâmetros `?`, **nunca** texto do usuário concatenado.
+  - **Dinheiro:** nunca `float64`, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`); somar e comparar em Go, com decimal.
+  - **Banco:** grava no formato do EF Core (decimal, data, GUID em maiúsculas), porque .NET e Go convivem no mesmo banco.
+  - **Estilo:** nomes em português, erro como valor (`fmt.Errorf("...: %w", err)`), `context.Context` primeiro, dependências pelo construtor, relógio injetável no fuso de Brasília; `gofmt`, `go vet` e `go test -race` limpos.
+  - **Troca aos poucos:** o .NET fica na frente e repassa ao Go os prefixos migrados (#231). O C# de um assunto só é apagado depois de uma versão publicada com ele no Go, e só o que nenhum outro C# usa.
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
 - Front-end chama a API só pelo `ApiService` (não usar `HttpClient` direto nos componentes).
 - Formatação: `.editorconfig`.
