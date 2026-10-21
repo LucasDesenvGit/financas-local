@@ -380,6 +380,11 @@ input, select, textarea {
   transition: border-color var(--transicao), box-shadow var(--transicao), background-color var(--transicao);
 }
 input::placeholder, textarea::placeholder { color: var(--texto-suave); opacity: 0.8; }
+/* #283: campo de número sem as setinhas do sistema (destoavam do tema). As setas do teclado continuam subindo e
+   descendo o valor. Firefox: appearance textfield; Chromium e Safari: o pseudo-elemento das setinhas. */
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
 input:hover, select:hover, textarea:hover { border-color: var(--linha); }
 input:focus, select:focus, textarea:focus {
   outline: none; background: var(--superficie);
