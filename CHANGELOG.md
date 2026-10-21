@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Publicação e documentação
+- **CI mais rápida** (#255, ADR 0047): o PR roda só os testes do front-end afetados pelo que mudou (tudo no merge); API, Jest e testes no navegador (em 2 partes) rodam em paralelo; o instalador .msi só é gerado e testado no PR que mexe nele (antes rodava em todo PR, por causa da linha da versão); caches de node_modules, do build do Angular, do Jest e do NuGet no Windows. A imagem Docker do Playwright foi avaliada e descartada (mais lenta de baixar que o navegador em cache).
 - **Testes de estilo no navegador** (#204): o visual que os testes antigos só adivinhavam lendo o CSS (cards do mesmo tamanho, colunas, divisórias, avisos centralizados, a seta das listas, as animações e "reduzir movimento") agora é medido na tela de verdade, e cada teste foi conferido estragando a regra de propósito. Os testes antigos saíram (nada ficou sem cobertura). A CI também confirmou que não dá para juntar os testes de instalação do Windows nem reaproveitar o build no instalador; o motivo está na ADR 0029.
 - **Manual: capítulo novo "Corrigir seus dados"** (#222). Ele vem logo depois de "Primeiros passos" e tem duas partes:
   - **o que já se acertou sozinho** depois das correções: estornos, transferências, pagamento de fatura, investimentos e parcelas;

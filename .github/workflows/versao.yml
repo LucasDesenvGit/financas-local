@@ -33,8 +33,32 @@ env:
   SITE: https://127.0.0.1:5443
 
 jobs:
+  # #255 (ADR 0047): no PR, o .msi só roda se o PR mexe no instalador, no gerenciador ou na inicialização da API. O
+  # Directory.Build.props muda em todo PR (a versão, ADR 0039), e a linha <Version> sozinha não conta. No push do develop
+  # e na tag, sempre.
+  precisa:
+    name: o PR precisa do .msi?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      msi: ${{ steps.decidir.outputs.msi }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decidir
+        id: decidir
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 scripts/ci/precisa-msi.py --base "origin/${{ github.base_ref }}"
+          else
+            echo "msi=true" >> "$GITHUB_OUTPUT"
+          fi
+
   gerar:
     name: gerar e testar o .msi
+    needs: precisa
+    if: needs.precisa.outputs.msi == 'true'
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:
@@ -49,11 +73,27 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # #255: o publish self-contained baixa os pacotes do runtime do win-x64 a cada execução sem isto.
+      - name: Cache dos pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-msi-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-msi-
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: src/frontend/package-lock.json
+
+      # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
+      - name: Cache do build do Angular
+        uses: actions/cache@v4
+        with:
+          path: src/frontend/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
 
       - name: Versão (Directory.Build.props; na tag, tem de ser igual)
         id: versao

@@ -35,6 +35,8 @@ TestResults/
 node_modules/
 dist/
 .angular/
+# #255: cache do Jest na CI (--cacheDirectory=.jest-cache)
+.jest-cache/
 npm-debug.log*
 
 # ------------------------------------------------------------------

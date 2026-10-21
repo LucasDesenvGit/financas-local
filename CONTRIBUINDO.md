@@ -110,6 +110,11 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 3. **importar peça por peça** num teste temporário (`await import(...)` com o tempo de cada um) acha a importação que pesa. Foi assim que o #204 achou os 15 s do `@lucide/angular`.
 
 **Workflows da CI:**
+- **no PR, só os testes afetados** ([ADR 0047](docs/adr/0047-ci-paralela-so-testes-afetados-no-pr.md)): `scripts/ci/testes-afetados.py` liga cada arquivo mudado às telas que o usam (grafo de imports) e roda só os testes delas; arquivo global (`styles.css`, `core/`, `layout/`, rotas, configuração, apoio dos testes, a própria CI) roda tudo. No push do `develop`/`main`, sempre tudo. O porquê aparece no resumo da execução. Para ver aqui o que rodaria: `python3 scripts/ci/testes-afetados.py --base origin/develop`;
+- **teste no navegador novo abre a tela pela rota escrita** (`page.goto('/transacoes')`), senão a seleção não o acha (ele ainda roda no merge);
+- **arquivo novo que vale para todas as telas** fora das pastas já marcadas como globais: acrescente-o em `GLOBAIS` no `testes-afetados.py`;
+- **o .msi só roda no PR que mexe nele** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API ou o `Directory.Build.props` além da versão;
+- jobs em paralelo (API, Jest, navegador em 2 partes): o tempo do PR é o do mais lento, não a soma;
 - todo workflow de PR tem `concurrency` com `cancel-in-progress`;
 - filtros `paths:` por pasta (`scripts/geral/**`), não por nome de arquivo, para um arquivo novo também disparar;
 - cache do que é baixado sempre igual (npm, NuGet, navegador do Playwright), menos quando baixar do zero é justamente o que se testa (os testes de instalação);
