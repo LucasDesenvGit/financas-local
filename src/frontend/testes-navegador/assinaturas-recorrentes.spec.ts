@@ -33,3 +33,31 @@ test('o de-para por cartão e conta, a busca na URL e a linha-resumo de Contas e
   }
   expect(problemas.lista).toEqual([]);
 });
+
+/**
+ * #242: cada conta ou cartão é uma sanfona. Espaço e Enter alternam (botão de verdade), o fechado sai do Tab, a escolha
+ * fica depois de recarregar, e o cabeçalho tem alvo de pelo menos 24 px (WCAG 2.5.8) com o selo do banco.
+ */
+test('sanfona das recorrentes: teclado, lembrada ao recarregar, alvo de 24 px e selo do banco', async ({ page }) => {
+  await page.goto('/contas-a-pagar?aba=recorrentes');
+  const cartao = page.getByRole('button', { name: /Cartão Exemplo/ }).and(page.locator('.grupo-recorrentes-botao'));
+  await expect(cartao).toHaveAttribute('aria-expanded', 'true');
+  const caixa = (await cartao.boundingBox())!;
+  expect(caixa.height).toBeGreaterThanOrEqual(24);
+  await expect(cartao.locator('app-logo-banco')).toBeVisible();
+
+  await cartao.focus();
+  await page.keyboard.press('Space');
+  await expect(cartao).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('link', { name: 'Ver as cobranças de Streaming' })).toBeHidden();
+  await page.keyboard.press('Enter');
+  await expect(cartao).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('link', { name: 'Ver as cobranças de Streaming' })).toBeVisible();
+
+  await cartao.click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: /Cartão Exemplo/ }).and(page.locator('.grupo-recorrentes-botao')))
+    .toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: /Conta Exemplo/ }).and(page.locator('.grupo-recorrentes-botao')))
+    .toHaveAttribute('aria-expanded', 'true');
+});

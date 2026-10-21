@@ -204,6 +204,13 @@ const respostas: Record<string, unknown> = {
       valorAnterior: 44.9, valorNovo: 49.9, contaNovaId: null, contaNovaNome: null, data: null }
   ],
   '/api/contas-agendadas/sugestoes': [
+    // #265: serviço conhecido (selo do YouTube); as outras sugestões ficam com o ícone da categoria ou o recibo.
+    { chave: 'youtube', descricao: 'Google YouTubePremium', valor: 26.9, valorVariavel: false, valorMinimo: 26.9, valorMaximo: 26.9,
+      proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 18)), diaHabitual: 18, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 18)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 18)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'YOUTUBEPREMIUM',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'YOUTUBEPREMIUM', recorrencia: 1,
+      chaveExtrato: 'YOUTUBEPREMIUM', pareceSerId: null, pareceSerNome: null },
     { chave: 'musica#2', descricao: 'MUSICA APP', valor: 21.9, valorVariavel: false, valorMinimo: 21.9, valorMaximo: 21.9,
       proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,
       ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 3)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 3)),

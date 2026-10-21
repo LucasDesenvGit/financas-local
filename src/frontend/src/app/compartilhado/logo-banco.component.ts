@@ -1,5 +1,6 @@
 import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
-import { visualBanco } from './bancos';
+import type { LucideIcon } from '@lucide/angular';
+import { VisualBanco, visualBanco } from './bancos';
 import { IconeComponent } from './icone.component';
 import { Icones } from './icones';
 
@@ -27,7 +28,7 @@ import { Icones } from './icones';
     } @else {
       <span class="logo-banco logo-generico" [style.width.px]="tamanho()" [style.height.px]="tamanho()"
         [attr.role]="rotulo() ? 'img' : null" [attr.aria-label]="rotulo() || null" [attr.aria-hidden]="rotulo() ? null : 'true'">
-        <app-icone [icone]="cartao() ? Icones.contas : Icones.banco" [tamanho]="tamanho() * 0.5" />
+        <app-icone [icone]="iconeGenerico() ?? (cartao() ? Icones.contas : Icones.banco)" [tamanho]="tamanho() * 0.5" />
       </span>
     }
   `,
@@ -52,7 +53,12 @@ export class LogoBancoComponent {
   /** Banco não identificado num cartão: ícone de cartão em vez de banco. */
   readonly cartao = input(false);
 
-  readonly visual = computed(() => visualBanco(this.codigo()));
+  /** #265: selo já resolvido (ex.: o de um serviço, compartilhado/servicos.ts), no lugar do banco pelo código. */
+  readonly visualPronto = input<VisualBanco | null>(null);
+  /** #265: ícone do selo neutro, no lugar do banco ou do cartão (ex.: o da categoria da cobrança). */
+  readonly iconeGenerico = input<LucideIcon | null>(null);
+
+  readonly visual = computed(() => this.visualPronto() ?? visualBanco(this.codigo()));
 
   /** Sigla maior quando é curta: "C6" grande, "sicredi" menor, sempre dentro do quadrado. */
   tamanhoSigla(sigla: string): number {

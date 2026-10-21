@@ -71,3 +71,29 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
   - **Banco novo:** acrescentar no `BancoService` e em `bancos.ts`; o desenho, quando houver no Simple Icons, é o `path` do SVG dele.
   - **Selo em outra tela:** use `<app-logo-banco [codigo]="...">`, decorativo quando o nome vem escrito ao lado e com `rotulo` quando aparece sozinho.
   - **Fatura do mês:** é só o `ContaService.FaturasDoMesAsync`, para o Painel e Contas não divergirem.
+
+## Atualização de 2026-10-20: selo das cobranças (issue #265)
+
+- **O que mudou:** o mesmo selo local identifica também o **serviço de cada cobrança** em Contas a pagar (aba Contas a
+  pagar, Assinaturas e recorrentes e Sugestões do extrato): YouTube, Netflix, Spotify, iFood, TIM, Claro, Esfera…
+  - Lista em `compartilhado/servicos.ts`, gerada a partir do pacote `simple-icons` 16.35.0 (CC0): o desenho quando o
+    Simple Icons tem a marca (44 dos 116), senão um selo próprio com a cor da marca e uma sigla, como os bancos sem desenho.
+    A maioria das marcas brasileiras (TIM, Claro, Oi, 99, Rappi, Magalu, Sem Parar, Sabesp, Enel, Unimed…) não está no
+    Simple Icons e fica com a sigla; as cores são aproximadas, e o selo não é o logotipo oficial.
+  - O serviço é reconhecido no front-end pelo texto da cobrança (e depois pelo nome), em ordem do mais específico para o
+    mais geral; termo de até 4 letras só casa com a palavra inteira ("TIM" não casa com "TIMBRE").
+  - Sem serviço conhecido: o **ícone da categoria** (Lucide, `IconesCategoria` em `icones.ts`) num quadrado neutro;
+    categoria criada pela pessoa ou sem categoria: um recibo.
+  - Componente **`<app-selo-servico>`**, sobre o `<app-logo-banco>` (que ganhou `visualPronto` e `iconeGenerico`).
+    Decorativo: o nome vem escrito ao lado. É genérico, para qualquer lista de lançamentos: procura o serviço no texto
+    do banco (`texto`), no estabelecimento e no nome, nessa ordem, e cai no ícone da categoria (as de receita e
+    transferência também têm ícone). Usado em Transações (cada linha), Painel (Próximos vencimentos e Últimas
+    transações) e Contas a pagar (lista, Assinaturas e recorrentes e Sugestões do extrato).
+- **Por que no front-end, sem mudar a API:** é só a cara da cobrança; o texto já vem na lista. Sem rede: nada é
+  baixado, a CSP não muda.
+- **Custo aceito:** a lista de serviços é mantida à mão; serviço novo (ou que mudou de nome no extrato) fica com o ícone
+  da categoria até entrar em `servicos.ts`. Um termo pode casar com um texto que não é do serviço (ex.: "VIVO" num nome
+  próprio); o efeito é só o selo errado, e o nome continua escrito ao lado.
+- **Na prática:** tela nova com lançamentos ou cobranças usa `<app-selo-servico>` com os textos que tiver (exemplos no
+  comentário do componente). Serviço novo entra em `servicos.ts` (o `path` do SVG do Simple Icons, quando houver, ou cor e sigla),
+  com o termo do extrato; o teste `testes/regressao/selo-cobranca.spec.ts` confere que todo serviço tem desenho ou sigla.

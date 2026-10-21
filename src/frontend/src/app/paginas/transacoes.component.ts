@@ -28,6 +28,7 @@ import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../compartilha
 import { RenomearTransacaoComponent } from './renomear-transacao.component';
 import { RenomearEmLoteComponent } from './renomear-em-lote.component';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
+import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 
 interface FormTransacao {
   id: number | null;
@@ -103,7 +104,7 @@ function dataCurta(iso: string, comAno: boolean): string {
   selector: 'app-transacoes',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
     IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
-    CampoDataComponent],
+    CampoDataComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Transações</h1>
@@ -283,6 +284,9 @@ function dataCurta(iso: string, comAno: boolean): string {
                 <td class="nowrap">{{ t.data | date: 'dd/MM/yy' }}</td>
                 <td>
                   <div class="linha-descricao">
+                    <!-- #265: selo do serviço (pelo texto do banco) ou ícone da categoria; decorativo, o nome vem ao lado. -->
+                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao"
+                      [categoria]="t.categoriaNome" [tamanho]="22" />
                     @if (modoEdicao()) {
                       <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
                     } @else {
@@ -540,6 +544,8 @@ function dataCurta(iso: string, comAno: boolean): string {
     /* #123: nome dado por você em cima; o do banco embaixo, menor (cor suave do tema, com contraste de texto). */
     .linha-descricao { display: flex; align-items: center; gap: 4px; min-width: 0; }
     .linha-descricao .truncar { min-width: 0; }
+    /* #265: o selo do serviço antes do nome, um pouco mais afastado que o ✎. */
+    .linha-descricao app-selo-servico { margin-right: 6px; }
     .botao-renomear { min-width: 24px; min-height: 24px; font-size: 0.85rem; opacity: 0.65; flex: none; }
     .botao-renomear:hover, .botao-renomear:focus-visible { opacity: 1; }
     .descricao-original { font-size: 0.78rem; color: var(--texto-suave); margin-top: 1px; }

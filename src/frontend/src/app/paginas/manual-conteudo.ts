@@ -426,6 +426,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'O que cada etiqueta quer dizer',
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
         passos: [
+          'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário). O mesmo selo aparece no Painel e em Contas a pagar.',
           'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
           '“fora dos gastos”: a transação não entra nas despesas nem nas receitas (transferência entre contas suas, pagamento de fatura, investimento ou “ignorar nos relatórios”).',
           '“somando nos gastos” (ou “nas receitas”): um pagamento de fatura ou uma transferência entre contas suas está contando em dobro. Veja como corrigir no capítulo de categorização.',
@@ -884,7 +885,9 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
           'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
-          'Embaixo, um bloco por cartão ou conta, com o total por mês e cada cobrança: como é cobrada, o dia, a última cobrança e o valor.',
+          'Embaixo, um bloco por cartão ou conta, com o selo do banco, o total por mês e cada cobrança: como é cobrada, o dia, a última cobrança e o valor.',
+          'Cada cobrança tem um selo antes do nome: o do serviço quando o site o reconhece pelo texto do extrato (YouTube, Netflix, iFood, TIM…), senão o ícone da categoria (Moradia, Educação…) ou um recibo. O mesmo selo aparece na aba Contas a pagar e nas sugestões do extrato.',
+          'Clique no nome do cartão ou da conta para fechar o bloco (ou abrir de novo); fechado, ele ainda mostra quantas cobranças tem e quanto vai por mês. Dá para deixar vários abertos, e “Fechar todos” / “Abrir todos” faz de uma vez. O site lembra, neste navegador, quais você fechou.',
           'Para achar onde cai uma assinatura, digite o nome em “Onde cai…?” (ex.: netflix).',
           'Filtre por conta ou cartão e pela forma de cobrança; “Mostrar as encerradas” traz também as que acabaram. Os filtros aparecem embaixo, com ✕ para tirar.',
           '“ver as cobranças” abre Transações com as cobranças do último ano, na conta ou cartão dela.',
