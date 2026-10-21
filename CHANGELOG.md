@@ -3,6 +3,19 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+
+## [2.28.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Instalação mais clara quando algo atrapalha** (#300).
+  - **Porta 5443 ocupada:** a instalação diz qual programa está nela e o PID, em vez de o site simplesmente não subir.
+    - Pelo `.msi`, a instalação para com a mensagem no log do instalador.
+    - Pelo `instalar-windows.cmd`, ela para antes de trocar a versão, sem mudar nada.
+    - Pelos scripts bash, ela avisa antes de ligar o serviço e repete no teste final, se o site não responder.
+  - **Firefox:** no fim da instalação, se ele estiver instalado, aparece como fazê-lo aceitar o certificado do site.
+  - **Certificado no Linux:** quando a confiança automática falha, a instalação salva a parte pública do certificado (sem a chave) e mostra os comandos da sua distribuição (Debian/Ubuntu, Fedora, Arch) e do Chrome/Chromium.
+  - **Gerenciador no Linux:** o `instalar.sh` já instala o gerenciador no fim (`--sem-gerenciador` para não instalar). No Windows pelos scripts, ele mostra o comando.
+
 ## [2.27.1] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação

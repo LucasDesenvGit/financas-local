@@ -125,6 +125,7 @@ Para só desligar o site por um tempo, use **Desligar** no gerenciador.
 | O gerenciador diz "ligado, mas não responde" | Espere alguns segundos (o site está subindo) e clique em **Reiniciar**. Se continuar, veja o Visualizador de Eventos do Windows › Aplicativo, origem FinancasLocal |
 | O gerenciador não oferece a versão nova | Sem internet, ele avisa e o site continua funcionando. Você também pode baixar o `.msi` novo e abrir |
 | O navegador alerta sobre o certificado | Abra o mesmo `.msi` de novo e escolha **Reparar**: ele recoloca o certificado nos confiáveis. No Firefox, em `about:config`, ative `security.enterprise_roots.enabled` |
+| A instalação falhou e o log diz que a porta 5443 está em uso | Outro programa está na porta do site, e o log do instalador diz qual e o PID. Feche esse programa (ou pare o serviço dele) e abra o `.msi` de novo. Depois de instalado, o gerenciador também avisa quando a porta está ocupada |
 | A instalação parou dizendo que o banco da instalação antiga não foi encontrado | Nada foi mudado e o site antigo voltou a rodar. Confira o `Banco:Caminho` no `appsettings.Production.json` da instalação antiga (pasta `publicado\api`), ou faça uma cópia do banco e remova o serviço antigo antes de instalar |
 | A sincronização falha com 401/403 | Confira o Client ID e o Secret e se o MeuPluggy foi autorizado para aquele banco |
 | O Client Secret da Pluggy não abre mais (trocou de computador ou apagou `dados\chaves`) | As chaves são de cada instalação: informe o Client Secret de novo em Configurações |
