@@ -3,6 +3,14 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+## [2.27.4] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **Go: esqueleto do servidor** (#73, épico #70). Ainda não roda no site. Para quem desenvolve:
+  - o servidor em Go serve o site em HTTPS, só no próprio computador, lendo os mesmos `appsettings` e o mesmo certificado que os scripts e o `.msi` já geram;
+  - cabeçalhos de segurança, cache, erros e o filtro de endereço iguais aos do .NET, conferidos contra o site rodando, rota por rota;
+  - toda chamada a `/api` ainda responde 404: as rotas entram assunto por assunto.
+
 ## [2.27.3] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação

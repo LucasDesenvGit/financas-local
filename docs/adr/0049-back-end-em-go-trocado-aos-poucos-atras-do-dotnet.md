@@ -75,6 +75,7 @@ Reescrevemos o back-end em **Go**, num módulo em `src/backend-go/`, e o trocamo
 | Dinheiro | [`github.com/shopspring/decimal`](https://pkg.go.dev/github.com/shopspring/decimal) | Go não tem decimal nativo, e `float64` erra centavos. Tem `RoundBank`, o arredondamento padrão do `Math.Round` do C#. |
 | Serviço do Windows | [`golang.org/x/sys/windows/svc`](https://pkg.go.dev/golang.org/x/sys/windows/svc) | Mantido pelo time do Go. |
 | Logs | `log/slog` da biblioteca padrão | Log estruturado sem dependência ([blog do Go](https://go.dev/blog/slog)). |
+| Certificado `.pfx` | [`software.sslmate.com/src/go-pkcs12`](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12) (#73) | A biblioteca padrão não lê PKCS#12, e o `golang.org/x/crypto/pkcs12` só lê o formato antigo (3DES). O `.pfx` que os scripts e o `.msi` já geram vem cifrado com AES. Conferido: o Go leu o `.pfx` do `dotnet dev-certs` e serviu o mesmo certificado do .NET. |
 
 Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR nova.
 
@@ -117,6 +118,12 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - os tipos `Decimal`, `Data`, `DataHora` e `Guid` (pacote `internal/tipos`) gravam e leem no formato do EF Core. O formato foi confirmado por uma sonda que grava pelo mesmo EF Core da API (`internal/tipos/testdata/sonda-efcore`), e o resultado é o gabarito dos testes;
     - o `Abrir` liga `foreign_keys` como o EF Core, espera até 30 s com o banco ocupado e começa as transações com `BEGIN IMMEDIATE`. Não muda o `journal_mode`;
     - o `sqlc` roda pelo `go run` numa versão fixa, sem entrar no `go.mod`, e precisa de cgo só para quem gera. Ele lê um esquema reescrito pelo próprio SQLite (o parser dele não entende `TEXT NULL` e passa para minúsculas os nomes do `CREATE TABLE`). Nas consultas, os nomes vão entre aspas duplas e não pode haver acento.
+  - **Servidor (#73):**
+    - o Go lê os mesmos `appsettings*.json` e o `configuracao.json` do `.msi`, então os scripts não mudam;
+    - escuta só em endereço local, e recusa outro;
+    - os cabeçalhos, o cache, o `ETag`, o 401 e o 404 sem corpo e o 400 de host foram conferidos contra o .NET rodando, rota por rota (`internal/servidor/igual_dotnet_test.go`);
+    - **o `wwwroot` é lido do disco**, ao lado do executável, como no .NET: embutir com `//go:embed` obrigaria compilar o Angular antes do Go e muda a publicação, e pode ser revisto na #84;
+    - **a CSP continua no `Seguranca.cs`:** um teste do Go lê o C# e confere que é a mesma, até o .NET sair (#86).
   - **Versão:** entra no executável por `-ldflags -X`, lida do `Directory.Build.props` (a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) continua valendo).
   - **CSP:** os testes no navegador ([0041](0041-testes-no-navegador-com-playwright.md)) e o `testes-afetados.py` ([0047](0047-ci-paralela-so-testes-afetados-no-pr.md)) leem a CSP do `Seguranca.cs`. Ela ganha uma fonte única antes de o Go servir o front-end (#73).
   - **Esquema do banco** ([0003](0003-esquema-por-scripts-sql-idempotentes.md)): continua nos scripts de `banco/` mais as linhas `adicionar_coluna_se_ausente`, aplicado pelo .NET até a inversão e depois pelo Go (#297). Erros ([0022](0022-erros-do-sistema-gravados-no-banco.md)): registrados pelo .NET até a inversão, e depois por um handler do `slog` (#298).

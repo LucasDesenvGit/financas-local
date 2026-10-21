@@ -109,7 +109,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
 - **Código Go** (`src/backend-go/`, migração do épico #70, [ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)):
-  - **Bibliotecas:** só as da ADR (`net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal`, `log/slog`, `x/sys/windows/svc`); outra dependência atualiza a ADR.
+  - **Bibliotecas:** só as da ADR (`net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal`, `log/slog`, `x/sys/windows/svc`, `go-pkcs12`); outra dependência atualiza a ADR.
   - **Consultas:** SQL só pelo código do `sqlc` ou com parâmetros `?`, **nunca** texto do usuário concatenado.
   - **Dinheiro:** nunca `float64`, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`); somar e comparar em Go, com decimal.
   - **Banco:** grava no formato do EF Core (decimal, data, GUID em maiúsculas), porque .NET e Go convivem no mesmo banco.
