@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+## [2.27.4] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **A CI liga a API de verdade em todo PR de back-end** (#309). Antes, a API só era ligada no teste do instalador do Windows, que roda em poucos PRs: um erro que só aparece ao iniciar (serviço sem registro, configuração, esquema do banco) passava batido. Agora o job "API e banco" liga a API num banco temporário e espera ela responder (`scripts/ci/ligar-api.sh`, ~10 s).
+
 ## [2.27.3] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
