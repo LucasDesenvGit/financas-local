@@ -7,6 +7,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Funcionalidades
 - **Criptomoedas em Investimentos** (#279, ADR 0048): logo abaixo do Câmbio, o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether.
   - É o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia, com a data e a hora sempre à vista.
+  - Cada moeda tem o ícone da marca ao lado do código, um arquivo do próprio site (simple-icons, CC0).
   - A variação em 24 h é calculada pelo próprio site, contra a cotação guardada um dia antes. Aparece depois do primeiro dia com o site ligado; sem esse dado, a tela diz isso em vez de inventar um número.
   - **Banco:** tabela nova `CotacaoCripto`, criada sozinha ao atualizar.
   - **Rede:** domínio novo de saída, `api.mercadobitcoin.net`. Só os pares fixos (BTC-BRL…) são enviados, nenhum dado seu.

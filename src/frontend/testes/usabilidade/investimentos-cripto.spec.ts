@@ -53,6 +53,16 @@ describe('Investimentos: criptomoedas em reais (#279)', () => {
     expect(el.querySelector('.aviso-cripto')).toBeNull();
   });
 
+  it('ícone de cada moeda à direita do código, decorativo (alt vazio), do próprio site', () => {
+    const { el } = abrir(of({ atualizadoEm: null, cotacoes: [cripto('BTC', 419262, 2.04)] }));
+    const identificacao = el.querySelector('.lista-cripto li .moeda-identificacao')!;
+    expect(identificacao.getAttribute('aria-hidden')).toBe('true');
+    expect([...identificacao.children].map((c) => c.tagName)).toEqual(['SPAN', 'IMG']);
+    const icones = [...el.querySelectorAll<HTMLImageElement>('.lista-cripto img.icone-cripto')];
+    expect(icones.map((i) => i.getAttribute('src'))).toEqual(['cripto/btc.svg', 'cripto/eth.svg', 'cripto/sol.svg', 'cripto/usdt.svg']);
+    expect(icones.every((i) => i.getAttribute('alt') === '')).toBe(true);
+  });
+
   it('moeda sem cotação guardada diz isso, em vez de sumir', () => {
     const { linhas } = abrir(of({ atualizadoEm: null, cotacoes: [cripto('BTC', 419262, 2.04)] }));
     expect(linhas()).toHaveLength(4);

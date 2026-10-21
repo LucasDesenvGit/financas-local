@@ -4,19 +4,22 @@ import { ApiService } from '../core/api.service';
 import { CotacaoCripto } from '../core/modelos';
 import { TermoComponent } from '../compartilhado/termo.component';
 
-/** As criptomoedas do bloco, na ordem (as mesmas de CriptoService.Moedas na API). */
-export const MOEDAS_CRIPTO: { codigo: string; nome: string }[] = [
-  { codigo: 'BTC', nome: 'Bitcoin' },
-  { codigo: 'ETH', nome: 'Ethereum' },
-  { codigo: 'SOL', nome: 'Solana' },
-  { codigo: 'USDT', nome: 'Tether (dólar digital)' }
+/**
+ * As criptomoedas do bloco, na ordem (as mesmas de CriptoService.Moedas na API). O ícone é um arquivo do próprio site
+ * em public/cripto (simple-icons, CC0: o desenho da marca em branco sobre a cor dela).
+ */
+export const MOEDAS_CRIPTO: { codigo: string; nome: string; icone: string }[] = [
+  { codigo: 'BTC', nome: 'Bitcoin', icone: 'btc' },
+  { codigo: 'ETH', nome: 'Ethereum', icone: 'eth' },
+  { codigo: 'SOL', nome: 'Solana', icone: 'sol' },
+  { codigo: 'USDT', nome: 'Tether (dólar digital)', icone: 'usdt' }
 ];
 
 /** Cotação mais antiga que isto (em horas) ganha o aviso: a API atualiza a cada 30 minutos, 24 h por dia. */
 export const HORAS_COTACAO_CRIPTO_ANTIGA = 2;
 
 export interface LinhaCripto {
-  codigo: string; nome: string;
+  codigo: string; nome: string; icone: string;
   /** Reais por 1 unidade; null sem cotação guardada. */
   preco: number | null;
   dataHora: string | null;
@@ -47,7 +50,11 @@ export interface LinhaCripto {
         <ul class="lista-simples lista-cripto">
           @for (l of lista; track l.codigo) {
             <li>
-              <span class="codigo-cripto" aria-hidden="true">{{ l.codigo }}</span>
+              <!-- O ícone é decoração: o nome está escrito ao lado (alt vazio, WCAG 1.1.1). -->
+              <span class="moeda-identificacao" aria-hidden="true">
+                <span class="codigo-cripto">{{ l.codigo }}</span>
+                <img class="icone-cripto" [src]="'cripto/' + l.icone + '.svg'" alt="" width="20" height="20" />
+              </span>
               <span class="cresce">{{ l.nome }}</span>
               @if (l.preco !== null) {
                 <span class="valor">R$ {{ l.preco | number: '1.2-2' }}</span>
@@ -83,15 +90,17 @@ export interface LinhaCripto {
     .codigo-cripto {
       font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px;
       background: var(--superficie-2); color: var(--texto-suave); font-variant-numeric: tabular-nums;
-      min-width: 3.4em; text-align: center;
+      min-width: 4.2em; text-align: center; box-sizing: border-box;
     }
+    .moeda-identificacao { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .icone-cripto { display: block; width: 20px; height: 20px; border-radius: 5px; }
     .variacao-cripto { min-width: 8.5em; text-align: right; font-variant-numeric: tabular-nums; }
     .data-cripto { min-width: 6.5em; text-align: right; }
     .nota-cripto { margin-top: 10px; }
     /* Celular: duas linhas em grade. Em cima o código, o nome e o preço; embaixo, a variação e a data e hora. */
     @media (max-width: 600px) {
       .lista-cripto li { display: grid; grid-template-columns: auto 1fr auto; column-gap: 10px; row-gap: 2px; align-items: center; }
-      .codigo-cripto { grid-row: 1 / span 2; align-self: start; margin-top: 2px; }
+      .moeda-identificacao { grid-row: 1 / span 2; align-self: start; margin-top: 2px; }
       .lista-cripto .cresce { grid-column: 2; min-width: 0; }
       .lista-cripto .valor { grid-column: 3; text-align: right; }
       .variacao-cripto { grid-column: 2; min-width: 0; text-align: left; }
@@ -120,7 +129,7 @@ export class InvestimentosCriptoComponent {
     if (!lista) return null;
     return MOEDAS_CRIPTO.map((m) => {
       const c = lista.find((x) => x.moeda === m.codigo);
-      return { codigo: m.codigo, nome: m.nome, preco: c?.preco ?? null, dataHora: c?.dataHora ?? null, variacao24h: c?.variacao24h ?? null };
+      return { codigo: m.codigo, nome: m.nome, icone: m.icone, preco: c?.preco ?? null, dataHora: c?.dataHora ?? null, variacao24h: c?.variacao24h ?? null };
     });
   });
 

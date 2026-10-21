@@ -17,6 +17,16 @@ test('Investimentos: criptomoedas em reais, com variação em 24 h e o ⓘ de "c
   await expect(linhas.nth(2)).toContainText('variação em 24 h ainda sem dado');
   await expect(linhas.nth(3)).toContainText('sem cotação guardada ainda');
 
+  // Os ícones carregam de verdade (arquivo do próprio site, sem bloqueio de CSP), à direita do código.
+  const icones = bloco.locator('img.icone-cripto');
+  await expect(icones).toHaveCount(4);
+  for (const img of await icones.all()) {
+    await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
+  }
+  const codigo = await linhas.first().locator('.codigo-cripto').boundingBox();
+  const icone = await linhas.first().locator('img.icone-cripto').boundingBox();
+  expect(icone!.x, 'o ícone fica à direita do código').toBeGreaterThan(codigo!.x + codigo!.width - 0.5);
+
   // Logo abaixo do Câmbio.
   const cambio = await page.getByRole('region', { name: 'Câmbio' }).boundingBox();
   const cripto = await bloco.boundingBox();

@@ -50,6 +50,7 @@ Usamos a **API pública v4 do Mercado Bitcoin** (`https://api.mercadobitcoin.net
   - **com o site desligado, não há cotação nem variação** daquele período: o histórico tem buracos;
   - **cripto oscila muito em 30 minutos:** a data e a hora ficam sempre à vista, e o bloco avisa para conferir na corretora antes de negociar.
 - **Na prática:**
-  - **moeda nova:** acrescentar o par em `CriptoService.Moedas`, conferindo antes que o Mercado Bitcoin negocia `XXX-BRL`, e o nome em `MOEDAS_CRIPTO`, no front-end;
+  - **moeda nova:** acrescentar o par em `CriptoService.Moedas`, conferindo antes que o Mercado Bitcoin negocia `XXX-BRL`, e o nome em `MOEDAS_CRIPTO`, no front-end, com o ícone;
+  - **ícones** (`src/frontend/public/cripto/`): o desenho da marca do simple-icons 16.35.0 (CC0), em branco sobre a cor dela, num quadrado arredondado. Assim o Ethereum, que é cinza-escuro, não some no tema escuro. São arquivos do próprio site (`img-src 'self'`, como as bandeiras do Câmbio, ADR 0024), decorativos (`alt=""`), e a licença fica ao lado;
   - **o domínio** está na tabela de segurança do `README.md` e na lista de saídas do `CLAUDE.md`;
   - **trocar de fonte** é decisão nova: uma ADR que substitui esta.
