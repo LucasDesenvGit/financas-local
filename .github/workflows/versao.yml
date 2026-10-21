@@ -48,6 +48,9 @@ jobs:
           fetch-depth: 0
       - name: Decidir
         id: decidir
+        env:
+          # #307: PR "ci:" não gera o .msi (a não ser que mexa no instalador, no gerenciador ou na API).
+          TITULO_PR: ${{ github.event.pull_request.title }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             python3 scripts/ci/precisa-msi.py --base "origin/${{ github.base_ref }}"
