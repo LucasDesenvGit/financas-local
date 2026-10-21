@@ -207,9 +207,8 @@ export class RelatoriosComponent implements OnInit {
   });
 
   /**
-   * #282: a linha do saldo vem por cima das barras. No Chart.js, `order` menor é desenhado por cima
-   * (chartjs.org/docs/latest/charts/mixed.html); sem ele, o primeiro conjunto fica no topo e a linha, a última, sumia
-   * atrás das barras. Os pontos dizem de qual mês é cada valor, e "Emergências" sai da legenda quando não houve nenhuma.
+   * #282: a linha do saldo vem por cima das barras, com um ponto por mês: padrão do <app-grafico> para barras com
+   * linha (compartilhado/grafico-misto.ts). "Emergências" sai da legenda quando não houve nenhuma.
    */
   readonly graficoFluxo = computed<ChartConfiguration<'bar'>>(() => {
     const meses = this.fluxo();
@@ -221,15 +220,14 @@ export class RelatoriosComponent implements OnInit {
         labels: meses.map((m) => `${NOMES_MESES_CURTOS[m.mes - 1]}/${String(m.ano).slice(2)}`),
         datasets: [
           { label: 'Receitas', data: meses.map((m) => m.receitas), backgroundColor: CORES_GRAFICO.receita, borderRadius: 8, borderSkipped: false,
-            stack: 'receitas', order: 1 },
+            stack: 'receitas' },
           { label: 'Despesas', data: meses.map((m) => m.despesas - (m.despesasEmergencia ?? 0)), backgroundColor: CORES_GRAFICO.despesa,
-            borderRadius: 8, borderSkipped: false, stack: 'despesas', order: 1 },
+            borderRadius: 8, borderSkipped: false, stack: 'despesas' },
           { label: 'Emergências', data: meses.map((m) => m.despesasEmergencia ?? 0), backgroundColor: CORES_GRAFICO.emergencia,
-            borderRadius: 8, borderSkipped: false, stack: 'despesas', order: 1 },
-          // Linha do saldo acumulado, por cima das barras (order 0), com um ponto por mês.
+            borderRadius: 8, borderSkipped: false, stack: 'despesas' },
+          // Linha do saldo acumulado: o <app-grafico> a põe por cima das barras, com um ponto por mês (grafico-misto.ts).
           { label: 'Saldo acumulado', data: saldoAcumulado, type: 'line' as never, borderColor: CORES_GRAFICO.saldo,
-            backgroundColor: CORES_GRAFICO.saldo, borderWidth: 3, tension: 0.35, stack: 'saldo', order: 0,
-            pointRadius: 4, pointHoverRadius: 6, pointBorderColor: '#ffffff', pointBorderWidth: 2 } as never
+            backgroundColor: CORES_GRAFICO.saldo, borderWidth: 3, tension: 0.35, stack: 'saldo' } as never
         ]
       },
       options: {

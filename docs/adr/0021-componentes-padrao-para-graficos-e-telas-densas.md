@@ -17,6 +17,11 @@ Os gráficos mostravam dados sem dizer o que concluir nem como ler (cores, eixos
 ## Decisão
 
 - **Todo gráfico** fica dentro de `<app-grafico-explicado [resumo] comoLer>`: a conclusão em uma frase (calculada pela tela e respeitando "Ocultar valores"), o gráfico e a linha "como ler"; resumo + "como ler" viram o `aria-label` da área (`role="img"`). As cores dos gráficos vêm de `cores-graficos.ts` (`CORES_GRAFICO`), com significado fixo (receita, despesa, emergência, financiamento, empréstimo, Selic).
+- **Gráfico de barras com linha** (2026-10-21, #282): a linha fica **por cima das barras, com um ponto em cada mês**. Antes, ela sumia atrás das barras no Fluxo de caixa e na Projeção.
+  - **Por quê:** no Chart.js, o primeiro conjunto é desenhado por cima, e `order` menor também vem por cima ([Mixed Chart Types](https://www.chartjs.org/docs/latest/charts/mixed.html)).
+  - **Quem aplica:** o `<app-grafico>` aplica sozinho `linhaPorCimaDasBarras` (`compartilhado/grafico-misto.ts`) em todo `type: 'bar'` que tem conjunto `type: 'line'`. A linha recebe `order: 0` e pontos com borda na cor do fundo; as barras recebem `order: 1`.
+  - **Para fugir do padrão num conjunto:** declare `order` no conjunto, ou `pointRadius: 0` nas linhas de referência ("Média", "Referência 20%"), que não são valores de mês.
+  - **O valor de cada ponto também fica na tabela do bloco**, para quem não enxerga o gráfico (WCAG 1.1.1).
 - **Tela densa** mostra primeiro o que responde à pergunta principal dela; o resto vai para `<app-mais-analises chave="tela" conteudo="o que tem dentro"><ng-template>…</ng-template>`, um botão com `aria-expanded` que diz o que está recolhido. O conteúdo vem num `<ng-template>` e **só é criado ao abrir** (gráfico recolhido não é carregado nem desenhado); a escolha fica lembrada por tela (ADR 0017).
 
 ## Consequências
@@ -26,4 +31,4 @@ Os gráficos mostravam dados sem dizer o que concluir nem como ler (cores, eixos
   - cada gráfico novo precisa de uma regra de resumo escrita para ele (mais código por gráfico) — e a frase pode enganar se a regra for ingênua (já aconteceu na comparação anual com poucos meses de dados, corrigido para avisar que a comparação não é confiável);
   - o que fica visível ou recolhido em cada tela é *julgamento próprio*, não validado com uso real; esconder o bloco errado irrita mais do que mostrar demais;
   - conteúdo recolhido não existe no DOM até abrir: busca do navegador (Ctrl+F) não encontra o que está fechado.
-- **Na prática:** gráfico novo usa `app-grafico-explicado` com resumo e "como ler", e cor de `CORES_GRAFICO`; bloco de apoio em tela densa vai para o `app-mais-analises` daquela tela, não para uma seção nova sempre aberta.
+- **Na prática:** gráfico novo usa `app-grafico-explicado` com resumo e "como ler", e cor de `CORES_GRAFICO`. Barras com linha já saem com a linha por cima e com pontos, sem código a mais: não repita `order` nem `pointRadius` na tela; bloco de apoio em tela densa vai para o `app-mais-analises` daquela tela, não para uma seção nova sempre aberta.

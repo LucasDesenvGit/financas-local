@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
+import { linhaPorCimaDasBarras } from '../../src/app/compartilhado/grafico-misto';
 import { ApiService } from '../../src/app/core/api.service';
 import { MesValores } from '../../src/app/core/modelos';
 import { RelatoriosComponent } from '../../src/app/paginas/relatorios.component';
@@ -35,7 +36,8 @@ async function abrir(fluxo: MesValores[]) {
 describe('Regressão: linha do saldo acumulado por cima das barras (#282)', () => {
   it('a linha tem order menor que as barras e um ponto em cada mês', async () => {
     const { tela } = await abrir([mes(5, 11000, 10900), mes(6, 7000, 9000), mes(7, 13000, 11000)]);
-    const conjuntos = tela.graficoFluxo().data.datasets as unknown as { label: string; order: number; pointRadius?: number; data: number[] }[];
+    // A configuração como vai para o Chart.js: o <app-grafico> aplica o padrão de barras com linha.
+    const conjuntos = linhaPorCimaDasBarras(tela.graficoFluxo()).data.datasets as unknown as { label: string; order: number; pointRadius?: number; data: number[] }[];
     const linha = conjuntos.find((c) => c.label === 'Saldo acumulado')!;
     const barras = conjuntos.filter((c) => c !== linha);
     expect(barras.every((b) => b.order > linha.order)).toBe(true);

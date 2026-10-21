@@ -2,10 +2,15 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, Output, 
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { TemaService } from '../core/tema.service';
+import { linhaPorCimaDasBarras } from './grafico-misto';
 
 Chart.register(...registerables);
 
-/** Envoltório mínimo do Chart.js (renderiza em canvas, compatível com a CSP do site). */
+/**
+ * Envoltório mínimo do Chart.js (renderiza em canvas, compatível com a CSP do site). Aplica sozinho os padrões do site:
+ * cores do tema, "ocultar valores" e, em gráfico de barras com linha, a linha por cima das barras com um ponto por mês
+ * (`linhaPorCimaDasBarras`, em grafico-misto.ts).
+ */
 @Component({
   selector: 'app-grafico',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -85,7 +90,9 @@ export class GraficoComponent implements AfterViewInit, OnDestroy {
       }
     }
     if (this.itemClicado.observed || this.serieClicada.observed) this.tornarClicavel(opcoes);
-    this.grafico = new Chart(this.canvas().nativeElement, { ...cfg, options: opcoes } as ChartConfiguration);
+    // Barras com linha: a linha por cima, com um ponto por mês (padrão do site, compartilhado/grafico-misto.ts).
+    const fundo = estilo.getPropertyValue('--superficie').trim() || '#ffffff';
+    this.grafico = new Chart(this.canvas().nativeElement, { ...linhaPorCimaDasBarras(cfg, fundo), options: opcoes } as ChartConfiguration);
   }
 
   /** Religado a cada desenho: o gráfico é recriado ao trocar tema, paleta ou privacidade. */
