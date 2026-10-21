@@ -50,6 +50,9 @@ jobs:
           BASE: ${{ github.base_ref }}
           TITULO_PR: ${{ github.event.pull_request.title }}
         run: python3 scripts/ci/verificar-versao.py
+      # #294: uma seção de cada tipo por versão no CHANGELOG (entrada nova vai dentro da seção que já existe).
+      - name: CHANGELOG sem seção repetida
+        run: python3 scripts/ci/verificar-changelog.py
 
   # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
   mudancas:

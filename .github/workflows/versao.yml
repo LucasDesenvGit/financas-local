@@ -229,11 +229,24 @@ jobs:
           # SHA256SUMS só do .msi da versão (o da versão seguinte foi gerado só para o teste).
           $hash = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLowerInvariant()
           [IO.File]::WriteAllText("$PWD\saida-instalador\SHA256SUMS.txt", "$hash  FinancasLocal-$versao.msi`n")
-          # Notas: como instalar e, depois, a seção da versão no CHANGELOG.md (ou a "Não publicado", se ainda não foi
-          # renomeada), sem o cabeçalho "## [X.Y.Z] — data", que repetiria o título.
-          $texto = Get-Content CHANGELOG.md -Raw
-          $m = [regex]::Match($texto, "(?ms)^## \[$([regex]::Escape($versao))\][^\n]*\n(.*?)(?=^## \[)")
-          if (-not $m.Success) { $m = [regex]::Match($texto, "(?ms)^## \[Não publicado\][^\n]*\n(.*?)(?=^## \[)") }
+          # Notas (#294, ADR 0039): como instalar e, depois, o CHANGELOG da seção desta versão até a última publicada
+          # (exclusive): a seção "## [X.Y.Z]" e as versões "· desenvolvimento" abaixo dela, um nível abaixo
+          # ("### X.Y.Z — data", "#### Correções"), sem o "· desenvolvimento". Sem a seção da versão, a "Não publicado".
+          $linhas = ((Get-Content CHANGELOG.md -Raw) -replace "`r`n", "`n") -split "`n"
+          $saida = New-Object System.Collections.Generic.List[string]
+          $dentro = $false
+          foreach ($linha in $linhas) {
+            if ($linha -match '^## \[') {
+              if (-not $dentro) {
+                if ($linha -match "^## \[$([regex]::Escape($versao))\]" -or $linha -match '^## \[Não publicado\]') { $dentro = $true }
+                else { continue }
+              } elseif ($linha -notmatch 'desenvolvimento') { break }
+              $saida.Add(($linha -replace '^## \[', '### ' -replace '\]', '' -replace ' · desenvolvimento', ''))
+              continue
+            }
+            if ($dentro) { $saida.Add(($linha -replace '^### ', '#### ')) }
+          }
+          $oQueMudou = ($saida -join "`n").Trim()
           $notas = @"
           ## Como instalar ou atualizar
 
@@ -243,7 +256,7 @@ jobs:
 
           ## O que mudou
 
-          $($m.Groups[1].Value.Trim())
+          $oQueMudou
           "@
           $notas | Set-Content notas.md -Encoding utf8
           # Título e notas sempre acertados: se alguém criou o Release à mão antes da tag, ele é corrigido aqui.
@@ -318,8 +331,13 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      # O título de cada PR nas notas (gh pr view); sem isto, as notas mostram só "PR #N".
+      pull-requests: read
     steps:
+      # Histórico inteiro: as notas listam os PRs desde a versão de desenvolvimento anterior (#294).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/download-artifact@v4
         with:
@@ -334,18 +352,9 @@ jobs:
           # Nome fixo, para o link não mudar; a versão de verdade fica no título, nas notas e no próprio site.
           cp "saida-instalador/FinancasLocal-$ROTULO.msi" FinancasLocal-desenvolvimento.msi
           sha256sum FinancasLocal-desenvolvimento.msi > SHA256SUMS.txt
-          {
-            echo "**Versão de desenvolvimento $ROTULO**, gerada do develop no commit $GITHUB_SHA."
-            echo
-            echo "Tem o que já foi aprovado nos PRs e ainda não saiu numa versão. Pode ter coisa ainda não testada no uso real."
-            echo "Para o dia a dia, prefira a [versão mais recente](https://github.com/$GITHUB_REPOSITORY/releases/latest)."
-            echo
-            echo "- **Instalar ou atualizar:** baixe o \`FinancasLocal-desenvolvimento.msi\` e abra. Ele troca a versão instalada (pelo \`.msi\` ou pelos scripts) e mantém os dados."
-            echo "- **Voltar para a versão publicada:** instale o \`.msi\` da versão mais recente por cima; a mesma versão X.Y.Z troca uma pela outra."
-            echo "- **Avisos do gerenciador:** instalado este \`.msi\`, o gerenciador avisa e atualiza para a versão de desenvolvimento mais nova (ADR 0040). Quem tem uma versão publicada não recebe aviso destas."
-            echo
-            awk '/^## \[Não publicado\]/{f=1; next} /^## \[/{if (f) exit} f' CHANGELOG.md
-          } > notas.md
+          # #294: um bloco por versão de desenvolvimento com os PRs que entraram nela (acumulados) e, embaixo, tudo desde
+          # a última versão publicada. O gerenciador mostra primeiro os blocos mais novos que a versão instalada.
+          bash scripts/ci/notas-desenvolvimento.sh > notas.md
           gh release delete desenvolvimento --cleanup-tag --yes || true
           gh release create desenvolvimento FinancasLocal-desenvolvimento.msi SHA256SUMS.txt --prerelease --latest=false \
             --target "$GITHUB_SHA" --title "Finanças Local $ROTULO (desenvolvimento)" --notes-file notas.md
