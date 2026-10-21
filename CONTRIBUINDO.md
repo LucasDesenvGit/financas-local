@@ -84,6 +84,16 @@ Em outubro de 2026 o Jest chegou a levar ~6 min na CI (#204): um pacote pesado i
 
 Não repita no Jest o que o navegador já confere, e vice-versa.
 
+**Localmente, rode só o que mudou** (#286): `cd src/frontend && NAVEGADOR=chromium npm run test:afetados`.
+- **O que ele roda:** a mesma escolha que a CI faz no PR (`scripts/ci/testes-afetados.py`, ADR 0047), contando também o que ainda não foi commitado. Ou seja:
+  - o Jest dos arquivos ligados à mudança;
+  - o build;
+  - os testes no navegador das telas afetadas.
+- **Mudou arquivo global** (estilos, `core/`, configuração): roda tudo.
+- **O front-end não mudou:** não roda nada.
+- **Tempo (medido em 21/10/2026):** numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge.
+- **O Python 3 é achado sozinho:** `python` no Windows, `python3` no Linux.
+
 - **Estilo calculado se testa no navegador**, em `testes-navegador/estilos.spec.ts`: layout (alturas, colunas, largura), borda, grid/subgrid, `var()`, quem vence na cascata, animação, "reduzir movimento", tamanho de alvo. **Não escreva teste do Jest que procura a regra no `styles.css`** (`cssRules`, ordem das regras no arquivo): ele quebra quando a regra é reescrita com o mesmo efeito e passa quando outra regra a anula. Propriedade simples que o jsdom calcula (`width`, `min-height`, `visibility`) pode ficar no Jest.
 - **Meça o efeito, não a regra:** "os três cards têm a mesma altura" (`boundingBox`), não "existe `align-items: stretch`".
 - **Teste novo de estilo prova que falha:** estrague a regra no CSS do build (`dist/…/styles-*.css`), rode o teste, veja falhar e restaure. Se não falhar, os dados da API falsa provavelmente não exercitam o caso (ex.: dois cards com o mesmo conteúdo ficam iguais mesmo sem a regra): use conteúdos de tamanhos diferentes.
