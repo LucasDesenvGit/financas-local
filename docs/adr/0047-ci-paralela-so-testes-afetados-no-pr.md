@@ -56,4 +56,5 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - **teste no navegador novo** abre a tela pela rota escrita (`page.goto('/transacoes')`), para a seleção achar;
   - **ver o que rodaria aqui:** `python3 scripts/ci/testes-afetados.py --base origin/develop` (mostra os comandos);
   - **rodar aqui antes do push** (#286, 2026-10-21): `cd src/frontend && NAVEGADOR=chromium npm run test:afetados`. Ele usa a mesma decisão, soma o que ainda não foi commitado (`--local`) e roda o Jest, o build e o navegador (`--executar`). Chama o Node direto com o executável de cada ferramenta, porque no Windows o `npx.cmd` passa pelo `cmd.exe`, que lê o `<` de `<rootDir>` como redirecionamento;
-  - **mexeu em CI:** tempo antes e depois no PR, por job (regra da #204).
+  - **mexeu em CI:** tempo antes e depois no PR, por job (regra da #204);
+  - **PR só de CI usa o título `ci:`** (#307, 2026-10-21): o `precisa-msi.py` não gera o `.msi` nele, mesmo mudando o `versao.yml` ou o próprio script. A salvaguarda: se o PR mexe no instalador, no gerenciador ou na inicialização da API, o `.msi` roda e o resumo avisa que o título não combina. O `.msi` continua rodando no push do `develop` e na tag.

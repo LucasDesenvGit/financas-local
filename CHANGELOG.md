@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+## [2.27.3] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **PR só de CI não roda o instalador do Windows** (#307). PR com título `ci:` não gera nem testa o `.msi` (~7 min), mesmo mexendo no `versao.yml`. Se ele mexer de fato no instalador, no gerenciador ou na inicialização da API, o `.msi` roda, e a CI avisa que o título não combina. Registrado no `CLAUDE.md` e na ADR 0047.
+
 ## [2.27.2] — 2026-10-21 · desenvolvimento
 
 ### Correções
