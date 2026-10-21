@@ -253,6 +253,12 @@ const respostas: Record<string, unknown> = {
   },
   '/api/emprestimos': { financiamentos: credito(1), emprestimos: credito(2), contratos: [], pagamentosPorMes: [] },
   '/api/cambio/moedas': [],
+  // #247: o câmbio em Investimentos (PTAX de compra; o iene aparece por 100).
+  '/api/cambio/cotacoes': { atualizadoEm: hoje.toISOString(), cotacoes: [
+    { moeda: 'USD', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 5.4321, venda: 5.4327, fonte: 'PTAX' },
+    { moeda: 'EUR', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 6.3012, venda: 6.3044, fonte: 'PTAX' },
+    { moeda: 'JPY', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 0.0362, venda: 0.0363, fonte: 'PTAX' }
+  ] },
   '/api/carteira': {
     selic: { metaAnual: 15, acumulado12Meses: 14.2, acumuladoAno: 11.5, atualizadaAte: iso(hoje) },
     rendaVariavel: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, lucroRealizado: 0, proventosRecebidos: 0,
