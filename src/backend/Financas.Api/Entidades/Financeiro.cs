@@ -175,10 +175,23 @@ public class Meta
     /// <summary>Ordem de prioridade (1 = primeira) no assistente de metas; 0 = ainda sem ordem (vai para o fim).</summary>
     public int Prioridade { get; set; }
     public string Cor { get; set; } = "#0f766e";
+    /// <summary>#316: ícone escolhido para a meta (nome da lista do front-end, ex.: "casa"); null = o padrão (cofrinho).</summary>
+    public string? Icone { get; set; }
     public bool Concluida { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     public Conta? Conta { get; set; }
+}
+
+/// <summary>#318: um "+ aporte" (ou retirada, negativo) numa meta, com a data: o histórico do gráfico da meta.</summary>
+public class MetaAporte
+{
+    public int Id { get; set; }
+    public int MetaId { get; set; }
+    public DateOnly Data { get; set; }
+    /// <summary>O que de fato mudou no total (a retirada para no zero).</summary>
+    public decimal Valor { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 }
 
 public class ContaAgendada

@@ -6,6 +6,26 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+
+
+## [2.31.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Metas: gráfico "Como está indo"** (#318). Em cada meta, um botão abre o gráfico com o total guardado no fim de cada mês, o caminho do plano até o valor alvo e o próprio alvo. Cada "+ aporte" muda o gráfico, e embaixo ficam os últimos aportes. **Banco:** tabela nova `MetaAporte`, criada sozinha ao atualizar. Ela guarda a data e o valor de cada aporte; antes, o aporte só somava no total. O histórico começa a partir desta versão.
+
+## [2.30.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Ícone em cada meta** (#316): casa, carro, viagem, estudo, reserva e outros 11, escolhidos no formulário e mostrados no cartão, na cor da meta. Ajuda a achar a meta de olho. O cartão ganhou divisórias entre o progresso, o plano do mês e as ações. **Banco:** coluna nova `Meta.Icone`, criada sozinha ao atualizar.
+
+### Correções
+- **Metas: "concluída" com 1% e "guardar R$ 0,00"** (#316).
+  - Quando a meta chega ao alvo, ela fica concluída. Se depois o alvo aumentava, a meta continuava concluída (ex.: R$ 200 de R$ 30.000). Agora, aumentar o alvo para acima do que já foi guardado devolve a meta ao plano, e o formulário diz isso.
+  - Marcada como concluída antes de chegar ao alvo, o cartão diz "concluída por você", e o formulário mostra quanto falta.
+  - Sem meta em andamento, o assistente diz isso, em vez de "recomendo guardar R$ 0,00".
+  - "R$ 200,00de R$ 30.000,00" ganhou o espaço.
+  - As cores do formulário têm nome para o leitor de tela ("Cor azul", e não o código).
+
 ## [2.29.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades
