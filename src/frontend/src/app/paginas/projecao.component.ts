@@ -196,10 +196,11 @@ export class ProjecaoComponent implements OnInit {
             backgroundColor: meses.map((m) => (realizado(m) ? CORES_GRAFICO.despesa : CORES_GRAFICO.despesa + '66')),
             borderRadius: 8, borderSkipped: false, yAxisID: 'y'
           },
+          // O <app-grafico> põe a linha por cima das barras, com um ponto por mês (grafico-misto.ts, #282).
           {
             label: 'Saldo previsto', data: meses.map((m) => m.saldoProjetado),
             type: 'line' as never, borderColor: CORES_GRAFICO.saldo, backgroundColor: CORES_GRAFICO.saldo,
-            borderWidth: 3, pointRadius: 3, tension: 0.35, yAxisID: 'y1', spanGaps: true
+            borderWidth: 3, tension: 0.35, yAxisID: 'y1', spanGaps: true
           } as never
         ]
       },

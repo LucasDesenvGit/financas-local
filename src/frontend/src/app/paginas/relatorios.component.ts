@@ -63,17 +63,18 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     <section class="painel-bloco">
       <h2>Fluxo de caixa mensal</h2>
       <app-grafico-explicado [resumo]="resumoFluxo()"
-        comoLer="Verde: receitas. Rosa: despesas do dia a dia; laranja, empilhado em cima: despesas marcadas como emergência. A linha lilás é o saldo acumulado no período.">
+        [comoLer]="comoLerFluxo()">
         <app-grafico [configuracao]="graficoFluxo()" [altura]="300" />
       </app-grafico-explicado>
       <div class="tabela-rolagem">
         <table class="tabela tabela-meses">
           <thead>
             <tr><th>Mês</th><th class="direita">Receitas</th><th class="direita">Despesas</th>
-              <th class="direita">Emergências</th><th class="direita">Resultado</th><th class="direita">Sem emergências</th></tr>
+              <th class="direita">Emergências</th><th class="direita">Resultado</th><th class="direita">Sem emergências</th>
+              <th class="direita">Saldo acumulado</th></tr>
           </thead>
           <tbody>
-            @for (m of fluxo(); track m.ano * 100 + m.mes) {
+            @for (m of fluxo(); track m.ano * 100 + m.mes; let i = $index) {
               <tr [class.linha-emergencia]="situacaoMes(m) === 'emergencia'" [class.linha-negativa]="situacaoMes(m) === 'negativo'">
                 <td>{{ nomeMes(m) }}
                   @if (situacaoMes(m) === 'emergencia') { <span class="etiqueta etiqueta-emergencia">no vermelho por emergência</span> }
@@ -85,6 +86,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                   [class.negativo]="situacaoMes(m) === 'negativo'" [class.texto-emergencia]="situacaoMes(m) === 'emergencia'">
                   {{ m.receitas - m.despesas | currency }}</td>
                 <td class="direita texto-suave">{{ m.receitas - m.despesas + m.despesasEmergencia | currency }}</td>
+                <td class="direita valor saldo-acumulado" [class.negativo]="saldoAcumulado()[i] < 0">{{ saldoAcumulado()[i] | currency }}</td>
               </tr>
             }
           </tbody>
@@ -189,10 +191,29 @@ export class RelatoriosComponent implements OnInit {
   readonly totalCategorias = computed(() => this.categorias().reduce((s, c) => s + c.valor, 0) || 1);
   readonly maiorCategoria = computed(() => Math.max(1, ...this.categorias().map((c) => c.valor)));
 
+  /** "Como ler" do Fluxo de caixa: o laranja só é citado quando houve emergência (igual à legenda). */
+  readonly comoLerFluxo = computed(() => {
+    const emergencias = this.fluxo().some((m) => m.despesasEmergencia > 0);
+    return 'Verde: receitas. Rosa: despesas do dia a dia' +
+      (emergencias ? '; laranja, empilhado em cima: despesas marcadas como emergência' : '') +
+      '. A linha lilás, com um ponto em cada mês, é o saldo acumulado desde o começo do período ' +
+      '(o valor de cada mês está na última coluna da tabela).';
+  });
+
+  /** Saldo acumulado no período, mês a mês (a linha do gráfico e a última coluna da tabela). */
+  readonly saldoAcumulado = computed(() => {
+    let acumulado = 0;
+    return this.fluxo().map((m) => (acumulado += m.receitas - m.despesas));
+  });
+
+  /**
+   * #282: a linha do saldo vem por cima das barras, com um ponto por mês: padrão do <app-grafico> para barras com
+   * linha (compartilhado/grafico-misto.ts). "Emergências" sai da legenda quando não houve nenhuma.
+   */
   readonly graficoFluxo = computed<ChartConfiguration<'bar'>>(() => {
     const meses = this.fluxo();
-    let acumulado = 0;
-    const saldoAcumulado = meses.map((m) => (acumulado += m.receitas - m.despesas));
+    const saldoAcumulado = this.saldoAcumulado();
+    const semEmergencias = meses.every((m) => !(m.despesasEmergencia > 0));
     return {
       type: 'bar',
       data: {
@@ -204,13 +225,18 @@ export class RelatoriosComponent implements OnInit {
             borderRadius: 8, borderSkipped: false, stack: 'despesas' },
           { label: 'Emergências', data: meses.map((m) => m.despesasEmergencia ?? 0), backgroundColor: CORES_GRAFICO.emergencia,
             borderRadius: 8, borderSkipped: false, stack: 'despesas' },
-          // Linha sobreposta do saldo acumulado
+          // Linha do saldo acumulado: o <app-grafico> a põe por cima das barras, com um ponto por mês (grafico-misto.ts).
           { label: 'Saldo acumulado', data: saldoAcumulado, type: 'line' as never, borderColor: CORES_GRAFICO.saldo,
-            backgroundColor: CORES_GRAFICO.saldo, borderWidth: 3, pointRadius: 0, tension: 0.35, stack: 'saldo' } as never
+            backgroundColor: CORES_GRAFICO.saldo, borderWidth: 3, tension: 0.35, stack: 'saldo' } as never
         ]
       },
       options: {
-        plugins: { legend: { position: 'bottom' } },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { filter: (item) => !(semEmergencias && item.text === 'Emergências') }
+          }
+        },
         interaction: { mode: 'index', intersect: false },
         scales: {
           x: { stacked: true },

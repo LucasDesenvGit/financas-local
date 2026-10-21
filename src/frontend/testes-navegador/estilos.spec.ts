@@ -282,6 +282,58 @@ test.describe('Lista suspensa', () => {
   });
 });
 
+test.describe('Acessos recentes (#284)', () => {
+  test('a data com hora não fica por cima do evento; evento em português e "Acesso local"', async ({ page }) => {
+    await abrir(page, '/configuracoes?aba=seguranca');
+    const linhas = page.locator('.lista-simples li').filter({ has: page.locator('.data-curta') });
+    await expect(linhas).toHaveCount(3);
+    // Mede o texto, não a caixa: com a largura fixa antiga, a caixa tinha 3,8em e o texto vazava por cima do evento.
+    const fimDoTexto = (l: Locator) => l.evaluate((el) => {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return r.getBoundingClientRect().right;
+    });
+    const inicioDoTexto = (l: Locator) => l.evaluate((el) => {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return r.getBoundingClientRect().left;
+    });
+    for (const linha of await linhas.all()) {
+      const fimData = await fimDoTexto(linha.locator('.data-curta'));
+      const inicioEvento = await inicioDoTexto(linha.locator('.cresce'));
+      expect(fimData, 'o texto da data termina antes de o do evento começar').toBeLessThanOrEqual(inicioEvento + 0.5);
+    }
+    await expect(linhas.first()).toContainText('Entrou no site');
+    await expect(linhas.first()).toContainText('Acesso local');
+    await expect(linhas.first()).not.toContainText('127.0.0.1');
+  });
+});
+
+test.describe('Campo de número (#283)', () => {
+  test('sem as setinhas do sistema: o desenho não muda quando elas são escondidas à força', async ({ page }) => {
+    await abrir(page, '/configuracoes');
+    // Sem transição nem animação: o print não pode pegar a cor do hover ou o fade de entrada pela metade.
+    await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; animation: none !important; }' });
+    const numero = await injetar(page, '<input type="number" value="5" style="width:140px">');
+    // As setinhas do Chromium aparecem com o mouse em cima. Print do campo como o site desenha, e de novo com as
+    // setinhas escondidas à força: se o site já as esconde, os dois são iguais (sem a regra, o primeiro tem setinha).
+    await numero.hover();
+    const comoOSiteDesenha = await numero.screenshot();
+    await page.addStyleTag({ content: 'input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none !important; display: none !important; }' });
+    await numero.hover();
+    const semSetinhas = await numero.screenshot();
+    expect(comoOSiteDesenha.equals(semSetinhas), 'o campo de número não pode ter setinhas').toBe(true);
+  });
+
+  test('a seta do teclado continua subindo o valor', async ({ page }) => {
+    await abrir(page, '/configuracoes');
+    const numero = await injetar(page, '<input type="number" value="5">');
+    await numero.focus();
+    await page.keyboard.press('ArrowUp');
+    await expect(numero).toHaveValue('6');
+  });
+});
+
 test.describe('Animações', () => {
   const animacao = (l: Locator) => estilo(l, 'animation-name');
 

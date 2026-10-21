@@ -4,6 +4,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Correções
+- **Gráficos de barras com linha: a linha fica por cima, com um ponto em cada mês** (#282). Ela sumia atrás das barras no **Fluxo de caixa mensal** (Relatórios) e no **Saldo previsto** (Projeção). Agora é um padrão do site, aplicado sozinho a todo gráfico de barras com linha (também na Visão anual e em Investimentos), registrado na ADR 0021.
+  - No Fluxo de caixa, a tabela ganhou a coluna "Saldo acumulado".
+  - "Emergências" só aparece na legenda e no "como ler" quando houve alguma no período.
+- **Visão anual › Resultado acumulado:** o preenchimento ia da linha até o zero. Nos meses com acumulado negativo, a faixa ficava acima da linha e parecia invertida; agora vai sempre da linha até a base do gráfico.
+- **Campos de número sem as setinhas do navegador** (#283): elas não tinham o estilo do site e destoavam no tema escuro (Parametrização e outras telas). As setas do teclado continuam mudando o valor.
+- **Configurações › Segurança › Acessos recentes** (#284):
+  - a data com hora não fica mais por cima do evento (a mesma correção vale para as datas de "Maiores despesas" em Relatórios);
+  - os eventos aparecem em português ("Entrou no site", "Regra de descrição criada (22)");
+  - o endereço do próprio computador aparece como "Acesso local".
+
 ### Publicação e documentação
 - **A skill `trabalho-longo` é oferecida na hora certa** (#280). Numa sessão com muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou quando acabou o limite de uso. Agora:
   - o `CLAUDE.md` e a skill têm um critério objetivo: mais de uma issue ou PR, a 2ª issue na mesma conversa, ou conversa já resumida;

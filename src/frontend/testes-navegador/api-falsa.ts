@@ -315,7 +315,12 @@ const respostas: Record<string, unknown> = {
     consentimentosVencendo: 0 },
   '/api/open-finance/logs': [],
   '/api/open-finance/categorias': [],
-  '/api/auth/auditoria': [],
+  // #284: dados fictícios para Configurações › Segurança › Acessos recentes (data com hora, nome em código, 127.0.0.1).
+  '/api/auth/auditoria': [
+    { id: 3, dataHora: '2026-10-21T05:21:00', evento: 'LoginSucesso', login: 'teste', ip: '127.0.0.1', userAgent: null },
+    { id: 2, dataHora: '2026-10-20T06:33:00', evento: 'RegraDescricaoCriada (22)', login: 'teste', ip: '::1', userAgent: null },
+    { id: 1, dataHora: '2026-10-19T17:20:00', evento: 'CredencialPluggyAlterada', login: 'teste', ip: '127.0.0.1', userAgent: null }
+  ],
   '/api/erros': { itens: [], total: 0, pagina: 1, tamanhoPagina: 50, abertos: 0, origens: [] }
 };
 

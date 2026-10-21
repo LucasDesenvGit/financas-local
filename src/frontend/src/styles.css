@@ -380,6 +380,11 @@ input, select, textarea {
   transition: border-color var(--transicao), box-shadow var(--transicao), background-color var(--transicao);
 }
 input::placeholder, textarea::placeholder { color: var(--texto-suave); opacity: 0.8; }
+/* #283: campo de número sem as setinhas do sistema (destoavam do tema). As setas do teclado continuam subindo e
+   descendo o valor. Firefox: appearance textfield; Chromium e Safari: o pseudo-elemento das setinhas. */
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
 input:hover, select:hover, textarea:hover { border-color: var(--linha); }
 input:focus, select:focus, textarea:focus {
   outline: none; background: var(--superficie);
@@ -698,7 +703,8 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 .lista-simples li.clicavel:hover { background: var(--superficie-2); }
 .lista-legenda { margin-top: 12px; }
 .pct { width: 3.2em; text-align: right; font-size: 0.84rem; }
-.data-curta { color: var(--texto-suave); font-size: 0.84rem; font-variant-numeric: tabular-nums; width: 3.8em; }
+/* #284: largura mínima, não fixa: "dd/MM HH:mm" e "dd/MM/yy" passavam da caixa e ficavam por cima do texto ao lado. */
+.data-curta { color: var(--texto-suave); font-size: 0.84rem; font-variant-numeric: tabular-nums; min-width: 3.8em; flex-shrink: 0; white-space: nowrap; }
 
 .grafico { position: relative; width: 100%; }
 
