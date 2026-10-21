@@ -826,26 +826,33 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 .secao-total strong.negativo { color: var(--negativo); }
 
 .cartao-conta header { align-items: center; }
-/* Contas: cabeçalho, saldo, legenda, "Cartões: …" e rodapé ficam na mesma altura em todos os cards da mesma linha
-   da grade (subgrid), mesmo quando um nome de banco longo quebra em várias linhas e empurraria o saldo para baixo.
-   O "Cartões: …" é opcional: o rodapé fica sempre na 5ª linha. Sem suporte a subgrid, o card só não alinha com o
-   vizinho (cada um com as próprias linhas). */
-.cartao-conta { display: grid; grid-row: span 5; grid-template-rows: subgrid; row-gap: 4px; align-content: start; }
-.cartao-conta > footer { grid-row: 5; }
+/* Contas: cabeçalho, saldo, legenda, "Cartões: …", recorrentes e rodapé ficam na mesma altura em todos os cards da
+   mesma linha da grade (subgrid), mesmo quando um nome de banco longo quebra em várias linhas e empurraria o saldo
+   para baixo. "Cartões: …" e recorrentes são opcionais: cada um tem a sua linha (4ª e 5ª) e o rodapé fica sempre na
+   6ª, então nada cai em cima de nada (#245: a linha de recorrentes, 6º item, caía na linha do rodapé). Sem suporte a
+   subgrid, o card só não alinha com o vizinho (cada um com as próprias linhas). */
+.cartao-conta { display: grid; grid-row: span 6; grid-template-rows: subgrid; row-gap: 4px; align-content: start; }
+.cartao-conta > .cartoes-da-conta { grid-row: 4; }
+.cartao-conta > .linha-recorrentes { grid-row: 5; justify-self: start; }
+.cartao-conta > footer { grid-row: 6; }
 .conta-icone {
   width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0;
   background: color-mix(in srgb, var(--cor-conta, var(--primaria)) 22%, transparent);
   color: var(--texto-forte); font-size: 1.1rem;
 }
 
-/* Cartões da mesma linha com a mesma altura, com "transações · editar" sempre no rodapé (margin-top: auto).
-   Custo aceito: abrir o histórico de faturas de um cartão também estica os vizinhos da mesma linha (antes era
-   align-items: start, e cada cartão tinha a sua altura). */
+/* Cartões de crédito: cada bloco ocupa duas linhas da grade (subgrid). Na 1ª, a frente (o cartão, os valores e
+   "transações · editar"), com a mesma altura nos cartões da mesma linha e o rodapé alinhado (margin-top: auto). Na 2ª,
+   o "Histórico de faturas", que não estica (align-self: start): abrir o histórico de um cartão aumenta só ele, e os
+   vizinhos ficam como estavam, sem espaço vazio dentro do card (#245; antes, o bloco inteiro esticava). O fundo e a
+   sombra ficam nas duas partes, que se encostam (row-gap: 0) e parecem um card só. */
 .grade-cartoes-credito { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-.cartao-credito-bloco {
-  background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); overflow: hidden;
-  display: flex; flex-direction: column;
+.cartao-credito-bloco { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 0; }
+.cartao-credito-frente, .cartao-credito-historico { background: var(--superficie); box-shadow: var(--sombra); overflow: hidden; }
+.cartao-credito-frente {
+  display: flex; flex-direction: column; border-radius: var(--raio) var(--raio) 0 0; clip-path: inset(-20px -20px 0 -20px);
 }
+.cartao-credito-historico { align-self: start; padding: 0 18px 14px; border-radius: 0 0 var(--raio) var(--raio); }
 .cartao-credito-bloco.arquivada { opacity: 0.55; }
 .cartao-credito {
   --base: var(--cor-conta, var(--primaria));

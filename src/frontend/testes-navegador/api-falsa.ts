@@ -43,9 +43,11 @@ const contas = [
   { id: 1, nome: 'Conta Exemplo', tipo: 1, origem: 2, numero: null, moeda: 'BRL', saldo: 3250.5, saldoInicial: 0,
     limiteCredito: null, limiteDisponivel: null, diaFechamento: null, diaVencimento: null, cor: '#a7a3f5', incluirNoSaldo: true,
     arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
+  // #245: ligado à Conta Exemplo, que também tem recorrentes: o card da conta mostra "Cartões: …" e a linha de recorrentes.
   { id: 2, nome: 'Cartão Exemplo', tipo: 3, origem: 2, numero: null, moeda: 'BRL', saldo: -820.1, saldoInicial: 0,
     limiteCredito: 5000, limiteDisponivel: 4179.9, diaFechamento: 3, diaVencimento: 10, cor: '#92c8f0', incluirNoSaldo: true,
-    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null,
+    contaVinculadaId: 1 },
   // #251: cartão de crédito com a fatura do mês já paga e a próxima, ainda aberta.
   { id: 3, nome: 'Cartão Crédito', tipo: 3, origem: 2, numero: '5555 4444 3333 1234', moeda: 'BRL', saldo: -207.8, saldoInicial: 0,
     limiteCredito: 3000, limiteDisponivel: 2792.2, diaFechamento: 3, diaVencimento: 10, cor: '#d4a5e8', incluirNoSaldo: true,
@@ -150,6 +152,12 @@ const respostas: Record<string, unknown> = {
   },
   '/api/contas': contas,
   '/api/contas/bancos': [],
+  // #245: histórico de faturas do Cartão Exemplo (6 meses), para abrir e ver que só ele cresce.
+  '/api/contas/2/faturas': Array.from({ length: 6 }, (_, i) => ({
+    id: 100 + i, dataVencimento: dataIso(new Date(ano, hoje.getMonth() - i, 10)), dataFechamento: dataIso(new Date(ano, hoje.getMonth() - i, 3)),
+    valorTotal: 800 + i * 37.5, valorMinimo: null, valorPago: i === 0 ? null : 800 + i * 37.5, quantidadeTransacoes: 12,
+    situacao: i === 0 ? 'fechada' : 'paga'
+  })),
   // #172: "Conferir com o banco".
   '/api/conferencia-banco': {
     contas: [{ id: 1, nome: 'Conta Corrente', banco: 'nubank', openFinance: true, saldo: 1000, pistas: [

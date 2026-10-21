@@ -62,6 +62,45 @@ test.describe('Contas e cartões: cards do mesmo tamanho e alinhados', () => {
   });
 });
 
+test.describe('Contas e cartões: recorrentes e histórico de faturas (#245)', () => {
+  test('conta com "Cartões: …" e recorrentes: cada linha no seu lugar, nada em cima do rodapé', async ({ page }) => {
+    await abrir(page, '/contas');
+    const card = page.locator('.cartao-conta').filter({ hasText: 'Cartões: Cartão Exemplo' });
+    const [cartoes, recorrentes, rodape] = [await caixa(card.locator('.cartoes-da-conta')),
+      await caixa(card.locator('.linha-recorrentes')), await caixa(card.locator('footer'))];
+    // Um embaixo do outro, sem sobreposição (antes, a linha de recorrentes caía na linha do rodapé).
+    expect(recorrentes.y, 'recorrentes abaixo de "Cartões: …"').toBeGreaterThanOrEqual(cartoes.y + cartoes.height - 1);
+    expect(rodape.y, 'rodapé abaixo das recorrentes').toBeGreaterThanOrEqual(recorrentes.y + recorrentes.height - 1);
+    // O "editar" do rodapé recebe o clique no ponto dele (nada por cima).
+    await card.getByRole('button', { name: /^Editar / }).click({ trial: true });
+  });
+
+  test('abrir o histórico de faturas de um cartão aumenta só ele; o vizinho não estica', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'no celular é uma coluna, sem vizinho na mesma linha');
+    await abrir(page, '/contas');
+    const blocos = page.locator('.grade-cartoes-credito .cartao-credito-bloco');
+    // O Cartão Exemplo (o que tem histórico na API falsa) e um vizinho na mesma linha da grade.
+    const a = blocos.filter({ hasText: 'Cartão Exemplo' });
+    const ya = (await caixa(a)).y;
+    let b = blocos.first();
+    for (const outro of await blocos.all()) {
+      if ((await outro.textContent())!.includes('Cartão Exemplo')) continue;
+      if (Math.abs((await caixa(outro)).y - ya) < 2) { b = outro; break; }
+    }
+    expect(Math.abs((await caixa(b)).y - ya), 'mesma linha').toBeLessThan(2);
+    const vizinhoAntes = await caixa(b.locator('.cartao-credito-historico'));
+    const frenteAntes = await caixa(b.locator('.cartao-credito-frente'));
+
+    await a.getByRole('button', { name: 'Histórico de faturas' }).click();
+    await expect(a.locator('.tabela-historico')).toBeVisible();
+    const aberto = await caixa(a.locator('.cartao-credito-historico'));
+    expect(aberto.height, 'o histórico aberto cresceu').toBeGreaterThan(vizinhoAntes.height + 100);
+    // O vizinho: a frente e o pé do card continuam do mesmo tamanho (sem espaço vazio dentro do card).
+    expect(Math.abs((await caixa(b.locator('.cartao-credito-historico'))).height - vizinhoAntes.height)).toBeLessThan(2);
+    expect(Math.abs((await caixa(b.locator('.cartao-credito-frente'))).height - frenteAntes.height)).toBeLessThan(2);
+  });
+});
+
 test.describe('Painel: cards do mês', () => {
   test('Receitas, Despesas e Resultado em três colunas iguais, com a mesma altura; "Faturas do mês" na linha de baixo, inteira', async ({ page, isMobile }) => {
     test.skip(isMobile, 'no celular os cards empilham');
