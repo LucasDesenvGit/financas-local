@@ -423,6 +423,10 @@ export class AnualComponent implements OnInit {
   readonly graficoReceitas = computed<ChartConfiguration<'line'>>(() => this.linhasComparativas(
     (m) => m.receitas, (m) => m.receitasAnterior, COR_RECEITA, COR_RECEITA_ANTERIOR));
 
+  /**
+   * Resultado acumulado no ano. O preenchimento vai da linha até a base do gráfico (`fill: 'start'`): com `fill: true`
+   * (até o zero), nos meses negativos a faixa ficava acima da linha e parecia invertida.
+   */
   readonly graficoAcumulado = computed<ChartConfiguration<'line'>>(() => {
     const d = this.dados();
     const meses = d?.meses ?? [];
@@ -435,7 +439,7 @@ export class AnualComponent implements OnInit {
       data: {
         labels: this.rotulosMeses,
         datasets: [
-          { label: String(d?.ano ?? ''), data: atual, borderColor: COR_ATUAL, backgroundColor: COR_ATUAL + '33', fill: true, tension: 0.35, borderWidth: 3, pointRadius: 2 },
+          { label: String(d?.ano ?? ''), data: atual, borderColor: COR_ATUAL, backgroundColor: COR_ATUAL + '33', fill: 'start', tension: 0.35, borderWidth: 3, pointRadius: 2 },
           { label: String(d?.anoComparacao ?? ''), data: anterior, borderColor: COR_ANTERIOR, borderDash: [6, 5], tension: 0.35, borderWidth: 2, pointRadius: 0 }
         ]
       },
