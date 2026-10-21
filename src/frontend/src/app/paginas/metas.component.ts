@@ -12,14 +12,16 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { NOMES_MESES } from '../compartilhado/utilidades';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
-import { CORES_SUGERIDAS } from '../compartilhado/utilidades';
+import { CORES_SUGERIDAS, NOMES_CORES } from '../compartilhado/utilidades';
+import { IconeComponent } from '../compartilhado/icone.component';
+import { IconesMeta, iconeDaMeta } from '../compartilhado/icones';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
   selector: 'app-metas',
   imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, ModalComponent, TermoComponent, CampoValorComponent,
-    CampoDataComponent],
+    CampoDataComponent, IconeComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Metas</h1>
@@ -46,6 +48,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           @if (c.sobraMes <= 0) {
             <p class="negativo">Pelo dinheiro que entra e sai, este mês fecha no vermelho: recomendo guardar R$ 0 agora.
               O plano compensa nos meses com mais folga.</p>
+          } @else if (ativas().length === 0) {
+            <!-- #316: sem meta em andamento não há para onde mandar a sobra: dizer isso, e não "guardar R$ 0,00". -->
+            <p>Nenhuma meta em andamento: crie uma meta, ou reabra uma concluída (em “editar”, desmarque “Concluída”), para eu
+              dividir a sobra.</p>
           } @else {
             <p>Recomendo guardar <strong>{{ c.totalRecomendado | currency }}</strong> este mês, dividido pela ordem de prioridade das metas.</p>
             @switch (c.limitadoPor) {
@@ -79,13 +85,23 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       @for (m of metas(); track m.id) {
         <article class="cartao-meta" [class.concluida]="m.concluida">
           <header>
-            <strong>{{ m.nome }}</strong>
-            @if (m.concluida) { <span class="etiqueta etiqueta-sucesso">concluída</span> }
+            <span class="titulo-meta">
+              <!-- #316: o ícone escolhido, na cor da meta (decorativo: o nome está ao lado). -->
+              <span class="icone-meta" [style.--cor]="m.cor" aria-hidden="true">
+                <app-icone [icone]="iconeDaMeta(m.icone).icone" [tamanho]="18" />
+              </span>
+              <strong>{{ m.nome }}</strong>
+            </span>
+            <!-- #316: concluída sem chegar ao alvo foi marcada pela pessoa: dizer isso, sem contradizer o percentual. -->
+            @if (m.concluida) {
+              <span class="etiqueta etiqueta-sucesso">{{ m.percentual < 100 ? 'concluída por você' : 'concluída' }}</span>
+            }
           </header>
           <div class="anel" [style.--pct]="m.percentual" [style.--cor]="m.cor">
             <span>{{ m.percentual | number: '1.0-0' }}%</span>
           </div>
-          <p><strong>{{ m.valorAtual | currency }}</strong> <span class="texto-suave">de {{ m.valorAlvo | currency }}</span></p>
+          <!-- O espaço vai dentro do texto: entre duas tags o Angular o tira ("R$ 200,00de"). -->
+          <p><strong>{{ m.valorAtual | currency }}</strong><span class="texto-suave"> de {{ m.valorAlvo | currency }}</span></p>
           @if (m.dataAlvo) { <p class="texto-suave">até {{ m.dataAlvo | date: 'MMM/yyyy' }}</p> }
           @if (!m.concluida && posicao(m) > 0) {
             <div class="linha-prioridade">
@@ -171,7 +187,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
               }
             </div>
           } @else if (m.aporteMensalSugerido) {
-            <p class="texto-suave">Guardar <strong>{{ m.aporteMensalSugerido | currency }}</strong>/mês para chegar lá</p>
+            <p class="recomendado texto-suave">Guardar <strong>{{ m.aporteMensalSugerido | currency }}</strong>/mês para chegar lá</p>
           }
           @if (m.reservaNome) {
             @if (m.reservaNaoEncontrada) {
@@ -205,7 +221,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
           <div class="grade-campos">
-            <label>Valor alvo <app-campo-valor name="alvo" [(ngModel)]="fm.valorAlvo" obrigatorio [minimo]="0.01" /></label>
+            <label>Valor alvo <app-campo-valor name="alvo" [ngModel]="fm.valorAlvo" (ngModelChange)="mudarAlvo(fm, $event)" obrigatorio [minimo]="0.01" /></label>
             <label>Data alvo <app-campo-data name="data" [(ngModel)]="fm.dataAlvo" /></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
@@ -232,13 +248,35 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           @if (fm.contaId !== null) {
             <p class="texto-suave">O progresso será o valor inicial somado ao saldo {{ fm.reservaNome ? 'do cofrinho' : 'atual da conta' }} escolhido.</p>
           }
-          <div class="cores">
-            @for (cor of cores; track cor) {
-              <button type="button" class="cor" [style.background]="cor" [class.selecionada]="fm.cor === cor"
-                (click)="fm.cor = cor" [attr.aria-label]="'Cor ' + cor"></button>
-            }
-          </div>
+          <!-- #316: ícone da meta. Botões com o nome no aria-label e o escolhido em aria-pressed (como as cores). -->
+          <fieldset class="escolha-icone">
+            <legend>Ícone</legend>
+            <div class="icones-meta">
+              @for (i of iconesMeta; track i.chave) {
+                <button type="button" class="opcao-icone" [class.selecionada]="iconeDaMeta(fm.icone).chave === i.chave"
+                  [attr.aria-pressed]="iconeDaMeta(fm.icone).chave === i.chave" [attr.aria-label]="'Ícone ' + i.nome"
+                  [style.--cor]="fm.cor" (click)="fm.icone = i.chave">
+                  <app-icone [icone]="i.icone" [tamanho]="20" />
+                </button>
+              }
+            </div>
+          </fieldset>
+          <fieldset class="escolha-cor">
+            <legend>Cor</legend>
+            <div class="cores">
+              @for (cor of cores; track cor) {
+                <button type="button" class="cor" [style.background]="cor" [class.selecionada]="fm.cor === cor"
+                  [attr.aria-pressed]="fm.cor === cor" (click)="fm.cor = cor" [attr.aria-label]="'Cor ' + (nomesCores[cor] ?? cor)"></button>
+              }
+            </div>
+          </fieldset>
           <label class="checkbox"><input type="checkbox" name="concluida" [(ngModel)]="fm.concluida"> Concluída</label>
+          @if (avisoReaberta) {
+            <p class="nota-discreta" role="status">A meta voltou para o plano: o alvo novo é maior que o que já foi guardado.</p>
+          } @else if (fm.concluida && faltaNoForm(fm) > 0) {
+            <p class="nota-discreta" role="status">Faltam {{ faltaNoForm(fm) | currency }} para o alvo. Marcada como concluída, a meta
+              sai do plano do mês; desmarque para ela voltar.</p>
+          }
           <div class="rodape-form">
             @if (editandoId) { <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button> }
             <span class="cresce"></span>
@@ -272,7 +310,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .assistente-metas .links-assistente { margin: 0; }
     .linha-prioridade { display: flex; align-items: center; gap: 6px; }
     .linha-prioridade .botao-icone { width: 28px; height: 28px; }
-    .recomendado { margin: 0; }
+    /* #316: divisórias no cartão (o progresso, o plano do mês e as ações), na cor de linha do site. */
+    .recomendado { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--linha); }
+    .cartao-meta > footer { border-top: 1px solid var(--linha); }
+    .cartao-meta > :has(+ footer) { margin-bottom: 8px; }
     .aviso-prazo { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
     .botao-plano, .botao-ajuste { justify-self: start; padding-left: 0; }
     .conta-sobra { font-size: 0.85rem; }
@@ -286,6 +327,24 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .nota-plano { margin: 0; font-size: 0.8rem; }
     .tabela-plano { font-size: 0.8rem; }
     .tabela-plano th, .tabela-plano td { padding: 4px 6px; }
+    /* #316: ícone da meta, num círculo com a cor dela (a mesma do anel). */
+    .titulo-meta { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+    .icone-meta {
+      display: inline-grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+      color: var(--cor); background: color-mix(in srgb, var(--cor) 22%, transparent);
+    }
+    .escolha-icone, .escolha-cor { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .escolha-icone legend, .escolha-cor legend { padding: 0; margin-bottom: 6px; font-size: 0.86rem; color: var(--texto-suave); }
+    .icones-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .opcao-icone {
+      display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 10px;
+      border: 1px solid var(--linha); background: var(--superficie-2); color: var(--texto-suave); cursor: pointer;
+    }
+    .opcao-icone:hover { border-color: var(--cor); color: var(--texto); }
+    .opcao-icone.selecionada {
+      color: var(--cor); border-color: var(--cor); background: color-mix(in srgb, var(--cor) 18%, transparent);
+      box-shadow: 0 0 0 2px var(--cor);
+    }
   `
 })
 export class MetasComponent implements OnInit {
@@ -295,6 +354,12 @@ export class MetasComponent implements OnInit {
   private readonly rota = inject(ActivatedRoute);
 
   readonly cores = CORES_SUGERIDAS;
+  readonly nomesCores = NOMES_CORES;
+  readonly iconesMeta = IconesMeta;
+  readonly iconeDaMeta = iconeDaMeta;
+  /** #316: a meta em edição (para saber quanto já foi guardado) e o aviso de que ela voltou para o plano. */
+  private metaEditada: Meta | null = null;
+  avisoReaberta = false;
   /** Guardar de 50% a 100% da sobra (a margem de segurança vai de 0% a 50%, ParametroService). */
   readonly opcoesPercentual = [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
   readonly metas = signal<Meta[]>([]);
@@ -453,15 +518,41 @@ export class MetasComponent implements OnInit {
 
   nova(): void {
     this.editandoId = null;
-    this.form = { nome: '', valorAlvo: 0, valorAtual: 0, dataAlvo: null, contaId: null, cor: CORES_SUGERIDAS[0], concluida: false, reservaNome: null };
+    this.metaEditada = null;
+    this.avisoReaberta = false;
+    this.form = { nome: '', valorAlvo: 0, valorAtual: 0, dataAlvo: null, contaId: null, cor: CORES_SUGERIDAS[0], concluida: false, reservaNome: null, icone: null };
   }
 
   editar(m: Meta): void {
     this.editandoId = m.id;
+    this.metaEditada = m;
+    this.avisoReaberta = false;
     this.form = {
       nome: m.nome, valorAlvo: m.valorAlvo, valorAtual: m.valorInicial, dataAlvo: m.dataAlvo,
-      contaId: m.contaId, cor: m.cor, concluida: m.concluida, reservaNome: m.reservaNome
+      contaId: m.contaId, cor: m.cor, concluida: m.concluida, reservaNome: m.reservaNome, icone: m.icone ?? null
     };
+  }
+
+  /**
+   * #316: quanto falta para o alvo no formulário: o alvo do formulário menos o já guardado (o valor inicial do formulário
+   * mais o que vem da conta ou do cofrinho, que o formulário não muda).
+   */
+  faltaNoForm(fm: SalvarMeta): number {
+    const deFora = this.metaEditada ? this.metaEditada.valorAtual - this.metaEditada.valorInicial : 0;
+    return Math.max(0, Number(fm.valorAlvo) - (Number(fm.valorAtual) || 0) - deFora);
+  }
+
+  /**
+   * #316: aumentar o alvo de uma meta concluída para acima do que já foi guardado reabre a meta. Antes, "Concluída"
+   * ficava marcada para sempre (a API grava ao chegar no alvo), e a meta continuava concluída com 1%.
+   */
+  mudarAlvo(fm: SalvarMeta, valor: number): void {
+    const anterior = Number(fm.valorAlvo);
+    fm.valorAlvo = valor;
+    if (fm.concluida && Number(valor) > anterior && this.faltaNoForm(fm) > 0) {
+      fm.concluida = false;
+      this.avisoReaberta = true;
+    }
   }
 
   salvar(): void {

@@ -370,6 +370,9 @@ CREATE TABLE IF NOT EXISTS Meta
     -- Ordem de prioridade (1 = primeira) para o assistente de metas dividir a sobra; 0 = ainda sem ordem.
     -- Bancos antigos: coluna via 2-criar-banco.sh.
     Prioridade  INTEGER NOT NULL CONSTRAINT DF_Meta_Prioridade DEFAULT 0,
+    -- #316: ícone escolhido para a meta (nome da lista do front-end); NULL = o padrão (cofrinho).
+    -- Bancos antigos: coluna via 2-criar-banco.sh.
+    Icone       TEXT    NULL,
     -- Preenchido pela API (Meta.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm    TEXT    NOT NULL,
     CONSTRAINT CK_Meta_ValorAlvo CHECK (CAST(ValorAlvo AS REAL) > 0),

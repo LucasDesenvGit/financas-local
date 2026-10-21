@@ -250,6 +250,7 @@ public class MetasController : BaseController
         m.ContaId = dto.ContaId;
         m.ReservaNome = dto.ContaId is null ? null : cofrinho;
         m.Cor = dto.Cor;
+        m.Icone = dto.Icone;
         m.Concluida = dto.Concluida;
     }
 
@@ -279,7 +280,7 @@ public class MetasController : BaseController
             m.Concluida || atual >= m.ValorAlvo, percentual, sugestao, m.ValorAtual, saldoConta,
             reserva?.Nome ?? m.ReservaNome, reserva?.Saldo,
             reserva is not null && (reserva.PodeTerSaldoAnterior || reserva.ConferenciaAntiga),
-            m.ReservaNome is not null && reserva is null, m.Prioridade);
+            m.ReservaNome is not null && reserva is null, m.Prioridade, m.Icone);
     }
 }
 

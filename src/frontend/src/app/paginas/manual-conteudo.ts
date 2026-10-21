@@ -795,7 +795,8 @@ export const MANUAL: CapituloManual[] = [
           'Abra Metas e clique em “+ Nova meta”.',
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
           'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
-          'Escolha uma cor e salve.'
+          'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta.',
+          'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “editar”.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
       },

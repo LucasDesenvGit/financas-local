@@ -197,7 +197,15 @@ const respostas: Record<string, unknown> = {
   ],
   '/api/regras-descricao/previa': { quantidade: 6, exemplos: ['PAGAMENTO CONDOMINIO EDIF SOLAR'] },
   '/api/orcamentos': [],
-  '/api/metas': [],
+  // #316: duas metas fictícias: uma em andamento com ícone (viagem) e uma "concluída por você" com 1% (como no defeito).
+  '/api/metas': [
+    { id: 1, nome: 'Viagem', valorAlvo: 8000, valorAtual: 2400, dataAlvo: `${ano + 1}-07-01`, contaId: null, contaNome: null,
+      cor: '#92c8f0', concluida: false, percentual: 30, aporteMensalSugerido: 600, valorInicial: 2400, saldoConta: 0,
+      reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 1, icone: 'viagem' },
+    { id: 2, nome: 'RESERVA', valorAlvo: 30000, valorAtual: 200, dataAlvo: `${ano + 3}-01-01`, contaId: null, contaNome: null,
+      cor: '#8fd5b4', concluida: true, percentual: 1, aporteMensalSugerido: null, valorInicial: 200, saldoConta: 0,
+      reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 0, icone: null }
+  ],
   '/api/reservas': [],
   '/api/metas/plano': { disponivel: false, mesesConsiderados: 1, ano, mes, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
     saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] },

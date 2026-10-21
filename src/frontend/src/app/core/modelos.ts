@@ -243,6 +243,8 @@ export interface Meta {
   reservaNome: string | null; saldoReserva: number | null; reservaConferir: boolean; reservaNaoEncontrada: boolean;
   /** #90: ordem de prioridade (1 = primeira); 0 = ainda sem ordem. */
   prioridade: number;
+  /** #316: chave do ícone (IconesMeta); null = o padrão (cofrinho). */
+  icone?: string | null;
 }
 
 /**
@@ -264,6 +266,8 @@ export interface PlanoMetas {
 export interface SalvarMeta {
   nome: string; valorAlvo: number; valorAtual: number; dataAlvo: string | null; contaId: number | null;
   cor: string; concluida: boolean; reservaNome: string | null;
+  /** #316: chave do ícone (IconesMeta); null = o padrão. */
+  icone?: string | null;
 }
 
 export interface ContaAgendada {
