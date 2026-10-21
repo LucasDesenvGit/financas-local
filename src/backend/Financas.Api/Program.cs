@@ -249,8 +249,11 @@ else
 }
 
 app.UseDefaultFiles();
-// Nomes gerados pelo build do Angular: main-ABCD1234.js, chunk-ABCD1234.js, styles-ABCD1234.css.
-var arquivoComHash = new System.Text.RegularExpressions.Regex(@"-[A-Z0-9]{8}\.(js|css)$",
+// Nomes gerados pelo build do Angular: main-SR6VQB6V.js, chunk-BZ-xW7Tm.js, chunk-CsAIQ8X_.js, styles-5INURTSO.css.
+// #305: o hash do esbuild tem 8 caracteres com maiúsculas, minúsculas, números, "_" e "-"; a regra antiga só aceitava
+// maiúsculas e números, e só 3 dos 35 arquivos recebiam o cache longo. scripts/ci/verificar-cache-estaticos.py lê esta
+// regra e confere nomes de um build de verdade (e que index.html, favicon e manifesto continuam sem cache longo).
+var arquivoComHash = new System.Text.RegularExpressions.Regex(@"-[A-Za-z0-9_-]{8}\.(js|css)$",
     System.Text.RegularExpressions.RegexOptions.Compiled);
 app.UseStaticFiles(new StaticFileOptions
 {
