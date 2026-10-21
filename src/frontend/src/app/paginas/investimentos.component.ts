@@ -22,6 +22,7 @@ import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.co
 import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
+import { InvestimentosCambioComponent } from './investimentos-cambio.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
 import { RendimentoInvestimentosOfComponent } from './rendimento-investimentos-of.component';
 import { conferenciaForaDoEsperado, podeConferirReserva, valorEsperadoDaReserva } from './reserva-conferencia';
@@ -57,7 +58,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent, InvestimentosCambioComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -149,6 +150,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
               </app-grafico-explicado>
             } @else { <p class="vazio">Lance suas compras para ver a comparação.</p> }
           </section>
+
+          <!-- #247: dólar, euro e iene em reais (PTAX), compacto, de apoio à carteira. -->
+          <app-investimentos-cambio />
 
           <app-mais-analises chave="investimentos" conteudo="distribuição por tipo e rentabilidade de cada ativo x Selic">
             <ng-template>
