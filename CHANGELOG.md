@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+
+## [2.28.1] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Projeção › Mês a mês: "Saldo previsto" cortado em tela de notebook** (#312). A 1366 px, a tabela ficava em meia largura, ao lado de "Gasto médio por categoria", e a última coluna só aparecia rolando para o lado; "em parcelas" quebrava em duas linhas. Agora a tabela ocupa a largura toda (o gasto por categoria vai para baixo), e "em parcelas" fica numa linha só.
+
 ## [2.28.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades

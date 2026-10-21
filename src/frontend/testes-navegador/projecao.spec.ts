@@ -18,3 +18,20 @@ test('Projeção: valor negativo não quebra a linha entre o sinal e o número',
   expect(linhasPorCelula.length).toBeGreaterThan(0);
   expect(linhasPorCelula.every((n) => n === 1)).toBe(true);
 });
+
+test('#312: "Mês a mês" sem rolagem lateral num notebook (1366 px): o "Saldo previsto" aparece inteiro', async ({ page, problemas }, info) => {
+  test.skip(info.project.name !== 'computador', 'no celular a tabela rola para o lado de propósito (tabela-rolagem)');
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/projecao');
+  const bloco = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Mês a mês' }) });
+  const rolagem = bloco.locator('.tabela-rolagem');
+  await expect(rolagem).toBeVisible();
+  const medidas = await rolagem.evaluate((el) => ({ visivel: el.clientWidth, conteudo: el.scrollWidth }));
+  expect(medidas.conteudo, 'a tabela cabe sem rolar para o lado').toBeLessThanOrEqual(medidas.visivel + 1);
+  // "em parcelas" numa linha só: a célula de despesas não vira três linhas.
+  const parcelas = bloco.locator('td small', { hasText: 'em parcelas' }).first();
+  const altura = await parcelas.evaluate((el) => el.getBoundingClientRect().height);
+  const linha = await parcelas.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight) || el.getBoundingClientRect().height);
+  expect(altura).toBeLessThan(linha * 1.5);
+  expect(problemas.lista).toEqual([]);
+});

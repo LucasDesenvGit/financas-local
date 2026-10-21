@@ -68,7 +68,8 @@ import { PrivacidadeService } from '../core/privacidade.service';
         </section>
 
         <div class="grade-2">
-          <section class="painel-bloco">
+          <!-- #312: a tabela ocupa a largura toda da grade; em meia largura, "Saldo previsto" ficava cortado a 1366 px. -->
+          <section class="painel-bloco bloco-mes-a-mes">
             <h2>Mês a mês</h2>
             <div class="tabela-rolagem">
               <table class="tabela">
@@ -87,7 +88,7 @@ import { PrivacidadeService } from '../core/privacidade.service';
                       <td class="direita valor positivo">{{ m.receitas | currency }}</td>
                       <td class="direita valor negativo">
                         {{ m.despesas | currency }}
-                        @if (m.parcelas > 0) { <br><small class="texto-suave">{{ m.parcelas | currency }} em parcelas</small> }
+                        @if (m.parcelas > 0) { <br><small class="texto-suave nowrap">{{ m.parcelas | currency }} em parcelas</small> }
                       </td>
                       <td class="direita valor" [class.positivo]="m.resultado >= 0" [class.negativo]="m.resultado < 0">{{ m.resultado | currency }}</td>
                       <td class="direita valor" [class.negativo]="(m.saldoProjetado ?? 0) < 0">
@@ -137,7 +138,11 @@ import { PrivacidadeService } from '../core/privacidade.service';
       <p class="texto-suave">Calculando…</p>
     }
     @if (erro()) { <p class="erro">{{ erro() }}</p> }
-  `
+  `,
+  styles: [`
+    /* #312: "Mês a mês" na largura toda da grade (a coluna "Saldo previsto" não cabia em meia largura). */
+    .bloco-mes-a-mes { grid-column: 1 / -1; }
+  `]
 })
 export class ProjecaoComponent implements OnInit {
   private readonly api = inject(ApiService);
