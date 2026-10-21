@@ -386,6 +386,10 @@ public record CotacaoMoedaDto(string Moeda, DateOnly DataSolicitada, DateOnly Da
 /// <summary>Última cotação guardada de cada moeda (disponível mesmo sem internet).</summary>
 public record CotacoesAtuaisDto(DateTime? AtualizadoEm, List<CotacaoMoedaDto> Cotacoes);
 
+/// <summary>ADR 0048: última cotação guardada de uma criptomoeda, em reais, e a variação contra ~24 h antes (null sem dado).</summary>
+public record CotacaoCriptoDto(string Moeda, decimal Preco, DateTime DataHora, decimal? Variacao24h, string Fonte);
+public record CotacoesCriptoDto(DateTime? AtualizadoEm, List<CotacaoCriptoDto> Cotacoes);
+
 /* ----------------------------- Empréstimos e financiamentos ----------------------------- */
 /// <summary>Saldo devedor e parcela mensal dos contratos em aberto, separados por natureza.</summary>
 public record TotaisCreditoDto(decimal SaldoFinanciamentos, decimal SaldoEmprestimos,

@@ -117,6 +117,11 @@ export const GLOSSARIO = {
     definicao: 'Quanto você pagou, em média, por cota, somando todas as compras.',
     exemplo: '10 cotas a R$ 100 e mais 10 a R$ 120: preço médio de R$ 110.'
   },
+  criptomoeda: {
+    termo: 'Criptomoeda',
+    definicao: 'Dinheiro digital negociado pela internet, sem banco central por trás, como o Bitcoin. O preço é livre e muda o tempo todo, 24 horas por dia, inclusive no fim de semana; por isso varia muito mais que o dólar.',
+    exemplo: 'Um Bitcoin a R$ 419.000 pode valer R$ 400.000 no dia seguinte.'
+  },
   ptax: {
     termo: 'PTAX',
     definicao: 'A cotação oficial do dólar (e de outras moedas) que o Banco Central divulga todo dia útil. O site usa a de compra para passar para reais o que você tem em moeda estrangeira, como o Méli Dólar.',

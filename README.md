@@ -92,6 +92,7 @@ Para só desligar o site por um tempo, use **Desligar** no gerenciador.
 | `api.bcb.gov.br` | taxa Selic | só datas |
 | `olinda.bcb.gov.br` | cotação PTAX de moedas estrangeiras | só o código da moeda e datas |
 | `query1.finance.yahoo.com` / `brapi.dev` | cotações de ações e FIIs (fontes gratuitas e não oficiais) | só o código do ativo |
+| `api.mercadobitcoin.net` | cotação de criptomoedas em reais, a cada 30 minutos (ADR 0048) | só os pares fixos (BTC-BRL, ETH-BRL, SOL-BRL, USDT-BRL) |
 | `api.github.com` / `github.com` | só o **Gerenciador** do Windows, para achar e baixar a versão nova, conferindo o SHA256 ([ADR 0028](docs/adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)) | só o pedido da página de versões. O gerenciador do Linux não acessa a internet (só na instalação de desenvolvimento, pelo `git`, quando se clica em "Atualizar para a última do develop"; [ADR 0040](docs/adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)) |
 
 **Recomendações:**

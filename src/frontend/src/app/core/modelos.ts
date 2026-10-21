@@ -607,6 +607,10 @@ export interface CotacaoMoeda {
 /** #247: a última cotação guardada de cada moeda (GET /api/cambio/cotacoes; não consulta a internet). */
 export interface CotacoesAtuais { atualizadoEm: string | null; cotacoes: CotacaoMoeda[]; }
 
+/** ADR 0048: última cotação guardada de uma criptomoeda em reais (Mercado Bitcoin); variacao24h null sem dado de 24 h antes. */
+export interface CotacaoCripto { moeda: string; preco: number; dataHora: string; variacao24h: number | null; fonte: string; }
+export interface CotacoesCripto { atualizadoEm: string | null; cotacoes: CotacaoCripto[]; }
+
 export interface AtualizarAtivo {
   nome: string | null; tipo: TipoAtivo; segmento: string | null; precoManual: boolean; precoAtual: number | null;
 }
