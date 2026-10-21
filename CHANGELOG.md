@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Correções
+- **Gráficos de linha num padrão só** (#292). Na Visão anual, uns eram preenchidos e outros não, e o **Patrimônio estimado** era preenchido até o zero: com valor negativo, a faixa ficava acima da linha. Agora todos seguem a mesma regra, aplicada sozinha pelo componente de gráfico (ADR 0021), também em Investimentos e FIIs:
+  - a linha principal é preenchida da linha até a base, com um ponto em cada mês;
+  - a linha tracejada de comparação fica sem preenchimento.
+
 ### Funcionalidades
 - **Gerenciador: o menu do botão direito na bandeja com o visual do site** (#289).
   - **No Windows:**

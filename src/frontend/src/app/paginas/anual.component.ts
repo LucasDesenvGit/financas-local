@@ -439,7 +439,7 @@ export class AnualComponent implements OnInit {
       data: {
         labels: this.rotulosMeses,
         datasets: [
-          { label: String(d?.ano ?? ''), data: atual, borderColor: COR_ATUAL, backgroundColor: COR_ATUAL + '33', fill: 'start', tension: 0.35, borderWidth: 3, pointRadius: 2 },
+          { label: String(d?.ano ?? ''), data: atual, borderColor: COR_ATUAL, backgroundColor: COR_ATUAL + '33', fill: 'start', tension: 0.35, borderWidth: 3 },
           { label: String(d?.anoComparacao ?? ''), data: anterior, borderColor: COR_ANTERIOR, borderDash: [6, 5], tension: 0.35, borderWidth: 2, pointRadius: 0 }
         ]
       },
@@ -541,7 +541,7 @@ export class AnualComponent implements OnInit {
         labels: this.rotulosMeses,
         datasets: [{
           label: 'Patrimônio estimado', data: meses.map((m) => m.patrimonioEstimado),
-          borderColor: '#92c8f0', backgroundColor: '#92c8f033', fill: true, tension: 0.35, borderWidth: 3, pointRadius: 2
+          borderColor: '#92c8f0', backgroundColor: '#92c8f033', fill: true, tension: 0.35, borderWidth: 3
         }]
       },
       options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: compacto } } } }

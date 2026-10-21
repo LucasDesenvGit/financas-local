@@ -22,6 +22,12 @@ Os gráficos mostravam dados sem dizer o que concluir nem como ler (cores, eixos
   - **Quem aplica:** o `<app-grafico>` aplica sozinho `linhaPorCimaDasBarras` (`compartilhado/grafico-misto.ts`) em todo `type: 'bar'` que tem conjunto `type: 'line'`. A linha recebe `order: 0` e pontos com borda na cor do fundo; as barras recebem `order: 1`.
   - **Para fugir do padrão num conjunto:** declare `order` no conjunto, ou `pointRadius: 0` nas linhas de referência ("Média", "Referência 20%"), que não são valores de mês.
   - **O valor de cada ponto também fica na tabela do bloco**, para quem não enxerga o gráfico (WCAG 1.1.1).
+- **Gráfico de linha** (2026-10-21, #292): todos se leem do mesmo jeito.
+  - **A linha principal** (a primeira contínua) é **preenchida da linha até a base** (`fill: 'start'`), com a cor dela suave, e tem um ponto por mês. É a única preenchida, para as áreas não se sobreporem.
+  - **A linha tracejada** (comparação com o ano anterior, Selic, média) fica sem preenchimento e sem pontos.
+  - **Por que 'start' e não `fill: true`:** no Chart.js, `fill: true` preenche até o zero. Com valor negativo (Patrimônio estimado, Poupança no vermelho), a faixa ficava acima da linha e parecia invertida.
+  - **Quem aplica:** o `<app-grafico>`, sozinho, com `linhasNoPadrao` (`compartilhado/grafico-linhas.ts`).
+  - **Para fugir do padrão num conjunto:** declare `fill: false` (sem área) ou `pointRadius` (outro tamanho; 0 em série diária com muitos pontos).
 - **Tela densa** mostra primeiro o que responde à pergunta principal dela; o resto vai para `<app-mais-analises chave="tela" conteudo="o que tem dentro"><ng-template>…</ng-template>`, um botão com `aria-expanded` que diz o que está recolhido. O conteúdo vem num `<ng-template>` e **só é criado ao abrir** (gráfico recolhido não é carregado nem desenhado); a escolha fica lembrada por tela (ADR 0017).
 
 ## Consequências
