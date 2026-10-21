@@ -5,6 +5,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **Gerenciador: o menu do botão direito na bandeja com o visual do site** (#289).
+  - **No Windows:**
+    - as cores do site, no tema claro e no escuro, como a janela;
+    - um ícone em cada item e "Abrir o site" em destaque;
+    - itens mais altos e cantos arredondados no Windows 11;
+    - **no topo, a situação do site**, por exemplo "Finanças Local · No ar", com o ponto colorido.
+  - **Teclado e alto contraste:** o teclado continua funcionando e pula a linha da situação. Com o alto contraste do Windows ligado, fica o desenho do sistema.
+  - **No Linux:** o menu ganha a mesma linha da situação. As cores lá são do ambiente gráfico.
 - **Criptomoedas em Investimentos** (#279, ADR 0048): logo abaixo do Câmbio, o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether.
   - É o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia, com a data e a hora sempre à vista.
   - Cada moeda tem o ícone da marca ao lado do código, um arquivo do próprio site (simple-icons, CC0).

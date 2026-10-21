@@ -51,6 +51,7 @@ internal sealed class FormPrincipal : Form
     private const string DicaSiteDesligado = "É preciso ligar o site para ver isto. Use o botão “Ligar” acima.";
     private readonly Interruptor _procurarAoAbrir = new("Procurar &versão nova ao abrir");
     private readonly NotifyIcon _bandeja = new() { Visible = true };
+    private MenuBandeja? _menuBandeja;
     private readonly System.Windows.Forms.Timer _relogio = new() { Interval = (int)Intervalo.TotalMilliseconds };
 
     private readonly bool _comecarNaBandeja;
@@ -142,12 +143,9 @@ internal sealed class FormPrincipal : Form
         _bandeja.Icon = Icones.Bandeja(EstadoSite.Mudando);
         _bandeja.Text = "Finanças Local";
         _bandeja.DoubleClick += (_, _) => Mostrar();
-        var menu = new ContextMenuStrip();
-        menu.Items.Add("Abrir o site", null, (_, _) => AbrirPagina(""));
-        menu.Items.Add("Mostrar o gerenciador", null, (_, _) => Mostrar());
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Sair", null, (_, _) => { _sair = true; Close(); });
-        _bandeja.ContextMenuStrip = menu;
+        // #289: menu com o visual do site (MenuBandeja.cs), com a situação no topo.
+        _menuBandeja = new MenuBandeja(() => AbrirPagina(""), Mostrar, () => { _sair = true; Close(); });
+        _bandeja.ContextMenuStrip = _menuBandeja;
 
         _relogio.Tick += async (_, _) => await AtualizarSituacaoAsync();
         MostrarVersao();
@@ -285,6 +283,7 @@ internal sealed class FormPrincipal : Form
         _erros.AccessibleDescription = _manual.AccessibleDescription = _manual.Enabled ? null : DicaSiteDesligado;
         _bandeja.Icon = Icones.Bandeja(situacao.Estado);
         _bandeja.Text = Limitar("Finanças Local: " + situacao.Titulo, 127);
+        _menuBandeja?.MostrarSituacao(situacao);
     }
 
     private async Task ServicoAsync(string acao)
@@ -645,6 +644,7 @@ internal sealed class FormPrincipal : Form
         if (disposing)
         {
             _bandeja.Dispose();
+            _menuBandeja?.Dispose();
             _relogio.Dispose();
             _download?.Dispose();
         }
