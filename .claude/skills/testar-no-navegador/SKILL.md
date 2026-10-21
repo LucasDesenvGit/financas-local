@@ -33,6 +33,8 @@ NAVEGADOR=chromium npx playwright test <arquivo> --repeat-each=5   # teste novo:
 
 Falhou só na CI? `gh run download <run> -n testes-navegador` e olhe o print e o `error-context.md` antes de mexer; não suba tentativas para ver se passa.
 
+Para simular a CI mais lenta: `--workers=8 --repeat-each=10 --retries=0`. Medida em px com folga de 0,5 (`toBeGreaterThanOrEqual(23.5)` para 24 px: no Linux da CI, 24 vira 23,99997); depois de um clique que troca o conteúdo, espere a troca (`not.toHaveText(antes)`) antes de ler.
+
 **Falhou?** Leia `testes-navegador/resultados/<teste>/error-context.md` (a árvore da página no momento da falha) e o `test-failed-1.png` antes de mexer. Não "conserte" o teste para passar: descubra se a tela quebrou.
 
 - **"chamadas da API sem simulação"**: a tela chama um endpoint novo. Acrescente a resposta em `api-falsa.ts`, com o formato do modelo em `src/app/core/modelos.ts`.

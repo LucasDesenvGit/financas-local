@@ -10,7 +10,8 @@ test('Transações: ordenar pelo cabeçalho, por clique e por teclado', async ({
   const valor = tabela.getByRole('button', { name: /^Valor/ });
   await expect(valor).toBeVisible();
   const caixa = (await valor.boundingBox())!;
-  expect(caixa.height).toBeGreaterThanOrEqual(24);
+  // 24 px pedidos no CSS; com as fontes do Linux da CI a caixa sai 23,99997 (arredondamento): mesma folga do telas.spec.
+  expect(caixa.height).toBeGreaterThanOrEqual(23.5);
   await expect(tabela.getByRole('columnheader', { name: /^Data/ })).toHaveAttribute('aria-sort', 'descending');
 
   await valor.click();

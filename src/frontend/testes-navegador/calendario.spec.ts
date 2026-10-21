@@ -18,13 +18,16 @@ test('calendário: título leva a meses e anos, escolher volta aos dias', async 
   await expect(celulas).toHaveCount(12);
   for (const c of await celulas.all()) {
     const caixa = (await c.boundingBox())!;
-    expect(caixa.width).toBeGreaterThanOrEqual(24);
-    expect(caixa.height).toBeGreaterThanOrEqual(24);
+    expect(caixa.width).toBeGreaterThanOrEqual(23.5);
+    expect(caixa.height).toBeGreaterThanOrEqual(23.5);
   }
 
   await calendario.locator('.calendario-titulo-botao').click();
   await expect(titulo).toHaveText(/^\d{4}–\d{4}$/);
+  // Lê o primeiro ano só depois de a página trocar (na CI, mais lenta, lia o da página anterior e clicava no outro).
+  const paginaAntes = (await titulo.textContent())!.trim();
   await calendario.getByRole('button', { name: 'Anos anteriores' }).click();
+  await expect(titulo).not.toHaveText(paginaAntes);
   const ano = Number((await celulas.first().textContent())!.trim());
   await celulas.first().click();
   await expect(titulo).toHaveText(String(ano));
