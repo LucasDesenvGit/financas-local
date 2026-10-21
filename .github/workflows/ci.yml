@@ -14,6 +14,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# #255 (ADR 0047): o antigo job "build" virou quatro, em paralelo (o tempo do PR é o do mais lento, não a soma):
+# "o que mudou" decide; "API e banco", "front-end: Jest" e "front-end: navegador" (em 2 partes) rodam juntos. No PR, só
+# os testes afetados pelo que mudou; no push do develop/main, tudo. Caches: NuGet, node_modules, build do Angular,
+# Jest e o Chromium do Playwright.
 jobs:
   # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
   manual:
@@ -47,10 +51,33 @@ jobs:
           TITULO_PR: ${{ github.event.pull_request.title }}
         run: python3 scripts/ci/verificar-versao.py
 
-  build:
-    name: build
+  # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
+  mudancas:
+    name: o que mudou
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
+    outputs:
+      frontend: ${{ steps.afetados.outputs.frontend }}
+      tudo: ${{ steps.afetados.outputs.tudo }}
+      playwright: ${{ steps.afetados.outputs.playwright }}
+      jest: ${{ steps.afetados.outputs.jest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Testes afetados
+        id: afetados
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 scripts/ci/testes-afetados.py --base "origin/${{ github.base_ref }}"
+          else
+            python3 scripts/ci/testes-afetados.py
+          fi
+
+  api:
+    name: API e banco
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -70,29 +97,104 @@ jobs:
       - name: Compilar API
         run: dotnet build FinancasLocal.sln -c Release
 
+      - name: Conferir scripts SQL (idempotentes)
+        run: python3 scripts/ci/verificar-sql.py
+
+      - name: Aplicar schema num banco SQLite descartável
+        run: |
+          rm -f /tmp/ci-financaslocal.db
+          sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
+          sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
+
+  jest:
+    name: "front-end: Jest"
+    needs: mudancas
+    if: needs.mudancas.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: src/frontend/package-lock.json
 
-      - name: Compilar front-end
+      # #255: o node_modules inteiro pela versão do Node e o package-lock; acertou, pula o npm ci.
+      - name: Cache do node_modules
+        id: modulos
+        uses: actions/cache@v4
+        with:
+          path: src/frontend/node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('src/frontend/package-lock.json') }}
+
+      - name: Dependências (npm ci)
+        if: steps.modulos.outputs.cache-hit != 'true'
         working-directory: src/frontend
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
+        run: npm ci --no-audit --no-fund
+
+      # #255: a transformação do TypeScript do Jest (a parte cara da 1ª execução) entre execuções.
+      - name: Cache do Jest
+        uses: actions/cache@v4
+        with:
+          path: src/frontend/.jest-cache
+          key: jest-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: jest-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
+
+      - name: Tipos
+        working-directory: src/frontend
+        run: npm run test:tipos
 
       - name: Testes do front-end (Jest)
         working-directory: src/frontend
-        run: |
-          npm run test:tipos
-          npm test -- --ci --json --outputFile=jest-resultado.json
+        run: npm test -- --ci --cacheDirectory=.jest-cache --json --outputFile=jest-resultado.json ${{ needs.mudancas.outputs.jest }}
 
       # #204: trava de desempenho. Arquivo de teste acima de 20 s ou suíte acima de 150 s falha (aviso a partir de
       # 10 s por arquivo). Ver "Testes rápidos" no CONTRIBUINDO.md.
       - name: Tempo dos testes do Jest
         run: python3 scripts/ci/verificar-tempo-testes.py src/frontend/jest-resultado.json
+
+  navegador:
+    name: "front-end: navegador (${{ matrix.parte }}/2)"
+    needs: mudancas
+    if: needs.mudancas.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        parte: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Cache do node_modules
+        id: modulos
+        uses: actions/cache@v4
+        with:
+          path: src/frontend/node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('src/frontend/package-lock.json') }}
+
+      - name: Dependências (npm ci)
+        if: steps.modulos.outputs.cache-hit != 'true'
+        working-directory: src/frontend
+        run: npm ci --no-audit --no-fund
+
+      # #255: o cache de build do Angular (angular.json: "cli.cache.environment": "all", para valer também na CI).
+      - name: Cache do build do Angular
+        uses: actions/cache@v4
+        with:
+          path: src/frontend/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
+
+      - name: Compilar front-end
+        working-directory: src/frontend
+        run: npm run build
 
       # ADR 0041: o build de produção num navegador de verdade, com a CSP da API e a API falsa (sem back-end).
       # #204: o Chromium fica em cache pela versão do Playwright; as bibliotecas do sistema (--with-deps) vêm do apt.
@@ -106,25 +208,43 @@ jobs:
         working-directory: src/frontend
         run: npx playwright install --with-deps chromium
 
+      # #255: os testes divididos em 2 partes, em máquinas diferentes; no PR, só os afetados (a parte que não tem nenhum
+      # passa sem rodar nada).
       - name: Testes no navegador (Playwright)
         working-directory: src/frontend
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.parte }}/2 --pass-with-no-tests ${{ needs.mudancas.outputs.playwright }}
 
       - name: Relatório dos testes no navegador
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: testes-navegador
+          name: testes-navegador-${{ matrix.parte }}
           path: |
             src/frontend/testes-navegador/relatorio
             src/frontend/testes-navegador/resultados
           if-no-files-found: ignore
 
-      - name: Conferir scripts SQL (idempotentes)
-        run: python3 scripts/ci/verificar-sql.py
-
-      - name: Aplicar schema num banco SQLite descartável
+  # O check exigido pela proteção do develop/main se chama "build" (o nome do job antigo). Este job junta os quatro:
+  # passa só se todos passaram ou foram pulados de propósito (PR sem front-end); se um falhou ou foi cancelado, falha
+  # e o merge fica bloqueado, como antes.
+  build:
+    name: build
+    if: always()
+    needs: [mudancas, api, jest, navegador]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resultado dos jobs
+        env:
+          O_QUE_MUDOU: ${{ needs.mudancas.result }}
+          API: ${{ needs.api.result }}
+          JEST: ${{ needs.jest.result }}
+          NAVEGADOR: ${{ needs.navegador.result }}
         run: |
-          rm -f /tmp/ci-financaslocal.db
-          sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
-          sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
+          falhou=0
+          for nome in O_QUE_MUDOU API JEST NAVEGADOR; do
+            resultado="${!nome}"
+            echo "$nome: $resultado"
+            case "$resultado" in success|skipped) ;; *) falhou=1 ;; esac
+          done
+          exit $falhou
