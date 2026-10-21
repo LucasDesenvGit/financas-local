@@ -257,7 +257,10 @@ const respostas: Record<string, unknown> = {
   '/api/cambio/cotacoes': { atualizadoEm: hoje.toISOString(), cotacoes: [
     { moeda: 'USD', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 5.4321, venda: 5.4327, fonte: 'PTAX' },
     { moeda: 'EUR', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 6.3012, venda: 6.3044, fonte: 'PTAX' },
-    { moeda: 'JPY', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 0.0362, venda: 0.0363, fonte: 'PTAX' }
+    { moeda: 'JPY', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 0.0362, venda: 0.0363, fonte: 'PTAX' },
+    // #278: mais moedas da PTAX (as que faltam aparecem como "sem cotação guardada ainda").
+    { moeda: 'GBP', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 7.2154, venda: 7.2191, fonte: 'PTAX' },
+    { moeda: 'CHF', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 6.7012, venda: 6.7049, fonte: 'PTAX' }
   ] },
   '/api/carteira': {
     selic: { metaAnual: 15, acumulado12Meses: 14.2, acumuladoAno: 11.5, atualizadaAte: iso(hoje) },

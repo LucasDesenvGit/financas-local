@@ -99,3 +99,15 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
 - **Na prática:** tela nova com lançamentos ou cobranças usa `<app-selo-servico>` com os textos que tiver (exemplos no
   comentário do componente). Serviço novo entra em `servicos.ts` (o `path` do SVG do Simple Icons, quando houver, ou cor e sigla),
   com o termo do extrato; o teste `testes/regressao/selo-cobranca.spec.ts` confere que todo serviço tem desenho ou sigla.
+
+## Atualização de 2026-10-21: bandeiras do Câmbio (issue #278)
+
+- **O que mudou:** o bloco Câmbio de Investimentos mostra a **bandeira do país** de cada moeda, à direita do código (a do euro é a da União Europeia), nas 10 moedas da PTAX.
+- **De onde vêm:** arquivos SVG do pacote [flag-icons](https://github.com/lipis/flag-icons) 7.2.3 (MIT), pasta `flags/4x3`, copiados sem alteração para `src/frontend/public/bandeiras/`, com a licença ao lado (`LICENSE.txt`). Foram conferidos antes de copiar: só desenho, sem script nem link externo.
+- **Por que arquivo e não desenho no código:**
+  - a CSP já permite imagem do próprio site (`img-src 'self'`), então nada é baixado da internet e a CSP não muda;
+  - os dez arquivos somam cerca de 6 KB e só são pedidos quando a tela abre;
+  - colocar o SVG dentro do HTML exigiria passar pelo sanitizador do Angular.
+- **Emoji de bandeira foi descartado:** no Windows, ele costuma aparecer como duas letras ("US").
+- **Decorativa:** `alt=""`, porque o nome da moeda está escrito ao lado (WCAG 1.1.1). Ela tem uma borda suave, para a bandeira branca do Japão não sumir no tema claro.
+- **Moeda nova na PTAX:** acrescente a bandeira de `flags/4x3` do mesmo pacote e a entrada em `MOEDAS_CAMBIO` (`investimentos-cambio.component.ts`).

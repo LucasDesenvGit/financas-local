@@ -1047,7 +1047,7 @@ export const MANUAL: CapituloManual[] = [
           'Informe o código da B3 (ex.: MXRF11), a quantidade, o preço pago e a data.',
           'A carteira mostra preço médio, cotação atual, valorização e proventos.',
           'As abas separam o Resumo, os FIIs, a Renda variável e o que veio do Open Finance.',
-          'No Resumo, o bloco “Câmbio” mostra quanto valem em reais 1 dólar, 1 euro e 100 ienes, pela PTAX de compra do Banco Central (a mesma que o site usa para converter), com a data de cada cotação. A cotação é de dia útil e se atualiza sozinha; sem internet, fica a última guardada, com a data dela. Ela não some com “ocultar valores”, porque não é um dado seu.'
+          'No Resumo, o bloco “Câmbio” mostra quanto valem em reais 1 dólar, 1 euro e 100 ienes, pela PTAX de compra do Banco Central (a mesma que o site usa para converter), com a bandeira do país e a data de cada cotação. Em “Mais 7 moedas” ficam as outras que o Banco Central publica: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca; o site lembra se você deixou aberto. A cotação é de dia útil e se atualiza sozinha; sem internet, fica a última guardada, com a data dela. Ela não some com “ocultar valores”, porque não é um dado seu.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['precoMedio', 'dy', 'dyNaCompra', 'yieldOnCost', 'ptax']
