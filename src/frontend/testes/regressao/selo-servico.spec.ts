@@ -31,6 +31,23 @@ describe('Regressão: selo de cada cobrança (#265)', () => {
     for (const [texto, chave] of casos) expect([texto, servicoDe(texto)?.chave]).toEqual([texto, chave]);
   });
 
+  it('#269: Uber pelo processador (DL*UberRides), Mercado Pago, Pix, Cobasi, Petz, Petlove e Extra', () => {
+    const casos: [string, string][] = [
+      ['DL*UberRides', 'uber'], ['UBER *TRIP', 'uber'], ['UBERTRIP', 'uber'], ['UBER ONE', 'uber'], ['DL*UberEats', 'ubereats'],
+      ['MP*MP', 'mercadopago'], ['MP*JULIOCEZARSIL', 'mercadopago'], ['MERCADO PAGO*LOJA', 'mercadopago'],
+      ['MP*MERCADOLIVRE', 'mercadolivre'],                        // é do Mercado Livre, não do Mercado Pago
+      ['PIX ENVIADO PESSOA EXEMPLO', 'pix'], ['PIX RECEBIDO', 'pix'], ['PIX NETFLIX.COM', 'netflix'],   // marca antes do Pix
+      ['COBASI', 'cobasi'], ['PETZ', 'petz'], ['PETLOVE*ASSINATURA', 'petlove'], ['Petlove Saud*Petlove S', 'petlove'],
+      ['EXTRA HIPER 123', 'extra'], ['MERCADO EXTRA', 'extra'], ['EXTRA.COM.BR', 'extra']
+    ];
+    for (const [texto, chave] of casos) expect([texto, servicoDe(texto)?.chave]).toEqual([texto, chave]);
+    // "extra" e "MP" soltos em outras palavras não viram marca.
+    expect(servicoDe('EXTRATO MENSAL')).toBeNull();
+    expect(servicoDe('PAGTO HORA EXTRA')).toBeNull();
+    expect(servicoDe('AMPLA ENERGIA')).toBeNull();
+    expect(servicoDe('POSTO UBERLANDIA')).toBeNull();
+  });
+
   it('palavra comum não vira marca: "OI" só sozinho, Méliuz não é Mercado Livre, "LIGHT" só com "SERV"', () => {
     expect(servicoDe('COMPRA OIAPOQUE')).toBeNull();
     expect(servicoDe('MELIUZ CASHBACK')).toBeNull();
