@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   OpcaoCategoria, SugestaoCategoria,
-  AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
+  AtualizarAtivo, Carteira, CotacaoMoeda, CotacoesAtuais, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
@@ -214,6 +214,8 @@ export class ApiService {
 
   // Carteira (renda variável + comparação com a Selic)
   moedasCambio(): Observable<MoedaCambio[]> { return this.http.get<MoedaCambio[]>(`${this.base}/cambio/moedas`); }
+  /** #247: a última cotação guardada de cada moeda. */
+  cotacoesCambio(): Observable<CotacoesAtuais> { return this.http.get<CotacoesAtuais>(`${this.base}/cambio/cotacoes`); }
   cotacaoCambio(moeda: string, data: string): Observable<CotacaoMoeda> {
     return this.http.get<CotacaoMoeda>(`${this.base}/cambio/cotacao`, { params: this.params({ moeda, data }) });
   }

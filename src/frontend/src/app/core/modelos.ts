@@ -604,6 +604,9 @@ export interface CotacaoMoeda {
   moeda: string; dataSolicitada: string; data: string; compra: number; venda: number; fonte: string;
 }
 
+/** #247: a última cotação guardada de cada moeda (GET /api/cambio/cotacoes; não consulta a internet). */
+export interface CotacoesAtuais { atualizadoEm: string | null; cotacoes: CotacaoMoeda[]; }
+
 export interface AtualizarAtivo {
   nome: string | null; tipo: TipoAtivo; segmento: string | null; precoManual: boolean; precoAtual: number | null;
 }

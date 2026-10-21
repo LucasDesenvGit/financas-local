@@ -48,17 +48,23 @@ export class TermoComponent {
 
   alternar(ev: Event): void {
     ev.stopPropagation(); // não dispara cliques da linha/cabeçalho onde o termo está
-    if (!this.aberto()) {
-      // Abaixo do ⓘ; perto da borda direita, alinhado pela direita para não sair da tela.
-      const botao = (this.el.nativeElement as HTMLElement).querySelector('.termo-botao')!.getBoundingClientRect();
-      const direita = botao.left > window.innerWidth / 2;
-      this.posicao.set({
-        top: botao.bottom + 6,
-        left: direita ? null : Math.max(8, botao.left),
-        right: direita ? Math.max(8, window.innerWidth - botao.right) : null
-      });
-    }
+    if (!this.aberto()) this.posicionar();
     this.aberto.update((v) => !v);
+  }
+
+  /** Abaixo do ⓘ; perto da borda direita, alinhado pela direita para não sair da tela. */
+  private posicionar(): void {
+    const botao = this.botao().getBoundingClientRect();
+    const direita = botao.left > window.innerWidth / 2;
+    this.posicao.set({
+      top: botao.bottom + 6,
+      left: direita ? null : Math.max(8, botao.left),
+      right: direita ? Math.max(8, window.innerWidth - botao.right) : null
+    });
+  }
+
+  private botao(): HTMLElement {
+    return (this.el.nativeElement as HTMLElement).querySelector<HTMLElement>('.termo-botao')!;
   }
 
   @HostListener('document:keydown.escape')
@@ -66,11 +72,20 @@ export class TermoComponent {
     this.aberto.set(false);
   }
 
-  /** Posição fixa não acompanha a rolagem: fecha para não ficar solto na tela. */
+  /**
+   * Rolar ou redimensionar: o balão (posição fixa) acompanha o ⓘ e só fecha se o ⓘ saiu da tela. Antes fechava a
+   * qualquer rolagem, e no celular a rolagem que vem com o toque fechava o balão logo depois de abrir (#247, CI).
+   */
   @HostListener('window:scroll')
   @HostListener('window:resize')
   fecharAoRolar(): void {
-    this.aberto.set(false);
+    if (!this.aberto()) return;
+    const r = this.botao().getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) {
+      this.aberto.set(false);
+      return;
+    }
+    this.posicionar();
   }
 
   @HostListener('document:click', ['$event'])
