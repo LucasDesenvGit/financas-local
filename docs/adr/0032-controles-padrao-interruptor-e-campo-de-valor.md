@@ -52,6 +52,9 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
   - **Por que:** o campo nativo aceitava ano de 6 dígitos ("13/02/275760"), e o calendário era o do navegador, fora do visual do site.
   - **Como funciona:** digita-se dd/mm/aaaa, com as barras entrando sozinhas e o ano sempre com 4 dígitos. Colar `AAAA-MM-DD` também funciona.
   - **Calendário próprio:** segue o padrão *Date Picker Dialog* do WAI-ARIA APG (setas, Home/End, PageUp/PageDown, Shift para o ano, Esc), com « ‹ › », "Hoje" e "Limpar".
+  - **Meses e anos pelo título (#264):** o título do mês ("outubro de 2026") é um botão que troca a grade de dias pela de meses do ano; o título do ano ("2026") leva a uma página de 12 anos ("2020–2031", páginas a partir de 1900). Escolher desce um nível (ano → meses → dias), ‹ › trocam o ano ou a página, e Esc sobe um nível antes de fechar. Meses e anos fora dos limites ficam desabilitados; o escolhido e o de hoje, destacados, como os dias. Teclado nas grades: ← → um, ↑ ↓ uma linha, Home/End, PageUp/PageDown. Alvos de 44 px de altura (WCAG 2.5.8).
+    - **Por que:** ir a uma data distante (nascimento, compra antiga, o fim de um financiamento) pedia dezenas de cliques nas setas (Nielsen 7). As setas continuam para quem anda mês a mês.
+    - *Julgamento próprio:* o modelo dias → meses → anos ao clicar no título é o mais comum em seletores de data; ainda não validado com uso real aqui. Testes em `testes/regressao/calendario-meses-anos.spec.ts` e `testes-navegador/calendario.spec.ts`.
   - **Limites:** 1900–2099 por padrão, ou os da tela (`[maximo]="hoje"`).
   - **Valor:** entrega o mesmo `'AAAA-MM-DD'` ao `ngModel` (`''` quando vazio). `(alterado)` faz o papel do `(change)` nativo.
   - **Alternativas descartadas:** só limitar o campo nativo com `max` (resolvia o ano, mas não o visual) e uma biblioteca de calendário (dependência externa).

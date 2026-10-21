@@ -37,6 +37,12 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 
 **Testes no navegador** (Playwright, [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)), em `src/frontend/testes-navegador/`: o build de produção com a CSP da API e a API falsa (`api-falsa.ts`, sem dado real); cada tela do menu abre sem erro de console, exceção ou bloqueio de CSP, em computador e celular. **Mudou tela, CSS, rota ou chamada da API no front-end? Use a skill `testar-no-navegador`** (`.claude/skills/`): roda a regressão, tira prints das telas mudadas para olhar e diz o que foi conferido. Tela nova no menu entra em `TELAS` (`base.ts`), e endpoint novo, na API falsa.
 
+**Antes de subir (push) mudança no front-end, rode os testes no navegador com o mesmo navegador da CI** (#264: passou no Edge daqui e falhou na CI):
+- `npx playwright install chromium` uma vez; depois `NAVEGADOR=chromium npx playwright test` (o Chromium do Playwright, o mesmo da CI). O Edge do computador continua para o dia a dia.
+- **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
+- **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
+- No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).
+
 Testes automatizados só no front-end, com Jest + `jest-preset-angular` em `src/frontend/testes/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)): `regressao/` (bug corrigido ou comportamento garantido por um PR — cada bug corrigido ganha teste aqui) e `usabilidade/` (critérios de UI/UX desta página verificáveis sem navegador). A CI roda `npm run test:tipos` e `npm test`. O back-end não tem testes automatizados; além disso, vale o checklist manual do PR (ver [CONTRIBUINDO.md](CONTRIBUINDO.md)).
 
 Em desenvolvimento no Visual Studio, o perfil *Desenvolvimento (Kestrel)* sobe a API em `https://localhost:7443`; as chaves do Data Protection ficam em `dados\chaves-dev` (Client Secret da Pluggy precisa ser reinformado).

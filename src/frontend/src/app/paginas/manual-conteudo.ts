@@ -87,7 +87,8 @@ export const MANUAL: CapituloManual[] = [
           'A calculadora abre no botão ao lado ou com Alt+C.',
           'No menu do usuário ficam o tema (claro, escuro ou do sistema), as cores do site e o “Sair”.',
           'O botão “Ajuda” abre este manual na parte que explica a tela em que você está.',
-          'Palavras com ⓘ têm explicação: clique (ou use Enter) no ⓘ para ver.'
+          'Palavras com ⓘ têm explicação: clique (ou use Enter) no ⓘ para ver.',
+          'Campos de data: digite dd/mm/aaaa (as barras entram sozinhas) ou abra o calendário no botão ao lado. No calendário, ‹ › trocam o mês e « » o ano; para ir longe, clique no título (“outubro de 2026”) e escolha o mês, ou clique de novo (“2026”) e escolha o ano. Esc volta um passo e, nos dias, fecha o calendário.'
         ]
       },
       {

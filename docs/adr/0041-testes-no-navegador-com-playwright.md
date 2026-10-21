@@ -69,3 +69,9 @@ A eficácia foi provada recolocando de propósito o bug da #157 (SRI ligado): o 
   - **A prova achou dois testes que passavam com o CSS quebrado:** as contas e os cartões da API falsa tinham conteúdos do mesmo tamanho. Corrigido com conteúdos de tamanhos diferentes.
 - **API falsa:** os cartões de crédito estavam com o tipo 2 (Poupança) em vez de 3. As telas nunca tinham sido abertas com um cartão de verdade. O `develop` já tinha corrigido um; este trabalho corrigiu o outro e acrescentou duas faturas no mês e contas de tamanhos diferentes.
 - **Na prática:** estilo calculado se testa aqui, e não no Jest; teste novo de estilo prova que falha (CONTRIBUINDO.md, "Testes rápidos").
+
+## Atualização de 2026-10-21: o mesmo navegador da CI antes de subir (issue #264)
+
+- **O que aconteceu:** o teste novo do calendário passou aqui (Edge) e falhou na CI (Chromium do Playwright, Linux), só no celular. Com outras fontes, a altura muda; e o toque na tela de celular rolava a página, o que fechava o calendário antes de ele aparecer. O defeito era do site (no celular de verdade, o toque também rola), e o Edge daqui não mostrava.
+- **Decisão:** antes de subir mudança no front-end, os testes no navegador rodam também com `NAVEGADOR=chromium` (o mesmo Chromium da CI, instalado uma vez com `npx playwright install chromium`); teste novo, com `--repeat-each=5`. Falha só na CI se investiga pelo artefato `testes-navegador` (print e `error-context.md`), sem subir tentativas.
+- **Custo:** ~150 MB do Chromium baixados uma vez neste computador; a suíte roda duas vezes antes de subir (Edge no dia a dia, Chromium antes do push). Fontes do Linux da CI continuam diferentes das daqui: o artefato da CI segue sendo a fonte de verdade quando só lá falha.
