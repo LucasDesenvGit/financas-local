@@ -41,7 +41,7 @@ A partir desta ADR, o `develop` foi para **2.2.0**, contando o que entrou desde 
   - o pacote de desenvolvimento e o Release de mesmo número trocam um pelo outro, como a 0029 já testa na CI.
 - **Negativas:**
   - **Conflito na versão:** dois PRs abertos ao mesmo tempo mexem na mesma linha do `Directory.Build.props`. Quem entrar depois faz `git merge origin/develop`, pega a versão maior e sobe de novo pelo tipo do seu PR.
-  - **Números que não saem:** o `develop` passa por 2.3.0, 2.3.1, 2.4.0…, e só alguns viram Release (o que a 0029 queria evitar). Aceito: o CHANGELOG continua juntando tudo em "Não publicado" até a versão sair.
+  - **Números que não saem:** o `develop` passa por 2.3.0, 2.3.1, 2.4.0…, e só alguns viram Release (o que a 0029 queria evitar). Aceito. O CHANGELOG juntava tudo em "Não publicado" até a versão sair; desde a #294 (2026-10-21) tem uma seção por versão (veja a atualização abaixo).
   - **Quem está na versão de desenvolvimento** `X.Y.Z-dev.N` não recebe aviso do gerenciador quando sai o Release `X.Y.Z`: o gerenciador compara só `X.Y.Z`. Essa pessoa já tem o conteúdo da versão, então o aviso não faz falta, mas o rótulo "-dev.N" só some instalando o Release.
   - **Dependabot** não sobe a versão: o check pula os PRs dele. A atualização de dependência sai junto com o próximo PR que subir.
   - Uma decisão a mais em cada PR, e a quebra de verdade fica a critério de quem faz o PR (a CI não tem como saber).
@@ -49,3 +49,20 @@ A partir desta ADR, o `develop` foi para **2.2.0**, contando o que entrou desde 
   - o check **"versão subiu"** (`scripts/ci/verificar-versao.py`, no `ci.yml`) falha o PR se a versão não subiu ou subiu menos do que o tipo do título pede (`feat` → pelo menos o do meio; o resto → pelo menos o último);
   - PR para a `main` (vindo do `develop` ou de `hotfix/*`) não é conferido: a versão já vem certa;
   - regra no `CLAUDE.md` e no `CONTRIBUINDO.md`.
+
+## Atualização de 2026-10-21: uma seção do CHANGELOG por versão (issue #294)
+
+- **Problema:** o "Não publicado" juntava tudo desde a 2.1.0, com um `### Correções` novo por PR. Na publicação da 2.17.0, a seção dela foi criada só na branch `release/2.17.0`, que não voltou para o `develop`: o "Não publicado" do `develop` continuou com o que já tinha saído. As notas da versão de desenvolvimento e a janela "O que mudou" do gerenciador ficavam longas e repetidas.
+- **O que mudou:** como todo PR já sobe a versão, o CHANGELOG passa a ter **uma seção por versão**:
+  - `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento` enquanto não for publicada, com um título de cada tipo dentro;
+  - a entrada do PR vai na seção da versão dele;
+  - publicar é tirar o "· desenvolvimento" do título.
+- **Reorganização do que já existia:** os itens do antigo "Não publicado" foram para a versão em que entraram, achada pelo histórico do git (o merge no `develop` que acrescentou cada texto e a versão do `Directory.Build.props` nele). A 2.17.0 voltou com o texto publicado.
+- **Notas:**
+  - **do Release X.Y.Z:** a seção X e as de desenvolvimento abaixo dela, até a última publicada;
+  - **da versão de desenvolvimento:** todas as seções "· desenvolvimento" e, por versão, os PRs que entraram nela (`scripts/ci/notas-desenvolvimento.sh`).
+- **No gerenciador:** "O que mudou" mostra primeiro só as seções mais novas que a versão instalada (`NotasDaVersao`).
+- **Na prática:**
+  - `scripts/ci/verificar-changelog.py`, no check "versão subiu", falha com: tipo repetido na mesma versão; versão repetida ou fora de ordem; versão acima da do `Directory.Build.props`;
+  - depois de publicar, a `main` volta para o `develop`.
+

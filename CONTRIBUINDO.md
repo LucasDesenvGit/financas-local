@@ -42,13 +42,13 @@ Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --as
 Outro PR subiu a versão antes do seu entrar? `git merge origin/develop`, pegue a versão maior e suba de novo pelo tipo do seu PR. O Dependabot não precisa subir.
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-1. No `develop`, no `CHANGELOG.md`, troque `## [Não publicado]` pela versão que está no `Directory.Build.props` (ex.: `## [2.2.0] - AAAA-MM-DD`) e abra uma seção `## [Não publicado]` vazia acima. O número já vem certo dos PRs.
+1. No `develop`, no `CHANGELOG.md`, tire o ` · desenvolvimento` do título da versão do topo (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`, com a data de hoje) (#294). O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo: as notas do Release juntam todas, até a última publicada. **Depois do merge na `main`, traga a `main` de volta para o `develop`**, para o `CHANGELOG` do `develop` ficar igual ao publicado (na 2.17.0 isso não foi feito, e o `develop` ficou sem a seção dela).
 2. PR de `develop` para `main` e merge.
 3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
    - testa instalar, atualizar, desinstalar e migrar;
-   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e a seção do CHANGELOG nas notas. Se alguém criou o Release à mão antes, o título e as notas são acertados.
+   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e, do CHANGELOG, a seção da versão e as de desenvolvimento abaixo dela até a última publicada. Se alguém criou o Release à mão antes, o título e as notas são acertados.
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
 
 Quem instala pelos scripts continua atualizando com `scripts/geral/3-publicar-atualizar.sh` (ou `instalar-windows.cmd`).
@@ -140,7 +140,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.
 - [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
-- [ ] README/CHANGELOG atualizados quando a mudança afeta o uso.
+- [ ] README/CHANGELOG atualizados quando a mudança afeta o uso. No `CHANGELOG.md` (#294), a entrada vai na seção da **versão do seu PR** (a do `Directory.Build.props`): `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se ainda não existe, e **dentro** do título do tipo que já existe nela (`### Funcionalidades`, `### Correções`, `### Publicação e documentação`…). Outro PR subiu a versão antes? Depois do `git merge origin/develop`, a sua entrada muda para a seção da versão nova. A CI confere (`scripts/ci/verificar-changelog.py`: tipo repetido, versão repetida ou fora de ordem, versão acima da do `Directory.Build.props`; `--corrigir` junta tipos repetidos), porque as notas das versões e a janela "O que mudou" do gerenciador saem dele.
 - [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
 - [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
 

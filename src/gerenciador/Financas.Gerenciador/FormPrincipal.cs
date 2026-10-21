@@ -123,7 +123,7 @@ internal sealed class FormPrincipal : Form
         _atualizarDev.Click += async (_, _) => await AtualizarPeloGitAsync();
         _atualizarGerenciador.Click += (_, _) => AtualizarGerenciadorEReabrir();
         _cancelar.Click += (_, _) => _download?.Cancel();
-        _notas.Click += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel).ShowDialog(this); };
+        _notas.Click += (_, _) => { if (_disponivel is not null) new FormNotas(_disponivel, VersaoAtual()).ShowDialog(this); };
         _mais.Click += (_, _) => AlternarMais();
         salvarCopia.Click += async (_, _) => await SalvarCopiaAsync();
         _erros.Click += (_, _) => AbrirPagina("configuracoes?aba=erros");

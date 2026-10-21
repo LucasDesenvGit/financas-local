@@ -2,12 +2,30 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [Não publicado]
+
+## [2.27.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: "O que mudou" legível e só com o que é novo para você** (#294).
+  - As notas aparecem formatadas (títulos, listas, negrito e links clicáveis), e não mais com os símbolos do Markdown.
+  - Primeiro vem só o que mudou desde a versão instalada; o resto (como instalar, versões anteriores e tudo desde a última publicada) fica em **Ver tudo**.
+  - As notas da versão de desenvolvimento listam, por versão, os PRs que entraram nela.
+
+### Publicação e documentação
+- **CHANGELOG com uma seção por versão** (#294). O "Não publicado" juntava tudo desde a 2.1.0, inclusive o que já tinha saído na 2.17.0: a seção da 2.17.0 ficou só na branch da versão e não voltou para o develop. Agora:
+  - a 2.17.0 voltou, com o texto publicado;
+  - o que entrou depois está na versão de cada PR (de 2.17.1 a 2.27.0), achada pelo histórico do git, com "· desenvolvimento" até ser publicada;
+  - cada versão tem um título de cada tipo (Funcionalidades, Correções…), e a CI confere (`scripts/ci/verificar-changelog.py`);
+  - publicar uma versão é tirar o "· desenvolvimento" do título dela; as notas juntam as versões de desenvolvimento desde a última publicada.
+
+## [2.26.1] — 2026-10-21 · desenvolvimento
 
 ### Correções
 - **Gráficos de linha num padrão só** (#292). Na Visão anual, uns eram preenchidos e outros não, e o **Patrimônio estimado** era preenchido até o zero: com valor negativo, a faixa ficava acima da linha. Agora todos seguem a mesma regra, aplicada sozinha pelo componente de gráfico (ADR 0021), também em Investimentos e FIIs:
   - a linha principal é preenchida da linha até a base, com um ponto em cada mês;
   - a linha tracejada de comparação fica sem preenchimento.
+
+## [2.26.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades
 - **Gerenciador: o menu do botão direito na bandeja com o visual do site** (#289).
@@ -18,6 +36,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
     - **no topo, a situação do site**, por exemplo "Finanças Local · No ar", com o ponto colorido.
   - **Teclado e alto contraste:** o teclado continua funcionando e pula a linha da situação. Com o alto contraste do Windows ligado, fica o desenho do sistema.
   - **No Linux:** o menu ganha a mesma linha da situação. As cores lá são do ambiente gráfico.
+
+## [2.25.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
 - **Criptomoedas em Investimentos** (#279, ADR 0048): logo abaixo do Câmbio, o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether.
   - É o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia, com a data e a hora sempre à vista.
   - Cada moeda tem o ícone da marca ao lado do código, um arquivo do próprio site (simple-icons, CC0).
@@ -25,11 +47,20 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Banco:** tabela nova `CotacaoCripto`, criada sozinha ao atualizar.
   - **Rede:** domínio novo de saída, `api.mercadobitcoin.net`. Só os pares fixos (BTC-BRL…) são enviados, nenhum dado seu.
 
+## [2.24.0] — 2026-10-21 · desenvolvimento
+
 ### Funcionalidades
 - **Câmbio em Investimentos: bandeira de cada moeda e mais moedas** (#278).
   - Cada moeda ganhou a bandeira do país à direita do código (a do euro é a da União Europeia).
   - Além do dólar, do euro e do iene, "Mais 7 moedas" mostra as outras que o Banco Central publica na PTAX: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca. O site lembra se você deixou aberto.
   - As bandeiras são arquivos do próprio site ([flag-icons](https://github.com/lipis/flag-icons), MIT), sem buscar nada na internet.
+
+## [2.23.4] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **Testes afetados também localmente** (#286): `npm run test:afetados`, em `src/frontend`. Ele roda o Jest, o build e os testes no navegador **só no que mudou** desde o develop, inclusive o que ainda não foi commitado, com a mesma escolha que a CI faz no PR. Numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira, que continua rodando na CI, no merge.
+
+## [2.23.3] — 2026-10-21 · desenvolvimento
 
 ### Correções
 - **Gráficos de barras com linha: a linha fica por cima, com um ponto em cada mês** (#282). Ela sumia atrás das barras no **Fluxo de caixa mensal** (Relatórios) e no **Saldo previsto** (Projeção). Agora é um padrão do site, aplicado sozinho a todo gráfico de barras com linha (também na Visão anual e em Investimentos), registrado na ADR 0021.
@@ -42,13 +73,108 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - os eventos aparecem em português ("Entrou no site", "Regra de descrição criada (22)");
   - o endereço do próprio computador aparece como "Acesso local".
 
+## [2.23.2] — 2026-10-21 · desenvolvimento
+
 ### Publicação e documentação
-- **Testes afetados também localmente** (#286): `npm run test:afetados`, em `src/frontend`. Ele roda o Jest, o build e os testes no navegador **só no que mudou** desde o develop, inclusive o que ainda não foi commitado, com a mesma escolha que a CI faz no PR. Numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira, que continua rodando na CI, no merge.
 - **A skill `trabalho-longo` é oferecida na hora certa** (#280). Numa sessão com muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou quando acabou o limite de uso. Agora:
   - o `CLAUDE.md` e a skill têm um critério objetivo: mais de uma issue ou PR, a 2ª issue na mesma conversa, ou conversa já resumida;
   - um hook do Claude Code, versionado em `.claude/settings.json`, lembra automaticamente quando o pedido tem link de issue ou PR ou a sessão fica longa. Vale para todos do projeto; para desligar, use `FINANCAS_SEM_LEMBRETE_TRABALHO_LONGO=1`.
+
+## [2.23.1] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Contas a pagar: selo do banco colado no nome e YouTube com o selo do Google** (#274). O selo do banco e o nome da conta ganham espaço depois do nome da cobrança; e, entre o texto da cobrança, o estabelecimento e o nome, vale a marca mais específica ("GOOGLE" + "Google YouTubePremium" dá YouTube; "PIX ENVIADO" + "Netflix" dá Netflix).
+
+## [2.23.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Investimentos: câmbio do dia** (#247). No Resumo, o bloco "Câmbio" mostra 1 dólar, 1 euro e 100 ienes em reais, pela PTAX de compra do Banco Central que o site já guarda, com a data de cada cotação e o ⓘ da PTAX. Funciona sem internet, com a última cotação e a data dela.
+
+### Correções
+- **O ⓘ dos termos fechava sozinho no celular** (#247): a rolagem que vem com o toque fechava a explicação logo depois de abrir. Agora ela acompanha o ⓘ e só fecha se ele sair da tela.
+
+## [2.22.1] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
 - **CI mais rápida** (#255, ADR 0047): o PR roda só os testes do front-end afetados pelo que mudou (tudo no merge); API, Jest e testes no navegador (em 2 partes) rodam em paralelo; o instalador .msi só é gerado e testado no PR que mexe nele (antes rodava em todo PR, por causa da linha da versão); caches de node_modules, do build do Angular, do Jest e do NuGet no Windows. A imagem Docker do Playwright foi avaliada e descartada (mais lenta de baixar que o navegador em cache).
+
+## [2.22.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Transações: ordenar a lista pelo cabeçalho** (#244). Clicar em Data, Categoria, Conta ou Valor ordena a lista inteira (não só a página), e clicar de novo inverte; a seta mostra a coluna e a direção. Em Valor, o maior lançamento primeiro, gasto ou receita; sem categoria fica no fim. A ordem fica no endereço da página (F5 e link salvo mantêm).
+
+## [2.21.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Mais selos de marcas** (#269): Pix, Mercado Pago ("MP*MP", "MP*NOME"), Uber pelo processador ("DL*UberRides", "UBERTRIP", "Uber One"), Bilhete Único ("BILHUNICO", com um ônibus), Cobasi, Petz, Petlove (com uma pata) e Extra (só nas formas da loja, para "extrato" e "hora extra" não virarem a loja).
+
+## [2.20.0] — 2026-10-20 · desenvolvimento
+
+### Funcionalidades
+- **Calendário: escolher o mês e o ano pelo título** (#264). Em todo campo de data, clicar no título do calendário ("outubro de 2026") mostra os 12 meses do ano; clicar de novo ("2026") mostra uma página de 12 anos. Escolher um ano leva aos meses, e um mês aos dias. As setas continuam iguais, e Esc volta um passo antes de fechar. Meses e anos fora do permitido ficam desabilitados.
+
+## [2.19.2] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Calendário do "Até (opcional)" abria em dezembro de 2099** (#263). Em Contas a pagar, com o próximo vencimento no futuro, o calendário do "Até" vazio abria no fim do intervalo permitido. Agora todo campo de data vazio abre no mês de hoje ou, se hoje não pode ser escolhido, no mês da data aceita mais perto de hoje.
+
+## [2.19.1] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Contas e cartões: recorrentes em cima do rodapé e histórico de faturas esticando os outros cartões** (#245). Na conta com cartões ligados e cobranças recorrentes, a linha "N cobranças recorrentes" caía em cima do número da conta e de "transações · editar"; agora cada linha tem o seu lugar. Abrir o "Histórico de faturas" de um cartão aumenta só aquele cartão: os vizinhos da mesma linha ficam como estavam, sem espaço vazio.
+
+## [2.19.0] — 2026-10-20 · desenvolvimento
+
+### Funcionalidades
+- **Ícone de cada cobrança em Contas a pagar** (#265): o selo do serviço quando o site o reconhece pelo texto do extrato, no mesmo estilo dos bancos. São 116 marcas comuns no Brasil: streaming e música (Netflix, Spotify, YouTube, Globoplay, Disney+…), telefone e internet (Vivo, TIM, Claro, Oi), transporte e comida (Uber, 99, iFood, Rappi, Sem Parar), compras (Amazon, Mercado Livre, Shopee, Magalu), luz, água e gás (Enel, Sabesp, Cemig…), saúde, academia, viagens, programas e IA; senão, o ícone da categoria (Moradia, Educação, Saúde…). Aparece em Contas a pagar (lista, "Assinaturas e recorrentes" e sugestões do extrato), em Transações (cada linha) e no Painel (próximos vencimentos e últimas transações). Nada é baixado da internet.
+- **Contas a pagar com o selo do banco e blocos que abrem e fecham** (#242). O selo do banco ou do cartão aparece ao lado da conta de cada cobrança, nas sugestões do extrato e no título de cada bloco de "Assinaturas e recorrentes". Cada bloco agora abre e fecha pelo título (clique ou teclado). Fechado, ele ainda mostra quantas cobranças tem e o total por mês. Dá para deixar vários abertos, e "Fechar todos" / "Abrir todos" faz de uma vez. O site lembra, neste navegador, quais você fechou.
+
+## [2.18.2] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Projeção e estornos de compra parcelada** (#257). Compra parcelada devolvida inteira (o banco estorna o valor total) agora conta como cancelada: o estorno e as parcelas já lançadas saem dos relatórios. Antes, o estorno do total abatia o gasto de um mês em que só a 1ª parcela tinha sido cobrada, e as despesas do mês ficavam negativas no Painel, nos Orçamentos e na Projeção. Na Projeção, as parcelas futuras do cartão não são mais descontadas duas vezes (no "Disponível hoje" e de novo em cada mês), e o valor negativo não quebra mais a linha entre o "−" e o número.
+
+## [2.18.1] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Sugestões de categoria com regras mais seguras** (#254). A regra sugerida agora sai da descrição do banco, que é o que a regra confere, e não do nome do estabelecimento: antes, um grupo de pagamento de fatura sugeria "contém BANCO", que pegaria Pix e tarifas. A caixa "criar regra" vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. "Aplicar as N de confiança alta" não cria mais duas regras iguais com categorias diferentes. As categorias sugeridas (as bolinhas) não cobrem mais o texto do motivo.
+
+## [2.18.0] — 2026-10-20 · desenvolvimento
+
+### Funcionalidades
+- **Avisos do Painel agrupados e que dá para ocultar** (#206): os orçamentos estourados agora ficam num card só, "N orçamentos estourados neste mês", com as piores categorias primeiro. Cada uma mostra quanto passou (em R$ e %), uma barra em que a parte clara é o limite, e o nome leva às despesas dela no mês. As que passaram só por emergência ficam em laranja, e "Ver todos" mostra o resto. Os outros avisos (conta vencida, consentimento, erros) vão para um card próprio. O menu "Ocultar" de cada card tem "Minimizar" (lembrado: o card fica recolhido toda vez que abrir o Painel, até clicar em "Mostrar") e "Ocultar até…" (lembrado). Recolhido, o card vira uma linha com a quantidade. O dos orçamentos volta sozinho no mês seguinte, se outra categoria estourar ou se uma piorar de faixa; o dos outros avisos volta quando aparece um aviso novo.
+
+## [2.17.3] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Painel alinhado** (#246, #258): "posição em … · não muda com o mês escolhido" fica à direita, na linha de "Situação hoje", como o seletor de mês da seção de baixo. Os avisos discretos do topo (descrições pouco informativas, trocos) usam a largura toda e não quebram mais em duas linhas com espaço sobrando.
+
+## [2.17.2] — 2026-10-20 · desenvolvimento
+
+### Publicação e documentação
 - **Testes de estilo no navegador** (#204): o visual que os testes antigos só adivinhavam lendo o CSS (cards do mesmo tamanho, colunas, divisórias, avisos centralizados, a seta das listas, as animações e "reduzir movimento") agora é medido na tela de verdade, e cada teste foi conferido estragando a regra de propósito. Os testes antigos saíram (nada ficou sem cobertura). A CI também confirmou que não dá para juntar os testes de instalação do Windows nem reaproveitar o build no instalador; o motivo está na ADR 0029.
+
+## [2.17.1] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Contas e cartões: fatura já paga aparecia como "fechada", e o card não mostrava a fatura seguinte** (#251). O Nubank não manda pelo Open Finance o pagamento da fatura, só o lançamento "Pagamento recebido" no cartão, e esse lançamento não era usado para saber se a fatura foi paga.
+  - A fatura passa a contar como paga também pelo pagamento lançado no cartão entre o vencimento anterior e o vencimento dela (pagar antes do fechamento conta). Vale para o card, o Painel ("Faturas do mês"), o histórico de faturas, "Conferir com o banco" e o "fatura a pagar" do plano das metas.
+  - Depois que a fatura do mês fecha, o card mostra embaixo a **próxima fatura**: o valor que já entrou nela, quando fecha e quando vence.
+
+## [2.17.0] — 2026-10-20
+
+Primeira versão publicada desde a 2.1.0. O número saltou porque, desde a ADR 0039, cada mudança sobe a versão; as 2.2.0 a 2.16.0 só existiram como versões de desenvolvimento.
+
+### Destaques
+- **Os números batem com o app do banco:** fatura do mês pelo ciclo do cartão, estorno abatendo o gasto em vez de virar receita, projeção sem parcelas em dobro, trocos das compras de FII fora dos rendimentos e a tela nova **Conferir com o banco**, que mostra as pistas quando algo não bate.
+- **Contas a pagar com assinaturas e débitos automáticos:** como cada conta é cobrada, baixa sozinha quando a cobrança chega, aba **Assinaturas e recorrentes** com o de-para por cartão, avisos de "não veio", "aumentou" e "mudou de cartão", e regras de descrição por valor para separar cobranças de mesmo nome.
+- **Investimentos mais completos:** **Mês a mês dos FIIs** (aportes, rendimentos por fundo, valorização e saldo), rendimento por mês da caixinha e dos CDBs, taxa da B3 pelo extrato, Méli Dólar no patrimônio, reservas pelo valor que o banco informa e nomes que se reconhecem ("CDB · Nubank").
+- **Metas que cabem no mês:** "quanto guardar" pela sobra real (contando a fatura que vence), plano em degraus e "consigo guardar outro valor".
+- **Navegação e visual:** menu lateral em grupos que abrem e fecham, menu que se esconde no computador, campos de valor, data e seleção padronizados, e acessibilidade revisada em todas as telas (contraste, teclado, alvos de toque).
+- **Gerenciador também no Linux** e, nas duas janelas, "Atualizar para a última do develop" na instalação de desenvolvimento.
+- **Banco:** a API acrescenta sozinha as tabelas e colunas novas ao iniciar (com cópia de segurança antes). Quem instala pelos scripts roda `scripts/geral/2-criar-banco.sh`. Os scripts mudaram de pasta (`scripts/geral/`, `scripts/windows/`, `scripts/linux/`); veja "Scripts separados por sistema" abaixo.
+
+### Publicação e documentação
 - **Manual: capítulo novo "Corrigir seus dados"** (#222). Ele vem logo depois de "Primeiros passos" e tem duas partes:
   - **o que já se acertou sozinho** depois das correções: estornos, transferências, pagamento de fatura, investimentos e parcelas;
   - **o passo a passo** para deixar o site igual aos apps dos bancos: sincronizar, conferir as reservas e o Méli Dólar, tirar os trocos dos rendimentos, responder a pergunta do limite, informar o nome nos Pix, cadastrar as assinaturas e terminar em "Conferir com o banco".
@@ -62,20 +188,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Quem instalou pelos scripts:** os comandos passam a ser, por exemplo, `scripts/geral/3-publicar-atualizar.sh` e `scripts/linux/instalar-gerenciador.sh`. O backup diário já agendado e o comando que o gerenciador do Linux mostrava continuam funcionando por repasses temporários; para gravar o caminho novo no agendamento, rode `scripts/geral/4-backup.sh --agendar` de novo.
 - **Testes no navegador** (#185, ADR 0041): a cada PR, a CI abre cada tela do site num navegador de verdade (o build de produção, com a mesma política de segurança da API e dados de exemplo, sem nenhum dado real), no computador e no celular, e falha com erro no console, exceção ou bloqueio da política de segurança. Pega, por exemplo, o erro da #157. Para quem desenvolve: `npm run test:navegador`, prints com `FOTOS=…`, e a skill `testar-no-navegador` do Claude Code.
 - **Versões publicadas sempre como "Finanças Local X.Y.Z"** (#187). O workflow de versão acerta o título e as notas mesmo se o Release foi criado à mão antes da tag. As notas começam com **como instalar ou atualizar** e trazem a seção do CHANGELOG sem o cabeçalho repetido.
-- **A versão sobe a cada mudança** (#187, ADR 0039): todo PR para o `develop` sobe o número no `Directory.Build.props`, pelo tipo (funcionalidade → o do meio; correção e ajuste → o último), e a CI confere. A versão de desenvolvimento passa a mostrar o número que vai sair (agora **2.2.0**, contando o que entrou desde a 2.1.0), em vez de "2.1.0-dev.N".
+- **A versão sobe a cada mudança** (#187, ADR 0039): todo PR para o `develop` sobe o número no `Directory.Build.props`, pelo tipo (funcionalidade → o do meio; correção e ajuste → o último), e a CI confere. A versão de desenvolvimento passa a mostrar o número que vai sair, em vez de "2.1.0-dev.N".
 - **README mais simples para quem usa** (#187): instalar, conectar os bancos, o que tem, atualizar, desinstalar, segurança e problemas comuns. Instalar pelo código, scripts, Linux, migrar do SQL Server e estrutura de pastas foram para `docs/INSTALACAO-PELO-CODIGO.md`.
 
 ### Correções
-- **Contas a pagar: selo do banco colado no nome e YouTube com o selo do Google** (#274). O selo do banco e o nome da conta ganham espaço depois do nome da cobrança; e, entre o texto da cobrança, o estabelecimento e o nome, vale a marca mais específica ("GOOGLE" + "Google YouTubePremium" dá YouTube; "PIX ENVIADO" + "Netflix" dá Netflix).
-- **O ⓘ dos termos fechava sozinho no celular** (#247): a rolagem que vem com o toque fechava a explicação logo depois de abrir. Agora ela acompanha o ⓘ e só fecha se ele sair da tela.
-- **Calendário do "Até (opcional)" abria em dezembro de 2099** (#263). Em Contas a pagar, com o próximo vencimento no futuro, o calendário do "Até" vazio abria no fim do intervalo permitido. Agora todo campo de data vazio abre no mês de hoje ou, se hoje não pode ser escolhido, no mês da data aceita mais perto de hoje.
-- **Contas e cartões: recorrentes em cima do rodapé e histórico de faturas esticando os outros cartões** (#245). Na conta com cartões ligados e cobranças recorrentes, a linha "N cobranças recorrentes" caía em cima do número da conta e de "transações · editar"; agora cada linha tem o seu lugar. Abrir o "Histórico de faturas" de um cartão aumenta só aquele cartão: os vizinhos da mesma linha ficam como estavam, sem espaço vazio.
-- **Projeção e estornos de compra parcelada** (#257). Compra parcelada devolvida inteira (o banco estorna o valor total) agora conta como cancelada: o estorno e as parcelas já lançadas saem dos relatórios. Antes, o estorno do total abatia o gasto de um mês em que só a 1ª parcela tinha sido cobrada, e as despesas do mês ficavam negativas no Painel, nos Orçamentos e na Projeção. Na Projeção, as parcelas futuras do cartão não são mais descontadas duas vezes (no "Disponível hoje" e de novo em cada mês), e o valor negativo não quebra mais a linha entre o "−" e o número.
-- **Sugestões de categoria com regras mais seguras** (#254). A regra sugerida agora sai da descrição do banco, que é o que a regra confere, e não do nome do estabelecimento: antes, um grupo de pagamento de fatura sugeria "contém BANCO", que pegaria Pix e tarifas. A caixa "criar regra" vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. "Aplicar as N de confiança alta" não cria mais duas regras iguais com categorias diferentes. As categorias sugeridas (as bolinhas) não cobrem mais o texto do motivo.
-- **Painel alinhado** (#246, #258): "posição em … · não muda com o mês escolhido" fica à direita, na linha de "Situação hoje", como o seletor de mês da seção de baixo. Os avisos discretos do topo (descrições pouco informativas, trocos) usam a largura toda e não quebram mais em duas linhas com espaço sobrando.
-- **Contas e cartões: fatura já paga aparecia como "fechada", e o card não mostrava a fatura seguinte** (#251). O Nubank não manda pelo Open Finance o pagamento da fatura, só o lançamento "Pagamento recebido" no cartão, e esse lançamento não era usado para saber se a fatura foi paga.
-  - A fatura passa a contar como paga também pelo pagamento lançado no cartão entre o vencimento anterior e o vencimento dela (pagar antes do fechamento conta). Vale para o card, o Painel ("Faturas do mês"), o histórico de faturas, "Conferir com o banco" e o "fatura a pagar" do plano das metas.
-  - Depois que a fatura do mês fecha, o card mostra embaixo a **próxima fatura**: o valor que já entrou nela, quando fecha e quando vence.
 - **Contas a pagar: a sugestão do extrato voltava depois de cadastrada com outro nome** (#205). "PIX ENVIADO LIVEPIX LTDA" cadastrada como "Manwha" continuava em "Sugestões do extrato", porque só a descrição ligava as duas.
   - **Cadastrar pela sugestão** grava na conta a pagar de qual pagamento do banco ela veio: o nome pode ser qualquer um.
   - **Conta cadastrada à mão** (ou antes desta versão) tira a sugestão quando o valor (até 15%), o dia do vencimento (até 3 dias) e a conta batem.
@@ -132,15 +248,71 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Ainda aberta:** soma as compras desde o fechamento anterior e a parcela do mês, menos os estornos.
   - **Na tela:** o Painel e Contas e cartões mostram quando a fatura fecha e quando vence.
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
+- **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.
+- **Listas suspensas no visual do site:** o campo fechado ganhou uma seta própria, no lugar da caixa do sistema, e fica numa linha só. A lista que abre continua a do navegador, e o teclado, o leitor de tela e o celular funcionam como antes.
+- **O que aparece depois entra com um fade curto,** em vez de surgir de uma vez: botões, avisos, etiquetas, cards, blocos, menus que abrem, listas vazias e mensagens de erro. Nada anima com "reduzir movimento" no sistema.
+- **Caixa de marcar nova e seleção de várias linhas melhor** (#133, ADR 0032).
+  - **Caixa nova em todo o site:** no visual do site, nos temas claro e escuro, com os estados marcada, parcial (traço) e desabilitada.
+  - **Nas tabelas:** a célula inteira é clicável e a linha selecionada fica destacada (Transações, Investimentos › importar do extrato, Sugestão de orçamentos, Conferir investimentos).
+  - **Em Transações:**
+    - Shift+clique seleciona um intervalo; Esc limpa;
+    - "Selecionar todas desta página" mostra o estado parcial;
+    - a barra diz "5 selecionadas (2 em outras páginas)", abre com animação, sem empurrar a tabela de uma vez, e fica fixa no topo ao rolar.
+  - **Trocar de página mantém a seleção;** trocar o filtro limpa, com o aviso "Seleção limpa ao trocar o filtro".
+  - **Leitor de tela:** cada caixa diz qual é a transação ("Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00"), e a contagem é anunciada.
+- **Campo de valor em reais padrão** (#132, ADR 0032), em todos os campos de dinheiro: Transações, Contas e cartões, Contas a pagar, Metas, Orçamentos, Investimentos e Conferir investimentos.
+  - **Entende o jeito brasileiro:** "1.234,56", "1234,56", "R$ 1.234,56" (colado do app do banco) e "1234.56". "1.500" é mil e quinhentos, não 1,5.
+  - **Formata enquanto você digita:** "124214" já aparece como "124.214", com o cursor no lugar. Ao sair do campo, completa as casas ("124.214,00").
+  - O símbolo da moeda fica dentro do campo. Investimentos aceitam outra moeda e até 4 casas.
+  - **No celular**, abre o teclado numérico. **No computador**, a rodinha do mouse não muda mais o valor, e as setinhas saíram.
+  - **Erro em texto, perto do campo:** "Informe um valor maior que zero.".
+  - **Orçamentos:** continua salvando ao sair da linha, e agora também com Enter.
+  - Os valores enviados à API não mudam.
+- **Interruptor para o que muda a tela na hora** (#130, ADR 0032).
+  - "Mostrar arquivadas" (Contas e cartões), "Mostrar encerradas" (Investimentos › Posições) e "Agrupar subcategorias" (Relatórios) viraram interruptores. As caixas de marcar de formulário, com "Salvar", não mudam.
+  - **"Mostrar arquivadas":**
+    - o estado fica na URL (`?arquivadas=1`), e recarregar, voltar ou abrir um link salvo mostra a tela do mesmo jeito;
+    - conta ou cartão arquivado mostra o selo **"Arquivada"** em texto.
+  - Os filtros de Transações continuam caixas de marcar, por consistência com a barra de filtros (o porquê está na ADR 0032).
+- **Esconder o menu lateral no computador** (#131).
+  - **Botão ☰:** o mesmo botão da barra de cima, que antes só aparecia no celular, agora também esconde e mostra o menu no computador. O conteúdo passa a usar a largura toda, e os gráficos se redesenham sozinhos.
+  - **Nome acessível:** fixo, "Menu de navegação", e o leitor de tela ouve pelo `aria-expanded` se o menu está aberto ou fechado.
+  - **Menu escondido:** sai da ordem do Tab (`inert`), tanto no computador quanto com a gaveta do celular fechada.
+  - **A escolha fica salva neste navegador** (`financas.menuRecolhido`, ADR 0017), e o padrão é o menu aberto. No celular a gaveta continua começando fechada.
+  - **Com o menu escondido, a página ganha a largura do menu** (até 1632 px) e fica **centralizada**, sem encostar à esquerda com um vazio grande à direita em tela larga.
+  - **Animação:**
+    - ao esconder, o menu desliza enquanto a coluna encolhe;
+    - ao mostrar, a coluna abre de uma vez e o conteúdo, o ☰ e o título deslizam junto com o menu, só com `transform` (sem o pisca-pisca de refazer o layout a cada quadro);
+    - nada disso acontece com movimento reduzido no sistema.
+  - **Gaveta do celular:** dá para fechar sem escolher uma tela. As formas são:
+    - o **✕ "Fechar menu"**;
+    - **tocar no fundo escuro**;
+    - **arrastar para a esquerda**;
+    - **Esc**, que também devolve o foco ao ☰.
+
+    A gaveta ocupa no máximo 85% da tela. Aberta, o foco vai para o ✕ e o conteúdo atrás sai do Tab.
+- **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
+  - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
+- **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
+  - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
+  - Sem animação com movimento reduzido no sistema.
+- **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
+  - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
+  - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
+  - **Versão nova:** nessa instalação, ele não oferece o `.msi` e diz como atualizar pelos scripts.
+- **Visual novo do gerenciador e do instalador**, com a identidade do site.
+  - **Gerenciador:** cabeçalho com a marca, cartões, botões arredondados e um ponto colorido com a situação. Segue o tema claro ou escuro do Windows, inclusive na barra de título. As preferências viraram interruptores (liga/desliga), e o botão em destaque é a próxima ação provável: "Abrir o site" quando está no ar, "Ligar" quando está desligado.
+  - **Instalador `.msi`:** imagens com o degradê da marca e o cofrinho nas telas de boas-vindas, de conclusão e no topo das demais (`instalador/imagens`).
+- **Instalador `.msi` do `develop`, com link fixo** (ADR 0029). A cada merge no `develop`, depois dos testes de instalação, a CI publica o `FinancasLocal-desenvolvimento.msi` no pré-lançamento [desenvolvimento](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento).
+  - **Versão mostrada:** `X.Y.Z-dev.N`, no site e no gerenciador.
+  - **Troca entre as duas:** o `.msi` de mesma versão `X.Y.Z` substitui o instalado, e a versão publicada e a de desenvolvimento trocam uma pela outra sem ficarem as duas instaladas. A CI testa essa troca.
+  - **Avisos do gerenciador:** continuam só para as versões publicadas.
+- **Mais fácil sair da instalação pelos scripts:** o gerenciador dessa instalação diz que o `.msi` traz o banco e as chaves e tem o botão **Baixar o instalador .msi**.
+- **Atalho do gerenciador na área de trabalho**, para abrir com um clique.
+  - **`.msi`:** o atalho vai para a área de trabalho de todos os usuários. Com `ATALHOAREADETRABALHO=0`, instala sem ele. A desinstalação remove o atalho.
+  - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
 
 ### Funcionalidades
-- **Investimentos: câmbio do dia** (#247). No Resumo, o bloco "Câmbio" mostra 1 dólar, 1 euro e 100 ienes em reais, pela PTAX de compra do Banco Central que o site já guarda, com a data de cada cotação e o ⓘ da PTAX. Funciona sem internet, com a última cotação e a data dela.
-- **Transações: ordenar a lista pelo cabeçalho** (#244). Clicar em Data, Categoria, Conta ou Valor ordena a lista inteira (não só a página), e clicar de novo inverte; a seta mostra a coluna e a direção. Em Valor, o maior lançamento primeiro, gasto ou receita; sem categoria fica no fim. A ordem fica no endereço da página (F5 e link salvo mantêm).
-- **Mais selos de marcas** (#269): Pix, Mercado Pago ("MP*MP", "MP*NOME"), Uber pelo processador ("DL*UberRides", "UBERTRIP", "Uber One"), Bilhete Único ("BILHUNICO", com um ônibus), Cobasi, Petz, Petlove (com uma pata) e Extra (só nas formas da loja, para "extrato" e "hora extra" não virarem a loja).
-- **Calendário: escolher o mês e o ano pelo título** (#264). Em todo campo de data, clicar no título do calendário ("outubro de 2026") mostra os 12 meses do ano; clicar de novo ("2026") mostra uma página de 12 anos. Escolher um ano leva aos meses, e um mês aos dias. As setas continuam iguais, e Esc volta um passo antes de fechar. Meses e anos fora do permitido ficam desabilitados.
-- **Ícone de cada cobrança em Contas a pagar** (#265): o selo do serviço quando o site o reconhece pelo texto do extrato, no mesmo estilo dos bancos. São 116 marcas comuns no Brasil: streaming e música (Netflix, Spotify, YouTube, Globoplay, Disney+…), telefone e internet (Vivo, TIM, Claro, Oi), transporte e comida (Uber, 99, iFood, Rappi, Sem Parar), compras (Amazon, Mercado Livre, Shopee, Magalu), luz, água e gás (Enel, Sabesp, Cemig…), saúde, academia, viagens, programas e IA; senão, o ícone da categoria (Moradia, Educação, Saúde…). Aparece em Contas a pagar (lista, "Assinaturas e recorrentes" e sugestões do extrato), em Transações (cada linha) e no Painel (próximos vencimentos e últimas transações). Nada é baixado da internet.
-- **Contas a pagar com o selo do banco e blocos que abrem e fecham** (#242). O selo do banco ou do cartão aparece ao lado da conta de cada cobrança, nas sugestões do extrato e no título de cada bloco de "Assinaturas e recorrentes". Cada bloco agora abre e fecha pelo título (clique ou teclado). Fechado, ele ainda mostra quantas cobranças tem e o total por mês. Dá para deixar vários abertos, e "Fechar todos" / "Abrir todos" faz de uma vez. O site lembra, neste navegador, quais você fechou.
-- **Avisos do Painel agrupados e que dá para ocultar** (#206): os orçamentos estourados agora ficam num card só, "N orçamentos estourados neste mês", com as piores categorias primeiro. Cada uma mostra quanto passou (em R$ e %), uma barra em que a parte clara é o limite, e o nome leva às despesas dela no mês. As que passaram só por emergência ficam em laranja, e "Ver todos" mostra o resto. Os outros avisos (conta vencida, consentimento, erros) vão para um card próprio. O menu "Ocultar" de cada card tem "Minimizar" (lembrado: o card fica recolhido toda vez que abrir o Painel, até clicar em "Mostrar") e "Ocultar até…" (lembrado). Recolhido, o card vira uma linha com a quantidade. O dos orçamentos volta sozinho no mês seguinte, se outra categoria estourar ou se uma piorar de faixa; o dos outros avisos volta quando aparece um aviso novo.
 - **Regras de descrição por valor** (#241, ADR 0030 e 0043): separam cobranças que chegam do banco com a mesma descrição e só mudam no valor, como duas contas do condomínio.
   - **Em Categorias e regras › Regras de descrição**, o grupo novo **"E o valor (opcional)"**: "De" e "Até", um dos dois basta. A regra só vale com o valor, sem o sinal, na faixa, e vem antes das regras sem valor. A lista ganhou a coluna "Valor", e a prévia já conta só as transações da faixa.
   - **Em Contas a pagar**, o nome dado por uma regra com valor é o que liga as cobranças: as "Sugestões do extrato" mostram as duas separadas, com o texto da cobrança igual ao nome, e a baixa sozinha e os avisos não misturam mais uma com a outra.
@@ -237,71 +409,6 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o campo de adicionar tem rótulo e dica;
   - o "Histórico de sincronizações" ganhou o visual do "Mais análises".
 - **O calendário abre por cima de tudo:** dentro de um modal, ele não é mais cortado.
-
-### Correções
-- **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.
-- **Listas suspensas no visual do site:** o campo fechado ganhou uma seta própria, no lugar da caixa do sistema, e fica numa linha só. A lista que abre continua a do navegador, e o teclado, o leitor de tela e o celular funcionam como antes.
-- **O que aparece depois entra com um fade curto,** em vez de surgir de uma vez: botões, avisos, etiquetas, cards, blocos, menus que abrem, listas vazias e mensagens de erro. Nada anima com "reduzir movimento" no sistema.
-- **Caixa de marcar nova e seleção de várias linhas melhor** (#133, ADR 0032).
-  - **Caixa nova em todo o site:** no visual do site, nos temas claro e escuro, com os estados marcada, parcial (traço) e desabilitada.
-  - **Nas tabelas:** a célula inteira é clicável e a linha selecionada fica destacada (Transações, Investimentos › importar do extrato, Sugestão de orçamentos, Conferir investimentos).
-  - **Em Transações:**
-    - Shift+clique seleciona um intervalo; Esc limpa;
-    - "Selecionar todas desta página" mostra o estado parcial;
-    - a barra diz "5 selecionadas (2 em outras páginas)", abre com animação, sem empurrar a tabela de uma vez, e fica fixa no topo ao rolar.
-  - **Trocar de página mantém a seleção;** trocar o filtro limpa, com o aviso "Seleção limpa ao trocar o filtro".
-  - **Leitor de tela:** cada caixa diz qual é a transação ("Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00"), e a contagem é anunciada.
-- **Campo de valor em reais padrão** (#132, ADR 0032), em todos os campos de dinheiro: Transações, Contas e cartões, Contas a pagar, Metas, Orçamentos, Investimentos e Conferir investimentos.
-  - **Entende o jeito brasileiro:** "1.234,56", "1234,56", "R$ 1.234,56" (colado do app do banco) e "1234.56". "1.500" é mil e quinhentos, não 1,5.
-  - **Formata enquanto você digita:** "124214" já aparece como "124.214", com o cursor no lugar. Ao sair do campo, completa as casas ("124.214,00").
-  - O símbolo da moeda fica dentro do campo. Investimentos aceitam outra moeda e até 4 casas.
-  - **No celular**, abre o teclado numérico. **No computador**, a rodinha do mouse não muda mais o valor, e as setinhas saíram.
-  - **Erro em texto, perto do campo:** "Informe um valor maior que zero.".
-  - **Orçamentos:** continua salvando ao sair da linha, e agora também com Enter.
-  - Os valores enviados à API não mudam.
-- **Interruptor para o que muda a tela na hora** (#130, ADR 0032).
-  - "Mostrar arquivadas" (Contas e cartões), "Mostrar encerradas" (Investimentos › Posições) e "Agrupar subcategorias" (Relatórios) viraram interruptores. As caixas de marcar de formulário, com "Salvar", não mudam.
-  - **"Mostrar arquivadas":**
-    - o estado fica na URL (`?arquivadas=1`), e recarregar, voltar ou abrir um link salvo mostra a tela do mesmo jeito;
-    - conta ou cartão arquivado mostra o selo **"Arquivada"** em texto.
-  - Os filtros de Transações continuam caixas de marcar, por consistência com a barra de filtros (o porquê está na ADR 0032).
-- **Esconder o menu lateral no computador** (#131).
-  - **Botão ☰:** o mesmo botão da barra de cima, que antes só aparecia no celular, agora também esconde e mostra o menu no computador. O conteúdo passa a usar a largura toda, e os gráficos se redesenham sozinhos.
-  - **Nome acessível:** fixo, "Menu de navegação", e o leitor de tela ouve pelo `aria-expanded` se o menu está aberto ou fechado.
-  - **Menu escondido:** sai da ordem do Tab (`inert`), tanto no computador quanto com a gaveta do celular fechada.
-  - **A escolha fica salva neste navegador** (`financas.menuRecolhido`, ADR 0017), e o padrão é o menu aberto. No celular a gaveta continua começando fechada.
-  - **Com o menu escondido, a página ganha a largura do menu** (até 1632 px) e fica **centralizada**, sem encostar à esquerda com um vazio grande à direita em tela larga.
-  - **Animação:**
-    - ao esconder, o menu desliza enquanto a coluna encolhe;
-    - ao mostrar, a coluna abre de uma vez e o conteúdo, o ☰ e o título deslizam junto com o menu, só com `transform` (sem o pisca-pisca de refazer o layout a cada quadro);
-    - nada disso acontece com movimento reduzido no sistema.
-  - **Gaveta do celular:** dá para fechar sem escolher uma tela. As formas são:
-    - o **✕ "Fechar menu"**;
-    - **tocar no fundo escuro**;
-    - **arrastar para a esquerda**;
-    - **Esc**, que também devolve o foco ao ☰.
-
-    A gaveta ocupa no máximo 85% da tela. Aberta, o foco vai para o ✕ e o conteúdo atrás sai do Tab.
-- **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
-  - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
-- **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
-  - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
-  - Sem animação com movimento reduzido no sistema.
-- **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
-  - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
-  - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
-  - **Versão nova:** nessa instalação, ele não oferece o `.msi` e diz como atualizar pelos scripts.
-- **Visual novo do gerenciador e do instalador**, com a identidade do site.
-  - **Gerenciador:** cabeçalho com a marca, cartões, botões arredondados e um ponto colorido com a situação. Segue o tema claro ou escuro do Windows, inclusive na barra de título. As preferências viraram interruptores (liga/desliga), e o botão em destaque é a próxima ação provável: "Abrir o site" quando está no ar, "Ligar" quando está desligado.
-  - **Instalador `.msi`:** imagens com o degradê da marca e o cofrinho nas telas de boas-vindas, de conclusão e no topo das demais (`instalador/imagens`).
-- **Instalador `.msi` do `develop`, com link fixo** (ADR 0029). A cada merge no `develop`, depois dos testes de instalação, a CI publica o `FinancasLocal-desenvolvimento.msi` no pré-lançamento [desenvolvimento](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento).
-  - **Versão mostrada:** `X.Y.Z-dev.N`, no site e no gerenciador.
-  - **Troca entre as duas:** o `.msi` de mesma versão `X.Y.Z` substitui o instalado, e a versão publicada e a de desenvolvimento trocam uma pela outra sem ficarem as duas instaladas. A CI testa essa troca.
-  - **Avisos do gerenciador:** continuam só para as versões publicadas.
-- **Mais fácil sair da instalação pelos scripts:** o gerenciador dessa instalação diz que o `.msi` traz o banco e as chaves e tem o botão **Baixar o instalador .msi**.
-- **Atalho do gerenciador na área de trabalho**, para abrir com um clique.
-  - **`.msi`:** o atalho vai para a área de trabalho de todos os usuários. Com `ATALHOAREADETRABALHO=0`, instala sem ele. A desinstalação remove o atalho.
-  - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
 
 ### Correções (layout)
 - **Painel: cards do mês reorganizados.**
