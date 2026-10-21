@@ -35,3 +35,19 @@ test('#312: "Mês a mês" sem rolagem lateral num notebook (1366 px): o "Saldo p
   expect(altura).toBeLessThan(linha * 1.5);
   expect(problemas.lista).toEqual([]);
 });
+
+test('#314: "Gasto médio por categoria" na largura toda, em duas colunas no computador e uma no celular', async ({ page, problemas }, info) => {
+  await page.goto('/projecao');
+  const mesAMes = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Mês a mês' }) });
+  const categorias = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Gasto médio por categoria' }) });
+  await expect(categorias).toBeVisible();
+  // Mesma largura da tabela "Mês a mês" (a grade inteira), sem sobrar a metade da direita.
+  const larguraTabela = (await mesAMes.boundingBox())!.width;
+  const larguraCategorias = (await categorias.boundingBox())!.width;
+  expect(Math.abs(larguraTabela - larguraCategorias)).toBeLessThan(2);
+  const colunas = await categorias.locator('.lista-categorias-projecao').evaluate((ul) => getComputedStyle(ul).columnCount);
+  expect(colunas).toBe(info.project.name === 'celular' ? '1' : '2');
+  // A porcentagem diz o que compara.
+  await expect(categorias.locator('.variacao').first()).toContainText('último mês');
+  expect(problemas.lista).toEqual([]);
+});

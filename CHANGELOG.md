@@ -5,6 +5,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+
+## [2.29.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Projeção mais fácil de ler** (#314).
+  - **O mês em que o saldo vira** ganha um selo, "saldo volta ao positivo" ou "saldo fica negativo", e a frase do gráfico diz o mês (sem valores, com "ocultar valores").
+  - **"Gasto médio por categoria" na largura toda**, em duas colunas no computador, sem a metade da direita vazia.
+  - **A porcentagem diz o que compara:** "último mês +34%", com a regra das cores escrita embaixo (antes só num texto que aparecia ao passar o mouse).
+  - **O nome da categoria abre Transações** com as despesas dela nos mesmos meses da média, e cada uma tem a barrinha proporcional, como em Relatórios.
+
 ## [2.28.1] — 2026-10-21 · desenvolvimento
 
 ### Correções

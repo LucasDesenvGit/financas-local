@@ -150,7 +150,15 @@ const respostas: Record<string, unknown> = {
     meses: Array.from({ length: 6 }, (_, i) => ({ ...mesesAtras(-i), receitas: 5000, despesasAVista: 3300, parcelas: 500,
       // #257: saldo negativo largo, o caso em que o "-" quebrava a linha sozinho no celular.
       despesas: 3800, resultado: 1200, saldoProjetado: -14863.64 + 1200 * i, atual: i === 0 })),
-    categorias: []
+    // #314: categorias fictícias, para o "Gasto médio por categoria" aparecer (e em duas colunas no computador).
+    categorias: [
+      { categoriaId: 1, nome: 'Alimentação', cor: '#f4a261', mediaMensal: 1127.54, ultimoMes: 1206.47 },
+      { categoriaId: 2, nome: 'Mercado', cor: '#e9c46a', mediaMensal: 882.67, ultimoMes: 1182.78 },
+      { categoriaId: 3, nome: 'Transporte', cor: '#a7a3f5', mediaMensal: 769.08, ultimoMes: 876.75 },
+      { categoriaId: 4, nome: 'Compras', cor: '#9fd2f6', mediaMensal: 339.75, ultimoMes: 217.44 },
+      { categoriaId: 5, nome: 'Moradia', cor: '#c9a0dc', mediaMensal: 125.74, ultimoMes: 35.21 },
+      { categoriaId: null, nome: 'Sem categoria', cor: '#b0b0b0', mediaMensal: 30.89, ultimoMes: 30.89 }
+    ]
   },
   '/api/contas': contas,
   '/api/contas/bancos': [],

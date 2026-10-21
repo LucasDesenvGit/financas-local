@@ -1016,7 +1016,9 @@ export const MANUAL: CapituloManual[] = [
           'Os meses seguintes usam a média das receitas, a média das despesas à vista e as parcelas já contratadas.',
           'O mês atual junta o que já aconteceu com a média do que falta.',
           '“Disponível hoje” é o saldo das contas menos as faturas dos cartões. As parcelas que vencem nos meses seguintes ficam fora dele e entram na despesa do mês em que vencem: cada parcela conta uma vez só.',
-          'Use o gráfico para ver a tendência e a tabela mês a mês para os números.'
+          'Use o gráfico para ver a tendência e a tabela mês a mês para os números.',
+          'Quando o saldo previsto troca de sinal, o mês da virada ganha o selo “saldo volta ao positivo” ou “saldo fica negativo”, e a frase do gráfico diz o mês.',
+          '“Gasto médio por categoria” mostra a média por mês das despesas à vista e, ao lado, o último mês comparado com essa média (em vermelho, mais de 10% acima; em verde, mais de 10% abaixo). Clique no nome da categoria para ver as transações dela nesses meses.'
         ],
         abrir: [{ rotulo: 'Abrir a Projeção', rota: '/projecao' }],
         termos: ['sobraPrevista']
