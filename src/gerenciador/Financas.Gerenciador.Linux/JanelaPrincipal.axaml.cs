@@ -21,6 +21,8 @@ public partial class JanelaPrincipal : Window
     private readonly Instalacao _instalacao = Instalacao.Atual;
     private readonly DispatcherTimer _relogio = new() { Interval = Intervalo };
     private readonly TrayIcon? _bandeja;
+    /// <summary>#289: a primeira linha do menu da bandeja, “Finanças Local · No ar” (sem ação).</summary>
+    private NativeMenuItem? _situacaoBandeja;
     private bool _iniciado, _consultando, _ocupado, _sair;
     /// <summary>Pasta do clone no develop (instalação de desenvolvimento), ou null (ADR 0040).</summary>
     private string? _raizDev;
@@ -91,6 +93,9 @@ public partial class JanelaPrincipal : Window
 
     private TrayIcon CriarBandeja()
     {
+        // #289: a situação no topo, sem ação, como no Windows. As cores do menu são do ambiente gráfico; o ícone da
+        // bandeja já mostra a cor da situação.
+        _situacaoBandeja = new NativeMenuItem("Finanças Local · Verificando…") { IsEnabled = false };
         var abrir = new NativeMenuItem("Abrir o site");
         abrir.Click += async (_, _) => await AbrirPaginaAsync("");
         var mostrar = new NativeMenuItem("Mostrar o gerenciador");
@@ -107,7 +112,7 @@ public partial class JanelaPrincipal : Window
         {
             Icon = Bandeja.Icone(EstadoSite.Mudando),
             ToolTipText = "Finanças Local",
-            Menu = new NativeMenu { Items = { abrir, mostrar, new NativeMenuItemSeparator(), sair } }
+            Menu = new NativeMenu { Items = { _situacaoBandeja, new NativeMenuItemSeparator(), abrir, mostrar, new NativeMenuItemSeparator(), sair } }
         };
         bandeja.Clicked += (_, _) => Mostrar();
         TrayIcon.SetIcons(Avalonia.Application.Current!, [bandeja]);
@@ -178,6 +183,7 @@ public partial class JanelaPrincipal : Window
         {
             _bandeja.Icon = Bandeja.Icone(situacao.Estado);
             _bandeja.ToolTipText = "Finanças Local: " + situacao.Titulo;
+            if (_situacaoBandeja is not null) _situacaoBandeja.Header = "Finanças Local · " + situacao.Curto;
         }
     }
 

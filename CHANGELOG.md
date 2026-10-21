@@ -5,6 +5,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não publicado]
 
 ### Funcionalidades
+- **Gerenciador: o menu do botão direito na bandeja com o visual do site** (#289).
+  - **No Windows:**
+    - as cores do site, no tema claro e no escuro, como a janela;
+    - um ícone em cada item e "Abrir o site" em destaque;
+    - itens mais altos e cantos arredondados no Windows 11;
+    - **no topo, a situação do site**, por exemplo "Finanças Local · No ar", com o ponto colorido.
+  - **Teclado e alto contraste:** o teclado continua funcionando e pula a linha da situação. Com o alto contraste do Windows ligado, fica o desenho do sistema.
+  - **No Linux:** o menu ganha a mesma linha da situação. As cores lá são do ambiente gráfico.
+
+### Funcionalidades
 - **Câmbio em Investimentos: bandeira de cada moeda e mais moedas** (#278).
   - Cada moeda ganhou a bandeira do país à direita do código (a do euro é a da União Europeia).
   - Além do dólar, do euro e do iene, "Mais 7 moedas" mostra as outras que o Banco Central publica na PTAX: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca. O site lembra se você deixou aberto.

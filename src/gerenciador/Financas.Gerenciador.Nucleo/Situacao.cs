@@ -10,7 +10,24 @@ public enum EstadoSite { NaoInstalado, Desligado, Mudando, NoAr, SemResposta }
 /// A situação em palavras do dia a dia (Nielsen 2): o título responde "o site está funcionando?". VersaoSite: a que o
 /// site no ar informa (null quando ele não responde).
 /// </summary>
-public sealed record Situacao(EstadoSite Estado, string Titulo, string Detalhe, string? VersaoSite = null);
+public sealed record Situacao(EstadoSite Estado, string Titulo, string Detalhe, string? VersaoSite = null)
+{
+    /// <summary>
+    /// #289: a situação em duas ou três palavras, para o menu da bandeja ("Finanças Local · No ar"):
+    /// "O site está no ar." vira "No ar"; "O site está ligando…" vira "Ligando…".
+    /// </summary>
+    public string Curto
+    {
+        get
+        {
+            if (Estado == EstadoSite.NaoInstalado) return "Não instalado";
+            const string prefixo = "O site está ";
+            var t = Titulo.StartsWith(prefixo, StringComparison.Ordinal) ? Titulo[prefixo.Length..] : Titulo;
+            t = t.TrimEnd('.');
+            return t.Length == 0 ? Titulo : char.ToUpperInvariant(t[0]) + t[1..];
+        }
+    }
+}
 
 /// <summary>Consulta o serviço do sistema e se o site responde (GET /api/auth/estado, que não exige login).</summary>
 public static class VerificadorSituacao
