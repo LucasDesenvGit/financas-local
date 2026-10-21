@@ -39,6 +39,8 @@ instalador/gerar-msi.ps1                        # gera o FinancasLocal-<versão>
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
 ```
 
+**PR só de CI: título `ci:`, e o instalador do Windows não roda** (#307). O `.msi` (~7 min) só é gerado no PR que mexe no instalador, no gerenciador ou na inicialização da API (ADR 0047). Mudança só de CI (workflows, `scripts/ci/`) vai num PR `ci:` ou `ci(escopo):`, que pula o `.msi` mesmo mexendo no `versao.yml`. Não misture produto num PR `ci:`: se misturar, o `.msi` roda e a CI avisa.
+
 **Testes rápidos (#204):** cada comportamento testado num lugar só: lógica no Jest, desenho/CSS/rota/CSP no navegador. A CI falha com arquivo do Jest acima de 20 s ou suíte acima de 150 s (`scripts/ci/verificar-tempo-testes.py`). Biblioteca pesada no front-end vira substituto leve nos testes do Jest (`testes/apoio/`, `moduleNameMapper`, como o `lucide-falso.js`); antes de pôr uma dependência nova, meça um teste que a use. Mexeu em teste ou em CI: tempo antes e depois no PR. Detalhes em [CONTRIBUINDO.md](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci).
 
 **Testes no navegador** (Playwright, [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)), em `src/frontend/testes-navegador/`: o build de produção com a CSP da API e a API falsa (`api-falsa.ts`, sem dado real); cada tela do menu abre sem erro de console, exceção ou bloqueio de CSP, em computador e celular. **Mudou tela, CSS, rota ou chamada da API no front-end? Use a skill `testar-no-navegador`** (`.claude/skills/`): roda a regressão, tira prints das telas mudadas para olhar e diz o que foi conferido. Tela nova no menu entra em `TELAS` (`base.ts`), e endpoint novo, na API falsa.

@@ -795,7 +795,8 @@ export const MANUAL: CapituloManual[] = [
           'Abra Metas e clique em “+ Nova meta”.',
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
           'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
-          'Escolha uma cor e salve.'
+          'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta.',
+          'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “editar”.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
       },
@@ -822,7 +823,8 @@ export const MANUAL: CapituloManual[] = [
           'Cada meta mostra “Este mês: guarde R$ X” e, embaixo, os degraus dos meses seguintes: menos nos meses de fatura alta, mais quando ela cai.',
           'Em “Consigo guardar outro valor”, diga quanto dá para guardar este mês: o resto do plano é refeito na hora e mostra se ainda fecha no prazo.',
           'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
-          '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.'
+          '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.',
+          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ aporte” muda o gráfico, e embaixo ficam os últimos aportes. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
         termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],
@@ -1016,7 +1018,9 @@ export const MANUAL: CapituloManual[] = [
           'Os meses seguintes usam a média das receitas, a média das despesas à vista e as parcelas já contratadas.',
           'O mês atual junta o que já aconteceu com a média do que falta.',
           '“Disponível hoje” é o saldo das contas menos as faturas dos cartões. As parcelas que vencem nos meses seguintes ficam fora dele e entram na despesa do mês em que vencem: cada parcela conta uma vez só.',
-          'Use o gráfico para ver a tendência e a tabela mês a mês para os números.'
+          'Use o gráfico para ver a tendência e a tabela mês a mês para os números.',
+          'Quando o saldo previsto troca de sinal, o mês da virada ganha o selo “saldo volta ao positivo” ou “saldo fica negativo”, e a frase do gráfico diz o mês.',
+          '“Gasto médio por categoria” mostra a média por mês das despesas à vista e, ao lado, o último mês comparado com essa média (em vermelho, mais de 10% acima; em verde, mais de 10% abaixo). Clique no nome da categoria para ver as transações dela nesses meses.'
         ],
         abrir: [{ rotulo: 'Abrir a Projeção', rota: '/projecao' }],
         termos: ['sobraPrevista']

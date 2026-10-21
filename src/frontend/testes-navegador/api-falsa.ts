@@ -150,7 +150,15 @@ const respostas: Record<string, unknown> = {
     meses: Array.from({ length: 6 }, (_, i) => ({ ...mesesAtras(-i), receitas: 5000, despesasAVista: 3300, parcelas: 500,
       // #257: saldo negativo largo, o caso em que o "-" quebrava a linha sozinho no celular.
       despesas: 3800, resultado: 1200, saldoProjetado: -14863.64 + 1200 * i, atual: i === 0 })),
-    categorias: []
+    // #314: categorias fictícias, para o "Gasto médio por categoria" aparecer (e em duas colunas no computador).
+    categorias: [
+      { categoriaId: 1, nome: 'Alimentação', cor: '#f4a261', mediaMensal: 1127.54, ultimoMes: 1206.47 },
+      { categoriaId: 2, nome: 'Mercado', cor: '#e9c46a', mediaMensal: 882.67, ultimoMes: 1182.78 },
+      { categoriaId: 3, nome: 'Transporte', cor: '#a7a3f5', mediaMensal: 769.08, ultimoMes: 876.75 },
+      { categoriaId: 4, nome: 'Compras', cor: '#9fd2f6', mediaMensal: 339.75, ultimoMes: 217.44 },
+      { categoriaId: 5, nome: 'Moradia', cor: '#c9a0dc', mediaMensal: 125.74, ultimoMes: 35.21 },
+      { categoriaId: null, nome: 'Sem categoria', cor: '#b0b0b0', mediaMensal: 30.89, ultimoMes: 30.89 }
+    ]
   },
   '/api/contas': contas,
   '/api/contas/bancos': [],
@@ -189,8 +197,24 @@ const respostas: Record<string, unknown> = {
   ],
   '/api/regras-descricao/previa': { quantidade: 6, exemplos: ['PAGAMENTO CONDOMINIO EDIF SOLAR'] },
   '/api/orcamentos': [],
-  '/api/metas': [],
+  // #316: duas metas fictícias: uma em andamento com ícone (viagem) e uma "concluída por você" com 1% (como no defeito).
+  '/api/metas': [
+    { id: 1, nome: 'Viagem', valorAlvo: 8000, valorAtual: 2400, dataAlvo: `${ano + 1}-07-01`, contaId: null, contaNome: null,
+      cor: '#92c8f0', concluida: false, percentual: 30, aporteMensalSugerido: 600, valorInicial: 2400, saldoConta: 0,
+      reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 1, icone: 'viagem' },
+    { id: 2, nome: 'RESERVA', valorAlvo: 30000, valorAtual: 200, dataAlvo: `${ano + 3}-01-01`, contaId: null, contaNome: null,
+      cor: '#8fd5b4', concluida: true, percentual: 1, aporteMensalSugerido: null, valorInicial: 200, saldoConta: 0,
+      reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 0, icone: null }
+  ],
   '/api/reservas': [],
+  // #318: aportes fictícios da Viagem nos últimos meses (o gráfico "Como está indo"); a RESERVA não tem nenhum.
+  '/api/metas/1/aportes': [
+    { data: dataIso(new Date(ano, hoje.getMonth() - 3, 5)), valor: 500 },
+    { data: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), valor: 600 },
+    { data: dataIso(new Date(ano, hoje.getMonth() - 1, 5)), valor: 600 },
+    { data: dataIso(new Date(ano, hoje.getMonth(), 2)), valor: 700 }
+  ],
+  '/api/metas/2/aportes': [],
   '/api/metas/plano': { disponivel: false, mesesConsiderados: 1, ano, mes, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
     saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] },
   // #158: uma conta paga à mão, um débito automático e uma assinatura no cartão (baixa sozinha), e duas sugestões.

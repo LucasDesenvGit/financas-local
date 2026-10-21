@@ -1,20 +1,21 @@
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Projecao } from '../core/modelos';
+import { Projecao, ProjecaoCategoria, ProjecaoMes } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { NOMES_MESES, NOMES_MESES_CURTOS, reaisOuNada } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, paramsTransacoes, reaisOuNada } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { PrivacidadeService } from '../core/privacidade.service';
 
 @Component({
   selector: 'app-projecao',
-  imports: [MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent],
+  imports: [MoedaPipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -68,7 +69,8 @@ import { PrivacidadeService } from '../core/privacidade.service';
         </section>
 
         <div class="grade-2">
-          <section class="painel-bloco">
+          <!-- #312: a tabela ocupa a largura toda da grade; em meia largura, "Saldo previsto" ficava cortado a 1366 px. -->
+          <section class="painel-bloco bloco-mes-a-mes">
             <h2>Mês a mês</h2>
             <div class="tabela-rolagem">
               <table class="tabela">
@@ -83,11 +85,18 @@ import { PrivacidadeService } from '../core/privacidade.service';
                         {{ nomeMesCurto(m.mes, m.ano) }}
                         @if (m.situacao === 'em andamento') { <span class="etiqueta">em andamento</span> }
                         @if (m.situacao === 'projetado') { <span class="etiqueta etiqueta-suave">previsão</span> }
+                        @if (virada(); as v) {
+                          @if (v.mes === m) {
+                            <span class="etiqueta selo-virada" [class.selo-virada-positivo]="v.positivo" [class.selo-virada-negativo]="!v.positivo">
+                              {{ v.positivo ? 'saldo volta ao positivo' : 'saldo fica negativo' }}
+                            </span>
+                          }
+                        }
                       </td>
                       <td class="direita valor positivo">{{ m.receitas | currency }}</td>
                       <td class="direita valor negativo">
                         {{ m.despesas | currency }}
-                        @if (m.parcelas > 0) { <br><small class="texto-suave">{{ m.parcelas | currency }} em parcelas</small> }
+                        @if (m.parcelas > 0) { <br><small class="texto-suave nowrap">{{ m.parcelas | currency }} em parcelas</small> }
                       </td>
                       <td class="direita valor" [class.positivo]="m.resultado >= 0" [class.negativo]="m.resultado < 0">{{ m.resultado | currency }}</td>
                       <td class="direita valor" [class.negativo]="(m.saldoProjetado ?? 0) < 0">
@@ -100,25 +109,37 @@ import { PrivacidadeService } from '../core/privacidade.service';
             </div>
           </section>
 
-          <section class="painel-bloco">
+          <!-- #314: na largura toda, com a lista em duas colunas (sozinho em meia largura sobrava a metade da direita). -->
+          <section class="painel-bloco bloco-categorias">
             <h2>Gasto médio por categoria</h2>
-            <ul class="lista-legenda">
+            <ul class="lista-legenda lista-categorias-projecao">
               @for (c of d.categorias.slice(0, 12); track c.nome) {
                 <li>
                   <span class="ponto" [style.background]="c.cor"></span>
-                  <span class="cresce">{{ c.nome }}</span>
+                  <span class="cresce nome-categoria">
+                    <!-- Detalhe por navegação (ADR 0018): as despesas da categoria nos mesmos meses da média. -->
+                    @if (linkCategoria(c); as params) {
+                      <a routerLink="/transacoes" [queryParams]="params"
+                        [attr.aria-label]="'Ver as transações de ' + c.nome + ' dos meses da média'">{{ c.nome }}</a>
+                    } @else { {{ c.nome }} }
+                    <span class="trilho trilho-categoria" aria-hidden="true">
+                      <span class="progresso" [style.background]="c.cor" [style.width.%]="c.mediaMensal / maiorMedia() * 100"></span>
+                    </span>
+                  </span>
                   <span class="valor">{{ c.mediaMensal | currency }}</span>
-                  <span class="texto-suave variacao" [class.negativo]="variacao(c.ultimoMes, c.mediaMensal) > 10"
-                    [class.positivo]="variacao(c.ultimoMes, c.mediaMensal) < -10"
-                    title="Último mês comparado à média">
-                    {{ variacao(c.ultimoMes, c.mediaMensal) > 0 ? '+' : '' }}{{ variacao(c.ultimoMes, c.mediaMensal) | number: '1.0-0' }}%
+                  <span class="texto-suave variacao nowrap" [class.negativo]="variacao(c.ultimoMes, c.mediaMensal) > 10"
+                    [class.positivo]="variacao(c.ultimoMes, c.mediaMensal) < -10">
+                    último mês {{ sinal(variacao(c.ultimoMes, c.mediaMensal)) }}{{ abs(variacao(c.ultimoMes, c.mediaMensal)) | number: '1.0-0' }}%
                   </span>
                 </li>
               } @empty {
                 <li class="vazio">Sem despesas no período.</li>
               }
             </ul>
-            <p class="texto-suave pequeno-texto">A porcentagem compara o último mês com a média.</p>
+            <p class="texto-suave pequeno-texto">
+              Média por mês das despesas à vista dos últimos {{ d.mesesConsiderados }} meses completos. "Último mês" compara o
+              mês passado com essa média: em vermelho, mais de 10% acima; em verde, mais de 10% abaixo.
+            </p>
           </section>
         </div>
 
@@ -137,7 +158,27 @@ import { PrivacidadeService } from '../core/privacidade.service';
       <p class="texto-suave">Calculando…</p>
     }
     @if (erro()) { <p class="erro">{{ erro() }}</p> }
-  `
+  `,
+  styles: [`
+    /* #312: "Mês a mês" na largura toda da grade (a coluna "Saldo previsto" não cabia em meia largura). */
+    .bloco-mes-a-mes { grid-column: 1 / -1; }
+    /* #314: o gasto por categoria também na largura toda, em duas colunas no computador. */
+    .bloco-categorias { grid-column: 1 / -1; }
+    .lista-categorias-projecao { columns: 2; column-gap: 40px; }
+    .lista-categorias-projecao li { break-inside: avoid; }
+    .nome-categoria { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    /* Alvo de clique de pelo menos 24 px de altura (WCAG 2.5.8; conferido em telas.spec.ts). */
+    .nome-categoria a { display: inline-flex; align-items: center; min-height: 24px; align-self: flex-start; }
+    .trilho-categoria { display: block; height: 4px; max-width: 160px; margin: 0; }
+    .trilho-categoria .progresso { display: block; height: 100%; }
+    .variacao { min-width: 8.5em; text-align: right; }
+    .selo-virada { font-weight: 600; }
+    .selo-virada-positivo { color: var(--positivo); }
+    .selo-virada-negativo { color: var(--negativo); }
+    @media (max-width: 700px) {
+      .lista-categorias-projecao { columns: 1; }
+    }
+  `]
 })
 export class ProjecaoComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -164,9 +205,12 @@ export class ProjecaoComponent implements OnInit {
     const diferenca = u.saldoProjetado - d.saldoDisponivelAtual;
     const valor = reaisOuNada(u.saldoProjetado, oculto);
     const base = d.mesesConsiderados > 0 ? `Pela média dos últimos ${d.mesesConsiderados} meses, ` : 'Sem histórico completo ainda, ';
-    if (Math.abs(diferenca) < 1) return `${base}o saldo deve ficar estável até ${quando}${valor ? ` (${valor})` : ''}.`;
-    if (u.saldoProjetado < 0) return `${base}o saldo deve ficar negativo até ${quando}${valor ? ` (${valor})` : ''}.`;
-    return `${base}o saldo deve ${diferenca > 0 ? 'subir' : 'cair'} até ${quando}${valor ? `, chegando a ${valor}` : ''}.`;
+    // #314: o mês em que o saldo vira, sem valor (vale também com "ocultar valores").
+    const v = this.virada();
+    const virada = v ? ` O saldo ${v.positivo ? 'volta ao positivo' : 'fica negativo'} em ${NOMES_MESES[v.mes.mes - 1]}/${v.mes.ano}.` : '';
+    if (Math.abs(diferenca) < 1) return `${base}o saldo deve ficar estável até ${quando}${valor ? ` (${valor})` : ''}.${virada}`;
+    if (u.saldoProjetado < 0) return `${base}o saldo deve ficar negativo até ${quando}${valor ? ` (${valor})` : ''}.${virada}`;
+    return `${base}o saldo deve ${diferenca > 0 ? 'subir' : 'cair'} até ${quando}${valor ? `, chegando a ${valor}` : ''}.${virada}`;
   });
 
   readonly resumoTendencia = computed(() => {
@@ -232,6 +276,46 @@ export class ProjecaoComponent implements OnInit {
 
   nomeMesCurto(mes: number, ano: number): string {
     return `${NOMES_MESES_CURTOS[mes - 1]}/${String(ano).slice(2)}`;
+  }
+
+  /**
+   * #314: o primeiro mês previsto em que o saldo troca de sinal em relação ao anterior (ou ao saldo de hoje, para o
+   * primeiro). É a conclusão mais importante da tabela (Shneiderman, overview first): ganha um selo em texto.
+   */
+  readonly virada = computed<{ mes: ProjecaoMes; positivo: boolean } | null>(() => {
+    const d = this.dados();
+    if (!d) return null;
+    let anterior = d.saldoDisponivelAtual;
+    for (const m of d.meses) {
+      if (m.situacao === 'realizado' || m.saldoProjetado === null) continue;
+      if ((anterior < 0) !== (m.saldoProjetado < 0)) return { mes: m, positivo: m.saldoProjetado >= 0 };
+      anterior = m.saldoProjetado;
+    }
+    return null;
+  });
+
+  readonly maiorMedia = computed(() => Math.max(1, ...(this.dados()?.categorias ?? []).map((c) => c.mediaMensal)));
+
+  /**
+   * #314: Transações com as despesas da categoria nos mesmos meses da média (os últimos `mesesConsiderados` completos,
+   * até o fim do mês passado). "Sem categoria" (null) vira categoria=sem. Sem histórico, sem link.
+   */
+  linkCategoria(c: ProjecaoCategoria): Record<string, string> | null {
+    const meses = this.dados()?.mesesConsiderados ?? 0;
+    if (meses <= 0) return null;
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - meses, 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return paramsTransacoes({ categoriaId: c.categoriaId, inicio: iso(inicio), fim: iso(fim), tipo: 'despesa' });
+  }
+
+  readonly abs = Math.abs;
+
+  /** "+", o menos tipográfico "−" (como no resto do site) ou nada, pelo valor já arredondado. */
+  sinal(v: number): string {
+    const arredondado = Math.round(v);
+    return arredondado > 0 ? '+' : arredondado < 0 ? '−' : '';
   }
 
   variacao(ultimo: number, media: number): number {

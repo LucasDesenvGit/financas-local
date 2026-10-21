@@ -24,7 +24,7 @@ cd financas-local/scripts/geral
 
 Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuário e a senha (mínimo de 8 caracteres).
 
-### Gerenciador do Finanças Local (opcional)
+### Gerenciador do Finanças Local
 
 **Windows**, sem precisar de administrador:
 
@@ -34,7 +34,7 @@ powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps
 
 Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
 
-**Linux**, depois do `instalar.sh`, sem `sudo`:
+**Linux:** o `instalar.sh` já instala o gerenciador no fim, sem `sudo` (#300). Para não instalar, use `scripts/geral/instalar.sh --sem-gerenciador`. Para instalar ou atualizar só ele:
 
 ```bash
 scripts/linux/instalar-gerenciador.sh
@@ -145,5 +145,24 @@ financas-local/
 | Windows: `npm error EPERM ... esbuild.exe` | Um `npm start` aberto está usando o arquivo. Os scripts atuais encerram o que roda de dentro de `src/frontend/node_modules` antes do `npm ci`; numa versão antiga, feche o `npm start` e rode de novo |
 | Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
 | Windows: o serviço não é registrado/iniciado | Rode o `3-publicar-atualizar.sh` num Git Bash aberto como Administrador |
-| Navegador alerta sobre o certificado | Rode o `3-publicar-atualizar.sh` de novo: ele recoloca o certificado nos confiáveis. No Firefox, em `about:config`, ative `security.enterprise_roots.enabled` |
+| Navegador alerta sobre o certificado | Veja [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado), abaixo |
+| O site não sobe e a instalação diz que a porta 5443 está em uso | Outro programa está na porta: a instalação diz qual e o PID. Feche esse programa (ou pare o serviço dele) e rode de novo. No Windows pelo PowerShell, a instalação para antes de trocar a versão, sem mudar nada |
 | O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |
+
+### O navegador alerta sobre o certificado
+
+O site usa um certificado HTTPS feito na instalação, só para este computador. A instalação tenta deixá-lo confiável sozinha (`dotnet dev-certs https --trust`); quando não consegue, ela diz isso e mostra os comandos abaixo, já com o caminho do arquivo.
+
+- **Windows:** rode o `3-publicar-atualizar.sh` (ou o `instalar-windows.cmd`) de novo, que recoloca o certificado nos confiáveis.
+- **Firefox (em qualquer sistema):** por padrão, ele não usa os certificados do sistema. Em `about:config`, deixe `security.enterprise_roots.enabled` como `true`; ou importe o `.pem` (abaixo) em **Configurações › Privacidade e segurança › Certificados › Ver certificados › Servidores › Importar**. A instalação não muda o Firefox sozinha: ligar essa opção faz ele confiar em todos os certificados do sistema, inclusive os de empresa, e essa escolha é sua.
+- **Linux:** a parte pública do certificado (sem a chave) fica em `dados/chaves/financaslocal.pem`. Confie nele uma vez:
+
+  | Onde | Comando |
+  |---|---|
+  | Debian, Ubuntu e derivados | `sudo cp dados/chaves/financaslocal.pem /usr/local/share/ca-certificates/financaslocal.crt && sudo update-ca-certificates` |
+  | Fedora, RHEL, CentOS | `sudo cp dados/chaves/financaslocal.pem /etc/pki/ca-trust/source/anchors/financaslocal.pem && sudo update-ca-trust` |
+  | Arch | `sudo trust anchor --store dados/chaves/financaslocal.pem` |
+  | Chrome e Chromium (pacote `libnss3-tools` ou `nss-tools`) | `certutil -d sql:$HOME/.pki/nssdb -A -t "P,," -n "Financas Local" -i dados/chaves/financaslocal.pem` |
+
+  O `-t "P,,"` é o jeito de confiar num certificado de servidor autoassinado no Chrome ([Linux Cert Management, Chromium](https://chromium.googlesource.com/chromium/src/+/84.0.4147.135/docs/linux/cert_management.md)).
+

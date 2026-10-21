@@ -124,6 +124,13 @@ export const CORES_SUGERIDAS = [
   '#f8c09a', '#f4a89a', '#f5a3b0', '#f3b3d3', '#d4a5e8', '#a9b4c6'
 ];
 
+/** #316: o nome de cada cor sugerida, para o leitor de tela (Nielsen 2: "Cor lilás", e não "Cor #a7a3f5"). */
+export const NOMES_CORES: Record<string, string> = {
+  '#a7a3f5': 'lilás', '#92c8f0': 'azul', '#8fd5b4': 'verde', '#8fd8d8': 'turquesa', '#b5cf9a': 'verde-oliva',
+  '#f2d98b': 'amarelo', '#f8c09a': 'laranja', '#f4a89a': 'salmão', '#f5a3b0': 'rosa', '#f3b3d3': 'rosa-claro',
+  '#d4a5e8': 'roxo', '#a9b4c6': 'cinza-azulado'
+};
+
 /** Valor em reais para frases-resumo; com "Ocultar valores" ligado devolve null (a frase usa só percentuais). */
 export function reaisOuNada(valor: number, oculto: boolean): string | null {
   return oculto ? null : valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
