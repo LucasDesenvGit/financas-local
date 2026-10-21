@@ -180,6 +180,8 @@ Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para 
 - **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
 - **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
 
+**Migração do back-end para Go (épico #70):** use a skill `migrar-para-go` (`.claude/skills/`) ou o agente `dev-go` (`.claude/agents/`, para analisar assuntos em paralelo). Eles seguem a ordem das etapas do épico e não começam código Go antes da ADR da #71.
+
 **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` (`.claude/skills/`) em uma frase. Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento. Ofereça quando **qualquer um** destes for verdade, e não só quando o pedido "parecer grande" (#280: numa sessão de muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou no limite):
 - o pedido cita **mais de uma issue ou PR**, ou um **épico**;
 - é a **2ª issue ou PR na mesma conversa**, ou a conversa **já foi resumida** (sessão longa);
