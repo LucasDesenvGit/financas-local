@@ -3,6 +3,12 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+
+## [2.27.2] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **O site abre mais rápido: cache longo em todos os arquivos do build** (#305). Os arquivos com hash no nome (que nunca mudam de conteúdo) ficam um ano no cache do navegador, mas a regra só aceitava maiúsculas e números, e o hash do Angular de hoje tem minúsculas, "_" e "-": só 3 dos 35 arquivos recebiam o cache longo, e o navegador perguntava de novo pelos outros 32 a cada abertura. Agora os 35 recebem; `index.html`, favicon, manifesto e ícones continuam sendo conferidos a cada abertura. A CI confere a regra contra nomes de um build de verdade (`scripts/ci/verificar-cache-estaticos.py`).
+
 ## [2.27.1] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
