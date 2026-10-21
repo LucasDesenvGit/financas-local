@@ -1002,7 +1002,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Relatórios',
         paraQueServe: 'Responder “para onde foi o meu dinheiro?”.',
         passos: [
-          'Fluxo de caixa mensal: receitas, despesas e o saldo acumulado.',
+          'Fluxo de caixa mensal: barras de receitas e despesas de cada mês e, por cima delas, a linha lilás do saldo acumulado, com um ponto em cada mês. O valor de cada ponto está na última coluna da tabela, "Saldo acumulado".',
           'Despesas (ou receitas) por categoria no período.',
           'Maiores despesas do período. Clique numa delas para abrir Transações no dia e na conta dela, com a despesa destacada.'
         ],
