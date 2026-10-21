@@ -134,6 +134,15 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
 - [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
 
+## Claude Code no projeto
+
+Quem usa o Claude Code no projeto recebe, pelo repositório:
+- **as skills de `.claude/skills/`**: `testar-no-navegador` e `trabalho-longo`;
+- **o hook de `.claude/settings.json`** (#280). A cada pedido, ele roda `.claude/hooks/lembrar-trabalho-longo.sh` (bash, sem dependência nova; no Windows, pelo Git Bash). Quando o pedido tem link de issue ou PR, cita um épico ou a sessão fica longa, ele lembra o Claude de oferecer a skill `trabalho-longo`, para o trabalho continuar sozinho quando o limite de uso voltar.
+  - O hook nunca bloqueia o pedido.
+  - Ele avisa uma vez por motivo e por sessão.
+  - Para desligar, defina `FINANCAS_SEM_LEMBRETE_TRABALHO_LONGO=1` no ambiente.
+
 ## Convenções de código
 
 - Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
