@@ -36,6 +36,7 @@ function apiFalsa(metas: Meta[], plano: PlanoMetas) {
   const parametros: Record<string, number>[] = [];
   const api = {
     metas: () => of(metas), contas: () => of(CONTAS), reservas: () => of(RESERVAS), planoMetas: () => of(plano),
+    aportesMeta: () => of([]),
     ordenarMetas: (ids: number[]) => { ordens.push(ids); return of(undefined); },
     salvarParametros: (valores: Record<string, number>) => { parametros.push(valores); return of([]); }
   };

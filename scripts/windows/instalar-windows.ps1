@@ -137,6 +137,15 @@ function Adicionar-Path([string]$pasta) {
 
 function Comando-Existe([string]$nome) { return [bool](Get-Command $nome -ErrorAction SilentlyContinue) }
 
+# #300: quem escuta na porta ("nome (PID n)"), ou $null se ela esta livre.
+function Quem-UsaPorta([int]$porta) {
+    $conexao = Get-NetTCPConnection -LocalPort $porta -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conexao) { return $null }
+    $processo = Get-Process -Id $conexao.OwningProcess -ErrorAction SilentlyContinue
+    $nome = if ($processo) { $processo.ProcessName } else { "programa desconhecido" }
+    return "$nome (PID $($conexao.OwningProcess))"
+}
+
 # ================================================================= 1) Ambiente
 function Preparar-Ambiente {
     Garantir-Pasta $Ferramentas
@@ -497,6 +506,14 @@ function Publicar {
         Ok "servico parado"
     }
 
+    # #300: outro programa na porta impede o site de subir. O servico ja parou (acima), entao quem estiver nela
+    # nao e o Financas Local. Para antes de trocar a versao: nada e mudado, e o servico volta a ligar.
+    $ocupante = Quem-UsaPorta 5443
+    if ($ocupante) {
+        if ($servico) { Start-Service -Name $NomeServico -ErrorAction SilentlyContinue }
+        ErroSai "A porta 5443 esta em uso por ${ocupante}: o site nao sobe enquanto ela estiver ocupada. Feche esse programa (ou pare o servico dele) e rode a instalacao de novo. Nada foi mudado."
+    }
+
     # Guarda a versao publicada atual para voltar a ela se a nova nao subir.
     $anterior = Join-Path $PastaPublicado "api-anterior"
     $temAnterior = Test-Path -LiteralPath (Join-Path $destino "Financas.Api.dll")
@@ -572,6 +589,10 @@ function Iniciar-E-Testar {
         Start-Sleep -Seconds 2
     }
     $global:LASTEXITCODE = 0
+    $ocupante = Quem-UsaPorta 5443
+    if ($ocupante -and $ocupante -notmatch '^(dotnet|Financas\.Api) ') {
+        return "A API nao respondeu em $urlTeste depois de 30 s. A porta 5443 esta em uso por ${ocupante}: feche esse programa."
+    }
     return "A API nao respondeu em $urlTeste depois de 30 s."
 }
 
@@ -639,8 +660,16 @@ try {
     Criar-Banco
     Publicar
 
+    # #300: o Firefox nao usa os certificados do Windows por padrao e mostra um aviso no site.
+    if (Test-Path -LiteralPath "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox") {
+        Aviso "Firefox instalado: por padrao ele nao usa os certificados do Windows e mostra um aviso no site."
+        Aviso "Para aceitar: em about:config, deixe security.enterprise_roots.enabled como true (ou use o Edge/Chrome)."
+    }
+
     Write-Host ""
     Write-Host "Instalacao concluida. Abra https://localhost:5443 no navegador." -ForegroundColor Green
+    Write-Host "Gerenciador (ver se o site esta no ar, ligar, desligar, copiar o banco): powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1"
+
 } catch {
     Write-Host ""
     Write-Host "    ERRO em `"$script:EtapaAtual`": $($_.Exception.Message)" -ForegroundColor Red

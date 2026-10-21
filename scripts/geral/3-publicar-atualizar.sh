@@ -114,6 +114,37 @@ pfx_valido_por_mais_de_30_dias() {
     [[ "$venc_epoch" -gt "$limite_epoch" ]]
 }
 
+# passo_a_passo_certificado: salva a parte publica do certificado (sem a chave) num .pem e mostra os
+# comandos para confiar nele na distribuicao detectada e no Chrome/Chromium e no Firefox (#300).
+# So mostra: mexer no repositorio de certificados do sistema pede sudo e e decisao de quem instala.
+passo_a_passo_certificado() {
+    local pem="${pfx%.pfx}.pem" id=""
+    if command -v openssl >/dev/null 2>&1 \
+        && openssl pkcs12 -in "$pfx" -passin pass:"$senha_pfx" -nokeys -clcerts 2>/dev/null \
+            | openssl x509 -out "$pem" 2>/dev/null; then
+        ok "parte publica do certificado (sem a chave) em $pem"
+    else
+        aviso "Sem o openssl para separar a parte publica do certificado; instale o openssl e rode de novo."
+        return 0
+    fi
+    [[ "$SO" == linux && -r /etc/os-release ]] && id="$(. /etc/os-release; echo "${ID:-} ${ID_LIKE:-}")"
+    echo '    Para o navegador confiar no site (uma vez):'
+    case "$id" in
+        *debian*|*ubuntu*)
+            echo "      sudo cp \"$pem\" /usr/local/share/ca-certificates/financaslocal.crt && sudo update-ca-certificates" ;;
+        *fedora*|*rhel*|*centos*)
+            echo "      sudo cp \"$pem\" /etc/pki/ca-trust/source/anchors/financaslocal.pem && sudo update-ca-trust" ;;
+        *arch*)
+            echo "      sudo trust anchor --store \"$pem\"" ;;
+        *)
+            echo "      Sistema: adicione $pem aos certificados confiaveis da sua distribuicao." ;;
+    esac
+    echo '      Chrome/Chromium (pacote libnss3-tools ou nss-tools):'
+    echo "      certutil -d sql:\$HOME/.pki/nssdb -A -t \"P,,\" -n \"Financas Local\" -i \"$pem\""
+    echo "      Firefox: Configuracoes > Privacidade e seguranca > Certificados > Ver certificados > Servidores > Importar: $pem"
+    echo '    Detalhes: docs/INSTALACAO-PELO-CODIGO.md, secao "O navegador alerta sobre o certificado".'
+}
+
 senha_pfx=""
 if [[ -f "$pfx" ]]; then
     senha_pfx="$(obter_senha_atual || true)"
@@ -137,7 +168,8 @@ if dotnet dev-certs https --trust >/dev/null 2>&1; then
     ok 'certificado marcado como confiavel neste computador'
 else
     aviso 'Nao foi possivel confiar automaticamente no certificado (normal em varias distribuicoes Linux).'
-    aviso "O navegador vai mostrar um aviso de seguranca. Para evitar, confie manualmente em $pfx no seu sistema/navegador."
+    aviso 'Sem isso, o navegador mostra um aviso de seguranca ao abrir o site.'
+    passo_a_passo_certificado
 fi
 
 # ------------------------------------------------------------------ Configuracao de producao
@@ -190,6 +222,20 @@ else
     done < <(find "$destino" -mindepth 1 -print0)
 fi
 ok 'arquivos publicados'
+
+# ------------------------------------------------------------------ Porta ocupada (#300)
+# Outro programa na porta impede o site de subir. No Windows o servico ja parou para a copia; no Linux
+# o proprio servico pode estar no ar (vai ser reiniciado), e esse nao conta.
+porta_site=5443
+ocupante="$(quem_usa_a_porta "$porta_site")"
+if [[ -n "$ocupante" && "$SO" == linux ]] && command -v systemctl >/dev/null 2>&1; then
+    pid_servico="$(systemctl --user show -p MainPID --value financaslocal.service 2>/dev/null || true)"
+    [[ -n "$pid_servico" && "$pid_servico" != 0 && "$ocupante" == *"(PID $pid_servico)"* ]] && ocupante=""
+fi
+if [[ -n "$ocupante" ]]; then
+    aviso "A porta $porta_site esta em uso por $ocupante: o site nao vai subir enquanto ela estiver ocupada."
+    aviso 'Feche esse programa (ou pare o servico dele) e rode esta etapa de novo.'
+fi
 
 # ------------------------------------------------------------------ Servico nativo do SO
 etapa "Registrando o servico $nome_servico"
@@ -283,6 +329,13 @@ if [[ "$sucesso" -eq 1 ]]; then
     ok "API respondeu: $resposta"
 else
     aviso "A API nao respondeu em $url_teste. Verifique os logs do servico."
+    ocupante="$(quem_usa_a_porta 5443)"
+    [[ -n "$ocupante" ]] && aviso "Quem esta na porta 5443 agora: $ocupante. Se nao for o Financas Local, feche esse programa."
+fi
+
+if [[ "$SO" == windows ]] && reg.exe query 'HKLM\SOFTWARE\Mozilla\Mozilla Firefox' >/dev/null 2>&1; then
+    aviso 'Firefox instalado: por padrao ele nao usa os certificados do Windows e mostra um aviso no site.'
+    aviso 'Para aceitar: em about:config, deixe security.enterprise_roots.enabled como true (ou use o Edge/Chrome).'
 fi
 
 echo ''

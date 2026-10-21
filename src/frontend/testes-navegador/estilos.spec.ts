@@ -235,12 +235,23 @@ test.describe('Texto e listas vazias', () => {
   });
 
   test('Metas sem metas: o aviso ocupa a linha toda da grade e fica centralizado', async ({ page }) => {
+    // A API falsa tem metas desde a #316: aqui, a lista vazia (a rota registrada depois vale primeiro).
+    await page.route(/\/api\/metas(\?|$)/, (r) => r.request().method() === 'GET' ? r.fulfill({ json: [] }) : r.fallback());
     await abrir(page, '/metas');
     const aviso = page.locator('.grade-cartoes > .vazio').first();
     await expect(aviso).toBeVisible();
     const [grade, a] = [await caixa(page.locator('.grade-cartoes').first()), await caixa(aviso)];
     expect(Math.abs((a.x + a.width / 2) - (grade.x + grade.width / 2)), 'centralizado na grade').toBeLessThan(3);
     expect(await estilo(aviso, 'text-align')).toBe('center');
+  });
+
+  test('o cartão da meta tem divisórias antes do plano do mês e antes das ações (#316)', async ({ page }) => {
+    await abrir(page, '/metas');
+    const cartao = page.locator('.cartao-meta').first();
+    for (const parte of [cartao.locator('.recomendado'), cartao.locator('footer')]) {
+      expect(await estilo(parte, 'border-top-style')).toBe('solid');
+      expect(await estilo(parte, 'border-top-width')).toBe('1px');
+    }
   });
 
   test('o aviso de vazio centraliza a caixa (margens iguais), não só o texto', async ({ page }) => {

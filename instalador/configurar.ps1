@@ -9,6 +9,8 @@
            para o .msi poder registrar o dele.
         3. Certificado HTTPS de 127.0.0.1/localhost: reaproveita o atual ou gera um novo (5 anos), confia
            nele nas Autoridades Raiz da maquina e grava dados\configuracao.json (caminho e senha do .pfx).
+        4. Porta 5443 (#300): se outro programa estiver nela, para com a mensagem no log do msiexec. O servico
+           e vital no .msi: sem isso, ele nao sobe e a instalacao falha com um erro generico do Windows Installer.
     -Acao desinstalar  (so na desinstalacao de verdade, nao na troca de versao)
         Tira o certificado das Autoridades Raiz. Os dados ficam, salvo -ApagarDados 1.
 
@@ -200,6 +202,19 @@ function Preparar-Certificado {
     Log "configuracao gravada em $Configuracao"
 }
 
+# ------------------------------------------------------------------ 4) Porta ocupada (#300)
+# O servico do Financas Local ja parou (troca de versao) ou foi removido (migracao): quem estiver na porta e outro
+# programa. Sem acento nem dois-pontos colado em variavel (o arquivo e lido na pagina de codigo do sistema).
+function Conferir-Porta {
+    $conexao = Get-NetTCPConnection -LocalPort 5443 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conexao) { Log "porta 5443 livre"; return }
+    $processo = Get-Process -Id $conexao.OwningProcess -ErrorAction SilentlyContinue
+    $nome = if ($processo) { $processo.ProcessName } else { "programa desconhecido" }
+    if ($nome -eq "Financas.Api") { Log "porta 5443 com o proprio Financas Local (PID $($conexao.OwningProcess))"; return }
+    throw ("A porta 5443 esta em uso por $nome (PID $($conexao.OwningProcess)). O site do Financas Local nao sobe " +
+           "enquanto ela estiver ocupada. Feche esse programa (ou pare o servico dele) e rode o instalador de novo.")
+}
+
 # ------------------------------------------------------------------ Desinstalar
 function Desinstalar {
     $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
@@ -221,6 +236,7 @@ try {
     if ($Acao -eq "instalar") {
         Preparar-Dados
         Migrar-Instalacao-Antiga
+        Conferir-Porta
         Preparar-Certificado
     } else {
         Desinstalar
