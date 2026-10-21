@@ -426,6 +426,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'O que cada etiqueta quer dizer',
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
         passos: [
+          'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário). O mesmo selo aparece no Painel e em Contas a pagar.',
           'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
           '“fora dos gastos”: a transação não entra nas despesas nem nas receitas (transferência entre contas suas, pagamento de fatura, investimento ou “ignorar nos relatórios”).',
           '“somando nos gastos” (ou “nas receitas”): um pagamento de fatura ou uma transferência entre contas suas está contando em dobro. Veja como corrigir no capítulo de categorização.',

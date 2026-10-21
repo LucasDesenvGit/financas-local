@@ -18,11 +18,12 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { PainelAvisosComponent } from './painel-avisos.component';
+import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 
 @Component({
   selector: 'app-painel',
   imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
-    MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent],
+    MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -119,6 +120,7 @@ import { PainelAvisosComponent } from './painel-avisos.component';
           <ul class="lista-simples">
             @for (c of d.proximasContas; track c.id) {
               <li>
+                <app-selo-servico [texto]="c.textoCobranca" [nome]="c.descricao" [categoria]="c.categoriaNome" [tamanho]="22" />
                 <span class="cresce">{{ c.descricao }}</span>
                 <span [class.negativo]="c.diasParaVencer < 0" class="texto-suave">
                   {{ c.diasParaVencer < 0 ? 'vencida' : c.diasParaVencer === 0 ? 'hoje' : 'em ' + c.diasParaVencer + 'd' }}
@@ -245,6 +247,8 @@ import { PainelAvisosComponent } from './painel-avisos.component';
                 @for (t of d.ultimasTransacoes; track t.id) {
                   <li>
                     <span class="data-curta">{{ t.data | date: 'dd/MM' }}</span>
+                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao"
+                      [categoria]="t.categoriaNome" [tamanho]="22" />
                     <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}</span>
                     <span class="valor" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</span>
                   </li>

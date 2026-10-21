@@ -8,7 +8,7 @@ import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
-import { SeloCobrancaComponent } from '../compartilhado/selo-cobranca.component';
+import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 import { dataIso } from '../compartilhado/utilidades';
 import {
@@ -32,7 +32,7 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
  */
 @Component({
   selector: 'app-assinaturas-recorrentes',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, LogoBancoComponent, IconeComponent, SeloCobrancaComponent],
+  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, LogoBancoComponent, IconeComponent, SeloServicoComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="kpis" aria-label="Resumo das assinaturas e recorrentes">
@@ -116,7 +116,7 @@ interface ChipFiltro { id: keyof FiltroRecorrentes; rotulo: string }
             <tbody>
               @for (c of g.itens; track c.id) {
                 <tr [class.ignorada]="!c.ativa">
-                  <td><span class="nome-cobranca"><app-selo-cobranca [texto]="c.textoCobranca" [nome]="c.descricao"
+                  <td><span class="nome-cobranca"><app-selo-servico [texto]="c.textoCobranca" [nome]="c.descricao"
                     [categoria]="c.categoriaNome" [tamanho]="24" /><strong>{{ c.descricao }}</strong></span>
                     @if (!c.ativa) { <span class="etiqueta etiqueta-suave">encerrada</span> }
                     @if (c.observacao) { <br><small class="texto-suave">{{ c.observacao }}</small> }</td>

@@ -76,7 +76,8 @@ export const Icones = {
 
 /**
  * #265: ícone de cada categoria padrão (banco/02-dados-iniciais.sql), pelo nome sem acento e em maiúsculas. Usado
- * quando a cobrança não é de um serviço conhecido (compartilhado/servicos.ts). Categoria criada por você: o recibo.
+ * pelo <app-selo-servico> quando o lançamento não é de um serviço conhecido (compartilhado/servicos.ts). Categoria
+ * criada por você, ou sem categoria: o recibo.
  */
 export const IconesCategoria: Record<string, LucideIcon> = {
   ALIMENTACAO: LucideUtensils,
@@ -95,6 +96,14 @@ export const IconesCategoria: Record<string, LucideIcon> = {
   DOACOES: LucideHandHeart,
   PETS: LucidePawPrint,
   'CUIDADOS PESSOAIS': LucideSparkles,
-  'JUROS E EMPRESTIMOS': LucideHandCoins
+  'JUROS E EMPRESTIMOS': LucideHandCoins,
+  'OUTROS GASTOS': LucideCircleEllipsis,
+  // Receitas e transferências (para o selo também servir em Transações)
+  SALARIO: LucideBriefcase,
+  RENDIMENTOS: LucideTrendingUp,
+  'OUTRAS RECEITAS': LucideCoins,
+  TRANSFERENCIAS: LucideArrowLeftRight,
+  'PAGAMENTO DE FATURA': LucideReceiptText,
+  INVESTIMENTOS: LucidePiggyBank
 };
 export const IconeCobrancaPadrao: LucideIcon = LucideReceipt;

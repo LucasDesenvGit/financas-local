@@ -57,12 +57,12 @@ test('Contas a pagar: selo de cada cobrança, da marca ou da categoria', async (
   await page.goto('/contas-a-pagar');
   const linhas = page.locator('table').first().locator('tbody tr');
   await expect(linhas.first()).toBeVisible();
-  for (const linha of await linhas.all()) await expect(linha.locator('app-selo-cobranca')).toBeVisible();
+  for (const linha of await linhas.all()) await expect(linha.locator('app-selo-servico')).toBeVisible();
 
   const youtube = page.locator('section.sugestoes tbody tr').filter({ hasText: 'Google YouTubePremium' });
-  await expect(youtube.locator('app-selo-cobranca svg.logo-banco rect')).toHaveAttribute('fill', '#FF0000');
+  await expect(youtube.locator('app-selo-servico svg.logo-banco rect')).toHaveAttribute('fill', '#FF0000');
 
   await page.getByRole('tab', { name: 'Assinaturas e recorrentes' }).click();
-  await expect(page.locator('.grupo-recorrentes tbody tr app-selo-cobranca').first()).toBeVisible();
+  await expect(page.locator('.grupo-recorrentes tbody tr app-selo-servico').first()).toBeVisible();
   expect(problemas.lista).toEqual([]);
 });

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { SeloCobrancaComponent } from '../../src/app/compartilhado/selo-cobranca.component';
+import { SeloServicoComponent } from '../../src/app/compartilhado/selo-servico.component';
 import { IconeCobrancaPadrao, IconesCategoria } from '../../src/app/compartilhado/icones';
 import { SERVICOS, servicoDe } from '../../src/app/compartilhado/servicos';
 
@@ -57,7 +57,7 @@ describe('Regressão: selo de cada cobrança (#265)', () => {
   });
 
   function selo(entradas: Record<string, string | null>) {
-    const fixture = TestBed.createComponent(SeloCobrancaComponent);
+    const fixture = TestBed.createComponent(SeloServicoComponent);
     for (const [nome, valor] of Object.entries(entradas)) fixture.componentRef.setInput(nome, valor);
     fixture.detectChanges();
     return { el: fixture.nativeElement as HTMLElement, tela: fixture.componentInstance };
