@@ -282,6 +282,33 @@ test.describe('Lista suspensa', () => {
   });
 });
 
+test.describe('Acessos recentes (#284)', () => {
+  test('a data com hora não fica por cima do evento; evento em português e "Acesso local"', async ({ page }) => {
+    await abrir(page, '/configuracoes?aba=seguranca');
+    const linhas = page.locator('.lista-simples li').filter({ has: page.locator('.data-curta') });
+    await expect(linhas).toHaveCount(3);
+    // Mede o texto, não a caixa: com a largura fixa antiga, a caixa tinha 3,8em e o texto vazava por cima do evento.
+    const fimDoTexto = (l: Locator) => l.evaluate((el) => {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return r.getBoundingClientRect().right;
+    });
+    const inicioDoTexto = (l: Locator) => l.evaluate((el) => {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return r.getBoundingClientRect().left;
+    });
+    for (const linha of await linhas.all()) {
+      const fimData = await fimDoTexto(linha.locator('.data-curta'));
+      const inicioEvento = await inicioDoTexto(linha.locator('.cresce'));
+      expect(fimData, 'o texto da data termina antes de o do evento começar').toBeLessThanOrEqual(inicioEvento + 0.5);
+    }
+    await expect(linhas.first()).toContainText('Entrou no site');
+    await expect(linhas.first()).toContainText('Acesso local');
+    await expect(linhas.first()).not.toContainText('127.0.0.1');
+  });
+});
+
 test.describe('Campo de número (#283)', () => {
   test('sem as setinhas do sistema: o desenho não muda quando elas são escondidas à força', async ({ page }) => {
     await abrir(page, '/configuracoes');

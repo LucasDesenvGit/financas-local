@@ -63,7 +63,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     <section class="painel-bloco">
       <h2>Fluxo de caixa mensal</h2>
       <app-grafico-explicado [resumo]="resumoFluxo()"
-        comoLer="Verde: receitas. Rosa: despesas do dia a dia; laranja, empilhado em cima: despesas marcadas como emergência. A linha lilás, com um ponto em cada mês, é o saldo acumulado desde o começo do período (o valor de cada mês está na última coluna da tabela).">
+        [comoLer]="comoLerFluxo()">
         <app-grafico [configuracao]="graficoFluxo()" [altura]="300" />
       </app-grafico-explicado>
       <div class="tabela-rolagem">
@@ -190,6 +190,15 @@ export class RelatoriosComponent implements OnInit {
   readonly mediaDespesas = computed(() => (this.fluxo().length ? this.totalDespesas() / this.fluxo().length : 0));
   readonly totalCategorias = computed(() => this.categorias().reduce((s, c) => s + c.valor, 0) || 1);
   readonly maiorCategoria = computed(() => Math.max(1, ...this.categorias().map((c) => c.valor)));
+
+  /** "Como ler" do Fluxo de caixa: o laranja só é citado quando houve emergência (igual à legenda). */
+  readonly comoLerFluxo = computed(() => {
+    const emergencias = this.fluxo().some((m) => m.despesasEmergencia > 0);
+    return 'Verde: receitas. Rosa: despesas do dia a dia' +
+      (emergencias ? '; laranja, empilhado em cima: despesas marcadas como emergência' : '') +
+      '. A linha lilás, com um ponto em cada mês, é o saldo acumulado desde o começo do período ' +
+      '(o valor de cada mês está na última coluna da tabela).';
+  });
 
   /** Saldo acumulado no período, mês a mês (a linha do gráfico e a última coluna da tabela). */
   readonly saldoAcumulado = computed(() => {

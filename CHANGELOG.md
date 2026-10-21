@@ -4,6 +4,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Correções
+- **Relatórios › Fluxo de caixa mensal** (#282): a linha lilás do saldo acumulado ficava atrás das barras e era difícil de ler. Agora ela vem por cima, com um ponto em cada mês; a tabela ganhou a coluna "Saldo acumulado"; e "Emergências" só aparece na legenda e no "como ler" quando houve alguma no período.
+- **Campos de número sem as setinhas do navegador** (#283): elas não tinham o estilo do site e destoavam no tema escuro (Parametrização e outras telas). As setas do teclado continuam mudando o valor.
+- **Configurações › Segurança › Acessos recentes** (#284):
+  - a data com hora não fica mais por cima do evento (a mesma correção vale para as datas de "Maiores despesas" em Relatórios);
+  - os eventos aparecem em português ("Entrou no site", "Regra de descrição criada (22)");
+  - o endereço do próprio computador aparece como "Acesso local".
+
 ### Publicação e documentação
 - **A skill `trabalho-longo` é oferecida na hora certa** (#280). Numa sessão com muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou quando acabou o limite de uso. Agora:
   - o `CLAUDE.md` e a skill têm um critério objetivo: mais de uma issue ou PR, a 2ª issue na mesma conversa, ou conversa já resumida;

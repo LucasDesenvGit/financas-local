@@ -9,6 +9,7 @@ import { StatusSincronizacaoService } from '../core/status-sincronizacao.service
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
+import { descreverEvento, origemDoAcesso } from '../compartilhado/auditoria';
 import { ParametrizacaoComponent } from './parametrizacao.component';
 import { AparenciaComponent } from './aparencia.component';
 import { ErrosComponent } from './erros.component';
@@ -55,12 +56,12 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
 
       <section class="painel-bloco">
         <h2>Acessos recentes</h2>
-        <ul class="lista-simples">
+        <ul class="lista-simples lista-acessos">
           @for (a of auditoria(); track a.id) {
             <li>
-              <span class="data-curta nowrap">{{ a.dataHora + 'Z' | date: 'dd/MM HH:mm' }}</span>
-              <span class="cresce" [class.negativo]="a.evento.includes('Falha') || a.evento.includes('Bloqueado')">{{ a.evento }}</span>
-              <span class="texto-suave">{{ a.ip }}</span>
+              <span class="data-curta">{{ a.dataHora + 'Z' | date: 'dd/MM HH:mm' }}</span>
+              <span class="cresce" [class.negativo]="a.evento.includes('Falha') || a.evento.includes('Bloqueado')">{{ descreverEvento(a.evento) }}</span>
+              <span class="texto-suave nowrap">{{ origemDoAcesso(a.ip) }}</span>
             </li>
           } @empty { <li class="vazio">Sem registros.</li> }
         </ul>
@@ -247,6 +248,9 @@ export class ConfiguracoesComponent implements OnInit {
   readonly conexoes = signal<Conexao[]>([]);
   readonly logs = signal<SincronizacaoLog[]>([]);
   readonly auditoria = signal<Auditoria[]>([]);
+  /** #284: evento em português e "Acesso local" no lugar de 127.0.0.1. */
+  readonly descreverEvento = descreverEvento;
+  readonly origemDoAcesso = origemDoAcesso;
   readonly ocupado = signal(false);
 
   clientId = '';

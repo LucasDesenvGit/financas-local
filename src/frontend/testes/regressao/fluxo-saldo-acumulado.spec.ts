@@ -63,5 +63,8 @@ describe('Regressão: linha do saldo acumulado por cima das barras (#282)', () =
     TestBed.resetTestingModule();
     const com = await abrir([mes(5, 1000, 900, 50)]);
     expect(filtro(com.tela)('Emergências')).toBe(true);
+    // O "como ler" acompanha a legenda: o laranja só é citado quando houve emergência.
+    expect(com.tela.comoLerFluxo()).toContain('laranja');
+    expect(sem.tela.comoLerFluxo()).not.toContain('laranja');
   });
 });

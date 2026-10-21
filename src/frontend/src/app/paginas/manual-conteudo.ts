@@ -1233,7 +1233,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
-          '“Acessos recentes” mostra logins, falhas e bloqueios.'
+          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou no site, senha errada, login bloqueado, regras criadas e credenciais alteradas. “Acesso local” quer dizer que veio deste computador (o site só aceita acesso dele).'
         ],
         abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
       },
