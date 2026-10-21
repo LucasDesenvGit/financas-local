@@ -3,6 +3,15 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+## [2.27.1] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **Skill e agente do Claude Code para a migração do back-end para Go** (épico #70). A skill `migrar-para-go` e o agente `dev-go` analisam o C# de um assunto e o portam para Go seguindo as etapas do épico:
+  - contrato idêntico ao do .NET, banco no formato do EF Core, dinheiro nunca em `float64`;
+  - nenhum código Go antes da ADR da #71;
+  - as armadilhas C# → Go: arredondamento bancário do `Math.Round`, lista vazia que vira `null`, ordenação estável, busca com acento.
+- O CHANGELOG da 2.17.0 que estava só no `main` (#249) já tinha voltado com a #294; o `main` entra no histórico do `develop` sem mudar o texto.
+
 ## [2.27.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades
