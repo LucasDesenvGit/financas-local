@@ -37,6 +37,7 @@ public class FinancasDbContext : DbContext
     public DbSet<PrecoMensalAtivo> PrecosMensaisAtivo => Set<PrecoMensalAtivo>();
     public DbSet<IndiceMensal> IndicesMensais => Set<IndiceMensal>();
     public DbSet<CotacaoMoeda> CotacoesMoeda => Set<CotacaoMoeda>();
+    public DbSet<CotacaoCripto> CotacoesCripto => Set<CotacaoCripto>();
     public DbSet<ReservaConferencia> ReservasConferidas => Set<ReservaConferencia>();
     public DbSet<ErroSistema> ErrosSistema => Set<ErroSistema>();
 
@@ -353,6 +354,15 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Moeda).HasMaxLength(3);
             e.Property(x => x.Compra).HasPrecision(18, 8);
             e.Property(x => x.Venda).HasPrecision(18, 8);
+        });
+
+        // ADR 0048: cotação de criptomoedas (Mercado Bitcoin), uma linha por moeda e data e hora da fonte.
+        mb.Entity<CotacaoCripto>(e =>
+        {
+            e.ToTable("CotacaoCripto");
+            e.HasKey(x => new { x.Moeda, x.DataHora });
+            e.Property(x => x.Moeda).HasMaxLength(10);
+            e.Property(x => x.Preco).HasPrecision(18, 8);
         });
 
         mb.Entity<ContaAgendada>(e =>

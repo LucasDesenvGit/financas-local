@@ -262,6 +262,12 @@ const respostas: Record<string, unknown> = {
     { moeda: 'GBP', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 7.2154, venda: 7.2191, fonte: 'PTAX' },
     { moeda: 'CHF', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 6.7012, venda: 6.7049, fonte: 'PTAX' }
   ] },
+  // #279 (ADR 0048): criptomoedas em reais (valores fictícios); a SOL ainda sem variação em 24 h, a USDT sem cotação.
+  '/api/cripto/cotacoes': { atualizadoEm: hoje.toISOString(), cotacoes: [
+    { moeda: 'BTC', preco: 419262, dataHora: hoje.toISOString(), variacao24h: 2.04, fonte: 'Mercado Bitcoin' },
+    { moeda: 'ETH', preco: 12382, dataHora: hoje.toISOString(), variacao24h: -1.37, fonte: 'Mercado Bitcoin' },
+    { moeda: 'SOL', preco: 538.82, dataHora: hoje.toISOString(), variacao24h: null, fonte: 'Mercado Bitcoin' }
+  ] },
   '/api/carteira': {
     selic: { metaAnual: 15, acumulado12Meses: 14.2, acumuladoAno: 11.5, atualizadaAte: iso(hoje) },
     rendaVariavel: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, lucroRealizado: 0, proventosRecebidos: 0,
