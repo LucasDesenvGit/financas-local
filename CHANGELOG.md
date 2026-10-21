@@ -2,15 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-
-## [2.27.5] — 2026-10-21 · desenvolvimento
+## [2.31.4] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
 - **CI: job do back-end em Go** (#231, épico #70). Roda em paralelo com os outros, só quando o PR mexe no que o Go lê, e entra no check `build`:
   - formatação, `go vet`, testes com o detector de corrida, código gerado pelo `sqlc` em dia, compilação para Windows e `govulncheck`;
   - o Dependabot passa a acompanhar os módulos do Go.
 
-## [2.27.4] — 2026-10-21 · desenvolvimento
+## [2.31.3] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
 - **Go: esqueleto do servidor** (#73, épico #70). Ainda não roda no site. Para quem desenvolve:
@@ -18,7 +17,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - cabeçalhos de segurança, cache, erros e o filtro de endereço iguais aos do .NET, conferidos contra o site rodando, rota por rota;
   - toda chamada a `/api` ainda responde 404: as rotas entram assunto por assunto.
 
-## [2.27.3] — 2026-10-21 · desenvolvimento
+## [2.31.2] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
 - **Go: camada de banco compatível com o EF Core** (#74, épico #70). Primeiro código Go do projeto, em `src/backend-go/`; ainda não roda no site. Para quem desenvolve:
@@ -27,7 +26,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - `sqlc` lendo o esquema do `banco/` (com as colunas novas do `2-criar-banco.sh`) e as primeiras consultas, da `Configuracao`;
   - lida uma cópia do banco real inteira sem nenhum erro de formato.
 
-## [2.27.2] — 2026-10-21 · desenvolvimento
+## [2.31.1] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação
 - **ADR 0049: o back-end vai para Go, trocado aos poucos atrás do .NET** (#71, épico #70). Nada muda no site ainda; a ADR registra como a migração vai ser feita:
@@ -36,6 +35,65 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o esquema novo dos segredos é feito em Go, mas só é usado na troca; nesse dia, o Client Secret da Pluggy e o token da brapi são informados de novo, uma vez;
   - bibliotecas: `net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal` e `log/slog`;
   - as ADRs 0002, 0005, 0011 e 0012 apontam o que a 0049 vai substituir, e o `CLAUDE.md` ganhou as convenções do código Go.
+
+## [2.31.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Metas: gráfico "Como está indo"** (#318). Em cada meta, um botão abre o gráfico com o total guardado no fim de cada mês, o caminho do plano até o valor alvo e o próprio alvo. Cada "+ aporte" muda o gráfico, e embaixo ficam os últimos aportes. **Banco:** tabela nova `MetaAporte`, criada sozinha ao atualizar. Ela guarda a data e o valor de cada aporte; antes, o aporte só somava no total. O histórico começa a partir desta versão.
+
+## [2.30.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Ícone em cada meta** (#316): casa, carro, viagem, estudo, reserva e outros 11, escolhidos no formulário e mostrados no cartão, na cor da meta. Ajuda a achar a meta de olho. O cartão ganhou divisórias entre o progresso, o plano do mês e as ações. **Banco:** coluna nova `Meta.Icone`, criada sozinha ao atualizar.
+
+### Correções
+- **Metas: "concluída" com 1% e "guardar R$ 0,00"** (#316).
+  - Quando a meta chega ao alvo, ela fica concluída. Se depois o alvo aumentava, a meta continuava concluída (ex.: R$ 200 de R$ 30.000). Agora, aumentar o alvo para acima do que já foi guardado devolve a meta ao plano, e o formulário diz isso.
+  - Marcada como concluída antes de chegar ao alvo, o cartão diz "concluída por você", e o formulário mostra quanto falta.
+  - Sem meta em andamento, o assistente diz isso, em vez de "recomendo guardar R$ 0,00".
+  - "R$ 200,00de R$ 30.000,00" ganhou o espaço.
+  - As cores do formulário têm nome para o leitor de tela ("Cor azul", e não o código).
+
+## [2.29.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Projeção mais fácil de ler** (#314).
+  - **O mês em que o saldo vira** ganha um selo, "saldo volta ao positivo" ou "saldo fica negativo", e a frase do gráfico diz o mês (sem valores, com "ocultar valores").
+  - **"Gasto médio por categoria" na largura toda**, em duas colunas no computador, sem a metade da direita vazia.
+  - **A porcentagem diz o que compara:** "último mês +34%", com a regra das cores escrita embaixo (antes só num texto que aparecia ao passar o mouse).
+  - **O nome da categoria abre Transações** com as despesas dela nos mesmos meses da média, e cada uma tem a barrinha proporcional, como em Relatórios.
+
+## [2.28.1] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Projeção › Mês a mês: "Saldo previsto" cortado em tela de notebook** (#312). A 1366 px, a tabela ficava em meia largura, ao lado de "Gasto médio por categoria", e a última coluna só aparecia rolando para o lado; "em parcelas" quebrava em duas linhas. Agora a tabela ocupa a largura toda (o gasto por categoria vai para baixo), e "em parcelas" fica numa linha só.
+
+## [2.28.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Instalação mais clara quando algo atrapalha** (#300).
+  - **Porta 5443 ocupada:** a instalação diz qual programa está nela e o PID, em vez de o site simplesmente não subir.
+    - Pelo `.msi`, a instalação para com a mensagem no log do instalador.
+    - Pelo `instalar-windows.cmd`, ela para antes de trocar a versão, sem mudar nada.
+    - Pelos scripts bash, ela avisa antes de ligar o serviço e repete no teste final, se o site não responder.
+  - **Firefox:** no fim da instalação, se ele estiver instalado, aparece como fazê-lo aceitar o certificado do site.
+  - **Certificado no Linux:** quando a confiança automática falha, a instalação salva a parte pública do certificado (sem a chave) e mostra os comandos da sua distribuição (Debian/Ubuntu, Fedora, Arch) e do Chrome/Chromium.
+  - **Gerenciador no Linux:** o `instalar.sh` já instala o gerenciador no fim (`--sem-gerenciador` para não instalar). No Windows pelos scripts, ele mostra o comando.
+
+## [2.27.4] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **A CI liga a API de verdade em todo PR de back-end** (#309). Antes, a API só era ligada no teste do instalador do Windows, que roda em poucos PRs: um erro que só aparece ao iniciar (serviço sem registro, configuração, esquema do banco) passava batido. Agora o job "API e banco" liga a API num banco temporário e espera ela responder (`scripts/ci/ligar-api.sh`, ~10 s).
+
+## [2.27.3] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **PR só de CI não roda o instalador do Windows** (#307). PR com título `ci:` não gera nem testa o `.msi` (~7 min), mesmo mexendo no `versao.yml`. Se ele mexer de fato no instalador, no gerenciador ou na inicialização da API, o `.msi` roda, e a CI avisa que o título não combina. Registrado no `CLAUDE.md` e na ADR 0047.
+
+## [2.27.2] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **O site abre mais rápido: cache longo em todos os arquivos do build** (#305). Os arquivos com hash no nome (que nunca mudam de conteúdo) ficam um ano no cache do navegador, mas a regra só aceitava maiúsculas e números, e o hash do Angular de hoje tem minúsculas, "_" e "-": só 3 dos 35 arquivos recebiam o cache longo, e o navegador perguntava de novo pelos outros 32 a cada abertura. Agora os 35 recebem; `index.html`, favicon, manifesto e ícones continuam sendo conferidos a cada abertura. A CI confere a regra contra nomes de um build de verdade (`scripts/ci/verificar-cache-estaticos.py`).
 
 ## [2.27.1] — 2026-10-21 · desenvolvimento
 

@@ -116,8 +116,17 @@ jobs:
       - name: Compilar API
         run: dotnet build FinancasLocal.sln -c Release
 
+      # #309: liga a API de verdade (banco temporário, HTTPS com certificado descartável) e espera /api/auth/estado:
+      # pega o que só aparece ao iniciar. O que é só do Windows continua com o teste do .msi (ADR 0047).
+      - name: Ligar a API (teste de inicialização)
+        run: bash scripts/ci/ligar-api.sh Release
+
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py
+
+      # #305: a regra do cache longo (Program.cs) aceita o hash do build do Angular, e não o que não tem hash.
+      - name: Conferir o cache dos arquivos do build
+        run: python3 scripts/ci/verificar-cache-estaticos.py
 
       - name: Aplicar schema num banco SQLite descartável
         run: |

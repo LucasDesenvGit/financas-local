@@ -154,6 +154,40 @@ requer_comando() {
     command -v "$nome" >/dev/null 2>&1 || erro_sai "$mensagem"
 }
 
+# ---------------------------------------------------------------- Porta ocupada (#300)
+# quem_usa_a_porta PORTA -> "nome (PID n)" de quem escuta na porta, ou nada se ela esta livre.
+# Linux: ss; Windows (Git Bash): netstat + PowerShell (Get-Process); macOS: lsof. Sem a ferramenta, nada (nao bloqueia).
+quem_usa_a_porta() {
+    local porta="$1" pid="" nome=""
+    case "$SO" in
+        linux)
+            local linha
+            linha="$(ss -ltnpH "sport = :$porta" 2>/dev/null | head -n1 || true)"
+            [[ -n "$linha" ]] || return 0
+            pid="$(grep -oE 'pid=[0-9]+' <<<"$linha" | head -n1 | cut -d= -f2 || true)"
+            nome="$(grep -oE '\(\("[^"]+"' <<<"$linha" | head -n1 | cut -d'"' -f2 || true)"
+            ;;
+        windows)
+            pid="$(netstat -ano 2>/dev/null | tr -d '\r' \
+                | awk -v p=":$porta" '$1 == "TCP" && $4 == "LISTENING" && substr($2, length($2) - length(p) + 1) == p { print $5; exit }')"
+            [[ -n "$pid" ]] || return 0
+            # Get-Process, e nao tasklist /FI: o tasklist com filtro chegou a travar 30 s num Windows 11.
+            nome="$(timeout 15 powershell.exe -NoProfile -Command "(Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName" 2>/dev/null | tr -d '\r' || true)"
+            ;;
+        osx)
+            pid="$(lsof -nP -iTCP:"$porta" -sTCP:LISTEN -t 2>/dev/null | head -n1 || true)"
+            [[ -n "$pid" ]] || return 0
+            nome="$(ps -p "$pid" -o comm= 2>/dev/null || true)"
+            ;;
+        *) return 0 ;;
+    esac
+    if [[ -n "$pid" ]]; then
+        echo "${nome:-programa desconhecido} (PID $pid)"
+    else
+        echo "outro programa"
+    fi
+}
+
 # ---------------------------------------------------------------- Ambiente de build (dotnet/node portateis ou do PATH)
 configurar_ambiente_build() {
     local dotnet_bin=dotnet node_bin=node
