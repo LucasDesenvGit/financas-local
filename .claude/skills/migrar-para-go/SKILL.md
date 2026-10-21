@@ -21,7 +21,7 @@ ls docs/adr/ | grep -i go                           # a ADR do back-end em Go j�
 
 - **Etapa bloqueada não começa.** Se a issue tem *blocked by* aberta, diga qual falta e pare (ou ofereça fazer a que bloqueia).
 - **Sem a ADR do back-end em Go (#71) aceita, não há código Go de produção.** Até lá, só cabem a própria #71 e a análise (seção 2). A ADR leva o **próximo número livre** (a 0022 citada nas issues está ocupada).
-- **Convivência (#231):** antes do merge dela, nada de funcionalidade nova em Go atrás do .NET; depois, só o que for **novo e fora do núcleo** (tabelas e rotas próprias). O que existe continua em C# até a etapa dele.
+- **Troca aos poucos (estratégia do #70 desde 21/10/2026):** o .NET fica na frente (login, CSRF, segredos) e repassa ao Go os prefixos de rota já migrados (#231). Antes do merge da #231, nenhum assunto roda em Go. Depois, cada assunto entra em uso em três passos: contrato e código Go → prefixo ligado (e a tarefa em segundo plano do assunto desligada no .NET no mesmo passo) → depois de uma versão publicada sem voltar, um PR à parte apaga o C# que nenhum outro C# usa. Autenticação, segredos, erros e `EsquemaBanco` só passam para o Go na inversão (#85).
 - Pedido amplo ("migra o back-end todo") é **várias etapas**: ofereça a skill `trabalho-longo` e faça uma etapa por PR, na ordem do épico.
 
 ## 1. Regras que não se negociam
@@ -33,7 +33,7 @@ ls docs/adr/ | grep -i go                           # a ADR do back-end em Go j�
 5. **Só cópias do banco** em desenvolvimento e teste. Nunca abra `dados/sql/FinancasLocal.db` com o .NET rodando, nunca suba dados reais (o repositório é compartilhado).
 6. **Segurança igual ou melhor que a de hoje:** bind só em `127.0.0.1`, CSP e cabeçalhos idênticos aos do `CabecalhosSegurancaMiddleware` (`Seguranca/Seguranca.cs`), SQL **só parametrizado** (`?` ou código do `sqlc`; nunca texto do usuário concatenado), segredos nunca na resposta nem no log, comparação de segredo com `crypto/subtle`. Novo domínio de saída de rede = ADR.
 7. **Nomes em português** (`ContaServico` ou `contas.Servico`, `SalvarContaEntrada`…), como no resto do projeto; identificadores da biblioteca padrão ficam como são.
-8. **O que vale em produção continua sendo o .NET** até a troca (Go-15, #85). O Go roda em outra porta (`5444`) e em pasta separada (`src/backend-go/`).
+8. **Voltar atrás tem de continuar fácil.** Um assunto volta para o .NET tirando o prefixo da lista de repasse; por isso o C# dele só é apagado depois de uma versão publicada sem precisar voltar. Tabela gravada pelos dois lados na transição: formato do EF Core, WAL com `busy_timeout` e transações curtas; regra duplicada nos dois lados só com o mesmo caso de contrato rodando contra os dois. O Go fica em `src/backend-go/`.
 
 ## 2. Analisar o C# antes de portar
 
@@ -110,7 +110,7 @@ Bibliotecas sugeridas na #71 (valem as que a ADR fixar): `net/http` puro (rotas 
 O épico promete instalação menor e menos memória; os números "com Go" são **estimativas** até a medição (#277, #86). Ao falar de ganho:
 
 - compare com a **linha de base** do épico (pasta instalada 157 MB, API ~225 MB de memória) e diga como mediu;
-- lembre que parte da memória cai sem Go (`System.GC.Server: true` hoje) e que o ganho de pasta depende do gerenciador (#276);
+- lembre que o ganho de pasta só aparece inteiro com o gerenciador também em Go (#276). Trocar para Go é decisão do time: não proponha otimizar o .NET como alternativa;
 - para código quente (relatórios, sincronização): `go test -bench . -benchmem` e `pprof` antes de otimizar; otimização que complica o código precisa de número que a justifique.
 
 ## 6. Como entregar
