@@ -61,6 +61,10 @@ describe('Regressão: selo de cada cobrança (#265)', () => {
     expect(servicoDe('POSTO UBERLANDIA')).toBeNull();
     expect(servicoDe('UBER *TRIP')?.chave).toBe('uber');
     expect(servicoDe('NETFLIX.COM', 'Minha assinatura de Spotify')?.chave).toBe('netflix');
+    // #274: entre os textos vale a marca mais específica (a que vem antes na lista), não a do primeiro texto.
+    expect(servicoDe('GOOGLE', null, 'Google YouTubePremium')?.chave).toBe('youtube');
+    expect(servicoDe('PIX ENVIADO', null, 'Netflix')?.chave).toBe('netflix');
+    expect(servicoDe('GOOGLE', null, 'Google One')?.chave).toBe('google');
     expect(servicoDe(null, 'Spotify Família')?.chave).toBe('spotify');
     expect(servicoDe('ALUGUEL', 'Condomínio')).toBeNull();
   });

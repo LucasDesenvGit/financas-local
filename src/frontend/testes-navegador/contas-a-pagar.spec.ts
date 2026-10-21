@@ -66,3 +66,13 @@ test('Contas a pagar: selo de cada cobrança, da marca ou da categoria', async (
   await expect(page.locator('.grupo-recorrentes tbody tr app-selo-servico').first()).toBeVisible();
   expect(problemas.lista).toEqual([]);
 });
+
+/** #274: o selo do banco (com o nome da conta) não encosta no nome da cobrança. */
+test('Contas a pagar: espaço entre o nome da cobrança e o selo do banco', async ({ page }) => {
+  await page.goto('/contas-a-pagar');
+  const linha = page.locator('table').first().locator('tbody tr').filter({ has: page.locator('.conta-da-cobranca') }).first();
+  const nome = (await linha.locator('.nome-cobranca').boundingBox())!;
+  const conta = (await linha.locator('.conta-da-cobranca').boundingBox())!;
+  // Na mesma linha, a conta começa pelo menos 6 px depois do fim do nome (antes, 0 a 3 px).
+  if (Math.abs(conta.y - nome.y) < nome.height) expect(conta.x - (nome.x + nome.width)).toBeGreaterThanOrEqual(6);
+});

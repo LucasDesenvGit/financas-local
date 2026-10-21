@@ -10,7 +10,7 @@ import { VisualBanco } from './bancos';
  * - Com `sigla`: selo próprio, com a cor da marca e uma sigla curta (o Simple Icons não tem a marca). Não é o logotipo
  *   oficial.
  *
- * O serviço é reconhecido pelo texto da cobrança (`termos`, sem acento e em maiúsculas), na ordem desta lista: o mais
+ * O serviço é reconhecido pelos textos (`termos`, sem acento e em maiúsculas), na ordem desta lista: o mais
  * específico vem antes ("Google YouTubePremium" é YouTube, não Google). Termo de uma palavra casa com o começo de uma
  * palavra do texto ("YOUTUBE" casa com "YOUTUBEPREMIUM"); com até 4 letras, só com a palavra inteira ("TIM" não casa
  * com "TIMBRE", nem "UBER" com "UBERLANDIA"). Termo de várias palavras casa com elas em sequência.
@@ -160,13 +160,18 @@ function casa(termo: string, texto: string[]): boolean {
   return texto.some((p) => (termo.length <= 4 ? p === termo : p.startsWith(termo)));
 }
 
-/** O serviço da cobrança pelos textos dela (o texto da cobrança e o nome), na ordem; null se nenhum. */
+/**
+ * O serviço pelos textos (o do banco, o estabelecimento, o nome): entre todos eles, o mais específico, isto é, o que
+ * vem antes nesta lista (#274: "GOOGLE" no texto da cobrança e "Google YouTubePremium" no nome dão YouTube, não
+ * Google; "PIX ENVIADO" e "Netflix" dão Netflix). null se nenhum casar.
+ */
 export function servicoDe(...textos: (string | null | undefined)[]): Servico | null {
+  let melhor = -1;
   for (const t of textos) {
     const p = palavras(t);
     if (!p.length) continue;
-    const achado = SERVICOS.find((s) => s.termos.some((termo) => casa(termo, p)));
-    if (achado) return achado;
+    const i = SERVICOS.findIndex((s) => s.termos.some((termo) => casa(termo, p)));
+    if (i >= 0 && (melhor < 0 || i < melhor)) melhor = i;
   }
-  return null;
+  return melhor >= 0 ? SERVICOS[melhor] : null;
 }

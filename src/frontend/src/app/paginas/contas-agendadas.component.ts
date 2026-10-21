@@ -304,6 +304,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .conta-da-cobranca { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
     /* #265: o selo da cobrança antes do nome, alinhado ao texto. */
     .nome-cobranca { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+    /* #274: o selo do banco e o nome da conta não encostam no nome da cobrança. */
+    .nome-cobranca + .conta-da-cobranca { margin-left: 10px; }
   `
 })
 export class ContasAgendadasComponent implements OnInit {
