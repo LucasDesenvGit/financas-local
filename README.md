@@ -31,6 +31,7 @@ O site liga sozinho com o computador e só responde nele mesmo. No Menu Iniciar 
 - **Abrir o site**, **Ligar/Desligar** e **Reiniciar** (as duas últimas pedem permissão de administrador).
 - **Versão nova:** avisa, mostra **O que mudou** e atualiza com um clique.
 - **Mais opções:** salvar uma cópia do banco onde você escolher (pendrive, nuvem…), ver os erros do site, abrir o manual e **iniciar com o Windows** (fica na área de notificação e avisa se o site cair).
+- **Botão direito no ícone da área de notificação:** mostra a situação do site ("Finanças Local · No ar") e tem **Abrir o site**, **Mostrar o gerenciador** e **Sair**, nas cores do site.
 
 ## Conectar seus bancos (Open Finance)
 
