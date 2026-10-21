@@ -29,6 +29,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
 ## Decisão
 
 - **`ci.yml` em jobs paralelos:** "o que mudou" (decide), "API e banco", "front-end: Jest" e "front-end: navegador" em **2 partes** (`--shard`). O tempo do PR passa a ser o do mais lento, não a soma.
+- **Um job final chamado `build`** junta os quatro: passa só se todos passaram ou foram pulados de propósito; falhou ou cancelou, falha. É o check que a proteção do `develop`/`main` exige pelo nome (o do job antigo): sem ele, o PR ficava esperando um `build` que não existia mais.
 - **No PR, só os testes afetados** (`scripts/ci/testes-afetados.py`):
   - **navegador:** o arquivo que mudou em `src/app` afeta as telas (rotas do `app.routes.ts`) que o importam, direta ou indiretamente, pelo grafo de imports do próprio código. Rodam os arquivos de teste que abrem essas telas (`goto('/rota')`, `abrir(page, '/rota')`), as linhas do `telas.spec.ts` dessas rotas, o `celular.spec.ts` e os testes que mudaram (filtro `--grep` do Playwright, que confere o nome do arquivo e o título);
   - **Jest:** `--findRelatedTests` com os arquivos que mudaram (segue os imports, com `src/` nas `roots`), mais os testes que leem o código como texto (`readFileSync`/`readdirSync`, que o grafo não enxerga) e os testes que mudaram;

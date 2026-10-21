@@ -223,3 +223,28 @@ jobs:
             src/frontend/testes-navegador/relatorio
             src/frontend/testes-navegador/resultados
           if-no-files-found: ignore
+
+  # O check exigido pela proteção do develop/main se chama "build" (o nome do job antigo). Este job junta os quatro:
+  # passa só se todos passaram ou foram pulados de propósito (PR sem front-end); se um falhou ou foi cancelado, falha
+  # e o merge fica bloqueado, como antes.
+  build:
+    name: build
+    if: always()
+    needs: [mudancas, api, jest, navegador]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resultado dos jobs
+        env:
+          O_QUE_MUDOU: ${{ needs.mudancas.result }}
+          API: ${{ needs.api.result }}
+          JEST: ${{ needs.jest.result }}
+          NAVEGADOR: ${{ needs.navegador.result }}
+        run: |
+          falhou=0
+          for nome in O_QUE_MUDOU API JEST NAVEGADOR; do
+            resultado="${!nome}"
+            echo "$nome: $resultado"
+            case "$resultado" in success|skipped) ;; *) falhou=1 ;; esac
+          done
+          exit $falhou
