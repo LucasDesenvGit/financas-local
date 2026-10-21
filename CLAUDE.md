@@ -24,6 +24,7 @@ cd src/frontend && npm start                    # front-end em dev (http://local
 # CI roda também:
 python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura.sql é idempotente
 python3 scripts/ci/testes-afetados.py --base origin/develop   # no PR, a CI roda só os testes afetados (ADR 0047): mostra quais
+# Job "Go" (#231): gofmt, go vet, go test -race, go generate em dia, build Windows, govulncheck (src/backend-go/README.md)
 # Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam
 
 # Banco (sem migrations)

@@ -3,6 +3,13 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
 
+## [2.27.5] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **CI: job do back-end em Go** (#231, épico #70). Roda em paralelo com os outros, só quando o PR mexe no que o Go lê, e entra no check `build`:
+  - formatação, `go vet`, testes com o detector de corrida, código gerado pelo `sqlc` em dia, compilação para Windows e `govulncheck`;
+  - o Dependabot passa a acompanhar os módulos do Go.
+
 ## [2.27.4] — 2026-10-21 · desenvolvimento
 
 ### Publicação e documentação

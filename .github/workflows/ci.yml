@@ -16,7 +16,8 @@ concurrency:
 
 # #255 (ADR 0047): o antigo job "build" virou quatro, em paralelo (o tempo do PR é o do mais lento, não a soma):
 # "o que mudou" decide; "API e banco", "front-end: Jest" e "front-end: navegador" (em 2 partes) rodam juntos. No PR, só
-# os testes afetados pelo que mudou; no push do develop/main, tudo. Caches: NuGet, node_modules, build do Angular,
+# os testes afetados pelo que mudou; no push do develop/main, tudo. #231 (ADR 0049): o job "Go" roda junto, só quando
+# o PR mexe no que o Go lê. Caches: NuGet, node_modules, build do Angular,
 # Jest e o Chromium do Playwright.
 jobs:
   # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
@@ -64,6 +65,7 @@ jobs:
       tudo: ${{ steps.afetados.outputs.tudo }}
       playwright: ${{ steps.afetados.outputs.playwright }}
       jest: ${{ steps.afetados.outputs.jest }}
+      go: ${{ steps.go.outputs.go }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,6 +77,20 @@ jobs:
             python3 scripts/ci/testes-afetados.py --base "origin/${{ github.base_ref }}"
           else
             python3 scripts/ci/testes-afetados.py
+          fi
+
+      # #231: o Go também lê o esquema (banco/, 2-criar-banco.sh) e a CSP do Seguranca.cs, que os testes dele conferem.
+      - name: Go afetado
+        id: go
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/backend-go/|banco/|scripts/geral/2-criar-banco\.sh$|src/backend/Financas\.Api/Seguranca/|\.github/workflows/ci\.yml$)'; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "Nada do que o Go lê mudou: o job Go fica de fora." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   api:
@@ -108,6 +124,50 @@ jobs:
           rm -f /tmp/ci-financaslocal.db
           sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
           sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
+
+  # #231 (ADR 0049): o back-end em Go. Os mesmos comandos do "Antes de subir" do src/backend-go/README.md.
+  go:
+    name: Go
+    needs: mudancas
+    if: needs.mudancas.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/backend-go
+    steps:
+      - uses: actions/checkout@v4
+
+      # A versão vem do go.mod; o cache guarda os módulos e o que já foi compilado (chave: go.sum).
+      - name: Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
+      - name: Formatação (gofmt)
+        run: |
+          fora=$(gofmt -l .)
+          if [ -n "$fora" ]; then echo "Arquivos fora do gofmt (rode gofmt -w .):"; echo "$fora"; exit 1; fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes (com detector de corrida)
+        run: go test -race ./...
+
+      # O sqlc compila com cgo (o gcc já vem no runner). Falha se uma consulta .sql mudou sem gerar o código Go.
+      - name: Código gerado em dia (go generate)
+        run: |
+          go generate ./...
+          git diff --exit-code -- . || { echo "Rode 'go generate ./...' em src/backend-go e suba o código gerado."; exit 1; }
+
+      - name: Compila para Windows
+        run: GOOS=windows GOARCH=amd64 go build ./...
+
+      # Falha só se o código chama uma função com vulnerabilidade conhecida (não basta o módulo estar no go.mod).
+      - name: Vulnerabilidades (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   jest:
     name: "front-end: Jest"
@@ -233,7 +293,7 @@ jobs:
   build:
     name: build
     if: always()
-    needs: [mudancas, api, jest, navegador]
+    needs: [mudancas, api, go, jest, navegador]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -241,11 +301,12 @@ jobs:
         env:
           O_QUE_MUDOU: ${{ needs.mudancas.result }}
           API: ${{ needs.api.result }}
+          GO: ${{ needs.go.result }}
           JEST: ${{ needs.jest.result }}
           NAVEGADOR: ${{ needs.navegador.result }}
         run: |
           falhou=0
-          for nome in O_QUE_MUDOU API JEST NAVEGADOR; do
+          for nome in O_QUE_MUDOU API GO JEST NAVEGADOR; do
             resultado="${!nome}"
             echo "$nome: $resultado"
             case "$resultado" in success|skipped) ;; *) falhou=1 ;; esac
