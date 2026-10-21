@@ -79,6 +79,20 @@ function dataDe(isoTexto: string): Date {
 
 interface Dia { iso: string; numero: number; doMes: boolean; nome: string; }
 
+/** #264: em que nível o calendário está: os dias de um mês, os meses de um ano ou uma página de anos. */
+export type VisaoCalendario = 'dias' | 'meses' | 'anos';
+/** Um mês (1–12) ou um ano na grade de meses ou de anos. */
+interface Celula { valor: number; texto: string; nome: string; fora: boolean; escolhido: boolean; atual: boolean; }
+
+const NOMES_MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+/** Quantos anos por página na grade de anos (4 linhas de 3, como a de meses). */
+export const ANOS_POR_PAGINA = 12;
+
+/** O primeiro ano da página que contém `ano` (páginas de 12 a partir de 1900: 2016–2027, 2028–2039…). */
+export function inicioDaPaginaDeAnos(ano: number): number {
+  return ano - (((ano - 1900) % ANOS_POR_PAGINA) + ANOS_POR_PAGINA) % ANOS_POR_PAGINA;
+}
+
 let proximoId = 0;
 
 /**
@@ -87,6 +101,9 @@ let proximoId = 0;
  * - ou escolher num calendário no visual do site (botão ao lado): ‹ › mês, « » ano, "Hoje" e "Limpar";
  *   teclado do padrão de calendário do WAI-ARIA (setas, Home/End, PageUp/PageDown, Shift+PageUp/Down para o ano,
  *   Enter escolhe, Esc fecha e devolve o foco);
+ * - #264: o título é um botão que sobe de nível (dias → meses do ano → página de 12 anos), para ir longe sem dezenas
+ *   de cliques (Nielsen 7); escolher desce um nível; Esc sobe um nível antes de fechar. Meses e anos fora dos limites
+ *   ficam desabilitados, e o escolhido e o de hoje destacados, como os dias;
  * - limites (padrão 1900–2099, ou os da tela: [maximo]="hoje"), erro em texto com aria-describedby (WCAG 3.3.1).
  * Entrega ao ngModel o mesmo 'AAAA-MM-DD' do campo nativo ('' quando vazio). (alterado) faz o papel do (change).
  * Uso: <label>Data <app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio /></label>
@@ -119,14 +136,46 @@ let proximoId = 0;
       <!-- Na camada superior (popover), com posição fixa: um modal ou uma tabela com rolagem não cortam o calendário. -->
       <div #calendario class="calendario" [id]="idCalendario" role="dialog" aria-modal="false" popover="manual"
         [style.top.px]="posicao().top" [style.bottom.px]="posicao().bottom" [style.left.px]="posicao().left"
-        [attr.aria-labelledby]="idTitulo" animate.leave="sair" (keydown.escape)="fechar(true); $event.stopPropagation()">
+        [attr.aria-labelledby]="idTitulo" animate.leave="sair" (keydown.escape)="aoEsc(); $event.stopPropagation()">
         <div class="calendario-topo">
-          <button type="button" class="botao-icone" (click)="mudarMes(-12)" aria-label="Ano anterior">«</button>
-          <button type="button" class="botao-icone" (click)="mudarMes(-1)" aria-label="Mês anterior">‹</button>
-          <strong [id]="idTitulo" aria-live="polite">{{ tituloMes() }}</strong>
-          <button type="button" class="botao-icone" (click)="mudarMes(1)" aria-label="Próximo mês">›</button>
-          <button type="button" class="botao-icone" (click)="mudarMes(12)" aria-label="Próximo ano">»</button>
+          @if (visao() === 'dias') {
+            <button type="button" class="botao-icone" (click)="mudarMes(-12)" aria-label="Ano anterior">«</button>
+            <button type="button" class="botao-icone" (click)="mudarMes(-1)" aria-label="Mês anterior">‹</button>
+          } @else {
+            <button type="button" class="botao-icone" (click)="navegarNivel(-1)"
+              [attr.aria-label]="visao() === 'meses' ? 'Ano anterior' : 'Anos anteriores'">‹</button>
+          }
+          <!-- #264: o título diz o nível (mês, ano ou página de anos) e, nos dias e nos meses, é o botão que sobe. -->
+          <strong [id]="idTitulo" aria-live="polite">@if (visao() === 'anos') {<span>{{ titulo() }}</span>} @else {<button type="button"
+            class="calendario-titulo-botao" [attr.aria-describedby]="idDicaTitulo" (click)="subirNivel()">{{ titulo() }}</button>}</strong>
+          @if (visao() === 'dias') {
+            <button type="button" class="botao-icone" (click)="mudarMes(1)" aria-label="Próximo mês">›</button>
+            <button type="button" class="botao-icone" (click)="mudarMes(12)" aria-label="Próximo ano">»</button>
+          } @else {
+            <button type="button" class="botao-icone" (click)="navegarNivel(1)"
+              [attr.aria-label]="visao() === 'meses' ? 'Próximo ano' : 'Próximos anos'">›</button>
+          }
         </div>
+        <span class="so-leitor" [id]="idDicaTitulo">{{ visao() === 'dias' ? 'escolher outro mês ou ano' : 'escolher outro ano' }}</span>
+        @if (visao() !== 'dias') {
+          <table class="calendario-grade calendario-grade-larga" role="grid" [attr.aria-labelledby]="idTitulo"
+            (keydown)="teclaNaGradeLarga($event)">
+            <tbody>
+              @for (linha of linhasLargas(); track $index) {
+                <tr>
+                  @for (c of linha; track c.valor) {
+                    <td [attr.aria-selected]="c.escolhido">
+                      <button type="button" class="calendario-celula" [class.escolhido]="c.escolhido"
+                        [attr.aria-current]="c.atual ? 'date' : null" [attr.data-valor]="c.valor"
+                        [attr.tabindex]="c.valor === focoLargo() ? 0 : -1" [disabled]="c.fora" [attr.aria-label]="c.nome"
+                        (click)="visao() === 'meses' ? escolherMes(c.valor) : escolherAno(c.valor)">{{ c.texto }}</button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
         <table class="calendario-grade" role="grid" [attr.aria-labelledby]="idTitulo" (keydown)="teclaNaGrade($event)">
           <thead>
             <tr>@for (d of iniciais; track $index) { <th scope="col" [attr.abbr]="diasSemana[$index]">{{ d }}</th> }</tr>
@@ -147,6 +196,7 @@ let proximoId = 0;
             }
           </tbody>
         </table>
+        }
         <div class="calendario-rodape">
           <button type="button" class="link" (click)="limpar()">Limpar</button>
           <button type="button" class="link" [disabled]="foraDoIntervalo(hoje)" (click)="escolher(hoje)">Hoje</button>
@@ -183,6 +233,7 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   readonly idErro = `campo-data-erro-${this.n}`;
   readonly idCalendario = `campo-data-calendario-${this.n}`;
   readonly idTitulo = `campo-data-titulo-${this.n}`;
+  readonly idDicaTitulo = `campo-data-dica-${this.n}`;
 
   readonly texto = signal('');
   readonly desabilitado = signal(false);
@@ -192,6 +243,10 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   /** Mês mostrado no calendário e o dia com o foco (tabindex 0). */
   readonly mesVisivel = signal({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   readonly foco = signal(this.hoje);
+  /** #264: o nível do calendário, o primeiro ano da página de anos e o mês (1–12) ou ano com o foco na grade larga. */
+  readonly visao = signal<VisaoCalendario>('dias');
+  readonly inicioAnos = signal(inicioDaPaginaDeAnos(new Date().getFullYear()));
+  readonly focoLargo = signal(new Date().getMonth() + 1);
   private readonly tocado = signal(false);
   private ultimoConfirmado = '';
 
@@ -202,6 +257,40 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   readonly erroVisivel = computed(() => this.tocado() && this.erro() !== null);
   readonly descricao = computed(() => [this.ajuda(), this.erroVisivel() ? this.idErro : ''].filter(Boolean).join(' ') || null);
   readonly tituloMes = computed(() => `${NOMES_MESES[this.mesVisivel().mes - 1]} de ${this.mesVisivel().ano}`);
+  /** O título diz em que nível se está: "outubro de 2026", "2026" ou "2016–2027" (Nielsen 1). */
+  readonly titulo = computed(() => this.visao() === 'dias' ? this.tituloMes()
+    : this.visao() === 'meses' ? String(this.mesVisivel().ano)
+    : `${this.inicioAnos()}–${this.inicioAnos() + ANOS_POR_PAGINA - 1}`);
+
+  /** #264: os 12 meses do ano visível, ou os 12 anos da página, em 4 linhas de 3. */
+  readonly linhasLargas = computed<Celula[][]>(() => {
+    const valor = this.valorIso();
+    const [anoValor, mesValor] = valor ? valor.split('-').map(Number) : [0, 0];
+    const [anoHoje, mesHoje] = this.hoje.split('-').map(Number);
+    const celulas: Celula[] = [];
+    if (this.visao() === 'meses') {
+      const ano = this.mesVisivel().ano;
+      for (let m = 1; m <= 12; m++) {
+        const ultimo = new Date(ano, m, 0).getDate();
+        const inicio = `${ano}-${String(m).padStart(2, '0')}-01`;
+        const fim = `${ano}-${String(m).padStart(2, '0')}-${ultimo}`;
+        celulas.push({
+          valor: m, texto: NOMES_MESES_CURTOS[m - 1], nome: `${NOMES_MESES[m - 1]} de ${ano}`,
+          fora: fim < this.minimoEfetivo() || inicio > this.maximoEfetivo(),
+          escolhido: anoValor === ano && mesValor === m, atual: anoHoje === ano && mesHoje === m
+        });
+      }
+    } else {
+      for (let a = this.inicioAnos(); a < this.inicioAnos() + ANOS_POR_PAGINA; a++) {
+        celulas.push({
+          valor: a, texto: String(a), nome: String(a),
+          fora: `${a}-12-31` < this.minimoEfetivo() || `${a}-01-01` > this.maximoEfetivo(),
+          escolhido: anoValor === a, atual: anoHoje === a
+        });
+      }
+    }
+    return [0, 3, 6, 9].map((i) => celulas.slice(i, i + 3));
+  });
 
   /** 6 semanas de domingo a sábado, com os dias do mês anterior e do seguinte para completar. */
   readonly semanas = computed<Dia[][]>(() => {
@@ -285,6 +374,7 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
     const d = dataDe(base);
     this.mesVisivel.set({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
     this.foco.set(base);
+    this.visao.set('dias');
     // Posição fixa a partir do campo; sem espaço embaixo (ex.: campo no fim da tela), abre para cima.
     const caixa = this.elemento.nativeElement.querySelector('.campo-data') ?? this.elemento.nativeElement;
     const r = caixa.getBoundingClientRect();
@@ -384,6 +474,96 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
     this.focarDia();
   }
 
+  /* ------------------------------ #264: meses e anos ------------------------------ */
+
+  /** Título clicado: dias → meses do ano visível → página de anos. */
+  subirNivel(): void {
+    if (this.visao() === 'dias') {
+      this.visao.set('meses');
+      this.focoLargo.set(this.mesVisivel().mes);
+    } else if (this.visao() === 'meses') {
+      this.visao.set('anos');
+      this.inicioAnos.set(inicioDaPaginaDeAnos(this.mesVisivel().ano));
+      this.focoLargo.set(this.mesVisivel().ano);
+    }
+    this.focarLargo();
+  }
+
+  /** ‹ › nos meses (um ano) e nos anos (uma página), mantendo o foco na mesma posição. */
+  navegarNivel(direcao: number): void {
+    if (this.visao() === 'meses') {
+      this.mudarMes(12 * direcao);
+    } else {
+      this.inicioAnos.update((a) => a + ANOS_POR_PAGINA * direcao);
+      this.focoLargo.update((a) => a + ANOS_POR_PAGINA * direcao);
+    }
+    this.focarLargo();
+  }
+
+  /** Escolher um mês volta para os dias dele, com o foco no mesmo dia (dentro dos limites). */
+  escolherMes(mes: number): void {
+    const ano = this.mesVisivel().ano;
+    const ultimo = new Date(ano, mes, 0).getDate();
+    let alvo = iso(new Date(ano, mes - 1, Math.min(dataDe(this.foco()).getDate(), ultimo)));
+    if (alvo < this.minimoEfetivo()) alvo = this.minimoEfetivo();
+    if (alvo > this.maximoEfetivo()) alvo = this.maximoEfetivo();
+    this.mesVisivel.set({ ano, mes });
+    this.foco.set(alvo);
+    this.visao.set('dias');
+    this.focarDia();
+  }
+
+  /** Escolher um ano volta para os meses dele. */
+  escolherAno(ano: number): void {
+    this.mesVisivel.update((m) => ({ ano, mes: m.mes }));
+    this.visao.set('meses');
+    this.focoLargo.set(this.mesVisivel().mes);
+    this.focarLargo();
+  }
+
+  /** Esc sobe um nível (anos → meses → dias) antes de fechar. */
+  aoEsc(): void {
+    if (this.visao() === 'anos') {
+      this.visao.set('meses');
+      this.focoLargo.set(this.mesVisivel().mes);
+      this.focarLargo();
+    } else if (this.visao() === 'meses') {
+      this.visao.set('dias');
+      this.focarDia();
+    } else {
+      this.fechar(true);
+    }
+  }
+
+  /** Teclado na grade de meses e de anos: ← → um, ↑ ↓ uma linha (3), Home/End o primeiro e o último, PageUp/PageDown o ano ou a página. */
+  teclaNaGradeLarga(e: KeyboardEvent): void {
+    const passos: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -3, ArrowDown: 3 };
+    const meses = this.visao() === 'meses';
+    const primeiro = meses ? 1 : this.inicioAnos();
+    const ultimo = meses ? 12 : this.inicioAnos() + ANOS_POR_PAGINA - 1;
+    if (e.key in passos) {
+      let novo = this.focoLargo() + passos[e.key];
+      if (meses && (novo < 1 || novo > 12)) {
+        // Passou do começo ou do fim do ano: vai para o ano ao lado.
+        this.mudarMes(novo < 1 ? -12 : 12);
+        novo = novo < 1 ? novo + 12 : novo - 12;
+      } else if (!meses && (novo < primeiro || novo > ultimo)) {
+        this.inicioAnos.update((a) => a + (novo < primeiro ? -ANOS_POR_PAGINA : ANOS_POR_PAGINA));
+      }
+      this.focoLargo.set(novo);
+    } else if (e.key === 'Home' || e.key === 'End') {
+      this.focoLargo.set(e.key === 'Home' ? primeiro : ultimo);
+    } else if (e.key === 'PageUp' || e.key === 'PageDown') {
+      this.navegarNivel(e.key === 'PageUp' ? -1 : 1);
+      e.preventDefault();
+      return;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    this.focarLargo();
+  }
+
   foraDoIntervalo(isoData: string): boolean {
     return isoData < this.minimoEfetivo() || isoData > this.maximoEfetivo();
   }
@@ -401,6 +581,15 @@ export class CampoDataComponent implements ControlValueAccessor, Validator {
   }
 
   /* ------------------------------ interno ------------------------------ */
+
+  /** O foco vai para o mês ou o ano com tabindex 0; desabilitado (fora dos limites), para o primeiro que dá. */
+  private focarLargo(): void {
+    afterNextRender(() => {
+      const raiz = this.elemento.nativeElement;
+      const alvo = raiz.querySelector<HTMLButtonElement>(`.calendario-celula[data-valor="${this.focoLargo()}"]`);
+      (alvo && !alvo.disabled ? alvo : raiz.querySelector<HTMLButtonElement>('.calendario-celula:not(:disabled)'))?.focus();
+    }, { injector: this.injector });
+  }
 
   private focarDia(): void {
     afterNextRender(() => {
