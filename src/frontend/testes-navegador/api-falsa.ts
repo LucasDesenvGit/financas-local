@@ -12,6 +12,8 @@ export interface ApiFalsa {
   errosDoSite: string[];
   /** Todas as chamadas, para conferir uma ação ("POST /api/metas"…). */
   chamadas: string[];
+  /** #244: as mesmas chamadas com a query ("GET /api/transacoes?ordem=valor&…"), para conferir os parâmetros. */
+  chamadasComQuery: string[];
 }
 
 const hoje = new Date();
@@ -313,12 +315,13 @@ const respostas: Record<string, unknown> = {
 
 /** Liga a API falsa na página. `alterar` troca respostas para um teste ("/api/auth/estado" deslogado…). */
 export async function ligarApiFalsa(page: Page, alterar: Record<string, unknown> = {}): Promise<ApiFalsa> {
-  const api: ApiFalsa = { semSimulacao: [], errosDoSite: [], chamadas: [] };
+  const api: ApiFalsa = { semSimulacao: [], errosDoSite: [], chamadas: [], chamadasComQuery: [] };
   const tabela = { ...respostas, ...alterar };
   await page.route('**/api/**', async (route: Route) => {
     const req = route.request();
     const caminho = new URL(req.url()).pathname;
     api.chamadas.push(`${req.method()} ${caminho}`);
+    api.chamadasComQuery.push(`${req.method()} ${caminho}${new URL(req.url()).search}`);
     if (req.method() === 'POST' && caminho === '/api/erros/front-end') {
       api.errosDoSite.push(req.postData() ?? '');
       return route.fulfill({ status: 204 });

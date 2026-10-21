@@ -416,7 +416,8 @@ export const MANUAL: CapituloManual[] = [
           'Filtre por conta, por uma ou várias categorias (inclusive “Sem categoria”), por tipo (despesas, receitas, transferências) e por “Lançamento” (Pix, compras no cartão, pagamento de fatura…).',
           'Marque “Só emergências” ou “Descrição pouco informativa” quando precisar.',
           'Digite em “Buscar” e aperte Enter para procurar na descrição, no estabelecimento e na observação.',
-          'Os filtros ativos aparecem em “Filtrando:”; o ✕ de cada um tira só aquele, e “Limpar filtros” tira todos.'
+          'Os filtros ativos aparecem em “Filtrando:”; o ✕ de cada um tira só aquele, e “Limpar filtros” tira todos.',
+          'Para ordenar a lista, clique no nome da coluna: Data, Categoria, Conta ou Valor (a seta ▲ ▼ mostra qual vale e em que direção); clique de novo para inverter. Em Valor, o maior lançamento vem primeiro, seja gasto ou receita; as sem categoria ficam no fim. A ordem vale para todas as páginas e fica no endereço da página.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
         dicas: ['O endereço da página guarda os filtros: dá para salvar nos favoritos ou mandar o link de uma lista filtrada.'],

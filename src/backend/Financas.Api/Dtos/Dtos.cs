@@ -142,6 +142,12 @@ public class FiltroTransacoesDto
     [MaxLength(200)] public List<long>? Ids { get; set; }
     [Range(1, int.MaxValue)] public int Pagina { get; set; } = 1;
     [Range(1, 500)] public int TamanhoPagina { get; set; } = 50;
+    /// <summary>
+    /// #244: coluna da ordenação, de uma lista fixa (nunca nome de coluna vindo do texto); sem ela, data mais recente
+    /// primeiro. "valor" ordena pelo valor sem o sinal (o maior lançamento, gasto ou receita).
+    /// </summary>
+    [RegularExpression("^(data|categoria|conta|valor)$")] public string? Ordem { get; set; }
+    [RegularExpression("^(asc|desc)$")] public string? Direcao { get; set; }
 }
 
 public record PaginaTransacoesDto(List<TransacaoDto> Itens, int Total, int Pagina, int TamanhoPagina,

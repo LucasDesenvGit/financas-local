@@ -138,6 +138,9 @@ export enum TipoLancamento {
   Deposito = 12, TarifaJuros = 13, Rendimento = 14, AplicacaoResgate = 15, Salario = 16, Credito = 17, Dinheiro = 18
 }
 
+/** #244: colunas pelas quais a lista de Transações pode ser ordenada (a mesma lista fixa da API). */
+export type OrdemTransacoes = 'data' | 'categoria' | 'conta' | 'valor';
+
 export interface FiltroTransacoes {
   inicio?: string | null; fim?: string | null; contaId?: number | null; categoriaId?: number | null;
   /** Várias categorias (cada uma inclui as subcategorias); com semCategoria, soma também as sem categoria. */
@@ -152,6 +155,9 @@ export interface FiltroTransacoes {
   semNatureza?: boolean;
   /** #173 d): só estes lançamentos (o detalhe de um número de outra tela). */
   ids?: number[] | null;
+  /** #244: ordenação (sem ela, data mais recente primeiro). "valor" é sem o sinal: o maior lançamento primeiro. */
+  ordem?: OrdemTransacoes | null;
+  direcao?: 'asc' | 'desc' | null;
 }
 
 export interface PaginaTransacoes {
