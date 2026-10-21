@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ## [Não publicado]
 
+### Funcionalidades
+- **Câmbio em Investimentos: bandeira de cada moeda e mais moedas** (#278).
+  - Cada moeda ganhou a bandeira do país à direita do código (a do euro é a da União Europeia).
+  - Além do dólar, do euro e do iene, "Mais 7 moedas" mostra as outras que o Banco Central publica na PTAX: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca. O site lembra se você deixou aberto.
+  - As bandeiras são arquivos do próprio site ([flag-icons](https://github.com/lipis/flag-icons), MIT), sem buscar nada na internet.
+
 ### Correções
 - **Gráficos de barras com linha: a linha fica por cima, com um ponto em cada mês** (#282). Ela sumia atrás das barras no **Fluxo de caixa mensal** (Relatórios) e no **Saldo previsto** (Projeção). Agora é um padrão do site, aplicado sozinho a todo gráfico de barras com linha (também na Visão anual e em Investimentos), registrado na ADR 0021.
   - No Fluxo de caixa, a tabela ganhou a coluna "Saldo acumulado".

@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
 import { CotacaoMoeda } from '../../src/app/core/modelos';
 import { PrivacidadeService } from '../../src/app/core/privacidade.service';
-import { InvestimentosCambioComponent } from '../../src/app/paginas/investimentos-cambio.component';
+import { CHAVE_MAIS_MOEDAS, InvestimentosCambioComponent, MOEDAS_CAMBIO } from '../../src/app/paginas/investimentos-cambio.component';
 
 /**
  * #247: o câmbio em Investimentos. Dólar, euro e iene (por 100) em reais, pela PTAX de compra guardada; a data de cada
@@ -22,9 +22,11 @@ function abrir(resposta: unknown, hoje = '2026-10-21', ocultar = false) {
   fixture.componentInstance.hoje = hoje;
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
-  const linhas = () => [...el.querySelectorAll('.lista-cambio li')]
-    .map((li) => [...li.children].map((c) => c.textContent!.replace(/\s+/g, ' ').trim()).join(' '));
-  return { el, linhas };
+  const texto = (li: Element) => [...li.children].map((c) => c.textContent!.replace(/\s+/g, ' ').trim()).join(' ');
+  // As três à vista; as outras ficam na lista de "Mais moedas" (#278).
+  const linhas = () => [...el.querySelectorAll('.lista-cambio:not(.lista-cambio-mais) li')].map(texto);
+  const mais = () => [...el.querySelectorAll('.lista-cambio-mais li')].map(texto);
+  return { el, linhas, mais, fixture };
 }
 
 describe('Investimentos: câmbio do dia (#247)', () => {
@@ -69,5 +71,46 @@ describe('Investimentos: câmbio do dia (#247)', () => {
   it('erro ao ler as cotações: avisa em texto', () => {
     const { el } = abrir(throwError(() => new Error('falhou')));
     expect(el.textContent).toContain('Não deu para ler as cotações guardadas agora.');
+  });
+
+  it('#278: as 10 moedas da PTAX, cada uma com a sua bandeira; três à vista', () => {
+    expect(MOEDAS_CAMBIO.map((m) => m.codigo)).toEqual(['USD', 'EUR', 'JPY', 'GBP', 'CHF', 'CAD', 'AUD', 'DKK', 'NOK', 'SEK']);
+    expect(new Set(MOEDAS_CAMBIO.map((m) => m.bandeira)).size).toBe(10);
+    expect(MOEDAS_CAMBIO.filter((m) => m.principal).map((m) => m.codigo)).toEqual(['USD', 'EUR', 'JPY']);
+  });
+
+  it('#278: bandeira à direita do código, decorativa (alt vazio), do próprio site', () => {
+    const { el } = abrir(of({ atualizadoEm: null, cotacoes: [cotacao('USD', 5.43)] }));
+    const identificacao = el.querySelector('.lista-cambio li .moeda-identificacao')!;
+    expect([...identificacao.children].map((c) => c.tagName)).toEqual(['SPAN', 'IMG']);
+    const img = identificacao.querySelector('img')!;
+    expect(img.getAttribute('src')).toBe('bandeiras/us.svg');
+    expect(img.getAttribute('alt')).toBe('');
+  });
+
+  it('#278: "Mais moedas" abre as outras sete (padrão Disclosure) e lembra a escolha', () => {
+    localStorage.clear();
+    const { el, mais, fixture } = abrir(of({ atualizadoEm: null, cotacoes: [cotacao('USD', 5.43), cotacao('GBP', 7.2154)] }));
+    const botao = el.querySelector<HTMLButtonElement>('.botao-mais-moedas')!;
+    const lista = el.querySelector<HTMLElement>('#cambio-mais-moedas')!;
+    expect(botao.getAttribute('aria-expanded')).toBe('false');
+    expect(botao.getAttribute('aria-controls')).toBe('cambio-mais-moedas');
+    expect(lista.hidden).toBe(true);
+    expect(botao.textContent).toContain('Mais 7 moedas');
+
+    botao.click();
+    fixture.detectChanges();
+    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    expect(lista.hidden).toBe(false);
+    expect(botao.textContent).toContain('Menos moedas');
+    expect(mais()).toHaveLength(7);
+    expect(mais()[0]).toBe('GBP Libra esterlina · 1 libra R$ 7,22 PTAX de 20/10/2026');
+    expect(localStorage.getItem(CHAVE_MAIS_MOEDAS)).toBe('1');
+  });
+
+  it('#278: abre já aberto quando a pessoa deixou assim', () => {
+    localStorage.setItem(CHAVE_MAIS_MOEDAS, '1');
+    const { el } = abrir(of({ atualizadoEm: null, cotacoes: [] }));
+    expect(el.querySelector<HTMLElement>('#cambio-mais-moedas')!.hidden).toBe(false);
   });
 });
