@@ -17,6 +17,28 @@ describe('Regressão: selo de cada cobrança (#265)', () => {
     expect(servicoDe('GOOGLE *Google One')?.chave).toBe('google');
   });
 
+  it('reconhece as marcas mais comuns no Brasil pelos textos do extrato', () => {
+    const casos: [string, string][] = [
+      ['SPOTIFY P1A2B3', 'spotify'], ['TIM S/A', 'tim'], ['VIVO FIBRA', 'vivo'], ['TELEFONICA BRASIL', 'vivo'],
+      ['OI S.A.', 'oi'], ['OI FIBRA', 'oi'], ['CLARO SA', 'claro'], ['NET SERVICOS', 'claro'], ['IFD*IFOOD.COM', 'ifood'],
+      ['UBER *TRIP', 'uber'], ['UBER* EATS', 'ubereats'], ['99 TAXI', '99'], ['99*99APP', '99'], ['99FOOD', '99'],
+      ['AMAZON.COM.BR', 'amazon'], ['AMZN MKTP', 'amazon'], ['AMAZON PRIME', 'primevideo'],
+      ['MERCADOLIVRE*MERCADOLIVRE', 'mercadolivre'], ['MP*MERCADOLIVRE', 'mercadolivre'], ['MELI+ ASSINATURA', 'mercadolivre'],
+      ['RAPPI BRASIL', 'rappi'], ['SEM PARAR', 'semparar'], ['SABESP', 'sabesp'], ['ENEL DISTRIBUICAO SP', 'enel'],
+      ['UNIMED SAO PAULO', 'unimed'], ['SMARTFIT', 'smartfit'], ['DISNEY PLUS', 'disney'], ['GLOBOPLAY', 'globoplay'],
+      ['YOUTUBE MUSIC', 'youtubemusic'], ['GOOGLE GEMINI', 'gemini'], ['APPLE.COM/BILL', 'apple']
+    ];
+    for (const [texto, chave] of casos) expect([texto, servicoDe(texto)?.chave]).toEqual([texto, chave]);
+  });
+
+  it('palavra comum não vira marca: "OI" só sozinho, Méliuz não é Mercado Livre, "LIGHT" só com "SERV"', () => {
+    expect(servicoDe('COMPRA OIAPOQUE')).toBeNull();
+    expect(servicoDe('MELIUZ CASHBACK')).toBeNull();
+    expect(servicoDe('COCA LIGHT')).toBeNull();
+    expect(servicoDe('LIGHT SERVICOS DE ELETRICIDADE')?.chave).toBe('light');
+    expect(servicoDe('CANETA AZUL')).toBeNull();
+  });
+
   it('termo curto só casa com a palavra inteira; o texto da cobrança vale antes do nome', () => {
     expect(servicoDe('TIMBRE ESCOLA')).toBeNull();
     expect(servicoDe('POSTO UBERLANDIA')).toBeNull();

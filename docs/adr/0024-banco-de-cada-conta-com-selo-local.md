@@ -77,7 +77,9 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
 - **O que mudou:** o mesmo selo local identifica também o **serviço de cada cobrança** em Contas a pagar (aba Contas a
   pagar, Assinaturas e recorrentes e Sugestões do extrato): YouTube, Netflix, Spotify, iFood, TIM, Claro, Esfera…
   - Lista em `compartilhado/servicos.ts`, gerada a partir do pacote `simple-icons` 16.35.0 (CC0): o desenho quando o
-    Simple Icons tem a marca (28 dos 46), senão um selo próprio com a cor da marca e uma sigla, como os bancos sem desenho.
+    Simple Icons tem a marca (44 dos 116), senão um selo próprio com a cor da marca e uma sigla, como os bancos sem desenho.
+    A maioria das marcas brasileiras (TIM, Claro, Oi, 99, Rappi, Magalu, Sem Parar, Sabesp, Enel, Unimed…) não está no
+    Simple Icons e fica com a sigla; as cores são aproximadas, e o selo não é o logotipo oficial.
   - O serviço é reconhecido no front-end pelo texto da cobrança (e depois pelo nome), em ordem do mais específico para o
     mais geral; termo de até 4 letras só casa com a palavra inteira ("TIM" não casa com "TIMBRE").
   - Sem serviço conhecido: o **ícone da categoria** (Lucide, `IconesCategoria` em `icones.ts`) num quadrado neutro;
