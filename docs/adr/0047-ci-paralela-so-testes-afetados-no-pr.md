@@ -55,4 +55,5 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - **arquivo novo que vale para todas as telas** (estilo global, serviço do `core/`) entra nas regras de `GLOBAIS` do `testes-afetados.py`, se não estiver numa pasta que já está lá;
   - **teste no navegador novo** abre a tela pela rota escrita (`page.goto('/transacoes')`), para a seleção achar;
   - **ver o que rodaria aqui:** `python3 scripts/ci/testes-afetados.py --base origin/develop` (mostra os comandos);
+  - **rodar aqui antes do push** (#286, 2026-10-21): `cd src/frontend && NAVEGADOR=chromium npm run test:afetados`. Ele usa a mesma decisão, soma o que ainda não foi commitado (`--local`) e roda o Jest, o build e o navegador (`--executar`). Chama o Node direto com o executável de cada ferramenta, porque no Windows o `npx.cmd` passa pelo `cmd.exe`, que lê o `<` de `<rootDir>` como redirecionamento;
   - **mexeu em CI:** tempo antes e depois no PR, por job (regra da #204).

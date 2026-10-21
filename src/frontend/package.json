@@ -10,7 +10,8 @@
     "test:regressao": "jest testes/regressao",
     "test:usabilidade": "jest testes/usabilidade",
     "test:tipos": "tsc -p tsconfig.spec.json --noEmit",
-    "test:navegador": "ng build --configuration production && playwright test"
+    "test:navegador": "ng build --configuration production && playwright test",
+    "test:afetados": "node testes/rodar-afetados.mjs"
   },
   "dependencies": {
     "@angular/common": "^22.2.3",

@@ -16,6 +16,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o endereço do próprio computador aparece como "Acesso local".
 
 ### Publicação e documentação
+- **Testes afetados também localmente** (#286): `npm run test:afetados`, em `src/frontend`. Ele roda o Jest, o build e os testes no navegador **só no que mudou** desde o develop, inclusive o que ainda não foi commitado, com a mesma escolha que a CI faz no PR. Numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira, que continua rodando na CI, no merge.
 - **A skill `trabalho-longo` é oferecida na hora certa** (#280). Numa sessão com muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou quando acabou o limite de uso. Agora:
   - o `CLAUDE.md` e a skill têm um critério objetivo: mais de uma issue ou PR, a 2ª issue na mesma conversa, ou conversa já resumida;
   - um hook do Claude Code, versionado em `.claude/settings.json`, lembra automaticamente quando o pedido tem link de issue ou PR ou a sessão fica longa. Vale para todos do projeto; para desligar, use `FINANCAS_SEM_LEMBRETE_TRABALHO_LONGO=1`.

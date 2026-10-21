@@ -18,6 +18,7 @@ dotnet build FinancasLocal.sln -c Release      # back-end (Financas.Api + Financ
 cd src/frontend && npm run build                # front-end (produção)
 cd src/frontend && npm test                     # testes do front-end (Jest): test:regressao | test:usabilidade | test:tipos
 cd src/frontend && npm run test:navegador       # testes no navegador (Playwright): build de produção + CSP da API + API falsa (ADR 0041)
+cd src/frontend && npm run test:afetados        # antes do push: Jest + navegador só no que mudou desde o develop (#286, mesma escolha da CI)
 cd src/frontend && npm start                    # front-end em dev (http://localhost:4200, proxy /api -> API)
 
 # CI roda também:
@@ -43,7 +44,10 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 **Testes no navegador** (Playwright, [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)), em `src/frontend/testes-navegador/`: o build de produção com a CSP da API e a API falsa (`api-falsa.ts`, sem dado real); cada tela do menu abre sem erro de console, exceção ou bloqueio de CSP, em computador e celular. **Mudou tela, CSS, rota ou chamada da API no front-end? Use a skill `testar-no-navegador`** (`.claude/skills/`): roda a regressão, tira prints das telas mudadas para olhar e diz o que foi conferido. Tela nova no menu entra em `TELAS` (`base.ts`), e endpoint novo, na API falsa.
 
 **Antes de subir (push) mudança no front-end, rode os testes no navegador com o mesmo navegador da CI** (#264: passou no Edge daqui e falhou na CI):
-- `npx playwright install chromium` uma vez; depois `NAVEGADOR=chromium npx playwright test` (o Chromium do Playwright, o mesmo da CI). O Edge do computador continua para o dia a dia.
+- `npx playwright install chromium` uma vez; depois **`NAVEGADOR=chromium npm run test:afetados`** (#286), com o Chromium do Playwright, o mesmo da CI.
+  - Ele roda o Jest, o build e o navegador **só no que o PR afeta**, inclusive o que não foi commitado, com a mesma escolha da CI (ADR 0047). Arquivo global roda tudo.
+  - Numa tela só: ~45 s, contra ~2,7 min da suíte inteira, que continua rodando na CI, no merge.
+  - Não rode a suíte inteira a cada envio. O Edge do computador continua para o dia a dia.
 - **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
 - **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
 - No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).

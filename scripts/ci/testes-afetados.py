@@ -15,6 +15,8 @@
 
 Uso na CI:  python3 scripts/ci/testes-afetados.py --base origin/develop   (escreve em $GITHUB_OUTPUT e no resumo)
 Uso local:  python3 scripts/ci/testes-afetados.py --base origin/develop   (mostra o que rodaria e os comandos)
+Rodar:      cd src/frontend && npm run test:afetados   (#286: --base origin/develop --local --executar; inclui o que
+            ainda não foi commitado e roda Jest e navegador só nos afetados; NAVEGADOR=chromium para o navegador da CI)
 Teste:      python3 scripts/ci/testes-afetados.py --arquivos a.ts b.css    (sem git; simula a lista de mudados)
 """
 import argparse
@@ -54,9 +56,49 @@ def git(*args):
     return subprocess.run(['git', *args], cwd=RAIZ, capture_output=True, text=True, check=True).stdout
 
 
-def mudados(base):
+def mudados(base, local=False):
+    """Arquivos mudados desde a base. Com local=True (#286), também o que ainda não foi commitado (alterado e novo)."""
     ponto = git('merge-base', base, 'HEAD').strip()
-    return [l for l in git('diff', '--name-only', f'{ponto}...HEAD').splitlines() if l.strip()]
+    lista = [l for l in git('diff', '--name-only', f'{ponto}...HEAD').splitlines() if l.strip()]
+    if local:
+        lista += git('diff', '--name-only', 'HEAD').splitlines()
+        lista += git('ls-files', '--others', '--exclude-standard').splitlines()
+    return sorted({l.strip() for l in lista if l.strip()})
+
+
+def executar(d):
+    """#286: roda localmente o que a CI rodaria (Jest e navegador só nos afetados). Devolve o código de saída."""
+    import shutil
+    front = os.path.join(RAIZ, FRONT)
+    # Node direto com o executável de cada ferramenta, sem npx/npm: no Windows eles são .cmd e passam pelo cmd.exe,
+    # que lê o "<" de "<rootDir>" como redirecionamento de arquivo.
+    node = shutil.which('node') or 'node'
+    jest = [node, os.path.join(front, 'node_modules', 'jest', 'bin', 'jest.js')]
+    ng = [node, os.path.join(front, 'node_modules', '@angular', 'cli', 'bin', 'ng.js')]
+    playwright = [node, os.path.join(front, 'node_modules', '@playwright', 'test', 'cli.js')]
+    build = ('build de produção', [*ng, 'build', '--configuration', 'production'])
+    passos = []
+    if not d['frontend']:
+        print('\nNada do front-end mudou: nenhum teste a rodar.')
+        return 0
+    if d['tudo']:
+        passos += [('Jest (tudo)', jest), build, ('navegador (tudo)', [*playwright, 'test'])]
+    else:
+        if d.get('jest'):
+            passos.append(('Jest (afetados)', [*jest, '--roots', '<rootDir>/testes', '--roots', '<rootDir>/src',
+                                               '--findRelatedTests', *d['jest'], '--passWithNoTests']))
+        if d.get('grep'):
+            passos += [build, ('navegador (afetados)', [*playwright, 'test', '--grep', d['grep']])]
+    if not passos:
+        print('\nNenhum teste ligado ao que mudou.')
+        return 0
+    for nome, comando in passos:
+        print(f'\n==> {nome}', flush=True)
+        if subprocess.run(comando, cwd=front).returncode != 0:
+            print(f'\nFalhou: {nome}.')
+            return 1
+    print('\nTudo certo nos testes afetados. A suíte inteira roda na CI, no merge.')
+    return 0
 
 
 def rotas_por_componente():
@@ -168,11 +210,13 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--base', help='ref da base (ex.: origin/develop); sem ela, tudo')
     p.add_argument('--arquivos', nargs='*', help='simula a lista de arquivos mudados (sem git)')
+    p.add_argument('--local', action='store_true', help='soma o que ainda não foi commitado (#286)')
+    p.add_argument('--executar', action='store_true', help='roda o Jest e o navegador só nos afetados (#286)')
     a = p.parse_args()
     if a.arquivos is not None:
         lista = a.arquivos
     elif a.base:
-        lista = mudados(a.base)
+        lista = mudados(a.base, a.local)
     else:
         lista = None
     d = decidir(lista) if lista is not None else {'frontend': True, 'tudo': True, 'motivo': ['sem base (push): tudo']}
@@ -204,7 +248,7 @@ def main():
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
             f.write(texto + '\n')
-    return 0
+    return executar(d) if a.executar else 0
 
 
 if __name__ == '__main__':

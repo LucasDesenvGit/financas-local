@@ -27,13 +27,19 @@ Cada tela do menu tem de abrir **sem**: erro no console, exceção, bloqueio da 
 
 ```bash
 npx playwright install chromium                         # uma vez
-NAVEGADOR=chromium npx playwright test                  # tudo, com o Chromium da CI
+NAVEGADOR=chromium npm run test:afetados                # antes do push: só o que o PR afeta (Jest + build + navegador)
 NAVEGADOR=chromium npx playwright test <arquivo> --repeat-each=5   # teste novo: 5 vezes, computador e celular
+NAVEGADOR=chromium npx playwright test                  # tudo, com o Chromium da CI (quando quiser a suíte inteira)
 ```
 
-Falhou só na CI? `gh run download <run> -n testes-navegador` e olhe o print e o `error-context.md` antes de mexer; não suba tentativas para ver se passa.
+`npm run test:afetados` (#286) faz a mesma escolha da CI no PR (ADR 0047), contando também o que ainda não foi commitado:
+- só os testes ligados ao que mudou desde o `develop`;
+- tudo, se mudou arquivo global (estilos, `core/`, configuração);
+- nada, se o front-end não mudou.
 
-Para rodar só o que o PR afeta (o mesmo que a CI faz, ADR 0047): `python3 ../../scripts/ci/testes-afetados.py --base origin/develop` mostra o comando do Playwright e do Jest; antes do push, a suíte inteira continua valendo.
+Numa mudança de uma tela, leva uns 45 s, contra uns 2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge. `python3 ../../scripts/ci/testes-afetados.py --base origin/develop` só mostra o que rodaria.
+
+Falhou só na CI? `gh run download <run> -n testes-navegador` e olhe o print e o `error-context.md` antes de mexer; não suba tentativas para ver se passa.
 
 Para simular a CI mais lenta: `--workers=8 --repeat-each=10 --retries=0`. Medida em px com folga de 0,5 (`toBeGreaterThanOrEqual(23.5)` para 24 px: no Linux da CI, 24 vira 23,99997); depois de um clique que troca o conteúdo, espere a troca (`not.toHaveText(antes)`) antes de ler.
 
