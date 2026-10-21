@@ -37,7 +37,7 @@ describe('Regressão: selo de cada cobrança (#265)', () => {
       ['MP*MP', 'mercadopago'], ['MP*JULIOCEZARSIL', 'mercadopago'], ['MERCADO PAGO*LOJA', 'mercadopago'],
       ['MP*MERCADOLIVRE', 'mercadolivre'],                        // é do Mercado Livre, não do Mercado Pago
       ['PIX ENVIADO PESSOA EXEMPLO', 'pix'], ['PIX RECEBIDO', 'pix'], ['PIX NETFLIX.COM', 'netflix'],   // marca antes do Pix
-      ['COBASI', 'cobasi'], ['PETZ', 'petz'], ['PETLOVE*ASSINATURA', 'petlove'], ['Petlove Saud*Petlove S', 'petlove'],
+      ['BILHUNICO', 'bilheteunico'], ['BILHETE UNICO SPTRANS', 'bilheteunico'], ['COBASI', 'cobasi'], ['PETZ', 'petz'], ['PETLOVE*ASSINATURA', 'petlove'], ['Petlove Saud*Petlove S', 'petlove'],
       ['EXTRA HIPER 123', 'extra'], ['MERCADO EXTRA', 'extra'], ['EXTRA.COM.BR', 'extra']
     ];
     for (const [texto, chave] of casos) expect([texto, servicoDe(texto)?.chave]).toEqual([texto, chave]);

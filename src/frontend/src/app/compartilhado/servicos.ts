@@ -16,7 +16,7 @@ import { VisualBanco } from './bancos';
  * com "TIMBRE", nem "UBER" com "UBERLANDIA"). Termo de várias palavras casa com elas em sequência.
  * Gerado a partir do pacote simple-icons 16.35.0; serviço novo: acrescente aqui (e o caminho do Simple Icons, se tiver).
  * As cores dos selos com sigla são aproximadas das marcas; não são o logotipo oficial. O Petlove tem um desenho próprio
- * (uma pata), também não oficial.
+ * (uma pata) e o Bilhete Único, um ônibus; também não oficiais.
  */
 export interface Servico { chave: string; termos: string[]; visual: VisualBanco }
 
@@ -60,6 +60,7 @@ export const SERVICOS: Servico[] = [
   { chave: '99', termos: ['99APP', '99 POP', '99POP', '99 TAXI', '99TAXI', '99 FOOD', '99FOOD', '99 TECNOLOGIA'], visual: { nome: '99', fundo: '#FFDD00', cor: '#1A1A1A', sigla: '99' } },
   { chave: 'cabify', termos: ['CABIFY'], visual: { nome: 'Cabify', fundo: '#7145D6', cor: '#FFFFFF', sigla: 'C' } },
   { chave: 'indrive', termos: ['INDRIVE', 'INDRIVER'], visual: { nome: 'inDrive', fundo: '#C1F11D', cor: '#1A1A1A', sigla: 'iD' } },
+  { chave: 'bilheteunico', termos: ['BILHUNICO', 'BILHETE UNICO', 'BILHETEUNICO', 'SPTRANS'], visual: { nome: 'Bilhete Único', fundo: '#0057A4', cor: '#FFFFFF', caminho: 'M7 3.5h10a2 2 0 0 1 2 2V17a1 1 0 0 1 -1 1H6a1 1 0 0 1 -1 -1V5.5a2 2 0 0 1 2 -2ZM7 6v5.5h10V6ZM7 13.5v1.6h2.2v-1.6ZM14.8 13.5v1.6H17v-1.6ZM6.4 19.6a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0ZM14.4 19.6a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z' } },
   { chave: 'semparar', termos: ['SEM PARAR', 'SEMPARAR'], visual: { nome: 'Sem Parar', fundo: '#F15A22', cor: '#FFFFFF', sigla: 'SP' } },
   { chave: 'conectcar', termos: ['CONECTCAR'], visual: { nome: 'ConectCar', fundo: '#00A859', cor: '#FFFFFF', sigla: 'CC' } },
   { chave: 'veloe', termos: ['VELOE'], visual: { nome: 'Veloe', fundo: '#FF5F00', cor: '#FFFFFF', sigla: 'V' } },
