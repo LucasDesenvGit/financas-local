@@ -4,6 +4,7 @@ using Financas.Api.Entidades;
 using Financas.Api.Seguranca;
 using Financas.Api.Servicos;
 using Financas.Api.Servicos.Cambio;
+using Financas.Api.Servicos.Cripto;
 using Financas.Api.Servicos.Diagnostico;
 using Financas.Api.Servicos.Investimentos;
 using Financas.Api.Servicos.Pluggy;
@@ -133,6 +134,7 @@ builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<SincronizacaoService>();
 builder.Services.AddHostedService<SincronizacaoHostedService>();
 builder.Services.AddHostedService<CambioHostedService>();
+builder.Services.AddHostedService<CriptoHostedService>();
 
 // Erros e avisos do próprio código vão também para o banco, sem dados sensíveis (#11, ADR 0022).
 builder.Services.AddSingleton<FilaErros>();
@@ -161,6 +163,14 @@ builder.Services.AddHttpClient<CambioService>(c =>
 {
     c.BaseAddress = new Uri("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/");
     c.Timeout = TimeSpan.FromSeconds(30);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("FinancasLocal/1.0");
+    c.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+});
+// ADR 0048: cotação de criptomoedas (API pública do Mercado Bitcoin, sem chave; só os pares fixos são enviados).
+builder.Services.AddHttpClient<CriptoService>(c =>
+{
+    c.BaseAddress = new Uri("https://api.mercadobitcoin.net/api/v4/");
+    c.Timeout = TimeSpan.FromSeconds(20);
     c.DefaultRequestHeaders.UserAgent.ParseAdd("FinancasLocal/1.0");
     c.DefaultRequestHeaders.Accept.ParseAdd("application/json");
 });

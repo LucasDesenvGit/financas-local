@@ -594,3 +594,19 @@ CREATE TABLE IF NOT EXISTS HistoricoInvestimento
     AtualizadoEm        TEXT    NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_HistoricoInvestimento_Investimento_Data ON HistoricoInvestimento (PluggyInvestmentId, Data);
+
+/* ------------------------------------------------------------------ */
+/* Cotação de criptomoedas (#279, ADR 0048)                            */
+/* ------------------------------------------------------------------ */
+/* Último negócio em reais no Mercado Bitcoin (API pública), gravado a cada 30 minutos pela API (CriptoHostedService)
+   e guardado por 30 dias, para a tela funcionar sem internet e para a variação em 24 h. Cripto negocia 24 h por dia:
+   a chave é moeda + data e hora da fonte (UTC). */
+CREATE TABLE IF NOT EXISTS CotacaoCripto
+(
+    Moeda        TEXT NOT NULL,
+    DataHora     TEXT NOT NULL,
+    Preco        TEXT NOT NULL,
+    -- Preenchido pela API (CotacaoCripto.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    AtualizadoEm TEXT NOT NULL,
+    CONSTRAINT PK_CotacaoCripto PRIMARY KEY (Moeda, DataHora)
+);

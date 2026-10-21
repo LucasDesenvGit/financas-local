@@ -7,6 +7,7 @@ Navegador (Angular)  ──HTTPS 127.0.0.1:5443──►  Financas.Api (.NET 10,
                                                    ├─► api.pluggy.ai          (Open Finance)
                                                    ├─► api.bcb.gov.br         (Selic)
                                                    ├─► olinda.bcb.gov.br      (câmbio — PTAX)
+                                                   ├─► api.mercadobitcoin.net (cripto, ADR 0048)
                                                    └─► Yahoo Finance/brapi    (cotações)
 ```
 
@@ -23,6 +24,7 @@ O Angular é publicado dentro da própria API (`wwwroot`), então site e API tê
 | `Servicos/Pluggy/` | Cliente HTTP da Pluggy (sem SDK), modelos e sincronização (agendada pelo `SincronizacaoHostedService`). |
 | `Servicos/Investimentos/` | Carteira de renda variável, cotações (`CotacaoService`), Selic (`SelicService`), FIIs (`FiiService`), importação pelo extrato (`ExtratoCarteiraService`), conferência com a corretora e o extrato (`ConferenciaInvestimentosService`, ADR 0027; o troco "sem dúvida" é classificado depois da sincronização, ADR 0044) reservas estimadas pelo extrato (`ReservaService`, que também estima o Méli Dólar em dólar, ADR 0038) e o histórico de saldo dos investimentos do Open Finance, com o rendimento de cada mês (`HistoricoInvestimentosService`, tabela `HistoricoInvestimento`, ADR 0045). |
 | `Servicos/Cambio/` | Cotação PTAX de moedas estrangeiras (`CambioService`), guardada no banco para uso offline e atualizada pelo `CambioHostedService`. |
+| `Servicos/Cripto/` | Cotação de criptomoedas em reais pelo Mercado Bitcoin (`CriptoService`, ADR 0048), guardada no banco por 30 dias e atualizada a cada 30 minutos pelo `CriptoHostedService`. |
 | `Servicos/Diagnostico/` | Erros do sistema ([ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md)): `RegistroErrosLoggerProvider` (avisos e erros do `ILogger` das classes `Financas.*`), `FilaErros`, `GravadorErrosHostedService` (grava na tabela `ErroSistema`, agrupa repetições e apaga os antigos) e `Sanitizador` (tira tokens, senhas, CPF e valores antes de gravar). |
 | `Entidades/` | Classes mapeadas no EF Core. |
 | `Data/FinancasDbContext.cs` | Mapeamento das tabelas (nomes, tamanhos, precisão, índices) — em sincronia manual com `banco/01-estrutura.sql`. |

@@ -23,6 +23,7 @@ import { TermoComponent } from '../compartilhado/termo.component';
 import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component';
 import { InvestimentosFiisComponent } from './investimentos-fiis.component';
 import { InvestimentosCambioComponent } from './investimentos-cambio.component';
+import { InvestimentosCriptoComponent } from './investimentos-cripto.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
 import { RendimentoInvestimentosOfComponent } from './rendimento-investimentos-of.component';
 import { conferenciaForaDoEsperado, podeConferirReserva, valorEsperadoDaReserva } from './reserva-conferencia';
@@ -58,7 +59,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent, InvestimentosCambioComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent, InvestimentosCambioComponent, InvestimentosCriptoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -153,6 +154,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
           <!-- #247: dólar, euro e iene em reais (PTAX), compacto, de apoio à carteira. -->
           <app-investimentos-cambio />
+
+          <!-- #279 (ADR 0048): criptomoedas em reais (Mercado Bitcoin), logo abaixo do câmbio. -->
+          <app-investimentos-cripto />
 
           <app-mais-analises chave="investimentos" conteudo="distribuição por tipo e rentabilidade de cada ativo x Selic">
             <ng-template>
