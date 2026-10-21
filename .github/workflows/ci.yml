@@ -100,6 +100,11 @@ jobs:
       - name: Compilar API
         run: dotnet build FinancasLocal.sln -c Release
 
+      # #309: liga a API de verdade (banco temporário, HTTPS com certificado descartável) e espera /api/auth/estado:
+      # pega o que só aparece ao iniciar. O que é só do Windows continua com o teste do .msi (ADR 0047).
+      - name: Ligar a API (teste de inicialização)
+        run: bash scripts/ci/ligar-api.sh Release
+
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py
 
