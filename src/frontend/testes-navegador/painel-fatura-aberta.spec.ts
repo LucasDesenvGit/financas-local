@@ -1,9 +1,12 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './base';
 
-/** Quantos cards há em cada linha da grade (pelo topo de cada um). */
+/**
+ * Quantos cards há em cada linha da grade, pelo topo de cada um no layout (offsetTop). O getBoundingClientRect conta a
+ * animação de entrada ("surgir", translateY de 4 px): o card que acabou de entrar parecia estar em outra linha.
+ */
 async function cardsPorLinha(page: Page, grade: string): Promise<number[]> {
-  const topos = await page.locator(`${grade} .kpi`).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  const topos = await page.locator(`${grade} .kpi`).evaluateAll((els) => els.map((e) => (e as HTMLElement).offsetTop));
   const linhas = new Map<number, number>();
   for (const y of topos) linhas.set(y, (linhas.get(y) ?? 0) + 1);
   return [...linhas.values()];
