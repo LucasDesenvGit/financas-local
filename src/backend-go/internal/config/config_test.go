@@ -3,8 +3,19 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 )
+
+// absoluto devolve um caminho absoluto no sistema em que o teste roda: "/srv/x" no Linux e "C:/srv/x" no Windows,
+// onde "/srv/x" não é absoluto (sem a letra do disco) e seria resolvido a partir da pasta base.
+func absoluto(p string) string {
+	if runtime.GOOS == "windows" {
+		return "C:" + p
+	}
+	return p
+}
 
 func escrever(t *testing.T, pasta, nome, conteudo string) {
 	t.Helper()
@@ -32,16 +43,17 @@ const (
 func TestCarregarComoOsScriptsGeram(t *testing.T) {
 	pasta := t.TempDir()
 	escrever(t, pasta, "appsettings.json", appsettingsDaAPI)
-	escrever(t, pasta, "appsettings.Production.json", producaoDosScripts)
+	escrever(t, pasta, "appsettings.Production.json", strings.ReplaceAll(producaoDosScripts, `"/srv/`, `"`+absoluto("/srv/")))
 
 	c, err := Carregar(pasta, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	esperado := Config{
-		PastaBase: pasta, BancoCaminho: "/srv/financas/dados/sql/FinancasLocal.db", PastaChaves: "/srv/financas/dados/chaves",
-		MinutosSessao: 120, PluggyURLBase: "https://api.pluggy.ai/", Endereco: "127.0.0.1:5443",
-		CertificadoCaminho: "/srv/financas/dados/chaves/financaslocal.pfx", CertificadoSenha: "segredo",
+		PastaBase: pasta, BancoCaminho: filepath.Clean(absoluto("/srv/financas/dados/sql/FinancasLocal.db")),
+		PastaChaves: filepath.Clean(absoluto("/srv/financas/dados/chaves")), MinutosSessao: 120,
+		PluggyURLBase: "https://api.pluggy.ai/", Endereco: "127.0.0.1:5443",
+		CertificadoCaminho: filepath.Clean(absoluto("/srv/financas/dados/chaves/financaslocal.pfx")), CertificadoSenha: "segredo",
 	}
 	if c.BancoCaminho != esperado.BancoCaminho || c.PastaChaves != esperado.PastaChaves || c.Endereco != esperado.Endereco ||
 		c.CertificadoCaminho != esperado.CertificadoCaminho || c.CertificadoSenha != esperado.CertificadoSenha ||
@@ -56,12 +68,12 @@ func TestCarregarComoOsScriptsGeram(t *testing.T) {
 func TestChavesSemDiferencaDeMaiusculas(t *testing.T) {
 	pasta := t.TempDir()
 	escrever(t, pasta, "appsettings.json", appsettingsDaAPI)
-	escrever(t, pasta, "appsettings.Production.json", `{ "banco": { "caminho": "/outro.db" }, "seguranca": { "minutossessao": 30 } }`)
+	escrever(t, pasta, "appsettings.Production.json", `{ "banco": { "caminho": "`+absoluto("/outro.db")+`" }, "seguranca": { "minutossessao": 30 } }`)
 	c, err := Carregar(pasta, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.BancoCaminho != "/outro.db" || c.MinutosSessao != 30 {
+	if c.BancoCaminho != filepath.Clean(absoluto("/outro.db")) || c.MinutosSessao != 30 {
 		t.Errorf("o arquivo do ambiente deveria ganhar, sem diferença de maiúsculas: %+v", c)
 	}
 }
