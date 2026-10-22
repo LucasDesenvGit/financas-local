@@ -10,7 +10,7 @@ import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -238,18 +238,30 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
               </app-grafico-explicado>
             </section>
             <section class="painel-bloco">
-              <div class="bloco-titulo"><h2>Últimas transações</h2><a routerLink="/transacoes">ver todas</a></div>
+              <!-- #334: as últimas vão só até hoje; as futuras (parcelas já lançadas) ficam atrás do botão "Futuras". -->
+              <div class="bloco-titulo">
+                <h2>{{ verFuturas() ? 'Próximas transações' : 'Últimas transações' }}</h2>
+                @if (d.quantidadeFuturas) {
+                  <div class="segmentado segmentado-transacoes" role="group" aria-label="Quais transações mostrar">
+                    <button type="button" [class.ativo]="!verFuturas()" [attr.aria-pressed]="!verFuturas()"
+                      (click)="verFuturas.set(false)">Até hoje</button>
+                    <button type="button" [class.ativo]="verFuturas()" [attr.aria-pressed]="verFuturas()"
+                      (click)="verFuturas.set(true)">Futuras ({{ d.quantidadeFuturas }})</button>
+                  </div>
+                }
+                <a routerLink="/transacoes" [queryParams]="linkTodas()">ver todas</a>
+              </div>
               <ul class="lista-simples">
-                @for (t of d.ultimasTransacoes; track t.id) {
+                @for (t of (verFuturas() ? (d.transacoesFuturas ?? []) : d.ultimasTransacoes); track t.id) {
                   <li>
-                    <span class="data-curta">{{ t.data | date: 'dd/MM' }}</span>
+                    <span class="data-curta">{{ t.data | date: (verFuturas() ? 'dd/MM/yy' : 'dd/MM') }}</span>
                     <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao" [tipo]="t.tipoLancamento"
                       [categoria]="t.categoriaNome" [tamanho]="22" />
                     <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}</span>
                     <span class="valor" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</span>
                   </li>
                 } @empty {
-                  <li class="vazio">Sem transações ainda.</li>
+                  <li class="vazio">{{ verFuturas() ? 'Nenhuma transação com data futura.' : 'Sem transações ainda.' }}</li>
                 }
               </ul>
             </section>
@@ -262,6 +274,13 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
+    /* #334: "Até hoje" e "Futuras" no cabeçalho de "Últimas transações"; no celular, numa linha própria, na largura toda. */
+    .segmentado-transacoes { flex-shrink: 0; white-space: nowrap; margin-left: auto; }
+    @media (max-width: 760px) {
+      .bloco-titulo:has(.segmentado-transacoes) { flex-wrap: wrap; }
+      .segmentado-transacoes { order: 3; flex-basis: 100%; margin-left: 0; display: flex; }
+      .segmentado-transacoes button { flex: 1; }
+    }
     .kpi-credito { position: relative; overflow: hidden; }
     .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
     .kpi-financiamento::before { background: #8fa8f0; }
@@ -292,6 +311,15 @@ export class PainelComponent implements OnInit {
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   /** UX-12: "Situação hoje" é sempre a posição de hoje; "Mês de …" segue o seletor. */
   readonly hoje = new Date();
+  /** #334: "Últimas transações" mostra as até hoje ou as futuras (parcelas já lançadas com data depois de hoje). */
+  readonly verFuturas = signal(false);
+
+  /** "ver todas" leva a Transações no mesmo recorte: até hoje, ou de amanhã em diante. */
+  linkTodas(): Record<string, string> {
+    const amanha = new Date(this.hoje.getFullYear(), this.hoje.getMonth(), this.hoje.getDate() + 1);
+    return this.verFuturas() ? paramsTransacoes({ inicio: dataIso(amanha) }) : paramsTransacoes({ fim: dataIso(this.hoje) });
+  }
+
   readonly nomeMes = computed(() => `${NOMES_MESES[this.periodo().mes - 1]}/${this.periodo().ano}`);
   /** #322: cartões escolhidos em Contas e cartões (neste navegador) e as contas, carregadas só se houver algum. */
   private readonly cartoesNoPainel = lerCartoesNoPainel();

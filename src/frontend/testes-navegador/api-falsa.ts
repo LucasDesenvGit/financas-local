@@ -124,7 +124,9 @@ const respostas: Record<string, unknown> = {
   '/api/painel': {
     saldoContas: 3250.5, dividaCartoes: 820.1, totalInvestido: 10000, patrimonioLiquido: 12430.4, rendaVariavel: 4000,
     patrimonioSemRendaVariavel: 8430.4, receitasMes: 5000, despesasMes: 1950, gastosPorCategoria: porCategoria, evolucao,
-    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes, alertas: ['Conta "Aluguel" vencida desde 05/10.'],
+    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes,
+    // #334: uma parcela já lançada com data futura, fora de "Últimas".
+    transacoesFuturas: [{ ...transacoes[0], id: 900, descricao: 'Loja Exemplo 11/11', data: dataIso(new Date(ano, hoje.getMonth() + 5, 15)), valor: -200.73 }], quantidadeFuturas: 1, alertas: ['Conta "Aluguel" vencida desde 05/10.'],
     ultimaSincronizacao: hoje.toISOString(), orcamentosEstourados,
     despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7,
     faturasDoMes: [
