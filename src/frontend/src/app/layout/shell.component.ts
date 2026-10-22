@@ -6,6 +6,7 @@ import { ajudaDaUrl } from '../paginas/manual-conteudo';
 import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.component';
 import { CalculadoraComponent } from '../compartilhado/calculadora.component';
 import { StatusSincronizacaoComponent } from '../compartilhado/status-sincronizacao.component';
+import { NotificacoesComponent } from '../compartilhado/notificacoes.component';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
@@ -105,7 +106,7 @@ export function roteiroDaTela(rota: string): string {
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, BotaoPrivacidadeComponent, CalculadoraComponent, MenuUsuarioComponent,
-    IconeComponent, StatusSincronizacaoComponent],
+    IconeComponent, StatusSincronizacaoComponent, NotificacoesComponent],
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()" [class.menu-recolhido]="recolhidoNoComputador()">
       <!-- #131: menu escondido (recolhido no computador, gaveta fechada no celular) fica fora do Tab (inert). -->
@@ -207,6 +208,8 @@ export function roteiroDaTela(rota: string): string {
                 <app-icone [icone]="Icones.ajuda" [tamanho]="18" /><span class="rotulo-ajuda">Ajuda</span>
               </a>
             }
+            <!-- #327: avisos e orçamentos estourados, em qualquer tela (saíram do topo do Painel). -->
+            <app-notificacoes />
             <app-status-sincronizacao />
             <app-botao-privacidade />
             <app-calculadora />

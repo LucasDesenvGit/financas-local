@@ -382,6 +382,13 @@ export interface Projecao {
   meses: ProjecaoMes[]; categorias: ProjecaoCategoria[];
 }
 
+/** #327: avisos e orçamentos estourados do mês atual (as notificações da barra do topo). */
+export interface Avisos {
+  ano: number; mes: number; alertas: string[]; orcamentosEstourados: Orcamento[];
+  /** #9/#327: transações recentes com descrição pouco informativa (aviso discreto, fora do contador). */
+  poucoInformativas?: number; poucoInformativasDesde?: string | null; exemploPoucoInformativa?: string | null;
+}
+
 export interface Painel {
   saldoContas: number; dividaCartoes: number; totalInvestido: number; patrimonioLiquido: number;
   rendaVariavel: number; patrimonioSemRendaVariavel: number;

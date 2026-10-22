@@ -10,7 +10,7 @@ import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -19,13 +19,12 @@ import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component'
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
-import { PainelAvisosComponent } from './painel-avisos.component';
 import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 
 @Component({
   selector: 'app-painel',
   imports: [KpiFaturasAbertasComponent, MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
-    MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent, SeloServicoComponent],
+    MaisAnalisesComponent, LogoBancoComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -39,15 +38,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
     @if (erro()) { <p class="erro">{{ erro() }}</p> }
 
     @if (dados(); as d) {
-      <!-- #206: orçamentos estourados agrupados e os outros avisos, os dois com "Ocultar". -->
-      <app-painel-avisos [estourados]="d.orcamentosEstourados ?? []" [alertas]="d.alertas" [periodo]="periodo()" />
-      @if (d.poucoInformativas > 0) {
-        <p class="nota-discreta">
-          {{ d.poucoInformativas === 1 ? '1 transação' : d.poucoInformativas + ' transações' }} dos últimos 90 dias com
-          <app-termo chave="descricaoPoucoInformativa">descrição pouco informativa</app-termo>@if (d.exemploPoucoInformativa) { (ex.: “{{ d.exemploPoucoInformativa }}”)}.
-          <a routerLink="/transacoes" [queryParams]="linkPoucoInformativas(d)">Revisar</a>
-        </p>
-      }
+      <!-- #327: os avisos e os orçamentos estourados ficam nas notificações da barra do topo (o sino). -->
       <!-- #170: a separação troco × provento é com prévia (ADR 0027); aqui só o aviso, com o caminho até ela. -->
       @if (d.creditosCorretoraComoReceita > 0) {
         <p class="nota-discreta">
@@ -320,10 +311,6 @@ export class PainelComponent implements OnInit {
   readonly erro = signal<string | null>(null);
 
   /** UX-3: despesas da categoria no mês selecionado no Painel ("Sem categoria" vai como categoria=sem). */
-  /** #9: Transações filtrada pelas descrições pouco informativas do mesmo período do aviso (até hoje). */
-  linkPoucoInformativas(d: Painel): Record<string, string> {
-    return { generica: '1', ...(d.poucoInformativasDesde ? { inicio: d.poucoInformativasDesde, fim: dataIso() } : {}) };
-  }
 
   linkCategoria(g: ValorCategoria): Record<string, string> {
     const { ano, mes } = this.periodo();
