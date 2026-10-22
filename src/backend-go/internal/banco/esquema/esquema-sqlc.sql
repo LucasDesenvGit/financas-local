@@ -231,6 +231,7 @@ CREATE TABLE "Meta" (
     "Concluida" INTEGER NOT NULL,
     "ReservaNome" TEXT,
     "Prioridade" INTEGER NOT NULL,
+    "Icone" TEXT,
     "CriadoEm" TEXT NOT NULL
 );
 
@@ -369,4 +370,12 @@ CREATE TABLE "CotacaoCripto" (
     "DataHora" TEXT NOT NULL,
     "Preco" TEXT NOT NULL,
     "AtualizadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "MetaAporte" (
+    "Id" INTEGER NOT NULL,
+    "MetaId" INTEGER NOT NULL,
+    "Data" TEXT NOT NULL,
+    "Valor" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
 );

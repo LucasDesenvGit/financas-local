@@ -242,7 +242,16 @@ type Meta struct {
 	Concluida   int64
 	ReservaNome *string
 	Prioridade  int64
+	Icone       *string
 	CriadoEm    string
+}
+
+type MetaAporte struct {
+	Id       int64
+	MetaId   int64
+	Data     string
+	Valor    string
+	CriadoEm string
 }
 
 type OperacaoAtivo struct {
