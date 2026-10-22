@@ -12,6 +12,7 @@ import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
+import { gravarCartoesNoPainel, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 import { EstadoLimite, diferencaDoLimite, estadoDoLimite, limiteUsado } from './limite-cartao';
@@ -224,6 +225,11 @@ const FATURAS_VISIVEIS = 6;
                   <a class="link linha-recorrentes" routerLink="/contas-a-pagar" [queryParams]="{ aba: 'recorrentes', conta: c.id }">
                     {{ r.rotulo }} · {{ r.porMes | currency }}/mês</a>
                 }
+                <!-- #322: efeito imediato → interruptor (ADR 0032); a escolha fica neste navegador (ADR 0017). -->
+                @if (!c.arquivada) {
+                  <label class="interruptor interruptor-painel"><input type="checkbox" role="switch" [checked]="noPainel(c.id)"
+                    (change)="alternarNoPainel(c.id)"> Fatura no Painel<span class="so-leitor"> ({{ c.nome }})</span></label>
+                }
                 <footer>
                   @if (c.arquivada) { <span class="etiqueta etiqueta-arquivada">Arquivada</span> }
                   <span class="etiqueta" [class.etiqueta-suave]="c.origem !== OrigemConta.OpenFinance">
@@ -404,6 +410,7 @@ const FATURAS_VISIVEIS = 6;
     .cartao-credito-instituicao { display: inline-flex; align-items: center; gap: 8px; }
     .valor-fatura-mes small, .valor-divida small { font-size: 0.78rem; }
     .proxima-fatura { margin: 0; font-size: 0.8rem; }
+    .interruptor-painel { align-self: flex-start; margin-top: 4px; font-size: 0.85rem; }
     .proxima-fatura b { color: var(--texto-forte); font-variant-numeric: tabular-nums; }
     .botao-historico {
       font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--primaria-forte); background: none; border: 0;
@@ -524,6 +531,20 @@ export class ContasComponent implements OnInit {
   finalCartao(c: Conta): string {
     const digitos = (c.numero ?? '').replace(/\D/g, '');
     return digitos.length >= 4 ? digitos.slice(-4) : '••••';
+  }
+
+  /** #322: cartões cuja fatura em aberto aparece no Painel (neste navegador). */
+  private readonly cartoesNoPainel = signal<ReadonlySet<number>>(new Set(lerCartoesNoPainel()));
+
+  noPainel(id: number): boolean {
+    return this.cartoesNoPainel().has(id);
+  }
+
+  alternarNoPainel(id: number): void {
+    const ids = new Set(this.cartoesNoPainel());
+    if (ids.has(id)) ids.delete(id); else ids.add(id);
+    this.cartoesNoPainel.set(ids);
+    gravarCartoesNoPainel([...ids]);
   }
 
   /** A fatura do cartão que fecha neste mês, a mesma conta do Painel (#144). */

@@ -8,6 +8,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+## [2.32.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Fatura em aberto no Painel** (#322). Em Contas e cartões, cada cartão ganhou o interruptor "Fatura no Painel". Ligado, o Painel mostra em "Situação hoje" a fatura em aberto do cartão: a do mês, enquanto não fecha; depois, a próxima. O card mostra quando ela fecha, quando vence e um link para o histórico. A escolha fica no navegador, como as outras preferências de exibição (ADR 0017).
+
 ## [2.31.0] — 2026-10-21 · desenvolvimento
 
 ### Funcionalidades
