@@ -4,8 +4,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Conta, FaturaMes, Painel, TipoConta, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
-import { faturaEmAberto, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
+import { Conta, Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { FaturaAbertaDoCartao, faturasAbertasDe, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
+import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas.component';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
@@ -23,7 +24,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
+  imports: [KpiFaturasAbertasComponent, MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
     MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
@@ -95,21 +96,8 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <strong class="negativo">{{ d.dividaCartoes | currency }}</strong>
           <small>todos os cartões, com parcelas futuras</small>
         </article>
-        <!-- #322: a fatura em aberto dos cartões escolhidos em Contas e cartões (posição de hoje, não muda com o mês). -->
-        @for (fa of faturasAbertas(); track fa.conta.id) {
-          <article class="kpi kpi-fatura-aberta">
-            <span class="kpi-rotulo"><app-icone [icone]="Icones.contas" [tamanho]="16" /> Fatura aberta · {{ fa.conta.nome }}</span>
-            @if (fa.fatura; as f) {
-              <strong class="negativo">{{ f.valorMes | currency }}</strong>
-              <small>@if (f.fechamento) {fecha {{ f.fechamento | date: 'dd/MM' }}}@if (f.fechamento && f.vencimento) {, }@if (f.vencimento) {vence {{ f.vencimento | date: 'dd/MM' }}}
-                · <a routerLink="/contas" [queryParams]="{ faturas: fa.conta.id }" [attr.aria-label]="'Ver as faturas de ' + fa.conta.nome">ver faturas</a></small>
-            } @else {
-              <strong>—</strong>
-              <small>a do mês já fechou e a próxima ainda não veio do banco ·
-                <a routerLink="/contas" [queryParams]="{ faturas: fa.conta.id }" [attr.aria-label]="'Ver as faturas de ' + fa.conta.nome">ver faturas</a></small>
-            }
-          </article>
-        }
+        <!-- #322: o total das faturas em aberto dos cartões escolhidos em Contas e cartões (posição de hoje). -->
+        @if (faturasAbertas().length) { <app-kpi-faturas-abertas [itens]="faturasAbertas()" /> }
         @if (d.dividaFinanciamentos > 0) {
           <article class="kpi kpi-credito kpi-financiamento">
             <span class="kpi-rotulo"><app-icone [icone]="Icones.financiamento" [tamanho]="16" /> Financiamentos</span>
@@ -316,12 +304,7 @@ export class PainelComponent implements OnInit {
   /** #322: cartões escolhidos em Contas e cartões (neste navegador) e as contas, carregadas só se houver algum. */
   private readonly cartoesNoPainel = lerCartoesNoPainel();
   private readonly contas = signal<Conta[]>([]);
-  readonly faturasAbertas = computed((): { conta: Conta; fatura: FaturaMes | null }[] => {
-    const escolhidos = new Set(this.cartoesNoPainel);
-    return this.contas()
-      .filter((c) => c.tipo === TipoConta.CartaoCredito && !c.arquivada && escolhidos.has(c.id))
-      .map((c) => ({ conta: c, fatura: faturaEmAberto(c.faturaMes) }));
-  });
+  readonly faturasAbertas = computed((): FaturaAbertaDoCartao[] => faturasAbertasDe(this.contas(), new Set(this.cartoesNoPainel)));
 
   rotuloSituacao(situacao: 'paga' | 'fechada' | 'aberta'): string {
     return situacao === 'paga' ? 'paga' : situacao === 'fechada' ? 'fechada' : 'em aberto';

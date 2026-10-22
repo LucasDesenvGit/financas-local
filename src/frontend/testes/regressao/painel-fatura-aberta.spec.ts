@@ -53,7 +53,7 @@ describe('Regressão: fatura em aberto no Painel (#322)', () => {
     expect(lerCartoesNoPainel()).toEqual([]);
   });
 
-  it('no Painel, um card por cartão escolhido, com a fatura em aberto; nenhum, sem pedir as contas', async () => {
+  it('sem cartão escolhido, o Painel não pede as contas nem mostra o card', async () => {
     let pedidas = 0;
     const contas = () => { pedidas++; return of([ULTRAVIOLETA, ROXO]); };
     const sem = await abrirPainel(painel(), '/painel', { contas });
@@ -61,15 +61,41 @@ describe('Regressão: fatura em aberto no Painel (#322)', () => {
     expect(sem.raiz.querySelector('.kpi-fatura-aberta')).toBeNull();
   });
 
-  it('no Painel, os cartões escolhidos mostram valor, fechamento, vencimento e o link do histórico', async () => {
-    localStorage.setItem(CHAVE_FATURAS_NO_PAINEL, '[2]');
-    const { raiz } = await abrirPainel(painel(), '/painel', { contas: () => of([ULTRAVIOLETA, ROXO]) });
+  it('no Painel, um card só com o total; "ver detalhes" abre a fatura de cada cartão', async () => {
+    localStorage.setItem(CHAVE_FATURAS_NO_PAINEL, '[2,3]');
+    const { raiz, atualizar } = await abrirPainel(painel(), '/painel', { contas: () => of([ULTRAVIOLETA, ROXO]) });
     const cards = [...raiz.querySelectorAll('.kpi-fatura-aberta')];
     expect(cards).toHaveLength(1);
-    const texto = cards[0].textContent!.replace(/\s+/g, ' ');
-    expect(texto).toContain('Fatura aberta · Ultravioleta');
-    expect(texto).toContain('R$ 315,40');
-    expect(texto).toContain('fecha 03/12, vence 10/12');
-    expect(cards[0].querySelector('a')!.getAttribute('href')).toBe('/contas?faturas=2');
+    const card = cards[0];
+    // 315,40 (a próxima do Ultravioleta, porque a do mês fechou) + 1.530,00 (a do Roxo, aberta).
+    expect(card.querySelector('strong')!.textContent!.replace(/\s+/g, ' ').trim()).toBe('R$ 1.845,40');
+    expect(card.textContent).toContain('total dos 2 cartões escolhidos');
+    const botao = card.querySelector<HTMLButtonElement>('.botao-detalhes')!;
+    expect(botao.getAttribute('aria-expanded')).toBe('false');
+    expect(card.querySelector('.lista-faturas-abertas')).toBeNull();
+    botao.click();
+    await atualizar();
+    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    expect(card.querySelector('#' + botao.getAttribute('aria-controls') + ' .lista-faturas-abertas')).not.toBeNull();
+    const linhas = [...card.querySelectorAll('.lista-faturas-abertas li')].map((l) => l.textContent!.replace(/\s+/g, ' ').trim());
+    for (const pedaco of ['Ultravioleta', 'R$ 315,40', 'fecha 03/12, vence 10/12']) expect(linhas[0]).toContain(pedaco);
+    for (const pedaco of ['Cartão Roxo', 'R$ 1.530,00']) expect(linhas[1]).toContain(pedaco);
+    expect(card.querySelector('.lista-faturas-abertas a')!.getAttribute('href')).toBe('/contas?faturas=2');
+  });
+
+  it('em Contas e cartões, o mesmo card no resumo, que muda na hora com o interruptor', async () => {
+    const { raiz, atualizar } = await abrirContas('/contas', [ULTRAVIOLETA, ROXO]);
+    expect(raiz.querySelector('.kpis-contas .kpi-fatura-aberta')).toBeNull();
+    const roxo = [...raiz.querySelectorAll<HTMLInputElement>('.interruptor-painel input')]
+      .find((i) => i.closest('label')!.textContent!.includes('(Cartão Roxo)'))!;
+    roxo.click();
+    await atualizar();
+    const card = raiz.querySelector('.kpis-contas .kpi-fatura-aberta')!;
+    expect(card.querySelector('strong')!.textContent!.replace(/\s+/g, ' ').trim()).toBe('R$ 1.530,00');
+    expect(card.textContent).toContain('do cartão escolhido');
+    card.querySelector<HTMLButtonElement>('.botao-detalhes')!.click();
+    await atualizar();
+    // Em Contas, o cartão já está na tela: o nome não é link.
+    expect(card.querySelector('.lista-faturas-abertas a')).toBeNull();
   });
 });

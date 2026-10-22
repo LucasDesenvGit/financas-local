@@ -1,4 +1,4 @@
-import { FaturaMes } from '../core/modelos';
+import { Conta, FaturaMes, TipoConta } from '../core/modelos';
 
 /**
  * #322: os cartões cuja fatura em aberto aparece no Painel, em "Situação hoje". A escolha é feita em Contas e cartões
@@ -32,4 +32,13 @@ export function faturaEmAberto(f: FaturaMes | null | undefined): FaturaMes | nul
   if (!f) return null;
   if (f.situacao === null || f.situacao === 'aberta') return f;
   return f.proxima ?? null;
+}
+
+export interface FaturaAbertaDoCartao { conta: Conta; fatura: FaturaMes | null }
+
+/** Os cartões escolhidos (não arquivados), na ordem das contas, com a fatura em aberto de cada um. */
+export function faturasAbertasDe(contas: readonly Conta[], escolhidos: ReadonlySet<number>): FaturaAbertaDoCartao[] {
+  return contas
+    .filter((c) => c.tipo === TipoConta.CartaoCredito && !c.arquivada && escolhidos.has(c.id))
+    .map((c) => ({ conta: c, fatura: faturaEmAberto(c.faturaMes) }));
 }
