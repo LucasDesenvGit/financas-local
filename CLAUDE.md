@@ -139,6 +139,7 @@ Ao propor, revisar ou implementar qualquer coisa de UI/UX (telas, navegação, g
 Padrões já adotados a partir delas (seguir, salvo motivo registrado):
 - **Detalhe por navegação, não modal**, quando já existe tela com o detalhe (ex.: total por categoria → `/transacoes` filtrada), levando o contexto completo (categoria + período + tipo) em query params.
 - **Filtro ativo sempre visível** (chips com ✕ e "Limpar filtros") em tela que pode abrir já filtrada.
+- **Escolher data ou mês sobe de nível pelo título** (#264, #342): todo quadro de escolher data ou mês tem o título como botão que sobe de nível (dia → mês → ano, em páginas de 12 anos), e Esc volta um nível antes de fechar. Vale para o calendário dos campos de data e para o seletor de mês; componente novo de data segue o mesmo e entra em `testes/usabilidade/escolher-data-sobe-nivel.spec.ts` (Nielsen 4 e 7).
 - **Estado de tela navegável na URL**: botão voltar do navegador tem que funcionar; atualização de filtro usa `replaceUrl` para não poluir o histórico.
 - **Clique em linha ou bloco é atalho de mouse**: a mesma ação tem `<button>`/`<a>` no template (ex.: o nome da transação abre a edição), conferido em `testes/regressao/clique-com-teclado.spec.ts` (WCAG 2.1.1).
 - **Gráfico se explica**: título + frase-resumo com a conclusão + linha "como ler" + legenda quando há mais de uma série; resumo respeita "ocultar valores".

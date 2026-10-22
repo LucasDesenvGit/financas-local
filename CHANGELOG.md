@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Seletor de mês: o ano abre os anos** (#342). No quadro do seletor de mês (Painel, Contas e cartões, Orçamentos…), o ano é um botão que abre uma página de 12 anos, como o título do calendário dos campos de data. Escolher um ano volta aos meses dele, e Esc volta um nível antes de fechar. A regra entrou no `CLAUDE.md` e num teste que confere os dois quadros, para nenhum componente de data novo ficar de fora.
+
 ## [2.36.1] — 2026-10-22 · desenvolvimento
 
 ### Correções
