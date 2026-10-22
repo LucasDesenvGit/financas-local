@@ -1299,6 +1299,14 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
   /* No celular o sincronizar mostra só o ícone (o texto fica no aria-label e na dica). */
   .botao-sincronizar .rotulo-barra { display: none; }
 }
+/* #327: com o sino, a barra não cabia num celular de 412 px (com as fontes do Linux, o avatar ficava cortado). Em tela
+   estreita, o título fica só com o símbolo (o link continua com o nome no aria-label) e os botões ficam mais justos,
+   ainda com 32 px (WCAG 2.5.8 pede 24). */
+@media (max-width: 440px) {
+  .barra-titulo-nome { display: none; }
+  .barra-acoes { gap: 0; }
+  .botao-barra { min-width: 32px; padding: 0 6px; }
+}
 /* Dicas da barra alinhadas pela direita: centralizadas, vazariam da tela nos botões da ponta. */
 .barra-acoes .com-dica::after { right: 0; transform: none; }
 
