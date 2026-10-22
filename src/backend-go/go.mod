@@ -1,6 +1,6 @@
 module github.com/LucasDesenvGit/financas-local/src/backend-go
 
-go 1.27.1
+go 1.27.3
 
 require (
 	github.com/shopspring/decimal v1.5.0

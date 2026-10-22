@@ -13,7 +13,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 
 ## Rodar
 
-Precisa do Go 1.27 ou mais novo. Ao lado do .NET, que fica na 5443:
+Precisa do Go 1.27.3 ou mais novo (as anteriores têm falhas de segurança na biblioteca padrão). Ao lado do .NET, que fica na 5443:
 
 ```bash
 cd src/backend-go
