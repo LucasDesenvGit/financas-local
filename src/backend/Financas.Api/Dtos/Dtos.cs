@@ -465,6 +465,10 @@ public record ProjecaoDto(int MesesConsiderados, decimal MediaReceitas, decimal 
 public record FaturaMesDto(int ContaId, string Cartao, decimal ValorMes, decimal ParcelasMes, int? FaturaId,
     DateOnly? Vencimento, string? Situacao, string? Banco = null, DateOnly? Fechamento = null, FaturaMesDto? Proxima = null);
 
+/// <summary>#327: avisos e orçamentos estourados do mês atual (notificações da barra do topo).</summary>
+public record AvisosDto(int Ano, int Mes, List<string> Alertas, List<OrcamentoDto> OrcamentosEstourados,
+    int PoucoInformativas = 0, DateOnly? PoucoInformativasDesde = null, string? ExemploPoucoInformativa = null);
+
 public record PainelDto(
     decimal SaldoContas,
     decimal DividaCartoes,
