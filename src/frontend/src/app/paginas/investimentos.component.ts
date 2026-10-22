@@ -744,7 +744,9 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
     /* #330: a distribuição sozinha ocupa a largura toda, com a rosca e a lista lado a lado. */
     .grade-2.grade-sozinha { grid-template-columns: minmax(0, 1fr); }
     .distribuicao-larga .distribuicao-corpo {
-      display: grid; grid-template-columns: minmax(220px, 340px) minmax(0, 1fr); gap: 8px 40px; align-items: center;
+      /* A lista tem largura limitada e o par fica centralizado: em tela larga, o valor não vai para longe do nome. */
+      display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 380px); gap: 8px 56px; align-items: center;
+      justify-content: center;
     }
     .distribuicao-larga .lista-legenda { margin-top: 0; }
     @media (max-width: 760px) { .distribuicao-larga .distribuicao-corpo { grid-template-columns: minmax(0, 1fr); } }

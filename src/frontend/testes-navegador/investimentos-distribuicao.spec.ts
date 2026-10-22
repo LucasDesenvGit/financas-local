@@ -19,6 +19,11 @@ test('Investimentos › Mais análises: a distribuição sozinha usa a largura t
   if (page.viewportSize()!.width > 760) {
     // Lado a lado: a lista começa à direita da rosca, na mesma faixa de altura.
     expect(lista.x).toBeGreaterThan(rosca.x + rosca.width);
+    // A lista não se estica até a borda (o valor longe do nome) e o par fica no meio do card.
+    expect(lista.width).toBeLessThanOrEqual(381);
+    const esquerda = rosca.x - caixa.x;
+    const direita = caixa.x + caixa.width - (lista.x + lista.width);
+    expect(Math.abs(esquerda - direita)).toBeLessThan(60);
   } else {
     expect(lista.y).toBeGreaterThan(rosca.y + rosca.height - 1);
   }
