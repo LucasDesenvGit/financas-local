@@ -174,7 +174,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
               @for (f of d.faturasDoMes; track f.contaId) {
                 <li>
                   <span class="cartao-fatura"><app-logo-banco [codigo]="f.banco" [tamanho]="20" [cartao]="true" />
-                    <a routerLink="/contas" [queryParams]="{ faturas: f.contaId }" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a></span>
+                    <a routerLink="/contas" [queryParams]="linkFaturas(f.contaId)" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a></span>
                   <span class="valor">{{ f.valorMes | currency }}</span>
                   @if (f.parcelasMes > 0) { <span class="texto-suave detalhe-fatura">{{ f.parcelasMes | currency }} em parcelas</span> }
                   @if (f.vencimento && f.situacao) {
@@ -419,6 +419,13 @@ export class PainelComponent implements OnInit {
     if (this.cartoesNoPainel.length) {
       this.api.contas().subscribe({ next: (c) => this.contas.set(c), error: () => this.contas.set([]) });
     }
+  }
+
+  /** #323: o histórico do cartão em Contas, no mesmo mês do Painel (no mês atual, sem ano e mês na URL). */
+  linkFaturas(contaId: number): Record<string, number> {
+    const { ano, mes } = this.periodo();
+    const atual = ano === this.hoje.getFullYear() && mes === this.hoje.getMonth() + 1;
+    return atual ? { faturas: contaId } : { faturas: contaId, ano, mes };
   }
 
   mudarPeriodo(p: MesAno): void {

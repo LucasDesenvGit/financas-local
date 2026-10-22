@@ -351,6 +351,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           '“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela das compras parceladas, menos os estornos. Depois de fechada, vale o total que o banco informou.',
           'Abaixo dela aparecem quando a fatura fecha, quando vence e a situação (paga, fechada ou em aberto). Ela aparece como paga quando o banco informa o pagamento ou quando o pagamento (por exemplo, “Pagamento recebido”) está nas transações do cartão, entre o vencimento anterior e o vencimento dela. Pagar antes do fechamento também conta.',
+          'Para ver as faturas de outro mês, use o seletor de mês em “Cartões de crédito” (como no Painel). Muda a “Fatura de <mês>” de cada cartão e o total; saldo, dívida total, limite e “Fatura em aberto” continuam sendo os de hoje. “Voltar para o mês atual” volta. O link “Faturas do mês” do Painel abre esta tela no mesmo mês.',
           'Depois que a fatura do mês fecha, aparece embaixo a “Próxima fatura”: o que já entrou na fatura seguinte, que ainda está aberta, com o dia em que ela fecha e vence.',
           '“Dívida total” é tudo o que você deve no cartão hoje, inclusive as parcelas que ainda vão vencer.',
           'A barra mostra quanto do limite está em uso e quanto ainda está disponível (ou quanto passou do limite).',

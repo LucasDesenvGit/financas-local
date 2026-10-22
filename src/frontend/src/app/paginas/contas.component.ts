@@ -5,13 +5,14 @@ import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Banco, Conta, ContaAgendada, Fatura, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../core/modelos';
+import { Banco, Conta, ContaAgendada, Fatura, FaturaMes, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { visualBanco } from '../compartilhado/bancos';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
-import { CORES_SUGERIDAS, NOMES_MESES, colunasEquilibradas } from '../compartilhado/utilidades';
+import { CORES_SUGERIDAS, NOMES_MESES, colunasEquilibradas, mesAnoDaUrl } from '../compartilhado/utilidades';
+import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
 import { FaturaAbertaDoCartao, faturasAbertasDe, gravarCartoesNoPainel, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
 import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
@@ -29,7 +30,7 @@ const FATURAS_VISIVEIS = 6;
  */
 @Component({
   selector: 'app-contas',
-  imports: [KpiFaturasAbertasComponent, ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
+  imports: [SeletorMesComponent, KpiFaturasAbertasComponent, ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
@@ -50,9 +51,9 @@ const FATURAS_VISIVEIS = 6;
         <small>{{ contasBancarias().length }} conta(s)</small>
       </article>
       <article class="kpi">
-        <span><app-termo chave="faturaDoMes">Faturas de {{ nomeMesAtual }}</app-termo></span>
+        <span><app-termo chave="faturaDoMes">Faturas de {{ nomeMes() }}</app-termo></span>
         <strong class="negativo">{{ totalFaturasMes() | currency }}</strong>
-        <small>lançado nos cartões neste mês</small>
+        <small>{{ mesAtual() ? 'lançado nos cartões neste mês' : 'a fatura de cada cartão que fecha no mês' }}</small>
       </article>
       <article class="kpi">
         <span><app-termo chave="dividaCartoes">Dívida total nos cartões</app-termo></span>
@@ -133,10 +134,17 @@ const FATURAS_VISIVEIS = 6;
             <small class="texto-suave">{{ cartoes().length }} cartão(ões)</small>
           </div>
           <div class="secao-total">
-            <span class="texto-suave">Faturas de {{ nomeMesAtual }}</span>
+            <span class="texto-suave">Faturas de {{ nomeMes() }}</span>
             <strong class="negativo">{{ totalFaturasMes() | currency }}</strong>
           </div>
+          <!-- #323: o mês das faturas, como no Painel; o mês fica na URL (?ano=&mes=, replaceUrl). -->
+          <app-seletor-mes class="seletor-faturas" [valor]="periodo()" (mudou)="mudarPeriodo($event)" />
         </header>
+        @if (!mesAtual()) {
+          <!-- Nielsen 1: deixa claro o que mudou com o mês, e o que continua sendo de hoje. -->
+          <p class="nota-discreta nota-mes" role="status">Faturas de {{ nomeMes() }}. Saldo, dívida total e limite continuam
+            sendo os de hoje. <button type="button" class="link" (click)="voltarAoMesAtual()">Voltar para o mês atual</button></p>
+        }
         <div class="grade-cartoes grade-cartoes-credito">
           @for (c of cartoes(); track c.id) {
             <article class="cartao-credito-bloco" [class.arquivada]="c.arquivada" [id]="'cartao-' + c.id">
@@ -160,11 +168,11 @@ const FATURAS_VISIVEIS = 6;
               <div class="cartao-credito-detalhes">
                 <div class="linha-valores">
                   <div class="valor-fatura-mes">
-                    <span class="texto-suave">Fatura de {{ nomeMesAtual }}</span>
+                    <span class="texto-suave">Fatura de {{ nomeMes() }}</span>
                     <strong class="negativo">{{ faturaDoMes(c) | currency }}</strong>
-                    @if (c.faturaMes?.vencimento && c.faturaMes?.situacao; as situacao) {
-                      <small class="texto-suave">@if (c.faturaMes!.fechamento) {fecha {{ c.faturaMes!.fechamento | date: 'dd/MM' }},}
-                        vence {{ c.faturaMes!.vencimento | date: 'dd/MM' }}
+                    @if (faturaMesDe(c)?.vencimento && faturaMesDe(c)?.situacao; as situacao) {
+                      <small class="texto-suave">@if (faturaMesDe(c)!.fechamento) {fecha {{ faturaMesDe(c)!.fechamento | date: 'dd/MM' }},}
+                        vence {{ faturaMesDe(c)!.vencimento | date: 'dd/MM' }}
                         <span class="etiqueta" [class.etiqueta-sucesso]="situacao === 'paga'"
                           [class.etiqueta-alerta]="situacao === 'fechada'">{{ nomeSituacao(situacao) }}</span></small>
                     } @else {
@@ -177,7 +185,7 @@ const FATURAS_VISIVEIS = 6;
                     <small class="texto-suave">com parcelas futuras</small>
                   </div>
                 </div>
-                @if (c.faturaMes?.proxima; as proxima) {
+                @if (mesAtual() && c.faturaMes?.proxima; as proxima) {
                   <p class="proxima-fatura texto-suave">Próxima fatura: <b>{{ proxima.valorMes | currency }}</b> ·
                     fecha {{ proxima.fechamento | date: 'dd/MM' }}@if (proxima.vencimento && proxima.situacao) {,
                     vence {{ proxima.vencimento | date: 'dd/MM' }}
@@ -413,6 +421,9 @@ const FATURAS_VISIVEIS = 6;
     .cartao-credito-instituicao { display: inline-flex; align-items: center; gap: 8px; }
     .valor-fatura-mes small, .valor-divida small { font-size: 0.78rem; }
     .proxima-fatura { margin: 0; font-size: 0.8rem; }
+    /* #323: o seletor de mês das faturas, no cabeçalho de "Cartões de crédito". */
+    .seletor-faturas { margin-left: auto; }
+    .nota-mes { margin: -4px 0 12px; }
     .interruptor-painel { align-self: flex-start; margin-top: 4px; font-size: 0.85rem; }
     .proxima-fatura b { color: var(--texto-forte); font-variant-numeric: tabular-nums; }
     .botao-historico {
@@ -440,7 +451,24 @@ export class ContasComponent implements OnInit {
   readonly cores = CORES_SUGERIDAS;
   readonly tipos = [TipoConta.ContaCorrente, TipoConta.Poupanca, TipoConta.CartaoCredito, TipoConta.Investimento,
     TipoConta.Dinheiro, TipoConta.Outro];
-  readonly nomeMesAtual = NOMES_MESES[new Date().getMonth()];
+  /** #323: o mês das faturas (o atual, ou o da URL). Saldo, dívida, limite e a fatura em aberto são sempre de hoje. */
+  readonly periodo = signal<MesAno>(mesAnoDaUrl(this.rota.snapshot.queryParamMap) ?? ContasComponent.mesDeHoje());
+  readonly mesAtual = computed(() => {
+    const hoje = ContasComponent.mesDeHoje();
+    return this.periodo().ano === hoje.ano && this.periodo().mes === hoje.mes;
+  });
+  /** "outubro"; de outro ano, "outubro/2025". */
+  readonly nomeMes = computed(() => {
+    const { ano, mes } = this.periodo();
+    return NOMES_MESES[mes - 1] + (ano === new Date().getFullYear() ? '' : `/${ano}`);
+  });
+  /** Faturas do mês escolhido, por cartão (null no mês atual, que vem com as contas, ou enquanto carrega). */
+  private readonly faturasDoPeriodo = signal<ReadonlyMap<number, FaturaMes> | null>(null);
+
+  private static mesDeHoje(): MesAno {
+    const hoje = new Date();
+    return { ano: hoje.getFullYear(), mes: hoje.getMonth() + 1 };
+  }
 
   readonly contas = signal<Conta[]>([]);
   readonly bancos = signal<Banco[]>([]);
@@ -488,6 +516,7 @@ export class ContasComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
+    this.carregarFaturasDoPeriodo();
     // Complementar: sem a lista, a tela segue sem a linha-resumo.
     this.api.contasAgendadas().subscribe({ next: (i) => this.recorrentes.set(i), error: () => this.recorrentes.set([]) });
     this.api.bancos().subscribe({ next: (b) => this.bancos.set(b), error: () => this.bancos.set([]) });
@@ -557,7 +586,40 @@ export class ContasComponent implements OnInit {
 
   /** A fatura do cartão que fecha neste mês, a mesma conta do Painel (#144). */
   faturaDoMes(c: Conta): number {
-    return c.faturaMes?.valorMes ?? 0;
+    return this.faturaMesDe(c)?.valorMes ?? 0;
+  }
+
+  /** #323: a fatura do cartão no mês escolhido (no mês atual, a que veio com a conta). */
+  faturaMesDe(c: Conta): FaturaMes | null {
+    return this.mesAtual() ? c.faturaMes : (this.faturasDoPeriodo()?.get(c.id) ?? null);
+  }
+
+  mudarPeriodo(p: MesAno): void {
+    this.periodo.set(p);
+    // No mês atual, a URL fica sem ano e mês (o padrão); replaceUrl: trocar de mês não enche o histórico.
+    const atual = this.mesAtual();
+    void this.router.navigate([], {
+      relativeTo: this.rota, queryParams: { ano: atual ? null : p.ano, mes: atual ? null : p.mes },
+      queryParamsHandling: 'merge', replaceUrl: true
+    });
+    this.carregarFaturasDoPeriodo();
+  }
+
+  voltarAoMesAtual(): void {
+    this.mudarPeriodo(ContasComponent.mesDeHoje());
+  }
+
+  private carregarFaturasDoPeriodo(): void {
+    this.faturasDoPeriodo.set(null);
+    if (this.mesAtual()) return;
+    const { ano, mes } = this.periodo();
+    this.api.faturasDoMes(ano, mes).subscribe({
+      next: (lista) => {
+        // Ignora a resposta de um mês que já foi trocado por outro.
+        if (this.periodo().ano === ano && this.periodo().mes === mes) this.faturasDoPeriodo.set(new Map(lista.map((f) => [f.contaId, f])));
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   /** Tudo o que se deve no cartão hoje, com parcelas futuras (o saldo do cartão é negativo quando há dívida). */

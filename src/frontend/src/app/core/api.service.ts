@@ -8,7 +8,7 @@ import {
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
   AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
-  Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, PaginaTransacoes, Painel, Regra,
+  Fatura, FaturaMes, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
@@ -51,6 +51,10 @@ export class ApiService {
   }
 
   // Contas
+  /** #323: a fatura de cada cartão que fecha no mês escolhido (Contas e cartões, outros meses). */
+  faturasDoMes(ano: number, mes: number): Observable<FaturaMes[]> {
+    return this.http.get<FaturaMes[]>(`${this.base}/contas/faturas-do-mes`, { params: { ano, mes } });
+  }
   contas(incluirArquivadas = false): Observable<Conta[]> {
     return this.http.get<Conta[]>(`${this.base}/contas`, { params: this.params({ incluirArquivadas }) });
   }
