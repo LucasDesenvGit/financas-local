@@ -408,6 +408,8 @@ export interface Painel {
   trocosAutomaticos?: TrocosAutomaticos | null;
   /** #206: todos os orçamentos do mês acima de 100%, os piores primeiro (card agrupado; não vêm mais em `alertas`). */
   orcamentosEstourados?: Orcamento[] | null;
+  /** #334: transações com data depois de hoje (parcelas já lançadas), as mais próximas primeiro, e quantas são. */
+  transacoesFuturas?: Transacao[] | null; quantidadeFuturas?: number;
 }
 
 /** #173 b): os trocos classificados na sincronização que continuam como ficaram (desde/ate: as datas deles). */

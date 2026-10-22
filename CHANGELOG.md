@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.2] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Painel: "Últimas transações" mostrava parcelas futuras** (#334). As parcelas que o banco já manda com data futura (ex.: "Casasbahiacom 11/11" em 15/04) ficavam no topo e escondiam o que aconteceu nos últimos dias. Agora a lista vai até hoje, e as futuras ficam no botão "Futuras (N)", com o ano na data. "ver todas" abre Transações no mesmo recorte (até hoje, ou de amanhã em diante).
+
 ## [2.37.1] — 2026-10-22 · desenvolvimento
 
 ### Publicação e documentação

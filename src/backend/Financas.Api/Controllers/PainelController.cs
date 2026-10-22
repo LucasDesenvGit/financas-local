@@ -87,11 +87,21 @@ public class PainelController : BaseController
         var diasVencimentos = await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasProximosVencimentos, ct);
         var proximas = await _relatorios.ContasAgendadasAsync(diasVencimentos, ct);
 
+        // #334: "Últimas" vai só até hoje: as parcelas que o banco já manda com data futura ficavam no topo e escondiam o
+        // que de fato aconteceu. As futuras vêm à parte, as mais próximas primeiro, com quantas são.
         var ultimas = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.Data <= hoje)
             .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
             .Take(8)
             .Select(ProjecoesTransacao.ParaDto)
             .ToListAsync(ct);
+        var futuras = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.Data > hoje)
+            .OrderBy(t => t.Data).ThenBy(t => t.Id)
+            .Take(8)
+            .Select(ProjecoesTransacao.ParaDto)
+            .ToListAsync(ct);
+        var quantidadeFuturas = await _db.Transacoes.AsNoTracking().CountAsync(t => t.Data > hoje, ct);
 
         // #206: os orçamentos estourados vão em lista própria (card agrupado no Painel), os piores primeiro.
         var orcamentosEstourados = orcamentos.Where(o => o.Percentual > 100).OrderByDescending(o => o.Percentual).ToList();
@@ -123,7 +133,8 @@ public class PainelController : BaseController
             ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
             faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
             quantidadePoucoInformativas, desdePoucoInformativas, exemplo,
-            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos, orcamentosEstourados);
+            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos, orcamentosEstourados,
+            futuras, quantidadeFuturas);
     }
     /// <summary>
     /// #327: os avisos e os orçamentos estourados do mês atual, para as notificações da barra do topo (em todas as

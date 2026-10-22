@@ -501,7 +501,10 @@ public record PainelDto(
     // #173 b) (ADR 0044): trocos que a sincronização classificou sozinha (aviso com "Ver", "Desfazer" e "Ok").
     TrocosAutomaticosDto? TrocosAutomaticos = null,
     // #206: todos os orçamentos do mês acima de 100%, os piores primeiro (card agrupado no Painel, fora de Alertas).
-    List<OrcamentoDto>? OrcamentosEstourados = null);
+    List<OrcamentoDto>? OrcamentosEstourados = null,
+    // #334: as próximas transações com data depois de hoje (parcelas já lançadas, agendadas), e quantas são ao todo.
+    List<TransacaoDto>? TransacoesFuturas = null,
+    int QuantidadeFuturas = 0);
 
 /// <summary>#173 b): os trocos classificados na sincronização que ainda estão como ficaram (Desde/Ate: as datas deles).</summary>
 public record TrocosAutomaticosDto(int Quantidade, decimal Total, List<long> Ids, DateOnly Desde, DateOnly Ate);

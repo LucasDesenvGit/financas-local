@@ -984,7 +984,7 @@ export const MANUAL: CapituloManual[] = [
           'O sino da barra do topo (em qualquer tela) mostra quantas notificações estão pendentes e, ao clicar, os orçamentos estourados e os avisos. Esc ou um clique fora fecham. Lá, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
           'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros). O que você oculta ou minimiza sai da conta do sino.',
           'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir as notificações, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
-          '“Mais análises” abre a evolução de 12 meses e as últimas transações.',
+          '“Mais análises” abre a evolução de 12 meses e as últimas transações. “Últimas transações” vai até hoje; as que têm data depois de hoje (parcelas que o banco já lançou) ficam em “Futuras (N)”, com o ano na data. “ver todas” abre Transações no mesmo recorte.',
           'Clique num total por categoria para ver as transações por trás dele.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
