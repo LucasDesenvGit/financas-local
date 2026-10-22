@@ -165,6 +165,11 @@ const respostas: Record<string, unknown> = {
     ]
   },
   '/api/contas': contas,
+  // #323: as faturas de outro mês (a mesma resposta para qualquer mês pedido).
+  '/api/contas/faturas-do-mes': [
+    { contaId: 3, cartao: 'Cartão Crédito', valorMes: 1234.56, parcelasMes: 200, faturaId: 8, vencimento: '2026-09-10',
+      situacao: 'paga', fechamento: '2026-09-03', banco: null }
+  ],
   '/api/contas/bancos': [],
   // #245: histórico de faturas do Cartão Exemplo (6 meses), para abrir e ver que só ele cresce.
   '/api/contas/2/faturas': Array.from({ length: 6 }, (_, i) => ({
