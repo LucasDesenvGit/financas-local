@@ -8,6 +8,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+## [2.34.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Criptomoedas: a fonte da cotação em cada moeda** (#329). Cada linha diz de onde veio o preço e quando ("Mercado Bitcoin · 22/10 16:00"), como o "PTAX de …" do câmbio. Com mais de 2 horas, a linha diz "desatualizada". No celular, a fonte e a hora ficam numa linha própria, e a variação em 24 h não fica mais espremida.
+
 ## [2.33.0] — 2026-10-22 · desenvolvimento
 
 ### Funcionalidades
