@@ -18,6 +18,11 @@ test('Notificações: o sino mostra quantas há, e o Painel não tem mais os avi
   await expect(sino).toBeVisible();
   expect((await sino.boundingBox())!.height).toBeGreaterThanOrEqual(23.5);
   await expect(page.locator('main app-painel-avisos')).toHaveCount(0);
+  // A barra do topo cabe na tela com o sino a mais (no celular, o avatar ficava cortado com as fontes do Linux).
+  const barra = await page.locator('.barra-superior').evaluate((b) => b.scrollWidth - b.clientWidth);
+  expect(barra).toBeLessThanOrEqual(1);
+  const avatar = (await page.locator('.menu-usuario-botao').boundingBox())!;
+  expect(avatar.x + avatar.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   // Em outra tela, o sino continua lá.
   await page.goto('/transacoes');
   await abrirSino(page);

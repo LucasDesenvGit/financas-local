@@ -197,7 +197,7 @@ export function roteiroDaTela(rota: string): string {
             </button>
             <a class="barra-titulo so-celular" routerLink="/painel" aria-label="Finanças, ir para o Painel">
               <span class="barra-titulo-simbolo" aria-hidden="true"><app-icone [icone]="Icones.marca" [tamanho]="16" [traco]="2" /></span>
-              Finanças
+              <span class="barra-titulo-nome">Finanças</span>
             </a>
           </div>
           <div class="barra-acoes">
