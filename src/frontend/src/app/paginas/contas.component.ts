@@ -12,7 +12,8 @@ import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
-import { gravarCartoesNoPainel, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
+import { FaturaAbertaDoCartao, faturasAbertasDe, gravarCartoesNoPainel, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
+import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 import { EstadoLimite, diferencaDoLimite, estadoDoLimite, limiteUsado } from './limite-cartao';
@@ -28,7 +29,7 @@ const FATURAS_VISIVEIS = 6;
  */
 @Component({
   selector: 'app-contas',
-  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
+  imports: [KpiFaturasAbertasComponent, ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, RouterLink, ModalComponent, LogoBancoComponent, TermoComponent, CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Contas e cartões</h1>
@@ -58,6 +59,8 @@ const FATURAS_VISIVEIS = 6;
         <strong class="negativo">{{ totalDivida() | currency }}</strong>
         <small>com parcelas futuras</small>
       </article>
+      <!-- #322: o mesmo card do Painel, com os cartões em que "Fatura no Painel" está ligado. -->
+      @if (faturasAbertas().length) { <app-kpi-faturas-abertas [itens]="faturasAbertas()" [links]="false" /> }
       <article class="kpi">
         <span>Limite disponível</span>
         <strong>{{ totalDisponivel() | currency }}</strong>
@@ -535,6 +538,8 @@ export class ContasComponent implements OnInit {
 
   /** #322: cartões cuja fatura em aberto aparece no Painel (neste navegador). */
   private readonly cartoesNoPainel = signal<ReadonlySet<number>>(new Set(lerCartoesNoPainel()));
+
+  readonly faturasAbertas = computed((): FaturaAbertaDoCartao[] => faturasAbertasDe(this.cartoes(), this.cartoesNoPainel()));
 
   noPainel(id: number): boolean {
     return this.cartoesNoPainel().has(id);

@@ -355,7 +355,7 @@ export const MANUAL: CapituloManual[] = [
           '“Dívida total” é tudo o que você deve no cartão hoje, inclusive as parcelas que ainda vão vencer.',
           'A barra mostra quanto do limite está em uso e quanto ainda está disponível (ou quanto passou do limite).',
           '“Melhor dia de compra” é o dia seguinte ao fechamento: o que você compra a partir dele só entra na fatura seguinte.',
-          'Ligue “Fatura no Painel” no cartão para ver a fatura em aberto dele no Painel, em “Situação hoje”. Vale na hora e fica guardado neste navegador: em outro computador ou celular, ligue de novo.'
+          'Ligue “Fatura no Painel” no cartão para somar a fatura em aberto dele no card “Fatura em aberto”, no topo desta tela e no Painel, em “Situação hoje”. “ver detalhes” mostra a fatura de cada cartão. Vale na hora e fica guardado neste navegador: em outro computador ou celular, ligue de novo.'
         ],
         abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
         termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
@@ -978,7 +978,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Responder “como estou hoje?” e “como está este mês?”.',
         passos: [
           '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
-          'Para ver ali a fatura em aberto de um cartão (a do mês, enquanto não fecha; depois, a próxima), ligue “Fatura no Painel” no cartão, em Contas e cartões.',
+          'O card “Fatura em aberto” soma a fatura que ainda recebe compras (a do mês, enquanto não fecha; depois, a próxima) dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
           '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor.',
           'No topo, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
           'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros).',
