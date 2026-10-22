@@ -11,7 +11,7 @@ import { visualBanco } from '../compartilhado/bancos';
 import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { TermoComponent } from '../compartilhado/termo.component';
-import { CORES_SUGERIDAS, NOMES_MESES } from '../compartilhado/utilidades';
+import { CORES_SUGERIDAS, NOMES_MESES, colunasEquilibradas } from '../compartilhado/utilidades';
 import { FaturaAbertaDoCartao, faturasAbertasDe, gravarCartoesNoPainel, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
 import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
@@ -43,7 +43,7 @@ const FATURAS_VISIVEIS = 6;
       </div>
     </header>
 
-    <section class="kpis kpis-contas" aria-label="Resumo das contas e cartões">
+    <section class="kpis kpis-contas kpis-equilibrados" [style.--colunas]="colunasResumo()" aria-label="Resumo das contas e cartões">
       <article class="kpi">
         <span>Saldo em contas</span>
         <strong [class.negativo]="totalContas() < 0">{{ totalContas() | currency }}</strong>
@@ -540,6 +540,9 @@ export class ContasComponent implements OnInit {
   private readonly cartoesNoPainel = signal<ReadonlySet<number>>(new Set(lerCartoesNoPainel()));
 
   readonly faturasAbertas = computed((): FaturaAbertaDoCartao[] => faturasAbertasDe(this.cartoes(), this.cartoesNoPainel()));
+
+  /** #322: 4 cards no resumo, mais a fatura em aberto quando há cartão ligado. */
+  readonly colunasResumo = computed(() => colunasEquilibradas(4 + (this.faturasAbertas().length ? 1 : 0)));
 
   noPainel(id: number): boolean {
     return this.cartoesNoPainel().has(id);

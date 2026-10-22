@@ -10,7 +10,7 @@ import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -75,7 +75,8 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <h2 id="titulo-hoje">Situação hoje</h2>
           <p class="texto-suave">posição em {{ hoje | date: 'dd/MM/yyyy' }} · não muda com o mês escolhido</p>
         </header>
-      <section class="kpis">
+      <!-- #322: colunas pelo número de cards, para nenhum ficar sozinho embaixo. -->
+      <section class="kpis kpis-equilibrados" [style.--colunas]="colunasHoje(d)">
         <article class="kpi kpi-destaque">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.patrimonio" [tamanho]="16" /> Patrimônio líquido</span>
           <strong>{{ d.patrimonioLiquido | currency }}</strong>
@@ -304,6 +305,12 @@ export class PainelComponent implements OnInit {
   /** #322: cartões escolhidos em Contas e cartões (neste navegador) e as contas, carregadas só se houver algum. */
   private readonly cartoesNoPainel = lerCartoesNoPainel();
   private readonly contas = signal<Conta[]>([]);
+  /** #322: "Situação hoje" tem 5 cards fixos, mais financiamentos, empréstimos e a fatura em aberto, quando há. */
+  colunasHoje(d: Painel): number {
+    return colunasEquilibradas(5 + (d.dividaFinanciamentos > 0 ? 1 : 0) + (d.dividaEmprestimos > 0 ? 1 : 0)
+      + (this.faturasAbertas().length ? 1 : 0));
+  }
+
   readonly faturasAbertas = computed((): FaturaAbertaDoCartao[] => faturasAbertasDe(this.contas(), new Set(this.cartoesNoPainel)));
 
   rotuloSituacao(situacao: 'paga' | 'fechada' | 'aberta'): string {
