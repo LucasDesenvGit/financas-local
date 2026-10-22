@@ -117,6 +117,10 @@ const credito = (natureza: number) => ({ natureza, contratosAbertos: 0, contrato
 /** Respostas dos GET, pelo caminho sem a query. */
 const respostas: Record<string, unknown> = {
   '/api/auth/estado': { configurado: true, autenticado: true, login: 'teste', versao: '0.0.0-teste' },
+  // #327: as notificações da barra do topo (os mesmos avisos do Painel).
+  '/api/painel/avisos': { ano, mes, alertas: ['Conta "Aluguel" vencida desde 05/10.'], orcamentosEstourados,
+    poucoInformativas: 9, poucoInformativasDesde: dataIso(new Date(ano, hoje.getMonth(), hoje.getDate() - 89)),
+    exemploPoucoInformativa: 'Pagamento recebido' },
   '/api/painel': {
     saldoContas: 3250.5, dividaCartoes: 820.1, totalInvestido: 10000, patrimonioLiquido: 12430.4, rendaVariavel: 4000,
     patrimonioSemRendaVariavel: 8430.4, receitasMes: 5000, despesasMes: 1950, gastosPorCategoria: porCategoria, evolucao,
@@ -161,6 +165,11 @@ const respostas: Record<string, unknown> = {
     ]
   },
   '/api/contas': contas,
+  // #323: as faturas de outro mês (a mesma resposta para qualquer mês pedido).
+  '/api/contas/faturas-do-mes': [
+    { contaId: 3, cartao: 'Cartão Crédito', valorMes: 1234.56, parcelasMes: 200, faturaId: 8, vencimento: '2026-09-10',
+      situacao: 'paga', fechamento: '2026-09-03', banco: null }
+  ],
   '/api/contas/bancos': [],
   // #245: histórico de faturas do Cartão Exemplo (6 meses), para abrir e ver que só ele cresce.
   '/api/contas/2/faturas': Array.from({ length: 6 }, (_, i) => ({

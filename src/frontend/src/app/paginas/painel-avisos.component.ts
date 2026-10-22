@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Orcamento } from '../core/modelos';
 import { IconeComponent } from '../compartilhado/icone.component';
@@ -106,7 +106,9 @@ import {
     .aviso-painel-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
     .aviso-painel-topo app-icone { color: var(--negativo); display: inline-flex; }
     .aviso-geral .aviso-painel-topo app-icone { color: var(--alerta); }
-    .aviso-painel-topo h2 { margin: 0; font-size: 1rem; flex: 1 1 220px; }
+    /* #327: o título encolhe e quebra a linha, e o "Ocultar" fica sempre à direita: no card estreito das notificações,
+       o botão ia para a linha de baixo, à esquerda, e o menu (alinhado pela direita dele) saía da tela. */
+    .aviso-painel-topo h2 { margin: 0; font-size: 1rem; flex: 1 1 0; min-width: 0; }
     .aviso-painel-alternar { font-size: 0.85rem; }
     .lista-estourados { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
     .lista-estourados li { min-width: 0; }
@@ -128,6 +130,8 @@ export class PainelAvisosComponent {
   readonly estourados = input<Orcamento[]>([]);
   readonly alertas = input<string[]>([]);
   readonly periodo = input.required<{ ano: number; mes: number }>();
+  /** #327: um card foi ocultado, minimizado ou mostrado (o contador das notificações conta de novo). */
+  readonly mudou = output<void>();
 
   readonly todos = signal(false);
   /** "Minimizar": lembrado neste navegador, sem prazo; só o "Mostrar" abre de novo (a linha com o título fica). */
@@ -175,6 +179,7 @@ export class PainelAvisosComponent {
   }
 
   ocultarCardOrcamentos(acao: string): void {
+    queueMicrotask(() => this.mudou.emit());
     if (acao === 'minimizar') {
       this.orcamentosMinimizados.set(true);
       guardar(CHAVE_ORCAMENTOS_MINIMIZADOS, true);
@@ -186,6 +191,7 @@ export class PainelAvisosComponent {
   }
 
   mostrarCardOrcamentos(): void {
+    queueMicrotask(() => this.mudou.emit());
     this.orcamentosMinimizados.set(false);
     guardar(CHAVE_ORCAMENTOS_MINIMIZADOS, false);
     this.orcamentosOcultos.update((salvo) => mostrarOrcamentos(salvo, chavePeriodo(this.periodo())));
@@ -193,6 +199,7 @@ export class PainelAvisosComponent {
   }
 
   ocultarCardAvisos(acao: string): void {
+    queueMicrotask(() => this.mudou.emit());
     if (acao === 'minimizar') {
       this.avisosMinimizados.set(true);
       guardar(CHAVE_AVISOS_MINIMIZADOS, true);
@@ -204,6 +211,7 @@ export class PainelAvisosComponent {
   }
 
   mostrarCardAvisos(): void {
+    queueMicrotask(() => this.mudou.emit());
     this.avisosMinimizados.set(false);
     guardar(CHAVE_AVISOS_MINIMIZADOS, false);
     this.avisosOcultos.set([]);
