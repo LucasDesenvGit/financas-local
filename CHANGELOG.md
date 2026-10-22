@@ -8,6 +8,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+## [2.33.1] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Investimentos › Mais análises: "Distribuição" sem o canto vazio** (#330). Sem ações nem FIIs em carteira, não há o card de rentabilidade × Selic, e a distribuição ficava em meia largura, com a outra metade vazia. Agora ela ocupa a largura toda, com a rosca à esquerda e a lista à direita (no celular, um embaixo do outro).
+
 ## [2.33.0] — 2026-10-22 · desenvolvimento
 
 ### Funcionalidades
