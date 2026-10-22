@@ -252,7 +252,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
                 @for (t of d.ultimasTransacoes; track t.id) {
                   <li>
                     <span class="data-curta">{{ t.data | date: 'dd/MM' }}</span>
-                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao"
+                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao" [tipo]="t.tipoLancamento"
                       [categoria]="t.categoriaNome" [tamanho]="22" />
                     <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}</span>
                     <span class="valor" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</span>

@@ -8,6 +8,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 
 
+## [2.33.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Selo da transação também pelas etiquetas** (#325). Antes, o selo vinha só do nome. Agora:
+  - "Pix enviado" e "Pix recebido" sem serviço conhecido ganham o selo do Pix (ex.: "Transferência Recebida|Fulano");
+  - "Pagamento de fatura" ganha o logo do banco citado no texto (ex.: "Fatura Paga Itau Uniclass" → Itaú);
+  - sem marca nem categoria, aparece o ícone do tipo, o mesmo da etiqueta, no lugar do recibo;
+  - o **Keeta** (delivery) entrou na lista de serviços.
+
 ## [2.32.0] — 2026-10-22 · desenvolvimento
 
 ### Funcionalidades

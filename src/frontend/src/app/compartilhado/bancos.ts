@@ -1,3 +1,5 @@
+import { palavras } from './servicos';
+
 /**
  * Selo de cada banco (ADR 0024), pelo código que a API devolve em `Conta.banco` (mesmos códigos do `BancoService`
  * no back-end; banco novo entra nos dois lugares). Tudo vai no build: nada é baixado da internet (CSP).
@@ -50,4 +52,31 @@ export const BANCOS: Record<string, VisualBanco> = {
 
 export function visualBanco(codigo: string | null | undefined): VisualBanco | null {
   return codigo ? BANCOS[codigo] ?? null : null;
+}
+
+/**
+ * #325: o banco citado num texto do extrato (ex.: "Pagamento de fatura Itau Uniclass" → itau), para o selo do pagamento
+ * de fatura. Só termos que não se confundem com palavras comuns; termo de uma palavra casa só com a palavra inteira
+ * ("INTER" não casa com "INTERNET"). Termos sem acento e em maiúsculas.
+ */
+const TERMOS_BANCO: [string, string[]][] = [
+  ['nubank', ['NUBANK', 'NU PAGAMENTOS']], ['itau', ['ITAU', 'UNICLASS', 'PERSONNALITE']], ['bradesco', ['BRADESCO']],
+  ['santander', ['SANTANDER']], ['inter', ['BANCO INTER', 'INTER']], ['c6', ['C6', 'C6 BANK']],
+  ['bb', ['BANCO DO BRASIL', 'OUROCARD']], ['caixa', ['CAIXA', 'CEF']], ['picpay', ['PICPAY']],
+  ['pagbank', ['PAGBANK', 'PAGSEGURO']], ['btg', ['BTG']], ['xp', ['XP']], ['neon', ['NEON']],
+  ['will', ['WILL BANK', 'WILLBANK']], ['mercadopago', ['MERCADO PAGO', 'MERCADOPAGO']], ['sicoob', ['SICOOB']],
+  ['sicredi', ['SICREDI']], ['banrisul', ['BANRISUL']], ['safra', ['SAFRA']], ['original', ['BANCO ORIGINAL']],
+  ['pan', ['BANCO PAN']], ['bmg', ['BMG']], ['agibank', ['AGIBANK']], ['nomad', ['NOMAD']], ['revolut', ['REVOLUT']],
+  ['paypal', ['PAYPAL']]
+];
+
+export function bancoNoTexto(...textos: (string | null | undefined)[]): string | null {
+  for (const texto of textos) {
+    const p = palavras(texto);
+    if (!p.length) continue;
+    const junto = ` ${p.join(' ')} `;
+    const achado = TERMOS_BANCO.find(([, termos]) => termos.some((t) => t.includes(' ') ? junto.includes(` ${t} `) : p.includes(t)));
+    if (achado) return achado[0];
+  }
+  return null;
 }
