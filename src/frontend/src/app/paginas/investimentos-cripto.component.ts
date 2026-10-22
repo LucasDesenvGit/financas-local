@@ -24,6 +24,8 @@ export interface LinhaCripto {
   preco: number | null;
   dataHora: string | null;
   variacao24h: number | null;
+  /** #329: de onde veio a cotação (hoje, o Mercado Bitcoin; ADR 0048). */
+  fonte: string | null;
 }
 
 /**
@@ -65,7 +67,8 @@ export interface LinhaCripto {
                 } @else {
                   <small class="texto-suave variacao-cripto">variação em 24 h ainda sem dado</small>
                 }
-                <small class="texto-suave data-cripto">{{ l.dataHora | date: 'dd/MM HH:mm' }}</small>
+                <!-- #329: a fonte em cada linha, como o "PTAX de …" do câmbio (Nielsen 1 e 2). -->
+                <small class="texto-suave data-cripto" [class.desatualizada]="velha(l)">{{ l.fonte ?? 'Mercado Bitcoin' }} · {{ l.dataHora | date: 'dd/MM HH:mm' }}@if (velha(l)) {<span> · desatualizada</span>}</small>
               } @else {
                 <small class="texto-suave data-cripto sem-cotacao">sem cotação guardada ainda</small>
               }
@@ -96,16 +99,17 @@ export interface LinhaCripto {
     .icone-cripto { display: block; width: 20px; height: 20px; border-radius: 5px; }
     .variacao-cripto { min-width: 8.5em; text-align: right; font-variant-numeric: tabular-nums; }
     .data-cripto { min-width: 6.5em; text-align: right; }
+    .data-cripto.desatualizada { color: var(--alerta); }
     .nota-cripto { margin-top: 10px; }
-    /* Celular: duas linhas em grade. Em cima o código, o nome e o preço; embaixo, a variação e a data e hora. */
+    /* Celular: três linhas em grade. Em cima o código, o nome e o preço; depois a variação; embaixo, a fonte e a data e
+       hora (#329), na largura toda, para não espremer a variação. */
     @media (max-width: 600px) {
       .lista-cripto li { display: grid; grid-template-columns: auto 1fr auto; column-gap: 10px; row-gap: 2px; align-items: center; }
-      .moeda-identificacao { grid-row: 1 / span 2; align-self: start; margin-top: 2px; }
+      .moeda-identificacao { grid-row: 1 / span 3; align-self: start; margin-top: 2px; }
       .lista-cripto .cresce { grid-column: 2; min-width: 0; }
       .lista-cripto .valor { grid-column: 3; text-align: right; }
-      .variacao-cripto { grid-column: 2; min-width: 0; text-align: left; }
-      .data-cripto { grid-column: 3; min-width: 0; text-align: right; }
-      .data-cripto.sem-cotacao { grid-column: 2 / span 2; text-align: left; }
+      .variacao-cripto { grid-column: 2 / span 2; min-width: 0; text-align: left; }
+      .data-cripto { grid-column: 2 / span 2; min-width: 0; text-align: left; }
     }
   `]
 })
@@ -129,9 +133,14 @@ export class InvestimentosCriptoComponent {
     if (!lista) return null;
     return MOEDAS_CRIPTO.map((m) => {
       const c = lista.find((x) => x.moeda === m.codigo);
-      return { codigo: m.codigo, nome: m.nome, icone: m.icone, preco: c?.preco ?? null, dataHora: c?.dataHora ?? null, variacao24h: c?.variacao24h ?? null };
+      return { codigo: m.codigo, nome: m.nome, icone: m.icone, preco: c?.preco ?? null, dataHora: c?.dataHora ?? null, variacao24h: c?.variacao24h ?? null, fonte: c?.fonte ?? null };
     });
   });
+
+  /** #329: a cotação desta linha tem mais de 2 horas (a API atualiza a cada 30 minutos). */
+  velha(l: { dataHora: string | null }): boolean {
+    return l.dataHora !== null && this.agora - Date.parse(l.dataHora) > HORAS_COTACAO_CRIPTO_ANTIGA * 3_600_000;
+  }
 
   /** A data e hora da cotação mais recente, quando ela tem mais de 2 horas (a API atualiza a cada 30 minutos). */
   readonly antiga = computed<string | null>(() => {

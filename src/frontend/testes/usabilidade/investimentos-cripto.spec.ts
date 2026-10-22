@@ -39,7 +39,9 @@ describe('Investimentos: criptomoedas em reais (#279)', () => {
     expect(MOEDAS_CRIPTO.map((m) => m.codigo)).toEqual(['BTC', 'ETH', 'SOL', 'USDT']);
     expect(el.querySelector('h2')!.textContent).toBe('Criptomoedas');
     const [btc, eth, sol, usdt] = linhas();
-    expect(btc).toMatch(/^BTC Bitcoin R\$ 419\.262,00 \+2,04% em 24 h \d{2}\/10 \d{2}:45$/);
+    // #329: a fonte em cada linha, antes da data e hora (como o "PTAX de …" do câmbio).
+    expect(btc).toMatch(/^BTC Bitcoin R\$ 419\.262,00 \+2,04% em 24 h Mercado Bitcoin · \d{2}\/10 \d{2}:45$/);
+    expect(el.querySelector('.desatualizada')).toBeNull();
     expect(eth).toContain('−1,37% em 24 h');
     expect(sol).toContain('0,00% em 24 h');
     expect(usdt).toContain('R$ 5,04');
@@ -73,6 +75,10 @@ describe('Investimentos: criptomoedas em reais (#279)', () => {
     const { el, linhas } = abrir(of({ atualizadoEm: null, cotacoes: [cripto('BTC', 419262, 2.04, '2026-10-21T08:00:00Z')] }));
     expect(linhas()[0]).toContain('R$ 419.262,00');
     expect(el.querySelector('.aviso-cripto')!.textContent).toContain('21/10');
+    // #329: a própria linha diz que a cotação está velha.
+    expect(linhas()[0]).toContain('Mercado Bitcoin');
+    expect(linhas()[0]).toContain('· desatualizada');
+    expect(el.querySelector('.data-cripto')!.classList).toContain('desatualizada');
   });
 
   it('com "ocultar valores" ligado, a cotação continua à vista (é pública, não é dado seu)', () => {
