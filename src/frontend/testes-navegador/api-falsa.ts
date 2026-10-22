@@ -306,7 +306,9 @@ const respostas: Record<string, unknown> = {
     rendaVariavel: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, lucroRealizado: 0, proventosRecebidos: 0,
       proventos12Meses: 0, resultadoTotal: 0, valorSeFosseSelic: 0, diferencaSelic: 0, resultadoTotalPercentual: null,
       resultadoSelicPercentual: null },
-    posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 0, distribuicao: [],
+    // #330: sem posição aberta, a distribuição fica sozinha em "Mais análises" (só Reservas, como no print da issue).
+    posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 2350,
+    distribuicao: [{ nome: 'Reservas', valor: 2350 }],
     cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [],
     // #237: numa conta, o banco detalha uma reserva pelo nome e outra fica fora da lista; na outra, manda só o total.
     reservas: [
