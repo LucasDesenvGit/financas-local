@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 import { CHAVE_FATURAS_NO_PAINEL, faturaEmAberto, lerCartoesNoPainel } from '../../src/app/compartilhado/faturas-no-painel';
 import { FaturaMes, TipoConta } from '../../src/app/core/modelos';
+import { colunasEquilibradas } from '../../src/app/compartilhado/utilidades';
 import { abrirContas, conta } from '../apoio/contas';
 import { abrirPainel, painel } from '../apoio/painel';
 
@@ -97,5 +98,14 @@ describe('Regressão: fatura em aberto no Painel (#322)', () => {
     await atualizar();
     // Em Contas, o cartão já está na tela: o nome não é link.
     expect(card.querySelector('.lista-faturas-abertas a')).toBeNull();
+  });
+
+  it('as colunas da grade de KPIs não deixam um card sozinho na última linha', () => {
+    expect([1, 2, 3, 4, 5].map(colunasEquilibradas)).toEqual([1, 2, 3, 4, 5]);
+    expect(colunasEquilibradas(6)).toBe(3);
+    expect(colunasEquilibradas(7)).toBe(4);
+    expect(colunasEquilibradas(8)).toBe(4);
+    expect(colunasEquilibradas(9)).toBe(5);
+    for (let n = 2; n <= 12; n++) expect([n, n % colunasEquilibradas(n)]).not.toEqual([n, 1]);
   });
 });

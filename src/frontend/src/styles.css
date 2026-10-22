@@ -629,6 +629,13 @@ app-campo-data { display: grid; gap: 4px; min-width: 0; position: relative; }
    com o valor logo abaixo do rótulo. "Faturas do mês", que lista os cartões e quase nunca tem a altura dos outros,
    vai para uma linha própria, na largura toda. Antes os quatro dividiam a linha e os três primeiros esticavam até
    a altura das faturas, com o valor solto no meio de um card vazio. */
+/* #322: grade de KPIs com o número de colunas pelo número de cards (--colunas, de colunasEquilibradas), para não sobrar
+   um card sozinho na última linha. Em tela menor, os cards dividem cada linha e crescem até a borda (flex). */
+.kpis.kpis-equilibrados { grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr)); }
+@media (max-width: 1199px) {
+  .kpis.kpis-equilibrados { display: flex; flex-wrap: wrap; }
+  .kpis.kpis-equilibrados .kpi { flex: 1 1 210px; }
+}
 .kpis-mes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .kpis-mes .kpi { position: relative; overflow: hidden; align-content: start; }
 .kpis-mes .kpi-faturas { grid-column: 1 / -1; }

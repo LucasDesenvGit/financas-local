@@ -1,4 +1,13 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from './base';
+
+/** Quantos cards há em cada linha da grade (pelo topo de cada um). */
+async function cardsPorLinha(page: Page, grade: string): Promise<number[]> {
+  const topos = await page.locator(`${grade} .kpi`).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  const linhas = new Map<number, number>();
+  for (const y of topos) linhas.set(y, (linhas.get(y) ?? 0) + 1);
+  return [...linhas.values()];
+}
 
 /**
  * #322: o interruptor "Fatura no Painel" de um cartão, em Contas e cartões, soma a fatura em aberto dele no card
@@ -14,6 +23,7 @@ test('Contas › "Fatura no Painel" põe a fatura em aberto no card de total, em
   await interruptor.click();
   await expect(interruptor).toBeChecked();
   await expect(page.locator('.kpis-contas .kpi-fatura-aberta')).toContainText('Fatura em aberto');
+  if ((page.viewportSize()?.width ?? 0) > 760) expect(await cardsPorLinha(page, '.kpis-contas')).not.toContain(1);
 
   await page.goto('/painel');
   const card = page.locator('.kpi-fatura-aberta');
@@ -24,6 +34,10 @@ test('Contas › "Fatura no Painel" põe a fatura em aberto no card de total, em
   await detalhes.click();
   await expect(card.getByRole('button', { name: 'esconder detalhes' })).toHaveAttribute('aria-expanded', 'true');
   await expect(card.getByRole('link', { name: 'Ver as faturas de Cartão Crédito' })).toHaveAttribute('href', '/contas?faturas=3');
+  // Nenhuma linha com um card sozinho (no celular, um por linha é o normal).
+  if ((page.viewportSize()?.width ?? 0) > 760) {
+    expect(await cardsPorLinha(page, '.kpis.kpis-equilibrados')).not.toContain(1);
+  }
   const sobra = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(sobra).toBeLessThanOrEqual(1);
   expect(problemas.lista).toEqual([]);
