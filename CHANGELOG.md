@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.1] — 2026-10-22 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o instalador `.msi` só é gerado no merge para o develop, e não mais no PR** (#344, ADR 0050). O PR é refeito várias vezes, e cada `.msi` gerado nele era jogado fora; o PR fica ~7 min mais rápido quando mexe no instalador. Para testar o instalador antes do merge, o workflow "Versão (instalador .msi)" roda à mão na branch. Saiu o `scripts/ci/precisa-msi.py`.
+
 ## [2.37.0] — 2026-10-22 · desenvolvimento
 
 ### Funcionalidades

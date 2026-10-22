@@ -1,24 +1,17 @@
 # Instalador .msi do Windows (#119, ADR 0029): gera o FinancasLocal-<versao>.msi e testa num Windows limpo
 # (instalação silenciosa, atualização para uma versão seguinte, desinstalação e migração de uma instalação feita pelos
 # scripts). Na tag vX.Y.Z, publica o .msi e o SHA256SUMS.txt no Release, que é de onde o gerenciador baixa.
-# Fora da tag, o .msi é de desenvolvimento (X.Y.Z-dev.<execução>); a cada push no develop, depois de todos os testes,
-# ele vai para o pré-lançamento "desenvolvimento" (link fixo). O gerenciador só olha o Release mais recente
-# (releases/latest), que nunca é um pré-lançamento.
+# Fora da tag, o .msi é de desenvolvimento (X.Y.Z-dev.<execução>); a cada push no develop (o merge de um PR), depois
+# de todos os testes, ele vai para o pré-lançamento "desenvolvimento" (link fixo). O gerenciador só olha o Release mais
+# recente (releases/latest), que nunca é um pré-lançamento.
+# #344 (ADR 0050): no PR o .msi não roda (o PR é refeito várias vezes, e cada .msi era jogado fora). Para testar o
+# instalador antes do merge, "Run workflow" (workflow_dispatch) na branch do PR.
 name: Versão (instalador .msi)
 
 on:
   push:
     tags: ["v*"]
     branches: [develop]
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - instalador/**
-      - src/gerenciador/**
-      - Directory.Build.props
-      - src/backend/Financas.Api/Program.cs
-      - src/backend/Financas.Api/Data/EsquemaBanco.cs
-      - .github/workflows/versao.yml
   workflow_dispatch:
 
 permissions:
@@ -33,35 +26,8 @@ env:
   SITE: https://127.0.0.1:5443
 
 jobs:
-  # #255 (ADR 0047): no PR, o .msi só roda se o PR mexe no instalador, no gerenciador ou na inicialização da API. O
-  # Directory.Build.props muda em todo PR (a versão, ADR 0039), e a linha <Version> sozinha não conta. No push do develop
-  # e na tag, sempre.
-  precisa:
-    name: o PR precisa do .msi?
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      msi: ${{ steps.decidir.outputs.msi }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Decidir
-        id: decidir
-        env:
-          # #307: PR "ci:" não gera o .msi (a não ser que mexa no instalador, no gerenciador ou na API).
-          TITULO_PR: ${{ github.event.pull_request.title }}
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            python3 scripts/ci/precisa-msi.py --base "origin/${{ github.base_ref }}"
-          else
-            echo "msi=true" >> "$GITHUB_OUTPUT"
-          fi
-
   gerar:
     name: gerar e testar o .msi
-    needs: precisa
-    if: needs.precisa.outputs.msi == 'true'
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:

@@ -39,7 +39,7 @@ instalador/gerar-msi.ps1                        # gera o FinancasLocal-<versão>
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
 ```
 
-**PR só de CI: título `ci:`, e o instalador do Windows não roda** (#307). O `.msi` (~7 min) só é gerado no PR que mexe no instalador, no gerenciador ou na inicialização da API (ADR 0047). Mudança só de CI (workflows, `scripts/ci/`) vai num PR `ci:` ou `ci(escopo):`, que pula o `.msi` mesmo mexendo no `versao.yml`. Não misture produto num PR `ci:`: se misturar, o `.msi` roda e a CI avisa.
+**O instalador `.msi` não é gerado no PR, só no merge para o develop** (#344, [ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)): o workflow "Versão (instalador .msi)" roda no push do `develop`, na tag `vX.Y.Z` e à mão. PR que mexe em `instalador/`, `src/gerenciador/`, `Program.cs` ou `EsquemaBanco.cs`: rode o workflow à mão na branch (Actions → Run workflow) antes do merge e diga no PR que rodou. Mudança só de CI (workflows, `scripts/ci/`) continua num PR `ci:` ou `ci(escopo):` (#307, ADR 0039); não misture produto nele.
 
 **Testes rápidos (#204):** cada comportamento testado num lugar só: lógica no Jest, desenho/CSS/rota/CSP no navegador. A CI falha com arquivo do Jest acima de 20 s ou suíte acima de 150 s (`scripts/ci/verificar-tempo-testes.py`). Biblioteca pesada no front-end vira substituto leve nos testes do Jest (`testes/apoio/`, `moduleNameMapper`, como o `lucide-falso.js`); antes de pôr uma dependência nova, meça um teste que a use. Mexeu em teste ou em CI: tempo antes e depois no PR. Detalhes em [CONTRIBUINDO.md](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci).
 
