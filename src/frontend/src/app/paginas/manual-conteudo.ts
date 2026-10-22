@@ -279,7 +279,7 @@ export const MANUAL: CapituloManual[] = [
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
           'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
           'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
-          'Conta em outra moeda (ex.: em dólar) gera um aviso no Painel: o site soma as contas como reais, sem conversão.'
+          'Conta em outra moeda (ex.: em dólar) gera um aviso nas notificações (o sino da barra do topo): o site soma as contas como reais, sem conversão.'
         ],
         abrir: [{ rotulo: 'Ajustar a sincronização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
@@ -777,7 +777,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'A barra de cada categoria mostra quanto do limite já foi.',
           'Laranja quer dizer que passou do limite só por causa de gastos de emergência.',
-          'O Painel junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
+          'O sino da barra do topo junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
           'Clique no gasto de uma categoria para ver as transações por trás dele.'
         ],
         abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }, { rotulo: 'Abrir o Painel', rota: '/painel' }]
@@ -981,9 +981,9 @@ export const MANUAL: CapituloManual[] = [
           '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
           'O card “Fatura em aberto” soma a fatura que ainda recebe compras (a do mês, enquanto não fecha; depois, a próxima) dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
           '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor.',
-          'No topo, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
-          'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros).',
-          'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir o Painel, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
+          'O sino da barra do topo (em qualquer tela) mostra quantas notificações estão pendentes e, ao clicar, os orçamentos estourados e os avisos. Esc ou um clique fora fecham. Lá, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
+          'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros). O que você oculta ou minimiza sai da conta do sino.',
+          'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir as notificações, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
           '“Mais análises” abre a evolução de 12 meses e as últimas transações.',
           'Clique num total por categoria para ver as transações por trás dele.'
         ],

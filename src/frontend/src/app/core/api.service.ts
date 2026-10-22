@@ -8,7 +8,7 @@ import {
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
   AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
-  Fatura, FaturaMes, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, PaginaTransacoes, Painel, Regra,
+  Fatura, FaturaMes, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, Avisos, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
@@ -31,6 +31,8 @@ export class ApiService {
   }
 
   // Painel e relatórios
+  /** #327: as notificações da barra do topo (o mês atual). */
+  avisos(): Observable<Avisos> { return this.http.get<Avisos>(`${this.base}/painel/avisos`); }
   painel(ano: number, mes: number): Observable<Painel> {
     return this.http.get<Painel>(`${this.base}/painel`, { params: this.params({ ano, mes }) });
   }

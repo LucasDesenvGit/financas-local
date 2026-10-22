@@ -2,16 +2,21 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.35.0] — 2026-10-22 · desenvolvimento
 
-
-
-
-
+### Funcionalidades
+- **Contas e cartões: as faturas de outros meses** (#323). O seletor de mês, como no Painel, fica em "Cartões de crédito" e muda a fatura de cada cartão e o total "Faturas de …". O mês fica na URL. Saldo, dívida total, limite e "Fatura em aberto" continuam sendo os de hoje, e a tela diz isso. O link "Faturas do mês" do Painel abre Contas no mesmo mês. Endpoint novo: `GET /api/contas/faturas-do-mes`.
 
 ## [2.34.0] — 2026-10-22 · desenvolvimento
 
 ### Funcionalidades
-- **Contas e cartões: as faturas de outros meses** (#323). O seletor de mês, como no Painel, fica em "Cartões de crédito" e muda a fatura de cada cartão e o total "Faturas de …". O mês fica na URL. Saldo, dívida total, limite e "Fatura em aberto" continuam sendo os de hoje, e a tela diz isso. O link "Faturas do mês" do Painel abre Contas no mesmo mês. Endpoint novo: `GET /api/contas/faturas-do-mes`.
+- **Notificações na barra do topo** (#327). Os orçamentos estourados e os avisos (conta vencida, Open Finance, erros…) saíram do topo do Painel e foram para o **sino** da barra do topo, em qualquer tela.
+  - O sino mostra quantas notificações estão pendentes; o que foi ocultado ou minimizado sai da conta.
+  - O card abre pelo sino e fecha com Esc, com um clique fora ou ao ir para outra tela.
+  - Os cards e o "Ocultar"/"Mostrar" são os mesmos de antes, e as escolhas continuam guardadas no navegador.
+  - O Painel não é mais empurrado para baixo pelos avisos.
+  - Se as notificações não carregarem, o card diz isso e oferece "Tentar de novo".
+  - Endpoint novo `GET /api/painel/avisos` (os avisos do mês atual, sem o resto do Painel).
 
 ## [2.33.0] — 2026-10-22 · desenvolvimento
 
