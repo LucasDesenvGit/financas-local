@@ -4,11 +4,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { Conta, Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { FaturaAbertaDoCartao, faturasAbertasDe, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
+import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas.component';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -22,7 +24,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
+  imports: [KpiFaturasAbertasComponent, MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
     MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
@@ -73,7 +75,8 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <h2 id="titulo-hoje">Situação hoje</h2>
           <p class="texto-suave">posição em {{ hoje | date: 'dd/MM/yyyy' }} · não muda com o mês escolhido</p>
         </header>
-      <section class="kpis">
+      <!-- #322: colunas pelo número de cards, para nenhum ficar sozinho embaixo. -->
+      <section class="kpis kpis-equilibrados" [style.--colunas]="colunasHoje(d)">
         <article class="kpi kpi-destaque">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.patrimonio" [tamanho]="16" /> Patrimônio líquido</span>
           <strong>{{ d.patrimonioLiquido | currency }}</strong>
@@ -94,6 +97,8 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <strong class="negativo">{{ d.dividaCartoes | currency }}</strong>
           <small>todos os cartões, com parcelas futuras</small>
         </article>
+        <!-- #322: o total das faturas em aberto dos cartões escolhidos em Contas e cartões (posição de hoje). -->
+        @if (faturasAbertas().length) { <app-kpi-faturas-abertas [itens]="faturasAbertas()" /> }
         @if (d.dividaFinanciamentos > 0) {
           <article class="kpi kpi-credito kpi-financiamento">
             <span class="kpi-rotulo"><app-icone [icone]="Icones.financiamento" [tamanho]="16" /> Financiamentos</span>
@@ -297,6 +302,16 @@ export class PainelComponent implements OnInit {
   /** UX-12: "Situação hoje" é sempre a posição de hoje; "Mês de …" segue o seletor. */
   readonly hoje = new Date();
   readonly nomeMes = computed(() => `${NOMES_MESES[this.periodo().mes - 1]}/${this.periodo().ano}`);
+  /** #322: cartões escolhidos em Contas e cartões (neste navegador) e as contas, carregadas só se houver algum. */
+  private readonly cartoesNoPainel = lerCartoesNoPainel();
+  private readonly contas = signal<Conta[]>([]);
+  /** #322: "Situação hoje" tem 5 cards fixos, mais financiamentos, empréstimos e a fatura em aberto, quando há. */
+  colunasHoje(d: Painel): number {
+    return colunasEquilibradas(5 + (d.dividaFinanciamentos > 0 ? 1 : 0) + (d.dividaEmprestimos > 0 ? 1 : 0)
+      + (this.faturasAbertas().length ? 1 : 0));
+  }
+
+  readonly faturasAbertas = computed((): FaturaAbertaDoCartao[] => faturasAbertasDe(this.contas(), new Set(this.cartoesNoPainel)));
 
   rotuloSituacao(situacao: 'paga' | 'fechada' | 'aberta'): string {
     return situacao === 'paga' ? 'paga' : situacao === 'fechada' ? 'fechada' : 'em aberto';
@@ -400,6 +415,10 @@ export class PainelComponent implements OnInit {
     const daUrl = mesAnoDaUrl(this.rota.snapshot.queryParamMap);
     if (daUrl) this.periodo.set(daUrl);
     this.carregar();
+    // #322: as contas trazem a fatura de hoje de cada cartão. Complementar: se falhar, o Painel fica sem esses cards.
+    if (this.cartoesNoPainel.length) {
+      this.api.contas().subscribe({ next: (c) => this.contas.set(c), error: () => this.contas.set([]) });
+    }
   }
 
   mudarPeriodo(p: MesAno): void {
