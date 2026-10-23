@@ -321,7 +321,8 @@ public record SalvarMetaDto(
 public record AporteDto([Range(-999999999d, 999999999d)] decimal Valor);
 
 /// <summary>#318: um aporte da meta, para o gráfico "Como está indo".</summary>
-public record MetaAporteDto(DateOnly Data, decimal Valor);
+/// <summary>#318: um aporte da meta. <c>Hora</c> (#359): "HH:mm" no fuso de Brasília, para o gráfico de um dia só.</summary>
+public record MetaAporteDto(DateOnly Data, decimal Valor, string? Hora = null);
 
 public record ContaAgendadaDto(int Id, string Descricao, decimal Valor, DateOnly ProximoVencimento,
     Recorrencia Recorrencia, int? CategoriaId, string? CategoriaNome, int? ContaId, string? ContaNome,

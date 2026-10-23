@@ -217,9 +217,11 @@ public class MetasController : BaseController
     public async Task<ActionResult<List<MetaAporteDto>>> Aportes(int id, CancellationToken ct)
     {
         if (!await _db.Metas.AnyAsync(m => m.Id == id, ct)) return NaoEncontrado();
-        return await _db.MetaAportes.AsNoTracking().Where(a => a.MetaId == id)
-            .OrderBy(a => a.Data).ThenBy(a => a.Id)
-            .Select(a => new MetaAporteDto(a.Data, a.Valor)).ToListAsync(ct);
+        var aportes = await _db.MetaAportes.AsNoTracking().Where(a => a.MetaId == id)
+            .OrderBy(a => a.Data).ThenBy(a => a.Id).ToListAsync(ct);
+        // #359: CriadoEm é gravado em UTC (o EF devolve sem o Kind): a hora vai no fuso de Brasília.
+        return aportes.Select(a => new MetaAporteDto(a.Data, a.Valor,
+            Relogio.ParaHoraLocal(DateTime.SpecifyKind(a.CriadoEm, DateTimeKind.Utc)).ToString("HH:mm"))).ToList();
     }
 
     [HttpDelete("{id:int}")]

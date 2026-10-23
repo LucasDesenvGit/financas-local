@@ -20,7 +20,7 @@ import { ChartConfiguration } from 'chart.js';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { PrivacidadeService } from '../core/privacidade.service';
-import { evolucaoDaMeta, resumoEvolucao } from './metas-evolucao';
+import { comoLerEvolucao, evolucaoDaMeta, resumoEvolucao } from './metas-evolucao';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
@@ -143,6 +143,17 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           }
           </div>
           <div class="meta-detalhe">
+          <!-- #359: concluída, o lado do plano diz isso numa caixa verde (no lugar do fundo verde do cartão inteiro). -->
+          @if (m.concluida) {
+            <p class="aviso-concluida" role="status"><span class="icone-aviso" aria-hidden="true">✓</span>
+              @if (m.percentual < 100) {
+                <span><strong>Concluída por você</strong> com <strong>{{ m.valorAtual | currency }}</strong> de
+                  {{ m.valorAlvo | currency }} guardados.</span>
+              } @else {
+                <span><strong>Meta alcançada!</strong> Você guardou <strong>{{ m.valorAtual | currency }}</strong> de
+                  {{ m.valorAlvo | currency }}.</span>
+              }</p>
+          }
           @if (planoDe(m); as pm) {
             <!-- #149 (D): o usuário diz quanto consegue; o resto do plano é refeito na hora. Simulação até registrar o aporte.
                  #335: o botão fica na mesma linha de "Este mês: guarde", à esquerda, junto do valor que ele muda. -->
@@ -259,15 +270,15 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           <div [id]="'evolucao-meta-' + m.id">
             @if (evolucaoAberta() === m.id) {
               @if (evolucao(); as ev) {
-                <app-grafico-explicado [resumo]="resumoDaEvolucao()"
-                  comoLer="Linha cheia: o total guardado no fim de cada mês; cada aporte muda o mês dele. Tracejada: o plano até o alvo. Pontilhada: o valor alvo.">
+                <!-- #359: a escala acompanha os aportes (mês, dia ou hora), e o "como ler" diz qual é. -->
+                <app-grafico-explicado [resumo]="resumoDaEvolucao()" [comoLer]="comoLerEvolucao(ev.escala)">
                   <app-grafico [configuracao]="graficoEvolucao()!" [altura]="200" />
                 </app-grafico-explicado>
                 @if (ev.aportes.length) {
                   <h3 class="titulo-aportes">Últimos aportes</h3>
                   <ul class="lista-aportes">
                     @for (a of ev.aportes.slice(0, 5); track $index) {
-                      <li><span class="texto-suave">{{ a.data | date: 'dd/MM/yyyy' }}</span>
+                      <li><span class="texto-suave">{{ a.data | date: 'dd/MM/yyyy' }}@if (a.hora) { às {{ a.hora }}}</span>
                         <strong>{{ a.valor > 0 ? '+' : '' }}{{ a.valor | currency }}</strong></li>
                     }
                   </ul>
@@ -465,6 +476,14 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       display: flex; gap: 8px; align-items: baseline; margin: 2px 0; padding: 8px 12px; border-radius: 10px;
       background: var(--alerta-suave); border-left: 4px solid var(--alerta); font-size: 0.875rem; line-height: 1.5;
     }
+    /* #359: na meta concluída (fundo verde), o hover do título é um verde translúcido, e não o cinza das outras. */
+    .cartao-meta.concluida .meta-alternar:hover { background: color-mix(in srgb, var(--positivo) 14%, transparent); }
+    .aviso-concluida {
+      display: flex; gap: 8px; align-items: baseline; margin: 0 0 6px; padding: 8px 12px; border-radius: 10px;
+      background: var(--positivo-suave); border-left: 4px solid var(--positivo); font-size: 0.875rem; line-height: 1.5;
+    }
+    .aviso-concluida .icone-aviso { color: var(--positivo); font-weight: 700; flex: none; }
+    .aviso-concluida strong { color: var(--texto-forte); }
     .aviso-prazo .icone-aviso { color: var(--alerta); font-size: 1rem; line-height: 1; flex: none; }
     .aviso-prazo strong { color: var(--texto-forte); }
     .botao-plano, .botao-ajuste, .botao-evolucao { justify-self: start; padding-left: 0; }
@@ -580,6 +599,7 @@ export class MetasComponent implements OnInit {
   readonly Math = Math;
   /** #318: o gráfico "Como está indo" aberto (uma meta por vez) e os aportes dela. */
   readonly evolucaoAberta = signal<number | null>(null);
+  readonly comoLerEvolucao = comoLerEvolucao;
   readonly aportesDaMeta = signal<{ metaId: number; aportes: MetaAporte[] } | null>(null);
   private readonly privacidade = inject(PrivacidadeService);
   /** #149 (C): quanto da sobra vai para as metas (100 − margem de segurança). */
@@ -648,7 +668,8 @@ export class MetasComponent implements OnInit {
     const caixa = this.plano();
     const agora = new Date();
     const hoje = caixa ? { ano: caixa.ano, mes: caixa.mes } : { ano: agora.getFullYear(), mes: agora.getMonth() + 1 };
-    return evolucaoDaMeta(meta, dados.aportes, this.planoDe(meta), hoje);
+    const hojeDia = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+    return evolucaoDaMeta(meta, dados.aportes, this.planoDe(meta), hoje, hojeDia);
   });
   readonly resumoDaEvolucao = computed(() => {
     const ev = this.evolucao();

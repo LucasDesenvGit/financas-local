@@ -250,7 +250,11 @@ export interface Meta {
 }
 
 /** #318: um aporte da meta (data AAAA-MM-DD; valor negativo é retirada), para o gráfico "Como está indo". */
-export interface MetaAporte { data: string; valor: number }
+export interface MetaAporte {
+  data: string; valor: number;
+  /** #359: "HH:mm" (Brasília) em que o aporte foi registrado, para o gráfico de um dia só. */
+  hora?: string | null;
+}
 
 /**
  * #149 — um mês do caixa: receitas e despesas das contas de dinheiro, faturas de cartão que vencem no mês (com a parte
