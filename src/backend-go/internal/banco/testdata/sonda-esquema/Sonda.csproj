@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sonda do EsquemaBanco (#297): veja Program.cs. Fica fora do FinancasLocal.sln de propósito. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- O mesmo SQLite da API (Financas.Api.csproj). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- O mesmo arquivo da API, com os mesmos scripts embutidos e os mesmos nomes (Financas.Api.csproj). -->
+    <Compile Include="../../../../../backend/Financas.Api/Data/EsquemaBanco.cs" Link="EsquemaBanco.cs" />
+    <EmbeddedResource Include="../../../../../../banco/01-estrutura.sql" LogicalName="banco.01-estrutura.sql" />
+    <EmbeddedResource Include="../../../../../../banco/02-dados-iniciais.sql" LogicalName="banco.02-dados-iniciais.sql" />
+    <EmbeddedResource Include="../../../../../../scripts/geral/2-criar-banco.sh" LogicalName="banco.2-criar-banco.sh" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+</Project>

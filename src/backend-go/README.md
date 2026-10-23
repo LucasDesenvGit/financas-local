@@ -7,7 +7,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `cmd/financas` | o ponto de entrada (o `Program.cs` do Go) |
 | `internal/config` | leitura dos mesmos `appsettings*.json` do .NET |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end |
-| `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc` ([README](internal/banco/README.md)) |
+| `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc`, esquema ao iniciar ([README](internal/banco/README.md)) |
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
 | `internal/relogio` | fuso de Brasília, injetável |
 
@@ -23,6 +23,7 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 - O `-wwwroot` aponta para o build do Angular (`npm run build` em `src/frontend`).
 - O `-certificado-temporario` cria um certificado só em memória, e o navegador vai avisar que não confia nele.
 - Para usar o `.pfx` e os caminhos de uma instalação, aponte `-pasta` para a pasta da publicação (onde está o `appsettings.Production.json`).
+- O `-aplicar-esquema` cria e atualiza o banco antes de atender, como o .NET faz ao iniciar (#297). Fica desligado por padrão: até a inversão (#85), quem faz isso é o .NET. Use só com uma cópia do banco.
 
 ## Antes de subir (push)
 
@@ -30,11 +31,12 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 gofmt -l .                 # não pode listar nada
 go vet ./...
 go test -race ./...
+go generate ./... && git diff --exit-code -- .   # código gerado e cópia dos scripts do banco em dia
 go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 ```
 
-A CI ainda não roda esses comandos: o job do Go entra na #231.
+O job "Go" da CI roda os mesmos comandos, também quando muda o `banco/` ou o `2-criar-banco.sh`.
 
 Dois testes manuais, que só rodam com as variáveis definidas:
 
