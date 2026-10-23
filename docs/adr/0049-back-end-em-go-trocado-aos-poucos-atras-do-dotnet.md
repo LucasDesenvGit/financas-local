@@ -1,7 +1,7 @@
 # 0049. Back-end em Go, trocado aos poucos atrás do .NET
 
 - **Status:** Aceita
-- **Data:** 2026-10-21
+- **Data:** 2026-10-21 (atualizada em 2026-10-23 com a convivência da #231)
 - **Relacionadas:** substitui em parte, ao fim da migração, a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (Kestrel), a [0005](0005-segredos-criptografados-com-data-protection.md) (Data Protection), a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) e a [0012](0012-instalador-do-windows-em-powershell.md) (SDK do .NET); afeta a [0003](0003-esquema-por-scripts-sql-idempotentes.md), a [0022](0022-erros-do-sistema-gravados-no-banco.md), a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md), a [0041](0041-testes-no-navegador-com-playwright.md) e a [0047](0047-ci-paralela-so-testes-afetados-no-pr.md); épico #70, issues #71 e #231
 
 ## Contexto
@@ -39,6 +39,44 @@ Reescrevemos o back-end em **Go**, num módulo em `src/backend-go/`, e o trocamo
 - **Repasse por prefixo** (#231): o .NET repassa ao Go os prefixos de rota de uma **lista na configuração**, com a pessoa autenticada e o CSRF já conferido. Prefixo fora da lista continua no .NET.
 - **Voltar um assunto para o .NET é tirar o prefixo da lista.** Não precisa reinstalar nem restaurar o banco.
 - **Na inversão, no fim** (#85), o Go passa a ficar na frente, com a autenticação (#75), os segredos (#76), os erros (#298) e o esquema do banco (#297), e o repasse sai.
+
+### A convivência na prática (#231)
+
+Como o .NET repassa ao Go, conferido de ponta a ponta pelo `scripts/ci/testar-go-atras-do-dotnet.sh` na CI:
+
+- **Repasse com `HttpClient`, num endpoint.** Cada prefixo de `Go:Prefixos` vira um `app.Map("<prefixo>/{**resto}")` com ordem -1 (`RepasseGo`).
+  - Por ser endpoint, a `FallbackPolicy` exige o login antes de chegar ao Go: sem login, 401 do próprio .NET, mesmo com o Go fora do ar ([autorização com política padrão](https://learn.microsoft.com/aspnet/core/security/authorization/secure-data#require-authenticated-users)).
+  - A ordem -1 ganha dos controllers e do `MapFallback` de `/api` ([`WithOrder`](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.builder.routingendpointconventionbuilderextensions.withorder)): um prefixo ligado leva o caminho, mesmo que um controller tenha a mesma rota.
+  - **CSRF conferido no repasse.** O `AutoValidateAntiforgeryTokenAttribute` é um filtro do MVC e não vale para endpoint fora dele ([documentação](https://learn.microsoft.com/aspnet/core/security/anti-request-forgery#antiforgery-with-minimal-apis)). O repasse chama `IAntiforgery.ValidateRequestAsync` com a mesma regra do filtro: GET, HEAD, OPTIONS e TRACE não conferem; o resto sem token recebe 400 sem corpo.
+  - Vão ao Go o método, o caminho, a query, o corpo e os cabeçalhos, menos os de conexão ([RFC 9110, 7.6.1](https://www.rfc-editor.org/rfc/rfc9110#section-7.6.1)), o cookie e o token CSRF: **o Go nunca vê o cookie de sessão.** Status, cabeçalhos e corpo voltam como o Go mandou, e o .NET põe os cabeçalhos de segurança por cima, como em toda resposta.
+  - Go fora do ar (subindo, reiniciando, sem executável): 503 com mensagem.
+- **Alternativa descartada: YARP** ([direct forwarding](https://learn.microsoft.com/aspnet/core/fundamentals/servers/yarp/direct-forwarding), pacote `Yarp.ReverseProxy`). Ele trata streaming, gRPC e WebSockets e converte erros em 5xx, mas seria um pacote novo na API para um repasse que sai na inversão (#85), e copia todos os cabeçalhos por padrão (inclusive o cookie). O repasse com `HttpClient` tem cerca de 100 linhas, lê a resposta sem guardá-la inteira na memória (`ResponseHeadersRead`) e não precisa de nada que o YARP tem a mais. *Julgamento:* se um assunto precisar de WebSocket ou streaming longo, trocar pelo `IHttpForwarder` do YARP, no mesmo endpoint.
+- **Confiança entre os dois:**
+  - o Go escuta só em `127.0.0.1`, numa porta que o sistema escolhe na partida (porta 0), e escreve `{"porta":N}` na saída padrão;
+  - a conversa é **HTTP, sem TLS**: não sai do computador, e quem lê o tráfego de `127.0.0.1` já é administrador (e lê o banco). *Julgamento*;
+  - **segredo interno** de 32 bytes aleatórios, gerado a cada partida do Go e passado pela **entrada padrão** (não aparece na linha de comando nem nas variáveis do processo). O Go confere com [`crypto/subtle.ConstantTimeCompare`](https://pkg.go.dev/crypto/subtle#ConstantTimeCompare) e, sem ele, responde 401 e registra um aviso;
+  - o Id de quem está logado vai em `X-Financas-Usuario`. Todo cabeçalho `X-Financas-*` que vier de fora é apagado pelo .NET, e o Go os tira da requisição depois de conferir.
+- **Processo filho, não serviço separado** (`ProcessoGo`). Continua um serviço só no systemd, no Serviço do Windows e no `.msi`, sem mudar o `configurar.ps1`.
+  - Sobe no `app.Run()`, depois do `EsquemaBanco` e das rotinas de partida. **O Go não aplica esquema** e recusa subir sem o arquivo do banco (não cria um banco vazio).
+  - Caiu: as rotas dele respondem 503, e o .NET o inicia de novo, esperando 1 s, 2 s, 4 s… até 1 min.
+  - O .NET parou: fecha a entrada padrão, o Go para com elegância ([`http.Server.Shutdown`](https://pkg.go.dev/net/http#Server.Shutdown)), e passados 10 s é encerrado à força.
+  - **O .NET caiu, até morto à força:** o sistema fecha a entrada padrão do Go, que para sozinho. No Windows, o Go fica também num [Job Object](https://learn.microsoft.com/windows/win32/procthread/job-objects) com `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` ([limites](https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information)), que o encerra mesmo travado. No systemd, o `KillMode=control-group` padrão já para o grupo todo ([systemd.kill](https://www.freedesktop.org/software/systemd/man/latest/systemd.kill.html)). *Julgamento a validar:* o Job Object foi testado só pelo teste do `.msi` e da instalação na CI do Windows, não num Windows de uso real.
+  - O mesmo executável (`cmd/financas`, com `-atras-do-dotnet`) é o da futura API: não há um auxiliar a reescrever.
+- **Log do Go:** em JSON na saída de erro ([`slog.JSONHandler`](https://pkg.go.dev/log/slog#JSONHandler)). O .NET registra cada linha com o mesmo nível na categoria `Financas.Go`, ou `Financas.Go.<origem>` quando o Go diz a origem da tela de erros (`"origem":"API"`). Avisos e erros vão para Configurações › Erros ([0022](0022-erros-do-sistema-gravados-no-banco.md)); a queda do Go vai como erro, com as últimas linhas da saída dele.
+- **Banco em WAL** ([sqlite.org/wal.html](https://www.sqlite.org/wal.html)): o `EsquemaBanco` passa o arquivo para WAL a cada partida (fica gravado no arquivo; sem efeito se já está). Quem lê não espera quem grava, e dois que gravam esperam um ao outro:
+  - no Go, `busy_timeout` de 30 s e `BEGIN IMMEDIATE` (#74);
+  - no .NET, o Microsoft.Data.Sqlite já tenta de novo enquanto o banco estiver ocupado, até o tempo do comando (30 s), e começa as transações com `BEGIN IMMEDIATE` ([documentação](https://learn.microsoft.com/dotnet/standard/data/sqlite/database-errors#locking-retries-and-timeouts), [código](https://github.com/dotnet/efcore/blob/main/src/Microsoft.Data.Sqlite.Core/SqliteTransaction.cs)). Nada mudou do lado do .NET;
+  - as cópias continuam certas: `VACUUM INTO` (a do `EsquemaBanco` e a do gerenciador) e `sqlite3 .backup` levam o que está no `-wal` (conferido), e o `configurar.ps1` já copia o `-wal` e o `-shm`. **Restaurar** uma cópia agora pede apagar o `-wal` e o `-shm` que sobraram ([sqlite.org/howtocorrupt.html, 1.4](https://www.sqlite.org/howtocorrupt.html)), com o serviço parado (dito no `4-backup.sh`).
+- **Configuração** (`appsettings.json`, seção `Go`), lida na partida: mudar vale ao reiniciar o serviço, sem reinstalar.
+  - `Go:Prefixos`: prefixos separados por `;` (padrão: `/api/go`). Só `/api/<algo>`, nunca `/api/auth` nem `/api/erros`. **Texto, e não lista JSON**, de propósito: no .NET, uma lista vazia num `appsettings` de cima não apaga a de baixo; `"Prefixos": ""` apaga.
+  - `Go:Tarefas`: tarefas em segundo plano que passaram para o Go e não rodam no .NET (`Sincronizacao`, `Cambio`, `Cripto`). O gravador de erros fica no .NET até a #298.
+  - `Go:Executavel`: o executável (padrão: `financas-go`, ao lado da API).
+  - Sem prefixo e sem tarefa, o Go nem é iniciado.
+- **Instalação mínima** (o resto é da #84), atualizando a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md):
+  - Go portátil em `ferramentas/go`, da linha do `go.mod` (`go 1.27.3` → a 1.27.x mais nova), pelo índice de `go.dev/dl` e o arquivo de `dl.google.com`, com o **SHA-256 do próprio índice conferido**. Reaproveita um `go` do PATH da mesma linha e não mais velho;
+  - compilado pelo `3-publicar-atualizar.sh`, pelo `instalar-windows.ps1` e pelo `gerar-msi.ps1` (com o `setup-go` no `versao.yml`), sem cgo (`CGO_ENABLED=0`), com a versão do `Directory.Build.props` pelo `-ldflags`, e publicado ao lado da API;
+  - `GOTOOLCHAIN=local` (nunca baixar outra versão do Go sozinho, [toolchains](https://go.dev/doc/toolchain)) e o cache de módulos e de compilação em `ferramentas/`;
+  - **sem `go mod vendor`.** Medido: a pasta `vendor` teria 137 MB (128 MB só do `modernc.org`, que traz o SQLite de todas as plataformas), no repositório. Os módulos vêm de `proxy.golang.org`, conferidos pelo `go.sum` do repositório, que guarda o hash de cada um ([go.sum](https://go.dev/ref/mod#go-sum-files)): a mesma garantia de integridade do SHA-256 conferido, sem o peso no `git clone`. Custo: mais um domínio na instalação, e compilar precisa de internet (como o NuGet e o npm já precisam).
 
 ### Cada assunto entra em uso em três passos
 
@@ -100,7 +138,9 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - o RE2 do Go não aceita lookbehind nem lookahead, e o `\b` dele só conhece ASCII (`ExtratoCarteiraService.cs:43`, `BancoService.cs:55`);
     - o `shopspring/decimal` escreve o número **entre aspas** no JSON, a menos que `MarshalJSONWithoutQuotes` seja ligado ([pkg.go.dev](https://pkg.go.dev/github.com/shopspring/decimal)). O tipo de dinheiro do projeto (#74) define o próprio `MarshalJSON`;
     - o suporte do `sqlc` a SQLite é menos maduro que o de PostgreSQL: consulta que ele não gerar vai para `database/sql` com `?`.
-  - **Domínio novo na instalação:** o download do Go (`go.dev`, `dl.google.com`) entra nos scripts na #231, com o SHA-256 conferido, e a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) é atualizada nesse PR.
+  - **Domínios novos na instalação** (#231): `go.dev` e `dl.google.com` (o Go, com o SHA-256 conferido) e `proxy.golang.org` (os módulos, conferidos pelo `go.sum`). A [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) foi atualizada.
+  - **Instalação pelo código maior durante a transição** (medido no Linux x64, #231): o Go portátil ocupa 276 MB em `ferramentas/go` (mais 68 MB do arquivo baixado), o cache de módulos 306 MB (46 MB baixados) e o de compilação 155 MB. A primeira compilação do Go leva cerca de 15 s; o executável tem 12 MB. O `.msi` só ganha o executável.
+  - **O Go é processo filho:** se o .NET não subir, o Go também não sobe; e um Go travado só é encerrado à força pelo .NET (ou, no Windows, pelo Job Object).
 - **Na prática:**
   - **Código Go em `src/backend-go/`** ([Organizing a Go module](https://go.dev/doc/modules/layout)):
     - `cmd/financas/main.go`;
@@ -116,7 +156,7 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - `gofmt`, `go vet` e `go test -race` limpos.
   - **Banco (#74; detalhes no `src/backend-go/internal/banco/README.md`):**
     - os tipos `Decimal`, `Data`, `DataHora` e `Guid` (pacote `internal/tipos`) gravam e leem no formato do EF Core. O formato foi confirmado por uma sonda que grava pelo mesmo EF Core da API (`internal/tipos/testdata/sonda-efcore`), e o resultado é o gabarito dos testes;
-    - o `Abrir` liga `foreign_keys` como o EF Core, espera até 30 s com o banco ocupado e começa as transações com `BEGIN IMMEDIATE`. Não muda o `journal_mode`;
+    - o `Abrir` liga `foreign_keys` como o EF Core, espera até 30 s com o banco ocupado e começa as transações com `BEGIN IMMEDIATE`. Não muda o `journal_mode`: quem passa o banco para WAL é quem aplica o esquema, o `EsquemaBanco` do .NET ou o `AplicarEsquema` do Go (#231, #297);
     - o `sqlc` roda pelo `go run` numa versão fixa, sem entrar no `go.mod`, e precisa de cgo só para quem gera. Ele lê um esquema reescrito pelo próprio SQLite (o parser dele não entende `TEXT NULL` e passa para minúsculas os nomes do `CREATE TABLE`). Nas consultas, os nomes vão entre aspas duplas e não pode haver acento.
   - **Servidor (#73):**
     - o Go lê os mesmos `appsettings*.json` e o `configuracao.json` do `.msi`, então os scripts não mudam;

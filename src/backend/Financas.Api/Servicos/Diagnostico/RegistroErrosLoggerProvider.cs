@@ -1,12 +1,14 @@
 using Financas.Api.Entidades;
+using Financas.Api.Servicos.Go;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Financas.Api.Servicos.Diagnostico;
 
 /// <summary>
 /// Provedor de log que manda para a tabela de erros (#11, ADR 0022) os avisos e erros do código do próprio sistema:
-/// categorias <c>Financas.*</c>, o tratador de exceções não tratadas da API (categoria "Erro") e a queda de serviços
-/// em segundo plano (<c>Microsoft.Extensions.Hosting</c>). O resto do framework (EF Core, Kestrel) fica de fora,
+/// categorias <c>Financas.*</c> (inclusive <c>Financas.Go</c>, o log do Go repassado pelo <see cref="ProcessoGo"/>),
+/// o tratador de exceções não tratadas da API (categoria "Erro") e a queda de serviços em segundo plano
+/// (<c>Microsoft.Extensions.Hosting</c>). O resto do framework (EF Core, Kestrel) fica de fora,
 /// para não duplicar nem gravar SQL. Os outros provedores (console, log de eventos) continuam recebendo tudo.
 /// </summary>
 [ProviderAlias("TabelaDeErros")]
@@ -44,6 +46,9 @@ public sealed class RegistroErrosLoggerProvider : ILoggerProvider
         _ when categoria.StartsWith("Financas.Api.Servicos.Pluggy", StringComparison.Ordinal) => "Open Finance",
         _ when categoria.StartsWith("Financas.Api.Servicos.Investimentos", StringComparison.Ordinal) => "Investimentos",
         _ when categoria.StartsWith("Financas.Api.Servicos.Cambio", StringComparison.Ordinal) => "Câmbio",
+        // #231: o que o Go escreve na saída de erro (ProcessoGo). "Financas.Go.<origem>" quando o Go diz a origem.
+        _ when categoria.StartsWith(ProcessoGo.CategoriaLog + ".", StringComparison.Ordinal) => categoria[(ProcessoGo.CategoriaLog.Length + 1)..],
+        ProcessoGo.CategoriaLog => "Sistema",
         _ => "Sistema"
     };
 

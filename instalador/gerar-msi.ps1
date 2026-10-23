@@ -1,6 +1,7 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador (precisa do .NET 10 SDK, do Node.js e do WiX 5: dotnet tool install --global wix --version 5.0.2;
+    no seu computador (precisa do .NET 10 SDK, do Go da versao do src\backend-go\go.mod, do Node.js e do WiX 5:
+    dotnet tool install --global wix --version 5.0.2;
     wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2).
 
     .\instalador\gerar-msi.ps1                      # versao do Directory.Build.props
@@ -66,6 +67,21 @@ if (-not $SoPacote) {
         Etapa "Publicando $projeto"
         Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
             "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
+    }
+
+    # #231 (ADR 0049): o back-end em Go roda atras da API, como processo filho dela, e fica ao lado dela. Sem cgo
+    # (o SQLite e o modernc.org/sqlite, em Go puro), para Windows x64. A versao entra no executavel pelo -ldflags.
+    Etapa "Compilando o back-end em Go"
+    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\backend-go\go.mod para a versao)." }
+    $env:CGO_ENABLED = "0"; $env:GOOS = "windows"; $env:GOARCH = "amd64"
+    Push-Location (Join-Path $Raiz "src\backend-go")
+    try {
+        Executar "go" @("build", "-trimpath", "-ldflags",
+            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$Rotulo",
+            "-o", (Join-Path $Publicado "financas-go.exe"), "./cmd/financas")
+    } finally {
+        Pop-Location
+        Remove-Item Env:GOOS, Env:GOARCH -ErrorAction SilentlyContinue
     }
 
     Etapa "Montando a pasta do instalador"

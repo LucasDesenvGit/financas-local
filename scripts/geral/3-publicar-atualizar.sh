@@ -2,8 +2,10 @@
 # =====================================================================
 # FinancasLocal - 3) Compilacao e publicacao (Kestrel, sem IIS)
 #
-#  - Compila o front-end Angular e a API .NET
+#  - Compila o front-end Angular, a API .NET e o back-end em Go (que roda
+#    atras do .NET, como processo filho dele: #231)
 #  - Publica em publicado/api, com o front-end incorporado ao wwwroot da API
+#    e o executavel financas-go ao lado da API
 #  - Gera/reaproveita um certificado HTTPS local (PFX) e escreve o
 #    appsettings.Production.json (com caminhos absolutos, ja que o processo
 #    pode rodar como servico a partir de outro diretorio de trabalho)
@@ -68,6 +70,17 @@ if [[ "$pular_build" -eq 0 ]]; then
     rm -rf "$preparo"
     dotnet publish "$projeto_api" -c Release -o "$preparo" --nologo
     ok 'API compilada'
+
+    # #231 (ADR 0049): o Go roda atras do .NET, como processo filho; o executavel fica ao lado da API, onde o
+    # .NET o procura (Go:Executavel). A versao e a do Directory.Build.props, como a da API.
+    etapa 'Compilando o back-end em Go'
+    command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
+    versao_sistema="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
+    nome_go=financas-go; [[ "$SO" == windows ]] && nome_go=financas-go.exe
+    (cd "$Raiz/src/backend-go" && go build -trimpath \
+        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao_sistema" \
+        -o "$(caminho_nativo "$preparo/$nome_go")" ./cmd/financas)
+    ok "back-end em Go compilado ($(go env GOVERSION))"
 
     dist_front="$pasta_front/dist/financas-web/browser"
     [[ -f "$dist_front/index.html" ]] || erro_sai "Saida do Angular nao encontrada em $dist_front"

@@ -56,6 +56,12 @@ jobs:
           cache: npm
           cache-dependency-path: src/frontend/package-lock.json
 
+      # #231 (ADR 0049): o back-end em Go vai no .msi, ao lado da API (o gerar-msi.ps1 compila).
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
       # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
       - name: Cache do build do Angular
         uses: actions/cache@v6
@@ -124,6 +130,23 @@ jobs:
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
+          # #231: o Go roda atrás do .NET (processo filho) e responde pelo repasse, com o login do .NET.
+          if (-not (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe")) { throw "financas-go.exe não foi instalado" }
+          $saude = $null
+          for ($i = 0; $i -lt 15; $i++) {
+            $saude = curl.exe --ssl-no-revoke -fsS -b c.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0 -and $saude) { break }
+            Start-Sleep 2
+          }
+          if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador" -or $saude.diarioDoBanco -ne "wal" -or $saude.versao -ne "${{ steps.versao.outputs.rotulo }}") {
+            throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)"
+          }
+          $semLogin = curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" "$env:SITE/api/go/saude"
+          if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          $api = Get-CimInstance Win32_Process -Filter "Name='Financas.Api.exe'"
+          if ($go.Count -ne 1 -or $go[0].ParentProcessId -ne $api.ProcessId) { throw "o Go não é processo filho da API: $($go | Select-Object ProcessId, ParentProcessId | ConvertTo-Json -Compress)" }
+          "Go atrás do .NET: $($saude | ConvertTo-Json -Compress)"
 
       - name: Trocar pela mesma versão do Release (a de desenvolvimento não fica instalada junto)
         if: github.ref_type != 'tag'
@@ -152,6 +175,9 @@ jobs:
           if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
+          # #231: a troca de versão parou o Go antigo junto (o arquivo foi trocado) e subiu o novo.
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          if ($go.Count -ne 1) { throw "processos do Go depois da atualização: $($go.Count) (esperado 1)" }
           # Os arquivos de dados continuam legíveis (permissões herdadas da pasta) depois da segunda configuração.
           foreach ($p in "sql\FinancasLocal.db", "certificado\financaslocal.pfx", "configuracao.json") {
             # Abre só para ler, dividindo com a API (que está com o banco aberto): falha só se faltar permissão.
@@ -169,6 +195,7 @@ jobs:
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
           if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o programa continua instalado" }
           if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
+          if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
 
       - name: Logs do msiexec
         if: failure()

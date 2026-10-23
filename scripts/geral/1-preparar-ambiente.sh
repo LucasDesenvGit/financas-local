@@ -7,6 +7,8 @@
 #    interpreta JSON nos scripts, no lugar do python3/jq)
 #  - .NET 10 SDK portatil em ferramentas/dotnet (reaproveita um dotnet 10.x
 #    que ja esteja no PATH, se houver)
+#  - Go portatil em ferramentas/go, na linha do src/backend-go/go.mod
+#    (reaproveita um go do PATH da mesma linha e nao mais velho; #231)
 #  - sqlite3: usa o do sistema se houver; senao baixa o portatil oficial
 #    (sqlite.org) em ferramentas/sqlite
 #
@@ -199,6 +201,82 @@ console.log([versao, alvo.sdk.version, arq.url, arq.hash].join("\n"));
     fi
 fi
 
+# ------------------------------------------------------------------ Go (#231, ADR 0049 e 0011)
+# O back-end em Go roda atras do .NET (processo filho) e e compilado na etapa 3. A versao minima vem do go.mod
+# (linha "go 1.27.3"); baixa a mais nova da mesma linha (1.27.x) publicada em go.dev/dl, conferida pelo SHA-256
+# que o proprio indice traz. Reaproveita um go do PATH que ja seja dessa versao ou mais novo.
+etapa 'Verificando o Go'
+go_minimo="$(awk '$1 == "go" { print $2; exit }' "$Raiz/src/backend-go/go.mod")"
+[[ -n "$go_minimo" ]] || erro_sai 'Versao do Go nao encontrada em src/backend-go/go.mod.'
+go_linha="$(cut -d. -f1-2 <<<"$go_minimo")"
+# versao_ao_menos ATUAL MINIMA: verdadeiro se ATUAL >= MINIMA (1.27.10 > 1.27.9).
+versao_ao_menos() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }
+
+go_bin=go; [[ "$SO" == windows ]] && go_bin=go.exe
+destino_go="$Ferramentas/go"
+usar_go_do_path=0
+if [[ ! -x "$destino_go/bin/$go_bin" ]] && command -v go >/dev/null 2>&1; then
+    go_do_path="$(GOTOOLCHAIN=local go env GOVERSION 2>/dev/null | sed 's/^go//' || true)"
+    if [[ -n "$go_do_path" && "$(cut -d. -f1-2 <<<"$go_do_path")" == "$go_linha" ]] && versao_ao_menos "$go_do_path" "$go_minimo"; then
+        ok "Go $go_do_path ja disponivel no PATH ($(command -v go))"
+        usar_go_do_path=1
+    fi
+fi
+
+if [[ "$usar_go_do_path" -eq 0 ]]; then
+    case "$SO" in
+        linux)   go_so=linux;   extensao_go=tar.gz ;;
+        osx)     go_so=darwin;  extensao_go=tar.gz ;;
+        windows) go_so=windows; extensao_go=zip ;;
+    esac
+    case "$ARCH" in x64) go_arch=amd64 ;; arm64) go_arch=arm64 ;; esac
+
+    etapa "Obtendo a versao mais recente do Go $go_linha (indice oficial em go.dev/dl)"
+    arq_indice_go="$Instaladores/go-versoes.json"
+    curl -fsSL 'https://go.dev/dl/?mode=json' -o "$arq_indice_go" || erro_sai 'Nao foi possivel obter o indice de versoes do Go (sem internet?).'
+    leitura_go="$(GO_LINHA="$go_linha" GO_MINIMO="$go_minimo" GO_SO="$go_so" GO_ARCH="$go_arch" GO_EXT="$extensao_go" node -e '
+const e = process.env;
+const numeros = v => v.replace(/^go/, "").split(".").map(Number);
+const aoMenos = (a, b) => { for (let i = 0; i < 3; i++) { const d = (a[i] || 0) - (b[i] || 0); if (d) return d > 0; } return true; };
+const versoes = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+for (const v of versoes) {
+    if (!v.stable || !v.version.startsWith("go" + e.GO_LINHA + ".") || !aoMenos(numeros(v.version), numeros(e.GO_MINIMO))) continue;
+    const arq = v.files.find(f => f.os === e.GO_SO && f.arch === e.GO_ARCH && f.kind === "archive" && f.filename.endsWith("." + e.GO_EXT));
+    if (arq) { console.log([v.version, arq.filename, arq.sha256].join("\n")); process.exit(0); }
+}
+process.exit(1);
+' "$(caminho_nativo "$arq_indice_go")")" || erro_sai "Nenhum Go $go_linha.x (>= $go_minimo) para $go_so/$go_arch no indice de go.dev/dl."
+    go_versao="$(sed -n '1p' <<<"$leitura_go" | tr -d '\r')"
+    go_arquivo="$(sed -n '2p' <<<"$leitura_go" | tr -d '\r')"
+    go_hash="$(sed -n '3p' <<<"$leitura_go" | tr -d '\r')"
+    ok "Go ${go_versao#go}"
+
+    versao_go_instalada=""
+    [[ -x "$destino_go/bin/$go_bin" ]] && versao_go_instalada="$(GOTOOLCHAIN=local "$destino_go/bin/$go_bin" env GOVERSION 2>/dev/null || true)"
+    if [[ "$versao_go_instalada" == "$go_versao" ]]; then
+        ok "Go ${go_versao#go} ja presente em $destino_go"
+    else
+        arq_go="$Instaladores/$go_arquivo"
+        # dl.google.com e para onde go.dev/dl/<arquivo> redireciona: baixa direto de la.
+        [[ -f "$arq_go" ]] || baixar_arquivo "https://dl.google.com/go/$go_arquivo" "$arq_go"
+        verificar_sha256 "$arq_go" "$go_hash"
+
+        etapa 'Extraindo o Go'
+        pasta_tmp="$Instaladores/go-extracao"
+        rm -rf "$pasta_tmp"
+        garantir_pasta "$pasta_tmp"
+        if [[ "$SO" == windows ]]; then
+            extrair_zip "$arq_go" "$pasta_tmp"
+        else
+            tar -xzf "$arq_go" -C "$pasta_tmp"
+        fi
+        rm -rf "$destino_go"
+        mv "$pasta_tmp/go" "$destino_go"
+        rm -rf "$pasta_tmp"
+        ok "Go ${go_versao#go} em $destino_go"
+    fi
+fi
+
 # ------------------------------------------------------------------ sqlite3
 etapa 'Verificando o sqlite3'
 destino_sqlite="$Ferramentas/sqlite"
@@ -253,6 +331,7 @@ fi
 etapa 'Conferindo o ambiente'
 configurar_ambiente_build
 ok "dotnet  $(dotnet --version)"
+ok "go      $(go env GOVERSION)"
 ok "node    $(node --version)"
 ok "npm     $(npm --version)"
 ok "sqlite3 $(sqlite3 --version | awk '{print $1}')"

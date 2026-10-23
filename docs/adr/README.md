@@ -48,7 +48,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0008](0008-moeda-estrangeira-somente-em-investimentos.md) | Moeda estrangeira só em investimentos; demais registros em reais | Aceita (em parte substituída pela 0009) |
 | [0009](0009-ativos-no-exterior-na-carteira-manual.md) | Ativos no exterior na carteira manual | Aceita |
 | [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Substituída por 0037 |
-| [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita (o SDK do .NET, depois, pelo Go: 0049) |
+| [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita (com o Go portátil desde a #231; o SDK do .NET sai depois, pelo Go: 0049) |
 | [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029; o SDK do .NET, depois, pelo Go: 0049) |
 | [0013](0013-testes-do-front-end-com-jest.md) | Testes automatizados do front-end com Jest | Aceita |
 | [0014](0014-emprestimos-e-financiamentos-pelo-open-finance.md) | Empréstimos e financiamentos pelo Open Finance, separados e fora das despesas | Aceita |
@@ -86,5 +86,5 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0046](0046-menu-lateral-em-grupos-que-abrem-e-fecham.md) | Menu lateral em grupos que abrem e fecham (sanfona), vários abertos ao mesmo tempo | Aceita |
 | [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) | CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele | Aceita |
 | [0048](0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md) | Cotação de criptomoedas pela API pública do Mercado Bitcoin | Aceita |
-| [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) | Back-end em Go, trocado aos poucos atrás do .NET (strangler fig), com sqlc, modernc.org/sqlite e shopspring/decimal | Aceita |
+| [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) | Back-end em Go, trocado aos poucos atrás do .NET (strangler fig), com sqlc, modernc.org/sqlite e shopspring/decimal; o .NET sobe o Go como processo filho e repassa os prefixos de `Go:Prefixos` (#231) | Aceita |
 | [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) | O .msi é gerado no merge para o develop (e na tag), e não no PR | Aceita |
