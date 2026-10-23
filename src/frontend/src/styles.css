@@ -709,6 +709,31 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 .lista-simples li + li, .lista-legenda li + li { border-top: 1px solid var(--linha); }
 .lista-simples li.clicavel:hover { background: var(--superficie-2); }
 .lista-legenda { margin-top: 12px; }
+/* #377: Câmbio e Criptomoedas (Investimentos) na mesma grade, com as colunas retas de uma linha para a outra e de um
+   bloco para o outro: código (largura fixa), bandeira ou ícone, nome, valor, variação e fonte. O câmbio não tem
+   variação: a data ocupa as duas últimas colunas e termina onde termina a de cripto. */
+.lista-cotacoes li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 8.5rem 12rem 13rem; column-gap: 12px; align-items: center;
+}
+.lista-cotacoes .moeda-identificacao {
+  display: grid; grid-template-columns: 3.4rem 20px; column-gap: 8px; align-items: center; justify-items: center;
+}
+.lista-cotacoes .moeda-identificacao > :first-child { width: 3.4rem; box-sizing: border-box; }
+.lista-cotacoes .valor { grid-column: 3; text-align: right; font-variant-numeric: tabular-nums; }
+.lista-cotacoes .cotacao-variacao { grid-column: 4; text-align: right; }
+.lista-cotacoes .cotacao-fonte { grid-column: 5; text-align: right; }
+.lista-cotacoes .cotacao-fonte.sem-variacao { grid-column: 4 / span 2; }
+.lista-cotacoes .sem-cotacao { grid-column: 3 / span 3; text-align: right; }
+/* Celular e tela estreita: o código e o ícone à esquerda, o nome e o valor em cima; a variação e a fonte embaixo do
+   nome, na largura que sobra (#329). */
+@media (max-width: 760px) {
+  .lista-cotacoes li { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 2px; }
+  .lista-cotacoes .moeda-identificacao { grid-row: 1 / span 3; align-self: start; margin-top: 2px; }
+  .lista-cotacoes .cresce { grid-column: 2; }
+  .lista-cotacoes .valor { grid-column: 3; }
+  .lista-cotacoes .cotacao-variacao, .lista-cotacoes .cotacao-fonte, .lista-cotacoes .cotacao-fonte.sem-variacao,
+  .lista-cotacoes .sem-cotacao { grid-column: 2 / span 2; text-align: left; }
+}
 /* #336: ícone da categoria (<app-icone-categoria>) e o nome lado a lado, nas tabelas e listas de categoria. */
 .categoria-com-icone { display: inline-flex; align-items: center; gap: 10px; min-height: 24px; vertical-align: middle; }
 a.categoria-com-icone { text-decoration: none; }
