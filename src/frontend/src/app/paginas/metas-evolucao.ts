@@ -7,7 +7,7 @@ import { MesRef, PlanoDaMeta } from './metas-plano';
  *
  * - **Guardado** (linha cheia): o total no fim de cada mês, do mês do primeiro aporte registrado até o atual. O total de
  *   hoje é o da meta (com a conta ou o cofrinho); os meses anteriores são esse total menos os aportes que vieram
- *   depois. Cada "+ aporte" muda a linha. Antes da tabela MetaAporte não havia data: o gráfico parte do total de hoje.
+ *   depois. Cada "+ Aporte" muda a linha. Antes da tabela MetaAporte não havia data: o gráfico parte do total de hoje.
  * - **Plano** (tracejada): começa no total de hoje e soma o que o plano do assistente manda guardar em cada mês seguinte
  *   (o mês atual entra no ponto do mês seguinte), até o alvo. Fica no mês da "data provável" do plano.
  * - **Alvo**: o valor alvo, de ponta a ponta.
@@ -73,7 +73,7 @@ export function resumoEvolucao(meta: Meta, ev: EvolucaoDaMeta, plano: PlanoDaMet
   const alvo = reaisOuNada(meta.valorAlvo, oculto);
   const partes = [valor && alvo ? `Guardado: ${valor} de ${alvo} (${pct(meta.percentual)}).` : `Guardado: ${pct(meta.percentual)} do alvo.`];
   if (ev.aportes.length === 0) {
-    partes.push('Ainda sem aporte registrado: cada “+ aporte” vira um ponto da linha.');
+    partes.push('Ainda sem aporte registrado: cada “+ Aporte” vira um ponto da linha.');
   } else {
     const n = ev.aportes.length;
     partes.push(`${n} ${n === 1 ? 'aporte registrado' : 'aportes registrados'} desde ${rotuloMesCurto(mesDaData(ev.aportes[n - 1].data))}.`);

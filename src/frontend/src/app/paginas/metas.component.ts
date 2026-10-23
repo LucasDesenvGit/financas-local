@@ -58,7 +58,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           } @else if (ativas().length === 0) {
             <!-- #316: sem meta em andamento não há para onde mandar a sobra: dizer isso, e não "guardar R$ 0,00". -->
             <p class="aviso-recomendacao"><strong>Nenhuma meta em andamento:</strong> crie uma meta, ou reabra uma concluída (em
-              “editar”, desmarque “Concluída”), para eu dividir a sobra.</p>
+              “Editar”, desmarque “Concluída”), para eu dividir a sobra.</p>
           } @else {
             <p class="aviso-recomendacao">Recomendo guardar <strong class="valor-recomendado">{{ c.totalRecomendado | currency }}</strong>
               este mês, dividido pela <strong>ordem de prioridade</strong> das metas.@switch (c.limitadoPor) {
@@ -281,10 +281,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           <!-- #335: as ações na largura toda, embaixo das duas colunas. -->
           <footer>
             @if (!m.concluida) {
-              <button type="button" class="link" (click)="abrirAporte(m)" [attr.aria-label]="'Aporte na meta ' + m.nome">+ aporte</button>
+              <button type="button" class="link" (click)="abrirAporte(m)" [attr.aria-label]="'Aporte na meta ' + m.nome">+ Aporte</button>
             }
             <span class="cresce"></span>
-            <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">editar</button>
+            <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">Editar</button>
           </footer>
           </div>
           </div>

@@ -801,7 +801,7 @@ export const MANUAL: CapituloManual[] = [
           'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta e, translúcido, no centro do anel do percentual.',
           'Cada meta é uma barra que abre e fecha: clique no nome. Fechada, ela mostra o percentual, quanto já foi guardado e quanto guardar no mês. Aberta, o anel, os valores e a prioridade ficam à esquerda, e o plano do mês à direita (no celular, um embaixo do outro). Todas começam abertas; as que você fechar ficam fechadas neste navegador. “Fechar todas” e “Abrir todas” ficam no topo da lista.',
           'Meta sem data alvo mostra “sem data definida”.',
-          'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “editar”.'
+          'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “Editar”.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
       },
@@ -810,7 +810,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Acompanhar o progresso',
         paraQueServe: 'Fazer a meta andar sozinha ou registrar cada aporte.',
         passos: [
-          'Sem conta ligada: registre cada valor guardado em “+ aporte”.',
+          'Sem conta ligada: registre cada valor guardado em “+ Aporte”.',
           'Com uma conta ligada (“Acompanhar saldo de uma conta”): o progresso é o valor inicial mais o saldo da conta.',
           'Na conta do Mercado Pago, dá para escolher um cofrinho (reserva): o progresso usa o saldo dele.',
           '“confira em Reservas” aparece quando o saldo do cofrinho é estimado: confira o saldo real em Investimentos › Reservas.'
@@ -830,7 +830,7 @@ export const MANUAL: CapituloManual[] = [
           'Na meta em que você disse “Quanto vou guardar por mês”, o plano guarda esse valor todo mês, antes das outras e pela prioridade, mas nunca mais do que a parte da sobra que vai para as metas: se num mês não der, um aviso amarelo diz quanto dá e o resto fica para os meses seguintes.',
           'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
           '“Plano mês a mês” mostra os próximos 5 meses e para no mês em que a meta é alcançada; “Mostrar mais” acrescenta 5 de cada vez, até 12, e “Mostrar menos” volta aos 5. “Como calculei” explica a conta.',
-          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ aporte” muda o gráfico, e embaixo ficam os últimos aportes. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
+          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ Aporte” muda o gráfico, e embaixo ficam os últimos aportes. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
         termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],

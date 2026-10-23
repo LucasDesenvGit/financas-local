@@ -65,7 +65,7 @@ describe('Regressão: gráfico "Como está indo" da meta (#318)', () => {
     expect(oculto).not.toContain('R$');
   });
 
-  it('sem aporte registrado, o resumo diz que cada "+ aporte" vira um ponto', () => {
+  it('sem aporte registrado, o resumo diz que cada "+ Aporte" vira um ponto', () => {
     const ev = evolucaoDaMeta(VIAGEM, [], null, HOJE);
     expect(resumoEvolucao(VIAGEM, ev, null, false)).toContain('Ainda sem aporte registrado');
   });
