@@ -232,18 +232,19 @@ type Investimento struct {
 }
 
 type Meta struct {
-	Id          int64
-	Nome        string
-	ValorAlvo   string
-	ValorAtual  string
-	DataAlvo    *string
-	ContaId     *int64
-	Cor         string
-	Concluida   int64
-	ReservaNome *string
-	Prioridade  int64
-	Icone       *string
-	CriadoEm    string
+	Id            int64
+	Nome          string
+	ValorAlvo     string
+	ValorAtual    string
+	DataAlvo      *string
+	ContaId       *int64
+	Cor           string
+	Concluida     int64
+	ReservaNome   *string
+	Prioridade    int64
+	Icone         *string
+	GuardarPorMes *string
+	CriadoEm      string
 }
 
 type MetaAporte struct {

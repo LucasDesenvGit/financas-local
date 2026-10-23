@@ -16,7 +16,10 @@ import { Meta, PlanoMetas } from '../core/modelos';
  *     prioridade; no aperto, decide a prioridade, e a meta sem prazo leva até uma parte justa;
  *  5. o valor que o usuário diz que consegue guardar numa meta este mês vale no lugar da recomendação, e o resto do plano
  *     é refeito sobre o que ainda falta;
- *  6. a partir do mês seguinte, meses com valores parecidos viram um degrau com o mesmo valor (o total não muda).
+ *  6. a partir do mês seguinte, meses com valores parecidos viram um degrau com o mesmo valor (o total não muda);
+ *  7. (#359) a meta em que a pessoa disse quanto vai guardar por mês (`guardarPorMes`) recebe esse valor todo mês, antes
+ *     das outras e pela prioridade, mas nunca mais do que a parte da sobra que vai para as metas naquele mês; ela fica
+ *     fora da divisão automática e dos degraus. A tabela para no mês em que a meta é alcançada.
  * Julgamento próprio, não validado com uso real: o mínimo (R$ 50), o teto (2×) e a tolerância dos degraus.
  */
 
@@ -43,6 +46,10 @@ export interface PlanoDaMeta {
   recomendado: number;
   /** O valor deste mês veio do usuário ("consigo guardar"), não da recomendação. */
   ajustado: boolean;
+  /** #359: quanto a pessoa disse que vai guardar por mês; null = o plano decide. */
+  porMes: number | null;
+  /** #359: primeiro mês em que a sobra para as metas não dá o valor por mês inteiro (e quanto deu); null = deu sempre. */
+  porMesCortado: { mes: MesRef; valor: number } | null;
   /** Mês (AAAA-MM-01) em que a meta é alcançada nesse plano; null se passa do horizonte. */
   dataProvavel: string | null;
   /** null sem data-alvo. */
@@ -124,8 +131,22 @@ export function planejarMetas(caixa: PlanoMetas, metas: readonly Meta[], percent
     falta.set(m.id, falta.get(m.id)! - valor);
   }
 
+  // Passo 7: o valor por mês que a pessoa escolheu, até a parte da sobra que vai para as metas.
+  const porMes = new Map(ativas.filter((m) => (m.guardarPorMes ?? 0) > 0).map((m) => [m.id, m.guardarPorMes!]));
+  const cortado = new Map<number, { mes: MesRef; valor: number }>();
   for (let k = 0; k < n; k++) {
-    const livres = ativas.filter((m) => !(k === 0 && ajustadas.has(m.id)));
+    for (const m of ativas) {
+      const v = porMes.get(m.id);
+      if (v === undefined || (k === 0 && ajustadas.has(m.id)) || falta.get(m.id)! <= 0.005) continue;
+      const desejado = Math.min(v, falta.get(m.id)!);
+      const valor = Math.max(0, Math.min(desejado, restante[k]));
+      if (valor < desejado - 0.005 && !cortado.has(m.id)) cortado.set(m.id, { mes: mesDoIndice(k), valor: centavos(valor) });
+      if (valor > 0) dar(m.id, k, valor);
+    }
+  }
+
+  for (let k = 0; k < n; k++) {
+    const livres = ativas.filter((m) => !porMes.has(m.id) && !(k === 0 && ajustadas.has(m.id)));
     // Passo 3: pedido de cada meta com prazo.
     const pedidos = new Map<number, number>();
     for (const m of livres) {
@@ -161,14 +182,14 @@ export function planejarMetas(caixa: PlanoMetas, metas: readonly Meta[], percent
     // Mínimo do mês atual: quando o pedido das metas com prazo ficou abaixo dele (a capacidade está nos meses seguintes).
     if (k === 0 && ajustadas.size === 0) {
       const total = ativas.reduce((s, m) => s + alocado.get(m.id)![0], 0);
-      const primeira = ativas.find((m) => falta.get(m.id)! > 0);
+      const primeira = livres.find((m) => falta.get(m.id)! > 0);
       if (primeira && total < minimo - 0.005) dar(primeira.id, 0, Math.min(minimo - total, falta.get(primeira.id)!));
     }
   }
 
   const planos = ativas.map((m): PlanoDaMeta => {
     const a = alocado.get(m.id)!;
-    const degraus = suavizar(a, caixa, mesDoIndice);
+    const degraus = porMes.has(m.id) ? [] : suavizar(a, caixa, mesDoIndice, restante);
     const total = faltaInicial.get(m.id)!;
     let acumulado = 0;
     let indiceProvavel: number | null = null;
@@ -185,10 +206,13 @@ export function planejarMetas(caixa: PlanoMetas, metas: readonly Meta[], percent
       falta: centavos(total),
       recomendado: centavos(a[0] ?? 0),
       ajustado: ajustadas.has(m.id),
+      porMes: porMes.get(m.id) ?? null,
+      porMesCortado: cortado.get(m.id) ?? null,
       dataProvavel: provavel ? `${provavel.ano}-${String(provavel.mes).padStart(2, '0')}-01` : null,
       noPrazo,
       paraManterPrazo,
-      meses: caixa.meses.slice(0, MESES_NA_TABELA).map((x, k) => ({
+      // #359: depois do mês em que a meta é alcançada, os meses só teriam R$ 0: a tabela para nele.
+      meses: caixa.meses.slice(0, Math.min(MESES_NA_TABELA, indiceProvavel === null ? n : indiceProvavel + 1)).map((x, k) => ({
         ano: x.ano, mes: x.mes, sobra: x.sobra, faturas: x.faturas, guardar: centavos(a[k])
       })),
       ateOAlvo: a.slice(0, indiceProvavel === null ? n : indiceProvavel + 1).map(centavos),
@@ -209,8 +233,10 @@ export function planejarMetas(caixa: PlanoMetas, metas: readonly Meta[], percent
 /**
  * Passo 6: a partir do mês seguinte, junta meses com valores parecidos num degrau com o mesmo valor (a média; o
  * arredondamento fica no último mês do degrau, para o total não mudar). Altera `a` e devolve os degraus.
+ * #359: o degrau não passa, em nenhum mês, do que sobrou para as metas (`folga`, que é atualizada): sem isso, a soma das
+ * metas de um mês podia passar da parte da sobra que vai para elas.
  */
-function suavizar(a: number[], caixa: PlanoMetas, mesDoIndice: (k: number) => MesRef): Degrau[] {
+function suavizar(a: number[], caixa: PlanoMetas, mesDoIndice: (k: number) => MesRef, folga: number[]): Degrau[] {
   let ultimo = 0;
   for (let k = a.length - 1; k >= 1; k--) if (a[k] > 0.005) { ultimo = k; break; }
   const degraus: Degrau[] = [];
@@ -220,13 +246,19 @@ function suavizar(a: number[], caixa: PlanoMetas, mesDoIndice: (k: number) => Me
     while (j + 1 <= ultimo) {
       const media = soma / (j - i + 1);
       if (Math.abs(a[j + 1] - media) > Math.max(TOLERANCIA_REAIS, TOLERANCIA_PERCENTUAL * media)) break;
+      const novaMedia = (soma + a[j + 1]) / (j - i + 2);
+      let cabe = true;
+      for (let k = i; k <= j + 1; k++) if (novaMedia > a[k] + Math.max(0, folga[k]) + 0.01) { cabe = false; break; }
+      if (!cabe) break;
       j++;
       soma += a[j];
     }
     const quantos = j - i + 1;
     const valor = centavos(soma / quantos);
+    const antes = a.slice(i, j + 1);
     for (let k = i; k < j; k++) a[k] = valor;
     a[j] = centavos(soma - valor * (quantos - 1));
+    for (let k = i; k <= j; k++) folga[k] -= a[k] - antes[k - i];
     let faturas = 0;
     for (let k = i; k <= j; k++) faturas += caixa.meses[k].faturas;
     degraus.push({ inicio: mesDoIndice(i), fim: mesDoIndice(j), valor, faturas: centavos(faturas / quantos) });
@@ -242,4 +274,17 @@ function dependeDaFatura(degraus: Degrau[]): PlanoDaMeta['dependeDaFatura'] {
   const maior = degraus.slice(1).reduce((x, d) => (d.valor > x.valor ? d : x));
   if (maior.valor < 2 * Math.max(primeiro.valor, 1) || maior.faturas > 0.8 * primeiro.faturas) return null;
   return { aPartir: maior.inicio, antes: primeiro.faturas, depois: maior.faturas };
+}
+
+/**
+ * #359: guardando `porMes` todo mês, a partir do mês atual, em quantos meses a meta chega ao que falta, e o mês em que
+ * chega (AAAA-MM-01). Um mês só = o mês atual. Null quando não há o que calcular (valor por mês ou falta ≤ 0).
+ */
+export function dataPeloValorMensal(falta: number, porMes: number, hoje: MesRef): { meses: number; data: string } | null {
+  if (!(porMes > 0) || !(falta > 0)) return null;
+  const meses = Math.ceil(Math.round(falta * 100) / Math.round(porMes * 100));
+  const total = hoje.ano * 12 + (hoje.mes - 1) + meses - 1;
+  const ano = Math.floor(total / 12);
+  const mes = (total % 12) + 1;
+  return { meses, data: `${ano}-${String(mes).padStart(2, '0')}-01` };
 }

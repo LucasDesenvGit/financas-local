@@ -18,11 +18,11 @@ const RESERVA = meta({ id: 2, nome: 'RESERVA', valorAlvo: 30000, valorAtual: 200
 describe('Regressão: Metas, "concluída" com 1% e ícone (#316)', () => {
   beforeEach(() => localStorage.clear());
 
-  it('concluída sem chegar ao alvo diz "concluída por você"; a que chegou continua "concluída"', async () => {
+  it('concluída sem chegar ao alvo diz "Concluída por você"; a que chegou continua "Concluída"', async () => {
     const chegou = meta({ id: 3, nome: 'Notebook', valorAlvo: 5000, valorAtual: 5000, percentual: 100, concluida: true });
     const { raiz } = abrirMetas([RESERVA, chegou]);
     const etiquetas = [...raiz.querySelectorAll('.cartao-meta .etiqueta-sucesso')].map((e) => e.textContent!.trim());
-    expect(etiquetas).toEqual(['concluída por você', 'concluída']);
+    expect(etiquetas).toEqual(['Concluída por você', 'Concluída']);
   });
 
   it('o valor e o alvo têm espaço entre eles ("R$ 200,00 de R$ 30.000,00")', () => {

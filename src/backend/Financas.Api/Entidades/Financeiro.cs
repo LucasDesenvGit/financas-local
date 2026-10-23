@@ -177,6 +177,8 @@ public class Meta
     public string Cor { get; set; } = "#0f766e";
     /// <summary>#316: ícone escolhido para a meta (nome da lista do front-end, ex.: "casa"); null = o padrão (cofrinho).</summary>
     public string? Icone { get; set; }
+    /// <summary>#359: quanto a pessoa disse que vai guardar por mês; o plano das metas usa esse valor. Null = o plano decide.</summary>
+    public decimal? GuardarPorMes { get; set; }
     public bool Concluida { get; set; }
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
