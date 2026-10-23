@@ -232,6 +232,7 @@ CREATE TABLE "Meta" (
     "ReservaNome" TEXT,
     "Prioridade" INTEGER NOT NULL,
     "Icone" TEXT,
+    "GuardarPorMes" TEXT,
     "CriadoEm" TEXT NOT NULL
 );
 
