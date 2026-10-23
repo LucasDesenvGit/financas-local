@@ -149,7 +149,7 @@ jobs:
 
       # A versão vem do go.mod; o cache guarda os módulos e o que já foi compilado (chave: go.sum).
       - name: Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: src/backend-go/go.mod
           cache-dependency-path: src/backend-go/go.sum
