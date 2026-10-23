@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../core/api.service';
@@ -23,7 +24,7 @@ interface LinhaOrcamento {
 
 @Component({
   selector: 'app-orcamentos',
-  imports: [FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent, ModalComponent, SugestaoOrcamentosComponent,
+  imports: [IconeCategoriaComponent, FormsModule, RouterLink, MoedaPipe, DecimalPipe, SeletorMesComponent, ModalComponent, SugestaoOrcamentosComponent,
     CampoValorComponent],
   template: `
     <header class="cabecalho-pagina">
@@ -65,8 +66,8 @@ interface LinhaOrcamento {
         <tbody>
           @for (l of linhas(); track l.categoria.id) {
             <tr>
-              <td><a class="chip chip-link" routerLink="/transacoes" [queryParams]="linkCategoria(l.categoria.id)"
-                [attr.aria-label]="'Ver transações de ' + l.categoria.nome"><span class="ponto" [style.background]="l.categoria.cor"></span>{{ l.categoria.nome }}</a></td>
+              <td><a class="categoria-com-icone link-categoria" routerLink="/transacoes" [queryParams]="linkCategoria(l.categoria.id)"
+                [attr.aria-label]="'Ver transações de ' + l.categoria.nome"><app-icone-categoria [nome]="l.categoria.nome" [cor]="l.categoria.cor" />{{ l.categoria.nome }}</a></td>
               <td class="direita valor">{{ l.gasto | currency }}
                 @if (l.orcamento && l.orcamento.gastoEmergencia > 0) {
                   <br><small class="texto-emergencia">{{ l.orcamento.gastoEmergencia | currency }} emergência</small>
