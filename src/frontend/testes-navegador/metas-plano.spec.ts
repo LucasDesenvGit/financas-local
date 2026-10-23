@@ -71,7 +71,7 @@ test('Metas: valor por mês acima da sobra é bloqueado no formulário, e o avis
   ] }) : r.fallback());
   await page.goto('/metas');
   const avisos = page.locator('.cartao-meta .aviso-prazo');
-  await expect(avisos.first()).toContainText('Você escolheu guardar');
+  await expect(avisos.first()).toContainText('não cabem');
   await expect(avisos.first().locator('strong').first()).toHaveText(/R\$\s22\.200,00 por mês/);
   const estilo = await avisos.first().evaluate((el) => getComputedStyle(el).borderLeftWidth);
   expect(estilo).toBe('4px');

@@ -127,7 +127,7 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
     await atualizar();
     const nota = raiz.querySelector('.nota-por-mes-plano')!;
     expect(nota.classList).toContain('aviso-prazo');
-    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('Você escolheu guardar R$ 800,00 por mês, mas em out/26 a sobra para as metas só dá R$ 450,00. O resto fica para os meses seguintes.');
+    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('R$ 800,00 por mês não cabem: em out/26 a sobra só dá R$ 450,00; o resto fica para depois.');
   });
 
   it('valor por mês maior que a sobra das metas: alerta amarelo, mesmo quando o que falta cabe no mês', async () => {
@@ -138,7 +138,7 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
     await atualizar();
     const nota = raiz.querySelector('.nota-por-mes-plano')!;
     expect(nota.classList).toContain('aviso-prazo');
-    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('mais do que a sobra para as metas este mês (R$ 3.150,00). O plano guarda só o que cabe nela.');
+    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('R$ 22.200,00 por mês passa da sobra para as metas este mês (R$ 3.150,00); o plano guarda só o que cabe.');
   });
 
   it('valor por mês que cabe na sobra: só a nota, sem alerta', async () => {

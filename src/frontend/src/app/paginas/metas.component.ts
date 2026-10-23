@@ -168,13 +168,13 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             @if (pm.porMes) {
               @if (pm.porMesCortado; as c) {
                 <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
-                  <span>Você escolheu guardar <strong>{{ pm.porMes | currency }} por mês</strong>, mas em
-                  <strong>{{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}</strong> a sobra para as metas só dá
-                  <strong>{{ c.valor | currency }}</strong>. O resto fica para os meses seguintes.</span></p>
+                  <span><strong>{{ pm.porMes | currency }} por mês</strong> não cabem: em
+                  <strong>{{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}</strong> a sobra só dá
+                  <strong>{{ c.valor | currency }}</strong>; o resto fica para depois.</span></p>
               } @else if (porMesAcimaDaSobra(pm); as limite) {
                 <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
-                  <span>Você escolheu guardar <strong>{{ pm.porMes | currency }} por mês</strong>, mais do que a sobra para as
-                  metas este mês (<strong>{{ limite | currency }}</strong>). O plano guarda só o que cabe nela.</span></p>
+                  <span><strong>{{ pm.porMes | currency }} por mês</strong> passa da sobra para as metas este mês
+                  (<strong>{{ limite | currency }}</strong>); o plano guarda só o que cabe.</span></p>
               } @else {
                 <p class="texto-suave nota-por-mes-plano">Você escolheu guardar {{ pm.porMes | currency }} por mês nesta meta.</p>
               }
@@ -473,7 +473,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .recomendado { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
     .recomendado .botao-ajuste { padding: 0; min-height: 24px; }
     .mais-meses { display: flex; gap: 16px; margin-top: 4px; font-size: 0.85rem; }
-    .saidas-prazo { display: block; margin-top: 4px; }
+    .saidas-prazo { margin-left: 4px; }
     .saidas-prazo .link { padding: 0; min-height: 24px; }
     .nota-plano { margin: 0; font-size: 0.8rem; }
     .tabela-plano { font-size: 0.8rem; }
