@@ -110,7 +110,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
               <strong class="meta-nome">{{ m.nome }}</strong>
               <!-- #316: concluída sem chegar ao alvo foi marcada pela pessoa: dizer isso, sem contradizer o percentual. -->
               @if (m.concluida) {
-                <span class="etiqueta etiqueta-sucesso">{{ m.percentual < 100 ? 'concluída por você' : 'concluída' }}</span>
+                <span class="etiqueta etiqueta-sucesso">{{ m.percentual < 100 ? 'Concluída por você' : 'Concluída' }}</span>
               }
               <span class="texto-suave meta-resumo-curto">{{ m.percentual | number: '1.0-0' }}% · {{ m.valorAtual | currency }}
                 de {{ m.valorAlvo | currency }}@if (planoDe(m); as pm) { · guarde {{ pm.recomendado | currency }} este mês}</span>
