@@ -1,0 +1,181 @@
+package banco
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"io/fs"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/esquema"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/esquema/embutido"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
+)
+
+const (
+	// BackupsGuardados é quantas cópias "antes da atualização" ficam; as mais antigas são apagadas.
+	BackupsGuardados = 5
+	// PrefixoBackup é o começo do nome das cópias, o mesmo do .NET.
+	PrefixoBackup = "FinancasLocal-antes-atualizacao-"
+)
+
+// AplicarEsquema cria e atualiza o banco como o EsquemaBanco.Aplicar do .NET (Data/EsquemaBanco.cs, ADR 0003): os
+// mesmos scripts de banco/ e as mesmas colunas novas das linhas adicionar_coluna_se_ausente do 2-criar-banco.sh,
+// embutidos no executável. Banco novo recebe também os dados iniciais. Num banco que já existe, se a assinatura dos
+// scripts (PRAGMA user_version) mudou desde a última vez, faz antes uma cópia em dados/backups; se não mudou, não
+// mexe em nada.
+//
+// Até a inversão (#85, ADR 0049), quem aplica o esquema ao iniciar é o .NET: o executável Go só chama isto com a
+// opção -aplicar-esquema. A assinatura é a mesma dos dois lados, então um não refaz o trabalho do outro.
+func AplicarEsquema(ctx context.Context, caminho string, r relogio.Relogio, log *slog.Logger) error {
+	scripts := esquema.Scripts{
+		Estrutura:     esquema.Texto(embutido.Estrutura),
+		DadosIniciais: esquema.Texto(embutido.DadosIniciais),
+		CriarBanco:    esquema.Texto(embutido.CriarBanco),
+	}
+	return aplicarEsquema(ctx, caminho, scripts, r, log)
+}
+
+func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Scripts, r relogio.Relogio, log *slog.Logger) error {
+	colunas := esquema.LerColunasNovas(scripts.CriarBanco)
+	if len(colunas) == 0 {
+		return errors.New("nenhuma coluna nova encontrada no 2-criar-banco.sh embutido")
+	}
+	assinatura := esquema.Assinatura(scripts.Estrutura, colunas)
+
+	caminho, err := filepath.Abs(caminhoBanco)
+	if err != nil {
+		return fmt.Errorf("caminho do banco %s: %w", caminhoBanco, err)
+	}
+	// 0o777 menos o umask, como o Directory.CreateDirectory do .NET.
+	if err := os.MkdirAll(filepath.Dir(caminho), 0o777); err != nil {
+		return fmt.Errorf("criar a pasta do banco: %w", err)
+	}
+	// Como o File.Exists do .NET: qualquer erro ao olhar o arquivo, ou uma pasta no lugar dele, conta como "não existe".
+	info, err := os.Stat(caminho)
+	novo := err != nil || info.IsDir() || info.Size() == 0
+
+	db, err := Abrir(ctx, caminho)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(1) // uma conexão só, como o EsquemaBanco (Pooling = false)
+
+	if !novo {
+		var versao int64
+		if err := db.QueryRowContext(ctx, "PRAGMA user_version;").Scan(&versao); err != nil {
+			return fmt.Errorf("ler o PRAGMA user_version: %w", err)
+		}
+		// Mesmos scripts da última vez: nada a fazer (o comum, a cada reinício do serviço).
+		if versao == int64(assinatura) {
+			return nil
+		}
+		if err := copiarAntesDaAtualizacao(ctx, db, caminho, r, log); err != nil {
+			return err
+		}
+	}
+
+	err = EmTransacao(ctx, db, func(tx *sql.Tx) error {
+		if _, err := tx.ExecContext(ctx, scripts.Estrutura); err != nil {
+			return fmt.Errorf("aplicar o 01-estrutura.sql: %w", err)
+		}
+		for _, c := range colunas {
+			var existe int
+			err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?;", c.Tabela, c.Coluna).Scan(&existe)
+			if err != nil {
+				return fmt.Errorf("conferir a coluna %s.%s: %w", c.Tabela, c.Coluna, err)
+			}
+			if existe > 0 {
+				continue
+			}
+			// DDL não aceita parâmetro. O texto vem do 2-criar-banco.sh embutido no executável, nunca de quem usa o
+			// site, e a expressão só aceita [A-Za-z0-9_] nos nomes.
+			alterar := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", c.Tabela, c.Coluna, c.Definicao)
+			if _, err := tx.ExecContext(ctx, alterar); err != nil {
+				return fmt.Errorf("acrescentar a coluna %s.%s: %w", c.Tabela, c.Coluna, err)
+			}
+			log.Info("Banco: coluna adicionada", "coluna", c.Coluna, "tabela", c.Tabela)
+		}
+		// Dados iniciais só no banco novo: rodar de novo recriaria categorias que a pessoa apagou.
+		if novo {
+			if _, err := tx.ExecContext(ctx, scripts.DadosIniciais); err != nil {
+				return fmt.Errorf("aplicar o 02-dados-iniciais.sql: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if _, err := db.ExecContext(ctx, fmt.Sprintf("PRAGMA user_version = %d;", assinatura)); err != nil {
+		return fmt.Errorf("gravar o PRAGMA user_version: %w", err)
+	}
+	if novo {
+		log.Info("Banco criado", "caminho", caminho)
+	} else {
+		log.Info("Estrutura do banco conferida", "caminho", caminho)
+	}
+	return nil
+}
+
+// pastaDasCopias é dados/backups quando o banco está em dados/sql (sem diferença de maiúsculas no "sql"), e senão a
+// pasta backups ao lado do banco.
+func pastaDasCopias(caminho string) string {
+	pastaSql := filepath.Dir(caminho)
+	pastaDados := pastaSql
+	if strings.EqualFold(filepath.Base(pastaSql), "sql") {
+		pastaDados = filepath.Dir(pastaSql)
+	}
+	return filepath.Join(pastaDados, "backups")
+}
+
+// copiarAntesDaAtualizacao faz uma cópia consistente (VACUUM INTO) em dados/backups e guarda as 5 mais recentes.
+//
+// O nome leva a data e a hora de Brasília (relogio). O .NET usa o DateTime.Now, o fuso do computador: num
+// computador fora de Brasília os nomes dos dois lados diferem em algumas horas.
+func copiarAntesDaAtualizacao(ctx context.Context, db *sql.DB, caminho string, r relogio.Relogio, log *slog.Logger) error {
+	pasta := pastaDasCopias(caminho)
+	if err := os.MkdirAll(pasta, 0o777); err != nil {
+		return fmt.Errorf("criar a pasta das cópias: %w", err)
+	}
+	destino := filepath.Join(pasta, PrefixoBackup+relogio.AgoraLocal(r).Format("20060102_150405")+".db")
+	if _, err := db.ExecContext(ctx, "VACUUM INTO ?;", destino); err != nil {
+		return fmt.Errorf("copiar o banco antes da atualização para %s: %w", destino, err)
+	}
+	log.Info("Banco: cópia antes da atualização", "destino", destino)
+	return apagarCopiasAntigas(pasta)
+}
+
+// apagarCopiasAntigas deixa só as BackupsGuardados cópias mais recentes pelo nome (a data e a hora estão nele).
+//
+// Como o .NET: um arquivo que não dá para apagar fica para a próxima, mas falta de permissão é erro (lá, o
+// UnauthorizedAccessException não é pego e impede a API de subir).
+func apagarCopiasAntigas(pasta string) error {
+	entradas, err := os.ReadDir(pasta)
+	if err != nil {
+		return fmt.Errorf("listar as cópias em %s: %w", pasta, err)
+	}
+	var copias []string
+	for _, e := range entradas {
+		nome := e.Name()
+		// O padrão "FinancasLocal-antes-atualizacao-*.db" do GetFiles: só arquivos, e o * pode ser vazio.
+		if !e.IsDir() && strings.HasPrefix(nome, PrefixoBackup) && strings.HasSuffix(nome, ".db") {
+			copias = append(copias, nome)
+		}
+	}
+	slices.Sort(copias)
+	slices.Reverse(copias) // da mais recente para a mais antiga
+	for _, antigo := range copias[min(BackupsGuardados, len(copias)):] {
+		err := os.Remove(filepath.Join(pasta, antigo))
+		if errors.Is(err, fs.ErrPermission) {
+			return fmt.Errorf("apagar a cópia antiga %s: %w", antigo, err)
+		}
+	}
+	return nil
+}
