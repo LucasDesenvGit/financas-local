@@ -156,7 +156,7 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - `gofmt`, `go vet` e `go test -race` limpos.
   - **Banco (#74; detalhes no `src/backend-go/internal/banco/README.md`):**
     - os tipos `Decimal`, `Data`, `DataHora` e `Guid` (pacote `internal/tipos`) gravam e leem no formato do EF Core. O formato foi confirmado por uma sonda que grava pelo mesmo EF Core da API (`internal/tipos/testdata/sonda-efcore`), e o resultado é o gabarito dos testes;
-    - o `Abrir` liga `foreign_keys` como o EF Core, espera até 30 s com o banco ocupado e começa as transações com `BEGIN IMMEDIATE`. Não muda o `journal_mode`: quem passa o banco para WAL é o `EsquemaBanco` do .NET (#231);
+    - o `Abrir` liga `foreign_keys` como o EF Core, espera até 30 s com o banco ocupado e começa as transações com `BEGIN IMMEDIATE`. Não muda o `journal_mode`: quem passa o banco para WAL é quem aplica o esquema, o `EsquemaBanco` do .NET ou o `AplicarEsquema` do Go (#231, #297);
     - o `sqlc` roda pelo `go run` numa versão fixa, sem entrar no `go.mod`, e precisa de cgo só para quem gera. Ele lê um esquema reescrito pelo próprio SQLite (o parser dele não entende `TEXT NULL` e passa para minúsculas os nomes do `CREATE TABLE`). Nas consultas, os nomes vão entre aspas duplas e não pode haver acento.
   - **Servidor (#73):**
     - o Go lê os mesmos `appsettings*.json` e o `configuracao.json` do `.msi`, então os scripts não mudam;

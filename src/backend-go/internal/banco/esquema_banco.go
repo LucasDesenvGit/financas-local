@@ -66,6 +66,7 @@ func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Sc
 	}
 	defer db.Close()
 	db.SetMaxOpenConns(1) // uma conexão só, como o EsquemaBanco (Pooling = false)
+	passarParaWal(ctx, db, log)
 
 	if !novo {
 		var versao int64
@@ -122,6 +123,19 @@ func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Sc
 		log.Info("Estrutura do banco conferida", "caminho", caminho)
 	}
 	return nil
+}
+
+// passarParaWal faz o mesmo que o EsquemaBanco.PassarParaWal do .NET (#231, ADR 0049): o .NET e o Go usam o mesmo
+// arquivo, e em WAL quem lê não espera quem grava. O modo fica gravado no arquivo; rodar de novo não muda nada. Só
+// dá para trocar sem outra conexão aberta: se não deu (ex.: o DB Browser aberto), avisa e segue no modo de antes.
+func passarParaWal(ctx context.Context, db *sql.DB, log *slog.Logger) {
+	var modo string
+	if err := db.QueryRowContext(ctx, "PRAGMA journal_mode = WAL;").Scan(&modo); err != nil {
+		modo = err.Error()
+	}
+	if !strings.EqualFold(modo, "wal") {
+		log.Warn("Banco: não deu para passar para o modo WAL; feche outros programas com o banco aberto e reinicie o serviço", "modo", modo)
+	}
 }
 
 // pastaDasCopias é dados/backups quando o banco está em dados/sql (sem diferença de maiúsculas no "sql"), e senão a

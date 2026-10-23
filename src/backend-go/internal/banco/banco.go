@@ -23,8 +23,8 @@ const EsperaSeOcupado = 30_000
 // Abrir abre o banco no caminho dado, com os PRAGMAs que o EF Core usa (foreign_keys ligado, conferido pela sonda
 // em internal/tipos/testdata) e a espera de banco ocupado.
 //
-// Não muda o journal_mode: ele é do arquivo, não da conexão, e quem passa o banco para WAL é o EsquemaBanco do .NET,
-// ao iniciar, antes de iniciar o Go (#231). O Go não aplica esquema (ADR 0049).
+// Não muda o journal_mode: ele é do arquivo, não da conexão, e quem passa o banco para WAL é quem aplica o esquema
+// (#231): o EsquemaBanco do .NET, antes de iniciar o Go, ou o AplicarEsquema, só com -aplicar-esquema (ADR 0049).
 func Abrir(ctx context.Context, caminho string) (*sql.DB, error) {
 	parametros := url.Values{}
 	parametros.Add("_pragma", "foreign_keys(1)")
