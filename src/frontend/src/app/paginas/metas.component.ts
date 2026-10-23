@@ -124,7 +124,9 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           <div class="meta-corpo">
           <div class="meta-resumo">
           <div class="anel" [style.--pct]="m.percentual" [style.--cor]="m.cor">
-            <span>{{ m.percentual | number: '1.0-0' }}%</span>
+            <!-- #359: o ícone da meta, translúcido, no centro do anel, atrás do percentual (decorativo). -->
+            <span class="anel-icone" aria-hidden="true"><app-icone [icone]="iconeDaMeta(m.icone).icone" [tamanho]="60" /></span>
+            <span class="anel-percentual">{{ m.percentual | number: '1.0-0' }}%</span>
           </div>
           <!-- O espaço vai dentro do texto: entre duas tags o Angular o tira ("R$ 200,00de"). -->
           <p><strong>{{ m.valorAtual | currency }}</strong><span class="texto-suave"> de {{ m.valorAlvo | currency }}</span></p>
@@ -193,8 +195,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 (meta: <strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>).
                 @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de <strong>{{ pm.paraManterPrazo | currency }}</strong>. }
                 <span class="saidas-prazo">
-                  <button type="button" class="link" (click)="editar(m)">Mudar o prazo ou o valor</button> ·
-                  <a routerLink="/anual">Ver onde cortar (50/30/20)</a> ·
+                  <button type="button" class="link" (click)="editar(m)">Mudar o prazo ou o valor</button>
+                  <span class="separador" aria-hidden="true">|</span>
+                  <a routerLink="/anual">Ver onde cortar (50/30/20)</a>
+                  <span class="separador" aria-hidden="true">|</span>
                   <a routerLink="/orcamentos">Orçamentos</a>
                 </span></span></p>
             } @else if (pm.noPrazo === null) {
@@ -473,11 +477,18 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .recomendado { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
     .recomendado .botao-ajuste { padding: 0; min-height: 24px; }
     .mais-meses { display: flex; gap: 16px; margin-top: 4px; font-size: 0.85rem; }
-    .saidas-prazo { margin-left: 4px; }
+    .saidas-prazo { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin-top: 4px; }
+    .saidas-prazo .separador { color: var(--texto-suave); }
     .saidas-prazo .link { padding: 0; min-height: 24px; }
     .nota-plano { margin: 0; font-size: 0.8rem; }
     .tabela-plano { font-size: 0.8rem; }
     .tabela-plano th, .tabela-plano td { padding: 4px 6px; }
+    /* #359: o ícone da meta no centro do anel, translúcido na cor dela, atrás do percentual. */
+    .anel .anel-icone {
+      position: absolute; inset: 0; z-index: 1; display: grid; place-items: center;
+      color: var(--cor); opacity: 0.22; pointer-events: none;
+    }
+    .anel .anel-percentual { z-index: 2; text-shadow: 0 1px 2px var(--superficie); }
     /* #316: ícone da meta, num círculo com a cor dela (a mesma do anel). */
     .titulo-meta { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
     .icone-meta {
