@@ -83,6 +83,11 @@ export const GLOSSARIO = {
     termo: 'Dívida total nos cartões',
     definicao: 'Tudo o que você deve nos cartões hoje, somando todos, inclusive parcelas que ainda vão vencer. Não é a fatura do mês.'
   },
+  rendimentoOpenFinance: {
+    termo: 'Rendimento dos investimentos do Open Finance',
+    definicao: 'Quanto o saldo cresceu além do valor aplicado: o que você guardou ou tirou no mês não conta como rendimento. O site guarda o saldo de cada investimento a cada sincronização; antes da primeira, o Open Finance não informa.',
+    exemplo: 'Fundo sem o valor aplicado mostra só o saldo, sem o rendimento. Valores brutos, antes do IR.'
+  },
   descricaoPoucoInformativa: {
     termo: 'Descrição pouco informativa',
     definicao: 'Descrição que não diz o que foi, como "PIX ENVIADO", "PAGAMENTO" ou só o nome do banco. As regras não conseguem categorizar essas transações sozinhas.',

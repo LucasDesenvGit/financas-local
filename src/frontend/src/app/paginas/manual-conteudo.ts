@@ -1142,7 +1142,8 @@ export const MANUAL: CapituloManual[] = [
           'Clique em “renomear” para dar o seu nome (ex.: “Caixinha viagem”). A sincronização não muda o nome que você escolher.',
           'Para voltar ao nome automático, abra “renomear” e clique em “Voltar ao nome automático” (ou salve com o campo vazio).',
           'A coluna Instituição mostra o banco da conexão.',
-          '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). “por investimento” abre o de cada um.'
+          '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). O mês mais recente já vem aberto por investimento: cada um numa linha, do que mais rendeu ao que menos, com uma barrinha do tamanho do rendimento; “por investimento” abre os outros meses. O ⓘ explica como o rendimento é calculado.',
+          'A tabela dos investimentos do Open Finance recolhe pelo título “Investimentos do Open Finance”: recolhida, mostra só quantos são e o total. A escolha fica guardada neste navegador.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }],
         dicas: [

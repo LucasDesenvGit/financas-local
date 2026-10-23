@@ -44,20 +44,38 @@ describe('Usabilidade: rendimento por mês dos investimentos do Open Finance', (
   it('a frase diz o último mês; a tabela começa pelo mais recente, e o mês que começou no meio diz desde quando', async () => {
     const { raiz } = await abrir(historico());
     expect(texto(raiz.querySelector('.resumo-rendimento-of'))).toBe('Em out/25, os investimentos renderam R$ 41.');
-    const linhas = Array.from(raiz.querySelectorAll('tbody > tr')).map((tr) => texto(tr.querySelector('th')));
+    const linhas = Array.from(raiz.querySelectorAll('tbody > tr:not(.linha-por-investimento)')).map((tr) => texto(tr.querySelector('th')));
     expect(linhas).toEqual(['out/25', 'set/25 desde 20/09']);
     expect(texto(raiz.querySelector('.nota'))).toContain('O histórico começou em 20/09/2025');
   });
 
-  it('"por investimento" abre o detalhe do mês, com aria-expanded; fundo sem valor aplicado diz isso', async () => {
+  it('#331: o mês mais recente já abre com o detalhe; os outros, por "por investimento" (aria-expanded)', async () => {
     const { fixture, raiz } = await abrir(historico());
-    const botao = raiz.querySelector<HTMLButtonElement>('[aria-label="Rendimento por investimento em out/25"]')!;
-    expect(botao.getAttribute('aria-expanded')).toBe('false');
-    botao.click();
-    fixture.detectChanges();
-    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    const outubro = raiz.querySelector<HTMLButtonElement>('[aria-label="Rendimento por investimento em out/25"]')!;
+    expect(outubro.getAttribute('aria-expanded')).toBe('true');
+    // Uma linha por investimento, do que mais rendeu ao que menos; sem o valor aplicado vira etiqueta, no fim.
     const itens = Array.from(raiz.querySelectorAll('#rend-of-2025-10 li')).map(texto);
     expect(itens).toEqual(['Caixinha viagem: R$ 33,00', 'Fundo Y: sem o valor aplicado']);
+    expect(raiz.querySelector('#rend-of-2025-10 li .etiqueta')!.textContent!.trim()).toBe('sem o valor aplicado');
+    const setembro = raiz.querySelector<HTMLButtonElement>('[aria-label="Rendimento por investimento em set/25"]')!;
+    expect(setembro.getAttribute('aria-expanded')).toBe('false');
+    setembro.click();
+    fixture.detectChanges();
+    expect(setembro.getAttribute('aria-expanded')).toBe('true');
+    // A barra do maior rendimento do mês ocupa tudo; a do menor, a proporção (10 → 100%, 2,30 → 23%).
+    const larguras = Array.from(raiz.querySelectorAll<HTMLElement>('#rend-of-2025-9 .trilho-investimento > span')).map((s) => s.style.width);
+    expect(larguras).toEqual(['100%', '23%']);
+    outubro.click();
+    fixture.detectChanges();
+    expect(raiz.querySelector('#rend-of-2025-10')).toBeNull();
+  });
+
+  it('#331: a explicação longa fica no ⓘ do glossário, e a nota é curta', async () => {
+    const { raiz } = await abrir(historico());
+    const nota = texto(raiz.querySelector('.nota'));
+    expect(nota).toContain('Valores brutos, antes do IR.');
+    expect(nota).not.toContain('o que você guardou ou tirou');
+    expect(raiz.querySelector('.nota app-termo')).not.toBeNull();
   });
 
   it('"ocultar valores" tira o R$ da frase', async () => {
