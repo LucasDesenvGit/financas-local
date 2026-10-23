@@ -23,8 +23,9 @@ A sonda em [`internal/tipos/testdata/sonda-efcore`](../tipos/testdata/sonda-efco
 | `bool`, `enum` | `INTEGER` (0/1, número) | `true`/`false`, número |
 
 - `HasPrecision(18, 2)` **não arredonda** no SQLite: `0.125` fica `0.125`.
-- Conexão: o EF Core liga `foreign_keys`; o `Abrir` também. O `journal_mode` é do arquivo, e o `Abrir` não o muda (passar para WAL é da #231).
-- Banco ocupado: o `Abrir` espera até 30 s (`busy_timeout`), o mesmo tempo padrão do Microsoft.Data.Sqlite, e começa as transações com `BEGIN IMMEDIATE` (`_txlock=immediate`).
+- Conexão: o EF Core liga `foreign_keys`; o `Abrir` também. O `journal_mode` é do arquivo, e o `Abrir` não o muda: o `EsquemaBanco` do .NET passa o banco para **WAL** ao iniciar, antes de subir o Go (#231). `ModoDoDiario` diz o modo.
+- Banco ocupado: o `Abrir` espera até 30 s (`busy_timeout`), o mesmo tempo padrão do Microsoft.Data.Sqlite, e começa as transações com `BEGIN IMMEDIATE` (`_txlock=immediate`). Com o .NET e o Go no mesmo arquivo, transação curta: nada de chamada de rede nem espera dentro dela.
+- Dois processos gravando ao mesmo tempo: `TestDoisProcessosGravandoEmWAL` (o próprio teste chamado num segundo processo). Com `BEGIN` comum no lugar do `IMMEDIATE`, ele falha (conferido).
 
 ## ⚠️ Armadilhas
 

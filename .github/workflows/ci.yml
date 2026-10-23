@@ -121,6 +121,17 @@ jobs:
       - name: Ligar a API (teste de inicialização)
         run: bash scripts/ci/ligar-api.sh Release
 
+      # #231 (ADR 0049): o .NET na frente e o Go atrás, como processo filho. Login, CSRF, segredo interno, os dois
+      # gravando no banco ao mesmo tempo, queda do Go e nenhum Go órfão. Roda em todo PR: mexe no Program.cs.
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
+      - name: Go atrás do .NET (ponta a ponta)
+        run: bash scripts/ci/testar-go-atras-do-dotnet.sh Release
+
       - name: Conferir scripts SQL (idempotentes)
         run: python3 scripts/ci/verificar-sql.py
 
