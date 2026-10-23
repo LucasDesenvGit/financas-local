@@ -224,8 +224,8 @@ import { fatiasRosca } from '../compartilhado/rosca-categorias';
             <p class="vazio">Nenhuma despesa neste mês.</p>
           }
         </section>
-        <!-- #336: o bloco ocupa a altura do vizinho ("Gastos por categoria"): as linhas crescem até um limite e o total
-             fica no rodapé. Com "Mostrar todas" as categorias, ele acompanha sem as linhas ficarem esparsas. -->
+        <!-- #336: o bloco ocupa a altura do vizinho ("Gastos por categoria"): as linhas dividem a altura por igual e o
+             total fica no rodapé, sem espaço vazio, também com "Mostrar todas" as categorias aberto. -->
         <section class="painel-bloco bloco-orcamentos">
           <div class="bloco-titulo"><h2>Orçamentos</h2><a routerLink="/orcamentos">ver todos</a></div>
           <div class="lista-orcamentos">
@@ -323,7 +323,7 @@ import { fatiasRosca } from '../compartilhado/rosca-categorias';
     .bloco-orcamentos { display: flex; flex-direction: column; }
     .lista-orcamentos { flex: 1; display: flex; flex-direction: column; }
     .lista-orcamentos .barra-orcamento {
-      flex: 1 1 auto; max-height: 120px; display: flex; flex-direction: column; justify-content: center;
+      flex: 1 1 0; min-height: 56px; display: flex; flex-direction: column; justify-content: center;
     }
     .lista-orcamentos .barra-orcamento + .barra-orcamento { border-top: 1px solid var(--linha); }
     .total-orcamentos {

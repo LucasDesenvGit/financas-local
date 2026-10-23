@@ -14,7 +14,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
     - as categorias menores que 3% ficam juntas em "Outras", e clicar nessa fatia abre todas as despesas do mês;
     - as fatias ganham um espaço entre elas.
   - **A lista do Painel:** cada categoria mostra o ícone, uma barrinha embaixo do nome, o valor e o %. Aparecem as 8 maiores, e "Mostrar todas" abre o resto.
-  - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas mais espaçadas (até um limite) e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
+  - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas dividindo a altura por igual e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
 
 ## [2.39.0] — 2026-10-23 · desenvolvimento
 
