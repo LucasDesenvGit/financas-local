@@ -20,10 +20,12 @@ import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
+import { fatiasRosca } from '../compartilhado/rosca-categorias';
 
 @Component({
   selector: 'app-painel',
-  imports: [KpiFaturasAbertasComponent, MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
+  imports: [IconeCategoriaComponent, KpiFaturasAbertasComponent, MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
     MaisAnalisesComponent, LogoBancoComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
@@ -187,31 +189,54 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <div class="bloco-titulo"><h2>Gastos por categoria</h2></div>
           @if (d.gastosPorCategoria.length) {
             <app-grafico-explicado [resumo]="resumoCategorias()"
-              comoLer="Cada fatia é uma categoria, do tamanho da parte dela nas despesas do mês. Clique numa fatia ou no nome da categoria para ver as transações.">
-              <app-grafico [configuracao]="graficoCategorias()" [altura]="240" dicaClique="Clique para ver as transações"
-                (itemClicado)="abrirCategoria($event)" />
+              comoLer="Cada fatia é uma categoria, do tamanho da parte dela nas despesas do mês; as menores que 3% ficam juntas em “Outras”. Clique numa fatia ou no nome da categoria para ver as transações.">
+              <!-- #336: o total do mês no centro da rosca (decorativo: o mesmo número está no topo do Painel). -->
+              <div class="rosca">
+                <app-grafico [configuracao]="graficoCategorias()" [altura]="240" dicaClique="Clique para ver as transações"
+                  (itemClicado)="abrirCategoria($event)" />
+                <div class="rosca-centro" aria-hidden="true">
+                  <strong>{{ d.despesasMes | currency: 'BRL' : 'symbol' : '1.0-0' }}</strong><span>em despesas</span>
+                </div>
+              </div>
             </app-grafico-explicado>
-            <ul class="lista-legenda">
-              @for (g of d.gastosPorCategoria.slice(0, 8); track g.nome) {
-                <li>
-                  <span class="ponto" [style.background]="g.cor"></span>
-                  <a class="cresce link-categoria" routerLink="/transacoes" [queryParams]="linkCategoria(g)"
-                    [attr.aria-label]="'Ver transações de ' + g.nome">{{ g.nome }}</a>
+            <!-- #336: cada categoria com o ícone na cor dela, o nome com a barrinha proporcional embaixo, o valor e o %. -->
+            <ul class="lista-legenda lista-categorias">
+              <!-- #336: as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e saem
+                   encolhendo no "Mostrar menos"; o bloco de Orçamentos ao lado acompanha a altura a cada passo. -->
+              @for (g of categoriasNaLista(); track g.nome; let i = $index) {
+                <li [animate.enter]="i >= CATEGORIAS_NA_LISTA ? 'categoria-entra' : ''"
+                  [animate.leave]="i >= CATEGORIAS_NA_LISTA ? 'categoria-sai' : ''"
+                  [style.--atraso.ms]="i >= CATEGORIAS_NA_LISTA ? (i - CATEGORIAS_NA_LISTA) * 40 : 0">
+                  <app-icone-categoria [nome]="g.nome" [cor]="g.cor" />
+                  <span class="cresce nome-e-barra">
+                    <a class="link-categoria" routerLink="/transacoes" [queryParams]="linkCategoria(g)"
+                      [attr.aria-label]="'Ver transações de ' + g.nome">{{ g.nome }}</a>
+                    <span class="trilho" aria-hidden="true"><span class="progresso" [style.background]="g.cor"
+                      [style.width.%]="g.valor / d.gastosPorCategoria[0].valor * 100"></span></span>
+                  </span>
                   <span class="valor">{{ g.valor | currency }}</span>
                   <span class="texto-suave pct">{{ g.valor / d.despesasMes * 100 | number: '1.0-0' }}%</span>
                 </li>
               }
             </ul>
+            @if (d.gastosPorCategoria.length > CATEGORIAS_NA_LISTA) {
+              <button type="button" class="link mais-categorias" [attr.aria-expanded]="todasCategorias()"
+                (click)="todasCategorias.set(!todasCategorias())">{{ todasCategorias() ? 'Mostrar menos'
+                  : 'Mostrar todas as ' + d.gastosPorCategoria.length + ' categorias' }}</button>
+            }
           } @else {
             <p class="vazio">Nenhuma despesa neste mês.</p>
           }
         </section>
-        <section class="painel-bloco">
+        <!-- #336: o bloco ocupa a altura do vizinho ("Gastos por categoria"): as linhas dividem a altura por igual e o
+             total fica no rodapé, sem espaço vazio, também com "Mostrar todas" as categorias aberto. -->
+        <section class="painel-bloco bloco-orcamentos">
           <div class="bloco-titulo"><h2>Orçamentos</h2><a routerLink="/orcamentos">ver todos</a></div>
+          <div class="lista-orcamentos">
           @for (o of d.orcamentos; track o.id) {
             <div class="barra-orcamento">
               <div class="linha-flex">
-                <span>{{ o.categoriaNome }}</span>
+                <span class="categoria-com-icone"><app-icone-categoria [nome]="o.categoriaNome" [cor]="o.categoriaCor" [tamanho]="24" />{{ o.categoriaNome }}</span>
                 <span class="texto-suave">{{ o.gasto | currency }} de {{ o.valor | currency }}</span>
               </div>
               <div class="trilho"><div class="progresso" [class.estourado]="o.situacao === 'estourado'"
@@ -221,6 +246,17 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
             </div>
           } @empty {
             <p class="vazio">Nenhum orçamento para este mês. <a routerLink="/orcamentos">Criar</a></p>
+          }
+          </div>
+          @if (totalOrcamentos(); as tot) {
+            <p class="total-orcamentos">
+              <span>Total: <strong>{{ tot.gasto | currency }}</strong> de {{ tot.valor | currency }}</span>
+              @if (tot.estourados) {
+                <span class="negativo">{{ tot.estourados }} {{ tot.estourados === 1 ? 'passou' : 'passaram' }} do limite</span>
+              } @else {
+                <span class="positivo">tudo dentro do limite</span>
+              }
+            </p>
           }
         </section>
       </div>
@@ -274,6 +310,37 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
+    /* #336: a rosca com o total no centro; a lista com o ícone, o nome e a barrinha embaixo dele. */
+    .rosca { position: relative; }
+    .rosca-centro {
+      position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none;
+    }
+    .rosca-centro strong { font-family: var(--fonte-titulo); font-size: 1.25rem; color: var(--texto-forte); font-variant-numeric: tabular-nums; }
+    .rosca-centro span { font-size: 0.8rem; color: var(--texto-suave); }
+    .lista-categorias li { gap: 12px; }
+    .nome-e-barra { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .nome-e-barra .link-categoria { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nome-e-barra .trilho { display: block; height: 5px; margin: 0; }
+    .nome-e-barra .progresso { display: block; }
+    .lista-categorias .valor { min-width: 7.5em; text-align: right; font-variant-numeric: tabular-nums; }
+    .mais-categorias { margin-top: 6px; padding-left: 6px; }
+    /* Sem animação com prefers-reduced-motion (regra global do styles.css). */
+    .lista-categorias li.categoria-entra { overflow: hidden; animation: categoria-cresce 0.32s ease-out var(--atraso, 0ms) both; }
+    .lista-categorias li.categoria-sai { overflow: hidden; animation: categoria-cresce 0.22s ease-in reverse both; }
+    @keyframes categoria-cresce {
+      from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; transform: translateY(-6px); }
+      to { max-height: 64px; opacity: 1; transform: none; }
+    }
+    .bloco-orcamentos { display: flex; flex-direction: column; }
+    .lista-orcamentos { flex: 1; display: flex; flex-direction: column; }
+    .lista-orcamentos .barra-orcamento {
+      flex: 1 1 0; min-height: 56px; display: flex; flex-direction: column; justify-content: center;
+    }
+    .lista-orcamentos .barra-orcamento + .barra-orcamento { border-top: 1px solid var(--linha); }
+    .total-orcamentos {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 12px 0 0; padding-top: 12px;
+      border-top: 1px solid var(--linha); font-size: 0.9rem;
+    }
     /* #334: "Até hoje" e "Futuras" no cabeçalho de "Últimas transações"; no celular, numa linha própria, na largura toda. */
     .segmentado-transacoes { flex-shrink: 0; white-space: nowrap; margin-left: auto; }
     @media (max-width: 760px) {
@@ -345,19 +412,47 @@ export class PainelComponent implements OnInit {
     return paramsTransacoes({ categoriaId: g.categoriaId, inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' });
   }
 
-  /** UX-4: clique na fatia da rosca (mesmos itens do gráfico, na mesma ordem). A legenda é o caminho por teclado/toque. */
+  /** #336: o rodapé do bloco de Orçamentos: o total gasto, o total orçado e quantos passaram do limite. */
+  readonly totalOrcamentos = computed(() => {
+    const orcamentos = this.dados()?.orcamentos ?? [];
+    if (!orcamentos.length) return null;
+    return {
+      gasto: orcamentos.reduce((s, o) => s + o.gasto, 0),
+      valor: orcamentos.reduce((s, o) => s + o.valor, 0),
+      estourados: orcamentos.filter((o) => o.situacao === 'estourado' || o.situacao === 'emergencia').length
+    };
+  });
+
+  /** #336: a lista mostra as 8 maiores; "Mostrar todas" abre o resto (Progressive Disclosure). */
+  readonly CATEGORIAS_NA_LISTA = 8;
+  readonly todasCategorias = signal(false);
+  readonly categoriasNaLista = computed(() => {
+    const itens = this.dados()?.gastosPorCategoria ?? [];
+    return this.todasCategorias() ? itens : itens.slice(0, this.CATEGORIAS_NA_LISTA);
+  });
+  /** #336: as fatias da rosca, com as menores que 3% juntas em "Outras". */
+  private readonly fatiasCategorias = computed(() => fatiasRosca(this.dados()?.gastosPorCategoria ?? []));
+
+  /** UX-4: clique na fatia da rosca. A legenda é o caminho por teclado/toque. "Outras" abre as despesas do mês. */
   abrirCategoria(indice: number): void {
-    const item = (this.dados()?.gastosPorCategoria ?? []).slice(0, 10)[indice];
-    if (item) void this.router.navigate(['/transacoes'], { queryParams: this.linkCategoria(item) });
+    const posicao = this.fatiasCategorias().indices[indice];
+    const item = posicao === undefined || posicao < 0 ? null : (this.dados()?.gastosPorCategoria ?? [])[posicao];
+    if (item) {
+      void this.router.navigate(['/transacoes'], { queryParams: this.linkCategoria(item) });
+    } else if (posicao === -1) {
+      const { ano, mes } = this.periodo();
+      void this.router.navigate(['/transacoes'], { queryParams: paramsTransacoes({ inicio: primeiroDiaMes(ano, mes), fim: ultimoDiaMes(ano, mes), tipo: 'despesa' }) });
+    }
   }
 
   readonly graficoCategorias = computed<ChartConfiguration<'doughnut'>>(() => {
-    const itens = (this.dados()?.gastosPorCategoria ?? []).slice(0, 10);
+    const f = this.fatiasCategorias();
     return {
       type: 'doughnut',
       data: {
-        labels: itens.map((i) => i.nome),
-        datasets: [{ data: itens.map((i) => i.valor), backgroundColor: itens.map((i) => i.cor), borderWidth: 0 }]
+        labels: f.rotulos,
+        // #336: um respiro entre as fatias e as pontas arredondadas.
+        datasets: [{ data: f.valores, backgroundColor: f.cores, borderWidth: 0, spacing: 3, borderRadius: 4 }]
       },
       options: { cutout: '72%', plugins: { legend: { display: false } } }
     };

@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { forkJoin } from 'rxjs';
@@ -19,7 +20,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 
 @Component({
   selector: 'app-relatorios',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataComponent],
+  imports: [IconeCategoriaComponent, ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, CampoDataComponent],
   template: `
     <header class="cabecalho-pagina">
       <h1>Relatórios</h1>
@@ -102,8 +103,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             <tbody>
               @for (c of categorias(); track c.nome) {
                 <tr>
-                  <td><a class="chip chip-link" routerLink="/transacoes" [queryParams]="linkCategoria(c)"
-                    [attr.aria-label]="'Ver transações de ' + c.nome"><span class="ponto" [style.background]="c.cor"></span>{{ c.nome }}</a></td>
+                  <td><a class="categoria-com-icone link-categoria" routerLink="/transacoes" [queryParams]="linkCategoria(c)"
+                    [attr.aria-label]="'Ver transações de ' + c.nome"><app-icone-categoria [nome]="c.nome" [cor]="c.cor" />{{ c.nome }}</a></td>
                   <td class="direita valor">{{ c.valor | currency }}</td>
                   <td class="direita texto-suave">{{ c.valor / totalCategorias() * 100 | number: '1.1-1' }}%</td>
                   <td style="width: 35%"><div class="trilho"><div class="progresso" [style.background]="c.cor"

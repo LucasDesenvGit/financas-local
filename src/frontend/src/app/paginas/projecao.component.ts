@@ -6,6 +6,7 @@ import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Projecao, ProjecaoCategoria, ProjecaoMes } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES, NOMES_MESES_CURTOS, paramsTransacoes, reaisOuNada } from '../compartilhado/utilidades';
@@ -15,7 +16,7 @@ import { PrivacidadeService } from '../core/privacidade.service';
 
 @Component({
   selector: 'app-projecao',
-  imports: [MoedaPipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent],
+  imports: [IconeCategoriaComponent, MoedaPipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -115,7 +116,7 @@ import { PrivacidadeService } from '../core/privacidade.service';
             <ul class="lista-legenda lista-categorias-projecao">
               @for (c of d.categorias.slice(0, 12); track c.nome) {
                 <li>
-                  <span class="ponto" [style.background]="c.cor"></span>
+                  <app-icone-categoria [nome]="c.nome" [cor]="c.cor" />
                   <span class="cresce nome-categoria">
                     <!-- Detalhe por navegação (ADR 0018): as despesas da categoria nos mesmos meses da média. -->
                     @if (linkCategoria(c); as params) {

@@ -67,12 +67,18 @@ test('Contas a pagar: selo de cada cobrança, da marca ou da categoria', async (
   expect(problemas.lista).toEqual([]);
 });
 
-/** #274: o selo do banco (com o nome da conta) não encosta no nome da cobrança. */
-test('Contas a pagar: espaço entre o nome da cobrança e o selo do banco', async ({ page }) => {
+/**
+ * #274 e #379: o selo da cobrança fica numa coluna, e o nome, a conta (com o selo do banco) e a forma de cobrança ficam
+ * empilhados ao lado, começando no mesmo ponto; a conta não encosta no nome.
+ */
+test('Contas a pagar: nome, conta e forma de cobrança alinhados depois do selo', async ({ page }) => {
   await page.goto('/contas-a-pagar');
   const linha = page.locator('table').first().locator('tbody tr').filter({ has: page.locator('.conta-da-cobranca') }).first();
-  const nome = (await linha.locator('.nome-cobranca').boundingBox())!;
-  const conta = (await linha.locator('.conta-da-cobranca').boundingBox())!;
-  // Na mesma linha, a conta começa pelo menos 6 px depois do fim do nome (antes, 0 a 3 px).
-  if (Math.abs(conta.y - nome.y) < nome.height) expect(conta.x - (nome.x + nome.width)).toBeGreaterThanOrEqual(6);
+  const [selo, nome, conta, forma] = await Promise.all(['app-selo-servico', '.nome-cobranca', '.conta-da-cobranca', '.forma-cobranca']
+    .map(async (s) => (await linha.locator(s).first().boundingBox())!));
+  expect(Math.abs(conta.x - nome.x)).toBeLessThan(0.5);
+  expect(Math.abs(forma.x - nome.x)).toBeLessThan(0.5);
+  expect(nome.x - (selo.x + selo.width)).toBeGreaterThanOrEqual(6);
+  // A conta fica embaixo do nome, sem encostar nele.
+  expect(conta.y).toBeGreaterThanOrEqual(nome.y + nome.height - 0.5);
 });
