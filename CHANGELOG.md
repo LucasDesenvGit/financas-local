@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.8] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: esquema do banco ao iniciar, igual ao do .NET** (#297, épico #70). Ainda não roda no site: até a inversão (#85), quem cria e atualiza o banco continua sendo o .NET. Para quem desenvolve:
+  - o Go aplica os mesmos scripts de `banco/` e as mesmas colunas novas do `2-criar-banco.sh`, com a mesma assinatura no banco: trocar entre o .NET e o Go não refaz a cópia de segurança a cada partida;
+  - cópia em `dados/backups` antes de mudar um banco que já existe (as 5 mais recentes) e dados iniciais só no banco novo, como no .NET;
+  - conferido contra o código do .NET: banco igual tabela por tabela, coluna por coluna, índices e dados iniciais;
+  - mudou o `banco/`? Rode `go generate ./...` em `src/backend-go` (passo novo no `docs/BANCO-DE-DADOS.md`).
+
 ## [2.37.7] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação

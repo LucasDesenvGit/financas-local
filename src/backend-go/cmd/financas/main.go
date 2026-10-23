@@ -17,7 +17,9 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 )
 
@@ -39,6 +41,7 @@ func rodar(log *slog.Logger) error {
 		endereco    = flag.String("endereco", "", "host:porta, no lugar do Kestrel:Endpoints:Https:Url (ex.: 127.0.0.1:5444)")
 		wwwroot     = flag.String("wwwroot", "", "pasta do build do Angular (padrão: <pasta>/wwwroot)")
 		temporario  = flag.Bool("certificado-temporario", false, "usar um certificado só em memória, sem o .pfx (desenvolvimento)")
+		aplicar     = flag.Bool("aplicar-esquema", false, "criar e atualizar o banco antes de atender, como o .NET faz (até a #85 quem faz isso é o .NET)")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")
 	)
 	flag.Parse()
@@ -66,6 +69,14 @@ func rodar(log *slog.Logger) error {
 	// SIGINT (Ctrl+C) e SIGTERM (systemd) param com elegância. O serviço do Windows entra na #84.
 	ctx, parar := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer parar()
+
+	// Desligado por padrão: até a inversão (#85, ADR 0049), o .NET aplica o esquema ao iniciar. Os dois usam a mesma
+	// assinatura (PRAGMA user_version), então ligar aqui também não repete a cópia nem a atualização.
+	if *aplicar {
+		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, relogio.Sistema{}, log); err != nil {
+			return err
+		}
+	}
 	return servidor.Rodar(ctx, servidor.Opcoes{Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log})
 }
 

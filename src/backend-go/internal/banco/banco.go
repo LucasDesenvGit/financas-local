@@ -1,4 +1,5 @@
-// Pacote banco abre o SQLite do Finanças Local do jeito que o back-end .NET abre, e dá a função de transação.
+// Pacote banco abre o SQLite do Finanças Local do jeito que o back-end .NET abre, dá a função de transação e cria e
+// atualiza o esquema como o EsquemaBanco do .NET (AplicarEsquema, em esquema_banco.go).
 //
 // O Go e o .NET convivem no mesmo arquivo durante a migração (ADR 0049), então tudo o que se grava aqui tem de
 // estar no formato do EF Core: use os tipos do pacote tipos (Decimal, Data, DataHora, Guid). Armadilhas no

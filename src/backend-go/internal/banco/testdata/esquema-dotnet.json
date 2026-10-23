@@ -1,0 +1,941 @@
+{
+  "geradoPor": "testdata/sonda-esquema (Data/EsquemaBanco.cs da API)",
+  "microsoftDataSqlite": "10.0.13.0",
+  "pragmas": {
+    "foreign_keys": "1",
+    "busy_timeout": "0",
+    "journal_mode": "delete",
+    "sqlite_version()": "3.53.3"
+  },
+  "entradas": {
+    "01-estrutura.sql": "1a108081c74c78124d28efe57894438f44734f5d2b6c758b682adbba4bc64d69",
+    "02-dados-iniciais.sql": "525e0605339633ad0b41391f33e531f7a1a0af2013160246930ad2e1f1d8b89c",
+    "2-criar-banco.sh": "f0dec474869379f2175916d321e955b70c009d33b87802d4781457c9a15b5008"
+  },
+  "assinaturas": {
+    "scripts": 322938181,
+    "scriptsComCrlf": 322938181,
+    "vazio": 424131073,
+    "acentos": 1387974945
+  },
+  "textoDeLeitura": "adicionar_coluna_se_ausente \"A\" \"B\" \"TEXT NULL\"\n   adicionar_coluna_se_ausente  \"C\"\t\"D\" \"INTEGER NOT NULL DEFAULT 0\" # comentário\n# adicionar_coluna_se_ausente \"X\" \"Y\" \"TEXT\"\n\tadicionar_coluna_se_ausente \"E\" \"F\" \"TEXT NOT NULL DEFAULT 'BRL'\"\necho adicionar_coluna_se_ausente \"G\" \"H\" \"TEXT\"\nadicionar_coluna_se_ausente \"Ação\" \"I\" \"TEXT\"\nadicionar_coluna_se_ausente 'J' 'K' 'TEXT'\nadicionar_coluna_se_ausente \"L\" \"M\" \"duas\nlinhas\"\n\u000Badicionar_coluna_se_ausente\u00A0\"N\"\u2003\"O\" \"TEXT\"\r\nadicionar_coluna_se_ausente \"P\" \"Q\" \"TEXT NULL\"\r\n\u0085\u2028adicionar_coluna_se_ausente\u0085\"T\"\u3000\"U\"\f\"TEXT\"\nadicionar_coluna_se_ausente \"R\" \"S\"\n",
+  "leitura": [
+    "A|B|TEXT NULL",
+    "C|D|INTEGER NOT NULL DEFAULT 0",
+    "E|F|TEXT NOT NULL DEFAULT 'BRL'",
+    "L|M|duas\nlinhas",
+    "N|O|TEXT",
+    "P|Q|TEXT NULL",
+    "T|U|TEXT"
+  ],
+  "cenarios": {
+    "novo": {
+      "banco": {
+        "userVersion": 322938181,
+        "tabelas": [
+          {
+            "nome": "Ativo",
+            "sqlHash": "b6c05ddc05e79e2bbe0d376294a430b6add3c1b2238103f7a514958ee68d8ddc",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Ticker|TEXT|1|<null>|0",
+              "2|Nome|TEXT|0|<null>|0",
+              "3|Tipo|INTEGER|1|1|0",
+              "4|Moeda|TEXT|1|'BRL'|0",
+              "5|PrecoAtual|TEXT|0|<null>|0",
+              "6|PrecoAnterior|TEXT|0|<null>|0",
+              "7|PrecoAtualizadoEm|TEXT|0|<null>|0",
+              "8|PrecoManual|INTEGER|1|0|0",
+              "9|FonteCotacao|TEXT|0|<null>|0",
+              "10|Segmento|TEXT|0|<null>|0",
+              "11|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Ativo_1|1|u|0|Ticker|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "AuditoriaAcesso",
+            "sqlHash": "39bfb11c05f05a7a35879fada74e12bba1bc967555b8ad0e49aaf1e7398986f2",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|DataHora|TEXT|1|<null>|0",
+              "2|Evento|TEXT|1|<null>|0",
+              "3|Login|TEXT|0|<null>|0",
+              "4|Ip|TEXT|0|<null>|0",
+              "5|UserAgent|TEXT|0|<null>|0"
+            ],
+            "indices": [],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Categoria",
+            "sqlHash": "1c64a21b09f0069612e43d3277a0f1051c9690d1329e2eff2cc02b51db64c888",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Nome|TEXT|1|<null>|0",
+              "2|Tipo|INTEGER|1|<null>|0",
+              "3|Cor|TEXT|1|'#64748b'|0",
+              "4|Icone|TEXT|0|<null>|0",
+              "5|CategoriaPaiId|INTEGER|0|<null>|0",
+              "6|Ativa|INTEGER|1|1|0",
+              "7|Natureza|INTEGER|0|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Categoria_1|1|u|0|Nome|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Categoria|CategoriaPaiId|Id|NO ACTION|NO ACTION|NONE"
+            ],
+            "linhas": 24,
+            "dadosHash": "d3839cd90a1ee9425941fc21f0e84882df02ffb358cf206e7169209306096211"
+          },
+          {
+            "nome": "CategoriaPluggy",
+            "sqlHash": "c4af46b7e121a05d70bb44acd69dba82be30cae2bc27358cbc5e19cfef75a4ee",
+            "colunas": [
+              "0|PluggyCategoriaId|TEXT|1|<null>|1",
+              "1|Descricao|TEXT|1|<null>|0",
+              "2|PaiPluggyId|TEXT|0|<null>|0",
+              "3|PaiDescricao|TEXT|0|<null>|0",
+              "4|CategoriaId|INTEGER|0|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_CategoriaPluggy_1|1|pk|0|PluggyCategoriaId|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Categoria|CategoriaId|Id|NO ACTION|SET NULL|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "ConexaoBancaria",
+            "sqlHash": "b0ff012cf06ce1dccabf2cb694af0603c6ee389403140c5a90291738ca3445c2",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|PluggyItemId|TEXT|1|<null>|0",
+              "2|NomeInstituicao|TEXT|0|<null>|0",
+              "3|CorPrimaria|TEXT|0|<null>|0",
+              "4|Status|TEXT|0|<null>|0",
+              "5|StatusExecucao|TEXT|0|<null>|0",
+              "6|UltimaAtualizacaoInstituicao|TEXT|0|<null>|0",
+              "7|ConsentimentoExpiraEm|TEXT|0|<null>|0",
+              "8|UltimaSincronizacaoEm|TEXT|0|<null>|0",
+              "9|UltimoErro|TEXT|0|<null>|0",
+              "10|Ativa|INTEGER|1|1|0",
+              "11|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_ConexaoBancaria_1|1|u|0|PluggyItemId|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Configuracao",
+            "sqlHash": "7d8d28950ba32ada7810422da2683b317bc473ceacdee60cd43beef16934123e",
+            "colunas": [
+              "0|Chave|TEXT|1|<null>|1",
+              "1|Valor|TEXT|0|<null>|0",
+              "2|Protegido|INTEGER|1|0|0",
+              "3|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Configuracao_1|1|pk|0|Chave|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 4,
+            "dadosHash": "38dfdea7762e2a03d8bcff9d2e8c564a930bf14b2f4a9af1ed96dab1ce44bf93"
+          },
+          {
+            "nome": "Conta",
+            "sqlHash": "bf54a468997075fd9f01f1b0be82eb45b99cbdb72ef76988d0a95f49ed36a546",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ConexaoBancariaId|INTEGER|0|<null>|0",
+              "2|PluggyAccountId|TEXT|0|<null>|0",
+              "3|Nome|TEXT|1|<null>|0",
+              "4|Tipo|INTEGER|1|<null>|0",
+              "5|Origem|INTEGER|1|<null>|0",
+              "6|Numero|TEXT|0|<null>|0",
+              "7|Moeda|TEXT|1|'BRL'|0",
+              "8|SaldoInicial|TEXT|1|'0'|0",
+              "9|Saldo|TEXT|1|'0'|0",
+              "10|LimiteCredito|TEXT|0|<null>|0",
+              "11|LimiteDisponivel|TEXT|0|<null>|0",
+              "12|DiaFechamento|INTEGER|0|<null>|0",
+              "13|DiaVencimento|INTEGER|0|<null>|0",
+              "14|Cor|TEXT|1|'#0f766e'|0",
+              "15|IncluirNoSaldo|INTEGER|1|1|0",
+              "16|Arquivada|INTEGER|1|0|0",
+              "17|Banco|TEXT|0|<null>|0",
+              "18|ContaVinculadaId|INTEGER|0|<null>|0",
+              "19|CriadoEm|TEXT|1|<null>|0",
+              "20|AtualizadoEm|TEXT|1|<null>|0",
+              "21|SaldoReservado|TEXT|0|<null>|0",
+              "22|ReservasInformadas|TEXT|0|<null>|0",
+              "23|LimiteAjustadoNoApp|INTEGER|0|<null>|0",
+              "24|LimiteDiferencaAvaliada|TEXT|0|<null>|0"
+            ],
+            "indices": [
+              "UX_Conta_PluggyAccountId|1|c|1|PluggyAccountId|aa2c4f55501e9867a9b4d5fcab7f4fd370b1cdc236b7d257d067ff6fc0068c54"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|ConexaoBancaria|ConexaoBancariaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "ContaAgendada",
+            "sqlHash": "1f7b42a3ffff15920a116eb4c748a36d75772cc15176fed5509df7b30136be15",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Descricao|TEXT|1|<null>|0",
+              "2|Valor|TEXT|1|<null>|0",
+              "3|ProximoVencimento|TEXT|1|<null>|0",
+              "4|Recorrencia|INTEGER|1|1|0",
+              "5|CategoriaId|INTEGER|0|<null>|0",
+              "6|ContaId|INTEGER|0|<null>|0",
+              "7|Ativa|INTEGER|1|1|0",
+              "8|UltimoPagamentoEm|TEXT|0|<null>|0",
+              "9|DataLimite|TEXT|0|<null>|0",
+              "10|ChaveExtrato|TEXT|0|<null>|0",
+              "11|CriadoEm|TEXT|1|<null>|0",
+              "12|FormaCobranca|INTEGER|1|1|0",
+              "13|TextoCobranca|TEXT|0|<null>|0",
+              "14|Observacao|TEXT|0|<null>|0"
+            ],
+            "indices": [
+              "IX_ContaAgendada_ProximoVencimento|0|c|0|Ativa,ProximoVencimento|f79feb9e84aebcebffba048008f3b3fb1b245592cab18efe1dd0a5bb0a7788ab"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Conta|ContaId|Id|NO ACTION|SET NULL|NONE",
+              "1|0|Categoria|CategoriaId|Id|NO ACTION|SET NULL|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "CotacaoCripto",
+            "sqlHash": "1314ffea1d460493f439949a7daab83eeeed4269bea94c18b93dee7d49c74add",
+            "colunas": [
+              "0|Moeda|TEXT|1|<null>|1",
+              "1|DataHora|TEXT|1|<null>|2",
+              "2|Preco|TEXT|1|<null>|0",
+              "3|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_CotacaoCripto_1|1|pk|0|Moeda,DataHora|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "CotacaoMoeda",
+            "sqlHash": "6b8d523e29386c9553b54f23a2e066c8b5ca480cc58fdf48fd5bde61805823f0",
+            "colunas": [
+              "0|Moeda|TEXT|1|<null>|1",
+              "1|Data|TEXT|1|<null>|2",
+              "2|Compra|TEXT|1|<null>|0",
+              "3|Venda|TEXT|1|<null>|0",
+              "4|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_CotacaoMoeda_1|1|pk|0|Moeda,Data|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Emprestimo",
+            "sqlHash": "c66810cd97d1098dd4c0d70cf550406b5e720d8cf182fb4fea8d7c18aa7d6a28",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ConexaoBancariaId|INTEGER|1|<null>|0",
+              "2|PluggyLoanId|TEXT|1|<null>|0",
+              "3|Natureza|INTEGER|1|<null>|0",
+              "4|Modalidade|TEXT|0|<null>|0",
+              "5|Produto|TEXT|1|<null>|0",
+              "6|NumeroContrato|TEXT|0|<null>|0",
+              "7|Moeda|TEXT|1|'BRL'|0",
+              "8|ValorContratado|TEXT|1|<null>|0",
+              "9|SaldoDevedor|TEXT|1|<null>|0",
+              "10|ValorParcela|TEXT|0|<null>|0",
+              "11|ParcelasTotal|INTEGER|0|<null>|0",
+              "12|ParcelasPagas|INTEGER|0|<null>|0",
+              "13|ParcelasAVencer|INTEGER|0|<null>|0",
+              "14|ParcelasEmAtraso|INTEGER|0|<null>|0",
+              "15|Periodicidade|TEXT|0|<null>|0",
+              "16|SistemaAmortizacao|TEXT|0|<null>|0",
+              "17|TaxaJuros|TEXT|0|<null>|0",
+              "18|PeriodicidadeTaxa|TEXT|0|<null>|0",
+              "19|Indexador|TEXT|0|<null>|0",
+              "20|Cet|TEXT|0|<null>|0",
+              "21|DataContratacao|TEXT|0|<null>|0",
+              "22|DataPrimeiraParcela|TEXT|0|<null>|0",
+              "23|DataVencimentoFinal|TEXT|0|<null>|0",
+              "24|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Emprestimo_1|1|u|0|PluggyLoanId|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|ConexaoBancaria|ConexaoBancariaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "ErroSistema",
+            "sqlHash": "65d7984751fe338c4db86564367b9966e5be5158d4ab2bded5632cceedf657f3",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|PrimeiraEm|TEXT|1|<null>|0",
+              "2|UltimaEm|TEXT|1|<null>|0",
+              "3|Ocorrencias|INTEGER|1|1|0",
+              "4|Nivel|INTEGER|1|<null>|0",
+              "5|Origem|TEXT|1|<null>|0",
+              "6|Categoria|TEXT|1|<null>|0",
+              "7|Mensagem|TEXT|1|<null>|0",
+              "8|Detalhe|TEXT|0|<null>|0",
+              "9|Rota|TEXT|0|<null>|0",
+              "10|Usuario|TEXT|0|<null>|0",
+              "11|Assinatura|TEXT|1|<null>|0",
+              "12|Resolvido|INTEGER|1|0|0",
+              "13|ResolvidoEm|TEXT|0|<null>|0"
+            ],
+            "indices": [
+              "IX_ErroSistema_Assinatura|0|c|0|Assinatura,Resolvido|5dbc8781682c5ed130d9cc7b592dee66204361239237366254b23cdc0bc0ed9e",
+              "IX_ErroSistema_Resolvido_UltimaEm|0|c|0|Resolvido,UltimaEm|fb508b5c84c7b8a0923ea261f4e8d7a22ef611617630584fffd20a78f67d1495"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "FaturaCartao",
+            "sqlHash": "c904d9fe21bb95fd1e23e9389c86940da162e262f150faf2831f03de1e86777a",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ContaId|INTEGER|1|<null>|0",
+              "2|PluggyBillId|TEXT|0|<null>|0",
+              "3|DataVencimento|TEXT|1|<null>|0",
+              "4|DataFechamento|TEXT|0|<null>|0",
+              "5|ValorTotal|TEXT|1|<null>|0",
+              "6|ValorMinimo|TEXT|0|<null>|0",
+              "7|ValorPago|TEXT|0|<null>|0",
+              "8|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "IX_FaturaCartao_Conta_Vencimento|0|c|0|ContaId,DataVencimento|c5c4b00f1403467137b833a9d874d1db4b21a155f0ed052a2506b27970e5b510",
+              "UX_FaturaCartao_PluggyBillId|1|c|1|PluggyBillId|daa6298ccd140376b889c40d704756544e99a6b7f9caa8cc772362f36d30401c"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Conta|ContaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "HistoricoInvestimento",
+            "sqlHash": "c6f80b8c320274208a0bb3cf25dea3d82b86676334d7a31f20915557fe954a72",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|PluggyInvestmentId|TEXT|1|<null>|0",
+              "2|ConexaoBancariaId|INTEGER|1|<null>|0",
+              "3|Nome|TEXT|1|<null>|0",
+              "4|Tipo|TEXT|1|<null>|0",
+              "5|Data|TEXT|1|<null>|0",
+              "6|Saldo|TEXT|1|<null>|0",
+              "7|ValorAplicado|TEXT|0|<null>|0",
+              "8|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "UX_HistoricoInvestimento_Investimento_Data|1|c|0|PluggyInvestmentId,Data|4d08bf1d4da70d69c4acad721a92a86b30f515d2b9aa761e4ae896a9e2cc7554"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "IndiceMensal",
+            "sqlHash": "5796f90fb115e11a5cf6da4e0452ba1a62c89dc8dd8fbe329b256f217f45abf1",
+            "colunas": [
+              "0|Codigo|TEXT|1|<null>|1",
+              "1|Mes|TEXT|1|<null>|2",
+              "2|Fechamento|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_IndiceMensal_1|1|pk|0|Codigo,Mes|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Investimento",
+            "sqlHash": "75e77402dee2aec35e43a40e574d0dce60b7464a1c90a3a04c29d47d6a67828b",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ConexaoBancariaId|INTEGER|1|<null>|0",
+              "2|PluggyInvestmentId|TEXT|1|<null>|0",
+              "3|Nome|TEXT|1|<null>|0",
+              "4|Tipo|TEXT|1|<null>|0",
+              "5|Subtipo|TEXT|0|<null>|0",
+              "6|Codigo|TEXT|0|<null>|0",
+              "7|Emissor|TEXT|0|<null>|0",
+              "8|Moeda|TEXT|1|'BRL'|0",
+              "9|Saldo|TEXT|1|<null>|0",
+              "10|ValorAplicado|TEXT|0|<null>|0",
+              "11|Rendimento|TEXT|0|<null>|0",
+              "12|Quantidade|TEXT|0|<null>|0",
+              "13|TaxaAnual|TEXT|0|<null>|0",
+              "14|DataVencimento|TEXT|0|<null>|0",
+              "15|DataAplicacao|TEXT|0|<null>|0",
+              "16|Status|TEXT|0|<null>|0",
+              "17|AtualizadoEm|TEXT|1|<null>|0",
+              "18|NomePersonalizado|TEXT|0|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Investimento_1|1|u|0|PluggyInvestmentId|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|ConexaoBancaria|ConexaoBancariaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Meta",
+            "sqlHash": "6d8d179d214d64caac29fb5d3bb1063f5b1f46ad3c3e0cca70010fec74958afa",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Nome|TEXT|1|<null>|0",
+              "2|ValorAlvo|TEXT|1|<null>|0",
+              "3|ValorAtual|TEXT|1|'0'|0",
+              "4|DataAlvo|TEXT|0|<null>|0",
+              "5|ContaId|INTEGER|0|<null>|0",
+              "6|Cor|TEXT|1|'#0f766e'|0",
+              "7|Concluida|INTEGER|1|0|0",
+              "8|ReservaNome|TEXT|0|<null>|0",
+              "9|Prioridade|INTEGER|1|0|0",
+              "10|Icone|TEXT|0|<null>|0",
+              "11|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [],
+            "chavesEstrangeiras": [
+              "0|0|Conta|ContaId|Id|NO ACTION|SET NULL|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "MetaAporte",
+            "sqlHash": "267aeebbc355f699ee8f90f495771d3381b5a70202a69db39062dc32ba729e92",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|MetaId|INTEGER|1|<null>|0",
+              "2|Data|TEXT|1|<null>|0",
+              "3|Valor|TEXT|1|<null>|0",
+              "4|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "IX_MetaAporte_Meta_Data|0|c|0|MetaId,Data|9a041e9e6eb5c02290b6301d9d43bc38510e6dc64fca44b320bd705ee449eece"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Meta|MetaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "OperacaoAtivo",
+            "sqlHash": "95e6a90bb650f4413033c9616d9bf93a30affb1de4e5d0d2b427d1eeab093679",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|AtivoId|INTEGER|1|<null>|0",
+              "2|Tipo|INTEGER|1|<null>|0",
+              "3|Data|TEXT|1|<null>|0",
+              "4|Quantidade|TEXT|1|<null>|0",
+              "5|PrecoUnitario|TEXT|1|<null>|0",
+              "6|Taxas|TEXT|1|'0'|0",
+              "7|Cambio|TEXT|1|'1'|0",
+              "8|Observacao|TEXT|0|<null>|0",
+              "9|Origem|INTEGER|1|1|0",
+              "10|PluggyTransacaoId|TEXT|0|<null>|0",
+              "11|TransacaoId|INTEGER|0|<null>|0",
+              "12|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "IX_OperacaoAtivo_Ativo_Data|0|c|0|AtivoId,Data|00c3bfe376f77a2062f868e6feccb130b11f8fee7f88c946a8a8f5c11f32ae0e",
+              "UX_OperacaoAtivo_PluggyTransacaoId|1|c|1|PluggyTransacaoId|f593ac1677a338df2a258ffca451289c26ce65f00f0f1c226aae22348e653a2b",
+              "UX_OperacaoAtivo_TransacaoId|1|c|1|TransacaoId|a8d0de4d8f6f9c2002dac293229dc3d03f913400f98aa2633b9c99b0a3e1123e"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Ativo|AtivoId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Orcamento",
+            "sqlHash": "2e26fa688ff65e07627239e47b52c5f983334f33fd8004bbf8737cdc297145c4",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|CategoriaId|INTEGER|1|<null>|0",
+              "2|Ano|INTEGER|1|<null>|0",
+              "3|Mes|INTEGER|1|<null>|0",
+              "4|Valor|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Orcamento_1|1|u|0|CategoriaId,Ano,Mes|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Categoria|CategoriaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "PagamentoEmprestimo",
+            "sqlHash": "5232984a7c5832ef662f998066b16858e8099a6f24959166daec8c828864e17e",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|EmprestimoId|INTEGER|1|<null>|0",
+              "2|Data|TEXT|1|<null>|0",
+              "3|Valor|TEXT|1|<null>|0",
+              "4|Extraordinario|INTEGER|1|0|0"
+            ],
+            "indices": [
+              "IX_PagamentoEmprestimo_EmprestimoId_Data|0|c|0|EmprestimoId,Data|6a0a837c9da67de655f2ddebfa0adaf127553b122f4b0f6a54589a0c531f4b5a"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Emprestimo|EmprestimoId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "PrecoMensalAtivo",
+            "sqlHash": "69390fe961d4c5eba6fd977d378f8416700beca019fb033cd19b780c8b154d06",
+            "colunas": [
+              "0|AtivoId|INTEGER|1|<null>|1",
+              "1|Mes|TEXT|1|<null>|2",
+              "2|Fechamento|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_PrecoMensalAtivo_1|1|pk|0|AtivoId,Mes|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Ativo|AtivoId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "ProventoAtivo",
+            "sqlHash": "bb59cd8ff3b0dde029e5fb18f9f09815daf93d6b22e20109e427898740d9b828",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|AtivoId|INTEGER|1|<null>|0",
+              "2|DataCom|TEXT|1|<null>|0",
+              "3|ValorPorCota|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_ProventoAtivo_1|1|u|0|AtivoId,DataCom|<sem sql>"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Ativo|AtivoId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "RegraCategorizacao",
+            "sqlHash": "a576cc9621514e81dae1c224d1204d5ef6d86093326718474f1c71df2b0fd582",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Texto|TEXT|1|<null>|0",
+              "2|TipoCorrespondencia|INTEGER|1|1|0",
+              "3|CategoriaId|INTEGER|1|<null>|0",
+              "4|Prioridade|INTEGER|1|100|0",
+              "5|Ativa|INTEGER|1|1|0",
+              "6|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [],
+            "chavesEstrangeiras": [
+              "0|0|Categoria|CategoriaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 24,
+            "dadosHash": "614e6fbe93f07e520c37856389bdae2afe618afd384fd31c18749ba638c8b01e"
+          },
+          {
+            "nome": "RegraDescricao",
+            "sqlHash": "d99694712d10a1149217f74754c27f10d630f5b61744102d5ee2d672a6810c3e",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Texto|TEXT|1|<null>|0",
+              "2|TipoCorrespondencia|INTEGER|1|3|0",
+              "3|NovaDescricao|TEXT|1|<null>|0",
+              "4|ValorMinimo|TEXT|0|<null>|0",
+              "5|ValorMaximo|TEXT|0|<null>|0",
+              "6|Ativa|INTEGER|1|1|0",
+              "7|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "ReservaConferencia",
+            "sqlHash": "1ef1f05ffa2eacaba4f12db8771e0bcad3785dfd751bad0e41b0cc3a178a88b0",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ContaId|INTEGER|1|<null>|0",
+              "2|Nome|TEXT|1|<null>|0",
+              "3|SaldoConferido|TEXT|1|<null>|0",
+              "4|DataConferencia|TEXT|1|<null>|0",
+              "5|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "UX_ReservaConferencia_Conta_Nome|1|c|0|ContaId,Nome|6dfaf152764914a932d09786ef72c93efcfa8327b32acd89ca33cb963d16cacb"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|Conta|ContaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "SincronizacaoLog",
+            "sqlHash": "59154b288ef4a200c7cb515860ceb3c447a802871f8ea0f6e402fc8eace3b9ef",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ConexaoBancariaId|INTEGER|0|<null>|0",
+              "2|Origem|TEXT|1|<null>|0",
+              "3|IniciadoEm|TEXT|1|<null>|0",
+              "4|FinalizadoEm|TEXT|0|<null>|0",
+              "5|Sucesso|INTEGER|1|0|0",
+              "6|TransacoesNovas|INTEGER|1|0|0",
+              "7|TransacoesAtualizadas|INTEGER|1|0|0",
+              "8|Mensagem|TEXT|0|<null>|0"
+            ],
+            "indices": [
+              "IX_SincronizacaoLog_IniciadoEm|0|c|0|IniciadoEm|004b3d5a5f0096200b938f350058777fb269b30c1349866ce3b7a38b1dca99ff"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|ConexaoBancaria|ConexaoBancariaId|Id|NO ACTION|SET NULL|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "TaxaSelicDiaria",
+            "sqlHash": "94150f3b9af7e8046b05ddb0de962991b597f4b88b1a6852cd6c99f1210165b9",
+            "colunas": [
+              "0|Data|TEXT|1|<null>|1",
+              "1|Taxa|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_TaxaSelicDiaria_1|1|pk|0|Data|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Transacao",
+            "sqlHash": "2516dc7cad648baaf4039b43783c047419673d601b626bb3a03400d712c9b267",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|ContaId|INTEGER|1|<null>|0",
+              "2|PluggyTransactionId|TEXT|0|<null>|0",
+              "3|Data|TEXT|1|<null>|0",
+              "4|Descricao|TEXT|1|<null>|0",
+              "5|DescricaoOriginal|TEXT|0|<null>|0",
+              "6|Estabelecimento|TEXT|0|<null>|0",
+              "7|Valor|TEXT|1|<null>|0",
+              "8|Tipo|INTEGER|1|<null>|0",
+              "9|Status|INTEGER|1|1|0",
+              "10|CategoriaId|INTEGER|0|<null>|0",
+              "11|CategoriaManual|INTEGER|1|0|0",
+              "12|PluggyCategoriaId|TEXT|0|<null>|0",
+              "13|FaturaCartaoId|INTEGER|0|<null>|0",
+              "14|ParcelaNumero|INTEGER|0|<null>|0",
+              "15|ParcelaTotal|INTEGER|0|<null>|0",
+              "16|IgnorarRelatorios|INTEGER|1|0|0",
+              "17|Emergencia|INTEGER|1|0|0",
+              "18|DescricaoRevisada|INTEGER|1|0|0",
+              "19|MeioPagamento|TEXT|0|<null>|0",
+              "20|MesmaTitularidade|INTEGER|0|<null>|0",
+              "21|RegraDescricaoId|INTEGER|0|<null>|0",
+              "22|DescricaoManual|INTEGER|1|0|0",
+              "23|TransferenciaGrupo|TEXT|0|<null>|0",
+              "24|Observacao|TEXT|0|<null>|0",
+              "25|CriadoEm|TEXT|1|<null>|0",
+              "26|AtualizadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "IX_Transacao_Categoria|0|c|0|CategoriaId,Data|3f2abee72cdd066d8bfdba3686fa6def239309e355045d119f3783912b85213a",
+              "IX_Transacao_Conta_Data|0|c|0|ContaId,Data|df91fbea91ea1015faa5d2dfc9473e6ef2e28a8b2f5f94f44e6adb1ff5aa1074",
+              "IX_Transacao_Data|0|c|0|Data|9ccb5acb77f0053944cdf583ad932f59ef7341bd9000522d9619b93106f9d976",
+              "IX_Transacao_FaturaCartao|0|c|1|FaturaCartaoId|1e21eddfdeb7b0db1787a99c81cba4b620305f197c9bc3bc2d46cb360eee6321",
+              "UX_Transacao_PluggyTransactionId|1|c|1|PluggyTransactionId|1e138b6e8642931ba24caa62ae0c0d2918b3fd21681ece234aad038f27106244"
+            ],
+            "chavesEstrangeiras": [
+              "0|0|FaturaCartao|FaturaCartaoId|Id|NO ACTION|NO ACTION|NONE",
+              "1|0|Categoria|CategoriaId|Id|NO ACTION|SET NULL|NONE",
+              "2|0|Conta|ContaId|Id|NO ACTION|CASCADE|NONE"
+            ],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "Usuario",
+            "sqlHash": "b45a1205342846bb5b136e605c8594649ad0966b3dcef7f0eab7d997069b5824",
+            "colunas": [
+              "0|Id|INTEGER|1|<null>|1",
+              "1|Login|TEXT|1|<null>|0",
+              "2|SenhaHash|TEXT|1|<null>|0",
+              "3|CarimboSeguranca|TEXT|1|<null>|0",
+              "4|TentativasFalhas|INTEGER|1|0|0",
+              "5|BloqueadoAte|TEXT|0|<null>|0",
+              "6|UltimoLoginEm|TEXT|0|<null>|0",
+              "7|CriadoEm|TEXT|1|<null>|0"
+            ],
+            "indices": [
+              "sqlite_autoindex_Usuario_1|1|u|0|Login|<sem sql>"
+            ],
+            "chavesEstrangeiras": [],
+            "linhas": 0,
+            "dadosHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "nome": "sqlite_sequence",
+            "sqlHash": "4cb1eaf14467f226196148cb5688569660cb290d414bae4c1c450b149b62befd",
+            "colunas": [
+              "0|name||0|<null>|0",
+              "1|seq||0|<null>|0"
+            ],
+            "indices": [],
+            "chavesEstrangeiras": [],
+            "linhas": 2,
+            "dadosHash": "bc29a5ccd73d7ca2745ca40b7a0928fbabe8186de9df7820a3c5f2bb5aebd2a5"
+          }
+        ],
+        "outros": []
+      },
+      "copias": []
+    },
+    "semMudanca": {
+      "arquivoIgual": true,
+      "copias": []
+    },
+    "vazio": {
+      "banco": {
+        "userVersion": 322938181,
+        "tabelas": {
+          "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
+          "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
+          "Categoria": "bf8fe5f8cd61530cd2a49a79e557c0abe12324414b5717686654e0192e36ed6c",
+          "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
+          "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
+          "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
+          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
+          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
+          "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
+          "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
+          "ErroSistema": "e6e9c776046308a028d9eb1e5bbcac7ac5db419fa6a0e3d0fd67e6694e93b61c",
+          "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
+          "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
+          "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
+          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Meta": "91adb8b2ab713438f0ad8bf8eddbbe1a6a48398d03576a58f73db548777e72ca",
+          "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
+          "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
+          "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
+          "PagamentoEmprestimo": "c00bd0da4dda6ca64206a55771f7a21cfc57efda22367745aadee4021432cb34",
+          "PrecoMensalAtivo": "c05ea7d87fb553376bfdcd2bdc7844319b39bdb054211ff2e80132502fc479b7",
+          "ProventoAtivo": "28879e1810a877ca6687831812e2890cb4e4766396bdf70027c15afe738695ba",
+          "RegraCategorizacao": "cad6aae9ac5a5b117d5279aac56d5192ce490687bca5b8df780609b8a6f62b78",
+          "RegraDescricao": "3c671138e7753f8d3b3841905706ad627b5f83e8fa1cd30cc0f15b0f2765e333",
+          "ReservaConferencia": "417c2f97a510fa93ae8cb747c5b6064265c287be00c9f9f21fb435cf6bde57e0",
+          "SincronizacaoLog": "ca86122ff5044f2a8a73c78c58e0b60fb1a13761ac2c567b96ec0087b9e8cfd7",
+          "TaxaSelicDiaria": "f6f16be4d1d12bec1dbb289ae774356e906b86c7fcf5856403f19ac431fd43c1",
+          "Transacao": "1d86cbd4fb24ecf56bb61295ac6efa8968c450b56f7c40ec72dacf0dcb4908cd",
+          "Usuario": "74c2761ef8445a08002d04f3cdc4836571b3f1c806378ac93c1571053e8458bf",
+          "sqlite_sequence": "0edc0fdbe9dc0fafd26bfb5e57015298ef65c2bffcb291f63789a0fa29c72337"
+        },
+        "outros": []
+      },
+      "copias": []
+    },
+    "antigo": {
+      "antes": {
+        "userVersion": 7,
+        "tabelas": {
+          "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
+          "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
+          "Categoria": "bf8fe5f8cd61530cd2a49a79e557c0abe12324414b5717686654e0192e36ed6c",
+          "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
+          "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
+          "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
+          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
+          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
+          "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
+          "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
+          "ErroSistema": "e6e9c776046308a028d9eb1e5bbcac7ac5db419fa6a0e3d0fd67e6694e93b61c",
+          "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
+          "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
+          "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
+          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Meta": "3cf83094f5fe0411ab5c6f11a1711938fc5d2d98957630e6e107fa5afae5026b",
+          "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
+          "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
+          "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
+          "PagamentoEmprestimo": "c00bd0da4dda6ca64206a55771f7a21cfc57efda22367745aadee4021432cb34",
+          "PrecoMensalAtivo": "c05ea7d87fb553376bfdcd2bdc7844319b39bdb054211ff2e80132502fc479b7",
+          "ProventoAtivo": "28879e1810a877ca6687831812e2890cb4e4766396bdf70027c15afe738695ba",
+          "RegraCategorizacao": "cad6aae9ac5a5b117d5279aac56d5192ce490687bca5b8df780609b8a6f62b78",
+          "RegraDescricao": "1a66090adc8a2ecb8597f75af49e7765baf96e4a2ecd9ed929bd652492f27731",
+          "ReservaConferencia": "417c2f97a510fa93ae8cb747c5b6064265c287be00c9f9f21fb435cf6bde57e0",
+          "SincronizacaoLog": "ca86122ff5044f2a8a73c78c58e0b60fb1a13761ac2c567b96ec0087b9e8cfd7",
+          "TaxaSelicDiaria": "f6f16be4d1d12bec1dbb289ae774356e906b86c7fcf5856403f19ac431fd43c1",
+          "Transacao": "1d86cbd4fb24ecf56bb61295ac6efa8968c450b56f7c40ec72dacf0dcb4908cd",
+          "Usuario": "74c2761ef8445a08002d04f3cdc4836571b3f1c806378ac93c1571053e8458bf",
+          "sqlite_sequence": "0edc0fdbe9dc0fafd26bfb5e57015298ef65c2bffcb291f63789a0fa29c72337"
+        },
+        "outros": []
+      },
+      "depois": {
+        "userVersion": 322938181,
+        "tabelas": {
+          "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
+          "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
+          "Categoria": "bf8fe5f8cd61530cd2a49a79e557c0abe12324414b5717686654e0192e36ed6c",
+          "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
+          "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
+          "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
+          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
+          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
+          "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
+          "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
+          "ErroSistema": "e6e9c776046308a028d9eb1e5bbcac7ac5db419fa6a0e3d0fd67e6694e93b61c",
+          "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
+          "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
+          "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
+          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Meta": "7ff71bfdf98de287b4d2f0f454a981d71645e4a72237557ef6f574794d2f2d4f",
+          "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
+          "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
+          "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
+          "PagamentoEmprestimo": "c00bd0da4dda6ca64206a55771f7a21cfc57efda22367745aadee4021432cb34",
+          "PrecoMensalAtivo": "c05ea7d87fb553376bfdcd2bdc7844319b39bdb054211ff2e80132502fc479b7",
+          "ProventoAtivo": "28879e1810a877ca6687831812e2890cb4e4766396bdf70027c15afe738695ba",
+          "RegraCategorizacao": "cad6aae9ac5a5b117d5279aac56d5192ce490687bca5b8df780609b8a6f62b78",
+          "RegraDescricao": "c095d58e21836c946f4f67ce9c6497356f4b563e2a138de398f36b99607571e1",
+          "ReservaConferencia": "417c2f97a510fa93ae8cb747c5b6064265c287be00c9f9f21fb435cf6bde57e0",
+          "SincronizacaoLog": "ca86122ff5044f2a8a73c78c58e0b60fb1a13761ac2c567b96ec0087b9e8cfd7",
+          "TaxaSelicDiaria": "f6f16be4d1d12bec1dbb289ae774356e906b86c7fcf5856403f19ac431fd43c1",
+          "Transacao": "1d86cbd4fb24ecf56bb61295ac6efa8968c450b56f7c40ec72dacf0dcb4908cd",
+          "Usuario": "74c2761ef8445a08002d04f3cdc4836571b3f1c806378ac93c1571053e8458bf",
+          "sqlite_sequence": "0edc0fdbe9dc0fafd26bfb5e57015298ef65c2bffcb291f63789a0fa29c72337"
+        },
+        "outros": []
+      },
+      "copia": {
+        "userVersion": 7,
+        "tabelas": {
+          "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
+          "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
+          "Categoria": "bf8fe5f8cd61530cd2a49a79e557c0abe12324414b5717686654e0192e36ed6c",
+          "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
+          "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
+          "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
+          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
+          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
+          "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
+          "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
+          "ErroSistema": "e6e9c776046308a028d9eb1e5bbcac7ac5db419fa6a0e3d0fd67e6694e93b61c",
+          "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
+          "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
+          "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
+          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Meta": "3cf83094f5fe0411ab5c6f11a1711938fc5d2d98957630e6e107fa5afae5026b",
+          "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
+          "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
+          "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
+          "PagamentoEmprestimo": "c00bd0da4dda6ca64206a55771f7a21cfc57efda22367745aadee4021432cb34",
+          "PrecoMensalAtivo": "c05ea7d87fb553376bfdcd2bdc7844319b39bdb054211ff2e80132502fc479b7",
+          "ProventoAtivo": "28879e1810a877ca6687831812e2890cb4e4766396bdf70027c15afe738695ba",
+          "RegraCategorizacao": "cad6aae9ac5a5b117d5279aac56d5192ce490687bca5b8df780609b8a6f62b78",
+          "RegraDescricao": "1a66090adc8a2ecb8597f75af49e7765baf96e4a2ecd9ed929bd652492f27731",
+          "ReservaConferencia": "417c2f97a510fa93ae8cb747c5b6064265c287be00c9f9f21fb435cf6bde57e0",
+          "SincronizacaoLog": "ca86122ff5044f2a8a73c78c58e0b60fb1a13761ac2c567b96ec0087b9e8cfd7",
+          "TaxaSelicDiaria": "f6f16be4d1d12bec1dbb289ae774356e906b86c7fcf5856403f19ac431fd43c1",
+          "Transacao": "1d86cbd4fb24ecf56bb61295ac6efa8968c450b56f7c40ec72dacf0dcb4908cd",
+          "Usuario": "74c2761ef8445a08002d04f3cdc4836571b3f1c806378ac93c1571053e8458bf",
+          "sqlite_sequence": "0edc0fdbe9dc0fafd26bfb5e57015298ef65c2bffcb291f63789a0fa29c72337"
+        },
+        "outros": []
+      },
+      "nomeDaCopiaNoFormato": true,
+      "copias": [
+        "dados/backups: 1"
+      ]
+    },
+    "rodizio": {
+      "arquivos": [
+        "FinancasLocal-antes-atualizacao-20200101_000000.db",
+        "FinancasLocal-antes-atualizacao-20200102_000000.db",
+        "FinancasLocal-antes-atualizacao-20200103_000000.db",
+        "FinancasLocal-antes-atualizacao-20200104_000000.db",
+        "FinancasLocal-antes-atualizacao-20200105_000000.db",
+        "FinancasLocal-antes-atualizacao-20200106_000000.db",
+        "FinancasLocal-antes-atualizacao-.db",
+        "FinancasLocal-antes-atualizacao-20200107_000000.db.txt",
+        "FinancasLocal-antes-instalacao-20200101_000000.db",
+        "outro.db"
+      ],
+      "pastas": [
+        "FinancasLocal-antes-atualizacao-29991231_235959.db"
+      ],
+      "restantes": [
+        "<nova>",
+        "FinancasLocal-antes-atualizacao-20200103_000000.db",
+        "FinancasLocal-antes-atualizacao-20200104_000000.db",
+        "FinancasLocal-antes-atualizacao-20200105_000000.db",
+        "FinancasLocal-antes-atualizacao-20200106_000000.db",
+        "FinancasLocal-antes-atualizacao-20200107_000000.db.txt",
+        "FinancasLocal-antes-atualizacao-29991231_235959.db",
+        "FinancasLocal-antes-instalacao-20200101_000000.db",
+        "outro.db"
+      ]
+    },
+    "pastaSqlMaiuscula": {
+      "copias": [
+        "dados/backups: 1"
+      ]
+    },
+    "pastaSemSql": {
+      "copias": [
+        "outra/backups: 1"
+      ]
+    }
+  }
+}

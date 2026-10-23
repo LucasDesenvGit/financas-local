@@ -1,10 +1,12 @@
-// Pacote esquema monta o esquema do banco para o sqlc: o banco/01-estrutura.sql mais as colunas que só existem
-// nas linhas adicionar_coluna_se_ausente do scripts/geral/2-criar-banco.sh (oito delas, em 21/10/2026, não estão
-// no CREATE TABLE).
+// Pacote esquema guarda o esquema do banco do lado do Go: de onde vêm as cópias dos scripts embutidas no executável
+// (subpacote embutido), a leitura das linhas adicionar_coluna_se_ausente e a assinatura que vai no
+// PRAGMA user_version, as duas iguais às do EsquemaBanco.cs. Quem aplica o esquema é o banco.AplicarEsquema.
 //
-// O sqlc não recebe o DDL original: o parser de SQLite dele não entende "TEXT NULL" (a coluna vira interface{}) e
-// passa para minúsculas os nomes do CREATE TABLE (CriadoEm vira o campo Criadoem). Por isso o esquema é aplicado
-// num SQLite em memória e reescrito como o próprio SQLite o vê: tabela, coluna, tipo e NOT NULL, nomes entre aspas.
+// Também monta o esquema para o sqlc: o banco/01-estrutura.sql mais as colunas que só existem nas linhas
+// adicionar_coluna_se_ausente (oito delas, em 21/10/2026, não estão no CREATE TABLE). O sqlc não recebe o DDL
+// original: o parser de SQLite dele não entende "TEXT NULL" (a coluna vira interface{}) e passa para minúsculas os
+// nomes do CREATE TABLE (CriadoEm vira o campo Criadoem). Por isso o esquema é aplicado num SQLite em memória e
+// reescrito como o próprio SQLite o vê: tabela, coluna, tipo e NOT NULL, nomes entre aspas.
 package esquema
 
 import (
@@ -19,13 +21,21 @@ import (
 
 // Arquivos de origem, a partir de src/backend-go.
 const (
-	ArquivoEstrutura = "../../banco/01-estrutura.sql"
-	ArquivoColunas   = "../../scripts/geral/2-criar-banco.sh"
-	ArquivoGerado    = "internal/banco/esquema/esquema-sqlc.sql"
+	ArquivoEstrutura     = "../../banco/01-estrutura.sql"
+	ArquivoDadosIniciais = "../../banco/02-dados-iniciais.sql"
+	ArquivoColunas       = "../../scripts/geral/2-criar-banco.sh"
+	ArquivoGerado        = "internal/banco/esquema/esquema-sqlc.sql"
+	PastaEmbutido        = "internal/banco/esquema/embutido"
 )
 
+// espacoDotnet é o \s do .NET: [\f\n\r\t\v\x85\p{Z}]. O \s do Go só conhece os espaços ASCII e não pega a
+// tabulação vertical, o NBSP nem os outros espaços do Unicode.
+const espacoDotnet = `[\f\n\r\t\v\x{85}\p{Z}]`
+
 // linhaColuna é a mesma expressão do EsquemaBanco.cs (e do instalar-windows.ps1): três argumentos entre aspas duplas.
-var linhaColuna = regexp.MustCompile(`(?m)^\s*adicionar_coluna_se_ausente\s+"([A-Za-z0-9_]+)"\s+"([A-Za-z0-9_]+)"\s+"([^"]+)"`)
+// O [^"] pega também a quebra de linha, como no .NET.
+var linhaColuna = regexp.MustCompile(`(?m)^` + espacoDotnet + `*adicionar_coluna_se_ausente` + espacoDotnet +
+	`+"([A-Za-z0-9_]+)"` + espacoDotnet + `+"([A-Za-z0-9_]+)"` + espacoDotnet + `+"([^"]+)"`)
 
 // ColunaNova é uma linha adicionar_coluna_se_ausente.
 type ColunaNova struct {

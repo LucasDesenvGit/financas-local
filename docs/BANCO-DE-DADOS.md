@@ -48,7 +48,8 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 1. Atualize a entidade em `Entidades/` e o mapeamento em `Data/FinancasDbContext.cs` (tamanhos e precisão iguais ao SQL).
 2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
-4. No commit, use `feat(banco)!:` para indicar que é preciso rodar o script do banco.
+4. Em `src/backend-go`, rode `go generate ./...` e suba o que ele mudar: o back-end em Go leva uma cópia dos scripts dentro do executável e um esquema para o `sqlc` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha.
+5. No commit, use `feat(banco)!:` para indicar que é preciso rodar o script do banco.
 
 Regras:
 - Nunca apague ou renomeie colunas em uso sem um bloco de transição.
