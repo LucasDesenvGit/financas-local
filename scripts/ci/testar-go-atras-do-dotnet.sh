@@ -181,7 +181,9 @@ n_go="$(sqlite3 "$banco" "SELECT COUNT(*) FROM Configuracao WHERE Chave LIKE 'te
 n_net="$(sqlite3 "$banco" "SELECT COUNT(*) FROM Categoria WHERE Nome LIKE 'Teste WAL %';")"
 [[ -n "$feitas_go" && "$n_go" == "$feitas_go" && "$n_net" == "$criadas" ]] ||
     falha "gravados: Go $n_go de ${feitas_go:-?}, .NET $n_net de $criadas"
-[[ "$criadas" -ge 10 ]] || falha "o .NET gravou só $criadas vezes em 6 s: o teste não mostrou nada"
+# Quantas vezes o .NET consegue a vez depende da máquina: aqui 38 a 48, no runner da CI já deu 8 (o Go grava ~570
+# vezes seguidas). O que importa é ter havido gravação dos dois lados ao mesmo tempo sem perder nada (conferido acima).
+[[ "$criadas" -ge 3 ]] || falha "o .NET gravou só $criadas vezes em 6 s: o teste não mostrou nada"
 if grep -i 'database is locked' "$log"; then falha "a API registrou banco travado"; fi
 ok "Go: $feitas_go transações; .NET: $criadas categorias e $criadas leituras pelo repasse; nenhuma falha"
 
