@@ -10,6 +10,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc` ([README](internal/banco/README.md)) |
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
 | `internal/relogio` | fuso de Brasília, injetável |
+| `testes/contrato` | testes de contrato: o que o .NET responde e grava, caso a caso, para o Go responder igual ([README](testes/contrato/README.md)) |
 
 ## Rodar
 
@@ -34,7 +35,9 @@ go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 ```
 
-A CI ainda não roda esses comandos: o job do Go entra na #231.
+A CI roda esses comandos no job "Go" (#231).
+
+**Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go. A CI roda o contrato no job "contrato (.NET)".
 
 Dois testes manuais, que só rodam com as variáveis definidas:
 

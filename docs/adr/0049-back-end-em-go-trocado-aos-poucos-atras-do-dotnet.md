@@ -124,6 +124,13 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - os cabeçalhos, o cache, o `ETag`, o 401 e o 404 sem corpo e o 400 de host foram conferidos contra o .NET rodando, rota por rota (`internal/servidor/igual_dotnet_test.go`);
     - **o `wwwroot` é lido do disco**, ao lado do executável, como no .NET: embutir com `//go:embed` obrigaria compilar o Angular antes do Go e muda a publicação, e pode ser revisto na #84;
     - **a CSP continua no `Seguranca.cs`:** um teste do Go lê o C# e confere que é a mesma, até o .NET sair (#86).
+  - **Testes de contrato (#72; detalhes no `src/backend-go/testes/contrato/README.md`):**
+    - os casos ficam em `casos/*.json`, um arquivo por assunto, rodados em ordem; o que o .NET respondeu fica em `esperado/*.json` (*golden files*), com o status, o JSON e as linhas que cada caso mudou em todas as tabelas, com o texto cru de cada coluna. Um caso pode guardar um valor da resposta para os seguintes (`capturar`);
+    - o JSON é comparado sem passar por `float64` (`10.50` ≠ `10.5`). Só é normalizado o que muda a cada execução (hora do relógio, GUID novo, `traceId`, versão, sal da senha, pasta temporária); dinheiro, datas de negócio e ids nunca;
+    - o .NET roda sem mudar o código: sem rede (`unshare -rn`, porque o câmbio e a cripto acessam a internet sozinhos), com o relógio começando em 2026-10-15 01:00 UTC pela libfaketime (o modo "começa em", sem mexer no relógio monotônico; congelado, travaria os temporizadores), em pt-BR e no fuso de Brasília. O banco fictício é inventado (`dados/base.sql`);
+    - a libfaketime não age sobre o Go (ele lê o relógio sem a libc): para rodar o contrato contra o Go, o relógio injetável ganha uma opção de teste;
+    - a CI roda o contrato contra o .NET (job "contrato (.NET)") em todo PR que mexe no back-end;
+    - cada etapa grava os casos do próprio assunto, com `--atualizar` contra o .NET, no PR dela.
   - **Versão:** entra no executável por `-ldflags -X`, lida do `Directory.Build.props` (a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) continua valendo).
   - **CSP:** os testes no navegador ([0041](0041-testes-no-navegador-com-playwright.md)) e o `testes-afetados.py` ([0047](0047-ci-paralela-so-testes-afetados-no-pr.md)) leem a CSP do `Seguranca.cs`. Ela ganha uma fonte única antes de o Go servir o front-end (#73).
   - **Esquema do banco** ([0003](0003-esquema-por-scripts-sql-idempotentes.md)): continua nos scripts de `banco/` mais as linhas `adicionar_coluna_se_ausente`, aplicado pelo .NET até a inversão e depois pelo Go (#297). Erros ([0022](0022-erros-do-sistema-gravados-no-banco.md)): registrados pelo .NET até a inversão, e depois por um handler do `slog` (#298).

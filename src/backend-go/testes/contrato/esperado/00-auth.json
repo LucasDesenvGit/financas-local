@@ -1,0 +1,901 @@
+[
+  {
+    "nome": "estado antes de configurar",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-Financas-AF=<valor>; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": false,
+      "configurado": false,
+      "login": null,
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "configurar sem token CSRF",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "configurar com corpo inválido",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Login": [
+          "The field Login must be a string with a minimum length of 3 and a maximum length of 100."
+        ],
+        "Senha": [
+          "The Senha field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "configurar com senha curta",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A senha deve ter pelo menos 8 caracteres."
+    }
+  },
+  {
+    "nome": "configurar com senha que contém o login",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A senha não pode conter o nome de usuário."
+    }
+  },
+  {
+    "nome": "configurar",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-Financas=<valor>; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": true,
+      "configurado": true,
+      "login": "ana.teste",
+      "versao": "<versao>"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "Configuracao",
+            "Id": 1,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "inseridas": [
+          {
+            "BloqueadoAte": null,
+            "CarimboSeguranca": "<GUID>",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 1,
+            "Login": "ana.teste",
+            "SenhaHash": "<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>",
+            "TentativasFalhas": 0,
+            "UltimoLoginEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "configurar acima do limite de tentativas",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 429
+  },
+  {
+    "nome": "configurar de novo",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O sistema já foi configurado."
+    }
+  },
+  {
+    "nome": "estado logado",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": true,
+      "configurado": true,
+      "login": "ana.teste",
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "estado sem login",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-Financas-AF=<valor>; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": false,
+      "configurado": true,
+      "login": null,
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "entrar com usuário que não existe",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 2,
+            "Ip": "127.0.0.2",
+            "Login": "nao.existe",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "entrar com senha errada",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 3,
+            "Ip": "127.0.0.2",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "entrar sem a senha",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Senha": [
+          "The Senha field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "entrar",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-Financas=<valor>; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": true,
+      "configurado": true,
+      "login": "ana.teste",
+      "versao": "<versao>"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginSucesso",
+            "Id": 4,
+            "Ip": "127.0.0.2",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 1,
+                "depois": 0
+              },
+              "UltimoLoginEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "auditoria sem login",
+    "requisicao": "GET /api/auth/auditoria",
+    "status": 401
+  },
+  {
+    "nome": "alterar senha sem login",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 401
+  },
+  {
+    "nome": "alterar senha sem token CSRF",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar senha com corpo vazio",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "NovaSenha": [
+          "The NovaSenha field is required."
+        ],
+        "SenhaAtual": [
+          "The SenhaAtual field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar senha com JSON quebrado",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$": [
+          "Expected start of a property name or value, but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 34."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar senha com a senha atual errada",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A senha atual não confere."
+    }
+  },
+  {
+    "nome": "alterar senha para uma curta",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A senha deve ter pelo menos 8 caracteres."
+    }
+  },
+  {
+    "nome": "alterar senha para uma que contém o login",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A senha não pode conter o nome de usuário."
+    }
+  },
+  {
+    "nome": "alterar senha",
+    "requisicao": "POST /api/auth/alterar-senha",
+    "status": 204,
+    "cookies": [
+      "__Host-Financas=<valor>; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "SenhaAlterada",
+            "Id": 5,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "CarimboSeguranca": {
+                "antes": "<GUID>",
+                "depois": "<GUID>"
+              },
+              "SenhaHash": {
+                "antes": "<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>",
+                "depois": "<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "estado logado depois de alterar a senha",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": true,
+      "configurado": true,
+      "login": "ana.teste",
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "sessão antiga derrubada pela troca de senha",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-Financas=; expires=Thu, 01 Jan 1970 00:00:00 GMT; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": false,
+      "configurado": true,
+      "login": null,
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "sessão antiga sem acesso à auditoria",
+    "requisicao": "GET /api/auth/auditoria",
+    "status": 401
+  },
+  {
+    "nome": "entrar com a senha antiga",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 6,
+            "Ip": "127.0.0.5",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "entrar com a senha nova",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-Financas=<valor>; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": true,
+      "configurado": true,
+      "login": "ana.teste",
+      "versao": "<versao>"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginSucesso",
+            "Id": 7,
+            "Ip": "127.0.0.5",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 1,
+                "depois": 0
+              },
+              "UltimoLoginEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "sair",
+    "requisicao": "POST /api/auth/sair",
+    "status": 204,
+    "cookies": [
+      "__Host-Financas=; expires=Thu, 01 Jan 1970 00:00:00 GMT; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "Logout",
+            "Id": 8,
+            "Ip": "127.0.0.5",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "estado depois de sair",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": false,
+      "configurado": true,
+      "login": null,
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "sair sem estar logado",
+    "requisicao": "POST /api/auth/sair",
+    "status": 204,
+    "cookies": [
+      "__Host-Financas=; expires=Thu, 01 Jan 1970 00:00:00 GMT; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ]
+  },
+  {
+    "nome": "sair sem token CSRF",
+    "requisicao": "POST /api/auth/sair",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "auditoria",
+    "requisicao": "GET /api/auth/auditoria",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "Logout",
+        "id": 8,
+        "ip": "127.0.0.5",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "LoginSucesso",
+        "id": 7,
+        "ip": "127.0.0.5",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "LoginFalha",
+        "id": 6,
+        "ip": "127.0.0.5",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "SenhaAlterada",
+        "id": 5,
+        "ip": "127.0.0.1",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "LoginSucesso",
+        "id": 4,
+        "ip": "127.0.0.2",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "LoginFalha",
+        "id": 3,
+        "ip": "127.0.0.2",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "LoginFalha",
+        "id": 2,
+        "ip": "127.0.0.2",
+        "login": "nao.existe",
+        "userAgent": "contrato-financas-local"
+      },
+      {
+        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "evento": "Configuracao",
+        "id": 1,
+        "ip": "127.0.0.1",
+        "login": "ana.teste",
+        "userAgent": "contrato-financas-local"
+      }
+    ]
+  },
+  {
+    "nome": "bloqueio: 1ª senha errada",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 9,
+            "Ip": "127.0.0.3",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "bloqueio: 2ª senha errada",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 10,
+            "Ip": "127.0.0.3",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 1,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "bloqueio: 3ª senha errada",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 11,
+            "Ip": "127.0.0.3",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 2,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "bloqueio: 4ª senha errada",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 12,
+            "Ip": "127.0.0.3",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TentativasFalhas": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "bloqueio: 5ª senha errada bloqueia",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 401,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Usuário ou senha inválidos."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginFalha",
+            "Id": 13,
+            "Ip": "127.0.0.3",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "BloqueadoAte": {
+                "antes": null,
+                "depois": "<relógio +15 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "TentativasFalhas": {
+                "antes": 4,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "bloqueio: senha certa durante o bloqueio",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 429,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Acesso bloqueado temporariamente por excesso de tentativas. Tente novamente em 15 minuto(s)."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginBloqueado",
+            "Id": 14,
+            "Ip": "127.0.0.4",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "bloqueio não derruba a sessão aberta",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": true,
+      "configurado": true,
+      "login": "ana.teste",
+      "versao": "<versao>"
+    }
+  }
+]
