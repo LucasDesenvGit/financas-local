@@ -798,6 +798,8 @@ export const MANUAL: CapituloManual[] = [
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
           'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
           'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta.',
+          'Cada meta é uma barra que abre e fecha: clique no nome. Fechada, ela mostra o percentual, quanto já foi guardado e quanto guardar no mês. Aberta, o anel, os valores e a prioridade ficam à esquerda, e o plano do mês à direita (no celular, um embaixo do outro). Todas começam abertas; as que você fechar ficam fechadas neste navegador. “Fechar todas” e “Abrir todas” ficam no topo da lista.',
+          'Meta sem data alvo mostra “sem data definida”.',
           'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “editar”.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
@@ -822,10 +824,10 @@ export const MANUAL: CapituloManual[] = [
           'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence − outras despesas) e quanto guardar no total.',
           'Em “Guardar X% da sobra”, escolha quanto da sobra vai para as metas; o resto fica livre para imprevistos.',
           'Use ↑ e ↓ em cada meta para definir a prioridade.',
-          'Cada meta mostra “Este mês: guarde R$ X” e, embaixo, os degraus dos meses seguintes: menos nos meses de fatura alta, mais quando ela cai.',
+          'Cada meta mostra “Este mês: guarde R$ X”, com “Consigo guardar outro valor” na mesma linha, e o “Plano mês a mês” já aberto: menos nos meses de fatura alta, mais quando ela cai.',
           'Em “Consigo guardar outro valor”, diga quanto dá para guardar este mês: o resto do plano é refeito na hora e mostra se ainda fecha no prazo.',
           'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
-          '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.',
+          '“Plano mês a mês” mostra os próximos 5 meses; “Mostrar mais” acrescenta 5 de cada vez, até 12, e “Mostrar menos” volta aos 5. “Como calculei” explica a conta.',
           '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ aporte” muda o gráfico, e embaixo ficam os últimos aportes. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],

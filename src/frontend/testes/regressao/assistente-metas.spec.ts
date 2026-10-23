@@ -137,12 +137,11 @@ describe('Regressão: assistente de metas (tela)', () => {
     expect(t.router.url).toBe('/metas?guardar=1:120');
   });
 
-  it('degraus com o motivo e a nota de que o plano conta com a fatura caindo', async () => {
+  it('a nota de que o plano conta com a fatura caindo (#335: sem a lista "Depois:", o plano mês a mês já vem aberto)', async () => {
     const t = abrirMetas([VIAGEM], plano({}, FATURA_CAINDO));
     await t.atualizar();
     const v = texto(t.raiz, 'Viagem');
-    const degraus = Array.from(t.raiz.querySelectorAll('.degraus li')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim());
-    expect(degraus[degraus.length - 1]).toMatch(/^R\$\s2\.291,6\d\/mês de jan\/27 a set\/27 \(faturas ~R\$\s1\.500\)$/);
+    expect(t.raiz.querySelector('.degraus')).toBeNull();
     expect(v).toMatch(/conta com as faturas caindo para ~R\$\s1\.500,00 a partir de jan\/27 \(hoje ~R\$\s5\.000,00\)/);
   });
 

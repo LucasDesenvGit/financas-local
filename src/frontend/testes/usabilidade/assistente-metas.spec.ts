@@ -61,16 +61,33 @@ describe('Usabilidade: assistente de metas', () => {
     expect(regiao.querySelector('app-campo-valor')).not.toBeNull();
   });
 
-  it('plano mês a mês começa fechado e abre num botão com aria-expanded', async () => {
+  it('#335: plano mês a mês começa aberto, com 5 meses e "Mostrar mais"; o botão fecha (aria-expanded)', async () => {
     const t = abrirMetas(METAS, plano());
     await t.atualizar();
     const botao = cartao(t.raiz, 'Viagem').querySelector<HTMLButtonElement>('.botao-plano')!;
     expect(botao.tagName).toBe('BUTTON');
+    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    const linhasDoPlano = () => cartao(t.raiz, 'Viagem').querySelectorAll('.tabela-plano tbody tr').length;
+    const maisMeses = () => [...cartao(t.raiz, 'Viagem').querySelectorAll<HTMLButtonElement>('.mais-meses button')];
+    expect(linhasDoPlano()).toBe(5);
+    expect(maisMeses().map((b) => b.textContent!.replace(/\s+/g, ' ').trim())).toEqual(['Mostrar mais 5 meses']);
+    maisMeses()[0].click();
+    await t.atualizar();
+    expect(linhasDoPlano()).toBe(10);
+    expect(maisMeses().map((b) => b.textContent!.replace(/\s+/g, ' ').trim())).toEqual(['Mostrar mais 2 meses', 'Mostrar menos']);
+    maisMeses()[0].click();
+    await t.atualizar();
+    expect(linhasDoPlano()).toBe(12);
+    expect(maisMeses().map((b) => b.textContent!.trim())).toEqual(['Mostrar menos']);
+    maisMeses()[0].click();
+    await t.atualizar();
+    expect(linhasDoPlano()).toBe(5);
+    botao.click();
+    await t.atualizar();
     expect(botao.getAttribute('aria-expanded')).toBe('false');
     expect(cartao(t.raiz, 'Viagem').querySelector('table')).toBeNull();
     botao.click();
     await t.atualizar();
-    expect(botao.getAttribute('aria-expanded')).toBe('true');
     const cabecalho = Array.from(cartao(t.raiz, 'Viagem').querySelectorAll('thead th')).map((th) => th.textContent!.trim());
     expect(cabecalho).toEqual(['Mês', 'Sobra', 'Faturas', 'Guardar']);
     const linhas = Array.from(cartao(t.raiz, 'Viagem').querySelectorAll('tbody tr'))

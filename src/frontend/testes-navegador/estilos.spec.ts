@@ -245,12 +245,16 @@ test.describe('Texto e listas vazias', () => {
     expect(await estilo(aviso, 'text-align')).toBe('center');
   });
 
-  test('o cartão da meta tem divisórias antes do plano do mês e antes das ações (#316)', async ({ page }) => {
+  test('o cartão da meta tem divisórias antes do plano do mês e antes das ações (#316, #335)', async ({ page }) => {
     await abrir(page, '/metas');
     const cartao = page.locator('.cartao-meta').first();
-    for (const parte of [cartao.locator('.recomendado'), cartao.locator('footer')]) {
-      expect(await estilo(parte, 'border-top-style')).toBe('solid');
-      expect(await estilo(parte, 'border-top-width')).toBe('1px');
+    // #335: no computador, o plano fica numa coluna ao lado do resumo, e a divisória é a linha vertical entre os dois;
+    // no celular, um embaixo do outro, com a linha em cima do plano.
+    const computador = page.viewportSize()!.width > 900;
+    const [plano, lado] = computador ? [cartao.locator('.meta-detalhe'), 'left'] : [cartao.locator('.recomendado'), 'top'];
+    for (const [parte, borda] of [[plano, lado], [cartao.locator('footer'), 'top']] as const) {
+      expect(await estilo(parte, `border-${borda}-style`)).toBe('solid');
+      expect(await estilo(parte, `border-${borda}-width`)).toBe('1px');
     }
   });
 
