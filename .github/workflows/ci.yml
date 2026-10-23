@@ -107,7 +107,7 @@ jobs:
 
       # #204: pacotes NuGet entre execuções (o projeto não tem packages.lock.json; a chave são os .csproj).
       - name: Cache dos pacotes NuGet
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
@@ -195,7 +195,7 @@ jobs:
       # #255: o node_modules inteiro pela versão do Node e o package-lock; acertou, pula o npm ci.
       - name: Cache do node_modules
         id: modulos
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/frontend/node_modules
           key: node-modules-${{ runner.os }}-node22-${{ hashFiles('src/frontend/package-lock.json') }}
@@ -207,7 +207,7 @@ jobs:
 
       # #255: a transformação do TypeScript do Jest (a parte cara da 1ª execução) entre execuções.
       - name: Cache do Jest
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/frontend/.jest-cache
           key: jest-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
@@ -246,7 +246,7 @@ jobs:
 
       - name: Cache do node_modules
         id: modulos
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/frontend/node_modules
           key: node-modules-${{ runner.os }}-node22-${{ hashFiles('src/frontend/package-lock.json') }}
@@ -258,7 +258,7 @@ jobs:
 
       # #255: o cache de build do Angular (angular.json: "cli.cache.environment": "all", para valer também na CI).
       - name: Cache do build do Angular
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/frontend/.angular/cache
           key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
@@ -271,7 +271,7 @@ jobs:
       # ADR 0041: o build de produção num navegador de verdade, com a CSP da API e a API falsa (sem back-end).
       # #204: o Chromium fica em cache pela versão do Playwright; as bibliotecas do sistema (--with-deps) vêm do apt.
       - name: Cache do navegador dos testes
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}

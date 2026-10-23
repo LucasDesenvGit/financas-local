@@ -44,7 +44,7 @@ jobs:
 
       # #255: o publish self-contained baixa os pacotes do runtime do win-x64 a cada execução sem isto.
       - name: Cache dos pacotes NuGet
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-msi-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
@@ -58,7 +58,7 @@ jobs:
 
       # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
       - name: Cache do build do Angular
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/frontend/.angular/cache
           key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
