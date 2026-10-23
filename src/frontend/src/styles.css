@@ -709,6 +709,10 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 .lista-simples li + li, .lista-legenda li + li { border-top: 1px solid var(--linha); }
 .lista-simples li.clicavel:hover { background: var(--superficie-2); }
 .lista-legenda { margin-top: 12px; }
+/* #336: ícone da categoria (<app-icone-categoria>) e o nome lado a lado, nas tabelas e listas de categoria. */
+.categoria-com-icone { display: inline-flex; align-items: center; gap: 10px; min-height: 24px; vertical-align: middle; }
+a.categoria-com-icone { text-decoration: none; }
+a.categoria-com-icone:hover { text-decoration: underline; }
 .pct { width: 3.2em; text-align: right; font-size: 0.84rem; }
 /* #284: largura mínima, não fixa: "dd/MM HH:mm" e "dd/MM/yy" passavam da caixa e ficavam por cima do texto ao lado. */
 .data-curta { color: var(--texto-suave); font-size: 0.84rem; font-variant-numeric: tabular-nums; min-width: 3.8em; flex-shrink: 0; white-space: nowrap; }

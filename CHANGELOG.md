@@ -2,6 +2,20 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.39.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Categorias com o ícone na cor delas, no lugar da bolinha** (#336).
+  - **Onde aparece:** no Painel ("Gastos por categoria" e Orçamentos), nas Análises (Relatórios, Visão anual e Projeção), em Categorias e regras e em Orçamentos, inclusive na sugestão de orçamentos.
+  - **Como é:** um quadrado arredondado com o ícone da categoria (talheres em Alimentação, casa em Moradia…), na cor dela, com o fundo dessa cor suave. Categoria sem ícone conhecido mostra a primeira letra do nome.
+  - **Contraste:** o ícone tem pelo menos 3:1 sobre o fundo nos dois temas e em todas as paletas, conferido pelo teste.
+  - **A rosca do Painel:**
+    - o total do mês fica no centro;
+    - as categorias menores que 3% ficam juntas em "Outras", e clicar nessa fatia abre todas as despesas do mês;
+    - as fatias ganham um espaço entre elas.
+  - **A lista do Painel:** cada categoria mostra o ícone, uma barrinha embaixo do nome, o valor e o %. Aparecem as 8 maiores, e "Mostrar todas" abre o resto.
+  - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas mais espaçadas (até um limite) e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
+
 ## [2.38.1] — 2026-10-23 · desenvolvimento
 
 ### Correções
