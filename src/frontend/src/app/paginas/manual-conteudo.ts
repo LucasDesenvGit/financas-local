@@ -279,7 +279,7 @@ export const MANUAL: CapituloManual[] = [
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
           'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
           'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
-          'Conta em outra moeda (ex.: em dólar) gera um aviso no Painel: o site soma as contas como reais, sem conversão.'
+          'Conta em outra moeda (ex.: em dólar) gera um aviso nas notificações (o sino da barra do topo): o site soma as contas como reais, sem conversão.'
         ],
         abrir: [{ rotulo: 'Ajustar a sincronização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
@@ -351,10 +351,12 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           '“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela das compras parceladas, menos os estornos. Depois de fechada, vale o total que o banco informou.',
           'Abaixo dela aparecem quando a fatura fecha, quando vence e a situação (paga, fechada ou em aberto). Ela aparece como paga quando o banco informa o pagamento ou quando o pagamento (por exemplo, “Pagamento recebido”) está nas transações do cartão, entre o vencimento anterior e o vencimento dela. Pagar antes do fechamento também conta.',
+          'Para ver as faturas de outro mês, use o seletor de mês em “Cartões de crédito” (como no Painel). Muda a “Fatura de <mês>” de cada cartão e o total; saldo, dívida total, limite e “Fatura em aberto” continuam sendo os de hoje. “Voltar para o mês atual” volta. O link “Faturas do mês” do Painel abre esta tela no mesmo mês.',
           'Depois que a fatura do mês fecha, aparece embaixo a “Próxima fatura”: o que já entrou na fatura seguinte, que ainda está aberta, com o dia em que ela fecha e vence.',
           '“Dívida total” é tudo o que você deve no cartão hoje, inclusive as parcelas que ainda vão vencer.',
           'A barra mostra quanto do limite está em uso e quanto ainda está disponível (ou quanto passou do limite).',
-          '“Melhor dia de compra” é o dia seguinte ao fechamento: o que você compra a partir dele só entra na fatura seguinte.'
+          '“Melhor dia de compra” é o dia seguinte ao fechamento: o que você compra a partir dele só entra na fatura seguinte.',
+          'Ligue “Fatura no Painel” no cartão para somar a fatura em aberto dele no card “Fatura em aberto”, no topo desta tela e no Painel, em “Situação hoje”. “ver detalhes” mostra a fatura de cada cartão. Vale na hora e fica guardado neste navegador: em outro computador ou celular, ligue de novo.'
         ],
         abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
         termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
@@ -428,7 +430,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'O que cada etiqueta quer dizer',
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
         passos: [
-          'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário). O mesmo selo aparece no Painel e em Contas a pagar.',
+          'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o selo pelo tipo do lançamento (o do Pix em “Pix enviado” e “Pix recebido”; o logo do banco em “Pagamento de fatura”, quando o texto cita o banco); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário); e, sem categoria, o ícone do tipo, o mesmo da etiqueta. O mesmo selo aparece no Painel e em Contas a pagar.',
           'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
           '“fora dos gastos”: a transação não entra nas despesas nem nas receitas (transferência entre contas suas, pagamento de fatura, investimento ou “ignorar nos relatórios”).',
           '“somando nos gastos” (ou “nas receitas”): um pagamento de fatura ou uma transferência entre contas suas está contando em dobro. Veja como corrigir no capítulo de categorização.',
@@ -775,7 +777,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'A barra de cada categoria mostra quanto do limite já foi.',
           'Laranja quer dizer que passou do limite só por causa de gastos de emergência.',
-          'O Painel junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
+          'O sino da barra do topo junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
           'Clique no gasto de uma categoria para ver as transações por trás dele.'
         ],
         abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }, { rotulo: 'Abrir o Painel', rota: '/painel' }]
@@ -977,11 +979,12 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Responder “como estou hoje?” e “como está este mês?”.',
         passos: [
           '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
-          '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor.',
-          'No topo, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
-          'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros).',
-          'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir o Painel, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
-          '“Mais análises” abre a evolução de 12 meses e as últimas transações.',
+          'O card “Fatura em aberto” soma a fatura que ainda recebe compras (a do mês, enquanto não fecha; depois, a próxima) dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
+          '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor: ‹ › andam um mês; o nome do mês abre os 12 meses, e o ano, em cima deles, abre uma página de 12 anos (como no calendário dos campos de data). Esc volta um nível.',
+          'O sino da barra do topo (em qualquer tela) mostra quantas notificações estão pendentes e, ao clicar, os orçamentos estourados e os avisos. Esc ou um clique fora fecham. Lá, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
+          'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros). O que você oculta ou minimiza sai da conta do sino.',
+          'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir as notificações, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
+          '“Mais análises” abre a evolução de 12 meses e as últimas transações. “Últimas transações” vai até hoje; as que têm data depois de hoje (parcelas que o banco já lançou) ficam em “Futuras (N)”, com o ano na data. “ver todas” abre Transações no mesmo recorte.',
           'Clique num total por categoria para ver as transações por trás dele.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
@@ -1052,7 +1055,8 @@ export const MANUAL: CapituloManual[] = [
           'A carteira mostra preço médio, cotação atual, valorização e proventos.',
           'As abas separam o Resumo, os FIIs, a Renda variável e o que veio do Open Finance.',
           'No Resumo, o bloco “Câmbio” mostra quanto valem em reais 1 dólar, 1 euro e 100 ienes, pela PTAX de compra do Banco Central (a mesma que o site usa para converter), com a bandeira do país e a data de cada cotação. Em “Mais 7 moedas” ficam as outras que o Banco Central publica: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca; o site lembra se você deixou aberto. A cotação é de dia útil e se atualiza sozinha; sem internet, fica a última guardada, com a data dela. Ela não some com “ocultar valores”, porque não é um dado seu.',
-          'Logo abaixo, o bloco “Criptomoedas” mostra o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether (o “dólar digital”): o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia, com a data e a hora. A variação em 24 h aparece depois que o site tiver a cotação de um dia antes. É preço de referência de uma corretora e muda muito: confira na sua corretora antes de comprar ou vender. Também não some com “ocultar valores”.'
+          '“Mais análises”, no fim do Resumo, mostra a distribuição por tipo de investimento (rosca e lista com os valores) e a rentabilidade de cada ativo comparada com a Selic. Sem ações ou FIIs em carteira, a distribuição ocupa a largura toda.',
+          'Logo abaixo, o bloco “Criptomoedas” mostra o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether (o “dólar digital”): o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia. Cada moeda diz de onde veio a cotação e quando (“Mercado Bitcoin · 22/10 16:00”), como o “PTAX de …” do câmbio; com mais de 2 horas, a linha diz “desatualizada”. A variação em 24 h aparece depois que o site tiver a cotação de um dia antes. É preço de referência de uma corretora e muda muito: confira na sua corretora antes de comprar ou vender. Também não some com “ocultar valores”.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['precoMedio', 'dy', 'dyNaCompra', 'yieldOnCost', 'ptax']

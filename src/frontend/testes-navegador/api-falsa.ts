@@ -117,10 +117,16 @@ const credito = (natureza: number) => ({ natureza, contratosAbertos: 0, contrato
 /** Respostas dos GET, pelo caminho sem a query. */
 const respostas: Record<string, unknown> = {
   '/api/auth/estado': { configurado: true, autenticado: true, login: 'teste', versao: '0.0.0-teste' },
+  // #327: as notificações da barra do topo (os mesmos avisos do Painel).
+  '/api/painel/avisos': { ano, mes, alertas: ['Conta "Aluguel" vencida desde 05/10.'], orcamentosEstourados,
+    poucoInformativas: 9, poucoInformativasDesde: dataIso(new Date(ano, hoje.getMonth(), hoje.getDate() - 89)),
+    exemploPoucoInformativa: 'Pagamento recebido' },
   '/api/painel': {
     saldoContas: 3250.5, dividaCartoes: 820.1, totalInvestido: 10000, patrimonioLiquido: 12430.4, rendaVariavel: 4000,
     patrimonioSemRendaVariavel: 8430.4, receitasMes: 5000, despesasMes: 1950, gastosPorCategoria: porCategoria, evolucao,
-    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes, alertas: ['Conta "Aluguel" vencida desde 05/10.'],
+    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes,
+    // #334: uma parcela já lançada com data futura, fora de "Últimas".
+    transacoesFuturas: [{ ...transacoes[0], id: 900, descricao: 'Loja Exemplo 11/11', data: dataIso(new Date(ano, hoje.getMonth() + 5, 15)), valor: -200.73 }], quantidadeFuturas: 1, alertas: ['Conta "Aluguel" vencida desde 05/10.'],
     ultimaSincronizacao: hoje.toISOString(), orcamentosEstourados,
     despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7,
     faturasDoMes: [
@@ -161,6 +167,11 @@ const respostas: Record<string, unknown> = {
     ]
   },
   '/api/contas': contas,
+  // #323: as faturas de outro mês (a mesma resposta para qualquer mês pedido).
+  '/api/contas/faturas-do-mes': [
+    { contaId: 3, cartao: 'Cartão Crédito', valorMes: 1234.56, parcelasMes: 200, faturaId: 8, vencimento: '2026-09-10',
+      situacao: 'paga', fechamento: '2026-09-03', banco: null }
+  ],
   '/api/contas/bancos': [],
   // #245: histórico de faturas do Cartão Exemplo (6 meses), para abrir e ver que só ele cresce.
   '/api/contas/2/faturas': Array.from({ length: 6 }, (_, i) => ({
@@ -297,7 +308,9 @@ const respostas: Record<string, unknown> = {
     rendaVariavel: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, lucroRealizado: 0, proventosRecebidos: 0,
       proventos12Meses: 0, resultadoTotal: 0, valorSeFosseSelic: 0, diferencaSelic: 0, resultadoTotalPercentual: null,
       resultadoSelicPercentual: null },
-    posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 0, distribuicao: [],
+    // #330: sem posição aberta, a distribuição fica sozinha em "Mais análises" (só Reservas, como no print da issue).
+    posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 2350,
+    distribuicao: [{ nome: 'Reservas', valor: 2350 }],
     cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [],
     // #237: numa conta, o banco detalha uma reserva pelo nome e outra fica fora da lista; na outra, manda só o total.
     reservas: [

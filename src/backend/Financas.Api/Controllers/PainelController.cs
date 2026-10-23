@@ -87,21 +87,93 @@ public class PainelController : BaseController
         var diasVencimentos = await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasProximosVencimentos, ct);
         var proximas = await _relatorios.ContasAgendadasAsync(diasVencimentos, ct);
 
+        // #334: "Últimas" vai só até hoje: as parcelas que o banco já manda com data futura ficavam no topo e escondiam o
+        // que de fato aconteceu. As futuras vêm à parte, as mais próximas primeiro, com quantas são.
         var ultimas = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.Data <= hoje)
             .OrderByDescending(t => t.Data).ThenByDescending(t => t.Id)
             .Take(8)
             .Select(ProjecoesTransacao.ParaDto)
             .ToListAsync(ct);
+        var futuras = await _db.Transacoes.AsNoTracking()
+            .Where(t => t.Data > hoje)
+            .OrderBy(t => t.Data).ThenBy(t => t.Id)
+            .Take(8)
+            .Select(ProjecoesTransacao.ParaDto)
+            .ToListAsync(ct);
+        var quantidadeFuturas = await _db.Transacoes.AsNoTracking().CountAsync(t => t.Data > hoje, ct);
 
         // #206: os orçamentos estourados vão em lista própria (card agrupado no Painel), os piores primeiro.
         var orcamentosEstourados = orcamentos.Where(o => o.Percentual > 100).OrderByDescending(o => o.Percentual).ToList();
 
-        // Alertas
+        var alertas = await AlertasAsync(proximas, composicao.MoedasSemCotacao, ct);
+
+        var emergenciaMes = Math.Abs(await _db.Transacoes.AsNoTracking()
+            .Where(t => t.Data >= inicio && t.Data <= fim && t.Emergencia && t.Valor < 0 && !t.IgnorarRelatorios
+                        && t.Tipo != TipoTransacao.Transferencia)
+            .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
+
+        var ultimaSincronizacao = await _config.ObterDataAsync(ConfiguracaoService.UltimaSincronizacaoGeral, ct);
+
+        // UX-12/#103: o que cada cartão lançou no mês escolhido (a mesma conta de Contas e cartões).
+        var faturasDoMes = (await _contas.FaturasDoMesAsync(inicio, fim, hoje, ct))
+            .Where(f => f.ValorMes > 0 || f.FaturaId is not null).ToList();
+
+        // #9: aviso discreto (não é alerta) com as descrições pouco informativas dos últimos 90 dias.
+        var (quantidadePoucoInformativas, desdePoucoInformativas, exemplo) = await PoucoInformativasAsync(hoje, ct);
+
+        // #170: trocos e vendas da corretora contando como receita (a correção é com prévia, em Conferir investimentos).
+        var creditosCorretora = await _conferencia.CreditosComoReceitaAsync(ct);
+        // #173 b): os trocos que a sincronização classificou sozinha.
+        var trocosAutomaticos = await _conferencia.ResumoTrocosAutomaticosAsync(ct);
+
+        return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
+            composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
+            receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
+            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
+            faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
+            quantidadePoucoInformativas, desdePoucoInformativas, exemplo,
+            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos, orcamentosEstourados,
+            futuras, quantidadeFuturas);
+    }
+    /// <summary>
+    /// #327: os avisos e os orçamentos estourados do mês atual, para as notificações da barra do topo (em todas as
+    /// telas). O mesmo que o Painel calcula, sem o resto do Painel.
+    /// </summary>
+    [HttpGet("avisos")]
+    public async Task<ActionResult<AvisosDto>> Avisos(CancellationToken ct)
+    {
+        var hoje = Relogio.Hoje;
+        var orcamentos = await _relatorios.OrcamentosDoMesAsync(hoje.Year, hoje.Month, ct);
+        var estourados = orcamentos.Where(o => o.Percentual > 100).OrderByDescending(o => o.Percentual).ToList();
+        var diasVencimentos = await _parametros.ObterInteiroAsync(ConfiguracaoService.DiasProximosVencimentos, ct);
+        var proximas = await _relatorios.ContasAgendadasAsync(diasVencimentos, ct);
+        var composicao = await _carteira.ComposicaoAsync(ct);
+        var (quantidade, desde, exemplo) = await PoucoInformativasAsync(hoje, ct);
+        return new AvisosDto(hoje.Year, hoje.Month, await AlertasAsync(proximas, composicao.MoedasSemCotacao, ct), estourados,
+            quantidade, desde, exemplo);
+    }
+
+    /// <summary>#9: as transações dos últimos 90 dias com descrição pouco informativa (quantas, desde quando e um exemplo).</summary>
+    private async Task<(int Quantidade, DateOnly Desde, string? Exemplo)> PoucoInformativasAsync(DateOnly hoje, CancellationToken ct)
+    {
+        var desde = hoje.AddDays(-(DiasPoucoInformativas - 1));
+        var lista = await _poucoInformativa.ListarAsync(
+            _db.Transacoes.AsNoTracking().Where(t => t.Data >= desde && t.Data <= hoje), ct);
+        var exemplo = lista.GroupBy(x => x.Descricao.Trim().ToUpperInvariant())
+            .OrderByDescending(g => g.Count()).Select(g => g.First().Descricao.Trim()).FirstOrDefault();
+        return (lista.Count, desde, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo);
+    }
+
+    /// <summary>Os avisos do Painel e das notificações (#327): conta vencida, Open Finance, erros, contratos em atraso…</summary>
+    private async Task<List<string>> AlertasAsync(IEnumerable<ContaAgendadaDto> proximas, IReadOnlyCollection<string> moedasSemCotacao,
+        CancellationToken ct)
+    {
         var alertas = new List<string>();
         foreach (var p in proximas.Where(p => p.DiasParaVencer < 0))
             alertas.Add($"Conta \"{p.Descricao}\" vencida desde {p.ProximoVencimento:dd/MM}.");
-        if (composicao.MoedasSemCotacao.Count > 0)
-            alertas.Add($"Investimentos em {string.Join(", ", composicao.MoedasSemCotacao)} ficaram fora do patrimônio: "
+        if (moedasSemCotacao.Count > 0)
+            alertas.Add($"Investimentos em {string.Join(", ", moedasSemCotacao)} ficaram fora do patrimônio: "
                 + "não há cotação de câmbio guardada para essa moeda.");
 
         // #172 (ADR 0008): contas são somadas como reais; conta em outra moeda entraria sem conversão.
@@ -159,37 +231,9 @@ public class PainelController : BaseController
             alertas.Add($"{(e.Natureza == NaturezaCredito.Financiamento ? "Financiamento" : "Empréstimo")} \"{e.Produto}\" " +
                         $"com {e.ParcelasEmAtraso} parcela(s) em atraso.");
 
-        var emergenciaMes = Math.Abs(await _db.Transacoes.AsNoTracking()
-            .Where(t => t.Data >= inicio && t.Data <= fim && t.Emergencia && t.Valor < 0 && !t.IgnorarRelatorios
-                        && t.Tipo != TipoTransacao.Transferencia)
-            .SumAsync(t => (decimal?)t.Valor, ct) ?? 0m);
-
-        var ultimaSincronizacao = await _config.ObterDataAsync(ConfiguracaoService.UltimaSincronizacaoGeral, ct);
-
-        // UX-12/#103: o que cada cartão lançou no mês escolhido (a mesma conta de Contas e cartões).
-        var faturasDoMes = (await _contas.FaturasDoMesAsync(inicio, fim, hoje, ct))
-            .Where(f => f.ValorMes > 0 || f.FaturaId is not null).ToList();
-
-        // #9: aviso discreto (não é alerta) com as descrições pouco informativas dos últimos 90 dias.
-        var desdePoucoInformativas = hoje.AddDays(-(DiasPoucoInformativas - 1));
-        var poucoInformativas = await _poucoInformativa.ListarAsync(
-            _db.Transacoes.AsNoTracking().Where(t => t.Data >= desdePoucoInformativas && t.Data <= hoje), ct);
-        var exemplo = poucoInformativas.GroupBy(x => x.Descricao.Trim().ToUpperInvariant())
-            .OrderByDescending(g => g.Count()).Select(g => g.First().Descricao.Trim()).FirstOrDefault();
-
-        // #170: trocos e vendas da corretora contando como receita (a correção é com prévia, em Conferir investimentos).
-        var creditosCorretora = await _conferencia.CreditosComoReceitaAsync(ct);
-        // #173 b): os trocos que a sincronização classificou sozinha.
-        var trocosAutomaticos = await _conferencia.ResumoTrocosAutomaticosAsync(ct);
-
-        return new PainelDto(saldoContas, dividaCartoes, totalInvestido, patrimonio,
-            composicao.RendaVariavel, patrimonio - composicao.RendaVariavel,
-            receitas, despesas, gastos, evolucao, orcamentos.Take(6).ToList(), proximas, ultimas, alertas,
-            ultimaSincronizacao, emergenciaMes, credito.SaldoFinanciamentos, credito.SaldoEmprestimos, diasVencimentos,
-            faturasDoMes, faturasDoMes.Sum(f => f.ValorMes),
-            poucoInformativas.Count, desdePoucoInformativas, exemplo is { Length: > 60 } ? exemplo[..60] : exemplo,
-            creditosCorretora.Quantidade, creditosCorretora.Total, trocosAutomaticos, orcamentosEstourados);
+        return alertas;
     }
+
 }
 
 [Route("api/emprestimos")]

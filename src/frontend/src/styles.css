@@ -629,6 +629,13 @@ app-campo-data { display: grid; gap: 4px; min-width: 0; position: relative; }
    com o valor logo abaixo do rótulo. "Faturas do mês", que lista os cartões e quase nunca tem a altura dos outros,
    vai para uma linha própria, na largura toda. Antes os quatro dividiam a linha e os três primeiros esticavam até
    a altura das faturas, com o valor solto no meio de um card vazio. */
+/* #322: grade de KPIs com o número de colunas pelo número de cards (--colunas, de colunasEquilibradas), para não sobrar
+   um card sozinho na última linha. Em tela menor, os cards dividem cada linha e crescem até a borda (flex). */
+.kpis.kpis-equilibrados { grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr)); }
+@media (max-width: 1199px) {
+  .kpis.kpis-equilibrados { display: flex; flex-wrap: wrap; }
+  .kpis.kpis-equilibrados .kpi { flex: 1 1 210px; }
+}
 .kpis-mes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .kpis-mes .kpi { position: relative; overflow: hidden; align-content: start; }
 .kpis-mes .kpi-faturas { grid-column: 1 / -1; }
@@ -1291,6 +1298,14 @@ a.chip-link:focus-visible, a.link-categoria:focus-visible { outline: 2px solid v
   .so-celular { display: inline-flex; }
   /* No celular o sincronizar mostra só o ícone (o texto fica no aria-label e na dica). */
   .botao-sincronizar .rotulo-barra { display: none; }
+}
+/* #327: com o sino, a barra não cabia num celular de 412 px (com as fontes do Linux, o avatar ficava cortado). Em tela
+   estreita, o título fica só com o símbolo (o link continua com o nome no aria-label) e os botões ficam mais justos,
+   ainda com 32 px (WCAG 2.5.8 pede 24). */
+@media (max-width: 440px) {
+  .barra-titulo-nome { display: none; }
+  .barra-acoes { gap: 0; }
+  .botao-barra { min-width: 32px; padding: 0 6px; }
 }
 /* Dicas da barra alinhadas pela direita: centralizadas, vazariam da tela nos botões da ponta. */
 .barra-acoes .com-dica::after { right: 0; transform: none; }

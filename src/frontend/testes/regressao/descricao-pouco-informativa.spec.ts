@@ -4,7 +4,7 @@ import { AvisosService } from '../../src/app/compartilhado/avisos.component';
 import { dataIso } from '../../src/app/compartilhado/utilidades';
 import { abrirTransacoes, paginaVazia, parametrosDaUrl } from '../apoio/transacoes';
 import { transacao } from '../apoio/transacoes-edicao';
-import { abrirPainel, painel } from '../apoio/painel';
+import { abrirNotificacoes } from '../apoio/notificacoes';
 
 /** Regressão do filtro "Descrição pouco informativa" (#9): URL, busca, revisada com desfazer e link do Painel. */
 describe('Regressão: descrição pouco informativa', () => {
@@ -56,9 +56,9 @@ describe('Regressão: descrição pouco informativa', () => {
     expect(chamadas).toEqual([[7, 8]]);
   });
 
-  it('o "Revisar" do Painel abre Transações com o filtro e o mesmo período do aviso', async () => {
-    const { raiz } = await abrirPainel(painel({ poucoInformativas: 3, poucoInformativasDesde: '2026-07-20' }));
-    const link = raiz.querySelector<HTMLAnchorElement>('.nota-discreta a')!;
+  it('o "Revisar" das notificações abre Transações com o filtro e o mesmo período do aviso (#327)', async () => {
+    const { raiz } = await abrirNotificacoes({ poucoInformativas: 3, poucoInformativasDesde: '2026-07-20' });
+    const link = raiz.querySelector<HTMLAnchorElement>('.pouco-informativas a:not(.termo)')!;
     const url = new URL(link.href, 'http://localhost');
     expect(url.pathname).toBe('/transacoes');
     expect(Object.fromEntries(url.searchParams)).toEqual({ generica: '1', inicio: '2026-07-20', fim: dataIso() });

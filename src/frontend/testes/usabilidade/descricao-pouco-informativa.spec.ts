@@ -1,6 +1,8 @@
+import { TestBed } from '@angular/core/testing';
 import { abrirTransacoes } from '../apoio/transacoes';
 import { transacao } from '../apoio/transacoes-edicao';
 import { abrirPainel, painel } from '../apoio/painel';
+import { abrirNotificacoes } from '../apoio/notificacoes';
 import { paginaVazia } from '../apoio/transacoes';
 
 /**
@@ -34,21 +36,26 @@ describe('Usabilidade: descrição pouco informativa', () => {
     expect(t.elemento.querySelector('.dica-generica')).toBeNull();
   });
 
-  it('no Painel é um aviso discreto, fora da caixa de alertas, com exemplo e "Revisar"', async () => {
-    const { raiz } = await abrirPainel(painel({
-      alertas: ['Orçamento de Mercado estourado (115%).'], poucoInformativas: 17, poucoInformativasDesde: '2026-07-20',
+  it('nas notificações é um aviso discreto, fora do card de avisos e do contador, com exemplo e "Revisar" (#327)', async () => {
+    const { raiz, sino } = await abrirNotificacoes({
+      alertas: ['Conta "Aluguel" vencida desde 05/10.'], poucoInformativas: 17, poucoInformativasDesde: '2026-07-20',
       exemploPoucoInformativa: 'PIX ENVIADO'
-    }));
-    const nota = raiz.querySelector('.nota-discreta')!;
-    expect(nota.closest('.alertas')).toBeNull();
+    });
+    const nota = raiz.querySelector('.pouco-informativas')!;
+    expect(nota.closest('.aviso-geral')).toBeNull();
+    // Sem "Ocultar", ela não conta no sino (o contador não teria como zerar).
+    expect(sino().getAttribute('aria-label')).toBe('Notificações, 1 pendente');
     expect(nota.textContent).not.toContain('⚠');
     expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('17 transações dos últimos 90 dias com descrição pouco informativa');
     expect(nota.textContent).toContain('(ex.: “PIX ENVIADO”)');
-    expect(nota.querySelector('a')!.textContent!.trim()).toBe('Revisar');
+    expect(nota.querySelector('a:not(.termo)')!.textContent!.trim()).toBe('Revisar');
   });
 
-  it('sem descrições pouco informativas, o Painel não mostra nada', async () => {
-    const { raiz } = await abrirPainel(painel());
-    expect(raiz.querySelector('.nota-discreta')).toBeNull();
+  it('sem descrições pouco informativas, as notificações não mostram a nota, e o Painel também não', async () => {
+    const { raiz } = await abrirNotificacoes({});
+    expect(raiz.querySelector('.pouco-informativas')).toBeNull();
+    TestBed.resetTestingModule();
+    const painelAberto = await abrirPainel(painel({ poucoInformativas: 17, poucoInformativasDesde: '2026-07-20' }));
+    expect(painelAberto.raiz.textContent).not.toContain('descrição pouco informativa');
   });
 });

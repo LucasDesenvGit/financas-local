@@ -294,7 +294,7 @@ function dataCurta(iso: string, comAno: boolean): string {
                 <td>
                   <div class="linha-descricao">
                     <!-- #265: selo do serviço (pelo texto do banco) ou ícone da categoria; decorativo, o nome vem ao lado. -->
-                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao"
+                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao" [tipo]="t.tipoLancamento"
                       [categoria]="t.categoriaNome" [tamanho]="22" />
                     @if (modoEdicao()) {
                       <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
