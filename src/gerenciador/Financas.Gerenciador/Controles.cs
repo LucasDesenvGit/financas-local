@@ -6,6 +6,26 @@ namespace Financas.Gerenciador;
 /// <summary>Formas arredondadas, na escala da tela (DPI).</summary>
 internal static class Desenho
 {
+    /// <summary>
+    /// #337: o ícone "download" do Lucide (o mesmo do site, licença ISC), desenhado no retângulo dado, com traço
+    /// arredondado de 2/24 do tamanho: a bandeja (U com os cantos de baixo arredondados) e a seta para baixo.
+    /// </summary>
+    public static void IconeBaixar(Graphics g, RectangleF r, Color cor)
+    {
+        var s = r.Width / 24f;
+        PointF P(float x, float y) => new(r.X + x * s, r.Y + y * s);
+        using var caneta = new Pen(cor, 2f * s) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+        using var bandeja = new GraphicsPath();
+        bandeja.AddLine(P(3, 15), P(3, 19));
+        bandeja.AddArc(r.X + 3 * s, r.Y + 17 * s, 4 * s, 4 * s, 180, -90);
+        bandeja.AddLine(P(5, 21), P(19, 21));
+        bandeja.AddArc(r.X + 17 * s, r.Y + 17 * s, 4 * s, 4 * s, 90, -90);
+        bandeja.AddLine(P(21, 19), P(21, 15));
+        g.DrawPath(caneta, bandeja);
+        g.DrawLines(caneta, new[] { P(7, 10), P(12, 15), P(17, 10) });
+        g.DrawLine(caneta, P(12, 15), P(12, 3));
+    }
+
     public static GraphicsPath Arredondado(RectangleF r, float raio)
     {
         var d = Math.Min(raio * 2, Math.Min(r.Width, r.Height));
@@ -150,8 +170,12 @@ internal sealed class Botao : Button
 
     private Font? _fonteIcone;
     private Font? FonteIcone => FonteIcones is null ? null : _fonteIcone ??= new Font(FonteIcones, Font.Size + 0.5f);
-    private string? GlifoIcone => _icone is char c && FonteIcones is not null ? c.ToString() : null;
+    private string? GlifoIcone => _icone is char c && c != IconeBotao.Baixar && FonteIcones is not null ? c.ToString() : null;
     private int VaoIcone => LogicalToDeviceUnits(8);
+    /// <summary>#337: a seta de "baixar" é desenhada (o "download" do Lucide, o mesmo do site), e não um caractere da fonte de
+    /// ícones, que saía fino e com outro peso que o texto em semibold.</summary>
+    private bool IconeDesenhado => _icone == IconeBotao.Baixar;
+    private int TamanhoIconeDesenhado => LogicalToDeviceUnits(16);
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public EstiloBotao Estilo
@@ -181,7 +205,9 @@ internal sealed class Botao : Button
     public override Size GetPreferredSize(Size proposto)
     {
         var texto = TextRenderer.MeasureText(Text, Font, Size.Empty, TextFormatFlags.SingleLine);
-        if (GlifoIcone is string glifo)
+        if (IconeDesenhado)
+            texto.Width += TamanhoIconeDesenhado + VaoIcone;
+        else if (GlifoIcone is string glifo)
             texto.Width += TextRenderer.MeasureText(glifo, FonteIcone, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + VaoIcone;
         return new Size(texto.Width + Padding.Horizontal + LogicalToDeviceUnits(4),
             Math.Max(texto.Height + Padding.Vertical, LogicalToDeviceUnits(34)));
@@ -256,13 +282,24 @@ internal sealed class Botao : Button
 
         var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine;
         if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
+        const TextFormatFlags medir = TextFormatFlags.SingleLine | TextFormatFlags.NoPadding;
+        if (IconeDesenhado)
+        {
+            // Ícone desenhado + vão + texto, o conjunto centralizado no botão.
+            var tam = TamanhoIconeDesenhado;
+            var largTexto = TextRenderer.MeasureText(Text, Font, Size.Empty, medir | (flags & TextFormatFlags.HidePrefix)).Width;
+            var x0 = (Width - (tam + VaoIcone + largTexto)) / 2;
+            Desenho.IconeBaixar(g, new RectangleF(x0, (Height - tam) / 2f, tam, tam), texto);
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(x0 + tam + VaoIcone, 0, largTexto + 2, Height), texto,
+                (flags & ~TextFormatFlags.HorizontalCenter) | TextFormatFlags.NoPadding);
+            return;
+        }
         if (GlifoIcone is not string glifo)
         {
             TextRenderer.DrawText(g, Text, Font, ClientRectangle, texto, flags);
             return;
         }
         // Ícone + vão + texto, o conjunto centralizado no botão.
-        const TextFormatFlags medir = TextFormatFlags.SingleLine | TextFormatFlags.NoPadding;
         var tamIcone = TextRenderer.MeasureText(glifo, FonteIcone, Size.Empty, medir);
         var tamTexto = TextRenderer.MeasureText(Text, Font, Size.Empty, medir | (flags & TextFormatFlags.HidePrefix));
         var x = (Width - (tamIcone.Width + VaoIcone + tamTexto.Width)) / 2;
