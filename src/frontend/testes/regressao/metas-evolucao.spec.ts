@@ -17,7 +17,7 @@ const APORTES = [
   { data: '2026-10-02', valor: 400 }
 ];
 const planoDe = (ateOAlvo: number[], dataProvavel: string | null): PlanoDaMeta =>
-  ({ metaId: 1, falta: 1000, recomendado: ateOAlvo[0], ajustado: false, dataProvavel, noPrazo: null, paraManterPrazo: null,
+  ({ metaId: 1, falta: 1000, recomendado: ateOAlvo[0], ajustado: false, porMes: null, porMesCortado: null, dataProvavel, noPrazo: null, paraManterPrazo: null,
     meses: [], ateOAlvo, degraus: [], dependeDaFatura: null });
 
 describe('Regressão: gráfico "Como está indo" da meta (#318)', () => {

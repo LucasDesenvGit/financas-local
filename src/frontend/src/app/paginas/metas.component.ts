@@ -7,7 +7,7 @@ import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Meta, MetaAporte, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
-import { Degrau, PlanoDaMeta, planejarMetas } from './metas-plano';
+import { Degrau, PlanoDaMeta, dataPeloValorMensal, planejarMetas } from './metas-plano';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { NOMES_MESES } from '../compartilhado/utilidades';
 import { AvisosService } from '../compartilhado/avisos.component';
@@ -50,27 +50,30 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             <p class="texto-suave conta-sobra">Entra {{ m0.receitas | currency }} · fatura do cartão {{ m0.faturas | currency }}
               · outras despesas {{ m0.despesas | currency }}</p>
           }
+          <!-- #359: a recomendação é o aviso principal do bloco: numa caixa só, numa linha (quebra só quando não cabe), com o
+               essencial em negrito (Nielsen 1 e 8). -->
           @if (c.sobraMes <= 0) {
-            <p class="negativo">Pelo dinheiro que entra e sai, este mês fecha no vermelho: recomendo guardar R$ 0 agora.
-              O plano compensa nos meses com mais folga.</p>
+            <p class="aviso-recomendacao aviso-vermelho">Pelo dinheiro que entra e sai, este mês <strong>fecha no vermelho</strong>:
+              recomendo guardar <strong>R$ 0 agora</strong>. O plano compensa nos meses com mais folga.</p>
           } @else if (ativas().length === 0) {
             <!-- #316: sem meta em andamento não há para onde mandar a sobra: dizer isso, e não "guardar R$ 0,00". -->
-            <p>Nenhuma meta em andamento: crie uma meta, ou reabra uma concluída (em “editar”, desmarque “Concluída”), para eu
-              dividir a sobra.</p>
+            <p class="aviso-recomendacao"><strong>Nenhuma meta em andamento:</strong> crie uma meta, ou reabra uma concluída (em
+              “editar”, desmarque “Concluída”), para eu dividir a sobra.</p>
           } @else {
-            <p>Recomendo guardar <strong>{{ c.totalRecomendado | currency }}</strong> este mês, dividido pela ordem de prioridade das metas.</p>
-            @switch (c.limitadoPor) {
-              @case ('saldo') {
-                <p class="texto-suave">Limitei ao que deve sobrar nas suas contas no fim do mês, depois de pagar a fatura
-                  ({{ p.saldoFimDoMes | currency }}).</p>
-              }
-              @case ('historico') {
-                <p class="texto-suave">Limitei ao que de fato sobrou no seu melhor mês recente ({{ p.melhorMesRecente | currency }}).</p>
-              }
-              @case ('minimo') {
-                <p class="texto-suave">É pouco, mas é um começo: o plano compensa nos meses com mais folga.</p>
-              }
-            }
+            <p class="aviso-recomendacao">Recomendo guardar <strong class="valor-recomendado">{{ c.totalRecomendado | currency }}</strong>
+              este mês, dividido pela <strong>ordem de prioridade</strong> das metas.@switch (c.limitadoPor) {
+                @case ('saldo') {
+                  <span class="limite-recomendacao">Limitei ao que deve sobrar nas contas no fim do mês, depois da fatura
+                    (<strong>{{ p.saldoFimDoMes | currency }}</strong>).</span>
+                }
+                @case ('historico') {
+                  <span class="limite-recomendacao">Limitei ao que de fato sobrou no seu melhor mês recente
+                    (<strong>{{ p.melhorMesRecente | currency }}</strong>).</span>
+                }
+                @case ('minimo') {
+                  <span class="limite-recomendacao">É pouco, mas é um começo: o plano compensa nos meses com mais folga.</span>
+                }
+              }</p>
           }
           <!-- #149 (C): quanto da sobra vai para as metas, na própria tela; muda na hora (Nielsen 3 e 6). -->
           <label class="parte-sobra">Guardar
@@ -160,7 +163,15 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 </div>
               }
             </div>
-            @if (m.aporteMensalSugerido) {
+            <!-- #359: o valor por mês que a pessoa escolheu manda; a sobra para as metas é o limite. -->
+            @if (pm.porMes) {
+              <p class="texto-suave nota-por-mes-plano">Você escolheu guardar {{ pm.porMes | currency }} por mês nesta meta.
+                @if (pm.porMesCortado; as c) {
+                  Em {{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}, a parte da sobra para as metas só dá
+                  {{ c.valor | currency }}: o resto fica para os meses seguintes.
+                }</p>
+            }
+            @if (m.aporteMensalSugerido && !pm.porMes) {
               <p class="texto-suave">Divisão igual seria {{ m.aporteMensalSugerido | currency }}/mês · faltam {{ pm.falta | currency }}</p>
             }
             @if (pm.noPrazo === false && prazoVencido(m)) {
@@ -274,7 +285,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
           <div class="grade-campos">
-            <label>Valor alvo <app-campo-valor name="alvo" [ngModel]="fm.valorAlvo" (ngModelChange)="mudarAlvo(fm, $event)" obrigatorio [minimo]="0.01" /></label>
+            <label>Valor alvo <app-campo-valor name="alvo" [ngModel]="fm.valorAlvo" (ngModelChange)="mudarAlvo(fm, $event); recalcularPorMes(fm)" obrigatorio [minimo]="0.01" /></label>
             <label>Data alvo <app-campo-data name="data" [(ngModel)]="fm.dataAlvo" /></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
@@ -284,8 +295,22 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             </select>
           </label>
           <label>Valor inicial já guardado
-            <app-campo-valor name="atual" [(ngModel)]="fm.valorAtual" />
+            <app-campo-valor name="atual" [ngModel]="fm.valorAtual" (ngModelChange)="fm.valorAtual = $event; recalcularPorMes(fm)" />
           </label>
+          <!-- #359: em vez da data, dá para dizer quanto vai guardar por mês: o site calcula e preenche a data alvo. -->
+          <label>Quanto vou guardar por mês (opcional)
+            <app-campo-valor name="porMes" [ngModel]="porMesNoForm" (ngModelChange)="porMesNoForm = $event; recalcularPorMes(fm)" />
+          </label>
+          @if (porMesNoForm) {
+            <p class="nota-discreta nota-por-mes" role="status">
+              @if (previsaoPorMes(fm); as p) {
+                Com {{ porMesNoForm | currency }} por mês, você chega lá em {{ p.data | date: 'MMM/yyyy' }}
+                ({{ p.meses === 1 ? 'este mês' : p.meses + ' meses' }}). A data alvo foi preenchida com ela.
+              } @else {
+                O que já está guardado chega ao valor alvo: não falta nada.
+              }
+            </p>
+          }
           @if (opcoesCofrinho(fm).length) {
             <label>Qual cofrinho (reserva)?
               <select name="reserva" [(ngModel)]="fm.reservaNome">
@@ -361,6 +386,16 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .valor-titulo { font-family: var(--fonte-titulo); font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
     .assistente-metas p { margin: 0 0 8px; }
     .assistente-metas .links-assistente { margin: 0; }
+    /* #359: o aviso da recomendação numa caixa de destaque; o texto corre numa linha e só quebra quando não cabe. */
+    .assistente-metas .aviso-recomendacao {
+      margin: 4px 0 12px; padding: 10px 14px; border-radius: 10px; line-height: 1.5;
+      background: var(--primaria-suave); border-left: 4px solid var(--primaria); color: var(--texto);
+    }
+    .aviso-recomendacao strong { color: var(--texto-forte); }
+    .aviso-recomendacao .valor-recomendado { font-variant-numeric: tabular-nums; }
+    .aviso-recomendacao .limite-recomendacao { color: var(--texto-suave); }
+    .aviso-recomendacao .limite-recomendacao::before { content: ' · '; }
+    .assistente-metas .aviso-vermelho { background: var(--negativo-suave); border-left-color: var(--negativo); }
     .linha-prioridade { display: flex; align-items: center; gap: 6px; }
     .linha-prioridade .botao-icone { width: 28px; height: 28px; }
     /* #316: divisórias no cartão (o progresso, o plano do mês e as ações), na cor de linha do site. */
@@ -491,6 +526,8 @@ export class MetasComponent implements OnInit {
   }
   /** #316: a meta em edição (para saber quanto já foi guardado) e o aviso de que ela voltou para o plano. */
   private metaEditada: Meta | null = null;
+  /** #359: quanto a pessoa diz que vai guardar por mês (gravado na meta: calcula a data alvo e o plano usa esse valor). */
+  porMesNoForm: number | null = null;
   avisoReaberta = false;
   /** Guardar de 50% a 100% da sobra (a margem de segurança vai de 0% a 50%, ParametroService). */
   readonly opcoesPercentual = [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
@@ -738,6 +775,7 @@ export class MetasComponent implements OnInit {
   nova(): void {
     this.editandoId = null;
     this.metaEditada = null;
+    this.porMesNoForm = null;
     this.avisoReaberta = false;
     this.form = { nome: '', valorAlvo: 0, valorAtual: 0, dataAlvo: null, contaId: null, cor: CORES_SUGERIDAS[0], concluida: false, reservaNome: null, icone: null };
   }
@@ -745,6 +783,7 @@ export class MetasComponent implements OnInit {
   editar(m: Meta): void {
     this.editandoId = m.id;
     this.metaEditada = m;
+    this.porMesNoForm = m.guardarPorMes ?? null;
     this.avisoReaberta = false;
     this.form = {
       nome: m.nome, valorAlvo: m.valorAlvo, valorAtual: m.valorInicial, dataAlvo: m.dataAlvo,
@@ -756,6 +795,19 @@ export class MetasComponent implements OnInit {
    * #316: quanto falta para o alvo no formulário: o alvo do formulário menos o já guardado (o valor inicial do formulário
    * mais o que vem da conta ou do cofrinho, que o formulário não muda).
    */
+  /** #359: com o valor por mês do formulário, em quantos meses e em que mês a meta chega ao alvo. */
+  previsaoPorMes(fm: SalvarMeta): { meses: number; data: string } | null {
+    const hoje = new Date();
+    return dataPeloValorMensal(this.faltaNoForm(fm), Number(this.porMesNoForm) || 0, { ano: hoje.getFullYear(), mes: hoje.getMonth() + 1 });
+  }
+
+  /** #359: mudou o valor por mês, o alvo ou o já guardado: a data alvo acompanha (só com o valor por mês preenchido). */
+  recalcularPorMes(fm: SalvarMeta): void {
+    if (!this.porMesNoForm) return;
+    const previsao = this.previsaoPorMes(fm);
+    if (previsao) fm.dataAlvo = previsao.data;
+  }
+
   faltaNoForm(fm: SalvarMeta): number {
     const deFora = this.metaEditada ? this.metaEditada.valorAtual - this.metaEditada.valorInicial : 0;
     return Math.max(0, Number(fm.valorAlvo) - (Number(fm.valorAtual) || 0) - deFora);
@@ -780,7 +832,8 @@ export class MetasComponent implements OnInit {
       ...this.form,
       valorAlvo: Number(this.form.valorAlvo),
       valorAtual: Number(this.form.valorAtual) || 0,
-      dataAlvo: this.form.dataAlvo || null
+      dataAlvo: this.form.dataAlvo || null,
+      guardarPorMes: Number(this.porMesNoForm) > 0 ? Number(this.porMesNoForm) : null
     };
     const req = this.editandoId ? this.api.atualizarMeta(this.editandoId, dto) : this.api.criarMeta(dto);
     req.subscribe({

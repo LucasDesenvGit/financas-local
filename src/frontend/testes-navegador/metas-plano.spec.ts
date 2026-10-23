@@ -38,3 +38,21 @@ test('Metas: o plano mês a mês aberto com 5 meses, e "Consigo guardar" na linh
   expect(sobra).toBeLessThanOrEqual(1);
   expect(problemas.lista).toEqual([]);
 });
+
+/**
+ * #359: a recomendação do topo é uma caixa em destaque, numa linha só no computador (quebra só quando não cabe), com o
+ * valor em negrito.
+ */
+test('Metas: o aviso "Recomendo guardar" numa caixa e numa linha só', async ({ page, problemas }) => {
+  await comPlano(page);
+  await page.goto('/metas');
+  const aviso = page.locator('.aviso-recomendacao');
+  await expect(aviso).toContainText('Recomendo guardar');
+  await expect(aviso.locator('strong').first()).toHaveText(/R\$/);
+  const { altura, linha } = await aviso.evaluate((el) => {
+    const css = getComputedStyle(el);
+    return { altura: el.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom), linha: parseFloat(css.lineHeight) };
+  });
+  if (page.viewportSize()!.width > 900) expect(altura).toBeLessThan(linha * 1.5);
+  expect(problemas.lista).toEqual([]);
+});

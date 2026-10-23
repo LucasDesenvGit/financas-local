@@ -245,6 +245,8 @@ export interface Meta {
   prioridade: number;
   /** #316: chave do ícone (IconesMeta); null = o padrão (cofrinho). */
   icone?: string | null;
+  /** #359: quanto a pessoa disse que vai guardar por mês (o plano usa esse valor); null = o plano decide. */
+  guardarPorMes?: number | null;
 }
 
 /** #318: um aporte da meta (data AAAA-MM-DD; valor negativo é retirada), para o gráfico "Como está indo". */
@@ -271,6 +273,8 @@ export interface SalvarMeta {
   cor: string; concluida: boolean; reservaNome: string | null;
   /** #316: chave do ícone (IconesMeta); null = o padrão. */
   icone?: string | null;
+  /** #359: quanto vai guardar por mês; null = o plano decide. */
+  guardarPorMes?: number | null;
 }
 
 export interface ContaAgendada {
