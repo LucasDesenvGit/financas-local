@@ -17,6 +17,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas dividindo a altura por igual e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
   - **Animações:** as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e o bloco de Orçamentos acompanha. O conteúdo de "Mais análises", em todas as telas, desce aparecendo ao abrir e sobe sumindo ao fechar. Com "reduzir movimento" ligado no sistema, não há animação.
 
+## [2.39.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Contas a pagar: nome, conta e forma de cobrança alinhados** (#379). O selo da cobrança fica numa coluna própria. À direita dele, o nome, a conta (com o selo do banco), a forma de cobrança ("paga à mão", "débito automático"…) e a observação ficam empilhados, todos começando no mesmo ponto. Antes, as linhas de baixo começavam antes do nome, cada uma num lugar diferente, o que ficava mais visível nas transferências. Vale também para as sugestões achadas no extrato.
+
 ## [2.39.0] — 2026-10-23 · desenvolvimento
 
 ### Funcionalidades
