@@ -103,6 +103,8 @@ function Parar-Processos([string]$descricao, [scriptblock]$filtro) {
 
 Parar-Processos "API" { param($t) ($t -match 'Financas\.Api(\.dll|\.exe)?("|\s|$)') -and (No-Projeto $t "") }
 Parar-Processos "Front (ng serve)" { param($t) No-Projeto $t "src\frontend\node_modules" }
+# #231: o Go roda como processo filho da API e para junto com ela; este so pega um que tenha sobrado.
+Parar-Processos "Go (atras da API)" { param($t) ($t -match 'financas-go(\.exe)?("|\s|$)') -and (No-Projeto $t "") }
 
 # ---------------------------------------------------------------- Servidores de build (opcional)
 if ($Compiladores) {

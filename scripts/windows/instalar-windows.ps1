@@ -5,11 +5,12 @@
 .DESCRIPTION
     Equivalente, no Windows, a scripts/geral/instalar.sh (etapas 1, 2 e 3). Usa so o que vem com o
     Windows (Windows PowerShell 5.1) e baixa o resto para ferramentas\:
-      1) Node.js LTS, .NET 10 SDK e sqlite3 portateis (reaproveita dotnet 10.x e sqlite3 do PATH),
-         todos por HTTPS e conferidos pelo hash publicado pela origem
+      1) Node.js LTS, .NET 10 SDK, Go e sqlite3 portateis (reaproveita dotnet 10.x, go da linha do
+         go.mod e sqlite3 do PATH), todos por HTTPS e conferidos pelo hash publicado pela origem
       2) Banco SQLite: banco\01-estrutura.sql, colunas novas e banco\02-dados-iniciais.sql
          (a lista de colunas novas e lida do 2-criar-banco.sh, para existir num lugar so)
-      3) Compila front-end e API, publica em publicado\api, gera/reaproveita o certificado HTTPS
+      3) Compila front-end, API e o back-end em Go (financas-go.exe, ao lado da API: #231), publica em
+         publicado\api, gera/reaproveita o certificado HTTPS
          e registra o servico do Windows "FinancasLocal"
 
     Precisa ser executado como Administrador (registro do servico). O instalar-windows.cmd, na raiz,
@@ -234,6 +235,61 @@ function Preparar-Ambiente {
         }
     }
 
+    # ------------------------------------------------------------ Go (#231, ADR 0049 e 0011)
+    # Mesmo criterio do 1-preparar-ambiente.sh: a linha do src\backend-go\go.mod ("go 1.27.3"), a versao mais nova
+    # dela em go.dev/dl, conferida pelo SHA-256 do proprio indice. Reaproveita um go do PATH da mesma linha.
+    Etapa "[1/3] Verificando o Go"
+    $linhaGoMod = Get-Content -LiteralPath (Join-Path $Raiz "src\backend-go\go.mod") | Where-Object { $_ -match '^go\s+(\d+\.\d+\.\d+)\s*$' } | Select-Object -First 1
+    if (-not $linhaGoMod) { ErroSai "Versao do Go nao encontrada em src\backend-go\go.mod." }
+    $goMinimo = [version](($linhaGoMod -split '\s+')[1])
+    $goLinha = "$($goMinimo.Major).$($goMinimo.Minor)"
+    $destinoGo = Join-Path $Ferramentas "go"
+    $goExe = Join-Path $destinoGo "bin\go.exe"
+    $usarGoDoPath = $false
+    if (-not (Test-Path -LiteralPath $goExe) -and (Comando-Existe "go")) {
+        $env:GOTOOLCHAIN = "local"
+        $goDoPath = (& go env GOVERSION) -replace '^go', ''
+        if ($LASTEXITCODE -eq 0 -and $goDoPath -match '^\d+\.\d+\.\d+$' -and ([version]$goDoPath).Major -eq $goMinimo.Major -and
+            ([version]$goDoPath).Minor -eq $goMinimo.Minor -and [version]$goDoPath -ge $goMinimo) {
+            Ok "Go $goDoPath ja disponivel no PATH ($((Get-Command go).Source))"
+            $usarGoDoPath = $true
+        }
+        $global:LASTEXITCODE = 0
+    }
+    if (-not $usarGoDoPath) {
+        $goArch = if ($Arch -eq "x64") { "amd64" } else { "arm64" }
+        Etapa "Obtendo a versao mais recente do Go $goLinha (indice oficial em go.dev/dl)"
+        $versoesGo = Invoke-RestMethod -Uri "https://go.dev/dl/?mode=json" -UseBasicParsing
+        $escolhida = $null; $arquivoGo = $null
+        foreach ($v in $versoesGo) {
+            if (-not $v.stable -or -not $v.version.StartsWith("go$goLinha.")) { continue }
+            if ([version]($v.version.Substring(2)) -lt $goMinimo) { continue }
+            $arquivoGo = $v.files | Where-Object { $_.os -eq "windows" -and $_.arch -eq $goArch -and $_.kind -eq "archive" -and $_.filename.EndsWith(".zip") } | Select-Object -First 1
+            if ($arquivoGo) { $escolhida = $v.version; break }
+        }
+        if (-not $escolhida) { ErroSai "Nenhum Go $goLinha.x (>= $goMinimo) para windows/$goArch no indice de go.dev/dl." }
+        Ok "Go $($escolhida.Substring(2))"
+
+        $instalada = $null
+        if (Test-Path -LiteralPath $goExe) { $env:GOTOOLCHAIN = "local"; $instalada = (& $goExe env GOVERSION); $global:LASTEXITCODE = 0 }
+        if ($instalada -eq $escolhida) {
+            Ok "Go $($escolhida.Substring(2)) ja presente em $destinoGo"
+        } else {
+            $arqGo = Join-Path $Instaladores $arquivoGo.filename
+            # dl.google.com e para onde go.dev/dl/<arquivo> redireciona: baixa direto de la.
+            if (-not (Test-Path -LiteralPath $arqGo)) { Baixar-Arquivo "https://dl.google.com/go/$($arquivoGo.filename)" $arqGo }
+            Verificar-Hash $arqGo $arquivoGo.sha256 "SHA256"
+            Etapa "Extraindo o Go"
+            $tmp = Join-Path $Instaladores "go-extracao"
+            if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Recurse -Force }
+            Extrair-Zip $arqGo $tmp
+            if (Test-Path -LiteralPath $destinoGo) { Remove-Item -LiteralPath $destinoGo -Recurse -Force }
+            Move-Item -LiteralPath (Join-Path $tmp "go") -Destination $destinoGo
+            Remove-Item -LiteralPath $tmp -Recurse -Force
+            Ok "Go $($escolhida.Substring(2)) em $destinoGo"
+        }
+    }
+
     # ------------------------------------------------------------ sqlite3
     Etapa "[1/3] Verificando o sqlite3"
     $destinoSqlite = Join-Path $Ferramentas "sqlite"
@@ -269,6 +325,7 @@ function Preparar-Ambiente {
     Etapa "[1/3] Conferindo o ambiente"
     Configurar-AmbienteBuild
     Ok "dotnet  $(& dotnet --version)"
+    Ok "go      $(& go env GOVERSION)"
     Ok "node    $(& node --version)"
     Ok "npm     $(& npm.cmd --version)"
     Ok "sqlite3 $((& sqlite3 --version).Split(' ')[0])"
@@ -286,6 +343,16 @@ function Configurar-AmbienteBuild {
     $nodePortatil = Join-Path $Ferramentas "node"
     if (Test-Path -LiteralPath (Join-Path $nodePortatil "node.exe")) { Adicionar-Path $nodePortatil }
     elseif (-not (Comando-Existe "node")) { ErroSai "Node.js nao encontrado." }
+
+    # Go (#231): o portatil, se houver; senao, o do PATH. Modulos e cache de compilacao em ferramentas\, nunca
+    # baixar outra versao do Go sozinho (GOTOOLCHAIN=local), cache apagavel (-modcacherw) e sem compilador C.
+    $goPortatil = Join-Path $Ferramentas "go\bin"
+    if (Test-Path -LiteralPath (Join-Path $goPortatil "go.exe")) { Adicionar-Path $goPortatil }
+    $env:GOPATH = Join-Path $Ferramentas "go-caminho"
+    $env:GOCACHE = Join-Path $Ferramentas "go-cache"
+    $env:GOTOOLCHAIN = "local"
+    $env:GOFLAGS = "-modcacherw"
+    $env:CGO_ENABLED = "0"
 
     $env:DOTNET_CLI_HOME = Join-Path $Ferramentas "dotnet-home"
     $env:NUGET_PACKAGES = Join-Path $Ferramentas "nuget-pacotes"
@@ -412,6 +479,18 @@ function Publicar {
         if (Test-Path -LiteralPath $preparo) { Remove-Item -LiteralPath $preparo -Recurse -Force }
         Executar "dotnet" @("publish", $projetoApi, "-c", "Release", "-o", $preparo, "--nologo")
         Ok "API compilada"
+
+        # #231 (ADR 0049): o Go roda atras do .NET, como processo filho; o executavel fica ao lado da API.
+        Etapa "[3/3] Compilando o back-end em Go"
+        if (-not (Comando-Existe "go")) { ErroSai "Go nao encontrado (a etapa 1 devia ter instalado em ferramentas\go)." }
+        $versaoSistema = ([xml](Get-Content -LiteralPath (Join-Path $Raiz "Directory.Build.props") -Raw)).Project.PropertyGroup.Version | Select-Object -First 1
+        Push-Location (Join-Path $Raiz "src\backend-go")
+        try {
+            Executar "go" @("build", "-trimpath",
+                "-ldflags", "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versaoSistema",
+                "-o", (Join-Path $preparo "financas-go.exe"), "./cmd/financas")
+        } finally { Pop-Location }
+        Ok "back-end em Go compilado ($(& go env GOVERSION))"
 
         $distFront = Join-Path $pastaFront "dist\financas-web\browser"
         if (-not (Test-Path -LiteralPath (Join-Path $distFront "index.html"))) { ErroSai "Saida do Angular nao encontrada em $distFront" }
