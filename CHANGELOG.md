@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.39.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Contas a pagar: nome, conta e forma de cobrança alinhados** (#379). O selo da cobrança fica numa coluna própria. À direita dele, o nome, a conta (com o selo do banco), a forma de cobrança ("paga à mão", "débito automático"…) e a observação ficam empilhados, todos começando no mesmo ponto. Antes, as linhas de baixo começavam antes do nome, cada uma num lugar diferente, o que ficava mais visível nas transferências. Vale também para as sugestões achadas no extrato.
+
 ## [2.39.0] — 2026-10-23 · desenvolvimento
 
 ### Funcionalidades

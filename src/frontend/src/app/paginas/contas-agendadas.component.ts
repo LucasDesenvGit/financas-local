@@ -90,18 +90,22 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                   </small>
                 }
               </td>
-              <!-- #265: selo do serviço (ou ícone da categoria) ao lado do nome da cobrança. -->
-              <td><span class="nome-cobranca"><app-selo-servico [texto]="c.textoCobranca" [nome]="c.descricao"
-                [categoria]="c.categoriaNome" [tamanho]="24" />{{ c.descricao }}</span>
-                <!-- #242: selo do banco ou do cartão ao lado do nome (decorativo: o nome está escrito, ADR 0024). -->
-                @if (c.contaNome) {
-                  <small class="texto-suave conta-da-cobranca"><app-logo-banco [codigo]="bancoDe(c.contaId)"
-                    [cartao]="ehCartao(c.contaId) || c.formaCobranca === FormaCobranca.CartaoCredito" [tamanho]="18" />{{ c.contaNome }}</small>
-                }
-                <!-- #158: como é cobrada, em texto (Nielsen 6: onde cai fica escrito na tela). -->
-                <br><small class="texto-suave">{{ nomeForma(c.formaCobranca) }}
-                  @if (baixaSozinha(c)) { · baixa sozinha quando a cobrança com “{{ c.textoCobranca }}” chega }</small>
-                @if (c.observacao) { <br><small class="texto-suave">{{ c.observacao }}</small> }</td>
+              <!-- #265: selo do serviço (ou ícone da categoria) ao lado do nome da cobrança. #379: o selo numa coluna, e o
+                   nome, a conta, a forma de cobrança e a observação empilhados ao lado, todos começando no mesmo ponto. -->
+              <td><div class="cobranca"><app-selo-servico [texto]="c.textoCobranca" [nome]="c.descricao"
+                [categoria]="c.categoriaNome" [tamanho]="24" />
+                <div class="cobranca-texto">
+                  <span class="nome-cobranca">{{ c.descricao }}</span>
+                  <!-- #242: selo do banco ou do cartão ao lado do nome (decorativo: o nome está escrito, ADR 0024). -->
+                  @if (c.contaNome) {
+                    <small class="texto-suave conta-da-cobranca"><app-logo-banco [codigo]="bancoDe(c.contaId)"
+                      [cartao]="ehCartao(c.contaId) || c.formaCobranca === FormaCobranca.CartaoCredito" [tamanho]="16" />{{ c.contaNome }}</small>
+                  }
+                  <!-- #158: como é cobrada, em texto (Nielsen 6: onde cai fica escrito na tela). -->
+                  <small class="texto-suave forma-cobranca">{{ nomeForma(c.formaCobranca) }}
+                    @if (baixaSozinha(c)) { · baixa sozinha quando a cobrança com “{{ c.textoCobranca }}” chega }</small>
+                  @if (c.observacao) { <small class="texto-suave">{{ c.observacao }}</small> }
+                </div></div></td>
               <td>{{ nomeRecorrencia(c.recorrencia) }}
                 @if (c.encerrada) {
                   <br><small class="texto-suave">encerrada@if (c.ultimoPagamentoEm) { em {{ c.ultimoPagamentoEm | date: 'dd/MM/yyyy' }}}</small>
@@ -151,8 +155,10 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                       @if (s.vencimentoSemPagamento) {
                         <br><small class="texto-alerta">o de {{ s.vencimentoSemPagamento | date: 'dd/MM' }} ainda não apareceu no extrato</small>
                       }</td>
-                    <td><span class="nome-cobranca"><app-selo-servico [texto]="s.textoCobranca ?? s.termoBusca" [nome]="s.descricao"
-                      [categoria]="s.categoriaNome" [tamanho]="24" />{{ s.descricao }}</span><br>
+                    <td><div class="cobranca"><app-selo-servico [texto]="s.textoCobranca ?? s.termoBusca" [nome]="s.descricao"
+                      [categoria]="s.categoriaNome" [tamanho]="24" />
+                      <div class="cobranca-texto">
+                      <span class="nome-cobranca">{{ s.descricao }}</span>
                       @if (s.recorrencia === Recorrencia.Anual) {
                         <small class="texto-suave">anual: pago em {{ s.primeiroPagamento | date: 'MM/yyyy' }} e {{ s.ultimoPagamento | date: 'MM/yyyy' }} ·
                           <span class="conta-da-cobranca"><app-logo-banco [codigo]="bancoDe(s.contaId)" [cartao]="ehCartao(s.contaId)" [tamanho]="16" />{{ s.contaNome }}</span></small>
@@ -160,14 +166,15 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                         <small class="texto-suave">pago em {{ s.meses }} meses@if (s.pagamentos !== s.meses) { ({{ s.pagamentos }} pagamentos) } · último em {{ s.ultimoPagamento | date: 'dd/MM' }} ·
                           <span class="conta-da-cobranca"><app-logo-banco [codigo]="bancoDe(s.contaId)" [cartao]="ehCartao(s.contaId)" [tamanho]="16" />{{ s.contaNome }}</span></small>
                       }
-                      <br><small class="texto-suave">{{ nomeForma(s.formaCobranca) }}</small>
+                      <small class="texto-suave forma-cobranca">{{ nomeForma(s.formaCobranca) }}</small>
                       <!-- #205: conta a pagar parecida (valor, dia e conta) com outro nome: a pergunta e a resposta juntas
                            (Nielsen 6, reconhecer em vez de lembrar), num botão de verdade (WCAG 2.1.1). -->
                       @if (s.pareceSerId !== null && s.chaveExtrato) {
-                        <br><small class="parece-ser">parece ser <strong>{{ s.pareceSerNome }}</strong>, que já está na lista</small>
+                        <small class="parece-ser">parece ser <strong>{{ s.pareceSerNome }}</strong>, que já está na lista</small>
                         <button type="button" class="botao botao-pequeno nowrap" (click)="eAMesma(s)"
                           [attr.aria-label]="'é a mesma: ' + s.descricao + ' é ' + s.pareceSerNome">é a mesma</button>
-                      }</td>
+                      }
+                      </div></div></td>
                     <td>{{ s.categoriaNome ?? '—' }}</td>
                     <td class="direita valor nowrap">
                       @if (s.valorVariavel) {
@@ -300,12 +307,14 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     </app-modal>
   `,
   styles: `
+    /* #379: o selo da cobrança numa coluna; à direita, o nome, a conta e a forma de cobrança empilhados, alinhados. */
+    .cobranca { display: flex; align-items: flex-start; gap: 10px; min-width: 15rem; }
+    .cobranca > app-selo-servico { flex: none; }
+    .cobranca-texto { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+    .nome-cobranca { min-height: 24px; display: inline-flex; align-items: center; overflow-wrap: anywhere; }
     /* #242: o selo do banco junto do nome da conta, na mesma linha. */
-    .conta-da-cobranca { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
-    /* #265: o selo da cobrança antes do nome, alinhado ao texto. */
-    .nome-cobranca { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
-    /* #274: o selo do banco e o nome da conta não encostam no nome da cobrança. */
-    .nome-cobranca + .conta-da-cobranca { margin-left: 10px; }
+    .conta-da-cobranca { display: inline-flex; align-items: center; gap: 5px; }
+    .cobranca-texto .botao { margin-top: 4px; }
   `
 })
 export class ContasAgendadasComponent implements OnInit {
