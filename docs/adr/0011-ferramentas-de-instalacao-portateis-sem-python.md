@@ -1,6 +1,6 @@
 # 0011. Ferramentas de instalação portáteis, sem depender de Python
 
-- **Status:** Aceita
+- **Status:** Aceita (vai ser substituída em parte pela [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): o SDK do .NET portátil dá lugar ao Go portátil, com o SHA-256 conferido, quando o Go entrar nos scripts na #231 e o .NET sair na #86)
 - **Data:** 2026-10-16
 - **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (scripts bash nos dois sistemas); [0012](0012-instalador-do-windows-em-powershell.md) (instalador do Windows sem bash)
 

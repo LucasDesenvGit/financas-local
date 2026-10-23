@@ -1,0 +1,21 @@
+# sqlc (ADR 0049): gera internal/banco/consultas a partir do SQL. Rodar: go generate ./...
+# O esquema é o mesmo do .NET (banco/01-estrutura.sql mais as colunas novas do 2-criar-banco.sh), reescrito
+# pelo gerador em internal/banco/esquema para o parser do sqlc entender.
+version: "2"
+sql:
+  - engine: "sqlite"
+    schema: "internal/banco/esquema/esquema-sqlc.sql"
+    queries: "internal/banco/consultas/sql"
+    gen:
+      go:
+        package: "consultas"
+        out: "internal/banco/consultas"
+        emit_pointers_for_null_types: true
+        overrides:
+          # Formato do EF Core: data e hora em TEXT, bool em INTEGER (pacote tipos).
+          - column: "Configuracao.AtualizadoEm"
+            go_type:
+              import: "github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
+              type: "DataHora"
+          - column: "Configuracao.Protegido"
+            go_type: "bool"

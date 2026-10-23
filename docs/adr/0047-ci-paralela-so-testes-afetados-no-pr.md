@@ -36,8 +36,12 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - **tudo** quando muda arquivo global (`styles.css`, `core/`, `layout/`, rotas, `index.html`, configuração, apoio dos testes, a CSP do `Seguranca/`, a própria CI) ou arquivo do front-end sem regra. Na dúvida, tudo;
   - **nada** do front-end quando o PR não mexe nele (só API, docs, scripts): os jobs do front-end ficam de fora;
   - **no push do `develop`/`main`, sempre tudo.** O que escapar no PR aparece no merge, antes da versão.
+- **Job "Go"** (#231, [ADR 0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): roda em paralelo com os outros e entra no `build`.
+  - Passos: `gofmt`, `go vet`, `go test -race`, código gerado em dia (`go generate` sem diferença), compilação para Windows e `govulncheck`.
+  - No PR, só quando muda algo que o Go lê: `src/backend-go/`, `banco/`, o `2-criar-banco.sh`, o `Seguranca/` (a CSP que os testes do Go conferem) ou a própria CI. No push, sempre.
+  - Cache do `setup-go`, com chave no `go.sum`: módulos e compilação, inclusive do `sqlc` e do `govulncheck`, que rodam por `go run` numa versão fixa.
 - *(Substituído pela [ADR 0050](0050-msi-gerado-no-merge-e-nao-no-pr.md): o .msi não roda mais no PR, só no merge para o develop, na tag e à mão.)* **.msi só quando o PR precisa** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API, o próprio workflow, ou o `Directory.Build.props` **além da linha `<Version>`**. No push do `develop` e na tag, sempre.
-- **Caches:** `node_modules` (pula o `npm ci`), build do Angular (`angular.json`: `cli.cache.environment: "all"`, porque o padrão desliga na CI), Jest (`--cacheDirectory`), NuGet (também no job do .msi, que publica self-contained para win-x64), e o Chromium do Playwright, como antes.
+- **Caches:** módulos e compilação do Go (`setup-go`), `node_modules` (pula o `npm ci`), build do Angular (`angular.json`: `cli.cache.environment: "all"`, porque o padrão desliga na CI), Jest (`--cacheDirectory`), NuGet (também no job do .msi, que publica self-contained para win-x64), e o Chromium do Playwright, como antes.
 
 ## Consequências
 

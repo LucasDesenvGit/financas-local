@@ -7,6 +7,14 @@ updates:
     labels: [dependencias, api]
     open-pull-requests-limit: 5
 
+  # #231: os módulos do back-end em Go (ADR 0049).
+  - package-ecosystem: gomod
+    directory: /src/backend-go
+    schedule: { interval: weekly, day: monday }
+    target-branch: develop
+    labels: [dependencias, api]
+    open-pull-requests-limit: 5
+
   - package-ecosystem: npm
     directory: /src/frontend
     schedule: { interval: weekly, day: monday }

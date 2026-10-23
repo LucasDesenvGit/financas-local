@@ -2,6 +2,40 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.7] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **CI: job do back-end em Go** (#231, épico #70). Roda em paralelo com os outros, só quando o PR mexe no que o Go lê, e entra no check `build`:
+  - formatação, `go vet`, testes com o detector de corrida, código gerado pelo `sqlc` em dia, compilação para Windows e `govulncheck`;
+  - o Dependabot passa a acompanhar os módulos do Go.
+
+## [2.37.6] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: esqueleto do servidor** (#73, épico #70). Ainda não roda no site. Para quem desenvolve:
+  - o servidor em Go serve o site em HTTPS, só no próprio computador, lendo os mesmos `appsettings` e o mesmo certificado que os scripts e o `.msi` já geram;
+  - cabeçalhos de segurança, cache, erros e o filtro de endereço iguais aos do .NET, conferidos contra o site rodando, rota por rota;
+  - toda chamada a `/api` ainda responde 404: as rotas entram assunto por assunto.
+
+## [2.37.5] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: camada de banco compatível com o EF Core** (#74, épico #70). Primeiro código Go do projeto, em `src/backend-go/`; ainda não roda no site. Para quem desenvolve:
+  - tipos `Decimal`, `Data`, `DataHora` e `Guid`, que gravam e leem o banco no mesmo formato do .NET, conferidos contra um gabarito gerado pelo próprio EF Core;
+  - abertura do banco com os mesmos ajustes do .NET, transação que desfaz sozinha em caso de erro, e o relógio no fuso de Brasília;
+  - `sqlc` lendo o esquema do `banco/` (com as colunas novas do `2-criar-banco.sh`) e as primeiras consultas, da `Configuracao`;
+  - lida uma cópia do banco real inteira sem nenhum erro de formato.
+
+## [2.37.4] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0049: o back-end vai para Go, trocado aos poucos atrás do .NET** (#71, épico #70). Nada muda no site ainda; a ADR registra como a migração vai ser feita:
+  - o .NET continua na frente (login, segredos, esquema do banco) e repassa ao Go, um assunto de cada vez, as rotas que já foram migradas; voltar um assunto é tirar a rota da lista;
+  - o C# de cada assunto é apagado depois de uma versão publicada com ele no Go;
+  - o esquema novo dos segredos é feito em Go, mas só é usado na troca; nesse dia, o Client Secret da Pluggy e o token da brapi são informados de novo, uma vez;
+  - bibliotecas: `net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal` e `log/slog`;
+  - as ADRs 0002, 0005, 0011 e 0012 apontam o que a 0049 vai substituir, e o `CLAUDE.md` ganhou as convenções do código Go.
+
 ## [2.37.3] — 2026-10-22 · desenvolvimento
 
 ### Correções

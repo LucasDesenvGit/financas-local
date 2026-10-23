@@ -1,6 +1,6 @@
 # 0012. Instalador do Windows em PowerShell, sem bash
 
-- **Status:** Aceita (em parte substituída pela [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md): para quem só usa, o caminho no Windows passa a ser o `.msi`; este instalador continua para desenvolvimento e para quem compila do código)
+- **Status:** Aceita (em parte substituída pela [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md): para quem só usa, o caminho no Windows passa a ser o `.msi`; este instalador continua para desenvolvimento e para quem compila do código; e vai ser substituída em parte pela [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): o SDK do .NET dá lugar ao Go portátil)
 - **Data:** 2026-10-16
 - **Relacionadas:** substitui em parte a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (automação só em bash); [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) (ferramentas portáteis)
 

@@ -39,17 +39,17 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | ADR | Título | Status |
 |---|---|---|
 | [0001](0001-registrar-decisoes-em-adrs.md) | Registrar decisões de arquitetura em ADRs | Aceita |
-| [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) | SQLite e Kestrel no lugar de SQL Server Express e IIS | Aceita (em parte substituída pela 0012) |
+| [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) | SQLite e Kestrel no lugar de SQL Server Express e IIS | Aceita (em parte substituída pela 0012; o Kestrel, depois, pela 0049) |
 | [0003](0003-esquema-por-scripts-sql-idempotentes.md) | Esquema do banco por scripts SQL idempotentes, sem migrations | Aceita |
 | [0004](0004-front-end-publicado-no-wwwroot-da-api.md) | Front-end publicado dentro da API (mesma origem) | Aceita |
-| [0005](0005-segredos-criptografados-com-data-protection.md) | Segredos criptografados no banco com ASP.NET Data Protection | Aceita |
+| [0005](0005-segredos-criptografados-com-data-protection.md) | Segredos criptografados no banco com ASP.NET Data Protection | Aceita (vai ser substituída pela 0049 na troca dos segredos) |
 | [0006](0006-cliente-http-proprio-para-a-pluggy.md) | Cliente HTTP próprio para a Pluggy, sem SDK | Aceita |
 | [0007](0007-cotacao-de-cambio-pela-ptax-do-banco-central.md) | Cotação de câmbio pela PTAX do Banco Central, guardada para uso offline | Aceita |
 | [0008](0008-moeda-estrangeira-somente-em-investimentos.md) | Moeda estrangeira só em investimentos; demais registros em reais | Aceita (em parte substituída pela 0009) |
 | [0009](0009-ativos-no-exterior-na-carteira-manual.md) | Ativos no exterior na carteira manual | Aceita |
 | [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Substituída por 0037 |
-| [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita |
-| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029) |
+| [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita (o SDK do .NET, depois, pelo Go: 0049) |
+| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029; o SDK do .NET, depois, pelo Go: 0049) |
 | [0013](0013-testes-do-front-end-com-jest.md) | Testes automatizados do front-end com Jest | Aceita |
 | [0014](0014-emprestimos-e-financiamentos-pelo-open-finance.md) | Empréstimos e financiamentos pelo Open Finance, separados e fora das despesas | Aceita |
 | [0015](0015-parametros-do-sistema-no-banco-editaveis-pelo-site.md) | Parâmetros do sistema no banco, editáveis pelo site | Aceita |
@@ -86,4 +86,5 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0046](0046-menu-lateral-em-grupos-que-abrem-e-fecham.md) | Menu lateral em grupos que abrem e fecham (sanfona), vários abertos ao mesmo tempo | Aceita |
 | [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) | CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele | Aceita |
 | [0048](0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md) | Cotação de criptomoedas pela API pública do Mercado Bitcoin | Aceita |
+| [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) | Back-end em Go, trocado aos poucos atrás do .NET (strangler fig), com sqlc, modernc.org/sqlite e shopspring/decimal | Aceita |
 | [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) | O .msi é gerado no merge para o develop (e na tag), e não no PR | Aceita |
