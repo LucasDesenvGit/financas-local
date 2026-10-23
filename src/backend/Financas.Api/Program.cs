@@ -6,6 +6,7 @@ using Financas.Api.Servicos;
 using Financas.Api.Servicos.Cambio;
 using Financas.Api.Servicos.Cripto;
 using Financas.Api.Servicos.Diagnostico;
+using Financas.Api.Servicos.Go;
 using Financas.Api.Servicos.Investimentos;
 using Financas.Api.Servicos.Pluggy;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -132,9 +133,22 @@ builder.Services.AddScoped<FiiService>();
 builder.Services.AddScoped<EmprestimoService>();
 builder.Services.AddScoped<RelatorioService>();
 builder.Services.AddScoped<SincronizacaoService>();
-builder.Services.AddHostedService<SincronizacaoHostedService>();
-builder.Services.AddHostedService<CambioHostedService>();
-builder.Services.AddHostedService<CriptoHostedService>();
+
+// ---------------------------------------------------------------- Convivência com o Go (#231, ADR 0049)
+// O .NET fica na frente (login, CSRF, segredos, esquema) e repassa ao Go os prefixos de Go:Prefixos. A tarefa em
+// segundo plano de um assunto que passou para o Go (Go:Tarefas) não roda aqui, para não rodar duas vezes.
+var opcoesGo = OpcoesGo.Ler(cfg, caminhoBanco);
+builder.Services.AddSingleton(opcoesGo);
+if (!opcoesGo.TarefaNoGo("Sincronizacao")) builder.Services.AddHostedService<SincronizacaoHostedService>();
+if (!opcoesGo.TarefaNoGo("Cambio")) builder.Services.AddHostedService<CambioHostedService>();
+if (!opcoesGo.TarefaNoGo("Cripto")) builder.Services.AddHostedService<CriptoHostedService>();
+if (opcoesGo.Ligado)
+{
+    // Processo filho: sobe no app.Run(), depois do EsquemaBanco e das rotinas de partida abaixo.
+    builder.Services.AddSingleton<ProcessoGo>();
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<ProcessoGo>());
+    builder.Services.AdicionarClienteGo();
+}
 
 // Erros e avisos do próprio código vão também para o banco, sem dados sensíveis (#11, ADR 0022).
 builder.Services.AddSingleton<FilaErros>();
@@ -272,6 +286,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Antes dos controllers e com ordem -1: um prefixo ligado ganha da rota do .NET com o mesmo caminho (ADR 0049).
+app.MapearRepasseGo(opcoesGo);
 app.MapControllers();
 app.MapFallback("/api/{**caminho}", () => Results.NotFound()).AllowAnonymous();
 app.MapFallbackToFile("index.html").AllowAnonymous();

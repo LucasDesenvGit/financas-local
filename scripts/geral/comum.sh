@@ -208,6 +208,24 @@ configurar_ambiente_build() {
         erro_sai 'Node.js nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     fi
 
+    # Go (#231): o portatil, se houver; senao, o do PATH (o 1-preparar-ambiente.sh confere a versao). So o
+    # 3-publicar-atualizar.sh precisa dele, e reclama se faltar.
+    local go_bin=go
+    [[ "$SO" == windows ]] && go_bin=go.exe
+    if [[ -x "$Ferramentas/go/bin/$go_bin" ]]; then
+        export PATH="$Ferramentas/go/bin:$PATH"
+    fi
+    # Modulos e cache de compilacao dentro de ferramentas/ (como o NuGet e o npm). GOTOOLCHAIN=local: nunca baixar
+    # outra versao do Go por conta propria. -modcacherw: o cache de modulos fica apagavel com rm -rf.
+    # CGO_ENABLED=0: o executavel nao depende de compilador C (o SQLite e o modernc.org/sqlite, em Go puro).
+    # (caminho_nativo: o go.exe nao entende /c/... dentro de variavel de ambiente.)
+    GOPATH="$(caminho_nativo "$Ferramentas/go-caminho")"
+    GOCACHE="$(caminho_nativo "$Ferramentas/go-cache")"
+    export GOPATH GOCACHE
+    export GOTOOLCHAIN=local
+    export GOFLAGS=-modcacherw
+    export CGO_ENABLED=0
+
     export DOTNET_CLI_HOME="$Ferramentas/dotnet-home"
     export NUGET_PACKAGES="$Ferramentas/nuget-pacotes"
     export DOTNET_CLI_TELEMETRY_OPTOUT=1

@@ -52,6 +52,7 @@ scripts/linux/instalar-gerenciador.sh
 | Componente | Origem | Verificação |
 |---|---|---|
 | .NET 10 SDK (portátil em `ferramentas/dotnet`) | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 + assinatura do instalador |
+| Go (portátil em `ferramentas/go`, compila o back-end em Go que roda atrás da API: [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)) | índice oficial `go.dev/dl`, arquivo de `dl.google.com`; os módulos do `go.sum` vêm de `proxy.golang.org` | SHA-256 do índice oficial; os módulos, pelo `go.sum` do repositório |
 | Node.js LTS (portátil em `ferramentas/node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
 | `sqlite3` (CLI) | o do sistema, se houver; senão portátil em `ferramentas/sqlite`, baixado de `www.sqlite.org` (Linux arm64: gerenciador de pacotes) | SHA3-256 publicado na página oficial de download |
 
