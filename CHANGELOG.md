@@ -15,6 +15,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
     - as fatias ganham um espaço entre elas.
   - **A lista do Painel:** cada categoria mostra o ícone, uma barrinha embaixo do nome, o valor e o %. Aparecem as 8 maiores, e "Mostrar todas" abre o resto.
   - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas dividindo a altura por igual e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
+  - **Animações:** as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e o bloco de Orçamentos acompanha. O conteúdo de "Mais análises", em todas as telas, desce aparecendo ao abrir e sobe sumindo ao fechar. Com "reduzir movimento" ligado no sistema, não há animação.
 
 ## [2.39.0] — 2026-10-23 · desenvolvimento
 

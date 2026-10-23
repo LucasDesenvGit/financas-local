@@ -201,8 +201,12 @@ import { fatiasRosca } from '../compartilhado/rosca-categorias';
             </app-grafico-explicado>
             <!-- #336: cada categoria com o ícone na cor dela, o nome com a barrinha proporcional embaixo, o valor e o %. -->
             <ul class="lista-legenda lista-categorias">
-              @for (g of categoriasNaLista(); track g.nome) {
-                <li>
+              <!-- #336: as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e saem
+                   encolhendo no "Mostrar menos"; o bloco de Orçamentos ao lado acompanha a altura a cada passo. -->
+              @for (g of categoriasNaLista(); track g.nome; let i = $index) {
+                <li [animate.enter]="i >= CATEGORIAS_NA_LISTA ? 'categoria-entra' : ''"
+                  [animate.leave]="i >= CATEGORIAS_NA_LISTA ? 'categoria-sai' : ''"
+                  [style.--atraso.ms]="i >= CATEGORIAS_NA_LISTA ? (i - CATEGORIAS_NA_LISTA) * 40 : 0">
                   <app-icone-categoria [nome]="g.nome" [cor]="g.cor" />
                   <span class="cresce nome-e-barra">
                     <a class="link-categoria" routerLink="/transacoes" [queryParams]="linkCategoria(g)"
@@ -320,6 +324,13 @@ import { fatiasRosca } from '../compartilhado/rosca-categorias';
     .nome-e-barra .progresso { display: block; }
     .lista-categorias .valor { min-width: 7.5em; text-align: right; font-variant-numeric: tabular-nums; }
     .mais-categorias { margin-top: 6px; padding-left: 6px; }
+    /* Sem animação com prefers-reduced-motion (regra global do styles.css). */
+    .lista-categorias li.categoria-entra { overflow: hidden; animation: categoria-cresce 0.32s ease-out var(--atraso, 0ms) both; }
+    .lista-categorias li.categoria-sai { overflow: hidden; animation: categoria-cresce 0.22s ease-in reverse both; }
+    @keyframes categoria-cresce {
+      from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; transform: translateY(-6px); }
+      to { max-height: 64px; opacity: 1; transform: none; }
+    }
     .bloco-orcamentos { display: flex; flex-direction: column; }
     .lista-orcamentos { flex: 1; display: flex; flex-direction: column; }
     .lista-orcamentos .barra-orcamento {

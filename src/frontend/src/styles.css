@@ -1368,6 +1368,14 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
 .mais-analises-botao small { font-weight: 400; color: var(--texto-suave); font-size: 0.85rem; }
 .mais-analises-seta { display: inline-block; transition: transform 0.15s ease; color: var(--primaria); }
 .mais-analises.aberta .mais-analises-seta { transform: rotate(90deg); }
+/* O conteúdo do "Mais análises" desce aparecendo ao abrir e sobe sumindo ao fechar. Ao abrir, nada fica aplicado
+   depois do fim (sem "forwards"): o clip-path cortaria os ⓘ que abrem por cima. */
+.mais-analises-corpo.mais-analises-entra { animation: mais-analises-abre 0.35s ease-out backwards; }
+.mais-analises-corpo.mais-analises-sai { animation: mais-analises-abre 0.22s ease-in reverse forwards; }
+@keyframes mais-analises-abre {
+  from { opacity: 0; transform: translateY(-10px); clip-path: inset(0 0 100% 0); }
+  to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
 
 /* Seleção de vários valores com caixas de marcar (filtro de categorias em Transações) */
 .seletor-multiplo { position: relative; display: grid; gap: 6px; min-width: 180px; }
