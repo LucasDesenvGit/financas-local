@@ -2,6 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.10] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Metas: card espremido com uma meta só, e um card mais fácil de ler** (#335).
+  - **Cada meta é uma sanfona** na largura toda, como os grupos de "Assinaturas e recorrentes". Fechada, mostra o percentual, os valores e quanto guardar no mês. Todas começam abertas, as fechadas ficam lembradas neste navegador, e há "Fechar todas"/"Abrir todas".
+  - **Aberta, no computador**, o anel, os valores e a prioridade ficam centralizados à esquerda, e o plano do mês à direita; as ações ("+ aporte", "editar") ficam embaixo, na largura toda. No celular, um embaixo do outro.
+  - **"Consigo guardar outro valor"** fica na mesma linha de "Este mês: guarde".
+  - **A lista "Depois:" saiu.** O "Plano mês a mês" já vem aberto, com 5 meses; "Mostrar mais" acrescenta 5 de cada vez, até 12.
+  - **Meta sem data alvo** mostra "sem data definida", e as metas não desalinham.
+
 ## [2.37.9] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
