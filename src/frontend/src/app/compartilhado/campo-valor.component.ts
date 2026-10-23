@@ -123,6 +123,10 @@ export class CampoValorComponent implements ControlValueAccessor, Validator {
   /** Máximo de casas decimais (cotação: 4). Mostra sempre pelo menos 2. */
   readonly casas = input(2);
   readonly minimo = input<number | null>(null);
+  /** #359: valor máximo; acima dele o erro aparece já ao digitar (não espera sair do campo). */
+  readonly maximo = input<number | null>(null);
+  /** #359: o que dizer acima do máximo (o padrão é "Informe até R$ X."). */
+  readonly mensagemMaximo = input<string>('');
   readonly obrigatorio = input(false, { transform: booleanAttribute });
   /** Saldo inicial pode ser negativo; o resto não. */
   readonly negativo = input(false, { transform: booleanAttribute });
@@ -143,7 +147,12 @@ export class CampoValorComponent implements ControlValueAccessor, Validator {
   readonly nomeMoeda = computed(() => NOMES_MOEDA[this.moeda() || 'BRL'] ?? this.moeda());
 
   readonly erro = computed(() => this.mensagemDeErro(this.texto()));
-  readonly erroVisivel = computed(() => this.tocado() && this.erro() !== null);
+  private readonly acimaDoMaximo = computed(() => {
+    const n = this.valorValido(this.texto());
+    const maximo = this.maximo();
+    return n !== null && maximo !== null && n > maximo;
+  });
+  readonly erroVisivel = computed(() => (this.tocado() || this.acimaDoMaximo()) && this.erro() !== null);
 
   private aoMudar: (v: number | null) => void = () => undefined;
   private aoTocar: () => void = () => undefined;
@@ -242,6 +251,8 @@ export class CampoValorComponent implements ControlValueAccessor, Validator {
     if (minimo !== null && n < minimo) {
       return minimo > 0 && minimo <= 0.01 ? 'Informe um valor maior que zero.' : `Informe pelo menos ${formatarValor(minimo, this.casas())}.`;
     }
+    const maximo = this.maximo();
+    if (maximo !== null && n > maximo) return this.mensagemMaximo() || `Informe até ${formatarValor(maximo, this.casas())}.`;
     return null;
   }
 }

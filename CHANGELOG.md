@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.39.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Metas: a data alvo pelo valor que você vai guardar por mês** (#359). No formulário, "Quanto vou guardar por mês" calcula quando a meta chega ao alvo, contando o mês atual, e preenche a data alvo. Uma frase mostra a conta ("Com R$ 1.000,00 por mês, você chega lá em mar./2027 (6 meses)"). Mudar o alvo ou o que já está guardado recalcula; a data continua editável à mão. Criar sem data alvo continua possível, e a meta fica "sem data definida". O valor por mês fica gravado na meta (coluna nova `Meta.GuardarPorMes`) e volta ao editar. O plano guarda esse valor todo mês, antes das outras metas e pela prioridade, sem passar da parte da sobra que vai para as metas (a meta avisa o mês em que não dá). No formulário, valor por mês acima do que sobra para as metas (a maior sobra dos próximos 12 meses, menos o que as outras metas já guardam) é bloqueado: o erro aparece ao digitar, com o máximo, e "Salvar" fica desabilitado. O plano mês a mês para no mês em que a meta é alcançada, e os degraus também não passam dessa parte da sobra. No topo, a recomendação vira uma caixa em destaque numa linha só, com o limite ao lado e o essencial em negrito; os avisos amarelos das metas (prazo e valor por mês) viram caixas no mesmo estilo, com valores e meses em negrito, e os links do aviso de prazo ficam na linha de baixo, separados por "|". O ícone da meta aparece, translúcido, no centro do anel do percentual, e o miolo do anel enche de baixo para cima na cor da meta, até o percentual guardado. Os botões do cartão ficam "+ Aporte" e "Editar", e a etiqueta "Concluída" (ou "Concluída por você"), com maiúscula. A meta concluída ganha uma caixa verde "Meta alcançada!" no lado do plano, e o hover do título dela fica verde translúcido. O gráfico "Como está indo" acompanha os aportes: todos no mesmo dia, um ponto por aporte na hora e minuto (a API devolve a hora do aporte, em Brasília); todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês. A lista de aportes mostra a hora.
+
 ## [2.38.1] — 2026-10-23 · desenvolvimento
 
 ### Correções

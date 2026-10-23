@@ -38,3 +38,52 @@ test('Metas: o plano mês a mês aberto com 5 meses, e "Consigo guardar" na linh
   expect(sobra).toBeLessThanOrEqual(1);
   expect(problemas.lista).toEqual([]);
 });
+
+/**
+ * #359: a recomendação do topo é uma caixa em destaque, numa linha só no computador (quebra só quando não cabe), com o
+ * valor em negrito.
+ */
+test('Metas: o aviso "Recomendo guardar" numa caixa e numa linha só', async ({ page, problemas }) => {
+  await comPlano(page);
+  await page.goto('/metas');
+  const aviso = page.locator('.aviso-recomendacao');
+  await expect(aviso).toContainText('Recomendo guardar');
+  await expect(aviso.locator('strong').first()).toHaveText(/R\$/);
+  const { altura, linha } = await aviso.evaluate((el) => {
+    const css = getComputedStyle(el);
+    return { altura: el.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom), linha: parseFloat(css.lineHeight) };
+  });
+  if (page.viewportSize()!.width > 900) expect(altura).toBeLessThan(linha * 1.5);
+  expect(problemas.lista).toEqual([]);
+});
+
+/**
+ * #359: valor por mês maior que a sobra para as metas não passa: o erro aparece ao digitar e "Salvar" fica desabilitado.
+ * Valor gravado antes do bloqueio mostra o aviso amarelo (caixa com a barra à esquerda e o essencial em negrito).
+ */
+test('Metas: valor por mês acima da sobra é bloqueado no formulário, e o aviso amarelo mostra o que importa', async ({ page, problemas }) => {
+  await comPlano(page);
+  const ano = new Date().getFullYear();
+  await page.route(/\/api\/metas(\?|$)/, (r) => r.request().method() === 'GET' ? r.fulfill({ json: [
+    { id: 6, nome: 'Teste', valorAlvo: 50000, valorAtual: 0, dataAlvo: `${ano}-12-01`, contaId: null, contaNome: null, cor: '#f0d58c',
+      concluida: false, percentual: 0, aporteMensalSugerido: null, valorInicial: 0, saldoConta: 0, reservaNome: null, saldoReserva: null,
+      reservaConferir: false, reservaNaoEncontrada: false, prioridade: 1, icone: null, guardarPorMes: 22200 }
+  ] }) : r.fallback());
+  await page.goto('/metas');
+  const avisos = page.locator('.cartao-meta .aviso-prazo');
+  await expect(avisos.first()).toContainText('não cabem');
+  await expect(avisos.first().locator('strong').first()).toHaveText(/R\$\s22\.200,00 por mês/);
+  const estilo = await avisos.first().evaluate((el) => getComputedStyle(el).borderLeftWidth);
+  expect(estilo).toBe('4px');
+
+  await page.getByRole('button', { name: /Nova meta/ }).click();
+  const dialogo = page.getByRole('dialog');
+  await dialogo.locator('input[name="nome"]').fill('Outra');
+  await dialogo.locator('app-campo-valor[name="alvo"] input').fill('1000');
+  // A outra meta já guarda R$ 22.200 (mais que a sobra): não sobra nada para esta.
+  await dialogo.locator('app-campo-valor[name="porMes"] input').fill('100');
+  await expect(dialogo.locator('app-campo-valor[name="porMes"] .campo-valor-mensagem')).toContainText('Não sobra nada para as metas');
+  await expect(dialogo.getByRole('button', { name: 'Salvar' })).toBeDisabled();
+  await expect(dialogo.locator('.nota-por-mes')).toHaveCount(0);
+  expect(problemas.lista).toEqual([]);
+});
