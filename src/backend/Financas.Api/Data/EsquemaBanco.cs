@@ -43,6 +43,7 @@ public static partial class EsquemaBanco
             DataSource = caminho, Pooling = false, DefaultTimeout = 30
         }.ToString());
         conexao.Open();
+        PassarParaWal(conexao, logger);
 
         if (!novo)
         {
@@ -66,6 +67,28 @@ public static partial class EsquemaBanco
         }
         Executar(conexao, null, $"PRAGMA user_version = {assinatura};");
         logger.LogInformation(novo ? "Banco criado em {Caminho}." : "Estrutura do banco conferida em {Caminho}.", caminho);
+    }
+
+    /// <summary>
+    /// #231 (ADR 0049): o .NET e o Go usam o mesmo arquivo. Em WAL, quem lê não espera quem grava, e a espera de banco
+    /// ocupado fica só entre dois que gravam (o Go espera até 30 s, o Microsoft.Data.Sqlite também). O modo fica
+    /// gravado no arquivo; rodar de novo não muda nada. Só dá para trocar sem outra conexão aberta: se não deu
+    /// (ex.: o DB Browser aberto), avisa e segue no modo de antes, como até a 2.37.
+    /// </summary>
+    private static void PassarParaWal(SqliteConnection conexao, ILogger logger)
+    {
+        string? modo;
+        try
+        {
+            modo = Convert.ToString(Escalar(conexao, "PRAGMA journal_mode = WAL;"));
+        }
+        catch (SqliteException ex)
+        {
+            modo = ex.Message;
+        }
+        if (!string.Equals(modo, "wal", StringComparison.OrdinalIgnoreCase))
+            logger.LogWarning("Banco: não deu para passar para o modo WAL ({Modo}); feche outros programas com o banco aberto "
+                + "e reinicie o serviço.", modo);
     }
 
     /// <summary>

@@ -2,8 +2,14 @@
 
 ```
 Navegador (Angular)  ──HTTPS 127.0.0.1:5443──►  Financas.Api (.NET 10, Kestrel)
+                                                   │  login, CSRF, segredos, esquema do banco
                                                    │
-                                                   ├─► SQLite (dados/sql/FinancasLocal.db, arquivo local)
+                                                   ├─► financas-go (processo filho; HTTP 127.0.0.1:<porta da partida>)
+                                                   │     só os prefixos de Go:Prefixos (ex.: /api/go), com o segredo
+                                                   │     interno e o Id de quem está logado (#231, ADR 0049)
+                                                   │
+                                                   ├─► SQLite (dados/sql/FinancasLocal.db, arquivo local, WAL;
+                                                   │           o Go lê e grava no mesmo arquivo)
                                                    ├─► api.pluggy.ai          (Open Finance)
                                                    ├─► api.bcb.gov.br         (Selic)
                                                    ├─► olinda.bcb.gov.br      (câmbio — PTAX)
@@ -12,6 +18,8 @@ Navegador (Angular)  ──HTTPS 127.0.0.1:5443──►  Financas.Api (.NET 10,
 ```
 
 A API sobe direto pelo Kestrel (sem IIS nem proxy) e roda como serviço do sistema: `UseSystemd` no Linux e `UseWindowsService` no Windows, com os mesmos scripts bash nos dois.
+
+**O back-end em Go roda atrás da API** ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), #231): o back-end está sendo trocado para Go um assunto de cada vez, e o .NET fica na frente até a inversão (#85). Veja [Back-end em Go](#back-end-em-go--srcbackend-go).
 
 O Angular é publicado dentro da própria API (`wwwroot`), então site e API têm a mesma origem: sem CORS, cookies `__Host-` e proteção CSRF simples.
 
@@ -30,6 +38,7 @@ O Angular é publicado dentro da própria API (`wwwroot`), então site e API tê
 | `Data/FinancasDbContext.cs` | Mapeamento das tabelas (nomes, tamanhos, precisão, índices) — em sincronia manual com `banco/01-estrutura.sql`. |
 | `Dtos/` | Contratos de entrada e saída da API (arquivo único `Dtos.cs`). |
 | `Seguranca/` | Cabeçalhos de segurança (CSP), validação de sessão, constantes de cookies. |
+| `Servicos/Go/` | Convivência com o Go (#231): `OpcoesGo` (`Go:Prefixos`, `Go:Tarefas`, `Go:Executavel`), `ProcessoGo` (sobe, vigia e para o processo filho; log do Go na categoria `Financas.Go`), `RepasseGo` (o endpoint que repassa os prefixos, com o login e o CSRF conferidos) e `JobObjectWindows`. |
 
 Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](adr/README.md)):
 - **SQLite + Kestrel**, sem SQL Server nem IIS ([ADR 0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md)).
@@ -42,6 +51,27 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 - **Segredos** (Client Secret da Pluggy, token da brapi) ficam criptografados na tabela `Configuracao` com Data Protection. Chaves em `dados/chaves`: protegidas por DPAPI no Windows e por permissão de arquivo no Linux ([ADR 0005](adr/0005-segredos-criptografados-com-data-protection.md)).
 - **Datas** sempre no fuso de Brasília (`Relogio`).
 - **Acesso ao banco** é só permissão de arquivo do sistema sobre `dados/`: o SQLite não tem login nem usuário; quem lê e grava é o processo da API, rodando com a conta do serviço. Não há senha de banco em lugar nenhum.
+
+## Back-end em Go — `src/backend-go`
+
+A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md); detalhes no [README](../src/backend-go/README.md)). O mesmo executável (`cmd/financas`) roda no site atrás do .NET e, depois da inversão (#85), na frente.
+
+- **Quem sobe o Go:** o .NET, como processo filho (`ProcessoGo`), depois do `EsquemaBanco` e das rotinas de partida. Continua um serviço só (systemd, Serviço do Windows, `.msi`). O executável `financas-go` fica ao lado da API.
+- **Repasse:** os prefixos de `Go:Prefixos` (no `appsettings.json`, separados por `;`) vão ao Go com o método, o caminho, a query, o corpo e os cabeçalhos, menos o cookie e o token CSRF. Prefixo fora da lista continua no .NET; tirar um prefixo da lista e reiniciar o serviço devolve o assunto ao .NET.
+- **Confiança:** o Go escuta só em `127.0.0.1`, numa porta escolhida na partida (em HTTP: a conversa não sai do computador). Sem o segredo interno, gerado a cada partida e passado pela entrada padrão, ele responde 401. O Id de quem está logado vai no cabeçalho `X-Financas-Usuario`, que o .NET apaga quando vem de fora.
+- **Parada:** a entrada padrão do Go fica aberta enquanto o .NET vive; quando ela fecha (o .NET parou ou caiu), o Go para. No Windows, um Job Object com "matar ao fechar" garante isso mesmo com o Go travado. Se o Go cair, as rotas dele respondem 503 e o .NET o inicia de novo.
+- **Banco:** o mesmo arquivo, em WAL (o `EsquemaBanco` passa o banco para WAL ao iniciar), com espera de banco ocupado nos dois lados e transações curtas. O Go grava no formato do EF Core e não aplica esquema.
+- **Tarefas em segundo plano:** quando um assunto passa para o Go, a tarefa dele sai do .NET por `Go:Tarefas` (`Sincronizacao`, `Cambio`, `Cripto`).
+- **Erros:** o Go escreve o log em JSON na saída de erro, e o .NET registra cada linha na categoria `Financas.Go` (avisos e erros vão para Configurações › Erros, ADR 0022).
+
+| Pasta | O que tem |
+|---|---|
+| `cmd/financas` | O ponto de entrada: `-atras-do-dotnet` (como roda no site) ou sozinho (esqueleto da #73). |
+| `internal/api` | O `ServeMux` com as rotas de todos os assuntos em Go. |
+| `internal/servidor` | HTTPS local, cabeçalhos, erros e o modo atrás do .NET (segredo interno, usuário). |
+| `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc`. |
+| `internal/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo. |
+| `internal/config`, `internal/relogio`, `internal/sessao`, `internal/tipos`, `internal/versao` | Configuração, fuso de Brasília, usuário logado, tipos do EF Core e versão. |
 
 ## Front-end — `src/frontend`
 
@@ -68,7 +98,7 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 ## Instalador do Windows — `instalador/`
 
 `.msi` gerado com o WiX 5 pela CI (`.github/workflows/versao.yml`; [ADR 0029](adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-- **Conteúdo:** API e gerenciador já compilados (self-contained `win-x64`) em `%ProgramFiles%\FinancasLocal`.
+- **Conteúdo:** API e gerenciador já compilados (self-contained `win-x64`) e o back-end em Go (`financas-go.exe`, sem cgo) em `%ProgramFiles%\FinancasLocal`.
 - **Dados:** em `%ProgramData%\FinancasLocal\dados`, que é o `Dados:Pasta` do `appsettings.Production.json` do pacote.
 - **Serviço:** `FinancasLocal` (LocalSystem).
 - **Ação personalizada (`configurar.ps1`):** pasta de dados protegida, migração da instalação pelos scripts, certificado HTTPS e `configuracao.json`.
@@ -93,9 +123,9 @@ Separados pelo sistema em que rodam (#154): `geral/` é o bash que roda nos dois
 | Script | Função |
 |---|---|
 | `geral/instalar.sh` | Roda as etapas 1, 2 e 3 em sequência e para no primeiro erro. |
-| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, .NET 10 SDK e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
+| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, .NET 10 SDK, Go (a linha do `src/backend-go/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x, um `go` da mesma linha e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
 | `geral/2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. Também é lido pela API (embutido no build, `EsquemaBanco`) e pelo `instalar-windows.ps1`, que tiram dele a lista de colunas novas. |
-| `geral/3-publicar-atualizar.sh` | Compila front e API, publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
+| `geral/3-publicar-atualizar.sh` | Compila front, API e o back-end em Go (`financas-go`, ao lado da API), publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
 | `geral/4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |
 | `geral/atualizar.sh`, `windows/atualizar-windows.ps1` | Só na instalação de desenvolvimento (clone na branch `develop`, ADR 0040): trazem o `develop` (só avançam, recusam com alteração local ou outra branch) e reinstalam. Chamados pelo botão do gerenciador. |
 | `geral/parar.sh` | Para o serviço, a API fora dele e o `npm start`; no Git Bash, repassa para o `windows/parar-windows.ps1`. |

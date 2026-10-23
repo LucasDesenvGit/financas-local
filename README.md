@@ -103,6 +103,7 @@ Para só desligar o site por um tempo, use **Desligar** no gerenciador.
 <summary>Detalhes técnicos de segurança</summary>
 
 - **Sem exposição na rede.** O Kestrel (servidor web embutido na própria API, sem IIS nem proxy reverso) responde somente em `127.0.0.1`, via HTTPS. O SQLite é só um arquivo local: não tem porta nem listener de rede.
+- **Back-end em Go atrás da API** ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): a API inicia o Go como processo filho e repassa a ele só as rotas já migradas, depois de conferir o login e o CSRF. O Go escuta só em `127.0.0.1`, numa porta escolhida na partida, e recusa (401) qualquer pedido sem o segredo interno, gerado a cada partida e conhecido só pela API. Ele para junto com a API.
 - **Sem senhas em arquivos.** O SQLite não tem login de banco: o acesso é a permissão do sistema operacional sobre a pasta `dados`, que só a conta do serviço (Serviço do Windows ou systemd) e os administradores leem.
 - **Client Secret da Pluggy e token da brapi criptografados** no banco com ASP.NET Data Protection. As chaves ficam em `dados\chaves`: no Windows, protegidas por DPAPI; no Linux, pelas permissões da pasta. A API nunca devolve o secret.
 - **Login:** senha com hash PBKDF2-SHA512 (ASP.NET Identity), bloqueio de 15 min após 5 erros, limite de 5 tentativas por minuto e tempo de resposta igual para usuário inexistente.

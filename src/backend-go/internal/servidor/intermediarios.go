@@ -128,13 +128,18 @@ func recuperarPanico(log *slog.Logger, proximo http.Handler) http.Handler {
 			if resposta.status != 0 {
 				return // a resposta já começou: não há como trocar por um 500
 			}
-			h := resposta.Header()
-			h.Set("Content-Type", "application/json; charset=utf-8")
-			resposta.WriteHeader(http.StatusInternalServerError)
-			_, _ = resposta.Write(mensagemErroInterno)
+			ResponderErroInterno(resposta)
 		}()
 		proximo.ServeHTTP(resposta, r)
 	})
+}
+
+// ResponderErroInterno responde 500 com a mensagem genérica do .NET. O erro em si vai para o log, nunca para quem
+// pediu.
+func ResponderErroInterno(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, _ = w.Write(mensagemErroInterno)
 }
 
 // LimiteDoCorpo é o MaxRequestBodySize do Kestrel: 1 MB.

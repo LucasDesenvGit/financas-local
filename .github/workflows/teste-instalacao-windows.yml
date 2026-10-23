@@ -1,6 +1,6 @@
 # Testa o instalador do Windows (instalar-windows.cmd + scripts/windows/instalar-windows.ps1) num
 # Windows de verdade, com o Windows PowerShell 5.1. O PATH e reduzido ao do Windows puro para
-# esconder o dotnet/node/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
+# esconder o dotnet/node/go/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
 # computador novo. Nao cobre o pedido de elevacao (UAC): o runner ja roda como Administrador.
 name: Teste de instalação no Windows
 
@@ -13,6 +13,7 @@ on:
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
       - banco/**
+      - src/backend-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   pull_request:
     branches: [main, develop]
@@ -22,6 +23,7 @@ on:
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
       - banco/**
+      - src/backend-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:
 
@@ -48,16 +50,16 @@ jobs:
         shell: powershell
         run: |
           $env:PATH = $env:PATH_WINDOWS_PURO
-          if (Get-Command dotnet, node, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
+          if (Get-Command dotnet, node, go, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Conferir instalacao
         shell: powershell
         run: |
-          foreach ($p in "ferramentas\node\node.exe", "ferramentas\dotnet\dotnet.exe", "ferramentas\sqlite\sqlite3.exe",
+          foreach ($p in "ferramentas\node\node.exe", "ferramentas\dotnet\dotnet.exe", "ferramentas\go\bin\go.exe", "ferramentas\sqlite\sqlite3.exe",
                          "dados\sql\FinancasLocal.db", "dados\chaves\financaslocal.pfx",
-                         "publicado\api\Financas.Api.dll", "publicado\api\wwwroot\index.html",
+                         "publicado\api\Financas.Api.dll", "publicado\api\financas-go.exe", "publicado\api\wwwroot\index.html",
                          "publicado\api\appsettings.Production.json") {
             if (-not (Test-Path $p)) { throw "nao encontrado: $p" }
           }
@@ -68,6 +70,33 @@ jobs:
           # --ssl-no-revoke: certificado autoassinado nao tem lista de revogacao.
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado
           if ($LASTEXITCODE -ne 0) { throw "certificado nao e confiavel para o Windows" }
+
+      # #231 (ADR 0049): o Go roda atras do .NET, como processo filho do servico (num Job Object), e responde pelo
+      # repasse com o login do .NET.
+      - name: Go atras do .NET (/api/go/saude)
+        shell: powershell
+        run: |
+          $site = "https://127.0.0.1:5443"
+          '{"login":"verificador","senha":"Teste#Win2026"}' | Set-Content corpo.json -NoNewline
+          curl.exe -k -fsS -c c.txt -b c.txt "$site/api/auth/estado" | Out-Null
+          $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] }) | Select-Object -Last 1
+          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$site/api/auth/configurar" | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "nao deu para criar o usuario" }
+          $semLogin = curl.exe -k -s -o NUL -w "%{http_code}" "$site/api/go/saude"
+          if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }
+          $saude = $null
+          for ($i = 0; $i -lt 15; $i++) {
+            $texto = curl.exe -k -fsS -b c.txt "$site/api/go/saude"
+            if ($LASTEXITCODE -eq 0 -and $texto) { $saude = $texto | ConvertFrom-Json; break }
+            Start-Sleep 2
+          }
+          if (-not $saude -or $saude.usuario -ne "verificador" -or $saude.diarioDoBanco -ne "wal") { throw "GET /api/go/saude: $texto" }
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          if ($go.Count -ne 1) { throw "processos do Go: $($go.Count) (esperado 1)" }
+          $pai = Get-CimInstance Win32_Process -Filter "ProcessId=$($go[0].ParentProcessId)"
+          if ($pai.Name -ne "dotnet.exe") { throw "o pai do Go e $($pai.Name), e nao o dotnet.exe do servico" }
+          "Go atras do .NET: $texto"
+          $global:LASTEXITCODE = 0
 
       # Segunda execucao pelo .cmd: testa a atualizacao (backup do banco, copia da versao
       # anterior, servico parado antes da copia, certificado reaproveitado) e o proprio .cmd.
@@ -98,6 +127,7 @@ jobs:
           if not "%CODIGO%"=="0" exit /b 1
           powershell.exe -NoProfile -Command "$s = Get-Service FinancasLocal; Write-Host $s.Status $s.StartType; if ($s.Status -ne 'Stopped' -or $s.StartType -ne 'Manual') { exit 1 }" || exit /b 1
           findstr /c:"nenhum processo com o banco aberto" parar.log || exit /b 1
+          powershell.exe -NoProfile -Command "if (Get-Process financas-go -ErrorAction SilentlyContinue) { Write-Host 'sobrou processo do Go'; exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado && exit /b 1
           exit /b 0
 

@@ -118,6 +118,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
   - **Banco:** grava no formato do EF Core (decimal, data, GUID em maiúsculas), porque .NET e Go convivem no mesmo banco.
   - **Estilo:** nomes em português, erro como valor (`fmt.Errorf("...: %w", err)`), `context.Context` primeiro, dependências pelo construtor, relógio injetável no fuso de Brasília; `gofmt`, `go vet` e `go test -race` limpos.
   - **Troca aos poucos:** o .NET fica na frente e repassa ao Go os prefixos migrados (#231). O C# de um assunto só é apagado depois de uma versão publicada com ele no Go, e só o que nenhum outro C# usa.
+  - **Funcionalidade nova fora do núcleo** (tabelas e rotas próprias) **é feita em Go, atrás do .NET**: prefixo em `Go:Prefixos`, pacote em `src/backend-go/internal/<assunto>`, rotas em `internal/api`. Ajuste em tela ou endpoint que já existe fica onde está (#231).
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
 - Front-end chama a API só pelo `ApiService` (não usar `HttpClient` direto nos componentes).
 - Formatação: `.editorconfig`.
