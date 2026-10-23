@@ -288,7 +288,7 @@ jobs:
 
       - name: Relatório dos testes no navegador
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: testes-navegador-${{ matrix.parte }}
           path: |

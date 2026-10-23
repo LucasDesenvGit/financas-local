@@ -172,7 +172,7 @@ jobs:
 
       - name: Logs do msiexec
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-msiexec
           path: |
@@ -180,7 +180,7 @@ jobs:
             C:\ProgramData\FinancasLocal\dados\*.txt
 
       - name: Guardar o .msi (para testar antes da versão)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: instalador
           path: |
@@ -284,7 +284,7 @@ jobs:
 
       - name: Logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-migracao
           path: |
