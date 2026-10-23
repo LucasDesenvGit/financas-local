@@ -14,7 +14,10 @@
 #
 # Dica: copie a pasta backups para um disco externo ou nuvem de confianca de
 # tempos em tempos. Para restaurar, com o servico parado, copie o .db do
-# backup para dados/sql/FinancasLocal.db.
+# backup para dados/sql/FinancasLocal.db e apague os FinancasLocal.db-wal e
+# FinancasLocal.db-shm que tiverem ficado ao lado: o banco esta em modo WAL
+# desde a 2.38 (#231), e trocar o .db sem apagar o -wal do banco antigo pode
+# corromper a copia (https://www.sqlite.org/howtocorrupt.html, secao 1.4).
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 

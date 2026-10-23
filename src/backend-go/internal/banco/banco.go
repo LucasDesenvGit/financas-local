@@ -23,7 +23,8 @@ const EsperaSeOcupado = 30_000
 // Abrir abre o banco no caminho dado, com os PRAGMAs que o EF Core usa (foreign_keys ligado, conferido pela sonda
 // em internal/tipos/testdata) e a espera de banco ocupado.
 //
-// Não muda o journal_mode: ele é do arquivo, não da conexão, e passar para WAL é decisão da #231.
+// Não muda o journal_mode: ele é do arquivo, não da conexão, e quem passa o banco para WAL é quem aplica o esquema
+// (#231): o EsquemaBanco do .NET, antes de iniciar o Go, ou o AplicarEsquema, só com -aplicar-esquema (ADR 0049).
 func Abrir(ctx context.Context, caminho string) (*sql.DB, error) {
 	parametros := url.Values{}
 	parametros.Add("_pragma", "foreign_keys(1)")
@@ -41,6 +42,15 @@ func Abrir(ctx context.Context, caminho string) (*sql.DB, error) {
 		return nil, fmt.Errorf("abrir o banco %s: %w", caminho, err)
 	}
 	return db, nil
+}
+
+// ModoDoDiario é o journal_mode do arquivo: "wal" quando o .NET e o Go dividem o banco (#231).
+func ModoDoDiario(ctx context.Context, db *sql.DB) (string, error) {
+	var modo string
+	if err := db.QueryRowContext(ctx, "PRAGMA journal_mode").Scan(&modo); err != nil {
+		return "", fmt.Errorf("ler o journal_mode: %w", err)
+	}
+	return modo, nil
 }
 
 // EmTransacao roda fn numa transação: confirma se fn devolver nil e desfaz se devolver erro ou entrar em pânico

@@ -114,6 +114,8 @@ parar_processos_unix() {
 
 parar_processos_unix 'API' 'Financas\.Api(\.dll)?( |$)' ''
 parar_processos_unix 'Front (ng serve)' 'node_modules' 'src/frontend/node_modules/'
+# #231: o Go roda como processo filho da API e para junto com ela; este so pega um que tenha sobrado.
+parar_processos_unix 'Go (atras da API)' 'financas-go( |$)' ''
 
 # ------------------------------------------------------------------ Servidores de build (opcional)
 if [[ $compiladores -eq 1 ]]; then

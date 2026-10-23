@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.37.10] — 2026-10-23 · desenvolvimento
+## [2.38.1] — 2026-10-23 · desenvolvimento
 
 ### Correções
 - **Metas: card espremido com uma meta só, e um card mais fácil de ler** (#335).
@@ -11,6 +11,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **"Consigo guardar outro valor"** fica na mesma linha de "Este mês: guarde".
   - **A lista "Depois:" saiu.** O "Plano mês a mês" já vem aberto, com 5 meses; "Mostrar mais" acrescenta 5 de cada vez, até 12.
   - **Meta sem data alvo** mostra "sem data definida", e as metas não desalinham.
+
+## [2.38.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **O back-end em Go passa a rodar no site, atrás do .NET** (#231, épico #70, ADR 0049). Nada muda nas telas; é a base para cada assunto passar para o Go, um de cada vez:
+  - o .NET continua cuidando do login, do CSRF e dos segredos, inicia o Go junto com ele e repassa ao Go só as rotas da lista `Go:Prefixos` (por enquanto, só `/api/go/saude`, que confere o caminho todo até o banco). Tirar uma rota da lista e reiniciar o serviço a devolve ao .NET, sem reinstalar;
+  - o Go só responde ao .NET (segredo interno, só no próprio computador), para junto com ele e, se cair, volta sozinho;
+  - o banco passa para o modo WAL, para os dois usarem o mesmo arquivo ao mesmo tempo. Para restaurar uma cópia, com o serviço parado, apague também os arquivos `-wal` e `-shm` ao lado do banco;
+  - a instalação pelos scripts baixa o Go (conferido pelo SHA-256 oficial) e compila o back-end em Go; ela fica mais demorada e ocupa mais espaço em `ferramentas/` enquanto o .NET e o Go convivem. O `.msi` só ganha o executável do Go.
 
 ## [2.37.9] — 2026-10-23 · desenvolvimento
 

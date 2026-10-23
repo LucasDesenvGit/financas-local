@@ -670,3 +670,44 @@ func TestApagarCopiasAntigasSemPermissao(t *testing.T) {
 		t.Errorf("sem permissão para apagar, esperava erro de permissão; veio %v", err)
 	}
 }
+
+// #231: como o EsquemaBanco.PassarParaWal do .NET, o banco fica em WAL, inclusive o que já existe com a mesma
+// assinatura (a troca vem antes da conferência do user_version), e sem fazer cópia por isso.
+func TestAplicarEsquemaPassaParaWal(t *testing.T) {
+	ctx := context.Background()
+	caminho := filepath.Join(t.TempDir(), "dados", "sql", "FinancasLocal.db")
+	if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+		t.Fatal(err)
+	}
+	if modo := modoDoDiario(t, caminho); modo != "wal" {
+		t.Fatalf("banco novo em %q, esperado wal", modo)
+	}
+
+	executar(t, caminho, "PRAGMA journal_mode = DELETE;")
+	if modo := modoDoDiario(t, caminho); modo != "delete" {
+		t.Fatalf("o teste não conseguiu voltar o banco para delete: %q", modo)
+	}
+	if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+		t.Fatal(err)
+	}
+	if modo := modoDoDiario(t, caminho); modo != "wal" {
+		t.Errorf("banco existente com a mesma assinatura ficou em %q, esperado wal", modo)
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(caminho), "..", "backups")); !errors.Is(err, fs.ErrNotExist) {
+		t.Error("passar para WAL não deveria fazer cópia do banco")
+	}
+}
+
+func modoDoDiario(t *testing.T, caminho string) string {
+	t.Helper()
+	db, err := Abrir(context.Background(), caminho)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	modo, err := ModoDoDiario(context.Background(), db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return modo
+}
