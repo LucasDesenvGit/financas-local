@@ -1,0 +1,116 @@
+{
+  "descricao": "Parametrização (ParametrosController, ParametroService): o catálogo de parâmetros com valor, padrão e faixa, a gravação que valida tudo antes (ou grava todos, ou nenhum) e o diagnóstico do sistema. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "O banco fictício tem valores gravados fora da faixa e inválidos: o valor volta limitado à faixa, e o inválido volta como o padrão.",
+      "metodo": "GET",
+      "caminho": "/api/parametros"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/parametros",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "salvar sem token CSRF",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "semCsrf": true,
+      "corpo": { "valores": { "Sincronizacao.IntervaloHoras": 12 } }
+    },
+    {
+      "nome": "salvar sem login",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "sessao": "visitante",
+      "corpo": { "valores": { "Sincronizacao.IntervaloHoras": 12 } }
+    },
+    {
+      "nome": "salvar sem valores",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": {} }
+    },
+    {
+      "nome": "salvar sem o campo valores",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": {}
+    },
+    {
+      "nome": "salvar com valor que não é inteiro",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": { "Sincronizacao.IntervaloHoras": 1.5 } }
+    },
+    {
+      "nome": "salvar com número em texto",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": { "Sincronizacao.IntervaloHoras": "12" } }
+    },
+    {
+      "nome": "salvar com erros em vários parâmetros",
+      "comentario": "Junta as mensagens com espaço, na ordem enviada, e não grava nada: nem os válidos, nem a auditoria registrada antes.",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": {
+        "valores": {
+          "Sincronizacao.IntervaloHoras": 12,
+          "Nao.Existe": 1,
+          "Sincronizacao.Habilitada": 2,
+          "Painel.DiasProximosVencimentos": 91,
+          "Orcamento.MetaPoupanca": -1
+        }
+      }
+    },
+    {
+      "nome": "salvar",
+      "comentario": "Atualiza os que existem no banco, cria os que não existem; booleano vira true/false no banco. Devolve a lista nova.",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": {
+        "valores": {
+          "Sincronizacao.IntervaloHoras": 12,
+          "Sincronizacao.Habilitada": 1,
+          "Painel.DiasProximosVencimentos": 90,
+          "Orcamento.MetaPoupanca": 0,
+          "Seguranca.MinutosBloqueio": 1440
+        }
+      }
+    },
+    {
+      "nome": "salvar o mesmo valor de novo",
+      "comentario": "Mesmo sem mudar o valor, AtualizadoEm é regravado.",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": { "Sincronizacao.IntervaloHoras": 12 } }
+    },
+    {
+      "nome": "desligar a sincronização automática",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": { "Sincronizacao.Habilitada": 0 } }
+    },
+    {
+      "nome": "sistema",
+      "comentario": "Exceção documentada: a versão do runtime e do sistema operacional, a hora em que o processo subiu e o tamanho do arquivo do banco são do ambiente, não do contrato (só o tipo é conferido). As pastas aparecem a partir de <dados>.",
+      "metodo": "GET",
+      "caminho": "/api/parametros/sistema",
+      "normalizar": {
+        "/dotNet": "texto",
+        "/sistemaOperacional": "texto",
+        "/iniciadoEm": "datahora",
+        "/tamanhoBancoBytes": "numero"
+      }
+    },
+    {
+      "nome": "sistema sem login",
+      "metodo": "GET",
+      "caminho": "/api/parametros/sistema",
+      "sessao": "visitante"
+    }
+  ]
+}

@@ -14,6 +14,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
 | `internal/relogio` | fuso de Brasília, injetável |
 | `internal/versao` | a versão, gravada na compilação pelo `-ldflags` |
+| `testes/contrato` | testes de contrato: o que o .NET responde e grava, caso a caso, para o Go responder igual ([README](testes/contrato/README.md)) |
 
 ## Como roda no site (atrás do .NET)
 
@@ -77,6 +78,8 @@ bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
 ```
 
 A CI roda os cinco primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco".
+
+**Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go. A CI roda o contrato no job "contrato (.NET)".
 
 Dois testes manuais, que só rodam com as variáveis definidas:
 

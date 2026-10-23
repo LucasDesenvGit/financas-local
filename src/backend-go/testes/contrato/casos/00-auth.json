@@ -1,0 +1,278 @@
+{
+  "descricao": "Autenticação (AuthController): configurar o usuário, entrar, sair, trocar a senha, auditoria, bloqueio por tentativas e o limite de 5 logins por minuto por IP (Program.cs). O banco fictício começa sem usuário; o primeiro 'configurar' cria o usuário e deixa a sessão 'principal' logada, e ela continua logada para os assuntos seguintes. Cada IP tem a própria cota de 5 tentativas por minuto: os casos estão distribuídos entre IPs para nunca cair no 429 sem querer.",
+  "sessoes": {
+    "segundo-ip": { "origem": "127.0.0.2" },
+    "terceiro-ip": { "origem": "127.0.0.3" },
+    "quarto-ip": { "origem": "127.0.0.4" },
+    "quinto-ip": { "origem": "127.0.0.5" }
+  },
+  "casos": [
+    {
+      "nome": "estado antes de configurar",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado"
+    },
+    {
+      "nome": "configurar sem token CSRF",
+      "comentario": "1ª tentativa de login do IP 127.0.0.1 no minuto: o limite conta antes do CSRF.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "semCsrf": true,
+      "corpo": { "login": "ana.teste", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "configurar com corpo inválido",
+      "comentario": "2ª de 127.0.0.1. Validação dos atributos do CredenciaisDto (mensagens padrão do ASP.NET).",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "corpo": { "login": "ab" }
+    },
+    {
+      "nome": "configurar com senha curta",
+      "comentario": "3ª de 127.0.0.1.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "corpo": { "login": "ana.teste", "senha": "curta" }
+    },
+    {
+      "nome": "configurar com senha que contém o login",
+      "comentario": "4ª de 127.0.0.1. A comparação ignora maiúsculas.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "corpo": { "login": "ana.teste", "senha": "minha-ANA.TESTE-123" }
+    },
+    {
+      "nome": "configurar",
+      "comentario": "5ª de 127.0.0.1. O login chega com espaços e é gravado sem eles.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "corpo": { "login": "  ana.teste ", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "configurar acima do limite de tentativas",
+      "comentario": "6ª de 127.0.0.1 no mesmo minuto: o limitador responde 429 antes do controller.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "corpo": { "login": "outra", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "configurar de novo",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "sessao": "segundo-ip",
+      "corpo": { "login": "outra", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "estado logado",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado"
+    },
+    {
+      "nome": "estado sem login",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado",
+      "sessao": "visitante",
+      "novaSessao": true
+    },
+    {
+      "nome": "entrar com usuário que não existe",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "segundo-ip",
+      "corpo": { "login": "nao.existe", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "entrar com senha errada",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "segundo-ip",
+      "corpo": { "login": "ana.teste", "senha": "senha-errada-1" }
+    },
+    {
+      "nome": "entrar sem a senha",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "segundo-ip",
+      "corpo": { "login": "ana.teste" }
+    },
+    {
+      "nome": "entrar",
+      "comentario": "Zera as tentativas que falharam e grava o último login.",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "segundo-ip",
+      "corpo": { "login": " ana.teste ", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "auditoria sem login",
+      "metodo": "GET",
+      "caminho": "/api/auth/auditoria",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "alterar senha sem login",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "sessao": "visitante",
+      "corpo": { "senhaAtual": "Senha-Forte-123", "novaSenha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "alterar senha sem token CSRF",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "semCsrf": true,
+      "corpo": { "senhaAtual": "Senha-Forte-123", "novaSenha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "alterar senha com corpo vazio",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "corpo": {}
+    },
+    {
+      "nome": "alterar senha com JSON quebrado",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "corpoTexto": "{\"senhaAtual\": \"Senha-Forte-123\", "
+    },
+    {
+      "nome": "alterar senha com a senha atual errada",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "corpo": { "senhaAtual": "nao-e-esta", "novaSenha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "alterar senha para uma curta",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "corpo": { "senhaAtual": "Senha-Forte-123", "novaSenha": "curta" }
+    },
+    {
+      "nome": "alterar senha para uma que contém o login",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "corpo": { "senhaAtual": "Senha-Forte-123", "novaSenha": "Ana.Teste-2026" }
+    },
+    {
+      "nome": "alterar senha",
+      "comentario": "Troca o carimbo de segurança (derruba as outras sessões) e mantém esta logada.",
+      "metodo": "POST",
+      "caminho": "/api/auth/alterar-senha",
+      "corpo": { "senhaAtual": "Senha-Forte-123", "novaSenha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "estado logado depois de alterar a senha",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado"
+    },
+    {
+      "nome": "sessão antiga derrubada pela troca de senha",
+      "comentario": "A sessão do segundo IP entrou antes da troca: o carimbo dela não vale mais (ValidadorSessao).",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado",
+      "sessao": "segundo-ip"
+    },
+    {
+      "nome": "sessão antiga sem acesso à auditoria",
+      "metodo": "GET",
+      "caminho": "/api/auth/auditoria",
+      "sessao": "segundo-ip"
+    },
+    {
+      "nome": "entrar com a senha antiga",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "quinto-ip",
+      "corpo": { "login": "ana.teste", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "entrar com a senha nova",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "quinto-ip",
+      "corpo": { "login": "ana.teste", "senha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "sair",
+      "metodo": "POST",
+      "caminho": "/api/auth/sair",
+      "sessao": "quinto-ip"
+    },
+    {
+      "nome": "estado depois de sair",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado",
+      "sessao": "quinto-ip"
+    },
+    {
+      "nome": "sair sem estar logado",
+      "comentario": "Não grava auditoria.",
+      "metodo": "POST",
+      "caminho": "/api/auth/sair",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "sair sem token CSRF",
+      "metodo": "POST",
+      "caminho": "/api/auth/sair",
+      "sessao": "visitante",
+      "semCsrf": true
+    },
+    {
+      "nome": "auditoria",
+      "comentario": "As 100 últimas, da mais nova para a mais antiga.",
+      "metodo": "GET",
+      "caminho": "/api/auth/auditoria"
+    },
+    {
+      "nome": "bloqueio: 1ª senha errada",
+      "comentario": "O padrão é bloquear na 5ª senha errada seguida (parâmetro Seguranca.MaximoTentativasLogin), por 15 minutos.",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "terceiro-ip",
+      "corpo": { "login": "ana.teste", "senha": "errada-1" }
+    },
+    {
+      "nome": "bloqueio: 2ª senha errada",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "terceiro-ip",
+      "corpo": { "login": "ana.teste", "senha": "errada-2" }
+    },
+    {
+      "nome": "bloqueio: 3ª senha errada",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "terceiro-ip",
+      "corpo": { "login": "ana.teste", "senha": "errada-3" }
+    },
+    {
+      "nome": "bloqueio: 4ª senha errada",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "terceiro-ip",
+      "corpo": { "login": "ana.teste", "senha": "errada-4" }
+    },
+    {
+      "nome": "bloqueio: 5ª senha errada bloqueia",
+      "comentario": "Ainda responde 401; grava BloqueadoAte (agora + 15 min) e zera as tentativas.",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "terceiro-ip",
+      "corpo": { "login": "ana.teste", "senha": "errada-5" }
+    },
+    {
+      "nome": "bloqueio: senha certa durante o bloqueio",
+      "comentario": "De outro IP, para não cair no limite por minuto: 429 com a mensagem dos minutos que faltam.",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "quarto-ip",
+      "corpo": { "login": "ana.teste", "senha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "bloqueio não derruba a sessão aberta",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado"
+    }
+  ]
+}

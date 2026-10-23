@@ -11,6 +11,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o banco passa para o modo WAL, para os dois usarem o mesmo arquivo ao mesmo tempo. Para restaurar uma cópia, com o serviço parado, apague também os arquivos `-wal` e `-shm` ao lado do banco;
   - a instalação pelos scripts baixa o Go (conferido pelo SHA-256 oficial) e compila o back-end em Go; ela fica mais demorada e ocupa mais espaço em `ferramentas/` enquanto o .NET e o Go convivem. O `.msi` só ganha o executável do Go.
 
+## [2.37.9] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: testes de contrato do back-end** (#72, épico #70). Primeiros testes automatizados do back-end; nada muda para quem usa. Para quem desenvolve:
+  - o que a API .NET responde e grava hoje fica registrado, caso a caso: status, JSON e as linhas que mudam no banco, com o formato exato de cada coluna. O Go vai ter de responder e gravar igual;
+  - a API roda sobre um banco de dados inventado, sem internet e com o relógio controlado, para o resultado ser o mesmo a cada execução;
+  - já cobertos: entrar, sair, configurar o usuário, trocar a senha, bloqueio por tentativas, auditoria e a Parametrização (54 casos). Cada próxima etapa grava os casos do próprio assunto;
+  - a CI roda o contrato em todo PR que mexe no back-end.
+
 ## [2.37.8] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
