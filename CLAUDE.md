@@ -40,7 +40,7 @@ instalador/gerar-msi.ps1                        # gera o FinancasLocal-<versão>
 dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
 ```
 
-**PR só de CI: título `ci:`, e o instalador do Windows não roda** (#307). O `.msi` (~7 min) só é gerado no PR que mexe no instalador, no gerenciador ou na inicialização da API (ADR 0047). Mudança só de CI (workflows, `scripts/ci/`) vai num PR `ci:` ou `ci(escopo):`, que pula o `.msi` mesmo mexendo no `versao.yml`. Não misture produto num PR `ci:`: se misturar, o `.msi` roda e a CI avisa.
+**O instalador `.msi` não é gerado no PR, só no merge para o develop** (#344, [ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)): o workflow "Versão (instalador .msi)" roda no push do `develop`, na tag `vX.Y.Z` e à mão. PR que mexe em `instalador/`, `src/gerenciador/`, `Program.cs` ou `EsquemaBanco.cs`: rode o workflow à mão na branch (Actions → Run workflow) antes do merge e diga no PR que rodou. Mudança só de CI (workflows, `scripts/ci/`) continua num PR `ci:` ou `ci(escopo):` (#307, ADR 0039); não misture produto nele.
 
 **Testes rápidos (#204):** cada comportamento testado num lugar só: lógica no Jest, desenho/CSS/rota/CSP no navegador. A CI falha com arquivo do Jest acima de 20 s ou suíte acima de 150 s (`scripts/ci/verificar-tempo-testes.py`). Biblioteca pesada no front-end vira substituto leve nos testes do Jest (`testes/apoio/`, `moduleNameMapper`, como o `lucide-falso.js`); antes de pôr uma dependência nova, meça um teste que a use. Mexeu em teste ou em CI: tempo antes e depois no PR. Detalhes em [CONTRIBUINDO.md](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci).
 
@@ -147,6 +147,7 @@ Ao propor, revisar ou implementar qualquer coisa de UI/UX (telas, navegação, g
 Padrões já adotados a partir delas (seguir, salvo motivo registrado):
 - **Detalhe por navegação, não modal**, quando já existe tela com o detalhe (ex.: total por categoria → `/transacoes` filtrada), levando o contexto completo (categoria + período + tipo) em query params.
 - **Filtro ativo sempre visível** (chips com ✕ e "Limpar filtros") em tela que pode abrir já filtrada.
+- **Escolher data ou mês sobe de nível pelo título** (#264, #342): todo quadro de escolher data ou mês tem o título como botão que sobe de nível (dia → mês → ano, em páginas de 12 anos), e Esc volta um nível antes de fechar. Vale para o calendário dos campos de data e para o seletor de mês; componente novo de data segue o mesmo e entra em `testes/usabilidade/escolher-data-sobe-nivel.spec.ts` (Nielsen 4 e 7).
 - **Estado de tela navegável na URL**: botão voltar do navegador tem que funcionar; atualização de filtro usa `replaceUrl` para não poluir o histórico.
 - **Clique em linha ou bloco é atalho de mouse**: a mesma ação tem `<button>`/`<a>` no template (ex.: o nome da transação abre a edição), conferido em `testes/regressao/clique-com-teclado.spec.ts` (WCAG 2.1.1).
 - **Gráfico se explica**: título + frase-resumo com a conclusão + linha "como ler" + legenda quando há mais de uma série; resumo respeita "ocultar valores".

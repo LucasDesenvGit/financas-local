@@ -4,11 +4,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { Conta, Painel, TrocosAutomaticos, ValorCategoria } from '../core/modelos';
+import { FaturaAbertaDoCartao, faturasAbertasDe, lerCartoesNoPainel } from '../compartilhado/faturas-no-painel';
+import { KpiFaturasAbertasComponent } from '../compartilhado/kpi-faturas-abertas.component';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { MesAno, SeletorMesComponent } from '../compartilhado/seletor-mes.component';
-import { NOMES_MESES, NOMES_MESES_CURTOS, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
+import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../compartilhado/cores-graficos';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { TermoComponent } from '../compartilhado/termo.component';
@@ -17,13 +19,12 @@ import { MaisAnalisesComponent } from '../compartilhado/mais-analises.component'
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
-import { PainelAvisosComponent } from './painel-avisos.component';
 import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
-    MaisAnalisesComponent, LogoBancoComponent, PainelAvisosComponent, SeloServicoComponent],
+  imports: [KpiFaturasAbertasComponent, MoedaPipe, DatePipe, DecimalPipe, RouterLink, GraficoComponent, GraficoExplicadoComponent, SeletorMesComponent, IconeComponent, TermoComponent,
+    MaisAnalisesComponent, LogoBancoComponent, SeloServicoComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -37,15 +38,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
     @if (erro()) { <p class="erro">{{ erro() }}</p> }
 
     @if (dados(); as d) {
-      <!-- #206: orçamentos estourados agrupados e os outros avisos, os dois com "Ocultar". -->
-      <app-painel-avisos [estourados]="d.orcamentosEstourados ?? []" [alertas]="d.alertas" [periodo]="periodo()" />
-      @if (d.poucoInformativas > 0) {
-        <p class="nota-discreta">
-          {{ d.poucoInformativas === 1 ? '1 transação' : d.poucoInformativas + ' transações' }} dos últimos 90 dias com
-          <app-termo chave="descricaoPoucoInformativa">descrição pouco informativa</app-termo>@if (d.exemploPoucoInformativa) { (ex.: “{{ d.exemploPoucoInformativa }}”)}.
-          <a routerLink="/transacoes" [queryParams]="linkPoucoInformativas(d)">Revisar</a>
-        </p>
-      }
+      <!-- #327: os avisos e os orçamentos estourados ficam nas notificações da barra do topo (o sino). -->
       <!-- #170: a separação troco × provento é com prévia (ADR 0027); aqui só o aviso, com o caminho até ela. -->
       @if (d.creditosCorretoraComoReceita > 0) {
         <p class="nota-discreta">
@@ -73,7 +66,8 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <h2 id="titulo-hoje">Situação hoje</h2>
           <p class="texto-suave">posição em {{ hoje | date: 'dd/MM/yyyy' }} · não muda com o mês escolhido</p>
         </header>
-      <section class="kpis">
+      <!-- #322: colunas pelo número de cards, para nenhum ficar sozinho embaixo. -->
+      <section class="kpis kpis-equilibrados" [style.--colunas]="colunasHoje(d)">
         <article class="kpi kpi-destaque">
           <span class="kpi-rotulo"><app-icone [icone]="Icones.patrimonio" [tamanho]="16" /> Patrimônio líquido</span>
           <strong>{{ d.patrimonioLiquido | currency }}</strong>
@@ -94,6 +88,8 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
           <strong class="negativo">{{ d.dividaCartoes | currency }}</strong>
           <small>todos os cartões, com parcelas futuras</small>
         </article>
+        <!-- #322: o total das faturas em aberto dos cartões escolhidos em Contas e cartões (posição de hoje). -->
+        @if (faturasAbertas().length) { <app-kpi-faturas-abertas [itens]="faturasAbertas()" /> }
         @if (d.dividaFinanciamentos > 0) {
           <article class="kpi kpi-credito kpi-financiamento">
             <span class="kpi-rotulo"><app-icone [icone]="Icones.financiamento" [tamanho]="16" /> Financiamentos</span>
@@ -169,7 +165,7 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
               @for (f of d.faturasDoMes; track f.contaId) {
                 <li>
                   <span class="cartao-fatura"><app-logo-banco [codigo]="f.banco" [tamanho]="20" [cartao]="true" />
-                    <a routerLink="/contas" [queryParams]="{ faturas: f.contaId }" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a></span>
+                    <a routerLink="/contas" [queryParams]="linkFaturas(f.contaId)" [attr.aria-label]="'Ver faturas de ' + f.cartao">{{ f.cartao }}</a></span>
                   <span class="valor">{{ f.valorMes | currency }}</span>
                   @if (f.parcelasMes > 0) { <span class="texto-suave detalhe-fatura">{{ f.parcelasMes | currency }} em parcelas</span> }
                   @if (f.vencimento && f.situacao) {
@@ -242,18 +238,30 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
               </app-grafico-explicado>
             </section>
             <section class="painel-bloco">
-              <div class="bloco-titulo"><h2>Últimas transações</h2><a routerLink="/transacoes">ver todas</a></div>
+              <!-- #334: as últimas vão só até hoje; as futuras (parcelas já lançadas) ficam atrás do botão "Futuras". -->
+              <div class="bloco-titulo">
+                <h2>{{ verFuturas() ? 'Próximas transações' : 'Últimas transações' }}</h2>
+                @if (d.quantidadeFuturas) {
+                  <div class="segmentado segmentado-transacoes" role="group" aria-label="Quais transações mostrar">
+                    <button type="button" [class.ativo]="!verFuturas()" [attr.aria-pressed]="!verFuturas()"
+                      (click)="verFuturas.set(false)">Até hoje</button>
+                    <button type="button" [class.ativo]="verFuturas()" [attr.aria-pressed]="verFuturas()"
+                      (click)="verFuturas.set(true)">Futuras ({{ d.quantidadeFuturas }})</button>
+                  </div>
+                }
+                <a routerLink="/transacoes" [queryParams]="linkTodas()">ver todas</a>
+              </div>
               <ul class="lista-simples">
-                @for (t of d.ultimasTransacoes; track t.id) {
+                @for (t of (verFuturas() ? (d.transacoesFuturas ?? []) : d.ultimasTransacoes); track t.id) {
                   <li>
-                    <span class="data-curta">{{ t.data | date: 'dd/MM' }}</span>
-                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao"
+                    <span class="data-curta">{{ t.data | date: (verFuturas() ? 'dd/MM/yy' : 'dd/MM') }}</span>
+                    <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao" [tipo]="t.tipoLancamento"
                       [categoria]="t.categoriaNome" [tamanho]="22" />
                     <span class="cresce truncar" [title]="t.descricao">{{ t.descricao }}</span>
                     <span class="valor" [class.positivo]="t.valor > 0" [class.negativo]="t.valor < 0">{{ t.valor | currency }}</span>
                   </li>
                 } @empty {
-                  <li class="vazio">Sem transações ainda.</li>
+                  <li class="vazio">{{ verFuturas() ? 'Nenhuma transação com data futura.' : 'Sem transações ainda.' }}</li>
                 }
               </ul>
             </section>
@@ -266,6 +274,13 @@ import { SeloServicoComponent } from '../compartilhado/selo-servico.component';
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
+    /* #334: "Até hoje" e "Futuras" no cabeçalho de "Últimas transações"; no celular, numa linha própria, na largura toda. */
+    .segmentado-transacoes { flex-shrink: 0; white-space: nowrap; margin-left: auto; }
+    @media (max-width: 760px) {
+      .bloco-titulo:has(.segmentado-transacoes) { flex-wrap: wrap; }
+      .segmentado-transacoes { order: 3; flex-basis: 100%; margin-left: 0; display: flex; }
+      .segmentado-transacoes button { flex: 1; }
+    }
     .kpi-credito { position: relative; overflow: hidden; }
     .kpi-credito::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
     .kpi-financiamento::before { background: #8fa8f0; }
@@ -296,7 +311,26 @@ export class PainelComponent implements OnInit {
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   /** UX-12: "Situação hoje" é sempre a posição de hoje; "Mês de …" segue o seletor. */
   readonly hoje = new Date();
+  /** #334: "Últimas transações" mostra as até hoje ou as futuras (parcelas já lançadas com data depois de hoje). */
+  readonly verFuturas = signal(false);
+
+  /** "ver todas" leva a Transações no mesmo recorte: até hoje, ou de amanhã em diante. */
+  linkTodas(): Record<string, string> {
+    const amanha = new Date(this.hoje.getFullYear(), this.hoje.getMonth(), this.hoje.getDate() + 1);
+    return this.verFuturas() ? paramsTransacoes({ inicio: dataIso(amanha) }) : paramsTransacoes({ fim: dataIso(this.hoje) });
+  }
+
   readonly nomeMes = computed(() => `${NOMES_MESES[this.periodo().mes - 1]}/${this.periodo().ano}`);
+  /** #322: cartões escolhidos em Contas e cartões (neste navegador) e as contas, carregadas só se houver algum. */
+  private readonly cartoesNoPainel = lerCartoesNoPainel();
+  private readonly contas = signal<Conta[]>([]);
+  /** #322: "Situação hoje" tem 5 cards fixos, mais financiamentos, empréstimos e a fatura em aberto, quando há. */
+  colunasHoje(d: Painel): number {
+    return colunasEquilibradas(5 + (d.dividaFinanciamentos > 0 ? 1 : 0) + (d.dividaEmprestimos > 0 ? 1 : 0)
+      + (this.faturasAbertas().length ? 1 : 0));
+  }
+
+  readonly faturasAbertas = computed((): FaturaAbertaDoCartao[] => faturasAbertasDe(this.contas(), new Set(this.cartoesNoPainel)));
 
   rotuloSituacao(situacao: 'paga' | 'fechada' | 'aberta'): string {
     return situacao === 'paga' ? 'paga' : situacao === 'fechada' ? 'fechada' : 'em aberto';
@@ -305,10 +339,6 @@ export class PainelComponent implements OnInit {
   readonly erro = signal<string | null>(null);
 
   /** UX-3: despesas da categoria no mês selecionado no Painel ("Sem categoria" vai como categoria=sem). */
-  /** #9: Transações filtrada pelas descrições pouco informativas do mesmo período do aviso (até hoje). */
-  linkPoucoInformativas(d: Painel): Record<string, string> {
-    return { generica: '1', ...(d.poucoInformativasDesde ? { inicio: d.poucoInformativasDesde, fim: dataIso() } : {}) };
-  }
 
   linkCategoria(g: ValorCategoria): Record<string, string> {
     const { ano, mes } = this.periodo();
@@ -400,6 +430,17 @@ export class PainelComponent implements OnInit {
     const daUrl = mesAnoDaUrl(this.rota.snapshot.queryParamMap);
     if (daUrl) this.periodo.set(daUrl);
     this.carregar();
+    // #322: as contas trazem a fatura de hoje de cada cartão. Complementar: se falhar, o Painel fica sem esses cards.
+    if (this.cartoesNoPainel.length) {
+      this.api.contas().subscribe({ next: (c) => this.contas.set(c), error: () => this.contas.set([]) });
+    }
+  }
+
+  /** #323: o histórico do cartão em Contas, no mesmo mês do Painel (no mês atual, sem ano e mês na URL). */
+  linkFaturas(contaId: number): Record<string, number> {
+    const { ano, mes } = this.periodo();
+    const atual = ano === this.hoje.getFullYear() && mes === this.hoje.getMonth() + 1;
+    return atual ? { faturas: contaId } : { faturas: contaId, ano, mes };
   }
 
   mudarPeriodo(p: MesAno): void {

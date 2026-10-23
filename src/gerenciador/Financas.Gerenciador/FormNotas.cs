@@ -80,6 +80,8 @@ internal sealed class FormNotas : Form
     {
         base.OnHandleCreated(e);
         Tema.Atual.AplicarBarraDeTitulo(Handle);
+        // #337: as notas da versão, com a barra de rolagem escura no tema escuro.
+        Tema.Atual.AplicarRolagem(_texto);
         Mostrar();
     }
 

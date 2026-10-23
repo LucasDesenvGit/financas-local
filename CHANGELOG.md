@@ -2,14 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.31.4] — 2026-10-21 · desenvolvimento
+## [2.37.7] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
 - **CI: job do back-end em Go** (#231, épico #70). Roda em paralelo com os outros, só quando o PR mexe no que o Go lê, e entra no check `build`:
   - formatação, `go vet`, testes com o detector de corrida, código gerado pelo `sqlc` em dia, compilação para Windows e `govulncheck`;
   - o Dependabot passa a acompanhar os módulos do Go.
 
-## [2.31.3] — 2026-10-21 · desenvolvimento
+## [2.37.6] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
 - **Go: esqueleto do servidor** (#73, épico #70). Ainda não roda no site. Para quem desenvolve:
@@ -17,7 +17,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - cabeçalhos de segurança, cache, erros e o filtro de endereço iguais aos do .NET, conferidos contra o site rodando, rota por rota;
   - toda chamada a `/api` ainda responde 404: as rotas entram assunto por assunto.
 
-## [2.31.2] — 2026-10-21 · desenvolvimento
+## [2.37.5] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
 - **Go: camada de banco compatível com o EF Core** (#74, épico #70). Primeiro código Go do projeto, em `src/backend-go/`; ainda não roda no site. Para quem desenvolve:
@@ -26,7 +26,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - `sqlc` lendo o esquema do `banco/` (com as colunas novas do `2-criar-banco.sh`) e as primeiras consultas, da `Configuracao`;
   - lida uma cópia do banco real inteira sem nenhum erro de formato.
 
-## [2.31.1] — 2026-10-21 · desenvolvimento
+## [2.37.4] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
 - **ADR 0049: o back-end vai para Go, trocado aos poucos atrás do .NET** (#71, épico #70). Nada muda no site ainda; a ADR registra como a migração vai ser feita:
@@ -35,6 +35,68 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o esquema novo dos segredos é feito em Go, mas só é usado na troca; nesse dia, o Client Secret da Pluggy e o token da brapi são informados de novo, uma vez;
   - bibliotecas: `net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal` e `log/slog`;
   - as ADRs 0002, 0005, 0011 e 0012 apontam o que a 0049 vai substituir, e o `CLAUDE.md` ganhou as convenções do código Go.
+
+## [2.37.3] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Gerenciador (Windows): a seta dos botões de baixar e a barra de rolagem no tema escuro** (#337).
+  - Em "Atualizar para a última do develop" e "Baixar o instalador .msi", a seta saía de um caractere da fonte de ícones do Windows, fina e com outro peso que o texto. Agora ela é desenhada: o ícone "download", o mesmo do site.
+  - No tema escuro, a caixa com a saída da atualização e a janela "O que mudou" tinham a barra de rolagem clara do Windows. Agora ela fica escura, com o tema escuro do próprio Windows.
+
+## [2.37.2] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Painel: "Últimas transações" mostrava parcelas futuras** (#334). As parcelas que o banco já manda com data futura (ex.: "Casasbahiacom 11/11" em 15/04) ficavam no topo e escondiam o que aconteceu nos últimos dias. Agora a lista vai até hoje, e as futuras ficam no botão "Futuras (N)", com o ano na data. "ver todas" abre Transações no mesmo recorte (até hoje, ou de amanhã em diante).
+
+## [2.37.1] — 2026-10-22 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o instalador `.msi` só é gerado no merge para o develop, e não mais no PR** (#344, ADR 0050). O PR é refeito várias vezes, e cada `.msi` gerado nele era jogado fora; o PR fica ~7 min mais rápido quando mexe no instalador. Para testar o instalador antes do merge, o workflow "Versão (instalador .msi)" roda à mão na branch. Saiu o `scripts/ci/precisa-msi.py`.
+
+## [2.37.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Seletor de mês: o ano abre os anos** (#342). No quadro do seletor de mês (Painel, Contas e cartões, Orçamentos…), o ano é um botão que abre uma página de 12 anos, como o título do calendário dos campos de data. Escolher um ano volta aos meses dele, e Esc volta um nível antes de fechar. A regra entrou no `CLAUDE.md` e num teste que confere os dois quadros, para nenhum componente de data novo ficar de fora.
+
+## [2.36.1] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Investimentos › Mais análises: "Distribuição" sem o canto vazio** (#330). Sem ações nem FIIs em carteira, não há o card de rentabilidade × Selic, e a distribuição ficava em meia largura, com a outra metade vazia. Agora ela ocupa a largura toda, com a rosca à esquerda e a lista à direita (no celular, um embaixo do outro).
+
+## [2.36.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Criptomoedas: a fonte da cotação em cada moeda** (#329). Cada linha diz de onde veio o preço e quando ("Mercado Bitcoin · 22/10 16:00"), como o "PTAX de …" do câmbio. Com mais de 2 horas, a linha diz "desatualizada". No celular, a fonte e a hora ficam numa linha própria, e a variação em 24 h não fica mais espremida.
+
+## [2.35.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Contas e cartões: as faturas de outros meses** (#323). O seletor de mês, como no Painel, fica em "Cartões de crédito" e muda a fatura de cada cartão e o total "Faturas de …". O mês fica na URL. Saldo, dívida total, limite e "Fatura em aberto" continuam sendo os de hoje, e a tela diz isso. O link "Faturas do mês" do Painel abre Contas no mesmo mês. Endpoint novo: `GET /api/contas/faturas-do-mes`.
+
+## [2.34.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Notificações na barra do topo** (#327). Os orçamentos estourados e os avisos (conta vencida, Open Finance, erros…) saíram do topo do Painel e foram para o **sino** da barra do topo, em qualquer tela.
+  - O sino mostra quantas notificações estão pendentes; o que foi ocultado ou minimizado sai da conta.
+  - O card abre pelo sino e fecha com Esc, com um clique fora ou ao ir para outra tela.
+  - Os cards e o "Ocultar"/"Mostrar" são os mesmos de antes, e as escolhas continuam guardadas no navegador.
+  - O Painel não é mais empurrado para baixo pelos avisos.
+  - Se as notificações não carregarem, o card diz isso e oferece "Tentar de novo".
+  - Endpoint novo `GET /api/painel/avisos` (os avisos do mês atual, sem o resto do Painel).
+
+## [2.33.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Selo da transação também pelas etiquetas** (#325). Antes, o selo vinha só do nome. Agora:
+  - "Pix enviado" e "Pix recebido" sem serviço conhecido ganham o selo do Pix (ex.: "Transferência Recebida|Fulano");
+  - "Pagamento de fatura" ganha o logo do banco citado no texto (ex.: "Fatura Paga Itau Uniclass" → Itaú);
+  - sem marca nem categoria, aparece o ícone do tipo, o mesmo da etiqueta, no lugar do recibo;
+  - o **Keeta** (delivery) entrou na lista de serviços.
+
+## [2.32.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Fatura em aberto no Painel e em Contas e cartões** (#322). Em Contas e cartões, cada cartão ganhou o interruptor "Fatura no Painel". O card "Fatura em aberto", no Painel ("Situação hoje") e no topo de Contas e cartões, soma a fatura em aberto dos cartões ligados: a do mês, enquanto não fecha; depois, a próxima. "ver detalhes" mostra a de cada cartão, com quando fecha, quando vence e o link para o histórico. A escolha fica no navegador, como as outras preferências de exibição (ADR 0017).
 
 ## [2.31.0] — 2026-10-21 · desenvolvimento
 

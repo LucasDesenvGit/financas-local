@@ -160,12 +160,15 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 
           <app-mais-analises chave="investimentos" conteudo="distribuição por tipo e rentabilidade de cada ativo x Selic">
             <ng-template>
-              <div class="grade-2">
-                <section class="painel-bloco">
+              <!-- #330: sem a rentabilidade por ativo, a distribuição ocupa a largura toda (rosca à esquerda, lista à
+                   direita), em vez de meia largura com o canto vazio (Nielsen 8). -->
+              <div class="grade-2" [class.grade-sozinha]="!abertas().length">
+                <section class="painel-bloco" [class.distribuicao-larga]="!abertas().length">
                   <h2>Distribuição</h2>
                   @if (d.distribuicao.length) {
+                    <div class="distribuicao-corpo">
                     <app-grafico-explicado [resumo]="resumoDistribuicao()"
-                      comoLer="Cada fatia é um tipo de investimento, do tamanho do valor dele hoje. A lista abaixo traz os valores.">
+                      comoLer="Cada fatia é um tipo de investimento, do tamanho do valor dele hoje. A lista traz os valores.">
                       <app-grafico [configuracao]="graficoDistribuicao()" [altura]="200" />
                     </app-grafico-explicado>
                     <ul class="lista-legenda">
@@ -178,6 +181,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                         </li>
                       }
                     </ul>
+                    </div>
                   } @else { <p class="vazio">Nenhum investimento ainda.</p> }
                 </section>
                 @if (abertas().length) {
@@ -737,6 +741,15 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .barra-abas { margin-bottom: 16px; }
+    /* #330: a distribuição sozinha ocupa a largura toda, com a rosca e a lista lado a lado. */
+    .grade-2.grade-sozinha { grid-template-columns: minmax(0, 1fr); }
+    .distribuicao-larga .distribuicao-corpo {
+      /* A lista tem largura limitada e o par fica centralizado: em tela larga, o valor não vai para longe do nome. */
+      display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 380px); gap: 8px 56px; align-items: center;
+      justify-content: center;
+    }
+    .distribuicao-larga .lista-legenda { margin-top: 0; }
+    @media (max-width: 760px) { .distribuicao-larga .distribuicao-corpo { grid-template-columns: minmax(0, 1fr); } }
     .legenda-grafico { margin: -6px 0 10px; font-size: 0.84rem; }
     .cabecalho-bloco { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
     .cabecalho-bloco h2 { margin: 0; }

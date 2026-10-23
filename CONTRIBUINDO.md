@@ -123,7 +123,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - **no PR, só os testes afetados** ([ADR 0047](docs/adr/0047-ci-paralela-so-testes-afetados-no-pr.md)): `scripts/ci/testes-afetados.py` liga cada arquivo mudado às telas que o usam (grafo de imports) e roda só os testes delas; arquivo global (`styles.css`, `core/`, `layout/`, rotas, configuração, apoio dos testes, a própria CI) roda tudo. No push do `develop`/`main`, sempre tudo. O porquê aparece no resumo da execução. Para ver aqui o que rodaria: `python3 scripts/ci/testes-afetados.py --base origin/develop`;
 - **teste no navegador novo abre a tela pela rota escrita** (`page.goto('/transacoes')`), senão a seleção não o acha (ele ainda roda no merge);
 - **arquivo novo que vale para todas as telas** fora das pastas já marcadas como globais: acrescente-o em `GLOBAIS` no `testes-afetados.py`;
-- **o .msi só roda no PR que mexe nele** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API ou o `Directory.Build.props` além da versão;
+- **o .msi não roda no PR, só no merge para o develop, na tag e à mão** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)): PR que mexe no instalador, no gerenciador ou na inicialização da API roda o workflow "Versão (instalador .msi)" à mão na branch antes do merge;
 - jobs em paralelo (API, Jest, navegador em 2 partes): o tempo do PR é o do mais lento, não a soma. **O job final `build` junta os quatro e é o check exigido pela proteção do `develop`/`main`:** não troque o nome dele; job novo no `ci.yml` entra no `needs` dele;
 - todo workflow de PR tem `concurrency` com `cancel-in-progress`;
 - filtros `paths:` por pasta (`scripts/geral/**`), não por nome de arquivo, para um arquivo novo também disparar;

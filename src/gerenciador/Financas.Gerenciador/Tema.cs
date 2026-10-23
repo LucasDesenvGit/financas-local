@@ -47,6 +47,23 @@ internal sealed record Tema(
         catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException) { }
     }
 
+    /// <summary>
+    /// #337: no tema escuro, a barra de rolagem nativa (TextBox, RichTextBox) fica escura, com o tema "DarkMode_Explorer"
+    /// do próprio Windows (10 1809+ e 11). O WinForms não deixa pintar a barra nativa; sem o tema, ela fica clara e larga,
+    /// destoando da janela. No tema claro, nada muda. Vale também quando o controle recria a janela (HandleCreated).
+    /// </summary>
+    public void AplicarRolagem(Control controle)
+    {
+        if (!Escuro) return;
+        void Aplicar()
+        {
+            try { SetWindowTheme(controle.Handle, "DarkMode_Explorer", null); }
+            catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException) { }
+        }
+        if (controle.IsHandleCreated) Aplicar();
+        controle.HandleCreated += (_, _) => Aplicar();
+    }
+
     /// <summary>Windows em modo escuro de aplicativos (HKCU …\Personalize\AppsUseLightTheme = 0).</summary>
     private static bool Detectar()
     {
@@ -62,6 +79,9 @@ internal sealed record Tema(
     }
 
     private static Color Cor(string hex) => ColorTranslator.FromHtml(hex);
+
+    [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
+    private static extern int SetWindowTheme(IntPtr janela, string? nomeApp, string? listaIds);
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr janela, int atributo, ref int valor, int tamanho);

@@ -1,6 +1,6 @@
 # 0047. CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele
 
-- **Status:** Aceita
+- **Status:** Aceita; a parte do .msi no PR foi substituída pela [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o .msi só no merge para o develop)
 - **Data:** 2026-10-21 (issue #255)
 - **Relacionadas:** [0041](0041-testes-no-navegador-com-playwright.md) (testes no navegador); [0013](0013-testes-do-front-end-com-jest.md) (Jest); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o .msi na CI); [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) (a versão sobe em todo PR)
 
@@ -40,7 +40,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - Passos: `gofmt`, `go vet`, `go test -race`, código gerado em dia (`go generate` sem diferença), compilação para Windows e `govulncheck`.
   - No PR, só quando muda algo que o Go lê: `src/backend-go/`, `banco/`, o `2-criar-banco.sh`, o `Seguranca/` (a CSP que os testes do Go conferem) ou a própria CI. No push, sempre.
   - Cache do `setup-go`, com chave no `go.sum`: módulos e compilação, inclusive do `sqlc` e do `govulncheck`, que rodam por `go run` numa versão fixa.
-- **.msi só quando o PR precisa** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API, o próprio workflow, ou o `Directory.Build.props` **além da linha `<Version>`**. No push do `develop` e na tag, sempre.
+- *(Substituído pela [ADR 0050](0050-msi-gerado-no-merge-e-nao-no-pr.md): o .msi não roda mais no PR, só no merge para o develop, na tag e à mão.)* **.msi só quando o PR precisa** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API, o próprio workflow, ou o `Directory.Build.props` **além da linha `<Version>`**. No push do `develop` e na tag, sempre.
 - **Caches:** módulos e compilação do Go (`setup-go`), `node_modules` (pula o `npm ci`), build do Angular (`angular.json`: `cli.cache.environment: "all"`, porque o padrão desliga na CI), Jest (`--cacheDirectory`), NuGet (também no job do .msi, que publica self-contained para win-x64), e o Chromium do Playwright, como antes.
 
 ## Consequências
