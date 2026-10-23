@@ -489,6 +489,11 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       color: var(--cor); opacity: 0.22; pointer-events: none;
     }
     .anel .anel-percentual { z-index: 2; text-shadow: 0 1px 2px var(--superficie); }
+    /* #359: o miolo do anel enche de baixo para cima, na cor da meta (a do ícone), até o percentual guardado. */
+    .anel::after {
+      background: linear-gradient(to top, color-mix(in srgb, var(--cor) 30%, var(--superficie)) calc(var(--pct) * 1%),
+        var(--superficie) calc(var(--pct) * 1%));
+    }
     /* #316: ícone da meta, num círculo com a cor dela (a mesma do anel). */
     .titulo-meta { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
     .icone-meta {
