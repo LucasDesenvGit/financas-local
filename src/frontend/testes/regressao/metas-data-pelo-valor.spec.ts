@@ -125,9 +125,30 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
       reservaNome: null, saldoReserva: null });
     const { raiz, atualizar } = abrirMetas([casa], plano({}, { faturas: [5500, 1500] }));
     await atualizar();
-    const nota = raiz.querySelector('.nota-por-mes-plano')!.textContent!.replace(/\s+/g, ' ');
-    expect(nota).toContain('Você escolheu guardar R$ 800,00 por mês nesta meta.');
-    expect(nota).toContain('Em out/26, a parte da sobra para as metas só dá R$ 450,00');
+    const nota = raiz.querySelector('.nota-por-mes-plano')!;
+    expect(nota.classList).toContain('aviso-prazo');
+    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('Você escolheu guardar R$ 800,00 por mês, mas em out/26 a sobra para as metas só dá R$ 450,00. O resto fica para os meses seguintes.');
+  });
+
+  it('valor por mês maior que a sobra das metas: alerta amarelo, mesmo quando o que falta cabe no mês', async () => {
+    // Faltam R$ 1.000 e cabem este mês (a meta chega no prazo), mas R$ 22.200/mês passa da parte da sobra (R$ 3.150).
+    const teste = meta({ id: 6, nome: 'Teste', valorAlvo: 1000, valorAtual: 0, dataAlvo: '2026-10-01', guardarPorMes: 22200,
+      reservaNome: null, saldoReserva: null });
+    const { raiz, atualizar } = abrirMetas([teste], plano());
+    await atualizar();
+    const nota = raiz.querySelector('.nota-por-mes-plano')!;
+    expect(nota.classList).toContain('aviso-prazo');
+    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('mais do que a sobra para as metas este mês (R$ 3.150,00). O plano guarda só o que cabe nela.');
+  });
+
+  it('valor por mês que cabe na sobra: só a nota, sem alerta', async () => {
+    const reserva = meta({ id: 7, nome: 'Reserva', valorAlvo: 1000, valorAtual: 0, dataAlvo: '2027-07-01', guardarPorMes: 100,
+      reservaNome: null, saldoReserva: null });
+    const { raiz, atualizar } = abrirMetas([reserva], plano());
+    await atualizar();
+    const nota = raiz.querySelector('.nota-por-mes-plano')!;
+    expect(nota.classList).not.toContain('aviso-prazo');
+    expect(nota.textContent!.replace(/\s+/g, ' ')).toContain('Você escolheu guardar R$ 100,00 por mês nesta meta.');
   });
 
   it('o aviso da recomendação é uma caixa só, com o limite na mesma linha e o essencial em negrito', async () => {
@@ -138,5 +159,39 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
     expect(avisos).toHaveLength(1);
     expect(avisos[0].querySelector('.limite-recomendacao')!.textContent).toContain('Limitei ao que deve sobrar');
     expect([...avisos[0].querySelectorAll('strong')].map((s) => s.textContent!.replace(/\s/g, ' ').trim())).toEqual(['R$ 180,00', 'ordem de prioridade', 'R$ 200,00']);
+  });
+
+  it('o formulário não deixa salvar um valor por mês maior que a sobra para as metas, e avisa na hora', async () => {
+    // Sobra de R$ 3.500/mês, 90% para as metas: no máximo R$ 3.150; a outra meta já guarda R$ 1.000 por mês.
+    const outra = meta({ id: 2, nome: 'Carro', valorAlvo: 30000, valorAtual: 0, dataAlvo: null, guardarPorMes: 1000,
+      reservaNome: null, saldoReserva: null });
+    const { tela, raiz, atualizar } = abrirMetas([outra], plano());
+    await atualizar();
+    tela.nova();
+    await atualizar();
+    const fm = tela.form!;
+    fm.nome = 'Teste';
+    tela.mudarAlvo(fm, 1000);
+    await atualizar();
+    expect(tela.limitePorMes()).toBe(2150);
+    const campo = raiz.querySelector<HTMLInputElement>('app-campo-valor[name="porMes"] input')!;
+    campo.value = '22200';
+    campo.dispatchEvent(new Event('input'));
+    await atualizar();
+    // O erro aparece ao digitar, sem sair do campo, e diz o máximo (WCAG 3.3.1).
+    const erro = raiz.querySelector('app-campo-valor[name="porMes"] .campo-valor-mensagem')!;
+    expect(erro.textContent!.replace(/\s+/g, ' ')).toContain('Passa do que sobra para as metas: informe até R$ 2.150,00 por mês');
+    expect(campo.getAttribute('aria-invalid')).toBe('true');
+    const salvar = [...raiz.querySelectorAll<HTMLButtonElement>('form button')].find((b) => b.textContent!.trim() === 'Salvar')!;
+    expect(salvar.disabled).toBe(true);
+    // Sem a frase "você chega lá" nem data preenchida com um valor que não cabe.
+    expect(raiz.querySelector('.nota-por-mes')).toBeNull();
+    expect(fm.dataAlvo).toBeNull();
+    campo.value = '200';
+    campo.dispatchEvent(new Event('input'));
+    await atualizar();
+    expect(raiz.querySelector('app-campo-valor[name="porMes"] .campo-valor-mensagem')).toBeNull();
+    expect(salvar.disabled).toBe(false);
+    expect(fm.dataAlvo).toBe(mesDaqui(4));
   });
 });

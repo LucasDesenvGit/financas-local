@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { CampoValorComponent, formatarValor } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
@@ -163,29 +163,40 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 </div>
               }
             </div>
-            <!-- #359: o valor por mês que a pessoa escolheu manda; a sobra para as metas é o limite. -->
+            <!-- #359: o valor por mês que a pessoa escolheu manda; a sobra para as metas é o limite. Quando o valor passa
+                 dela, o aviso é amarelo, como o do prazo (Nielsen 1). -->
             @if (pm.porMes) {
-              <p class="texto-suave nota-por-mes-plano">Você escolheu guardar {{ pm.porMes | currency }} por mês nesta meta.
-                @if (pm.porMesCortado; as c) {
-                  Em {{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}, a parte da sobra para as metas só dá
-                  {{ c.valor | currency }}: o resto fica para os meses seguintes.
-                }</p>
+              @if (pm.porMesCortado; as c) {
+                <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                  <span>Você escolheu guardar <strong>{{ pm.porMes | currency }} por mês</strong>, mas em
+                  <strong>{{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}</strong> a sobra para as metas só dá
+                  <strong>{{ c.valor | currency }}</strong>. O resto fica para os meses seguintes.</span></p>
+              } @else if (porMesAcimaDaSobra(pm); as limite) {
+                <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                  <span>Você escolheu guardar <strong>{{ pm.porMes | currency }} por mês</strong>, mais do que a sobra para as
+                  metas este mês (<strong>{{ limite | currency }}</strong>). O plano guarda só o que cabe nela.</span></p>
+              } @else {
+                <p class="texto-suave nota-por-mes-plano">Você escolheu guardar {{ pm.porMes | currency }} por mês nesta meta.</p>
+              }
             }
             @if (m.aporteMensalSugerido && !pm.porMes) {
               <p class="texto-suave">Divisão igual seria {{ m.aporteMensalSugerido | currency }}/mês · faltam {{ pm.falta | currency }}</p>
             }
             @if (pm.noPrazo === false && prazoVencido(m)) {
-              <p class="aviso-prazo" role="status">⚠ O prazo ({{ m.dataAlvo | date: 'MMM/yyyy' }}) já passou. Nesse ritmo você chega em
-                {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}; se quiser, edite a data da meta.</p>
+              <p class="aviso-prazo" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                <span>O prazo (<strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>) já passou. Nesse ritmo você chega em
+                <strong>{{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}</strong>; se quiser, edite a
+                data da meta.</span></p>
             } @else if (pm.noPrazo === false) {
-              <p class="aviso-prazo" role="status">⚠ Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}
-                (meta: {{ m.dataAlvo | date: 'MMM/yyyy' }}).
-                @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de {{ pm.paraManterPrazo | currency }}. }
+              <p class="aviso-prazo" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                <span>Nesse ritmo você chega em <strong>{{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}</strong>
+                (meta: <strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>).
+                @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de <strong>{{ pm.paraManterPrazo | currency }}</strong>. }
                 <span class="saidas-prazo">
                   <button type="button" class="link" (click)="editar(m)">Mudar o prazo ou o valor</button> ·
                   <a routerLink="/anual">Ver onde cortar (50/30/20)</a> ·
                   <a routerLink="/orcamentos">Orçamentos</a>
-                </span></p>
+                </span></span></p>
             } @else if (pm.noPrazo === null) {
               <p class="texto-suave">Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}.</p>
             }
@@ -299,9 +310,12 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           </label>
           <!-- #359: em vez da data, dá para dizer quanto vai guardar por mês: o site calcula e preenche a data alvo. -->
           <label>Quanto vou guardar por mês (opcional)
-            <app-campo-valor name="porMes" [ngModel]="porMesNoForm" (ngModelChange)="porMesNoForm = $event; recalcularPorMes(fm)" />
+            <!-- #359: não deixa passar do que sobra para as metas: o erro aparece ao digitar e "Salvar" fica desabilitado
+                 (WCAG 3.3.1). -->
+            <app-campo-valor name="porMes" [ngModel]="porMesNoForm" (ngModelChange)="porMesNoForm = $event; recalcularPorMes(fm)"
+              [maximo]="limitePorMes()" [mensagemMaximo]="mensagemLimitePorMes()" />
           </label>
-          @if (porMesNoForm) {
+          @if (porMesNoForm && !porMesAcimaDoLimite()) {
             <p class="nota-discreta nota-por-mes" role="status">
               @if (previsaoPorMes(fm); as p) {
                 Com {{ porMesNoForm | currency }} por mês, você chega lá em {{ p.data | date: 'MMM/yyyy' }}
@@ -442,7 +456,13 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       .meta-detalhe > .recomendado:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
       .meta-corpo > footer { grid-column: 1 / -1; margin-top: 12px; }
     }
-    .aviso-prazo { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
+    /* #359: aviso amarelo como o da recomendação: caixa com a barra à esquerda, o ⚠ na cor do alerta, o texto ao lado. */
+    .aviso-prazo {
+      display: flex; gap: 8px; align-items: baseline; margin: 2px 0; padding: 8px 12px; border-radius: 10px;
+      background: var(--alerta-suave); border-left: 4px solid var(--alerta); font-size: 0.875rem; line-height: 1.5;
+    }
+    .aviso-prazo .icone-aviso { color: var(--alerta); font-size: 1rem; line-height: 1; flex: none; }
+    .aviso-prazo strong { color: var(--texto-forte); }
     .botao-plano, .botao-ajuste, .botao-evolucao { justify-self: start; padding-left: 0; }
     .conta-sobra { font-size: 0.85rem; }
     .parte-sobra { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; font-weight: 400; }
@@ -454,6 +474,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .recomendado .botao-ajuste { padding: 0; min-height: 24px; }
     .mais-meses { display: flex; gap: 16px; margin-top: 4px; font-size: 0.85rem; }
     .saidas-prazo { display: block; margin-top: 4px; }
+    .saidas-prazo .link { padding: 0; min-height: 24px; }
     .nota-plano { margin: 0; font-size: 0.8rem; }
     .tabela-plano { font-size: 0.8rem; }
     .tabela-plano th, .tabela-plano td { padding: 4px 6px; }
@@ -795,6 +816,39 @@ export class MetasComponent implements OnInit {
    * #316: quanto falta para o alvo no formulário: o alvo do formulário menos o já guardado (o valor inicial do formulário
    * mais o que vem da conta ou do cofrinho, que o formulário não muda).
    */
+  /**
+   * #359: o maior valor por mês que dá para escolher: a maior parte da sobra para as metas nos próximos 12 meses (o mês
+   * atual já com os limites), menos o que as outras metas já guardam por mês. Null sem o plano (menos de 3 meses de extrato).
+   */
+  limitePorMes(): number | null {
+    const p = this.plano();
+    const c = this.calculado();
+    if (!p?.disponivel || !c) return null;
+    const parte = this.percentual() / 100;
+    const maior = Math.max(c.limiteMes, ...p.meses.slice(1, 12).map((m) => Math.max(0, m.sobra * parte)));
+    const outras = this.ativas().filter((m) => m.id !== this.editandoId).reduce((s, m) => s + (m.guardarPorMes ?? 0), 0);
+    return Math.max(0, Math.round((maior - outras) * 100) / 100);
+  }
+
+  mensagemLimitePorMes(): string {
+    const limite = this.limitePorMes();
+    if (limite === null) return '';
+    return limite > 0
+      ? `Passa do que sobra para as metas: informe até R$ ${formatarValor(limite, 2)} por mês (já descontado o que as outras metas guardam).`
+      : 'Não sobra nada para as metas nos próximos meses: deixe em branco e o plano decide.';
+  }
+
+  porMesAcimaDoLimite(): boolean {
+    const limite = this.limitePorMes();
+    return limite !== null && Number(this.porMesNoForm) > limite;
+  }
+
+  /** #359: a parte da sobra para as metas este mês, quando o valor por mês escolhido passa dela; senão, null. */
+  porMesAcimaDaSobra(pm: PlanoDaMeta): number | null {
+    const limite = this.calculado()?.limiteMes;
+    return pm.porMes !== null && limite !== undefined && pm.porMes > limite + 0.005 ? limite : null;
+  }
+
   /** #359: com o valor por mês do formulário, em quantos meses e em que mês a meta chega ao alvo. */
   previsaoPorMes(fm: SalvarMeta): { meses: number; data: string } | null {
     const hoje = new Date();
@@ -803,7 +857,7 @@ export class MetasComponent implements OnInit {
 
   /** #359: mudou o valor por mês, o alvo ou o já guardado: a data alvo acompanha (só com o valor por mês preenchido). */
   recalcularPorMes(fm: SalvarMeta): void {
-    if (!this.porMesNoForm) return;
+    if (!this.porMesNoForm || this.porMesAcimaDoLimite()) return;
     const previsao = this.previsaoPorMes(fm);
     if (previsao) fm.dataAlvo = previsao.data;
   }
