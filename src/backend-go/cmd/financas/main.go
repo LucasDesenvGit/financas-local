@@ -30,6 +30,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/api"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
@@ -53,6 +54,7 @@ func rodar() error {
 		temporario  = flag.Bool("certificado-temporario", false, "usar um certificado só em memória, sem o .pfx (desenvolvimento)")
 		atras       = flag.Bool("atras-do-dotnet", false, "rodar como processo filho do .NET (#231): segredo pela entrada padrão, porta pela saída padrão")
 		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho (o .NET passa o dele)")
+		aplicar     = flag.Bool("aplicar-esquema", false, "sozinho: criar e atualizar o banco antes de atender, como o .NET faz (até a #85 quem faz isso é o .NET)")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")
 	)
 	flag.Parse()
@@ -96,6 +98,15 @@ func rodar() error {
 	certificado, err := carregarCertificado(cfg, *temporario)
 	if err != nil {
 		return err
+	}
+
+	// Desligado por padrão: até a inversão (#85, ADR 0049), o .NET aplica o esquema ao iniciar. Os dois usam a mesma
+	// assinatura (PRAGMA user_version), então ligar aqui também não repete a cópia nem a atualização. Atrás do .NET
+	// (acima) a opção não vale: quem aplica é sempre o .NET, antes de iniciar o Go.
+	if *aplicar {
+		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, relogio.Sistema{}, log); err != nil {
+			return err
+		}
 	}
 	return servidor.Rodar(ctx, servidor.Opcoes{Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log})
 }

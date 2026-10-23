@@ -11,6 +11,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o banco passa para o modo WAL, para os dois usarem o mesmo arquivo ao mesmo tempo. Para restaurar uma cópia, com o serviço parado, apague também os arquivos `-wal` e `-shm` ao lado do banco;
   - a instalação pelos scripts baixa o Go (conferido pelo SHA-256 oficial) e compila o back-end em Go; ela fica mais demorada e ocupa mais espaço em `ferramentas/` enquanto o .NET e o Go convivem. O `.msi` só ganha o executável do Go.
 
+## [2.37.8] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: esquema do banco ao iniciar, igual ao do .NET** (#297, épico #70). Ainda não roda no site: até a inversão (#85), quem cria e atualiza o banco continua sendo o .NET. Para quem desenvolve:
+  - o Go aplica os mesmos scripts de `banco/` e as mesmas colunas novas do `2-criar-banco.sh`, com a mesma assinatura no banco: trocar entre o .NET e o Go não refaz a cópia de segurança a cada partida;
+  - cópia em `dados/backups` antes de mudar um banco que já existe (as 5 mais recentes) e dados iniciais só no banco novo, como no .NET;
+  - conferido contra o código do .NET: banco igual tabela por tabela, coluna por coluna, índices e dados iniciais;
+  - mudou o `banco/`? Rode `go generate ./...` em `src/backend-go` (passo novo no `docs/BANCO-DE-DADOS.md`).
+
 ## [2.37.7] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
