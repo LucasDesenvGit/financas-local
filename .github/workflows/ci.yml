@@ -66,6 +66,7 @@ jobs:
       playwright: ${{ steps.afetados.outputs.playwright }}
       jest: ${{ steps.afetados.outputs.jest }}
       go: ${{ steps.go.outputs.go }}
+      contrato: ${{ steps.contrato.outputs.contrato }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,6 +92,20 @@ jobs:
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
             echo "Nada do que o Go lê mudou: o job Go fica de fora." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # #72: o contrato roda quando muda o back-end (.NET ou Go), o esquema ou o que monta o banco do contrato.
+      - name: Contrato afetado
+        id: contrato
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "contrato=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/backend/|src/backend-go/|banco/|scripts/geral/(2-criar-banco|comum)\.sh$|\.github/workflows/ci\.yml$)'; then
+            echo "contrato=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "contrato=false" >> "$GITHUB_OUTPUT"
+            echo "Nada do back-end mudou: o contrato fica de fora." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   api:
@@ -177,6 +192,48 @@ jobs:
       # Falha só se o código chama uma função com vulnerabilidade conhecida (não basta o módulo estar no go.mod).
       - name: Vulnerabilidades (govulncheck)
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # #72 (ADR 0049): testes de contrato. Sobe o .NET sobre o banco fictício, sem rede e com o relógio começando em
+  # 2026-10-15 01:00 UTC (libfaketime), e confere que ele responde e grava igual a src/backend-go/testes/contrato/esperado.
+  contrato:
+    name: contrato (.NET)
+    needs: mudancas
+    if: needs.mudancas.outputs.contrato == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache dos pacotes NuGet
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
+      # O Ubuntu 24.04 só deixa criar namespace de usuário (unshare -rn, a rede sem saída) com esta chave desligada.
+      - name: libfaketime e rede isolada
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends faketime
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Compilar API
+        run: dotnet build src/backend/Financas.Api/Financas.Api.csproj -c Release
+
+      - name: Contrato contra o .NET
+        run: bash src/backend-go/testes/contrato/rodar-dotnet.sh
 
   jest:
     name: "front-end: Jest"
@@ -302,7 +359,7 @@ jobs:
   build:
     name: build
     if: always()
-    needs: [mudancas, api, go, jest, navegador]
+    needs: [mudancas, api, go, contrato, jest, navegador]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -311,11 +368,12 @@ jobs:
           O_QUE_MUDOU: ${{ needs.mudancas.result }}
           API: ${{ needs.api.result }}
           GO: ${{ needs.go.result }}
+          CONTRATO: ${{ needs.contrato.result }}
           JEST: ${{ needs.jest.result }}
           NAVEGADOR: ${{ needs.navegador.result }}
         run: |
           falhou=0
-          for nome in O_QUE_MUDOU API GO JEST NAVEGADOR; do
+          for nome in O_QUE_MUDOU API GO CONTRATO JEST NAVEGADOR; do
             resultado="${!nome}"
             echo "$nome: $resultado"
             case "$resultado" in success|skipped) ;; *) falhou=1 ;; esac

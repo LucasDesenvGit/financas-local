@@ -1,0 +1,1262 @@
+[
+  {
+    "nome": "listar",
+    "requisicao": "GET /api/parametros",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "chave": "Sincronizacao.Habilitada",
+        "descricao": "Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
+        "grupo": "Sincronização",
+        "maximo": null,
+        "minimo": null,
+        "nome": "Sincronização automática",
+        "padrao": 1,
+        "tipo": 2,
+        "unidade": null,
+        "valor": 1
+      },
+      {
+        "chave": "Sincronizacao.IntervaloHoras",
+        "descricao": "De quanto em quanto tempo a sincronização automática roda. O Meu Pluggy atualiza os bancos cerca de uma vez por dia.",
+        "grupo": "Sincronização",
+        "maximo": 48,
+        "minimo": 1,
+        "nome": "Intervalo entre sincronizações",
+        "padrao": 6,
+        "tipo": 1,
+        "unidade": "horas",
+        "valor": 6
+      },
+      {
+        "chave": "Sincronizacao.DiasRetroativos",
+        "descricao": "Quantos dias para trás são relidos para pegar transações que mudaram ou entraram atrasadas.",
+        "grupo": "Sincronização",
+        "maximo": 365,
+        "minimo": 1,
+        "nome": "Dias relidos a cada sincronização",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 30
+      },
+      {
+        "chave": "Sincronizacao.DiasPrimeiraCarga",
+        "descricao": "Quantos dias de histórico são buscados quando uma conta é sincronizada pela primeira vez.",
+        "grupo": "Sincronização",
+        "maximo": 1825,
+        "minimo": 30,
+        "nome": "Histórico na primeira carga",
+        "padrao": 365,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 365
+      },
+      {
+        "chave": "Painel.DiasProximosVencimentos",
+        "descricao": "Até quantos dias à frente o painel lista as contas a pagar.",
+        "grupo": "Painel",
+        "maximo": 90,
+        "minimo": 1,
+        "nome": "Próximos vencimentos",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 15
+      },
+      {
+        "chave": "Painel.DiasAvisoConsentimento",
+        "descricao": "Com quantos dias de antecedência o painel avisa que o consentimento do Open Finance vai expirar.",
+        "grupo": "Painel",
+        "maximo": 120,
+        "minimo": 1,
+        "nome": "Aviso de consentimento expirando",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 120
+      },
+      {
+        "chave": "Seguranca.MaximoTentativasLogin",
+        "descricao": "Quantas senhas erradas seguidas bloqueiam o acesso temporariamente.",
+        "grupo": "Segurança",
+        "maximo": 20,
+        "minimo": 3,
+        "nome": "Tentativas de login antes do bloqueio",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "tentativas",
+        "valor": 5
+      },
+      {
+        "chave": "Seguranca.MinutosBloqueio",
+        "descricao": "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
+        "grupo": "Segurança",
+        "maximo": 1440,
+        "minimo": 1,
+        "nome": "Tempo de bloqueio",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "minutos",
+        "valor": 15
+      },
+      {
+        "chave": "Orcamento.MetaPoupanca",
+        "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+        "grupo": "Orçamentos",
+        "maximo": 60,
+        "minimo": 0,
+        "nome": "Meta de poupança",
+        "padrao": 20,
+        "tipo": 1,
+        "unidade": "% da renda",
+        "valor": 20
+      },
+      {
+        "chave": "Orcamento.FolgaEssenciais",
+        "descricao": "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+        "grupo": "Orçamentos",
+        "maximo": 30,
+        "minimo": 0,
+        "nome": "Folga nos gastos essenciais",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 5
+      },
+      {
+        "chave": "Orcamento.CartaoAtencao",
+        "descricao": "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 5,
+        "nome": "Uso do limite do cartão: atenção",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 30
+      },
+      {
+        "chave": "Orcamento.CartaoAlerta",
+        "descricao": "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 10,
+        "nome": "Uso do limite do cartão: alerta",
+        "padrao": 70,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 10
+      },
+      {
+        "chave": "Orcamento.CorteCartao",
+        "descricao": "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+        "grupo": "Orçamentos",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Corte por uso do cartão",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 10
+      },
+      {
+        "chave": "Metas.MargemSeguranca",
+        "descricao": "Quanto da sobra do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar. Também muda na tela de Metas (\"Guardar X% da sobra\").",
+        "grupo": "Metas",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Margem de segurança",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "% da sobra",
+        "valor": 10
+      },
+      {
+        "chave": "Transacoes.MinimoLetrasDescricao",
+        "descricao": "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+        "grupo": "Transações",
+        "maximo": 20,
+        "minimo": 1,
+        "nome": "Descrição pouco informativa",
+        "padrao": 3,
+        "tipo": 1,
+        "unidade": "letras",
+        "valor": 4
+      },
+      {
+        "chave": "Diagnostico.DiasRetencaoErros",
+        "descricao": "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+        "grupo": "Erros do sistema",
+        "maximo": 365,
+        "minimo": 7,
+        "nome": "Guardar erros por",
+        "padrao": 90,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      }
+    ]
+  },
+  {
+    "nome": "listar sem login",
+    "requisicao": "GET /api/parametros",
+    "status": 401
+  },
+  {
+    "nome": "salvar sem token CSRF",
+    "requisicao": "PUT /api/parametros",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar sem login",
+    "requisicao": "PUT /api/parametros",
+    "status": 401
+  },
+  {
+    "nome": "salvar sem valores",
+    "requisicao": "PUT /api/parametros",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Nenhum parâmetro informado."
+    }
+  },
+  {
+    "nome": "salvar sem o campo valores",
+    "requisicao": "PUT /api/parametros",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valores": [
+          "The Valores field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com valor que não é inteiro",
+    "requisicao": "PUT /api/parametros",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.valores['Sincronizacao.IntervaloHoras']": [
+          "The JSON value could not be converted to System.Int32. Path: $.valores['Sincronizacao.IntervaloHoras'] | LineNumber: 0 | BytePositionInLine: 50."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com número em texto",
+    "requisicao": "PUT /api/parametros",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "chave": "Sincronizacao.Habilitada",
+        "descricao": "Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
+        "grupo": "Sincronização",
+        "maximo": null,
+        "minimo": null,
+        "nome": "Sincronização automática",
+        "padrao": 1,
+        "tipo": 2,
+        "unidade": null,
+        "valor": 1
+      },
+      {
+        "chave": "Sincronizacao.IntervaloHoras",
+        "descricao": "De quanto em quanto tempo a sincronização automática roda. O Meu Pluggy atualiza os bancos cerca de uma vez por dia.",
+        "grupo": "Sincronização",
+        "maximo": 48,
+        "minimo": 1,
+        "nome": "Intervalo entre sincronizações",
+        "padrao": 6,
+        "tipo": 1,
+        "unidade": "horas",
+        "valor": 12
+      },
+      {
+        "chave": "Sincronizacao.DiasRetroativos",
+        "descricao": "Quantos dias para trás são relidos para pegar transações que mudaram ou entraram atrasadas.",
+        "grupo": "Sincronização",
+        "maximo": 365,
+        "minimo": 1,
+        "nome": "Dias relidos a cada sincronização",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 30
+      },
+      {
+        "chave": "Sincronizacao.DiasPrimeiraCarga",
+        "descricao": "Quantos dias de histórico são buscados quando uma conta é sincronizada pela primeira vez.",
+        "grupo": "Sincronização",
+        "maximo": 1825,
+        "minimo": 30,
+        "nome": "Histórico na primeira carga",
+        "padrao": 365,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 365
+      },
+      {
+        "chave": "Painel.DiasProximosVencimentos",
+        "descricao": "Até quantos dias à frente o painel lista as contas a pagar.",
+        "grupo": "Painel",
+        "maximo": 90,
+        "minimo": 1,
+        "nome": "Próximos vencimentos",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 15
+      },
+      {
+        "chave": "Painel.DiasAvisoConsentimento",
+        "descricao": "Com quantos dias de antecedência o painel avisa que o consentimento do Open Finance vai expirar.",
+        "grupo": "Painel",
+        "maximo": 120,
+        "minimo": 1,
+        "nome": "Aviso de consentimento expirando",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 120
+      },
+      {
+        "chave": "Seguranca.MaximoTentativasLogin",
+        "descricao": "Quantas senhas erradas seguidas bloqueiam o acesso temporariamente.",
+        "grupo": "Segurança",
+        "maximo": 20,
+        "minimo": 3,
+        "nome": "Tentativas de login antes do bloqueio",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "tentativas",
+        "valor": 5
+      },
+      {
+        "chave": "Seguranca.MinutosBloqueio",
+        "descricao": "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
+        "grupo": "Segurança",
+        "maximo": 1440,
+        "minimo": 1,
+        "nome": "Tempo de bloqueio",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "minutos",
+        "valor": 15
+      },
+      {
+        "chave": "Orcamento.MetaPoupanca",
+        "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+        "grupo": "Orçamentos",
+        "maximo": 60,
+        "minimo": 0,
+        "nome": "Meta de poupança",
+        "padrao": 20,
+        "tipo": 1,
+        "unidade": "% da renda",
+        "valor": 20
+      },
+      {
+        "chave": "Orcamento.FolgaEssenciais",
+        "descricao": "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+        "grupo": "Orçamentos",
+        "maximo": 30,
+        "minimo": 0,
+        "nome": "Folga nos gastos essenciais",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 5
+      },
+      {
+        "chave": "Orcamento.CartaoAtencao",
+        "descricao": "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 5,
+        "nome": "Uso do limite do cartão: atenção",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 30
+      },
+      {
+        "chave": "Orcamento.CartaoAlerta",
+        "descricao": "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 10,
+        "nome": "Uso do limite do cartão: alerta",
+        "padrao": 70,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 10
+      },
+      {
+        "chave": "Orcamento.CorteCartao",
+        "descricao": "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+        "grupo": "Orçamentos",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Corte por uso do cartão",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 10
+      },
+      {
+        "chave": "Metas.MargemSeguranca",
+        "descricao": "Quanto da sobra do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar. Também muda na tela de Metas (\"Guardar X% da sobra\").",
+        "grupo": "Metas",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Margem de segurança",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "% da sobra",
+        "valor": 10
+      },
+      {
+        "chave": "Transacoes.MinimoLetrasDescricao",
+        "descricao": "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+        "grupo": "Transações",
+        "maximo": 20,
+        "minimo": 1,
+        "nome": "Descrição pouco informativa",
+        "padrao": 3,
+        "tipo": 1,
+        "unidade": "letras",
+        "valor": 4
+      },
+      {
+        "chave": "Diagnostico.DiasRetencaoErros",
+        "descricao": "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+        "grupo": "Erros do sistema",
+        "maximo": 365,
+        "minimo": 7,
+        "nome": "Guardar erros por",
+        "padrao": 90,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      }
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ParametrosAlterados",
+            "Id": 15,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-10-01 12:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "6",
+                "depois": "12"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "salvar com erros em vários parâmetros",
+    "requisicao": "PUT /api/parametros",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Parâmetro desconhecido: Nao.Existe. Sincronização automática: use ligado ou desligado. Próximos vencimentos: informe um valor entre 1 e 90 dias. Meta de poupança: informe um valor entre 0 e 60 % da renda."
+    }
+  },
+  {
+    "nome": "salvar",
+    "requisicao": "PUT /api/parametros",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "chave": "Sincronizacao.Habilitada",
+        "descricao": "Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
+        "grupo": "Sincronização",
+        "maximo": null,
+        "minimo": null,
+        "nome": "Sincronização automática",
+        "padrao": 1,
+        "tipo": 2,
+        "unidade": null,
+        "valor": 1
+      },
+      {
+        "chave": "Sincronizacao.IntervaloHoras",
+        "descricao": "De quanto em quanto tempo a sincronização automática roda. O Meu Pluggy atualiza os bancos cerca de uma vez por dia.",
+        "grupo": "Sincronização",
+        "maximo": 48,
+        "minimo": 1,
+        "nome": "Intervalo entre sincronizações",
+        "padrao": 6,
+        "tipo": 1,
+        "unidade": "horas",
+        "valor": 12
+      },
+      {
+        "chave": "Sincronizacao.DiasRetroativos",
+        "descricao": "Quantos dias para trás são relidos para pegar transações que mudaram ou entraram atrasadas.",
+        "grupo": "Sincronização",
+        "maximo": 365,
+        "minimo": 1,
+        "nome": "Dias relidos a cada sincronização",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 30
+      },
+      {
+        "chave": "Sincronizacao.DiasPrimeiraCarga",
+        "descricao": "Quantos dias de histórico são buscados quando uma conta é sincronizada pela primeira vez.",
+        "grupo": "Sincronização",
+        "maximo": 1825,
+        "minimo": 30,
+        "nome": "Histórico na primeira carga",
+        "padrao": 365,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 365
+      },
+      {
+        "chave": "Painel.DiasProximosVencimentos",
+        "descricao": "Até quantos dias à frente o painel lista as contas a pagar.",
+        "grupo": "Painel",
+        "maximo": 90,
+        "minimo": 1,
+        "nome": "Próximos vencimentos",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      },
+      {
+        "chave": "Painel.DiasAvisoConsentimento",
+        "descricao": "Com quantos dias de antecedência o painel avisa que o consentimento do Open Finance vai expirar.",
+        "grupo": "Painel",
+        "maximo": 120,
+        "minimo": 1,
+        "nome": "Aviso de consentimento expirando",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 120
+      },
+      {
+        "chave": "Seguranca.MaximoTentativasLogin",
+        "descricao": "Quantas senhas erradas seguidas bloqueiam o acesso temporariamente.",
+        "grupo": "Segurança",
+        "maximo": 20,
+        "minimo": 3,
+        "nome": "Tentativas de login antes do bloqueio",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "tentativas",
+        "valor": 5
+      },
+      {
+        "chave": "Seguranca.MinutosBloqueio",
+        "descricao": "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
+        "grupo": "Segurança",
+        "maximo": 1440,
+        "minimo": 1,
+        "nome": "Tempo de bloqueio",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "minutos",
+        "valor": 1440
+      },
+      {
+        "chave": "Orcamento.MetaPoupanca",
+        "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+        "grupo": "Orçamentos",
+        "maximo": 60,
+        "minimo": 0,
+        "nome": "Meta de poupança",
+        "padrao": 20,
+        "tipo": 1,
+        "unidade": "% da renda",
+        "valor": 0
+      },
+      {
+        "chave": "Orcamento.FolgaEssenciais",
+        "descricao": "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+        "grupo": "Orçamentos",
+        "maximo": 30,
+        "minimo": 0,
+        "nome": "Folga nos gastos essenciais",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 5
+      },
+      {
+        "chave": "Orcamento.CartaoAtencao",
+        "descricao": "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 5,
+        "nome": "Uso do limite do cartão: atenção",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 30
+      },
+      {
+        "chave": "Orcamento.CartaoAlerta",
+        "descricao": "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 10,
+        "nome": "Uso do limite do cartão: alerta",
+        "padrao": 70,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 10
+      },
+      {
+        "chave": "Orcamento.CorteCartao",
+        "descricao": "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+        "grupo": "Orçamentos",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Corte por uso do cartão",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 10
+      },
+      {
+        "chave": "Metas.MargemSeguranca",
+        "descricao": "Quanto da sobra do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar. Também muda na tela de Metas (\"Guardar X% da sobra\").",
+        "grupo": "Metas",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Margem de segurança",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "% da sobra",
+        "valor": 10
+      },
+      {
+        "chave": "Transacoes.MinimoLetrasDescricao",
+        "descricao": "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+        "grupo": "Transações",
+        "maximo": 20,
+        "minimo": 1,
+        "nome": "Descrição pouco informativa",
+        "padrao": 3,
+        "tipo": 1,
+        "unidade": "letras",
+        "valor": 4
+      },
+      {
+        "chave": "Diagnostico.DiasRetencaoErros",
+        "descricao": "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+        "grupo": "Erros do sistema",
+        "maximo": 365,
+        "minimo": 7,
+        "nome": "Guardar erros por",
+        "padrao": 90,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      }
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ParametrosAlterados",
+            "Id": 16,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Orcamento.MetaPoupanca",
+            "Protegido": 0,
+            "Valor": "0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Painel.DiasProximosVencimentos",
+            "Protegido": 0,
+            "Valor": "90"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Seguranca.MinutosBloqueio",
+            "Protegido": 0,
+            "Valor": "1440"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-10-01 12:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "True",
+                "depois": "true"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "salvar o mesmo valor de novo",
+    "requisicao": "PUT /api/parametros",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "chave": "Sincronizacao.Habilitada",
+        "descricao": "Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
+        "grupo": "Sincronização",
+        "maximo": null,
+        "minimo": null,
+        "nome": "Sincronização automática",
+        "padrao": 1,
+        "tipo": 2,
+        "unidade": null,
+        "valor": 1
+      },
+      {
+        "chave": "Sincronizacao.IntervaloHoras",
+        "descricao": "De quanto em quanto tempo a sincronização automática roda. O Meu Pluggy atualiza os bancos cerca de uma vez por dia.",
+        "grupo": "Sincronização",
+        "maximo": 48,
+        "minimo": 1,
+        "nome": "Intervalo entre sincronizações",
+        "padrao": 6,
+        "tipo": 1,
+        "unidade": "horas",
+        "valor": 12
+      },
+      {
+        "chave": "Sincronizacao.DiasRetroativos",
+        "descricao": "Quantos dias para trás são relidos para pegar transações que mudaram ou entraram atrasadas.",
+        "grupo": "Sincronização",
+        "maximo": 365,
+        "minimo": 1,
+        "nome": "Dias relidos a cada sincronização",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 30
+      },
+      {
+        "chave": "Sincronizacao.DiasPrimeiraCarga",
+        "descricao": "Quantos dias de histórico são buscados quando uma conta é sincronizada pela primeira vez.",
+        "grupo": "Sincronização",
+        "maximo": 1825,
+        "minimo": 30,
+        "nome": "Histórico na primeira carga",
+        "padrao": 365,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 365
+      },
+      {
+        "chave": "Painel.DiasProximosVencimentos",
+        "descricao": "Até quantos dias à frente o painel lista as contas a pagar.",
+        "grupo": "Painel",
+        "maximo": 90,
+        "minimo": 1,
+        "nome": "Próximos vencimentos",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      },
+      {
+        "chave": "Painel.DiasAvisoConsentimento",
+        "descricao": "Com quantos dias de antecedência o painel avisa que o consentimento do Open Finance vai expirar.",
+        "grupo": "Painel",
+        "maximo": 120,
+        "minimo": 1,
+        "nome": "Aviso de consentimento expirando",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 120
+      },
+      {
+        "chave": "Seguranca.MaximoTentativasLogin",
+        "descricao": "Quantas senhas erradas seguidas bloqueiam o acesso temporariamente.",
+        "grupo": "Segurança",
+        "maximo": 20,
+        "minimo": 3,
+        "nome": "Tentativas de login antes do bloqueio",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "tentativas",
+        "valor": 5
+      },
+      {
+        "chave": "Seguranca.MinutosBloqueio",
+        "descricao": "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
+        "grupo": "Segurança",
+        "maximo": 1440,
+        "minimo": 1,
+        "nome": "Tempo de bloqueio",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "minutos",
+        "valor": 1440
+      },
+      {
+        "chave": "Orcamento.MetaPoupanca",
+        "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+        "grupo": "Orçamentos",
+        "maximo": 60,
+        "minimo": 0,
+        "nome": "Meta de poupança",
+        "padrao": 20,
+        "tipo": 1,
+        "unidade": "% da renda",
+        "valor": 0
+      },
+      {
+        "chave": "Orcamento.FolgaEssenciais",
+        "descricao": "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+        "grupo": "Orçamentos",
+        "maximo": 30,
+        "minimo": 0,
+        "nome": "Folga nos gastos essenciais",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 5
+      },
+      {
+        "chave": "Orcamento.CartaoAtencao",
+        "descricao": "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 5,
+        "nome": "Uso do limite do cartão: atenção",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 30
+      },
+      {
+        "chave": "Orcamento.CartaoAlerta",
+        "descricao": "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 10,
+        "nome": "Uso do limite do cartão: alerta",
+        "padrao": 70,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 10
+      },
+      {
+        "chave": "Orcamento.CorteCartao",
+        "descricao": "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+        "grupo": "Orçamentos",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Corte por uso do cartão",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 10
+      },
+      {
+        "chave": "Metas.MargemSeguranca",
+        "descricao": "Quanto da sobra do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar. Também muda na tela de Metas (\"Guardar X% da sobra\").",
+        "grupo": "Metas",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Margem de segurança",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "% da sobra",
+        "valor": 10
+      },
+      {
+        "chave": "Transacoes.MinimoLetrasDescricao",
+        "descricao": "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+        "grupo": "Transações",
+        "maximo": 20,
+        "minimo": 1,
+        "nome": "Descrição pouco informativa",
+        "padrao": 3,
+        "tipo": 1,
+        "unidade": "letras",
+        "valor": 4
+      },
+      {
+        "chave": "Diagnostico.DiasRetencaoErros",
+        "descricao": "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+        "grupo": "Erros do sistema",
+        "maximo": 365,
+        "minimo": 7,
+        "nome": "Guardar erros por",
+        "padrao": 90,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      }
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ParametrosAlterados",
+            "Id": 17,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desligar a sincronização automática",
+    "requisicao": "PUT /api/parametros",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "chave": "Sincronizacao.Habilitada",
+        "descricao": "Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
+        "grupo": "Sincronização",
+        "maximo": null,
+        "minimo": null,
+        "nome": "Sincronização automática",
+        "padrao": 1,
+        "tipo": 2,
+        "unidade": null,
+        "valor": 0
+      },
+      {
+        "chave": "Sincronizacao.IntervaloHoras",
+        "descricao": "De quanto em quanto tempo a sincronização automática roda. O Meu Pluggy atualiza os bancos cerca de uma vez por dia.",
+        "grupo": "Sincronização",
+        "maximo": 48,
+        "minimo": 1,
+        "nome": "Intervalo entre sincronizações",
+        "padrao": 6,
+        "tipo": 1,
+        "unidade": "horas",
+        "valor": 12
+      },
+      {
+        "chave": "Sincronizacao.DiasRetroativos",
+        "descricao": "Quantos dias para trás são relidos para pegar transações que mudaram ou entraram atrasadas.",
+        "grupo": "Sincronização",
+        "maximo": 365,
+        "minimo": 1,
+        "nome": "Dias relidos a cada sincronização",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 30
+      },
+      {
+        "chave": "Sincronizacao.DiasPrimeiraCarga",
+        "descricao": "Quantos dias de histórico são buscados quando uma conta é sincronizada pela primeira vez.",
+        "grupo": "Sincronização",
+        "maximo": 1825,
+        "minimo": 30,
+        "nome": "Histórico na primeira carga",
+        "padrao": 365,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 365
+      },
+      {
+        "chave": "Painel.DiasProximosVencimentos",
+        "descricao": "Até quantos dias à frente o painel lista as contas a pagar.",
+        "grupo": "Painel",
+        "maximo": 90,
+        "minimo": 1,
+        "nome": "Próximos vencimentos",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      },
+      {
+        "chave": "Painel.DiasAvisoConsentimento",
+        "descricao": "Com quantos dias de antecedência o painel avisa que o consentimento do Open Finance vai expirar.",
+        "grupo": "Painel",
+        "maximo": 120,
+        "minimo": 1,
+        "nome": "Aviso de consentimento expirando",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 120
+      },
+      {
+        "chave": "Seguranca.MaximoTentativasLogin",
+        "descricao": "Quantas senhas erradas seguidas bloqueiam o acesso temporariamente.",
+        "grupo": "Segurança",
+        "maximo": 20,
+        "minimo": 3,
+        "nome": "Tentativas de login antes do bloqueio",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "tentativas",
+        "valor": 5
+      },
+      {
+        "chave": "Seguranca.MinutosBloqueio",
+        "descricao": "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
+        "grupo": "Segurança",
+        "maximo": 1440,
+        "minimo": 1,
+        "nome": "Tempo de bloqueio",
+        "padrao": 15,
+        "tipo": 1,
+        "unidade": "minutos",
+        "valor": 1440
+      },
+      {
+        "chave": "Orcamento.MetaPoupanca",
+        "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
+        "grupo": "Orçamentos",
+        "maximo": 60,
+        "minimo": 0,
+        "nome": "Meta de poupança",
+        "padrao": 20,
+        "tipo": 1,
+        "unidade": "% da renda",
+        "valor": 0
+      },
+      {
+        "chave": "Orcamento.FolgaEssenciais",
+        "descricao": "Margem que a sugestão acrescenta às categorias essenciais (mercado, contas da casa), porque elas variam de um mês para o outro.",
+        "grupo": "Orçamentos",
+        "maximo": 30,
+        "minimo": 0,
+        "nome": "Folga nos gastos essenciais",
+        "padrao": 5,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 5
+      },
+      {
+        "chave": "Orcamento.CartaoAtencao",
+        "descricao": "A partir deste uso do limite dos cartões, a sugestão aperta as categorias de estilo de vida pagas no cartão.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 5,
+        "nome": "Uso do limite do cartão: atenção",
+        "padrao": 30,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 30
+      },
+      {
+        "chave": "Orcamento.CartaoAlerta",
+        "descricao": "A partir deste uso do limite, a sugestão mostra um alerta forte.",
+        "grupo": "Orçamentos",
+        "maximo": 100,
+        "minimo": 10,
+        "nome": "Uso do limite do cartão: alerta",
+        "padrao": 70,
+        "tipo": 1,
+        "unidade": "% do limite",
+        "valor": 10
+      },
+      {
+        "chave": "Orcamento.CorteCartao",
+        "descricao": "Quanto a sugestão reduz as categorias de estilo de vida pagas no cartão quando o uso do limite passa do nível de atenção.",
+        "grupo": "Orçamentos",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Corte por uso do cartão",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "%",
+        "valor": 10
+      },
+      {
+        "chave": "Metas.MargemSeguranca",
+        "descricao": "Quanto da sobra do mês o assistente de metas deixa livre, para imprevistos, antes de recomendar quanto guardar. Também muda na tela de Metas (\"Guardar X% da sobra\").",
+        "grupo": "Metas",
+        "maximo": 50,
+        "minimo": 0,
+        "nome": "Margem de segurança",
+        "padrao": 10,
+        "tipo": 1,
+        "unidade": "% da sobra",
+        "valor": 10
+      },
+      {
+        "chave": "Transacoes.MinimoLetrasDescricao",
+        "descricao": "Tirando números e palavras genéricas (PIX, TED, PAGAMENTO, nome do banco), a descrição com menos letras que isso entra no filtro \"Descrição pouco informativa\".",
+        "grupo": "Transações",
+        "maximo": 20,
+        "minimo": 1,
+        "nome": "Descrição pouco informativa",
+        "padrao": 3,
+        "tipo": 1,
+        "unidade": "letras",
+        "valor": 4
+      },
+      {
+        "chave": "Diagnostico.DiasRetencaoErros",
+        "descricao": "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
+        "grupo": "Erros do sistema",
+        "maximo": 365,
+        "minimo": 7,
+        "nome": "Guardar erros por",
+        "padrao": 90,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 90
+      }
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ParametrosAlterados",
+            "Id": 18,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "true",
+                "depois": "false"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "sistema",
+    "requisicao": "GET /api/parametros/sistema",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "caminhoBanco": "<dados>/sql/FinancasLocal.db",
+      "conexoesAtivas": 1,
+      "contas": 6,
+      "dotNet": "<texto>",
+      "iniciadoEm": "<data e hora, AAAA-MM-DDThh:mm:ss.fZ>",
+      "pastaChaves": "<dados>/chaves",
+      "sistemaOperacional": "<texto>",
+      "tamanhoBancoBytes": "<número>",
+      "transacoes": 170,
+      "ultimaSincronizacao": "2026-10-14T09:00:00Z",
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "sistema sem login",
+    "requisicao": "GET /api/parametros/sistema",
+    "status": 401
+  }
+]
