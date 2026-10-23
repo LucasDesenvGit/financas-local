@@ -6,15 +6,20 @@ import { HistoricoInvestimentos, MesInvestimentosOf } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES_CURTOS, reaisOuNada } from '../compartilhado/utilidades';
+import { TermoComponent } from '../compartilhado/termo.component';
 
 /**
  * #173 e) (ADR 0045): rendimento de cada mês dos investimentos do Open Finance (caixinha, CDB, fundos), pelo histórico de
  * saldo que o site guarda a cada sincronização. Como o "Mês a mês" dos FIIs: a frase com o último mês antes da tabela
  * (Shneiderman: overview first), o mês mais recente primeiro e o detalhe por investimento sob demanda.
+ *
+ * #331: o mês mais recente já abre com o detalhe; cada investimento numa linha, do que mais rendeu ao que menos, com
+ * uma barrinha proporcional (como "Gasto por categoria" em Relatórios) no lugar da linha corrida; "sem o valor aplicado"
+ * vira etiqueta; e a explicação longa vai para um ⓘ do glossário (Nielsen 8; Progressive Disclosure).
  */
 @Component({
   selector: 'app-rendimento-investimentos-of',
-  imports: [DatePipe, MoedaPipe],
+  imports: [DatePipe, MoedaPipe, TermoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="painel-bloco rendimento-of" aria-labelledby="titulo-rendimento-of">
@@ -52,8 +57,18 @@ import { NOMES_MESES_CURTOS, reaisOuNada } from '../compartilhado/utilidades';
                     <tr class="linha-por-investimento" [id]="'rend-of-' + m.ano + '-' + m.mes">
                       <td colspan="3">
                         <ul class="lista-por-investimento" [attr.aria-label]="'Rendimento por investimento em ' + rotuloMes(m)">
-                          @for (i of m.porInvestimento; track i.nome) {
-                            <li><span>{{ i.nome }}: </span><strong>{{ i.rendimento !== null ? (i.rendimento | currency) : 'sem o valor aplicado' }}</strong></li>
+                          @for (i of ordenados(m); track i.nome) {
+                            <li>
+                              <span class="nome-investimento">{{ i.nome }}<span class="so-leitor">: </span></span>
+                              @if (i.rendimento !== null) {
+                                <strong class="valor-investimento" [class.positivo]="i.rendimento > 0" [class.negativo]="i.rendimento < 0">{{ i.rendimento | currency }}</strong>
+                                <!-- A barra é decoração: o valor está escrito ao lado. -->
+                                <span class="trilho-investimento" aria-hidden="true"><span [style.width.%]="largura(m, i.rendimento)"
+                                  [class.negativa]="i.rendimento < 0"></span></span>
+                              } @else {
+                                <span class="etiqueta etiqueta-suave">sem o valor aplicado</span>
+                              }
+                            </li>
                           }
                         </ul>
                       </td>
@@ -64,9 +79,8 @@ import { NOMES_MESES_CURTOS, reaisOuNada } from '../compartilhado/utilidades';
             </table>
           </div>
           <p class="texto-suave nota">
-            Rendimento é quanto o saldo cresceu além do valor aplicado: o que você guardou ou tirou não conta. O histórico
-            começou em {{ d.desde | date: 'dd/MM/yyyy' }}; antes disso o Open Finance não informa. Fundo sem o valor aplicado
-            mostra só o saldo. Valores brutos, antes do IR.
+            O histórico começou em {{ d.desde | date: 'dd/MM/yyyy' }}. Valores brutos, antes do IR.
+            <app-termo chave="rendimentoOpenFinance">Como o rendimento é calculado</app-termo>
           </p>
         }
       }
@@ -75,8 +89,14 @@ import { NOMES_MESES_CURTOS, reaisOuNada } from '../compartilhado/utilidades';
   styles: `
     .rendimento-of h2 { margin: 0 0 6px; }
     .resumo-rendimento-of { margin: 0 0 10px; }
-    .lista-por-investimento { list-style: none; margin: 0; padding: 4px 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.88rem; }
-    .lista-por-investimento li { display: flex; gap: 6px; }
+    /* #331: uma linha por investimento: o nome e o valor em cima, a barra proporcional embaixo. */
+    .lista-por-investimento { list-style: none; margin: 0; padding: 6px 0 8px; display: grid; gap: 10px; font-size: 0.88rem; }
+    .lista-por-investimento li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; }
+    .nome-investimento { min-width: 0; overflow-wrap: anywhere; }
+    .valor-investimento { font-variant-numeric: tabular-nums; }
+    .trilho-investimento { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: var(--superficie-3); overflow: hidden; }
+    .trilho-investimento > span { display: block; height: 100%; border-radius: 99px; background: var(--positivo); }
+    .trilho-investimento > span.negativa { background: var(--negativo); }
     .link-mes { display: inline-flex; align-items: center; min-height: 24px; font-size: 0.85rem; }
     .nota { font-size: 0.82rem; margin: 12px 2px 0; }
   `
@@ -105,9 +125,25 @@ export class RendimentoInvestimentosOfComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.historicoInvestimentos().subscribe({
-      next: (d) => this.dados.set(d),
+      next: (d) => {
+        this.dados.set(d);
+        // #331: o mês mais recente já abre com o detalhe por investimento.
+        const ultimo = d.meses.at(-1);
+        if (ultimo && ultimo.porInvestimento.length > 1) this.abertos.set(new Set([`${ultimo.ano}-${ultimo.mes}`]));
+      },
       error: (e) => this.erro.set(mensagemDeErro(e))
     });
+  }
+
+  /** #331: do que mais rendeu ao que menos; os sem o valor aplicado no fim. */
+  ordenados(m: MesInvestimentosOf): MesInvestimentosOf['porInvestimento'] {
+    return [...m.porInvestimento].sort((a, b) => (b.rendimento ?? -Infinity) - (a.rendimento ?? -Infinity));
+  }
+
+  /** Largura da barra: o rendimento em relação ao maior do mês (em módulo), com um mínimo para aparecer. */
+  largura(m: MesInvestimentosOf, rendimento: number): number {
+    const maior = Math.max(...m.porInvestimento.map((i) => Math.abs(i.rendimento ?? 0)));
+    return maior > 0 ? Math.max(2, Math.abs(rendimento) / maior * 100) : 0;
   }
 
   rotuloMes(m: { ano: number; mes: number }): string {
