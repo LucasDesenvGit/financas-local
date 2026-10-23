@@ -39,6 +39,17 @@ public class ContasController : BaseController
         return ParaDto(conta, conta.ConexaoBancaria?.NomeInstituicao, await ExtrasAsync(ct));
     }
 
+    /// <summary>
+    /// #323: a fatura de cada cartão que fecha no mês escolhido (o mesmo cálculo do Painel), para Contas e cartões ver
+    /// outros meses. A lista de contas continua com a de hoje (saldo, dívida, limite e a fatura em aberto não mudam).
+    /// </summary>
+    [HttpGet("faturas-do-mes")]
+    public async Task<ActionResult<List<FaturaMesDto>>> FaturasDoMes([FromQuery] int ano, [FromQuery] int mes, CancellationToken ct)
+    {
+        if (ano < 2000 || ano > 2100 || mes < 1 || mes > 12) return Erro("Período inválido.");
+        return await _contas.FaturasDoMesAsync(Relogio.PrimeiroDiaMes(ano, mes), Relogio.UltimoDiaMes(ano, mes), Relogio.Hoje, ct);
+    }
+
     /// <summary>Bancos que a tela sabe identificar (ADR 0024), para o campo "Banco".</summary>
     [HttpGet("bancos")]
     public ActionResult<List<BancoDto>> Bancos()

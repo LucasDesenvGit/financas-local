@@ -160,6 +160,8 @@ internal sealed class FormPrincipal : Form
     {
         base.OnHandleCreated(e);
         _tema.AplicarBarraDeTitulo(Handle);
+        // #337: a caixa com a saída da atualização, com a barra de rolagem escura no tema escuro.
+        _tema.AplicarRolagem(_saida);
     }
 
     protected override async void OnLoad(EventArgs e)
