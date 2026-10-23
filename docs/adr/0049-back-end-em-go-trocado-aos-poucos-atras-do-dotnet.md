@@ -171,6 +171,7 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - a libfaketime não age sobre o Go (ele lê o relógio sem a libc): para rodar o contrato contra o Go, o relógio injetável ganha uma opção de teste;
     - a CI roda o contrato contra o .NET (job "contrato (.NET)") em todo PR que mexe no back-end;
     - cada etapa grava os casos do próprio assunto, com `--atualizar` contra o .NET, no PR dela.
+  - **Os outros testes do Go** (unitário em tabela, integração com SQLite real, HTTP com `httptest`) e o "pronto quando" de cada etapa estão na [0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md) (#368): o contrato continua obrigatório, mas não basta sozinho.
   - **Versão:** entra no executável por `-ldflags -X`, lida do `Directory.Build.props` (a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) continua valendo).
   - **CSP:** os testes no navegador ([0041](0041-testes-no-navegador-com-playwright.md)) e o `testes-afetados.py` ([0047](0047-ci-paralela-so-testes-afetados-no-pr.md)) leem a CSP do `Seguranca.cs`. Ela ganha uma fonte única antes de o Go servir o front-end (#73).
   - **Esquema do banco** ([0003](0003-esquema-por-scripts-sql-idempotentes.md)): continua nos scripts de `banco/` mais as linhas `adicionar_coluna_se_ausente`, aplicado pelo .NET até a inversão e depois pelo Go (#297).

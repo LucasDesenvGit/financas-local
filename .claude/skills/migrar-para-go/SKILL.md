@@ -66,10 +66,31 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
    go test ./testes/contrato -args -alvo=https://127.0.0.1:5444
    govulncheck ./...        # quando estiver na CI (#231/#84)
    ```
-   Testes em tabela (*table-driven*) para regras de cálculo, com os casos-limite: negativo, zero, 8 casas, `NULL`, meia-noite, virada de mês/ano, horário de verão antigo.
+   **Como testar é a [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)** (resumo em `CONTRIBUINDO.md`, "Testes do back-end (Go)"). O contrato sozinho não basta:
+   - **unitário em tabela** (`t.Run` por caso) no pacote do assunto, para regra, cálculo, conversão e validação;
+   - **integração** num SQLite de verdade, em arquivo do `t.TempDir()` com o esquema real (sem mock, sem `:memory:`), para consulta, transação e cascata;
+   - **HTTP** com `httptest` e o usuário por `sessao.ComUsuario`, para status, validação e erro;
+   - **dependência externa** com respostas gravadas num `httptest.NewServer`;
+   - só a biblioteca padrão. Nada de `time.Now()` (use `relogio.Fixo`), `time.Sleep` para esperar (use um sinal ou o `testing/synctest`), rede ou dado real.
+
+   **A etapa está pronta quando:**
+   - cada regra da lista "Regras de negócio" do levantamento (seção 2) tem pelo menos uma linha na tabela de um teste unitário;
+   - cada ponto de risco do levantamento tem um teste;
+   - cada endpoint tem caso de contrato, inclusive os de erro;
+   - cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste com o SQLite real;
+   - os casos-limite que se aplicam estão na tabela:
+     - negativo, zero, 8 casas, meio centavo (`RoundBank`);
+     - `NULL`, lista vazia (`[]`);
+     - meia-noite em Brasília × UTC, horário de verão antigo;
+     - virada de mês e de ano, dias 29, 30 e 31;
+     - texto com acento.
+   - **o teste novo provou que falha:** estrague o código de propósito, veja falhar e desfaça, como no #360.
+
+   Bug do C# achado no porte: o teste do Go fixa o comportamento de hoje e aponta a issue (não corrija em silêncio).
 5. Fechamento do PR, como em todo PR do projeto:
    - versão no `Directory.Build.props` pelo tipo do título (ADR 0039) e entrada no `CHANGELOG.md` na seção da versão (`python3 scripts/ci/verificar-changelog.py`);
    - ADR criada ou atualizada quando a etapa decide algo (biblioteca, formato, esquema de segredos);
+   - na descrição, a tabela **regra → teste** (nome do teste e do caso), os casos-limite que não se aplicam e as mutações com o teste que pegou cada uma (ADR 0051);
    - `Closes #N` na descrição; "Manual: não se aplica" quando nada muda para quem usa;
    - **seção "🎓 Aula rápida"** (exigida por todo PR do épico): ~5 min para devs sênior que não conhecem Go — o que foi feito (trechos do próprio PR), por que assim (alternativa descartada, comparação com o .NET), pegadinhas, e **um link para cada afirmação técnica** (go.dev, pkg.go.dev, especificação, código-fonte). Nada citado de memória.
 

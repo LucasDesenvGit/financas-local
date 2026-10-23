@@ -63,6 +63,7 @@ A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-bac
 - **Banco:** o mesmo arquivo, em WAL (o `EsquemaBanco` passa o banco para WAL ao iniciar), com espera de banco ocupado nos dois lados e transações curtas. O Go grava no formato do EF Core e não aplica esquema.
 - **Tarefas em segundo plano:** quando um assunto passa para o Go, a tarefa dele sai do .NET por `Go:Tarefas` (`Sincronizacao`, `Cambio`, `Cripto`).
 - **Erros:** o Go escreve o log em JSON na saída de erro, e o .NET registra cada linha na categoria `Financas.Go` (avisos e erros vão para Configurações › Erros, ADR 0022).
+- **Testes** ([ADR 0051](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): cada regra tem teste unitário em tabela no pacote do assunto, além do caso de contrato do endpoint (`testes/contrato`, #72). Consultas se testam num SQLite de verdade num arquivo temporário, com o esquema real; handlers, com `httptest`. Só a biblioteca padrão, sem asserção nem mock de terceiros. O C# continua sem teste automatizado.
 
 | Pasta | O que tem |
 |---|---|
