@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.37.3] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Gerenciador (Windows): a seta dos botões de baixar e a barra de rolagem no tema escuro** (#337).
+  - Em "Atualizar para a última do develop" e "Baixar o instalador .msi", a seta saía de um caractere da fonte de ícones do Windows, fina e com outro peso que o texto. Agora ela é desenhada: o ícone "download", o mesmo do site.
+  - No tema escuro, a caixa com a saída da atualização e a janela "O que mudou" tinham a barra de rolagem clara do Windows. Agora ela fica escura, com o tema escuro do próprio Windows.
+
 ## [2.37.2] — 2026-10-22 · desenvolvimento
 
 ### Correções
