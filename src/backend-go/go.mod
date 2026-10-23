@@ -5,7 +5,7 @@ go 1.27.3
 require (
 	github.com/shopspring/decimal v1.6.0
 	modernc.org/sqlite v1.60.1
-	software.sslmate.com/src/go-pkcs12 v0.7.3
+	software.sslmate.com/src/go-pkcs12 v0.7.4
 )
 
 require (
