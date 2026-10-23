@@ -86,9 +86,13 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       </section>
     }
 
-    <section class="grade-cartoes">
+    <!-- #335: a grade se ajusta à quantidade de metas: uma ocupa a largura toda (resumo à esquerda, plano à direita),
+         duas dividem a linha, três ou mais em cards mais largos que antes. -->
+    <section class="grade-cartoes grade-metas" [class.metas-uma]="metas().length === 1" [class.metas-duas]="metas().length === 2">
       @for (m of metas(); track m.id) {
         <article class="cartao-meta" [class.concluida]="m.concluida">
+          <!-- #335: as duas metades do card; viram colunas só com uma meta, no computador (senão, display: contents). -->
+          <div class="meta-resumo">
           <header>
             <span class="titulo-meta">
               <!-- #316: o ícone escolhido, na cor da meta (decorativo: o nome está ao lado). -->
@@ -117,6 +121,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 [attr.aria-label]="'Descer a prioridade de ' + m.nome">↓</button>
             </div>
           }
+          </div>
+          <div class="meta-detalhe">
           @if (planoDe(m); as pm) {
             <p class="recomendado">Este mês: guarde <strong>{{ pm.recomendado | currency }}</strong>@if (pm.ajustado) {<span
               class="texto-suave"> (o valor que você escolheu)</span>}</p>
@@ -240,6 +246,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             <span class="cresce"></span>
             <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">editar</button>
           </footer>
+          </div>
         </article>
       } @empty {
         <p class="vazio">Crie metas como reserva de emergência, viagem ou entrada de um imóvel.</p>
@@ -342,12 +349,31 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .linha-prioridade .botao-icone { width: 28px; height: 28px; }
     /* #316: divisórias no cartão (o progresso, o plano do mês e as ações), na cor de linha do site. */
     .recomendado { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--linha); }
-    .cartao-meta > footer { border-top: 1px solid var(--linha); }
+    .cartao-meta footer { border-top: 1px solid var(--linha); }
     /* #318: "Como está indo": a lista dos últimos aportes, data à esquerda e valor à direita. */
     .titulo-aportes { margin: 8px 0 4px; font-size: 0.86rem; font-weight: 600; color: var(--texto-suave); }
     .lista-aportes { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
     .lista-aportes li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
-    .cartao-meta > :has(+ footer) { margin-bottom: 8px; }
+    .meta-detalhe > :has(+ footer) { margin-bottom: 8px; }
+    /* #335: as metades não mudam o card de sempre (os filhos continuam itens do card)… */
+    .meta-resumo, .meta-detalhe { display: contents; }
+    .grade-metas { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    .grade-metas.metas-duas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* …com uma meta só, no computador, o card ocupa a linha: o resumo (anel, valores, prioridade) à esquerda e o plano do
+       mês à direita, em vez de um card estreito no canto e o resto vazio (Nielsen 8). */
+    @media (min-width: 901px) {
+      .grade-metas.metas-uma { grid-template-columns: minmax(0, 1fr); }
+      .metas-uma .cartao-meta { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 0 32px; align-items: start; }
+      .metas-uma .meta-resumo, .metas-uma .meta-detalhe { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+      .metas-uma .meta-detalhe { border-left: 1px solid var(--linha); padding-left: 32px; min-height: 100%; }
+      /* O resumo fica no meio da coluna dele, na vertical e na horizontal (o plano, à direita, costuma ser mais alto). */
+      .metas-uma .meta-resumo { align-self: center; align-items: center; text-align: center; }
+      .metas-uma .meta-resumo header { justify-content: center; flex-wrap: wrap; }
+      .metas-uma .meta-resumo .linha-prioridade { justify-content: center; }
+      .metas-uma .meta-detalhe > .recomendado:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+      .metas-uma .meta-detalhe footer { margin-top: auto; }
+    }
+    @media (max-width: 760px) { .grade-metas.metas-duas { grid-template-columns: minmax(0, 1fr); } }
     .aviso-prazo { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
     .botao-plano, .botao-ajuste, .botao-evolucao { justify-self: start; padding-left: 0; }
     .conta-sobra { font-size: 0.85rem; }

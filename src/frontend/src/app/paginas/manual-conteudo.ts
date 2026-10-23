@@ -798,6 +798,7 @@ export const MANUAL: CapituloManual[] = [
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
           'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
           'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta.',
+          'Os cartões se ajustam à quantidade de metas: uma só ocupa a largura toda, com o anel e os valores à esquerda e o plano do mês à direita; duas dividem a linha; três ou mais ficam em grade.',
           'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “editar”.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
