@@ -206,6 +206,9 @@ jobs:
 
   # #72 (ADR 0049): testes de contrato. Sobe o .NET sobre o banco fictício, sem rede e com o relógio começando em
   # 2026-10-15 01:00 UTC (libfaketime), e confere que ele responde e grava igual a src/backend-go/testes/contrato/esperado.
+  # #363: o roteiro compila o Go e o .NET o sobe atrás dele, com o mesmo relógio (Go:InicioDoRelogio); /api/go passa
+  # pelo Go. A segunda rodada passa pelo Go os assuntos ligados em testes/contrato/assuntos-no-go.txt: o assunto liga a
+  # dele naquele arquivo, sem mexer aqui (este arquivo faz a CI rodar todos os testes do front-end).
   contrato:
     name: contrato (.NET)
     needs: mudancas
@@ -243,8 +246,12 @@ jobs:
       - name: Compilar API
         run: dotnet build src/backend/Financas.Api/Financas.Api.csproj -c Release
 
-      - name: Contrato contra o .NET
+      - name: Contrato contra o .NET (com o Go atrás dele)
         run: bash src/backend-go/testes/contrato/rodar-dotnet.sh
+
+      # Os mesmos esperados, com os assuntos de assuntos-no-go.txt atendidos pelo Go. Sem assunto ligado, não faz nada.
+      - name: Contrato contra o Go atrás do .NET (assuntos-no-go.txt)
+        run: bash src/backend-go/testes/contrato/rodar-dotnet.sh --go
 
   jest:
     name: "front-end: Jest"

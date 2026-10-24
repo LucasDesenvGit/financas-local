@@ -1,0 +1,31 @@
+[
+  {
+    "nome": "saúde pelo Go, com o relógio de teste",
+    "requisicao": "GET /api/go/saude",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "agora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+      "diarioDoBanco": "wal",
+      "hoje": "2026-10-14",
+      "situacao": "ok",
+      "usuario": "ana.teste",
+      "versao": "<versao>"
+    }
+  },
+  {
+    "nome": "saúde sem login",
+    "requisicao": "GET /api/go/saude",
+    "status": 401
+  },
+  {
+    "nome": "POST sem token CSRF",
+    "requisicao": "POST /api/go/saude",
+    "status": 400
+  },
+  {
+    "nome": "POST com token CSRF chega ao Go",
+    "requisicao": "POST /api/go/saude",
+    "status": 404
+  }
+]
