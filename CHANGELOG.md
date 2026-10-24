@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.40.2] — 2026-10-23 · desenvolvimento
+## [2.40.3] — 2026-10-23 · desenvolvimento
 
 ### Correções
 - **Regras enxergam o nome dado por outra regra** (#250). Antes, toda regra comparava só com a descrição que veio do banco.
@@ -10,6 +10,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Regras de descrição em cadeia:** a primeira olha a descrição do banco, e a seguinte, o nome que a anterior deu ("Aluguel" → "Aluguel apto 12"). Cada regra entra uma vez só, então não há ciclo, e a cadeia tem no máximo 10 passos.
   - **A categoria acompanha:** criar, editar ou excluir uma regra de descrição aplica de novo as regras de categoria nas transações que mudaram de nome (menos as de categoria escolhida à mão). Isso vale também na sincronização e em "Reaplicar regras".
   - **Prévia:** a da regra de descrição acha também pelo nome atual.
+
+## [2.40.2] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: relógio de teste e contrato rodando contra o Go atrás do .NET** (#363, épico #70). Nada muda para quem usa. Para quem desenvolve:
+  - o Go ganha uma opção só para teste, `-inicio-do-relogio`, desligada por padrão: o relógio começa num instante dado e anda dali, como a libfaketime faz com o .NET no contrato (ela não age sobre o Go). O .NET a passa ao Go quando `Go:InicioDoRelogio` tem um instante (vazio no `appsettings.json`);
+  - o contrato compila o Go e o sobe atrás do .NET, com o mesmo relógio. `PREFIXOS_GO="/api/..."` passa um assunto pelo Go com os mesmos esperados; `--go` passa os assuntos ligados em `testes/contrato/assuntos-no-go.txt`, e a CI roda as duas rodadas. O `/api/go/saude` devolve a hora e a data do relógio do Go e ganhou casos de contrato (58 casos);
+  - para os assuntos feitos em paralelo (#75, #77, #81) não se chocarem: cada assunto registra as rotas com uma linha no `internal/api`, tem um número de arquivo de casos reservado (tabela no README do contrato) e uma entrada própria em `Go:Prefixos`, que passa a ser uma entrada por assunto (o texto com `;` continua valendo).
 
 ## [2.40.1] — 2026-10-23 · desenvolvimento
 

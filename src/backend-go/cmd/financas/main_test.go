@@ -18,11 +18,15 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 )
 
 const segredo = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+
+// inicioDoContrato é o InicioPadrao do testes/contrato: em Brasília ainda é 14/10, 22h.
+var inicioDoContrato = time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)
 
 // bancoComUsuario cria, como o EsquemaBanco do .NET faria, um banco em WAL com a estrutura e um usuário.
 func bancoComUsuario(t *testing.T) string {
@@ -59,7 +63,7 @@ func TestAtrasDoDotnetDoComecoAoFim(t *testing.T) {
 	terminou := make(chan error, 1)
 	go func() {
 		cfg := config.Config{BancoCaminho: caminho}
-		terminou <- rodarAtrasDoDotnet(context.Background(), cfg, slog.New(slog.DiscardHandler), entradaLeitor, saidaEscritor)
+		terminou <- rodarAtrasDoDotnet(context.Background(), cfg, relogio.NovoAPartirDe(inicioDoContrato), slog.New(slog.DiscardHandler), entradaLeitor, saidaEscritor)
 	}()
 
 	if _, err := io.WriteString(entradaEscritor, segredo+"\n"); err != nil {
@@ -98,6 +102,10 @@ func TestAtrasDoDotnetDoComecoAoFim(t *testing.T) {
 	if resposta.StatusCode != http.StatusOK || corpo.Situacao != "ok" || corpo.Usuario != "verificador" || corpo.DiarioDoBanco != "wal" {
 		t.Fatalf("status %d, corpo %+v", resposta.StatusCode, corpo)
 	}
+	// O relógio de teste chega até a rota: a hora é a do início (mais o que passou), e não a do computador.
+	if passou := corpo.Agora.Tempo().Sub(inicioDoContrato); passou < 0 || passou > 10*time.Second || corpo.Hoje.String() != "2026-10-14" {
+		t.Fatalf("relógio: agora %s, hoje %s; esperado logo depois de %s, hoje 2026-10-14 (Brasília)", corpo.Agora, corpo.Hoje, inicioDoContrato)
+	}
 
 	// Sem o segredo, 401: outro programa do computador não fala direto com o Go.
 	semSegredo, err := http.Get(url)
@@ -122,7 +130,7 @@ func TestAtrasDoDotnetDoComecoAoFim(t *testing.T) {
 
 func TestAtrasDoDotnetSemSegredoNaoSobe(t *testing.T) {
 	cfg := config.Config{BancoCaminho: bancoComUsuario(t)}
-	err := rodarAtrasDoDotnet(context.Background(), cfg, slog.New(slog.DiscardHandler), strings.NewReader(""), io.Discard)
+	err := rodarAtrasDoDotnet(context.Background(), cfg, relogio.Sistema{}, slog.New(slog.DiscardHandler), strings.NewReader(""), io.Discard)
 	if err == nil {
 		t.Fatal("subiu sem o segredo interno")
 	}
@@ -133,7 +141,7 @@ func TestAtrasDoDotnetSemBancoNaoSobe(t *testing.T) {
 	entrada, escritor := io.Pipe()
 	go func() { _, _ = io.WriteString(escritor, segredo+"\n") }()
 	cfg := config.Config{BancoCaminho: filepath.Join(t.TempDir(), "nao-existe.db")}
-	err := rodarAtrasDoDotnet(context.Background(), cfg, slog.New(slog.DiscardHandler), entrada, io.Discard)
+	err := rodarAtrasDoDotnet(context.Background(), cfg, relogio.Sistema{}, slog.New(slog.DiscardHandler), entrada, io.Discard)
 	if err == nil {
 		t.Fatal("subiu sem o banco")
 	}
@@ -141,4 +149,41 @@ func TestAtrasDoDotnetSemBancoNaoSobe(t *testing.T) {
 		t.Fatal("criou um banco vazio")
 	}
 	escritor.Close()
+}
+
+// Sem a opção, o relógio do sistema, como antes da #363; com ela, o relógio de teste; texto inválido não sobe.
+func TestEscolherRelogio(t *testing.T) {
+	casos := []struct {
+		nome   string
+		inicio string
+		tipo   string // "sistema", "a partir de" ou "erro"
+	}{
+		{"sem a opção", "", "sistema"},
+		{"instante em UTC", "2026-10-15T01:00:00Z", "a partir de"},
+		{"instante com fuso (o ToString(\"O\") do .NET)", "2026-10-14T22:00:00.0000000-03:00", "a partir de"},
+		{"sem fuso", "2026-10-15T01:00:00", "erro"},
+		{"texto qualquer", "-banco /tmp/outro.db", "erro"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			r, err := escolherRelogio(c.inicio, slog.New(slog.DiscardHandler))
+			switch c.tipo {
+			case "erro":
+				if err == nil {
+					t.Fatalf("aceitou %q", c.inicio)
+				}
+			case "sistema":
+				if _, ok := r.(relogio.Sistema); err != nil || !ok {
+					t.Fatalf("esperado o relógio do sistema, veio %T (%v)", r, err)
+				}
+			case "a partir de":
+				if err != nil {
+					t.Fatal(err)
+				}
+				if passou := r.Agora().Sub(inicioDoContrato); passou < 0 || passou > 5*time.Second {
+					t.Fatalf("o relógio marca %s, esperado logo depois de %s", r.Agora(), inicioDoContrato)
+				}
+			}
+		})
+	}
 }

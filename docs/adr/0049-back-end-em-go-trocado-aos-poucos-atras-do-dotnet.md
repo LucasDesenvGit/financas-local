@@ -1,7 +1,7 @@
 # 0049. Back-end em Go, trocado aos poucos atrás do .NET
 
 - **Status:** Aceita
-- **Data:** 2026-10-21 (atualizada em 2026-10-23 com a convivência da #231)
+- **Data:** 2026-10-21 (atualizada em 2026-10-23 com a convivência da #231 e o relógio de teste da #363)
 - **Relacionadas:** substitui em parte, ao fim da migração, a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (Kestrel), a [0005](0005-segredos-criptografados-com-data-protection.md) (Data Protection), a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) e a [0012](0012-instalador-do-windows-em-powershell.md) (SDK do .NET); afeta a [0003](0003-esquema-por-scripts-sql-idempotentes.md), a [0022](0022-erros-do-sistema-gravados-no-banco.md), a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md), a [0041](0041-testes-no-navegador-com-playwright.md) e a [0047](0047-ci-paralela-so-testes-afetados-no-pr.md); épico #70, issues #71 e #231
 
 ## Contexto
@@ -68,9 +68,12 @@ Como o .NET repassa ao Go, conferido de ponta a ponta pelo `scripts/ci/testar-go
   - no .NET, o Microsoft.Data.Sqlite já tenta de novo enquanto o banco estiver ocupado, até o tempo do comando (30 s), e começa as transações com `BEGIN IMMEDIATE` ([documentação](https://learn.microsoft.com/dotnet/standard/data/sqlite/database-errors#locking-retries-and-timeouts), [código](https://github.com/dotnet/efcore/blob/main/src/Microsoft.Data.Sqlite.Core/SqliteTransaction.cs)). Nada mudou do lado do .NET;
   - as cópias continuam certas: `VACUUM INTO` (a do `EsquemaBanco` e a do gerenciador) e `sqlite3 .backup` levam o que está no `-wal` (conferido), e o `configurar.ps1` já copia o `-wal` e o `-shm`. **Restaurar** uma cópia agora pede apagar o `-wal` e o `-shm` que sobraram ([sqlite.org/howtocorrupt.html, 1.4](https://www.sqlite.org/howtocorrupt.html)), com o serviço parado (dito no `4-backup.sh`).
 - **Configuração** (`appsettings.json`, seção `Go`), lida na partida: mudar vale ao reiniciar o serviço, sem reinstalar.
-  - `Go:Prefixos`: prefixos separados por `;` (padrão: `/api/go`). Só `/api/<algo>`, nunca `/api/auth` nem `/api/erros`. **Texto, e não lista JSON**, de propósito: no .NET, uma lista vazia num `appsettings` de cima não apaga a de baixo; `"Prefixos": ""` apaga.
+  - `Go:Prefixos`: **uma entrada por assunto** (#363), com os prefixos dele separados por `;` (`"cambio": "/api/cambio;/api/cripto"`); entrada vazia é assunto desligado. O `appsettings.json` já traz as entradas dos assuntos do épico, vazias, com uma linha em branco entre elas: dois PRs em paralelo mexem cada um na sua linha, sem conflito no merge (o merge acusa conflito em linhas vizinhas, conferido). Só `/api/<algo>`, nunca `/api/auth` nem `/api/erros`.
+    - Um `appsettings` de cima desliga um assunto sozinho (`"cambio": ""`). O texto com `;` continua valendo e ganha das entradas: `"Prefixos": ""` (ou `Go__Prefixos=""`) desliga todos.
+    - **Lista JSON, não:** no .NET, uma lista vazia num `appsettings` de cima não apaga a de baixo. Na #231 era um texto só, e cada assunto mexeria na mesma linha.
   - `Go:Tarefas`: tarefas em segundo plano que passaram para o Go e não rodam no .NET (`Sincronizacao`, `Cambio`, `Cripto`). O gravador de erros fica no .NET até a #298.
   - `Go:Executavel`: o executável (padrão: `financas-go`, ao lado da API).
+  - `Go:InicioDoRelogio`: **só para teste**, vazio por padrão (#363). Com um instante RFC 3339 com fuso, o .NET sobe o Go com `-inicio-do-relogio` e o relógio do Go começa ali (abaixo, em "Testes de contrato"). O .NET valida o instante e passa o valor que ele mesmo formata, nunca o texto da configuração; valor inválido não deixa o serviço subir.
   - Sem prefixo e sem tarefa, o Go nem é iniciado.
 - **Instalação mínima** (o resto é da #84), atualizando a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md):
   - Go portátil em `ferramentas/go`, da linha do `go.mod` (`go 1.27.3` → a 1.27.x mais nova), pelo índice de `go.dev/dl` e o arquivo de `dl.google.com`, com o **SHA-256 do próprio índice conferido**. Reaproveita um `go` do PATH da mesma linha e não mais velho;
@@ -144,7 +147,7 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
 - **Na prática:**
   - **Código Go em `src/backend-go/`** ([Organizing a Go module](https://go.dev/doc/modules/layout)):
     - `cmd/financas/main.go`;
-    - `internal/` com um pacote por assunto e os pacotes de apoio (`config`, `servidor`, `banco`, `relogio`).
+    - `internal/` com um pacote por assunto e os pacotes de apoio (`config`, `servidor`, `banco`, `relogio`). Cada assunto exporta `Registrar(mux, <o que usa>)`, e o `internal/api` tem uma linha por assunto (#363).
   - **Convenções do código Go** (também no `CLAUDE.md`):
     - nomes em português;
     - erro como valor, embrulhado com `%w`;
@@ -168,8 +171,9 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - os casos ficam em `casos/*.json`, um arquivo por assunto, rodados em ordem; o que o .NET respondeu fica em `esperado/*.json` (*golden files*), com o status, o JSON e as linhas que cada caso mudou em todas as tabelas, com o texto cru de cada coluna. Um caso pode guardar um valor da resposta para os seguintes (`capturar`);
     - o JSON é comparado sem passar por `float64` (`10.50` ≠ `10.5`). Só é normalizado o que muda a cada execução (hora do relógio, GUID novo, `traceId`, versão, sal da senha, pasta temporária); dinheiro, datas de negócio e ids nunca;
     - o .NET roda sem mudar o código: sem rede (`unshare -rn`, porque o câmbio e a cripto acessam a internet sozinhos), com o relógio começando em 2026-10-15 01:00 UTC pela libfaketime (o modo "começa em", sem mexer no relógio monotônico; congelado, travaria os temporizadores), em pt-BR e no fuso de Brasília. O banco fictício é inventado (`dados/base.sql`);
-    - a libfaketime não age sobre o Go (ele lê o relógio sem a libc): para rodar o contrato contra o Go, o relógio injetável ganha uma opção de teste;
-    - a CI roda o contrato contra o .NET (job "contrato (.NET)") em todo PR que mexe no back-end;
+    - a libfaketime não age sobre o Go: ele lê o relógio direto do kernel, pelo vDSO, sem a libc (conferido: sob a libfaketime, o `date` vê o instante falso e o Go, a hora real). Por isso o Go tem uma **opção de teste**, `-inicio-do-relogio` (#363): o relógio (`relogio.APartirDe`) começa no instante dado e anda dali, no relógio monotônico, como o `FAKETIME="@..."`. Sem a opção, o relógio do sistema. O contrato liga `Go:InicioDoRelogio`, e o .NET passa ao Go esse instante mais o tempo desde a partida dele: o Go fica no mesmo relógio do .NET, e continua nele se reiniciar;
+    - o contrato roda **contra o Go atrás do .NET** (#363): `PREFIXOS_GO` no `rodar-dotnet.sh` repassa ao Go os prefixos de um assunto, e os mesmos esperados, gravados do .NET, têm de passar. Gravar esperados com o Go respondendo é recusado, menos nas rotas que só existem no Go (`/api/go`). Cada assunto tem um número de arquivo de casos reservado e liga a rodada contra o Go na linha dele do `assuntos-no-go.txt`, que a CI lê (`rodar-dotnet.sh --go`), sem mexer no `ci.yml` (tabela e passos no README do contrato);
+    - a CI roda o contrato contra o .NET, com o Go compilado e atrás dele (job "contrato (.NET)"), em todo PR que mexe no back-end;
     - cada etapa grava os casos do próprio assunto, com `--atualizar` contra o .NET, no PR dela.
   - **Versão:** entra no executável por `-ldflags -X`, lida do `Directory.Build.props` (a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) continua valendo).
   - **CSP:** os testes no navegador ([0041](0041-testes-no-navegador-com-playwright.md)) e o `testes-afetados.py` ([0047](0047-ci-paralela-so-testes-afetados-no-pr.md)) leem a CSP do `Seguranca.cs`. Ela ganha uma fonte única antes de o Go servir o front-end (#73).

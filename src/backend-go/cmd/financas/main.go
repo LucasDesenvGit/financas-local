@@ -9,6 +9,10 @@
 //     /api responde 404, porque ainda não há login no Go (#75). Em desenvolvimento, ao lado do .NET (5443):
 //
 //     go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
+//
+// Só para teste, nos dois jeitos: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e
+// andar dali (#363), como a libfaketime faz com o .NET no contrato. Atrás do .NET, quem passa a opção é ele, quando
+// Go:InicioDoRelogio está configurado. Sem a opção, o relógio do sistema.
 package main
 
 import (
@@ -26,6 +30,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/api"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
@@ -55,6 +60,7 @@ func rodar() error {
 		atras       = flag.Bool("atras-do-dotnet", false, "rodar como processo filho do .NET (#231): segredo pela entrada padrão, porta pela saída padrão")
 		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho (o .NET passa o dele)")
 		aplicar     = flag.Bool("aplicar-esquema", false, "sozinho: criar e atualizar o banco antes de atender, como o .NET faz (até a #85 quem faz isso é o .NET)")
+		inicioRel   = flag.String("inicio-do-relogio", "", "só para teste (#363): o relógio começa neste instante e anda dali (RFC 3339 com fuso, ex.: 2026-10-15T01:00:00Z); vazio é o relógio do sistema")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")
 	)
 	flag.Parse()
@@ -79,13 +85,17 @@ func rodar() error {
 	if *caminhoDB != "" {
 		cfg.BancoCaminho = *caminhoDB
 	}
+	rel, err := escolherRelogio(*inicioRel, log)
+	if err != nil {
+		return err
+	}
 
 	// SIGINT (Ctrl+C) e SIGTERM (systemd) param com elegância. O serviço do Windows entra na #84.
 	ctx, parar := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer parar()
 
 	if *atras {
-		return rodarAtrasDoDotnet(ctx, cfg, log, os.Stdin, os.Stdout)
+		return rodarAtrasDoDotnet(ctx, cfg, rel, log, os.Stdin, os.Stdout)
 	}
 
 	if *endereco != "" {
@@ -104,7 +114,7 @@ func rodar() error {
 	// assinatura (PRAGMA user_version), então ligar aqui também não repete a cópia nem a atualização. Atrás do .NET
 	// (acima) a opção não vale: quem aplica é sempre o .NET, antes de iniciar o Go.
 	if *aplicar {
-		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, relogio.Sistema{}, log); err != nil {
+		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, rel, log); err != nil {
 			return err
 		}
 	}
@@ -113,7 +123,7 @@ func rodar() error {
 
 // rodarAtrasDoDotnet lê o segredo da primeira linha da entrada, abre o banco (que o .NET já criou e passou para
 // WAL) e atende até a entrada fechar ou o contexto acabar.
-func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, log *slog.Logger, entrada io.Reader, saida io.Writer) error {
+func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relogio, log *slog.Logger, entrada io.Reader, saida io.Writer) error {
 	leitor := bufio.NewReader(entrada)
 	linha, err := leitor.ReadString('\n')
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -152,12 +162,28 @@ func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, log *slog.Logger
 	log.Info("iniciando atrás do .NET", "versao", versao.Atual)
 	return servidor.RodarAtrasDoDotnet(ctx, servidor.OpcoesAtras{
 		Segredo: segredo,
-		Rotas:   api.NovasRotas(api.Dependencias{DB: db, Log: log}),
+		Rotas:   api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel}),
 		Log:     log,
 		AvisarPorta: func(porta int) error {
 			return json.NewEncoder(saida).Encode(map[string]int{"porta": porta})
 		},
 	})
+}
+
+// escolherRelogio devolve o relógio do sistema, ou, com -inicio-do-relogio, um que começa no instante dado e anda
+// dali (relogio.APartirDe). É só para teste: o contrato (#72) faz o mesmo com o .NET pela libfaketime, que não age
+// sobre o Go. Ligado, fica um aviso no log (vai para Configurações › Erros quando o Go roda atrás do .NET).
+func escolherRelogio(inicio string, log *slog.Logger) (relogio.Relogio, error) {
+	if inicio == "" {
+		return relogio.Sistema{}, nil
+	}
+	instante, err := relogio.LerInicio(inicio)
+	if err != nil {
+		return nil, err
+	}
+	log.Warn("relógio de teste: a hora começa no instante dado, e não na do computador (-inicio-do-relogio)",
+		"inicio", instante.Format(time.RFC3339Nano), "origem", "Sistema")
+	return relogio.NovoAPartirDe(instante), nil
 }
 
 func carregarCertificado(cfg config.Config, temporario bool) (tls.Certificate, error) {
