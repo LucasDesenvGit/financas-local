@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 )
 
@@ -58,7 +59,7 @@ func novoAmbiente(t *testing.T) *ambiente {
 	auth := Nova(Opcoes{DB: db, Relogio: rel, Log: log, Chave: chave, Versao: "teste", MinutosSessao: 120,
 		MaximoTentativasLogin: 5, MinutosBloqueio: 15})
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { semCorpo(w, http.StatusNotFound) })
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { respostas.SemCorpo(w, http.StatusNotFound) })
 	auth.Registrar(mux)
 	srv := httptest.NewTLSServer(auth.Proteger(mux))
 	t.Cleanup(srv.Close)

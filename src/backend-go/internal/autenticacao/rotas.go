@@ -11,8 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
@@ -69,14 +71,14 @@ func (a *Autenticacao) estado(w http.ResponseWriter, r *http.Request) {
 		login := req.sessao.Login
 		resposta.Autenticado, resposta.Login = true, &login
 	}
-	escreverJSON(w, http.StatusOK, conteudoJSON, resposta)
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, resposta)
 }
 
 // configurar cria o único usuário do sistema; só funciona enquanto não houver nenhum.
 func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
-	login := &campoTexto{propriedade: "Login", minimo: 3, maximo: 100}
-	senha := &campoTexto{propriedade: "Senha", maximo: 200}
-	if !lerCorpo(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha) {
+	login := &respostas.CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
+	senha := &respostas.CampoTexto{Propriedade: "Senha", Maximo: 200}
+	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha) {
 		return
 	}
 	ctx := r.Context()
@@ -86,15 +88,15 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if existe {
-		escreverMensagem(w, http.StatusConflict, "O sistema já foi configurado.")
+		respostas.Mensagem(w, http.StatusConflict, "O sistema já foi configurado.")
 		return
 	}
-	loginLimpo := strings.TrimSpace(*login.valor)
-	if problema := validarSenha(*senha.valor, loginLimpo); problema != "" {
-		escreverMensagem(w, http.StatusBadRequest, problema)
+	loginLimpo := strings.TrimSpace(*login.Valor)
+	if problema := validarSenha(*senha.Valor, loginLimpo); problema != "" {
+		respostas.Mensagem(w, http.StatusBadRequest, problema)
 		return
 	}
-	hash, err := GerarHash(*senha.valor)
+	hash, err := GerarHash(*senha.Valor)
 	if err != nil {
 		a.erroInterno(w, "gerar o hash", err)
 		return
@@ -121,27 +123,27 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 		a.erroInterno(w, "iniciar a sessão", err)
 		return
 	}
-	escreverJSON(w, http.StatusOK, conteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
 }
 
 // entrar confere usuário e senha, com o bloqueio por tentativas e a auditoria.
 func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
-	login := &campoTexto{propriedade: "Login", minimo: 3, maximo: 100}
-	senha := &campoTexto{propriedade: "Senha", maximo: 200}
-	if !lerCorpo(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha) {
+	login := &respostas.CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
+	senha := &respostas.CampoTexto{Propriedade: "Senha", Maximo: 200}
+	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha) {
 		return
 	}
 	ctx := r.Context()
-	loginLimpo := strings.TrimSpace(*login.valor)
+	loginLimpo := strings.TrimSpace(*login.Valor)
 	usuario, err := a.q.ObterUsuarioPorLogin(ctx, loginLimpo)
 	if errors.Is(err, sql.ErrNoRows) {
 		// Confere a senha mesmo assim, contra um hash qualquer: o tempo da resposta não revela se o usuário existe.
-		VerificarHash(a.hashDeMentira(), *senha.valor)
+		VerificarHash(a.hashDeMentira(), *senha.Valor)
 		if err := a.auditar(ctx, a.q, r, "LoginFalha", &loginLimpo); err != nil {
 			a.erroInterno(w, "auditar", err)
 			return
 		}
-		escreverMensagem(w, http.StatusUnauthorized, mensagemFalhaLogin)
+		respostas.Mensagem(w, http.StatusUnauthorized, mensagemFalhaLogin)
 		return
 	}
 	if err != nil {
@@ -156,12 +158,12 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		minutos := max(1, int(math.Ceil(usuario.BloqueadoAte.Tempo().Sub(agora).Minutes())))
-		escreverMensagem(w, http.StatusTooManyRequests,
+		respostas.Mensagem(w, http.StatusTooManyRequests,
 			fmt.Sprintf("Acesso bloqueado temporariamente por excesso de tentativas. Tente novamente em %d minuto(s).", minutos))
 		return
 	}
 
-	resultado := VerificarHash(usuario.SenhaHash, *senha.valor)
+	resultado := VerificarHash(usuario.SenhaHash, *senha.Valor)
 	if resultado == SenhaErrada {
 		usuario.TentativasFalhas++
 		maximo, minutosBloqueio, err := a.parametros(ctx)
@@ -178,12 +180,12 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 			a.erroInterno(w, "entrar", err)
 			return
 		}
-		escreverMensagem(w, http.StatusUnauthorized, mensagemFalhaLogin)
+		respostas.Mensagem(w, http.StatusUnauthorized, mensagemFalhaLogin)
 		return
 	}
 
 	if resultado == SenhaCertaRefazer {
-		if usuario.SenhaHash, err = GerarHash(*senha.valor); err != nil {
+		if usuario.SenhaHash, err = GerarHash(*senha.Valor); err != nil {
 			a.erroInterno(w, "refazer o hash", err)
 			return
 		}
@@ -198,7 +200,7 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 		a.erroInterno(w, "iniciar a sessão", err)
 		return
 	}
-	escreverJSON(w, http.StatusOK, conteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
 }
 
 // sair encerra a sessão (logada ou não) e reemite o CSRF para quem agora é anônimo.
@@ -222,9 +224,9 @@ func (a *Autenticacao) sair(w http.ResponseWriter, r *http.Request) {
 
 // alterarSenha troca a senha e o carimbo de segurança: as outras sessões caem, e esta continua (sessão nova).
 func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
-	atual := &campoTexto{propriedade: "SenhaAtual", maximo: 200}
-	nova := &campoTexto{propriedade: "NovaSenha", maximo: 200}
-	if !lerCorpo(w, r, "dto", "Financas.Api.Dtos.AlterarSenhaDto", atual, nova) {
+	atual := &respostas.CampoTexto{Propriedade: "SenhaAtual", Maximo: 200}
+	nova := &respostas.CampoTexto{Propriedade: "NovaSenha", Maximo: 200}
+	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.AlterarSenhaDto", atual, nova) {
 		return
 	}
 	ctx := r.Context()
@@ -234,15 +236,15 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 		a.erroInterno(w, "alterar a senha", err)
 		return
 	}
-	if VerificarHash(usuario.SenhaHash, *atual.valor) == SenhaErrada {
-		escreverMensagem(w, http.StatusBadRequest, "A senha atual não confere.")
+	if VerificarHash(usuario.SenhaHash, *atual.Valor) == SenhaErrada {
+		respostas.Mensagem(w, http.StatusBadRequest, "A senha atual não confere.")
 		return
 	}
-	if problema := validarSenha(*nova.valor, usuario.Login); problema != "" {
-		escreverMensagem(w, http.StatusBadRequest, problema)
+	if problema := validarSenha(*nova.Valor, usuario.Login); problema != "" {
+		respostas.Mensagem(w, http.StatusBadRequest, problema)
 		return
 	}
-	if usuario.SenhaHash, err = GerarHash(*nova.valor); err != nil {
+	if usuario.SenhaHash, err = GerarHash(*nova.Valor); err != nil {
 		a.erroInterno(w, "gerar o hash", err)
 		return
 	}
@@ -270,7 +272,7 @@ func (a *Autenticacao) auditoria(w http.ResponseWriter, r *http.Request) {
 	for _, x := range registros {
 		saida = append(saida, auditoriaDto{Id: x.Id, DataHora: x.DataHora, Evento: x.Evento, Login: x.Login, Ip: x.Ip, UserAgent: x.UserAgent})
 	}
-	escreverJSON(w, http.StatusOK, conteudoJSON, saida)
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, saida)
 }
 
 // iniciarSessao é o EntrarAsync: cookie de sessão novo e o token CSRF reemitido para o usuário (ele é ligado a quem
@@ -312,18 +314,9 @@ func (a *Autenticacao) salvarComAuditoria(ctx context.Context, r *http.Request, 
 	})
 }
 
-// auditar é o AuditoriaService.Registrar: o evento, o login (até 100 caracteres), o IP e o navegador (até 400), na
-// hora UTC.
+// auditar grava o evento na auditoria, com a hora do relógio da autenticação.
 func (a *Autenticacao) auditar(ctx context.Context, q *consultas.Queries, r *http.Request, evento string, login *string) error {
-	if login != nil {
-		cortado := cortarUtf16(*login, 100)
-		login = &cortado
-	}
-	ip := ipDe(r)
-	agente := cortarUtf16(r.UserAgent(), 400)
-	return q.InserirAuditoria(ctx, consultas.InserirAuditoriaParams{
-		DataHora: a.agoraDb(), Evento: evento, Login: login, Ip: &ip, UserAgent: &agente,
-	})
+	return auditoria.Registrar(ctx, q, r, a.agoraDb(), evento, login)
 }
 
 // parametros são as tentativas antes do bloqueio e os minutos de bloqueio (ParametroService.ObterInteiroAsync): o valor
@@ -363,31 +356,11 @@ func (a *Autenticacao) agoraDb() tipos.DataHora { return tipos.NovaDataHora(a.o.
 
 // validarSenha é o ValidarSenha do AuthController.
 func validarSenha(senha, login string) string {
-	if tamanhoUtf16(senha) < tamanhoMinimoSenha {
+	if respostas.TamanhoUtf16(senha) < tamanhoMinimoSenha {
 		return fmt.Sprintf("A senha deve ter pelo menos %d caracteres.", tamanhoMinimoSenha)
 	}
 	if strings.Contains(strings.ToUpper(senha), strings.ToUpper(login)) {
 		return "A senha não pode conter o nome de usuário."
 	}
 	return ""
-}
-
-func escreverMensagem(w http.ResponseWriter, status int, mensagem string) {
-	escreverJSON(w, status, conteudoJSON, map[string]string{"mensagem": mensagem})
-}
-
-// cortarUtf16 corta o texto em n caracteres UTF-16 (o s[..n] do C#), sem partir um caractere no meio.
-func cortarUtf16(s string, n int) string {
-	usados := 0
-	for i, r := range s {
-		tamanho := 1
-		if r > 0xFFFF {
-			tamanho = 2
-		}
-		if usados+tamanho > n {
-			return s[:i]
-		}
-		usados += tamanho
-	}
-	return s
 }
