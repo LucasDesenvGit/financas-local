@@ -72,6 +72,9 @@ Como o .NET repassa ao Go, conferido de ponta a ponta pelo `scripts/ci/testar-go
     - Um `appsettings` de cima desliga um assunto sozinho (`"cambio": ""`). O texto com `;` continua valendo e ganha das entradas: `"Prefixos": ""` (ou `Go__Prefixos=""`) desliga todos.
     - **Lista JSON, não:** no .NET, uma lista vazia num `appsettings` de cima não apaga a de baixo. Na #231 era um texto só, e cada assunto mexeria na mesma linha.
   - `Go:Tarefas`: tarefas em segundo plano que passaram para o Go e não rodam no .NET (`Sincronizacao`, `Cambio`, `Cripto`). O gravador de erros fica no .NET até a #298.
+    - **O Go lê a mesma chave** (#81) e roda só as tarefas listadas nela: o .NET deixa de rodar a dele e o Go passa a rodar a sua no mesmo passo, sem uma segunda chave que pudesse deixar a tarefa sem ninguém (a `Tarefas:Habilitadas` da issue #81 ficou de fora por isso). Vazia, o Go não vai à internet sozinho.
+    - O Go recusa `Sincronizacao` até a #83 (ainda não há sincronização em Go: ligada, ninguém a rodaria). Nome desconhecido é erro nos dois lados.
+    - A tarefa roda numa goroutine com o `context` do serviço e é esperada (`sync.WaitGroup`) antes de o banco fechar; erro e pânico de um ciclo viram log (`internal/tarefas`).
   - `Go:Executavel`: o executável (padrão: `financas-go`, ao lado da API).
   - `Go:InicioDoRelogio`: **só para teste**, vazio por padrão (#363). Com um instante RFC 3339 com fuso, o .NET sobe o Go com `-inicio-do-relogio` e o relógio do Go começa ali (abaixo, em "Testes de contrato"). O .NET valida o instante e passa o valor que ele mesmo formata, nunca o texto da configuração; valor inválido não deixa o serviço subir.
   - Sem prefixo e sem tarefa, o Go nem é iniciado.
