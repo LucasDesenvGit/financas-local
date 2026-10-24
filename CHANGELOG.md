@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.41.3] — 2026-10-23 · desenvolvimento
+## [2.41.5] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação
 - **Apoio comum aos testes do back-end em Go** (#369, épico #374, ADR 0051). Nada muda para quem usa. O pacote `internal/testeapoio`, só para testes, dá aos três assuntos do #70 o mesmo jeito de testar:
@@ -10,6 +10,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - fábrica de dados inventados no formato do EF Core (conta, categoria, subcategoria, transação, regra de categorização), com valores padrão e só o que importa trocado no teste;
   - relógios parados em Brasília ("hoje é dia 31", "23h30 de 31/12") e o handler chamado com o usuário logado, conferindo o JSON pelo comparador do contrato (sem `float64`, `[]` diferente de `null`);
   - o `TestEmTransacao` deixou de usar `time.Now()` (uma das dívidas da ADR 0051).
+
+## [2.41.3] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Regras enxergam o nome dado por outra regra** (#250). Antes, toda regra comparava só com a descrição que veio do banco.
+  - **Regra de categoria:** vale pela descrição do banco **e** pelo nome que a transação tem agora. "Contém Aluguel" → Moradia pega a transação que uma regra de descrição renomeou de "PIX TRANSF 123" para "Aluguel". As regras que usam o texto do banco continuam valendo.
+  - **Regras de descrição em cadeia:** a primeira olha a descrição do banco, e a seguinte, o nome que a anterior deu ("Aluguel" → "Aluguel apto 12"). Cada regra entra uma vez só, então não há ciclo, e a cadeia tem no máximo 10 passos.
+  - **A categoria acompanha:** criar, editar ou excluir uma regra de descrição aplica de novo as regras de categoria nas transações que mudaram de nome (menos as de categoria escolhida à mão). Isso vale também na sincronização e em "Reaplicar regras".
+  - **Prévia:** a da regra de descrição acha também pelo nome atual.
 
 ## [2.41.2] — 2026-10-23 · desenvolvimento
 

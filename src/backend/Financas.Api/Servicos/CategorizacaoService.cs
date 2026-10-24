@@ -116,19 +116,26 @@ public class CategorizacaoService
         _carregado = true;
     }
 
-    public int? Resolver(string descricao, string? pluggyCategoriaId)
+    public int? Resolver(string descricao, string? pluggyCategoriaId) => Resolver(descricao, null, pluggyCategoriaId);
+
+    /// <summary>
+    /// #250: a categoria da transação pelas regras, olhando a descrição do banco <b>e</b> o nome que ela tem agora (dado
+    /// por uma regra de descrição ou escolhido à mão): a regra "contém Aluguel" pega a transação que uma regra de
+    /// descrição renomeou para "Aluguel", e as regras que usam o texto do banco continuam valendo.
+    /// </summary>
+    public int? Resolver(Transacao t) => Resolver(t.DescricaoOriginal ?? t.Descricao, t.Descricao, t.PluggyCategoriaId);
+
+    private int? Resolver(string descricao, string? outraDescricao, string? pluggyCategoriaId)
     {
         if (!_carregado) throw new InvalidOperationException("Chame CarregarAsync antes de Resolver.");
 
         var texto = Normalizar(descricao);
+        var outro = outraDescricao is null ? null : Normalizar(outraDescricao);
+        if (outro == texto) outro = null;
         foreach (var r in _regras)
         {
-            var corresponde = r.Tipo switch
-            {
-                TipoCorrespondencia.ComecaCom => texto.StartsWith(r.TextoNormalizado, StringComparison.Ordinal),
-                TipoCorrespondencia.Igual => texto == r.TextoNormalizado,
-                _ => texto.Contains(r.TextoNormalizado, StringComparison.Ordinal)
-            };
+            var corresponde = Corresponde(texto, r.TextoNormalizado, r.Tipo)
+                              || (outro is not null && Corresponde(outro, r.TextoNormalizado, r.Tipo));
             if (corresponde && _tiposCategoria.ContainsKey(r.CategoriaId)) return r.CategoriaId;
         }
 
@@ -137,6 +144,13 @@ public class CategorizacaoService
 
         return null;
     }
+
+    private static bool Corresponde(string texto, string regra, TipoCorrespondencia tipo) => tipo switch
+    {
+        TipoCorrespondencia.ComecaCom => texto.StartsWith(regra, StringComparison.Ordinal),
+        TipoCorrespondencia.Igual => texto == regra,
+        _ => texto.Contains(regra, StringComparison.Ordinal)
+    };
 
     /// <summary>
     /// Tipo de um lançamento que não é transferência (ADR 0036): saída é despesa; entrada é receita, menos no cartão de
