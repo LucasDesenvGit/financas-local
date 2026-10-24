@@ -225,7 +225,7 @@ public class TransacoesController : BaseController
         {
             // Sem categoria escolhida: volta para a categorização automática.
             t.CategoriaManual = false;
-            t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+            t.CategoriaId = _categorizacao.Resolver(t);
         }
         else
         {
@@ -323,7 +323,7 @@ public class TransacoesController : BaseController
             if (dto.CategoriaId is null)
             {
                 t.CategoriaManual = false;
-                t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+                t.CategoriaId = _categorizacao.Resolver(t);
             }
             else
             {
@@ -394,7 +394,7 @@ public class TransacoesController : BaseController
             if (automatica)
             {
                 t.CategoriaManual = false;
-                t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+                t.CategoriaId = _categorizacao.Resolver(t);
             }
             else
             {
@@ -515,7 +515,8 @@ public class TransacoesController : BaseController
             t.RegraDescricaoId = null;
             t.Descricao = t.DescricaoOriginal!;
             anteriores.AddRange((await _descricoes.ReaplicarAsync(ct)).Where(a => a.Id != t.Id));
-            if (t.RegraDescricaoId != regra.Id)
+            // #250: a regra nova pode ser seguida de outra na cadeia; o que importa é ela valer para a transação.
+            if (!_descricoes.Cadeia(t.DescricaoOriginal, t.Valor).Any(c => c.Id == regra.Id))
             {
                 var outra = t.RegraDescricaoId is int idOutra
                     ? await _db.RegrasDescricao.AsNoTracking().Where(r => r.Id == idOutra).Select(r => r.Texto).FirstOrDefaultAsync(ct)

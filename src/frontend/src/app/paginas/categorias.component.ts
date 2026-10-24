@@ -101,7 +101,9 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
         </div>
         <p class="texto-suave">Dão um nome mais claro às transações do banco ("PIX ENVIADO 12345" → "Aluguel"). Valem nas
           transações que já existem e nas próximas; um nome escolhido à mão não muda. Crie aqui ou pelo ✎ "Renomear" em Transações.
-          Com a mesma descrição do banco e valores diferentes (as duas contas do condomínio), use o valor para separar.</p>
+          Com a mesma descrição do banco e valores diferentes (as duas contas do condomínio), use o valor para separar.
+          Uma regra também pega o nome dado por outra ("Aluguel" → "Aluguel apto 12"), e as regras de categoria valem pelo nome
+          novo.</p>
         <div class="tabela-rolagem">
           <table class="tabela">
             <thead><tr><th>Quando a descrição do banco</th><th>Texto</th><th>Valor</th><th>Mostrar</th><th class="direita">Transações</th><th></th></tr></thead>
@@ -497,7 +499,7 @@ export class CategoriasComponent implements OnInit {
       const f = this.formRegraDescricao;
       return f && (f.valorMinimo != null || f.valorMaximo != null)
         ? 'Nenhuma transação tem essa descrição do banco com esse valor agora: a regra vale para as próximas.'
-        : 'Nenhuma transação tem essa descrição do banco agora: a regra vale para as próximas.';
+        : 'Nenhuma transação tem essa descrição (do banco ou dada por outra regra) agora: a regra vale para as próximas.';
     }
     const exemplos = p.exemplos.length ? ` (ex.: ${p.exemplos.join('; ')})` : '';
     return `Vai renomear ${p.quantidade} transação(ões)${exemplos} e as próximas.`;
