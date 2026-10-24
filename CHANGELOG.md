@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.40.3] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Banco: as 8 colunas que só nasciam por `ALTER TABLE` agora estão no `CREATE TABLE`** (#367). `Conta` (`SaldoReservado`, `ReservasInformadas`, `LimiteAjustadoNoApp`, `LimiteDiferencaAvaliada`), `Investimento` (`NomePersonalizado`) e `ContaAgendada` (`FormaCobranca`, `TextoCobranca`, `Observacao`) entram no `banco/01-estrutura.sql` com a mesma definição das linhas `adicionar_coluna_se_ausente`, que continuam no `2-criar-banco.sh` para atualizar bancos antigos.
+  - **Banco que já existe:** a estrutura não muda. Banco novo fica com as mesmas colunas de antes, só em outra ordem, e sem as 8 mensagens "coluna adicionada" no log.
+  - **Uma cópia a mais em `dados/backups`, uma vez só:** a assinatura do esquema (`PRAGMA user_version`) muda, e a API faz a cópia de sempre antes de conferir o banco (`FinancasLocal-antes-atualizacao-*.db`). É o esperado. Nos reinícios seguintes, não há cópia nova.
+  - **Para quem desenvolve:** o Go ganhou dois testes. Um falha se uma coluna das linhas `adicionar_coluna_se_ausente` faltar no `CREATE TABLE`. O outro falha se o banco novo e o antigo atualizado ficarem com colunas diferentes (tipo, `NOT NULL` ou padrão).
+
 ## [2.40.2] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação

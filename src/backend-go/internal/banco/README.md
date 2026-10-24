@@ -87,3 +87,7 @@ go test -race ./...
 cp ../../dados/sql/FinancasLocal.db /tmp/copia.db
 FINANCAS_COPIA_BANCO=/tmp/copia.db go test ./internal/banco -run CopiaDoBancoReal -v
 ```
+
+Coluna nova (#367, `colunas_novas_test.go`), com os scripts de agora:
+- `TestColunasNovasTambemNoCreateTable`: toda coluna das linhas `adicionar_coluna_se_ausente` também está no `CREATE TABLE` do `01-estrutura.sql`;
+- `TestBancoAntigoAtualizadoFicaIgualAoNovo`: um banco sem essas colunas, atualizado pelo `AplicarEsquema`, fica com as mesmas colunas do banco novo (tipo, `NOT NULL`, padrão e chave; só a ordem pode mudar).

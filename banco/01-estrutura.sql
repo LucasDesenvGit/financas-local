@@ -174,6 +174,13 @@ CREATE TABLE IF NOT EXISTS Conta
     Banco               TEXT    NULL,
     -- ADR 0024: cartão → conta a que pertence (de onde paga a fatura). Sem FK: a API limpa ao excluir a conta.
     ContaVinculadaId    INTEGER NULL,
+    -- #168 (ADR 0010): reservas/caixinhas informadas pela instituição (NULL = não informa; estimadas pelo extrato).
+    SaldoReservado      TEXT    NULL,
+    -- #168: reservas com nome e valor (lista em JSON: nome e valor de cada uma), quando a instituição detalha.
+    ReservasInformadas  TEXT    NULL,
+    -- #171: "você reduziu o limite no app?" (1 sim, 0 é compromisso, NULL sem resposta) e a diferença quando respondeu.
+    LimiteAjustadoNoApp     INTEGER NULL,
+    LimiteDiferencaAvaliada TEXT    NULL,
     -- CriadoEm/AtualizadoEm preenchidos pela API (DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     AtualizadoEm        TEXT    NOT NULL,
@@ -282,6 +289,8 @@ CREATE TABLE IF NOT EXISTS Investimento
     DataVencimento      TEXT    NULL,
     DataAplicacao       TEXT    NULL,
     Status              TEXT    NULL,
+    -- #170: nome escolhido pelo usuário ("Caixinha viagem"); a sincronização não mexe nele.
+    NomePersonalizado   TEXT    NULL,
     -- Preenchido pela API (Investimento.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     AtualizadoEm        TEXT    NOT NULL,
     CONSTRAINT UQ_Investimento_PluggyInvestmentId UNIQUE (PluggyInvestmentId),
@@ -396,6 +405,11 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     UltimoPagamentoEm   TEXT    NULL,
     -- #69: último vencimento que ainda se repete (NULL = sem fim). Ao pagar e passar dele, a conta é encerrada.
     DataLimite          TEXT    NULL,
+    -- #158 (ADR 0043): FormaCobranca 1 À mão, 2 Débito automático, 3 Cartão de crédito; TextoCobranca liga às
+    -- cobranças do extrato ("a descrição do banco contém"); Observacao é texto livre.
+    FormaCobranca       INTEGER NOT NULL CONSTRAINT DF_ContaAgendada_FormaCobranca DEFAULT 1,
+    TextoCobranca       TEXT    NULL,
+    Observacao          TEXT    NULL,
     -- #205: chave da descrição do banco (a do agrupamento das sugestões do extrato) do pagamento que é esta conta.
     ChaveExtrato        TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.

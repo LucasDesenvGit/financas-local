@@ -104,12 +104,12 @@ CREATE TABLE "Conta" (
     "Arquivada" INTEGER NOT NULL,
     "Banco" TEXT,
     "ContaVinculadaId" INTEGER,
-    "CriadoEm" TEXT NOT NULL,
-    "AtualizadoEm" TEXT NOT NULL,
     "SaldoReservado" TEXT,
     "ReservasInformadas" TEXT,
     "LimiteAjustadoNoApp" INTEGER,
-    "LimiteDiferencaAvaliada" TEXT
+    "LimiteDiferencaAvaliada" TEXT,
+    "CriadoEm" TEXT NOT NULL,
+    "AtualizadoEm" TEXT NOT NULL
 );
 
 CREATE TABLE "FaturaCartao" (
@@ -172,8 +172,8 @@ CREATE TABLE "Investimento" (
     "DataVencimento" TEXT,
     "DataAplicacao" TEXT,
     "Status" TEXT,
-    "AtualizadoEm" TEXT NOT NULL,
-    "NomePersonalizado" TEXT
+    "NomePersonalizado" TEXT,
+    "AtualizadoEm" TEXT NOT NULL
 );
 
 CREATE TABLE "Emprestimo" (
@@ -247,11 +247,11 @@ CREATE TABLE "ContaAgendada" (
     "Ativa" INTEGER NOT NULL,
     "UltimoPagamentoEm" TEXT,
     "DataLimite" TEXT,
-    "ChaveExtrato" TEXT,
-    "CriadoEm" TEXT NOT NULL,
     "FormaCobranca" INTEGER NOT NULL,
     "TextoCobranca" TEXT,
-    "Observacao" TEXT
+    "Observacao" TEXT,
+    "ChaveExtrato" TEXT,
+    "CriadoEm" TEXT NOT NULL
 );
 
 CREATE TABLE "Ativo" (
