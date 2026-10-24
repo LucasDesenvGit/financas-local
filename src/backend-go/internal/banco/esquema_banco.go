@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/esquema"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/esquema/embutido"
@@ -158,19 +159,30 @@ func copiarAntesDaAtualizacao(ctx context.Context, db *sql.DB, caminho string, r
 	if err := os.MkdirAll(pasta, 0o777); err != nil {
 		return fmt.Errorf("criar a pasta das cópias: %w", err)
 	}
-	destino := filepath.Join(pasta, PrefixoBackup+relogio.AgoraLocal(r).Format("20060102_150405")+".db")
+	destino := filepath.Join(pasta, nomeDaCopia(relogio.AgoraLocal(r)))
 	if _, err := db.ExecContext(ctx, "VACUUM INTO ?;", destino); err != nil {
 		return fmt.Errorf("copiar o banco antes da atualização para %s: %w", destino, err)
 	}
 	log.Info("Banco: cópia antes da atualização", "destino", destino)
-	return apagarCopiasAntigas(pasta)
+	return apagarCopiasAntigas(pasta, log)
 }
 
-// apagarCopiasAntigas deixa só as BackupsGuardados cópias mais recentes pelo nome (a data e a hora estão nele).
+// nomeDaCopia é FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db, o mesmo yyyyMMdd_HHmmss_fff do .NET.
 //
-// Como o .NET: um arquivo que não dá para apagar fica para a próxima, mas falta de permissão é erro (lá, o
-// UnauthorizedAccessException não é pego e impede a API de subir).
-func apagarCopiasAntigas(pasta string) error {
+// #366: com o nome só até o segundo, duas atualizações no mesmo segundo (a API reiniciando logo depois de uma
+// atualização que falhou) davam o mesmo nome, e o VACUUM INTO recusa um destino que já existe. Os milissegundos são
+// cortados, não arredondados, como o fff do .NET. O "_" vem depois do "." na tabela ASCII: o nome antigo de um
+// segundo (…_HHMMSS.db) fica antes dos novos do mesmo segundo, e a ordem pelo nome continua a ordem do tempo.
+func nomeDaCopia(instante time.Time) string {
+	return fmt.Sprintf("%s%s_%03d.db", PrefixoBackup, instante.Format("20060102_150405"), instante.Nanosecond()/int(time.Millisecond))
+}
+
+// apagarCopiasAntigas deixa só as BackupsGuardados cópias mais recentes pelo nome (a data e a hora estão nele),
+// comparado byte a byte, como o StringComparer.Ordinal do .NET.
+//
+// #365: uma cópia que não dá para apagar (outro dono, só leitura, aberta noutro programa) fica para a próxima, com
+// um aviso, e não impede a API de subir.
+func apagarCopiasAntigas(pasta string, log *slog.Logger) error {
 	entradas, err := os.ReadDir(pasta)
 	if err != nil {
 		return fmt.Errorf("listar as cópias em %s: %w", pasta, err)
@@ -186,10 +198,17 @@ func apagarCopiasAntigas(pasta string) error {
 	slices.Sort(copias)
 	slices.Reverse(copias) // da mais recente para a mais antiga
 	for _, antigo := range copias[min(BackupsGuardados, len(copias)):] {
-		err := os.Remove(filepath.Join(pasta, antigo))
-		if errors.Is(err, fs.ErrPermission) {
-			return fmt.Errorf("apagar a cópia antiga %s: %w", antigo, err)
+		if err := apagarCopia(filepath.Join(pasta, antigo)); err != nil {
+			log.Warn("Banco: não deu para apagar uma cópia antiga; fica para a próxima", "arquivo", antigo, "erro", err)
 		}
+	}
+	return nil
+}
+
+// apagarCopia apaga o arquivo. Um arquivo que já não existe não é erro, como no FileInfo.Delete do .NET.
+func apagarCopia(caminho string) error {
+	if err := os.Remove(caminho); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
 	}
 	return nil
 }
