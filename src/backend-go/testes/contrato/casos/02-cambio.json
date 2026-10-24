@@ -1,0 +1,92 @@
+{
+  "descricao": "Câmbio pela PTAX (#81, ADR 0007): GET /api/cambio/moedas, /cotacoes e /cotacao. O contrato roda sem rede: a lista de moedas não vem do Banco Central (fica a guardada, vazia no base.sql), e toda consulta à PTAX falha, como sem internet; o que vale é o que está guardado em CotacaoMoeda (USD de 05/03, 09, 13 e 14/10; EUR de 14/10). Hoje é 14/10 em Brasília (o relógio começa em 15/10 01:00 UTC). Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "moedas sem internet: a lista guardada",
+      "comentario": "Nada guardado em Cambio.Moedas e a PTAX fora do alcance: lista vazia ([], não null), sem gravar nada.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/moedas"
+    },
+    {
+      "nome": "cotações guardadas",
+      "comentario": "A última de cada moeda, em ordem de moeda, com a data pedida de hoje (14/10) e o atualizadoEm da Configuracao com Z (DateTimeKind.Utc).",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacoes"
+    },
+    {
+      "nome": "cotação do dólar de hoje",
+      "comentario": "A de 14/10 já está guardada: nem tenta a PTAX.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=USD"
+    },
+    {
+      "nome": "cotação no feriado: o último dia útil",
+      "comentario": "12/10 é feriado: a PTAX é consultada (e falha, sem rede) e vale a de 09/10, com dataSolicitada 12/10.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=USD&data=2026-10-12"
+    },
+    {
+      "nome": "moeda em minúsculas e com espaço, nome do parâmetro em maiúsculas",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?MOEDA=%20usd&data=2026-10-13"
+    },
+    {
+      "nome": "real é fixo",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=BRL&data=2026-10-01"
+    },
+    {
+      "nome": "data no futuro vale hoje",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=EUR&data=2027-01-01"
+    },
+    {
+      "nome": "data no formato americano",
+      "comentario": "O model binding lê a query na cultura invariante: 10/13/2026 é 13/10.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=USD&data=10/13/2026"
+    },
+    {
+      "nome": "sem cotação nos 7 dias antes",
+      "comentario": "O euro só tem 14/10, depois da data pedida: 503 com a mensagem.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=EUR&data=2026-10-13"
+    },
+    {
+      "nome": "hoje, moeda sem nada guardado",
+      "comentario": "Sem a lista de moedas, não dá para dizer que o Banco Central não publica a libra: consulta a PTAX (falha), não grava Cambio.UltimaConsulta.GBP e responde 503.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=GBP"
+    },
+    {
+      "nome": "sem moeda",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao"
+    },
+    {
+      "nome": "moeda com 4 letras",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=USDT"
+    },
+    {
+      "nome": "data que não é data",
+      "comentario": "O 400 automático do [ApiController] (ValidationProblemDetails), antes de olhar a moeda.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacao?moeda=USD&data=abc"
+    },
+    {
+      "nome": "POST numa rota de GET",
+      "comentario": "Com o token CSRF, para chegar à rota. O que o .NET responde é a régua (o fallback de /api/{**caminho} ou o 405).",
+      "metodo": "POST",
+      "caminho": "/api/cambio/cotacao",
+      "corpo": {}
+    },
+    {
+      "nome": "sem login",
+      "comentario": "401 do próprio .NET: o login é conferido antes de qualquer repasse.",
+      "metodo": "GET",
+      "caminho": "/api/cambio/cotacoes",
+      "sessao": "visitante"
+    }
+  ]
+}
