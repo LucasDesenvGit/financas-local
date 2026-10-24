@@ -9,14 +9,15 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sessao"
 )
@@ -102,8 +103,8 @@ func (r *requisicao) usuario() int64 {
 func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		chaveRota := r.Method + " " + strings.ToLower(r.URL.Path)
-		if rotasLimitadas[chaveRota] && !a.limite.permitir(ipDe(r)) {
-			semCorpo(w, http.StatusTooManyRequests)
+		if rotasLimitadas[chaveRota] && !a.limite.permitir(auditoria.IP(r)) {
+			respostas.SemCorpo(w, http.StatusTooManyRequests)
 			return
 		}
 
@@ -133,12 +134,12 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 		}
 
 		if req.sessao == nil && !rotasAnonimas[chaveRota] {
-			semCorpo(w, http.StatusUnauthorized)
+			respostas.SemCorpo(w, http.StatusUnauthorized)
 			return
 		}
 		if !metodoSeguro(r.Method) {
 			if _, padrao := rotas.Handler(r); padrao != "/" && !csrfValido(a.o.Chave, req.segredo, r.Header.Get(CabecalhoXsrf), req.usuario()) {
-				responderCsrfRecusado(w)
+				respostas.CsrfRecusado(w)
 				return
 			}
 		}
@@ -161,19 +162,6 @@ func metodoSeguro(metodo string) bool {
 }
 
 // ipDe é o Connection.RemoteIpAddress: o IP de quem conectou (o site escuta só em 127.0.0.1; não há proxy na frente).
-func ipDe(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
-
-func semCorpo(w http.ResponseWriter, status int) {
-	w.Header().Set("Content-Length", "0")
-	w.WriteHeader(status)
-}
-
 // erroInterno é o UseExceptionHandler: o erro vai para o log, e quem pediu recebe só o 500 de sempre.
 func (a *Autenticacao) erroInterno(w http.ResponseWriter, oque string, err error) {
 	a.o.Log.Error("erro na autenticação", "etapa", oque, "erro", err)

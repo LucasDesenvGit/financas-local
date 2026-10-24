@@ -14,8 +14,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
 
 // Dependencias de todos os assuntos, passadas pelo construtor (sem container de injeção). Cada assunto recebe no
@@ -24,6 +27,7 @@ type Dependencias struct {
 	DB      *sql.DB
 	Log     *slog.Logger
 	Relogio relogio.Relogio // relogio.Sistema no site; relogio.APartirDe no contrato (-inicio-do-relogio)
+	Config  config.Config   // os appsettings (caminhos, padrões dos parâmetros)
 }
 
 // NovasRotas devolve o ServeMux com as rotas de todos os assuntos. Caminho sem rota recebe 404 sem corpo, como o
@@ -36,6 +40,14 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	})
 
 	// Uma linha por assunto, na ordem do épico #70.
-	saude.Registrar(mux, d.DB, d.Log, d.Relogio) // #231: o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco)
+	saude.Registrar(mux, d.DB, d.Log, d.Relogio)                 // #231: o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco)
+	parametros.Registrar(mux, parametros.Novo(parametros.Opcoes{ // #76
+		DB: d.DB, Relogio: d.Relogio, Log: d.Log, Versao: versao.Atual,
+		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves,
+		Padroes: map[string]int{
+			"Seguranca.MaximoTentativasLogin": d.Config.MaximoTentativasLogin,
+			"Seguranca.MinutosBloqueio":       d.Config.MinutosBloqueio,
+		},
+	}))
 	return mux
 }

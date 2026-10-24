@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.8] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Go: parâmetros, configurações e o esquema novo dos segredos** (#76, épico #70). Nada muda para quem usa: no site, quem atende a Parametrização e guarda os segredos continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho tem as 3 rotas de `api/parametros` (lista, gravação que valida tudo antes, diagnóstico do sistema) e o `ConfiguracaoService`, com as mesmas regras do `int.TryParse`, `bool.TryParse` e `DateTime.TryParse` do C#; o contrato `01-parametros` passa, 14 de 14, e o `--go-sozinho` agora roda `00-auth` e `01-parametros`;
+  - os segredos ganharam o esquema que substitui o Data Protection: AES-256-GCM, valor `v2:` com nonce novo a cada gravação, chave em `dados/chaves/segredos.chave` (DPAPI no Windows, `0600` no Linux). O valor antigo volta como "precisa ser informado de novo", sem mexer na linha. Fica desligado até a #85 (ADR 0049);
+  - as respostas de erro do ASP.NET e a auditoria saíram do pacote da autenticação para `internal/respostas` e `internal/auditoria`, para todos os assuntos usarem;
+  - o contrato passa a comparar os caminhos de pasta com `/` também no Windows.
+
 ## [2.41.7] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação

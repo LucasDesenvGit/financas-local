@@ -146,7 +146,7 @@ func rodar() error {
 		DB: db, Relogio: rel, Log: log, Chave: chave, Versao: versao.Atual, MinutosSessao: cfg.MinutosSessao,
 		MaximoTentativasLogin: cfg.MaximoTentativasLogin, MinutosBloqueio: cfg.MinutosBloqueio,
 	})
-	rotas := api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel})
+	rotas := api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
 	auth.Registrar(rotas)
 	log.Info("iniciando sozinho, com o login do Go", "versao", versao.Atual)
 	return servidor.Rodar(ctx, servidor.Opcoes{
@@ -195,7 +195,7 @@ func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relo
 	log.Info("iniciando atrás do .NET", "versao", versao.Atual)
 	return servidor.RodarAtrasDoDotnet(ctx, servidor.OpcoesAtras{
 		Segredo: segredo,
-		Rotas:   api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel}),
+		Rotas:   api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg}),
 		Log:     log,
 		AvisarPorta: func(porta int) error {
 			return json.NewEncoder(saida).Encode(map[string]int{"porta": porta})

@@ -7,7 +7,80 @@ package consultas
 
 import (
 	"context"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
+
+const contarConexoesAtivas = `-- name: ContarConexoesAtivas :one
+SELECT COUNT(*) FROM "ConexaoBancaria" WHERE "Ativa" = 1
+`
+
+func (q *Queries) ContarConexoesAtivas(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, contarConexoesAtivas)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const contarContas = `-- name: ContarContas :one
+SELECT COUNT(*) FROM "Conta"
+`
+
+func (q *Queries) ContarContas(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, contarContas)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const contarTransacoes = `-- name: ContarTransacoes :one
+SELECT COUNT(*) FROM "Transacao"
+`
+
+func (q *Queries) ContarTransacoes(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, contarTransacoes)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const definirConfiguracao = `-- name: DefinirConfiguracao :exec
+INSERT INTO "Configuracao" ("Chave", "Valor", "Protegido", "AtualizadoEm")
+VALUES (?, ?, ?, ?)
+ON CONFLICT ("Chave") DO UPDATE SET
+    "Valor" = excluded."Valor",
+    "Protegido" = excluded."Protegido",
+    "AtualizadoEm" = excluded."AtualizadoEm"
+`
+
+type DefinirConfiguracaoParams struct {
+	Chave        string
+	Valor        *string
+	Protegido    bool
+	AtualizadoEm tipos.DataHora
+}
+
+// O DefinirAsync do ConfiguracaoService: cria ou atualiza, sempre com Protegido e AtualizadoEm novos.
+func (q *Queries) DefinirConfiguracao(ctx context.Context, arg DefinirConfiguracaoParams) error {
+	_, err := q.db.ExecContext(ctx, definirConfiguracao,
+		arg.Chave,
+		arg.Valor,
+		arg.Protegido,
+		arg.AtualizadoEm,
+	)
+	return err
+}
+
+const existeConfiguracao = `-- name: ExisteConfiguracao :one
+SELECT EXISTS (SELECT 1 FROM "Configuracao" WHERE "Chave" = ? AND "Valor" IS NOT NULL) AS "Existe"
+`
+
+func (q *Queries) ExisteConfiguracao(ctx context.Context, chave string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existeConfiguracao, chave)
+	var Existe bool
+	err := row.Scan(&Existe)
+	return Existe, err
+}
 
 const listarConfiguracoes = `-- name: ListarConfiguracoes :many
 SELECT "Chave", "Valor", "Protegido", "AtualizadoEm"
@@ -50,7 +123,7 @@ FROM "Configuracao"
 WHERE "Chave" = ?
 `
 
-// Leitura da Configuracao (parametros e configuracoes). So leitura: quem grava e o .NET ate a #76 (ADR 0049).
+// Configuracao (parametros e configuracoes). Desde a #76 o Go grava os parametros (PUT /api/parametros, atras do .NET).
 // Valor com Protegido = 1 e um segredo cifrado pelo Data Protection do .NET: o Go nao decifra nem escreve em log.
 // SEM ACENTO neste arquivo e nomes entre aspas duplas: veja o README.md do pacote banco.
 func (q *Queries) ObterConfiguracao(ctx context.Context, chave string) (Configuracao, error) {

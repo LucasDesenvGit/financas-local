@@ -65,14 +65,14 @@ O diagnóstico `/api/go/saude` (#231) e a funcionalidade nova feita só em Go (`
 O login (#75) não passa pelo repasse: `/api/auth` fica no .NET até a inversão (#85). O Go sozinho tem o login dele (`internal/autenticacao`), e o roteiro o compara com os mesmos esperados do .NET:
 
 ```bash
-src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho                       # os arquivos de CONTRATO_SOMENTE (00-auth)
-CONTRATO_SOMENTE="00-auth,01-parametros" src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho
+src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho                       # os arquivos de CONTRATO_SOMENTE (00-auth,01-parametros)
+CONTRATO_SOMENTE="00-auth" src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho
 ```
 
 - Monta o mesmo banco fictício, compila o Go com a versão do `Directory.Build.props`, sobe-o sozinho com o relógio de teste (`-inicio-do-relogio`) e um certificado em memória, e roda o comparador só nos arquivos de `CONTRATO_SOMENTE` (opção `-somente` do `go test`).
 - Não precisa do .NET, da libfaketime nem do `unshare`: o Go tem o próprio relógio de teste, e o login não sai para a rede. Roda também no Git Bash do Windows, com o `sqlite3` no PATH.
-- **Só os assuntos que não dependem das rotinas de partida do `Program.cs`**: sem o .NET, elas não rodam. O login não depende de nenhuma. Assunto novo entra em `CONTRATO_SOMENTE` quando o Go o atende sozinho.
-- Sem o roteiro, à mão: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z -somente=00-auth`. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
+- **Só os assuntos que não dependem das rotinas de partida do `Program.cs`**: sem o .NET, elas não rodam. O login e os parâmetros não dependem de nenhuma. Assunto novo entra em `CONTRATO_SOMENTE` quando o Go o atende sozinho.
+- Sem o roteiro, à mão: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z -somente=00-auth,01-parametros`. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
 
 ## Adicionar um caso
 

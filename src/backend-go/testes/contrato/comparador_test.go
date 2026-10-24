@@ -66,6 +66,7 @@ func TestNormalizadorTexto(t *testing.T) {
 		{"GUID do EF Core", "2F00DEFB-672E-45EF-87D0-702995AE8D2E", "<GUID>"},
 		{"GUID do JSON", "2f00defb-672e-45ef-87d0-702995ae8d2e", "<guid>"},
 		{"pasta dos dados", "/tmp/x/dados/sql/FinancasLocal.db", "<dados>/sql/FinancasLocal.db"},
+		{"pasta dos dados no Windows", `/tmp/x/dados\sql\FinancasLocal.db`, "<dados>/sql/FinancasLocal.db"},
 		{"texto comum", "Usuário ou senha inválidos.", "Usuário ou senha inválidos."},
 	}
 	for _, c := range casos {

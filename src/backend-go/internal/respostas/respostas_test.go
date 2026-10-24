@@ -1,4 +1,4 @@
-package autenticacao
+package respostas
 
 import (
 	"encoding/json"
@@ -42,11 +42,11 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 			r := httptest.NewRequest(http.MethodPost, "/api/auth/entrar", strings.NewReader(c.corpo))
 			r.Header.Set("Content-Type", tipo)
 			w := httptest.NewRecorder()
-			login := &campoTexto{propriedade: "Login", minimo: 3, maximo: 100}
-			senha := &campoTexto{propriedade: "Senha", maximo: 200}
-			ok := lerCorpo(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha)
+			login := &CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
+			senha := &CampoTexto{Propriedade: "Senha", Maximo: 200}
+			ok := LerTextos(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha)
 			if c.status == 0 {
-				if !ok || login.valor == nil || *login.valor != "ana.teste" {
+				if !ok || login.Valor == nil || *login.Valor != "ana.teste" {
 					t.Fatalf("recusou: %d %s", w.Code, w.Body)
 				}
 				return

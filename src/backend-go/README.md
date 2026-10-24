@@ -10,6 +10,11 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
 | `internal/sessao` | quem está logado, no contexto da requisição |
 | `internal/autenticacao` | o `AuthController` em Go (#75): login, sessão em cookie assinado, CSRF, limite por IP, bloqueio e auditoria; só com o Go sozinho, até a inversão (#85) |
+| `internal/respostas` | as respostas que o ASP.NET monta sozinho (`ProblemDetails`, `ValidationProblemDetails` com as mensagens do `System.Text.Json`, 415, `{"mensagem"}` do `BaseController`), para todos os assuntos |
+| `internal/auditoria` | o `AuditoriaService`: grava em `AuditoriaAcesso` o evento, o login, o IP e o navegador |
+| `internal/configuracao` | o `ConfiguracaoService` (#76): ler e gravar a `Configuracao` com as regras do `int.TryParse`, `bool.TryParse` e `DateTime.TryParse` do C# |
+| `internal/parametros` | o `ParametrosController` e o `ParametroService` (#76): o catálogo, a gravação que valida tudo antes e o diagnóstico; o prefixo entra no repasse na inversão (#85) |
+| `internal/segredos` | o esquema novo dos segredos (#76): AES-256-GCM com prefixo `v2:`, chave protegida por DPAPI no Windows e `0600` no Linux; desligado até a #85 |
 | `internal/config` | leitura dos mesmos `appsettings*.json` do .NET |
 | `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc`, esquema ao iniciar ([README](internal/banco/README.md)) |
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |

@@ -95,6 +95,13 @@ Como o .NET repassa ao Go, conferido de ponta a ponta pelo `scripts/ci/testar-go
 - **Até a troca, o .NET continua sendo a fonte dos segredos.** Não há canal interno pelo qual o Go peça um segredo ao .NET.
 - **Assunto que depende de segredo só liga o prefixo junto com a troca dos segredos:** a cotação pela brapi, na #82, e a Pluggy, na #83.
 - **A troca dos segredos** acontece quando o núcleo estiver completo, ou na inversão. Nesse passo, quem usa informa o Client Secret da Pluggy e o token da brapi de novo, uma vez.
+- **Como ficou o esquema (#76, pacote `internal/segredos`):**
+  - o valor gravado é `v2:` + base64(nonce de 12 bytes | cifra com a etiqueta do GCM), com um nonce sorteado a cada gravação;
+  - a chave da `Configuracao` (`Pluggy.ClientSecret`) entra como dado autenticado (AAD): o valor copiado para a linha de outro segredo não se lê;
+  - a chave de 32 bytes fica em `dados/chaves/segredos.chave`. No Windows, protegida pelo DPAPI da conta que roda o site (`CryptProtectData`, com uma entropia própria); no Linux, crua, com permissão `0600`;
+  - arquivo de chave que não se lê é erro que diz o que fazer, nunca uma chave nova por cima (os segredos gravados se perderiam);
+  - valor sem `v2:` (o do Data Protection) volta como "precisa ser informado de novo", e a linha não muda. O aviso na tela entra com a troca, na #85.
+- **Parâmetros (#76):** o `ParametroService` e as 3 rotas de `/api/parametros` estão em Go, conferidos pelo contrato com o Go sozinho (`--go-sozinho`). O prefixo só entra no repasse na inversão (#85), como está na tabela do contrato.
 
 ### Repetição e tabela com dois escritores na transição
 

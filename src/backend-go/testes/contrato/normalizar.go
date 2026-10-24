@@ -21,7 +21,8 @@ import (
 //   - GUID gerado na hora (carimbo de segurança): "<GUID>" ou "<guid>", guardando se veio em maiúsculas;
 //   - traceId do ValidationProblemDetails: "<traceId>";
 //   - a versão do sistema (sobe a cada PR, ADR 0039): "<versao>";
-//   - a pasta temporária dos dados: "<dados>";
+//   - a pasta temporária dos dados: "<dados>", com o resto do caminho com "/" (no Windows o .NET e o Go usam "\\", e o
+//     esperado gravado no Linux vale nos dois);
 //   - o hash da senha (sal aleatório): "<hash v3 ...>" com os parâmetros, que têm de ser os mesmos;
 //   - o valor dos cookies (cifrado pelo Data Protection): "<valor>".
 type Normalizador struct {
@@ -80,7 +81,7 @@ func (n Normalizador) texto(s string) string {
 	case guidMinusc.MatchString(s):
 		return "<guid>"
 	case n.PastaDados != "" && strings.HasPrefix(s, n.PastaDados):
-		return "<dados>" + strings.TrimPrefix(s, n.PastaDados)
+		return "<dados>" + strings.ReplaceAll(strings.TrimPrefix(s, n.PastaDados), `\`, "/")
 	}
 	return s
 }
