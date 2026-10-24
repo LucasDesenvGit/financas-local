@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.40.3] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Cópia do banco antes da atualização não impede mais a API de subir** (#365, #366). Ao atualizar um banco que já existe, a API faz uma cópia em `dados/backups` e apaga as antigas, guardando as 5 mais recentes:
+  - **cópia antiga que não dá para apagar** (de outro dono ou só leitura, como uma cópia feita à mão como administrador) fica para a próxima, com um aviso no log que diz o arquivo. Antes, a falta de permissão parava a partida (#365);
+  - **duas atualizações no mesmo segundo** (o serviço reiniciando logo depois de uma atualização que falhou) não dão mais o mesmo nome: o nome da cópia ganhou os milissegundos (`FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db`). Antes, a segunda parava a partida (#366);
+  - as 5 guardadas continuam as mais recentes, misturando nomes antigos e novos: a ordem pelo nome passou a ser byte a byte, que não depende do idioma do computador.
+  - O mesmo vale para o porte em Go (`AplicarEsquema`).
+
 ## [2.40.2] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
