@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.41.1] — 2026-10-23 · desenvolvimento
+## [2.41.3] — 2026-10-23 · desenvolvimento
 
 ### Correções
 - **Cópia do banco antes da atualização não impede mais a API de subir** (#365, #366). Ao atualizar um banco que já existe, a API faz uma cópia em `dados/backups` e apaga as antigas, guardando as 5 mais recentes:
@@ -10,6 +10,23 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **duas atualizações no mesmo segundo** (o serviço reiniciando logo depois de uma atualização que falhou) não dão mais o mesmo nome: o nome da cópia ganhou os milissegundos (`FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db`). Antes, a segunda parava a partida (#366);
   - as 5 guardadas continuam as mais recentes, misturando nomes antigos e novos: a ordem pelo nome passou a ser byte a byte, que não depende do idioma do computador.
   - O mesmo vale para o porte em Go (`AplicarEsquema`).
+
+## [2.41.2] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Banco: as 8 colunas que só nasciam por `ALTER TABLE` agora estão no `CREATE TABLE`** (#367). `Conta` (`SaldoReservado`, `ReservasInformadas`, `LimiteAjustadoNoApp`, `LimiteDiferencaAvaliada`), `Investimento` (`NomePersonalizado`) e `ContaAgendada` (`FormaCobranca`, `TextoCobranca`, `Observacao`) entram no `banco/01-estrutura.sql` com a mesma definição das linhas `adicionar_coluna_se_ausente`, que continuam no `2-criar-banco.sh` para atualizar bancos antigos.
+  - **Banco que já existe:** a estrutura não muda. Banco novo fica com as mesmas colunas de antes, só em outra ordem, e sem as 8 mensagens "coluna adicionada" no log.
+  - **Uma cópia a mais em `dados/backups`, uma vez só:** a assinatura do esquema (`PRAGMA user_version`) muda, e a API faz a cópia de sempre antes de conferir o banco (`FinancasLocal-antes-atualizacao-*.db`). É o esperado. Nos reinícios seguintes, não há cópia nova.
+  - **Para quem desenvolve:** o Go ganhou dois testes. Um falha se uma coluna das linhas `adicionar_coluna_se_ausente` faltar no `CREATE TABLE`. O outro falha se o banco novo e o antigo atualizado ficarem com colunas diferentes (tipo, `NOT NULL` ou padrão).
+
+## [2.41.1] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Regra de testes do back-end em Go** (#368, épico #374, ADR 0051). Nada muda para quem usa. Toda regra do back-end em Go passa a nascer com teste unitário, além do caso de contrato do endpoint:
+  - unitário em tabela no pacote do assunto; consultas num SQLite de verdade, em arquivo temporário com o esquema real (sem mock); handlers com `httptest`; só a biblioteca padrão, sem `testify`;
+  - uma etapa do #70 só fica pronta com cada regra do levantamento na tabela de testes, os casos-limite que se aplicam (negativo, zero, 8 casas, `NULL`, meia-noite em Brasília, virada de mês e de ano, dias 29 a 31, acento) e o teste provado contra o código estragado de propósito;
+  - proibido em teste: `time.Now()`, `time.Sleep` para esperar, rede e dado real. O `t.Parallel()` vale para os testes com banco próprio;
+  - a regra está no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), na skill `migrar-para-go`, no agente `dev-go` e no modelo de PR. O C# continua sem testes, só com o checklist.
 
 ## [2.41.0] — 2026-10-23 · desenvolvimento
 

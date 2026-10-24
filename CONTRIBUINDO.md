@@ -130,12 +130,60 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - cache do que é baixado sempre igual (npm, NuGet, navegador do Playwright), menos quando baixar do zero é justamente o que se testa (os testes de instalação);
 - **mexeu em teste ou em CI? Ponha no PR o tempo antes e depois**, por job e pelos passos mais caros.
 
+## Testes do back-end (Go)
+
+O C# chegou a 128 rotas sem nenhum teste automatizado e continua assim: para ele, vale o checklist do PR. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
+
+| O que testar | Onde | Como |
+|---|---|---|
+| Regra de negócio, cálculo, conversão, validação | `*_test.go` no pacote do assunto (`internal/<assunto>`) | tabela de casos com `t.Run` |
+| Consulta SQL, transação, cascata | o mesmo pacote | SQLite **de verdade** num arquivo do `t.TempDir()`, com o esquema real; sem mock de banco e sem `:memory:` |
+| Handler: status, validação, erro | o mesmo pacote | `httptest.NewRequestWithContext` + `httptest.NewRecorder`, com o usuário por `sessao.ComUsuario` |
+| O mesmo JSON e o mesmo banco do .NET | `testes/contrato` (#72) | casos gravados do .NET, antes do código Go |
+| Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
+
+**Uma etapa do #70 está pronta quando:**
+- cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
+- cada ponto de risco de equivalência do levantamento tem um teste;
+- cada endpoint tem caso de contrato, inclusive os de erro;
+- cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste com o SQLite real;
+- os casos-limite que se aplicam estão na tabela (o PR diz quais não se aplicam):
+  - valor negativo, zero, 8 casas, meio centavo;
+  - `NULL` e lista vazia (`[]`, nunca `null`);
+  - meia-noite em Brasília × UTC, horário de verão antigo;
+  - virada de mês e de ano, dias 29, 30 e 31;
+  - texto com acento e maiúsculas.
+
+**Teste novo prova que falha:** estrague o código de propósito (troque `RoundBank` por `Round`, tire um filtro, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta.
+
+**Proibido em teste:**
+- `time.Now()`: use o `relogio.Fixo`;
+- `time.Sleep` para esperar algo: espere um sinal (canal, `sync.WaitGroup`) ou use o `testing/synctest` em código com temporizador. Um teto (`time.After` num `select`) pode;
+- rede de verdade: respostas gravadas. O próprio teste ouvindo em `127.0.0.1` pode;
+- dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
+- biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
+
+**`t.Parallel()`:**
+- **use** nos testes de banco e de HTTP que têm o próprio banco no próprio `t.TempDir()`;
+- **não use** com `t.Setenv` ou `t.Chdir` (o Go recusa), variável de pacote, banco dividido, tempo real ou processo filho, nem no contrato (casos em ordem, no mesmo banco).
+
+**Como escrever:**
+- mensagem com a função, o obtido e o esperado (`Hoje = 2026-10-16, esperado 2026-10-15`);
+- nome do caso em português, dizendo a regra;
+- `t.Error` para continuar, `t.Fatal` só na preparação;
+- `t.Helper()` nos ajudantes e `t.Context()` no lugar de `context.Background()`.
+
+**Gabarito** (*golden file*) fica em `testdata/`, vem da referência (o .NET ou o EF Core) e é regravado só por opção explícita (`-atualizar`), olhando a diferença no PR.
+
+**Antes de subir:** em `src/backend-go`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend-go/README.md#antes-de-subir-push)). Cobertura com piso (#370), trava de tempo (#371), fuzz (#372) e mutação automática (#373) entram pelo épico #374.
+
 ## Checklist do pull request
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
 - [ ] Compila: `dotnet build FinancasLocal.sln -c Release` e `npm run build` em `src/frontend`.
 - [ ] Testes no navegador passam: `npm run test:navegador` em `src/frontend` (a CI também roda; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes-navegador/base.ts`); endpoint novo, em `testes-navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
 - [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/regressao/`; padrão novo de UI/UX, em `testes/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
+- [ ] Back-end em Go: regra nova com teste unitário, consulta nova com teste no SQLite real, endpoint novo com caso de contrato, e as mutações listadas no PR ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md), "Testes do back-end (Go)" acima).
 - [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`) chamado em `scripts/geral/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)) — e entidades/`FinancasDbContext` ajustados. Sem migrations.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.
 - [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).

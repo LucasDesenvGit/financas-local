@@ -2,8 +2,9 @@
 // (subpacote embutido), a leitura das linhas adicionar_coluna_se_ausente e a assinatura que vai no
 // PRAGMA user_version, as duas iguais às do EsquemaBanco.cs. Quem aplica o esquema é o banco.AplicarEsquema.
 //
-// Também monta o esquema para o sqlc: o banco/01-estrutura.sql mais as colunas que só existem nas linhas
-// adicionar_coluna_se_ausente (oito delas, em 21/10/2026, não estão no CREATE TABLE). O sqlc não recebe o DDL
+// Também monta o esquema para o sqlc: o banco/01-estrutura.sql mais as colunas das linhas adicionar_coluna_se_ausente
+// que faltarem no CREATE TABLE (desde a #367, nenhuma: a regra é pôr a coluna nova nos dois; a junção fica como
+// garantia, como o adicionar_coluna_se_ausente faz num banco novo). O sqlc não recebe o DDL
 // original: o parser de SQLite dele não entende "TEXT NULL" (a coluna vira interface{}) e passa para minúsculas os
 // nomes do CREATE TABLE (CriadoEm vira o campo Criadoem). Por isso o esquema é aplicado num SQLite em memória e
 // reescrito como o próprio SQLite o vê: tabela, coluna, tipo e NOT NULL, nomes entre aspas.

@@ -84,11 +84,11 @@ type ContaAgendada struct {
 	Ativa             int64
 	UltimoPagamentoEm *string
 	DataLimite        *string
-	ChaveExtrato      *string
-	CriadoEm          string
 	FormaCobranca     int64
 	TextoCobranca     *string
 	Observacao        *string
+	ChaveExtrato      *string
+	CriadoEm          string
 }
 
 type Contum struct {
@@ -111,12 +111,12 @@ type Contum struct {
 	Arquivada               int64
 	Banco                   *string
 	ContaVinculadaId        *int64
-	CriadoEm                string
-	AtualizadoEm            string
 	SaldoReservado          *string
 	ReservasInformadas      *string
 	LimiteAjustadoNoApp     *int64
 	LimiteDiferencaAvaliada *string
+	CriadoEm                string
+	AtualizadoEm            string
 }
 
 type CotacaoCripto struct {
@@ -227,8 +227,8 @@ type Investimento struct {
 	DataVencimento     *string
 	DataAplicacao      *string
 	Status             *string
-	AtualizadoEm       string
 	NomePersonalizado  *string
+	AtualizadoEm       string
 }
 
 type Meta struct {
