@@ -466,6 +466,7 @@ export const MANUAL: CapituloManual[] = [
           'Salve. O aviso tem “Desfazer”. Na lista, o nome novo fica em cima e a descrição do banco embaixo, menor (“do banco: …”).',
           'Para voltar, abra o ✎ de novo e use “Voltar à descrição do banco”.',
           'Várias de uma vez: marque as transações e use “✎ Renomear” na barra de seleção. Com “Nas selecionadas e nas próximas”, o site cria uma regra por descrição do banco.',
+          'Uma regra de descrição também pega o nome dado por outra: “PIX TRANSF 123” → “Aluguel” e, depois, “Aluguel” → “Aluguel apto 12”. Cada regra vale uma vez só para a mesma transação, então não há volta sem fim. Quando uma regra de descrição muda nomes, as regras de categoria valem de novo nessas transações (menos onde você escolheu a categoria à mão).',
           'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto (com prévia de quantas transações renomeia), e dá para editar, desligar ou excluir.',
           'Mesma descrição do banco e valores diferentes (ex.: duas contas do condomínio)? Na regra de descrição, preencha “E o valor”: “De” e “Até” (um dos dois basta). Crie uma regra para cada valor, cada uma com o seu nome. A regra com valor vem antes das outras.'
         ],
@@ -656,6 +657,7 @@ export const MANUAL: CapituloManual[] = [
           'Abra Categorias e regras › “Regras automáticas” e clique em “+ Regra”.',
           'Em “Quando a descrição”, escolha “contém”, “começa com” ou “é igual a”.',
           'Em “Texto”, escreva o trecho da descrição (sem acento ou maiúscula fazendo diferença).',
+          'O texto vale pela descrição do banco e também pelo nome que a transação tem agora (o dado por uma regra de descrição ou por você): “contém Aluguel” pega a transação que uma regra de descrição renomeou para “Aluguel”.',
           'Escolha a “Categoria”.',
           'Em “Prioridade”, um número menor vence quando duas regras batem com a mesma transação.',
           'Salve. Para atualizar as transações que já existem, use “Reaplicar regras em todas as transações”.'
