@@ -17,7 +17,7 @@ const APORTES = [
   { data: '2026-10-02', valor: 400 }
 ];
 const planoDe = (ateOAlvo: number[], dataProvavel: string | null): PlanoDaMeta =>
-  ({ metaId: 1, falta: 1000, recomendado: ateOAlvo[0], ajustado: false, dataProvavel, noPrazo: null, paraManterPrazo: null,
+  ({ metaId: 1, falta: 1000, recomendado: ateOAlvo[0], ajustado: false, porMes: null, porMesCortado: null, dataProvavel, noPrazo: null, paraManterPrazo: null,
     meses: [], ateOAlvo, degraus: [], dependeDaFatura: null });
 
 describe('Regressão: gráfico "Como está indo" da meta (#318)', () => {
@@ -65,7 +65,7 @@ describe('Regressão: gráfico "Como está indo" da meta (#318)', () => {
     expect(oculto).not.toContain('R$');
   });
 
-  it('sem aporte registrado, o resumo diz que cada "+ aporte" vira um ponto', () => {
+  it('sem aporte registrado, o resumo diz que cada "+ Aporte" vira um ponto', () => {
     const ev = evolucaoDaMeta(VIAGEM, [], null, HOJE);
     expect(resumoEvolucao(VIAGEM, ev, null, false)).toContain('Ainda sem aporte registrado');
   });

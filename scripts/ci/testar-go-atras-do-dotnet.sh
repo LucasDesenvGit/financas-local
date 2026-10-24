@@ -11,7 +11,9 @@
 #   - o .NET e o Go gravando no banco ao mesmo tempo, sem erro;
 #   - o Go cai: 503 enquanto isso, e ele volta sozinho;
 #   - o .NET parado (SIGTERM) ou morto (SIGKILL): nenhum Go sobra;
-#   - Go:Prefixos vazio: a rota volta para o .NET (404), sem Go rodando.
+#   - Go:Prefixos vazio: a rota volta para o .NET (404), sem Go rodando;
+#   - Go:InicioDoRelogio (só para teste, #363): o relógio do Go começa no
+#     instante dado e continua nele quando o Go reinicia.
 #
 # Banco, chaves e certificado numa pasta temporária (nunca o banco real).
 # Uso (depois do dotnet build):  scripts/ci/testar-go-atras-do-dotnet.sh [Release|Debug]
@@ -242,6 +244,28 @@ sleep 2
 s="$(status -b "$cookies" "$url/api/go/saude")"
 [[ "$s" == 404 ]] || falha "esperado 404 do .NET, veio $s"
 ok "404 do .NET (MapFallback de /api) e nenhum processo do Go"
+
+passo "13. Go:InicioDoRelogio (só para teste, #363): o Go começa no instante dado e continua nele se reiniciar"
+kill -TERM "$pid"
+wait "$pid" 2>/dev/null || true
+pid=""
+Go__InicioDoRelogio="2026-10-15T01:00:00Z" ligar sim
+s="$(status -b "$cookies" "$url/api/go/saude")"
+antes="$(grep -oE '"agora":"[^"]+"' "$pasta/corpo" || true)"
+[[ "$s" == 200 && "$antes" == '"agora":"2026-10-15T01:0'* && "$(cat "$pasta/corpo")" == *'"hoje":"2026-10-14"'* ]] ||
+    falha "esperado o relógio de teste (2026-10-15 01:0x UTC, hoje 14/10 em Brasília): $s $(cat "$pasta/corpo")"
+grep -q 'relógio de teste' "$log" || falha "o Go não avisou no log que o relógio de teste está ligado"
+kill -9 "$(processos_go)"
+s=""
+for _ in $(seq 1 20); do
+    s="$(status -b "$cookies" "$url/api/go/saude")"
+    [[ "$s" == 200 ]] && break
+    sleep 1
+done
+depois="$(grep -oE '"agora":"[^"]+"' "$pasta/corpo" || true)"
+[[ "$s" == 200 && "$depois" == '"agora":"2026-10-15T01:0'* && "$depois" > "$antes" ]] ||
+    falha "depois de reiniciar, o relógio do Go devia continuar: antes $antes, depois $s $depois"
+ok "${antes#*:} e, depois de o Go reiniciar, ${depois#*:}"
 
 echo
 echo "OK: o .NET e o Go convivem (#231)."

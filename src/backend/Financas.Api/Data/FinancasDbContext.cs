@@ -277,6 +277,7 @@ public class FinancasDbContext : DbContext
             e.Property(x => x.Nome).HasMaxLength(120).IsRequired();
             e.Property(x => x.ValorAlvo).HasPrecision(18, 2);
             e.Property(x => x.ValorAtual).HasPrecision(18, 2);
+            e.Property(x => x.GuardarPorMes).HasPrecision(18, 2);
             e.Property(x => x.Cor).HasMaxLength(9).IsRequired();
             e.Property(x => x.Icone).HasMaxLength(30);
             // Mesmo tamanho do nome da reserva (ReservaService.TamanhoMaximoNome).

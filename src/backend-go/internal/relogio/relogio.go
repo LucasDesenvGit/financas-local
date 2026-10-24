@@ -1,8 +1,10 @@
 // Pacote relogio é o Relogio.cs do Go: datas no fuso de Brasília, seja qual for o fuso do computador. Ao contrário
-// do C# (classe estática), o relógio é passado como dependência, e os testes usam um relógio parado (Fixo).
+// do C# (classe estática), o relógio é passado como dependência, e os testes usam um relógio parado (Fixo) ou um
+// que começa numa hora dada e anda dali (APartirDe, o do contrato).
 package relogio
 
 import (
+	"fmt"
 	"time"
 	_ "time/tzdata" // fusos embutidos no executável: o Windows não tem a base de fusos que o time.LoadLocation lê
 
@@ -36,6 +38,38 @@ type Fixo struct {
 }
 
 func (f Fixo) Agora() time.Time { return f.Instante.UTC() }
+
+// APartirDe é um relógio que começa num instante dado e anda dali, no ritmo do relógio de verdade. Só para teste
+// (#363): é o que o FAKETIME="@..." da libfaketime faz com o .NET no contrato. A libfaketime não age sobre o Go, que
+// lê o relógio sem passar pela libc, por isso a opção -inicio-do-relogio do cmd/financas.
+//
+// Ao contrário do Fixo, o tempo passa: o bloqueio de login de 15 minutos e o "há quanto tempo" continuam
+// funcionando. O tempo decorrido vem da leitura monotônica do time.Now, então acertar o relógio do computador no
+// meio do teste não muda nada.
+type APartirDe struct {
+	inicio  time.Time
+	partida time.Time        // quando o relógio foi criado, com a leitura monotônica
+	agora   func() time.Time // time.Now; os testes trocam
+}
+
+// NovoAPartirDe cria um relógio que agora marca inicio.
+func NovoAPartirDe(inicio time.Time) APartirDe { return novoAPartirDe(inicio, time.Now) }
+
+func novoAPartirDe(inicio time.Time, agora func() time.Time) APartirDe {
+	return APartirDe{inicio: inicio, partida: agora(), agora: agora}
+}
+
+func (r APartirDe) Agora() time.Time { return r.inicio.Add(r.agora().Sub(r.partida)).UTC() }
+
+// LerInicio lê o instante de partida do relógio de teste: RFC 3339 com o fuso explícito ("2026-10-15T01:00:00Z" ou
+// "2026-10-14T22:00:00-03:00"), para não depender do fuso do computador. Fração de segundo é aceita.
+func LerInicio(texto string) (time.Time, error) {
+	instante, err := time.Parse(time.RFC3339, texto)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("início do relógio %q: use RFC 3339 com fuso, como 2026-10-15T01:00:00Z: %w", texto, err)
+	}
+	return instante.UTC(), nil
+}
 
 // AgoraLocal é a hora atual em Brasília (Relogio.AgoraLocal no C#).
 func AgoraLocal(r Relogio) time.Time { return r.Agora().In(Brasilia) }

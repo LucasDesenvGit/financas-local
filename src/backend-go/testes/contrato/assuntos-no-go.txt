@@ -1,0 +1,19 @@
+# Assuntos com código Go que o contrato confere pelo Go atrás do .NET (#363): rodar-dotnet.sh --go, e na CI.
+# Uma linha por assunto: o nome (a entrada dele em Go:Prefixos) e os prefixos, separados por ";".
+# O PR do assunto tira o "#" da linha dele quando o código Go entra (passo 1 da ADR 0049); os mesmos esperados,
+# gravados do .NET, têm de passar. As linhas em branco entre os assuntos são de propósito: dois PRs mexendo em
+# linhas vizinhas se chocam no merge. Tabela dos assuntos e números dos casos: README.md desta pasta.
+
+# cambio /api/cambio;/api/cripto
+
+# cadastros /api/contas;/api/conferencia-banco;/api/categorias;/api/regras;/api/regras-descricao
+
+# transacoes /api/transacoes
+
+# planejamento /api/orcamentos;/api/metas;/api/contas-agendadas
+
+# investimentos /api/carteira;/api/reservas;/api/investimentos
+
+# painel /api/painel;/api/relatorios;/api/emprestimos
+
+# open-finance /api/open-finance

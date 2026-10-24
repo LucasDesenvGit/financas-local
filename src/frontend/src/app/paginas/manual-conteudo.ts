@@ -258,6 +258,7 @@ export const MANUAL: CapituloManual[] = [
           'No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada banco.',
           'Cada autorização gera um Item ID (aparece no dashboard).',
           'Em Configurações › Open Finance, cole o Item ID no campo “Adicionar conexão” e clique em “Adicionar”.',
+          'Cada conexão aparece com o selo do banco (o mesmo de Contas e cartões); banco que o site não conhece aparece com um ícone de banco.',
           'Cada conexão mostra a situação em português: “Atualizada”, “Desatualizada”, “Erro de login no banco” ou “Precisa de ação sua” (aí é preciso entrar no Meu Pluggy). Os botões “Sincronizar”, “Pausar” e “Remover” ficam na própria linha.',
           'Clique em “Sincronizar agora”. Na primeira vez são buscados os últimos meses de histórico.',
           'Confira em Contas e cartões se as contas e cartões apareceram.',
@@ -710,6 +711,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.',
           'Dê um “Nome”, escolha o “Tipo” (despesa, receita ou transferência) e uma cor.',
+          'Cada categoria aparece com um ícone na cor dela (talheres em Alimentação, casa em Moradia…) no Painel, nas Análises, em Categorias e regras e em Orçamentos. Categoria criada por você aparece com a primeira letra do nome.',
           'Para uma subcategoria (ex.: Lazer › Cinema), escolha a categoria em “Subcategoria de”.',
           'No filtro de Transações, escolher uma categoria inclui as subcategorias dela.'
         ],
@@ -797,8 +799,11 @@ export const MANUAL: CapituloManual[] = [
           'Abra Metas e clique em “+ Nova meta”.',
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
           'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
-          'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta.',
-          'Quando a meta chega ao valor alvo, ela fica “concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “concluída por você”; para ela voltar, desmarque “Concluída” em “editar”.'
+          'Não sabe a data? Deixe “Data alvo” em branco (a meta fica “sem data definida”), ou diga em “Quanto vou guardar por mês” quanto vai guardar: o site calcula quando a meta chega ao alvo, contando o mês atual, e preenche a data alvo. A data continua podendo ser mudada à mão. O valor por mês fica gravado na meta (aparece de novo ao editar) e o plano passa a usá-lo; apague o campo para o plano voltar a decidir. O valor não pode passar do que sobra para as metas (a maior sobra dos próximos 12 meses, já descontado o que as outras metas guardam por mês): acima disso, o campo diz o máximo e “Salvar” fica desabilitado.',
+          'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta e, translúcido, no centro do anel do percentual; o anel e o miolo dele enchem na cor escolhida, conforme o dinheiro guardado.',
+          'Cada meta é uma barra que abre e fecha: clique no nome. Fechada, ela mostra o percentual, quanto já foi guardado e quanto guardar no mês. Aberta, o anel, os valores e a prioridade ficam à esquerda, e o plano do mês à direita (no celular, um embaixo do outro). Todas começam abertas; as que você fechar ficam fechadas neste navegador. “Fechar todas” e “Abrir todas” ficam no topo da lista.',
+          'Meta sem data alvo mostra “sem data definida”.',
+          'Quando a meta chega ao valor alvo, ela fica “Concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “Concluída por você”; para ela voltar, desmarque “Concluída” em “Editar”. Aberta, a meta concluída mostra uma caixa verde “Meta alcançada!” com o quanto foi guardado.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
       },
@@ -807,7 +812,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Acompanhar o progresso',
         paraQueServe: 'Fazer a meta andar sozinha ou registrar cada aporte.',
         passos: [
-          'Sem conta ligada: registre cada valor guardado em “+ aporte”.',
+          'Sem conta ligada: registre cada valor guardado em “+ Aporte”.',
           'Com uma conta ligada (“Acompanhar saldo de uma conta”): o progresso é o valor inicial mais o saldo da conta.',
           'Na conta do Mercado Pago, dá para escolher um cofrinho (reserva): o progresso usa o saldo dele.',
           '“confira em Reservas” aparece quando o saldo do cofrinho é estimado: confira o saldo real em Investimentos › Reservas.'
@@ -819,14 +824,15 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Prioridade e quanto guardar por mês',
         paraQueServe: 'Saber quanto guardar este mês em cada meta, pelo dinheiro que de fato entra e sai, contando a fatura do cartão.',
         passos: [
-          'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence − outras despesas) e quanto guardar no total.',
+          'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence − outras despesas) e, numa caixa em destaque, quanto guardar no total (e o limite, quando houver).',
           'Em “Guardar X% da sobra”, escolha quanto da sobra vai para as metas; o resto fica livre para imprevistos.',
           'Use ↑ e ↓ em cada meta para definir a prioridade.',
-          'Cada meta mostra “Este mês: guarde R$ X” e, embaixo, os degraus dos meses seguintes: menos nos meses de fatura alta, mais quando ela cai.',
+          'Cada meta mostra “Este mês: guarde R$ X”, com “Consigo guardar outro valor” na mesma linha, e o “Plano mês a mês” já aberto: menos nos meses de fatura alta, mais quando ela cai.',
           'Em “Consigo guardar outro valor”, diga quanto dá para guardar este mês: o resto do plano é refeito na hora e mostra se ainda fecha no prazo.',
+          'Na meta em que você disse “Quanto vou guardar por mês”, o plano guarda esse valor todo mês, antes das outras e pela prioridade, mas nunca mais do que a parte da sobra que vai para as metas: se num mês não der, um aviso amarelo diz quanto dá e o resto fica para os meses seguintes.',
           'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
-          '“Plano mês a mês” mostra os próximos 12 meses; “Como calculei” explica a conta.',
-          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ aporte” muda o gráfico, e embaixo ficam os últimos aportes. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
+          '“Plano mês a mês” mostra os próximos 5 meses e para no mês em que a meta é alcançada; “Mostrar mais” acrescenta 5 de cada vez, até 12, e “Mostrar menos” volta aos 5. “Como calculei” explica a conta.',
+          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ Aporte” muda o gráfico, e embaixo ficam os últimos aportes, com a data e a hora. A escala acompanha os aportes: todos no mesmo dia, um ponto por aporte, na hora e minuto; todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês, com o plano. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
         termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],
@@ -985,7 +991,9 @@ export const MANUAL: CapituloManual[] = [
           'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros). O que você oculta ou minimiza sai da conta do sino.',
           'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir as notificações, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
           '“Mais análises” abre a evolução de 12 meses e as últimas transações. “Últimas transações” vai até hoje; as que têm data depois de hoje (parcelas que o banco já lançou) ficam em “Futuras (N)”, com o ano na data. “ver todas” abre Transações no mesmo recorte.',
-          'Clique num total por categoria para ver as transações por trás dele.'
+          '“Gastos por categoria” mostra o total do mês no centro da rosca; as categorias menores que 3% ficam juntas na fatia “Outras”. A lista embaixo traz cada categoria com o ícone, uma barrinha do tamanho do gasto, o valor e o %; mostra as 8 maiores, e “Mostrar todas” abre o resto.',
+          'Ao lado, “Orçamentos” mostra cada orçamento do mês com o ícone da categoria e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.',
+          'Clique num total por categoria para ver as transações por trás dele; na fatia “Outras”, abrem todas as despesas do mês.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
         termos: ['dividaCartoes', 'patrimonioSemRendaVariavel']

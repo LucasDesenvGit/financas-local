@@ -2,6 +2,63 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
+
+## [2.40.2] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: relógio de teste e contrato rodando contra o Go atrás do .NET** (#363, épico #70). Nada muda para quem usa. Para quem desenvolve:
+  - o Go ganha uma opção só para teste, `-inicio-do-relogio`, desligada por padrão: o relógio começa num instante dado e anda dali, como a libfaketime faz com o .NET no contrato (ela não age sobre o Go). O .NET a passa ao Go quando `Go:InicioDoRelogio` tem um instante (vazio no `appsettings.json`);
+  - o contrato compila o Go e o sobe atrás do .NET, com o mesmo relógio. `PREFIXOS_GO="/api/..."` passa um assunto pelo Go com os mesmos esperados; `--go` passa os assuntos ligados em `testes/contrato/assuntos-no-go.txt`, e a CI roda as duas rodadas. O `/api/go/saude` devolve a hora e a data do relógio do Go e ganhou casos de contrato (58 casos);
+  - para os assuntos feitos em paralelo (#75, #77, #81) não se chocarem: cada assunto registra as rotas com uma linha no `internal/api`, tem um número de arquivo de casos reservado (tabela no README do contrato) e uma entrada própria em `Go:Prefixos`, que passa a ser uma entrada por assunto (o texto com `;` continua valendo).
+
+## [2.40.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Investimentos: Câmbio e Criptomoedas com as colunas alinhadas** (#377). Os dois blocos usam a mesma grade:
+  - código com largura fixa, bandeira ou ícone, nome, valor, variação e fonte;
+  - o nome começa e o valor termina no mesmo ponto em todas as linhas, e também de um bloco para o outro;
+  - no câmbio, que não tem variação, a data termina onde termina a de cripto;
+  - no celular, a variação e a fonte ficam embaixo do nome.
+
+## [2.40.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Categorias com o ícone na cor delas, no lugar da bolinha** (#336).
+  - **Onde aparece:** no Painel ("Gastos por categoria" e Orçamentos), nas Análises (Relatórios, Visão anual e Projeção), em Categorias e regras e em Orçamentos, inclusive na sugestão de orçamentos.
+  - **Como é:** um quadrado arredondado com o ícone da categoria (talheres em Alimentação, casa em Moradia…), na cor dela, com o fundo dessa cor suave. Categoria sem ícone conhecido mostra a primeira letra do nome.
+  - **Contraste:** o ícone tem pelo menos 3:1 sobre o fundo nos dois temas e em todas as paletas, conferido pelo teste.
+  - **A rosca do Painel:**
+    - o total do mês fica no centro;
+    - as categorias menores que 3% ficam juntas em "Outras", e clicar nessa fatia abre todas as despesas do mês;
+    - as fatias ganham um espaço entre elas.
+  - **A lista do Painel:** cada categoria mostra o ícone, uma barrinha embaixo do nome, o valor e o %. Aparecem as 8 maiores, e "Mostrar todas" abre o resto.
+  - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas dividindo a altura por igual e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
+  - **Animações:** as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e o bloco de Orçamentos acompanha. O conteúdo de "Mais análises", em todas as telas, desce aparecendo ao abrir e sobe sumindo ao fechar. Com "reduzir movimento" ligado no sistema, não há animação.
+
+## [2.39.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Contas a pagar: nome, conta e forma de cobrança alinhados** (#379). O selo da cobrança fica numa coluna própria. À direita dele, o nome, a conta (com o selo do banco), a forma de cobrança ("paga à mão", "débito automático"…) e a observação ficam empilhados, todos começando no mesmo ponto. Antes, as linhas de baixo começavam antes do nome, cada uma num lugar diferente, o que ficava mais visível nas transferências. Vale também para as sugestões achadas no extrato.
+
+## [2.39.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Metas: a data alvo pelo valor que você vai guardar por mês** (#359). No formulário, "Quanto vou guardar por mês" calcula quando a meta chega ao alvo, contando o mês atual, e preenche a data alvo. Uma frase mostra a conta ("Com R$ 1.000,00 por mês, você chega lá em mar./2027 (6 meses)"). Mudar o alvo ou o que já está guardado recalcula; a data continua editável à mão. Criar sem data alvo continua possível, e a meta fica "sem data definida". O valor por mês fica gravado na meta (coluna nova `Meta.GuardarPorMes`) e volta ao editar. O plano guarda esse valor todo mês, antes das outras metas e pela prioridade, sem passar da parte da sobra que vai para as metas (a meta avisa o mês em que não dá). No formulário, valor por mês acima do que sobra para as metas (a maior sobra dos próximos 12 meses, menos o que as outras metas já guardam) é bloqueado: o erro aparece ao digitar, com o máximo, e "Salvar" fica desabilitado. O plano mês a mês para no mês em que a meta é alcançada, e os degraus também não passam dessa parte da sobra. No topo, a recomendação vira uma caixa em destaque numa linha só, com o limite ao lado e o essencial em negrito; os avisos amarelos das metas (prazo e valor por mês) viram caixas no mesmo estilo, com valores e meses em negrito, e os links do aviso de prazo ficam na linha de baixo, separados por "|". O ícone da meta aparece, translúcido, no centro do anel do percentual, e o miolo do anel enche de baixo para cima na cor da meta, até o percentual guardado. Os botões do cartão ficam "+ Aporte" e "Editar", e a etiqueta "Concluída" (ou "Concluída por você"), com maiúscula. A meta concluída ganha uma caixa verde "Meta alcançada!" no lado do plano, e o hover do título dela fica verde translúcido. O gráfico "Como está indo" acompanha os aportes: todos no mesmo dia, um ponto por aporte na hora e minuto (a API devolve a hora do aporte, em Brasília); todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês. A lista de aportes mostra a hora.
+
+## [2.38.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Metas: card espremido com uma meta só, e um card mais fácil de ler** (#335).
+  - **Cada meta é uma sanfona** na largura toda, como os grupos de "Assinaturas e recorrentes". Fechada, mostra o percentual, os valores e quanto guardar no mês. Todas começam abertas, as fechadas ficam lembradas neste navegador, e há "Fechar todas"/"Abrir todas".
+  - **Aberta, no computador**, o anel, os valores e a prioridade ficam centralizados à esquerda, e o plano do mês à direita; as ações ("+ aporte", "editar") ficam embaixo, na largura toda. No celular, um embaixo do outro.
+  - **"Consigo guardar outro valor"** fica na mesma linha de "Este mês: guarde".
+  - **A lista "Depois:" saiu.** O "Plano mês a mês" já vem aberto, com 5 meses; "Mostrar mais" acrescenta 5 de cada vez, até 12.
+  - **Meta sem data alvo** mostra "sem data definida", e as metas não desalinham.
+
 ## [2.38.0] — 2026-10-23 · desenvolvimento
 
 ### Funcionalidades

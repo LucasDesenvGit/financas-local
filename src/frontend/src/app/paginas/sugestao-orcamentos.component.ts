@@ -6,6 +6,7 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { ItemSugestaoOrcamento, NaturezaGasto, SugestaoOrcamento } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { AvisosService } from '../compartilhado/avisos.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { NOMES_MESES } from '../compartilhado/utilidades';
 
@@ -27,7 +28,7 @@ interface Fatia { classe: string; rotulo: string; percentual: number; referencia
  */
 @Component({
   selector: 'app-sugestao-orcamentos',
-  imports: [FormsModule, MoedaPipe, DecimalPipe],
+  imports: [IconeCategoriaComponent, FormsModule, MoedaPipe, DecimalPipe],
   template: `
     @if (erro()) {
       <p class="erro">{{ erro() }}</p>
@@ -89,7 +90,7 @@ interface Fatia { classe: string; rotulo: string; percentual: number; referencia
               <tr [class.sem-dados]="l.item.sugerido === null" [class.selecionada]="l.marcada">
                 <td class="col-check"><label class="celula-marcar"><input type="checkbox" [(ngModel)]="l.marcada" (ngModelChange)="mudou()"
                   [disabled]="l.item.sugerido === null" [attr.aria-label]="'Aplicar orçamento de ' + l.item.nome"></label></td>
-                <td class="nowrap categoria"><span class="ponto" [style.background]="l.item.cor"></span>{{ l.item.nome }}
+                <td class="nowrap categoria"><span class="categoria-com-icone"><app-icone-categoria [nome]="l.item.nome" [cor]="l.item.cor" [tamanho]="24" />{{ l.item.nome }}</span>
                   <br><small class="texto-suave">{{ rotuloNatureza(l.item.natureza) }}</small></td>
                 <td class="direita">
                   @if (l.item.sugerido === null) {

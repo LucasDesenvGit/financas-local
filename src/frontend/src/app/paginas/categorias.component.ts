@@ -9,6 +9,7 @@ import {
   TipoCategoria, TipoCorrespondencia, NaturezaGasto
 } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { CORES_SUGERIDAS, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import { IconeComponent } from '../compartilhado/icone.component';
@@ -22,7 +23,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
 
 @Component({
   selector: 'app-categorias',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective, CampoValorComponent,
+  imports: [IconeCategoriaComponent, ListaSuspensaDirective, FormsModule, RouterLink, ModalComponent, IconeComponent, DicaDirective, CampoValorComponent,
     MoedaPipe],
   template: `
     <header class="cabecalho-pagina">
@@ -45,7 +46,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
               <ul class="lista-simples">
                 @for (c of grupo.itens; track c.id) {
                   <li class="clicavel" (click)="editarCategoria(c)" [class.ignorada]="!c.ativa">
-                    <span class="ponto" [style.background]="c.cor"></span>
+                    <app-icone-categoria [nome]="c.nome" [cor]="c.cor" />
                     <!-- WCAG 2.1.1: o clique na linha é atalho de mouse; pelo teclado, a edição abre por este botão. -->
                     <button type="button" class="cresce botao-texto" [class.subcategoria]="c.categoriaPaiId"
                       (click)="$event.stopPropagation(); editarCategoria(c)" [attr.aria-label]="'Editar a categoria ' + c.nome">{{ c.nome }}</button>

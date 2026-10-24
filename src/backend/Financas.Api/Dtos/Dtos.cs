@@ -282,7 +282,8 @@ public record AplicarSugestaoOrcamentoDto([Range(2000, 2100)] short Ano, [Range(
 public record MetaDto(int Id, string Nome, decimal ValorAlvo, decimal ValorAtual, DateOnly? DataAlvo,
     int? ContaId, string? ContaNome, string Cor, bool Concluida, decimal Percentual, decimal? AporteMensalSugerido,
     decimal ValorInicial, decimal SaldoConta, string? ReservaNome = null, decimal? SaldoReserva = null,
-    bool ReservaConferir = false, bool ReservaNaoEncontrada = false, int Prioridade = 0, string? Icone = null);
+    bool ReservaConferir = false, bool ReservaNaoEncontrada = false, int Prioridade = 0, string? Icone = null,
+    decimal? GuardarPorMes = null);
 
 /// <summary>Nova ordem de prioridade das metas (a primeira da lista é a 1ª prioridade).</summary>
 public record PrioridadesMetasDto([Required, MinLength(1), MaxLength(200)] List<int> Ids);
@@ -313,12 +314,15 @@ public record SalvarMetaDto(
     bool Concluida,
     [StringLength(100)] string? ReservaNome = null,
     // #316: nome do ícone da lista do front-end (letras minúsculas e hífen); null = o padrão.
-    [StringLength(30), RegularExpression("^[a-z-]+$")] string? Icone = null);
+    [StringLength(30), RegularExpression("^[a-z-]+$")] string? Icone = null,
+    // #359: quanto a pessoa vai guardar por mês; null = o plano das metas decide.
+    [Range(0.01d, 999999999d)] decimal? GuardarPorMes = null);
 
 public record AporteDto([Range(-999999999d, 999999999d)] decimal Valor);
 
 /// <summary>#318: um aporte da meta, para o gráfico "Como está indo".</summary>
-public record MetaAporteDto(DateOnly Data, decimal Valor);
+/// <summary>#318: um aporte da meta. <c>Hora</c> (#359): "HH:mm" no fuso de Brasília, para o gráfico de um dia só.</summary>
+public record MetaAporteDto(DateOnly Data, decimal Valor, string? Hora = null);
 
 public record ContaAgendadaDto(int Id, string Descricao, decimal Valor, DateOnly ProximoVencimento,
     Recorrencia Recorrencia, int? CategoriaId, string? CategoriaNome, int? ContaId, string? ContaNome,

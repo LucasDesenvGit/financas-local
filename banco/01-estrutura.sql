@@ -373,6 +373,9 @@ CREATE TABLE IF NOT EXISTS Meta
     -- #316: ícone escolhido para a meta (nome da lista do front-end); NULL = o padrão (cofrinho).
     -- Bancos antigos: coluna via 2-criar-banco.sh.
     Icone       TEXT    NULL,
+    -- #359: quanto a pessoa disse que vai guardar por mês (o plano das metas usa esse valor); NULL = o plano decide.
+    -- Bancos antigos: coluna via 2-criar-banco.sh.
+    GuardarPorMes TEXT  NULL,
     -- Preenchido pela API (Meta.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm    TEXT    NOT NULL,
     CONSTRAINT CK_Meta_ValorAlvo CHECK (CAST(ValorAlvo AS REAL) > 0),

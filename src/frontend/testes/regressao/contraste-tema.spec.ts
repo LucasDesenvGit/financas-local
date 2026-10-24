@@ -87,3 +87,33 @@ describe('Regressão: contraste da seta e do foco do menu em grupos (WCAG 1.4.11
     expect(css).not.toMatch(/\.grupo-cabecalho[^{]*:focus[^{]*\{[^}]*outline:\s*(none|0)/);
   });
 });
+
+describe('Regressão: ícone da categoria sobre o fundo suave dela (#336, WCAG 1.4.11)', () => {
+  // As mesmas misturas do <app-icone-categoria>: o desenho é a cor meio a meio com o texto forte no tema claro e a cor
+  // pura no escuro, e o fundo é 22% da cor sobre a superfície. Cores: as sugeridas e as das categorias padrão (as que a pessoa mais vê).
+  const componente = readFileSync(join(__dirname, '../../src/app/compartilhado/icone-categoria.component.ts'), 'utf8');
+  const sql = readFileSync(join(__dirname, '../../../../banco/02-dados-iniciais.sql'), 'utf8');
+  const utilidades = readFileSync(join(__dirname, '../../src/app/compartilhado/utilidades.ts'), 'utf8');
+  const categorias = sql.slice(sql.indexOf('INSERT OR IGNORE INTO Categoria'), sql.indexOf(';', sql.indexOf('INSERT OR IGNORE INTO Categoria')));
+  const sugeridas = utilidades.slice(utilidades.indexOf('CORES_SUGERIDAS'), utilidades.indexOf('];', utilidades.indexOf('CORES_SUGERIDAS')));
+  const cores = [...new Set([...categorias.matchAll(/'(#[0-9a-fA-F]{6})'/g), ...sugeridas.matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1].toLowerCase()))];
+
+  const misturar = (a: string, b: string, parteA: number) => '#' + [1, 3, 5].map((i) =>
+    Math.round(parseInt(a.slice(i, i + 2), 16) * parteA + parseInt(b.slice(i, i + 2), 16) * (1 - parteA)).toString(16).padStart(2, '0')).join('');
+
+  it('o componente usa as misturas conferidas aqui', () => {
+    expect(componente).toContain('background: color-mix(in srgb, var(--cor) 22%, var(--superficie))');
+    expect(componente).toContain('color: color-mix(in srgb, var(--cor) 50%, var(--texto-forte))');
+    expect(componente).toContain(':host-context([data-tema="escuro"]) .icone-categoria { color: var(--cor); }');
+    expect(cores.length).toBeGreaterThan(20);
+  });
+
+  it.each(casosDosTemas())('%s: o ícone tem pelo menos 3:1 sobre o fundo, em toda cor de categoria', (nome, tema) => {
+    const abaixo = cores.filter((cor) => {
+      const desenho = nome.startsWith('escuro') ? cor : misturar(cor, tema['texto-forte'], 0.5);
+      const fundo = misturar(cor, tema['superficie'], 0.22);
+      return contraste(desenho, fundo) < 3;
+    });
+    expect(abaixo).toEqual([]);
+  });
+});

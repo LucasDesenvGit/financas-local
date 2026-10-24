@@ -2,25 +2,25 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CampoValorComponent } from '../compartilhado/campo-valor.component';
+import { CampoValorComponent, formatarValor } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
 import { ApiService } from '../core/api.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Conta, Meta, MetaAporte, PlanoMetas, Reserva, SalvarMeta } from '../core/modelos';
-import { Degrau, PlanoDaMeta, planejarMetas } from './metas-plano';
+import { Degrau, PlanoDaMeta, dataPeloValorMensal, planejarMetas } from './metas-plano';
 import { TermoComponent } from '../compartilhado/termo.component';
 import { NOMES_MESES } from '../compartilhado/utilidades';
 import { AvisosService } from '../compartilhado/avisos.component';
 import { ModalComponent } from '../compartilhado/modal.component';
 import { CORES_SUGERIDAS, NOMES_CORES } from '../compartilhado/utilidades';
 import { IconeComponent } from '../compartilhado/icone.component';
-import { IconesMeta, iconeDaMeta } from '../compartilhado/icones';
+import { Icones, IconesMeta, iconeDaMeta } from '../compartilhado/icones';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import { ChartConfiguration } from 'chart.js';
 import { GraficoComponent } from '../compartilhado/grafico.component';
 import { GraficoExplicadoComponent } from '../compartilhado/grafico-explicado.component';
 import { PrivacidadeService } from '../core/privacidade.service';
-import { evolucaoDaMeta, resumoEvolucao } from './metas-evolucao';
+import { comoLerEvolucao, evolucaoDaMeta, resumoEvolucao } from './metas-evolucao';
 import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directive';
 
 @Component({
@@ -50,27 +50,30 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             <p class="texto-suave conta-sobra">Entra {{ m0.receitas | currency }} · fatura do cartão {{ m0.faturas | currency }}
               · outras despesas {{ m0.despesas | currency }}</p>
           }
+          <!-- #359: a recomendação é o aviso principal do bloco: numa caixa só, numa linha (quebra só quando não cabe), com o
+               essencial em negrito (Nielsen 1 e 8). -->
           @if (c.sobraMes <= 0) {
-            <p class="negativo">Pelo dinheiro que entra e sai, este mês fecha no vermelho: recomendo guardar R$ 0 agora.
-              O plano compensa nos meses com mais folga.</p>
+            <p class="aviso-recomendacao aviso-vermelho">Pelo dinheiro que entra e sai, este mês <strong>fecha no vermelho</strong>:
+              recomendo guardar <strong>R$ 0 agora</strong>. O plano compensa nos meses com mais folga.</p>
           } @else if (ativas().length === 0) {
             <!-- #316: sem meta em andamento não há para onde mandar a sobra: dizer isso, e não "guardar R$ 0,00". -->
-            <p>Nenhuma meta em andamento: crie uma meta, ou reabra uma concluída (em “editar”, desmarque “Concluída”), para eu
-              dividir a sobra.</p>
+            <p class="aviso-recomendacao"><strong>Nenhuma meta em andamento:</strong> crie uma meta, ou reabra uma concluída (em
+              “Editar”, desmarque “Concluída”), para eu dividir a sobra.</p>
           } @else {
-            <p>Recomendo guardar <strong>{{ c.totalRecomendado | currency }}</strong> este mês, dividido pela ordem de prioridade das metas.</p>
-            @switch (c.limitadoPor) {
-              @case ('saldo') {
-                <p class="texto-suave">Limitei ao que deve sobrar nas suas contas no fim do mês, depois de pagar a fatura
-                  ({{ p.saldoFimDoMes | currency }}).</p>
-              }
-              @case ('historico') {
-                <p class="texto-suave">Limitei ao que de fato sobrou no seu melhor mês recente ({{ p.melhorMesRecente | currency }}).</p>
-              }
-              @case ('minimo') {
-                <p class="texto-suave">É pouco, mas é um começo: o plano compensa nos meses com mais folga.</p>
-              }
-            }
+            <p class="aviso-recomendacao">Recomendo guardar <strong class="valor-recomendado">{{ c.totalRecomendado | currency }}</strong>
+              este mês, dividido pela <strong>ordem de prioridade</strong> das metas.@switch (c.limitadoPor) {
+                @case ('saldo') {
+                  <span class="limite-recomendacao">Limitei ao que deve sobrar nas contas no fim do mês, depois da fatura
+                    (<strong>{{ p.saldoFimDoMes | currency }}</strong>).</span>
+                }
+                @case ('historico') {
+                  <span class="limite-recomendacao">Limitei ao que de fato sobrou no seu melhor mês recente
+                    (<strong>{{ p.melhorMesRecente | currency }}</strong>).</span>
+                }
+                @case ('minimo') {
+                  <span class="limite-recomendacao">É pouco, mas é um começo: o plano compensa nos meses com mais folga.</span>
+                }
+              }</p>
           }
           <!-- #149 (C): quanto da sobra vai para as metas, na própria tela; muda na hora (Nielsen 3 e 6). -->
           <label class="parte-sobra">Guardar
@@ -86,28 +89,49 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
       </section>
     }
 
-    <section class="grade-cartoes">
+    <!-- #335: cada meta é uma sanfona, como os grupos de "Assinaturas e recorrentes" (ADR 0046): o título é o botão
+         (aria-expanded), fechada ainda mostra o percentual e os valores, várias abertas ao mesmo tempo, todas abertas no
+         começo, as fechadas lembradas neste navegador (ADR 0017). Aberta, o resumo fica à esquerda e o plano à direita. -->
+    @if (metas().length > 1) {
+      <div class="acoes-metas">
+        <button type="button" class="link" (click)="alternarTodasMetas()">{{ algumaMetaAberta() ? 'Fechar todas' : 'Abrir todas' }}</button>
+      </div>
+    }
+    <section class="grade-cartoes lista-metas">
       @for (m of metas(); track m.id) {
-        <article class="cartao-meta" [class.concluida]="m.concluida">
-          <header>
-            <span class="titulo-meta">
+        <article class="cartao-meta" [class.concluida]="m.concluida" [class.fechada]="!metaAberta(m.id)">
+          <h2 class="meta-titulo">
+            <button type="button" class="meta-alternar" [id]="'meta-' + m.id" [attr.aria-expanded]="metaAberta(m.id)"
+              [attr.aria-controls]="'meta-' + m.id + '-conteudo'" (click)="alternarMeta(m.id)">
               <!-- #316: o ícone escolhido, na cor da meta (decorativo: o nome está ao lado). -->
               <span class="icone-meta" [style.--cor]="m.cor" aria-hidden="true">
                 <app-icone [icone]="iconeDaMeta(m.icone).icone" [tamanho]="18" />
               </span>
-              <strong>{{ m.nome }}</strong>
-            </span>
-            <!-- #316: concluída sem chegar ao alvo foi marcada pela pessoa: dizer isso, sem contradizer o percentual. -->
-            @if (m.concluida) {
-              <span class="etiqueta etiqueta-sucesso">{{ m.percentual < 100 ? 'concluída por você' : 'concluída' }}</span>
-            }
-          </header>
+              <strong class="meta-nome">{{ m.nome }}</strong>
+              <!-- #316: concluída sem chegar ao alvo foi marcada pela pessoa: dizer isso, sem contradizer o percentual. -->
+              @if (m.concluida) {
+                <span class="etiqueta etiqueta-sucesso">{{ m.percentual < 100 ? 'Concluída por você' : 'Concluída' }}</span>
+              }
+              <span class="texto-suave meta-resumo-curto">{{ m.percentual | number: '1.0-0' }}% · {{ m.valorAtual | currency }}
+                de {{ m.valorAlvo | currency }}@if (planoDe(m); as pm) { · guarde {{ pm.recomendado | currency }} este mês}</span>
+              <app-icone class="meta-seta" [icone]="setaGrupo" [tamanho]="16" />
+            </button>
+          </h2>
+          <!-- Fechada: fora do Tab e do leitor de tela (inert + visibility), sem sair do DOM, para animar a altura. -->
+          <div class="meta-conteudo" [id]="'meta-' + m.id + '-conteudo'" [class.fechado]="!metaAberta(m.id)"
+            [attr.inert]="metaAberta(m.id) ? null : ''">
+          <div class="meta-dentro">
+          <div class="meta-corpo">
+          <div class="meta-resumo">
           <div class="anel" [style.--pct]="m.percentual" [style.--cor]="m.cor">
-            <span>{{ m.percentual | number: '1.0-0' }}%</span>
+            <!-- #359: o ícone da meta, translúcido, no centro do anel, atrás do percentual (decorativo). -->
+            <span class="anel-icone" aria-hidden="true"><app-icone [icone]="iconeDaMeta(m.icone).icone" [tamanho]="60" /></span>
+            <span class="anel-percentual">{{ m.percentual | number: '1.0-0' }}%</span>
           </div>
           <!-- O espaço vai dentro do texto: entre duas tags o Angular o tira ("R$ 200,00de"). -->
           <p><strong>{{ m.valorAtual | currency }}</strong><span class="texto-suave"> de {{ m.valorAlvo | currency }}</span></p>
-          @if (m.dataAlvo) { <p class="texto-suave">até {{ m.dataAlvo | date: 'MMM/yyyy' }}</p> }
+          <!-- #335: sem data alvo, diz isso (e as metas lado a lado não desalinham). -->
+          <p class="texto-suave">@if (m.dataAlvo) {até {{ m.dataAlvo | date: 'MMM/yyyy' }}} @else {sem data definida}</p>
           @if (!m.concluida && posicao(m) > 0) {
             <div class="linha-prioridade">
               <span class="etiqueta etiqueta-suave">{{ posicao(m) }}ª prioridade</span>
@@ -117,14 +141,28 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 [attr.aria-label]="'Descer a prioridade de ' + m.nome">↓</button>
             </div>
           }
+          </div>
+          <div class="meta-detalhe">
+          <!-- #359: concluída, o lado do plano diz isso numa caixa verde (no lugar do fundo verde do cartão inteiro). -->
+          @if (m.concluida) {
+            <p class="aviso-concluida" role="status"><span class="icone-aviso" aria-hidden="true">✓</span>
+              @if (m.percentual < 100) {
+                <span><strong>Concluída por você</strong> com <strong>{{ m.valorAtual | currency }}</strong> de
+                  {{ m.valorAlvo | currency }} guardados.</span>
+              } @else {
+                <span><strong>Meta alcançada!</strong> Você guardou <strong>{{ m.valorAtual | currency }}</strong> de
+                  {{ m.valorAlvo | currency }}.</span>
+              }</p>
+          }
           @if (planoDe(m); as pm) {
-            <p class="recomendado">Este mês: guarde <strong>{{ pm.recomendado | currency }}</strong>@if (pm.ajustado) {<span
-              class="texto-suave"> (o valor que você escolheu)</span>}</p>
-            <!-- #149 (D): o usuário diz quanto consegue; o resto do plano é refeito na hora. Simulação até registrar o aporte. -->
-            @if (!pm.ajustado) {
-              <button type="button" class="link botao-ajuste" [attr.aria-expanded]="ajusteAberto() === m.id"
-                [attr.aria-controls]="'ajuste-meta-' + m.id" (click)="alternarAjuste(m.id)">Consigo guardar outro valor</button>
-            }
+            <!-- #149 (D): o usuário diz quanto consegue; o resto do plano é refeito na hora. Simulação até registrar o aporte.
+                 #335: o botão fica na mesma linha de "Este mês: guarde", à esquerda, junto do valor que ele muda. -->
+            <p class="recomendado"><span>Este mês: guarde <strong>{{ pm.recomendado | currency }}</strong>@if (pm.ajustado) {<span
+              class="texto-suave"> (o valor que você escolheu)</span>}</span>
+              @if (!pm.ajustado) {
+                <button type="button" class="link botao-ajuste" [attr.aria-expanded]="ajusteAberto() === m.id"
+                  [attr.aria-controls]="'ajuste-meta-' + m.id" (click)="alternarAjuste(m.id)">Consigo guardar outro valor</button>
+              }</p>
             <div [id]="'ajuste-meta-' + m.id">
               @if (ajusteAberto() === m.id || pm.ajustado) {
                 <div class="ajuste-mes">
@@ -138,35 +176,42 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 </div>
               }
             </div>
-            @if (pm.degraus.length) {
-              <!-- #149 (B): o plano em degraus, com o motivo (as faturas), em vez de um valor por mês (Nielsen 2 e 10). -->
-              <div class="degraus">
-                <span class="texto-suave">Depois:</span>
-                <ul>
-                  @for (d of pm.degraus.slice(0, 4); track d.inicio.ano * 100 + d.inicio.mes) {
-                    <li><strong>{{ d.valor > 0 ? (d.valor | currency) + (mesmoMes(d) ? '' : '/mês') : 'nada' }}</strong>
-                      {{ mesmoMes(d) ? 'em ' + rotuloMes(d.inicio) : 'de ' + rotuloMes(d.inicio) + ' a ' + rotuloMes(d.fim) }}
-                      <span class="texto-suave">(faturas ~{{ d.faturas | currency: 'BRL' : 'symbol' : '1.0-0' }})</span></li>
-                  }
-                  @if (pm.degraus.length > 4) { <li class="texto-suave">… veja o plano mês a mês</li> }
-                </ul>
-              </div>
+            <!-- #359: o valor por mês que a pessoa escolheu manda; a sobra para as metas é o limite. Quando o valor passa
+                 dela, o aviso é amarelo, como o do prazo (Nielsen 1). -->
+            @if (pm.porMes) {
+              @if (pm.porMesCortado; as c) {
+                <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                  <span><strong>{{ pm.porMes | currency }} por mês</strong> não cabem: em
+                  <strong>{{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}</strong> a sobra só dá
+                  <strong>{{ c.valor | currency }}</strong>; o resto fica para depois.</span></p>
+              } @else if (porMesAcimaDaSobra(pm); as limite) {
+                <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                  <span><strong>{{ pm.porMes | currency }} por mês</strong> passa da sobra para as metas este mês
+                  (<strong>{{ limite | currency }}</strong>); o plano guarda só o que cabe.</span></p>
+              } @else {
+                <p class="texto-suave nota-por-mes-plano">Você escolheu guardar {{ pm.porMes | currency }} por mês nesta meta.</p>
+              }
             }
-            @if (m.aporteMensalSugerido) {
+            @if (m.aporteMensalSugerido && !pm.porMes) {
               <p class="texto-suave">Divisão igual seria {{ m.aporteMensalSugerido | currency }}/mês · faltam {{ pm.falta | currency }}</p>
             }
             @if (pm.noPrazo === false && prazoVencido(m)) {
-              <p class="aviso-prazo" role="status">⚠ O prazo ({{ m.dataAlvo | date: 'MMM/yyyy' }}) já passou. Nesse ritmo você chega em
-                {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}; se quiser, edite a data da meta.</p>
+              <p class="aviso-prazo" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                <span>O prazo (<strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>) já passou. Nesse ritmo você chega em
+                <strong>{{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}</strong>; se quiser, edite a
+                data da meta.</span></p>
             } @else if (pm.noPrazo === false) {
-              <p class="aviso-prazo" role="status">⚠ Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}
-                (meta: {{ m.dataAlvo | date: 'MMM/yyyy' }}).
-                @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de {{ pm.paraManterPrazo | currency }}. }
+              <p class="aviso-prazo" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+                <span>Nesse ritmo você chega em <strong>{{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}</strong>
+                (meta: <strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>).
+                @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de <strong>{{ pm.paraManterPrazo | currency }}</strong>. }
                 <span class="saidas-prazo">
-                  <button type="button" class="link" (click)="editar(m)">Mudar o prazo ou o valor</button> ·
-                  <a routerLink="/anual">Ver onde cortar (50/30/20)</a> ·
+                  <button type="button" class="link" (click)="editar(m)">Mudar o prazo ou o valor</button>
+                  <span class="separador" aria-hidden="true">|</span>
+                  <a routerLink="/anual">Ver onde cortar (50/30/20)</a>
+                  <span class="separador" aria-hidden="true">|</span>
                   <a routerLink="/orcamentos">Orçamentos</a>
-                </span></p>
+                </span></span></p>
             } @else if (pm.noPrazo === null) {
               <p class="texto-suave">Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}.</p>
             }
@@ -175,20 +220,30 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
                 {{ nomeMesCurto(dep.aPartir.mes) }}/{{ dep.aPartir.ano % 100 }} (hoje ~{{ dep.antes | currency }}). Se entrar
                 parcelamento novo, ele atrasa; o assistente refaz a conta todo mês.</p>
             }
-            <button type="button" class="link botao-plano" [attr.aria-expanded]="planoAberto() === m.id"
+            <!-- #335: o plano mês a mês já vem aberto (no lugar da lista "Depois:"), com 5 meses e "Mostrar mais". -->
+            <button type="button" class="link botao-plano" [attr.aria-expanded]="planoAberto(m.id)"
               [attr.aria-controls]="'plano-meta-' + m.id" (click)="alternarPlano(m.id)">
-              <span aria-hidden="true">{{ planoAberto() === m.id ? '▾' : '▸' }}</span> Plano mês a mês</button>
+              <span aria-hidden="true">{{ planoAberto(m.id) ? '▾' : '▸' }}</span> Plano mês a mês</button>
             <div [id]="'plano-meta-' + m.id">
-              @if (planoAberto() === m.id) {
+              @if (planoAberto(m.id)) {
                 <table class="tabela tabela-plano">
                   <thead><tr><th>Mês</th><th class="direita">Sobra</th><th class="direita">Faturas</th><th class="direita">Guardar</th></tr></thead>
                   <tbody>
-                    @for (x of pm.meses; track x.ano * 100 + x.mes) {
+                    @for (x of pm.meses.slice(0, mesesNoPlano(m.id)); track x.ano * 100 + x.mes) {
                       <tr><td>{{ nomeMesCurto(x.mes) }}/{{ x.ano % 100 }}</td><td class="direita">{{ x.sobra | currency }}</td>
                         <td class="direita">{{ x.faturas | currency }}</td><td class="direita"><strong>{{ x.guardar | currency }}</strong></td></tr>
                     }
                   </tbody>
                 </table>
+                <div class="mais-meses">
+                  @if (pm.meses.length > mesesNoPlano(m.id)) {
+                    <button type="button" class="link" (click)="mostrarMaisMeses(m.id, pm.meses.length)">Mostrar mais {{
+                      Math.min(passoMeses, pm.meses.length - mesesNoPlano(m.id)) }} meses</button>
+                  }
+                  @if (mesesNoPlano(m.id) > passoMeses) {
+                    <button type="button" class="link" (click)="mostrarMenosMeses(m.id)">Mostrar menos</button>
+                  }
+                </div>
               }
             </div>
           } @else if (m.aporteMensalSugerido) {
@@ -215,15 +270,15 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
           <div [id]="'evolucao-meta-' + m.id">
             @if (evolucaoAberta() === m.id) {
               @if (evolucao(); as ev) {
-                <app-grafico-explicado [resumo]="resumoDaEvolucao()"
-                  comoLer="Linha cheia: o total guardado no fim de cada mês; cada aporte muda o mês dele. Tracejada: o plano até o alvo. Pontilhada: o valor alvo.">
+                <!-- #359: a escala acompanha os aportes (mês, dia ou hora), e o "como ler" diz qual é. -->
+                <app-grafico-explicado [resumo]="resumoDaEvolucao()" [comoLer]="comoLerEvolucao(ev.escala)">
                   <app-grafico [configuracao]="graficoEvolucao()!" [altura]="200" />
                 </app-grafico-explicado>
                 @if (ev.aportes.length) {
                   <h3 class="titulo-aportes">Últimos aportes</h3>
                   <ul class="lista-aportes">
                     @for (a of ev.aportes.slice(0, 5); track $index) {
-                      <li><span class="texto-suave">{{ a.data | date: 'dd/MM/yyyy' }}</span>
+                      <li><span class="texto-suave">{{ a.data | date: 'dd/MM/yyyy' }}@if (a.hora) { às {{ a.hora }}}</span>
                         <strong>{{ a.valor > 0 ? '+' : '' }}{{ a.valor | currency }}</strong></li>
                     }
                   </ul>
@@ -233,13 +288,18 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
               }
             }
           </div>
+          </div>
+          <!-- #335: as ações na largura toda, embaixo das duas colunas. -->
           <footer>
             @if (!m.concluida) {
-              <button type="button" class="link" (click)="abrirAporte(m)" [attr.aria-label]="'Aporte na meta ' + m.nome">+ aporte</button>
+              <button type="button" class="link" (click)="abrirAporte(m)" [attr.aria-label]="'Aporte na meta ' + m.nome">+ Aporte</button>
             }
             <span class="cresce"></span>
-            <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">editar</button>
+            <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">Editar</button>
           </footer>
+          </div>
+          </div>
+          </div>
         </article>
       } @empty {
         <p class="vazio">Crie metas como reserva de emergência, viagem ou entrada de um imóvel.</p>
@@ -251,7 +311,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
         <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
           <label>Nome <input name="nome" [(ngModel)]="fm.nome" required maxlength="120"></label>
           <div class="grade-campos">
-            <label>Valor alvo <app-campo-valor name="alvo" [ngModel]="fm.valorAlvo" (ngModelChange)="mudarAlvo(fm, $event)" obrigatorio [minimo]="0.01" /></label>
+            <label>Valor alvo <app-campo-valor name="alvo" [ngModel]="fm.valorAlvo" (ngModelChange)="mudarAlvo(fm, $event); recalcularPorMes(fm)" obrigatorio [minimo]="0.01" /></label>
             <label>Data alvo <app-campo-data name="data" [(ngModel)]="fm.dataAlvo" /></label>
           </div>
           <label>Acompanhar saldo de uma conta (opcional)
@@ -261,8 +321,25 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             </select>
           </label>
           <label>Valor inicial já guardado
-            <app-campo-valor name="atual" [(ngModel)]="fm.valorAtual" />
+            <app-campo-valor name="atual" [ngModel]="fm.valorAtual" (ngModelChange)="fm.valorAtual = $event; recalcularPorMes(fm)" />
           </label>
+          <!-- #359: em vez da data, dá para dizer quanto vai guardar por mês: o site calcula e preenche a data alvo. -->
+          <label>Quanto vou guardar por mês (opcional)
+            <!-- #359: não deixa passar do que sobra para as metas: o erro aparece ao digitar e "Salvar" fica desabilitado
+                 (WCAG 3.3.1). -->
+            <app-campo-valor name="porMes" [ngModel]="porMesNoForm" (ngModelChange)="porMesNoForm = $event; recalcularPorMes(fm)"
+              [maximo]="limitePorMes()" [mensagemMaximo]="mensagemLimitePorMes()" />
+          </label>
+          @if (porMesNoForm && !porMesAcimaDoLimite()) {
+            <p class="nota-discreta nota-por-mes" role="status">
+              @if (previsaoPorMes(fm); as p) {
+                Com {{ porMesNoForm | currency }} por mês, você chega lá em {{ p.data | date: 'MMM/yyyy' }}
+                ({{ p.meses === 1 ? 'este mês' : p.meses + ' meses' }}). A data alvo foi preenchida com ela.
+              } @else {
+                O que já está guardado chega ao valor alvo: não falta nada.
+              }
+            </p>
+          }
           @if (opcoesCofrinho(fm).length) {
             <label>Qual cofrinho (reserva)?
               <select name="reserva" [(ngModel)]="fm.reservaNome">
@@ -338,29 +415,104 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
     .valor-titulo { font-family: var(--fonte-titulo); font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
     .assistente-metas p { margin: 0 0 8px; }
     .assistente-metas .links-assistente { margin: 0; }
+    /* #359: o aviso da recomendação numa caixa de destaque; o texto corre numa linha e só quebra quando não cabe. */
+    .assistente-metas .aviso-recomendacao {
+      margin: 4px 0 12px; padding: 10px 14px; border-radius: 10px; line-height: 1.5;
+      background: var(--primaria-suave); border-left: 4px solid var(--primaria); color: var(--texto);
+    }
+    .aviso-recomendacao strong { color: var(--texto-forte); }
+    .aviso-recomendacao .valor-recomendado { font-variant-numeric: tabular-nums; }
+    .aviso-recomendacao .limite-recomendacao { color: var(--texto-suave); }
+    .aviso-recomendacao .limite-recomendacao::before { content: ' · '; }
+    .assistente-metas .aviso-vermelho { background: var(--negativo-suave); border-left-color: var(--negativo); }
     .linha-prioridade { display: flex; align-items: center; gap: 6px; }
     .linha-prioridade .botao-icone { width: 28px; height: 28px; }
     /* #316: divisórias no cartão (o progresso, o plano do mês e as ações), na cor de linha do site. */
     .recomendado { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--linha); }
-    .cartao-meta > footer { border-top: 1px solid var(--linha); }
+    .cartao-meta footer { border-top: 1px solid var(--linha); }
     /* #318: "Como está indo": a lista dos últimos aportes, data à esquerda e valor à direita. */
     .titulo-aportes { margin: 8px 0 4px; font-size: 0.86rem; font-weight: 600; color: var(--texto-suave); }
     .lista-aportes { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
     .lista-aportes li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
-    .cartao-meta > :has(+ footer) { margin-bottom: 8px; }
-    .aviso-prazo { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
+    /* #335: cada meta é uma sanfona na largura toda (a lista é uma coluna). */
+    .lista-metas { grid-template-columns: minmax(0, 1fr); }
+    .acoes-metas { display: flex; justify-content: flex-end; margin: 4px 0 -4px; }
+    .meta-titulo { margin: 0; font-size: 1rem; }
+    .meta-alternar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; min-height: 44px; padding: 4px 6px;
+      margin: -4px -6px; box-sizing: content-box; border: 0; border-radius: var(--raio-pequeno); background: none;
+      font: inherit; font-weight: 600; color: var(--texto-forte); text-align: left; cursor: pointer;
+      transition: background-color var(--transicao);
+    }
+    .meta-alternar:hover { background: var(--superficie-2); }
+    .meta-nome { flex: 1 1 160px; min-width: 0; }
+    .meta-resumo-curto { font-weight: 400; font-size: 0.88rem; }
+    .meta-seta { color: var(--texto-suave); transition: transform 0.2s ease; margin-left: auto; }
+    .meta-alternar[aria-expanded="true"] .meta-seta { transform: rotate(90deg); }
+    /* No celular, a seta fica na linha do nome (à direita), e o resumo vai inteiro para a linha de baixo. */
+    @media (max-width: 760px) {
+      .meta-alternar .etiqueta { order: 2; }
+      .meta-seta { order: 3; }
+      .meta-resumo-curto { order: 4; flex-basis: 100%; }
+    }
+    .meta-conteudo { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.2s ease, visibility 0s linear 0s; }
+    .meta-conteudo.fechado { grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.2s ease, visibility 0s linear 0.2s; }
+    .meta-dentro { min-height: 0; overflow: hidden; }
+    .meta-corpo { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--linha); }
+    .meta-resumo, .meta-detalhe { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .meta-resumo { align-items: center; text-align: center; }
+    .meta-resumo .linha-prioridade { justify-content: center; }
+    /* No computador, aberta: o resumo (anel, valores, prazo, prioridade) centralizado à esquerda e o plano à direita. */
+    @media (min-width: 901px) {
+      .meta-corpo { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 0 32px; align-items: stretch; }
+      /* As duas colunas centralizadas na vertical: o plano curto não deixa um buraco até as ações. */
+      .meta-resumo, .meta-detalhe { justify-content: center; }
+      .meta-detalhe { border-left: 1px solid var(--linha); padding-left: 32px; }
+      .meta-detalhe > .recomendado:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+      .meta-corpo > footer { grid-column: 1 / -1; margin-top: 12px; }
+    }
+    /* #359: aviso amarelo como o da recomendação: caixa com a barra à esquerda, o ⚠ na cor do alerta, o texto ao lado. */
+    .aviso-prazo {
+      display: flex; gap: 8px; align-items: baseline; margin: 2px 0; padding: 8px 12px; border-radius: 10px;
+      background: var(--alerta-suave); border-left: 4px solid var(--alerta); font-size: 0.875rem; line-height: 1.5;
+    }
+    /* #359: na meta concluída (fundo verde), o hover do título é um verde translúcido, e não o cinza das outras. */
+    .cartao-meta.concluida .meta-alternar:hover { background: color-mix(in srgb, var(--positivo) 14%, transparent); }
+    .aviso-concluida {
+      display: flex; gap: 8px; align-items: baseline; margin: 0 0 6px; padding: 8px 12px; border-radius: 10px;
+      background: var(--positivo-suave); border-left: 4px solid var(--positivo); font-size: 0.875rem; line-height: 1.5;
+    }
+    .aviso-concluida .icone-aviso { color: var(--positivo); font-weight: 700; flex: none; }
+    .aviso-concluida strong { color: var(--texto-forte); }
+    .aviso-prazo .icone-aviso { color: var(--alerta); font-size: 1rem; line-height: 1; flex: none; }
+    .aviso-prazo strong { color: var(--texto-forte); }
     .botao-plano, .botao-ajuste, .botao-evolucao { justify-self: start; padding-left: 0; }
     .conta-sobra { font-size: 0.85rem; }
     .parte-sobra { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; font-weight: 400; }
     .parte-sobra select { width: auto; }
     .ajuste-mes { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
     .ajuste-mes label { flex: 1 1 160px; font-size: 0.85rem; }
-    .degraus { font-size: 0.85rem; }
-    .degraus ul { margin: 2px 0 0; padding-left: 18px; display: grid; gap: 2px; }
-    .saidas-prazo { display: block; margin-top: 4px; }
+    /* #335: "Este mês: guarde" e "Consigo guardar outro valor" na mesma linha. */
+    .recomendado { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
+    .recomendado .botao-ajuste { padding: 0; min-height: 24px; }
+    .mais-meses { display: flex; gap: 16px; margin-top: 4px; font-size: 0.85rem; }
+    .saidas-prazo { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin-top: 4px; }
+    .saidas-prazo .separador { color: var(--texto-suave); }
+    .saidas-prazo .link { padding: 0; min-height: 24px; }
     .nota-plano { margin: 0; font-size: 0.8rem; }
     .tabela-plano { font-size: 0.8rem; }
     .tabela-plano th, .tabela-plano td { padding: 4px 6px; }
+    /* #359: o ícone da meta no centro do anel, translúcido na cor dela, atrás do percentual. */
+    .anel .anel-icone {
+      position: absolute; inset: 0; z-index: 1; display: grid; place-items: center;
+      color: var(--cor); opacity: 0.22; pointer-events: none;
+    }
+    .anel .anel-percentual { z-index: 2; text-shadow: 0 1px 2px var(--superficie); }
+    /* #359: o miolo do anel enche de baixo para cima, na cor da meta (a do ícone), até o percentual guardado. */
+    .anel::after {
+      background: linear-gradient(to top, color-mix(in srgb, var(--cor) 30%, var(--superficie)) calc(var(--pct) * 1%),
+        var(--superficie) calc(var(--pct) * 1%));
+    }
     /* #316: ícone da meta, num círculo com a cor dela (a mesma do anel). */
     .titulo-meta { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
     .icone-meta {
@@ -391,8 +543,47 @@ export class MetasComponent implements OnInit {
   readonly nomesCores = NOMES_CORES;
   readonly iconesMeta = IconesMeta;
   readonly iconeDaMeta = iconeDaMeta;
+  readonly setaGrupo = Icones.setaGrupo;
+  /** #335: metas fechadas na sanfona, lembradas neste navegador (ADR 0017); todas abertas no começo. */
+  static readonly CHAVE_FECHADAS = 'financas.metasFechadas';
+  private readonly metasFechadas = signal<ReadonlySet<number>>(MetasComponent.lerFechadas());
+  readonly algumaMetaAberta = computed(() => this.metas().some((m) => !this.metasFechadas().has(m.id)));
+
+  metaAberta(id: number): boolean {
+    return !this.metasFechadas().has(id);
+  }
+
+  alternarMeta(id: number): void {
+    this.metasFechadas.update((s) => {
+      const novo = new Set(s);
+      if (!novo.delete(id)) novo.add(id);
+      return novo;
+    });
+    this.guardarFechadas();
+  }
+
+  /** "Fechar todas" com alguma aberta; "Abrir todas" com todas fechadas (Nielsen 3). */
+  alternarTodasMetas(): void {
+    this.metasFechadas.set(this.algumaMetaAberta() ? new Set(this.metas().map((m) => m.id)) : new Set());
+    this.guardarFechadas();
+  }
+
+  private guardarFechadas(): void {
+    try { localStorage.setItem(MetasComponent.CHAVE_FECHADAS, JSON.stringify([...this.metasFechadas()])); } catch { /* só não lembra */ }
+  }
+
+  private static lerFechadas(): ReadonlySet<number> {
+    try {
+      const salvo: unknown = JSON.parse(localStorage.getItem(MetasComponent.CHAVE_FECHADAS) ?? '[]');
+      return new Set(Array.isArray(salvo) ? salvo.filter((id): id is number => Number.isInteger(id)) : []);
+    } catch {
+      return new Set();
+    }
+  }
   /** #316: a meta em edição (para saber quanto já foi guardado) e o aviso de que ela voltou para o plano. */
   private metaEditada: Meta | null = null;
+  /** #359: quanto a pessoa diz que vai guardar por mês (gravado na meta: calcula a data alvo e o plano usa esse valor). */
+  porMesNoForm: number | null = null;
   avisoReaberta = false;
   /** Guardar de 50% a 100% da sobra (a margem de segurança vai de 0% a 50%, ParametroService). */
   readonly opcoesPercentual = [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
@@ -400,9 +591,15 @@ export class MetasComponent implements OnInit {
   readonly contas = signal<Conta[]>([]);
   /** #90/#149: o caixa que vem da API; o plano das metas é calculado aqui (metas-plano.ts). */
   readonly plano = signal<PlanoMetas | null>(null);
-  readonly planoAberto = signal<number | null>(null);
+  /** #335: o plano mês a mês vem aberto em todas as metas; aqui, as que a pessoa fechou. */
+  private readonly planosFechados = signal<ReadonlySet<number>>(new Set());
+  /** #335: quantos meses o plano mostra em cada meta (5 no começo; "Mostrar mais" soma 5, até os 12 do plano). */
+  readonly passoMeses = 5;
+  private readonly mesesPlano = signal<ReadonlyMap<number, number>>(new Map());
+  readonly Math = Math;
   /** #318: o gráfico "Como está indo" aberto (uma meta por vez) e os aportes dela. */
   readonly evolucaoAberta = signal<number | null>(null);
+  readonly comoLerEvolucao = comoLerEvolucao;
   readonly aportesDaMeta = signal<{ metaId: number; aportes: MetaAporte[] } | null>(null);
   private readonly privacidade = inject(PrivacidadeService);
   /** #149 (C): quanto da sobra vai para as metas (100 − margem de segurança). */
@@ -471,7 +668,8 @@ export class MetasComponent implements OnInit {
     const caixa = this.plano();
     const agora = new Date();
     const hoje = caixa ? { ano: caixa.ano, mes: caixa.mes } : { ano: agora.getFullYear(), mes: agora.getMonth() + 1 };
-    return evolucaoDaMeta(meta, dados.aportes, this.planoDe(meta), hoje);
+    const hojeDia = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+    return evolucaoDaMeta(meta, dados.aportes, this.planoDe(meta), hoje, hojeDia);
   });
   readonly resumoDaEvolucao = computed(() => {
     const ev = this.evolucao();
@@ -599,8 +797,28 @@ export class MetasComponent implements OnInit {
     });
   }
 
+  planoAberto(id: number): boolean {
+    return !this.planosFechados().has(id);
+  }
+
   alternarPlano(id: number): void {
-    this.planoAberto.update((v) => (v === id ? null : id));
+    this.planosFechados.update((s) => {
+      const novo = new Set(s);
+      if (!novo.delete(id)) novo.add(id);
+      return novo;
+    });
+  }
+
+  mesesNoPlano(id: number): number {
+    return this.mesesPlano().get(id) ?? this.passoMeses;
+  }
+
+  mostrarMaisMeses(id: number, total: number): void {
+    this.mesesPlano.update((m) => new Map(m).set(id, Math.min(total, this.mesesNoPlano(id) + this.passoMeses)));
+  }
+
+  mostrarMenosMeses(id: number): void {
+    this.mesesPlano.update((m) => new Map(m).set(id, this.passoMeses));
   }
 
   nomeMes(mes: number): string {
@@ -615,6 +833,7 @@ export class MetasComponent implements OnInit {
   nova(): void {
     this.editandoId = null;
     this.metaEditada = null;
+    this.porMesNoForm = null;
     this.avisoReaberta = false;
     this.form = { nome: '', valorAlvo: 0, valorAtual: 0, dataAlvo: null, contaId: null, cor: CORES_SUGERIDAS[0], concluida: false, reservaNome: null, icone: null };
   }
@@ -622,6 +841,7 @@ export class MetasComponent implements OnInit {
   editar(m: Meta): void {
     this.editandoId = m.id;
     this.metaEditada = m;
+    this.porMesNoForm = m.guardarPorMes ?? null;
     this.avisoReaberta = false;
     this.form = {
       nome: m.nome, valorAlvo: m.valorAlvo, valorAtual: m.valorInicial, dataAlvo: m.dataAlvo,
@@ -633,6 +853,52 @@ export class MetasComponent implements OnInit {
    * #316: quanto falta para o alvo no formulário: o alvo do formulário menos o já guardado (o valor inicial do formulário
    * mais o que vem da conta ou do cofrinho, que o formulário não muda).
    */
+  /**
+   * #359: o maior valor por mês que dá para escolher: a maior parte da sobra para as metas nos próximos 12 meses (o mês
+   * atual já com os limites), menos o que as outras metas já guardam por mês. Null sem o plano (menos de 3 meses de extrato).
+   */
+  limitePorMes(): number | null {
+    const p = this.plano();
+    const c = this.calculado();
+    if (!p?.disponivel || !c) return null;
+    const parte = this.percentual() / 100;
+    const maior = Math.max(c.limiteMes, ...p.meses.slice(1, 12).map((m) => Math.max(0, m.sobra * parte)));
+    const outras = this.ativas().filter((m) => m.id !== this.editandoId).reduce((s, m) => s + (m.guardarPorMes ?? 0), 0);
+    return Math.max(0, Math.round((maior - outras) * 100) / 100);
+  }
+
+  mensagemLimitePorMes(): string {
+    const limite = this.limitePorMes();
+    if (limite === null) return '';
+    return limite > 0
+      ? `Passa do que sobra para as metas: informe até R$ ${formatarValor(limite, 2)} por mês (já descontado o que as outras metas guardam).`
+      : 'Não sobra nada para as metas nos próximos meses: deixe em branco e o plano decide.';
+  }
+
+  porMesAcimaDoLimite(): boolean {
+    const limite = this.limitePorMes();
+    return limite !== null && Number(this.porMesNoForm) > limite;
+  }
+
+  /** #359: a parte da sobra para as metas este mês, quando o valor por mês escolhido passa dela; senão, null. */
+  porMesAcimaDaSobra(pm: PlanoDaMeta): number | null {
+    const limite = this.calculado()?.limiteMes;
+    return pm.porMes !== null && limite !== undefined && pm.porMes > limite + 0.005 ? limite : null;
+  }
+
+  /** #359: com o valor por mês do formulário, em quantos meses e em que mês a meta chega ao alvo. */
+  previsaoPorMes(fm: SalvarMeta): { meses: number; data: string } | null {
+    const hoje = new Date();
+    return dataPeloValorMensal(this.faltaNoForm(fm), Number(this.porMesNoForm) || 0, { ano: hoje.getFullYear(), mes: hoje.getMonth() + 1 });
+  }
+
+  /** #359: mudou o valor por mês, o alvo ou o já guardado: a data alvo acompanha (só com o valor por mês preenchido). */
+  recalcularPorMes(fm: SalvarMeta): void {
+    if (!this.porMesNoForm || this.porMesAcimaDoLimite()) return;
+    const previsao = this.previsaoPorMes(fm);
+    if (previsao) fm.dataAlvo = previsao.data;
+  }
+
   faltaNoForm(fm: SalvarMeta): number {
     const deFora = this.metaEditada ? this.metaEditada.valorAtual - this.metaEditada.valorInicial : 0;
     return Math.max(0, Number(fm.valorAlvo) - (Number(fm.valorAtual) || 0) - deFora);
@@ -657,7 +923,8 @@ export class MetasComponent implements OnInit {
       ...this.form,
       valorAlvo: Number(this.form.valorAlvo),
       valorAtual: Number(this.form.valorAtual) || 0,
-      dataAlvo: this.form.dataAlvo || null
+      dataAlvo: this.form.dataAlvo || null,
+      guardarPorMes: Number(this.porMesNoForm) > 0 ? Number(this.porMesNoForm) : null
     };
     const req = this.editandoId ? this.api.atualizarMeta(this.editandoId, dto) : this.api.criarMeta(dto);
     req.subscribe({

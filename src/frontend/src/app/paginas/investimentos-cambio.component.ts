@@ -67,13 +67,13 @@ export interface LinhaCambio {
       @if (erro()) {
         <p class="texto-suave">Não deu para ler as cotações guardadas agora.</p>
       } @else if (linhas(); as lista) {
-        <ul class="lista-simples lista-cambio">
+        <ul class="lista-simples lista-cambio lista-cotacoes">
           @for (l of principais(); track l.codigo) {
             <ng-container *ngTemplateOutlet="linha; context: { $implicit: l }" />
           }
         </ul>
         <!-- Sempre no HTML, escondida com hidden: o aria-controls do botão aponta para ela (padrão Disclosure). -->
-        <ul class="lista-simples lista-cambio lista-cambio-mais" id="cambio-mais-moedas" [hidden]="!maisMoedasAberto()">
+        <ul class="lista-simples lista-cambio lista-cotacoes lista-cambio-mais" id="cambio-mais-moedas" [hidden]="!maisMoedasAberto()">
           @for (l of outras(); track l.codigo) {
             <ng-container *ngTemplateOutlet="linha; context: { $implicit: l }" />
           }
@@ -103,33 +103,27 @@ export interface LinhaCambio {
         <span class="cresce">{{ l.nome }} <small class="texto-suave">· {{ l.rotulo }}</small></span>
         @if (l.valor !== null) {
           <span class="valor">R$ {{ l.valor | number: '1.2-2' }}</span>
-          <small class="texto-suave data-cambio">PTAX de {{ l.data | date: 'dd/MM/yyyy' }}</small>
+          <!-- #377: sem variação no câmbio, a data ocupa a coluna dela e termina onde termina a de Criptomoedas. -->
+          <small class="texto-suave data-cambio cotacao-fonte sem-variacao">PTAX de {{ l.data | date: 'dd/MM/yyyy' }}</small>
         } @else {
-          <small class="texto-suave data-cambio">sem cotação guardada ainda</small>
+          <small class="texto-suave data-cambio sem-cotacao">sem cotação guardada ainda</small>
         }
       </li>
     </ng-template>
   `,
   styles: [`
     .bloco-cambio .bloco-titulo { flex-wrap: wrap; }
-    .lista-cambio li { flex-wrap: wrap; }
     .lista-cambio-mais { border-top: 1px solid var(--linha); }
     .lista-cambio-mais[hidden] { display: none; }
-    .moeda-identificacao { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    /* #377: as colunas (código, bandeira, nome, valor, data) vêm da grade comum .lista-cotacoes, do styles.css. */
     .codigo-moeda {
       font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px;
-      background: var(--superficie-2); color: var(--texto-suave); font-variant-numeric: tabular-nums;
-      min-width: 2.6em; text-align: center;
+      background: var(--superficie-2); color: var(--texto-suave); font-variant-numeric: tabular-nums; text-align: center;
     }
     /* Borda suave: a bandeira branca (Japão) não some no tema claro. */
     .bandeira { display: block; width: 20px; height: 15px; border-radius: 3px; object-fit: cover;
       box-shadow: 0 0 0 1px var(--linha); }
     .botao-mais-moedas { margin-top: 6px; min-height: 24px; }
-    .data-cambio { min-width: 9.5em; text-align: right; }
-    /* Celular: a data (ou "sem cotação guardada ainda") desce para a linha de baixo, e o nome fica com a largura toda. */
-    @media (max-width: 600px) {
-      .data-cambio { flex-basis: 100%; min-width: 0; margin-top: -6px; padding-left: 5.6em; text-align: left; }
-    }
   `]
 })
 export class InvestimentosCambioComponent {
