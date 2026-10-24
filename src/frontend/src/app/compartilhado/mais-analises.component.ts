@@ -14,6 +14,8 @@ let sequencia = 0;
  * O conteúdo vem num <ng-template> para só ser criado ao abrir: gráfico recolhido não é carregado nem desenhado.
  * A escolha de abrir/fechar fica lembrada por tela neste navegador. O botão diz o que tem dentro, para a pessoa
  * reconhecer em vez de lembrar (Nielsen 6), e usa aria-expanded/aria-controls (WCAG 4.1.2).
+ * Aberto pelo botão, o conteúdo desce aparecendo; fechado, sobe sumindo. Ao abrir a tela já aberta, aparece sem
+ * animação (sem movimento à toa). Sem animação com prefers-reduced-motion (regra global do styles.css).
  */
 @Component({
   selector: 'app-mais-analises',
@@ -30,7 +32,10 @@ let sequencia = 0;
         </button>
       </h2>
       <div [id]="id" class="mais-analises-conteudo">
-        @if (aberta() && modelo(); as m) { <ng-container [ngTemplateOutlet]="m" /> }
+        @if (aberta() && modelo(); as m) {
+          <div class="mais-analises-corpo" [animate.enter]="peloBotao ? 'mais-analises-entra' : ''"
+            [animate.leave]="'mais-analises-sai'"><ng-container [ngTemplateOutlet]="m" /></div>
+        }
       </div>
     </section>
   `
@@ -45,7 +50,11 @@ export class MaisAnalisesComponent {
   readonly id = `mais-analises-${++sequencia}`;
   readonly aberta = linkedSignal(() => this.lerPreferencia(this.chave()));
 
+  /** Só anima o que a pessoa abriu agora (a tela que já abre aberta não anima). */
+  peloBotao = false;
+
   alternar(): void {
+    this.peloBotao = true;
     this.aberta.update((v) => !v);
     try {
       localStorage.setItem(this.chaveArmazenada(this.chave()), this.aberta() ? '1' : '0');

@@ -710,6 +710,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.',
           'Dê um “Nome”, escolha o “Tipo” (despesa, receita ou transferência) e uma cor.',
+          'Cada categoria aparece com um ícone na cor dela (talheres em Alimentação, casa em Moradia…) no Painel, nas Análises, em Categorias e regras e em Orçamentos. Categoria criada por você aparece com a primeira letra do nome.',
           'Para uma subcategoria (ex.: Lazer › Cinema), escolha a categoria em “Subcategoria de”.',
           'No filtro de Transações, escolher uma categoria inclui as subcategorias dela.'
         ],
@@ -989,7 +990,9 @@ export const MANUAL: CapituloManual[] = [
           'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros). O que você oculta ou minimiza sai da conta do sino.',
           'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir as notificações, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
           '“Mais análises” abre a evolução de 12 meses e as últimas transações. “Últimas transações” vai até hoje; as que têm data depois de hoje (parcelas que o banco já lançou) ficam em “Futuras (N)”, com o ano na data. “ver todas” abre Transações no mesmo recorte.',
-          'Clique num total por categoria para ver as transações por trás dele.'
+          '“Gastos por categoria” mostra o total do mês no centro da rosca; as categorias menores que 3% ficam juntas na fatia “Outras”. A lista embaixo traz cada categoria com o ícone, uma barrinha do tamanho do gasto, o valor e o %; mostra as 8 maiores, e “Mostrar todas” abre o resto.',
+          'Ao lado, “Orçamentos” mostra cada orçamento do mês com o ícone da categoria e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.',
+          'Clique num total por categoria para ver as transações por trás dele; na fatia “Outras”, abrem todas as despesas do mês.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
         termos: ['dividaCartoes', 'patrimonioSemRendaVariavel']

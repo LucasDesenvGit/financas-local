@@ -56,15 +56,21 @@ Peça só a análise? Entregue o levantamento e o **mapa C# → Go** (pacotes, t
 Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
 
 1. `gh issue edit <N> --add-assignee @me --add-label "em progresso"`; branch com `gh issue develop <N> --base develop --name feature/go-<assunto> --checkout`.
-2. **Casos de contrato primeiro**: se a etapa tem endpoints, os casos (`casos/*.json`) e os esperados gravados do .NET entram antes do código Go, inclusive os de erro (400, 401, 404, 409).
+2. **Casos de contrato primeiro**: se a etapa tem endpoints, os casos (`casos/NN-assunto.json`, no número reservado do assunto na tabela do `testes/contrato/README.md`) e os esperados gravados do .NET entram antes do código Go, inclusive os de erro (400, 401, 404, 409). As rotas do assunto entram por `Registrar(mux, ...)` no pacote dele e uma linha no `internal/api/api.go`.
 3. Porte **cálculo por cálculo**, mantendo a mesma ordem de operações do C# onde houver arredondamento. Não "melhore" uma regra durante a migração: diferença de comportamento vira issue à parte, decidida com o usuário.
 4. Teste:
    ```bash
    cd src/backend-go
    gofmt -l . && go vet ./...
    go test -race ./...
-   go test ./testes/contrato -args -alvo=https://127.0.0.1:5444
    govulncheck ./...        # quando estiver na CI (#231/#84)
+   # Contrato (Linux, libfaketime; detalhes em testes/contrato/README.md):
+   testes/contrato/rodar-dotnet.sh --atualizar                    # grava os casos novos, do .NET
+   PREFIXOS_GO="/api/<assunto>" testes/contrato/rodar-dotnet.sh  # os mesmos esperados, pelo Go atrás do .NET
+   # Na CI: tire o "#" da linha do assunto em testes/contrato/assuntos-no-go.txt (o job do contrato roda --go).
+   # Go sozinho (só o que não passa pelo repasse, como o login da #75), com o relógio de teste:
+   #   go run ./cmd/financas -endereco 127.0.0.1:5453 -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z ...
+   #   go test ./testes/contrato -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z
    ```
    **Como testar é a [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)** (resumo em `CONTRIBUINDO.md`, "Testes do back-end (Go)"). O contrato sozinho não basta:
    - **unitário em tabela** (`t.Run` por caso) no pacote do assunto, para regra, cálculo, conversão e validação;

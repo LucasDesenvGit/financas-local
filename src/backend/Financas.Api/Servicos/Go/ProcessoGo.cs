@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -114,6 +115,13 @@ public sealed class ProcessoGo : BackgroundService
         };
         foreach (var argumento in new[] { "-atras-do-dotnet", "-banco", _opcoes.CaminhoBanco, "-pasta", AppContext.BaseDirectory })
             inicio.ArgumentList.Add(argumento);
+        // Só para teste (#363): o relógio do Go continua o do .NET (Go:InicioDoRelogio + o tempo desde a partida).
+        // Vai o instante já validado e formatado aqui, nunca o texto da configuração.
+        if (_opcoes.InstanteDoRelogio() is { } relogio)
+        {
+            inicio.ArgumentList.Add("-inicio-do-relogio");
+            inicio.ArgumentList.Add(relogio.ToString("O", CultureInfo.InvariantCulture));
+        }
 
         using var processo = new Process { StartInfo = inicio };
         var ultimas = new Queue<string>();

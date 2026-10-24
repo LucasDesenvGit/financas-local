@@ -1,0 +1,33 @@
+{
+  "descricao": "Rotas que só existem no Go (#231, #363), repassadas pelo .NET: não há .NET a imitar, então o esperado é o que o Go respondeu, e o caso confere que nada muda sem querer. O /api/go/saude devolve a hora do relógio do Go: ela tem de cair na janela do relógio do contrato (o .NET passa Go:InicioDoRelogio ao Go, porque a libfaketime não age sobre ele) e 'hoje' tem de ser 14/10, a data de Brasília. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "saúde pelo Go, com o relógio de teste",
+      "comentario": "Passa pelo caminho todo: .NET (login) → Go → banco. 'agora' é a hora do Go em UTC; com o relógio do computador, cairia fora da janela e apareceria crua na diferença.",
+      "metodo": "GET",
+      "caminho": "/api/go/saude"
+    },
+    {
+      "nome": "saúde sem login",
+      "comentario": "401 do próprio .NET: o login é conferido antes do repasse.",
+      "metodo": "GET",
+      "caminho": "/api/go/saude",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "POST sem token CSRF",
+      "comentario": "400 do .NET, sem chegar ao Go: o CSRF é conferido no repasse.",
+      "metodo": "POST",
+      "caminho": "/api/go/saude",
+      "semCsrf": true,
+      "corpo": {}
+    },
+    {
+      "nome": "POST com token CSRF chega ao Go",
+      "comentario": "404 sem corpo, do Go: a rota só tem GET, e o caminho sem rota cai no 404 do ServeMux, como o MapFallback do .NET.",
+      "metodo": "POST",
+      "caminho": "/api/go/saude",
+      "corpo": {}
+    }
+  ]
+}

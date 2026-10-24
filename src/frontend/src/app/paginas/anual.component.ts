@@ -8,6 +8,7 @@ import { mensagemDeErro } from '../core/erro.interceptor';
 import { NaturezaGasto, PainelAnual } from '../core/modelos';
 import { PrivacidadeService } from '../core/privacidade.service';
 import { GraficoComponent } from '../compartilhado/grafico.component';
+import { IconeCategoriaComponent } from '../compartilhado/icone-categoria.component';
 import { MoedaPipe } from '../compartilhado/moeda.pipe';
 import {
   ContextoTransacoes, NOMES_MESES, NOMES_MESES_CURTOS, paramsTransacoes, pct, reaisOuNada, ultimoDiaMes
@@ -51,7 +52,7 @@ interface Parte503020 {
 
 @Component({
   selector: 'app-anual',
-  imports: [ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent,
+  imports: [IconeCategoriaComponent, ListaSuspensaDirective, FormsModule, RouterLink, MoedaPipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, TermoComponent,
     MaisAnalisesComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -190,7 +191,7 @@ interface Parte503020 {
                   @for (c of d.categorias.slice(0, 15); track c.nome) {
                     <tr>
                       <td>
-                        <span class="chip"><span class="ponto" [style.background]="c.cor"></span>{{ c.nome }}</span>
+                        <span class="categoria-com-icone"><app-icone-categoria [nome]="c.nome" [cor]="c.cor" />{{ c.nome }}</span>
                         @if (c.natureza === NaturezaGasto.Essencial) { <span class="etiqueta etiqueta-suave">essencial</span> }
                       </td>
                       <td class="direita valor">{{ c.valor | currency }}</td>
@@ -229,7 +230,7 @@ interface Parte503020 {
                   <tbody>
                     @for (l of mapa().linhas; track l.nome) {
                       <tr>
-                        <td class="nowrap"><span class="ponto" [style.background]="l.cor"></span>{{ l.nome }}</td>
+                        <td class="nowrap"><span class="categoria-com-icone"><app-icone-categoria [nome]="l.nome" [cor]="l.cor" [tamanho]="22" />{{ l.nome }}</span></td>
                         @for (v of l.valores; track $index) {
                           <td class="direita celula-calor" [style.background]="corCalor(l.cor, v, l.maximo)">
                             {{ v > 0 ? (v | currency) : '' }}

@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.39.1] — 2026-10-23 · desenvolvimento
+## [2.40.3] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
 - **Regra de testes do back-end em Go** (#368, épico #374, ADR 0051). Nada muda para quem usa. Toda regra do back-end em Go passa a nascer com teste unitário, além do caso de contrato do endpoint:
@@ -10,6 +10,43 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - uma etapa do #70 só fica pronta com cada regra do levantamento na tabela de testes, os casos-limite que se aplicam (negativo, zero, 8 casas, `NULL`, meia-noite em Brasília, virada de mês e de ano, dias 29 a 31, acento) e o teste provado contra o código estragado de propósito;
   - proibido em teste: `time.Now()`, `time.Sleep` para esperar, rede e dado real. O `t.Parallel()` vale para os testes com banco próprio;
   - a regra está no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), na skill `migrar-para-go`, no agente `dev-go` e no modelo de PR. O C# continua sem testes, só com o checklist.
+
+## [2.40.2] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: relógio de teste e contrato rodando contra o Go atrás do .NET** (#363, épico #70). Nada muda para quem usa. Para quem desenvolve:
+  - o Go ganha uma opção só para teste, `-inicio-do-relogio`, desligada por padrão: o relógio começa num instante dado e anda dali, como a libfaketime faz com o .NET no contrato (ela não age sobre o Go). O .NET a passa ao Go quando `Go:InicioDoRelogio` tem um instante (vazio no `appsettings.json`);
+  - o contrato compila o Go e o sobe atrás do .NET, com o mesmo relógio. `PREFIXOS_GO="/api/..."` passa um assunto pelo Go com os mesmos esperados; `--go` passa os assuntos ligados em `testes/contrato/assuntos-no-go.txt`, e a CI roda as duas rodadas. O `/api/go/saude` devolve a hora e a data do relógio do Go e ganhou casos de contrato (58 casos);
+  - para os assuntos feitos em paralelo (#75, #77, #81) não se chocarem: cada assunto registra as rotas com uma linha no `internal/api`, tem um número de arquivo de casos reservado (tabela no README do contrato) e uma entrada própria em `Go:Prefixos`, que passa a ser uma entrada por assunto (o texto com `;` continua valendo).
+
+## [2.40.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Investimentos: Câmbio e Criptomoedas com as colunas alinhadas** (#377). Os dois blocos usam a mesma grade:
+  - código com largura fixa, bandeira ou ícone, nome, valor, variação e fonte;
+  - o nome começa e o valor termina no mesmo ponto em todas as linhas, e também de um bloco para o outro;
+  - no câmbio, que não tem variação, a data termina onde termina a de cripto;
+  - no celular, a variação e a fonte ficam embaixo do nome.
+
+## [2.40.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Categorias com o ícone na cor delas, no lugar da bolinha** (#336).
+  - **Onde aparece:** no Painel ("Gastos por categoria" e Orçamentos), nas Análises (Relatórios, Visão anual e Projeção), em Categorias e regras e em Orçamentos, inclusive na sugestão de orçamentos.
+  - **Como é:** um quadrado arredondado com o ícone da categoria (talheres em Alimentação, casa em Moradia…), na cor dela, com o fundo dessa cor suave. Categoria sem ícone conhecido mostra a primeira letra do nome.
+  - **Contraste:** o ícone tem pelo menos 3:1 sobre o fundo nos dois temas e em todas as paletas, conferido pelo teste.
+  - **A rosca do Painel:**
+    - o total do mês fica no centro;
+    - as categorias menores que 3% ficam juntas em "Outras", e clicar nessa fatia abre todas as despesas do mês;
+    - as fatias ganham um espaço entre elas.
+  - **A lista do Painel:** cada categoria mostra o ícone, uma barrinha embaixo do nome, o valor e o %. Aparecem as 8 maiores, e "Mostrar todas" abre o resto.
+  - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas dividindo a altura por igual e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
+  - **Animações:** as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e o bloco de Orçamentos acompanha. O conteúdo de "Mais análises", em todas as telas, desce aparecendo ao abrir e sobe sumindo ao fechar. Com "reduzir movimento" ligado no sistema, não há animação.
+
+## [2.39.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Contas a pagar: nome, conta e forma de cobrança alinhados** (#379). O selo da cobrança fica numa coluna própria. À direita dele, o nome, a conta (com o selo do banco), a forma de cobrança ("paga à mão", "débito automático"…) e a observação ficam empilhados, todos começando no mesmo ponto. Antes, as linhas de baixo começavam antes do nome, cada uma num lugar diferente, o que ficava mais visível nas transferências. Vale também para as sugestões achadas no extrato.
 
 ## [2.39.0] — 2026-10-23 · desenvolvimento
 

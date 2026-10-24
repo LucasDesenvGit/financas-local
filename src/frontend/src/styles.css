@@ -709,6 +709,35 @@ app-painel .lista-faturas li + li { border-left: 1px solid var(--linha); padding
 .lista-simples li + li, .lista-legenda li + li { border-top: 1px solid var(--linha); }
 .lista-simples li.clicavel:hover { background: var(--superficie-2); }
 .lista-legenda { margin-top: 12px; }
+/* #377: Câmbio e Criptomoedas (Investimentos) na mesma grade, com as colunas retas de uma linha para a outra e de um
+   bloco para o outro: código (largura fixa), bandeira ou ícone, nome, valor, variação e fonte. O câmbio não tem
+   variação: a data ocupa as duas últimas colunas e termina onde termina a de cripto. */
+.lista-cotacoes li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 8.5rem 12rem 13rem; column-gap: 12px; align-items: center;
+}
+.lista-cotacoes .moeda-identificacao {
+  display: grid; grid-template-columns: 3.4rem 20px; column-gap: 8px; align-items: center; justify-items: center;
+}
+.lista-cotacoes .moeda-identificacao > :first-child { width: 3.4rem; box-sizing: border-box; }
+.lista-cotacoes .valor { grid-column: 3; text-align: right; font-variant-numeric: tabular-nums; }
+.lista-cotacoes .cotacao-variacao { grid-column: 4; text-align: right; }
+.lista-cotacoes .cotacao-fonte { grid-column: 5; text-align: right; }
+.lista-cotacoes .cotacao-fonte.sem-variacao { grid-column: 4 / span 2; }
+.lista-cotacoes .sem-cotacao { grid-column: 3 / span 3; text-align: right; }
+/* Celular e tela estreita: o código e o ícone à esquerda, o nome e o valor em cima; a variação e a fonte embaixo do
+   nome, na largura que sobra (#329). */
+@media (max-width: 760px) {
+  .lista-cotacoes li { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 2px; }
+  .lista-cotacoes .moeda-identificacao { grid-row: 1 / span 3; align-self: start; margin-top: 2px; }
+  .lista-cotacoes .cresce { grid-column: 2; }
+  .lista-cotacoes .valor { grid-column: 3; }
+  .lista-cotacoes .cotacao-variacao, .lista-cotacoes .cotacao-fonte, .lista-cotacoes .cotacao-fonte.sem-variacao,
+  .lista-cotacoes .sem-cotacao { grid-column: 2 / span 2; text-align: left; }
+}
+/* #336: ícone da categoria (<app-icone-categoria>) e o nome lado a lado, nas tabelas e listas de categoria. */
+.categoria-com-icone { display: inline-flex; align-items: center; gap: 10px; min-height: 24px; vertical-align: middle; }
+a.categoria-com-icone { text-decoration: none; }
+a.categoria-com-icone:hover { text-decoration: underline; }
 .pct { width: 3.2em; text-align: right; font-size: 0.84rem; }
 /* #284: largura mínima, não fixa: "dd/MM HH:mm" e "dd/MM/yy" passavam da caixa e ficavam por cima do texto ao lado. */
 .data-curta { color: var(--texto-suave); font-size: 0.84rem; font-variant-numeric: tabular-nums; min-width: 3.8em; flex-shrink: 0; white-space: nowrap; }
@@ -1364,6 +1393,14 @@ a.alerta-sincronizacao:hover { background: var(--alerta-suave); color: var(--ale
 .mais-analises-botao small { font-weight: 400; color: var(--texto-suave); font-size: 0.85rem; }
 .mais-analises-seta { display: inline-block; transition: transform 0.15s ease; color: var(--primaria); }
 .mais-analises.aberta .mais-analises-seta { transform: rotate(90deg); }
+/* O conteúdo do "Mais análises" desce aparecendo ao abrir e sobe sumindo ao fechar. Ao abrir, nada fica aplicado
+   depois do fim (sem "forwards"): o clip-path cortaria os ⓘ que abrem por cima. */
+.mais-analises-corpo.mais-analises-entra { animation: mais-analises-abre 0.35s ease-out backwards; }
+.mais-analises-corpo.mais-analises-sai { animation: mais-analises-abre 0.22s ease-in reverse forwards; }
+@keyframes mais-analises-abre {
+  from { opacity: 0; transform: translateY(-10px); clip-path: inset(0 0 100% 0); }
+  to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
 
 /* Seleção de vários valores com caixas de marcar (filtro de categorias em Transações) */
 .seletor-multiplo { position: relative; display: grid; gap: 6px; min-width: 180px; }
