@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.40.3] — 2026-10-23 · desenvolvimento
+## [2.41.1] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
 - **Regra de testes do back-end em Go** (#368, épico #374, ADR 0051). Nada muda para quem usa. Toda regra do back-end em Go passa a nascer com teste unitário, além do caso de contrato do endpoint:
@@ -10,6 +10,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - uma etapa do #70 só fica pronta com cada regra do levantamento na tabela de testes, os casos-limite que se aplicam (negativo, zero, 8 casas, `NULL`, meia-noite em Brasília, virada de mês e de ano, dias 29 a 31, acento) e o teste provado contra o código estragado de propósito;
   - proibido em teste: `time.Now()`, `time.Sleep` para esperar, rede e dado real. O `t.Parallel()` vale para os testes com banco próprio;
   - a regra está no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), na skill `migrar-para-go`, no agente `dev-go` e no modelo de PR. O C# continua sem testes, só com o checklist.
+
+## [2.41.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
 
 ## [2.40.2] — 2026-10-23 · desenvolvimento
 
