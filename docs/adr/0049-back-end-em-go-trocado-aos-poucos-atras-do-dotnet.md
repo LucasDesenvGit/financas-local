@@ -135,7 +135,7 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
   - **Regra repetida pode divergir** se alguém esquecer o outro lado. O contrato rodando contra os dois é a defesa.
   - **Dois escritores na mesma tabela** exigem o formato do EF Core sem desvio. Um erro de formato no Go aparece como erro de leitura no .NET.
   - **Assuntos com segredo** (#82, #83) ficam no .NET até a troca dos segredos, mesmo com o código Go pronto.
-  - **Na inversão, todos são deslogados uma vez** (o formato do cookie muda) e **os segredos são informados de novo uma vez**. Se for preciso voltar ao .NET depois disso, os segredos são informados de novo, porque o .NET não lê o `v2:`.
+  - **Na inversão, todos são deslogados uma vez** (o formato do cookie muda; #75: o do Go é `<conteúdo>.<HMAC-SHA256>`, com o usuário, o login, o carimbo de segurança e a janela, assinado pela chave `dados/chaves/sessao-go.chave`; o CSRF é *double-submit* assinado e ligado ao usuário, com os mesmos nomes de cookie do .NET; a senha continua no hash v3 do ASP.NET Identity, que o Go lê e grava) e **os segredos são informados de novo uma vez**. Se for preciso voltar ao .NET depois disso, os segredos são informados de novo, porque o .NET não lê o `v2:`.
   - **O C# continua mudando:** mudou no C# um assunto já portado, o mesmo PR muda o Go e o contrato.
   - **Pegadinhas da linguagem:**
     - o RE2 do Go não aceita lookbehind nem lookahead, e o `\b` dele só conhece ASCII (`ExtratoCarteiraService.cs:43`, `BancoService.cs:55`);

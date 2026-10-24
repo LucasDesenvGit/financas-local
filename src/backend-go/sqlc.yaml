@@ -19,3 +19,30 @@ sql:
               type: "DataHora"
           - column: "Configuracao.Protegido"
             go_type: "bool"
+          # #75: Usuario e AuditoriaAcesso no formato do EF Core.
+          - column: "Usuario.CarimboSeguranca"
+            go_type:
+              import: "github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
+              type: "Guid"
+          - column: "Usuario.CriadoEm"
+            go_type:
+              import: "github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
+              type: "DataHora"
+          - column: "Usuario.BloqueadoAte"
+            nullable: true
+            go_type:
+              import: "github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
+              type: "DataHora"
+              pointer: true
+          - column: "Usuario.UltimoLoginEm"
+            nullable: true
+            go_type:
+              import: "github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
+              type: "DataHora"
+              pointer: true
+          - column: "AuditoriaAcesso.DataHora"
+            go_type:
+              import: "github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
+              type: "DataHora"
+          - column: "Usuario.TentativasFalhas"
+            go_type: "int"

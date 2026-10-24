@@ -4,11 +4,12 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 
 | Pasta | O que tem |
 |---|---|
-| `cmd/financas` | o ponto de entrada (o `Program.cs` do Go): `-atras-do-dotnet` no site, ou sozinho (esqueleto da #73) |
+| `cmd/financas` | o ponto de entrada (o `Program.cs` do Go): `-atras-do-dotnet` no site, ou sozinho, com o login do Go (#75) |
 | `internal/api` | o `ServeMux` com as rotas de todos os assuntos (o `MapControllers` do Go): uma linha por assunto |
 | `internal/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco) |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
 | `internal/sessao` | quem está logado, no contexto da requisição |
+| `internal/autenticacao` | o `AuthController` em Go (#75): login, sessão em cookie assinado, CSRF, limite por IP, bloqueio e auditoria; só com o Go sozinho, até a inversão (#85) |
 | `internal/config` | leitura dos mesmos `appsettings*.json` do .NET |
 | `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc`, esquema ao iniciar ([README](internal/banco/README.md)) |
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
