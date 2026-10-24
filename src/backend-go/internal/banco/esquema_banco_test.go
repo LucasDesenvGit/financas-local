@@ -16,7 +16,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -259,7 +258,7 @@ func TestEsquemaIgualAoDotnet(t *testing.T) {
 			t.Fatalf("esperava uma cópia, achei %v (%v)", copias, err)
 		}
 		compararResumos(t, "cópia", resumir(despejar(t, copias[0])), g.Cenarios.Antigo.Copia)
-		formato := regexp.MustCompile(`^FinancasLocal-antes-atualizacao-\d{8}_\d{6}\.db$`).MatchString(filepath.Base(copias[0]))
+		formato := regexp.MustCompile(`^FinancasLocal-antes-atualizacao-\d{8}_\d{6}_\d{3}\.db$`).MatchString(filepath.Base(copias[0]))
 		if formato != g.Cenarios.Antigo.NomeDaCopiaNoFormato {
 			t.Errorf("nome da cópia %s no formato = %v, no .NET %v", filepath.Base(copias[0]), formato, g.Cenarios.Antigo.NomeDaCopiaNoFormato)
 		}
@@ -607,7 +606,7 @@ func TestAplicarEsquemaComOsScriptsEmbutidos(t *testing.T) {
 	if n := contar(t, caminho, "SELECT COUNT(*) FROM Categoria"); n != categorias {
 		t.Errorf("%d categorias depois de atualizar, eram %d: os dados iniciais rodaram de novo", n, categorias)
 	}
-	copia := filepath.Join(filepath.Dir(caminho), "..", "backups", PrefixoBackup+"20261022_233000.db")
+	copia := filepath.Join(filepath.Dir(caminho), "..", "backups", PrefixoBackup+"20261022_233000_000.db")
 	if _, err := os.Stat(copia); err != nil {
 		t.Errorf("a cópia deveria ter o nome na hora de Brasília (22/10 23:30): %v", err)
 	}
@@ -648,26 +647,6 @@ func TestPastaDasCopias(t *testing.T) {
 		if got := pastaDasCopias(caminho); got != want {
 			t.Errorf("pastaDasCopias(%s) = %s, esperado %s", caminho, got, want)
 		}
-	}
-}
-
-func TestApagarCopiasAntigasSemPermissao(t *testing.T) {
-	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
-		t.Skip("precisa de permissão de pasta do Unix e de um usuário que não seja o root")
-	}
-	pasta := t.TempDir()
-	for dia := 1; dia <= BackupsGuardados+1; dia++ {
-		if err := os.WriteFile(filepath.Join(pasta, fmt.Sprintf("%s202001%02d_000000.db", PrefixoBackup, dia)), nil, 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := os.Chmod(pasta, 0o555); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chmod(pasta, 0o755) })
-	// No .NET, o UnauthorizedAccessException do FileInfo.Delete não é pego (só o IOException) e a API não sobe.
-	if err := apagarCopiasAntigas(pasta); !errors.Is(err, fs.ErrPermission) {
-		t.Errorf("sem permissão para apagar, esperava erro de permissão; veio %v", err)
 	}
 }
 

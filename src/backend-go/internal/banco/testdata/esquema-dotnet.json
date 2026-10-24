@@ -4,17 +4,17 @@
   "pragmas": {
     "foreign_keys": "1",
     "busy_timeout": "0",
-    "journal_mode": "delete",
+    "journal_mode": "wal",
     "sqlite_version()": "3.53.3"
   },
   "entradas": {
-    "01-estrutura.sql": "1a108081c74c78124d28efe57894438f44734f5d2b6c758b682adbba4bc64d69",
+    "01-estrutura.sql": "63ff4e79e2104d904091239e6ddc58b6fc4e3f900ac57e86e70b8c9e77bf8c30",
     "02-dados-iniciais.sql": "525e0605339633ad0b41391f33e531f7a1a0af2013160246930ad2e1f1d8b89c",
-    "2-criar-banco.sh": "f0dec474869379f2175916d321e955b70c009d33b87802d4781457c9a15b5008"
+    "2-criar-banco.sh": "25e8308a99d6e320c90396b6eafaf32e7a9afa8f2915adac967d58ce21c202fe"
   },
   "assinaturas": {
-    "scripts": 322938181,
-    "scriptsComCrlf": 322938181,
+    "scripts": 1082873364,
+    "scriptsComCrlf": 1082873364,
     "vazio": 424131073,
     "acentos": 1387974945
   },
@@ -31,7 +31,7 @@
   "cenarios": {
     "novo": {
       "banco": {
-        "userVersion": 322938181,
+        "userVersion": 1082873364,
         "tabelas": [
           {
             "nome": "Ativo",
@@ -417,7 +417,7 @@
           },
           {
             "nome": "Meta",
-            "sqlHash": "6d8d179d214d64caac29fb5d3bb1063f5b1f46ad3c3e0cca70010fec74958afa",
+            "sqlHash": "9da8d906299f078ee54042b4f843fd6692b521dfbdfa92a5644223d1c4f21a69",
             "colunas": [
               "0|Id|INTEGER|1|<null>|1",
               "1|Nome|TEXT|1|<null>|0",
@@ -430,7 +430,8 @@
               "8|ReservaNome|TEXT|0|<null>|0",
               "9|Prioridade|INTEGER|1|0|0",
               "10|Icone|TEXT|0|<null>|0",
-              "11|CriadoEm|TEXT|1|<null>|0"
+              "11|GuardarPorMes|TEXT|0|<null>|0",
+              "12|CriadoEm|TEXT|1|<null>|0"
             ],
             "indices": [],
             "chavesEstrangeiras": [
@@ -744,7 +745,7 @@
     },
     "vazio": {
       "banco": {
-        "userVersion": 322938181,
+        "userVersion": 1082873364,
         "tabelas": {
           "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
           "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
@@ -762,7 +763,7 @@
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
           "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
-          "Meta": "91adb8b2ab713438f0ad8bf8eddbbe1a6a48398d03576a58f73db548777e72ca",
+          "Meta": "f80e4d9c8c27c5a706ca5931c03d29351998cb4fd488f2492a78e59114a1502c",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
           "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
@@ -802,7 +803,7 @@
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
           "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
-          "Meta": "3cf83094f5fe0411ab5c6f11a1711938fc5d2d98957630e6e107fa5afae5026b",
+          "Meta": "3da5e64d00906e9929a4dc95d2fef76749ad5af3a93a257e401718ec539f978c",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
           "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
@@ -821,7 +822,7 @@
         "outros": []
       },
       "depois": {
-        "userVersion": 322938181,
+        "userVersion": 1082873364,
         "tabelas": {
           "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
           "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
@@ -839,7 +840,7 @@
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
           "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
-          "Meta": "7ff71bfdf98de287b4d2f0f454a981d71645e4a72237557ef6f574794d2f2d4f",
+          "Meta": "95a83161af71f60445d395b4ceecddaf15db1c6f9033dd07651649ea250aedc9",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
           "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
@@ -876,7 +877,7 @@
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
           "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
-          "Meta": "3cf83094f5fe0411ab5c6f11a1711938fc5d2d98957630e6e107fa5afae5026b",
+          "Meta": "3da5e64d00906e9929a4dc95d2fef76749ad5af3a93a257e401718ec539f978c",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
           "Orcamento": "25728a0f114df592fc619b4e1e1fdb35b5c39ab3754ebc1153952226ba35b536",
@@ -907,6 +908,7 @@
         "FinancasLocal-antes-atualizacao-20200104_000000.db",
         "FinancasLocal-antes-atualizacao-20200105_000000.db",
         "FinancasLocal-antes-atualizacao-20200106_000000.db",
+        "FinancasLocal-antes-atualizacao-20200103_000000_500.db",
         "FinancasLocal-antes-atualizacao-.db",
         "FinancasLocal-antes-atualizacao-20200107_000000.db.txt",
         "FinancasLocal-antes-instalacao-20200101_000000.db",
@@ -917,7 +919,7 @@
       ],
       "restantes": [
         "<nova>",
-        "FinancasLocal-antes-atualizacao-20200103_000000.db",
+        "FinancasLocal-antes-atualizacao-20200103_000000_500.db",
         "FinancasLocal-antes-atualizacao-20200104_000000.db",
         "FinancasLocal-antes-atualizacao-20200105_000000.db",
         "FinancasLocal-antes-atualizacao-20200106_000000.db",
