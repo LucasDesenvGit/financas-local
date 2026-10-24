@@ -356,7 +356,15 @@ const respostas: Record<string, unknown> = {
     caminhoBanco: '/teste/FinancasLocal.db', tamanhoBancoBytes: 1024, pastaChaves: '/teste/chaves', contas: 2, transacoes: 2,
     conexoesAtivas: 1, ultimaSincronizacao: hoje.toISOString() },
   '/api/open-finance/configuracao': { clientId: null, secretConfigurado: false, intervaloHoras: 6, diasRetroativos: 30, habilitada: true },
-  '/api/open-finance/conexoes': [],
+  // #376: duas conexões fictícias: uma de banco com selo (Nubank) e uma de banco sem selo (ícone neutro).
+  '/api/open-finance/conexoes': [
+    { id: 1, pluggyItemId: 'item-exemplo-1', nomeInstituicao: 'MeuPluggy', corPrimaria: '#820AD1', status: 'UPDATED',
+      statusExecucao: 'SUCCESS', ultimaAtualizacaoInstituicao: null, consentimentoExpiraEm: null, ultimaSincronizacaoEm: null,
+      ultimoErro: null, ativa: true, quantidadeContas: 2, nomeExibicao: 'Nubank' },
+    { id: 2, pluggyItemId: 'item-exemplo-2', nomeInstituicao: 'MeuPluggy', corPrimaria: null, status: 'UPDATED',
+      statusExecucao: 'SUCCESS', ultimaAtualizacaoInstituicao: null, consentimentoExpiraEm: null, ultimaSincronizacaoEm: null,
+      ultimoErro: null, ativa: true, quantidadeContas: 1, nomeExibicao: 'Banco Exemplo' }
+  ],
   '/api/open-finance/status': { ultimaSincronizacao: hoje.toISOString(), emExecucao: false, conexoesAtivas: 1, conexoesComErro: 0,
     consentimentosVencendo: 0 },
   '/api/open-finance/logs': [],

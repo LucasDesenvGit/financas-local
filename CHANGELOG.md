@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.40.3] — 2026-10-23 · desenvolvimento
+## [2.41.1] — 2026-10-23 · desenvolvimento
 
 ### Correções
 - **Cópia do banco antes da atualização não impede mais a API de subir** (#365, #366). Ao atualizar um banco que já existe, a API faz uma cópia em `dados/backups` e apaga as antigas, guardando as 5 mais recentes:
@@ -10,6 +10,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **duas atualizações no mesmo segundo** (o serviço reiniciando logo depois de uma atualização que falhou) não dão mais o mesmo nome: o nome da cópia ganhou os milissegundos (`FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db`). Antes, a segunda parava a partida (#366);
   - as 5 guardadas continuam as mais recentes, misturando nomes antigos e novos: a ordem pelo nome passou a ser byte a byte, que não depende do idioma do computador.
   - O mesmo vale para o porte em Go (`AplicarEsquema`).
+
+## [2.41.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
 
 ## [2.40.2] — 2026-10-23 · desenvolvimento
 
