@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.9] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Câmbio e criptomoedas em Go** (#81, épico #70, ADRs 0007, 0048 e 0049). Nada muda para quem usa: o .NET continua atendendo até o prefixo ser ligado em `Go:Prefixos` (PR à parte). O Go ganhou:
+  - o cliente da PTAX do Banco Central e o do Mercado Bitcoin (só HTTPS, 30 s e 20 s, `User-Agent: FinancasLocal/1.0`), testados com respostas gravadas de verdade, inclusive fim de semana e feriado sem cotação, erro 500 e tempo esgotado;
+  - `GET /api/cambio/moedas`, `/cotacoes` e `/cotacao` e `GET /api/cripto/cotacoes`, com o mesmo JSON e o mesmo banco do .NET (escala dos decimais, data com `Z`, o 400 automático da data inválida);
+  - o conversor para reais (o `ConversorMoeda`), para a carteira (#82) e o painel (#80) usarem;
+  - as tarefas em segundo plano (câmbio de 15 em 15 minutos, depois do fechamento das 13h30; cripto de 30 em 30), que só rodam com o nome em `Go:Tarefas` e param com o serviço, sem derrubar o processo num erro;
+  - a aritmética do decimal do C# em Go (`tipos.Dividir`, `tipos.Arredondar`), conferida contra o .NET por uma sonda: o shopspring divide e arredonda diferente, e a variação de 10% sairia `10.00` em vez de `10.0`.
+  - Os casos de contrato `02-cambio` e `03-cripto` estão escritos; os esperados são gravados do .NET (Linux) antes do merge.
+
 ## [2.41.8] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação

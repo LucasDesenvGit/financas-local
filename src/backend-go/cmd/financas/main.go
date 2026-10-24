@@ -31,15 +31,19 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/api"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tarefas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
 
@@ -192,7 +196,33 @@ func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relo
 		log.Warn("o banco não está em WAL: com o .NET e o Go no mesmo arquivo, quem lê pode esperar quem grava", "journal_mode", diario)
 	}
 
-	log.Info("iniciando atrás do .NET", "versao", versao.Atual)
+	// Tarefas em segundo plano (#81): só as de Go:Tarefas, que o .NET deixa de rodar (ADR 0049). Vazio, nenhuma: o Go
+	// em desenvolvimento nunca vai à internet sozinho. Quem para é o ctx; o defer espera cada uma terminar antes de
+	// o banco fechar.
+	ligadas, err := tarefas.Ligadas(cfg.GoTarefas)
+	if err != nil {
+		return err
+	}
+	ctxTarefas, pararTarefas := context.WithCancel(ctx)
+	var emAndamento sync.WaitGroup
+	defer func() {
+		pararTarefas()
+		emAndamento.Wait()
+	}()
+	if ligadas["Cambio"] {
+		t := cambio.NovaTarefa(cambio.NovoServico(db, cambio.ClientePadrao(), rel, log), rel, log)
+		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
+	}
+	if ligadas["Cripto"] {
+		t := cripto.NovaTarefa(cripto.NovoServico(db, cripto.ClientePadrao(), rel, log), log)
+		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
+	}
+	if ligadas["Sincronizacao"] {
+		// A sincronização com a Pluggy ainda não está em Go (#83): ligada aqui, ninguém a rodaria.
+		return errors.New("Go:Tarefas tem Sincronizacao, que ainda não está em Go (#83)")
+	}
+
+	log.Info("iniciando atrás do .NET", "versao", versao.Atual, "tarefas", cfg.GoTarefas)
 	return servidor.RodarAtrasDoDotnet(ctx, servidor.OpcoesAtras{
 		Segredo: segredo,
 		Rotas:   api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg}),

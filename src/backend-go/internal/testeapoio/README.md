@@ -16,6 +16,9 @@ O que os testes dos assuntos do #70 dividem, para cada um não escrever o seu (#
 | `fab.Subcategoria(pai, ajustes...)` | categoria filha, com o tipo do pai |
 | `fab.Transacao(conta, ajustes...)` | despesa efetivada de `-10.00`, sem categoria, com a data de hoje em Brasília (pelo relógio da fábrica) |
 | `fab.RegraCategorizacao(categoria, ajustes...)` | regra ativa "contém", prioridade 100 |
+| `fab.CotacaoMoeda(ajustes...)` | PTAX do dólar de hoje (em Brasília): compra 5.4123, venda 5.4129 (#81) |
+| `fab.CotacaoCripto(ajustes...)` | bitcoin agora (UTC): 612345.67 (#81) |
+| `fab.Configuracao(chave, valor)` | configuração que não é segredo (`Protegido = 0`) |
 | `RelogioDosTestes()` | parado em 23/10/2026 02:30 UTC, que em Brasília ainda é dia **22**: pega quem confunde UTC com Brasília |
 | `HojeEmBrasilia(2026, 10, 31)` | "hoje em Brasília é dia 31", ao meio-dia (longe da virada do dia) |
 | `AgoraEmBrasilia(2026, 12, 31, 23, 30)` | a hora exata em Brasília, para a virada do dia, do mês e do ano |
