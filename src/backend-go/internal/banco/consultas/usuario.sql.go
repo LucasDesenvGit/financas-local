@@ -7,7 +7,139 @@ package consultas
 
 import (
 	"context"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
+
+const atualizarUsuario = `-- name: AtualizarUsuario :exec
+UPDATE "Usuario"
+SET "SenhaHash" = ?, "CarimboSeguranca" = ?, "TentativasFalhas" = ?, "BloqueadoAte" = ?, "UltimoLoginEm" = ?
+WHERE "Id" = ?
+`
+
+type AtualizarUsuarioParams struct {
+	SenhaHash        string
+	CarimboSeguranca tipos.Guid
+	TentativasFalhas int
+	BloqueadoAte     *tipos.DataHora
+	UltimoLoginEm    *tipos.DataHora
+	Id               int64
+}
+
+func (q *Queries) AtualizarUsuario(ctx context.Context, arg AtualizarUsuarioParams) error {
+	_, err := q.db.ExecContext(ctx, atualizarUsuario,
+		arg.SenhaHash,
+		arg.CarimboSeguranca,
+		arg.TentativasFalhas,
+		arg.BloqueadoAte,
+		arg.UltimoLoginEm,
+		arg.Id,
+	)
+	return err
+}
+
+const existeUsuario = `-- name: ExisteUsuario :one
+SELECT EXISTS (SELECT 1 FROM "Usuario") AS "Existe"
+`
+
+func (q *Queries) ExisteUsuario(ctx context.Context) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existeUsuario)
+	var Existe bool
+	err := row.Scan(&Existe)
+	return Existe, err
+}
+
+const inserirAuditoria = `-- name: InserirAuditoria :exec
+INSERT INTO "AuditoriaAcesso" ("DataHora", "Evento", "Login", "Ip", "UserAgent")
+VALUES (?, ?, ?, ?, ?)
+`
+
+type InserirAuditoriaParams struct {
+	DataHora  tipos.DataHora
+	Evento    string
+	Login     *string
+	Ip        *string
+	UserAgent *string
+}
+
+func (q *Queries) InserirAuditoria(ctx context.Context, arg InserirAuditoriaParams) error {
+	_, err := q.db.ExecContext(ctx, inserirAuditoria,
+		arg.DataHora,
+		arg.Evento,
+		arg.Login,
+		arg.Ip,
+		arg.UserAgent,
+	)
+	return err
+}
+
+const inserirUsuario = `-- name: InserirUsuario :one
+INSERT INTO "Usuario" ("Login", "SenhaHash", "CarimboSeguranca", "TentativasFalhas", "BloqueadoAte", "UltimoLoginEm", "CriadoEm")
+VALUES (?, ?, ?, ?, ?, ?, ?)
+RETURNING "Id"
+`
+
+type InserirUsuarioParams struct {
+	Login            string
+	SenhaHash        string
+	CarimboSeguranca tipos.Guid
+	TentativasFalhas int
+	BloqueadoAte     *tipos.DataHora
+	UltimoLoginEm    *tipos.DataHora
+	CriadoEm         tipos.DataHora
+}
+
+func (q *Queries) InserirUsuario(ctx context.Context, arg InserirUsuarioParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, inserirUsuario,
+		arg.Login,
+		arg.SenhaHash,
+		arg.CarimboSeguranca,
+		arg.TentativasFalhas,
+		arg.BloqueadoAte,
+		arg.UltimoLoginEm,
+		arg.CriadoEm,
+	)
+	var Id int64
+	err := row.Scan(&Id)
+	return Id, err
+}
+
+const listarAuditoria = `-- name: ListarAuditoria :many
+SELECT "Id", "DataHora", "Evento", "Login", "Ip", "UserAgent"
+FROM "AuditoriaAcesso"
+ORDER BY "Id" DESC
+LIMIT 100
+`
+
+func (q *Queries) ListarAuditoria(ctx context.Context) ([]AuditoriaAcesso, error) {
+	rows, err := q.db.QueryContext(ctx, listarAuditoria)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AuditoriaAcesso
+	for rows.Next() {
+		var i AuditoriaAcesso
+		if err := rows.Scan(
+			&i.Id,
+			&i.DataHora,
+			&i.Evento,
+			&i.Login,
+			&i.Ip,
+			&i.UserAgent,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const obterLoginDoUsuario = `-- name: ObterLoginDoUsuario :one
 
@@ -16,11 +148,74 @@ FROM "Usuario"
 WHERE "Id" = ?
 `
 
-// Leitura do Usuario. So leitura: quem grava e o .NET (login, senha, sessao) ate a #75 (ADR 0049).
+// Usuario e AuditoriaAcesso. Ate a inversao (#85) quem grava no site e o .NET; o Go grava quando roda sozinho, com o
+// login dele (#75). As colunas e o formato sao os do EF Core (GUID em maiusculas, data e hora "AAAA-MM-DD hh:mm:ss.f").
 // SEM ACENTO neste arquivo e nomes entre aspas duplas: veja o README.md do pacote banco.
 func (q *Queries) ObterLoginDoUsuario(ctx context.Context, id int64) (string, error) {
 	row := q.db.QueryRowContext(ctx, obterLoginDoUsuario, id)
 	var Login string
 	err := row.Scan(&Login)
 	return Login, err
+}
+
+const obterUsuarioPorId = `-- name: ObterUsuarioPorId :one
+SELECT "Id", "Login", "SenhaHash", "CarimboSeguranca", "TentativasFalhas", "BloqueadoAte", "UltimoLoginEm", "CriadoEm"
+FROM "Usuario"
+WHERE "Id" = ?
+LIMIT 1
+`
+
+func (q *Queries) ObterUsuarioPorId(ctx context.Context, id int64) (Usuario, error) {
+	row := q.db.QueryRowContext(ctx, obterUsuarioPorId, id)
+	var i Usuario
+	err := row.Scan(
+		&i.Id,
+		&i.Login,
+		&i.SenhaHash,
+		&i.CarimboSeguranca,
+		&i.TentativasFalhas,
+		&i.BloqueadoAte,
+		&i.UltimoLoginEm,
+		&i.CriadoEm,
+	)
+	return i, err
+}
+
+const obterUsuarioPorLogin = `-- name: ObterUsuarioPorLogin :one
+SELECT "Id", "Login", "SenhaHash", "CarimboSeguranca", "TentativasFalhas", "BloqueadoAte", "UltimoLoginEm", "CriadoEm"
+FROM "Usuario"
+WHERE "Login" = ?
+LIMIT 1
+`
+
+func (q *Queries) ObterUsuarioPorLogin(ctx context.Context, login string) (Usuario, error) {
+	row := q.db.QueryRowContext(ctx, obterUsuarioPorLogin, login)
+	var i Usuario
+	err := row.Scan(
+		&i.Id,
+		&i.Login,
+		&i.SenhaHash,
+		&i.CarimboSeguranca,
+		&i.TentativasFalhas,
+		&i.BloqueadoAte,
+		&i.UltimoLoginEm,
+		&i.CriadoEm,
+	)
+	return i, err
+}
+
+const sessaoValida = `-- name: SessaoValida :one
+SELECT EXISTS (SELECT 1 FROM "Usuario" WHERE "Id" = ? AND "CarimboSeguranca" = ?) AS "Valida"
+`
+
+type SessaoValidaParams struct {
+	Id               int64
+	CarimboSeguranca tipos.Guid
+}
+
+func (q *Queries) SessaoValida(ctx context.Context, arg SessaoValidaParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, sessaoValida, arg.Id, arg.CarimboSeguranca)
+	var Valida bool
+	err := row.Scan(&Valida)
+	return Valida, err
 }

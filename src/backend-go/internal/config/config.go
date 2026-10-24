@@ -18,15 +18,19 @@ import (
 
 // Config é o que o servidor usa da configuração.
 type Config struct {
-	PastaBase          string   // onde ficam os appsettings e o wwwroot (a pasta do executável)
-	BancoCaminho       string   // Banco:Caminho
-	PastaChaves        string   // Seguranca:PastaChaves
-	MinutosSessao      int      // Seguranca:MinutosSessao
-	PluggyURLBase      string   // Pluggy:UrlBase
-	Endereco           string   // host:porta, de Kestrel:Endpoints:Https:Url
-	CertificadoCaminho string   // Kestrel:Endpoints:Https:Certificate:Path
-	CertificadoSenha   string   // Kestrel:Endpoints:Https:Certificate:Password (nunca vai para o log)
-	HostsPermitidos    []string // AllowedHosts, separados por ";"
+	PastaBase     string // onde ficam os appsettings e o wwwroot (a pasta do executável)
+	BancoCaminho  string // Banco:Caminho
+	PastaChaves   string // Seguranca:PastaChaves
+	MinutosSessao int    // Seguranca:MinutosSessao
+	// #75: os padrões dos parâmetros de login (ParametroService.Padrao: o appsettings e, sem ele, 5 e 15). O valor
+	// gravado em Configuracao (Configurações › Parametrização) vale mais que estes.
+	MaximoTentativasLogin int      // Seguranca:MaximoTentativasLogin
+	MinutosBloqueio       int      // Seguranca:MinutosBloqueio
+	PluggyURLBase         string   // Pluggy:UrlBase
+	Endereco              string   // host:porta, de Kestrel:Endpoints:Https:Url
+	CertificadoCaminho    string   // Kestrel:Endpoints:Https:Certificate:Path
+	CertificadoSenha      string   // Kestrel:Endpoints:Https:Certificate:Password (nunca vai para o log)
+	HostsPermitidos       []string // AllowedHosts, separados por ";"
 }
 
 // Carregar lê a configuração da pasta base, no ambiente dado ("Production" se vazio).
@@ -56,14 +60,16 @@ func Carregar(pastaBase, ambiente string) (Config, error) {
 	}
 
 	c := Config{
-		PastaBase:          pastaBase,
-		BancoCaminho:       caminho(pastaBase, texto(arvore, "Banco:Caminho"), filepath.Join("dados", "sql", "FinancasLocal.db")),
-		PastaChaves:        caminho(pastaBase, texto(arvore, "Seguranca:PastaChaves"), "chaves"),
-		MinutosSessao:      120,
-		PluggyURLBase:      texto(arvore, "Pluggy:UrlBase"),
-		Endereco:           "127.0.0.1:5443",
-		CertificadoCaminho: texto(arvore, "Kestrel:Endpoints:Https:Certificate:Path"),
-		CertificadoSenha:   texto(arvore, "Kestrel:Endpoints:Https:Certificate:Password"),
+		PastaBase:             pastaBase,
+		BancoCaminho:          caminho(pastaBase, texto(arvore, "Banco:Caminho"), filepath.Join("dados", "sql", "FinancasLocal.db")),
+		PastaChaves:           caminho(pastaBase, texto(arvore, "Seguranca:PastaChaves"), "chaves"),
+		MinutosSessao:         120,
+		MaximoTentativasLogin: 5,
+		MinutosBloqueio:       15,
+		PluggyURLBase:         texto(arvore, "Pluggy:UrlBase"),
+		Endereco:              "127.0.0.1:5443",
+		CertificadoCaminho:    texto(arvore, "Kestrel:Endpoints:Https:Certificate:Path"),
+		CertificadoSenha:      texto(arvore, "Kestrel:Endpoints:Https:Certificate:Password"),
 	}
 	if c.CertificadoCaminho != "" {
 		c.CertificadoCaminho = caminho(pastaBase, c.CertificadoCaminho, "")
@@ -74,6 +80,18 @@ func Carregar(pastaBase, ambiente string) (Config, error) {
 			return Config{}, fmt.Errorf("Seguranca:MinutosSessao inválido %q: %w", minutos, err)
 		}
 		c.MinutosSessao = n
+	}
+	for chave, destino := range map[string]*int{
+		"Seguranca:MaximoTentativasLogin": &c.MaximoTentativasLogin,
+		"Seguranca:MinutosBloqueio":       &c.MinutosBloqueio,
+	} {
+		if valor := texto(arvore, chave); valor != "" {
+			n, err := strconv.Atoi(valor)
+			if err != nil {
+				return Config{}, fmt.Errorf("%s inválido %q: %w", chave, valor, err)
+			}
+			*destino = n
+		}
 	}
 	if endereco := texto(arvore, "Kestrel:Endpoints:Https:Url"); endereco != "" {
 		u, err := url.Parse(endereco)

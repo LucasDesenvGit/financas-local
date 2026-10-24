@@ -25,6 +25,8 @@ var (
 	banco     = flag.String("banco", "", "arquivo SQLite que o servidor sob teste usa (para comparar o banco)")
 	inicio    = flag.String("inicio", InicioPadrao, "instante em que o relógio do servidor começou (RFC 3339)")
 	atualizar = flag.Bool("atualizar", false, "grava os esperados a partir do servidor (só contra o .NET: ele é a referência)")
+	// #75: o Go sozinho (com o login dele) atende só os assuntos já portados; os outros arquivos ficam de fora.
+	somente = flag.String("somente", "", "arquivos de casos a rodar, separados por vírgula (ex.: 00-auth); vazio roda todos")
 )
 
 // Resultado é o que um caso produziu, já normalizado: é o que fica em esperado/*.json.
@@ -77,7 +79,16 @@ func TestContrato(t *testing.T) {
 	defer db.Close()
 
 	ex := &execucao{alvo: enderecoAlvo, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
+	escolhidos := map[string]bool{}
+	for _, nome := range strings.Split(*somente, ",") {
+		if nome = strings.TrimSpace(nome); nome != "" {
+			escolhidos[nome] = true
+		}
+	}
 	for _, nome := range nomes {
+		if len(escolhidos) > 0 && !escolhidos[nome] {
+			continue
+		}
 		arquivo := arquivos[nome]
 		t.Run(nome, func(t *testing.T) { ex.rodarArquivo(t, nome, arquivo) })
 	}

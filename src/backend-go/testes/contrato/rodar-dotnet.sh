@@ -26,6 +26,10 @@
 #                       # os mesmos esperados, com esses prefixos atendidos pelo Go atrás do .NET
 #   src/backend-go/testes/contrato/rodar-dotnet.sh --go         # PREFIXOS_GO = os assuntos de assuntos-no-go.txt
 #                       # (é o que a CI roda; sem assunto ligado, não faz nada)
+#   src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho # #75: o Go sozinho, com o login dele, sem o .NET:
+#                       # roda só os arquivos de CONTRATO_SOMENTE (padrão: 00-auth), os que o Go já atende sem o
+#                       # .NET na frente. Não precisa do .NET, da libfaketime nem do unshare (o Go tem o relógio de
+#                       # teste e o login não sai para a rede); roda também no Git Bash do Windows.
 #
 # Variáveis opcionais: PREFIXOS_GO (vazio: o .NET responde tudo, menos as rotas
 # que só existem no Go), CONFIGURACAO (Release), DOTNET (dotnet), PORTA (5451),
@@ -36,10 +40,12 @@ set -euo pipefail
 
 atualizar=""
 assuntos_no_go=""
+go_sozinho=""
 for arg in "$@"; do
     case "$arg" in
         --atualizar) atualizar="-atualizar" ;;
         --go) assuntos_no_go=1 ;;
+        --go-sozinho) go_sozinho=1 ;;
         -h|--help) sed -n '2,34p' "$0"; exit 0 ;;
         *) echo "Argumento desconhecido: $arg" >&2; exit 2 ;;
     esac
@@ -82,9 +88,15 @@ if [[ -n "$prefixos_go" && -n "$atualizar" ]]; then
     exit 2
 fi
 
-[[ -f "$dll" ]] || { echo "API não compilada em $dll (rode: $dotnet build FinancasLocal.sln -c $configuracao)." >&2; exit 1; }
+if [[ -n "$go_sozinho" && ( -n "$atualizar" || -n "$prefixos_go" ) ]]; then
+    echo "--go-sozinho não combina com --atualizar, --go nem PREFIXOS_GO: os esperados vêm do .NET." >&2
+    exit 2
+fi
+
 command -v sqlite3 >/dev/null || { echo "sqlite3 não encontrado." >&2; exit 1; }
 command -v go >/dev/null || { echo "go não encontrado." >&2; exit 1; }
+if [[ -z "$go_sozinho" ]]; then
+[[ -f "$dll" ]] || { echo "API não compilada em $dll (rode: $dotnet build FinancasLocal.sln -c $configuracao)." >&2; exit 1; }
 
 faketime_lib="${FAKETIME_LIB:-}"
 if [[ -z "$faketime_lib" ]]; then
@@ -100,6 +112,7 @@ if ! unshare -rn true 2>/dev/null; then
     echo "unshare -rn falhou: este sistema não deixa criar um namespace de usuário sem root." >&2
     echo "No Ubuntu 24.04: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0" >&2
     exit 1
+fi
 fi
 
 pasta="$(mktemp -d)"
@@ -123,6 +136,33 @@ banco_db="$pasta/dados/sql/FinancasLocal.db"
     sqlite3 -bail "$banco" < "$raiz/banco/02-dados-iniciais.sql"
     sqlite3 -bail "$banco" < "$pasta_contrato/dados/base.sql"
 )
+
+# #75: o Go sozinho, com o login dele e o relógio de teste, sobre o mesmo banco fictício. O .NET não sobe, então as
+# rotinas de partida do Program.cs não rodam: vale para os assuntos que não dependem delas (o login).
+if [[ -n "$go_sozinho" ]]; then
+    exe="$(cd "$pasta_go" && go env GOEXE)" # ".exe" no Windows
+    versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.props" | head -n1)"
+    (cd "$pasta_go" &&
+        go test -c -o "$pasta/contrato.test$exe" ./testes/contrato &&
+        CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao"             -o "$pasta/financas-go$exe" ./cmd/financas)
+    url="https://127.0.0.1:$porta"
+    "$pasta/financas-go$exe" -pasta "$pasta" -endereco "127.0.0.1:$porta" -certificado-temporario         -wwwroot "$pasta_go/internal/servidor/testdata/wwwroot" -banco "$banco_db" -chaves "$pasta/dados/chaves"         -inicio-do-relogio "$inicio" >"$pasta/go.log" 2>&1 &
+    pid=$!
+    parar_go() { kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; limpar; }
+    trap parar_go EXIT
+    for _ in $(seq 1 60); do
+        grep -q 'escutando' "$pasta/go.log" && break
+        kill -0 "$pid" 2>/dev/null || { echo "O Go parou ao iniciar. Log:"; cat "$pasta/go.log"; exit 1; }
+        sleep 0.5
+    done
+    grep -q 'escutando' "$pasta/go.log" || { echo "O Go não subiu em 30 s. Log:"; cat "$pasta/go.log"; exit 1; }
+    echo "Go sozinho, atendendo: ${CONTRATO_SOMENTE:-00-auth}"
+    cd "$pasta_contrato"
+    status=0
+    "$pasta/contrato.test$exe" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" -banco="$banco_db"         -inicio="$inicio" -somente="${CONTRATO_SOMENTE:-00-auth}" || status=$?
+    if [[ $status -ne 0 ]]; then echo "--- Fim do log do Go ---"; tail -n 60 "$pasta/go.log"; fi
+    exit $status
+fi
 
 # Certificado descartável (senha aleatória; some com a pasta).
 senha="$(head -c 18 /dev/urandom | base64 | tr -d '/+=')"
