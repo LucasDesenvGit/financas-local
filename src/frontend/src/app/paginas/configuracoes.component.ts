@@ -9,6 +9,8 @@ import { StatusSincronizacaoService } from '../core/status-sincronizacao.service
 import { mensagemDeErro } from '../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../core/modelos';
 import { AvisosService } from '../compartilhado/avisos.component';
+import { LogoBancoComponent } from '../compartilhado/logo-banco.component';
+import { bancoNoTexto } from '../compartilhado/bancos';
 import { descreverEvento, origemDoAcesso } from '../compartilhado/auditoria';
 import { ParametrizacaoComponent } from './parametrizacao.component';
 import { AparenciaComponent } from './aparencia.component';
@@ -18,7 +20,7 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
 
 @Component({
   selector: 'app-configuracoes',
-  imports: [FormsModule, DatePipe, ParametrizacaoComponent, AparenciaComponent, ErrosComponent],
+  imports: [FormsModule, DatePipe, LogoBancoComponent, ParametrizacaoComponent, AparenciaComponent, ErrosComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -142,11 +144,17 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
             @for (c of conexoes(); track c.id) {
               <tr [class.ignorada]="!c.ativa">
                 <td>
-                  <span class="ponto" [style.background]="c.corPrimaria ?? '#64748b'"></span>
-                  <!-- #170: o banco, e não o conector ("MeuPluggy"); o conector fica ao lado (Nielsen 2). -->
-                  {{ nomeConexao(c) }} <small class="texto-suave">{{ c.quantidadeContas }} conta(s)
-                    @if (c.nomeInstituicao && c.nomeInstituicao !== nomeConexao(c)) { · via {{ c.nomeInstituicao }} }</small>
-                  @if (c.ultimoErro) { <div class="erro pequeno">{{ c.ultimoErro }}</div> }
+                  <!-- #376: o selo do banco (o mesmo de Contas e cartões, ADR 0024) no lugar da bolinha; decorativo, porque o
+                       nome está escrito ao lado. Banco sem selo: o ícone neutro de banco. -->
+                  <div class="instituicao">
+                    <app-logo-banco [codigo]="bancoDaConexao(c)" [tamanho]="28" />
+                    <div>
+                      <!-- #170: o banco, e não o conector ("MeuPluggy"); o conector fica ao lado (Nielsen 2). -->
+                      {{ nomeConexao(c) }} <small class="texto-suave contas-conexao">{{ c.quantidadeContas }} conta(s)
+                        @if (c.nomeInstituicao && c.nomeInstituicao !== nomeConexao(c)) { · via {{ c.nomeInstituicao }} }</small>
+                      @if (c.ultimoErro) { <div class="erro pequeno">{{ c.ultimoErro }}</div> }
+                    </div>
+                  </div>
                 </td>
                 <!-- Situação em português (Nielsen 2), com a cor: verde em dia, amarelo atenção, vermelho ação sua. -->
                 <td><span class="etiqueta" [class.etiqueta-sucesso]="situacao(c).tom === 'ok'"
@@ -196,6 +204,11 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
     </section>
     }
     }
+  `,
+  styles: `
+    /* #376: o selo do banco à esquerda; o nome, as contas e o erro empilhados ao lado. */
+    .instituicao { display: flex; align-items: center; gap: 10px; }
+    .contas-conexao { display: block; }
   `
 })
 export class ConfiguracoesComponent implements OnInit {
@@ -209,6 +222,11 @@ export class ConfiguracoesComponent implements OnInit {
   /** #170: o banco da conexão (pelas contas); "MeuPluggy" é o nome do conector, igual em todas. */
   nomeConexao(c: Conexao): string {
     return c.nomeExibicao ?? c.nomeInstituicao ?? 'Instituição';
+  }
+
+  /** #376: o código do banco da conexão, pelo nome (o mesmo dos selos de Contas e cartões); null se não é conhecido. */
+  bancoDaConexao(c: Conexao): string | null {
+    return bancoNoTexto(c.nomeExibicao, c.nomeInstituicao);
   }
 
   /**

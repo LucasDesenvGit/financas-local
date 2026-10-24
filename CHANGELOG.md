@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.40.3] — 2026-10-23 · desenvolvimento
+## [2.41.1] — 2026-10-23 · desenvolvimento
 
 ### Correções
 - **Regras enxergam o nome dado por outra regra** (#250). Antes, toda regra comparava só com a descrição que veio do banco.
@@ -10,6 +10,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - **Regras de descrição em cadeia:** a primeira olha a descrição do banco, e a seguinte, o nome que a anterior deu ("Aluguel" → "Aluguel apto 12"). Cada regra entra uma vez só, então não há ciclo, e a cadeia tem no máximo 10 passos.
   - **A categoria acompanha:** criar, editar ou excluir uma regra de descrição aplica de novo as regras de categoria nas transações que mudaram de nome (menos as de categoria escolhida à mão). Isso vale também na sincronização e em "Reaplicar regras".
   - **Prévia:** a da regra de descrição acha também pelo nome atual.
+
+## [2.41.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
 
 ## [2.40.2] — 2026-10-23 · desenvolvimento
 
