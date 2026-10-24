@@ -188,7 +188,7 @@ public class RegrasController : BaseController
 
             foreach (var t in lote)
             {
-                var nova = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+                var nova = _categorizacao.Resolver(t);
                 if (nova != t.CategoriaId)
                 {
                     t.CategoriaId = nova;
@@ -225,11 +225,42 @@ public class RegrasDescricaoController : BaseController
 {
     private readonly FinancasDbContext _db;
     private readonly RegraDescricaoService _descricoes;
+    private readonly CategorizacaoService _categorizacao;
+    private readonly TransferenciasService _transferencias;
 
-    public RegrasDescricaoController(FinancasDbContext db, RegraDescricaoService descricoes)
+    public RegrasDescricaoController(FinancasDbContext db, RegraDescricaoService descricoes, CategorizacaoService categorizacao,
+        TransferenciasService transferencias)
     {
         _db = db;
         _descricoes = descricoes;
+        _categorizacao = categorizacao;
+        _transferencias = transferencias;
+    }
+
+    /// <summary>
+    /// #250: depois de uma regra de descrição mudar nomes, a categoria automática dessas transações é resolvida de novo:
+    /// a regra de categoria olha o nome novo (ex.: "contém Aluguel" → Moradia). Categoria escolhida à mão fica.
+    /// Não salva: chame SaveChangesAsync.
+    /// </summary>
+    private async Task RecategorizarAsync(IEnumerable<long> ids, CancellationToken ct)
+    {
+        var lista = ids.Distinct().ToList();
+        if (lista.Count == 0) return;
+        await _categorizacao.CarregarAsync(ct);
+        var mudou = false;
+        foreach (var t in await _db.Transacoes.Where(t => lista.Contains(t.Id) && !t.CategoriaManual).ToListAsync(ct))
+        {
+            var nova = _categorizacao.Resolver(t);
+            if (nova == t.CategoriaId) continue;
+            t.CategoriaId = nova;
+            _categorizacao.AplicarTipo(t);
+            t.AtualizadoEm = DateTime.UtcNow;
+            mudou = true;
+        }
+        if (!mudou) return;
+        // Transferência só fica fora dos relatórios quando é entre contas suas (ADR 0031), como no "reaplicar".
+        await _db.SaveChangesAsync(ct);
+        await _transferencias.ReclassificarAsync(ct);
     }
 
     [HttpGet]
@@ -268,7 +299,8 @@ public class RegrasDescricaoController : BaseController
         };
         _db.RegrasDescricao.Add(r);
         await _db.SaveChangesAsync(ct);
-        await _descricoes.ReaplicarAsync(ct);
+        var mudaram = await _descricoes.ReaplicarAsync(ct);
+        await RecategorizarAsync(mudaram.Select(m => m.Id), ct);
         await _db.SaveChangesAsync(ct);
         var quantidade = await _db.Transacoes.CountAsync(t => t.RegraDescricaoId == r.Id, ct);
         return ParaDto(r, quantidade);
@@ -287,7 +319,8 @@ public class RegrasDescricaoController : BaseController
         r.ValorMaximo = dto.ValorMaximo;
         r.Ativa = dto.Ativa;
         await _db.SaveChangesAsync(ct);
-        await _descricoes.ReaplicarAsync(ct);
+        var mudaram = await _descricoes.ReaplicarAsync(ct);
+        await RecategorizarAsync(mudaram.Select(m => m.Id), ct);
         await _db.SaveChangesAsync(ct);
         var quantidade = await _db.Transacoes.CountAsync(t => t.RegraDescricaoId == id, ct);
         return ParaDto(r, quantidade);
@@ -308,7 +341,8 @@ public class RegrasDescricaoController : BaseController
         }
         _db.RegrasDescricao.Remove(r);
         await _db.SaveChangesAsync(ct);
-        await _descricoes.ReaplicarAsync(ct);
+        var mudaram = await _descricoes.ReaplicarAsync(ct);
+        await RecategorizarAsync(transacoes.Select(x => x.Id).Concat(mudaram.Select(m => m.Id)), ct);
         await _db.SaveChangesAsync(ct);
         return NoContent();
     }

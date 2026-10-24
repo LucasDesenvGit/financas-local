@@ -266,7 +266,7 @@ public class OpenFinanceController : BaseController
                 .ToListAsync(ct);
             foreach (var t in transacoes)
             {
-                var nova = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+                var nova = _categorizacao.Resolver(t);
                 if (nova == t.CategoriaId) continue;
                 t.CategoriaId = nova;
                 _categorizacao.AplicarTipo(t);
