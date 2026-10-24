@@ -11,25 +11,36 @@
 #    - sem rede (unshare -rn: só a interface de loopback). O câmbio e a cripto
 #      tentam a internet 1 minuto depois de subir e falham sem gravar nada;
 #    - cultura pt-BR e fuso de Brasília, como no computador de quem usa;
-#    - HTTPS com um certificado descartável (o cookie anti-CSRF exige HTTPS).
+#    - HTTPS com um certificado descartável (o cookie anti-CSRF exige HTTPS);
+#    - o Go atrás do .NET (#231, #363): compilado do src/backend-go, o .NET o
+#      sobe como processo filho com o mesmo relógio (Go:InicioDoRelogio, porque
+#      a libfaketime não age sobre o Go) e repassa a ele as rotas que só
+#      existem no Go (/api/go) e os prefixos de PREFIXOS_GO.
 # 3. Roda o comparador (go test ./testes/contrato) contra ela, no mesmo
 #    ambiente sem rede, e desliga a API.
 #
 # Uso (depois do build da API):
 #   src/backend-go/testes/contrato/rodar-dotnet.sh              # compara com esperado/
-#   src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar  # grava esperado/
+#   src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar  # grava esperado/ (só com o .NET respondendo)
+#   PREFIXOS_GO="/api/cambio;/api/cripto" src/backend-go/testes/contrato/rodar-dotnet.sh
+#                       # os mesmos esperados, com esses prefixos atendidos pelo Go atrás do .NET
+#   src/backend-go/testes/contrato/rodar-dotnet.sh --go         # PREFIXOS_GO = os assuntos de assuntos-no-go.txt
+#                       # (é o que a CI roda; sem assunto ligado, não faz nada)
 #
-# Variáveis opcionais: CONFIGURACAO (Release), DOTNET (dotnet), PORTA (5451),
+# Variáveis opcionais: PREFIXOS_GO (vazio: o .NET responde tudo, menos as rotas
+# que só existem no Go), CONFIGURACAO (Release), DOTNET (dotnet), PORTA (5451),
 # FAKETIME_LIB (caminho da libfaketime.so.1), CULTURA (pt_BR.UTF-8), MANTER_PASTA=1 (não apaga a
 # pasta temporária, para olhar o banco e o log da API).
 # =====================================================================
 set -euo pipefail
 
 atualizar=""
+assuntos_no_go=""
 for arg in "$@"; do
     case "$arg" in
         --atualizar) atualizar="-atualizar" ;;
-        -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
+        --go) assuntos_no_go=1 ;;
+        -h|--help) sed -n '2,34p' "$0"; exit 0 ;;
         *) echo "Argumento desconhecido: $arg" >&2; exit 2 ;;
     esac
 done
@@ -44,6 +55,32 @@ dll="$raiz/src/backend/Financas.Api/bin/$configuracao/net10.0/Financas.Api.dll"
 # O mesmo instante do InicioPadrao (contrato_test.go), em segundos desde 1970: assim não depende do fuso de quem roda.
 inicio="2026-10-15T01:00:00Z"
 inicio_epoch=1792026000
+
+# Rotas que só existem no Go (não há .NET a imitar): vão sempre para o Go, e o esperado delas é o que ele responde.
+# Hoje, só o diagnóstico da convivência (casos/90-go.json). Rota do núcleo NÃO entra aqui: ela vai em PREFIXOS_GO,
+# e o esperado dela vem do .NET.
+prefixos_so_no_go="/api/go"
+prefixos_go="${PREFIXOS_GO:-}"
+if [[ -n "$assuntos_no_go" ]]; then
+    [[ -z "$prefixos_go" ]] || { echo "Use --go ou PREFIXOS_GO, não os dois." >&2; exit 2; }
+    # Linhas "<assunto> <prefixos>" sem "#" no começo; o resto da linha é ignorado.
+    nomes=""
+    while read -r nome prefixos _; do
+        [[ -z "$nome" || "$nome" == \#* ]] && continue
+        [[ -n "$prefixos" ]] || { echo "assuntos-no-go.txt: o assunto $nome está sem prefixos." >&2; exit 2; }
+        nomes="${nomes:+$nomes, }$nome"
+        prefixos_go="${prefixos_go:+$prefixos_go;}$prefixos"
+    done <"$pasta_contrato/assuntos-no-go.txt"
+    if [[ -z "$prefixos_go" ]]; then
+        echo "Nenhum assunto ligado em assuntos-no-go.txt: o contrato contra o Go fica para quando houver um."
+        exit 0
+    fi
+    echo "Assuntos no Go: $nomes"
+fi
+if [[ -n "$prefixos_go" && -n "$atualizar" ]]; then
+    echo "--atualizar com o Go respondendo (PREFIXOS_GO ou --go): os esperados se gravam só com o .NET (ele é a referência)." >&2
+    exit 2
+fi
 
 [[ -f "$dll" ]] || { echo "API não compilada em $dll (rode: $dotnet build FinancasLocal.sln -c $configuracao)." >&2; exit 1; }
 command -v sqlite3 >/dev/null || { echo "sqlite3 não encontrado." >&2; exit 1; }
@@ -92,8 +129,13 @@ senha="$(head -c 18 /dev/urandom | base64 | tr -d '/+=')"
 "$dotnet" dev-certs https -ep "$pasta/teste.pfx" -p "$senha" >/dev/null
 [[ -f "$pasta/teste.pfx" ]] || { echo "dotnet dev-certs não gerou o certificado." >&2; exit 1; }
 
-# O comparador compilado fora do namespace sem rede (o go pode precisar baixar módulos).
-(cd "$pasta_go" && go test -c -o "$pasta/contrato.test" ./testes/contrato)
+# O comparador e o Go compilados fora do namespace sem rede (o go pode precisar baixar módulos). O Go sai como na
+# publicação: sem cgo e com a versão do Directory.Build.props (o /api/go/saude a devolve).
+versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.props" | head -n1)"
+(cd "$pasta_go" &&
+    go test -c -o "$pasta/contrato.test" ./testes/contrato &&
+    CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao" \
+        -o "$pasta/financas-go" ./cmd/financas)
 
 # 2 e 3, dentro de um namespace de rede só com o loopback.
 cat >"$pasta/dentro.sh" <<'DENTRO'
@@ -109,6 +151,7 @@ Kestrel__Endpoints__Https__Certificate__Path="$PASTA/teste.pfx" \
 Kestrel__Endpoints__Https__Certificate__Password="$SENHA" \
 Banco__Caminho="$PASTA/dados/sql/FinancasLocal.db" \
 Seguranca__PastaChaves="$PASTA/dados/chaves" \
+Go__Executavel="$PASTA/financas-go" Go__Prefixos="$PREFIXOS" Go__InicioDoRelogio="$INICIO" \
 LANG="$CULTURA" LC_ALL="$CULTURA" TZ=America/Sao_Paulo \
 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
     "$DOTNET" "$DLL" >"$PASTA/api.log" 2>&1 &
@@ -123,6 +166,13 @@ for _ in $(seq 1 120); do
     sleep 0.5
 done
 [[ -n "$pronta" ]] || { echo "A API não respondeu em 60 s. Log:"; cat "$PASTA/api.log"; exit 1; }
+# O Go sobe depois do .NET (app.Run): espera ele avisar a porta, para o primeiro caso repassado não pegar o 503.
+for _ in $(seq 1 60); do
+    grep -q 'Go no ar em' "$PASTA/api.log" && break
+    sleep 0.5
+done
+grep -q 'Go no ar em' "$PASTA/api.log" || { echo "O Go não subiu atrás do .NET em 30 s. Log:"; cat "$PASTA/api.log"; exit 1; }
+echo "Go atrás do .NET, atendendo: $PREFIXOS"
 
 cd "$PASTA_CONTRATO"
 status=0
@@ -133,4 +183,5 @@ DENTRO
 
 PASTA="$pasta" PASTA_CONTRATO="$pasta_contrato" PORTA="$porta" SENHA="$senha" DOTNET="$(command -v "$dotnet")" DLL="$dll" \
 FAKETIME_LIB="$faketime_lib" INICIO="$inicio" INICIO_EPOCH="$inicio_epoch" ATUALIZAR="$atualizar" CULTURA="${CULTURA:-pt_BR.UTF-8}" \
+PREFIXOS="$prefixos_so_no_go${prefixos_go:+;$prefixos_go}" \
     unshare -rn bash "$pasta/dentro.sh"

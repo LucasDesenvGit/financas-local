@@ -5,14 +5,14 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | Pasta | O que tem |
 |---|---|
 | `cmd/financas` | o ponto de entrada (o `Program.cs` do Go): `-atras-do-dotnet` no site, ou sozinho (esqueleto da #73) |
-| `internal/api` | o `ServeMux` com as rotas de todos os assuntos (o `MapControllers` do Go) |
+| `internal/api` | o `ServeMux` com as rotas de todos os assuntos (o `MapControllers` do Go): uma linha por assunto |
 | `internal/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco) |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
 | `internal/sessao` | quem está logado, no contexto da requisição |
 | `internal/config` | leitura dos mesmos `appsettings*.json` do .NET |
 | `internal/banco` | SQLite no formato do EF Core, transação, consultas do `sqlc`, esquema ao iniciar ([README](internal/banco/README.md)) |
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
-| `internal/relogio` | fuso de Brasília, injetável |
+| `internal/relogio` | fuso de Brasília, injetável; o relógio de teste do contrato (`APartirDe`, #363) |
 | `internal/versao` | a versão, gravada na compilação pelo `-ldflags` |
 | `testes/contrato` | testes de contrato: o que o .NET responde e grava, caso a caso, para o Go responder igual ([README](testes/contrato/README.md)) |
 
@@ -33,12 +33,13 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 
 ### Rota nova
 
-1. O handler no pacote do assunto (`internal/<assunto>`), com as dependências pelo construtor.
-2. O registro em `internal/api/api.go`: `mux.Handle("GET /api/<assunto>/{id}", ...)`.
-3. O prefixo em `Go:Prefixos` no `src/backend/Financas.Api/appsettings.json` (separados por `;`). Enquanto o prefixo não estiver lá, a rota não recebe nada e o .NET continua atendendo.
-4. Tarefa em segundo plano que passou para o Go: o nome dela em `Go:Tarefas` (`Sincronizacao`, `Cambio` ou `Cripto`), para o .NET não rodar a dele.
+1. O handler no pacote do assunto (`internal/<assunto>`), com as dependências pelo construtor. O pacote exporta `Registrar(mux, <só o que ele usa>)`, que põe as rotas dele no mux (`mux.Handle("GET /api/<assunto>/{id}", ...)`); o exemplo é o `internal/saude`.
+2. **Uma linha** em `internal/api/api.go`: `<assunto>.Registrar(mux, d.DB, d.Log, d.Relogio)`. É só isso que os assuntos feitos em paralelo dividem; no merge, conflito ali é sempre "fique com as duas linhas". Hora vem do `d.Relogio`, nunca do `time.Now()`.
+3. Os casos de contrato (no número reservado do assunto) e a rodada contra o Go: `PREFIXOS_GO` para rodar aqui e a linha do assunto em `testes/contrato/assuntos-no-go.txt` para a CI, como no [README do contrato](testes/contrato/README.md#como-cada-assunto-liga-o-contrato-contra-o-go).
+4. Para ligar no site (passo 2 da ADR 0049, PR à parte): os prefixos na entrada do assunto em `Go:Prefixos`, no `src/backend/Financas.Api/appsettings.json`. É uma entrada por assunto, já reservada e vazia, com os prefixos separados por `;` (`"cambio": "/api/cambio;/api/cripto"`), e uma linha em branco entre as entradas, para dois PRs não mexerem em linhas vizinhas. Enquanto a entrada estiver vazia, a rota não recebe nada e o .NET continua atendendo.
+5. Tarefa em segundo plano que passou para o Go: o nome dela em `Go:Tarefas` (`Sincronizacao`, `Cambio` ou `Cripto`), para o .NET não rodar a dele.
 
-Voltar o assunto para o .NET é tirar o prefixo (e a tarefa) da lista e reiniciar o serviço; não precisa reinstalar.
+Voltar o assunto para o .NET é esvaziar a entrada dele (e tirar a tarefa) e reiniciar o serviço; não precisa reinstalar. Num `appsettings` de cima, `"Go": {"Prefixos": {"cambio": ""}}` desliga só aquele assunto, e `"Prefixos": ""` (texto) desliga todos.
 
 ## Rodar
 
@@ -63,6 +64,7 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 - O `-certificado-temporario` cria um certificado só em memória, e o navegador vai avisar que não confia nele.
 - Para usar o `.pfx` e os caminhos de uma instalação, aponte `-pasta` para a pasta da publicação (onde está o `appsettings.Production.json`).
 - O `-aplicar-esquema` cria e atualiza o banco antes de atender, como o .NET faz ao iniciar (#297). Fica desligado por padrão: até a inversão (#85), quem faz isso é o .NET. Use só com uma cópia do banco.
+- O `-inicio-do-relogio 2026-10-15T01:00:00Z` é **só para teste** (#363): o relógio começa nesse instante e anda dali, como a libfaketime faz com o .NET no contrato. Sem ele, o relógio do sistema. Atrás do .NET, quem passa a opção é o .NET, quando `Go:InicioDoRelogio` (vazio por padrão) tem um instante com fuso; ele passa o instante já validado, mais o tempo desde a partida dele. Ligado, o Go deixa um aviso no log (Configurações › Erros).
 
 ## Antes de subir (push)
 
@@ -79,7 +81,7 @@ bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
 
 A CI roda os cinco primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco".
 
-**Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go. A CI roda o contrato no job "contrato (.NET)".
+**Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe atrás do .NET, como no site. Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go, e confere o Go com `PREFIXOS_GO="<prefixos do assunto>" testes/contrato/rodar-dotnet.sh` (os mesmos esperados). A CI roda o contrato no job "contrato (.NET)".
 
 Dois testes manuais, que só rodam com as variáveis definidas:
 
