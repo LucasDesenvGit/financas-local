@@ -48,7 +48,7 @@ func TestNonceDiferenteACadaGravacao(t *testing.T) {
 			t.Fatal(err)
 		}
 		bruto, _ := base64.StdEncoding.DecodeString(strings.TrimPrefix(gravado, "v2:"))
-		nonce := string(bruto[:c.aead.NonceSize()])
+		nonce := string(bruto[:12]) // 96 bits, na frente da cifra
 		if vistos[nonce] {
 			t.Fatal("nonce repetido")
 		}

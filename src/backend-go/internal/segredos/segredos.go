@@ -1,7 +1,8 @@
 // Pacote segredos é o esquema novo dos segredos da tabela Configuracao (Client Secret da Pluggy, token da brapi),
 // que substitui o ASP.NET Data Protection na inversão (#85, ADR 0049; a 0005 fica substituída).
 //
-//   - Cifra: AES-256-GCM, com um nonce aleatório novo a cada gravação. O valor gravado é "v2:" + base64(nonce|cifra);
+//   - Cifra: AES-256-GCM com nonce aleatório de 96 bits, novo a cada gravação (cipher.NewGCMWithRandomNonce: quem
+//     sorteia o nonce é a biblioteca padrão). O valor gravado é "v2:" + base64(nonce|cifra);
 //     o prefixo de versão deixa trocar o esquema no futuro sem adivinhar o formato.
 //   - A chave da Configuracao (ex.: "Pluggy.ClientSecret") entra como dado autenticado (AAD): o valor cifrado de um
 //     segredo não serve se for copiado para a linha de outro.
@@ -64,7 +65,7 @@ func novoCofre(chave []byte) (*Cofre, error) {
 	if err != nil {
 		return nil, fmt.Errorf("chave dos segredos: %w", err)
 	}
-	aead, err := cipher.NewGCM(bloco)
+	aead, err := cipher.NewGCMWithRandomNonce(bloco)
 	if err != nil {
 		return nil, fmt.Errorf("chave dos segredos: %w", err)
 	}
@@ -73,12 +74,8 @@ func novoCofre(chave []byte) (*Cofre, error) {
 
 // Cifrar devolve o valor a gravar na Configuracao para o segredo da chave dada.
 func (c *Cofre) Cifrar(chave, segredo string) (string, error) {
-	nonce := make([]byte, c.aead.NonceSize())
-	if _, err := rand.Read(nonce); err != nil {
-		return "", fmt.Errorf("sortear o nonce: %w", err)
-	}
-	// Seal acrescenta a cifra (com a etiqueta de autenticação) ao fim do nonce: nonce|cifra.
-	cifrado := c.aead.Seal(nonce, nonce, []byte(segredo), []byte(chave))
+	// Com NewGCMWithRandomNonce o nonce não é passado: o Seal sorteia um e o põe na frente (nonce|cifra|etiqueta).
+	cifrado := c.aead.Seal(nil, nil, []byte(segredo), []byte(chave))
 	return prefixo + base64.StdEncoding.EncodeToString(cifrado), nil
 }
 
@@ -90,11 +87,10 @@ func (c *Cofre) Decifrar(chave, gravado string) (string, error) {
 		return "", ErrInformarDeNovo
 	}
 	cifrado, err := base64.StdEncoding.DecodeString(codificado)
-	if err != nil || len(cifrado) < c.aead.NonceSize()+c.aead.Overhead() {
+	if err != nil {
 		return "", ErrAdulterado
 	}
-	nonce, cifra := cifrado[:c.aead.NonceSize()], cifrado[c.aead.NonceSize():]
-	segredo, err := c.aead.Open(nil, nonce, cifra, []byte(chave))
+	segredo, err := c.aead.Open(nil, nil, cifrado, []byte(chave))
 	if err != nil {
 		return "", ErrAdulterado
 	}
