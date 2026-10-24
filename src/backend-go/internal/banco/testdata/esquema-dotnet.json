@@ -8,13 +8,13 @@
     "sqlite_version()": "3.53.3"
   },
   "entradas": {
-    "01-estrutura.sql": "63ff4e79e2104d904091239e6ddc58b6fc4e3f900ac57e86e70b8c9e77bf8c30",
+    "01-estrutura.sql": "5380b70070b3f1f8b6c21a51110f8e7f310137cd278a734d19352f17d62b5cbf",
     "02-dados-iniciais.sql": "525e0605339633ad0b41391f33e531f7a1a0af2013160246930ad2e1f1d8b89c",
     "2-criar-banco.sh": "25e8308a99d6e320c90396b6eafaf32e7a9afa8f2915adac967d58ce21c202fe"
   },
   "assinaturas": {
-    "scripts": 1082873364,
-    "scriptsComCrlf": 1082873364,
+    "scripts": 1607403912,
+    "scriptsComCrlf": 1607403912,
     "vazio": 424131073,
     "acentos": 1387974945
   },
@@ -31,7 +31,7 @@
   "cenarios": {
     "novo": {
       "banco": {
-        "userVersion": 1082873364,
+        "userVersion": 1607403912,
         "tabelas": [
           {
             "nome": "Ativo",
@@ -156,7 +156,7 @@
           },
           {
             "nome": "Conta",
-            "sqlHash": "bf54a468997075fd9f01f1b0be82eb45b99cbdb72ef76988d0a95f49ed36a546",
+            "sqlHash": "b1e14b45f2b50d23aa136f5f5bcbc86203babe343fd7980a8babd765b536c419",
             "colunas": [
               "0|Id|INTEGER|1|<null>|1",
               "1|ConexaoBancariaId|INTEGER|0|<null>|0",
@@ -177,12 +177,12 @@
               "16|Arquivada|INTEGER|1|0|0",
               "17|Banco|TEXT|0|<null>|0",
               "18|ContaVinculadaId|INTEGER|0|<null>|0",
-              "19|CriadoEm|TEXT|1|<null>|0",
-              "20|AtualizadoEm|TEXT|1|<null>|0",
-              "21|SaldoReservado|TEXT|0|<null>|0",
-              "22|ReservasInformadas|TEXT|0|<null>|0",
-              "23|LimiteAjustadoNoApp|INTEGER|0|<null>|0",
-              "24|LimiteDiferencaAvaliada|TEXT|0|<null>|0"
+              "19|SaldoReservado|TEXT|0|<null>|0",
+              "20|ReservasInformadas|TEXT|0|<null>|0",
+              "21|LimiteAjustadoNoApp|INTEGER|0|<null>|0",
+              "22|LimiteDiferencaAvaliada|TEXT|0|<null>|0",
+              "23|CriadoEm|TEXT|1|<null>|0",
+              "24|AtualizadoEm|TEXT|1|<null>|0"
             ],
             "indices": [
               "UX_Conta_PluggyAccountId|1|c|1|PluggyAccountId|aa2c4f55501e9867a9b4d5fcab7f4fd370b1cdc236b7d257d067ff6fc0068c54"
@@ -195,7 +195,7 @@
           },
           {
             "nome": "ContaAgendada",
-            "sqlHash": "1f7b42a3ffff15920a116eb4c748a36d75772cc15176fed5509df7b30136be15",
+            "sqlHash": "bd12d62c6239fe6466f9769df6d5b12577b1a8bf1f0b4079201c30d7aba57f2b",
             "colunas": [
               "0|Id|INTEGER|1|<null>|1",
               "1|Descricao|TEXT|1|<null>|0",
@@ -207,11 +207,11 @@
               "7|Ativa|INTEGER|1|1|0",
               "8|UltimoPagamentoEm|TEXT|0|<null>|0",
               "9|DataLimite|TEXT|0|<null>|0",
-              "10|ChaveExtrato|TEXT|0|<null>|0",
-              "11|CriadoEm|TEXT|1|<null>|0",
-              "12|FormaCobranca|INTEGER|1|1|0",
-              "13|TextoCobranca|TEXT|0|<null>|0",
-              "14|Observacao|TEXT|0|<null>|0"
+              "10|FormaCobranca|INTEGER|1|1|0",
+              "11|TextoCobranca|TEXT|0|<null>|0",
+              "12|Observacao|TEXT|0|<null>|0",
+              "13|ChaveExtrato|TEXT|0|<null>|0",
+              "14|CriadoEm|TEXT|1|<null>|0"
             ],
             "indices": [
               "IX_ContaAgendada_ProximoVencimento|0|c|0|Ativa,ProximoVencimento|f79feb9e84aebcebffba048008f3b3fb1b245592cab18efe1dd0a5bb0a7788ab"
@@ -384,7 +384,7 @@
           },
           {
             "nome": "Investimento",
-            "sqlHash": "75e77402dee2aec35e43a40e574d0dce60b7464a1c90a3a04c29d47d6a67828b",
+            "sqlHash": "0ea3180df51f97f3084bed3a880f6ec4ea1d7906d4ccd123de8da8a72e3fa541",
             "colunas": [
               "0|Id|INTEGER|1|<null>|1",
               "1|ConexaoBancariaId|INTEGER|1|<null>|0",
@@ -403,8 +403,8 @@
               "14|DataVencimento|TEXT|0|<null>|0",
               "15|DataAplicacao|TEXT|0|<null>|0",
               "16|Status|TEXT|0|<null>|0",
-              "17|AtualizadoEm|TEXT|1|<null>|0",
-              "18|NomePersonalizado|TEXT|0|<null>|0"
+              "17|NomePersonalizado|TEXT|0|<null>|0",
+              "18|AtualizadoEm|TEXT|1|<null>|0"
             ],
             "indices": [
               "sqlite_autoindex_Investimento_1|1|u|0|PluggyInvestmentId|<sem sql>"
@@ -745,7 +745,7 @@
     },
     "vazio": {
       "banco": {
-        "userVersion": 1082873364,
+        "userVersion": 1607403912,
         "tabelas": {
           "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
           "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
@@ -753,8 +753,8 @@
           "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
           "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
           "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
-          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
-          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "Conta": "5a6a6e98614fe3bc008f2869b17789f4d3ec4b9713c0fa2d88cc9a5816b30837",
+          "ContaAgendada": "30372dd2c3f8cef098b5333701301aacaead5a3476be9dbd94662b3c53fa5767",
           "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
           "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
           "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
@@ -762,7 +762,7 @@
           "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
-          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Investimento": "2e9d1e1f71c6c00d27b6dfac64688f65e9153a9377086bbe9f9fcbf26bfa29cd",
           "Meta": "f80e4d9c8c27c5a706ca5931c03d29351998cb4fd488f2492a78e59114a1502c",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
@@ -793,8 +793,8 @@
           "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
           "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
           "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
-          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
-          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "Conta": "5a6a6e98614fe3bc008f2869b17789f4d3ec4b9713c0fa2d88cc9a5816b30837",
+          "ContaAgendada": "30372dd2c3f8cef098b5333701301aacaead5a3476be9dbd94662b3c53fa5767",
           "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
           "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
           "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
@@ -802,7 +802,7 @@
           "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
-          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Investimento": "2e9d1e1f71c6c00d27b6dfac64688f65e9153a9377086bbe9f9fcbf26bfa29cd",
           "Meta": "3da5e64d00906e9929a4dc95d2fef76749ad5af3a93a257e401718ec539f978c",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
@@ -822,7 +822,7 @@
         "outros": []
       },
       "depois": {
-        "userVersion": 1082873364,
+        "userVersion": 1607403912,
         "tabelas": {
           "Ativo": "7522bda8d4a35ba0f8439cfe96b1bba97377ccfd20b2c2e72b70029f1298266f",
           "AuditoriaAcesso": "2edb0a6765362e1469537e207c8a9e6ee7728aaf76f6becc13e64a2ce8dedb2b",
@@ -830,8 +830,8 @@
           "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
           "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
           "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
-          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
-          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "Conta": "5a6a6e98614fe3bc008f2869b17789f4d3ec4b9713c0fa2d88cc9a5816b30837",
+          "ContaAgendada": "30372dd2c3f8cef098b5333701301aacaead5a3476be9dbd94662b3c53fa5767",
           "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
           "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
           "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
@@ -839,7 +839,7 @@
           "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
-          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Investimento": "2e9d1e1f71c6c00d27b6dfac64688f65e9153a9377086bbe9f9fcbf26bfa29cd",
           "Meta": "95a83161af71f60445d395b4ceecddaf15db1c6f9033dd07651649ea250aedc9",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
@@ -867,8 +867,8 @@
           "CategoriaPluggy": "b80ac75b8044976354ccb9491bc048d565aa49f54f5c814bfa5489c5ee360aff",
           "ConexaoBancaria": "136aa81f6af58a9459dbbcc684678381fb197f8f93bdf03bd709979032307827",
           "Configuracao": "7f6a51e28aba29d0cc1b2a202cb14166143fa1510e9e02ee6d2b65a65a397502",
-          "Conta": "d10dfc858f3dfcffe7a08a8854bd2db7fd3eb7171fb97caca316f27a3537631b",
-          "ContaAgendada": "e99c2d5f6eef611bb5cae8ef38321190a0ca8a1843e2570daeb936568f1e7541",
+          "Conta": "5a6a6e98614fe3bc008f2869b17789f4d3ec4b9713c0fa2d88cc9a5816b30837",
+          "ContaAgendada": "30372dd2c3f8cef098b5333701301aacaead5a3476be9dbd94662b3c53fa5767",
           "CotacaoCripto": "0df27b9871229fdad1ace2936a815886f5e27d0b66c5fe56560fe3a23c8b2946",
           "CotacaoMoeda": "b1953190d46e88a1c9b3e9e7d72a3598e65d6f60397e3fe8e10b2ce8381efaf1",
           "Emprestimo": "4586bf427cdeab9a9ccd996b7882bbe4434d6b35032d9b15ec6e8e36b6ad92cd",
@@ -876,7 +876,7 @@
           "FaturaCartao": "9b892f4556f0f622eb6c47a3dea6fe48aa7851a6634641d3618c102985ed271a",
           "HistoricoInvestimento": "5ff756ca9666b91e6673322bee7eaafbc21a6e3128fa13b3da0f5e663fd1ff39",
           "IndiceMensal": "0637e9bb3cf87dd72de9acaf461c86f766ac21cd8569e7dfa45ee94a05719ec4",
-          "Investimento": "9a973d45bf26bd85d59374af4818ce7f9bf1f55763c5dbef625e1b81cfca8fb4",
+          "Investimento": "2e9d1e1f71c6c00d27b6dfac64688f65e9153a9377086bbe9f9fcbf26bfa29cd",
           "Meta": "3da5e64d00906e9929a4dc95d2fef76749ad5af3a93a257e401718ec539f978c",
           "MetaAporte": "a713d1c58e404614a69ebc4b402c74b6d4b195270c8a291cc0951046a5d2645d",
           "OperacaoAtivo": "53468c791bbef86d2ad1991b56caf7493f0100ade7a73c2651ead8b97af68e4b",
