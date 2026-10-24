@@ -2,6 +2,50 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.5] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Apoio comum aos testes do back-end em Go** (#369, épico #374, ADR 0051). Nada muda para quem usa. O pacote `internal/testeapoio`, só para testes, dá aos três assuntos do #70 o mesmo jeito de testar:
+  - banco temporário com o esquema real (`NovoBanco`, `NovoBancoVazio`), fechado sozinho no fim do teste; uns 5 ms por banco, e pode rodar em paralelo;
+  - fábrica de dados inventados no formato do EF Core (conta, categoria, subcategoria, transação, regra de categorização), com valores padrão e só o que importa trocado no teste;
+  - relógios parados em Brasília ("hoje é dia 31", "23h30 de 31/12") e o handler chamado com o usuário logado, conferindo o JSON pelo comparador do contrato (sem `float64`, `[]` diferente de `null`);
+  - o `TestEmTransacao` deixou de usar `time.Now()` (uma das dívidas da ADR 0051).
+
+## [2.41.4] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Cópia do banco antes da atualização não impede mais a API de subir** (#365, #366). Ao atualizar um banco que já existe, a API faz uma cópia em `dados/backups` e apaga as antigas, guardando as 5 mais recentes:
+  - **cópia antiga que não dá para apagar** (de outro dono ou só leitura, como uma cópia feita à mão como administrador) fica para a próxima, com um aviso no log que diz o arquivo. Antes, a falta de permissão parava a partida (#365);
+  - **duas atualizações no mesmo segundo** (o serviço reiniciando logo depois de uma atualização que falhou) não dão mais o mesmo nome: o nome da cópia ganhou os milissegundos (`FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db`). Antes, a segunda parava a partida (#366);
+  - as 5 guardadas continuam as mais recentes, misturando nomes antigos e novos: a ordem pelo nome passou a ser byte a byte, que não depende do idioma do computador.
+  - O mesmo vale para o porte em Go (`AplicarEsquema`).
+
+## [2.41.3] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Regras enxergam o nome dado por outra regra** (#250). Antes, toda regra comparava só com a descrição que veio do banco.
+  - **Regra de categoria:** vale pela descrição do banco **e** pelo nome que a transação tem agora. "Contém Aluguel" → Moradia pega a transação que uma regra de descrição renomeou de "PIX TRANSF 123" para "Aluguel". As regras que usam o texto do banco continuam valendo.
+  - **Regras de descrição em cadeia:** a primeira olha a descrição do banco, e a seguinte, o nome que a anterior deu ("Aluguel" → "Aluguel apto 12"). Cada regra entra uma vez só, então não há ciclo, e a cadeia tem no máximo 10 passos.
+  - **A categoria acompanha:** criar, editar ou excluir uma regra de descrição aplica de novo as regras de categoria nas transações que mudaram de nome (menos as de categoria escolhida à mão). Isso vale também na sincronização e em "Reaplicar regras".
+  - **Prévia:** a da regra de descrição acha também pelo nome atual.
+
+## [2.41.2] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Banco: as 8 colunas que só nasciam por `ALTER TABLE` agora estão no `CREATE TABLE`** (#367). `Conta` (`SaldoReservado`, `ReservasInformadas`, `LimiteAjustadoNoApp`, `LimiteDiferencaAvaliada`), `Investimento` (`NomePersonalizado`) e `ContaAgendada` (`FormaCobranca`, `TextoCobranca`, `Observacao`) entram no `banco/01-estrutura.sql` com a mesma definição das linhas `adicionar_coluna_se_ausente`, que continuam no `2-criar-banco.sh` para atualizar bancos antigos.
+  - **Banco que já existe:** a estrutura não muda. Banco novo fica com as mesmas colunas de antes, só em outra ordem, e sem as 8 mensagens "coluna adicionada" no log.
+  - **Uma cópia a mais em `dados/backups`, uma vez só:** a assinatura do esquema (`PRAGMA user_version`) muda, e a API faz a cópia de sempre antes de conferir o banco (`FinancasLocal-antes-atualizacao-*.db`). É o esperado. Nos reinícios seguintes, não há cópia nova.
+  - **Para quem desenvolve:** o Go ganhou dois testes. Um falha se uma coluna das linhas `adicionar_coluna_se_ausente` faltar no `CREATE TABLE`. O outro falha se o banco novo e o antigo atualizado ficarem com colunas diferentes (tipo, `NOT NULL` ou padrão).
+
+## [2.41.1] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Regra de testes do back-end em Go** (#368, épico #374, ADR 0051). Nada muda para quem usa. Toda regra do back-end em Go passa a nascer com teste unitário, além do caso de contrato do endpoint:
+  - unitário em tabela no pacote do assunto; consultas num SQLite de verdade, em arquivo temporário com o esquema real (sem mock); handlers com `httptest`; só a biblioteca padrão, sem `testify`;
+  - uma etapa do #70 só fica pronta com cada regra do levantamento na tabela de testes, os casos-limite que se aplicam (negativo, zero, 8 casas, `NULL`, meia-noite em Brasília, virada de mês e de ano, dias 29 a 31, acento) e o teste provado contra o código estragado de propósito;
+  - proibido em teste: `time.Now()`, `time.Sleep` para esperar, rede e dado real. O `t.Parallel()` vale para os testes com banco próprio;
+  - a regra está no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), na skill `migrar-para-go`, no agente `dev-go` e no modelo de PR. O C# continua sem testes, só com o checklist.
+
 ## [2.41.0] — 2026-10-23 · desenvolvimento
 
 ### Funcionalidades

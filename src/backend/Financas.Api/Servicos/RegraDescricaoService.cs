@@ -12,12 +12,18 @@ namespace Financas.Api.Servicos;
 /// descrições editadas antes desta funcionalidade ficam como estão. A comparação é com a descrição do banco, sem acento
 /// e sem diferença de maiúsculas, como nas regras de categoria.
 /// #241: a regra pode ter uma faixa de valor (sem o sinal), para separar cobranças com a mesma descrição do banco.
+/// #250: as regras valem em cadeia: a primeira olha a descrição do banco, e a seguinte, o nome que a anterior deu
+/// ("PIX TRANSF 123" → "Aluguel" → "Aluguel apto 12"). Cada regra entra uma vez só na cadeia (sem ciclo A→B→A), com no
+/// máximo <see cref="MaximoNaCadeia"/> passos. <c>RegraDescricaoId</c> guarda a última, a que deu o nome final.
 /// </summary>
 public partial class RegraDescricaoService
 {
     private readonly FinancasDbContext _db;
     private List<(int Id, string Texto, TipoCorrespondencia Tipo, string NovaDescricao, decimal? Minimo, decimal? Maximo)> _regras = new();
     private bool _carregado;
+
+    /// <summary>#250: quantas regras, no máximo, uma transação atravessa em cadeia.</summary>
+    public const int MaximoNaCadeia = 10;
 
     public RegraDescricaoService(FinancasDbContext db) => _db = db;
 
@@ -49,15 +55,37 @@ public partial class RegraDescricaoService
         => !t.DescricaoManual && t.DescricaoOriginal is not null
            && (t.RegraDescricaoId is not null || t.Descricao == t.DescricaoOriginal);
 
-    /// <summary>A regra que vale para essa descrição do banco e esse valor, ou null.</summary>
+    /// <summary>A regra que vale para essa descrição do banco e esse valor, ou null (só o primeiro passo da cadeia).</summary>
     public (int Id, string NovaDescricao)? Resolver(string? descricaoOriginal, decimal valor)
+        => Resolver(descricaoOriginal, valor, null);
+
+    private (int Id, string NovaDescricao)? Resolver(string? descricao, decimal valor, HashSet<int>? usadas)
     {
         if (!_carregado) throw new InvalidOperationException("Chame CarregarAsync antes de Resolver.");
-        if (string.IsNullOrWhiteSpace(descricaoOriginal)) return null;
-        var texto = CategorizacaoService.Normalizar(descricaoOriginal);
+        if (string.IsNullOrWhiteSpace(descricao)) return null;
+        var texto = CategorizacaoService.Normalizar(descricao);
         foreach (var r in _regras)
-            if (Corresponde(texto, r.Texto, r.Tipo) && NaFaixa(valor, r.Minimo, r.Maximo)) return (r.Id, r.NovaDescricao);
+            if ((usadas is null || !usadas.Contains(r.Id)) && Corresponde(texto, r.Texto, r.Tipo) && NaFaixa(valor, r.Minimo, r.Maximo))
+                return (r.Id, r.NovaDescricao);
         return null;
+    }
+
+    /// <summary>
+    /// #250: as regras que a transação atravessa, em ordem: a primeira pela descrição do banco, cada uma das seguintes
+    /// pelo nome que a anterior deu. Vazia se nenhuma vale.
+    /// </summary>
+    public List<(int Id, string NovaDescricao)> Cadeia(string? descricaoOriginal, decimal valor)
+    {
+        var cadeia = new List<(int Id, string NovaDescricao)>();
+        var usadas = new HashSet<int>();
+        var texto = descricaoOriginal;
+        while (cadeia.Count < MaximoNaCadeia && Resolver(texto, valor, usadas) is { } regra)
+        {
+            cadeia.Add(regra);
+            usadas.Add(regra.Id);
+            texto = regra.NovaDescricao;
+        }
+        return cadeia;
     }
 
     /// <summary>#241: o valor, sem o sinal (a despesa vem negativa), está na faixa da regra (cada ponta é opcional).</summary>
@@ -79,7 +107,8 @@ public partial class RegraDescricaoService
     public bool Aplicar(Transacao t)
     {
         if (!NomeAutomatico(t)) return false;
-        var regra = Resolver(t.DescricaoOriginal, t.Valor);
+        var cadeia = Cadeia(t.DescricaoOriginal, t.Valor);
+        (int Id, string NovaDescricao)? regra = cadeia.Count > 0 ? cadeia[^1] : null;
         var descricao = regra?.NovaDescricao ?? t.DescricaoOriginal!;
         if (t.Descricao == descricao && t.RegraDescricaoId == regra?.Id) return false;
         t.Descricao = descricao;
@@ -112,6 +141,8 @@ public partial class RegraDescricaoService
     /// <summary>
     /// Quantas transações de nome automático (além de <paramref name="excetoId"/>) têm a descrição do banco que bate com
     /// o texto (e, #241, o valor na faixa), e alguns exemplos, para a prévia de "usar também nas outras".
+    /// #250: vale também o nome que a transação tem agora, dado por outra regra (a regra nova entra na cadeia depois
+    /// dela); o exemplo é o texto que bateu.
     /// </summary>
     public async Task<(int Quantidade, List<string> Exemplos)> PreviaAsync(string texto, TipoCorrespondencia tipo,
         long excetoId, CancellationToken ct, decimal? valorMinimo = null, decimal? valorMaximo = null)
@@ -121,12 +152,13 @@ public partial class RegraDescricaoService
         var candidatas = await _db.Transacoes.AsNoTracking()
             .Where(t => t.Id != excetoId && !t.DescricaoManual && t.DescricaoOriginal != null
                         && (t.RegraDescricaoId != null || t.Descricao == t.DescricaoOriginal))
-            .Select(t => new { Descricao = t.DescricaoOriginal!, t.Valor })
+            .Select(t => new { Original = t.DescricaoOriginal!, Atual = t.Descricao, t.Valor })
             .ToListAsync(ct);
         var batem = candidatas
-            .Where(d => Corresponde(CategorizacaoService.Normalizar(d.Descricao), normalizado, tipo)
-                        && NaFaixa(d.Valor, valorMinimo, valorMaximo))
-            .Select(d => d.Descricao).ToList();
+            .Where(d => NaFaixa(d.Valor, valorMinimo, valorMaximo))
+            .Select(d => Corresponde(CategorizacaoService.Normalizar(d.Original), normalizado, tipo) ? d.Original
+                : Corresponde(CategorizacaoService.Normalizar(d.Atual), normalizado, tipo) ? d.Atual : null)
+            .OfType<string>().ToList();
         var exemplos = batem.Distinct().Take(3).ToList();
         return (batem.Count, exemplos);
     }

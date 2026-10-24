@@ -86,7 +86,7 @@ func TestEmTransacao(t *testing.T) {
 	db := bancoDeTeste(t)
 	gravar := func(tx *sql.Tx, chave string) error {
 		_, err := tx.ExecContext(ctx, `INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES (?, 'x', 0, ?)`,
-			chave, tipos.NovaDataHora(time.Now()))
+			chave, tipos.NovaDataHora(instanteDosTestes.Agora()))
 		return err
 	}
 	existe := func(chave string) bool {

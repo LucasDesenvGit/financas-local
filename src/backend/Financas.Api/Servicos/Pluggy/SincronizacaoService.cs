@@ -401,7 +401,7 @@ public class SincronizacaoService
 
             var categoriaAnterior = t.CategoriaId;
             if (!t.CategoriaManual)
-                t.CategoriaId = _categorizacao.Resolver(t.DescricaoOriginal ?? t.Descricao, t.PluggyCategoriaId);
+                t.CategoriaId = _categorizacao.Resolver(t);
             // #156: com a categoria igual, o tipo já foi decidido (inclusive pela ReclassificarAsync, no fim, para a
             // categoria "Transferências"). Reaplicar marcaria de novo como transferência o que ela devolveu para
             // despesa/receita: a transação contava como "atualizada" a cada sincronização e perdia o "ignorar nos
