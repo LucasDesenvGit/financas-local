@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS IX_NovaTabela_Nome ON NovaTabela (Nome);
 
 O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no script, não no SQL:
 
-1. Inclua a coluna no `CREATE TABLE` de `01-estrutura.sql` (para quem cria o banco do zero).
+1. Inclua a coluna no `CREATE TABLE` de `01-estrutura.sql` (para quem cria o banco do zero), com a mesma definição do passo 2. Os testes do Go conferem as duas coisas (#367): `TestColunasNovasTambemNoCreateTable` falha se a coluna ficar só no `.sh`, e `TestBancoAntigoAtualizadoFicaIgualAoNovo`, se o banco novo e o antigo atualizado ficarem com tipo, `NOT NULL` ou padrão diferentes.
 2. Em `scripts/geral/2-criar-banco.sh`, depois de aplicar o `01-estrutura.sql`, chame o helper de `comum.sh` (ele consulta `PRAGMA table_info` antes de alterar):
 
    ```bash
