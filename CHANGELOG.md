@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.9] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Go: fuzz nos tipos de dinheiro e data** (#372, épico #374). Nada muda para quem usa. Para quem desenvolve:
+  - há 7 alvos de fuzz: decimal no banco e no JSON, data, data e hora, GUID, o começo do dia em Brasília e o primeiro e o último dia do mês;
+  - as sementes são o gabarito do EF Core, e o que o fuzz acha fica em `testdata/fuzz/` e roda em todo `go test`;
+  - o fuzz achou 2 bugs no Go, já corrigidos:
+    - nos dias em que o horário de verão começava (até 2019), o começo do dia caía às 23:00 do dia anterior. O C# lança exceção nesse dia (#393);
+    - o GUID com hífen fora do lugar era aceito, e o `Guid.Parse` do .NET o recusa;
+  - como rodar está no `CONTRIBUINDO.md`, em "Testes do back-end (Go)".
+
 ## [2.41.8] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação

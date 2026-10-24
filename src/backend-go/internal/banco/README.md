@@ -34,6 +34,8 @@ A sonda em [`internal/tipos/testdata/sonda-efcore`](../tipos/testdata/sonda-efco
 - **Nunca `float64` para dinheiro.** Nem no JSON: o `tipos.Decimal` escreve o número sem passar por `float64`. O `shopspring/decimal` sozinho escreveria **entre aspas**.
 - **Arredondamento:** o `Math.Round` do C# arredonda pelo método bancário (0,125 → 0,12). Use `RoundBank`, e não `Round`, onde o C# não diz o `MidpointRounding`.
 - **Datas:** a de negócio (a `Data` da transação) está no fuso de Brasília; os carimbos (`CriadoEm`) estão em UTC. O `DataHora` guarda a hora "de parede" sem fuso, como o EF Core: converta antes de gravar (`relogio`).
+- **Meia-noite que não existiu:** nos dias em que o horário de verão começava (até 2019, como 04/11/2018), o relógio de Brasília pulava de 23:59:59 para 01:00. Para essa hora, o `time.Date` devolve as 23:00 do dia anterior. Para o começo de um dia, use o `relogio.InicioDoDiaUtc`, que já trata isso (#372).
+- **GUID:** o `tipos.LerGuid` lê só os dois formatos que o .NET escreve, `8-4-4-4-12` e os 32 dígitos, como o `Guid.Parse`. Hífen fora do lugar é recusado (#372).
 - **Coluna opcional** é ponteiro (`*tipos.Decimal`, `*string`): `nil` grava e lê `NULL`.
 
 ## Esquema ao iniciar: `AplicarEsquema` (#297)

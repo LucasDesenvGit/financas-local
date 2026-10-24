@@ -175,9 +175,22 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - `t.Error` para continuar, `t.Fatal` só na preparação;
 - `t.Helper()` nos ajudantes e `t.Context()` no lugar de `context.Background()`.
 
+**Fuzz** ([Go Fuzzing](https://go.dev/doc/security/fuzz/), #372), nos tipos que todo assunto usa: `internal/tipos` e `internal/relogio`.
+- **O que confere:** o Go gera as entradas, e o alvo confere o que vale para qualquer uma: ida e volta pelo banco e pelo JSON, a escala do decimal, o formato do EF Core e o dia de Brasília.
+- **Sementes:** os valores do gabarito do EF Core.
+- **Achado:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda em todo `go test`, como regressão. Comite o arquivo junto com a correção.
+- **Rodar:**
+
+  ```bash
+  go test ./internal/tipos -run '^$' -fuzz '^FuzzDecimalNoBanco$' -fuzztime 5m
+  ```
+
+  Um alvo por vez: o `-fuzz` não aceita mais de um.
+- **Tipo novo** em `internal/tipos` ganha um alvo `FuzzXxx`, com as sementes do gabarito.
+
 **Gabarito** (*golden file*) fica em `testdata/`, vem da referência (o .NET ou o EF Core) e é regravado só por opção explícita (`-atualizar`), olhando a diferença no PR.
 
-**Antes de subir:** em `src/backend-go`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend-go/README.md#antes-de-subir-push)). Cobertura com piso (#370), trava de tempo (#371), fuzz (#372) e mutação automática (#373) entram pelo épico #374.
+**Antes de subir:** em `src/backend-go`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend-go/README.md#antes-de-subir-push)). Cobertura com piso (#370), trava de tempo (#371) e mutação automática (#373) entram pelo épico #374.
 
 ## Checklist do pull request
 

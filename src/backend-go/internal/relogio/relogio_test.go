@@ -31,6 +31,8 @@ func TestInicioDoDiaUtc(t *testing.T) {
 	casos := map[string]time.Time{
 		"2026-10-15": time.Date(2026, 10, 15, 3, 0, 0, 0, time.UTC),
 		"2018-12-01": time.Date(2018, 12, 1, 2, 0, 0, 0, time.UTC), // horário de verão: UTC-2
+		"2018-11-04": time.Date(2018, 11, 4, 3, 0, 0, 0, time.UTC), // começo do horário de verão: sem meia-noite, 01:00
+		"2019-02-17": time.Date(2019, 2, 17, 3, 0, 0, 0, time.UTC), // fim: 23h de novo no dia 16, e o 17 às 00:00 de UTC-3
 	}
 	for dia, esperado := range casos {
 		d, _ := tipos.LerData(dia)
