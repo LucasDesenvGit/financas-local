@@ -54,7 +54,7 @@ try
         antes = Resumir(antigoAntes),
         depois = Resumir(Despejar(antigo)),
         copia = Resumir(Despejar(copiaAntigo)),
-        nomeDaCopiaNoFormato = Regex.IsMatch(Path.GetFileName(copiaAntigo), @"^FinancasLocal-antes-atualizacao-\d{8}_\d{6}\.db$"),
+        nomeDaCopiaNoFormato = Regex.IsMatch(Path.GetFileName(copiaAntigo), @"^FinancasLocal-antes-atualizacao-\d{8}_\d{6}_\d{3}\.db$"),
         copias = PastasComCopia(Banco("antigo")),
     };
 
@@ -284,6 +284,9 @@ partial class Program
         "FinancasLocal-antes-atualizacao-20200104_000000.db",
         "FinancasLocal-antes-atualizacao-20200105_000000.db",
         "FinancasLocal-antes-atualizacao-20200106_000000.db",
+        // #366: o nome com milissegundos, no mesmo segundo de um nome antigo e bem na divisa das 5 mais recentes. Na
+        // ordem byte a byte ("." antes de "_"), ele é o mais recente dos dois e fica; na ordem da cultura (ICU), sairia.
+        "FinancasLocal-antes-atualizacao-20200103_000000_500.db",
         "FinancasLocal-antes-atualizacao-.db",
         "FinancasLocal-antes-atualizacao-20200107_000000.db.txt",
         "FinancasLocal-antes-instalacao-20200101_000000.db",
