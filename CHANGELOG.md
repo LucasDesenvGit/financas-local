@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
+
 ## [2.40.2] — 2026-10-23 · desenvolvimento
 
 ### Publicação e documentação
