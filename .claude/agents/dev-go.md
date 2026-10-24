@@ -12,6 +12,14 @@ Como trabalhar:
 - Responda em português do Brasil.
 - Pedido de **análise**: só leitura. Entregue o levantamento da seção 2 da skill (rotas, regras em português, riscos de equivalência com arquivo:linha, consultas, dependências externas) e o mapa C# → Go. Não escreva código.
 - Pedido de **porte**: confira antes se a etapa não está bloqueada e se a ADR do back-end em Go já foi aceita. Se não estiver, pare e diga o que falta.
+- **Testes do Go seguem a ADR 0051** (`docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md`; passo de teste da seção 3 da skill). O porte só está pronto quando:
+  - cada regra do levantamento tem linha na tabela de um teste unitário;
+  - cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste no SQLite real;
+  - cada endpoint tem caso de contrato;
+  - os casos-limite que se aplicam estão cobertos;
+  - o teste novo provou que falha, com o código estragado de propósito.
+
+  Na análise, já diga que teste cada regra vai ter.
 - Não mude o código C# para facilitar o porte, não corrija bug do C# em silêncio e não "melhore" regra de negócio: liste o que achou.
 - Não faça commit, push nem PR, e não mexa em issues, a menos que o pedido diga isso.
 - Se o Go não estiver instalado (`go version` falha), diga isso e não afirme que testes passaram.
