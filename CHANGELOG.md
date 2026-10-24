@@ -7,6 +7,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Funcionalidades
 - **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
 
+## [2.40.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Investimentos: Câmbio e Criptomoedas com as colunas alinhadas** (#377). Os dois blocos usam a mesma grade:
+  - código com largura fixa, bandeira ou ícone, nome, valor, variação e fonte;
+  - o nome começa e o valor termina no mesmo ponto em todas as linhas, e também de um bloco para o outro;
+  - no câmbio, que não tem variação, a data termina onde termina a de cripto;
+  - no celular, a variação e a fonte ficam embaixo do nome.
+
 ## [2.40.0] — 2026-10-23 · desenvolvimento
 
 ### Funcionalidades
