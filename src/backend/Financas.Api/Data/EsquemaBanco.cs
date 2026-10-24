@@ -103,7 +103,17 @@ public static partial class EsquemaBanco
         return valor == 0 ? 1 : valor;
     }
 
-    /// <summary>Cópia consistente (VACUUM INTO) em <c>dados/backups</c>, guardando as 5 mais recentes.</summary>
+    /// <summary>
+    /// Cópia consistente (VACUUM INTO) em <c>dados/backups</c>, guardando as 5 mais recentes.
+    /// <para>#366: o nome vai até o milissegundo. Só até o segundo, duas atualizações no mesmo segundo (o serviço
+    /// reiniciando logo depois de uma atualização que falhou) davam o mesmo nome, e o VACUUM INTO recusa um destino que
+    /// já existe. A ordem é byte a byte (<see cref="StringComparer.Ordinal"/>): o "." vem antes do "_", e o nome antigo
+    /// de um segundo (<c>_HHmmss.db</c>) fica antes dos novos do mesmo segundo. A ordem da cultura (a padrão do
+    /// <c>OrderBy</c>) põe o "_" antes do "." e apagaria o mais novo.</para>
+    /// <para>#365: uma cópia antiga que não dá para apagar (outro dono, só leitura) fica para a próxima, com um aviso.
+    /// Sem permissão, o <see cref="FileInfo.Delete"/> lança <see cref="UnauthorizedAccessException"/>, que não é
+    /// <see cref="IOException"/>, e a API não subia.</para>
+    /// </summary>
     private static void Backup(SqliteConnection conexao, string caminho, ILogger logger)
     {
         var pastaSql = Path.GetDirectoryName(caminho)!;
@@ -111,7 +121,7 @@ public static partial class EsquemaBanco
             ? Path.GetDirectoryName(pastaSql)! : pastaSql;
         var pastaBackups = Path.Combine(pastaDados, "backups");
         Directory.CreateDirectory(pastaBackups);
-        var destino = Path.Combine(pastaBackups, $"{PrefixoBackup}{DateTime.Now:yyyyMMdd_HHmmss}.db");
+        var destino = Path.Combine(pastaBackups, $"{PrefixoBackup}{DateTime.Now:yyyyMMdd_HHmmss_fff}.db");
         using (var comando = conexao.CreateCommand())
         {
             comando.CommandText = "VACUUM INTO $destino;";
@@ -121,10 +131,13 @@ public static partial class EsquemaBanco
         logger.LogInformation("Banco: cópia antes da atualização em {Destino}.", destino);
 
         foreach (var antigo in new DirectoryInfo(pastaBackups).GetFiles(PrefixoBackup + "*.db")
-                     .OrderByDescending(f => f.Name).Skip(BackupsGuardados))
+                     .OrderByDescending(f => f.Name, StringComparer.Ordinal).Skip(BackupsGuardados))
         {
             try { antigo.Delete(); }
-            catch (IOException) { /* fica para a próxima */ }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Banco: não deu para apagar a cópia antiga {Arquivo}; fica para a próxima.", antigo.Name);
+            }
         }
     }
 

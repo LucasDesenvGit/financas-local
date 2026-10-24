@@ -78,6 +78,7 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
    - **HTTP** com `httptest` e o usuário por `sessao.ComUsuario`, para status, validação e erro;
    - **dependência externa** com respostas gravadas num `httptest.NewServer`;
    - só a biblioteca padrão. Nada de `time.Now()` (use `relogio.Fixo`), `time.Sleep` para esperar (use um sinal ou o `testing/synctest`), rede ou dado real.
+   - **o apoio comum já existe:** `internal/testeapoio` (`NovoBanco`, `Fabrica`, `HojeEmBrasilia`, `Chamar` + `ConferirJSON`; [README](../../../src/backend-go/internal/testeapoio/README.md)), só em `_test.go`. Tabela nova que o assunto usa vira um método da `Fabrica`.
 
    **A etapa está pronta quando:**
    - cada regra da lista "Regras de negócio" do levantamento (seção 2) tem pelo menos uma linha na tabela de um teste unitário;

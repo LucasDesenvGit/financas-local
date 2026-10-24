@@ -2,6 +2,24 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.5] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Apoio comum aos testes do back-end em Go** (#369, épico #374, ADR 0051). Nada muda para quem usa. O pacote `internal/testeapoio`, só para testes, dá aos três assuntos do #70 o mesmo jeito de testar:
+  - banco temporário com o esquema real (`NovoBanco`, `NovoBancoVazio`), fechado sozinho no fim do teste; uns 5 ms por banco, e pode rodar em paralelo;
+  - fábrica de dados inventados no formato do EF Core (conta, categoria, subcategoria, transação, regra de categorização), com valores padrão e só o que importa trocado no teste;
+  - relógios parados em Brasília ("hoje é dia 31", "23h30 de 31/12") e o handler chamado com o usuário logado, conferindo o JSON pelo comparador do contrato (sem `float64`, `[]` diferente de `null`);
+  - o `TestEmTransacao` deixou de usar `time.Now()` (uma das dívidas da ADR 0051).
+
+## [2.41.4] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Cópia do banco antes da atualização não impede mais a API de subir** (#365, #366). Ao atualizar um banco que já existe, a API faz uma cópia em `dados/backups` e apaga as antigas, guardando as 5 mais recentes:
+  - **cópia antiga que não dá para apagar** (de outro dono ou só leitura, como uma cópia feita à mão como administrador) fica para a próxima, com um aviso no log que diz o arquivo. Antes, a falta de permissão parava a partida (#365);
+  - **duas atualizações no mesmo segundo** (o serviço reiniciando logo depois de uma atualização que falhou) não dão mais o mesmo nome: o nome da cópia ganhou os milissegundos (`FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db`). Antes, a segunda parava a partida (#366);
+  - as 5 guardadas continuam as mais recentes, misturando nomes antigos e novos: a ordem pelo nome passou a ser byte a byte, que não depende do idioma do computador.
+  - O mesmo vale para o porte em Go (`AplicarEsquema`).
+
 ## [2.41.3] — 2026-10-23 · desenvolvimento
 
 ### Correções

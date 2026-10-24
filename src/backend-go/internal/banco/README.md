@@ -42,7 +42,10 @@ O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../docs/adr/0003-esquema-
 
 1. Lê as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh` com a mesma expressão (com o `\s` do .NET, que pega mais espaços que o do Go) e calcula a **mesma assinatura** do .NET.
 2. Banco que já existe com a mesma assinatura no `PRAGMA user_version`: não faz nada, nem cópia.
-3. Assinatura diferente: copia o banco com `VACUUM INTO` para `dados/backups/FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS.db` (hora de Brasília; o .NET usa a do computador) e guarda as 5 mais recentes.
+3. Assinatura diferente: copia o banco com `VACUUM INTO` para `dados/backups/FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db` (hora de Brasília; o .NET usa a do computador) e guarda as 5 mais recentes.
+   - **Milissegundos no nome** (#366): só até o segundo, duas atualizações no mesmo segundo davam o mesmo nome, e o `VACUUM INTO` recusa um destino que já existe.
+   - **Ordem pelo nome, byte a byte** (`slices.Sort`; no .NET, `StringComparer.Ordinal`): o `.` vem antes do `_`, e o nome antigo de um segundo (`_HHMMSS.db`) fica antes dos novos do mesmo segundo. A ordem da cultura, padrão do `OrderBy` do .NET, põe o `_` antes do `.` (medido) e apagaria o mais novo.
+   - **Cópia antiga que não dá para apagar** (outro dono, só leitura) fica para a próxima, com um aviso no log que diz o arquivo, e a API sobe (#365).
 4. Numa transação: o `01-estrutura.sql`, as colunas que faltam e, **só no banco novo**, o `02-dados-iniciais.sql`. Depois grava a assinatura.
 
 **Até a inversão (#85, [ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), quem aplica o esquema ao iniciar é o .NET.** O executável Go só aplica com `-aplicar-esquema`. Com a mesma assinatura, um lado não refaz o trabalho do outro.
