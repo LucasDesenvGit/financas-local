@@ -142,6 +142,8 @@ O C# chegou a 128 rotas sem nenhum teste automatizado e continua assim: para ele
 | O mesmo JSON e o mesmo banco do .NET | `testes/contrato` (#72) | casos gravados do .NET, antes do código Go |
 | Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
 
+O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/testeapoio` ([README](src/backend-go/internal/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
+
 **Uma etapa do #70 está pronta quando:**
 - cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
 - cada ponto de risco de equivalência do levantamento tem um teste;
