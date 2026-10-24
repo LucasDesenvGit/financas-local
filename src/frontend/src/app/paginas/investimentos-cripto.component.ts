@@ -49,7 +49,7 @@ export interface LinhaCripto {
       @if (erro()) {
         <p class="texto-suave">Não deu para ler as cotações guardadas agora.</p>
       } @else if (linhas(); as lista) {
-        <ul class="lista-simples lista-cripto">
+        <ul class="lista-simples lista-cripto lista-cotacoes">
           @for (l of lista; track l.codigo) {
             <li>
               <!-- O ícone é decoração: o nome está escrito ao lado (alt vazio, WCAG 1.1.1). -->
@@ -61,14 +61,14 @@ export interface LinhaCripto {
               @if (l.preco !== null) {
                 <span class="valor">R$ {{ l.preco | number: '1.2-2' }}</span>
                 @if (l.variacao24h !== null) {
-                  <small class="variacao-cripto" [class.positivo]="l.variacao24h > 0" [class.negativo]="l.variacao24h < 0">
+                  <small class="variacao-cripto cotacao-variacao" [class.positivo]="l.variacao24h > 0" [class.negativo]="l.variacao24h < 0">
                     {{ l.variacao24h > 0 ? '+' : (l.variacao24h < 0 ? '−' : '') }}{{ abs(l.variacao24h) | number: '1.2-2' }}% em 24 h
                   </small>
                 } @else {
-                  <small class="texto-suave variacao-cripto">variação em 24 h ainda sem dado</small>
+                  <small class="texto-suave variacao-cripto cotacao-variacao">variação em 24 h ainda sem dado</small>
                 }
                 <!-- #329: a fonte em cada linha, como o "PTAX de …" do câmbio (Nielsen 1 e 2). -->
-                <small class="texto-suave data-cripto" [class.desatualizada]="velha(l)">{{ l.fonte ?? 'Mercado Bitcoin' }} · {{ l.dataHora | date: 'dd/MM HH:mm' }}@if (velha(l)) {<span> · desatualizada</span>}</small>
+                <small class="texto-suave data-cripto cotacao-fonte" [class.desatualizada]="velha(l)">{{ l.fonte ?? 'Mercado Bitcoin' }} · {{ l.dataHora | date: 'dd/MM HH:mm' }}@if (velha(l)) {<span> · desatualizada</span>}</small>
               } @else {
                 <small class="texto-suave data-cripto sem-cotacao">sem cotação guardada ainda</small>
               }
@@ -89,28 +89,15 @@ export interface LinhaCripto {
   `,
   styles: [`
     .bloco-cripto .bloco-titulo { flex-wrap: wrap; }
-    .lista-cripto li { flex-wrap: wrap; }
+    /* #377: as colunas (código, ícone, nome, preço, variação, fonte) vêm da grade comum .lista-cotacoes, do styles.css. */
     .codigo-cripto {
       font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px;
-      background: var(--superficie-2); color: var(--texto-suave); font-variant-numeric: tabular-nums;
-      min-width: 4.2em; text-align: center; box-sizing: border-box;
+      background: var(--superficie-2); color: var(--texto-suave); font-variant-numeric: tabular-nums; text-align: center;
     }
-    .moeda-identificacao { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .icone-cripto { display: block; width: 20px; height: 20px; border-radius: 5px; }
-    .variacao-cripto { min-width: 8.5em; text-align: right; font-variant-numeric: tabular-nums; }
-    .data-cripto { min-width: 6.5em; text-align: right; }
+    .variacao-cripto { font-variant-numeric: tabular-nums; }
     .data-cripto.desatualizada { color: var(--alerta); }
     .nota-cripto { margin-top: 10px; }
-    /* Celular: três linhas em grade. Em cima o código, o nome e o preço; depois a variação; embaixo, a fonte e a data e
-       hora (#329), na largura toda, para não espremer a variação. */
-    @media (max-width: 600px) {
-      .lista-cripto li { display: grid; grid-template-columns: auto 1fr auto; column-gap: 10px; row-gap: 2px; align-items: center; }
-      .moeda-identificacao { grid-row: 1 / span 3; align-self: start; margin-top: 2px; }
-      .lista-cripto .cresce { grid-column: 2; min-width: 0; }
-      .lista-cripto .valor { grid-column: 3; text-align: right; }
-      .variacao-cripto { grid-column: 2 / span 2; min-width: 0; text-align: left; }
-      .data-cripto { grid-column: 2 / span 2; min-width: 0; text-align: left; }
-    }
   `]
 })
 export class InvestimentosCriptoComponent {
