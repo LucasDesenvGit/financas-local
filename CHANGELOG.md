@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.7] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `fast-uri` 3.1.8 → 3.1.9** (#375, Dependabot). Correção de segurança na leitura de endereços (URIs), numa dependência indireta só das ferramentas de build do front-end; nada muda no site.
+
 ## [2.41.6] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação
