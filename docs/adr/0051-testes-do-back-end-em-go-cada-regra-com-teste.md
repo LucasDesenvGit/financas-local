@@ -66,7 +66,7 @@ Três devs vão começar #75, #77 e #81 em paralelo. A regra precisa existir ant
 | **Contrato** | o mesmo status, o mesmo JSON e o mesmo banco do .NET | `testes/contrato` (#72), casos em `casos/*.json` e esperados gravados do .NET |
 | **Dependência externa** | Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o cliente recebe a URL base pelo construtor, e o teste sobe um `httptest.NewServer` que devolve **respostas gravadas** de `testdata/` |
 
-- **O apoio comum** (banco temporário, fábrica de dados inventados, ajudantes de relógio e de HTTP) é da #369: um pacote dentro de `internal/`, importado só por `_test.go`. O `go build` ignora os `_test.go` ([cmd/go](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies)), então o apoio não entra no executável. Até ele existir, cada pacote usa um ajudante local, como o `bancoDeTeste`. O nome do pacote fica com a #369. *Inferido.*
+- **O apoio comum** (banco temporário, fábrica de dados inventados, ajudantes de relógio e de HTTP) é da #369: um pacote dentro de `internal/`, importado só por `_test.go`. O `go build` ignora os `_test.go` ([cmd/go](https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies)), então o apoio não entra no executável. O pacote é o `internal/testeapoio` ([README](../../src/backend-go/internal/testeapoio/README.md), #369): `NovoBanco`, a `Fabrica`, os relógios parados em Brasília e o `Chamar` com o usuário logado, que confere o JSON pelo comparador do contrato. Os pacotes que ele importa (`banco`, `relogio`, `tipos`, `sessao`) não podem importá-lo nos próprios testes (ciclo), e continuam com um ajudante local, como o `bancoDeTeste`.
 - **Não repita** num lugar o que outro já confere. O contrato prova a equivalência com o .NET, com pelo menos um caso de sucesso e um por status de erro. O unitário cobre as variações da regra. O HTTP cobre cada ramo de validação.
 - **Gabarito** (*golden file*) fica em `testdata/` (o `go` ignora essa pasta: [cmd/go, Test packages](https://pkg.go.dev/cmd/go#hdr-Test_packages)) e é regravado só por uma opção explícita (`-atualizar`, como no contrato; a biblioteca padrão faz o mesmo com `-update`, no [`go/printer`](https://github.com/golang/go/blob/master/src/go/printer/printer_test.go)).
   - **O gabarito vem da referência, nunca do código que ele testa.** A referência é o .NET, ou o EF Core pela sonda. Senão o teste só confirma o próprio Go.
@@ -117,7 +117,7 @@ O detalhe de cada etapa está num comentário do épico #70.
 - **Dívidas que já existem** (conferidas; ficam até alguém mexer no arquivo, ou numa história do épico #374. *Inferido.*):
   - `internal/servidor/servidor_test.go:273-278`: tenta o servidor a cada 20 ms, até 50 vezes, esperando ele subir;
   - `internal/banco/esquema_banco_test.go:234`: dorme 20 ms para a data do arquivo mudar;
-  - `internal/banco/banco_test.go:89`: `time.Now()` para preencher uma data que o teste não confere.
+  - ~~`internal/banco/banco_test.go:89`: `time.Now()` para preencher uma data que o teste não confere~~: resolvida na #369, com o `instanteDosTestes`.
 
 ### Como escrever
 

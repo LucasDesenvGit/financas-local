@@ -48,6 +48,20 @@ func codificar(v any) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// CompararJSON lê os dois JSON sem float64 e devolve as diferenças, com as regras do comparar abaixo (vazio = iguais).
+// É o mesmo comparador dos casos de contrato, exportado para os testes de HTTP (internal/testeapoio, #369).
+func CompararJSON(esperado, obtido []byte) ([]string, error) {
+	e, err := decodificar(esperado)
+	if err != nil {
+		return nil, fmt.Errorf("JSON esperado inválido: %w", err)
+	}
+	o, err := decodificar(obtido)
+	if err != nil {
+		return nil, fmt.Errorf("JSON obtido inválido: %w", err)
+	}
+	return comparar("", e, o), nil
+}
+
 // comparar devolve as diferenças entre esperado e obtido, cada uma com o caminho em que aparece. Os dois vêm de
 // decodificar (map[string]any, []any, string, json.Number, bool, nil).
 //

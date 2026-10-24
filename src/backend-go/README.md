@@ -14,6 +14,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
 | `internal/relogio` | fuso de Brasília, injetável; o relógio de teste do contrato (`APartirDe`, #363) |
 | `internal/versao` | a versão, gravada na compilação pelo `-ldflags` |
+| `internal/testeapoio` | só para testes (`_test.go`): banco temporário com o esquema real, fábrica de dados inventados, relógio parado em Brasília e handler chamado com o usuário logado ([README](internal/testeapoio/README.md), #369) |
 | `testes/contrato` | testes de contrato: o que o .NET responde e grava, caso a caso, para o Go responder igual ([README](testes/contrato/README.md)) |
 
 ## Como roda no site (atrás do .NET)
@@ -36,8 +37,9 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 1. O handler no pacote do assunto (`internal/<assunto>`), com as dependências pelo construtor. O pacote exporta `Registrar(mux, <só o que ele usa>)`, que põe as rotas dele no mux (`mux.Handle("GET /api/<assunto>/{id}", ...)`); o exemplo é o `internal/saude`.
 2. **Uma linha** em `internal/api/api.go`: `<assunto>.Registrar(mux, d.DB, d.Log, d.Relogio)`. É só isso que os assuntos feitos em paralelo dividem; no merge, conflito ali é sempre "fique com as duas linhas". Hora vem do `d.Relogio`, nunca do `time.Now()`.
 3. Os casos de contrato (no número reservado do assunto) e a rodada contra o Go: `PREFIXOS_GO` para rodar aqui e a linha do assunto em `testes/contrato/assuntos-no-go.txt` para a CI, como no [README do contrato](testes/contrato/README.md#como-cada-assunto-liga-o-contrato-contra-o-go).
-4. Para ligar no site (passo 2 da ADR 0049, PR à parte): os prefixos na entrada do assunto em `Go:Prefixos`, no `src/backend/Financas.Api/appsettings.json`. É uma entrada por assunto, já reservada e vazia, com os prefixos separados por `;` (`"cambio": "/api/cambio;/api/cripto"`), e uma linha em branco entre as entradas, para dois PRs não mexerem em linhas vizinhas. Enquanto a entrada estiver vazia, a rota não recebe nada e o .NET continua atendendo.
-5. Tarefa em segundo plano que passou para o Go: o nome dela em `Go:Tarefas` (`Sincronizacao`, `Cambio` ou `Cripto`), para o .NET não rodar a dele.
+4. Os testes do assunto (ADR 0051), com o apoio comum de `internal/testeapoio` ([README](internal/testeapoio/README.md)): banco temporário, fábrica de dados e handler chamado com o usuário logado.
+5. Para ligar no site (passo 2 da ADR 0049, PR à parte): os prefixos na entrada do assunto em `Go:Prefixos`, no `src/backend/Financas.Api/appsettings.json`. É uma entrada por assunto, já reservada e vazia, com os prefixos separados por `;` (`"cambio": "/api/cambio;/api/cripto"`), e uma linha em branco entre as entradas, para dois PRs não mexerem em linhas vizinhas. Enquanto a entrada estiver vazia, a rota não recebe nada e o .NET continua atendendo.
+6. Tarefa em segundo plano que passou para o Go: o nome dela em `Go:Tarefas` (`Sincronizacao`, `Cambio` ou `Cripto`), para o .NET não rodar a dele.
 
 Voltar o assunto para o .NET é esvaziar a entrada dele (e tirar a tarefa) e reiniciar o serviço; não precisa reinstalar. Num `appsettings` de cima, `"Go": {"Prefixos": {"cambio": ""}}` desliga só aquele assunto, e `"Prefixos": ""` (texto) desliga todos.
 

@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.5] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Apoio comum aos testes do back-end em Go** (#369, épico #374, ADR 0051). Nada muda para quem usa. O pacote `internal/testeapoio`, só para testes, dá aos três assuntos do #70 o mesmo jeito de testar:
+  - banco temporário com o esquema real (`NovoBanco`, `NovoBancoVazio`), fechado sozinho no fim do teste; uns 5 ms por banco, e pode rodar em paralelo;
+  - fábrica de dados inventados no formato do EF Core (conta, categoria, subcategoria, transação, regra de categorização), com valores padrão e só o que importa trocado no teste;
+  - relógios parados em Brasília ("hoje é dia 31", "23h30 de 31/12") e o handler chamado com o usuário logado, conferindo o JSON pelo comparador do contrato (sem `float64`, `[]` diferente de `null`);
+  - o `TestEmTransacao` deixou de usar `time.Now()` (uma das dívidas da ADR 0051).
+
 ## [2.41.4] — 2026-10-23 · desenvolvimento
 
 ### Correções
