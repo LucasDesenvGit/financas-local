@@ -1,7 +1,6 @@
 package autenticacao
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -15,10 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 )
 
-// relogioDeTeste anda só quando o teste manda (bloqueio de 15 minutos sem esperar 15 minutos).
+// relogioDeTeste anda só quando o teste manda (bloqueio de 15 minutos sem esperar 15 minutos). O do testeapoio é
+// parado, e aqui o tempo precisa passar.
 type relogioDeTeste struct {
 	mu       sync.Mutex
 	instante time.Time
@@ -36,7 +36,9 @@ func (r *relogioDeTeste) andar(d time.Duration) {
 	r.instante = r.instante.Add(d)
 }
 
-// ambiente é o Go sozinho de verdade (esquema real num SQLite temporário, HTTPS) com a autenticação na frente.
+// ambiente é o Go sozinho de verdade (esquema real num SQLite temporário, HTTPS) com a autenticação na frente. Os
+// cookies (Secure, __Host-) pedem HTTPS e um navegador com pote de cookies: por isso um servidor de teste, e não o
+// testeapoio.Chamar, que chama o handler direto com o usuário já no contexto.
 type ambiente struct {
 	t       *testing.T
 	srv     *httptest.Server
@@ -46,18 +48,9 @@ type ambiente struct {
 
 func novoAmbiente(t *testing.T) *ambiente {
 	t.Helper()
-	ctx := context.Background()
-	rel := &relogioDeTeste{instante: time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)}
+	rel := &relogioDeTeste{instante: testeapoio.InstanteDosTestes}
 	log := slog.New(slog.DiscardHandler)
-	caminho := filepath.Join(t.TempDir(), "sql", "FinancasLocal.db")
-	if err := banco.AplicarEsquema(ctx, caminho, rel, log); err != nil {
-		t.Fatal(err)
-	}
-	db, err := banco.Abrir(ctx, caminho)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { db.Close() })
+	db := testeapoio.NovoBanco(t)
 	chave, err := CarregarChave(filepath.Join(t.TempDir(), "chaves"))
 	if err != nil {
 		t.Fatal(err)
