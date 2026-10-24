@@ -5,8 +5,10 @@
 //     127.0.0.1, numa porta livre, e escreve {"porta":N} na saída padrão quando já aceita conexões. Para quando a
 //     entrada padrão fecha (o .NET saiu, mesmo à força) ou com SIGINT/SIGTERM.
 //
-//   - Sozinho (o esqueleto da #73): serve o Angular com os mesmos cabeçalhos, cache e erros do .NET, e toda rota
-//     /api responde 404, porque ainda não há login no Go (#75). Em desenvolvimento, ao lado do .NET (5443):
+//   - Sozinho: serve o Angular com os mesmos cabeçalhos, cache e erros do .NET (#73) e atende /api com o login do
+//     próprio Go (#75): sessão, CSRF e limite de tentativas na frente de todas as rotas. É assim que o site vai rodar
+//     depois da inversão (#85); até lá, serve para desenvolver e para o contrato. Em desenvolvimento, ao lado do
+//     .NET (5443):
 //
 //     go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
 //
@@ -33,6 +35,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/api"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
@@ -60,6 +63,7 @@ func rodar() error {
 		atras       = flag.Bool("atras-do-dotnet", false, "rodar como processo filho do .NET (#231): segredo pela entrada padrão, porta pela saída padrão")
 		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho (o .NET passa o dele)")
 		aplicar     = flag.Bool("aplicar-esquema", false, "sozinho: criar e atualizar o banco antes de atender, como o .NET faz (até a #85 quem faz isso é o .NET)")
+		pastaChaves = flag.String("chaves", "", "sozinho: pasta da chave da sessão, no lugar do Seguranca:PastaChaves (padrão: dados/chaves, ao lado do banco)")
 		inicioRel   = flag.String("inicio-do-relogio", "", "só para teste (#363): o relógio começa neste instante e anda dali (RFC 3339 com fuso, ex.: 2026-10-15T01:00:00Z); vazio é o relógio do sistema")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")
 	)
@@ -118,7 +122,36 @@ func rodar() error {
 			return err
 		}
 	}
-	return servidor.Rodar(ctx, servidor.Opcoes{Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log})
+	// #75: o Go sozinho faz o próprio login. O banco tem de existir (quem o cria, até a #85, é o .NET, ou o
+	// -aplicar-esquema acima).
+	if _, err := os.Stat(cfg.BancoCaminho); err != nil {
+		return fmt.Errorf("o banco %s não existe (crie-o com -aplicar-esquema ou pelo .NET): %w", cfg.BancoCaminho, err)
+	}
+	db, err := banco.Abrir(ctx, cfg.BancoCaminho)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if *pastaChaves != "" {
+		cfg.PastaChaves = *pastaChaves
+	} else if _, err := os.Stat(cfg.PastaChaves); err != nil {
+		// Sem a pasta do appsettings (ex.: o contrato, só com -banco): a dados/chaves ao lado da dados/sql do banco.
+		cfg.PastaChaves = filepath.Join(filepath.Dir(filepath.Dir(cfg.BancoCaminho)), "chaves")
+	}
+	chave, err := autenticacao.CarregarChave(cfg.PastaChaves)
+	if err != nil {
+		return err
+	}
+	auth := autenticacao.Nova(autenticacao.Opcoes{
+		DB: db, Relogio: rel, Log: log, Chave: chave, Versao: versao.Atual, MinutosSessao: cfg.MinutosSessao,
+		MaximoTentativasLogin: cfg.MaximoTentativasLogin, MinutosBloqueio: cfg.MinutosBloqueio,
+	})
+	rotas := api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel})
+	auth.Registrar(rotas)
+	log.Info("iniciando sozinho, com o login do Go", "versao", versao.Atual)
+	return servidor.Rodar(ctx, servidor.Opcoes{
+		Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas),
+	})
 }
 
 // rodarAtrasDoDotnet lê o segredo da primeira linha da entrada, abre o banco (que o .NET já criou e passou para

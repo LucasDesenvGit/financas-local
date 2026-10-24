@@ -25,7 +25,7 @@ type Ativo struct {
 
 type AuditoriaAcesso struct {
 	Id        int64
-	DataHora  string
+	DataHora  tipos.DataHora
 	Evento    string
 	Login     *string
 	Ip        *string
@@ -381,9 +381,9 @@ type Usuario struct {
 	Id               int64
 	Login            string
 	SenhaHash        string
-	CarimboSeguranca string
-	TentativasFalhas int64
-	BloqueadoAte     *string
-	UltimoLoginEm    *string
-	CriadoEm         string
+	CarimboSeguranca tipos.Guid
+	TentativasFalhas int
+	BloqueadoAte     *tipos.DataHora
+	UltimoLoginEm    *tipos.DataHora
+	CriadoEm         tipos.DataHora
 }

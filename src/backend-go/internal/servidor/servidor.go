@@ -1,5 +1,6 @@
 // Pacote servidor é o Program.cs do Go, menos os endpoints: HTTPS só local, cabeçalhos de segurança, filtro de
-// hosts, tratamento de erro, limite de corpo, log e o front-end (#73). Toda rota /api ainda responde 404.
+// hosts, tratamento de erro, limite de corpo, log e o front-end (#73). As rotas de /api vêm de fora (Opcoes.API):
+// sem elas, toda rota /api responde 404.
 package servidor
 
 import (
@@ -23,6 +24,9 @@ type Opcoes struct {
 	PastaSite   string // o wwwroot com o build do Angular
 	Certificado tls.Certificate
 	Log         *slog.Logger
+	// API atende /api (#75: as rotas dos assuntos com a autenticação na frente). Nil: toda rota /api responde 404,
+	// como no esqueleto da #73.
+	API http.Handler
 }
 
 // NovoHandler monta o pipeline, na ordem do Program.cs: filtro de hosts → cabeçalhos de segurança → erro → rotas.
@@ -37,8 +41,12 @@ func NovoHandler(o Opcoes) (http.Handler, error) {
 
 	// As rotas de cada assunto entram neste ServeMux (ADR 0049). O "/" é o MapFallback("/api/{**caminho}") do
 	// .NET: 404 sem corpo.
-	api := http.NewServeMux()
-	api.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { semCorpo(w, http.StatusNotFound) })
+	var api http.Handler = o.API
+	if api == nil {
+		semRotas := http.NewServeMux()
+		semRotas.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { semCorpo(w, http.StatusNotFound) })
+		api = semRotas
+	}
 
 	// O caminho é limpo aqui ("/a/../b" vira "/b"), como o Kestrel faz em silêncio: o ServeMux responderia com um
 	// redirecionamento. Atenção para as próximas etapas: o ServeMux diferencia maiúsculas, e a rota do .NET não.

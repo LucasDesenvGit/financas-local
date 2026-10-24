@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.41.6] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Go: login, sessão, CSRF e limite de tentativas** (#75, épico #70). Nada muda para quem usa: no site, quem faz o login continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho (`cmd/financas` sem `-atras-do-dotnet`) tem os 6 endpoints de `api/auth` e põe a autenticação na frente de todo `/api`: 401 sem login, CSRF nos métodos que mudam algo, 5 tentativas por minuto por IP;
+  - a senha continua no hash v3 do ASP.NET Identity: o Go aceita o hash gravado pelo .NET, e o .NET aceita o gravado pelo Go (conferido pela sonda em `internal/autenticacao/testdata`);
+  - a sessão é um cookie assinado (HMAC-SHA256) com o carimbo de segurança, conferido no banco a cada requisição. A chave fica em `dados/chaves/sessao-go.chave`, e na inversão todos saem da conta uma vez (ADR 0049);
+  - o contrato `00-auth` passa no Go sozinho, 40 de 40: `rodar-dotnet.sh --go-sozinho` roda sem o .NET, e também no Windows, com o `sqlite3`.
+
 ## [2.41.5] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação
