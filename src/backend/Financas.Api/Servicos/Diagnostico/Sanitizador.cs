@@ -14,7 +14,9 @@ public static partial class Sanitizador
     [GeneratedRegex(@"(https?://[^\s?#""'<>]+)\?[^\s#""'<>]*", RegexOptions.IgnoreCase)]
     private static partial Regex QueryString();
 
-    [GeneratedRegex(@"\b(access_?token|refresh_?token|token|api_?key|x-api-key|client_?secret|secret|senha|password|passwd|pwd|authorization|cookie)(\s*[=:]\s*""?|""\s*:\s*"")([^\s&,;""']+)", RegexOptions.IgnoreCase)]
+    // #396: "Bearer " depois da chave fica (o valor é o token, e não a palavra), e o valor para no ")", "]" e "}" que
+    // fecham o que veio antes. Sem lookahead, porque a mesma expressão roda no RE2 do Go (internal/erros).
+    [GeneratedRegex(@"\b(access_?token|refresh_?token|token|api_?key|x-api-key|client_?secret|secret|senha|password|passwd|pwd|authorization|cookie)(\s*[=:]\s*""?|""\s*:\s*"")((?:Bearer\s+)?)([^\s&,;""')\]}]+)", RegexOptions.IgnoreCase)]
     private static partial Regex ChaveValor();
 
     [GeneratedRegex(@"\bBearer\s+[A-Za-z0-9\-._~+/]+=*", RegexOptions.IgnoreCase)]
@@ -33,7 +35,7 @@ public static partial class Sanitizador
     {
         if (string.IsNullOrEmpty(texto)) return texto;
         texto = QueryString().Replace(texto, "$1?" + Removido);
-        texto = ChaveValor().Replace(texto, "$1$2" + Removido);
+        texto = ChaveValor().Replace(texto, "$1$2$3" + Removido);
         texto = Bearer().Replace(texto, "Bearer " + Removido);
         texto = Jwt().Replace(texto, Removido);
         texto = Cpf().Replace(texto, Removido);
