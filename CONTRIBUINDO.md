@@ -158,6 +158,11 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 
 **Teste novo prova que falha:** estrague o código de propósito (troque `RoundBank` por `Round`, tire um filtro, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta.
 
+**Teste de mutação semanal (#373):** o workflow "Teste de mutação (Go)" roda o gremlins toda segunda nos pacotes de `scripts/ci/mutacao-go.txt`, e falha quando um pacote fica abaixo do piso dele.
+- **Assunto novo com regra de negócio ou dinheiro:** entra nessa lista no PR dele, com o piso da primeira medição: `python3 scripts/ci/mutacao-go.py internal/<assunto>`, uns 2 min.
+- **Mutação viva:** vira teste. Se ela não muda o resultado (é equivalente), vai para `scripts/ci/mutacao-go-equivalentes.txt` com o porquê.
+- **Ponto cego:** o gremlins não testa mutação dentro de `case`. Ali, a mutação à mão no PR continua valendo.
+
 **Proibido em teste:**
 - `time.Now()`: use o `relogio.Fixo`;
 - `time.Sleep` para esperar algo: espere um sinal (canal, `sync.WaitGroup`) ou use o `testing/synctest` em código com temporizador. Um teto (`time.After` num `select`) pode;
