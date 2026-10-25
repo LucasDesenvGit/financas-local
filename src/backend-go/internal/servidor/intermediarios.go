@@ -124,7 +124,7 @@ func recuperarPanico(log *slog.Logger, proximo http.Handler) http.Handler {
 			if p == http.ErrAbortHandler { // o próprio net/http usa esse pânico para abortar a resposta
 				panic(p)
 			}
-			log.Error("erro não tratado", "caminho", r.URL.Path, "erro", fmt.Sprint(p))
+			log.ErrorContext(r.Context(), "erro não tratado", "origem", "API", "caminho", r.URL.Path, "erro", fmt.Sprint(p))
 			if resposta.status != 0 {
 				return // a resposta já começou: não há como trocar por um 500
 			}

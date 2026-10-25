@@ -35,7 +35,7 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 - **Partida:** o Go lê o segredo interno da primeira linha da entrada padrão, escuta em `127.0.0.1` numa porta livre e escreve `{"porta":N}` na saída padrão.
 - **Confiança:** sem o segredo, 401 (e um aviso no log). O Id do usuário vem em `X-Financas-Usuario`, que o .NET apaga quando vem de fora; a rota o lê com `sessao.Usuario(ctx)`.
 - **Parada:** quando a entrada padrão fecha (o .NET parou, ou caiu), o Go para com elegância. SIGINT e SIGTERM também. No Windows, o .NET o põe num Job Object que o encerra junto.
-- **Log:** JSON na saída de erro. O .NET registra cada linha na categoria `Financas.Go`; avisos e erros vão para Configurações › Erros. Para cair na origem certa da tela, ponha o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"` ou `"Sistema"`).
+- **Log:** JSON na saída de erro. O .NET registra cada linha na categoria `Financas.Go`; avisos e erros vão para Configurações › Erros. Para cair na origem certa da tela, ponha o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"`, `"Cripto"` ou `"Sistema"`). Com o Go sozinho (#298), quem grava é o próprio Go (`internal/erros`), com as mesmas origens.
 - **Banco:** o mesmo arquivo do .NET, em WAL (quem passa para WAL é o `EsquemaBanco`). O Go não cria nem muda tabela.
 
 ### Rota nova

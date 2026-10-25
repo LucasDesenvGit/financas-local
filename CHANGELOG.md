@@ -2,6 +2,18 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.0] — 2026-10-24 · desenvolvimento
+
+### Funcionalidades
+- **Erros do sistema: origem "Cripto"** (#298). Em Configurações › Erros, os avisos e erros da cotação das criptomoedas aparecem com a origem própria, e não mais misturados em "Sistema". Os que já estavam gravados continuam como estavam.
+
+### Publicação e documentação
+- **Go: erros do sistema** (#298, épico #70, ADR 0022). Nada muda para quem usa: no site, quem grava os erros e atende Configurações › Erros continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho grava os próprios avisos e erros em `ErroSistema`: um handler do `log/slog` põe na fila, e o gravador limpa os dados sensíveis, agrupa a mesma ocorrência em 24 h e apaga os antigos uma vez por dia, como o .NET (mesma assinatura, conferida com valores calculados pelo .NET);
+  - as 5 rotas de `api/erros` em Go, com o contrato novo `17-erros` (52 casos, gravados do .NET), que passa no .NET e no Go sozinho;
+  - a leitura de JSON do pacote `respostas` passou a andar token a token: o erro de tipo num campo agora cita o tipo do DTO e a posição do fim do valor, como o .NET (antes saía "System.String" e o fim do corpo);
+  - os erros internos do Go saem com a origem "API", e o log feito durante uma requisição leva a rota e o usuário.
+
 ## [2.41.8] — 2026-10-24 · desenvolvimento
 
 ### Publicação e documentação

@@ -3,11 +3,14 @@ package auditoria
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net"
 	"net/http"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sessao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
@@ -35,4 +38,23 @@ func IP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// Login é o User.Identity.Name do .NET: o login de quem está na sessão, ou nil (sem sessão, ou usuário que não existe
+// mais).
+func Login(ctx context.Context, q interface {
+	ObterLoginDoUsuario(context.Context, int64) (string, error)
+}) (*string, error) {
+	id, ok := sessao.Usuario(ctx)
+	if !ok {
+		return nil, nil
+	}
+	login, err := q.ObterLoginDoUsuario(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &login, nil
 }

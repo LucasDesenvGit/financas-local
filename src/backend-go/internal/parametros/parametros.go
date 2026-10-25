@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 )
@@ -80,6 +81,14 @@ type InfoSistemaDto struct {
 type Valor struct {
 	Chave string
 	Valor int
+}
+
+// PadroesDoAppsettings são os valores do appsettings dos parâmetros que existiam lá antes (DoAppsettings).
+func PadroesDoAppsettings(cfg config.Config) map[string]int {
+	return map[string]int{
+		"Seguranca.MaximoTentativasLogin": cfg.MaximoTentativasLogin,
+		"Seguranca.MinutosBloqueio":       cfg.MinutosBloqueio,
+	}
 }
 
 // Padrao é o Padrao(p) do C#: o do appsettings, quando o parâmetro existia lá antes, ou o do catálogo.

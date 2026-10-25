@@ -28,7 +28,7 @@ public sealed class ProcessoGo : BackgroundService
 
     /// <summary>Origens da tela de erros que o Go pode usar no atributo "origem" do log.</summary>
     private static readonly HashSet<string> OrigensConhecidas = new(StringComparer.Ordinal)
-        { "API", "Open Finance", "Investimentos", "Câmbio", "Sistema" };
+        { "API", "Open Finance", "Investimentos", "Câmbio", "Cripto", "Sistema" };
 
     private static readonly TimeSpan EsperaInicial = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan EsperaMaxima = TimeSpan.FromMinutes(1);
