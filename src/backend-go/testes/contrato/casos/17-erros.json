@@ -1,0 +1,315 @@
+{
+  "descricao": "Erros do sistema (ErrosController, ADR 0022): lista com filtros (situação, origem, nível, período em dias de Brasília, página), detalhe, resolver um ou todos os do filtro e o erro do front-end, gravado em segundo plano já limpo de dados sensíveis e somado quando se repete. Os erros vêm do base.sql; a tabela fica fora da comparação do banco (TabelasIgnoradas), então as respostas é que mostram o que mudou. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "Padrão: só os em aberto, 25 por página, do mais recente para o mais antigo (empate pelo Id). Abertos e origens contam a tabela inteira, inclusive o aviso que o Go grava na partida (relógio de teste); o de 01/07 já foi apagado pela limpeza da partida.",
+      "metodo": "GET",
+      "caminho": "/api/erros?fim=2026-10-13"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/erros",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "listar todos, página 2 de 2 itens",
+      "metodo": "GET",
+      "caminho": "/api/erros?situacao=todos&fim=2026-10-13&pagina=2&tamanhoPagina=2"
+    },
+    {
+      "nome": "listar resolvidos",
+      "metodo": "GET",
+      "caminho": "/api/erros?situacao=resolvidos"
+    },
+    {
+      "nome": "filtrar por origem e nível",
+      "metodo": "GET",
+      "caminho": "/api/erros?origem=Open%20Finance&nivel=3&fim=2026-10-13"
+    },
+    {
+      "nome": "filtrar pelo nome do nível",
+      "metodo": "GET",
+      "caminho": "/api/erros?nivel=Erro&fim=2026-10-13"
+    },
+    {
+      "nome": "período em dias de Brasília",
+      "comentario": "06/10 em Brasília vai de 06/10 03:00 a 07/10 03:00 UTC: entram os de 07/10 02:30 UTC.",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=2026-10-06&fim=2026-10-06"
+    },
+    {
+      "nome": "início do período inclui a meia-noite",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=2026-10-03&fim=2026-10-03"
+    },
+    {
+      "nome": "origem só com espaço não filtra",
+      "metodo": "GET",
+      "caminho": "/api/erros?origem=%20&fim=2026-10-13"
+    },
+    {
+      "nome": "filtro inválido: página, tamanho e situação",
+      "metodo": "GET",
+      "caminho": "/api/erros?pagina=0&tamanhoPagina=101&situacao=pendentes"
+    },
+    {
+      "nome": "filtro inválido: nível, data e número",
+      "metodo": "GET",
+      "caminho": "/api/erros?nivel=7&inicio=ontem&pagina=abc"
+    },
+    {
+      "nome": "filtro inválido: origem longa demais",
+      "metodo": "GET",
+      "caminho": "/api/erros?origem=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "nome": "filtro com valores vazios",
+      "metodo": "GET",
+      "caminho": "/api/erros?pagina=&tamanhoPagina=&nivel=&inicio=&situacao=&origem=&fim=2026-10-13"
+    },
+    {
+      "nome": "filtro com o nome do nível em minúsculas e número com espaços",
+      "metodo": "GET",
+      "caminho": "/api/erros?nivel=aviso&pagina=%201%20&fim=2026-10-13"
+    },
+    {
+      "nome": "filtro com o nível com sinal",
+      "metodo": "GET",
+      "caminho": "/api/erros?nivel=%2B5&fim=2026-10-13"
+    },
+    {
+      "nome": "filtro com a data sem zero à esquerda",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=2026-10-3&fim=2026-10-3"
+    },
+    {
+      "nome": "filtro com a data com barras",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=10/03/2026&fim=10/03/2026"
+    },
+    {
+      "nome": "filtro com a data e a hora",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=2026-10-03T10:00&fim=2026-10-03"
+    },
+    {
+      "nome": "filtro repetido vale o primeiro",
+      "metodo": "GET",
+      "caminho": "/api/erros?tamanhoPagina=1&tamanhoPagina=2&fim=2026-10-13"
+    },
+    {
+      "nome": "nome do filtro em maiúsculas e situação em maiúsculas",
+      "metodo": "GET",
+      "caminho": "/api/erros?TAMANHOPAGINA=1&Situacao=Todos&fim=2026-10-13"
+    },
+    {
+      "nome": "filtro com número em hexadecimal",
+      "metodo": "GET",
+      "caminho": "/api/erros?pagina=0x2&tamanhoPagina=2&fim=2026-10-13"
+    },
+    {
+      "nome": "página além do fim",
+      "metodo": "GET",
+      "caminho": "/api/erros?pagina=50&fim=2026-10-13"
+    },
+    {
+      "nome": "filtro inválido: nível por nome e lista de níveis",
+      "metodo": "GET",
+      "caminho": "/api/erros?nivel=grave&tamanhoPagina=0x"
+    },
+    {
+      "nome": "filtro inválido: lista de níveis",
+      "metodo": "GET",
+      "caminho": "/api/erros?nivel=Aviso,Erro"
+    },
+    {
+      "nome": "filtro inválido: data impossível e número que estoura",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=2026-02-30&pagina=99999999999"
+    },
+    {
+      "nome": "filtro com a data com espaços",
+      "metodo": "GET",
+      "caminho": "/api/erros?inicio=%202026-10-03%20&fim=2026-10-03"
+    },
+    {
+      "nome": "detalhe",
+      "metodo": "GET",
+      "caminho": "/api/erros/1"
+    },
+    {
+      "nome": "detalhe sem login",
+      "metodo": "GET",
+      "caminho": "/api/erros/1",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "detalhe que não existe",
+      "metodo": "GET",
+      "caminho": "/api/erros/999"
+    },
+    {
+      "nome": "detalhe do apagado pela limpeza",
+      "metodo": "GET",
+      "caminho": "/api/erros/5"
+    },
+    {
+      "nome": "detalhe com id que não é número",
+      "metodo": "GET",
+      "caminho": "/api/erros/abc"
+    },
+    {
+      "nome": "detalhe com id grande demais",
+      "metodo": "GET",
+      "caminho": "/api/erros/99999999999999999999"
+    },
+    {
+      "nome": "erro do front-end",
+      "comentario": "Sempre 204. A gravação é em segundo plano: a linha é conferida alguns casos depois, já sem token, senha, CPF, valor e query string.",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpo": {
+        "mensagem": "TypeError: x is undefined (token=abc123, senha: segredo1) CPF 123.456.789-09, valor R$ 1.234,56",
+        "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?v=1&chave=2:10:5\n    Authorization: Bearer abc.def-123",
+        "rota": "/transacoes?conta=1"
+      }
+    },
+    {
+      "nome": "erro do front-end sem CSRF",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpo": {
+        "mensagem": "x"
+      },
+      "semCsrf": true
+    },
+    {
+      "nome": "erro do front-end sem login",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpo": {
+        "mensagem": "x"
+      },
+      "sessao": "visitante"
+    },
+    {
+      "nome": "erro do front-end sem mensagem",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpo": {
+        "detalhe": "y"
+      }
+    },
+    {
+      "nome": "erro do front-end com textos longos demais",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpo": {
+        "mensagem": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+        "rota": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+      }
+    },
+    {
+      "nome": "erro do front-end com tipo errado",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpoTexto": "{\"mensagem\": 1}"
+    },
+    {
+      "nome": "resolver um",
+      "metodo": "PUT",
+      "caminho": "/api/erros/1/situacao",
+      "corpo": {
+        "resolvido": true
+      }
+    },
+    {
+      "nome": "resolver um sem CSRF",
+      "metodo": "PUT",
+      "caminho": "/api/erros/1/situacao",
+      "corpo": {
+        "resolvido": true
+      },
+      "semCsrf": true
+    },
+    {
+      "nome": "resolver um que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/erros/999/situacao",
+      "corpo": {
+        "resolvido": true
+      }
+    },
+    {
+      "nome": "reabrir com corpo sem o campo",
+      "comentario": "Resolvido é bool: sem o campo, vale false, e o erro volta a ficar em aberto.",
+      "metodo": "PUT",
+      "caminho": "/api/erros/1/situacao",
+      "corpo": {}
+    },
+    {
+      "nome": "situação com tipo errado",
+      "metodo": "PUT",
+      "caminho": "/api/erros/1/situacao",
+      "corpo": {
+        "resolvido": "sim"
+      }
+    },
+    {
+      "nome": "erro do front-end gravado",
+      "metodo": "GET",
+      "caminho": "/api/erros?origem=Front-end&inicio=2026-10-14",
+      "capturar": {
+        "idFront": "/itens/0/id"
+      }
+    },
+    {
+      "nome": "detalhe do erro do front-end",
+      "metodo": "GET",
+      "caminho": "/api/erros/{{idFront}}"
+    },
+    {
+      "nome": "o mesmo erro do front-end de novo",
+      "metodo": "POST",
+      "caminho": "/api/erros/front-end",
+      "corpo": {
+        "mensagem": "TypeError: x is undefined (token=abc123, senha: segredo1) CPF 123.456.789-09, valor R$ 1.234,56",
+        "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?v=1&chave=2:10:5\n    Authorization: Bearer abc.def-123",
+        "rota": "/transacoes?conta=1"
+      }
+    },
+    {
+      "nome": "resolver todos sem CSRF",
+      "metodo": "POST",
+      "caminho": "/api/erros/resolver?origem=Open%20Finance&fim=2026-10-13",
+      "semCsrf": true
+    },
+    {
+      "nome": "resolver todos com filtro",
+      "metodo": "POST",
+      "caminho": "/api/erros/resolver?origem=Open%20Finance&fim=2026-10-13"
+    },
+    {
+      "nome": "resolver todos com filtro inválido",
+      "metodo": "POST",
+      "caminho": "/api/erros/resolver?tamanhoPagina=0"
+    },
+    {
+      "nome": "resolver todos entre os resolvidos",
+      "metodo": "POST",
+      "caminho": "/api/erros/resolver?situacao=resolvidos"
+    },
+    {
+      "nome": "repetição somada na mesma linha",
+      "metodo": "GET",
+      "caminho": "/api/erros?origem=Front-end&inicio=2026-10-14"
+    },
+    {
+      "nome": "listar depois de resolver",
+      "metodo": "GET",
+      "caminho": "/api/erros?situacao=todos&fim=2026-10-13"
+    }
+  ]
+}

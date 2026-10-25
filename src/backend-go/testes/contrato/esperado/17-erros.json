@@ -1,0 +1,1334 @@
+[
+  {
+    "nome": "listar",
+    "requisicao": "GET /api/erros?fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 7,
+          "mensagem": "A Pluggy respondeu 503 ao buscar as transações.",
+          "nivel": 4,
+          "ocorrencias": 4,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-06T20:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 2,
+          "mensagem": "Conexão Banco Exemplo: o consentimento vence em 5 dias.",
+          "nivel": 3,
+          "ocorrencias": 1,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-07T02:30:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 6,
+          "mensagem": "TypeError: Cannot read properties of undefined",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "2026-10-05T18:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /painel",
+          "ultimaEm": "2026-10-05T18:00:00.25Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 5
+    }
+  },
+  {
+    "nome": "listar sem login",
+    "requisicao": "GET /api/erros",
+    "status": 401
+  },
+  {
+    "nome": "listar todos, página 2 de 2 itens",
+    "requisicao": "GET /api/erros?situacao=todos&fim=2026-10-13&pagina=2&tamanhoPagina=2",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 6,
+          "mensagem": "TypeError: Cannot read properties of undefined",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "2026-10-05T18:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /painel",
+          "ultimaEm": "2026-10-05T18:00:00.25Z",
+          "usuario": "ana.teste"
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 2,
+      "tamanhoPagina": 2,
+      "total": 6
+    }
+  },
+  {
+    "nome": "listar resolvidos",
+    "requisicao": "GET /api/erros?situacao=resolvidos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 3,
+          "mensagem": "Não foi possível atualizar a cotação de EXMP11.",
+          "nivel": 4,
+          "ocorrencias": 2,
+          "origem": "Investimentos",
+          "primeiraEm": "2026-09-18T09:00:00Z",
+          "resolvido": true,
+          "resolvidoEm": "2026-09-21T10:00:00.5Z",
+          "rota": null,
+          "ultimaEm": "2026-09-20T09:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtrar por origem e nível",
+    "requisicao": "GET /api/erros?origem=Open%20Finance&nivel=3&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 2,
+          "mensagem": "Conexão Banco Exemplo: o consentimento vence em 5 dias.",
+          "nivel": 3,
+          "ocorrencias": 1,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-07T02:30:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtrar pelo nome do nível",
+    "requisicao": "GET /api/erros?nivel=Erro&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 7,
+          "mensagem": "A Pluggy respondeu 503 ao buscar as transações.",
+          "nivel": 4,
+          "ocorrencias": 4,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-06T20:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 6,
+          "mensagem": "TypeError: Cannot read properties of undefined",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "2026-10-05T18:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /painel",
+          "ultimaEm": "2026-10-05T18:00:00.25Z",
+          "usuario": "ana.teste"
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 3
+    }
+  },
+  {
+    "nome": "período em dias de Brasília",
+    "requisicao": "GET /api/erros?inicio=2026-10-06&fim=2026-10-06",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 7,
+          "mensagem": "A Pluggy respondeu 503 ao buscar as transações.",
+          "nivel": 4,
+          "ocorrencias": 4,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-06T20:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 2,
+          "mensagem": "Conexão Banco Exemplo: o consentimento vence em 5 dias.",
+          "nivel": 3,
+          "ocorrencias": 1,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-07T02:30:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 3
+    }
+  },
+  {
+    "nome": "início do período inclui a meia-noite",
+    "requisicao": "GET /api/erros?inicio=2026-10-03&fim=2026-10-03",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "origem só com espaço não filtra",
+    "requisicao": "GET /api/erros?origem=%20&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 7,
+          "mensagem": "A Pluggy respondeu 503 ao buscar as transações.",
+          "nivel": 4,
+          "ocorrencias": 4,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-06T20:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 2,
+          "mensagem": "Conexão Banco Exemplo: o consentimento vence em 5 dias.",
+          "nivel": 3,
+          "ocorrencias": 1,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-07T02:30:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 6,
+          "mensagem": "TypeError: Cannot read properties of undefined",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "2026-10-05T18:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /painel",
+          "ultimaEm": "2026-10-05T18:00:00.25Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 5
+    }
+  },
+  {
+    "nome": "filtro inválido: página, tamanho e situação",
+    "requisicao": "GET /api/erros?pagina=0&tamanhoPagina=101&situacao=pendentes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Pagina": [
+          "The field Pagina must be between 1 and 2147483647."
+        ],
+        "Situacao": [
+          "The field Situacao must match the regular expression '^(abertos|resolvidos|todos)$'."
+        ],
+        "TamanhoPagina": [
+          "The field TamanhoPagina must be between 1 and 100."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro inválido: nível, data e número",
+    "requisicao": "GET /api/erros?nivel=7&inicio=ontem&pagina=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Inicio": [
+          "The value 'ontem' is not valid for Inicio."
+        ],
+        "Nivel": [
+          "The value '7' is invalid."
+        ],
+        "Pagina": [
+          "The value 'abc' is not valid for Pagina."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro inválido: origem longa demais",
+    "requisicao": "GET /api/erros?origem=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Origem": [
+          "The field Origem must be a string with a maximum length of 30."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro com valores vazios",
+    "requisicao": "GET /api/erros?pagina=&tamanhoPagina=&nivel=&inicio=&situacao=&origem=&fim=2026-10-13",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Pagina": [
+          "The value '' is invalid."
+        ],
+        "TamanhoPagina": [
+          "The value '' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro com o nome do nível em minúsculas e número com espaços",
+    "requisicao": "GET /api/erros?nivel=aviso&pagina=%201%20&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 2,
+          "mensagem": "Conexão Banco Exemplo: o consentimento vence em 5 dias.",
+          "nivel": 3,
+          "ocorrencias": 1,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-07T02:30:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtro com o nível com sinal",
+    "requisicao": "GET /api/erros?nivel=%2B5&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtro com a data sem zero à esquerda",
+    "requisicao": "GET /api/erros?inicio=2026-10-3&fim=2026-10-3",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtro com a data com barras",
+    "requisicao": "GET /api/erros?inicio=10/03/2026&fim=10/03/2026",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtro com a data e a hora",
+    "requisicao": "GET /api/erros?inicio=2026-10-03T10:00&fim=2026-10-03",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "filtro repetido vale o primeiro",
+    "requisicao": "GET /api/erros?tamanhoPagina=1&tamanhoPagina=2&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 7,
+          "mensagem": "A Pluggy respondeu 503 ao buscar as transações.",
+          "nivel": 4,
+          "ocorrencias": 4,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-06T20:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 1,
+      "total": 5
+    }
+  },
+  {
+    "nome": "nome do filtro em maiúsculas e situação em maiúsculas",
+    "requisicao": "GET /api/erros?TAMANHOPAGINA=1&Situacao=Todos&fim=2026-10-13",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Situacao": [
+          "The field Situacao must match the regular expression '^(abertos|resolvidos|todos)$'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro com número em hexadecimal",
+    "requisicao": "GET /api/erros?pagina=0x2&tamanhoPagina=2&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 6,
+          "mensagem": "TypeError: Cannot read properties of undefined",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "2026-10-05T18:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /painel",
+          "ultimaEm": "2026-10-05T18:00:00.25Z",
+          "usuario": "ana.teste"
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 2,
+      "tamanhoPagina": 2,
+      "total": 5
+    }
+  },
+  {
+    "nome": "página além do fim",
+    "requisicao": "GET /api/erros?pagina=50&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 50,
+      "tamanhoPagina": 25,
+      "total": 5
+    }
+  },
+  {
+    "nome": "filtro inválido: nível por nome e lista de níveis",
+    "requisicao": "GET /api/erros?nivel=grave&tamanhoPagina=0x",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nivel": [
+          "The value 'grave' is not valid for Nivel."
+        ],
+        "TamanhoPagina": [
+          "The input was not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro inválido: lista de níveis",
+    "requisicao": "GET /api/erros?nivel=Aviso,Erro",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nivel": [
+          "The value 'Aviso,Erro' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro inválido: data impossível e número que estoura",
+    "requisicao": "GET /api/erros?inicio=2026-02-30&pagina=99999999999",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Inicio": [
+          "The value '2026-02-30' is not valid for Inicio."
+        ],
+        "Pagina": [
+          "The value '99999999999' is not valid for Pagina."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "filtro com a data com espaços",
+    "requisicao": "GET /api/erros?inicio=%202026-10-03%20&fim=2026-10-03",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 6,
+      "itens": [
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "detalhe",
+    "requisicao": "GET /api/erros/1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoria": "Erro",
+      "detalhe": "System.InvalidOperationException: Sequence contains no elements\n   at Financas.Api.Servicos.Exemplo.Calcular()",
+      "id": 1
+    }
+  },
+  {
+    "nome": "detalhe sem login",
+    "requisicao": "GET /api/erros/1",
+    "status": 401
+  },
+  {
+    "nome": "detalhe que não existe",
+    "requisicao": "GET /api/erros/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "detalhe do apagado pela limpeza",
+    "requisicao": "GET /api/erros/5",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "detalhe com id que não é número",
+    "requisicao": "GET /api/erros/abc",
+    "status": 404
+  },
+  {
+    "nome": "detalhe com id grande demais",
+    "requisicao": "GET /api/erros/99999999999999999999",
+    "status": 404
+  },
+  {
+    "nome": "erro do front-end",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 204
+  },
+  {
+    "nome": "erro do front-end sem CSRF",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "erro do front-end sem login",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 401
+  },
+  {
+    "nome": "erro do front-end sem mensagem",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Mensagem": [
+          "The Mensagem field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "erro do front-end com textos longos demais",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Mensagem": [
+          "The field Mensagem must be a string with a maximum length of 1000."
+        ],
+        "Rota": [
+          "The field Rota must be a string with a maximum length of 300."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "erro do front-end com tipo errado",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.mensagem": [
+          "The JSON value could not be converted to Financas.Api.Dtos.ErroFrontEndDto. Path: $.mensagem | LineNumber: 0 | BytePositionInLine: 14."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "resolver um",
+    "requisicao": "PUT /api/erros/1/situacao",
+    "status": 204
+  },
+  {
+    "nome": "resolver um sem CSRF",
+    "requisicao": "PUT /api/erros/1/situacao",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "resolver um que não existe",
+    "requisicao": "PUT /api/erros/999/situacao",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "reabrir com corpo sem o campo",
+    "requisicao": "PUT /api/erros/1/situacao",
+    "status": 204
+  },
+  {
+    "nome": "situação com tipo errado",
+    "requisicao": "PUT /api/erros/1/situacao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.resolvido": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SituacaoErroDto. Path: $.resolvido | LineNumber: 1 | BytePositionInLine: 26."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "erro do front-end gravado",
+    "requisicao": "GET /api/erros?origem=Front-end&inicio=2026-10-14",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 7,
+      "itens": [
+        {
+          "id": 9,
+          "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido] CPF [removido], valor R$ [removido]",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /transacoes?conta=1",
+          "ultimaEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+          "usuario": "ana.teste"
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "detalhe do erro do front-end",
+    "requisicao": "GET /api/erros/{{idFront}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoria": "Front-end",
+      "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?[removido]\n    Authorization: [removido] abc.def-123",
+      "id": 9
+    }
+  },
+  {
+    "nome": "o mesmo erro do front-end de novo",
+    "requisicao": "POST /api/erros/front-end",
+    "status": 204
+  },
+  {
+    "nome": "resolver todos sem CSRF",
+    "requisicao": "POST /api/erros/resolver?origem=Open%20Finance&fim=2026-10-13",
+    "status": 400,
+    "tipo": "application/problem+json; charset=utf-8",
+    "corpo": {
+      "status": 400,
+      "title": "Bad Request",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "resolver todos com filtro",
+    "requisicao": "POST /api/erros/resolver?origem=Open%20Finance&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "quantidade": 2
+    }
+  },
+  {
+    "nome": "resolver todos com filtro inválido",
+    "requisicao": "POST /api/erros/resolver?tamanhoPagina=0",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "TamanhoPagina": [
+          "The field TamanhoPagina must be between 1 and 100."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "resolver todos entre os resolvidos",
+    "requisicao": "POST /api/erros/resolver?situacao=resolvidos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "quantidade": 0
+    }
+  },
+  {
+    "nome": "repetição somada na mesma linha",
+    "requisicao": "GET /api/erros?origem=Front-end&inicio=2026-10-14",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 5,
+      "itens": [
+        {
+          "id": 9,
+          "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido] CPF [removido], valor R$ [removido]",
+          "nivel": 4,
+          "ocorrencias": 2,
+          "origem": "Front-end",
+          "primeiraEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /transacoes?conta=1",
+          "ultimaEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+          "usuario": "ana.teste"
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 1
+    }
+  },
+  {
+    "nome": "listar depois de resolver",
+    "requisicao": "GET /api/erros?situacao=todos&fim=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abertos": 5,
+      "itens": [
+        {
+          "id": 7,
+          "mensagem": "A Pluggy respondeu 503 ao buscar as transações.",
+          "nivel": 4,
+          "ocorrencias": 4,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-06T20:00:00Z",
+          "resolvido": true,
+          "resolvidoEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 2,
+          "mensagem": "Conexão Banco Exemplo: o consentimento vence em 5 dias.",
+          "nivel": 3,
+          "ocorrencias": 1,
+          "origem": "Open Finance",
+          "primeiraEm": "2026-10-07T02:30:00Z",
+          "resolvido": true,
+          "resolvidoEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+          "rota": null,
+          "ultimaEm": "2026-10-07T02:30:00Z",
+          "usuario": null
+        },
+        {
+          "id": 1,
+          "mensagem": "Erro não tratado em /api/transacoes: Sequence contains no elements",
+          "nivel": 4,
+          "ocorrencias": 3,
+          "origem": "API",
+          "primeiraEm": "2026-10-01T12:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "GET /api/transacoes",
+          "ultimaEm": "2026-10-06T14:30:00Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 6,
+          "mensagem": "TypeError: Cannot read properties of undefined",
+          "nivel": 4,
+          "ocorrencias": 1,
+          "origem": "Front-end",
+          "primeiraEm": "2026-10-05T18:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": "tela /painel",
+          "ultimaEm": "2026-10-05T18:00:00.25Z",
+          "usuario": "ana.teste"
+        },
+        {
+          "id": 4,
+          "mensagem": "Falha na atualização automática do câmbio.",
+          "nivel": 5,
+          "ocorrencias": 1,
+          "origem": "Câmbio",
+          "primeiraEm": "2026-10-03T03:00:00Z",
+          "resolvido": false,
+          "resolvidoEm": null,
+          "rota": null,
+          "ultimaEm": "2026-10-03T03:00:00Z",
+          "usuario": null
+        },
+        {
+          "id": 3,
+          "mensagem": "Não foi possível atualizar a cotação de EXMP11.",
+          "nivel": 4,
+          "ocorrencias": 2,
+          "origem": "Investimentos",
+          "primeiraEm": "2026-09-18T09:00:00Z",
+          "resolvido": true,
+          "resolvidoEm": "2026-09-21T10:00:00.5Z",
+          "rota": null,
+          "ultimaEm": "2026-09-20T09:00:00Z",
+          "usuario": null
+        }
+      ],
+      "origens": [
+        "API",
+        "Câmbio",
+        "Front-end",
+        "Investimentos",
+        "Open Finance",
+        "Sistema"
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 25,
+      "total": 6
+    }
+  }
+]

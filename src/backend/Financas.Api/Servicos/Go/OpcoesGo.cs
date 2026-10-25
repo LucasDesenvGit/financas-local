@@ -64,7 +64,8 @@ public sealed partial record OpcoesGo(IReadOnlyList<string> Prefixos, IReadOnlyS
             if (!PrefixoValido().IsMatch(prefixo))
                 throw new InvalidOperationException(
                     $"Go:Prefixos tem \"{prefixo}\": cada prefixo começa com /api/ e tem só letras minúsculas, números e \"-\".");
-            // Login, sessão e CSRF ficam no .NET até a inversão (#85); os erros, até a #298.
+            // Login, sessão, CSRF e os erros do sistema ficam no .NET até a inversão (#85): o gravador de erros é um
+            // só, e atrás do .NET é o do .NET (o Go grava os dele só quando roda sozinho, #298).
             if (prefixo is "/api/auth" or "/api/erros" || prefixo.StartsWith("/api/auth/") || prefixo.StartsWith("/api/erros/"))
                 throw new InvalidOperationException($"Go:Prefixos tem \"{prefixo}\", que fica no .NET até a inversão (ADR 0049).");
         }

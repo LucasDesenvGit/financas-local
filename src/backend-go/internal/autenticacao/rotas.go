@@ -59,11 +59,11 @@ func (a *Autenticacao) estado(w http.ResponseWriter, r *http.Request) {
 	req := daRequisicao(r.Context())
 	configurado, err := a.q.ExisteUsuario(r.Context())
 	if err != nil {
-		a.erroInterno(w, "estado", err)
+		a.erroInterno(w, r, "estado", err)
 		return
 	}
 	if err := a.emitirCsrf(w, req); err != nil {
-		a.erroInterno(w, "emitir o CSRF", err)
+		a.erroInterno(w, r, "emitir o CSRF", err)
 		return
 	}
 	resposta := estadoDto{Configurado: configurado, Versao: a.o.Versao}
@@ -84,7 +84,7 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	existe, err := a.q.ExisteUsuario(ctx)
 	if err != nil {
-		a.erroInterno(w, "configurar", err)
+		a.erroInterno(w, r, "configurar", err)
 		return
 	}
 	if existe {
@@ -98,7 +98,7 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 	}
 	hash, err := GerarHash(*senha.Valor)
 	if err != nil {
-		a.erroInterno(w, "gerar o hash", err)
+		a.erroInterno(w, r, "gerar o hash", err)
 		return
 	}
 	agora := a.agoraDb()
@@ -116,11 +116,11 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 		return a.auditar(ctx, q, r, "Configuracao", &loginLimpo)
 	})
 	if err != nil {
-		a.erroInterno(w, "configurar", err)
+		a.erroInterno(w, r, "configurar", err)
 		return
 	}
 	if err := a.iniciarSessao(w, daRequisicao(ctx), usuario); err != nil {
-		a.erroInterno(w, "iniciar a sessão", err)
+		a.erroInterno(w, r, "iniciar a sessão", err)
 		return
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
@@ -140,21 +140,21 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 		// Confere a senha mesmo assim, contra um hash qualquer: o tempo da resposta não revela se o usuário existe.
 		VerificarHash(a.hashDeMentira(), *senha.Valor)
 		if err := a.auditar(ctx, a.q, r, "LoginFalha", &loginLimpo); err != nil {
-			a.erroInterno(w, "auditar", err)
+			a.erroInterno(w, r, "auditar", err)
 			return
 		}
 		respostas.Mensagem(w, http.StatusUnauthorized, mensagemFalhaLogin)
 		return
 	}
 	if err != nil {
-		a.erroInterno(w, "entrar", err)
+		a.erroInterno(w, r, "entrar", err)
 		return
 	}
 
 	agora := a.o.Relogio.Agora()
 	if usuario.BloqueadoAte != nil && usuario.BloqueadoAte.Tempo().After(agora) {
 		if err := a.auditar(ctx, a.q, r, "LoginBloqueado", &loginLimpo); err != nil {
-			a.erroInterno(w, "auditar", err)
+			a.erroInterno(w, r, "auditar", err)
 			return
 		}
 		minutos := max(1, int(math.Ceil(usuario.BloqueadoAte.Tempo().Sub(agora).Minutes())))
@@ -168,7 +168,7 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 		usuario.TentativasFalhas++
 		maximo, minutosBloqueio, err := a.parametros(ctx)
 		if err != nil {
-			a.erroInterno(w, "ler os parâmetros", err)
+			a.erroInterno(w, r, "ler os parâmetros", err)
 			return
 		}
 		if usuario.TentativasFalhas >= maximo {
@@ -177,7 +177,7 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 			usuario.TentativasFalhas = 0
 		}
 		if err := a.salvarComAuditoria(ctx, r, usuario, "LoginFalha", &loginLimpo); err != nil {
-			a.erroInterno(w, "entrar", err)
+			a.erroInterno(w, r, "entrar", err)
 			return
 		}
 		respostas.Mensagem(w, http.StatusUnauthorized, mensagemFalhaLogin)
@@ -186,18 +186,18 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 
 	if resultado == SenhaCertaRefazer {
 		if usuario.SenhaHash, err = GerarHash(*senha.Valor); err != nil {
-			a.erroInterno(w, "refazer o hash", err)
+			a.erroInterno(w, r, "refazer o hash", err)
 			return
 		}
 	}
 	ultimo := tipos.NovaDataHora(agora)
 	usuario.TentativasFalhas, usuario.BloqueadoAte, usuario.UltimoLoginEm = 0, nil, &ultimo
 	if err := a.salvarComAuditoria(ctx, r, usuario, "LoginSucesso", &loginLimpo); err != nil {
-		a.erroInterno(w, "entrar", err)
+		a.erroInterno(w, r, "entrar", err)
 		return
 	}
 	if err := a.iniciarSessao(w, daRequisicao(ctx), usuario); err != nil {
-		a.erroInterno(w, "iniciar a sessão", err)
+		a.erroInterno(w, r, "iniciar a sessão", err)
 		return
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
@@ -209,14 +209,14 @@ func (a *Autenticacao) sair(w http.ResponseWriter, r *http.Request) {
 	if req.sessao != nil {
 		login := req.sessao.Login
 		if err := a.auditar(r.Context(), a.q, r, "Logout", &login); err != nil {
-			a.erroInterno(w, "auditar", err)
+			a.erroInterno(w, r, "auditar", err)
 			return
 		}
 	}
 	expirarSessao(w)
 	req.sessao = nil
 	if err := a.emitirCsrf(w, req); err != nil {
-		a.erroInterno(w, "emitir o CSRF", err)
+		a.erroInterno(w, r, "emitir o CSRF", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -233,7 +233,7 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 	req := daRequisicao(ctx)
 	usuario, err := a.q.ObterUsuarioPorId(ctx, req.usuario())
 	if err != nil {
-		a.erroInterno(w, "alterar a senha", err)
+		a.erroInterno(w, r, "alterar a senha", err)
 		return
 	}
 	if VerificarHash(usuario.SenhaHash, *atual.Valor) == SenhaErrada {
@@ -245,17 +245,17 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if usuario.SenhaHash, err = GerarHash(*nova.Valor); err != nil {
-		a.erroInterno(w, "gerar o hash", err)
+		a.erroInterno(w, r, "gerar o hash", err)
 		return
 	}
 	usuario.CarimboSeguranca = tipos.NovoGuid() // encerra as demais sessões
 	login := usuario.Login
 	if err := a.salvarComAuditoria(ctx, r, usuario, "SenhaAlterada", &login); err != nil {
-		a.erroInterno(w, "alterar a senha", err)
+		a.erroInterno(w, r, "alterar a senha", err)
 		return
 	}
 	if err := a.iniciarSessao(w, req, usuario); err != nil {
-		a.erroInterno(w, "iniciar a sessão", err)
+		a.erroInterno(w, r, "iniciar a sessão", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -265,7 +265,7 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 func (a *Autenticacao) auditoria(w http.ResponseWriter, r *http.Request) {
 	registros, err := a.q.ListarAuditoria(r.Context())
 	if err != nil {
-		a.erroInterno(w, "auditoria", err)
+		a.erroInterno(w, r, "auditoria", err)
 		return
 	}
 	saida := make([]auditoriaDto, 0, len(registros)) // lista vazia sai [], nunca null
