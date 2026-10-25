@@ -29,10 +29,16 @@ func TestLimpar(t *testing.T) {
 		{"client_secret=xyz;outra", "client_secret=[removido];outra"},
 		{`{"clientSecret": "xyz"}`, `{"clientSecret": "[removido]"}`},
 		{`"api_key":"k-1"`, `"api_key":"[removido]"`},
-		{"senha: segredo1)", "senha: [removido]"}, // como o .NET: o ")" vai junto (#396)
+		{"(senha: segredo1)", "(senha: [removido])"},                         // #396: o ")" que fecha fica
+		{"[token=abc] {secret=x}", "[token=[removido]] {secret=[removido]}"}, // #396: "]" e "}" também
+		{"token=(abc)", "token=[removido])"},                                 // o "(" que abre não para o valor
 		{"PASSWORD = abc def", "PASSWORD = [removido] def"},
 		{"Bearer abc.def-123==", "Bearer [removido]"},
-		{"Authorization: Bearer abc.def-123", "Authorization: [removido] abc.def-123"}, // o .NET deixa o token (#396)
+		{"Authorization: Bearer abc.def-123", "Authorization: Bearer [removido]"}, // #396: antes o token ficava
+		{"authorization=bearer   abc", "authorization=bearer   [removido]"},
+		{`"Authorization": "Bearer abc"`, `"Authorization": "Bearer [removido]"`},
+		{"Authorization: Bearer", "Authorization: [removido]"}, // sem token depois: a palavra é o valor
+		{"Cookie: Bearerzinho=1", "Cookie: [removido]"},        // "Bearer" só conta seguido de espaço
 		{"eyJhbGciOi.eyJzdWIiOi.assinatura", "[removido]"},
 		{"CPF 123.456.789-09 e 12345678909", "CPF [removido] e [removido]"},
 		{"a123.456.789-09", "a123.456.789-09"}, // sem fronteira antes: não é CPF
@@ -274,7 +280,7 @@ func TestGravarAgrupa(t *testing.T) {
 		mais(func(r *Registro) { r.Em = t0.Add(2 * time.Minute); r.Nivel = Aviso; r.Usuario = texto("ana.teste") }))
 	gravar(t, db, mais(func(r *Registro) { r.Em = t0.Add(3 * time.Hour) }))
 	if l := linhasDaTabela(t, db); len(l) != 1 ||
-		l[0] != "1|2026-10-15 12:00:00|2026-10-15 15:00:00|4|4|Open Finance|Financas.Go.Open Finance|a Pluggy respondeu 503 (token=[removido]|-|GET /api/x?y=1|ana.teste|0" {
+		l[0] != "1|2026-10-15 12:00:00|2026-10-15 15:00:00|4|4|Open Finance|Financas.Go.Open Finance|a Pluggy respondeu 503 (token=[removido])|-|GET /api/x?y=1|ana.teste|0" {
 		t.Fatalf("agrupado:\n%s", strings.Join(l, "\n"))
 	}
 

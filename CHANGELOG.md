@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.1] — 2026-10-25 · desenvolvimento
+
+### Correções
+- **Erros do sistema: o token depois de "Authorization: Bearer" não aparece mais** (#396). Na limpeza dos textos de Configurações › Erros, `Authorization: Bearer abc` virava `Authorization: [removido] abc`, e o token ficava à mostra; agora vira `Authorization: Bearer [removido]`. O valor limpo também para no `)`, `]` ou `}` que fecha o que veio antes (`(senha: x)` vira `(senha: [removido])`, e não perde o parêntese). Vale para os erros gravados daqui em diante, no .NET e no Go.
+
 ## [2.42.0] — 2026-10-24 · desenvolvimento
 
 ### Funcionalidades

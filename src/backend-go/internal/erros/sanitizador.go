@@ -18,13 +18,14 @@ const Removido = "[removido]"
 const (
 	espaco   = `\s\v\x{85}\p{Z}`
 	digito   = `\p{Nd}`
-	naoValor = `[^` + espaco + `&,;"']`
+	naoValor = `[^` + espaco + `&,;"')\]}]` // #396: o valor para no ")", "]" e "}" que fecham o que veio antes
 )
 
 var (
 	queryString = regexp.MustCompile(`(?i)(https?://[^` + espaco + `?#"'<>]+)\?[^` + espaco + `#"'<>]*`)
-	chaveValor  = regexp.MustCompile(`(?i)\b(access_?token|refresh_?token|token|api_?key|x-api-key|client_?secret|secret|senha|password|passwd|pwd|authorization|cookie)` +
-		`([` + espaco + `]*[=:][` + espaco + `]*"?|"[` + espaco + `]*:[` + espaco + `]*")(` + naoValor + `+)`)
+	// #396: "Bearer " depois da chave fica no texto, e o que sai é o token (antes saía a palavra e o token ficava).
+	chaveValor = regexp.MustCompile(`(?i)\b(access_?token|refresh_?token|token|api_?key|x-api-key|client_?secret|secret|senha|password|passwd|pwd|authorization|cookie)` +
+		`([` + espaco + `]*[=:][` + espaco + `]*"?|"[` + espaco + `]*:[` + espaco + `]*")((?:Bearer[` + espaco + `]+)?)(` + naoValor + `+)`)
 	bearer = regexp.MustCompile(`(?i)\bBearer[` + espaco + `]+[A-Za-z0-9\-._~+/]+=*`)
 	jwt    = regexp.MustCompile(`\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]*`)
 	cpf    = regexp.MustCompile(`\b` + digito + `{3}\.?` + digito + `{3}\.?` + digito + `{3}-?` + digito + `{2}\b`)
@@ -34,15 +35,13 @@ var (
 // Limpar é o Sanitizador.Limpar: tira query strings de URLs, pares "chave=valor" de segredos, tokens Bearer e JWT,
 // CPF e valores em reais, nessa ordem. É uma limpeza por padrão de texto, não uma garantia: o código continua não
 // pondo segredo em log.
-//
-// Na mesma ordem do .NET de propósito, inclusive com o que ela deixa passar: em "Authorization: Bearer abc", o par
-// "Authorization:" leva a palavra "Bearer" e o token fica (#396; o contrato 17-erros grava isso).
+// As expressões e a ordem são as mesmas do .NET: mudou uma, muda a outra no mesmo PR (o contrato 17-erros confere).
 func Limpar(texto string) string {
 	if texto == "" {
 		return texto
 	}
 	texto = queryString.ReplaceAllString(texto, "${1}?"+Removido)
-	texto = chaveValor.ReplaceAllString(texto, "${1}${2}"+Removido)
+	texto = chaveValor.ReplaceAllString(texto, "${1}${2}${3}"+Removido)
 	texto = bearer.ReplaceAllString(texto, "Bearer "+Removido)
 	texto = jwt.ReplaceAllString(texto, Removido)
 	texto = cpf.ReplaceAllString(texto, Removido)

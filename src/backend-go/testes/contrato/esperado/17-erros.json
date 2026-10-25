@@ -1108,7 +1108,7 @@
       "itens": [
         {
           "id": 9,
-          "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido] CPF [removido], valor R$ [removido]",
+          "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido]) CPF [removido], valor R$ [removido]",
           "nivel": 4,
           "ocorrencias": 1,
           "origem": "Front-end",
@@ -1140,7 +1140,7 @@
     "tipo": "application/json; charset=utf-8",
     "corpo": {
       "categoria": "Front-end",
-      "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?[removido]\n    Authorization: [removido] abc.def-123",
+      "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?[removido]\n    Authorization: Bearer [removido]",
       "id": 9
     }
   },
@@ -1206,7 +1206,7 @@
       "itens": [
         {
           "id": 9,
-          "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido] CPF [removido], valor R$ [removido]",
+          "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido]) CPF [removido], valor R$ [removido]",
           "nivel": 4,
           "ocorrencias": 2,
           "origem": "Front-end",
