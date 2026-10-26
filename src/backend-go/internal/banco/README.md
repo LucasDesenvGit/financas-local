@@ -32,8 +32,11 @@ A sonda em [`internal/tipos/testdata/sonda-efcore`](../tipos/testdata/sonda-efco
 
 - **Nunca `SUM`, `AVG`, `ORDER BY`, `<` ou `>` do SQL em coluna de dinheiro.** Ela é `TEXT`: o `SUM` converte para ponto flutuante (erra centavos), e o `ORDER BY` ordena como texto (`"10.0" < "9.0"`). Some e compare em Go, com `tipos.Decimal`. Confira como o .NET faz hoje em cada consulta.
 - **Nunca `float64` para dinheiro.** Nem no JSON: o `tipos.Decimal` escreve o número sem passar por `float64`. O `shopspring/decimal` sozinho escreveria **entre aspas**.
-- **Arredondamento:** o `Math.Round` do C# arredonda pelo método bancário (0,125 → 0,12). Use `RoundBank`, e não `Round`, onde o C# não diz o `MidpointRounding`.
+- **Arredondamento:** o `Math.Round` do C# arredonda pelo método bancário (0,125 → 0,12) e só mexe quando há mais casas que o pedido (250.0 continua 250.0). Use `tipos.Arredondar`, e não o `Round` do shopspring, onde o C# não diz o `MidpointRounding`.
+- **Divisão:** use `tipos.Dividir`, nunca o `Div` do shopspring (#81). O decimal do C# divide até caber em 96 bits, arredonda a última casa pelo método bancário e tira os zeros à direita só até a escala natural (`1.00 / 1 = 1.00`, `10 / 4 = 2.5`); o shopspring divide com 16 casas, e o `10.0` do C# sairia `10.00` no JSON. O gabarito é o `tipos/testdata/csharp.json` (sonda `tipos/testdata/sonda-csharp`).
 - **Datas:** a de negócio (a `Data` da transação) está no fuso de Brasília; os carimbos (`CriadoEm`) estão em UTC. O `DataHora` guarda a hora "de parede" sem fuso, como o EF Core: converta antes de gravar (`relogio`).
+- **Meia-noite que não existiu:** nos dias em que o horário de verão começava (até 2019, como 04/11/2018), o relógio de Brasília pulava de 23:59:59 para 01:00. Para essa hora, o `time.Date` devolve as 23:00 do dia anterior. Para o começo de um dia, use o `relogio.InicioDoDiaUtc`, que já trata isso (#372).
+- **GUID:** o `tipos.LerGuid` lê só os dois formatos que o .NET escreve, `8-4-4-4-12` e os 32 dígitos, como o `Guid.Parse`. Hífen fora do lugar é recusado (#372).
 - **Coluna opcional** é ponteiro (`*tipos.Decimal`, `*string`): `nil` grava e lê `NULL`.
 
 ## Esquema ao iniciar: `AplicarEsquema` (#297)
