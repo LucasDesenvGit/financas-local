@@ -110,7 +110,16 @@ O gerenciador passa para Go como **ícone na bandeja mais uma página com o visu
 - **Opção E, programa com Wails:** janela própria, sem porta aberta, e o leitor de tela vê a página direto. Custa ~2 vezes a memória do D com a janela aberta, depende do Wails v3, que é beta, e no Linux pede o GTK 4 e o WebKitGTK.
 
 **Recomendação: a opção E** (26/10/2026, depois do E acertado acima). *Julgamento próprio, com a preocupação do @JulioCezarSP:* o gerenciador tem de ser um programa, igual ao de C#, e não uma página do Edge. O D não consegue tirar o menu do botão direito, o F12, o zoom nem o agrupamento com o Edge. O E tira tudo isso, não abre porta na máquina (a seção "Segurança da página local" deixa de existir) e o leitor de tela vê a página direto. O preço:
-- ~200 MB de memória com a janela aberta, contra ~100 do D. Com a janela fechada, o WebView2 continua na memória, a menos que a janela seja destruída ao fechar e recriada ao abrir (*a medir na história*);
+- ~200 MB de memória com a janela aberta, contra ~100 do D. **Parado na bandeja, depende de como fecha** (medido em 26/10/2026, duas rodadas):
+
+  | E parado na bandeja | Memória privada | *Working set* | Processos |
+  |---|---|---|---|
+  | Fechar só esconde a janela | 186–191 MB | ~350 MB | 7 (o WebView2 continua) |
+  | **Fechar destrói a janela** (a bandeja cria outra ao abrir) | **51 MB** | **33 MB** | 1 |
+  | Começa na bandeja, sem janela (ao iniciar com o sistema) | 48 MB | 17–18 MB | 1 |
+  | *C# de hoje, para comparar* | *14–15 MB* | *56–59 MB* | *1* |
+
+  Então a história faz **destruir ao fechar**: parado, o E reserva ~3 vezes a memória privada do C# (o runtime do Go e o Wails), mas usa menos memória física. Reabrir a janela pela bandeja depois de destruída *não foi conferido* (o teste não clica na bandeja);
 - o Wails v3 em beta (fixar a versão no `go.mod` e só subir com o teste de instalação passando);
 - no Linux, GTK 4 e WebKitGTK, que a instalação pede.
 
