@@ -13,7 +13,7 @@ banco                   80.5
 banco/esquema           81.8
 cambio                  83.9
 config                  86.7
-configuracao            83.4
+configuracao            87.3
 cripto                  85.2
 erros                   93.3
 parametros              81.5

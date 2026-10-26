@@ -7,6 +7,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Publicação e documentação
 - **Go: a autenticação sem mutação viva** (#399, épico #374). Nada muda para quem usa. O teste de mutação da `autenticacao` vai de 91% para 100%, com os testes que faltavam: a chave de sessão criada com 32 bytes; o cookie assinado com conteúdo que não é sessão (JSON quebrado, usuário 0); a renovação exatamente na metade da janela; o CSRF com o segredo vazio; a limpeza do limitador com 1024 IPs; o hash v3 com subchave de 16 bytes; a auditoria do configurar e do login; e o hash antigo (v2) refeito no login. Três mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 76%.
 
+## [2.42.7] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a configuração sem mutação viva** (#400, épico #374). Nada muda para quem usa. O teste de mutação da `configuracao` vai de 88% para 100%: faltavam o teste de ler um inteiro e um booleano que existem no banco (só a chave que falta era conferida) e um número com o dígito 9 na leitura de inteiros. As duas mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 87,3%.
+
 ## [2.42.5] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação
