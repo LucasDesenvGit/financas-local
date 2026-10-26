@@ -391,3 +391,27 @@ INSERT INTO CotacaoMoeda (Moeda, Data, Compra, Venda, AtualizadoEm) VALUES
 INSERT INTO CotacaoCripto (Moeda, DataHora, Preco, AtualizadoEm) VALUES
     ('BTC', '2026-10-13 21:00:00', '612345.67', '2026-10-13 21:00:05'),
     ('BTC', '2026-10-14 21:00:00', '618900.12', '2026-10-14 21:00:05');
+
+/* ------------------------------------------------------------------ Erros do sistema (17-erros, #298) */
+/* Datas em UTC, todas antes de 14/10: o aviso que o Go grava na partida (relógio de teste) fica fora dos filtros
+   por período dos casos. O de 01/07 tem mais de 90 dias (Diagnostico.DiasRetencaoErros): a limpeza da partida o
+   apaga. O 2 e o 7 empatam na última ocorrência (desempate pelo Id) e caem em 06/10 no horário de Brasília. */
+INSERT INTO ErroSistema (Id, PrimeiraEm, UltimaEm, Ocorrencias, Nivel, Origem, Categoria, Mensagem, Detalhe, Rota, Usuario, Assinatura, Resolvido, ResolvidoEm) VALUES
+    (1, '2026-10-01 12:00:00', '2026-10-06 14:30:00', 3, 4, 'API', 'Erro',
+        'Erro não tratado em /api/transacoes: Sequence contains no elements',
+        'System.InvalidOperationException: Sequence contains no elements
+   at Financas.Api.Servicos.Exemplo.Calcular()', 'GET /api/transacoes', 'ana.teste', '0A1B2C3D4E5F60718293A4B5C6D7E8F9', 0, NULL),
+    (2, '2026-10-07 02:30:00', '2026-10-07 02:30:00', 1, 3, 'Open Finance', 'Financas.Api.Servicos.Pluggy.SincronizacaoService',
+        'Conexão Banco Exemplo: o consentimento vence em 5 dias.', NULL, NULL, NULL, '1111111111111111AAAAAAAAAAAAAAAA', 0, NULL),
+    (3, '2026-09-18 09:00:00', '2026-09-20 09:00:00', 2, 4, 'Investimentos', 'Financas.Api.Servicos.Investimentos.CotacaoService',
+        'Não foi possível atualizar a cotação de EXMP11.', NULL, NULL, NULL, '2222222222222222BBBBBBBBBBBBBBBB', 1, '2026-09-21 10:00:00.5'),
+    (4, '2026-10-03 03:00:00', '2026-10-03 03:00:00', 1, 5, 'Câmbio', 'Financas.Api.Servicos.Cambio.CambioHostedService',
+        'Falha na atualização automática do câmbio.', 'System.Net.Http.HttpRequestException: Name or service not known', NULL, NULL,
+        '3333333333333333CCCCCCCCCCCCCCCC', 0, NULL),
+    (5, '2026-07-01 08:00:00', '2026-07-01 08:00:00', 1, 3, 'Sistema', 'Financas.Api.Data.EsquemaBanco',
+        'Aviso antigo, apagado pela limpeza.', NULL, NULL, NULL, '4444444444444444DDDDDDDDDDDDDDDD', 0, NULL),
+    (6, '2026-10-05 18:00:00', '2026-10-05 18:00:00.25', 1, 4, 'Front-end', 'Front-end',
+        'TypeError: Cannot read properties of undefined', 'TypeError: Cannot read properties of undefined
+    at main-ABCDEFGH.js:1:2345', 'tela /painel', 'ana.teste', '5555555555555555EEEEEEEEEEEEEEEE', 0, NULL),
+    (7, '2026-10-06 20:00:00', '2026-10-07 02:30:00', 4, 4, 'Open Finance', 'Financas.Api.Servicos.Pluggy.PluggyClient',
+        'A Pluggy respondeu 503 ao buscar as transações.', NULL, NULL, NULL, '6666666666666666FFFFFFFFFFFFFFFF', 0, NULL);

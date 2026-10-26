@@ -43,11 +43,7 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	saude.Registrar(mux, d.DB, d.Log, d.Relogio)                 // #231: o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco)
 	parametros.Registrar(mux, parametros.Novo(parametros.Opcoes{ // #76
 		DB: d.DB, Relogio: d.Relogio, Log: d.Log, Versao: versao.Atual,
-		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves,
-		Padroes: map[string]int{
-			"Seguranca.MaximoTentativasLogin": d.Config.MaximoTentativasLogin,
-			"Seguranca.MinutosBloqueio":       d.Config.MinutosBloqueio,
-		},
+		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves, Padroes: parametros.PadroesDoAppsettings(d.Config),
 	}))
 	return mux
 }

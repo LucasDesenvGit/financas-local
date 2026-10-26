@@ -1,9 +1,7 @@
 package parametros
 
 import (
-	"context"
 	"database/sql"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -11,7 +9,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
-	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sessao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
@@ -26,7 +23,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 	lista, err := s.Listar(r.Context())
 	if err != nil {
-		s.erroInterno(w, "listar", err)
+		s.erroInterno(w, r, "listar", err)
 		return
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista)
@@ -61,7 +58,7 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	err := banco.EmTransacao(ctx, s.o.DB, func(tx *sql.Tx) error {
 		q := s.q.WithTx(tx)
-		login, err := s.login(ctx, q)
+		login, err := auditoria.Login(ctx, q)
 		if err != nil {
 			return err
 		}
@@ -72,7 +69,7 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 		return s.gravar(ctx, tx, dto.valores)
 	})
 	if err != nil {
-		s.erroInterno(w, "salvar", err)
+		s.erroInterno(w, r, "salvar", err)
 		return
 	}
 	s.listar(w, r)
@@ -81,32 +78,14 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 func (s *Servico) sistema(w http.ResponseWriter, r *http.Request) {
 	info, err := s.InfoSistema(r.Context())
 	if err != nil {
-		s.erroInterno(w, "sistema", err)
+		s.erroInterno(w, r, "sistema", err)
 		return
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, info)
 }
 
-// login é o User.Identity.Name do .NET: o login de quem está na sessão, ou nil.
-func (s *Servico) login(ctx context.Context, q interface {
-	ObterLoginDoUsuario(context.Context, int64) (string, error)
-}) (*string, error) {
-	id, ok := sessao.Usuario(ctx)
-	if !ok {
-		return nil, nil
-	}
-	login, err := q.ObterLoginDoUsuario(ctx, id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &login, nil
-}
-
 // erroInterno é o UseExceptionHandler: o erro vai para o log, e quem pediu recebe só o 500 de sempre.
-func (s *Servico) erroInterno(w http.ResponseWriter, etapa string, err error) {
-	s.o.Log.Error("erro nos parâmetros", "etapa", etapa, "erro", err)
+func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
+	s.o.Log.ErrorContext(r.Context(), "erro nos parâmetros", "origem", "API", "etapa", etapa, "erro", err)
 	servidor.ResponderErroInterno(w)
 }

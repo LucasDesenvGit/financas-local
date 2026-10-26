@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.41.9] — 2026-10-24 · desenvolvimento
+## [2.42.4] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação
 - **Go: fuzz nos tipos de dinheiro e data** (#372, épico #374). Nada muda para quem usa. Para quem desenvolve:
@@ -12,6 +12,32 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
     - nos dias em que o horário de verão começava (até 2019), o começo do dia caía às 23:00 do dia anterior. O C# lança exceção nesse dia (#393);
     - o GUID com hífen fora do lugar era aceito, e o `Guid.Parse` do .NET o recusa;
   - como rodar está no `CONTRIBUINDO.md`, em "Testes do back-end (Go)".
+
+## [2.42.2] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Go: teste de mutação toda semana** (#373, épico #374, ADR 0051). Nada muda para quem usa. Para quem desenvolve:
+  - o workflow "Teste de mutação (Go)" roda o [gremlins](https://github.com/go-gremlins/gremlins) toda segunda (e à mão), nunca em PR. Ele estraga o código de propósito, numa cópia, e conta o que os testes não pegaram, nos pacotes de `scripts/ci/mutacao-go.txt`, com um piso por pacote que só sobe;
+  - primeira medição: `tipos`, `parametros` e `segredos` em 100%; `autenticacao` 91%, `configuracao` 88%, `erros` 88%, `respostas` 73%. As mutações vivas desses quatro viraram as issues #399 a #402;
+  - testes novos que a medição pediu: os bits de versão e de variante do `NovoGuid`, o JSON inválido de `Data` e `Guid`, a chave repetida no meio dos parâmetros e o nome do sistema operacional;
+  - ponto cego anotado na ADR: a mutação dentro de `case` não é testada pela ferramenta, porque a cobertura do Go não conta a condição do `case`. Nessas regras, continua valendo a mutação à mão no PR.
+
+## [2.42.1] — 2026-10-25 · desenvolvimento
+
+### Correções
+- **Erros do sistema: o token depois de "Authorization: Bearer" não aparece mais** (#396). Na limpeza dos textos de Configurações › Erros, `Authorization: Bearer abc` virava `Authorization: [removido] abc`, e o token ficava à mostra; agora vira `Authorization: Bearer [removido]`. O valor limpo também para no `)`, `]` ou `}` que fecha o que veio antes (`(senha: x)` vira `(senha: [removido])`, e não perde o parêntese). Vale para os erros gravados daqui em diante, no .NET e no Go.
+
+## [2.42.0] — 2026-10-24 · desenvolvimento
+
+### Funcionalidades
+- **Erros do sistema: origem "Cripto"** (#298). Em Configurações › Erros, os avisos e erros da cotação das criptomoedas aparecem com a origem própria, e não mais misturados em "Sistema". Os que já estavam gravados continuam como estavam.
+
+### Publicação e documentação
+- **Go: erros do sistema** (#298, épico #70, ADR 0022). Nada muda para quem usa: no site, quem grava os erros e atende Configurações › Erros continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho grava os próprios avisos e erros em `ErroSistema`: um handler do `log/slog` põe na fila, e o gravador limpa os dados sensíveis, agrupa a mesma ocorrência em 24 h e apaga os antigos uma vez por dia, como o .NET (mesma assinatura, conferida com valores calculados pelo .NET);
+  - as 5 rotas de `api/erros` em Go, com o contrato novo `17-erros` (52 casos, gravados do .NET), que passa no .NET e no Go sozinho;
+  - a leitura de JSON do pacote `respostas` passou a andar token a token: o erro de tipo num campo agora cita o tipo do DTO e a posição do fim do valor, como o .NET (antes saía "System.String" e o fim do corpo);
+  - os erros internos do Go saem com a origem "API", e o log feito durante uma requisição leva a rota e o usuário.
 
 ## [2.41.8] — 2026-10-24 · desenvolvimento
 

@@ -140,57 +140,6 @@ func TipoNaoSuportado(w http.ResponseWriter) {
 	})
 }
 
-// campoTexto é um parâmetro string de um DTO com [Required] e [StringLength(maximo, MinimumLength = minimo)].
-type CampoTexto struct {
-	Propriedade string // o nome da propriedade no C#, que é a chave em "errors" ("Login", "SenhaAtual")
-	Minimo      int
-	Maximo      int
-	Valor       *string
-}
-
-// LerTextos faz o model binding e a validação do [ApiController] para um DTO só de strings: devolve false se já
-// respondeu (415 ou 400). parametro é o nome do parâmetro da action ("dto"), que aparece quando o corpo não abre;
-// tipoDto é o nome completo do tipo no C#, que aparece quando o JSON não é um objeto.
-func LerTextos(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, campos ...*CampoTexto) bool {
-	corpo, ok := LerCorpo(w, r, parametro)
-	if !ok {
-		return false
-	}
-
-	if erroJSON := lerCampos(corpo, tipoDto, campos); erroJSON != nil {
-		Validacao(w, map[string][]string{erroJSON.Caminho: {erroJSON.Mensagem}, parametro: {Obrigatorio(parametro)}})
-		return false
-	}
-
-	erros := map[string][]string{}
-	for _, c := range campos {
-		var lista []string
-		if c.Valor == nil || strings.TrimSpace(*c.Valor) == "" {
-			// [Required] recusa nulo, vazio e só espaços (AllowEmptyStrings = false).
-			lista = append(lista, Obrigatorio(c.Propriedade))
-		}
-		if c.Valor != nil {
-			// [StringLength] conta caracteres UTF-16, como string.Length do C#; nulo passa (quem recusa é o Required).
-			if n := TamanhoUtf16(*c.Valor); n > c.Maximo || n < c.Minimo {
-				if c.Minimo > 0 {
-					lista = append(lista, fmt.Sprintf("The field %s must be a string with a minimum length of %d and a maximum length of %d.",
-						c.Propriedade, c.Minimo, c.Maximo))
-				} else {
-					lista = append(lista, fmt.Sprintf("The field %s must be a string with a maximum length of %d.", c.Propriedade, c.Maximo))
-				}
-			}
-		}
-		if len(lista) > 0 {
-			erros[c.Propriedade] = lista
-		}
-	}
-	if len(erros) > 0 {
-		Validacao(w, erros)
-		return false
-	}
-	return true
-}
-
 func Obrigatorio(nome string) string { return "The " + nome + " field is required." }
 
 // tamanhoUtf16 é o string.Length do C#: unidades UTF-16 (um emoji conta 2).
@@ -206,38 +155,6 @@ func TamanhoUtf16(s string) int {
 type ErroJSON struct {
 	Caminho  string
 	Mensagem string
-}
-
-// lerCampos lê o objeto JSON como o System.Text.Json com as opções web do ASP.NET: nomes sem diferença de
-// maiúsculas, campos a mais ignorados, o último repetido vale. Cada campo é string ou null.
-func lerCampos(corpo []byte, tipoDto string, campos []*CampoTexto) *ErroJSON {
-	var bruto any
-	if err := json.Unmarshal(corpo, &bruto); err != nil {
-		return ErroDeSintaxe(corpo, err)
-	}
-	objeto, ok := bruto.(map[string]any)
-	if !ok {
-		return &ErroJSON{"$", fmt.Sprintf("The JSON value could not be converted to %s. Path: $ | %s.", tipoDto, Posicao(corpo, primeiroNaoBranco(corpo)+1))}
-	}
-	// A ordem do JSON decide qual repetido vale; json.Unmarshal num map já fica com o último.
-	for nome, valor := range objeto {
-		for _, c := range campos {
-			if !strings.EqualFold(nome, c.Propriedade) {
-				continue
-			}
-			switch v := valor.(type) {
-			case nil:
-				c.Valor = nil
-			case string:
-				texto := v
-				c.Valor = &texto
-			default:
-				return &ErroJSON{"$." + nome, fmt.Sprintf("The JSON value could not be converted to System.String. Path: $.%s | %s.",
-					nome, Posicao(corpo, len(corpo)))}
-			}
-		}
-	}
-	return nil
 }
 
 // erroDeSintaxe imita a mensagem do Utf8JsonReader para o JSON que não abre. A do fim inesperado (o caso do
@@ -281,10 +198,6 @@ func Posicao(corpo []byte, n int) string {
 	linha := bytes.Count(antes, []byte("\n"))
 	inicioLinha := bytes.LastIndexByte(antes, '\n') + 1
 	return fmt.Sprintf("LineNumber: %d | BytePositionInLine: %d", linha, n-inicioLinha)
-}
-
-func primeiroNaoBranco(corpo []byte) int {
-	return len(corpo) - len(bytes.TrimLeft(corpo, " \t\r\n"))
 }
 
 // dentroDeTexto diz se o JSON acabou no meio de uma string (aspas abertas, sem contar as escapadas).

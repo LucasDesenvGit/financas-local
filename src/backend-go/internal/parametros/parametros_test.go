@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -286,7 +287,13 @@ func itoa(n int) string { b, _ := json.Marshal(n); return string(b) }
 // Regra: o valor repetido e o com sinal chegam ao banco como o .NET gravaria.
 func TestSalvarRepetidoESinal(t *testing.T) {
 	db, mux := novo(t, testeapoio.RelogioDosTestes())
-	testeapoio.Chamar(t, mux, "PUT", "/api/parametros", `{"valores":{"Seguranca.MinutosBloqueio":0,"Seguranca.MinutosBloqueio":"+022"}}`).ConferirStatus(t, http.StatusOK)
+	// A repetida no meio: o que vem depois dela também é lido (o teste de mutação, #373, mostrou que só a repetida no
+	// fim não pegava um "break" no lugar do "continue").
+	testeapoio.Chamar(t, mux, "PUT", "/api/parametros",
+		`{"valores":{"Seguranca.MinutosBloqueio":0,"Seguranca.MinutosBloqueio":"+022","Painel.DiasProximosVencimentos":20}}`).ConferirStatus(t, http.StatusOK)
+	if v := configuracoes(t, db)["Painel.DiasProximosVencimentos"]; !strings.HasPrefix(v, "20|0|") {
+		t.Errorf("o valor depois da chave repetida não foi gravado: %q", v)
+	}
 	if v := configuracoes(t, db)["Seguranca.MinutosBloqueio"]; !strings.HasPrefix(v, "22|0|") {
 		t.Errorf("gravado %q, esperado 22", v)
 	}
@@ -311,8 +318,10 @@ func TestSistema(t *testing.T) {
 	if s, _ := info["iniciadoEm"].(string); !strings.HasSuffix(s, "Z") {
 		t.Errorf("iniciadoEm em UTC com Z: %q", s)
 	}
-	if s, _ := info["sistemaOperacional"].(string); s == "" {
-		t.Error("sem sistema operacional")
+	// Como o OSDescription do .NET: o nome do sistema com a versão, e não só o GOOS.
+	esperado := map[string]string{"windows": "Microsoft Windows ", "linux": "Linux "}[runtime.GOOS]
+	if s, _ := info["sistemaOperacional"].(string); s == "" || (esperado != "" && !strings.HasPrefix(s, esperado)) {
+		t.Errorf("sistema operacional %q, esperado começando com %q", s, esperado)
 	}
 }
 

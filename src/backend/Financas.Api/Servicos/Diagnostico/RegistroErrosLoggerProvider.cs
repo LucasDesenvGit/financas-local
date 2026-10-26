@@ -46,6 +46,8 @@ public sealed class RegistroErrosLoggerProvider : ILoggerProvider
         _ when categoria.StartsWith("Financas.Api.Servicos.Pluggy", StringComparison.Ordinal) => "Open Finance",
         _ when categoria.StartsWith("Financas.Api.Servicos.Investimentos", StringComparison.Ordinal) => "Investimentos",
         _ when categoria.StartsWith("Financas.Api.Servicos.Cambio", StringComparison.Ordinal) => "Câmbio",
+        // #298: a cotação das criptomoedas tem origem própria (antes caía em "Sistema").
+        _ when categoria.StartsWith("Financas.Api.Servicos.Cripto", StringComparison.Ordinal) => "Cripto",
         // #231: o que o Go escreve na saída de erro (ProcessoGo). "Financas.Go.<origem>" quando o Go diz a origem.
         _ when categoria.StartsWith(ProcessoGo.CategoriaLog + ".", StringComparison.Ordinal) => categoria[(ProcessoGo.CategoriaLog.Length + 1)..],
         ProcessoGo.CategoriaLog => "Sistema",

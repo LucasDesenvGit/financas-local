@@ -13,7 +13,7 @@ public class ErroSistema
     public DateTime UltimaEm { get; set; }
     public int Ocorrencias { get; set; } = 1;
     public NivelErro Nivel { get; set; }
-    /// <summary>De onde veio, para filtrar: API, Open Finance, Investimentos, Câmbio, Front-end ou Sistema.</summary>
+    /// <summary>De onde veio, para filtrar: API, Open Finance, Investimentos, Câmbio, Cripto, Front-end ou Sistema.</summary>
     public string Origem { get; set; } = string.Empty;
     /// <summary>Categoria do log (classe que registrou).</summary>
     public string Categoria { get; set; } = string.Empty;

@@ -1,0 +1,15 @@
+# Pacotes do Go medidos pelo teste de mutação (#373, ADR 0051; scripts/ci/mutacao-go.py) e o piso da eficácia de
+# cada um, em % (mortas / (mortas + vivas), sem as equivalentes conhecidas).
+#
+# O piso só sobe: subiu a eficácia de um pacote, suba o piso dele no mesmo PR. Assunto novo do épico #70 com regra de
+# negócio ou dinheiro entra aqui no PR dele, com o piso da primeira medição.
+#
+# Primeira medição: 25/10/2026 (#373).
+
+internal/tipos          100
+internal/parametros     100
+internal/segredos       100
+internal/autenticacao   90    # mutações vivas: #399
+internal/configuracao   88    # #400
+internal/erros          88    # #401
+internal/respostas      72    # #402
