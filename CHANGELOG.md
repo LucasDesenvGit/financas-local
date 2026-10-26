@@ -11,7 +11,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o conversor para reais (o `ConversorMoeda`), para a carteira (#82) e o painel (#80) usarem;
   - as tarefas em segundo plano (câmbio de 15 em 15 minutos, depois do fechamento das 13h30; cripto de 30 em 30), que só rodam com o nome em `Go:Tarefas` e param com o serviço, sem derrubar o processo num erro;
   - a aritmética do decimal do C# em Go (`tipos.Dividir`, `tipos.Arredondar`), conferida contra o .NET por uma sonda: o shopspring divide e arredonda diferente, e a variação de 10% sairia `10.00` em vez de `10.0`.
-  - Os casos de contrato `02-cambio` e `03-cripto` estão escritos; os esperados são gravados do .NET (Linux) antes do merge.
+  - os casos de contrato `02-cambio` (15) e `03-cripto` (2), gravados do .NET na CI (Linux), que passam também com o Go atendendo;
+  - os logs da cripto saem com a origem "Cripto", como o .NET desde a #298;
+  - **correção na convivência** (`ProcessoGo`): o atributo `erro` de um log do Go vai para o detalhe do erro, como a exceção de um log do .NET, e não mais para a mensagem. O texto do erro muda a cada vez (a porta de um erro de rede, por exemplo) e, na mensagem, fazia cada aviso repetido virar uma linha nova na tela de Erros, em vez de somar uma ocorrência.
 
 ## [2.42.4] — 2026-10-25 · desenvolvimento
 
