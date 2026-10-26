@@ -24,9 +24,18 @@ public static class Relogio
     public static DateOnly ParaDataLocal(DateTimeOffset valor)
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(valor, Fuso).DateTime);
 
-    /// <summary>Instante UTC em que começa o dia (meia-noite em Brasília).</summary>
+    /// <summary>
+    /// Instante UTC em que começa o dia (meia-noite em Brasília). No dia em que o horário de verão começava (até 2019),
+    /// a meia-noite não existia: o relógio ia de 23:59:59 direto para 01:00, e o ConvertTimeToUtc lança exceção para
+    /// hora que não existe. O dia então começa na primeira hora que existe, a da troca de fuso, como o
+    /// relogio.InicioDoDiaUtc do Go (#393).
+    /// </summary>
     public static DateTime InicioDoDiaUtc(DateOnly dia)
-        => TimeZoneInfo.ConvertTimeToUtc(dia.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), Fuso);
+    {
+        var inicio = dia.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
+        while (Fuso.IsInvalidTime(inicio)) inicio = inicio.AddMinutes(1);
+        return TimeZoneInfo.ConvertTimeToUtc(inicio, Fuso);
+    }
 
     public static DateOnly PrimeiroDiaMes(int ano, int mes) => new(ano, mes, 1);
 

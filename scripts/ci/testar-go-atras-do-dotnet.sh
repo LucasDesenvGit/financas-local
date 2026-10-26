@@ -11,7 +11,7 @@
 #   - o .NET e o Go gravando no banco ao mesmo tempo, sem erro;
 #   - o Go cai: 503 enquanto isso, e ele volta sozinho;
 #   - o .NET parado (SIGTERM) ou morto (SIGKILL): nenhum Go sobra;
-#   - Go:Prefixos vazio: a rota volta para o .NET (404), sem Go rodando;
+#   - Go:Prefixos e Go:Tarefas vazios: a rota volta para o .NET (404), sem Go rodando;
 #   - Go:InicioDoRelogio (só para teste, #363): o relógio do Go começa no
 #     instante dado e continua nele quando o Go reinicia.
 #
@@ -106,7 +106,7 @@ esperar_sem_go() {
 }
 
 # ------------------------------------------------------------------
-passo "1. Liga a API com Go:Prefixos=/api/go (o padrão do appsettings.json)"
+passo "1. Liga a API com o Go:Prefixos e o Go:Tarefas padrão do appsettings.json (/api/go e o câmbio, #81)"
 ligar sim
 pid_go="$(processos_go)"
 [[ -n "$pid_go" ]] || falha "o Go não está rodando"
@@ -237,10 +237,12 @@ pid=""
 esperar_sem_go 15 || falha "sobrou Go órfão: $(processos_go)"
 ok "o Go $pid_go parou sozinho"
 
-passo "12. Go:Prefixos vazio: a rota volta para o .NET, sem reinstalar"
-Go__Prefixos="" ligar nao
+# Sem prefixo e sem tarefa, o .NET nem sobe o Go. Desde a #81 o padrão tem as tarefas do câmbio e da cripto: sem o
+# Go__Tarefas vazio, o Go subiria para rodá-las.
+passo "12. Go:Prefixos e Go:Tarefas vazios: a rota volta para o .NET, sem reinstalar"
+Go__Prefixos="" Go__Tarefas="" ligar nao
 sleep 2
-[[ -z "$(processos_go)" ]] || falha "o Go foi iniciado sem nenhum prefixo"
+[[ -z "$(processos_go)" ]] || falha "o Go foi iniciado sem nenhum prefixo nem tarefa"
 s="$(status -b "$cookies" "$url/api/go/saude")"
 [[ "$s" == 404 ]] || falha "esperado 404 do .NET, veio $s"
 ok "404 do .NET (MapFallback de /api) e nenhum processo do Go"
