@@ -1,0 +1,97 @@
+# 0052. Gerenciador em Go: ícone na bandeja e a "janela" como página local no navegador
+
+- **Status:** Proposta (#276; a decisão é do time)
+- **Data:** 2026-10-25
+- **Relacionadas:** [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e [0033](0033-gerenciador-no-linux-com-avalonia.md) (o gerenciador de hoje, em C#, que esta substituiria); [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) (atualizar pelo develop); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi`); [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (o back-end em Go); épico #70
+
+## Contexto
+
+O gerenciador liga, desliga e acompanha o site, faz a cópia do banco e se atualiza. É todo em C#, com cerca de 3.600 linhas:
+- `Financas.Gerenciador.Nucleo` (708): serviço, situação, cópia do banco, atualização;
+- `Financas.Gerenciador`, para Windows (1.956): WinForms, UAC, GitHub Releases;
+- `Financas.Gerenciador.Linux` (967): Avalonia, bandeja, `systemctl --user`.
+
+O épico #70 remove o .NET no fim (#86). Sem tratar o gerenciador, o `.msi`, os scripts e a CI deixam de gerá-lo. **O time decidiu em 21/10/2026 que o destino é tudo em Go**, inclusive o gerenciador (revisão do épico, comentário na #276). Falta decidir **como** desenhar a parte com janela.
+
+O que ele precisa continuar fazendo (lista da #276):
+- funcionar com o site desligado, porque é ele que liga;
+- UAC só nas ações que precisam;
+- serviço do Windows e `systemctl --user`;
+- bandeja e instância única;
+- atualização pelo GitHub Releases com SHA-256, e pelo develop na instalação de desenvolvimento;
+- os mesmos textos e ações nos dois sistemas;
+- nada instalado à parte na máquina de quem usa;
+- teclado, leitor de tela e contraste.
+
+## Os testes (#276, 24 e 25/10/2026)
+
+Três protótipos, com as mesmas funções (situação, ligar, desligar, ícone com menu), e o C# de hoje como referência.
+- **No Windows 11:** tamanho no disco; memória privada do processo e dos filhos; ícone registrado na bandeja (`NotifyIconSettings`); árvore de acessibilidade pela UI Automation (o que o Narrador lê); ordem do Tab; UAC de verdade.
+- **No Linux:** Ubuntu 24.04 no WSL2, com o WSLg.
+
+| | C# de hoje | **A: Go + bandeja + página local** | B: [Wails](https://github.com/wailsapp/wails) v3 | C: [Fyne](https://fyne.io) 2 |
+|---|---|---|---|---|
+| Tamanho (Windows) | 121 MB, 240 arquivos (self-contained) | **9,4 MB**, 1 arquivo | 12,5 MB | 23,6 MB |
+| Tamanho (Linux) | – | **9,6 MB**, estático | 13 MB | 24 MB |
+| Memória (Windows) | – | **46 MB** | 188,5 MB (7 processos do WebView2) | 188 MB |
+| Memória (Linux, WSLg) | – | **14 MB** | 133 MB (a página não carregou; abaixo) | 185 MB |
+| Precisa de cgo para compilar | – | **não** (compilado com `CGO_ENABLED=0` para os dois sistemas) | no Linux | sim, nos dois (compilação de 4 a 6,5 min) |
+| Precisa na máquina, no Linux | – | **nada** | GTK 4 e WebKitGTK 6.0: 113 pacotes, ~231 MB se faltarem | OpenGL e X11: 12 pacotes, ~16 MB |
+| Ícone na bandeja (Windows) | sim | sim | sim | sim |
+| Leitor de tela (Windows, UI Automation) | sim | a página no navegador; o menu do ícone é do sistema | texto e botões expostos; o Tab passa por Ligar → Desligar | **nada exposto** |
+| UAC (ligar e desligar o serviço) | sim | **testado:** pediu o "Sim", ligou em 4 s e desligou em 2 s | o mesmo código do A | o mesmo código do A |
+| Situação da biblioteca | – | [`fyne.io/systray`](https://github.com/fyne-io/systray), push em 24/10/2026 | **versão prévia:** v3.0.0-beta.34 em 20/10/2026 | estável |
+
+O que **não** deu para conferir:
+- **Bandeja no Linux:** o WSLg não tem quem mostre o ícone. Os três disseram "org.kde.StatusNotifierWatcher was not provided", porque o `fyne.io/systray` usa o padrão StatusNotifierItem pelo D-Bus. Falta testar num GNOME e num KDE de verdade.
+- **Wails no Linux:** nem o MiniBrowser do próprio WebKitGTK abriu o processo que desenha a página no WSLg. É do ambiente, e não do Wails, mas a janela do B no Linux ficou sem teste.
+- **Leitor de tela no Linux** (Orca), nas três.
+
+## Alternativas consideradas
+
+- **Manter em C# (opção a da #276).** Custo quase zero, mas contraria a decisão do time: o SDK do .NET continua na CI e nos scripts só por causa do gerenciador.
+- **Fyne (C).** Uma biblioteca só, que desenha a janela com OpenGL. **Descartada:** a UI Automation não viu nenhum texto nem botão na janela, então o leitor de tela não lê nada, e a acessibilidade é exigência do projeto. Também é a maior e precisa de cgo nos dois sistemas.
+- **Wails v3 (B).** Janela de verdade em HTML, desenhada pelo navegador do sistema. Acessível no Windows. Contra:
+  - é versão prévia (beta), com uma versão nova quase por dia;
+  - no Linux, depende do GTK 4 e do WebKitGTK 6.0 (até ~231 MB de pacotes, que a instalação teria de pedir) e precisa de cgo;
+  - no Windows, 4 vezes a memória do A, por causa dos processos do WebView2.
+- **Electron.** Levaria um Chromium e um Node em cada instalação e um terceiro runtime ao projeto: vai contra a instalação leve (revisão do épico).
+
+## Decisão (proposta)
+
+O gerenciador passa para Go como **ícone na bandeja mais uma página local**. A "janela" é uma página que o próprio gerenciador serve em `127.0.0.1` e abre no navegador padrão de quem usa.
+
+- **Bandeja:** [`fyne.io/systray`](https://github.com/fyne-io/systray), com o menu "Abrir o gerenciador", "Ligar o site", "Desligar o site", "Abrir o site" e "Sair". Sem cgo no Windows nem no Linux (conferido). No Linux, o ícone vai em PNG: o protótipo com ICO falhou ("unknown format").
+- **Página local:** o mesmo HTML, nos dois sistemas, com situação, ligar e desligar, cópia do banco, versão nova e "O que mudou". Os textos são os de hoje.
+  - Ela funciona com o site desligado, porque quem a serve é o gerenciador, e não o site.
+  - O teclado, o leitor de tela e o contraste são os do navegador de quem usa, com os mesmos padrões do site (WCAG 2.2, `CLAUDE.md`).
+- **Segurança da página local:** é um servidor novo na máquina, então:
+  - só em `127.0.0.1`, numa porta sorteada a cada partida;
+  - um segredo sorteado na URL que o gerenciador abre, trocado por um cookie `HttpOnly` e `SameSite=Strict`;
+  - o cabeçalho `Host` conferido, contra *DNS rebinding*;
+  - token anti-CSRF em toda ação.
+
+  *Julgamento:* o mesmo cuidado do site (ADR 0049), num servidor menor. Detalhar na história.
+- **Elevação no Windows:** o gerenciador roda sem elevação e lê a situação do serviço assim (conferido). Para ligar ou desligar, ele se reabre como administrador só para a ação (`ShellExecute` com `runas` e `-acao=ligar`, conferido).
+- **Instância única:** a segunda partida abre a página da primeira, e não sobe outra. *A detalhar:* arquivo com a porta na pasta do usuário, com trava.
+- **Atualização:** o GitHub Releases com SHA-256 (ADR 0028) e o develop na instalação de desenvolvimento (ADR 0040), em Go (`net/http` e `crypto/sha256`). Os domínios de saída são os mesmos de hoje.
+- **Um executável ou dois:** *a decidir na história.* Um só, `financas`, com o modo `gerenciador`, poupa ~9 MB e uma compilação. Dois deixam a API sem o código da bandeja.
+
+## Consequências
+
+- **Positivas:**
+  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~10 MB num arquivo só;
+  - sem cgo, compila para os dois sistemas de qualquer um deles;
+  - no Linux, não pede GTK nem WebKit, e não precisa mais do Avalonia;
+  - a página é HTML, com os mesmos padrões de acessibilidade do site, num lugar só para Windows e Linux. Hoje são duas janelas, WinForms e Avalonia, que precisam ser mantidas iguais à mão;
+  - o .NET pode sair de vez na #86.
+- **Negativas:**
+  - **não é uma janela de programa:** é uma aba do navegador, que a pessoa pode fechar ou perder entre outras abas. O ícone na bandeja é o caminho de volta;
+  - **mais um servidor na máquina,** ainda que só local, com as proteções acima: mais código de segurança para manter e testar;
+  - **bandeja no GNOME:** depende do StatusNotifierItem. *Inferido, não testado:* o Ubuntu traz a extensão de AppIndicator ligada, e outras distribuições podem não trazer. Sem ela, o gerenciador abre pelo atalho do menu de aplicativos;
+  - **reescrever ~3.600 linhas,** inclusive a atualização com SHA-256, que é sensível;
+  - **não testado num Linux de verdade:** a bandeja no GNOME e no KDE e o Orca. Isso fica para a primeira história.
+- **Na prática (se aceita):**
+  - as histórias de implementação entram no épico #70, bloqueando a #86;
+  - a #84 e a #277 passam a gerar o gerenciador em Go no `.msi` e nos scripts;
+  - a 0028 e a 0033 ficam "Substituída por 0052" quando o gerenciador em Go for publicado.
