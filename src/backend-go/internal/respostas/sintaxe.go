@@ -6,17 +6,17 @@ import (
 )
 
 // ErroDeSintaxe é o erro do System.Text.Json para o JSON que não abre: a mensagem do Utf8JsonReader, o caminho e a
-// posição (linha a partir de zero e o byte na linha), como o ASP.NET põe em "errors". O erro do Go (err) não diz o
-// bastante (em que ponto o leitor estava, qual propriedade lia), então o corpo é relido aqui, byte a byte, até o
-// primeiro problema. O gabarito é o do próprio .NET (testdata/erros-json-dotnet.json, gravado pela sonda-json).
+// posição (linha a partir de zero e o byte na linha), como o ASP.NET põe em "errors". O erro do Go não diz o bastante
+// (em que ponto o leitor estava, qual propriedade lia), então o corpo é relido aqui, byte a byte, até o primeiro
+// problema. O gabarito é o do próprio .NET (testdata/erros-json-dotnet.json, gravado pela sonda-json).
 //
-//   - fim inesperado: a mensagem depende do que se esperava (fim do texto, um valor, nome de propriedade, o resto do
-//     número ou do literal); a posição é o fim do corpo, menos quando ele acaba numa vírgula, que o .NET devolve;
+//   - fim inesperado: a mensagem depende do que se esperava (fim do texto, um valor, nome de propriedade, um dígito,
+//     o resto do número ou do literal); a posição é o fim do corpo, menos quando ele acaba numa vírgula, que o .NET devolve;
 //   - caractere errado: a mensagem diz onde (início de valor, de nome, depois do nome, depois do valor, depois do JSON
 //     inteiro), na posição do caractere;
 //   - caminho: "$.<propriedade>" enquanto se lê o valor de uma propriedade do objeto de fora (em qualquer
 //     profundidade dentro dele); "$" no resto.
-func ErroDeSintaxe(corpo []byte, _ error) *ErroJSON {
+func ErroDeSintaxe(corpo []byte) *ErroJSON {
 	l := leitorSintaxe{corpo: corpo}
 	caminho, mensagem, posicao := l.ler()
 	return &ErroJSON{caminho, fmt.Sprintf("%s Path: %s | %s.", mensagem, caminho, Posicao(corpo, posicao))}
@@ -35,6 +35,7 @@ const (
 	mensagemProfundidade = "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed."
 	mensagemInicioNome   = "Expected start of a property name or value, but instead reached end of data."
 	mensagemUmValor      = "Expected a value, but instead reached end of data."
+	mensagemUmDigito     = "Expected a digit ('0'-'9'), but instead reached end of data."
 )
 
 type leitorSintaxe struct {
@@ -76,24 +77,24 @@ func (l *leitorSintaxe) ler() (string, string, int) {
 			l.i++
 			l.estado = esperaValor
 		case esperaNome:
-			if c == '}' && l.logoApos {
-				l.fechar()
-				continue
-			}
 			if c == '}' {
-				return "$", "The JSON object contains a trailing comma at the end which is not supported in this mode. Change the reader options.", l.i
+				if !l.logoApos {
+					return "$", "The JSON object contains a trailing comma at the end which is not supported in this mode. Change the reader options.", l.i
+				}
+				l.fechar()
+			} else {
+				if c != '"' {
+					return "$", fmt.Sprintf("'%c' is an invalid start of a property name. Expected a '\"'.", c), l.i
+				}
+				nome, ok := l.texto()
+				if !ok {
+					return "$", mensagemFimDoTexto, len(l.corpo)
+				}
+				if len(l.pilha) == 1 {
+					l.nomeDeFora = nome
+				}
+				l.estado = esperaDoisPontos
 			}
-			if c != '"' {
-				return "$", fmt.Sprintf("'%c' is an invalid start of a property name. Expected a '\"'.", c), l.i
-			}
-			nome, ok := l.texto()
-			if !ok {
-				return "$", mensagemFimDoTexto, len(l.corpo)
-			}
-			if len(l.pilha) == 1 {
-				l.nomeDeFora = nome
-			}
-			l.estado = esperaDoisPontos
 		case esperaVirgulaOuFim:
 			fecho := byte('}')
 			if l.pilha[len(l.pilha)-1] == '[' {
@@ -132,7 +133,10 @@ func (l *leitorSintaxe) valor(c byte) (string, string, int, bool) {
 			l.estado = esperaNome
 		}
 		return "", "", 0, false
-	case c == ']' && l.logoApos && len(l.pilha) > 0 && l.pilha[len(l.pilha)-1] == '[':
+	case c == ']' && len(l.pilha) > 0 && l.pilha[len(l.pilha)-1] == '[':
+		if !l.logoApos {
+			return l.caminho(), "The JSON array contains a trailing comma at the end which is not supported in this mode. Change the reader options.", l.i, true
+		}
 		l.fechar()
 		return "", "", 0, false
 	case c == '"':
@@ -143,7 +147,12 @@ func (l *leitorSintaxe) valor(c byte) (string, string, int, bool) {
 		for l.i < len(l.corpo) && bytes.IndexByte([]byte("0123456789+-.eE"), l.corpo[l.i]) >= 0 {
 			l.i++
 		}
-		if l.i >= len(l.corpo) && len(l.pilha) > 0 {
+		// No fim do corpo: sem o dígito depois de "-", "." ou "e", falta um dígito; com ele, o número de dentro de um
+		// objeto ou lista ficou sem o que o fecha. (No topo, o número inteiro é um JSON válido e não chega aqui.)
+		if l.i >= len(l.corpo) {
+			if ultimo := l.corpo[l.i-1]; ultimo < '0' || ultimo > '9' {
+				return l.caminho(), mensagemUmDigito, len(l.corpo), true
+			}
 			return l.caminho(), fmt.Sprintf("'%c' is an invalid end of a number. Expected a delimiter.", l.corpo[l.i-1]), len(l.corpo), true
 		}
 	case c == 't' || c == 'f' || c == 'n':
@@ -210,7 +219,7 @@ func (l *leitorSintaxe) fimInesperado() (string, string, int) {
 			return "$", mensagemProfundidade, fim
 		}
 		// Depois de ",": o .NET devolve a vírgula quando ela é o último byte.
-		if fim > 0 && l.corpo[fim-1] == ',' {
+		if l.corpo[fim-1] == ',' {
 			fim--
 		}
 		return "$", mensagemInicioNome, fim

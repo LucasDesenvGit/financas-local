@@ -12,4 +12,4 @@ internal/segredos       100
 internal/autenticacao   100
 internal/configuracao   100
 internal/erros          100
-internal/respostas      72    # #402
+internal/respostas      100

@@ -159,9 +159,6 @@ type ErroJSON struct {
 
 // posicao é o "LineNumber: L | BytePositionInLine: B" do .NET para o byte n do corpo (linha a partir de zero).
 func Posicao(corpo []byte, n int) string {
-	if n > len(corpo) {
-		n = len(corpo)
-	}
 	antes := corpo[:n]
 	linha := bytes.Count(antes, []byte("\n"))
 	inicioLinha := bytes.LastIndexByte(antes, '\n') + 1

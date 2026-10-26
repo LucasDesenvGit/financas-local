@@ -138,5 +138,115 @@
     "corpo": "{\u0022a\u0022:1}  ,",
     "caminho": "$",
     "mensagem": "\u0027,\u0027 is invalid after a single JSON value. Expected end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 9."
+  },
+  {
+    "corpo": "{\u0022a\u0022:0",
+    "caminho": "$.a",
+    "mensagem": "\u00270\u0027 is an invalid end of a number. Expected a delimiter. Path: $.a | LineNumber: 0 | BytePositionInLine: 6."
+  },
+  {
+    "corpo": "{\u0022a\u0022:10",
+    "caminho": "$.a",
+    "mensagem": "\u00270\u0027 is an invalid end of a number. Expected a delimiter. Path: $.a | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "{\u0022a\u0022:19",
+    "caminho": "$.a",
+    "mensagem": "\u00279\u0027 is an invalid end of a number. Expected a delimiter. Path: $.a | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "-",
+    "caminho": "$",
+    "mensagem": "Expected a digit (\u00270\u0027-\u00279\u0027), but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 1."
+  },
+  {
+    "corpo": "1.",
+    "caminho": "$",
+    "mensagem": "Expected a digit (\u00270\u0027-\u00279\u0027), but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 2."
+  },
+  {
+    "corpo": "{\u0022a\u0022:-",
+    "caminho": "$.a",
+    "mensagem": "Expected a digit (\u00270\u0027-\u00279\u0027), but instead reached end of data. Path: $.a | LineNumber: 0 | BytePositionInLine: 6."
+  },
+  {
+    "corpo": "{\u0022a\u0022:1.",
+    "caminho": "$.a",
+    "mensagem": "Expected a digit (\u00270\u0027-\u00279\u0027), but instead reached end of data. Path: $.a | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "{\u0022a\u0022:1e",
+    "caminho": "$.a",
+    "mensagem": "Expected a digit (\u00270\u0027-\u00279\u0027), but instead reached end of data. Path: $.a | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "{\u0022a\u0022:true x}",
+    "caminho": "$",
+    "mensagem": "\u0027x\u0027 is invalid after a value. Expected either \u0027,\u0027, \u0027}\u0027, or \u0027]\u0027. Path: $ | LineNumber: 0 | BytePositionInLine: 10."
+  },
+  {
+    "corpo": "{\u0022a\u0022:nul}",
+    "caminho": "$.a",
+    "mensagem": "\u0027nul}\u0027 is an invalid JSON literal. Expected the literal \u0027null\u0027. Path: $.a | LineNumber: 0 | BytePositionInLine: 8."
+  },
+  {
+    "corpo": "{\u0022a\u0022:[1,x]}",
+    "caminho": "$.a",
+    "mensagem": "\u0027x\u0027 is an invalid start of a value. Path: $.a | LineNumber: 0 | BytePositionInLine: 8."
+  },
+  {
+    "corpo": "{\u0022a\u0022:{\u0022b\u0022:x}}",
+    "caminho": "$.a",
+    "mensagem": "\u0027x\u0027 is an invalid start of a value. Path: $.a | LineNumber: 0 | BytePositionInLine: 10."
+  },
+  {
+    "corpo": "{\u0022a\u0022:[",
+    "caminho": "$.a",
+    "mensagem": "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed. Path: $.a | LineNumber: 0 | BytePositionInLine: 6."
+  },
+  {
+    "corpo": "{\u0022a\u0022:[1,",
+    "caminho": "$.a",
+    "mensagem": "Expected start of a property name or value, but instead reached end of data. Path: $.a | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "{\u0022a\u0022:[1",
+    "caminho": "$.a",
+    "mensagem": "\u00271\u0027 is an invalid end of a number. Expected a delimiter. Path: $.a | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "[",
+    "caminho": "$",
+    "mensagem": "The JSON value could not be converted to Credenciais. Path: $ | LineNumber: 0 | BytePositionInLine: 1."
+  },
+  {
+    "corpo": "[1,",
+    "caminho": "$",
+    "mensagem": "The JSON value could not be converted to Credenciais. Path: $ | LineNumber: 0 | BytePositionInLine: 1."
+  },
+  {
+    "corpo": "{\u0022a\u0022:[]x}",
+    "caminho": "$",
+    "mensagem": "\u0027x\u0027 is invalid after a value. Expected either \u0027,\u0027, \u0027}\u0027, or \u0027]\u0027. Path: $ | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "{\u0022a\u0022:{}x}",
+    "caminho": "$",
+    "mensagem": "\u0027x\u0027 is invalid after a value. Expected either \u0027,\u0027, \u0027}\u0027, or \u0027]\u0027. Path: $ | LineNumber: 0 | BytePositionInLine: 7."
+  },
+  {
+    "corpo": "{\u0022a\u0022:[1,]}",
+    "caminho": "$.a",
+    "mensagem": "The JSON array contains a trailing comma at the end which is not supported in this mode. Change the reader options. Path: $.a | LineNumber: 0 | BytePositionInLine: 8."
+  },
+  {
+    "corpo": "{\u0022a\u0022:{\u0022b\u0022:1} x}",
+    "caminho": "$",
+    "mensagem": "\u0027x\u0027 is invalid after a value. Expected either \u0027,\u0027, \u0027}\u0027, or \u0027]\u0027. Path: $ | LineNumber: 0 | BytePositionInLine: 13."
+  },
+  {
+    "corpo": "{\u0022a\u0022:{\u0022b\u0022:1},\u0022c\u0022:x}",
+    "caminho": "$.c",
+    "mensagem": "\u0027x\u0027 is an invalid start of a value. Path: $.c | LineNumber: 0 | BytePositionInLine: 17."
   }
 ]

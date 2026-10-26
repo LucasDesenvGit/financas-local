@@ -27,7 +27,7 @@ func NovoLeitorJSON(corpo []byte) *LeitorJSON {
 func (l *LeitorJSON) Token() (json.Token, *ErroJSON) {
 	t, err := l.dec.Token()
 	if err != nil {
-		return nil, l.sintaxe(err)
+		return nil, ErroDeSintaxe(l.corpo)
 	}
 	return t, nil
 }
@@ -59,7 +59,7 @@ func (l *LeitorJSON) Pular(inicio json.Token) *ErroJSON {
 // Fim confere que não há nada depois do valor (o leitor do .NET recusa).
 func (l *LeitorJSON) Fim() *ErroJSON {
 	if _, err := l.dec.Token(); !errors.Is(err, io.EOF) {
-		return l.sintaxe(err)
+		return ErroDeSintaxe(l.corpo)
 	}
 	return nil
 }
@@ -68,15 +68,6 @@ func (l *LeitorJSON) Fim() *ErroJSON {
 func (l *LeitorJSON) Conversao(caminho, tipo string) *ErroJSON {
 	return &ErroJSON{Caminho: caminho, Mensagem: fmt.Sprintf("The JSON value could not be converted to %s. Path: %s | %s.",
 		tipo, caminho, Posicao(l.corpo, int(l.dec.InputOffset())))}
-}
-
-// sintaxe é o erro de JSON que não abre, com as mensagens de ErroDeSintaxe.
-func (l *LeitorJSON) sintaxe(err error) *ErroJSON {
-	var qualquer any
-	if errUnmarshal := json.Unmarshal(l.corpo, &qualquer); errUnmarshal != nil {
-		err = errUnmarshal
-	}
-	return ErroDeSintaxe(l.corpo, err)
 }
 
 // Campo é uma propriedade de um DTO lido por LerObjeto.

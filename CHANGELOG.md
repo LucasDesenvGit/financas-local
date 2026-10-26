@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.17] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a leitura do JSON sem mutação viva** (#402, épico #374). Nada muda para quem usa. O teste de mutação da `respostas` vai de 72% para 100%. O erro do JSON que não abre (corpo cortado ou estragado) passa a ser montado relendo o corpo byte a byte, e é conferido com um gabarito gravado pelo próprio .NET (`testdata/sonda-json`, 50 corpos). Com isso, o Go também passou a dar a mesma mensagem do .NET em dois casos em que dava outra: o número cortado num `-`, `.` ou `e` ("Expected a digit") e a vírgula sobrando numa lista. Também entraram os testes de propriedade a mais com objetos e listas dentro e de texto com o tamanho máximo exato. Os pisos da mutação e da cobertura vão a 100% e 95,6%.
+
 ## [2.42.15] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação

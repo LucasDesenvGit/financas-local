@@ -17,6 +17,10 @@ string[] corpos = [
     "{\"a\": x}", "{x}", "{\"a\" 1}", "{\"a\":1 \"b\":2}", "{\"a\":1,}", "{\"login\":\"ana\"\n  x}",
     // lixo depois do valor
     "{\"a\":1} x", "{\"a\":1}\n{", "{\"login\":\"ana\"}}", "{\"a\":1}  ,",
+    // números, literais, listas e objetos dentro do objeto (#402: separam as mutações do leitor de sintaxe)
+    "{\"a\":0", "{\"a\":10", "{\"a\":19","-", "1.", "{\"a\":-", "{\"a\":1.", "{\"a\":1e", "{\"a\":true x}", "{\"a\":nul}",
+    "{\"a\":[1,x]}", "{\"a\":{\"b\":x}}", "{\"a\":[", "{\"a\":[1,", "{\"a\":[1", "[", "[1,", "{\"a\":[]x}",
+    "{\"a\":{}x}", "{\"a\":[1,]}", "{\"a\":{\"b\":1} x}", "{\"a\":{\"b\":1},\"c\":x}",
 ];
 var gabarito = new List<object>();
 foreach (var c in corpos)

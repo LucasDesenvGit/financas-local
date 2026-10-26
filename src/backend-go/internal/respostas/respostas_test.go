@@ -18,6 +18,9 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 	}{
 		{nome: "válido", corpo: `{"login":"ana.teste","senha":"Senha-Forte-123"}`, status: 0},
 		{nome: "nome sem diferença de maiúsculas", corpo: `{"LOGIN":"ana.teste","Senha":"x"}`, status: 0},
+		{nome: "propriedades a mais, com objetos e listas dentro, são puladas",
+			corpo: `{"extra":{"a":[1,{"b":2}],"c":{}},"login":"ana.teste","lista":[[]],"senha":"x"}`, status: 0},
+		{nome: "senha com o tamanho máximo exato", corpo: `{"login":"ana.teste","senha":"` + strings.Repeat("x", 200) + `"}`, status: 0},
 		{nome: "login curto e sem senha", corpo: `{"login":"ab"}`, status: 400, erros: map[string][]string{
 			"Login": {"The field Login must be a string with a minimum length of 3 and a maximum length of 100."},
 			"Senha": {"The Senha field is required."}}},
