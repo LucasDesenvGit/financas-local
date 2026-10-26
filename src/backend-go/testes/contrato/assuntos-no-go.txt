@@ -4,7 +4,7 @@
 # gravados do .NET, têm de passar. As linhas em branco entre os assuntos são de propósito: dois PRs mexendo em
 # linhas vizinhas se chocam no merge. Tabela dos assuntos e números dos casos: README.md desta pasta.
 
-# cambio /api/cambio;/api/cripto
+cambio /api/cambio;/api/cripto
 
 # cadastros /api/contas;/api/conferencia-banco;/api/categorias;/api/regras;/api/regras-descricao
 

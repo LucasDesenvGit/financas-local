@@ -1,0 +1,183 @@
+[
+  {
+    "nome": "moedas sem internet: a lista guardada",
+    "requisicao": "GET /api/cambio/moedas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "cotações guardadas",
+    "requisicao": "GET /api/cambio/cotacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "atualizadoEm": "2026-10-15T00:30:00Z",
+      "cotacoes": [
+        {
+          "compra": 6.2981,
+          "data": "2026-10-14",
+          "dataSolicitada": "2026-10-14",
+          "fonte": "PTAX/Banco Central",
+          "moeda": "EUR",
+          "venda": 6.2995
+        },
+        {
+          "compra": 5.4123,
+          "data": "2026-10-14",
+          "dataSolicitada": "2026-10-14",
+          "fonte": "PTAX/Banco Central",
+          "moeda": "USD",
+          "venda": 5.4129
+        }
+      ]
+    }
+  },
+  {
+    "nome": "cotação do dólar de hoje",
+    "requisicao": "GET /api/cambio/cotacao?moeda=USD",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compra": 5.4123,
+      "data": "2026-10-14",
+      "dataSolicitada": "2026-10-14",
+      "fonte": "PTAX/Banco Central",
+      "moeda": "USD",
+      "venda": 5.4129
+    }
+  },
+  {
+    "nome": "cotação no feriado: o último dia útil",
+    "requisicao": "GET /api/cambio/cotacao?moeda=USD&data=2026-10-12",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compra": 5.3871,
+      "data": "2026-10-09",
+      "dataSolicitada": "2026-10-12",
+      "fonte": "PTAX/Banco Central",
+      "moeda": "USD",
+      "venda": 5.3877
+    }
+  },
+  {
+    "nome": "moeda em minúsculas e com espaço, nome do parâmetro em maiúsculas",
+    "requisicao": "GET /api/cambio/cotacao?MOEDA=%20usd&data=2026-10-13",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compra": 5.4012,
+      "data": "2026-10-13",
+      "dataSolicitada": "2026-10-13",
+      "fonte": "PTAX/Banco Central",
+      "moeda": "USD",
+      "venda": 5.4018
+    }
+  },
+  {
+    "nome": "real é fixo",
+    "requisicao": "GET /api/cambio/cotacao?moeda=BRL&data=2026-10-01",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compra": 1,
+      "data": "2026-10-01",
+      "dataSolicitada": "2026-10-01",
+      "fonte": "Fixa",
+      "moeda": "BRL",
+      "venda": 1
+    }
+  },
+  {
+    "nome": "data no futuro vale hoje",
+    "requisicao": "GET /api/cambio/cotacao?moeda=EUR&data=2027-01-01",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compra": 6.2981,
+      "data": "2026-10-14",
+      "dataSolicitada": "2026-10-14",
+      "fonte": "PTAX/Banco Central",
+      "moeda": "EUR",
+      "venda": 6.2995
+    }
+  },
+  {
+    "nome": "data no formato americano",
+    "requisicao": "GET /api/cambio/cotacao?moeda=USD&data=10/13/2026",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compra": 5.4012,
+      "data": "2026-10-13",
+      "dataSolicitada": "2026-10-13",
+      "fonte": "PTAX/Banco Central",
+      "moeda": "USD",
+      "venda": 5.4018
+    }
+  },
+  {
+    "nome": "sem cotação nos 7 dias antes",
+    "requisicao": "GET /api/cambio/cotacao?moeda=EUR&data=2026-10-13",
+    "status": 503,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Cotação de EUR indisponível no momento. Tente novamente mais tarde."
+    }
+  },
+  {
+    "nome": "hoje, moeda sem nada guardado",
+    "requisicao": "GET /api/cambio/cotacao?moeda=GBP",
+    "status": 503,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Cotação de GBP indisponível no momento. Tente novamente mais tarde."
+    }
+  },
+  {
+    "nome": "sem moeda",
+    "requisicao": "GET /api/cambio/cotacao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe a moeda com o código de 3 letras (ex.: USD, EUR)."
+    }
+  },
+  {
+    "nome": "moeda com 4 letras",
+    "requisicao": "GET /api/cambio/cotacao?moeda=USDT",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe a moeda com o código de 3 letras (ex.: USD, EUR)."
+    }
+  },
+  {
+    "nome": "data que não é data",
+    "requisicao": "GET /api/cambio/cotacao?moeda=USD&data=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "data": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "POST numa rota de GET",
+    "requisicao": "POST /api/cambio/cotacao",
+    "status": 404
+  },
+  {
+    "nome": "sem login",
+    "requisicao": "GET /api/cambio/cotacoes",
+    "status": 401
+  }
+]

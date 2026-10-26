@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf16"
 	"unicode/utf8"
 )
 
@@ -98,13 +99,20 @@ func hostPermitido(host string, permitidos []string) bool {
 
 // mensagemErroInterno é o corpo do 500, como o System.Text.Json escreve (ele troca o que não é ASCII por \uXXXX).
 var mensagemErroInterno = []byte(`{"mensagem":"` +
-	escaparComoDotnet("Ocorreu um erro interno. Ele foi registrado em Configurações › Erros.") + `"}`)
+	EscaparComoDotnet("Ocorreu um erro interno. Ele foi registrado em Configurações › Erros.") + `"}`)
 
-func escaparComoDotnet(texto string) string {
+// EscaparComoDotnet troca o que não é ASCII por \uXXXX, como o JavaScriptEncoder.Default do System.Text.Json (o
+// JsonSerializer.Serialize do .NET sem opções): o "ó" de "Dólar" vira uma barra, a letra u e o código 00F3, e o que
+// está fora do plano básico (um emoji) vira um par de substitutos. Serve também para gravar no banco o mesmo texto que o .NET gravaria (#81).
+func EscaparComoDotnet(texto string) string {
 	var b strings.Builder
 	for _, r := range texto {
 		if r < utf8.RuneSelf {
 			b.WriteRune(r)
+			continue
+		}
+		if alto, baixo := utf16.EncodeRune(r); alto != utf8.RuneError {
+			fmt.Fprintf(&b, `\u%04X\u%04X`, alto, baixo)
 			continue
 		}
 		fmt.Fprintf(&b, `\u%04X`, r)

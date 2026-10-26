@@ -14,7 +14,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
@@ -45,5 +47,7 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 		DB: d.DB, Relogio: d.Relogio, Log: d.Log, Versao: versao.Atual,
 		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves, Padroes: parametros.PadroesDoAppsettings(d.Config),
 	}))
+	cambio.Registrar(mux, d.DB, d.Log, d.Relogio) // #81: câmbio pela PTAX (ADR 0007)
+	cripto.Registrar(mux, d.DB, d.Log, d.Relogio) // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
 	return mux
 }

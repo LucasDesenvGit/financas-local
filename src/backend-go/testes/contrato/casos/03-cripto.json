@@ -1,0 +1,17 @@
+{
+  "descricao": "Criptomoedas (#81, ADR 0048): GET /api/cripto/cotacoes. Sem rede, a tarefa não grava nada (e só tentaria 1 minuto depois de subir); vale o que está guardado em CotacaoCripto: o bitcoin de 13/10 e de 14/10, às 21h UTC, 24 h um do outro. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "cotações guardadas, com a variação em 24 h",
+      "comentario": "Só o BTC tem cotação: as outras moedas ficam de fora. A variação é Math.Round((618900.12 - 612345.67) / 612345.67 * 100, 2), com a escala do decimal do C#. dataHora com Z (DateTime.SpecifyKind Utc); atualizadoEm null (nada em Cripto.UltimaAtualizacao).",
+      "metodo": "GET",
+      "caminho": "/api/cripto/cotacoes"
+    },
+    {
+      "nome": "sem login",
+      "metodo": "GET",
+      "caminho": "/api/cripto/cotacoes",
+      "sessao": "visitante"
+    }
+  ]
+}
