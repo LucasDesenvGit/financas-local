@@ -15,14 +15,14 @@ config                  86.7
 configuracao            82.1
 erros                   93.3
 parametros              81.5
-relogio                 84.2
+relogio                 90.9
 respostas               80.3
 saude                   54.5
 segredos                77.7
 servidor                88.8
 sessao                  100.0
 testeapoio              92.5
-tipos                   84.6
+tipos                   86.3
 
 banco/consultas         fora  código gerado pelo sqlc (go generate); as consultas são testadas pelos pacotes que as usam
 banco/esquema/gerar     fora  o gerador do go generate, que não vai no executável
