@@ -70,6 +70,26 @@ O que **não** deu para conferir:
 
 - **Leitor de tela no D:** o Edge só monta a árvore de acessibilidade da página quando percebe um leitor de tela de verdade (o Narrador). O teste não prova que o D é inacessível, só que o E expõe tudo direto. *A conferir com o Narrador ligado.*
 - **Visual:** o mesmo nos dois, porque o HTML e o CSS são os mesmos e o motor também (o WebView2 é o Edge).
+- **O que o D não consegue tirar do Edge:** menu do botão direito, F12, zoom com Ctrl e roda do mouse, extensões e o agrupamento com as janelas do Edge na barra de tarefas. É uma janela do navegador, e o `--app` só esconde a barra de endereço.
+
+**O E com cara do gerenciador de hoje (26/10/2026).** O protótipo E foi acertado para ficar como a janela em C# (`FormPrincipal.cs`):
+
+| No C# de hoje | No E (Wails v3) | Conferido |
+|---|---|---|
+| Ícone do cofrinho na janela, na barra de tarefas e na bandeja | `Options.Icon` com o PNG do cofrinho (o mesmo do site) | sim, no print da janela |
+| Ícone no `.exe` (Explorer) | recurso `.syso` gerado do `icone.ico` (go-winres ou `wails3 generate syso`) | **não:** a ferramenta não foi baixada no protótipo |
+| Desenho: faixa do topo com o degradê e o cofrinho, ponto com halo, cartões de 448, botões de 34 px com borda, "Mais opções ▾" fora do cartão, rodapé com a pasta e o endereço | HTML e CSS com as cores do `Tema.cs` e as medidas do `Controles.cs`, sem o CSS do site; claro e escuro pelo tema do Windows | sim, comparado com o print do C# |
+| Tamanho fixo, sem maximizar, no centro | `DisableResize`, `MaximiseButtonState: ButtonHidden`, `InitialPosition: WindowCentered`; largura da página 480 (448 + 16 de cada lado) | sim |
+| Fechar deixa na bandeja | gancho em `WindowClosing` com `Cancel()` e `Hide()`; "Sair" no menu da bandeja encerra | sim: depois do X, o processo continua e a janela some |
+| Sem nada de navegador | build com `-tags production` tira o F12 e o menu do botão direito; zoom e atalhos do navegador já vêm desligados no Wails | pelo código do Wails v3.0.0-beta.34 (`webview_window_windows.go`) |
+| Glifos nos botões (`IconeBotao`, Segoe Fluent Icons / MDL2) | os mesmos códigos, com a mesma fonte do Windows no CSS, fora do leitor de tela (`aria-hidden`); no Linux, que não tem a fonte, trocar por SVG do lucide (os do site) | sim, no Windows |
+| Botão em destaque: "Abrir o site" no ar, "Ligar" desligado; um botão só para ligar ou desligar | o mesmo, pela situação | sim, nos dois estados |
+| Site desligado: "Abrir o site", "Reiniciar", "Ver os erros do site" e "Abrir o manual" bloqueados, com a dica "É preciso ligar o site para ver isto. Use o botão “Ligar” acima." | os mesmos, com `disabled`; a dica sai ao passar o mouse e vai para o leitor de tela pelo `aria-describedby` | os bloqueios, sim; a dica ao passar o mouse, **não** (o teste não mexe no mouse) |
+| Sem barra de rolagem: a janela cresce e encolhe com o conteúdo (`AutoSize`) | a página manda a altura do conteúdo (ao abrir e ao abrir ou fechar "Mais opções"), e o gerenciador chama `SetSize`, somando a moldura (janela menos a área visível; no WebView2, o `outerHeight` é o da página) | sim: 450 px fechado, 644 aberto, sem rolagem |
+
+- **Botões personalizados:** como a página é HTML e CSS, o botão fica do jeito que se quiser (cor, borda, canto, ícone, passar o mouse, apertado, bloqueado, foco), sem desenhar à mão como o `Botao` do WinForms (`OnPaint`). O que não muda pelo CSS é a moldura da janela (título, minimizar, fechar), que é a do Windows, como no C#. Dá para tirar com `Frameless` e desenhar a barra na página, mas aí o arrastar, o encaixe nas bordas e o leitor de tela da moldura ficam por nossa conta: *julgamento:* não vale, a do Windows é a mesma do C#.
+- Tamanho: 11,1 MB. Memória privada: 199 a 203 MB em 7 processos (o gerenciador sozinho, 52 MB), com a janela aberta, três rodadas.
+- Leitor de tela: a UI Automation vê todos os botões, os links e o interruptor, com os nomes limpos (os glifos ficam fora, com `aria-hidden`). A primeira consulta volta vazia: o Chromium só monta a árvore quando um leitor pergunta. O Narrador e o NVDA perguntam de novo; *a conferir com o Narrador ligado.*
 
 ## Alternativas consideradas
 
@@ -88,6 +108,13 @@ O gerenciador passa para Go como **ícone na bandeja mais uma página com o visu
 **Fica para o time escolher como a página aparece** (protótipos D e E, acima):
 - **Opção D, página pelo Edge:** o gerenciador serve a página em `127.0.0.1` e a abre com `msedge --app` (Chromium ou navegador padrão no Linux). É a mais leve e não depende de biblioteca em versão prévia, mas a janela é do Edge e há um servidor local para proteger (abaixo).
 - **Opção E, programa com Wails:** janela própria, sem porta aberta, e o leitor de tela vê a página direto. Custa ~2 vezes a memória do D com a janela aberta, depende do Wails v3, que é beta, e no Linux pede o GTK 4 e o WebKitGTK.
+
+**Recomendação: a opção E** (26/10/2026, depois do E acertado acima). *Julgamento próprio, com a preocupação do @JulioCezarSP:* o gerenciador tem de ser um programa, igual ao de C#, e não uma página do Edge. O D não consegue tirar o menu do botão direito, o F12, o zoom nem o agrupamento com o Edge. O E tira tudo isso, não abre porta na máquina (a seção "Segurança da página local" deixa de existir) e o leitor de tela vê a página direto. O preço:
+- ~200 MB de memória com a janela aberta, contra ~100 do D. Com a janela fechada, o WebView2 continua na memória, a menos que a janela seja destruída ao fechar e recriada ao abrir (*a medir na história*);
+- o Wails v3 em beta (fixar a versão no `go.mod` e só subir com o teste de instalação passando);
+- no Linux, GTK 4 e WebKitGTK, que a instalação pede.
+
+A escolha final continua com o time; esta ADR só passa a "Aceita" depois dela.
 
 O resto vale para as duas. Os pontos marcados "(D)" só valem para a opção D.
 
