@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.12] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@angular/build` e `@angular/cli` 22.2.3 → 22.2.4** (#407, Dependabot). As ferramentas de build do front-end; nada muda para quem usa.
+
 ## [2.42.11] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
