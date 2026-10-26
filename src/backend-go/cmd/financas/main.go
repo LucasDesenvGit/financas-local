@@ -21,6 +21,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -41,6 +42,8 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/erros"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tarefas"
@@ -76,15 +79,25 @@ func rodar() error {
 		ambienteEnv = os.Getenv("ASPNETCORE_ENVIRONMENT")
 	}
 
+	rel, inicioDeTeste, err := novoRelogio(*inicioRel)
+	if err != nil {
+		return err
+	}
 	// Atrás do .NET, o log sai em JSON na saída de erro: o .NET lê cada linha e a registra com a categoria
-	// Financas.Go (os avisos e erros vão para Configurações › Erros, ADR 0022).
-	var log *slog.Logger
+	// Financas.Go (os avisos e erros vão para Configurações › Erros, ADR 0022). Sozinho (#298), quem põe os avisos
+	// e erros na tabela é o próprio Go: o handler do pacote erros os põe na fila, e o gravador os grava.
+	var log, logSemTabela *slog.Logger
+	var filaDeErros *erros.Fila
 	if *atras {
 		log = slog.New(slog.NewJSONHandler(os.Stderr, nil))
+		logSemTabela = log
 	} else {
-		log = slog.New(slog.NewTextHandler(os.Stderr, nil))
+		texto := slog.NewTextHandler(os.Stderr, nil)
+		filaDeErros = erros.NovaFila()
+		log, logSemTabela = slog.New(erros.NovoHandler(texto, filaDeErros, rel)), slog.New(texto)
 	}
 	slog.SetDefault(log)
+	avisarRelogioDeTeste(log, inicioDeTeste)
 
 	cfg, err := config.Carregar(*pastaBase, ambienteEnv)
 	if err != nil {
@@ -92,10 +105,6 @@ func rodar() error {
 	}
 	if *caminhoDB != "" {
 		cfg.BancoCaminho = *caminhoDB
-	}
-	rel, err := escolherRelogio(*inicioRel, log)
-	if err != nil {
-		return err
 	}
 
 	// SIGINT (Ctrl+C) e SIGTERM (systemd) param com elegância. O serviço do Windows entra na #84.
@@ -152,6 +161,20 @@ func rodar() error {
 	})
 	rotas := api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
 	auth.Registrar(rotas)
+	// #298: os erros do sistema. O gravador para depois do servidor e grava o que sobrou na fila antes de o banco
+	// fechar (o defer acima).
+	erros.Registrar(rotas, erros.NovoServico(db, filaDeErros, rel, log))
+	gravador := erros.NovoGravador(db, filaDeErros, rel, parametrosDoSite(db, rel, log, cfg), logSemTabela)
+	ctxGravador, pararGravador := context.WithCancel(context.Background())
+	gravadorParou := make(chan struct{})
+	go func() {
+		defer close(gravadorParou)
+		gravador.Rodar(ctxGravador)
+	}()
+	defer func() {
+		pararGravador()
+		<-gravadorParou
+	}()
 	log.Info("iniciando sozinho, com o login do Go", "versao", versao.Atual)
 	return servidor.Rodar(ctx, servidor.Opcoes{
 		Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas),
@@ -235,18 +258,42 @@ func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relo
 
 // escolherRelogio devolve o relógio do sistema, ou, com -inicio-do-relogio, um que começa no instante dado e anda
 // dali (relogio.APartirDe). É só para teste: o contrato (#72) faz o mesmo com o .NET pela libfaketime, que não age
-// sobre o Go. Ligado, fica um aviso no log (vai para Configurações › Erros quando o Go roda atrás do .NET).
+// sobre o Go. Ligado, fica um aviso no log (vai para Configurações › Erros).
 func escolherRelogio(inicio string, log *slog.Logger) (relogio.Relogio, error) {
-	if inicio == "" {
-		return relogio.Sistema{}, nil
-	}
-	instante, err := relogio.LerInicio(inicio)
+	r, instante, err := novoRelogio(inicio)
 	if err != nil {
 		return nil, err
 	}
+	avisarRelogioDeTeste(log, instante)
+	return r, nil
+}
+
+// novoRelogio é o escolherRelogio sem o aviso: o Go sozinho cria o relógio antes do log, porque o handler que põe o
+// aviso na tabela de erros usa o relógio (a hora do aviso é a do relógio de teste, como no .NET).
+func novoRelogio(inicio string) (relogio.Relogio, *time.Time, error) {
+	if inicio == "" {
+		return relogio.Sistema{}, nil, nil
+	}
+	instante, err := relogio.LerInicio(inicio)
+	if err != nil {
+		return nil, nil, err
+	}
+	return relogio.NovoAPartirDe(instante), &instante, nil
+}
+
+func avisarRelogioDeTeste(log *slog.Logger, instante *time.Time) {
+	if instante == nil {
+		return
+	}
 	log.Warn("relógio de teste: a hora começa no instante dado, e não na do computador (-inicio-do-relogio)",
 		"inicio", instante.Format(time.RFC3339Nano), "origem", "Sistema")
-	return relogio.NovoAPartirDe(instante), nil
+}
+
+// parametrosDoSite é o ParametroService que o gravador usa para o prazo dos erros (os padrões do appsettings, como
+// no api.NovasRotas).
+func parametrosDoSite(db *sql.DB, rel relogio.Relogio, log *slog.Logger, cfg config.Config) *parametros.Servico {
+	return parametros.Novo(parametros.Opcoes{DB: db, Relogio: rel, Log: log, Versao: versao.Atual,
+		CaminhoBanco: cfg.BancoCaminho, PastaChaves: cfg.PastaChaves, Padroes: parametros.PadroesDoAppsettings(cfg)})
 }
 
 func carregarCertificado(cfg config.Config, temporario bool) (tls.Certificate, error) {

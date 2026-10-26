@@ -102,7 +102,27 @@ O detalhe de cada etapa está num comentário do épico #70.
 - Estrague o **código** (não o teste) de propósito, rode, veja o teste falhar e desfaça. Exemplos: trocar `RoundBank` por `Round`, tirar um filtro, inverter uma comparação, devolver `nil` no lugar de `[]`.
 - Foi assim no PR #360: 12 mutações, todas pegas. A ADR [0041](0041-testes-no-navegador-com-playwright.md) faz o mesmo com o CSS do front-end.
 - **Teste que nenhuma mutação derruba é refeito.** Em geral, os dados do teste não exercitam o caso.
-- Pelo menos uma mutação por regra de cálculo, listada no PR com o teste que a pegou. *Inferido: a quantidade.* Medir isso com ferramenta é a #373.
+- Pelo menos uma mutação por regra de cálculo, listada no PR com o teste que a pegou. *Inferido: a quantidade.*
+
+### Teste de mutação automático (#373)
+
+A mutação à mão continua no PR. A ferramenta mede, toda semana, se os testes de cada pacote continuam pegando erro.
+
+- **Ferramenta: [gremlins](https://github.com/go-gremlins/gremlins) v0.6.0** (Apache-2.0), rodada com `go run …@v0.6.0`, como o `govulncheck`. Não entra no `go.mod`.
+  - Trabalha numa cópia do módulo: o código dele diz que a cópia "allows Gremlins not to work in the actual source directory messing up with the source code files" ([`workdir.go`](https://github.com/go-gremlins/gremlins/blob/main/internal/engine/workdir/workdir.go)).
+  - Só testa a mutação que algum teste do pacote cobre: mede antes a cobertura.
+  - Roda em paralelo, tem limiar e grava o resultado em JSON.
+- **Alternativas consideradas** (25/10/2026, pela página de cada uma no GitHub):
+  - [go-mutesting da Avito](https://github.com/avito-tech/go-mutesting) (v2.3.1, dez/2025): tem remoção de comando, que o gremlins não tem. Mas o README diz que ele faz "Replace the original file with the mutation": interrompido no meio, deixa o código estragado.
+  - [ooze](https://github.com/gtramontina/ooze) (sem versão publicada): é biblioteca, entra no `go.mod` e roda como teste com build tag. Dependência nova no módulo só para medir.
+  - [go-mutesting original](https://github.com/zimmski/go-mutesting): sem versão desde 2021.
+- **Onde e quando:** `scripts/ci/mutacao-go.py`, nos pacotes de `scripts/ci/mutacao-go.txt` (regra de negócio e dinheiro), pelo workflow "Teste de mutação (Go)":
+  - toda segunda e à mão, **nunca em PR**: ~1 min por pacote;
+  - todos os operadores ligados;
+  - 4 workers, com folga de 30× no tempo de cada teste (no padrão de 5×, a compilação em paralelo estourava o tempo).
+- **Piso por pacote, que só sobe:** eficácia = mortas / (mortas + vivas). Assunto novo com regra entra na lista no PR dele.
+- **Equivalentes conhecidas** (a mutação que não muda o resultado, como `100 * time.Nanosecond` por `100 / time.Nanosecond`): ficam em `scripts/ci/mutacao-go-equivalentes.txt`, pelo texto da linha, com o porquê, e saem da conta. Só entra o que foi conferido à mão.
+- **Ponto cego:** a cobertura do Go conta comandos, e a condição de um `case` não é comando. Por isso, mutação dentro de `case` sai como "NOT COVERED" e o gremlins nunca a testa. No nosso estilo (`switch { case …: }`), isso cobre boa parte das regras. Nelas, a mutação à mão no PR é o que vale. *Conferido na primeira medição: o `validar` dos parâmetros tem teste, e as mutações dos `case` dele saíram como "NOT COVERED".*
 
 ### Proibido em teste
 
@@ -151,7 +171,7 @@ Os princípios estão aqui. Os números e as ferramentas, nelas (*inferido*, at�
 - **#370:** a cobertura na CI, com piso por pacote que só sobe;
 - **#371:** a trava de tempo dos testes do Go;
 - **#372:** fuzz nos tipos de dinheiro e data. O corpus fica em `testdata/fuzz/` e roda no `go test` comum ([Go Fuzzing](https://go.dev/doc/security/fuzz/));
-- **#373:** o teste de mutação automático nas regras de negócio.
+- **#373:** o teste de mutação automático nas regras de negócio (feito: seção acima).
 
 Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, seção 5).
 
@@ -166,6 +186,7 @@ Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, se
 - **Negativas:**
   - **mais tempo por etapa:** a tabela de casos, os testes de integração e as mutações à mão vêm antes de o PR estar pronto;
   - **a regra depende de revisão:** a CI não sabe se "cada regra tem teste". A cobertura da #370 é só um indicador, e a mutação da #373 também;
+  - **a mutação automática não vê `case` nem remove comandos** (limites do gremlins). Ela também não roda no PR: o buraco aparece na semana seguinte, e não antes do merge;
   - **teste mais verboso** sem asserção pronta: cada `if` escreve a própria mensagem. A tabela dilui esse custo;
   - **sobreposição:** um mesmo comportamento pode acabar no unitário e no contrato. A regra "num lugar só" pede julgamento a cada PR;
   - **o gabarito precisa de disciplina:** regravar sem olhar a diferença esconde uma regressão;
