@@ -21,6 +21,7 @@ func TestLerInteiro(t *testing.T) {
 	}{
 		{"12", 12, true}, {"-7", -7, true}, {"+7", 7, true}, {" \t12\r\n", 12, true}, {"012", 12, true}, {"12\x00\x00", 12, true},
 		{"2147483647", 2147483647, true}, {"-2147483648", -2147483648, true},
+		{"9", 9, true}, {"1990", 1990, true}, // o 9 e o 0 nas pontas da faixa de dígitos (#400: nenhum caso tinha o 9)
 		{"2147483648", 0, false}, {"", 0, false}, {" ", 0, false}, {"+", 0, false}, {"+-1", 0, false}, {"--1", 0, false},
 		{"1.5", 0, false}, {"1,5", 0, false}, {"1e2", 0, false}, {"1 2", 0, false}, {" 12", 0, false}, {"١٢", 0, false},
 	}
@@ -172,5 +173,53 @@ func TestSegredoNovoEAntigo(t *testing.T) {
 	}
 	if linha != "CfDJ8NZn1tJ0oQ1Gm1gBQ|1|2026-10-01 00:00:00" {
 		t.Errorf("a linha antiga mudou: %q", linha)
+	}
+}
+
+// Regra: ObterInteiro e ObterBool leem o valor gravado; sem valor, ou com valor que não se lê, o padrão (#400: o
+// teste de mutação mostrou que só a chave que falta era conferida).
+func TestObterInteiroEBool(t *testing.T) {
+	db := testeapoio.NovoBanco(t)
+	ctx := t.Context()
+	if _, err := db.ExecContext(ctx, `INSERT INTO "Configuracao" VALUES ('Teste.Inteiro', ' 42 ', 0, '2026-10-01 00:00:00'),
+		('Teste.InteiroRuim', '4,2', 0, '2026-10-01 00:00:00'), ('Teste.Bool', 'False', 0, '2026-10-01 00:00:00'),
+		('Teste.BoolRuim', 'talvez', 0, '2026-10-01 00:00:00')`); err != nil {
+		t.Fatal(err)
+	}
+	s := Novo(db, testeapoio.RelogioDosTestes())
+	inteiros := map[string]int{"Teste.Inteiro": 42, "Teste.InteiroRuim": 7, "Nao.Existe": 7}
+	for chave, esperado := range inteiros {
+		if n, err := s.ObterInteiro(ctx, chave, 7); n != esperado || err != nil {
+			t.Errorf("ObterInteiro(%s) = %d, %v; esperado %d", chave, n, err, esperado)
+		}
+	}
+	booleanos := map[string]bool{"Teste.Bool": false, "Teste.BoolRuim": true, "Nao.Existe": true}
+	for chave, esperado := range booleanos {
+		if b, err := s.ObterBool(ctx, chave, true); b != esperado || err != nil {
+			t.Errorf("ObterBool(%s) = %v, %v; esperado %v", chave, b, err, esperado)
+		}
+	}
+}
+
+// Regra: ObterData lê a data gravada; sem valor, ou com texto que não é data, nil (o DateTime? do C#).
+// Pega: o "err != nil || valor == nil" virando "&&" (com a chave que falta, lia um ponteiro nulo). Apareceu com o
+// #392, quando os testes do pacote passaram a chegar no ObterData.
+func TestObterData(t *testing.T) {
+	db := testeapoio.NovoBanco(t)
+	ctx := t.Context()
+	if _, err := db.ExecContext(ctx, `INSERT INTO "Configuracao" VALUES ('Teste.Data', '2026-10-14T09:00:00Z', 0, '2026-10-01 00:00:00'),
+		('Teste.DataRuim', 'ontem', 0, '2026-10-01 00:00:00')`); err != nil {
+		t.Fatal(err)
+	}
+	s := Novo(db, testeapoio.RelogioDosTestes())
+	if d, err := s.ObterData(ctx, "Teste.Data"); err != nil || d == nil {
+		t.Fatalf("data gravada: %v, %v", d, err)
+	} else if b, _ := json.Marshal(d); string(b) != `"2026-10-14T09:00:00Z"` {
+		t.Errorf("data gravada: %s", b)
+	}
+	for _, chave := range []string{"Teste.DataRuim", "Nao.Existe"} {
+		if d, err := s.ObterData(ctx, chave); d != nil || err != nil {
+			t.Errorf("%s: %v, %v; esperado nil", chave, d, err)
+		}
 	}
 }

@@ -48,7 +48,7 @@ func TestRenovacaoDaSessao(t *testing.T) {
 	for _, c := range []struct {
 		depois  time.Duration
 		renovar bool
-	}{{0, false}, {59 * time.Minute, false}, {61 * time.Minute, true}, {119 * time.Minute, true}} {
+	}{{0, false}, {59 * time.Minute, false}, {60 * time.Minute, false}, {61 * time.Minute, true}, {119 * time.Minute, true}} {
 		if got := s.precisaRenovar(inicio.Add(c.depois)); got != c.renovar {
 			t.Errorf("%v depois: %v", c.depois, got)
 		}
