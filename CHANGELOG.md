@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.10] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `modernc.org/sqlite` 1.60.1 → 1.61.0** (#405, Dependabot). O driver do SQLite do back-end em Go; nada muda para quem usa.
+
 ## [2.42.9] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
