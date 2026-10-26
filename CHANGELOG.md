@@ -2,6 +2,53 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.15] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Câmbio e criptomoedas passam a ser atendidos pelo Go** (#81, épico #70, passo 2 da ADR 0049). Nada muda para quem usa: as cotações de moedas e de criptomoedas, a lista de moedas e as atualizações automáticas (câmbio de 15 em 15 minutos depois do fechamento das 13h30, cripto de 30 em 30) agora rodam no back-end em Go, atrás do .NET, com o mesmo JSON e o mesmo banco, conferidos pelo contrato `02-cambio` e `03-cripto`. As tarefas do .NET para os dois ficam desligadas.
+  - **Para voltar ao .NET**, sem reinstalar: no `appsettings.json` da API, `"cambio": ""` em `Go:Prefixos` e `"Tarefas": ""`, e reiniciar o serviço. Mude no arquivo, não por variável de ambiente: o Go lê o `Go:Tarefas` só dos arquivos.
+  - O C# do câmbio só sai depois de uma versão publicada sem precisar voltar (ADR 0049), e só o que nenhum outro C# usa: o conversor de moedas continua servindo o painel e a carteira em .NET.
+
+## [2.42.14] — 2026-10-26 · desenvolvimento
+
+### Correções
+- **Filtro de datas da tela de Erros com um dia de começo de horário de verão** (#393). Nos dias em que o horário de verão começava em Brasília (até 2019, como 04/11/2018), a meia-noite não existia, e o filtro que começava ou terminava num desses dias dava erro 500. Agora o dia começa à 01:00, a primeira hora que existe, como no Go (#394).
+
+## [2.42.13] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `chart.js` 4.5.1 → 4.6.1** (#408, Dependabot). A biblioteca dos gráficos; os testes no navegador abrem todas as telas, inclusive as que têm gráfico, sem erro.
+
+## [2.42.12] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@angular/build` e `@angular/cli` 22.2.3 → 22.2.4** (#407, Dependabot). As ferramentas de build do front-end; nada muda para quem usa.
+
+## [2.42.11] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@lucide/angular` 1.60.0 → 1.61.0** (#406, Dependabot). Os ícones do front-end; nada muda para quem usa.
+
+## [2.42.10] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `modernc.org/sqlite` 1.60.1 → 1.61.0** (#405, Dependabot). O driver do SQLite do back-end em Go; nada muda para quem usa.
+
+## [2.42.9] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: os erros do sistema sem mutação viva** (#401, épico #374). Nada muda para quem usa. O teste de mutação dos `erros` vai de 88% para 100%, com os testes que faltavam: as bordas da leitura do filtro na URL (valor só com espaço, tamanho 1, `&` vazio, escape inválido, lista de níveis); a lista filtrada pela origem e a página 2; o lote de no máximo 100; dois erros diferentes no mesmo lote; gravar e limpar sem log quando dá certo; e o detalhe do log (atributo que não é erro, erro simples e `errors.Join`). Duas mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100%.
+
+## [2.42.8] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a autenticação sem mutação viva** (#399, épico #374). Nada muda para quem usa. O teste de mutação da `autenticacao` vai de 91% para 100%, com os testes que faltavam: a chave de sessão criada com 32 bytes; o cookie assinado com conteúdo que não é sessão (JSON quebrado, usuário 0); a renovação exatamente na metade da janela; o CSRF com o segredo vazio; a limpeza do limitador com 1024 IPs; o hash v3 com subchave de 16 bytes; a auditoria do configurar e do login; e o hash antigo (v2) refeito no login. Três mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 76%. Também volta a 100% a `configuracao`: com o câmbio (#392), os testes do pacote passaram a chegar no `ObterData`, e faltava o teste dele.
+
+## [2.42.7] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a configuração sem mutação viva** (#400, épico #374). Nada muda para quem usa. O teste de mutação da `configuracao` vai de 88% para 100%: faltavam o teste de ler um inteiro e um booleano que existem no banco (só a chave que falta era conferida) e um número com o dígito 9 na leitura de inteiros. As duas mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 87,3%.
+
 ## [2.42.5] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação
