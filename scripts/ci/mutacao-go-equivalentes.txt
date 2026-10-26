@@ -10,3 +10,5 @@ internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() > 0 { | co
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() < -casasMaximas { | com 28 casas, RoundBank(28) não muda nada
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if d.v.Exponent() >= 0 { | com expoente 0, -Exponent() também é 0
 internal/parametros | entrada.go | INVERT_LOGICAL | if c < '0' || c > '9' { | o ParseInt logo depois recusa o que não é dígito do mesmo jeito
+internal/erros | gravador.go | INVERT_LOOPCTRL | break | dentro da janela de 24 h, cada assinatura tem no máximo uma linha no lote: pegar a primeira ou a última dá no mesmo (#401)
+internal/erros | handler.go | CONDITIONALS_BOUNDARY | if lista := e.Unwrap(); len(lista) > 0 { | o erro do errors.Join sempre tem pelo menos um erro dentro (#401)
