@@ -179,7 +179,12 @@ Os princípios estão aqui. Os números e as ferramentas, nelas (*inferido*, at�
   - **onde:** `scripts/ci/verificar-tempo-testes-go.py`, sobre o `go test -json` do mesmo comando;
   - **limites:** teste com aviso em 5 s e falha em 20 s, pacote em 60 s e suíte em 120 s;
   - **por que esses números:** cerca de 3 vezes o que se tem hoje (*julgamento*), com referência de ~22 s para a suíte e 20 s para o pacote mais lento, na CI e com `-race`;
-- **#372:** fuzz nos tipos de dinheiro e data. O corpus fica em `testdata/fuzz/` e roda no `go test` comum ([Go Fuzzing](https://go.dev/doc/security/fuzz/));
+- **#372:** fuzz nos tipos de dinheiro e data ([Go Fuzzing](https://go.dev/doc/security/fuzz/)). **Feito:**
+  - **onde:** um alvo por tipo, em `internal/tipos/fuzz_test.go` e `internal/relogio/fuzz_test.go`;
+  - **o que confere:** só propriedades que valem para qualquer entrada: ida e volta, escala, formato do EF Core e o dia de Brasília. As sementes vêm do gabarito do EF Core;
+  - **regressão:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda no `go test` comum;
+  - **onde roda o fuzz de verdade:** o `-fuzz` não roda no PR. Roda à mão e uma vez por semana, num workflow à parte (PR `ci(go):`). *Julgamento:* o achado do fuzz quase nunca é culpa do PR aberto, e travá-lo por isso atrasaria um trabalho sem relação. A semana é *inferida*;
+  - **primeira rodada:** achou 2 bugs, um no começo do dia no horário de verão e outro no GUID com hífen fora do lugar. O mesmo começo do dia lança exceção no C# (#393);
 - **#373:** o teste de mutação automático nas regras de negócio (feito: seção acima).
 
 Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, seção 5).
