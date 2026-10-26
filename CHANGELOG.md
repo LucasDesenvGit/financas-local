@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.13] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `chart.js` 4.5.1 → 4.6.1** (#408, Dependabot). A biblioteca dos gráficos; os testes no navegador abrem todas as telas, inclusive as que têm gráfico, sem erro.
+
 ## [2.42.12] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
