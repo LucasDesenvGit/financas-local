@@ -33,7 +33,8 @@ Três protótipos, com as mesmas funções (situação, ligar, desligar, ícone 
 |---|---|---|---|---|
 | Tamanho (Windows) | 121 MB, 240 arquivos (self-contained) | **9,4 MB**, 1 arquivo | 12,5 MB | 23,6 MB |
 | Tamanho (Linux) | – | **9,6 MB**, estático | 13 MB | 24 MB |
-| Memória (Windows) | – | **46 MB** | 188,5 MB (7 processos do WebView2) | 188 MB |
+| Memória privada (Windows) | **14–15 MB** | 46 MB | 188,5 MB (7 processos do WebView2) | 188 MB |
+| Memória em uso, *working set* (Windows) | 56–59 MB | 14–53 MB | – | – |
 | Memória (Linux, WSLg) | – | **14 MB** | 133 MB (a página não carregou; abaixo) | 185 MB |
 | Precisa de cgo para compilar | – | **não** (compilado com `CGO_ENABLED=0` para os dois sistemas) | no Linux | sim, nos dois (compilação de 4 a 6,5 min) |
 | Precisa na máquina, no Linux | – | **nada** | GTK 4 e WebKitGTK 6.0: 113 pacotes, ~231 MB se faltarem | OpenGL e X11: 12 pacotes, ~16 MB |
@@ -41,6 +42,8 @@ Três protótipos, com as mesmas funções (situação, ligar, desligar, ícone 
 | Leitor de tela (Windows, UI Automation) | sim | a página no navegador; o menu do ícone é do sistema | texto e botões expostos; o Tab passa por Ligar → Desligar | **nada exposto** |
 | UAC (ligar e desligar o serviço) | sim | **testado:** pediu o "Sim", ligou em 4 s e desligou em 2 s | o mesmo código do A | o mesmo código do A |
 | Situação da biblioteca | – | [`fyne.io/systray`](https://github.com/fyne-io/systray), push em 24/10/2026 | **versão prévia:** v3.0.0-beta.34 em 20/10/2026 | estável |
+
+**Na memória, o A não ganha do C#.** Medidos lado a lado, duas vezes: o C# fica com 14–15 MB de memória privada, e o A com 46 MB, porque o runtime do Go deixa mais memória reservada. Em uso de fato (*working set*), o A oscila entre 14 e 53 MB, e o C# fica perto de 58 MB. A vantagem do A é o tamanho e não depender de nada no Linux, e não a memória.
 
 O que **não** deu para conferir:
 - **Bandeja no Linux:** o WSLg não tem quem mostre o ícone. Os três disseram "org.kde.StatusNotifierWatcher was not provided", porque o `fyne.io/systray` usa o padrão StatusNotifierItem pelo D-Bus. Falta testar num GNOME e num KDE de verdade.
@@ -54,7 +57,7 @@ O que **não** deu para conferir:
 - **Wails v3 (B).** Janela de verdade em HTML, desenhada pelo navegador do sistema. Acessível no Windows. Contra:
   - é versão prévia (beta), com uma versão nova quase por dia;
   - no Linux, depende do GTK 4 e do WebKitGTK 6.0 (até ~231 MB de pacotes, que a instalação teria de pedir) e precisa de cgo;
-  - no Windows, 4 vezes a memória do A, por causa dos processos do WebView2.
+  - no Windows, 188 MB de memória privada em 7 processos (WebView2): 4 vezes a do A e 12 vezes a do C# de hoje.
 - **Electron.** Levaria um Chromium e um Node em cada instalação e um terceiro runtime ao projeto: vai contra a instalação leve (revisão do épico).
 
 ## Decisão (proposta)
@@ -80,7 +83,7 @@ O gerenciador passa para Go como **ícone na bandeja mais uma página local**. A
 ## Consequências
 
 - **Positivas:**
-  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~10 MB num arquivo só;
+  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~10 MB num arquivo só. A memória fica na mesma ordem da de hoje (acima);
   - sem cgo, compila para os dois sistemas de qualquer um deles;
   - no Linux, não pede GTK nem WebKit, e não precisa mais do Avalonia;
   - a página é HTML, com os mesmos padrões de acessibilidade do site, num lugar só para Windows e Linux. Hoje são duas janelas, WinForms e Avalonia, que precisam ser mantidas iguais à mão;

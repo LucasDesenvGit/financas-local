@@ -5,7 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [2.42.6] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação
-- **Gerenciador em Go: proposta** (#276, épico #70, ADR 0052, em Proposta). Nada muda para quem usa. Três protótipos medidos no Windows 11 e no Linux (WSL): Go com ícone na bandeja e página local, Wails v3 e Fyne. A proposta é o primeiro: ~10 MB num arquivo, contra os 121 MB (240 arquivos) do gerenciador em C#; 46 MB de memória; sem cgo e sem GTK ou WebKit no Linux. O Fyne fica de fora porque o leitor de tela não vê nada na janela dele; o Wails, por ser versão prévia e pesar no Linux. A decisão é do time.
+- **Gerenciador em Go: proposta** (#276, épico #70, ADR 0052, em Proposta). Nada muda para quem usa. Três protótipos medidos no Windows 11 e no Linux (WSL): Go com ícone na bandeja e página local, Wails v3 e Fyne. A proposta é o primeiro: ~10 MB num arquivo, contra os 121 MB (240 arquivos) do gerenciador em C#, com memória na mesma ordem da de hoje; sem cgo e sem GTK ou WebKit no Linux. O Fyne fica de fora porque o leitor de tela não vê nada na janela dele; o Wails, por ser versão prévia e pesar no Linux. A decisão é do time.
 
 ## [2.42.2] — 2026-10-25 · desenvolvimento
 
