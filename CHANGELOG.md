@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.7] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a configuração sem mutação viva** (#400, épico #374). Nada muda para quem usa. O teste de mutação da `configuracao` vai de 88% para 100%: faltavam o teste de ler um inteiro e um booleano que existem no banco (só a chave que falta era conferida) e um número com o dígito 9 na leitura de inteiros. As duas mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 87,3%.
+
 ## [2.42.4] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação

@@ -12,7 +12,7 @@ autenticacao            73.5
 banco                   80.5
 banco/esquema           81.8
 config                  86.7
-configuracao            82.1
+configuracao            87.3
 erros                   93.3
 parametros              81.5
 relogio                 90.9
