@@ -2,6 +2,20 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.3] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **CI do Go: cobertura com piso, trava de tempo e fuzz semanal** (#370, #371, #372; épico #374). Nada muda para quem usa. Para quem desenvolve:
+  - **cobertura** (#370): o job "Go" mede a cobertura de cada pacote, com o piso em `src/backend-go/cobertura-minima.txt`, e o piso só sobe:
+    - pacote abaixo do piso falha, mostrando as funções que nenhum teste roda;
+    - pacote novo precisa de 80%;
+    - descer um piso falha;
+  - **tempo** (#371):
+    - teste com mais de 20 s falha, e com mais de 5 s gera um aviso;
+    - pacote com mais de 60 s, ou a suíte com mais de 120 s, falha;
+    - os 10 testes mais lentos vão para o resumo do job;
+  - **fuzz** (#372): o workflow "Fuzz do Go" roda o `-fuzz` de cada alvo toda segunda e à mão, fora do PR. O que ele acha sai no artefato `achados-do-fuzz`.
+
 ## [2.42.2] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação
