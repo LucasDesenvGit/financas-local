@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.42.10] — 2026-10-26 · desenvolvimento
+## [2.42.11] — 2026-10-26 · desenvolvimento
 
 ### Correções
 - **Filtro de datas da tela de Erros com um dia de começo de horário de verão** (#393). Nos dias em que o horário de verão começava em Brasília (até 2019, como 04/11/2018), a meia-noite não existia, e o filtro que começava ou terminava num desses dias dava erro 500. Agora o dia começa à 01:00, a primeira hora que existe, como no Go (#394).
+
+## [2.42.10] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `modernc.org/sqlite` 1.60.1 → 1.61.0** (#405, Dependabot). O driver do SQLite do back-end em Go; nada muda para quem usa.
 
 ## [2.42.9] — 2026-10-26 · desenvolvimento
 
