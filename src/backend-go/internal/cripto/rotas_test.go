@@ -55,6 +55,12 @@ func TestCicloDaTarefa(t *testing.T) {
 			if c.avisoNoLog != "" && !strings.Contains(saida.String(), c.avisoNoLog) {
 				t.Errorf("o log não tem %q:\n%s", c.avisoNoLog, saida.String())
 			}
+			// A origem na tela de erros é a do .NET desde a #298: "Cripto", não "Câmbio".
+			for _, linha := range strings.Split(saida.String(), "\n") {
+				if c.avisoNoLog != "" && strings.Contains(linha, c.avisoNoLog) && !strings.Contains(linha, "origem=Cripto") {
+					t.Errorf("a linha do log não tem a origem Cripto: %s", linha)
+				}
+			}
 		})
 	}
 }

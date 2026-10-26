@@ -15,6 +15,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
@@ -128,7 +129,7 @@ func (s *Servico) Atualizar(ctx context.Context) (ResultadoAtualizacao, error) {
 		return ResultadoAtualizacao{}, err
 	}
 	if len(resultado.Falhas) > 0 {
-		s.log.Warn("O Mercado Bitcoin não devolveu a cotação de algumas moedas.", "origem", "Câmbio",
+		s.log.Warn("O Mercado Bitcoin não devolveu a cotação de algumas moedas.", "origem", erros.OrigemCripto,
 			"moedas", strings.Join(resultado.Falhas, ", "))
 	}
 

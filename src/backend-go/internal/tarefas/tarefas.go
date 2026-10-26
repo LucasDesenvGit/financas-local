@@ -12,6 +12,8 @@ import (
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/erros"
 )
 
 // Periodica roda ciclo depois de atraso e, dali em diante, a cada intervalo, até o ctx acabar. É o
@@ -56,12 +58,16 @@ func rodarCiclo(ctx context.Context, log *slog.Logger, nome string, ciclo func(c
 	}
 }
 
-// origem é a origem do erro em Configurações › Erros ("Câmbio", como no .NET; cripto também cai em Câmbio).
+// origem é a origem do erro em Configurações › Erros, a mesma do .NET (RegistroErrosLoggerProvider.Origem): o câmbio
+// em "Câmbio" e, desde a #298, a cripto em "Cripto".
 func origem(nome string) string {
-	if strings.Contains(nome, "câmbio") || strings.Contains(nome, "cripto") {
+	switch {
+	case strings.Contains(nome, "cripto"):
+		return erros.OrigemCripto
+	case strings.Contains(nome, "câmbio"):
 		return "Câmbio"
 	}
-	return "Sistema"
+	return erros.OrigemSistema
 }
 
 // Conhecidas são as tarefas que um assunto em Go pode assumir, os nomes de Go:Tarefas (OpcoesGo.TarefasConhecidas).

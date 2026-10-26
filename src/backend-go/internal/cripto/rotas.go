@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
@@ -29,7 +30,7 @@ func RegistrarCom(mux *http.ServeMux, s *Servico, log *slog.Logger) {
 		cotacoes, err := s.Ultimas(req.Context())
 		if err != nil {
 			if req.Context().Err() == nil {
-				log.Error("cotação de criptomoedas", "origem", "Câmbio", "erro", err)
+				log.Error("cotação de criptomoedas", "origem", erros.OrigemCripto, "erro", err)
 				servidor.ResponderErroInterno(w)
 			}
 			return
@@ -74,11 +75,11 @@ func (t *Tarefa) Ciclo(ctx context.Context) error {
 	resultado, err := t.servico.Atualizar(ctx)
 	if err != nil {
 		if ehDeRede(err) && ctx.Err() == nil {
-			t.log.Warn("Não foi possível consultar a cotação de criptomoedas no Mercado Bitcoin.", "origem", "Câmbio", "erro", err)
+			t.log.Warn("Não foi possível consultar a cotação de criptomoedas no Mercado Bitcoin.", "origem", erros.OrigemCripto, "erro", err)
 			return nil
 		}
 		return err
 	}
-	t.log.Info("Cotação de criptomoedas atualizada.", "origem", "Câmbio", "novas", resultado.Novas)
+	t.log.Info("Cotação de criptomoedas atualizada.", "origem", erros.OrigemCripto, "novas", resultado.Novas)
 	return nil
 }
