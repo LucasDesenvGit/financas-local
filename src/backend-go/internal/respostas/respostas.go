@@ -157,38 +157,6 @@ type ErroJSON struct {
 	Mensagem string
 }
 
-// erroDeSintaxe imita a mensagem do Utf8JsonReader para o JSON que não abre. A do fim inesperado (o caso do
-// contrato) sai igual, com a linha (contando do zero) e o byte na linha; as outras, na forma do .NET, mas a
-// posição pode não bater byte a byte.
-func ErroDeSintaxe(corpo []byte, err error) *ErroJSON {
-	fim := bytes.TrimRight(corpo, " \t\r\n")
-	var sintaxe *json.SyntaxError
-	if errors.Is(err, io.ErrUnexpectedEOF) || (errors.As(err, &sintaxe) && int(sintaxe.Offset) >= len(fim)) {
-		mensagem := "Expected start of a property name or value, but instead reached end of data."
-		caminho := "$"
-		if dentroDeTexto(fim) {
-			mensagem = "Expected end of string, but instead reached end of data."
-		} else if n := len(fim); n > 0 && fim[n-1] == ':' {
-			caminho = "$." + ultimoNome(fim)
-		} else if n > 0 && fim[n-1] != ',' && fim[n-1] != '{' && fim[n-1] != '[' {
-			mensagem = "Expected depth to be zero at the end of the JSON payload. There is an open JSON object or array that should be closed."
-		}
-		return &ErroJSON{caminho, fmt.Sprintf("%s Path: %s | %s.", mensagem, caminho, Posicao(corpo, len(corpo)))}
-	}
-	deslocamento := len(corpo)
-	if errors.As(err, &sintaxe) {
-		deslocamento = int(sintaxe.Offset) - 1
-	}
-	if deslocamento < 0 {
-		deslocamento = 0
-	}
-	caractere := "?"
-	if deslocamento < len(corpo) {
-		caractere = string(corpo[deslocamento])
-	}
-	return &ErroJSON{"$", fmt.Sprintf("'%s' is an invalid start of a value. Path: $ | %s.", caractere, Posicao(corpo, deslocamento))}
-}
-
 // posicao é o "LineNumber: L | BytePositionInLine: B" do .NET para o byte n do corpo (linha a partir de zero).
 func Posicao(corpo []byte, n int) string {
 	if n > len(corpo) {
@@ -198,30 +166,4 @@ func Posicao(corpo []byte, n int) string {
 	linha := bytes.Count(antes, []byte("\n"))
 	inicioLinha := bytes.LastIndexByte(antes, '\n') + 1
 	return fmt.Sprintf("LineNumber: %d | BytePositionInLine: %d", linha, n-inicioLinha)
-}
-
-// dentroDeTexto diz se o JSON acabou no meio de uma string (aspas abertas, sem contar as escapadas).
-func dentroDeTexto(fim []byte) bool {
-	dentro, escapado := false, false
-	for _, b := range fim {
-		switch {
-		case escapado:
-			escapado = false
-		case b == '\\' && dentro:
-			escapado = true
-		case b == '"':
-			dentro = !dentro
-		}
-	}
-	return dentro
-}
-
-// ultimoNome é o nome da propriedade antes do ":" do fim ("…, \"login\":" → "login").
-func ultimoNome(fim []byte) string {
-	s := strings.TrimSpace(strings.TrimSuffix(string(fim), ":"))
-	s = strings.TrimSuffix(s, `"`)
-	if i := strings.LastIndex(s, `"`); i >= 0 {
-		return s[i+1:]
-	}
-	return ""
 }
