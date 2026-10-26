@@ -16,3 +16,5 @@ internal/autenticacao | cookies.go | INVERT_LOGICAL | if err1 != nil || err2 != 
 internal/autenticacao | senha.go | CONDITIONALS_BOUNDARY | if len(dados) < cabecalhoV3 { | com o tamanho exato do cabeçalho, não sobra sal: o tamanhoSal > len(dados)-cabecalhoV3 logo abaixo recusa (#399)
 internal/autenticacao | senha.go | CONDITIONALS_BOUNDARY | if tamanhoSal < 16 || tamanhoSal > len(dados)-cabecalhoV3 || iteracoes == 0 { | com o sal ocupando o resto, a subchave fica vazia e o len(esperada) < 16 logo abaixo recusa (#399)
 internal/configuracao | configuracao.go | ARITHMETIC_BASE | return Instante{t: t.UTC().Truncate(100 * time.Nanosecond), tipo: utc} | 100 / time.Nanosecond também é 100 ns: o nanossegundo vale 1
+internal/erros | gravador.go | INVERT_LOOPCTRL | break | dentro da janela de 24 h, cada assinatura tem no máximo uma linha no lote: pegar a primeira ou a última dá no mesmo (#401)
+internal/erros | handler.go | CONDITIONALS_BOUNDARY | if lista := e.Unwrap(); len(lista) > 0 { | o erro do errors.Join sempre tem pelo menos um erro dentro (#401)
