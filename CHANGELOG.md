@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.42.14] — 2026-10-26 · desenvolvimento
+## [2.42.16] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
 - **Gerenciador em Go: proposta** (#276, épico #70, ADR 0052, em Proposta). Nada muda para quem usa. Protótipos medidos no Windows 11 e no Linux (WSL). A proposta é o gerenciador em Go com ícone na bandeja e uma página com o visual do site (o `styles.css` embutido), em ~10 MB num arquivo, contra os 121 MB (240 arquivos) de hoje. O time escolhe como a página aparece: pelo Edge no modo aplicativo (~100 MB com a janela aberta) ou num programa com o Wails (janela própria, ~200 MB, versão prévia). O Fyne fica de fora porque o leitor de tela não vê nada na janela dele.
