@@ -45,6 +45,13 @@ Três protótipos, com as mesmas funções (situação, ligar, desligar, ícone 
 
 **Na memória, o A não ganha do C#.** Medidos lado a lado, duas vezes: o C# fica com 14–15 MB de memória privada, e o A com 46 MB, porque o runtime do Go deixa mais memória reservada. Em uso de fato (*working set*), o A oscila entre 14 e 53 MB, e o C# fica perto de 58 MB. A vantagem do A é o tamanho e não depender de nada no Linux, e não a memória.
 
+**O visual e a janela (protótipo D, 26/10/2026).** O A com a página no visual do site:
+- **o `styles.css` do próprio site** vai embutido no executável, com as classes dele (`.botao`, `.botao-primario`, `.ponto`, `.marca`), e o tema claro ou escuro vem do "Modo de aplicativo" do Windows, como no `Tema.cs` de hoje. A página foi desenhada pelo Edge sem janela (`--headless --screenshot`), nos dois temas, e ficou igual ao site;
+- **hoje, as cores do gerenciador são uma cópia à mão do site, e já se desencontraram:** linha `#e2dfee` × `#e8e6f1`, positivo `#2a9a6a` × `#1b7550`, negativo `#d2546b` × `#b23a52`. Com o CSS do site embutido, deixa de haver cópia;
+- **janela de aplicativo:** o gerenciador abre a página com `msedge --app=<endereço>`, e a UI Automation achou uma janela própria do Edge com o título da página. *Não confirmado:* se a barra de endereço some. A UI Automation listou um campo "Barra de pesquisa e endereços" na janela, e não olhei a tela;
+- **memória com a janela aberta:** o gerenciador fica em 46–48 MB, e o Edge soma 53 MB (com o Edge já aberto, 3 processos) ou 124 MB (com o Edge fechado, 5 processos). **Com a janela aberta, o total chega perto do Wails;** com ela fechada, só o gerenciador fica na memória;
+- **não testados aqui:** o leitor de tela e o Tab dentro da página. O teste de teclado mandaria teclas para a janela que estivesse na frente, e foi interrompido.
+
 O que **não** deu para conferir:
 - **Bandeja no Linux:** o WSLg não tem quem mostre o ícone. Os três disseram "org.kde.StatusNotifierWatcher was not provided", porque o `fyne.io/systray` usa o padrão StatusNotifierItem pelo D-Bus. Falta testar num GNOME e num KDE de verdade.
 - **Wails no Linux:** nem o MiniBrowser do próprio WebKitGTK abriu o processo que desenha a página no WSLg. É do ambiente, e não do Wails, mas a janela do B no Linux ficou sem teste.
@@ -65,7 +72,7 @@ O que **não** deu para conferir:
 O gerenciador passa para Go como **ícone na bandeja mais uma página local**. A "janela" é uma página que o próprio gerenciador serve em `127.0.0.1` e abre no navegador padrão de quem usa.
 
 - **Bandeja:** [`fyne.io/systray`](https://github.com/fyne-io/systray), com o menu "Abrir o gerenciador", "Ligar o site", "Desligar o site", "Abrir o site" e "Sair". Sem cgo no Windows nem no Linux (conferido). No Linux, o ícone vai em PNG: o protótipo com ICO falhou ("unknown format").
-- **Página local:** o mesmo HTML, nos dois sistemas, com situação, ligar e desligar, cópia do banco, versão nova e "O que mudou". Os textos são os de hoje.
+- **Página local:** o mesmo HTML, com o `styles.css` do site embutido (protótipo D), nos dois sistemas, com situação, ligar e desligar, cópia do banco, versão nova e "O que mudou". Os textos são os de hoje.
   - Ela funciona com o site desligado, porque quem a serve é o gerenciador, e não o site.
   - O teclado, o leitor de tela e o contraste são os do navegador de quem usa, com os mesmos padrões do site (WCAG 2.2, `CLAUDE.md`).
 - **Segurança da página local:** é um servidor novo na máquina, então:
@@ -89,7 +96,8 @@ O gerenciador passa para Go como **ícone na bandeja mais uma página local**. A
   - a página é HTML, com os mesmos padrões de acessibilidade do site, num lugar só para Windows e Linux. Hoje são duas janelas, WinForms e Avalonia, que precisam ser mantidas iguais à mão;
   - o .NET pode sair de vez na #86.
 - **Negativas:**
-  - **não é uma janela de programa:** é uma aba do navegador, que a pessoa pode fechar ou perder entre outras abas. O ícone na bandeja é o caminho de volta;
+  - **não é uma janela de programa:** é o navegador. No Windows, o `msedge --app` abre uma janela própria, com o título da página, o que atenua o problema da aba perdida. No Linux, isso só vale com o Chromium, o Chrome ou o Edge instalados; sem eles, abre numa aba do navegador padrão. O ícone na bandeja é o caminho de volta;
+  - **memória com a janela aberta:** o Edge soma de 53 a 124 MB enquanto a página está aberta, perto do Wails. A diferença é que, fechada a janela, essa memória volta;
   - **mais um servidor na máquina,** ainda que só local, com as proteções acima: mais código de segurança para manter e testar;
   - **bandeja no GNOME:** depende do StatusNotifierItem. *Inferido, não testado:* o Ubuntu traz a extensão de AppIndicator ligada, e outras distribuições podem não trazer. Sem ela, o gerenciador abre pelo atalho do menu de aplicativos;
   - **reescrever ~3.600 linhas,** inclusive a atualização com SHA-256, que é sensível;
