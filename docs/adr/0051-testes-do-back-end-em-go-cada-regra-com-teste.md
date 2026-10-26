@@ -80,7 +80,7 @@ Três devs vão começar #75, #77 e #81 em paralelo. A regra precisa existir ant
 4. **Cada consulta que grava, apaga em cascata, filtra texto ou ordena** tem teste de integração com o SQLite real.
 5. **Os casos-limite que se aplicam** (lista abaixo) estão na tabela. O PR diz quais não se aplicam.
 6. **O teste novo provou que falha** (abaixo), com a lista das mutações no PR.
-7. `gofmt`, `go vet` e `go test -race` limpos. Os pisos de cobertura (#370) e de tempo (#371) valem quando entrarem.
+7. `gofmt`, `go vet` e `go test -race` limpos, dentro dos pisos de cobertura (#370) e de tempo (#371), que a CI confere.
 
 O detalhe de cada etapa está num comentário do épico #70.
 
@@ -168,9 +168,23 @@ A mutação à mão continua no PR. A ferramenta mede, toda semana, se os testes
 Os princípios estão aqui. Os números e as ferramentas, nelas (*inferido*, até cada uma decidir):
 
 - **#369:** o pacote de apoio (banco temporário, fábrica de dados, relógio, HTTP com usuário);
-- **#370:** a cobertura na CI, com piso por pacote que só sobe;
-- **#371:** a trava de tempo dos testes do Go;
-- **#372:** fuzz nos tipos de dinheiro e data. O corpus fica em `testdata/fuzz/` e roda no `go test` comum ([Go Fuzzing](https://go.dev/doc/security/fuzz/));
+- **#370:** a cobertura na CI, com piso por pacote que só sobe. **Feito:**
+  - **como mede:** `go test -race -coverpkg=./internal/...`, em que cada pacote conta as linhas que qualquer teste roda;
+  - **os pisos:** ficam em `src/backend-go/cobertura-minima.txt` e começaram no valor de 24/10/2026, medido na CI;
+  - **pacote novo:** precisa de **80%**. *Julgamento*, sugerido na #370: é o que já tem a maioria dos pacotes escritos com teste desde o começo;
+  - **descer um piso falha**, comparando com o arquivo do `develop`. Subir a cobertura 1 ponto gera um aviso para subir o piso;
+  - **"fora":** só para código gerado (sqlc, gerador do `go generate`), com o motivo na linha;
+  - **o que dá trabalho:** a cobertura cai sozinha quando entra código sem teste num pacote antigo, mas não sobe sozinha. Subir o piso é trabalho de quem subiu a cobertura, no mesmo PR;
+- **#371:** a trava de tempo dos testes do Go. **Feito:**
+  - **onde:** `scripts/ci/verificar-tempo-testes-go.py`, sobre o `go test -json` do mesmo comando;
+  - **limites:** teste com aviso em 5 s e falha em 20 s, pacote em 60 s e suíte em 120 s;
+  - **por que esses números:** cerca de 3 vezes o que se tem hoje (*julgamento*), com referência de ~22 s para a suíte e 20 s para o pacote mais lento, na CI e com `-race`;
+- **#372:** fuzz nos tipos de dinheiro e data ([Go Fuzzing](https://go.dev/doc/security/fuzz/)). **Feito:**
+  - **onde:** um alvo por tipo, em `internal/tipos/fuzz_test.go` e `internal/relogio/fuzz_test.go`;
+  - **o que confere:** só propriedades que valem para qualquer entrada: ida e volta, escala, formato do EF Core e o dia de Brasília. As sementes vêm do gabarito do EF Core;
+  - **regressão:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda no `go test` comum;
+  - **onde roda o fuzz de verdade:** o `-fuzz` não roda no PR. Roda à mão e uma vez por semana, num workflow à parte (PR `ci(go):`). *Julgamento:* o achado do fuzz quase nunca é culpa do PR aberto, e travá-lo por isso atrasaria um trabalho sem relação. A semana é *inferida*;
+  - **primeira rodada:** achou 2 bugs, um no começo do dia no horário de verão e outro no GUID com hífen fora do lugar. O mesmo começo do dia lança exceção no C# (#393);
 - **#373:** o teste de mutação automático nas regras de negócio (feito: seção acima).
 
 Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, seção 5).
