@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.15] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Câmbio e criptomoedas passam a ser atendidos pelo Go** (#81, épico #70, passo 2 da ADR 0049). Nada muda para quem usa: as cotações de moedas e de criptomoedas, a lista de moedas e as atualizações automáticas (câmbio de 15 em 15 minutos depois do fechamento das 13h30, cripto de 30 em 30) agora rodam no back-end em Go, atrás do .NET, com o mesmo JSON e o mesmo banco, conferidos pelo contrato `02-cambio` e `03-cripto`. As tarefas do .NET para os dois ficam desligadas.
+  - **Para voltar ao .NET**, sem reinstalar: no `appsettings.json` da API, `"cambio": ""` em `Go:Prefixos` e `"Tarefas": ""`, e reiniciar o serviço. Mude no arquivo, não por variável de ambiente: o Go lê o `Go:Tarefas` só dos arquivos.
+  - O C# do câmbio só sai depois de uma versão publicada sem precisar voltar (ADR 0049), e só o que nenhum outro C# usa: o conversor de moedas continua servindo o painel e a carteira em .NET.
+
 ## [2.42.14] — 2026-10-26 · desenvolvimento
 
 ### Correções
