@@ -10,3 +10,6 @@ internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() > 0 { | co
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() < -casasMaximas { | com 28 casas, RoundBank(28) não muda nada
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if d.v.Exponent() >= 0 { | com expoente 0, -Exponent() também é 0
 internal/parametros | entrada.go | INVERT_LOGICAL | if c < '0' || c > '9' { | o ParseInt logo depois recusa o que não é dígito do mesmo jeito
+internal/autenticacao | cookies.go | INVERT_LOGICAL | if err1 != nil || err2 != nil || !hmac.Equal(assinatura, assinar(chave, usoSessao, dados)) { | com base64 estragado, a assinatura HMAC dos dados que sobram nunca bate: a sessão é recusada do mesmo jeito (#399)
+internal/autenticacao | senha.go | CONDITIONALS_BOUNDARY | if len(dados) < cabecalhoV3 { | com o tamanho exato do cabeçalho, não sobra sal: o tamanhoSal > len(dados)-cabecalhoV3 logo abaixo recusa (#399)
+internal/autenticacao | senha.go | CONDITIONALS_BOUNDARY | if tamanhoSal < 16 || tamanhoSal > len(dados)-cabecalhoV3 || iteracoes == 0 { | com o sal ocupando o resto, a subchave fica vazia e o len(esperada) < 16 logo abaixo recusa (#399)
