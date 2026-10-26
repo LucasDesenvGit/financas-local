@@ -33,7 +33,7 @@ var (
 	}
 )
 
-func lerGabarito(t *testing.T) gabarito {
+func lerGabarito(t testing.TB) gabarito {
 	t.Helper()
 	dados, err := os.ReadFile("testdata/efcore.json")
 	if err != nil {

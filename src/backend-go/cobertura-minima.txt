@@ -1,0 +1,31 @@
+# Piso de cobertura por pacote do Go (#370, ADR 0051), conferido na CI por scripts/ci/verificar-cobertura-go.py.
+#
+# - A cobertura é a do go test -coverpkg=./internal/... ./... (o pacote conta as linhas que qualquer teste roda).
+# - O piso começou no valor de 24/10/2026, medido na CI (Linux), e só sobe: subiu a cobertura, suba o piso no mesmo PR (a CI avisa).
+# - Pacote novo, sem linha aqui, precisa de 80%.
+# - "fora" tira o pacote da conta, com o motivo na mesma linha. Só para código que não é escrito à mão.
+#
+# pacote                piso
+api                     77.7
+auditoria               100.0
+autenticacao            76.0
+banco                   80.5
+banco/esquema           81.8
+cambio                  83.9
+config                  86.7
+configuracao            87.3
+cripto                  85.2
+erros                   93.3
+parametros              81.5
+relogio                 95.4
+respostas               80.3
+saude                   54.5
+segredos                77.7
+servidor                88.8
+sessao                  100.0
+tarefas                 100.0
+testeapoio              92.5
+tipos                   89.7
+
+banco/consultas         fora  código gerado pelo sqlc (go generate); as consultas são testadas pelos pacotes que as usam
+banco/esquema/gerar     fora  o gerador do go generate, que não vai no executável

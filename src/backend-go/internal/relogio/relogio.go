@@ -81,8 +81,17 @@ func Hoje(r Relogio) tipos.Data { return tipos.DataDe(AgoraLocal(r)) }
 func ParaHoraLocal(instante time.Time) time.Time { return instante.In(Brasilia) }
 
 // InicioDoDiaUtc é o instante, em UTC, em que o dia começa em Brasília (meia-noite local).
+//
+// No dia em que o horário de verão começava (até 2019), a meia-noite não existia: o relógio ia de 23:59:59 direto
+// para 01:00. Para uma hora que não existe, o time.Date não garante qual dos dois fusos usa, e aqui devolve as 23:00
+// do dia anterior. O dia então começa na troca de fuso, às 01:00 (#372, achado pelo fuzz). O C# lança exceção
+// nesse dia (#393).
 func InicioDoDiaUtc(dia tipos.Data) time.Time {
-	return time.Date(dia.Ano(), dia.Mes(), dia.Dia(), 0, 0, 0, 0, Brasilia).UTC()
+	inicio := time.Date(dia.Ano(), dia.Mes(), dia.Dia(), 0, 0, 0, 0, Brasilia)
+	if tipos.DataDe(inicio).String() != dia.String() {
+		_, inicio = inicio.ZoneBounds()
+	}
+	return inicio.UTC()
 }
 
 // PrimeiroDiaMes e UltimoDiaMes são os do C#.

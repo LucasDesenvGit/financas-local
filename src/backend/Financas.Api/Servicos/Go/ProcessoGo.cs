@@ -275,11 +275,17 @@ public sealed class ProcessoGo : BackgroundService
                 var nivel = raiz.TryGetProperty("level", out var l) ? l.GetString() : null;
                 var mensagem = raiz.TryGetProperty("msg", out var m) ? m.GetString() ?? "" : "";
                 var origem = raiz.TryGetProperty("origem", out var o) && o.ValueKind == JsonValueKind.String ? o.GetString() : null;
+                // #81: o atributo "erro" (o erro do log, no Go) vai para o detalhe, como a exceção de um log do .NET, e
+                // não para a mensagem. O texto do erro muda a cada vez (a porta de um erro de rede, por exemplo) e, na
+                // mensagem, impediria o agrupamento: a assinatura usa a mensagem e só o tipo do detalhe.
+                var erro = raiz.TryGetProperty("erro", out var e)
+                    ? new ErroDoGo(e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : e.GetRawText())
+                    : null;
                 var atributos = string.Join(" ", raiz.EnumerateObject()
-                    .Where(p => p.Name is not ("time" or "level" or "msg" or "origem"))
+                    .Where(p => p.Name is not ("time" or "level" or "msg" or "origem" or "erro"))
                     .Select(p => $"{p.Name}={(p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() : p.Value.GetRawText())}"));
                 var categoria = origem is not null && OrigensConhecidas.Contains(origem) ? $"{CategoriaLog}.{origem}" : CategoriaLog;
-                _fabrica.CreateLogger(categoria).Log(Nivel(nivel), "{Mensagem}",
+                _fabrica.CreateLogger(categoria).Log(Nivel(nivel), erro, "{Mensagem}",
                     atributos.Length > 0 ? $"{mensagem} ({atributos})" : mensagem);
                 return;
             }
@@ -303,3 +309,6 @@ public sealed class ProcessoGo : BackgroundService
         public override string ToString() => saida.Length > 0 ? saida : Message;
     }
 }
+
+/// <summary>O erro de um log do Go (o atributo "erro"), no lugar da exceção: vai para o detalhe do registro (#81).</summary>
+public sealed class ErroDoGo(string mensagem) : Exception(mensagem);

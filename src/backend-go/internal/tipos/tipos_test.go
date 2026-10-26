@@ -143,8 +143,21 @@ func TestGuid(t *testing.T) {
 	if novo == GuidVazio || novo.String()[14] != '4' {
 		t.Errorf("NovoGuid deveria ser versão 4: %s", novo)
 	}
-	if _, err := LerGuid("123"); err == nil {
-		t.Error("guid curto deveria dar erro")
+	for _, texto := range []string{
+		"123",                                    // curto
+		"2f00defb672e45ef87d0-702995ae8d2e",      // hífen fora do lugar: o Guid.Parse recusa
+		"2f00defb-672e45ef-87d0-702995ae8d2e-",   // hífens fora do lugar, com 36 caracteres
+		"{2f00defb-672e-45ef-87d0-702995ae8d2e}", // com chaves: o .NET lê, mas não escreve
+		"2f00defb-672e-45ef-87d0-702995ae8d2g",   // letra que não é hexadecimal
+	} {
+		if _, err := LerGuid(texto); err == nil {
+			t.Errorf("LerGuid(%q) deveria dar erro", texto)
+		}
+	}
+	for _, texto := range []string{"2F00DEFB672E45EF87D0702995AE8D2E", " 2f00defb-672e-45ef-87d0-702995ae8d2e\t"} {
+		if lido, err := LerGuid(texto); err != nil || lido != g {
+			t.Errorf("LerGuid(%q) = %s, %v; esperado %s", texto, lido, err, g)
+		}
 	}
 }
 
