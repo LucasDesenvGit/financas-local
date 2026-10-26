@@ -57,11 +57,25 @@ O que **não** deu para conferir:
 - **Wails no Linux:** nem o MiniBrowser do próprio WebKitGTK abriu o processo que desenha a página no WSLg. É do ambiente, e não do Wails, mas a janela do B no Linux ficou sem teste.
 - **Leitor de tela no Linux** (Orca), nas três.
 
+**Página pelo Edge × programa com Wails (protótipos D e E, 26/10/2026).** A mesma página (o `styles.css` do site, o mesmo HTML e o mesmo tema) em duas "janelas": o D a abre com `msedge --app`; o E é um programa com o Wails v3, com janela própria e o HTML servido por dentro, sem porta aberta. Três rodadas de cada no Windows 11, sem teclas e sem captura de tela:
+
+| | D: página pelo Edge | E: programa com Wails |
+|---|---|---|
+| Janela aparece em | 0,5 a 1 s | 0,7 a 1,3 s |
+| Memória privada com a janela aberta | ~100 MB (gerenciador 48 + Edge 52, com o Edge já aberto em segundo plano; ~170 com ele fechado) | ~195 a 204 MB (gerenciador 52 + WebView2, 7 processos) |
+| O que a UI Automation vê na janela | só os botões da moldura (minimizar, maximizar, fechar) | **todos os botões e links da página** |
+| Tamanho | 9,5 MB | 12,6 MB |
+| Porta aberta na máquina | sim (127.0.0.1, com segredo, `Host` e CSRF) | **não** |
+| Cara de programa | janela do Edge, com o título da página | **janela própria** |
+
+- **Leitor de tela no D:** o Edge só monta a árvore de acessibilidade da página quando percebe um leitor de tela de verdade (o Narrador). O teste não prova que o D é inacessível, só que o E expõe tudo direto. *A conferir com o Narrador ligado.*
+- **Visual:** o mesmo nos dois, porque o HTML e o CSS são os mesmos e o motor também (o WebView2 é o Edge).
+
 ## Alternativas consideradas
 
 - **Manter em C# (opção a da #276).** Custo quase zero, mas contraria a decisão do time: o SDK do .NET continua na CI e nos scripts só por causa do gerenciador.
 - **Fyne (C).** Uma biblioteca só, que desenha a janela com OpenGL. **Descartada:** a UI Automation não viu nenhum texto nem botão na janela, então o leitor de tela não lê nada, e a acessibilidade é exigência do projeto. Também é a maior e precisa de cgo nos dois sistemas.
-- **Wails v3 (B).** Janela de verdade em HTML, desenhada pelo navegador do sistema. Acessível no Windows. Contra:
+- **Wails v3 (B e E).** **Em aberto, como opção da janela (abaixo).** Janela de verdade em HTML, desenhada pelo navegador do sistema. Acessível no Windows: a UI Automation vê todos os botões e links. Contra:
   - é versão prévia (beta), com uma versão nova quase por dia;
   - no Linux, depende do GTK 4 e do WebKitGTK 6.0 (até ~231 MB de pacotes, que a instalação teria de pedir) e precisa de cgo;
   - no Windows, 188 MB de memória privada em 7 processos (WebView2): 4 vezes a do A e 12 vezes a do C# de hoje.
@@ -69,13 +83,19 @@ O que **não** deu para conferir:
 
 ## Decisão (proposta)
 
-O gerenciador passa para Go como **ícone na bandeja mais uma página local**. A "janela" é uma página que o próprio gerenciador serve em `127.0.0.1` e abre no navegador padrão de quem usa.
+O gerenciador passa para Go como **ícone na bandeja mais uma página com o visual do site**, nos dois sistemas.
+
+**Fica para o time escolher como a página aparece** (protótipos D e E, acima):
+- **Opção D, página pelo Edge:** o gerenciador serve a página em `127.0.0.1` e a abre com `msedge --app` (Chromium ou navegador padrão no Linux). É a mais leve e não depende de biblioteca em versão prévia, mas a janela é do Edge e há um servidor local para proteger (abaixo).
+- **Opção E, programa com Wails:** janela própria, sem porta aberta, e o leitor de tela vê a página direto. Custa ~2 vezes a memória do D com a janela aberta, depende do Wails v3, que é beta, e no Linux pede o GTK 4 e o WebKitGTK.
+
+O resto vale para as duas. Os pontos marcados "(D)" só valem para a opção D.
 
 - **Bandeja:** [`fyne.io/systray`](https://github.com/fyne-io/systray), com o menu "Abrir o gerenciador", "Ligar o site", "Desligar o site", "Abrir o site" e "Sair". Sem cgo no Windows nem no Linux (conferido). No Linux, o ícone vai em PNG: o protótipo com ICO falhou ("unknown format").
 - **Página local:** o mesmo HTML, com o `styles.css` do site embutido (protótipo D), nos dois sistemas, com situação, ligar e desligar, cópia do banco, versão nova e "O que mudou". Os textos são os de hoje.
   - Ela funciona com o site desligado, porque quem a serve é o gerenciador, e não o site.
   - O teclado, o leitor de tela e o contraste são os do navegador de quem usa, com os mesmos padrões do site (WCAG 2.2, `CLAUDE.md`).
-- **Segurança da página local:** é um servidor novo na máquina, então:
+- **Segurança da página local (D):** é um servidor novo na máquina, então:
   - só em `127.0.0.1`, numa porta sorteada a cada partida;
   - um segredo sorteado na URL que o gerenciador abre, trocado por um cookie `HttpOnly` e `SameSite=Strict`;
   - o cabeçalho `Host` conferido, contra *DNS rebinding*;
