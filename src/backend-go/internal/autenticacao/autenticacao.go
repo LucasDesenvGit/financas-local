@@ -16,6 +16,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
@@ -117,7 +118,7 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 			if s, ok := lerSessao(a.o.Chave, c.Value, agora); ok {
 				valida, err := a.q.SessaoValida(r.Context(), consultas.SessaoValidaParams{Id: s.Usuario, CarimboSeguranca: s.Carimbo})
 				if err != nil {
-					a.erroInterno(w, "conferir a sessão", err)
+					a.erroInterno(w, r, "conferir a sessão", err)
 					return
 				}
 				if !valida {
@@ -144,7 +145,14 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), chaveRequisicao{}, req)
+		// A rota e o login vão para o contexto: um erro logado durante a requisição os leva para a tabela de erros
+		// (#298), como o HttpContext no .NET.
+		var login *string
+		if req.sessao != nil {
+			login = &req.sessao.Login
+		}
+		ctx := erros.ComRequisicao(r.Context(), r.Method, r.URL.Path, login)
+		ctx = context.WithValue(ctx, chaveRequisicao{}, req)
 		if req.sessao != nil {
 			ctx = sessao.ComUsuario(ctx, req.sessao.Usuario)
 		}
@@ -163,7 +171,7 @@ func metodoSeguro(metodo string) bool {
 
 // ipDe é o Connection.RemoteIpAddress: o IP de quem conectou (o site escuta só em 127.0.0.1; não há proxy na frente).
 // erroInterno é o UseExceptionHandler: o erro vai para o log, e quem pediu recebe só o 500 de sempre.
-func (a *Autenticacao) erroInterno(w http.ResponseWriter, oque string, err error) {
-	a.o.Log.Error("erro na autenticação", "etapa", oque, "erro", err)
+func (a *Autenticacao) erroInterno(w http.ResponseWriter, r *http.Request, oque string, err error) {
+	a.o.Log.ErrorContext(r.Context(), "erro na autenticação", "origem", erros.OrigemAPI, "etapa", oque, "erro", err)
 	servidor.ResponderErroInterno(w)
 }

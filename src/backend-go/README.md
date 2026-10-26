@@ -35,7 +35,7 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 - **Partida:** o Go lê o segredo interno da primeira linha da entrada padrão, escuta em `127.0.0.1` numa porta livre e escreve `{"porta":N}` na saída padrão.
 - **Confiança:** sem o segredo, 401 (e um aviso no log). O Id do usuário vem em `X-Financas-Usuario`, que o .NET apaga quando vem de fora; a rota o lê com `sessao.Usuario(ctx)`.
 - **Parada:** quando a entrada padrão fecha (o .NET parou, ou caiu), o Go para com elegância. SIGINT e SIGTERM também. No Windows, o .NET o põe num Job Object que o encerra junto.
-- **Log:** JSON na saída de erro. O .NET registra cada linha na categoria `Financas.Go`; avisos e erros vão para Configurações › Erros. Para cair na origem certa da tela, ponha o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"` ou `"Sistema"`).
+- **Log:** JSON na saída de erro. O .NET registra cada linha na categoria `Financas.Go`; avisos e erros vão para Configurações › Erros. Para cair na origem certa da tela, ponha o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"`, `"Cripto"` ou `"Sistema"`). Com o Go sozinho (#298), quem grava é o próprio Go (`internal/erros`), com as mesmas origens.
 - **Banco:** o mesmo arquivo do .NET, em WAL (quem passa para WAL é o `EsquemaBanco`). O Go não cria nem muda tabela.
 
 ### Rota nova
@@ -85,6 +85,12 @@ go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 # De ponta a ponta, com o .NET compilado (dotnet build FinancasLocal.sln -c Release, na raiz):
 bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
+```
+
+Teste de mutação (#373, ADR 0051): não roda em PR, por ser lento. Roda toda segunda pelo workflow "Teste de mutação (Go)", e à mão:
+
+```bash
+python3 ../../scripts/ci/mutacao-go.py internal/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
 A CI roda os cinco primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco". No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".

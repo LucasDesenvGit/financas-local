@@ -27,7 +27,7 @@
 #   src/backend-go/testes/contrato/rodar-dotnet.sh --go         # PREFIXOS_GO = os assuntos de assuntos-no-go.txt
 #                       # (é o que a CI roda; sem assunto ligado, não faz nada)
 #   src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho # #75: o Go sozinho, com o login dele, sem o .NET:
-#                       # roda só os arquivos de CONTRATO_SOMENTE (padrão: 00-auth,01-parametros), os que o Go já atende sem o
+#                       # roda só os arquivos de CONTRATO_SOMENTE (padrão: 00-auth,01-parametros,17-erros), os que o Go já atende sem o
 #                       # .NET na frente. Não precisa do .NET, da libfaketime nem do unshare (o Go tem o relógio de
 #                       # teste e o login não sai para a rede); roda também no Git Bash do Windows.
 #
@@ -156,10 +156,10 @@ if [[ -n "$go_sozinho" ]]; then
         sleep 0.5
     done
     grep -q 'escutando' "$pasta/go.log" || { echo "O Go não subiu em 30 s. Log:"; cat "$pasta/go.log"; exit 1; }
-    echo "Go sozinho, atendendo: ${CONTRATO_SOMENTE:-00-auth,01-parametros}"
+    echo "Go sozinho, atendendo: ${CONTRATO_SOMENTE:-00-auth,01-parametros,17-erros}"
     cd "$pasta_contrato"
     status=0
-    "$pasta/contrato.test$exe" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" -banco="$banco_db"         -inicio="$inicio" -somente="${CONTRATO_SOMENTE:-00-auth,01-parametros}" || status=$?
+    "$pasta/contrato.test$exe" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" -banco="$banco_db"         -inicio="$inicio" -somente="${CONTRATO_SOMENTE:-00-auth,01-parametros,17-erros}" || status=$?
     if [[ $status -ne 0 ]]; then echo "--- Fim do log do Go ---"; tail -n 60 "$pasta/go.log"; fi
     exit $status
 fi
