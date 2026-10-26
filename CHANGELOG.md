@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.42.4] — 2026-10-25 · desenvolvimento
+## [2.42.5] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação
 - **Câmbio e criptomoedas em Go** (#81, épico #70, ADRs 0007, 0048 e 0049). Nada muda para quem usa: o .NET continua atendendo até o prefixo ser ligado em `Go:Prefixos` (PR à parte). O Go ganhou:
