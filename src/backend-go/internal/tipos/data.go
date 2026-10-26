@@ -44,8 +44,19 @@ func (d Data) String() string     { return d.t.Format(formatoData) }
 func (d Data) Antes(o Data) bool  { return d.t.Before(o.t) }
 func (d Data) Depois(o Data) bool { return d.t.After(o.t) }
 
+// Igual compara as datas (use no lugar do ==, que compara o time.Time de dentro).
+func (d Data) Igual(o Data) bool { return d.t.Equal(o.t) }
+
 // SomarDias devolve a data n dias depois (ou antes, com n negativo).
 func (d Data) SomarDias(n int) Data { return Data{t: d.t.AddDate(0, 0, n)} }
+
+// SomarAnos é o DateOnly.AddYears do C#: o dia que não existe no ano de chegada vira o último do mês (29/02/2024 +
+// 1 ano = 28/02/2025). O AddDate do Go passaria para 01/03.
+func (d Data) SomarAnos(n int) Data {
+	ano, mes := d.Ano()+n, d.Mes()
+	ultimo := time.Date(ano, mes+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	return NovaData(ano, mes, min(d.Dia(), ultimo))
+}
 
 // Value grava "2026-10-15" (driver.Valuer).
 func (d Data) Value() (driver.Value, error) { return d.String(), nil }

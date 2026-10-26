@@ -31,6 +31,7 @@ type Config struct {
 	CertificadoCaminho    string   // Kestrel:Endpoints:Https:Certificate:Path
 	CertificadoSenha      string   // Kestrel:Endpoints:Https:Certificate:Password (nunca vai para o log)
 	HostsPermitidos       []string // AllowedHosts, separados por ";"
+	GoTarefas             string   // Go:Tarefas: as tarefas em segundo plano que o Go roda no lugar do .NET (ADR 0049, #81)
 }
 
 // Carregar lê a configuração da pasta base, no ambiente dado ("Production" se vazio).
@@ -70,6 +71,7 @@ func Carregar(pastaBase, ambiente string) (Config, error) {
 		Endereco:              "127.0.0.1:5443",
 		CertificadoCaminho:    texto(arvore, "Kestrel:Endpoints:Https:Certificate:Path"),
 		CertificadoSenha:      texto(arvore, "Kestrel:Endpoints:Https:Certificate:Password"),
+		GoTarefas:             texto(arvore, "Go:Tarefas"),
 	}
 	if c.CertificadoCaminho != "" {
 		c.CertificadoCaminho = caminho(pastaBase, c.CertificadoCaminho, "")

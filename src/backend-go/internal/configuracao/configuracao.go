@@ -261,3 +261,26 @@ func (i Instante) MarshalJSON() ([]byte, error) {
 	}
 	return []byte(`"` + texto + `"`), nil
 }
+
+// Tempo devolve o instante (sem fuso: a hora de parede, num time.Time em UTC). #81: o câmbio compara com o relógio.
+func (i Instante) Tempo() time.Time { return i.t }
+
+// TextoRedondo é o ToString("O") do C#, sempre com 7 casas: "2026-10-15T01:02:03.1234567Z" (UTC), com o
+// deslocamento (hora local) ou sem nada (sem fuso). É como o .NET grava os carimbos na Configuracao (#81).
+func (i Instante) TextoRedondo() string {
+	texto := i.t.Format("2006-01-02T15:04:05.0000000")
+	switch i.tipo {
+	case utc:
+		texto += "Z"
+	case local:
+		texto += i.t.Format("-07:00")
+	}
+	return texto
+}
+
+// DefinirData grava o instante como o .NET grava os carimbos: DateTime.UtcNow.ToString("O"). #81: as datas de
+// atualização do câmbio e da cripto.
+func (s *Servico) DefinirData(ctx context.Context, chave string, instante time.Time) error {
+	texto := InstanteUTC(instante).TextoRedondo()
+	return s.Definir(ctx, chave, &texto)
+}
