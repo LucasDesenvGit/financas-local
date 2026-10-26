@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.11] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@lucide/angular` 1.60.0 → 1.61.0** (#406, Dependabot). Os ícones do front-end; nada muda para quem usa.
+
 ## [2.42.10] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
