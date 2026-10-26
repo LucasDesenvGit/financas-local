@@ -1,0 +1,59 @@
+# Fuzz do Go (#372, ADR 0051). O -fuzz não roda no PR: o achado quase nunca é culpa do PR aberto. Roda uma vez por
+# semana e à mão (Actions → "Fuzz do Go" → Run workflow), um alvo por vez, porque o -fuzz só aceita um.
+# Achou um caso que falha: o job falha, e o artefato "achados-do-fuzz" traz a entrada (testdata/fuzz/<alvo>/...).
+# Ela entra no PR da correção, onde vira regressão que roda em todo go test.
+name: Fuzz do Go
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # segunda, 03:17 em Brasília
+  workflow_dispatch:
+    inputs:
+      tempo:
+        description: Tempo por alvo (o -fuzztime, como 1m ou 10m)
+        default: 1m
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: fuzz
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: src/backend-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
+      # Os alvos são descobertos pelo nome (FuzzXxx): alvo novo entra sem mexer aqui.
+      - name: Fuzz, um alvo por vez
+        env:
+          TEMPO: ${{ inputs.tempo || '1m' }}
+        run: |
+          falhou=0
+          for pacote in $(go list ./internal/...); do
+            for alvo in $(go test -list '^Fuzz' "$pacote" | grep '^Fuzz' || true); do
+              echo "::group::$alvo ($pacote, $TEMPO)"
+              if ! go test "$pacote" -run '^$' -fuzz "^${alvo}\$" -fuzztime "$TEMPO"; then
+                echo "::error::$alvo achou um caso que falha: a entrada está no artefato achados-do-fuzz"
+                falhou=1
+              fi
+              echo "::endgroup::"
+            done
+          done
+          exit $falhou
+
+      - name: Achados
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: achados-do-fuzz
+          path: src/backend-go/internal/**/testdata/fuzz/
