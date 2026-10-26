@@ -2,6 +2,44 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.5] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Câmbio e criptomoedas em Go** (#81, épico #70, ADRs 0007, 0048 e 0049). Nada muda para quem usa: o .NET continua atendendo até o prefixo ser ligado em `Go:Prefixos` (PR à parte). O Go ganhou:
+  - o cliente da PTAX do Banco Central e o do Mercado Bitcoin (só HTTPS, 30 s e 20 s, `User-Agent: FinancasLocal/1.0`), testados com respostas gravadas de verdade, inclusive fim de semana e feriado sem cotação, erro 500 e tempo esgotado;
+  - `GET /api/cambio/moedas`, `/cotacoes` e `/cotacao` e `GET /api/cripto/cotacoes`, com o mesmo JSON e o mesmo banco do .NET (escala dos decimais, data com `Z`, o 400 automático da data inválida);
+  - o conversor para reais (o `ConversorMoeda`), para a carteira (#82) e o painel (#80) usarem;
+  - as tarefas em segundo plano (câmbio de 15 em 15 minutos, depois do fechamento das 13h30; cripto de 30 em 30), que só rodam com o nome em `Go:Tarefas` e param com o serviço, sem derrubar o processo num erro;
+  - a aritmética do decimal do C# em Go (`tipos.Dividir`, `tipos.Arredondar`), conferida contra o .NET por uma sonda: o shopspring divide e arredonda diferente, e a variação de 10% sairia `10.00` em vez de `10.0`.
+  - os casos de contrato `02-cambio` (15) e `03-cripto` (2), gravados do .NET na CI (Linux), que passam também com o Go atendendo;
+  - os logs da cripto saem com a origem "Cripto", como o .NET desde a #298;
+  - **correção na convivência** (`ProcessoGo`): o atributo `erro` de um log do Go vai para o detalhe do erro, como a exceção de um log do .NET, e não mais para a mensagem. O texto do erro muda a cada vez (a porta de um erro de rede, por exemplo) e, na mensagem, fazia cada aviso repetido virar uma linha nova na tela de Erros, em vez de somar uma ocorrência.
+
+## [2.42.4] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Go: fuzz nos tipos de dinheiro e data** (#372, épico #374). Nada muda para quem usa. Para quem desenvolve:
+  - há 7 alvos de fuzz: decimal no banco e no JSON, data, data e hora, GUID, o começo do dia em Brasília e o primeiro e o último dia do mês;
+  - as sementes são o gabarito do EF Core, e o que o fuzz acha fica em `testdata/fuzz/` e roda em todo `go test`;
+  - o fuzz achou 2 bugs no Go, já corrigidos:
+    - nos dias em que o horário de verão começava (até 2019), o começo do dia caía às 23:00 do dia anterior. O C# lança exceção nesse dia (#393);
+    - o GUID com hífen fora do lugar era aceito, e o `Guid.Parse` do .NET o recusa;
+  - como rodar está no `CONTRIBUINDO.md`, em "Testes do back-end (Go)".
+
+## [2.42.3] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **CI do Go: cobertura com piso, trava de tempo e fuzz semanal** (#370, #371, #372; épico #374). Nada muda para quem usa. Para quem desenvolve:
+  - **cobertura** (#370): o job "Go" mede a cobertura de cada pacote, com o piso em `src/backend-go/cobertura-minima.txt`, e o piso só sobe:
+    - pacote abaixo do piso falha, mostrando as funções que nenhum teste roda;
+    - pacote novo precisa de 80%;
+    - descer um piso falha;
+  - **tempo** (#371):
+    - teste com mais de 20 s falha, e com mais de 5 s gera um aviso;
+    - pacote com mais de 60 s, ou a suíte com mais de 120 s, falha;
+    - os 10 testes mais lentos vão para o resumo do job;
+  - **fuzz** (#372): o workflow "Fuzz do Go" roda o `-fuzz` de cada alvo toda segunda e à mão, fora do PR. O que ele acha sai no artefato `achados-do-fuzz`.
+
 ## [2.42.2] — 2026-10-25 · desenvolvimento
 
 ### Publicação e documentação

@@ -81,13 +81,14 @@ jobs:
           fi
 
       # #231: o Go também lê o esquema (banco/, 2-criar-banco.sh) e a CSP do Seguranca.cs, que os testes dele conferem.
+      # #370/#371: e os scripts da cobertura e do tempo, que rodam no job dele.
       - name: Go afetado
         id: go
         run: |
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend-go/|banco/|scripts/geral/2-criar-banco\.sh$|src/backend/Financas\.Api/Seguranca/|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend-go/|banco/|scripts/geral/2-criar-banco\.sh$|src/backend/Financas\.Api/Seguranca/|scripts/ci/verificar-(cobertura|tempo-testes)-go\.py$|\.github/workflows/ci\.yml$)'; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
@@ -188,8 +189,28 @@ jobs:
       - name: go vet
         run: go vet ./...
 
-      - name: Testes (com detector de corrida)
-        run: go test -race ./...
+      # #370 e #371: um go test só dá o resultado, a cobertura e o tempo. Com -json, quem mostra a saída do que
+      # falhou é o verificar-tempo-testes-go.py, que também confere o tempo de cada teste e de cada pacote.
+      - name: Testes (com detector de corrida e cobertura)
+        run: |
+          set +e
+          go test -race -json -coverpkg=./internal/... -coverprofile="$RUNNER_TEMP/cobertura.out" ./... > "$RUNNER_TEMP/testes.json"
+          resultado=$?
+          set -e
+          python3 ../../scripts/ci/verificar-tempo-testes-go.py "$RUNNER_TEMP/testes.json"
+          exit $resultado
+
+      # O piso de cada pacote (cobertura-minima.txt) só sobe: no PR, o arquivo do develop entra como --base.
+      - name: Cobertura por pacote (piso que só sobe)
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          base=()
+          if [ -n "$BASE" ] && git fetch -q --depth=1 origin "$BASE" &&
+             git show FETCH_HEAD:src/backend-go/cobertura-minima.txt > "$RUNNER_TEMP/pisos-base.txt" 2>/dev/null; then
+            base=(--base "$RUNNER_TEMP/pisos-base.txt")
+          fi
+          python3 ../../scripts/ci/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
 
       # O sqlc compila com cgo (o gcc já vem no runner). Falha se uma consulta .sql mudou sem gerar o código Go.
       - name: Código gerado em dia (go generate)

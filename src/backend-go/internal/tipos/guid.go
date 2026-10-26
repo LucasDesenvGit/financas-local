@@ -25,10 +25,16 @@ func NovoGuid() Guid {
 	return g
 }
 
-// LerGuid aceita maiúsculas ou minúsculas, com hífens ("2f00defb-672e-45ef-87d0-702995ae8d2e").
+// LerGuid lê os dois formatos que o .NET grava e escreve: 8-4-4-4-12 ("2f00defb-672e-45ef-87d0-702995ae8d2e") ou
+// os 32 dígitos sem hífen, em maiúsculas ou minúsculas, com os espaços em volta ignorados, como o Guid.Parse. Hífen
+// fora do lugar é recusado, como no .NET (#372, achado pelo fuzz). Os formatos com chaves e parênteses, que o
+// Guid.Parse também lê, ficam de fora: o .NET do projeto não os escreve.
 func LerGuid(texto string) (Guid, error) {
 	var g Guid
-	limpo := strings.ReplaceAll(strings.TrimSpace(texto), "-", "")
+	limpo := strings.TrimSpace(texto)
+	if len(limpo) == 36 && limpo[8] == '-' && limpo[13] == '-' && limpo[18] == '-' && limpo[23] == '-' {
+		limpo = limpo[:8] + limpo[9:13] + limpo[14:18] + limpo[19:23] + limpo[24:]
+	}
 	if len(limpo) != 32 {
 		return g, fmt.Errorf("guid inválido %q", texto)
 	}
