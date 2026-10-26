@@ -10,3 +10,5 @@ internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() > 0 { | co
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() < -casasMaximas { | com 28 casas, RoundBank(28) não muda nada
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if d.v.Exponent() >= 0 { | com expoente 0, -Exponent() também é 0
 internal/parametros | entrada.go | INVERT_LOGICAL | if c < '0' || c > '9' { | o ParseInt logo depois recusa o que não é dígito do mesmo jeito
+internal/configuracao | configuracao.go | INVERT_LOGICAL | if c < '0' || c > '9' { | o ParseInt logo depois recusa o que não é dígito do mesmo jeito (#400)
+internal/configuracao | configuracao.go | ARITHMETIC_BASE | return Instante{t: t.Truncate(100 * time.Nanosecond), tipo: tipo}, true | 100 / time.Nanosecond também é 100 ns: o nanossegundo vale 1 (#400)
