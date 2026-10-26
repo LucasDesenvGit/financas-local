@@ -200,3 +200,26 @@ func TestObterInteiroEBool(t *testing.T) {
 		}
 	}
 }
+
+// Regra: ObterData lê a data gravada; sem valor, ou com texto que não é data, nil (o DateTime? do C#).
+// Pega: o "err != nil || valor == nil" virando "&&" (com a chave que falta, lia um ponteiro nulo). Apareceu com o
+// #392, quando os testes do pacote passaram a chegar no ObterData.
+func TestObterData(t *testing.T) {
+	db := testeapoio.NovoBanco(t)
+	ctx := t.Context()
+	if _, err := db.ExecContext(ctx, `INSERT INTO "Configuracao" VALUES ('Teste.Data', '2026-10-14T09:00:00Z', 0, '2026-10-01 00:00:00'),
+		('Teste.DataRuim', 'ontem', 0, '2026-10-01 00:00:00')`); err != nil {
+		t.Fatal(err)
+	}
+	s := Novo(db, testeapoio.RelogioDosTestes())
+	if d, err := s.ObterData(ctx, "Teste.Data"); err != nil || d == nil {
+		t.Fatalf("data gravada: %v, %v", d, err)
+	} else if b, _ := json.Marshal(d); string(b) != `"2026-10-14T09:00:00Z"` {
+		t.Errorf("data gravada: %s", b)
+	}
+	for _, chave := range []string{"Teste.DataRuim", "Nao.Existe"} {
+		if d, err := s.ObterData(ctx, chave); d != nil || err != nil {
+			t.Errorf("%s: %v, %v; esperado nil", chave, d, err)
+		}
+	}
+}

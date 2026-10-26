@@ -9,7 +9,7 @@
 internal/tipos          100
 internal/parametros     100
 internal/segredos       100
-internal/autenticacao   90    # mutações vivas: #399
+internal/autenticacao   100
 internal/configuracao   100
 internal/erros          88    # #401
 internal/respostas      72    # #402

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.8] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a autenticação sem mutação viva** (#399, épico #374). Nada muda para quem usa. O teste de mutação da `autenticacao` vai de 91% para 100%, com os testes que faltavam: a chave de sessão criada com 32 bytes; o cookie assinado com conteúdo que não é sessão (JSON quebrado, usuário 0); a renovação exatamente na metade da janela; o CSRF com o segredo vazio; a limpeza do limitador com 1024 IPs; o hash v3 com subchave de 16 bytes; a auditoria do configurar e do login; e o hash antigo (v2) refeito no login. Três mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 76%. Também volta a 100% a `configuracao`: com o câmbio (#392), os testes do pacote passaram a chegar no `ObterData`, e faltava o teste dele.
+
 ## [2.42.7] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
