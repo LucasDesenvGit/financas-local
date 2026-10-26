@@ -56,7 +56,7 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 		d, ok := lerDataDaQuery(bruta)
 		if !ok {
 			// O 400 automático do [ApiController] quando o texto não vira o tipo do parâmetro (DateOnly?).
-			respostas.Validacao(w, map[string][]string{"data": {"The value '" + bruta + "' is not valid for data."}})
+			respostas.Validacao(w, map[string][]string{"data": {"The value '" + bruta + "' is not valid."}})
 			return
 		}
 		data = &d

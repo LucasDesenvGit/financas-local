@@ -80,7 +80,7 @@ func TestDataInvalidaEhO400DoModelBinding(t *testing.T) {
 	delete(corpo, "traceId")
 	semTrace, _ := json.Marshal(corpo)
 	testeapoio.ConferirJSON(t, semTrace, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1",`+
-		`"title":"One or more validation errors occurred.","status":400,"errors":{"data":["The value 'abc' is not valid for data."]}}`)
+		`"title":"One or more validation errors occurred.","status":400,"errors":{"data":["The value 'abc' is not valid."]}}`)
 }
 
 func TestRotasDoCambioSemLogin(t *testing.T) {
