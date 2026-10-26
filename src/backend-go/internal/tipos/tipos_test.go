@@ -147,3 +147,43 @@ func TestGuid(t *testing.T) {
 		t.Error("guid curto deveria dar erro")
 	}
 }
+
+// Regra: o NovoGuid é a versão 4 da RFC 9562 (os 4 bits altos do byte 6 são 0100) com a variante 10 (os 2 bits altos
+// do byte 8), e o resto continua aleatório. O teste de mutação (#373) mostrou que conferir um GUID só não bastava.
+func TestNovoGuidVersaoEVariante(t *testing.T) {
+	var variaram6, variaram8 byte
+	primeiro := NovoGuid()
+	for range 200 {
+		g := NovoGuid()
+		if g[6]>>4 != 0x4 || g[8]>>6 != 0x2 {
+			t.Fatalf("%s: versão %x, variante %b", g, g[6]>>4, g[8]>>6)
+		}
+		variaram6 |= g[6] ^ primeiro[6]
+		variaram8 |= g[8] ^ primeiro[8]
+	}
+	if variaram6 != 0x0f || variaram8 != 0x3f {
+		t.Errorf("os bits aleatórios dos bytes 6 e 8 não variaram: %08b %08b", variaram6, variaram8)
+	}
+}
+
+// Regra: Data e Guid só aceitam texto no JSON, e texto inválido é erro (o que o model binding do .NET recusa).
+func TestDataEGuidRecusamJSONInvalido(t *testing.T) {
+	var d Data
+	var g Guid
+	for _, entrada := range []string{`20261015`, `null`, `"2026-02-30"`, `"15/10/2026"`} {
+		if err := json.Unmarshal([]byte(entrada), &d); err == nil {
+			t.Errorf("Data aceitou %s", entrada)
+		}
+	}
+	for _, entrada := range []string{`123`, `"2f00defb"`, `"2f00defb-672e-45ef-87d0-702995ae8d2z"`} {
+		if err := json.Unmarshal([]byte(entrada), &g); err == nil {
+			t.Errorf("Guid aceitou %s", entrada)
+		}
+	}
+	if err := json.Unmarshal([]byte(`"2026-10-15"`), &d); err != nil || d.String() != "2026-10-15" {
+		t.Errorf("Data válida: %v %s", err, d)
+	}
+	if err := json.Unmarshal([]byte(`"2F00DEFB-672E-45EF-87D0-702995AE8D2E"`), &g); err != nil || g.String() != "2f00defb-672e-45ef-87d0-702995ae8d2e" {
+		t.Errorf("Guid válido: %v %s", err, g)
+	}
+}

@@ -87,6 +87,12 @@ GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
 ```
 
+Teste de mutação (#373, ADR 0051): não roda em PR, por ser lento. Roda toda segunda pelo workflow "Teste de mutação (Go)", e à mão:
+
+```bash
+python3 ../../scripts/ci/mutacao-go.py internal/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
+```
+
 A CI roda os cinco primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco".
 
 **Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe atrás do .NET, como no site. Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go, e confere o Go com `PREFIXOS_GO="<prefixos do assunto>" testes/contrato/rodar-dotnet.sh` (os mesmos esperados). A CI roda o contrato no job "contrato (.NET)".

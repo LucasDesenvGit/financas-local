@@ -1,0 +1,50 @@
+name: Teste de mutação (Go)
+
+# #373 (ADR 0051): mede se os testes do Go pegam erro de verdade. O gremlins estraga o código de propósito, numa cópia
+# (troca < por <=, && por ||, + por -...), e conta as mudanças que os testes não pegaram. É lento (~1 min por pacote),
+# então não roda em PR: toda segunda de manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow).
+# Os pacotes e os pisos ficam em scripts/ci/mutacao-go.txt; o relatório sai no resumo do job e no artefato.
+on:
+  schedule:
+    - cron: '0 9 * * 1' # segunda, 06:00 em Brasília
+  workflow_dispatch:
+    inputs:
+      pacotes:
+        description: 'Pacotes, separados por espaço (vazio: todos os de scripts/ci/mutacao-go.txt). Ex.: internal/tipos internal/parametros'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutacao-go-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutacao:
+    name: Teste de mutação (Go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
+      - name: Teste de mutação
+        env:
+          PACOTES: ${{ inputs.pacotes }}
+        run: python3 scripts/ci/mutacao-go.py $PACOTES
+
+      - name: Relatório e resultados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutacao-go
+          path: src/backend-go/mutacao/
+          if-no-files-found: ignore
+          retention-days: 30

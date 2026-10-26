@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.2] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Go: teste de mutação toda semana** (#373, épico #374, ADR 0051). Nada muda para quem usa. Para quem desenvolve:
+  - o workflow "Teste de mutação (Go)" roda o [gremlins](https://github.com/go-gremlins/gremlins) toda segunda (e à mão), nunca em PR. Ele estraga o código de propósito, numa cópia, e conta o que os testes não pegaram, nos pacotes de `scripts/ci/mutacao-go.txt`, com um piso por pacote que só sobe;
+  - primeira medição: `tipos`, `parametros` e `segredos` em 100%; `autenticacao` 91%, `configuracao` 88%, `erros` 88%, `respostas` 73%. As mutações vivas desses quatro viraram as issues #399 a #402;
+  - testes novos que a medição pediu: os bits de versão e de variante do `NovoGuid`, o JSON inválido de `Data` e `Guid`, a chave repetida no meio dos parâmetros e o nome do sistema operacional;
+  - ponto cego anotado na ADR: a mutação dentro de `case` não é testada pela ferramenta, porque a cobertura do Go não conta a condição do `case`. Nessas regras, continua valendo a mutação à mão no PR.
+
 ## [2.42.1] — 2026-10-25 · desenvolvimento
 
 ### Correções
