@@ -109,6 +109,16 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 **Limites de tempo (a CI confere):**
 - **Jest:** cada arquivo de teste até **10 s** (passou disso, a CI avisa) e no máximo **20 s** (passou, falha); a suíte inteira até **150 s** (`scripts/ci/verificar-tempo-testes.py`). Referência hoje: ~34 s a suíte, 6 s o arquivo mais lento, 0,7 s a mediana (2 workers, como a CI).
 - **Navegador:** cada teste até 30 s (padrão do Playwright); a suíte hoje leva ~30 s.
+- **Go** (#371, `scripts/ci/verificar-tempo-testes-go.py`, sobre o `go test -race -json` do job "Go"):
+  - **teste:** aviso a partir de **5 s** e falha a partir de **20 s**;
+  - **pacote:** até **60 s**;
+  - **suíte:** até **120 s**, do primeiro ao último teste, com os pacotes em paralelo;
+  - **referência** (24/10/2026, CI, com `-race`): ~22 s a suíte; `banco` 20 s e `autenticacao` 17 s.
+  - **Causas comuns de teste lento:**
+    - `time.Sleep` para esperar: use um sinal ou o `testing/synctest`;
+    - banco recriado em cada subteste: um banco por teste, com os subtestes em cima dele quando não gravam;
+    - rede de verdade: proibida (ADR 0051).
+  - **No resumo do job:** os 10 testes mais lentos.
 
 **Importação pesada é a causa nº 1 de teste lento.** Um arquivo de teste importa a tela, que importa os componentes dela, que importam bibliotecas. Biblioteca grande (ícones, gráficos, editores…) carregada no Jest custa em todo arquivo que encosta nela:
 - **antes de pôr uma dependência nova no front-end**, rode um teste que a use e veja o tempo (`npx jest testes/<arquivo>.spec.ts`);
@@ -195,7 +205,24 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 
 **Gabarito** (*golden file*) fica em `testdata/`, vem da referência (o .NET ou o EF Core) e é regravado só por opção explícita (`-atualizar`), olhando a diferença no PR.
 
-**Antes de subir:** em `src/backend-go`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend-go/README.md#antes-de-subir-push)). Cobertura com piso (#370), trava de tempo (#371) e mutação automática (#373) entram pelo épico #374.
+**Antes de subir:** em `src/backend-go`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend-go/README.md#antes-de-subir-push)). A CI confere também a trava de tempo (acima, em "Testes rápidos") e a cobertura com piso por pacote (abaixo). A mutação automática (#373) entra pelo épico #374.
+
+**Cobertura** (#370): o piso de cada pacote fica em `src/backend-go/cobertura-minima.txt` e **só sobe**.
+- **O que a CI confere** (`scripts/ci/verificar-cobertura-go.py`):
+  - pacote abaixo do piso falha, mostrando as funções que nenhum teste roda;
+  - pacote novo precisa de 80%;
+  - descer um piso falha, comparando com o arquivo do `develop`;
+  - subiu a cobertura 1 ponto ou mais: a CI avisa para subir o piso no mesmo PR.
+- **"fora"**, com o motivo na linha, é só para código gerado.
+- **Ver localmente:** em `src/backend-go`,
+
+  ```bash
+  go test -coverpkg=./internal/... -coverprofile=c.out ./...
+  go tool cover -html=c.out
+  ```
+
+  O `go tool cover -func=c.out` dá a lista por função.
+- **Atenção:** cobertura mede linha executada, não regra conferida. Ela não substitui a tabela regra → teste nem as mutações.
 
 ## Checklist do pull request
 
