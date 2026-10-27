@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.18] — 2026-10-27 · desenvolvimento
+
+### Publicação e documentação
+- **Gerenciador em Go: decidido** (#276, épico #70, ADR 0052, aceita). Nada muda para quem usa por enquanto. O gerenciador vai para Go como um programa com o Wails v3: janela própria igual à de hoje (o mesmo desenho, os mesmos ícones, os botões bloqueados com o site desligado, sem barra de rolagem) e o ícone na bandeja, em ~11 MB num arquivo, contra os 121 MB (240 arquivos) de hoje. Medido no Windows 11: ~200 MB de memória com a janela aberta; fechada, a janela é destruída e o gerenciador parado fica em ~50 MB. A página pelo Edge (mais leve com a janela aberta, mas com cara de navegador) e o Fyne (o leitor de tela não vê nada) ficam de fora.
+
 ## [2.42.17] — 2026-10-26 · desenvolvimento
 
 ### Publicação e documentação
