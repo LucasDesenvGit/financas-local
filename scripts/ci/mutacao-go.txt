@@ -13,3 +13,5 @@ internal/autenticacao   100
 internal/configuracao   100
 internal/erros          100
 internal/respostas      100
+internal/cambio         100
+internal/cripto         100
