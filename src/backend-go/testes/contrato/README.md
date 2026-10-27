@@ -13,7 +13,7 @@ São *characterization tests*: não dizem o que o sistema deveria fazer, congela
 | `assuntos-no-go.txt` | os assuntos com código Go que a rodada contra o Go confere (`--go`, e a CI), um por linha |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
 
 ## Rodar contra o .NET
 
@@ -65,14 +65,15 @@ O diagnóstico `/api/go/saude` (#231) e a funcionalidade nova feita só em Go (`
 O login (#75) não passa pelo repasse: `/api/auth` fica no .NET até a inversão (#85). O Go sozinho tem o login dele (`internal/autenticacao`), e o roteiro o compara com os mesmos esperados do .NET:
 
 ```bash
-src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho                       # os arquivos de CONTRATO_SOMENTE (00-auth,01-parametros,17-erros)
+src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho                       # os arquivos de CONTRATO_SOMENTE (00-auth,01-parametros,02-cambio,03-cripto,17-erros)
 CONTRATO_SOMENTE="00-auth" src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho
 ```
 
 - Monta o mesmo banco fictício, compila o Go com a versão do `Directory.Build.props`, sobe-o sozinho com o relógio de teste (`-inicio-do-relogio`) e um certificado em memória, e roda o comparador só nos arquivos de `CONTRATO_SOMENTE` (opção `-somente` do `go test`).
 - Não precisa do .NET, da libfaketime nem do `unshare`: o Go tem o próprio relógio de teste, e o login não sai para a rede. Roda também no Git Bash do Windows, com o `sqlite3` no PATH.
-- **Só os assuntos que não dependem das rotinas de partida do `Program.cs`**: sem o .NET, elas não rodam. O login, os parâmetros e os erros não dependem de nenhuma (o Go sozinho tem o próprio gravador de erros, que limpa os antigos já na partida, como o .NET). Assunto novo entra em `CONTRATO_SOMENTE` quando o Go o atende sozinho.
-- Sem o roteiro, à mão: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z -somente=00-auth,01-parametros,17-erros`. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
+- **Só os assuntos que não dependem das rotinas de partida do `Program.cs`**: sem o .NET, elas não rodam. O login, os parâmetros e os erros não dependem de nenhuma (o Go sozinho tem o próprio gravador de erros, que limpa os antigos já na partida, como o .NET). Assunto novo entra em `CONTRATO_SOMENTE` quando o Go o atende sozinho, **na mesma ordem da rodada completa**: os casos de um arquivo deixam rastro no banco que os seguintes veem (o câmbio, sem internet, deixa 4 avisos abertos que o `17-erros` conta; #416).
+- **Sem rede, sem `unshare`:** o roteiro sobe o Go com `HTTPS_PROXY=http://127.0.0.1:9`, uma porta fechada. O `http.Client` do Go segue o proxy ([`ProxyFromEnvironment`](https://pkg.go.dev/net/http#ProxyFromEnvironment)), e o endereço de loopback, que é o do teste, nunca passa por ele: toda chamada para a internet falha como no .NET dentro do `unshare -rn`.
+- Sem o roteiro, à mão: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z -somente=00-auth,01-parametros,02-cambio,03-cripto,17-erros`, com `HTTPS_PROXY=http://127.0.0.1:9` no Go. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
 
 ## Adicionar um caso
 
