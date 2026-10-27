@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.42.16] — 2026-10-26 · desenvolvimento
+## [2.42.18] — 2026-10-27 · desenvolvimento
 
 ### Publicação e documentação
-- **Gerenciador em Go: proposta** (#276, épico #70, ADR 0052, em Proposta). Nada muda para quem usa. Protótipos medidos no Windows 11 e no Linux (WSL). A proposta é o gerenciador em Go com ícone na bandeja e uma página com o visual do site (o `styles.css` embutido), em ~10 MB num arquivo, contra os 121 MB (240 arquivos) de hoje. O time escolhe como a página aparece: pelo Edge no modo aplicativo (~100 MB com a janela aberta) ou num programa com o Wails (janela própria, ~200 MB, versão prévia). O Fyne fica de fora porque o leitor de tela não vê nada na janela dele.
+- **Gerenciador em Go: decidido** (#276, épico #70, ADR 0052, aceita). Nada muda para quem usa por enquanto. O gerenciador vai para Go como um programa com o Wails v3: janela própria igual à de hoje (o mesmo desenho, os mesmos ícones, os botões bloqueados com o site desligado, sem barra de rolagem) e o ícone na bandeja, em ~11 MB num arquivo, contra os 121 MB (240 arquivos) de hoje. Medido no Windows 11: ~200 MB de memória com a janela aberta; fechada, a janela é destruída e o gerenciador parado fica em ~50 MB. A página pelo Edge (mais leve com a janela aberta, mas com cara de navegador) e o Fyne (o leitor de tela não vê nada) ficam de fora.
+
+## [2.42.17] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a leitura do JSON sem mutação viva** (#402, épico #374). Nada muda para quem usa. O teste de mutação da `respostas` vai de 72% para 100%. O erro do JSON que não abre (corpo cortado ou estragado) passa a ser montado relendo o corpo byte a byte, e é conferido com um gabarito gravado pelo próprio .NET (`testdata/sonda-json`, 50 corpos). Com isso, o Go também passou a dar a mesma mensagem do .NET em dois casos em que dava outra: o número cortado num `-`, `.` ou `e` ("Expected a digit") e a vírgula sobrando numa lista. Também entraram os testes de propriedade a mais com objetos e listas dentro e de texto com o tamanho máximo exato. Os pisos da mutação e da cobertura vão a 100% e 95,6%.
 
 ## [2.42.15] — 2026-10-26 · desenvolvimento
 

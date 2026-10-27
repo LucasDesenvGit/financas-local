@@ -18,7 +18,7 @@ cripto                  85.2
 erros                   93.3
 parametros              81.5
 relogio                 95.4
-respostas               80.3
+respostas               95.6
 saude                   54.5
 segredos                77.7
 servidor                88.8

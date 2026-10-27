@@ -1,7 +1,7 @@
-# 0052. Gerenciador em Go: ícone na bandeja e a "janela" como página local no navegador
+# 0052. Gerenciador em Go: ícone na bandeja e janela própria com o Wails
 
-- **Status:** Proposta (#276; a decisão é do time)
-- **Data:** 2026-10-25
+- **Status:** Aceita (#276; opção E escolhida pelo @JulioCezarSP em 27/10/2026)
+- **Data:** 2026-10-25 (proposta); 2026-10-27 (aceita)
 - **Relacionadas:** [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e [0033](0033-gerenciador-no-linux-com-avalonia.md) (o gerenciador de hoje, em C#, que esta substituiria); [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) (atualizar pelo develop); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi`); [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (o back-end em Go); épico #70
 
 ## Contexto
@@ -95,70 +95,42 @@ O que **não** deu para conferir:
 
 - **Manter em C# (opção a da #276).** Custo quase zero, mas contraria a decisão do time: o SDK do .NET continua na CI e nos scripts só por causa do gerenciador.
 - **Fyne (C).** Uma biblioteca só, que desenha a janela com OpenGL. **Descartada:** a UI Automation não viu nenhum texto nem botão na janela, então o leitor de tela não lê nada, e a acessibilidade é exigência do projeto. Também é a maior e precisa de cgo nos dois sistemas.
-- **Wails v3 (B e E).** **Em aberto, como opção da janela (abaixo).** Janela de verdade em HTML, desenhada pelo navegador do sistema. Acessível no Windows: a UI Automation vê todos os botões e links. Contra:
-  - é versão prévia (beta), com uma versão nova quase por dia;
-  - no Linux, depende do GTK 4 e do WebKitGTK 6.0 (até ~231 MB de pacotes, que a instalação teria de pedir) e precisa de cgo;
-  - no Windows, 188 MB de memória privada em 7 processos (WebView2): 4 vezes a do A e 12 vezes a do C# de hoje.
+- **Bandeja com a página pelo Edge (A e D).** O gerenciador serve a página em `127.0.0.1` e a abre com `msedge --app`. É o mais leve com a janela aberta (~100 MB, contra ~200 do Wails), não depende de biblioteca em versão prévia e, no Linux, não pede GTK nem WebKit. **Descartada:** a janela é do Edge, e não dá para tirar o menu do botão direito, o F12, o zoom, as extensões nem o agrupamento com o Edge na barra de tarefas; e é mais um servidor na máquina para proteger (porta sorteada, segredo na URL, `Host` conferido, CSRF). O gerenciador tem de ser um programa, igual ao de C#.
 - **Electron.** Levaria um Chromium e um Node em cada instalação e um terceiro runtime ao projeto: vai contra a instalação leve (revisão do épico).
 
-## Decisão (proposta)
+## Decisão
 
-O gerenciador passa para Go como **ícone na bandeja mais uma página com o visual do site**, nos dois sistemas.
+O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.dev/github.com/wailsapp/wails/v3) (protótipo E): ícone na bandeja e janela própria em HTML**, desenhada pelo navegador do sistema (WebView2 no Windows, WebKitGTK no Linux), nos dois sistemas.
 
-**Fica para o time escolher como a página aparece** (protótipos D e E, acima):
-- **Opção D, página pelo Edge:** o gerenciador serve a página em `127.0.0.1` e a abre com `msedge --app` (Chromium ou navegador padrão no Linux). É a mais leve e não depende de biblioteca em versão prévia, mas a janela é do Edge e há um servidor local para proteger (abaixo).
-- **Opção E, programa com Wails:** janela própria, sem porta aberta, e o leitor de tela vê a página direto. Custa ~2 vezes a memória do D com a janela aberta, depende do Wails v3, que é beta, e no Linux pede o GTK 4 e o WebKitGTK.
-
-**Recomendação: a opção E** (26/10/2026, depois do E acertado acima). *Julgamento próprio, com a preocupação do @JulioCezarSP:* o gerenciador tem de ser um programa, igual ao de C#, e não uma página do Edge. O D não consegue tirar o menu do botão direito, o F12, o zoom nem o agrupamento com o Edge. O E tira tudo isso, não abre porta na máquina (a seção "Segurança da página local" deixa de existir) e o leitor de tela vê a página direto. O preço:
-- ~200 MB de memória com a janela aberta, contra ~100 do D. **Parado na bandeja, depende de como fecha** (medido em 26/10/2026, duas rodadas):
-
-  | E parado na bandeja | Memória privada | *Working set* | Processos |
-  |---|---|---|---|
-  | Fechar só esconde a janela | 186–191 MB | ~350 MB | 7 (o WebView2 continua) |
-  | **Fechar destrói a janela** (a bandeja cria outra ao abrir) | **51 MB** | **33 MB** | 1 |
-  | Começa na bandeja, sem janela (ao iniciar com o sistema) | 48 MB | 17–18 MB | 1 |
-  | *C# de hoje, para comparar* | *14–15 MB* | *56–59 MB* | *1* |
-
-  Então a história faz **destruir ao fechar**: parado, o E reserva ~3 vezes a memória privada do C# (o runtime do Go e o Wails), mas usa menos memória física. Reabrir a janela pela bandeja depois de destruída *não foi conferido* (o teste não clica na bandeja);
-- o Wails v3 em beta (fixar a versão no `go.mod` e só subir com o teste de instalação passando);
-- no Linux, GTK 4 e WebKitGTK, que a instalação pede.
-
-A escolha final continua com o time; esta ADR só passa a "Aceita" depois dela.
-
-O resto vale para as duas. Os pontos marcados "(D)" só valem para a opção D.
-
-- **Bandeja:** [`fyne.io/systray`](https://github.com/fyne-io/systray), com o menu "Abrir o gerenciador", "Ligar o site", "Desligar o site", "Abrir o site" e "Sair". Sem cgo no Windows nem no Linux (conferido). No Linux, o ícone vai em PNG: o protótipo com ICO falhou ("unknown format").
-- **Página local:** o mesmo HTML, com o `styles.css` do site embutido (protótipo D), nos dois sistemas, com situação, ligar e desligar, cópia do banco, versão nova e "O que mudou". Os textos são os de hoje.
-  - Ela funciona com o site desligado, porque quem a serve é o gerenciador, e não o site.
-  - O teclado, o leitor de tela e o contraste são os do navegador de quem usa, com os mesmos padrões do site (WCAG 2.2, `CLAUDE.md`).
-- **Segurança da página local (D):** é um servidor novo na máquina, então:
-  - só em `127.0.0.1`, numa porta sorteada a cada partida;
-  - um segredo sorteado na URL que o gerenciador abre, trocado por um cookie `HttpOnly` e `SameSite=Strict`;
-  - o cabeçalho `Host` conferido, contra *DNS rebinding*;
-  - token anti-CSRF em toda ação.
-
-  *Julgamento:* o mesmo cuidado do site (ADR 0049), num servidor menor. Detalhar na história.
+- **Janela igual à de hoje** (tabela "O E com cara do gerenciador de hoje", acima): o desenho do `FormPrincipal.cs` (cores do `Tema.cs`, medidas do `Controles.cs`), os mesmos glifos, os mesmos bloqueios com o site desligado, tamanho fixo no centro, sem barra de rolagem (a janela acompanha o conteúdo), sem F12 nem menu do botão direito (`-tags production`). Os textos são os de hoje.
+  - No Linux, os glifos vão em SVG do lucide (os do site), porque a Segoe Fluent Icons é do Windows.
+  - O teclado, o leitor de tela e o contraste seguem os padrões do site (WCAG 2.2, `CLAUDE.md`).
+- **Fechar destrói a janela** (e os processos do WebView2); a bandeja cria outra ao abrir. Parado, o gerenciador fica em ~50 MB (medido acima). Ao iniciar com o sistema, começa sem janela.
+- **Sem porta aberta:** o HTML e as ações são servidos por dentro do programa (`AssetOptions.Handler` do Wails), e não por um servidor na máquina.
+- **Bandeja e instância única:** as do próprio Wails (`SystemTray`, `SingleInstanceOptions`), com o menu "Abrir o gerenciador", "Ligar o site", "Desligar o site", "Abrir o site" e "Sair". No Linux, o ícone vai em PNG.
+- **Ícone no `.exe`:** recurso `.syso` gerado do `icone.ico` de hoje (`wails3 generate syso` ou go-winres), na CI.
 - **Elevação no Windows:** o gerenciador roda sem elevação e lê a situação do serviço assim (conferido). Para ligar ou desligar, ele se reabre como administrador só para a ação (`ShellExecute` com `runas` e `-acao=ligar`, conferido).
-- **Instância única:** a segunda partida abre a página da primeira, e não sobe outra. *A detalhar:* arquivo com a porta na pasta do usuário, com trava.
 - **Atualização:** o GitHub Releases com SHA-256 (ADR 0028) e o develop na instalação de desenvolvimento (ADR 0040), em Go (`net/http` e `crypto/sha256`). Os domínios de saída são os mesmos de hoje.
-- **Um executável ou dois:** *a decidir na história.* Um só, `financas`, com o modo `gerenciador`, poupa ~9 MB e uma compilação. Dois deixam a API sem o código da bandeja.
+- **Wails em versão prévia:** a versão fica fixa no `go.mod` e só sobe num PR próprio, com o teste de instalação passando nos dois sistemas. Se o v3 for abandonado ou travar, a saída é a opção D (acima), que reaproveita a mesma página.
+- **Um executável ou dois:** *a decidir na história.* O gerenciador separado deixa a API sem o Wails e sem cgo; um só poupa uma compilação.
 
 ## Consequências
 
 - **Positivas:**
-  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~10 MB num arquivo só. A memória fica na mesma ordem da de hoje (acima);
-  - sem cgo, compila para os dois sistemas de qualquer um deles;
-  - no Linux, não pede GTK nem WebKit, e não precisa mais do Avalonia;
-  - a página é HTML, com os mesmos padrões de acessibilidade do site, num lugar só para Windows e Linux. Hoje são duas janelas, WinForms e Avalonia, que precisam ser mantidas iguais à mão;
+  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~11 MB num arquivo só;
+  - um programa de verdade, com a mesma cara do de hoje, e não uma página do navegador;
+  - nenhum servidor novo na máquina;
+  - a janela é HTML, num lugar só para Windows e Linux. Hoje são duas janelas, WinForms e Avalonia, que precisam ser mantidas iguais à mão;
   - o .NET pode sair de vez na #86.
 - **Negativas:**
-  - **não é uma janela de programa:** é o navegador. No Windows, o `msedge --app` abre uma janela própria, com o título da página, o que atenua o problema da aba perdida. No Linux, isso só vale com o Chromium, o Chrome ou o Edge instalados; sem eles, abre numa aba do navegador padrão. O ícone na bandeja é o caminho de volta;
-  - **memória com a janela aberta:** o Edge soma de 53 a 124 MB enquanto a página está aberta, perto do Wails. A diferença é que, fechada a janela, essa memória volta;
-  - **mais um servidor na máquina,** ainda que só local, com as proteções acima: mais código de segurança para manter e testar;
-  - **bandeja no GNOME:** depende do StatusNotifierItem. *Inferido, não testado:* o Ubuntu traz a extensão de AppIndicator ligada, e outras distribuições podem não trazer. Sem ela, o gerenciador abre pelo atalho do menu de aplicativos;
-  - **reescrever ~3.600 linhas,** inclusive a atualização com SHA-256, que é sensível;
-  - **não testado num Linux de verdade:** a bandeja no GNOME e no KDE e o Orca. Isso fica para a primeira história.
-- **Na prática (se aceita):**
-  - as histórias de implementação entram no épico #70, bloqueando a #86;
+  - **memória com a janela aberta:** ~200 MB (o WebView2), contra 14–15 MB de memória privada do C#. Fechada a janela, volta a ~50 MB;
+  - **Wails v3 é versão prévia**, com versões novas quase todo dia: risco de quebra ao subir e de mudança de API;
+  - **Linux pede mais coisa:** o GTK 4 e o WebKitGTK 6.0 (até ~231 MB de pacotes, que a instalação tem de pedir) e cgo para compilar. No Windows compila sem cgo (conferido);
+  - **não testado num Linux de verdade:** no WSLg, a página do Wails não carregou (é do ambiente, mas fica sem prova). A bandeja no GNOME e no KDE e o Orca também. Isso é a primeira história; se o Wails não servir no Linux, volta para cá;
+  - **bandeja no GNOME:** depende do StatusNotifierItem. *Inferido, não testado:* o Ubuntu traz a extensão de AppIndicator ligada, e outras distribuições podem não trazer;
+  - **reescrever ~3.600 linhas,** inclusive a atualização com SHA-256, que é sensível.
+- **Na prática:**
+  - as histórias de implementação entram no épico #70, bloqueando a #86, e a primeira prova o Wails num Linux de verdade;
   - a #84 e a #277 passam a gerar o gerenciador em Go no `.msi` e nos scripts;
+  - o Wails e o go-winres entram na lista de bibliotecas da [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), só para o gerenciador;
   - a 0028 e a 0033 ficam "Substituída por 0052" quando o gerenciador em Go for publicado.
