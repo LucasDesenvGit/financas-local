@@ -1,6 +1,6 @@
 # 0040. Atualizar pelo develop, pelo gerenciador, só na instalação de desenvolvimento
 
-- **Status:** Aceita
+- **Status:** Aceita (em parte substituída pela [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md): no gerenciador em Go, receber versões de desenvolvimento é uma escolha)
 - **Data:** 2026-10-20 (issue #154, parte 2)
 - **Relacionadas:** substitui em parte a [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) (o gerenciador só instala versão publicada; na instalação pelos scripts, não procura nem instala versões) e a [0033](0033-gerenciador-no-linux-com-avalonia.md) (o gerenciador do Linux não acessa a internet; a atualização só mostra o comando); ajusta a [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o gerenciador só consulta `releases/latest`); [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) (versão de desenvolvimento `X.Y.Z-dev.N`)
 

@@ -72,19 +72,24 @@ func TestTextoDaVersao(t *testing.T) {
 	casos := []struct {
 		nome, instalada       string
 		peloMsi, siteInformou bool
+		procura               string
 		esperado              string
 	}{
-		{"pelo .msi, site fora do ar", "2.42.21", true, false,
+		{"pelo .msi, site fora do ar", "2.42.21", true, false, "",
 			"Versão instalada: 2.42.21. Versão nova: clique em “Procurar versão nova”."},
-		{"de desenvolvimento", "2.42.21-dev.3", true, false,
+		{"de desenvolvimento", "2.42.21-dev.3", true, false, "",
 			"Versão de desenvolvimento instalada: 2.42.21-dev.3. Versão nova: clique em “Procurar versão nova”."},
-		{"site no ar: a versão vai na situação", "2.42.21", true, true, ""},
-		{"pelos scripts", "2.42.21", false, true, "Instalado pelos scripts: para atualizar o site, rode de novo o " +
+		{"fora do ar, depois de procurar", "2.42.21", true, false, "Você está na versão mais nova.",
+			"Versão instalada: 2.42.21. Você está na versão mais nova."},
+		{"site no ar: a versão vai na situação", "2.42.21", true, true, "", ""},
+		{"site no ar, depois de procurar: só o resultado", "2.42.21", true, true, "Tem versão nova: 2.43.0.",
+			"Tem versão nova: 2.43.0."},
+		{"pelos scripts", "2.42.21", false, true, "x", "Instalado pelos scripts: para atualizar o site, rode de novo o " +
 			"instalar-windows.cmd (ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o " +
 			"instalador: o .msi traz o banco e as chaves, e daí em diante a versão nova chega por aqui."},
 	}
 	for _, c := range casos {
-		if obtido := TextoDaVersao(c.instalada, c.peloMsi, c.siteInformou); obtido != c.esperado {
+		if obtido := TextoDaVersao(c.instalada, c.peloMsi, c.siteInformou, c.procura); obtido != c.esperado {
 			t.Errorf("%s: %q", c.nome, obtido)
 		}
 	}
@@ -212,8 +217,9 @@ func TestNomesDosBotoes(t *testing.T) {
 		t.Error("sobrou um & de atalho")
 	}
 	icones := regexp.MustCompile(`<span class="ico"[^>]*>`).FindAllString(html, -1)
-	// Abrir, Desligar, Reiniciar, Procurar, Salvar uma cópia, Ver os erros, Abrir o manual e Abrir a pasta (do aviso).
-	if len(icones) != 8 {
+	// Abrir, Desligar, Reiniciar; Atualizar, Procurar, O que mudou, Cancelar download; Salvar uma cópia, Ver os erros,
+	// Abrir o manual; Abrir a pasta e Atualizar (do aviso); Ver tudo e Ver a página da versão (das notas).
+	if len(icones) != 14 {
 		t.Errorf("%d ícones", len(icones))
 	}
 	for _, i := range icones {
@@ -236,12 +242,14 @@ func TestAtualizacao(t *testing.T) {
 	t.Parallel()
 	desligado := Tela{Situacao: Situacao{Estado: Desligado, Titulo: "O site está desligado.", Detalhe: "Clique"}, Versao: "v"}.Atualizacao()
 	if desligado != (Atualizacao{Ponto: "negativo", Titulo: "O site está desligado.", Detalhe: "Clique", AbrirPrimario: false,
-		LigarAcao: "ligar", LigarTexto: "Ligar", LigarTecla: "l", LigarHabilitado: true, LigarPrimario: true, Versao: "v"}) {
+		LigarAcao: "ligar", LigarTexto: "Ligar", LigarTecla: "l", LigarHabilitado: true, LigarPrimario: true, Versao: "v",
+		ProcurarHabilitado: true, AtualizarTexto: "Atualizar para "}) {
 		t.Errorf("desligado: %+v", desligado)
 	}
 	noAr := Tela{Situacao: Situacao{Estado: NoAr}}.Atualizacao()
 	if noAr != (Atualizacao{Ponto: "positivo", AbrirHabilitado: true, AbrirPrimario: true, LigarAcao: "desligar",
-		LigarTexto: "Desligar", LigarTecla: "d", LigarHabilitado: true, ReiniciarHabilitado: true, PaginasDoSite: true}) {
+		LigarTexto: "Desligar", LigarTecla: "d", LigarHabilitado: true, ReiniciarHabilitado: true, PaginasDoSite: true,
+		ProcurarHabilitado: true, AtualizarTexto: "Atualizar para "}) {
 		t.Errorf("no ar: %+v", noAr)
 	}
 }
@@ -250,11 +258,11 @@ func TestAtualizacao(t *testing.T) {
 func TestVaziosEscondidos(t *testing.T) {
 	t.Parallel()
 	html := escrever(t, Tela{Situacao: Verificando})
-	if !strings.Contains(html, `id="detalhe" hidden>`) || !strings.Contains(html, `id="versao" hidden>`) {
+	if !strings.Contains(html, `id="detalhe" hidden>`) || !strings.Contains(html, `id="versao" role="status" aria-live="polite" hidden>`) {
 		t.Error("vazios à mostra")
 	}
 	cheio := escrever(t, Tela{Situacao: Situacao{Detalhe: "d"}, Versao: "v"})
-	if !strings.Contains(cheio, `id="detalhe">d<`) || !strings.Contains(cheio, `id="versao">v<`) {
+	if !strings.Contains(cheio, `id="detalhe">d<`) || !strings.Contains(cheio, `id="versao" role="status" aria-live="polite">v<`) {
 		t.Error("cheios escondidos")
 	}
 }
@@ -296,5 +304,85 @@ func TestDialogoDoAviso(t *testing.T) {
 		if !strings.Contains(html, parte) {
 			t.Errorf("sem %s", parte)
 		}
+	}
+}
+
+// Regra: procurar fica bloqueado procurando ou baixando; a versão nova e o download chegam na atualização da janela.
+func TestProcuraNaAtualizacao(t *testing.T) {
+	t.Parallel()
+	for _, p := range []Procura{{Procurando: true}, {Baixando: true}} {
+		if (Tela{Procura: p}).ProcurarHabilitado() {
+			t.Errorf("%+v: procurar liberado", p)
+		}
+	}
+	a := Tela{Procura: Procura{Nova: "2.45.0", Baixando: true, Progresso: 42}}.Atualizacao()
+	if a.Nova != "2.45.0" || a.AtualizarTexto != "Atualizar para 2.45.0" || !a.Baixando || a.Progresso != 42 || a.ProcurarHabilitado {
+		t.Errorf("%+v", a)
+	}
+}
+
+// Regra: as frases depois de procurar, as do C#.
+func TestResultadoDaProcura(t *testing.T) {
+	t.Parallel()
+	casos := map[[2]bool]string{
+		{true, true}:   "Tem versão de desenvolvimento nova: 2.45.0-dev.3.",
+		{true, false}:  "Tem versão nova: 2.45.0-dev.3.",
+		{false, true}:  "Você está na última versão de desenvolvimento.",
+		{false, false}: "Você está na versão mais nova.",
+	}
+	for c, quer := range casos {
+		if obtido := ResultadoDaProcura(c[0], c[1], "2.45.0-dev.3"); obtido != quer {
+			t.Errorf("%v: %q", c, obtido)
+		}
+	}
+}
+
+// Regra: a pergunta antes de atualizar, com o texto do C#.
+func TestConfirmarAtualizacao(t *testing.T) {
+	t.Parallel()
+	a := ConfirmarAtualizacao("2.45.0")
+	if a.Tipo != "pergunta" || a.Titulo != "Atualizar o Finanças Local para a versão 2.45.0?" ||
+		!strings.HasPrefix(a.Mensagem, "O instalador abre em seguida") || !strings.Contains(a.Mensagem, `dados\backups`) {
+		t.Errorf("%+v", a)
+	}
+}
+
+// Regra: pelo .msi, sem versão nova, "Atualizar" e "O que mudou" ficam escondidos e o download também; com versão
+// nova baixando, aparecem, com "Atualizar" bloqueado e a barra no ponto do download.
+func TestCartaoDaVersao(t *testing.T) {
+	t.Parallel()
+	sem := escrever(t, Tela{PeloMsi: true})
+	for _, parte := range []string{`id="atualizar" class="botao primario" type="button" accesskey="t" hidden>`,
+		`id="notas" class="botao discreto" type="button" accesskey="q" hidden>`, `id="baixando" hidden>`} {
+		if !strings.Contains(sem, parte) {
+			t.Errorf("sem versão nova, falta %s", parte)
+		}
+	}
+	com := escrever(t, Tela{PeloMsi: true, Procura: Procura{Nova: "2.45.0", Baixando: true, Progresso: 30}})
+	for _, parte := range []string{`accesskey="t" disabled>`, `Atualizar para 2.45.0</span>`,
+		`id="notas" class="botao discreto" type="button" accesskey="q">`, `id="baixando">`, `value="30"`,
+		`data-acao="procurar" accesskey="p" disabled>`} {
+		if !strings.Contains(com, parte) {
+			t.Errorf("baixando, falta %s", parte)
+		}
+	}
+	if scripts := escrever(t, Tela{}); strings.Contains(scripts, `id="atualizar"`) || strings.Contains(scripts, `id="baixando"`) ||
+		strings.Contains(scripts, "Receber versões de desenvolvimento") {
+		t.Error("pelos scripts, com a versão nova")
+	}
+}
+
+// Regra: "Receber versões de desenvolvimento" é um interruptor com o ⓘ que abre a explicação (Disclosure).
+func TestInterruptorDeDesenvolvimento(t *testing.T) {
+	t.Parallel()
+	ligado := escrever(t, Tela{PeloMsi: true, ReceberDesenvolvimento: true})
+	for _, parte := range []string{`data-preferencia="desenvolvimento" checked>Receber versões de desenvolvimento`,
+		`class="info" type="button" aria-expanded="false" aria-controls="info-desenvolvimento"`, `id="info-desenvolvimento" hidden>`} {
+		if !strings.Contains(ligado, parte) {
+			t.Errorf("falta %s", parte)
+		}
+	}
+	if strings.Contains(escrever(t, Tela{PeloMsi: true}), `data-preferencia="desenvolvimento" checked`) {
+		t.Error("ligado sem pedir")
 	}
 }

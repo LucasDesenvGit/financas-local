@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.45.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: versão nova pelo GitHub** (#420, épico #70, ADRs 0028 e 0053). Nada muda para quem usa: o gerenciador instalado continua o de C#. No gerenciador em Go instalado pelo `.msi`, "Procurar versão nova" passa a funcionar (também ao abrir, se a preferência estiver ligada): com versão nova, aparecem "Atualizar para X", que pergunta antes, baixa com a barra de progresso e "Cancelar download", confere o SHA-256 e abre o instalador, e "O que mudou", com as notas formatadas e primeiro só o que mudou desde a sua versão. Em Mais opções, o interruptor novo **"Receber versões de desenvolvimento"**, desligado por padrão, faz a procura olhar as versões geradas do develop; um ⓘ explica que elas são menos testadas e que, desligando, só vem versão publicada mais nova que a instalada. "Atualizar pelo develop" e "Atualizar o gerenciador e reabrir" ficam para a #428.
+
 ## [2.44.1] — 2026-10-28 · desenvolvimento
 
 ### Correções
