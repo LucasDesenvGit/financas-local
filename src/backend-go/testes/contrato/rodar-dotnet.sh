@@ -27,9 +27,10 @@
 #   src/backend-go/testes/contrato/rodar-dotnet.sh --go         # PREFIXOS_GO = os assuntos de assuntos-no-go.txt
 #                       # (é o que a CI roda; sem assunto ligado, não faz nada)
 #   src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho # #75: o Go sozinho, com o login dele, sem o .NET:
-#                       # roda só os arquivos de CONTRATO_SOMENTE (padrão: 00-auth,01-parametros,17-erros), os que o Go já atende sem o
-#                       # .NET na frente. Não precisa do .NET, da libfaketime nem do unshare (o Go tem o relógio de
-#                       # teste e o login não sai para a rede); roda também no Git Bash do Windows.
+#                       # roda só os arquivos de CONTRATO_SOMENTE (padrão: 00-auth,01-parametros,02-cambio,03-cripto,17-erros), os que
+#                       # o Go já atende sem o .NET na frente. Não precisa do .NET, da libfaketime nem do unshare: o Go tem o relógio
+#                       # de teste, e a saída para a internet (PTAX, Mercado Bitcoin) vai para um proxy numa porta fechada, como
+#                       # sem rede (#416). Roda também no Git Bash do Windows.
 #
 # Variáveis opcionais: PREFIXOS_GO (vazio: o .NET responde tudo, menos as rotas
 # que só existem no Go), CONFIGURACAO (Release), DOTNET (dotnet), PORTA (5451),
@@ -140,13 +141,16 @@ banco_db="$pasta/dados/sql/FinancasLocal.db"
 # #75: o Go sozinho, com o login dele e o relógio de teste, sobre o mesmo banco fictício. O .NET não sobe, então as
 # rotinas de partida do Program.cs não rodam: vale para os assuntos que não dependem delas (o login).
 if [[ -n "$go_sozinho" ]]; then
+    # Na mesma ordem da rodada completa: os casos do câmbio, sem internet, deixam avisos abertos que o 17-erros conta (#416).
+    somente="${CONTRATO_SOMENTE:-00-auth,01-parametros,02-cambio,03-cripto,17-erros}"
     exe="$(cd "$pasta_go" && go env GOEXE)" # ".exe" no Windows
     versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.props" | head -n1)"
     (cd "$pasta_go" &&
         go test -c -o "$pasta/contrato.test$exe" ./testes/contrato &&
         CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao"             -o "$pasta/financas-go$exe" ./cmd/financas)
     url="https://127.0.0.1:$porta"
-    "$pasta/financas-go$exe" -pasta "$pasta" -endereco "127.0.0.1:$porta" -certificado-temporario         -wwwroot "$pasta_go/internal/servidor/testdata/wwwroot" -banco "$banco_db" -chaves "$pasta/dados/chaves"         -inicio-do-relogio "$inicio" >"$pasta/go.log" 2>&1 &
+    # Sem rede, como o .NET no unshare: o http.Client do Go segue o HTTPS_PROXY, e 127.0.0.1 (o teste) nunca passa por ele.
+    HTTPS_PROXY=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY=     "$pasta/financas-go$exe" -pasta "$pasta" -endereco "127.0.0.1:$porta" -certificado-temporario         -wwwroot "$pasta_go/internal/servidor/testdata/wwwroot" -banco "$banco_db" -chaves "$pasta/dados/chaves"         -inicio-do-relogio "$inicio" >"$pasta/go.log" 2>&1 &
     pid=$!
     parar_go() { kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; limpar; }
     trap parar_go EXIT
@@ -156,10 +160,10 @@ if [[ -n "$go_sozinho" ]]; then
         sleep 0.5
     done
     grep -q 'escutando' "$pasta/go.log" || { echo "O Go não subiu em 30 s. Log:"; cat "$pasta/go.log"; exit 1; }
-    echo "Go sozinho, atendendo: ${CONTRATO_SOMENTE:-00-auth,01-parametros,17-erros}"
+    echo "Go sozinho, atendendo: $somente"
     cd "$pasta_contrato"
     status=0
-    "$pasta/contrato.test$exe" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" -banco="$banco_db"         -inicio="$inicio" -somente="${CONTRATO_SOMENTE:-00-auth,01-parametros,17-erros}" || status=$?
+    "$pasta/contrato.test$exe" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" -banco="$banco_db"         -inicio="$inicio" -somente="$somente" || status=$?
     if [[ $status -ne 0 ]]; then echo "--- Fim do log do Go ---"; tail -n 60 "$pasta/go.log"; fi
     exit $status
 fi

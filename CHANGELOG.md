@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.42.19] — 2026-10-27 · desenvolvimento
+
+### Publicação e documentação
+- **Contrato do Go sozinho de volta ao verde, agora com o câmbio e a cripto** (#416, épico #70). Nada muda para quem usa. Desde o câmbio no Go (#392), o `17-erros` falhava no `--go-sozinho`: na rodada completa, os casos do câmbio rodam antes e, sem internet, deixam 4 avisos abertos que entram na contagem. O modo sozinho passa a rodar também o `02-cambio` e o `03-cripto`, na mesma ordem, e sobe o Go sem saída para a internet (`HTTPS_PROXY` numa porta fechada, sem precisar do `unshare`): os 123 casos passam, inclusive no Git Bash do Windows.
+
 ## [2.42.18] — 2026-10-27 · desenvolvimento
 
 ### Publicação e documentação
