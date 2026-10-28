@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.43.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: a janela e a bandeja, no Windows** (#418, épico #70, ADR 0052). Nada muda para quem usa por enquanto: o gerenciador em C# continua sendo o instalado. Em `src/gerenciador-go/`, o esqueleto do gerenciador novo com o Wails v3: a janela igual à de hoje (os mesmos cartões, textos, ícones e botões bloqueados com o site desligado, sem barra de rolagem, sem F12 nem menu do botão direito), o ícone na bandeja com a situação no topo do menu, uma cópia só (abrir de novo mostra a janela da que já está aberta) e `--bandeja` para começar sem janela. Fechar destrói a janela: parado na bandeja, ele fica em ~51 MB (com a janela, ~200 MB). A situação do site, ligar e desligar e a cópia do banco vêm na #419; a versão nova, na #420; o Linux, na #417.
+
 ## [2.42.20] — 2026-10-27 · desenvolvimento
 
 ### Publicação e documentação

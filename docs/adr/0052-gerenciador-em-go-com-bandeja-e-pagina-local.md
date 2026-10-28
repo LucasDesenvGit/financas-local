@@ -112,7 +112,13 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
 - **Elevação no Windows:** o gerenciador roda sem elevação e lê a situação do serviço assim (conferido). Para ligar ou desligar, ele se reabre como administrador só para a ação (`ShellExecute` com `runas` e `-acao=ligar`, conferido).
 - **Atualização:** o GitHub Releases com SHA-256 (ADR 0028) e o develop na instalação de desenvolvimento (ADR 0040), em Go (`net/http` e `crypto/sha256`). Os domínios de saída são os mesmos de hoje.
 - **Wails em versão prévia:** a versão fica fixa no `go.mod` e só sobe num PR próprio, com o teste de instalação passando nos dois sistemas. Se o v3 for abandonado ou travar, a saída é a opção D (acima), que reaproveita a mesma página.
-- **Um executável ou dois:** *a decidir na história.* O gerenciador separado deixa a API sem o Wails e sem cgo; um só poupa uma compilação.
+- **Um executável ou dois: dois** (decidido na #418). O gerenciador é um programa à parte, num módulo Go próprio, em `src/gerenciador-go/`, com o `go.mod` dele:
+  - a API continua sem o Wails e sem cgo, e o `go.mod` dela sem as dependências do Wails;
+  - o `go vet ./...` e o `go test ./...` da API no Linux da CI não precisam do GTK 4 nem do WebKitGTK;
+  - o custo é uma compilação a mais, e o job de Go da CI passa a cobrir também esse módulo (PR `ci:` à parte).
+  A montagem da janela fica em `internal/tela`, sem o Wails, e é testada sem janela.
+- **Windows primeiro:** a pedido do @JulioCezarSP (27/10/2026), a #418 começa pelo Windows sem esperar o teste no Linux (#417). A #417 passou a bloquear a #86 (remover o .NET); se o Wails não servir no Linux, esta ADR volta para decisão.
+- **Cache do WebView2:** em `%LOCALAPPDATA%\FinancasLocal\Gerenciador\WebView2`. A pasta de dados do site (`%ProgramData%\FinancasLocal\dados`) é do serviço, e o gerenciador roda sem administrador.
 
 ## Consequências
 
