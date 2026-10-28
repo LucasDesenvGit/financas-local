@@ -52,6 +52,7 @@ func main() {
 	maisOpcoes := flag.Bool("mais-opcoes", false, "abre com \"Mais opções\" aberto")
 	flag.Parse()
 
+	permitirPrimeiroPlano()
 	g := novoGerenciador(instalacao.Atual())
 	g.maisOpcoes = *maisOpcoes
 	if *mostrar != "" {

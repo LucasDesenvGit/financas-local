@@ -1,6 +1,7 @@
 package tela
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -148,7 +149,7 @@ func TestPaginaComOSiteNoAr(t *testing.T) {
 	if tag := botao(t, html, "Abrir o site"); !strings.Contains(tag, "primario") {
 		t.Errorf("Abrir o site sem destaque: %s", tag)
 	}
-	if strings.Contains(html, ">Ligar<") || strings.Contains(html, `aria-describedby="`) ||
+	if strings.Contains(html, ">Ligar<") || strings.Contains(html, `aria-describedby="dica-`) ||
 		strings.Count(html, `role="tooltip" hidden>`+DicaSiteDesligado) != 2 {
 		t.Error("dica à mostra ou Ligar com o site no ar")
 	}
@@ -211,8 +212,8 @@ func TestNomesDosBotoes(t *testing.T) {
 		t.Error("sobrou um & de atalho")
 	}
 	icones := regexp.MustCompile(`<span class="ico"[^>]*>`).FindAllString(html, -1)
-	// Abrir, Desligar, Reiniciar, Procurar, Salvar uma cópia, Ver os erros e Abrir o manual.
-	if len(icones) != 7 {
+	// Abrir, Desligar, Reiniciar, Procurar, Salvar uma cópia, Ver os erros, Abrir o manual e Abrir a pasta (do aviso).
+	if len(icones) != 8 {
 		t.Errorf("%d ícones", len(icones))
 	}
 	for _, i := range icones {
@@ -255,5 +256,45 @@ func TestVaziosEscondidos(t *testing.T) {
 	cheio := escrever(t, Tela{Situacao: Situacao{Detalhe: "d"}, Versao: "v"})
 	if !strings.Contains(cheio, `id="detalhe">d<`) || !strings.Contains(cheio, `id="versao">v<`) {
 		t.Error("cheios escondidos")
+	}
+}
+
+// Regra: o aviso da cópia salva traz o arquivo e a pasta à parte (com "Abrir a pasta"); cancelado e erro são alertas,
+// com os textos do C#.
+func TestAvisoDaCopia(t *testing.T) {
+	t.Parallel()
+	destino := filepath.Join(t.TempDir(), "FinancasLocal-2026-10-28.db")
+	casos := []struct {
+		feito, cancelado bool
+		quer             Aviso
+	}{
+		{true, false, Aviso{Tipo: "sucesso", Titulo: "Cópia do banco salva",
+			Mensagem: "Ela tem todos os seus dados financeiros: guarde em lugar seguro.",
+			Arquivo:  "FinancasLocal-2026-10-28.db", Pasta: filepath.Dir(destino)}},
+		{false, true, Aviso{Tipo: "alerta", Titulo: "Cópia do banco", Mensagem: "Cancelado: nenhuma cópia foi feita."}},
+		{false, false, Aviso{Tipo: "alerta", Titulo: "Cópia do banco",
+			Mensagem: "Não deu para copiar o banco. Confira se a pasta escolhida aceita gravação."}},
+	}
+	for _, c := range casos {
+		if obtido := AvisoDaCopia(c.feito, c.cancelado, destino); obtido != c.quer {
+			t.Errorf("%v %v: %+v", c.feito, c.cancelado, obtido)
+		}
+	}
+	// Na raiz do disco, a pasta fica com a barra (C:\ e não C:).
+	raiz := filepath.VolumeName(destino) + string(filepath.Separator)
+	if obtido := AvisoDaCopia(true, false, raiz+"copia.db"); obtido.Pasta != raiz {
+		t.Errorf("raiz: %q", obtido.Pasta)
+	}
+}
+
+// Regra: o diálogo do aviso está na página, com título, ícone do projeto e os dois botões.
+func TestDialogoDoAviso(t *testing.T) {
+	t.Parallel()
+	html := escrever(t, Tela{})
+	for _, parte := range []string{`<dialog id="aviso" class="aviso" aria-labelledby="aviso-titulo"`, `src="/icone.png"`,
+		`id="aviso-abrir-pasta"`, `Abrir a pasta</button>`, `id="aviso-ok" class="botao primario"`} {
+		if !strings.Contains(html, parte) {
+			t.Errorf("sem %s", parte)
+		}
 	}
 }

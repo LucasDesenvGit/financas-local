@@ -9,6 +9,8 @@
   --primaria-suave: #2a2950; --positivo: #7fd9ad; --negativo: #ff9db0; --alerta: #f3c56f; color-scheme: dark; }
 /* Sem barra de rolagem: a janela cresce e encolhe com o conteúdo, como o AutoSize do C# (o script no fim da página). */
 html, body { overflow: hidden; }
+/* Escondido é escondido, mesmo nos elementos que o CSS põe em flex ou grid. */
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; user-select: none; }
 .raiz { width: 480px; }
 .cabecalho { height: 72px; display: flex; align-items: center; gap: 14px; padding: 0 18px;
@@ -57,4 +59,22 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
 .dica { display: none; position: absolute; z-index: 1; left: 0; top: calc(100% - 4px); width: max-content; max-width: 300px;
   padding: 5px 8px; border-radius: 6px; background: var(--texto); color: var(--fundo); font-size: 12px; }
 .com-dica:hover .dica { display: block; }
-.dica[hidden] { display: none !important; }
+/* O aviso (resultado da cópia do banco) no desenho do gerenciador: a faixa da marca com o cofrinho, o cartão e os
+   botões de sempre. */
+.aviso { width: 400px; max-width: calc(100vw - 48px); padding: 0; border: 1px solid var(--linha); border-radius: 12px;
+  background: var(--superficie); color: var(--texto); box-shadow: 0 12px 32px rgb(0 0 0 / 28%); }
+.aviso::backdrop { background: rgb(0 0 0 / 40%); }
+.aviso-cabecalho { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--marca-texto);
+  background: linear-gradient(135deg, var(--marca-inicio), var(--marca-fim)); }
+.aviso-cabecalho .moldura { width: 30px; height: 30px; border-radius: 8px; background: rgb(255 255 255 / 59%); display: grid; place-items: center; }
+.aviso-cabecalho img { width: 26px; height: 26px; display: block; }
+.aviso-cabecalho strong { font: 600 14px "Segoe UI Semibold", "Segoe UI", sans-serif; }
+.aviso-corpo { display: flex; gap: 14px; padding: 16px 16px 6px; }
+.aviso-simbolo { font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 24px; line-height: 1; margin-top: 1px; flex: none; }
+.aviso-simbolo.sucesso { color: var(--positivo); } .aviso-simbolo.alerta { color: var(--alerta); }
+.aviso h2 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.aviso dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0 0 8px; }
+.aviso dt { color: var(--texto-suave); }
+.aviso dd { margin: 0; overflow-wrap: anywhere; user-select: text; }
+.aviso p { margin: 0; color: var(--texto-suave); }
+.aviso-botoes { display: flex; justify-content: flex-end; padding: 10px 8px 6px 16px; }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -61,6 +62,7 @@ type gerenciador struct {
 	ocupado     bool // ligando, desligando ou reiniciando
 	consultando bool
 	maisOpcoes  bool
+	ultimaCopia string // o arquivo da última cópia do banco, para "Abrir a pasta"
 
 	bandeja      *application.SystemTray
 	itemSituacao *application.MenuItem
@@ -191,7 +193,8 @@ func (g *gerenciador) acaoNoServico(acao string) {
 	}
 }
 
-func (g *gerenciador) salvarCopia() {
+// salvarCopia pergunta onde salvar, copia elevado e devolve o aviso para a janela mostrar (nil: escolha cancelada).
+func (g *gerenciador) salvarCopia() *tela.Aviso {
 	opcoes := &application.SaveFileDialogOptions{
 		Title:     "Salvar uma cópia do banco",
 		Filename:  "FinancasLocal-" + time.Now().Format("2006-01-02") + ".db",
@@ -205,18 +208,30 @@ func (g *gerenciador) salvarCopia() {
 	g.trava.Unlock()
 	destino, err := g.app.Dialog.SaveFileWithOptions(opcoes).PromptForSingleSelection()
 	if err != nil || destino == "" {
+		return nil
+	}
+	resultado := elevacao.Executar("--backup", destino)
+	if resultado == elevacao.Feito {
+		g.trava.Lock()
+		g.ultimaCopia = destino
+		g.trava.Unlock()
+	}
+	aviso := tela.AvisoDaCopia(resultado == elevacao.Feito, resultado == elevacao.Cancelado, destino)
+	return &aviso
+}
+
+// abrirPasta abre o Explorer com a última cópia selecionada. O caminho é o que o próprio gerenciador salvou, nunca
+// um que venha da página.
+func (g *gerenciador) abrirPasta() {
+	g.trava.Lock()
+	arquivo := g.ultimaCopia
+	g.trava.Unlock()
+	if arquivo == "" {
 		return
 	}
-	var aviso *application.MessageDialog
-	switch elevacao.Executar("--backup", destino) {
-	case elevacao.Feito:
-		aviso = g.app.Dialog.Info().SetMessage("Cópia salva em " + destino + ". Ela tem todos os seus dados financeiros: guarde em lugar seguro.")
-	case elevacao.Cancelado:
-		aviso = g.app.Dialog.Warning().SetMessage("Cancelado: nenhuma cópia foi feita.")
-	default:
-		aviso = g.app.Dialog.Warning().SetMessage("Não deu para copiar o banco. Confira se a pasta escolhida aceita gravação.")
+	if err := exec.Command("explorer.exe", "/select,"+arquivo).Start(); err != nil {
+		log.Print(err)
 	}
-	aviso.SetTitle("Cópia do banco").Show()
 }
 
 func (g *gerenciador) abrirNoNavegador(endereco string) {
@@ -262,7 +277,14 @@ func (g *gerenciador) rotas() http.Handler {
 			// O aviso do UAC e a espera não seguram a página: a situação nova chega pelo GET /estado.
 			go g.acaoNoServico(acao)
 		case "copia":
-			go g.salvarCopia()
+			// Espera o diálogo de salvar e o UAC: a resposta é o aviso que a janela mostra, no desenho dela.
+			if aviso := g.salvarCopia(); aviso != nil {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(aviso)
+				return
+			}
+		case "abrir-pasta":
+			g.abrirPasta()
 		case "baixar-msi":
 			g.abrirNoNavegador(releases)
 		case "procurar":
@@ -349,6 +371,12 @@ func (g *gerenciador) abrir() {
 		BackgroundColour:           fundo,
 	})
 	j.RegisterHook(events.Common.WindowClosing, func(*application.WindowEvent) { g.fechou(j) })
+	// A janela nova também vem para a frente (e com o foco), e não só a que já existia.
+	var desligar func()
+	desligar = j.OnWindowEvent(events.Common.WindowShow, func(*application.WindowEvent) {
+		desligar()
+		j.Focus()
+	})
 	g.janela = j
 }
 

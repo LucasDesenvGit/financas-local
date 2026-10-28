@@ -43,6 +43,23 @@
     </section>
   </main>
 </div>
+<!-- O resultado da cópia do banco, no desenho do gerenciador (e não a caixa do Windows): modal, prende o foco e
+     fecha com Esc (showModal). -->
+<dialog id="aviso" class="aviso" aria-labelledby="aviso-titulo" aria-describedby="aviso-mensagem">
+  <div class="aviso-cabecalho"><span class="moldura"><img src="/icone.png" alt=""></span><strong>Finanças Local</strong></div>
+  <div class="aviso-corpo">
+    <span id="aviso-simbolo-sucesso" class="aviso-simbolo sucesso" aria-hidden="true">&#xE930;</span><span id="aviso-simbolo-alerta" class="aviso-simbolo alerta" aria-hidden="true" hidden>&#xE7BA;</span>
+    <div>
+      <h2 id="aviso-titulo"></h2>
+      <dl id="aviso-local" hidden><dt>Arquivo</dt><dd id="aviso-arquivo"></dd><dt>Pasta</dt><dd id="aviso-pasta"></dd></dl>
+      <p id="aviso-mensagem"></p>
+    </div>
+  </div>
+  <div class="aviso-botoes">
+    <button id="aviso-abrir-pasta" class="botao" type="button" hidden>{{icone "pasta"}}Abrir a pasta</button>
+    <button id="aviso-ok" class="botao primario" type="button">OK</button>
+  </div>
+</dialog>
 <script>
   var $ = function (id) { return document.getElementById(id); };
   // "Mais opções" abre e fecha o painel (padrão Disclosure da WAI-ARIA, como o _mais do C#).
@@ -60,7 +77,27 @@
     var b = e.target.closest('button:not(:disabled)');
     if (!b) return;
     if (b.dataset.pagina !== undefined) fetch('/abrir?pagina=' + encodeURIComponent(b.dataset.pagina), { method: 'POST' });
+    else if (b.dataset.acao === 'copia') fetch('/acao/copia', { method: 'POST' }).then(function (r) {
+      if (r.status === 200) return r.json().then(mostrarAviso);
+    });
     else if (b.dataset.acao) fetch('/acao/' + b.dataset.acao, { method: 'POST' }).then(atualizar);
+  });
+  var aviso = $('aviso');
+  function mostrarAviso(a) {
+    ['sucesso', 'alerta'].forEach(function (t) { $('aviso-simbolo-' + t).hidden = a.tipo !== t; });
+    $('aviso-titulo').textContent = a.titulo;
+    $('aviso-mensagem').textContent = a.mensagem;
+    $('aviso-local').hidden = !a.arquivo;
+    $('aviso-arquivo').textContent = a.arquivo || '';
+    $('aviso-pasta').textContent = a.pasta || '';
+    $('aviso-abrir-pasta').hidden = !a.arquivo;
+    aviso.showModal();
+    $('aviso-ok').focus();
+  }
+  $('aviso-ok').addEventListener('click', function () { aviso.close(); });
+  $('aviso-abrir-pasta').addEventListener('click', function () {
+    fetch('/acao/abrir-pasta', { method: 'POST' });
+    aviso.close();
   });
   // As preferências valem na hora (por isso são interruptores, ADR 0032).
   document.addEventListener('change', function (e) {
