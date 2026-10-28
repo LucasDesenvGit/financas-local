@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.43.1] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o gerenciador em Go também é testado** (#418, ADR 0052). Nada muda para quem usa. O job novo "gerenciador em Go" roda num Windows quando o `src/gerenciador-go/` muda: `gofmt`, `go vet`, os testes, a compilação sem cgo e o `govulncheck`. No Linux, ele entra com a #417.
+
 ## [2.43.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades

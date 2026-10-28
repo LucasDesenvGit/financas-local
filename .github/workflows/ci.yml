@@ -66,6 +66,7 @@ jobs:
       playwright: ${{ steps.afetados.outputs.playwright }}
       jest: ${{ steps.afetados.outputs.jest }}
       go: ${{ steps.go.outputs.go }}
+      gerenciador: ${{ steps.gerenciador.outputs.gerenciador }}
       contrato: ${{ steps.contrato.outputs.contrato }}
     steps:
       - uses: actions/checkout@v4
@@ -93,6 +94,20 @@ jobs:
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
             echo "Nada do que o Go lê mudou: o job Go fica de fora." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # #418 (ADR 0052): o gerenciador em Go é um módulo à parte; o job dele roda só quando ele muda.
+      - name: Gerenciador em Go afetado
+        id: gerenciador
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "gerenciador=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/gerenciador-go/|\.github/workflows/ci\.yml$)'; then
+            echo "gerenciador=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gerenciador=false" >> "$GITHUB_OUTPUT"
+            echo "O gerenciador em Go não mudou: o job dele fica de fora." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # #72: o contrato roda quando muda o back-end (.NET ou Go), o esquema ou o que monta o banco do contrato.
@@ -222,6 +237,47 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build ./...
 
       # Falha só se o código chama uma função com vulnerabilidade conhecida (não basta o módulo estar no go.mod).
+      - name: Vulnerabilidades (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # #418 (ADR 0052): o gerenciador em Go (src/gerenciador-go), por enquanto só no Windows: no Linux, o Wails pede cgo,
+  # GTK 4 e WebKitGTK, que entram com a #417. No Windows ele compila sem cgo, então o teste roda sem o -race.
+  gerenciador-go:
+    name: gerenciador em Go
+    needs: mudancas
+    if: needs.mudancas.outputs.gerenciador == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+        working-directory: src/gerenciador-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/gerenciador-go/go.mod
+          cache-dependency-path: src/gerenciador-go/go.sum
+
+      - name: Formatação (gofmt)
+        run: |
+          fora=$(gofmt -l .)
+          if [ -n "$fora" ]; then echo "Arquivos fora do gofmt (rode gofmt -w .):"; echo "$fora"; exit 1; fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes
+        run: go test ./...
+
+      # Como o README do módulo: sem cgo, sem F12 nem menu do botão direito (-tags production).
+      - name: Compila
+        env:
+          CGO_ENABLED: '0'
+        run: go build -tags production -trimpath -ldflags "-s -w -H=windowsgui" -o gerenciador-go.exe .
+
       - name: Vulnerabilidades (govulncheck)
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
