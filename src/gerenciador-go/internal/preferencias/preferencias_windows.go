@@ -77,6 +77,35 @@ func DefinirProcurarAoAbrir(ligado bool) error {
 	return k.SetDWordValue("ProcurarAoAbrir", valor)
 }
 
+// ReceberDesenvolvimento: "Procurar versão nova" olha o pré-lançamento "desenvolvimento" (ADR 0040). Sem a escolha
+// gravada, vale o tipo da versão instalada (padrao), como era antes do interruptor.
+func ReceberDesenvolvimento(padrao bool) bool {
+	k, err := registry.OpenKey(registry.CURRENT_USER, chave, registry.QUERY_VALUE)
+	if err != nil {
+		return padrao
+	}
+	defer k.Close()
+	v, _, err := k.GetIntegerValue("ReceberDesenvolvimento")
+	if err != nil {
+		return padrao
+	}
+	return v != 0
+}
+
+// DefinirReceberDesenvolvimento grava a escolha (DWORD 1 ou 0).
+func DefinirReceberDesenvolvimento(ligado bool) error {
+	k, _, err := registry.CreateKey(registry.CURRENT_USER, chave, registry.SET_VALUE)
+	if err != nil {
+		return err
+	}
+	defer k.Close()
+	valor := uint32(0)
+	if ligado {
+		valor = 1
+	}
+	return k.SetDWordValue("ReceberDesenvolvimento", valor)
+}
+
 // Escuro: o Windows em modo escuro de aplicativos (HKCU …\Personalize\AppsUseLightTheme = 0), como o Tema.Detectar.
 func Escuro() bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Themes\Personalize`, registry.QUERY_VALUE)

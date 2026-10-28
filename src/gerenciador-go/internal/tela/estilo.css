@@ -78,3 +78,31 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
 .aviso dd { margin: 0; overflow-wrap: anywhere; user-select: text; }
 .aviso p { margin: 0; color: var(--texto-suave); }
 .aviso-botoes { display: flex; justify-content: flex-end; padding: 10px 8px 6px 16px; }
+.aviso-simbolo.pergunta { color: var(--primaria); }
+/* Download da versão nova: a barra e "Cancelar download" (a BarraProgresso do C#). */
+.baixando { align-items: center; gap: 10px; margin-top: 2px; }
+.baixando progress { flex: 1; height: 8px; margin: 0 0 8px; appearance: none; border: 0; border-radius: 4px; background: var(--superficie-3); }
+.baixando progress::-webkit-progress-bar { background: var(--superficie-3); border-radius: 4px; }
+.baixando progress::-webkit-progress-value { background: var(--primaria); border-radius: 4px; }
+/* Interruptor com o ⓘ que explica (o termo técnico com definição no contexto, por clique ou teclado). */
+.com-info { display: flex; align-items: center; gap: 4px; }
+.com-info .interruptor { margin-right: 0; }
+.info { min-width: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--primaria);
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 14px; cursor: default; }
+.info:hover { background: var(--primaria-suave); }
+.info:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.info-texto { margin: 0 0 8px 50px; color: var(--texto-suave); }
+/* "O que mudou": mais largo que o aviso, com a rolagem só no texto das notas. */
+.aviso.notas { width: 440px; }
+.notas-corpo { padding: 14px 16px 0; }
+.notas-corpo > h2 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.notas-texto { max-height: calc(100vh - 230px); overflow: auto; padding: 10px 12px; border-radius: 8px; background: var(--superficie-2);
+  user-select: text; }
+.notas-texto:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.notas-texto h3, .notas-texto h4 { font-size: 14.5px; margin: 10px 0 4px; }
+.notas-texto h5, .notas-texto h6 { font-size: 13px; margin: 8px 0 4px; }
+.notas-texto > :first-child { margin-top: 0; }
+.notas-texto p { margin: 0 0 6px; }
+.notas-texto ul { margin: 0 0 6px; padding-left: 20px; }
+.notas-texto code { font: 12px Consolas, monospace; color: var(--texto-suave); }
+.notas-texto a { color: var(--primaria); }

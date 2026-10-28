@@ -77,7 +77,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0037](0037-reservas-pelo-valor-do-open-finance.md) | Reservas pelo valor que o Open Finance informa; a estimativa pelo extrato fica para o resto | Aceita |
 | [0038](0038-meli-dolar-como-reserva-em-dolar.md) | Méli Dólar como reserva em dólar, estimada pelo extrato e convertida pela PTAX | Aceita |
 | [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) | A versão sobe a cada pull request, pelo tipo do commit | Aceita |
-| [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) | Atualizar pelo develop, pelo gerenciador, só na instalação de desenvolvimento | Aceita |
+| [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) | Atualizar pelo develop, pelo gerenciador, só na instalação de desenvolvimento | Aceita (em parte substituída pela 0053) |
 | [0041](0041-testes-no-navegador-com-playwright.md) | Testes no navegador com Playwright, com a CSP da API e uma API falsa | Aceita |
 | [0042](0042-contas-fora-do-saldo-continuam-nos-relatorios.md) | Contas fora do saldo e arquivadas continuam nos relatórios | Aceita |
 | [0043](0043-assinaturas-e-recorrentes-em-contas-a-pagar.md) | Assinaturas e cobranças recorrentes estendendo Contas a pagar | Aceita |
@@ -90,3 +90,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) | O .msi é gerado no merge para o develop (e na tag), e não no PR | Aceita |
 | [0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md) | Testes do back-end em Go: cada regra com teste unitário, além do contrato; SQLite real, `httptest` e só a biblioteca padrão; teste de mutação semanal com o gremlins (#373) | Aceita |
 | [0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md) | Gerenciador em Go: ícone na bandeja e janela própria com o Wails (#276) | Aceita |
+| [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) | Receber versões de desenvolvimento por escolha, no gerenciador em Go | Aceita |

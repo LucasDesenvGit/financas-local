@@ -69,6 +69,41 @@ type Tela struct {
 	PastaDados        string
 	Endereco          string
 	Escuro            bool
+	// ReceberDesenvolvimento: "Procurar versão nova" olha o pré-lançamento "desenvolvimento" (ADR 0040).
+	ReceberDesenvolvimento bool
+	Procura                Procura
+}
+
+// Procura é o estado da versão nova no cartão "Versão" (o ProcurarAsync e o AtualizarAsync do C#).
+type Procura struct {
+	Procurando bool
+	// Nova é a versão nova achada ("" sem versão nova): aparecem "Atualizar para …" e "O que mudou".
+	Nova      string
+	Baixando  bool
+	Progresso int // de 0 a 100
+}
+
+// ProcurarHabilitado: nem procurando nem baixando.
+func (t Tela) ProcurarHabilitado() bool { return !t.Procura.Procurando && !t.Procura.Baixando }
+
+// AtualizarTexto é o "Atualizar para X" do botão em destaque.
+func (t Tela) AtualizarTexto() string { return "Atualizar para " + t.Procura.Nova }
+
+// ErroDaProcura: sem internet, a procura falha, e o site continua funcionando.
+const ErroDaProcura = "Não deu para procurar versão nova agora (sem internet?). O site continua funcionando."
+
+// ResultadoDaProcura é a frase depois de procurar, como no C#.
+func ResultadoDaProcura(nova, desenvolvimento bool, versao string) string {
+	switch {
+	case nova && desenvolvimento:
+		return "Tem versão de desenvolvimento nova: " + versao + "."
+	case nova:
+		return "Tem versão nova: " + versao + "."
+	case desenvolvimento:
+		return "Você está na última versão de desenvolvimento."
+	default:
+		return "Você está na versão mais nova."
+	}
 }
 
 // Ponto é a classe da cor do ponto da situação (Tema.DaSituacao); a cor nunca é a única pista (WCAG 1.4.1).
@@ -138,6 +173,11 @@ type Atualizacao struct {
 	ReiniciarHabilitado bool   `json:"reiniciarHabilitado"`
 	PaginasDoSite       bool   `json:"paginasDoSite"`
 	Versao              string `json:"versao"`
+	ProcurarHabilitado  bool   `json:"procurarHabilitado"`
+	Nova                string `json:"nova"`
+	AtualizarTexto      string `json:"atualizarTexto"`
+	Baixando            bool   `json:"baixando"`
+	Progresso           int    `json:"progresso"`
 }
 
 // Atualizacao da tela, com as mesmas regras da página inteira.
@@ -148,31 +188,56 @@ func (t Tela) Atualizacao() Atualizacao {
 		LigarAcao: t.LigarAcao(), LigarTexto: t.LigarTexto(), LigarTecla: t.LigarTecla(),
 		LigarHabilitado: t.LigarHabilitado(), LigarPrimario: t.LigarPrimario(),
 		ReiniciarHabilitado: t.ReiniciarHabilitado(), PaginasDoSite: t.PaginasDoSiteHabilitadas(), Versao: t.Versao,
+		ProcurarHabilitado: t.ProcurarHabilitado(), Nova: t.Procura.Nova, AtualizarTexto: t.AtualizarTexto(),
+		Baixando: t.Procura.Baixando, Progresso: t.Procura.Progresso,
 	}
 }
 
-// TextoDaVersao é o cartão "Versão" do MostrarVersao do C#, sem a procura (#420). Com o site no ar, a versão já vai
-// no detalhe da situação, e o texto fica vazio.
-func TextoDaVersao(instalada string, peloMsi, siteInformouVersao bool) string {
+// TextoDaVersao é o cartão "Versão" do MostrarVersao do C#. Com o site no ar, a versão já vai no detalhe da situação:
+// fica só o resultado da procura. Fora do ar, a versão instalada (o .msi instala site e gerenciador juntos) e o
+// resultado da procura, ou o convite para procurar.
+func TextoDaVersao(instalada string, peloMsi, siteInformouVersao bool, resultadoDaProcura string) string {
 	if !peloMsi {
 		return "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd " +
 			"(ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi " +
 			"traz o banco e as chaves, e daí em diante a versão nova chega por aqui."
 	}
-	if siteInformouVersao {
-		return ""
+	var partes []string
+	if !siteInformouVersao {
+		de := ""
+		if strings.Contains(instalada, "-dev.") {
+			de = "de desenvolvimento "
+		}
+		partes = append(partes, "Versão "+de+"instalada: "+instalada+".")
+		if resultadoDaProcura == "" {
+			resultadoDaProcura = "Versão nova: clique em “Procurar versão nova”."
+		}
 	}
-	de := ""
-	if strings.Contains(instalada, "-dev.") {
-		de = "de desenvolvimento "
+	if resultadoDaProcura != "" {
+		partes = append(partes, resultadoDaProcura)
 	}
-	return "Versão " + de + "instalada: " + instalada + ". Versão nova: clique em “Procurar versão nova”."
+	return strings.Join(partes, " ")
+}
+
+// Notas é o "O que mudou" da versão nova, já em HTML seguro (atualizacao.HTMLDasNotas).
+type Notas struct {
+	Titulo    string        `json:"titulo"`
+	Novidades template.HTML `json:"novidades"`
+	Resto     template.HTML `json:"resto"`
+	Pagina    string        `json:"pagina"`
+}
+
+// ConfirmarAtualizacao é a pergunta antes de baixar, com o texto do AtualizarAsync do C#.
+func ConfirmarAtualizacao(versao string) Aviso {
+	return Aviso{Tipo: "pergunta", Titulo: "Atualizar o Finanças Local para a versão " + versao + "?",
+		Mensagem: "O instalador abre em seguida e o site fica fora do ar por alguns segundos. Antes de mudar o banco, " +
+			"a versão nova guarda uma cópia dele em dados\\backups. Seus dados continuam onde estão."}
 }
 
 // Os glifos dos botões do C# (IconeBotao, Controles.cs), da fonte de ícones do Windows (Segoe Fluent Icons).
 var glifos = map[string]string{
 	"abrir": "", "ligar": "", "reiniciar": "", "baixar": "", "procurar": "",
-	"informacao": "", "pasta": "", "erros": "", "manual": "", "salvar": "",
+	"informacao": "", "cancelar": "", "pasta": "", "erros": "", "manual": "", "salvar": "",
 }
 
 //go:embed estilo.css

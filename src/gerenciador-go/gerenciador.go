@@ -18,6 +18,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/atualizacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/icones"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
@@ -63,13 +64,15 @@ type gerenciador struct {
 	consultando bool
 	maisOpcoes  bool
 	ultimaCopia string // o arquivo da última cópia do banco, para "Abrir a pasta"
+	nova        versaoNova
 
 	bandeja      *application.SystemTray
 	itemSituacao *application.MenuItem
 }
 
 func novoGerenciador(inst instalacao.Instalacao) *gerenciador {
-	return &gerenciador{inst: inst, consulta: situacao.Nova(inst), situacao: tela.Verificando}
+	return &gerenciador{inst: inst, consulta: situacao.Nova(inst), situacao: tela.Verificando,
+		nova: versaoNova{cliente: atualizacao.NovoCliente(versao)}}
 }
 
 func (g *gerenciador) iniciar(comJanela bool) {
@@ -94,9 +97,14 @@ func (g *gerenciador) iniciar(comJanela bool) {
 		g.abrir()
 	}
 	go func() {
+		g.atualizarSituacao()
+		// Como o IniciarAsync do C#: depois da primeira situação (que diz a versão do site), procura a versão nova.
+		if g.inst.PeloMsi && preferencias.ProcurarAoAbrir() {
+			go g.procurar()
+		}
 		for {
-			g.atualizarSituacao()
 			time.Sleep(intervalo)
+			g.atualizarSituacao()
 		}
 	}()
 	if err := g.app.Run(); err != nil {
@@ -110,7 +118,7 @@ func (g *gerenciador) tela() tela.Tela {
 	return tela.Tela{
 		Situacao:          g.situacao,
 		Ocupado:           g.ocupado,
-		Versao:            tela.TextoDaVersao(versao, g.inst.PeloMsi, g.situacao.VersaoSite != ""),
+		Versao:            g.textoDaVersao(),
 		PeloMsi:           g.inst.PeloMsi,
 		MaisOpcoes:        g.maisOpcoes,
 		IniciarComSistema: preferencias.IniciarComSistema(),
@@ -118,6 +126,9 @@ func (g *gerenciador) tela() tela.Tela {
 		PastaDados:        g.inst.PastaDados,
 		Endereco:          g.inst.Site,
 		Escuro:            preferencias.Escuro(),
+
+		ReceberDesenvolvimento: receberDesenvolvimento(g.situacao.VersaoSite),
+		Procura:                g.nova.procura,
 	}
 }
 
@@ -288,7 +299,11 @@ func (g *gerenciador) rotas() http.Handler {
 		case "baixar-msi":
 			g.abrirNoNavegador(releases)
 		case "procurar":
-			// A versão nova entra na #420.
+			go g.procurar()
+		case "atualizar":
+			go g.atualizar()
+		case "cancelar-download":
+			g.cancelarDownload()
 		default:
 			http.Error(w, "ação desconhecida", http.StatusBadRequest)
 			return
@@ -303,6 +318,10 @@ func (g *gerenciador) rotas() http.Handler {
 			err = preferencias.DefinirIniciarComSistema(ligado)
 		case "procurar":
 			err = preferencias.DefinirProcurarAoAbrir(ligado)
+		case "desenvolvimento":
+			if err = preferencias.DefinirReceberDesenvolvimento(ligado); err == nil {
+				g.esquecerProcura()
+			}
 		default:
 			http.Error(w, "preferência desconhecida", http.StatusBadRequest)
 			return
@@ -312,6 +331,19 @@ func (g *gerenciador) rotas() http.Handler {
 			http.Error(w, "não deu para gravar", http.StatusInternalServerError)
 			return
 		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("GET /confirmar-atualizacao", func(w http.ResponseWriter, _ *http.Request) {
+		responderJSON(w, g.confirmacao())
+	})
+	mux.HandleFunc("GET /notas", func(w http.ResponseWriter, _ *http.Request) { responderJSON(w, g.notas()) })
+	mux.HandleFunc("POST /abrir-link", func(w http.ResponseWriter, r *http.Request) {
+		endereco := r.URL.Query().Get("url")
+		if !linkDaWeb(endereco) {
+			http.Error(w, "só links da web", http.StatusBadRequest)
+			return
+		}
+		g.abrirNoNavegador(endereco)
 		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("POST /altura", func(w http.ResponseWriter, r *http.Request) {
@@ -416,4 +448,14 @@ func limitar(texto string, maximo int) string {
 		return texto
 	}
 	return string(r[:maximo-1]) + "…"
+}
+
+// responderJSON responde o valor em JSON, ou 404 quando não há (nil).
+func responderJSON[T any](w http.ResponseWriter, valor *T) {
+	if valor == nil {
+		http.NotFound(w, nil)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(valor)
 }

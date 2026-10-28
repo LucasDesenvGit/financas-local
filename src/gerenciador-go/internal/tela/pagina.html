@@ -22,11 +22,17 @@
     </section>
     <section class="cartao" aria-labelledby="titulo-versao">
       <p class="subtitulo" id="titulo-versao">Versão</p>
-      <p class="versao" id="versao"{{if not .Versao}} hidden{{end}}>{{.Versao}}</p>
+      <p class="versao" id="versao" role="status" aria-live="polite"{{if not .Versao}} hidden{{end}}>{{.Versao}}</p>
       <div class="linha">
-        {{if .PeloMsi}}<button class="botao" type="button" data-acao="procurar" accesskey="p">{{icone "procurar"}}Procurar versão nova</button>
+        {{if .PeloMsi}}<button id="atualizar" class="botao primario" type="button" accesskey="t"{{if not .Procura.Nova}} hidden{{end}}{{if .Procura.Baixando}} disabled{{end}}>{{icone "baixar"}}<span id="texto-atualizar">{{.AtualizarTexto}}</span></button>
+        <button id="procurar" class="botao" type="button" data-acao="procurar" accesskey="p"{{if not .ProcurarHabilitado}} disabled{{end}}>{{icone "procurar"}}Procurar versão nova</button>
+        <button id="notas" class="botao discreto" type="button" accesskey="q"{{if not .Procura.Nova}} hidden{{end}}>{{icone "informacao"}}O que mudou</button>
         {{- else}}<button class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub">{{icone "baixar"}}Baixar o instalador .msi</button>{{end}}
       </div>
+      {{if .PeloMsi}}<div class="linha baixando" id="baixando"{{if not .Procura.Baixando}} hidden{{end}}>
+        <progress id="barra" max="100" value="{{.Procura.Progresso}}" aria-label="Baixando a versão nova"></progress>
+        <button class="botao discreto" type="button" data-acao="cancelar-download">{{icone "cancelar"}}Cancelar download</button>
+      </div>{{end}}
     </section>
     <button class="botao discreto mais" type="button" accesskey="m" aria-controls="painel-mais" aria-expanded="{{.MaisOpcoes}}"
       aria-label="{{if .MaisOpcoes}}Menos opções (esconder){{else}}Mais opções: cópia do banco, erros, manual e preferências{{end}}"
@@ -38,7 +44,12 @@
         <span class="com-dica"><button id="manual" class="botao pagina-do-site" type="button" data-pagina="manual" accesskey="n"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-manual"{{end}}>{{icone "manual"}}Abrir o manual</button><span id="dica-manual" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
       </div>
       <label class="interruptor"><input type="checkbox" role="switch" data-preferencia="iniciar" accesskey="i"{{if .IniciarComSistema}} checked{{end}}>Iniciar com o Windows (fica na área de notificação)</label>
-      {{if .PeloMsi}}<label class="interruptor"><input type="checkbox" role="switch" data-preferencia="procurar" accesskey="v"{{if .ProcurarAoAbrir}} checked{{end}}>Procurar versão nova ao abrir</label>{{end}}
+      {{if .PeloMsi}}<label class="interruptor"><input type="checkbox" role="switch" data-preferencia="procurar" accesskey="v"{{if .ProcurarAoAbrir}} checked{{end}}>Procurar versão nova ao abrir</label>
+      <div class="com-info">
+        <label class="interruptor"><input type="checkbox" role="switch" data-preferencia="desenvolvimento"{{if .ReceberDesenvolvimento}} checked{{end}}>Receber versões de desenvolvimento</label>
+        <button class="info" type="button" aria-expanded="false" aria-controls="info-desenvolvimento" aria-label="O que são as versões de desenvolvimento">&#xE946;</button>
+      </div>
+      <p class="info-texto" id="info-desenvolvimento" hidden>Saem a cada mudança no código, antes de virar versão publicada: chegam antes, mas são menos testadas. Desligando de novo, só vem versão publicada mais nova que a que estiver instalada.</p>{{end}}
       <p class="rodape">Dados em {{.PastaDados}}. Endereço: {{.Endereco}}</p>
     </section>
   </main>
@@ -48,7 +59,7 @@
 <dialog id="aviso" class="aviso" aria-labelledby="aviso-titulo" aria-describedby="aviso-mensagem">
   <div class="aviso-cabecalho"><span class="moldura"><img src="/icone.png" alt=""></span><strong>Finanças Local</strong></div>
   <div class="aviso-corpo">
-    <span id="aviso-simbolo-sucesso" class="aviso-simbolo sucesso" aria-hidden="true">&#xE930;</span><span id="aviso-simbolo-alerta" class="aviso-simbolo alerta" aria-hidden="true" hidden>&#xE7BA;</span>
+    <span id="aviso-simbolo-sucesso" class="aviso-simbolo sucesso" aria-hidden="true">&#xE930;</span><span id="aviso-simbolo-alerta" class="aviso-simbolo alerta" aria-hidden="true" hidden>&#xE7BA;</span><span id="aviso-simbolo-pergunta" class="aviso-simbolo pergunta" aria-hidden="true" hidden>&#xE946;</span>
     <div>
       <h2 id="aviso-titulo"></h2>
       <dl id="aviso-local" hidden><dt>Arquivo</dt><dd id="aviso-arquivo"></dd><dt>Pasta</dt><dd id="aviso-pasta"></dd></dl>
@@ -58,6 +69,22 @@
   <div class="aviso-botoes">
     <button id="aviso-abrir-pasta" class="botao" type="button" hidden>{{icone "pasta"}}Abrir a pasta</button>
     <button id="aviso-ok" class="botao primario" type="button">OK</button>
+    <button id="aviso-cancelar" class="botao" type="button" hidden>Cancelar</button>
+    <button id="aviso-confirmar" class="botao primario" type="button" hidden>{{icone "baixar"}}Atualizar</button>
+  </div>
+</dialog>
+<!-- "O que mudou" na versão nova: primeiro só o que mudou desde a versão instalada; o resto atrás de "Ver tudo"
+     (Progressive Disclosure), como o FormNotas.cs. As notas chegam em HTML já limpo pelo gerenciador. -->
+<dialog id="notas-dialogo" class="aviso notas" aria-labelledby="notas-titulo">
+  <div class="aviso-cabecalho"><span class="moldura"><img src="/icone.png" alt=""></span><strong>Finanças Local</strong></div>
+  <div class="notas-corpo">
+    <h2 id="notas-titulo"></h2>
+    <div id="notas-texto" class="notas-texto" tabindex="0"></div>
+  </div>
+  <div class="aviso-botoes">
+    <button id="notas-tudo" class="botao discreto" type="button" aria-controls="notas-texto" aria-expanded="false" aria-description="Mostra também como instalar, as versões de desenvolvimento anteriores e tudo o que mudou desde a última versão publicada.">{{icone "informacao"}}<span id="texto-notas-tudo">Ver tudo</span></button>
+    <button id="notas-pagina" class="botao discreto" type="button">{{icone "abrir"}}Ver a página da versão no GitHub</button>
+    <button id="notas-fechar" class="botao primario" type="button">Fechar</button>
   </div>
 </dialog>
 <script>
@@ -82,27 +109,79 @@
     });
     else if (b.dataset.acao) fetch('/acao/' + b.dataset.acao, { method: 'POST' }).then(atualizar);
   });
-  var aviso = $('aviso');
-  function mostrarAviso(a) {
-    ['sucesso', 'alerta'].forEach(function (t) { $('aviso-simbolo-' + t).hidden = a.tipo !== t; });
+  var aviso = $('aviso'), aoConfirmar = null;
+  // O aviso no desenho do gerenciador: resultado (OK) ou pergunta (Cancelar e a ação, que recebe o foco).
+  function mostrarAviso(a, confirmar) {
+    ['sucesso', 'alerta', 'pergunta'].forEach(function (t) { $('aviso-simbolo-' + t).hidden = a.tipo !== t; });
     $('aviso-titulo').textContent = a.titulo;
     $('aviso-mensagem').textContent = a.mensagem;
     $('aviso-local').hidden = !a.arquivo;
     $('aviso-arquivo').textContent = a.arquivo || '';
     $('aviso-pasta').textContent = a.pasta || '';
     $('aviso-abrir-pasta').hidden = !a.arquivo;
+    aoConfirmar = confirmar || null;
+    $('aviso-ok').hidden = !!aoConfirmar;
+    $('aviso-cancelar').hidden = $('aviso-confirmar').hidden = !aoConfirmar;
     aviso.showModal();
-    $('aviso-ok').focus();
+    $(aoConfirmar ? 'aviso-confirmar' : 'aviso-ok').focus();
   }
   $('aviso-ok').addEventListener('click', function () { aviso.close(); });
+  $('aviso-cancelar').addEventListener('click', function () { aviso.close(); });
+  $('aviso-confirmar').addEventListener('click', function () { aviso.close(); if (aoConfirmar) aoConfirmar(); });
   $('aviso-abrir-pasta').addEventListener('click', function () {
     fetch('/acao/abrir-pasta', { method: 'POST' });
     aviso.close();
   });
+  // Versão nova: confirmar antes de baixar, como o C#.
+  if ($('atualizar')) $('atualizar').addEventListener('click', function () {
+    fetch('/confirmar-atualizacao').then(function (r) { return r.ok ? r.json() : null; }).then(function (a) {
+      if (a) mostrarAviso(a, function () { fetch('/acao/atualizar', { method: 'POST' }).then(atualizar); });
+    });
+  });
+  // "O que mudou": as notas já vêm em HTML limpo; "Ver tudo" mostra também o resto.
+  var notas = null, tudo = false, dialogoNotas = $('notas-dialogo');
+  function mostrarNotas() {
+    $('notas-texto').innerHTML = notas.novidades + (tudo ? notas.resto : '');
+    $('texto-notas-tudo').textContent = tudo ? 'Só o que é novo' : 'Ver tudo';
+    $('notas-tudo').setAttribute('aria-expanded', String(tudo));
+    $('notas-texto').scrollTop = 0;
+  }
+  if ($('notas')) $('notas').addEventListener('click', function () {
+    fetch('/notas').then(function (r) { return r.ok ? r.json() : null; }).then(function (n) {
+      if (!n) return;
+      notas = n;
+      tudo = false;
+      $('notas-titulo').textContent = n.titulo;
+      $('notas-tudo').hidden = !n.resto;
+      mostrarNotas();
+      dialogoNotas.showModal();
+      $('notas-fechar').focus();
+    });
+  });
+  $('notas-tudo').addEventListener('click', function () { tudo = !tudo; mostrarNotas(); });
+  $('notas-fechar').addEventListener('click', function () { dialogoNotas.close(); });
+  $('notas-pagina').addEventListener('click', function () { abrirLink(notas.pagina); });
+  // Os links das notas abrem no navegador, e não dentro da janela do gerenciador.
+  $('notas-texto').addEventListener('click', function (e) {
+    var a = e.target.closest('a[href]');
+    if (!a) return;
+    e.preventDefault();
+    abrirLink(a.href);
+  });
+  function abrirLink(url) { fetch('/abrir-link?url=' + encodeURIComponent(url), { method: 'POST' }); }
+  // ⓘ: a explicação abre e fecha por clique ou teclado (Disclosure), e não só no title=.
+  document.querySelectorAll('.info').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var alvo = $(b.getAttribute('aria-controls'));
+      alvo.hidden = !alvo.hidden;
+      b.setAttribute('aria-expanded', String(!alvo.hidden));
+      ajustarAltura();
+    });
+  });
   // As preferências valem na hora (por isso são interruptores, ADR 0032).
   document.addEventListener('change', function (e) {
     var p = e.target.dataset.preferencia;
-    if (p) fetch('/preferencia/' + p + '?ligado=' + e.target.checked, { method: 'POST' });
+    if (p) fetch('/preferencia/' + p + '?ligado=' + e.target.checked, { method: 'POST' }).then(atualizar);
   });
   function botao(b, habilitado, primario) { b.disabled = !habilitado; b.classList.toggle('primario', primario); }
   // A situação de agora, com as regras do gerenciador (GET /estado), nos elementos que já existem: o foco e o "Mais
@@ -124,8 +203,16 @@
       if (e.paginasDoSite) $(id).removeAttribute('aria-describedby'); else $(id).setAttribute('aria-describedby', 'dica-' + id);
       $('dica-' + id).hidden = e.paginasDoSite;
     });
-    $('versao').textContent = e.versao;
+    if ($('versao').textContent !== e.versao) $('versao').textContent = e.versao;
     $('versao').hidden = !e.versao;
+    if ($('procurar')) {
+      $('procurar').disabled = !e.procurarHabilitado;
+      $('atualizar').hidden = $('notas').hidden = !e.nova;
+      $('atualizar').disabled = e.baixando;
+      $('texto-atualizar').textContent = e.atualizarTexto;
+      $('baixando').hidden = !e.baixando;
+      $('barra').value = e.progresso;
+    }
     ajustarAltura();
   }
   function atualizar() { return fetch('/estado').then(function (r) { return r.json(); }).then(aplicar).catch(function () {}); }
