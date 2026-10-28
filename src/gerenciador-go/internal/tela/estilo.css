@@ -106,3 +106,8 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
 .notas-texto ul { margin: 0 0 6px; padding-left: 20px; }
 .notas-texto code { font: 12px Consolas, monospace; color: var(--texto-suave); }
 .notas-texto a { color: var(--primaria); }
+/* A saída dos scripts do develop (o _saida do C#): fonte de largura fixa, com a rolagem só dentro da caixa. */
+.saida { display: block; width: 100%; height: 150px; box-sizing: border-box; margin: 4px 0 8px; padding: 6px 8px; resize: none;
+  border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); color: var(--texto);
+  font: 11.5px/1.4 Consolas, monospace; user-select: text; }
+.saida:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }

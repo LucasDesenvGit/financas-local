@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.46.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: atualizar para a última do develop** (#428, épico #70, ADR 0040). Nada muda para quem usa: o gerenciador instalado continua o de C#. Na instalação de desenvolvimento pelos scripts (a pasta do projeto num clone na branch develop), o gerenciador em Go mostra "Atualizar para a última do develop", como o de C#: pergunta antes, traz o develop pelo git como o usuário (só avança, recusa com alteração local ou outra branch) e reinstala o site pedindo o UAC, com a saída dos scripts e do instalador ao vivo numa caixa da janela. "Atualizar o gerenciador e reabrir" fica para a #430.
+
 ## [2.45.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades
