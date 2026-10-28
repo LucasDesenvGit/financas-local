@@ -131,3 +131,37 @@ func TestHTMLDasNotasLinks(t *testing.T) {
 		t.Error(obtido)
 	}
 }
+
+// Regra: *itálico* vira <em>, mas o asterisco grudado em letra ou número fica como texto (descrições do banco).
+func TestHTMLDasNotasItalico(t *testing.T) {
+	t.Parallel()
+	casos := map[string]string{
+		`parece ser *nome* e`:                    `<p>parece ser <em>nome</em> e</p>`,
+		`*a*`:                                    `<p><em>a</em></p>`,
+		`Pix, Mercado Pago ("MP*MP", "MP*NOME")`: `<p>Pix, Mercado Pago (&#34;MP*MP&#34;, &#34;MP*NOME&#34;)</p>`,
+		`2*x* e a * b * c`:                       `<p>2*x* e a * b * c</p>`,
+		`*fim*2`:                                 `<p>*fim*2</p>`,
+		`é*ção* ou ão*x*`:                        `<p>é*ção* ou ão*x*</p>`,
+	}
+	for md, quer := range casos {
+		if obtido := string(HTMLDasNotas(md)); obtido != quer {
+			t.Errorf("%s:\n%s\nquer %s", md, obtido, quer)
+		}
+	}
+}
+
+// Regra: o título de versão ganha o selo com o número; o de tipo de mudança, a classe do tipo; os outros, nada.
+func TestHTMLDasNotasTitulos(t *testing.T) {
+	t.Parallel()
+	md := "## [2.46.0] — 2026-10-28 · desenvolvimento\n### Funcionalidades\n### Correções\n### Publicação e documentação\n" +
+		"### 2.26.1-dev.4 · 21/10/2026\n## 2.17.0\n### Destaques\n## [x] não é versão"
+	quer := `<h4 class="nota-versao"><span class="selo-versao">2.46.0</span> — 2026-10-28 · desenvolvimento</h4>` +
+		`<h5 class="nota-tipo funcionalidades">Funcionalidades</h5><h5 class="nota-tipo correcoes">Correções</h5>` +
+		`<h5 class="nota-tipo documentacao">Publicação e documentação</h5>` +
+		`<h5 class="nota-versao"><span class="selo-versao">2.26.1-dev.4</span> · 21/10/2026</h5>` +
+		`<h4 class="nota-versao"><span class="selo-versao">2.17.0</span></h4>` +
+		`<h5>Destaques</h5><h4>[x] não é versão</h4>`
+	if obtido := string(HTMLDasNotas(md)); obtido != quer {
+		t.Errorf("obtido:\n%s\nquer:\n%s", obtido, quer)
+	}
+}

@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/atualizacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
@@ -18,7 +21,8 @@ type develop struct {
 	raiz    string // a pasta do clone na branch develop, ou "" (não é instalação de desenvolvimento)
 	rodando bool
 	saida   []string
-	texto   string // durante e depois da atualização, substitui o texto do cartão
+	texto   string      // durante e depois da atualização, substitui o texto do cartão
+	notas   *tela.Notas // o "O que mudou" da última atualização (#432), ou nil
 }
 
 // procurarClone vê, sem travar a janela, se a instalação é de desenvolvimento (o git leva um instante).
@@ -67,9 +71,10 @@ func (g *gerenciador) atualizarDevelop() {
 		g.trava.Unlock()
 		return
 	}
-	g.dev.rodando, g.ocupado, g.dev.saida = true, true, nil
+	g.dev.rodando, g.ocupado, g.dev.saida, g.dev.notas = true, true, nil, nil
 	g.dev.texto = "Buscando o develop no GitHub…"
 	g.trava.Unlock()
+	antes, temAntes := versaoDoClone(raiz)
 	defer func() {
 		g.trava.Lock()
 		g.dev.rodando, g.ocupado = false, false
@@ -90,6 +95,10 @@ func (g *gerenciador) atualizarDevelop() {
 		return
 	}
 
+	notas := notasDoDevelop(raiz, antes, temAntes)
+	g.trava.Lock()
+	g.dev.notas = notas
+	g.trava.Unlock()
 	g.textoDoDevelop("Código atualizado. Reinstalando o site (permita no aviso do Windows)…")
 	ctx, parar := context.WithCancel(context.Background())
 	acompanhado := make(chan struct{})
@@ -118,5 +127,37 @@ func textoDaReinstalacao(r elevacao.Resultado) string {
 
 // developNaTela é o que a tela mostra do develop; chamado com a trava.
 func (g *gerenciador) developNaTela() tela.Develop {
-	return tela.Develop{Disponivel: g.dev.raiz != "", Rodando: g.dev.rodando, Saida: strings.Join(g.dev.saida, "\n")}
+	return tela.Develop{Disponivel: g.dev.raiz != "", Rodando: g.dev.rodando, Saida: strings.Join(g.dev.saida, "\n"),
+		Notas: g.dev.notas != nil}
+}
+
+// versaoDoClone é a versão do Directory.Build.props do clone (antes ou depois de trazer o develop).
+func versaoDoClone(raiz string) (atualizacao.Versao, bool) {
+	props, err := os.ReadFile(filepath.Join(raiz, "Directory.Build.props"))
+	if err != nil {
+		return atualizacao.Versao{}, false
+	}
+	return atualizacao.VersaoDoProjeto(string(props))
+}
+
+// notasDoDevelop é o "O que mudou" entre a versão de antes e a que veio (#432): as seções do CHANGELOG.md do próprio
+// clone, sem rede. nil sem versão nova ou sem seção.
+func notasDoDevelop(raiz string, antes atualizacao.Versao, temAntes bool) *tela.Notas {
+	nova, ok := versaoDoClone(raiz)
+	changelog, err := os.ReadFile(filepath.Join(raiz, "CHANGELOG.md"))
+	if !ok || err != nil {
+		return nil
+	}
+	var de *atualizacao.Versao
+	titulo := "O que mudou na versão " + nova.String()
+	if temAntes {
+		de = &antes
+		titulo = "O que mudou desde a " + antes.String()
+	}
+	secoes := atualizacao.SecoesDoChangelog(string(changelog), de, nova)
+	if secoes == "" {
+		return nil
+	}
+	return &tela.Notas{Titulo: titulo, Novidades: atualizacao.HTMLDasNotas(secoes),
+		Pagina: "https://github.com/" + atualizacao.Repositorio + "/blob/develop/CHANGELOG.md", TextoPagina: "Ver o CHANGELOG no GitHub"}
 }

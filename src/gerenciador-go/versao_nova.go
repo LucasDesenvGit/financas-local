@@ -188,8 +188,11 @@ func fraseDoErro(err error) string {
 // notas é o "O que mudou" da versão nova (nil sem versão nova).
 func (g *gerenciador) notas() *tela.Notas {
 	g.trava.Lock()
-	d := g.nova.disponivel
+	d, doDevelop := g.nova.disponivel, g.dev.notas
 	g.trava.Unlock()
+	if doDevelop != nil {
+		return doDevelop
+	}
 	if d == nil {
 		return nil
 	}

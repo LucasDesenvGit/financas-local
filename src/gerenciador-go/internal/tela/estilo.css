@@ -111,3 +111,14 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
   border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); color: var(--texto);
   font: 11.5px/1.4 Consolas, monospace; user-select: text; }
 .saida:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+/* "O que mudou": cada versão separada da anterior por uma linha, com o número num selo nas cores do botão principal; cada
+   tipo de mudança com a barra da cor dele, e o nome do tipo escrito (a cor nunca é a única pista, WCAG 1.4.1). */
+.notas-texto .nota-versao { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; padding-top: 12px;
+  border-top: 1px solid var(--linha); font-size: 12.5px; font-weight: 400; color: var(--texto-suave); }
+.notas-texto .nota-versao:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.selo-versao { padding: 2px 9px; border-radius: 999px; background: var(--primaria); color: var(--primaria-texto); font-size: 12.5px; font-weight: 600; }
+.notas-texto .nota-tipo { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+.notas-texto .nota-tipo::before { content: ""; flex: none; width: 4px; height: 15px; border-radius: 2px; background: var(--cor-tipo); }
+.nota-tipo.funcionalidades { --cor-tipo: var(--positivo); }
+.nota-tipo.correcoes { --cor-tipo: var(--alerta); }
+.nota-tipo.documentacao { --cor-tipo: var(--texto-suave); }

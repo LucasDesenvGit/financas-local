@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.47.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: "O que mudou" depois de atualizar pelo develop** (#432, épico #70). Nada muda para quem usa: o gerenciador instalado continua o de C#. Depois de "Atualizar para a última do develop", aparece "O que mudou", com as seções do `CHANGELOG.md` do próprio clone entre a versão de antes e a nova, sem rede. Na janela de notas (também a da versão nova pelo GitHub), cada versão fica separada da anterior por uma linha, com o número num selo, e cada tipo de mudança (Funcionalidades, Correções, Publicação e documentação) ganha uma barra da cor dele; o *itálico* do Markdown também passa a aparecer.
+
 ## [2.46.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades
