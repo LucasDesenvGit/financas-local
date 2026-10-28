@@ -7,6 +7,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Publicação e documentação
 - **Go: câmbio e cripto no teste de mutação, sem mutação viva** (#422, épico #374). Nada muda para quem usa. Os dois assuntos entraram no Go sem passar pelo teste de mutação; agora entram, com 100%: o `cambio` tinha 20 mutações vivas (90,1%) e a `cripto` 18 (82,2%). Faltavam os testes das bordas (status 299, corpo no tamanho máximo exato, exatamente 30 minutos entre consultas e entre tentativas, lista de moedas com exatamente 7 dias, data só com o dia), do item ignorado antes de um válido, das correções somadas de duas moedas, da variação contra a cotação mais perto de 24 h e de que o sucesso não deixa aviso. Três trechos que não mudavam o resultado ficaram mais simples, e uma mutação que não muda nada entrou na lista de equivalentes, com o porquê. Os pisos da cobertura sobem para 84,1% e 86,5%.
 
+## [2.42.19] — 2026-10-27 · desenvolvimento
+
+### Publicação e documentação
+- **Contrato do Go sozinho de volta ao verde, agora com o câmbio e a cripto** (#416, épico #70). Nada muda para quem usa. Desde o câmbio no Go (#392), o `17-erros` falhava no `--go-sozinho`: na rodada completa, os casos do câmbio rodam antes e, sem internet, deixam 4 avisos abertos que entram na contagem. O modo sozinho passa a rodar também o `02-cambio` e o `03-cripto`, na mesma ordem, e sobe o Go sem saída para a internet (`HTTPS_PROXY` numa porta fechada, sem precisar do `unshare`): os 123 casos passam, inclusive no Git Bash do Windows.
+
 ## [2.42.18] — 2026-10-27 · desenvolvimento
 
 ### Publicação e documentação
