@@ -112,8 +112,9 @@ func montar(linhas []string, novos []trecho, titulo string) Notas {
 	usadas := map[int]bool{}
 	partes := []string{titulo, ""}
 	for _, t := range novos {
-		for i := t.inicio; i < t.fim; i++ {
-			usadas[i] = true
+		// range sobre o tamanho, e não i++: um i-- trocado pelo teste de mutação encheria o mapa sem parar (#433).
+		for i := range t.fim - t.inicio {
+			usadas[t.inicio+i] = true
 		}
 		partes = append(partes, strings.TrimSpace(strings.Join(linhas[t.inicio:t.fim], "\n"))+"\n")
 	}

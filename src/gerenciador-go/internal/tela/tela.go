@@ -81,6 +81,8 @@ type Develop struct {
 	Disponivel bool
 	Rodando    bool
 	Saida      string
+	// Notas: depois de trazer o develop, há o "O que mudou" desde a versão de antes (#432).
+	Notas bool
 }
 
 // TextoDeDesenvolvimento é o cartão "Versão" da instalação de desenvolvimento (MostrarVersao do C#).
@@ -205,6 +207,7 @@ type Atualizacao struct {
 	Develop             bool   `json:"develop"`
 	DevelopRodando      bool   `json:"developRodando"`
 	Saida               string `json:"saida"`
+	NotasDevelop        bool   `json:"notasDevelop"`
 }
 
 // Atualizacao da tela, com as mesmas regras da página inteira.
@@ -218,6 +221,7 @@ func (t Tela) Atualizacao() Atualizacao {
 		ProcurarHabilitado: t.ProcurarHabilitado(), Nova: t.Procura.Nova, AtualizarTexto: t.AtualizarTexto(),
 		Baixando: t.Procura.Baixando, Progresso: t.Procura.Progresso,
 		Develop: t.Develop.Disponivel, DevelopRodando: t.Develop.Rodando, Saida: t.Develop.Saida,
+		NotasDevelop: t.Develop.Notas,
 	}
 }
 
@@ -253,6 +257,8 @@ type Notas struct {
 	Novidades template.HTML `json:"novidades"`
 	Resto     template.HTML `json:"resto"`
 	Pagina    string        `json:"pagina"`
+	// TextoPagina troca o "Ver a página da versão no GitHub" (o do develop abre o CHANGELOG).
+	TextoPagina string `json:"textoPagina,omitempty"`
 }
 
 // ConfirmarAtualizacao é a pergunta antes de baixar, com o texto do AtualizarAsync do C#.

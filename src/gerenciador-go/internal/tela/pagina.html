@@ -28,6 +28,7 @@
         <button id="procurar" class="botao" type="button" data-acao="procurar" accesskey="p"{{if not .ProcurarHabilitado}} disabled{{end}}>{{icone "procurar"}}Procurar versão nova</button>
         <button id="notas" class="botao discreto" type="button" accesskey="q"{{if not .Procura.Nova}} hidden{{end}}>{{icone "informacao"}}O que mudou</button>
         {{- else}}<button id="atualizar-develop" class="botao primario" type="button" accesskey="v"{{if not .Develop.Disponivel}} hidden{{end}}{{if .Develop.Rodando}} disabled{{end}}>{{icone "baixar"}}Atualizar para a última do develop</button>
+        <button id="notas-develop" class="botao discreto" type="button" accesskey="q"{{if not .Develop.Notas}} hidden{{end}}>{{icone "informacao"}}O que mudou</button>
         <button id="baixar-msi" class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub"{{if .Develop.Disponivel}} hidden{{end}}>{{icone "baixar"}}Baixar o instalador .msi</button>{{end}}
       </div>
       {{if not .PeloMsi}}<textarea id="saida" class="saida" readonly aria-label="Saída da atualização"{{if not .Develop.Saida}} hidden{{end}}>{{.Develop.Saida}}</textarea>{{end}}
@@ -85,7 +86,7 @@
   </div>
   <div class="aviso-botoes">
     <button id="notas-tudo" class="botao discreto" type="button" aria-controls="notas-texto" aria-expanded="false" aria-description="Mostra também como instalar, as versões de desenvolvimento anteriores e tudo o que mudou desde a última versão publicada.">{{icone "informacao"}}<span id="texto-notas-tudo">Ver tudo</span></button>
-    <button id="notas-pagina" class="botao discreto" type="button">{{icone "abrir"}}Ver a página da versão no GitHub</button>
+    <button id="notas-pagina" class="botao discreto" type="button">{{icone "abrir"}}<span id="texto-notas-pagina">Ver a página da versão no GitHub</span></button>
     <button id="notas-fechar" class="botao primario" type="button">Fechar</button>
   </div>
 </dialog>
@@ -154,20 +155,24 @@
     $('notas-tudo').setAttribute('aria-expanded', String(tudo));
     $('notas-texto').scrollTop = 0;
   }
-  if ($('notas')) $('notas').addEventListener('click', function () {
+  function abrirNotas() {
     fetch('/notas').then(function (r) { return r.ok ? r.json() : null; }).then(function (n) {
       if (!n) return;
       notas = n;
       tudo = false;
       $('notas-titulo').textContent = n.titulo;
+      $('texto-notas-pagina').textContent = n.textoPagina || 'Ver a página da versão no GitHub';
       $('notas-tudo').hidden = !n.resto;
       mostrarNotas();
       dialogoNotas.showModal();
+      ajustarAltura();
       $('notas-fechar').focus();
     });
-  });
+  }
+  ['notas', 'notas-develop'].forEach(function (id) { if ($(id)) $(id).addEventListener('click', abrirNotas); });
   $('notas-tudo').addEventListener('click', function () { tudo = !tudo; mostrarNotas(); });
   $('notas-fechar').addEventListener('click', function () { dialogoNotas.close(); });
+  dialogoNotas.addEventListener('close', ajustarAltura); // Fechar ou Esc: a janela volta ao tamanho do conteúdo
   $('notas-pagina').addEventListener('click', function () { abrirLink(notas.pagina); });
   // Os links das notas abrem no navegador, e não dentro da janela do gerenciador.
   $('notas-texto').addEventListener('click', function (e) {
@@ -217,6 +222,7 @@
       $('atualizar-develop').hidden = !e.develop;
       $('atualizar-develop').disabled = e.developRodando;
       $('baixar-msi').hidden = e.develop;
+      $('notas-develop').hidden = !e.notasDevelop;
       var saida = $('saida'), noFim = saida.scrollTop + saida.clientHeight >= saida.scrollHeight - 4;
       if (saida.value !== e.saida) {
         saida.value = e.saida;
@@ -240,7 +246,10 @@
   // (No WebView2, o outerHeight é o da página, e não o da janela.) Só pede quando muda.
   var ultima = '';
   function ajustarAltura() {
-    var medida = Math.ceil(document.querySelector('.raiz').getBoundingClientRect().bottom) + ' ' + window.innerHeight + ' ' + window.innerWidth;
+    // Com "O que mudou" aberto, a janela cresce para as notas terem espaço (o gerenciador limita a 1000).
+    var fim = Math.ceil(document.querySelector('.raiz').getBoundingClientRect().bottom);
+    if (dialogoNotas.open) fim = Math.max(fim, 760);
+    var medida = fim + ' ' + window.innerHeight + ' ' + window.innerWidth;
     if (medida === ultima) return;
     ultima = medida;
     fetch('/altura', { method: 'POST', body: medida });

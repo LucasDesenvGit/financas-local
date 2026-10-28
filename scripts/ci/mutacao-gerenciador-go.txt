@@ -1,0 +1,16 @@
+# Pacotes do gerenciador em Go (src/gerenciador-go, ADR 0052) medidos pelo teste de mutação e o piso da eficácia de
+# cada um, em % (mortas / (mortas + vivas), sem as equivalentes conhecidas). Mesma regra do mutacao-go.txt: o piso só
+# sobe, e pacote novo com regra entra no PR dele.
+#
+# Ficam de fora os que só chamam o Windows (servico, elevacao, preferencias): o job roda no Linux, e eles não têm
+# regra para mutar fora da chamada ao sistema.
+#
+# Primeira medição: 28/10/2026, na máquina de desenvolvimento (#419, #420, #428); daqui em diante, na CI (#433).
+
+internal/tela             100
+internal/atualizacao      100
+internal/instalacao       100
+internal/situacao         100
+internal/copia            100
+internal/icones           100
+internal/desenvolvimento  100

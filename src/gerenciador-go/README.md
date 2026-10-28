@@ -7,7 +7,7 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 | Janela igual à do `FormPrincipal.cs`, ícone na bandeja, uma cópia só, `--bandeja`, fechar destrói a janela (#418) | Atualizar o gerenciador e reabrir (#430, depois da #277) |
 | Situação do site (de 5 em 5 s, na janela e no ícone da bandeja), ligar, desligar e reiniciar pelo UAC, cópia do banco, preferências (#419) | Aviso na bandeja quando o site cai com a janela fechada |
 | Versão nova pelo GitHub Releases: procurar, "O que mudou", baixar conferindo o SHA-256 e abrir o instalador; "Receber versões de desenvolvimento" (#420, ADR 0053) | Linux: compilar com cgo, GTK 4 e WebKitGTK, Orca (#417) |
-| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040) | Ícone no `.exe` (go-winres) |
+| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432) | Ícone no `.exe` (go-winres) |
 
 ## Organização
 
