@@ -28,6 +28,8 @@ type Situacao struct {
 	Estado  Estado
 	Titulo  string
 	Detalhe string
+	// VersaoSite é a que o site no ar informa ("" quando ele não responde ou não informa).
+	VersaoSite string
 }
 
 // Verificando é a situação antes da primeira consulta (a do ItemSituacao do menu da bandeja em C#).
@@ -106,8 +108,47 @@ func (t Tela) LigarAcao() string {
 	return "desligar"
 }
 
+// LigarTexto e LigarTecla: "Ligar" (Alt+L) ou "Desligar" (Alt+D), como o "&Ligar"/"&Desligar" do C#.
+func (t Tela) LigarTexto() string {
+	if t.desligado() {
+		return "Ligar"
+	}
+	return "Desligar"
+}
+
+func (t Tela) LigarTecla() string { return strings.ToLower(t.LigarTexto()[:1]) }
+
 // PaginasDoSiteHabilitadas: erros e manual são páginas do site, e só abrem com ele no ar.
 func (t Tela) PaginasDoSiteHabilitadas() bool { return t.Situacao.Estado == NoAr }
+
+// Atualizacao é o que muda na janela aberta a cada consulta da situação (GET /estado): a página aplica nos
+// elementos que já existem, sem recarregar, para não perder o foco nem o "Mais opções".
+type Atualizacao struct {
+	Ponto               string `json:"ponto"`
+	Titulo              string `json:"titulo"`
+	Detalhe             string `json:"detalhe"`
+	AbrirHabilitado     bool   `json:"abrirHabilitado"`
+	AbrirPrimario       bool   `json:"abrirPrimario"`
+	LigarAcao           string `json:"ligarAcao"`
+	LigarTexto          string `json:"ligarTexto"`
+	LigarTecla          string `json:"ligarTecla"`
+	LigarHabilitado     bool   `json:"ligarHabilitado"`
+	LigarPrimario       bool   `json:"ligarPrimario"`
+	ReiniciarHabilitado bool   `json:"reiniciarHabilitado"`
+	PaginasDoSite       bool   `json:"paginasDoSite"`
+	Versao              string `json:"versao"`
+}
+
+// Atualizacao da tela, com as mesmas regras da página inteira.
+func (t Tela) Atualizacao() Atualizacao {
+	return Atualizacao{
+		Ponto: t.Ponto(), Titulo: t.Situacao.Titulo, Detalhe: t.Situacao.Detalhe,
+		AbrirHabilitado: t.AbrirHabilitado(), AbrirPrimario: t.AbrirPrimario(),
+		LigarAcao: t.LigarAcao(), LigarTexto: t.LigarTexto(), LigarTecla: t.LigarTecla(),
+		LigarHabilitado: t.LigarHabilitado(), LigarPrimario: t.LigarPrimario(),
+		ReiniciarHabilitado: t.ReiniciarHabilitado(), PaginasDoSite: t.PaginasDoSiteHabilitadas(), Versao: t.Versao,
+	}
+}
 
 // TextoDaVersao é o cartão "Versão" do MostrarVersao do C#, sem a procura (#420). Com o site no ar, a versão já vai
 // no detalhe da situação, e o texto fica vazio.

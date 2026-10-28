@@ -11,19 +11,18 @@
   <main class="corpo">
     <section class="cartao" aria-label="Situação do site">
       <div class="situacao">
-        <span class="ponto {{.Ponto}}" aria-hidden="true"></span>
-        <div role="status" aria-live="polite"><p class="titulo">{{.Situacao.Titulo}}</p>{{with .Situacao.Detalhe}}<p class="detalhe">{{.}}</p>{{end}}</div>
+        <span id="ponto" class="ponto {{.Ponto}}" aria-hidden="true"></span>
+        <div role="status" aria-live="polite"><p class="titulo" id="titulo">{{.Situacao.Titulo}}</p><p class="detalhe" id="detalhe"{{if not .Situacao.Detalhe}} hidden{{end}}>{{.Situacao.Detalhe}}</p></div>
       </div>
       <div class="linha">
-        <button class="botao{{if .AbrirPrimario}} primario{{end}}" type="button" data-pagina="" accesskey="a"{{if not .AbrirHabilitado}} disabled{{end}}>{{icone "abrir"}}Abrir o site</button>
-        {{if eq .LigarAcao "ligar"}}<button class="botao{{if .LigarPrimario}} primario{{end}}" type="button" data-acao="ligar" accesskey="l"{{if not .LigarHabilitado}} disabled{{end}}>{{icone "ligar"}}Ligar</button>
-        {{- else}}<button class="botao{{if .LigarPrimario}} primario{{end}}" type="button" data-acao="desligar" accesskey="d"{{if not .LigarHabilitado}} disabled{{end}}>{{icone "ligar"}}Desligar</button>{{end}}
-        <button class="botao" type="button" data-acao="reiniciar" accesskey="r"{{if not .ReiniciarHabilitado}} disabled{{end}}>{{icone "reiniciar"}}Reiniciar</button>
+        <button id="abrir" class="botao{{if .AbrirPrimario}} primario{{end}}" type="button" data-pagina="" accesskey="a"{{if not .AbrirHabilitado}} disabled{{end}}>{{icone "abrir"}}Abrir o site</button>
+        <button id="ligar" class="botao{{if .LigarPrimario}} primario{{end}}" type="button" data-acao="{{.LigarAcao}}" accesskey="{{.LigarTecla}}"{{if not .LigarHabilitado}} disabled{{end}}>{{icone "ligar"}}<span id="texto-ligar">{{.LigarTexto}}</span></button>
+        <button id="reiniciar" class="botao" type="button" data-acao="reiniciar" accesskey="r"{{if not .ReiniciarHabilitado}} disabled{{end}}>{{icone "reiniciar"}}Reiniciar</button>
       </div>
     </section>
     <section class="cartao" aria-labelledby="titulo-versao">
       <p class="subtitulo" id="titulo-versao">Versão</p>
-      {{with .Versao}}<p class="versao">{{.}}</p>{{end}}
+      <p class="versao" id="versao"{{if not .Versao}} hidden{{end}}>{{.Versao}}</p>
       <div class="linha">
         {{if .PeloMsi}}<button class="botao" type="button" data-acao="procurar" accesskey="p">{{icone "procurar"}}Procurar versão nova</button>
         {{- else}}<button class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub">{{icone "baixar"}}Baixar o instalador .msi</button>{{end}}
@@ -35,10 +34,8 @@
     <section class="cartao" id="painel-mais"{{if not .MaisOpcoes}} hidden{{end}}>
       <div class="linha"><button class="botao" type="button" data-acao="copia" accesskey="c">{{icone "salvar"}}Salvar uma cópia do banco…</button></div>
       <div class="linha">
-        {{if .PaginasDoSiteHabilitadas}}<button class="botao" type="button" data-pagina="configuracoes?aba=erros" accesskey="e">{{icone "erros"}}Ver os erros do site</button>
-        <button class="botao" type="button" data-pagina="manual" accesskey="n">{{icone "manual"}}Abrir o manual</button>
-        {{- else}}<span class="com-dica"><button class="botao" type="button" disabled aria-describedby="dica-erros">{{icone "erros"}}Ver os erros do site</button><span id="dica-erros" class="dica" role="tooltip">{{dica}}</span></span>
-        <span class="com-dica"><button class="botao" type="button" disabled aria-describedby="dica-manual">{{icone "manual"}}Abrir o manual</button><span id="dica-manual" class="dica" role="tooltip">{{dica}}</span></span>{{end}}
+        <span class="com-dica"><button id="erros" class="botao pagina-do-site" type="button" data-pagina="configuracoes?aba=erros" accesskey="e"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-erros"{{end}}>{{icone "erros"}}Ver os erros do site</button><span id="dica-erros" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
+        <span class="com-dica"><button id="manual" class="botao pagina-do-site" type="button" data-pagina="manual" accesskey="n"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-manual"{{end}}>{{icone "manual"}}Abrir o manual</button><span id="dica-manual" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
       </div>
       <label class="interruptor"><input type="checkbox" role="switch" data-preferencia="iniciar" accesskey="i"{{if .IniciarComSistema}} checked{{end}}>Iniciar com o Windows (fica na área de notificação)</label>
       {{if .PeloMsi}}<label class="interruptor"><input type="checkbox" role="switch" data-preferencia="procurar" accesskey="v"{{if .ProcurarAoAbrir}} checked{{end}}>Procurar versão nova ao abrir</label>{{end}}
@@ -47,8 +44,9 @@
   </main>
 </div>
 <script>
+  var $ = function (id) { return document.getElementById(id); };
   // "Mais opções" abre e fecha o painel (padrão Disclosure da WAI-ARIA, como o _mais do C#).
-  var mais = document.querySelector('.mais'), painel = document.getElementById('painel-mais');
+  var mais = document.querySelector('.mais'), painel = $('painel-mais');
   mais.addEventListener('click', function () {
     painel.hidden = !painel.hidden;
     mais.setAttribute('aria-expanded', String(!painel.hidden));
@@ -57,18 +55,52 @@
     ajustarAltura();
   });
   // Os botões pedem ao gerenciador, por dentro do programa (sem porta aberta): abrir uma página do site no navegador
-  // ou uma ação.
+  // ou uma ação. A situação nova chega pela consulta abaixo.
   document.addEventListener('click', function (e) {
     var b = e.target.closest('button:not(:disabled)');
     if (!b) return;
     if (b.dataset.pagina !== undefined) fetch('/abrir?pagina=' + encodeURIComponent(b.dataset.pagina), { method: 'POST' });
-    else if (b.dataset.acao) fetch('/acao/' + b.dataset.acao, { method: 'POST' });
+    else if (b.dataset.acao) fetch('/acao/' + b.dataset.acao, { method: 'POST' }).then(atualizar);
   });
+  // As preferências valem na hora (por isso são interruptores, ADR 0032).
+  document.addEventListener('change', function (e) {
+    var p = e.target.dataset.preferencia;
+    if (p) fetch('/preferencia/' + p + '?ligado=' + e.target.checked, { method: 'POST' });
+  });
+  function botao(b, habilitado, primario) { b.disabled = !habilitado; b.classList.toggle('primario', primario); }
+  // A situação de agora, com as regras do gerenciador (GET /estado), nos elementos que já existem: o foco e o "Mais
+  // opções" ficam como estão, e o leitor de tela anuncia o título só quando ele muda (role=status).
+  function aplicar(e) {
+    $('ponto').className = 'ponto ' + e.ponto;
+    if ($('titulo').textContent !== e.titulo) $('titulo').textContent = e.titulo;
+    if ($('detalhe').textContent !== e.detalhe) $('detalhe').textContent = e.detalhe;
+    $('detalhe').hidden = !e.detalhe;
+    botao($('abrir'), e.abrirHabilitado, e.abrirPrimario);
+    var ligar = $('ligar');
+    ligar.dataset.acao = e.ligarAcao;
+    ligar.accessKey = e.ligarTecla;
+    $('texto-ligar').textContent = e.ligarTexto;
+    botao(ligar, e.ligarHabilitado, e.ligarPrimario);
+    botao($('reiniciar'), e.reiniciarHabilitado, false);
+    ['erros', 'manual'].forEach(function (id) {
+      $(id).disabled = !e.paginasDoSite;
+      if (e.paginasDoSite) $(id).removeAttribute('aria-describedby'); else $(id).setAttribute('aria-describedby', 'dica-' + id);
+      $('dica-' + id).hidden = e.paginasDoSite;
+    });
+    $('versao').textContent = e.versao;
+    $('versao').hidden = !e.versao;
+    ajustarAltura();
+  }
+  function atualizar() { return fetch('/estado').then(function (r) { return r.json(); }).then(aplicar).catch(function () {}); }
+  setInterval(atualizar, 1000);
   // A altura do conteúdo e a da área visível; o gerenciador soma a moldura e muda o tamanho da janela (POST /altura).
-  // (No WebView2, o outerHeight é o da página, e não o da janela.)
+  // (No WebView2, o outerHeight é o da página, e não o da janela.) Só pede quando muda.
+  var ultima = '';
   function ajustarAltura() {
-    var fim = document.querySelector('.raiz').getBoundingClientRect().bottom;
-    fetch('/altura', { method: 'POST', body: Math.ceil(fim) + ' ' + window.innerHeight + ' ' + window.innerWidth });
+    var medida = Math.ceil(document.querySelector('.raiz').getBoundingClientRect().bottom) + ' ' + window.innerHeight + ' ' + window.innerWidth;
+    if (medida === ultima) return;
+    ultima = medida;
+    fetch('/altura', { method: 'POST', body: medida });
   }
   addEventListener('load', ajustarAltura);
 </script>

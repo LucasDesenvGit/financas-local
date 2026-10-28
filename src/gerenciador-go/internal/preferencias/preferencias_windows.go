@@ -1,11 +1,19 @@
-// Package preferencias lê as preferências do gerenciador, por usuário, nos mesmos lugares do Preferencias.cs (nada
-// disso precisa de administrador).
+// Package preferencias lê e grava as preferências do gerenciador, por usuário, nos mesmos lugares do Preferencias.cs
+// (nada disso precisa de administrador).
 //
-// Só leitura por enquanto: gravar a entrada de iniciar com o Windows trocaria o gerenciador em C# pelo em Go no
-// início do Windows, e isso só vale quando o .msi instalar o em Go (#419, #277).
+// A entrada de iniciar com o Windows tem o mesmo nome da do C#: ligar no gerenciador em Go troca o que abre com o
+// Windows, como vai ser quando o .msi instalar o em Go (#277).
 package preferencias
 
-import "golang.org/x/sys/windows/registry"
+import (
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
+)
 
 const (
 	chave        = `Software\FinancasLocal\Gerenciador`
@@ -24,6 +32,26 @@ func IniciarComSistema() bool {
 	return err == nil
 }
 
+// DefinirIniciarComSistema grava (ou apaga) a entrada do Windows que abre o gerenciador com --bandeja.
+func DefinirIniciarComSistema(ligado bool) error {
+	k, _, err := registry.CreateKey(registry.CURRENT_USER, chaveIniciar, registry.SET_VALUE)
+	if err != nil {
+		return err
+	}
+	defer k.Close()
+	if !ligado {
+		if err := k.DeleteValue(nomeIniciar); err != nil && !errors.Is(err, registry.ErrNotExist) {
+			return err
+		}
+		return nil
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	return k.SetStringValue(nomeIniciar, `"`+strings.TrimRight(exe, `\`)+`" --bandeja`)
+}
+
 // ProcurarAoAbrir: procura versão nova ao abrir (padrão: sim).
 func ProcurarAoAbrir() bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, chave, registry.QUERY_VALUE)
@@ -35,6 +63,20 @@ func ProcurarAoAbrir() bool {
 	return err != nil || v != 0
 }
 
+// DefinirProcurarAoAbrir grava a preferência (DWORD 1 ou 0, como o C#).
+func DefinirProcurarAoAbrir(ligado bool) error {
+	k, _, err := registry.CreateKey(registry.CURRENT_USER, chave, registry.SET_VALUE)
+	if err != nil {
+		return err
+	}
+	defer k.Close()
+	valor := uint32(0)
+	if ligado {
+		valor = 1
+	}
+	return k.SetDWordValue("ProcurarAoAbrir", valor)
+}
+
 // Escuro: o Windows em modo escuro de aplicativos (HKCU …\Personalize\AppsUseLightTheme = 0), como o Tema.Detectar.
 func Escuro() bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Themes\Personalize`, registry.QUERY_VALUE)
@@ -44,4 +86,13 @@ func Escuro() bool {
 	defer k.Close()
 	v, _, err := k.GetIntegerValue("AppsUseLightTheme")
 	return err == nil && v == 0
+}
+
+// PastaDocumentos é onde o "Salvar uma cópia do banco" começa (Meus documentos).
+func PastaDocumentos() string {
+	if pasta, err := windows.KnownFolderPath(windows.FOLDERID_Documents, 0); err == nil {
+		return pasta
+	}
+	casa, _ := os.UserHomeDir()
+	return filepath.Join(casa, "Documents")
 }
