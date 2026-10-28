@@ -108,9 +108,10 @@ func (c *ClientePTAX) BuscarFechamentos(ctx context.Context, moeda string, de, a
 		if err != nil {
 			continue
 		}
-		compra, okCompra := numero(item, "cotacaoCompra")
-		venda, okVenda := numero(item, "cotacaoVenda")
-		if !okCompra || !okVenda || !compra.Decimal().IsPositive() || !venda.Decimal().IsPositive() {
+		// Sem o número (ausente ou em texto), vem zero, que não é positivo: a linha é pulada do mesmo jeito.
+		compra := numero(item, "cotacaoCompra")
+		venda := numero(item, "cotacaoVenda")
+		if !compra.Decimal().IsPositive() || !venda.Decimal().IsPositive() {
 			continue
 		}
 		fechamentos = append(fechamentos, Fechamento{Data: data, Compra: compra, Venda: venda})
@@ -169,22 +170,23 @@ func texto(item map[string]json.RawMessage, nome string) string {
 }
 
 // numero é o TryGetDecimal do .NET: só número JSON (não texto), com a escala escrita ("5.01130" fica com 5 casas).
-func numero(item map[string]json.RawMessage, nome string) (tipos.Decimal, bool) {
+// Sem número, devolve zero.
+func numero(item map[string]json.RawMessage, nome string) tipos.Decimal {
 	bruto, ok := item[nome]
 	if !ok || bytes.HasPrefix(bytes.TrimSpace(bruto), []byte(`"`)) {
-		return tipos.Decimal{}, false // texto com número não vale: o .NET confere ValueKind == Number
+		return tipos.Decimal{} // texto com número não vale: o .NET confere ValueKind == Number
 	}
 	var n json.Number
 	dec := json.NewDecoder(bytes.NewReader(bruto))
 	dec.UseNumber()
 	if err := dec.Decode(&n); err != nil {
-		return tipos.Decimal{}, false
+		return tipos.Decimal{}
 	}
 	d, err := tipos.NovoDecimal(n.String())
 	if err != nil {
-		return tipos.Decimal{}, false
+		return tipos.Decimal{}
 	}
-	return d, true
+	return d
 }
 
 // mesDiaAno escreve a data como o {de:MM-dd-yyyy} do C#.

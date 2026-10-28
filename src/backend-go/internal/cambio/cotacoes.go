@@ -45,12 +45,10 @@ func (s *Servico) AtualizarTodas(ctx context.Context) (ResultadoAtualizacao, err
 		}
 	}
 
-	if len(resultado.Falhas) == 0 {
-		if err := s.config.DefinirData(ctx, ChaveUltimaAtualizacao, s.relogio.Agora()); err != nil {
-			return resultado, err
-		}
+	if len(resultado.Falhas) > 0 {
+		return resultado, nil
 	}
-	return resultado, nil
+	return resultado, s.config.DefinirData(ctx, ChaveUltimaAtualizacao, s.relogio.Agora())
 }
 
 // Ultimas é o UltimasAsync: a última cotação guardada de cada moeda, sem consultar a internet.

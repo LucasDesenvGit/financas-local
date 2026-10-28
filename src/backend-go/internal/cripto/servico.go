@@ -228,10 +228,7 @@ func variacao24h(ultima guardada, daMoeda []guardada) (*tipos.Decimal, error) {
 // distancia é o Math.Abs((a - b).Ticks).
 func distancia(a, b time.Time) durationAbs {
 	d := a.Sub(b)
-	if d < 0 {
-		d = -d
-	}
-	return durationAbs(d)
+	return durationAbs(max(d, -d))
 }
 
 type durationAbs time.Duration
