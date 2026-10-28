@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.44.1] — 2026-10-28 · desenvolvimento
+
+### Correções
+- **Gerenciador em Go: a janela reaberta vem para a frente** (#419, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. Abrindo o gerenciador em Go de novo depois de fechar a janela, ela abria atrás das outras: a segunda cópia só avisa a primeira e fecha, e o Windows não deixava a primeira trazer a janela para a frente. Agora a segunda cópia passa esse direito adiante, e a janela criada de novo pede o foco ao aparecer.
+
 ## [2.44.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades
