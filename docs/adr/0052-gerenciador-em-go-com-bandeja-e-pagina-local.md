@@ -118,12 +118,13 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
   - o custo é uma compilação a mais, e o job de Go da CI passa a cobrir também esse módulo (PR `ci:` à parte).
   A montagem da janela fica em `internal/tela`, sem o Wails, e é testada sem janela.
 - **Windows primeiro:** a pedido do @JulioCezarSP (27/10/2026), a #418 começa pelo Windows sem esperar o teste no Linux (#417). A #417 passou a bloquear a #86 (remover o .NET); se o Wails não servir no Linux, esta ADR volta para decisão.
+- **Cópia do banco no próprio gerenciador** (#419): o `VACUUM INTO` pelo `modernc.org/sqlite`, o mesmo da API (ADR 0049), no processo elevado, como o C#. Custa ~5,6 MB no `.exe`; chamar o executável da API para isso pouparia o tamanho, mas amarraria o gerenciador à versão da API instalada.
 - **Cache do WebView2:** em `%LOCALAPPDATA%\FinancasLocal\Gerenciador\WebView2`. A pasta de dados do site (`%ProgramData%\FinancasLocal\dados`) é do serviço, e o gerenciador roda sem administrador.
 
 ## Consequências
 
 - **Positivas:**
-  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~11 MB num arquivo só;
+  - instalação muito menor: o gerenciador cai de 121 MB (240 arquivos) para ~17 MB num arquivo só (11 MB na #418; o SQLite da cópia do banco soma ~5,6 MB na #419);
   - um programa de verdade, com a mesma cara do de hoje, e não uma página do navegador;
   - nenhum servidor novo na máquina;
   - a janela é HTML, num lugar só para Windows e Linux. Hoje são duas janelas, WinForms e Avalonia, que precisam ser mantidas iguais à mão;

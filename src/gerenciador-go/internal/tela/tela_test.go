@@ -101,7 +101,7 @@ func escrever(t *testing.T, tl Tela) string {
 // botao devolve a tag de abertura do botão com o nome dado (o texto depois do ícone).
 func botao(t *testing.T, html, nome string) string {
 	t.Helper()
-	m := regexp.MustCompile(`<button[^>]*>(?:<span class="ico"[^>]*>[^<]*</span>)?` + regexp.QuoteMeta(nome) + `</button>`).
+	m := regexp.MustCompile(`<button[^>]*>(?:<span class="ico"[^>]*>[^<]*</span>)?(?:<span id="[^"]*">)?` + regexp.QuoteMeta(nome) + `(?:</span>)?</button>`).
 		FindString(html)
 	if m == "" {
 		t.Fatalf("sem o botão %q", nome)
@@ -113,7 +113,7 @@ func botao(t *testing.T, html, nome string) string {
 // páginas do site (WCAG 1.4.13: a dica é texto do próprio botão, por aria-describedby).
 func TestPaginaComOSiteDesligado(t *testing.T) {
 	t.Parallel()
-	html := escrever(t, Tela{Situacao: Situacao{Desligado, "O site está desligado.", "Clique em “Ligar” para usar."}, PeloMsi: true})
+	html := escrever(t, Tela{Situacao: Situacao{Estado: Desligado, Titulo: "O site está desligado.", Detalhe: "Clique em “Ligar” para usar."}, PeloMsi: true})
 	for nome, deve := range map[string][]string{
 		"Abrir o site":         {"disabled"},
 		"Ligar":                {`class="botao primario"`, `data-acao="ligar"`, `accesskey="l"`},
@@ -139,7 +139,7 @@ func TestPaginaComOSiteDesligado(t *testing.T) {
 // Regra: no ar, tudo liberado, "Abrir o site" em destaque, "Desligar" no lugar de "Ligar", e sem dica.
 func TestPaginaComOSiteNoAr(t *testing.T) {
 	t.Parallel()
-	html := escrever(t, Tela{Situacao: Situacao{NoAr, "O site está no ar.", "Versão 2.42.21 · https://127.0.0.1:5443/"}})
+	html := escrever(t, Tela{Situacao: Situacao{Estado: NoAr, Titulo: "O site está no ar.", Detalhe: "Versão 2.42.21 · https://127.0.0.1:5443/"}})
 	for _, nome := range []string{"Abrir o site", "Desligar", "Reiniciar", "Ver os erros do site", "Abrir o manual"} {
 		if tag := botao(t, html, nome); strings.Contains(tag, "disabled") {
 			t.Errorf("%s bloqueado: %s", nome, tag)
@@ -148,8 +148,9 @@ func TestPaginaComOSiteNoAr(t *testing.T) {
 	if tag := botao(t, html, "Abrir o site"); !strings.Contains(tag, "primario") {
 		t.Errorf("Abrir o site sem destaque: %s", tag)
 	}
-	if strings.Contains(html, DicaSiteDesligado) || strings.Contains(html, ">Ligar<") {
-		t.Error("dica ou Ligar com o site no ar")
+	if strings.Contains(html, ">Ligar<") || strings.Contains(html, `aria-describedby="`) ||
+		strings.Count(html, `role="tooltip" hidden>`+DicaSiteDesligado) != 2 {
+		t.Error("dica à mostra ou Ligar com o site no ar")
 	}
 }
 
@@ -226,5 +227,33 @@ func TestIconeSemGlifo(t *testing.T) {
 	t.Parallel()
 	if _, err := icone("nenhum"); err == nil || err.Error() != "ícone sem glifo: nenhum" {
 		t.Errorf("erro %v", err)
+	}
+}
+
+// Regra: a atualização da janela aberta (GET /estado) segue as mesmas regras da página inteira.
+func TestAtualizacao(t *testing.T) {
+	t.Parallel()
+	desligado := Tela{Situacao: Situacao{Estado: Desligado, Titulo: "O site está desligado.", Detalhe: "Clique"}, Versao: "v"}.Atualizacao()
+	if desligado != (Atualizacao{Ponto: "negativo", Titulo: "O site está desligado.", Detalhe: "Clique", AbrirPrimario: false,
+		LigarAcao: "ligar", LigarTexto: "Ligar", LigarTecla: "l", LigarHabilitado: true, LigarPrimario: true, Versao: "v"}) {
+		t.Errorf("desligado: %+v", desligado)
+	}
+	noAr := Tela{Situacao: Situacao{Estado: NoAr}}.Atualizacao()
+	if noAr != (Atualizacao{Ponto: "positivo", AbrirHabilitado: true, AbrirPrimario: true, LigarAcao: "desligar",
+		LigarTexto: "Desligar", LigarTecla: "d", LigarHabilitado: true, ReiniciarHabilitado: true, PaginasDoSite: true}) {
+		t.Errorf("no ar: %+v", noAr)
+	}
+}
+
+// Regra: detalhe e versão vazios ficam escondidos (os elementos existem, para a atualização preencher).
+func TestVaziosEscondidos(t *testing.T) {
+	t.Parallel()
+	html := escrever(t, Tela{Situacao: Verificando})
+	if !strings.Contains(html, `id="detalhe" hidden>`) || !strings.Contains(html, `id="versao" hidden>`) {
+		t.Error("vazios à mostra")
+	}
+	cheio := escrever(t, Tela{Situacao: Situacao{Detalhe: "d"}, Versao: "v"})
+	if !strings.Contains(cheio, `id="detalhe">d<`) || !strings.Contains(cheio, `id="versao">v<`) {
+		t.Error("cheios escondidos")
 	}
 }

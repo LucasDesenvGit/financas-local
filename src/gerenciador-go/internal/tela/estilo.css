@@ -57,3 +57,4 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
 .dica { display: none; position: absolute; z-index: 1; left: 0; top: calc(100% - 4px); width: max-content; max-width: 300px;
   padding: 5px 8px; border-radius: 6px; background: var(--texto); color: var(--fundo); font-size: 12px; }
 .com-dica:hover .dica { display: block; }
+.dica[hidden] { display: none !important; }

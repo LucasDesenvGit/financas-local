@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.44.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: situação, ligar e desligar e cópia do banco** (#419, épico #70, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. O gerenciador em Go passa a ler a situação de verdade, de 5 em 5 segundos, como o de C# (o serviço e se o site responde, com a versão dele e o aviso de porta ocupada), na janela, que se atualiza sem recarregar, e no ícone da bandeja, com o ponto da cor da situação. Ligar, desligar e reiniciar pedem o UAC só para a ação, e "Salvar uma cópia do banco…" faz a cópia com o site no ar. A pasta de dados e o endereço vêm dos mesmos `appsettings` da API, as preferências passam a ser gravadas, e "Baixar o instalador .msi" abre a página da versão. Falta o aviso na bandeja quando o site cai com a janela fechada.
+
 ## [2.43.1] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação
