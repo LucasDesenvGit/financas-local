@@ -72,6 +72,30 @@ type Tela struct {
 	// ReceberDesenvolvimento: "Procurar versão nova" olha o pré-lançamento "desenvolvimento" (ADR 0040).
 	ReceberDesenvolvimento bool
 	Procura                Procura
+	// Develop é o "Atualizar para a última do develop" da instalação de desenvolvimento (ADR 0040).
+	Develop Develop
+}
+
+// Develop: Disponivel quando a pasta do projeto é um clone na branch develop; Saida é o que os scripts escreveram.
+type Develop struct {
+	Disponivel bool
+	Rodando    bool
+	Saida      string
+}
+
+// TextoDeDesenvolvimento é o cartão "Versão" da instalação de desenvolvimento (MostrarVersao do C#).
+func TextoDeDesenvolvimento(raiz string) string {
+	return "Instalação de desenvolvimento: a pasta " + raiz + " é um clone na branch develop. O botão abaixo traz o " +
+		"develop do GitHub e reinstala (só para quem desenvolve; o site fica fora do ar alguns minutos e o banco ganha " +
+		"uma cópia antes)."
+}
+
+// ConfirmarDevelop é a pergunta antes de atualizar pelo develop, com o texto do AtualizarPeloGitAsync do C#.
+func ConfirmarDevelop() Aviso {
+	return Aviso{Tipo: "pergunta", Titulo: "Atualizar esta instalação de desenvolvimento para a última versão do develop?",
+		Mensagem: "O gerenciador traz o código do GitHub e reinstala o site (pede permissão de administrador). O site fica " +
+			"fora do ar por alguns minutos, enquanto o front-end e a API são compilados, e o banco ganha uma cópia em backups " +
+			"antes de mudar. Com alterações locais ou em outra branch, nada é mudado: a tela diz o motivo."}
 }
 
 // Procura é o estado da versão nova no cartão "Versão" (o ProcurarAsync e o AtualizarAsync do C#).
@@ -178,6 +202,9 @@ type Atualizacao struct {
 	AtualizarTexto      string `json:"atualizarTexto"`
 	Baixando            bool   `json:"baixando"`
 	Progresso           int    `json:"progresso"`
+	Develop             bool   `json:"develop"`
+	DevelopRodando      bool   `json:"developRodando"`
+	Saida               string `json:"saida"`
 }
 
 // Atualizacao da tela, com as mesmas regras da página inteira.
@@ -190,6 +217,7 @@ func (t Tela) Atualizacao() Atualizacao {
 		ReiniciarHabilitado: t.ReiniciarHabilitado(), PaginasDoSite: t.PaginasDoSiteHabilitadas(), Versao: t.Versao,
 		ProcurarHabilitado: t.ProcurarHabilitado(), Nova: t.Procura.Nova, AtualizarTexto: t.AtualizarTexto(),
 		Baixando: t.Procura.Baixando, Progresso: t.Procura.Progresso,
+		Develop: t.Develop.Disponivel, DevelopRodando: t.Develop.Rodando, Saida: t.Develop.Saida,
 	}
 }
 

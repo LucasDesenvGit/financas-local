@@ -27,8 +27,10 @@
         {{if .PeloMsi}}<button id="atualizar" class="botao primario" type="button" accesskey="t"{{if not .Procura.Nova}} hidden{{end}}{{if .Procura.Baixando}} disabled{{end}}>{{icone "baixar"}}<span id="texto-atualizar">{{.AtualizarTexto}}</span></button>
         <button id="procurar" class="botao" type="button" data-acao="procurar" accesskey="p"{{if not .ProcurarHabilitado}} disabled{{end}}>{{icone "procurar"}}Procurar versão nova</button>
         <button id="notas" class="botao discreto" type="button" accesskey="q"{{if not .Procura.Nova}} hidden{{end}}>{{icone "informacao"}}O que mudou</button>
-        {{- else}}<button class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub">{{icone "baixar"}}Baixar o instalador .msi</button>{{end}}
+        {{- else}}<button id="atualizar-develop" class="botao primario" type="button" accesskey="v"{{if not .Develop.Disponivel}} hidden{{end}}{{if .Develop.Rodando}} disabled{{end}}>{{icone "baixar"}}Atualizar para a última do develop</button>
+        <button id="baixar-msi" class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub"{{if .Develop.Disponivel}} hidden{{end}}>{{icone "baixar"}}Baixar o instalador .msi</button>{{end}}
       </div>
+      {{if not .PeloMsi}}<textarea id="saida" class="saida" readonly aria-label="Saída da atualização"{{if not .Develop.Saida}} hidden{{end}}>{{.Develop.Saida}}</textarea>{{end}}
       {{if .PeloMsi}}<div class="linha baixando" id="baixando"{{if not .Procura.Baixando}} hidden{{end}}>
         <progress id="barra" max="100" value="{{.Procura.Progresso}}" aria-label="Baixando a versão nova"></progress>
         <button class="botao discreto" type="button" data-acao="cancelar-download">{{icone "cancelar"}}Cancelar download</button>
@@ -138,6 +140,12 @@
       if (a) mostrarAviso(a, function () { fetch('/acao/atualizar', { method: 'POST' }).then(atualizar); });
     });
   });
+  // Atualizar pelo develop: confirmar antes, como o C#; a saída dos scripts chega pela consulta abaixo.
+  if ($('atualizar-develop')) $('atualizar-develop').addEventListener('click', function () {
+    fetch('/confirmar-develop').then(function (r) { return r.ok ? r.json() : null; }).then(function (a) {
+      if (a) mostrarAviso(a, function () { fetch('/acao/atualizar-develop', { method: 'POST' }).then(atualizar); });
+    });
+  });
   // "O que mudou": as notas já vêm em HTML limpo; "Ver tudo" mostra também o resto.
   var notas = null, tudo = false, dialogoNotas = $('notas-dialogo');
   function mostrarNotas() {
@@ -205,6 +213,17 @@
     });
     if ($('versao').textContent !== e.versao) $('versao').textContent = e.versao;
     $('versao').hidden = !e.versao;
+    if ($('saida')) {
+      $('atualizar-develop').hidden = !e.develop;
+      $('atualizar-develop').disabled = e.developRodando;
+      $('baixar-msi').hidden = e.develop;
+      var saida = $('saida'), noFim = saida.scrollTop + saida.clientHeight >= saida.scrollHeight - 4;
+      if (saida.value !== e.saida) {
+        saida.value = e.saida;
+        if (noFim) saida.scrollTop = saida.scrollHeight; // acompanha o fim, a não ser que a pessoa tenha subido
+      }
+      saida.hidden = !e.saida;
+    }
     if ($('procurar')) {
       $('procurar').disabled = !e.procurarHabilitado;
       $('atualizar').hidden = $('notas').hidden = !e.nova;

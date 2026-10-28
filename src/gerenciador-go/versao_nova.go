@@ -56,6 +56,12 @@ func (g *gerenciador) textoDaVersao() string {
 	if g.nova.texto != "" {
 		return g.nova.texto
 	}
+	if g.dev.texto != "" {
+		return g.dev.texto
+	}
+	if g.dev.raiz != "" {
+		return tela.TextoDeDesenvolvimento(g.dev.raiz)
+	}
 	return tela.TextoDaVersao(versao, g.inst.PeloMsi, g.situacao.VersaoSite != "", g.nova.resultado)
 }
 

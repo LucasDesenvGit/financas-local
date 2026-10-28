@@ -386,3 +386,42 @@ func TestInterruptorDeDesenvolvimento(t *testing.T) {
 		t.Error("ligado sem pedir")
 	}
 }
+
+// Regra: pelos scripts, num clone na develop, aparece "Atualizar para a última do develop" no lugar de "Baixar o
+// instalador .msi"; rodando, o botão fica bloqueado e a caixa mostra a saída dos scripts.
+func TestCartaoDoDevelop(t *testing.T) {
+	t.Parallel()
+	fora := escrever(t, Tela{})
+	if !strings.Contains(fora, `id="atualizar-develop" class="botao primario" type="button" accesskey="v" hidden>`) ||
+		strings.Contains(fora, `data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub" hidden`) ||
+		!strings.Contains(fora, `id="saida" class="saida" readonly aria-label="Saída da atualização" hidden>`) {
+		t.Error("fora do clone: botões errados")
+	}
+	rodando := escrever(t, Tela{Develop: Develop{Disponivel: true, Rodando: true, Saida: "==> Buscando <o develop>"}})
+	for _, parte := range []string{`accesskey="v" disabled>`, `aria-description="Abre a página da versão mais recente no GitHub" hidden>`,
+		`aria-label="Saída da atualização">==&gt; Buscando &lt;o develop&gt;</textarea>`} {
+		if !strings.Contains(rodando, parte) {
+			t.Errorf("rodando, falta %s", parte)
+		}
+	}
+	if strings.Contains(escrever(t, Tela{PeloMsi: true}), `id="atualizar-develop"`) {
+		t.Error("pelo .msi, com o develop")
+	}
+	a := Tela{Develop: Develop{Disponivel: true, Rodando: true, Saida: "x"}}.Atualizacao()
+	if !a.Develop || !a.DevelopRodando || a.Saida != "x" {
+		t.Errorf("%+v", a)
+	}
+}
+
+// Regra: o texto do cartão e a pergunta antes, com os textos do C#.
+func TestTextosDoDevelop(t *testing.T) {
+	t.Parallel()
+	if obtido := TextoDeDesenvolvimento(`C:\projeto`); !strings.HasPrefix(obtido, `Instalação de desenvolvimento: a pasta C:\projeto é um clone na branch develop.`) {
+		t.Error(obtido)
+	}
+	a := ConfirmarDevelop()
+	if a.Tipo != "pergunta" || a.Titulo != "Atualizar esta instalação de desenvolvimento para a última versão do develop?" ||
+		!strings.HasSuffix(a.Mensagem, "Com alterações locais ou em outra branch, nada é mudado: a tela diz o motivo.") {
+		t.Errorf("%+v", a)
+	}
+}

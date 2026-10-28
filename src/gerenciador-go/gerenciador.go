@@ -65,6 +65,7 @@ type gerenciador struct {
 	maisOpcoes  bool
 	ultimaCopia string // o arquivo da última cópia do banco, para "Abrir a pasta"
 	nova        versaoNova
+	dev         develop
 
 	bandeja      *application.SystemTray
 	itemSituacao *application.MenuItem
@@ -98,6 +99,7 @@ func (g *gerenciador) iniciar(comJanela bool) {
 	}
 	go func() {
 		g.atualizarSituacao()
+		go g.procurarClone()
 		// Como o IniciarAsync do C#: depois da primeira situação (que diz a versão do site), procura a versão nova.
 		if g.inst.PeloMsi && preferencias.ProcurarAoAbrir() {
 			go g.procurar()
@@ -129,6 +131,7 @@ func (g *gerenciador) tela() tela.Tela {
 
 		ReceberDesenvolvimento: receberDesenvolvimento(g.situacao.VersaoSite),
 		Procura:                g.nova.procura,
+		Develop:                g.developNaTela(),
 	}
 }
 
@@ -302,6 +305,8 @@ func (g *gerenciador) rotas() http.Handler {
 			go g.procurar()
 		case "atualizar":
 			go g.atualizar()
+		case "atualizar-develop":
+			go g.atualizarDevelop()
 		case "cancelar-download":
 			g.cancelarDownload()
 		default:
@@ -332,6 +337,9 @@ func (g *gerenciador) rotas() http.Handler {
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("GET /confirmar-develop", func(w http.ResponseWriter, _ *http.Request) {
+		responderJSON(w, g.confirmacaoDoDevelop())
 	})
 	mux.HandleFunc("GET /confirmar-atualizacao", func(w http.ResponseWriter, _ *http.Request) {
 		responderJSON(w, g.confirmacao())

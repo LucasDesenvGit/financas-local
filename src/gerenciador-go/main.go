@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/copia"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/servico"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
@@ -33,14 +34,18 @@ var exemplos = map[string]tela.Situacao{
 }
 
 func main() {
-	// Como o Program.cs: --servico ligar|desligar|reiniciar e --backup "destino" são as ações que o próprio
-	// gerenciador roda como administrador (UAC), sem janela.
+	// Como o Program.cs: --servico ligar|desligar|reiniciar, --backup "destino" e --instalar-pelos-scripts (só na
+	// instalação de desenvolvimento, ADR 0040) são as ações que o próprio gerenciador roda como administrador (UAC),
+	// sem janela.
 	if len(os.Args) == 3 && os.Args[1] == "--servico" && servico.AcaoValida(os.Args[2]) {
 		if err := servico.Executar(os.Args[2]); err != nil {
 			log.Print(err)
 			os.Exit(1)
 		}
 		return
+	}
+	if len(os.Args) == 2 && os.Args[1] == "--instalar-pelos-scripts" {
+		os.Exit(desenvolvimento.ReinstalarElevado())
 	}
 	if len(os.Args) == 3 && os.Args[1] == "--backup" {
 		os.Exit(backup(os.Args[2]))
