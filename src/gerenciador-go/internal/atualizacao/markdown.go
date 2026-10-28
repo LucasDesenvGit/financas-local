@@ -85,7 +85,7 @@ func trechosHTML(texto string) string {
 			b.WriteString("<code>" + html.EscapeString(texto[m[4]:m[5]]) + "</code>")
 		case m[10] >= 0:
 			// Asterisco grudado em letra ou número não é itálico ("MP*MP", "MP*NOME", das descrições do banco).
-			if letraOuNumero(texto, m[0]-1) || letraOuNumero(texto, m[1]) {
+			if letraOuNumeroAntes(texto, m[0]) || letraOuNumeroDepois(texto, m[1]) {
 				b.WriteString(html.EscapeString(texto[m[0]:m[1]]))
 			} else {
 				b.WriteString("<em>" + trechosHTML(texto[m[10]:m[11]]) + "</em>")
@@ -125,14 +125,16 @@ func titulo(texto string) (classe, conteudo string) {
 	return "", trechosHTML(texto)
 }
 
-// letraOuNumero diz se o caractere no byte i (fora do texto: não) é letra ou número.
-func letraOuNumero(texto string, i int) bool {
-	if i < 0 || i >= len(texto) {
-		return false
-	}
-	r, _ := utf8.DecodeRuneInString(texto[i:])
-	if r == utf8.RuneError && i > 0 {
-		r, _ = utf8.DecodeLastRuneInString(texto[:i+1])
-	}
-	return unicode.IsLetter(r) || unicode.IsDigit(r)
+// letraOuNumeroAntes e letraOuNumeroDepois: o caractere inteiro (o "ç" tem dois bytes) logo antes ou logo depois da
+// posição; no começo ou no fim do texto, não há (RuneError, que não é letra).
+func letraOuNumeroAntes(texto string, i int) bool {
+	r, _ := utf8.DecodeLastRuneInString(texto[:i])
+	return letraOuNumero(r)
 }
+
+func letraOuNumeroDepois(texto string, i int) bool {
+	r, _ := utf8.DecodeRuneInString(texto[i:])
+	return letraOuNumero(r)
+}
+
+func letraOuNumero(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) }

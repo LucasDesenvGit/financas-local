@@ -34,9 +34,9 @@ func TestSepararPorSecao(t *testing.T) {
 		!strings.Contains(n.Novidades, "- correção B") || strings.Contains(n.Novidades, "antiga C") {
 		t.Errorf("novidades:\n%s", n.Novidades)
 	}
-	if !n.TemResto() || !strings.Contains(n.Resto, "## Como instalar") || !strings.Contains(n.Resto, "### 2.44.0 — ") ||
-		!strings.Contains(n.Resto, "antiga C") ||
-		strings.Contains(n.Resto, "nova A") {
+	// O resto inteiro: tudo o que não é novidade, na ordem, linha por linha (nenhuma a mais, nenhuma a menos).
+	quer := "## Como instalar\n- baixe o .msi\n\n## O que mudou\n### 2.44.0 — 2026-10-27 · desenvolvimento\n- antiga C"
+	if !n.TemResto() || n.Resto != quer {
 		t.Errorf("resto:\n%s", n.Resto)
 	}
 }
