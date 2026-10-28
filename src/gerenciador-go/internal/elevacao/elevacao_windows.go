@@ -29,8 +29,12 @@ type shellExecuteInfo struct {
 	processo    windows.Handle
 }
 
-// SEE_MASK_NOCLOSEPROCESS: devolve o processo criado, para esperar e ler o código de saída.
-const seeMaskNoCloseProcess = 0x40
+// SEE_MASK_NOCLOSEPROCESS devolve o processo criado, para esperar e ler o código de saída; SEE_MASK_NOASYNC termina
+// tudo antes de voltar, porque a chamada sai de uma goroutine, sem laço de mensagens (documentação do SHELLEXECUTEINFOW).
+const (
+	seeMaskNoCloseProcess = 0x40
+	seeMaskNoAsync        = 0x100
+)
 
 var shellExecuteEx = windows.NewLazySystemDLL("shell32.dll").NewProc("ShellExecuteExW")
 
@@ -47,7 +51,7 @@ func Executar(argumentos ...string) Resultado {
 	verbo, _ := windows.UTF16PtrFromString("runas")
 	arquivo, _ := windows.UTF16PtrFromString(exe)
 	parametros, _ := windows.UTF16PtrFromString(strings.Join(partes, " "))
-	info := shellExecuteInfo{mascara: seeMaskNoCloseProcess, verbo: verbo, arquivo: arquivo, parametros: parametros,
+	info := shellExecuteInfo{mascara: seeMaskNoCloseProcess | seeMaskNoAsync, verbo: verbo, arquivo: arquivo, parametros: parametros,
 		mostrar: windows.SW_HIDE}
 	info.tamanho = uint32(unsafe.Sizeof(info))
 	if ok, _, err := shellExecuteEx.Call(uintptr(unsafe.Pointer(&info))); ok == 0 {
