@@ -82,7 +82,10 @@ def linha_do_codigo(pacote, arquivo, numero):
 def medir(pacote, conhecidas):
     os.makedirs(SAIDA, exist_ok=True)
     saida_json = os.path.join(SAIDA, pacote.replace('/', '-') + '.json')
-    comando = ['go', 'run', GREMLINS, 'unleash', './' + pacote, '--silent', '--output', saida_json] + OPERADORES + EXECUCAO
+    # O gerenciador mostra o andamento do gremlins (sem --silent): ajuda a ver onde ele para na CI (#433).
+    silencio = [] if GERENCIADOR else ['--silent']
+    comando = ['go', 'run', GREMLINS, 'unleash', './' + pacote] + silencio + ['--output', saida_json] + OPERADORES + EXECUCAO
+    print(f'== {pacote}', flush=True)
     subprocess.run(comando, cwd=GO, check=True)
     with open(saida_json, encoding='utf-8') as f:
         dados = json.load(f)
