@@ -349,6 +349,12 @@ func (g *gerenciador) abrir() {
 		BackgroundColour:           fundo,
 	})
 	j.RegisterHook(events.Common.WindowClosing, func(*application.WindowEvent) { g.fechou(j) })
+	// A janela nova também vem para a frente (e com o foco), e não só a que já existia.
+	var desligar func()
+	desligar = j.OnWindowEvent(events.Common.WindowShow, func(*application.WindowEvent) {
+		desligar()
+		j.Focus()
+	})
 	g.janela = j
 }
 
