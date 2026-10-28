@@ -22,11 +22,12 @@ var (
 // HTMLDasNotas escreve as notas em HTML seguro para pôr na página.
 func HTMLDasNotas(markdown string) template.HTML {
 	var b strings.Builder
-	niveis := 0 // listas abertas
+	// niveis: listas abertas. Abrir e fechar vão de uma vez (strings.Repeat), sem laço que conta: um laço que conta
+	// para o lado errado escreveria sem parar e acabaria com a memória (foi o que travou o teste de mutação, #433).
+	niveis := 0
 	fecharListas := func(ate int) {
-		for ; niveis > ate; niveis-- {
-			b.WriteString("</li></ul>")
-		}
+		b.WriteString(strings.Repeat("</li></ul>", niveis-ate))
+		niveis = ate
 	}
 	emComentario := false
 	for bruta := range strings.SplitSeq(strings.ReplaceAll(markdown, "\r\n", "\n"), "\n") {
@@ -46,9 +47,8 @@ func HTMLDasNotas(markdown string) template.HTML {
 			nivel := len(strings.ReplaceAll(m[1], "\t", "  "))/2 + 1
 			switch {
 			case nivel > niveis:
-				for ; niveis < nivel; niveis++ {
-					b.WriteString("<ul><li>")
-				}
+				b.WriteString(strings.Repeat("<ul><li>", nivel-niveis))
+				niveis = nivel
 			default:
 				fecharListas(nivel)
 				b.WriteString("</li><li>")
