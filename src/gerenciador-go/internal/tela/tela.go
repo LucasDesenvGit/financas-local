@@ -7,6 +7,7 @@ import (
 	"errors"
 	"html/template"
 	"io"
+	"path/filepath"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -171,7 +172,7 @@ func TextoDaVersao(instalada string, peloMsi, siteInformouVersao bool) string {
 // Os glifos dos botões do C# (IconeBotao, Controles.cs), da fonte de ícones do Windows (Segoe Fluent Icons).
 var glifos = map[string]string{
 	"abrir": "", "ligar": "", "reiniciar": "", "baixar": "", "procurar": "",
-	"informacao": "", "erros": "", "manual": "", "salvar": "",
+	"informacao": "", "pasta": "", "erros": "", "manual": "", "salvar": "",
 }
 
 //go:embed estilo.css
@@ -192,6 +193,33 @@ func icone(nome string) (template.HTML, error) {
 		return "", errors.New("ícone sem glifo: " + nome)
 	}
 	return template.HTML(`<span class="ico" aria-hidden="true">` + g + `</span>`), nil
+}
+
+// Aviso é o diálogo que a janela mostra no desenho dela (e não a caixa do Windows): o resultado da cópia do banco.
+type Aviso struct {
+	// Tipo: "sucesso" ou "alerta" (o ícone e a cor).
+	Tipo     string `json:"tipo"`
+	Titulo   string `json:"titulo"`
+	Mensagem string `json:"mensagem"`
+	// Arquivo e Pasta só na cópia salva, em linhas separadas, para o caminho comprido não quebrar no meio da frase; com
+	// eles aparece "Abrir a pasta".
+	Arquivo string `json:"arquivo,omitempty"`
+	Pasta   string `json:"pasta,omitempty"`
+}
+
+// AvisoDaCopia é o resultado de "Salvar uma cópia do banco…", com os textos do SalvarCopiaAsync do C#.
+func AvisoDaCopia(feito, cancelado bool, destino string) Aviso {
+	switch {
+	case feito:
+		return Aviso{Tipo: "sucesso", Titulo: "Cópia do banco salva",
+			Mensagem: "Ela tem todos os seus dados financeiros: guarde em lugar seguro.",
+			Arquivo:  filepath.Base(destino), Pasta: filepath.Dir(destino)}
+	case cancelado:
+		return Aviso{Tipo: "alerta", Titulo: "Cópia do banco", Mensagem: "Cancelado: nenhuma cópia foi feita."}
+	default:
+		return Aviso{Tipo: "alerta", Titulo: "Cópia do banco",
+			Mensagem: "Não deu para copiar o banco. Confira se a pasta escolhida aceita gravação."}
+	}
 }
 
 // Escrever escreve a página da janela.
