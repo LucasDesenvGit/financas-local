@@ -11,10 +11,15 @@ mutação dentro de "case" sai como NOT COVERED e nunca é testada. Nessas regra
 
 Não roda em todo PR (é lento: ~1 min por pacote). Roda toda semana e à mão, pelo workflow "Teste de mutação (Go)".
 
+O gerenciador em Go (src/gerenciador-go, ADR 0052) é outro módulo, com a lista e as equivalentes dele
+(mutacao-gerenciador-go.txt e mutacao-gerenciador-go-equivalentes.txt). Ele roda no PR que o muda, na CI, para o teste
+pesado não rodar na máquina de quem desenvolve (#433).
+
 Uso:   python3 scripts/ci/mutacao-go.py                      # todos os pacotes de mutacao-go.txt
        python3 scripts/ci/mutacao-go.py internal/parametros  # só os pacotes dados
-Saída: src/backend-go/mutacao/<pacote>.json (o do gremlins) e src/backend-go/mutacao/relatorio.md (também no resumo
-       do job, quando roda no GitHub Actions).
+       python3 scripts/ci/mutacao-go.py --gerenciador        # os do gerenciador (mutacao-gerenciador-go.txt)
+Saída: <módulo>/mutacao/<pacote>.json (o do gremlins) e <módulo>/mutacao/relatorio.md (também no resumo do job,
+       quando roda no GitHub Actions).
 """
 import json
 import os
@@ -30,8 +35,13 @@ EXECUCAO = ['--workers', '4', '--timeout-coefficient', '30']
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(os.path.dirname(AQUI))
-GO = os.path.join(RAIZ, 'src', 'backend-go')
+# O módulo medido: o back-end (padrão) ou, com --gerenciador, o gerenciador; cada um com a sua lista.
+GERENCIADOR = '--gerenciador' in sys.argv[1:]
+GO = os.path.join(RAIZ, 'src', 'gerenciador-go' if GERENCIADOR else 'backend-go')
 SAIDA = os.path.join(GO, 'mutacao')
+LISTA = 'mutacao-gerenciador-go.txt' if GERENCIADOR else 'mutacao-go.txt'
+EQUIVALENTES = 'mutacao-gerenciador-go-equivalentes.txt' if GERENCIADOR else 'mutacao-go-equivalentes.txt'
+TITULO = '## Teste de mutação (gerenciador em Go)' if GERENCIADOR else '## Teste de mutação (Go)'
 
 
 def ler_linhas(nome):
@@ -45,7 +55,7 @@ def ler_linhas(nome):
 def pisos():
     """pacote → piso da eficácia, em %. O piso só sobe (ADR 0051)."""
     resultado = {}
-    for linha in ler_linhas('mutacao-go.txt'):
+    for linha in ler_linhas(LISTA):
         pacote, piso = linha.split()[:2]
         resultado[pacote] = float(piso)
     return resultado
@@ -55,7 +65,7 @@ def equivalentes():
     """(pacote, arquivo, tipo, trecho da linha) das mutações que não mudam o resultado. Pelo texto da linha, e não
     pelo número, para não quebrar quando o arquivo muda em cima."""
     resultado = {}
-    for linha in ler_linhas('mutacao-go-equivalentes.txt'):
+    for linha in ler_linhas(EQUIVALENTES):
         # Separado por " | " (com os espaços): o "||" de uma condição no trecho não corta a linha.
         partes = [p.strip() for p in linha.split(' | ')]
         pacote, arquivo, tipo, motivo = partes[0], partes[1], partes[2], partes[-1]
@@ -95,7 +105,7 @@ def medir(pacote, conhecidas):
 
 
 def relatorio(resultados, limites):
-    linhas = ['## Teste de mutação (Go)', '',
+    linhas = [TITULO, '',
               '| Pacote | Mortas | Vivas | Equivalentes | Sem teste | Eficácia | Piso |', '|---|---|---|---|---|---|---|']
     for r in resultados:
         situacao = '' if r['eficacia'] >= limites[r['pacote']] else ' ❌'
@@ -112,7 +122,7 @@ def relatorio(resultados, limites):
 
 def main():
     limites = pisos()
-    pedidos = sys.argv[1:] or list(limites)
+    pedidos = [a for a in sys.argv[1:] if a != '--gerenciador'] or list(limites)
     conhecidas = equivalentes()
     resultados = [medir(p, conhecidas) for p in pedidos]
     texto = relatorio(resultados, limites)

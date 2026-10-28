@@ -2,9 +2,18 @@ name: Teste de mutação (Go)
 
 # #373 (ADR 0051): mede se os testes do Go pegam erro de verdade. O gremlins estraga o código de propósito, numa cópia
 # (troca < por <=, && por ||, + por -...), e conta as mudanças que os testes não pegaram. É lento (~1 min por pacote),
-# então não roda em PR: toda segunda de manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow).
+# então o do back-end não roda em PR: toda segunda de manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow).
 # Os pacotes e os pisos ficam em scripts/ci/mutacao-go.txt; o relatório sai no resumo do job e no artefato.
+# #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/mutacao-gerenciador-go.txt) roda também no PR que mexe
+# nele, para o teste pesado não rodar na máquina de quem desenvolve (chegava a 8 GB de memória).
 on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'src/gerenciador-go/**'
+      - 'scripts/ci/mutacao-go.py'
+      - 'scripts/ci/mutacao-gerenciador-go*.txt'
+      - '.github/workflows/mutacao-go.yml'
   schedule:
     - cron: '0 9 * * 1' # segunda, 06:00 em Brasília
   workflow_dispatch:
@@ -24,6 +33,7 @@ concurrency:
 jobs:
   mutacao:
     name: Teste de mutação (Go)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -46,5 +56,31 @@ jobs:
         with:
           name: mutacao-go
           path: src/backend-go/mutacao/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # #433: o gerenciador em Go. No Linux: os pacotes medidos não chamam o Windows (os que chamam ficam fora da lista).
+  gerenciador:
+    name: Teste de mutação (gerenciador em Go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/gerenciador-go/go.mod
+          cache-dependency-path: src/gerenciador-go/go.sum
+
+      - name: Teste de mutação
+        run: python3 scripts/ci/mutacao-go.py --gerenciador
+
+      - name: Relatório e resultados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutacao-gerenciador-go
+          path: src/gerenciador-go/mutacao/
           if-no-files-found: ignore
           retention-days: 30
