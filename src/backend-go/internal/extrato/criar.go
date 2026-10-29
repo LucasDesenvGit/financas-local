@@ -70,9 +70,8 @@ func (s *Servico) validarManual(ctx context.Context, d salvarTransacaoDto) (stri
 		return "Não é possível lançar manualmente em contas do Open Finance. Os lançamentos chegam pela sincronização.", nil
 	}
 	if d.CategoriaId != nil {
-		var existe bool
-		if err := s.db.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM "Categoria" WHERE "Id" = ?)`, *d.CategoriaId).
-			Scan(&existe); err != nil {
+		existe, err := s.categoriaExiste(ctx, *d.CategoriaId)
+		if err != nil {
 			return "", err
 		}
 		if !existe {
@@ -83,10 +82,10 @@ func (s *Servico) validarManual(ctx context.Context, d salvarTransacaoDto) (stri
 }
 
 // aplicar é o Aplicar do controller: a descrição aparada, o valor com o sinal pelo tipo (receita positiva, o resto
-// negativo), a categoria escolhida (manual) ou a das regras, e o tipo pela categoria e pelo sinal (ADR 0036). O tipo do
-// corpo só decide o sinal. Ignorar nos relatórios vale fora das transferências; emergência, só para saída. A observação
-// e a emergência voltam à parte: o modelo das regras não as tem.
-func aplicar(t *transacoes.Transacao, d salvarTransacaoDto, rs *categorizacao.Regras, agora tipos.DataHora) (observacao *string, emergencia bool) {
+// negativo), o status, a observação aparada (em branco é nula), a categoria escolhida (manual) ou a das regras, e o tipo
+// pela categoria e pelo sinal (ADR 0036). O tipo do corpo só decide o sinal. Ignorar nos relatórios vale fora das
+// transferências; emergência, só para saída.
+func aplicar(t *transacoes.Transacao, d salvarTransacaoDto, rs *categorizacao.Regras, agora tipos.DataHora) {
 	t.Data = d.Data
 	t.Descricao = strings.TrimSpace(d.Descricao)
 	t.DescricaoOriginal = nil
@@ -95,10 +94,8 @@ func aplicar(t *transacoes.Transacao, d salvarTransacaoDto, rs *categorizacao.Re
 	if d.Tipo != transacoes.Receita {
 		t.Valor = tipos.DeDecimal(abs.Decimal().Neg())
 	}
-	if d.Observacao != nil && strings.TrimSpace(*d.Observacao) != "" {
-		o := strings.TrimSpace(*d.Observacao)
-		observacao = &o
-	}
+	t.Status = d.Status
+	t.Observacao = aparadoOuNulo(d.Observacao)
 	t.CategoriaManual = d.CategoriaId != nil
 	t.CategoriaId = d.CategoriaId
 	if t.CategoriaId == nil {
@@ -108,8 +105,17 @@ func aplicar(t *transacoes.Transacao, d salvarTransacaoDto, rs *categorizacao.Re
 	if t.Tipo != transacoes.Transferencia {
 		t.IgnorarRelatorios = d.IgnorarRelatorios
 	}
+	t.Emergencia = d.Emergencia && t.Valor.Decimal().IsNegative()
 	t.AtualizadoEm = agora
-	return observacao, d.Emergencia && t.Valor.Decimal().IsNegative()
+}
+
+// aparadoOuNulo é o "string.IsNullOrWhiteSpace(x) ? null : x.Trim()" do C#.
+func aparadoOuNulo(s *string) *string {
+	if s == nil || strings.TrimSpace(*s) == "" {
+		return nil
+	}
+	aparado := strings.TrimSpace(*s)
+	return &aparado
 }
 
 // criar é o lançamento manual (só em contas manuais). Depois de gravar, as transferências entre contas suas são
@@ -137,15 +143,15 @@ func (s *Servico) criar(w http.ResponseWriter, r *http.Request) {
 		}
 		agora := tipos.NovaDataHora(s.relogio.Agora())
 		t := transacoes.Transacao{ContaId: d.ContaId}
-		observacao, emergencia := aplicar(&t, d, rs, agora)
+		aplicar(&t, d, rs, agora)
 		res, err := tx.ExecContext(r.Context(), `INSERT INTO "Transacao" ("ContaId", "PluggyTransactionId", "Data",
 			"Descricao", "DescricaoOriginal", "Estabelecimento", "Valor", "Tipo", "Status", "CategoriaId", "CategoriaManual",
 			"PluggyCategoriaId", "FaturaCartaoId", "ParcelaNumero", "ParcelaTotal", "IgnorarRelatorios", "Emergencia",
 			"DescricaoRevisada", "MeioPagamento", "MesmaTitularidade", "RegraDescricaoId", "DescricaoManual",
 			"TransferenciaGrupo", "Observacao", "CriadoEm", "AtualizadoEm")
 			VALUES (?, NULL, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, ?, 0, NULL, NULL, NULL, 0, NULL, ?, ?, ?)`,
-			t.ContaId, t.Data, t.Descricao, t.Valor, t.Tipo, d.Status, t.CategoriaId, t.CategoriaManual, t.IgnorarRelatorios,
-			emergencia, observacao, agora, t.AtualizadoEm)
+			t.ContaId, t.Data, t.Descricao, t.Valor, t.Tipo, t.Status, t.CategoriaId, t.CategoriaManual, t.IgnorarRelatorios,
+			t.Emergencia, t.Observacao, agora, t.AtualizadoEm)
 		if err != nil {
 			return err
 		}

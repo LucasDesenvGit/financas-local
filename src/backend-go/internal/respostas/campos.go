@@ -28,7 +28,10 @@ func numeroPtBR(v float64) string {
 
 // inteiroDoToken lê um int do C# (32 bits): número JSON inteiro ou, como as opções web do ASP.NET leem
 // (AllowReadingFromString), o mesmo número em texto. "7.0", "1e2" e " 7" não são int para o System.Text.Json.
-func inteiroDoToken(t json.Token) (int64, bool) {
+func inteiroDoToken(t json.Token) (int64, bool) { return inteiroDoTokenEm(t, 32) }
+
+// inteiroDoTokenEm é o inteiroDoToken com o tamanho do inteiro em bits (64 para o long).
+func inteiroDoTokenEm(t json.Token, bits int) (int64, bool) {
 	var texto string
 	switch v := t.(type) {
 	case json.Number:
@@ -38,7 +41,7 @@ func inteiroDoToken(t json.Token) (int64, bool) {
 	default:
 		return 0, false
 	}
-	n, err := strconv.ParseInt(texto, 10, 32)
+	n, err := strconv.ParseInt(texto, 10, bits)
 	if err != nil || strings.HasPrefix(texto, "+") {
 		return 0, false
 	}

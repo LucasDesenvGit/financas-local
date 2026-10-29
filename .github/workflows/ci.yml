@@ -400,7 +400,10 @@ jobs:
           esperado=src/backend-go/testes/contrato/esperado
           bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar
           mkdir -p "$RUNNER_TEMP/primeira" && cp "$esperado"/*.json "$RUNNER_TEMP/primeira/"
-          bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar
+          MANTER_PASTA=1 bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar 2>&1 | tee "$RUNNER_TEMP/gravacao.log"
+          pasta="$(grep -o 'Pasta mantida: .*' "$RUNNER_TEMP/gravacao.log" | cut -d' ' -f3)"
+          echo "Erros que a API registrou nas transações:"
+          sqlite3 "$pasta/dados/sql/FinancasLocal.db" "SELECT Id, Rota, Mensagem, substr(Detalhe, 1, 3000) FROM ErroSistema WHERE Rota LIKE '%transacoes%'" || true
           if diff -r "$RUNNER_TEMP/primeira" "$esperado"; then echo "As duas gravações deram o mesmo."; else echo "::error::As duas gravações deram diferente."; fi
           echo "Esperados que mudaram ou entraram:"; git status --short -- "$esperado"
 
