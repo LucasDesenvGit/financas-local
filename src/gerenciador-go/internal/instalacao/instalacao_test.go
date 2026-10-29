@@ -148,3 +148,27 @@ func mustJSON(s string) []byte {
 	b, _ := json.Marshal(s)
 	return b
 }
+
+// Regra: no Linux, a pasta da API é a WorkingDirectory da unidade; sem ela (ou relativa, ou "~"), a pasta do
+// Financas.Api.dll do ExecStart; unidade que não carregou não tem pasta.
+func TestPastaDaUnidade(t *testing.T) {
+	t.Parallel()
+	execStart := "{ path=/home/ana/financas/ferramentas/dotnet/dotnet ; argv[]=/home/ana/financas/ferramentas/dotnet/dotnet " +
+		"/home/ana/financas/publicado/api/Financas.Api.dll ; ignore_errors=no }"
+	casos := []struct {
+		nome     string
+		p        map[string]string
+		esperada string
+	}{
+		{"WorkingDirectory", map[string]string{"LoadState": "loaded", "WorkingDirectory": "/srv/api", "ExecStart": execStart}, "/srv/api"},
+		{"sem WorkingDirectory", map[string]string{"LoadState": "loaded", "ExecStart": execStart}, "/home/ana/financas/publicado/api"},
+		{"WorkingDirectory ~", map[string]string{"LoadState": "loaded", "WorkingDirectory": "~", "ExecStart": execStart}, "/home/ana/financas/publicado/api"},
+		{"sem a API", map[string]string{"LoadState": "loaded", "ExecStart": "{ path=/usr/bin/outro ; argv[]=/usr/bin/outro }"}, ""},
+		{"não carregou", map[string]string{"LoadState": "not-found", "WorkingDirectory": "/srv/api"}, ""},
+	}
+	for _, c := range casos {
+		if obtida := PastaDaUnidade(c.p); obtida != c.esperada {
+			t.Errorf("%s: %q, esperada %q", c.nome, obtida, c.esperada)
+		}
+	}
+}

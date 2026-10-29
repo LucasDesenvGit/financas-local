@@ -15,42 +15,52 @@
         <div role="status" aria-live="polite"><p class="titulo" id="titulo">{{.Situacao.Titulo}}</p><p class="detalhe" id="detalhe"{{if not .Situacao.Detalhe}} hidden{{end}}>{{.Situacao.Detalhe}}</p></div>
       </div>
       <div class="linha">
-        <button id="abrir" class="botao{{if .AbrirPrimario}} primario{{end}}" type="button" data-pagina="" accesskey="a"{{if not .AbrirHabilitado}} disabled{{end}}>{{icone "abrir"}}Abrir o site</button>
-        <button id="ligar" class="botao{{if .LigarPrimario}} primario{{end}}" type="button" data-acao="{{.LigarAcao}}" accesskey="{{.LigarTecla}}"{{if not .LigarHabilitado}} disabled{{end}}>{{icone "ligar"}}<span id="texto-ligar">{{.LigarTexto}}</span></button>
-        <button id="reiniciar" class="botao" type="button" data-acao="reiniciar" accesskey="r"{{if not .ReiniciarHabilitado}} disabled{{end}}>{{icone "reiniciar"}}Reiniciar</button>
+        <button id="abrir" class="botao{{if .AbrirPrimario}} primario{{end}}" type="button" data-pagina="" accesskey="a"{{if not .AbrirHabilitado}} disabled{{end}}>{{.Icone "abrir"}}Abrir o site</button>
+        <button id="ligar" class="botao{{if .LigarPrimario}} primario{{end}}" type="button" data-acao="{{.LigarAcao}}" accesskey="{{.LigarTecla}}"{{if not .LigarHabilitado}} disabled{{end}}>{{.Icone "ligar"}}<span id="texto-ligar">{{.LigarTexto}}</span></button>
+        <button id="reiniciar" class="botao" type="button" data-acao="reiniciar" accesskey="r"{{if not .ReiniciarHabilitado}} disabled{{end}}>{{.Icone "reiniciar"}}Reiniciar</button>
       </div>
     </section>
     <section class="cartao" aria-labelledby="titulo-versao">
       <p class="subtitulo" id="titulo-versao">Versão</p>
       <p class="versao" id="versao" role="status" aria-live="polite"{{if not .Versao}} hidden{{end}}>{{.Versao}}</p>
+      {{if .Comando}}<div class="comando" id="comando"{{if .Develop.Disponivel}} hidden{{end}}>
+        <input id="texto-comando" class="saida" type="text" readonly value="{{.Comando}}" aria-label="Comando para atualizar">
+        <div class="linha"><button class="botao" type="button" data-acao="copiar-comando" accesskey="o">{{.Icone "copiar"}}Copiar o comando</button><span id="copiado" class="copiado" role="status"></span></div>
+      </div>{{end}}
       <div class="linha">
-        {{if .PeloMsi}}<button id="atualizar" class="botao primario" type="button" accesskey="t"{{if not .Procura.Nova}} hidden{{end}}{{if .Procura.Baixando}} disabled{{end}}>{{icone "baixar"}}<span id="texto-atualizar">{{.AtualizarTexto}}</span></button>
-        <button id="procurar" class="botao" type="button" data-acao="procurar" accesskey="p"{{if not .ProcurarHabilitado}} disabled{{end}}>{{icone "procurar"}}Procurar versão nova</button>
-        <button id="notas" class="botao discreto" type="button" accesskey="q"{{if not .Procura.Nova}} hidden{{end}}>{{icone "informacao"}}O que mudou</button>
-        {{- else}}<button id="atualizar-develop" class="botao primario" type="button" accesskey="v"{{if not .Develop.Disponivel}} hidden{{end}}{{if .Develop.Rodando}} disabled{{end}}>{{icone "baixar"}}Atualizar para a última do develop</button>
-        <button id="notas-develop" class="botao discreto" type="button" accesskey="q"{{if not .Develop.Notas}} hidden{{end}}>{{icone "informacao"}}O que mudou</button>
-        <button id="baixar-msi" class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub"{{if .Develop.Disponivel}} hidden{{end}}>{{icone "baixar"}}Baixar o instalador .msi</button>{{end}}
+        {{if .PeloMsi}}<button id="atualizar" class="botao primario" type="button" accesskey="t"{{if not .Procura.Nova}} hidden{{end}}{{if .Procura.Baixando}} disabled{{end}}>{{.Icone "baixar"}}<span id="texto-atualizar">{{.AtualizarTexto}}</span></button>
+        <button id="procurar" class="botao" type="button" data-acao="procurar" accesskey="p"{{if not .ProcurarHabilitado}} disabled{{end}}>{{.Icone "procurar"}}Procurar versão nova</button>
+        <button id="notas" class="botao discreto" type="button" accesskey="q"{{if not .Procura.Nova}} hidden{{end}}>{{.Icone "informacao"}}O que mudou</button>
+        {{- else}}<button id="atualizar-develop" class="botao primario" type="button" accesskey="v"{{if not .Develop.Disponivel}} hidden{{end}}{{if .Develop.Rodando}} disabled{{end}}>{{.Icone "baixar"}}Atualizar para a última do develop</button>
+        <button id="notas-develop" class="botao discreto" type="button" accesskey="q"{{if not .Develop.Notas}} hidden{{end}}>{{.Icone "informacao"}}O que mudou</button>
+        {{- if not .Linux}}
+        <button id="baixar-msi" class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub"{{if .Develop.Disponivel}} hidden{{end}}>{{.Icone "baixar"}}Baixar o instalador .msi</button>{{end}}{{end}}
       </div>
       {{if not .PeloMsi}}<textarea id="saida" class="saida" readonly aria-label="Saída da atualização"{{if not .Develop.Saida}} hidden{{end}}>{{.Develop.Saida}}</textarea>{{end}}
       {{if .PeloMsi}}<div class="linha baixando" id="baixando"{{if not .Procura.Baixando}} hidden{{end}}>
         <progress id="barra" max="100" value="{{.Procura.Progresso}}" aria-label="Baixando a versão nova"></progress>
-        <button class="botao discreto" type="button" data-acao="cancelar-download">{{icone "cancelar"}}Cancelar download</button>
+        <button class="botao discreto" type="button" data-acao="cancelar-download">{{.Icone "cancelar"}}Cancelar download</button>
       </div>{{end}}
     </section>
     <button class="botao discreto mais" type="button" accesskey="m" aria-controls="painel-mais" aria-expanded="{{.MaisOpcoes}}"
-      aria-label="{{if .MaisOpcoes}}Menos opções (esconder){{else}}Mais opções: cópia do banco, erros, manual e preferências{{end}}"
+      data-rotulo="{{.RotuloMais}}" aria-label="{{if .MaisOpcoes}}Menos opções (esconder){{else}}{{.RotuloMais}}{{end}}"
       >{{if .MaisOpcoes}}Menos opções ▴{{else}}Mais opções ▾{{end}}</button>
     <section class="cartao" id="painel-mais"{{if not .MaisOpcoes}} hidden{{end}}>
-      <div class="linha"><button class="botao" type="button" data-acao="copia" accesskey="c">{{icone "salvar"}}Salvar uma cópia do banco…</button></div>
+      <div class="linha"><button class="botao" type="button" data-acao="copia" accesskey="c">{{.Icone "salvar"}}Salvar uma cópia do banco…</button></div>
       <div class="linha">
-        <span class="com-dica"><button id="erros" class="botao pagina-do-site" type="button" data-pagina="configuracoes?aba=erros" accesskey="e"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-erros"{{end}}>{{icone "erros"}}Ver os erros do site</button><span id="dica-erros" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
-        <span class="com-dica"><button id="manual" class="botao pagina-do-site" type="button" data-pagina="manual" accesskey="n"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-manual"{{end}}>{{icone "manual"}}Abrir o manual</button><span id="dica-manual" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
+        <span class="com-dica"><button id="erros" class="botao pagina-do-site" type="button" data-pagina="configuracoes?aba=erros" accesskey="e"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-erros"{{end}}>{{.Icone "erros"}}Ver os erros do site</button><span id="dica-erros" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
+        {{if .Linux}}<button id="registro" class="botao" type="button" accesskey="g">{{.Icone "registro"}}Ver o registro do serviço</button>{{end}}
+        <span class="com-dica"><button id="manual" class="botao pagina-do-site" type="button" data-pagina="manual" accesskey="n"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-manual"{{end}}>{{.Icone "manual"}}Abrir o manual</button><span id="dica-manual" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
       </div>
-      <label class="interruptor"><input type="checkbox" role="switch" data-preferencia="iniciar" accesskey="i"{{if .IniciarComSistema}} checked{{end}}>Iniciar com o Windows (fica na área de notificação)</label>
+      <label class="interruptor"><input type="checkbox" role="switch" data-preferencia="iniciar" accesskey="i"{{if .IniciarComSistema}} checked{{end}}>Iniciar com o {{if .Linux}}sistema{{else}}Windows{{end}} (fica na área de notificação)</label>
+      {{if .Linux}}<div class="sem-login" id="sem-login"{{if not .TextoSemLogin}} hidden{{end}}>
+        <p id="texto-sem-login" role="status">{{.TextoSemLogin}}</p>
+        <div class="linha"><button id="botao-sem-login" class="botao" type="button" data-acao="sem-login" accesskey="s"{{if ne .SemLogin "nao"}} hidden{{end}}>Manter o site no ar sem login</button></div>
+      </div>{{end}}
       {{if .PeloMsi}}<label class="interruptor"><input type="checkbox" role="switch" data-preferencia="procurar" accesskey="v"{{if .ProcurarAoAbrir}} checked{{end}}>Procurar versão nova ao abrir</label>
       <div class="com-info">
         <label class="interruptor"><input type="checkbox" role="switch" data-preferencia="desenvolvimento"{{if .ReceberDesenvolvimento}} checked{{end}}>Receber versões de desenvolvimento</label>
-        <button class="info" type="button" aria-expanded="false" aria-controls="info-desenvolvimento" aria-label="O que são as versões de desenvolvimento">&#xE946;</button>
+        <button class="info" type="button" aria-expanded="false" aria-controls="info-desenvolvimento" aria-label="O que são as versões de desenvolvimento">{{.Glifo "informacao"}}</button>
       </div>
       <p class="info-texto" id="info-desenvolvimento" hidden>Saem a cada mudança no código, antes de virar versão publicada: chegam antes, mas são menos testadas. Desligando de novo, só vem versão publicada mais nova que a que estiver instalada.</p>{{end}}
       <p class="rodape">Dados em {{.PastaDados}}. Endereço: {{.Endereco}}</p>
@@ -62,7 +72,7 @@
 <dialog id="aviso" class="aviso" aria-labelledby="aviso-titulo" aria-describedby="aviso-mensagem">
   <div class="aviso-cabecalho"><span class="moldura"><img src="/icone.png" alt=""></span><strong>Finanças Local</strong></div>
   <div class="aviso-corpo">
-    <span id="aviso-simbolo-sucesso" class="aviso-simbolo sucesso" aria-hidden="true">&#xE930;</span><span id="aviso-simbolo-alerta" class="aviso-simbolo alerta" aria-hidden="true" hidden>&#xE7BA;</span><span id="aviso-simbolo-pergunta" class="aviso-simbolo pergunta" aria-hidden="true" hidden>&#xE946;</span>
+    <span id="aviso-simbolo-sucesso" class="aviso-simbolo sucesso" aria-hidden="true">{{.Glifo "sucesso"}}</span><span id="aviso-simbolo-alerta" class="aviso-simbolo alerta" aria-hidden="true" hidden>{{.Glifo "alerta"}}</span><span id="aviso-simbolo-pergunta" class="aviso-simbolo pergunta" aria-hidden="true" hidden>{{.Glifo "informacao"}}</span>
     <div>
       <h2 id="aviso-titulo"></h2>
       <dl id="aviso-local" hidden><dt>Arquivo</dt><dd id="aviso-arquivo"></dd><dt>Pasta</dt><dd id="aviso-pasta"></dd></dl>
@@ -70,10 +80,10 @@
     </div>
   </div>
   <div class="aviso-botoes">
-    <button id="aviso-abrir-pasta" class="botao" type="button" hidden>{{icone "pasta"}}Abrir a pasta</button>
+    <button id="aviso-abrir-pasta" class="botao" type="button" hidden>{{.Icone "pasta"}}Abrir a pasta</button>
     <button id="aviso-ok" class="botao primario" type="button">OK</button>
     <button id="aviso-cancelar" class="botao" type="button" hidden>Cancelar</button>
-    <button id="aviso-confirmar" class="botao primario" type="button" hidden>{{icone "baixar"}}Atualizar</button>
+    <button id="aviso-confirmar" class="botao primario" type="button" hidden>{{.Icone "baixar"}}Atualizar</button>
   </div>
 </dialog>
 <!-- "O que mudou" na versão nova: primeiro só o que mudou desde a versão instalada; o resto atrás de "Ver tudo"
@@ -85,8 +95,8 @@
     <div id="notas-texto" class="notas-texto" tabindex="0"></div>
   </div>
   <div class="aviso-botoes">
-    <button id="notas-tudo" class="botao discreto" type="button" aria-controls="notas-texto" aria-expanded="false" aria-description="Mostra também como instalar, as versões de desenvolvimento anteriores e tudo o que mudou desde a última versão publicada.">{{icone "informacao"}}<span id="texto-notas-tudo">Ver tudo</span></button>
-    <button id="notas-pagina" class="botao discreto" type="button">{{icone "abrir"}}<span id="texto-notas-pagina">Ver a página da versão no GitHub</span></button>
+    <button id="notas-tudo" class="botao discreto" type="button" aria-controls="notas-texto" aria-expanded="false" aria-description="Mostra também como instalar, as versões de desenvolvimento anteriores e tudo o que mudou desde a última versão publicada.">{{.Icone "informacao"}}<span id="texto-notas-tudo">Ver tudo</span></button>
+    <button id="notas-pagina" class="botao discreto" type="button">{{.Icone "abrir"}}<span id="texto-notas-pagina">Ver a página da versão no GitHub</span></button>
     <button id="notas-fechar" class="botao primario" type="button">Fechar</button>
   </div>
 </dialog>
@@ -98,7 +108,7 @@
     painel.hidden = !painel.hidden;
     mais.setAttribute('aria-expanded', String(!painel.hidden));
     mais.textContent = painel.hidden ? 'Mais opções ▾' : 'Menos opções ▴';
-    mais.setAttribute('aria-label', painel.hidden ? 'Mais opções: cópia do banco, erros, manual e preferências' : 'Menos opções (esconder)');
+    mais.setAttribute('aria-label', painel.hidden ? mais.dataset.rotulo : 'Menos opções (esconder)');
     ajustarAltura();
   });
   // Os botões pedem ao gerenciador, por dentro do programa (sem porta aberta): abrir uma página do site no navegador
@@ -109,6 +119,9 @@
     if (b.dataset.pagina !== undefined) fetch('/abrir?pagina=' + encodeURIComponent(b.dataset.pagina), { method: 'POST' });
     else if (b.dataset.acao === 'copia') fetch('/acao/copia', { method: 'POST' }).then(function (r) {
       if (r.status === 200) return r.json().then(mostrarAviso);
+    });
+    else if (b.dataset.acao === 'copiar-comando') fetch('/acao/copiar-comando', { method: 'POST' }).then(function (r) {
+      $('copiado').textContent = r.ok ? 'Copiado. Cole no terminal.' : 'Não deu para copiar: selecione o comando e use Ctrl+C.';
     });
     else if (b.dataset.acao) fetch('/acao/' + b.dataset.acao, { method: 'POST' }).then(atualizar);
   });
@@ -155,21 +168,24 @@
     $('notas-tudo').setAttribute('aria-expanded', String(tudo));
     $('notas-texto').scrollTop = 0;
   }
-  function abrirNotas() {
-    fetch('/notas').then(function (r) { return r.ok ? r.json() : null; }).then(function (n) {
+  // As notas da versão nova ("O que mudou") e, no Linux, o registro do serviço, no mesmo diálogo.
+  function abrirNotas(endereco) {
+    fetch(endereco).then(function (r) { return r.ok ? r.json() : null; }).then(function (n) {
       if (!n) return;
       notas = n;
       tudo = false;
       $('notas-titulo').textContent = n.titulo;
       $('texto-notas-pagina').textContent = n.textoPagina || 'Ver a página da versão no GitHub';
       $('notas-tudo').hidden = !n.resto;
+      $('notas-pagina').hidden = !n.pagina;
       mostrarNotas();
       dialogoNotas.showModal();
       ajustarAltura();
       $('notas-fechar').focus();
     });
   }
-  ['notas', 'notas-develop'].forEach(function (id) { if ($(id)) $(id).addEventListener('click', abrirNotas); });
+  ['notas', 'notas-develop'].forEach(function (id) { if ($(id)) $(id).addEventListener('click', function () { abrirNotas('/notas'); }); });
+  if ($('registro')) $('registro').addEventListener('click', function () { abrirNotas('/registro'); });
   $('notas-tudo').addEventListener('click', function () { tudo = !tudo; mostrarNotas(); });
   $('notas-fechar').addEventListener('click', function () { dialogoNotas.close(); });
   dialogoNotas.addEventListener('close', ajustarAltura); // Fechar ou Esc: a janela volta ao tamanho do conteúdo
@@ -221,7 +237,8 @@
     if ($('saida')) {
       $('atualizar-develop').hidden = !e.develop;
       $('atualizar-develop').disabled = e.developRodando;
-      $('baixar-msi').hidden = e.develop;
+      if ($('baixar-msi')) $('baixar-msi').hidden = e.develop;
+      if ($('comando')) $('comando').hidden = e.develop;
       $('notas-develop').hidden = !e.notasDevelop;
       var saida = $('saida'), noFim = saida.scrollTop + saida.clientHeight >= saida.scrollHeight - 4;
       if (saida.value !== e.saida) {
@@ -229,6 +246,11 @@
         if (noFim) saida.scrollTop = saida.scrollHeight; // acompanha o fim, a não ser que a pessoa tenha subido
       }
       saida.hidden = !e.saida;
+    }
+    if ($('sem-login')) {
+      $('sem-login').hidden = !e.textoSemLogin;
+      if ($('texto-sem-login').textContent !== e.textoSemLogin) $('texto-sem-login').textContent = e.textoSemLogin;
+      $('botao-sem-login').hidden = e.semLogin !== 'nao';
     }
     if ($('procurar')) {
       $('procurar').disabled = !e.procurarHabilitado;
