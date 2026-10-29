@@ -58,6 +58,17 @@ func (d Data) SomarAnos(n int) Data {
 	return NovaData(ano, mes, min(d.Dia(), ultimo))
 }
 
+// SomarMeses é o DateOnly.AddMonths do C#: o dia que não existe no mês de chegada vira o último dele (31/01 + 1 mês
+// = 28/02 ou 29/02). O AddDate do Go passaria para março.
+func (d Data) SomarMeses(n int) Data {
+	primeiro := time.Date(d.Ano(), d.Mes()+time.Month(n), 1, 0, 0, 0, 0, time.UTC)
+	ultimo := time.Date(primeiro.Year(), primeiro.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	return NovaData(primeiro.Year(), primeiro.Month(), min(d.Dia(), ultimo))
+}
+
+// DiasDesde é a diferença em dias (d.DayNumber - o.DayNumber no C#): positiva quando d é depois de o.
+func (d Data) DiasDesde(o Data) int { return int(d.t.Sub(o.t).Hours() / 24) }
+
 // Value grava "2026-10-15" (driver.Valuer).
 func (d Data) Value() (driver.Value, error) { return d.String(), nil }
 
@@ -156,6 +167,15 @@ func (d *DataHora) lerTexto(texto string) error {
 
 func (d DataHora) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.t.Format(formatoDataHoraNoJSON))
+}
+
+// DataHoraUtc é o DateTime com Kind Utc: o DateTime.UtcNow que o C# acabou de gravar e devolve da memória, no criar e
+// no editar. No JSON, com "Z" no fim ("2026-10-15T01:00:00.1234567Z"); lido de volta do banco, o mesmo carimbo vem sem
+// fuso, como DataHora.
+type DataHoraUtc struct{ DataHora }
+
+func (d DataHoraUtc) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.t.Format(formatoDataHoraNoJSON) + "Z")
 }
 
 func (d *DataHora) UnmarshalJSON(dados []byte) error {

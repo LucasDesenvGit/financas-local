@@ -127,6 +127,90 @@ func (c *CampoEnum) Ou(padrao int64) int64 {
 	return *c.Valor
 }
 
+// CampoByteOpcional é um parâmetro byte? de um record (o dia do mês): número inteiro de 0 a 255 ou o mesmo número em
+// texto (AllowReadingFromString); null ou ausente fica nil. Com Faixa, o [Range].
+type CampoByteOpcional struct {
+	Propriedade string
+	Faixa       *Faixa
+	Valor       *int64
+}
+
+func (c *CampoByteOpcional) propriedade() string { return c.Propriedade }
+
+func (c *CampoByteOpcional) ler(t json.Token) bool {
+	var texto string
+	switch v := t.(type) {
+	case nil:
+		c.Valor = nil
+		return true
+	case json.Number:
+		texto = string(v)
+	case string:
+		texto = v
+	default:
+		return false
+	}
+	n, err := strconv.ParseUint(texto, 10, 8)
+	if err != nil || strings.HasPrefix(texto, "+") {
+		return false
+	}
+	v := int64(n)
+	c.Valor = &v
+	return true
+}
+
+func (c *CampoByteOpcional) validar(erros map[string][]string) {
+	if c.Faixa != nil && c.Valor != nil && (float64(*c.Valor) < c.Faixa.Minimo || float64(*c.Valor) > c.Faixa.Maximo) {
+		erros[c.Propriedade] = append(erros[c.Propriedade], c.Faixa.mensagem(c.Propriedade))
+	}
+}
+
+// CampoBoolOpcional é um parâmetro bool? de um record: null ou ausente fica nil. Texto ("true") não vale: o
+// AllowReadingFromString das opções web é só para número.
+type CampoBoolOpcional struct {
+	Propriedade string
+	Valor       *bool
+}
+
+func (c *CampoBoolOpcional) propriedade() string { return c.Propriedade }
+
+func (c *CampoBoolOpcional) ler(t json.Token) bool {
+	switch v := t.(type) {
+	case nil:
+		c.Valor = nil
+	case bool:
+		c.Valor = &v
+	default:
+		return false
+	}
+	return true
+}
+
+func (c *CampoBoolOpcional) validar(map[string][]string) {}
+
+// CampoDecimal é um parâmetro decimal (não anulável) de um record: sem a propriedade no JSON fica zero, e null é erro
+// de conversão. Lê como o CampoDecimalOpcional.
+type CampoDecimal struct {
+	Propriedade string
+	Valor       tipos.Decimal
+}
+
+func (c *CampoDecimal) propriedade() string { return c.Propriedade }
+
+func (c *CampoDecimal) ler(t json.Token) bool {
+	if t == nil {
+		return false
+	}
+	opcional := CampoDecimalOpcional{Propriedade: c.Propriedade}
+	if !opcional.ler(t) {
+		return false
+	}
+	c.Valor = *opcional.Valor
+	return true
+}
+
+func (c *CampoDecimal) validar(map[string][]string) {}
+
 // CampoDecimalOpcional é um parâmetro decimal? de um record: número JSON (com a escala que veio) ou número em texto
 // (AllowReadingFromString). null ou ausente fica nil. Com Faixa, o [Range] em double, como o RangeAttribute(double,
 // double): o valor é convertido para double só para comparar.

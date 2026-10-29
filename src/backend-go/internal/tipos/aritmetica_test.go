@@ -111,3 +111,21 @@ func TestSomarESubtrairMantemAMaiorEscala(t *testing.T) {
 		})
 	}
 }
+
+// Regra: Maior é o Math.Max do C#: o maior; no empate, o primeiro, com a escala dele.
+func TestMaiorComoOMathMax(t *testing.T) {
+	t.Parallel()
+	casos := []struct{ a, b, esperado string }{
+		{"100", "100.0", "100"},
+		{"100.00", "100.0", "100.00"},
+		{"0", "-0.00", "0"},
+		{"0", "5.5", "5.5"},
+		{"-1", "-2", "-1"},
+		{"30", "100", "100"},
+	}
+	for _, c := range casos {
+		if obtido := Maior(dec(t, c.a), dec(t, c.b)); obtido.String() != c.esperado {
+			t.Errorf("Maior(%s, %s) = %s, esperado %s", c.a, c.b, obtido, c.esperado)
+		}
+	}
+}

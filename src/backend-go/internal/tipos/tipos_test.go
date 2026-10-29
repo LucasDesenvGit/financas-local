@@ -200,3 +200,46 @@ func TestDataEGuidRecusamJSONInvalido(t *testing.T) {
 		t.Errorf("Guid válido: %v %s", err, g)
 	}
 }
+
+// Regra: SomarMeses é o DateOnly.AddMonths (o dia que falta vira o último do mês, inclusive no ano bissexto e na virada
+// do ano, para a frente e para trás); DiasDesde é a diferença de DayNumber.
+func TestSomarMesesEDiasDesde(t *testing.T) {
+	t.Parallel()
+	d := func(ano int, mes time.Month, dia int) Data { return NovaData(ano, mes, dia) }
+	casos := []struct {
+		de       Data
+		meses    int
+		esperado Data
+	}{
+		{d(2026, 1, 31), 1, d(2026, 2, 28)},
+		{d(2028, 1, 31), 1, d(2028, 2, 29)},
+		{d(2026, 3, 31), -1, d(2026, 2, 28)},
+		{d(2026, 12, 15), 1, d(2027, 1, 15)},
+		{d(2026, 1, 10), -1, d(2025, 12, 10)},
+		{d(2026, 10, 31), -24, d(2024, 10, 31)},
+		{d(2026, 5, 31), 13, d(2027, 6, 30)},
+		{d(2026, 8, 30), 0, d(2026, 8, 30)},
+	}
+	for _, c := range casos {
+		if obtido := c.de.SomarMeses(c.meses); !obtido.Igual(c.esperado) {
+			t.Errorf("%s + %d meses = %s, esperado %s", c.de, c.meses, obtido, c.esperado)
+		}
+	}
+	if n := d(2026, 3, 1).DiasDesde(d(2026, 2, 1)); n != 28 {
+		t.Errorf("DiasDesde = %d, esperado 28", n)
+	}
+	if n := d(2025, 12, 31).DiasDesde(d(2026, 1, 1)); n != -1 {
+		t.Errorf("DiasDesde = %d, esperado -1", n)
+	}
+}
+
+// Regra: o carimbo que o C# devolve da memória (Kind Utc) sai com "Z"; o lido do banco, sem.
+func TestDataHoraUtcNoJSON(t *testing.T) {
+	t.Parallel()
+	d := NovaDataHora(time.Date(2026, 10, 15, 1, 0, 0, 123456700, time.UTC))
+	utc, _ := json.Marshal(DataHoraUtc{d})
+	semFuso, _ := json.Marshal(d)
+	if string(utc) != `"2026-10-15T01:00:00.1234567Z"` || string(semFuso) != `"2026-10-15T01:00:00.1234567"` {
+		t.Errorf("JSON %s e %s", utc, semFuso)
+	}
+}
