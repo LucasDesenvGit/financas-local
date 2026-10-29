@@ -4,10 +4,8 @@ package situacao
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -33,22 +31,11 @@ func Nova(i instalacao.Instalacao) Consulta {
 		Cliente: ClientePara(i.Site), PortaOcupada: portaOcupada}
 }
 
-// ClientePara pergunta só se o site responde, neste computador: aceita o certificado local mesmo que o sistema ainda
-// não confie nele (nenhum dado é enviado nessa consulta). Fora do loopback, o certificado é conferido.
+// ClientePara pergunta só se o site responde, neste computador, usando validação TLS padrão.
 func ClientePara(site string) *http.Client {
 	transporte := &http.Transport{Proxy: nil}
-	if u, err := url.Parse(site); err == nil && loopback(u.Hostname()) {
-		transporte.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // só no loopback, como o C#
-	}
+	_, _ = url.Parse(site)
 	return &http.Client{Transport: transporte, Timeout: 4 * time.Second}
-}
-
-func loopback(host string) bool {
-	if host == "localhost" {
-		return true
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
 }
 
 // Consultar é a situação agora.
