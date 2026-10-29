@@ -22,3 +22,5 @@ internal/cambio | rotas.go | CONDITIONALS_BOUNDARY | if strings.EqualFold(chave,
 internal/categorias | regrasdescricao.go | CONDITIONALS_BOUNDARY | if strings.EqualFold(chave, nome) && len(valores) > 0 { | o url.Values da query nunca tem chave com a lista vazia
 internal/categorias | categorias.go | INVERT_LOGICAL | if errors.Is(err, context.Canceled) || r.Context().Err() != nil { | o erro de contexto cancelado só vem com o contexto da requisição cancelado: os dois lados andam juntos
 internal/transacoes | transacoes.go | ARITHMETIC_BASE | argumentos := make([]any, 0, len(lista)+1) | é só a capacidade inicial do slice: o append cresce do mesmo jeito
+internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | if n < 0 { | com n = 0, -n também é 0
+internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | (distancia == d && o.id < melhor.id) | o mesmo lançamento não é candidato duas vezes: o.id nunca é igual a melhor.id

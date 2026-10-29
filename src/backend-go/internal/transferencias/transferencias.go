@@ -264,9 +264,12 @@ func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64
 	slices.SortStableFunc(candidatos, porDataEId)
 	de, ate := candidatos[0].Data.SomarDias(-DiasDoPar), maiorData(candidatos).SomarDias(DiasDoPar)
 
+	// O C# não tem ORDER BY: vale a ordem do índice IX_Transacao_Conta_Data (ContaId, Data DESC), que a consulta dele
+	// e esta usam. Aqui ela fica escrita, sem custo (o plano é o mesmo), para o empate não depender do plano.
 	argumentos = []any{}
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Data", "Valor" FROM "Transacao" WHERE "ContaId" IN (`+
-		lista(idsCartoes, &argumentos)+`) AND "Data" >= ? AND "Data" <= ?`, append(argumentos, de, ate)...)
+		lista(idsCartoes, &argumentos)+`) AND "Data" >= ? AND "Data" <= ? ORDER BY "ContaId", "Data" DESC, "Id"`,
+		append(argumentos, de, ate)...)
 	if err != nil {
 		return 0, fmt.Errorf("ler os créditos nos cartões: %w", err)
 	}
@@ -298,7 +301,7 @@ func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64
 			if !c.valor.Decimal().Equal(oposto) || usados[c.id] || distancia > DiasDoPar {
 				continue
 			}
-			// OrderBy(distância).FirstOrDefault(): o primeiro de menor distância, na ordem do banco.
+			// OrderBy(distância).FirstOrDefault(): o primeiro de menor distância, na ordem do índice (data maior antes).
 			if !achou || distancia < abs(dias(melhor.data, t.Data)) {
 				achou, melhor = true, c
 			}

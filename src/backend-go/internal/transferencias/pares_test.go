@@ -68,9 +68,12 @@ func TestJanelaZeroEContagem(t *testing.T) {
 	zero := c.lancar(c.corrente, "0.00", "ZERO", 13, cat, transacoes.Transferencia, true)
 	c.lancar(c.poupanca, "0", "OUTRO ZERO", 13, nil, transacoes.Receita, false)
 	depois := c.lancar(c.corrente, "-40", "SEM PAR DEPOIS", 14, cat, transacoes.Transferencia, true)
-	if got := c.reclassificar(t); got != 3 {
-		t.Errorf("mudaram %d, esperado 3 (limite, zero e o de depois)", got)
+	comPar := c.lancar(c.corrente, "-25", "COM PAR DEPOIS DO ZERO", 14, cat, transacoes.Despesa, false)
+	c.lancar(c.poupanca, "25", "PAR DEPOIS DO ZERO", 14, nil, transacoes.Receita, false)
+	if got := c.reclassificar(t); got != 4 {
+		t.Errorf("mudaram %d, esperado 4 (limite, zero, o de depois e o com par)", got)
 	}
+	c.conferirTipo(t, "o com par depois do zero também forma par", comPar, transacoes.Transferencia, true)
 	c.conferirTipo(t, "sem par e já despesa", semMudar, transacoes.Despesa, false)
 	c.conferirTipo(t, "par a 5 dias antes do primeiro", limite, transacoes.Transferencia, true)
 	c.conferirTipo(t, "já certa", jaCerta, transacoes.Transferencia, true)
@@ -119,6 +122,21 @@ func TestPagamentosDeFaturaPareados(t *testing.T) {
 	pago("cartão presente não é fatura", presente, false)
 }
 
+// Regra: no empate de distância, o pagamento de fatura fica com o crédito de data maior: o OrderBy estável do C# sobre
+// a lista na ordem do índice (ContaId, Data DESC). Com o crédito de depois usado, o pagamento seguinte fica sem par.
+func TestPagamentoDeFaturaEmpatadoFicaComODeDataMaior(t *testing.T) {
+	c := novoCenario(t)
+	p1 := c.lancar(c.corrente, "-70", "PAGAMENTO FATURA", 10, nil, transacoes.Despesa, false)
+	c.lancar(c.cartao, "70", "PAGAMENTO RECEBIDO", 8, &c.pagamentoFatura, transacoes.Transferencia, true)  // 2 dias de P1
+	c.lancar(c.cartao, "70", "PAGAMENTO RECEBIDO", 12, &c.pagamentoFatura, transacoes.Transferencia, true) // 2 de P1, 4 de P2
+	p2 := c.lancar(c.corrente, "-70", "PAGAMENTO FATURA", 16, nil, transacoes.Despesa, false)              // o de 8 está a 8
+	if got := c.reclassificar(t); got != 1 {
+		t.Errorf("mudaram %d, esperado 1: P1 com o de 12, e P2 sem par", got)
+	}
+	c.conferirTipo(t, "P1", p1, transacoes.Transferencia, true)
+	c.conferirTipo(t, "P2 sem par: o de 12 ficou com P1", p2, transacoes.Despesa, false)
+}
+
 // Regra: a categoria genérica também no singular ("Transferência"); sem ela (e sem cartão), Reclassificar não quebra e
 // não muda nada; sem lançamentos na genérica, também nada.
 func TestCategoriaGenerica(t *testing.T) {
@@ -148,4 +166,38 @@ func TestPontasDoNomeEDaReserva(t *testing.T) {
 	if got := PalavrasDoNome(p("Lu Silva")); len(got) != 2 || got[0] != "LU" || got[1] != "SILVA" {
 		t.Errorf("nome de duas letras: %q", got)
 	}
+}
+
+// Regra: o lado oposto de antes da data também conta pela distância absoluta (7 dias antes não vale); no empate, o de
+// menor Id, mesmo quando ele é o de data maior; candidato da mesma conta não para a busca; transferência com par que
+// ainda está nos relatórios, ou despesa ignorada com par, vira transferência fora dos relatórios.
+func TestParesNasPontas(t *testing.T) {
+	c := novoCenario(t)
+	cat := &c.transferencias
+	antes := c.lancar(c.corrente, "-90", "TED SEM PAR", 10, cat, transacoes.Transferencia, true)
+	c.lancar(c.poupanca, "90", "VOLTA 7 DIAS ANTES", 3, nil, transacoes.Receita, false)
+
+	a := c.lancar(c.corrente, "-55", "TED A", 20, cat, transacoes.Despesa, false)
+	c.lancar(c.poupanca, "55", "MENOR ID, DATA MAIOR", 21, nil, transacoes.Receita, false)
+	c.lancar(c.poupanca, "55", "MAIOR ID, DATA MENOR", 19, nil, transacoes.Receita, false)
+	e := c.lancar(c.corrente, "-55", "TED E", 25, cat, transacoes.Transferencia, true) // só alcança a de 21 (a de 19 está a 6)
+
+	mesma := c.lancar(c.corrente, "-60", "TED MESMA CONTA PRIMEIRO", 10, cat, transacoes.Despesa, false)
+	c.lancar(c.corrente, "60", "NA MESMA CONTA", 12, nil, transacoes.Receita, false)
+	c.lancar(c.poupanca, "60", "NA POUPANCA", 9, nil, transacoes.Receita, false)
+
+	nosRelatorios := c.lancar(c.corrente, "-35", "TED NOS RELATORIOS", 15, cat, transacoes.Transferencia, false)
+	c.lancar(c.poupanca, "35", "PAR 35", 15, nil, transacoes.Receita, false)
+	ignorada := c.lancar(c.corrente, "-36", "TED IGNORADA", 15, cat, transacoes.Despesa, true)
+	c.lancar(c.poupanca, "36", "PAR 36", 15, nil, transacoes.Receita, false)
+
+	if got := c.reclassificar(t); got != 6 {
+		t.Errorf("mudaram %d, esperado 6", got)
+	}
+	c.conferirTipo(t, "7 dias antes não é par", antes, transacoes.Despesa, false)
+	c.conferirTipo(t, "A com o de menor Id", a, transacoes.Transferencia, true)
+	c.conferirTipo(t, "E sem par: o de 21 ficou com A", e, transacoes.Despesa, false)
+	c.conferirTipo(t, "a da mesma conta não para a busca", mesma, transacoes.Transferencia, true)
+	c.conferirTipo(t, "transferência com par sai dos relatórios", nosRelatorios, transacoes.Transferencia, true)
+	c.conferirTipo(t, "despesa ignorada com par vira transferência", ignorada, transacoes.Transferencia, true)
 }

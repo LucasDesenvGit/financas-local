@@ -180,6 +180,7 @@ func TestAplicarTipoComADescricaoDoBanco(t *testing.T) {
 		{"tira o prefixo do estorno uma vez só", "Estorno de estorno Uber", p("Estorno de estorno Uber"), &c.transferencias, transacoes.Despesa, nil},
 		{"estorno que cai em transferência fica sem categoria", "ESTORNO XP INVEST", p("ESTORNO XP INVEST"), &c.transferencias, transacoes.Despesa, nil},
 		{"estorno manual na genérica", "ESTORNO UBER", nil, &c.transferencias, transacoes.Despesa, &c.transporte},
+		{"na categoria da fatura, texto de estorno continua pagamento", "ESTORNO LOJA", p("ESTORNO LOJA"), &c.pagamentoFatura, transacoes.Transferencia, &c.pagamentoFatura},
 	}
 	for _, caso := range casos {
 		t.Run(caso.nome, func(t *testing.T) {
