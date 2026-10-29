@@ -62,6 +62,9 @@ func TemPalavra(texto string, termos ...string) bool {
 	return false
 }
 
+// MaiusculasInvariantes é o ToUpperInvariant do .NET para um texto (ver maiusculaInvariante).
+func MaiusculasInvariantes(s string) string { return strings.Map(maiusculaInvariante, s) }
+
 // maiusculaInvariante é o ToUpperInvariant do .NET para um caractere: o mapeamento simples do Unicode, menos o "ı"
 // (i sem ponto, U+0131), que o .NET deixa como está (o "I" dele é só do turco). Conferido no gabarito.
 func maiusculaInvariante(r rune) rune {
