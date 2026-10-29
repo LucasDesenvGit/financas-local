@@ -1,0 +1,3637 @@
+[
+  {
+    "nome": "listar regras",
+    "requisicao": "GET /api/regras",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 1,
+        "prioridade": 50,
+        "texto": "XP INVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 2,
+        "prioridade": 50,
+        "texto": "CLEAR CORRETORA",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 3,
+        "prioridade": 50,
+        "texto": "RICO INVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 4,
+        "prioridade": 50,
+        "texto": "NU INVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 5,
+        "prioridade": 50,
+        "texto": "NUINVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 6,
+        "prioridade": 50,
+        "texto": "INTER DTVM",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 7,
+        "prioridade": 50,
+        "texto": "BTG PACTUAL CTVM",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 8,
+        "prioridade": 50,
+        "texto": "GENIAL INVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 9,
+        "prioridade": 50,
+        "texto": "TORO INVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 10,
+        "prioridade": 50,
+        "texto": "ORAMA",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 11,
+        "prioridade": 50,
+        "texto": "MODAL DTVM",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 12,
+        "prioridade": 50,
+        "texto": "AGORA INVEST",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 13,
+        "prioridade": 50,
+        "texto": "AVENUE SECURITIES",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 14,
+        "prioridade": 50,
+        "texto": "WARREN",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 15,
+        "prioridade": 50,
+        "texto": "B3 S.A",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 16,
+        "prioridade": 50,
+        "texto": "MELI DOLAR",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 17,
+        "prioridade": 50,
+        "texto": "APLICACAO RDB",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 18,
+        "prioridade": 50,
+        "texto": "RESGATE RDB",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 19,
+        "prioridade": 50,
+        "texto": "APLICACAO CDB",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 20,
+        "prioridade": 50,
+        "texto": "RESGATE CDB",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 21,
+        "prioridade": 50,
+        "texto": "APLICACAO POUPANCA",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 22,
+        "prioridade": 50,
+        "texto": "RESGATE POUPANCA",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 23,
+        "prioridade": 50,
+        "texto": "RESGATE DE APLICACAO",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 24,
+        "categoriaNome": "Investimentos",
+        "id": 24,
+        "prioridade": 50,
+        "texto": "RESGATE APLICACAO",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 4,
+        "categoriaNome": "Transporte",
+        "id": 27,
+        "prioridade": 90,
+        "texto": "APP TRANSPORTE",
+        "tipoCorrespondencia": 2
+      },
+      {
+        "ativa": true,
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "id": 25,
+        "prioridade": 100,
+        "texto": "SUPERMERCADO",
+        "tipoCorrespondencia": 1
+      },
+      {
+        "ativa": true,
+        "categoriaId": 9,
+        "categoriaNome": "Serviços e assinaturas",
+        "id": 26,
+        "prioridade": 100,
+        "texto": "STREAMFLIX",
+        "tipoCorrespondencia": 1
+      }
+    ]
+  },
+  {
+    "nome": "listar regras sem login",
+    "requisicao": "GET /api/regras",
+    "status": 401
+  },
+  {
+    "nome": "criar regra",
+    "requisicao": "POST /api/regras",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaId": 7,
+      "categoriaNome": "Lazer",
+      "id": 29,
+      "prioridade": 80,
+      "texto": "cinema",
+      "tipoCorrespondencia": 1
+    },
+    "banco": {
+      "RegraCategorizacao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": 7,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 29,
+            "Prioridade": 80,
+            "Texto": "cinema",
+            "TipoCorrespondencia": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar regra com categoria que não existe",
+    "requisicao": "POST /api/regras",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "criar regra com texto curto e prioridade alta",
+    "requisicao": "POST /api/regras",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Prioridade": [
+          "The field Prioridade must be between 0 and 10000."
+        ],
+        "Texto": [
+          "The field Texto must be a string with a minimum length of 2 and a maximum length of 200."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar regra com objeto vazio",
+    "requisicao": "POST /api/regras",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Texto": [
+          "The Texto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar regra com a prioridade em texto",
+    "requisicao": "POST /api/regras",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": false,
+      "categoriaId": 7,
+      "categoriaNome": "Lazer",
+      "id": 30,
+      "prioridade": 70,
+      "texto": "teatro",
+      "tipoCorrespondencia": 2
+    },
+    "banco": {
+      "RegraCategorizacao": {
+        "inseridas": [
+          {
+            "Ativa": 0,
+            "CategoriaId": 7,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 30,
+            "Prioridade": 70,
+            "Texto": "teatro",
+            "TipoCorrespondencia": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar regra com a prioridade negativa",
+    "requisicao": "POST /api/regras",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Prioridade": [
+          "The field Prioridade must be between 0 and 10000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "editar regra",
+    "requisicao": "PUT /api/regras/{{idRegra}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaId": 16,
+      "categoriaNome": "Cuidados pessoais",
+      "id": 29,
+      "prioridade": 10,
+      "texto": "LOJA DE ROUPAS",
+      "tipoCorrespondencia": 2
+    },
+    "banco": {
+      "RegraCategorizacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 29
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 16
+              },
+              "Prioridade": {
+                "antes": 80,
+                "depois": 10
+              },
+              "Texto": {
+                "antes": "cinema",
+                "depois": "LOJA DE ROUPAS"
+              },
+              "TipoCorrespondencia": {
+                "antes": 1,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar regra que não existe",
+    "requisicao": "PUT /api/regras/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "editar regra com categoria que não existe",
+    "requisicao": "PUT /api/regras/{{idRegra}}",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "excluir regra que não existe",
+    "requisicao": "DELETE /api/regras/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir regra",
+    "requisicao": "DELETE /api/regras/{{idRegraTeatro}}",
+    "status": 204,
+    "banco": {
+      "RegraCategorizacao": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "CategoriaId": 7,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 30,
+            "Prioridade": 70,
+            "Texto": "teatro",
+            "TipoCorrespondencia": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "reaplicar regras",
+    "requisicao": "POST /api/regras/reaplicar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 122
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-03 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 18,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 9
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 12
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 15
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 17
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 18
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 19
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 20
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 22
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 25
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 26
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 27
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 28
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 29
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 31
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 32
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 33
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 34
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 36
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 39
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 40
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 41
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 42
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 43
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 45
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 46
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 47
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 48
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 50
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 53
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 54
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 55
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 56
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 57
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 59
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 60
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 61
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 62
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 64
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 67
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 68
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 69
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 70
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 71
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 73
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 74
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 75
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 76
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 78
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 81
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 82
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 83
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 84
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 85
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 87
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 88
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 89
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 90
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 92
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 95
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 96
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 97
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 98
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 99
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 101
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 102
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 103
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 104
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 106
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 109
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 110
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 111
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 112
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 113
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 115
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 116
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-09 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": 16
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 117
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 118
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 119
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 121
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-16 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 122
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 125
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 126
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-03 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 5,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 127
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 128
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 129
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 130
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 132
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 133
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 134
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 135
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 137
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 140
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 141
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 142
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 143
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 144
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 146
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 147
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 148
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 149
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 152
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-18 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 25,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 154
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 156
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-25 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 12,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 157
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-30 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 20,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 158
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-04 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 159
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-05 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 19,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 160
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 161
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 22,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 163
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-08 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 164
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 165
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-10 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 23,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 167
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 169
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-13 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 21,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 170
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-14 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 2,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "reaplicar regras de novo",
+    "requisicao": "POST /api/regras/reaplicar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "reaplicar sem login",
+    "requisicao": "POST /api/regras/reaplicar",
+    "status": 401
+  },
+  {
+    "nome": "listar regras de descrição",
+    "requisicao": "GET /api/regras-descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": true,
+        "id": 1,
+        "novaDescricao": "Aluguel",
+        "texto": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "tipoCorrespondencia": 3,
+        "transacoes": 12,
+        "valorMaximo": 1900.0,
+        "valorMinimo": 1800.0
+      },
+      {
+        "ativa": true,
+        "id": 2,
+        "novaDescricao": "Conta de luz",
+        "texto": "DEBITO AUTOMATICO ENERGIA",
+        "tipoCorrespondencia": 2,
+        "transacoes": 12,
+        "valorMaximo": null,
+        "valorMinimo": null
+      }
+    ]
+  },
+  {
+    "nome": "prévia sem texto",
+    "requisicao": "GET /api/regras-descricao/previa?texto=%20%20",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "exemplos": [],
+      "quantidade": 0
+    }
+  },
+  {
+    "nome": "prévia que contém",
+    "requisicao": "GET /api/regras-descricao/previa?texto=pix",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "exemplos": [
+        "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "PIX ENVIADO",
+        "PIX RECEBIDO JOAO FICTICIO"
+      ],
+      "quantidade": 14
+    }
+  },
+  {
+    "nome": "prévia igual, pelo nome do tipo",
+    "requisicao": "GET /api/regras-descricao/previa?texto=Supermercado%20Exemplo&tipo=Igual",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "exemplos": [
+        "SUPERMERCADO EXEMPLO"
+      ],
+      "quantidade": 11
+    }
+  },
+  {
+    "nome": "prévia que começa com, pelo número do tipo",
+    "requisicao": "GET /api/regras-descricao/previa?texto=loja%20de%20m%C3%B3veis&tipo=2",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "exemplos": [
+        "LOJA DE MOVEIS FICTICIA 1/10",
+        "LOJA DE MOVEIS FICTICIA 2/10",
+        "LOJA DE MOVEIS FICTICIA 3/10"
+      ],
+      "quantidade": 10
+    }
+  },
+  {
+    "nome": "prévia com tipo que não existe",
+    "requisicao": "GET /api/regras-descricao/previa?texto=pix&tipo=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "prévia com faixa de valor",
+    "requisicao": "GET /api/regras-descricao/previa?texto=loja&valorMinimo=100&valorMaximo=200.5",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "exemplos": [],
+      "quantidade": 0
+    }
+  },
+  {
+    "nome": "prévia com valor que não é número",
+    "requisicao": "GET /api/regras-descricao/previa?texto=loja&valorMinimo=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "valorMinimo": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar regra de descrição",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "id": 3,
+      "novaDescricao": "Supermercado do bairro",
+      "texto": "SUPERMERCADO EXEMPLO",
+      "tipoCorrespondencia": 3,
+      "transacoes": 11,
+      "valorMaximo": null,
+      "valorMinimo": null
+    },
+    "banco": {
+      "RegraDescricao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 3,
+            "NovaDescricao": "Supermercado do bairro",
+            "Texto": "SUPERMERCADO EXEMPLO",
+            "TipoCorrespondencia": 3,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 35
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 49
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 63
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 77
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 91
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 105
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 120
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 136
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-15 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Supermercado do bairro"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar regra de descrição em cadeia",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "id": 4,
+      "novaDescricao": "Mercado da esquina",
+      "texto": "do bairro",
+      "tipoCorrespondencia": 1,
+      "transacoes": 11,
+      "valorMaximo": null,
+      "valorMinimo": null
+    },
+    "banco": {
+      "RegraDescricao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 4,
+            "NovaDescricao": "Mercado da esquina",
+            "Texto": "do bairro",
+            "TipoCorrespondencia": 1,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 35
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 49
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 63
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 77
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 91
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 105
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 120
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 136
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Mercado da esquina"
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": 4
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar regra de descrição com tipo que não existe",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Tipo de correspondência inválido."
+    }
+  },
+  {
+    "nome": "criar regra de descrição com a faixa invertida",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O valor \"de\" é maior que o valor \"até\": troque os dois."
+    }
+  },
+  {
+    "nome": "criar regra de descrição com valor fora da faixa",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ValorMaximo": [
+          "The field ValorMaximo must be between 0,01 and 999999999."
+        ],
+        "ValorMinimo": [
+          "The field ValorMinimo must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar regra de descrição sem os textos",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "NovaDescricao": [
+          "The NovaDescricao field is required.",
+          "The field NovaDescricao must be a string with a minimum length of 1 and a maximum length of 300."
+        ],
+        "Texto": [
+          "The field Texto must be a string with a minimum length of 2 and a maximum length of 200."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar regra de descrição com faixa de valor",
+    "requisicao": "POST /api/regras-descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "id": 5,
+      "novaDescricao": "Móveis novos",
+      "texto": "LOJA DE MOVEIS",
+      "tipoCorrespondencia": 2,
+      "transacoes": 0,
+      "valorMaximo": 200.50,
+      "valorMinimo": 100
+    },
+    "banco": {
+      "RegraDescricao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 5,
+            "NovaDescricao": "Móveis novos",
+            "Texto": "LOJA DE MOVEIS",
+            "TipoCorrespondencia": 2,
+            "ValorMaximo": "200.5",
+            "ValorMinimo": "100.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar regra de descrição",
+    "requisicao": "PUT /api/regras-descricao/{{idDescricao}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "id": 3,
+      "novaDescricao": "Supermercado da vila",
+      "texto": "SUPERMERCADO EXEMPLO",
+      "tipoCorrespondencia": 3,
+      "transacoes": 11,
+      "valorMaximo": null,
+      "valorMinimo": null
+    },
+    "banco": {
+      "RegraDescricao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "NovaDescricao": {
+                "antes": "Supermercado do bairro",
+                "depois": "Supermercado da vila"
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 35
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 49
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 63
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 77
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 91
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 105
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 120
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 136
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Mercado da esquina",
+                "depois": "Supermercado da vila"
+              },
+              "RegraDescricaoId": {
+                "antes": 4,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar regra de descrição que não existe",
+    "requisicao": "PUT /api/regras-descricao/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "desligar a regra de descrição da cadeia",
+    "requisicao": "PUT /api/regras-descricao/{{idDescricaoCadeia}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": false,
+      "id": 4,
+      "novaDescricao": "Mercado da esquina",
+      "texto": "do bairro",
+      "tipoCorrespondencia": 1,
+      "transacoes": 0,
+      "valorMaximo": null,
+      "valorMinimo": null
+    },
+    "banco": {
+      "RegraDescricao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a regra de descrição do aluguel",
+    "requisicao": "DELETE /api/regras-descricao/1",
+    "status": 204,
+    "banco": {
+      "RegraDescricao": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "2025-11-02 10:00:00",
+            "Id": 1,
+            "NovaDescricao": "Aluguel",
+            "Texto": "PIX ENVIADO IMOBILIARIA FICTICIA",
+            "TipoCorrespondencia": 3,
+            "ValorMaximo": "1900.0",
+            "ValorMinimo": "1800.0"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 17
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 31
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 45
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 59
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 73
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 87
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 101
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 115
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 132
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 146
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 163
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 1,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir regra de descrição que não existe",
+    "requisicao": "DELETE /api/regras-descricao/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir regra de descrição sem login",
+    "requisicao": "DELETE /api/regras-descricao/{{idDescricaoFaixa}}",
+    "status": 401
+  },
+  {
+    "nome": "listar regras de descrição depois das mudanças",
+    "requisicao": "GET /api/regras-descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": true,
+        "id": 2,
+        "novaDescricao": "Conta de luz",
+        "texto": "DEBITO AUTOMATICO ENERGIA",
+        "tipoCorrespondencia": 2,
+        "transacoes": 12,
+        "valorMaximo": null,
+        "valorMinimo": null
+      },
+      {
+        "ativa": false,
+        "id": 4,
+        "novaDescricao": "Mercado da esquina",
+        "texto": "do bairro",
+        "tipoCorrespondencia": 1,
+        "transacoes": 0,
+        "valorMaximo": null,
+        "valorMinimo": null
+      },
+      {
+        "ativa": true,
+        "id": 5,
+        "novaDescricao": "Móveis novos",
+        "texto": "LOJA DE MOVEIS",
+        "tipoCorrespondencia": 2,
+        "transacoes": 0,
+        "valorMaximo": 200.5,
+        "valorMinimo": 100.0
+      },
+      {
+        "ativa": true,
+        "id": 3,
+        "novaDescricao": "Supermercado da vila",
+        "texto": "SUPERMERCADO EXEMPLO",
+        "tipoCorrespondencia": 3,
+        "transacoes": 11,
+        "valorMaximo": null,
+        "valorMinimo": null
+      }
+    ]
+  }
+]

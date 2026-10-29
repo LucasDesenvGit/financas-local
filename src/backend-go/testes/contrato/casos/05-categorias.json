@@ -1,0 +1,213 @@
+{
+  "descricao": "Categorias (#77, CategoriasController): lista, criar, editar (inclusive a troca de tipo, que refaz o tipo das transações da categoria, ADR 0036) e excluir (as transações ficam sem categoria; as regras dela saem pela FK em cascata). O DTO tem validação de atributos ([Required], [StringLength(80)], [RegularExpression] da cor), e o resto é validado pelo controller com as mensagens que o front-end mostra. Roda com a sessão 'principal', logada pelo 00-auth. Valor de enum fora da lista (Tipo 9) passa pelo JSON e quebra no CHECK do banco (500): fica de fora daqui, porque o 500 grava em ErroSistema e mudaria a contagem do 17-erros; o Go confere esse caminho nos testes do pacote.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "Ordem: Tipo e depois Nome, no ORDER BY do SQLite (byte a byte: 'Saúde' depois de 'Sal…').",
+      "metodo": "GET",
+      "caminho": "/api/categorias"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/categorias",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "criar subcategoria",
+      "comentario": "Nome e ícone aparados; Ativa ausente vale true (o padrão do construtor do record); Natureza de despesa fica.",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "  Cinema  ", "tipo": 1, "cor": "#123ABC", "icone": " filme ", "categoriaPaiId": 7, "natureza": 2 },
+      "capturar": { "idCinema": "/id" }
+    },
+    {
+      "nome": "criar receita ignora a natureza",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "Bicos", "tipo": 2, "cor": "#0F766E", "icone": "  ", "categoriaPaiId": null, "ativa": false, "natureza": 1 },
+      "capturar": { "idBicos": "/id" }
+    },
+    {
+      "nome": "criar com o nome de outra em minúsculas",
+      "comentario": "A comparação do nome é a do SQLite (byte a byte): 'mercado' não é 'Mercado', e o UNIQUE também não recusa.",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "mercado", "tipo": 1, "cor": "#64748b" },
+      "capturar": { "idMercadoMinusculo": "/id" }
+    },
+    {
+      "nome": "criar com nome repetido",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": " Mercado ", "tipo": 1, "cor": "#64748b" }
+    },
+    {
+      "nome": "criar com pai que não existe",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "Órfã", "tipo": 1, "cor": "#64748b", "categoriaPaiId": 999 }
+    },
+    {
+      "nome": "criar com pai que já é subcategoria",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "Neta", "tipo": 1, "cor": "#64748b", "categoriaPaiId": 25 }
+    },
+    {
+      "nome": "criar com tipo diferente do pai",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "Receita de lazer", "tipo": 2, "cor": "#64748b", "categoriaPaiId": 7 }
+    },
+    {
+      "nome": "criar sem nome e com cor errada",
+      "comentario": "Validação dos atributos: o 400 automático do [ApiController], antes do controller.",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "   ", "tipo": 1, "cor": "red" }
+    },
+    {
+      "nome": "criar com nome e ícone longos",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": { "nome": "Nome com oitenta e um caracteres, um a mais do que o limite da coluna Nome do C#.", "tipo": 1, "cor": "#64748b", "icone": "um ícone com mais de quarenta caracteres no nome" }
+    },
+    {
+      "nome": "criar com objeto vazio",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpo": {}
+    },
+    {
+      "nome": "criar com tipo em texto",
+      "comentario": "Enum com número em texto: o System.Text.Json com as opções web lê ou recusa? O .NET decide.",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpoTexto": "{\"nome\": \"Tipo em texto\", \"tipo\": \"1\", \"cor\": \"#64748b\"}"
+    },
+    {
+      "nome": "criar com pai em texto",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpoTexto": "{\"nome\": \"Pai em texto\", \"tipo\": 1, \"cor\": \"#64748b\", \"categoriaPaiId\": \"7\"}"
+    },
+    {
+      "nome": "criar com JSON quebrado",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "corpoTexto": "{\"nome\": \"Quebrado\", "
+    },
+    {
+      "nome": "criar sem login",
+      "metodo": "POST",
+      "caminho": "/api/categorias",
+      "sessao": "visitante",
+      "corpo": { "nome": "Visitante", "tipo": 1, "cor": "#64748b" }
+    },
+    {
+      "nome": "editar",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/{{idCinema}}",
+      "corpo": { "nome": "Cinema e teatro", "tipo": 1, "cor": "#abcdef", "icone": null, "categoriaPaiId": 7, "ativa": false, "natureza": 1 }
+    },
+    {
+      "nome": "editar a que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/999",
+      "corpo": { "nome": "Nada", "tipo": 1, "cor": "#64748b" }
+    },
+    {
+      "nome": "editar com id que não é número",
+      "comentario": "A rota é {id:int}: sem casar, cai no fallback de /api.",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/abc",
+      "corpo": { "nome": "Nada", "tipo": 1, "cor": "#64748b" }
+    },
+    {
+      "nome": "editar para ser pai dela mesma",
+      "comentario": "O id vai como número: a categoria criada é a 28 (os ids do AUTOINCREMENT são sempre os mesmos num banco novo).",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/{{idCinema}}",
+      "corpo": { "nome": "Cinema e teatro", "tipo": 1, "cor": "#abcdef", "categoriaPaiId": 28 }
+    },
+    {
+      "nome": "editar para ser pai dela mesma, com o id em texto",
+      "comentario": "O mesmo, com o id do pai em texto (\"28\"): o .NET lê número em texto?",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/{{idCinema}}",
+      "corpo": { "nome": "Cinema e teatro", "tipo": 1, "cor": "#abcdef", "categoriaPaiId": "{{idCinema}}" }
+    },
+    {
+      "nome": "editar a que tem subcategorias para virar subcategoria",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/1",
+      "corpo": { "nome": "Alimentação", "tipo": 1, "cor": "#f8c09a", "icone": "restaurante", "categoriaPaiId": 2, "natureza": 2 }
+    },
+    {
+      "nome": "editar com o nome de outra",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/{{idCinema}}",
+      "corpo": { "nome": "Lazer", "tipo": 1, "cor": "#abcdef" }
+    },
+    {
+      "nome": "trocar o tipo para transferência",
+      "comentario": "Outras receitas (21) tem o PIX RECEBIDO: as transações dela viram transferência fora dos relatórios.",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/21",
+      "corpo": { "nome": "Outras receitas", "tipo": 3, "cor": "#64748b", "natureza": 2 }
+    },
+    {
+      "nome": "trocar o tipo de volta para receita",
+      "comentario": "Fora de transferência, o tipo vem do sinal (e do cartão), e a transação volta aos relatórios.",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/21",
+      "corpo": { "nome": "Outras receitas", "tipo": 2, "cor": "#64748b" }
+    },
+    {
+      "nome": "trocar o tipo de uma categoria de cartão",
+      "comentario": "Compras (8) tem compras e um estorno no cartão: no cartão, entrada é estorno (despesa, ADR 0036).",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/8",
+      "corpo": { "nome": "Compras", "tipo": 2, "cor": "#64748b" }
+    },
+    {
+      "nome": "trocar o tipo de uma categoria de cartão de volta",
+      "metodo": "PUT",
+      "caminho": "/api/categorias/8",
+      "corpo": { "nome": "Compras", "tipo": 1, "cor": "#64748b", "natureza": 2 }
+    },
+    {
+      "nome": "excluir a que tem subcategorias",
+      "metodo": "DELETE",
+      "caminho": "/api/categorias/1"
+    },
+    {
+      "nome": "excluir a que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/categorias/999"
+    },
+    {
+      "nome": "excluir com transações e regra",
+      "comentario": "Padaria (26): a transação manual fica sem categoria (e deixa de ser manual) e a regra PADARIA sai em cascata.",
+      "metodo": "DELETE",
+      "caminho": "/api/categorias/26"
+    },
+    {
+      "nome": "excluir a subcategoria criada",
+      "metodo": "DELETE",
+      "caminho": "/api/categorias/{{idCinema}}"
+    },
+    {
+      "nome": "excluir sem login",
+      "metodo": "DELETE",
+      "caminho": "/api/categorias/{{idBicos}}",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "listar depois das mudanças",
+      "metodo": "GET",
+      "caminho": "/api/categorias"
+    }
+  ]
+}
