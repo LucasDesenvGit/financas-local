@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
@@ -78,10 +77,13 @@ func (s *Servico) previa(w http.ResponseWriter, r *http.Request) {
 	erros := map[string][]string{}
 	tipo := int64(categorizacao.Contem)
 	if valor, ok := respostas.ParametroDaQuery(r, "tipo"); ok {
-		if v, ok := lerEnumDaQuery(valor, nomesDoTipoCorrespondencia); ok {
-			tipo = v
-		} else {
+		switch v, converte, definido := respostas.EnumDaQuery(valor, nomesDoTipoCorrespondencia); {
+		case !converte:
 			erros["tipo"] = []string{respostas.MensagemDaQuery(valor)}
+		case !definido:
+			erros["tipo"] = []string{respostas.MensagemDeValorInvalido(valor)}
+		default:
+			tipo = v
 		}
 	}
 	var minimo, maximo *tipos.Decimal
@@ -122,26 +124,6 @@ type previaDto struct {
 }
 
 var nomesDoTipoCorrespondencia = map[string]int64{"contem": 1, "comecacom": 2, "igual": 3}
-
-// lerEnumDaQuery é o EnumConverter do .NET na query: o nome (sem diferença de maiúsculas) ou o número, e vários
-// separados por vírgula viram a combinação (o OR dos valores). Número que não existe no enum passa.
-func lerEnumDaQuery(valor string, nomes map[string]int64) (int64, bool) {
-	var resultado int64
-	partes := strings.Split(valor, ",")
-	for _, p := range partes {
-		p = strings.TrimSpace(p)
-		if v, ok := nomes[strings.ToLower(p)]; ok {
-			resultado |= v
-			continue
-		}
-		n, err := strconv.ParseUint(p, 10, 8) // o enum é ": byte"
-		if err != nil {
-			return 0, false
-		}
-		resultado |= int64(n)
-	}
-	return resultado, true
-}
 
 // lerDecimalDaQuery é o decimal da query na cultura invariante (NumberStyles.Number): espaços nas pontas, sinal,
 // ponto decimal e vírgula de milhar.

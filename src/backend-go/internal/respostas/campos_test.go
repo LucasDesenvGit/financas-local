@@ -144,9 +144,9 @@ func TestCampoTextoComPadrao(t *testing.T) {
 		erros map[string][]string
 	}{
 		{`{"c":"#12abEF"}`, map[string][]string{}},
-		{`{"c":"red"}`, map[string][]string{"C": {padrao.mensagem("C")}}},
+		{`{"c":"red"}`, map[string][]string{"C": {padrao.Mensagem("C")}}},
 		{`{"c":""}`, map[string][]string{"C": {"The C field is required."}}},
-		{`{"c":"  "}`, map[string][]string{"C": {"The C field is required.", padrao.mensagem("C")}}},
+		{`{"c":"  "}`, map[string][]string{"C": {"The C field is required.", padrao.Mensagem("C")}}},
 	}
 	for _, c := range casos {
 		campo := &CampoTexto{Propriedade: "C", Maximo: 100, Padrao: padrao}

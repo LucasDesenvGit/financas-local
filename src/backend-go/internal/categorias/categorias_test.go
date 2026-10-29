@@ -137,19 +137,6 @@ func TestTrocarOTipoRefazAsTransacoesEmLotes(t *testing.T) {
 // Regra: a query da prévia como o model binding do ASP.NET: tipo pelo nome (sem diferença de maiúsculas), pelo
 // número ou pela combinação com vírgula; decimal na cultura invariante, com vírgula de milhar.
 func TestLerDaQuery(t *testing.T) {
-	enums := []struct {
-		valor    string
-		esperado int64
-		ok       bool
-	}{
-		{"Igual", 3, true}, {"comecacom", 2, true}, {" CONTEM ", 1, true}, {"2", 2, true}, {"9", 9, true},
-		{"Contem, Igual", 3, true}, {"Igual,Contem", 3, true}, {"2,1", 3, true}, {"abc", 0, false}, {"256", 0, false}, {"-1", 0, false}, {"", 0, false},
-	}
-	for _, e := range enums {
-		if got, ok := lerEnumDaQuery(e.valor, nomesDoTipoCorrespondencia); got != e.esperado || ok != e.ok {
-			t.Errorf("lerEnumDaQuery(%q) = %d, %v; esperado %d, %v", e.valor, got, ok, e.esperado, e.ok)
-		}
-	}
 	decimais := []struct {
 		valor, esperado string
 		ok              bool
@@ -165,7 +152,8 @@ func TestLerDaQuery(t *testing.T) {
 	}
 }
 
-// Regra: a prévia responde o 400 automático com o nome do parâmetro e, sem texto, zero e lista vazia.
+// Regra: a prévia responde o 400 automático com o nome do parâmetro (o tipo fora do enum também) e, sem texto, zero e
+// lista vazia.
 func TestPreviaPelaRota(t *testing.T) {
 	mux, _, _ := rotasDeTeste(t)
 	resp := testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&TIPO=xyz&valorMaximo=1,0,0.x", "")
@@ -175,6 +163,13 @@ func TestPreviaPelaRota(t *testing.T) {
 		t.Errorf("400 da prévia: %s", resp.Corpo)
 	}
 	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa", "").ConferirJSON(t, `{"quantidade":0,"exemplos":[]}`)
+	// O número que não existe no enum é o 400 do EnumTypeModelBinder (ele confere o Enum.IsDefined), e não passa.
+	fora := testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&tipo=9", "")
+	fora.ConferirStatus(t, http.StatusBadRequest)
+	if !strings.Contains(string(fora.Corpo), `"tipo":["The value '9' is invalid."]`) {
+		t.Errorf("400 do tipo fora do enum: %s", fora.Corpo)
+	}
+	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&tipo=Igual", "").ConferirStatus(t, http.StatusOK)
 }
 
 // Regra: erro do banco nas listas é o 500 genérico.

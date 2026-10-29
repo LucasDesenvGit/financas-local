@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
-	"strings"
-	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
@@ -52,7 +50,7 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 	// O model binding do ASP.NET roda antes da ação: data inválida é o 400 automático, antes de olhar a moeda.
 	var data *tipos.Data
 	if bruta, _ := respostas.ParametroDaQuery(req, "data"); bruta != "" {
-		d, ok := lerDataDaQuery(bruta)
+		d, ok := respostas.DataDaQuery(bruta)
 		if !ok {
 			// O 400 automático do [ApiController] quando o texto não vira o tipo do parâmetro (DateOnly?).
 			respostas.Validacao(w, map[string][]string{"data": {"The value '" + bruta + "' is not valid."}})
@@ -90,19 +88,6 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 		return
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, c)
-}
-
-// lerDataDaQuery é o DateOnly do model binding, que lê a query na cultura invariante: "2026-10-15" (o que o
-// front-end manda) e o formato americano "10/15/2026". Outros formatos que o .NET aceita (nome do mês por extenso)
-// ficam de fora: o front-end nunca os manda.
-func lerDataDaQuery(texto string) (tipos.Data, bool) {
-	texto = strings.TrimSpace(texto)
-	for _, formato := range []string{"2006-01-02", "1/2/2006", "2006/1/2"} {
-		if t, err := time.Parse(formato, texto); err == nil {
-			return tipos.DataDe(t), true
-		}
-	}
-	return tipos.Data{}, false
 }
 
 // soLogado confere o usuário que o .NET passou (ele já conferiu o login; chegar sem é requisição de fora).
