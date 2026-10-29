@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.1] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@angular/build` e `@angular/cli` 22.2.4 → 22.2.5** (#453, Dependabot, alertas 2 a 7). Leva o `vite` de 8.3.0 a 8.3.5, que corrige 6 falhas de segurança do servidor de desenvolvimento (`ng serve`), entre elas as do `launch-editor` que vem dentro dele. Só as ferramentas de build do front-end mudam; nada muda no site publicado. Fica aberto o alerta do `deepmerge` (12), que ainda não tem versão corrigida e só entra pelo Jest, nos testes.
+
 ## [2.50.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades
