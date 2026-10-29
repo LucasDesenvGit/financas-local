@@ -229,11 +229,41 @@ func TestNomesDosBotoes(t *testing.T) {
 	}
 }
 
-// Regra: ícone sem glifo é erro ao montar a página, e não um botão sem ícone.
+// Regra: ícone sem glifo é erro ao montar a página, e não um botão sem ícone, nos dois sistemas.
 func TestIconeSemGlifo(t *testing.T) {
 	t.Parallel()
-	if _, err := icone("nenhum"); err == nil || err.Error() != "ícone sem glifo: nenhum" {
-		t.Errorf("erro %v", err)
+	for _, linux := range []bool{false, true} {
+		if _, err := (Tela{Linux: linux}).Icone("nenhum"); err == nil || err.Error() != "ícone sem glifo: nenhum" {
+			t.Errorf("linux %v: erro %v", linux, err)
+		}
+	}
+}
+
+// Regra: todo ícone tem o glifo do Windows e o desenho do Linux, e nada mais (um nome a mais de um lado só seria um
+// botão sem ícone no outro sistema).
+func TestIconesNosDoisSistemas(t *testing.T) {
+	t.Parallel()
+	if len(glifos) != len(desenhos) {
+		t.Errorf("%d glifos e %d desenhos", len(glifos), len(desenhos))
+	}
+	for nome := range glifos {
+		if _, ok := desenhos[nome]; !ok {
+			t.Errorf("%s sem desenho no Linux", nome)
+		}
+	}
+}
+
+// Regra: no Windows, o glifo é o caractere da fonte de ícones; no Linux, o SVG do lucide na cor do texto, também
+// fora do leitor de tela.
+func TestGlifoPorSistema(t *testing.T) {
+	t.Parallel()
+	if g, _ := (Tela{}).Icone("ligar"); g != `<span class="ico" aria-hidden="true">`+"\uE7E8"+`</span>` {
+		t.Errorf("windows: %s", g)
+	}
+	g, _ := (Tela{Linux: true}).Icone("ligar")
+	if g != `<span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" `+
+		`stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg></span>` {
+		t.Errorf("linux: %s", g)
 	}
 }
 
@@ -419,9 +449,105 @@ func TestTextosDoDevelop(t *testing.T) {
 	if obtido := TextoDeDesenvolvimento(`C:\projeto`); !strings.HasPrefix(obtido, `Instalação de desenvolvimento: a pasta C:\projeto é um clone na branch develop.`) {
 		t.Error(obtido)
 	}
-	a := ConfirmarDevelop()
+	a := ConfirmarDevelop(false)
 	if a.Tipo != "pergunta" || a.Titulo != "Atualizar esta instalação de desenvolvimento para a última versão do develop?" ||
+		!strings.HasPrefix(a.Mensagem, "O gerenciador traz o código do GitHub e reinstala o site (pede permissão de administrador). O site fica") ||
 		!strings.HasSuffix(a.Mensagem, "Com alterações locais ou em outra branch, nada é mudado: a tela diz o motivo.") {
 		t.Errorf("%+v", a)
+	}
+	// No Linux, nada pede administrador.
+	if l := ConfirmarDevelop(true); l.Titulo != a.Titulo || !strings.HasPrefix(l.Mensagem, "O gerenciador traz o código do GitHub e reinstala o site. O site fica") {
+		t.Errorf("linux: %+v", l)
+	}
+}
+
+// Regra: o detalhe quando ligar, desligar ou reiniciar falha: sem motivo (Windows, pelo UAC), o texto de sempre; com
+// o motivo do systemctl (Linux), ele vem antes de onde ver mais.
+func TestNaoDeuCerto(t *testing.T) {
+	t.Parallel()
+	casos := map[[2]string]string{
+		{"", "Veja os eventos do Windows (Visualizador de Eventos › Aplicativo, origem FinancasLocal)."}:            "Não deu certo. Veja os eventos do Windows (Visualizador de Eventos › Aplicativo, origem FinancasLocal).",
+		{"Job for financaslocal.service failed.", "Em “Mais opções”, “Ver o registro do serviço” mostra o motivo."}: "Não deu certo: Job for financaslocal.service failed. Em “Mais opções”, “Ver o registro do serviço” mostra o motivo.",
+	}
+	for entrada, esperado := range casos {
+		if obtido := NaoDeuCerto(entrada[0], entrada[1]); obtido != esperado {
+			t.Errorf("%q", obtido)
+		}
+	}
+}
+
+// Regra: no Linux, pelos scripts, o cartão "Versão" diz como atualizar; com a pasta do projeto, o comando vem pronto,
+// com a pasta entre aspas simples para o bash (inclusive com aspa e espaço no nome).
+func TestComoAtualizarNoLinux(t *testing.T) {
+	t.Parallel()
+	if !strings.HasSuffix(TextoPelosScriptsNoLinux(true), "rode no terminal (o site fica fora do ar por alguns segundos e o banco ganha uma cópia antes):") ||
+		TextoPelosScriptsNoLinux(false) != "Instalado pelos scripts: para atualizar, rode git pull, scripts/geral/3-publicar-atualizar.sh e "+
+			"scripts/linux/instalar-gerenciador.sh na pasta do projeto." {
+		t.Error("textos")
+	}
+	esperado := `cd '/home/ana/D'\''Ávila finanças' && git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh`
+	if obtido := ComandoParaAtualizar("/home/ana/D'Ávila finanças"); obtido != esperado {
+		t.Errorf("%s", obtido)
+	}
+}
+
+// Regra: o "sem login" (linger) diz o que acontece ao sair da conta; sem dar para saber, o bloco some; o erro de
+// ligar troca o texto e diz o comando.
+func TestTextoSemLogin(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		semLogin, erro, esperado string
+	}{
+		{"sim", "", "O site sobe junto com o computador, mesmo antes de você entrar na sua conta."},
+		{"nao", "", "Hoje o site só fica no ar enquanto você está com a sessão aberta: ao sair da conta, ele desliga."},
+		{"", "", ""},
+		{"nao", "Access denied.", "Não deu certo: Access denied. No terminal: loginctl enable-linger"},
+	}
+	for _, c := range casos {
+		tl := Tela{Linux: true, SemLogin: c.semLogin, ErroSemLogin: c.erro}
+		if tl.TextoSemLogin() != c.esperado || tl.Atualizacao().TextoSemLogin != c.esperado || tl.Atualizacao().SemLogin != c.semLogin {
+			t.Errorf("%+v: %q", c, tl.TextoSemLogin())
+		}
+	}
+}
+
+// Regra: a página no Linux: ícones em SVG (nenhum caractere da fonte do Windows), "Iniciar com o sistema", "Ver o
+// registro do serviço", o comando para copiar e o "sem login", e nada de .msi; no Windows, nada disso.
+func TestPaginaNoLinux(t *testing.T) {
+	t.Parallel()
+	html := escrever(t, Tela{Linux: true, MaisOpcoes: true, Comando: "cd '/x' && git pull", SemLogin: "nao",
+		Situacao: Situacao{Estado: NoAr}})
+	if regexp.MustCompile("[\uE000-\uF8FF]").MatchString(html) {
+		t.Error("sobrou um glifo da fonte do Windows")
+	}
+	for _, parte := range []string{
+		"Iniciar com o sistema (fica na área de notificação)</label>",
+		`<button id="registro" class="botao" type="button" accesskey="g"><span class="ico" aria-hidden="true"><svg`,
+		"Ver o registro do serviço</button>",
+		`<input id="texto-comando" class="saida" type="text" readonly value="cd &#39;/x&#39; &amp;&amp; git pull" aria-label="Comando para atualizar">`,
+		`data-acao="copiar-comando" accesskey="o">`,
+		`<button id="botao-sem-login" class="botao" type="button" data-acao="sem-login" accesskey="s">Manter o site no ar sem login</button>`,
+		`data-rotulo="Mais opções: cópia do banco, erros, registro, manual e preferências"`,
+	} {
+		if !strings.Contains(html, parte) {
+			t.Errorf("falta %s", parte)
+		}
+	}
+	if strings.Contains(html, "Baixar o instalador") || strings.Contains(html, "Iniciar com o Windows") {
+		t.Error("no Linux, coisa do Windows")
+	}
+	// Sem a pasta do projeto, sem o comando; site que sobe sem login, sem o botão; sem dar para saber, sem o bloco.
+	sim := escrever(t, Tela{Linux: true, SemLogin: "sim"})
+	if strings.Contains(sim, `id="comando"`) || !strings.Contains(sim, `data-acao="sem-login" accesskey="s" hidden>`) ||
+		!strings.Contains(escrever(t, Tela{Linux: true}), `id="sem-login" hidden>`) {
+		t.Error("sem comando ou com o linger: elementos errados")
+	}
+	// Instalação de desenvolvimento: o botão do develop no lugar do comando.
+	if !strings.Contains(escrever(t, Tela{Linux: true, Comando: "x", Develop: Develop{Disponivel: true}}), `id="comando" hidden>`) {
+		t.Error("develop com o comando à mostra")
+	}
+	windows := escrever(t, Tela{MaisOpcoes: true, Comando: "x", SemLogin: "nao"})
+	if strings.Contains(windows, `id="registro"`) || strings.Contains(windows, `id="sem-login"`) || strings.Contains(windows, "<svg") {
+		t.Error("no Windows, coisa do Linux")
 	}
 }

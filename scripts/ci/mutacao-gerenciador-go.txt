@@ -2,8 +2,9 @@
 # cada um, em % (mortas / (mortas + vivas), sem as equivalentes conhecidas). Mesma regra do mutacao-go.txt: o piso só
 # sobe, e pacote novo com regra entra no PR dele.
 #
-# Ficam de fora os que só chamam o Windows (servico, elevacao, preferencias): o job roda no Linux, e eles não têm
-# regra para mutar fora da chamada ao sistema.
+# Fica de fora o elevacao, que só chama o Windows. O servico e o preferencias entraram com o Linux (#417): as regras
+# do systemd e do freedesktop (systemd.go, freedesktop.go) rodam em qualquer sistema; a chamada aos programas do
+# sistema não tem teste, e o gremlins não conta o que nenhum teste cobre.
 #
 # Primeira medição: 28/10/2026, na máquina de desenvolvimento (#419, #420, #428); daqui em diante, na CI (#433).
 
@@ -14,3 +15,6 @@ internal/situacao         100
 internal/copia            100
 internal/icones           100
 internal/desenvolvimento  100
+internal/comando          100
+internal/servico          100
+internal/preferencias     100

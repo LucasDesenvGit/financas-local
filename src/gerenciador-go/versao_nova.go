@@ -62,6 +62,9 @@ func (g *gerenciador) textoDaVersao() string {
 	if g.dev.raiz != "" {
 		return tela.TextoDeDesenvolvimento(g.dev.raiz)
 	}
+	if linux && !g.inst.PeloMsi {
+		return tela.TextoPelosScriptsNoLinux(g.comando != "")
+	}
 	return tela.TextoDaVersao(versao, g.inst.PeloMsi, g.situacao.VersaoSite != "", g.nova.resultado)
 }
 
