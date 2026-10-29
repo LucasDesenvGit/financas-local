@@ -5,11 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/atualizacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
-	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
 
@@ -58,12 +56,12 @@ func (g *gerenciador) confirmacaoDoDevelop() *tela.Aviso {
 	if g.dev.raiz == "" {
 		return nil
 	}
-	a := tela.ConfirmarDevelop()
+	a := tela.ConfirmarDevelop(linux)
 	return &a
 }
 
-// atualizarDevelop traz o develop como o usuário e reinstala como administrador (UAC), num passo à parte, como o
-// AtualizarPeloGitAsync do C#.
+// atualizarDevelop traz o develop como o usuário e reinstala (no Windows, como administrador, pelo UAC, num passo à
+// parte), como o AtualizarPeloGitAsync do C#.
 func (g *gerenciador) atualizarDevelop() {
 	g.trava.Lock()
 	raiz := g.dev.raiz
@@ -99,30 +97,8 @@ func (g *gerenciador) atualizarDevelop() {
 	g.trava.Lock()
 	g.dev.notas = notas
 	g.trava.Unlock()
-	g.textoDoDevelop("Código atualizado. Reinstalando o site (permita no aviso do Windows)…")
-	ctx, parar := context.WithCancel(context.Background())
-	acompanhado := make(chan struct{})
-	go func() {
-		desenvolvimento.AcompanharLog(ctx, desenvolvimento.Log(raiz), g.escrever, time.Second)
-		close(acompanhado)
-	}()
-	resultado := elevacao.Executar("--instalar-pelos-scripts")
-	parar()
-	<-acompanhado
-	g.textoDoDevelop(textoDaReinstalacao(resultado))
-}
-
-// textoDaReinstalacao: os textos do C#. O "Atualizar o gerenciador e reabrir" entra com a #430.
-func textoDaReinstalacao(r elevacao.Resultado) string {
-	switch r {
-	case elevacao.Feito:
-		return "Pronto: o site está na última versão do develop. O gerenciador continua na versão de antes."
-	case elevacao.Cancelado:
-		return "Reinstalação cancelada no aviso do Windows. O código já está atualizado: rode o instalar-windows.cmd para terminar."
-	default:
-		return "A reinstalação falhou; o site da versão anterior volta sozinho. Veja a caixa abaixo e o log em " +
-			"instaladores\\instalacao-windows.log."
-	}
+	g.textoDoDevelop(reinstalando)
+	g.textoDoDevelop(textoDaReinstalacao(reinstalar(raiz, g.escrever)))
 }
 
 // developNaTela é o que a tela mostra do develop; chamado com a trava.

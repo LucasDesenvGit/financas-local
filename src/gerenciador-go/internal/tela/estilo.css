@@ -122,3 +122,12 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
 .nota-tipo.funcionalidades { --cor-tipo: var(--positivo); }
 .nota-tipo.correcoes { --cor-tipo: var(--alerta); }
 .nota-tipo.documentacao { --cor-tipo: var(--texto-suave); }
+/* No Linux, os ícones são os SVG do lucide (os do site), do tamanho da fonte e na cor do texto. */
+.ico svg, .aviso-simbolo svg, .info svg { display: block; width: 1em; height: 1em; }
+.info svg { margin: auto; }
+/* O comando para atualizar pelos scripts (Linux), numa linha, para copiar. */
+.comando .saida { height: auto; margin-top: 0; white-space: nowrap; }
+.copiado { align-self: center; margin: 0 0 8px; color: var(--texto-suave); }
+/* O registro do serviço (Linux), no diálogo das notas: o texto como o journalctl escreveu. */
+.notas-texto pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 11.5px/1.4 Consolas, monospace; user-select: text; }
+.sem-login p { margin: 4px 0 6px; color: var(--texto-suave); }

@@ -2,7 +2,8 @@
 // gerenciador em C# (src/gerenciador/Financas.Gerenciador). A página é servida por dentro do programa, sem porta
 // aberta.
 //
-// A versão nova (procurar, baixar e instalar) entra na #420; o Linux, na #417.
+// No Linux (#417), o serviço é do systemd do próprio usuário: ligar, desligar e copiar o banco rodam no próprio
+// gerenciador, sem pedir senha (sistema_linux.go).
 package main
 
 import (
@@ -25,7 +26,7 @@ var versao = "0.0.0-dev.0"
 // serviço.
 var exemplos = map[string]tela.Situacao{
 	"nao-instalado": {Estado: tela.NaoInstalado, Titulo: "O Finanças Local não está instalado neste computador.",
-		Detalhe: "Instale pelo arquivo FinancasLocal.msi."},
+		Detalhe: servico.ComoInstalar},
 	"desligado": {Estado: tela.Desligado, Titulo: "O site está desligado.", Detalhe: "Clique em “Ligar” para usar."},
 	"ligando":   {Estado: tela.Mudando, Titulo: "O site está ligando…", Detalhe: "Aguarde alguns segundos."},
 	"no-ar":     {Estado: tela.NoAr, Titulo: "O site está no ar.", Detalhe: "Versão " + versao + " · https://127.0.0.1:5443/", VersaoSite: versao},

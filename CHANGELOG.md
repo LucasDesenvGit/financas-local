@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.49.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go no Linux** (#417, épico #70, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. O gerenciador em Go passa a funcionar no Linux, testado num KDE de verdade (Wayland, GTK 4 e WebKitGTK 6.0): liga, desliga e reinicia o site pelo `systemctl --user`, sem senha, e espera o site responder; segue o tema claro ou escuro do sistema; "Iniciar com o sistema" pelo `~/.config/autostart`; a bandeja do KDE, com a situação no menu; e, como o de C# do Linux, "Ver o registro do serviço", o comando para atualizar pelos scripts com "Copiar o comando" e "Manter o site no ar sem login". Os ícones dos botões vêm do lucide (os do site), em SVG. Fechar a janela, no Linux, só a esconde: destruída, ela deixava um processo do WebKit vivo a cada vez. O resultado do teste (memória, pacotes, compilação e as ressalvas) está na ADR 0052.
+
+### Publicação e documentação
+- **Skill `migrar-para-go`: merge só com o OK de quem pediu** (#417). Nada muda para quem usa. A skill passa a dizer que o PR é aberto e acompanhado até a CI ficar verde, mas o `gh pr merge` só roda com um "pode" explícito para aquele PR, e como pôr a trava também nas configurações do Claude Code (`permissions.ask`).
+
 ## [2.48.2] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação
