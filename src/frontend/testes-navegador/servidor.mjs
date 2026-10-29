@@ -24,7 +24,7 @@ function cspDaApi() {
   const fonte = readFileSync(arquivo, 'utf8');
   // As partes entre aspas, ligadas por "+", até o ";" que fecha a instrução. A CSP tem ";" DENTRO das aspas
   // ('self';), então não dá para parar no primeiro ";".
-  const bloco = fonte.match(/const string Csp\s*=\s*((?:"[^"]*"\s*\+?\s*)+);/);
+  const bloco = fonte.match(/const string Csp\s*=\s*("([^"\\]|\\.)*"(?:\s*\+\s*"([^"\\]|\\.)*")*)\s*;/);
   if (!bloco) throw new Error(`Não achei a constante Csp em ${arquivo}`);
   return [...bloco[1].matchAll(/"([^"]*)"/g)].map((m) => m[1]).join('').trim();
 }

@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -74,6 +75,26 @@ func (d Decimal) TextoNoBanco() string {
 		texto += ".0"
 	}
 	return texto
+}
+
+// NaEscalaDoBanco é o decimal como o EF Core o lê de volta depois de gravá-lo: pelo menos uma casa e nenhum zero à
+// direita (21.00 → 21.0, 1.50 → 1.5, 100 → 100.0, o mesmo que TextoNoBanco guarda). É a escala que o ef_sum do SQLite
+// devolve para uma soma, e por isso a de um total que o C# calculava no SQL (#447).
+func (d Decimal) NaEscalaDoBanco() Decimal {
+	numero := new(big.Int).Set(d.v.Coefficient())
+	expoente := d.v.Exponent() // DeDecimal nunca deixa expoente positivo
+	resto := new(big.Int)
+	for expoente < -1 {
+		quociente, r := new(big.Int).QuoRem(numero, dez, resto)
+		if r.Sign() != 0 {
+			break
+		}
+		numero, expoente = quociente, expoente+1
+	}
+	if expoente == 0 {
+		numero, expoente = numero.Mul(numero, dez), -1
+	}
+	return Decimal{v: decimal.NewFromBigInt(numero, expoente)}
 }
 
 // Value grava no banco no formato do EF Core (driver.Valuer).

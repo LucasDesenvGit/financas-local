@@ -26,6 +26,7 @@ python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura
 python3 scripts/ci/testes-afetados.py --base origin/develop   # no PR, a CI roda só os testes afetados (ADR 0047): mostra quais
 # Job "Go" (#231): gofmt, go vet, go test -race (com cobertura por pacote que só sobe, #370, e trava de tempo, #371), go generate em dia, build Windows, govulncheck (src/backend-go/README.md)
 # Workflow "Fuzz do Go" (#372): o -fuzz dos alvos FuzzXxx, toda segunda e à mão; não roda no PR
+# Workflow "CodeQL" (#451, ADR 0054): segurança do código (C#, Go, TS, Python, workflows) em todo PR; achados em Security › Code scanning, sem bloquear
 # Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam
 
 # Banco (sem migrations)
@@ -178,6 +179,8 @@ Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para 
 - quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
 - Outro PR subiu antes? `git merge origin/develop`, pegue a maior e suba de novo. Diga ao usuário, no fim, de qual para qual versão foi.
 
+**Backlog no Project "ClaudioFinancas"** ([users/LucasDesenvGit/projects/2](https://github.com/users/LucasDesenvGit/projects/2)): as issues e o andamento ficam lá. A conta do `gh` tem o escopo `project`, então dá para ler e mexer nele: `gh project item-list 2 --owner LucasDesenvGit`, `gh project field-list 2 --owner LucasDesenvGit` e `gh project item-edit`. Issue nova (e sub-issue) entra sozinha, pelo workflow "Auto-add to project", com o Status `Backlog`. Campos: **Status** (Backlog, In progress, In review, Done, Epic), **Priority** (P0–P2) e **Size** (XS–XL); na prática, a prioridade vai na etiqueta `prioridade: alta|média|baixa`. Consulte o Project quando a conversa for sobre backlog, andamento ou o que falta.
+
 **O branch padrão do repositório é o `develop`** (#142). Por isso, todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge. Fora do branch padrão, a palavra-chave é ignorada.
 - **Branch nova:** de preferência criada pela issue, com `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
 - **Issue nova já nasce no nome de quem pediu:** `gh issue create --assignee @me` (a conta do `gh` é a do usuário) ou o login de quem pediu, se for outra pessoa. **Exceção, os épicos:** veja a regra abaixo.
@@ -203,4 +206,4 @@ Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto p
 - Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo da API, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
 - Segredos (Client Secret da Pluggy, token da brapi) via ASP.NET Data Protection, chaves em `dados/chaves`: DPAPI no Windows (`OperatingSystem.IsWindows()` em `Program.cs`), permissão de arquivo no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
-- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev`, `api.mercadobitcoin.net` (cripto, ADR 0048) (API) e `api.github.com`/`github.com` (só o gerenciador: o do Windows para versão nova, ADR 0028; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop" nas duas janelas, ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).
+- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `olinda.bcb.gov.br` (câmbio PTAX), `query1.finance.yahoo.com`/`brapi.dev`, `api.mercadobitcoin.net` (cripto, ADR 0048) (API) e `api.github.com`/`github.com` (só o gerenciador: o do Windows para versão nova, ADR 0028; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop" nas duas janelas, ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver a tabela em [docs/SEGURANCA.md](docs/SEGURANCA.md#o-que-sai-para-a-internet) e o diagrama "Como funciona" do [README.md](README.md#como-funciona), que mudam junto).

@@ -1,0 +1,105 @@
+name: CodeQL
+
+# #451 (ADR 0054): análise de segurança do nosso código pelo CodeQL do GitHub (o govulncheck, no ci.yml, olha as
+# bibliotecas do Go; este, o código). Os achados vão para Security › Code scanning e, no PR, viram anotações nas linhas;
+# não bloqueiam o merge. Uma linguagem por job, em paralelo: o tempo do PR é o da mais lenta (a do Go, que compila).
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Toda quinta, 11h23 em Brasília: as consultas do CodeQL ganham regras novas mesmo sem o código mudar.
+    - cron: '23 14 * * 4'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analisar:
+    name: CodeQL (${{ matrix.linguagem }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      # Para enviar os achados ao Code scanning.
+      security-events: write
+      # Para o codeql-action ler o próprio workflow (pede no repositório privado; inofensivo no público).
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Os workflows: título ou branch de PR dentro de um run:, permissões largas demais.
+          - linguagem: actions
+            modo: none
+          - linguagem: csharp
+            modo: none
+          # O Go é compilado à mão: são dois módulos, e o gerenciador pede GTK 4, WebKitGTK e cgo no Linux (o
+          # autobuild não instala nada disso e analisaria só parte do código).
+          - linguagem: go
+            modo: manual
+          - linguagem: javascript-typescript
+            modo: none
+          # Os scripts de CI (scripts/ci).
+          - linguagem: python
+            modo: none
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        if: matrix.linguagem == 'go'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: |
+            src/backend-go/go.sum
+            src/gerenciador-go/go.sum
+
+      - name: GTK 4 e WebKitGTK 6.0 (gerenciador em Go)
+        if: matrix.linguagem == 'go'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+
+      - name: Iniciar o CodeQL
+        id: codeql
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.linguagem }}
+          build-mode: ${{ matrix.modo }}
+
+      # O CodeQL acompanha esta compilação para ler o Go.
+      - name: Compilar o Go (API e gerenciador)
+        if: matrix.modo == 'manual'
+        run: |
+          (cd src/backend-go && go build ./...)
+          (cd src/gerenciador-go && CGO_ENABLED=1 go build ./...)
+
+      - name: Analisar
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.linguagem }}"
+
+      # O que entrou na análise, por pasta: uma pasta que some daqui (o gerenciador em Go sem compilar, por exemplo)
+      # deixa de ser analisada sem nenhum erro.
+      - name: Resumo do que foi analisado
+        if: always()
+        env:
+          LINGUAGEM: ${{ matrix.linguagem }}
+        run: |
+          # O src.zip guarda o código lido, com o caminho inteiro e sem a / do começo. Um banco só por job; a pasta
+          # dele nem sempre tem o nome da linguagem (a do javascript-typescript é "javascript").
+          fonte=$(find "$RUNNER_TEMP/codeql_databases" -maxdepth 2 -name src.zip | head -n 1)
+          resumo=$(
+            echo "arquivos analisados por pasta:"
+            unzip -Z1 "$fonte" | sed "s|^${GITHUB_WORKSPACE#/}/||" | grep -v '/$' |
+              awk -F/ '{print (NF > 2 ? $1"/"$2 : $1)}' | sort | uniq -c | sort -rn | head -n 15
+          )
+          echo "$resumo"
+          printf '### CodeQL (%s)\n```\n%s\n```\n' "$LINGUAGEM" "$resumo" >> "$GITHUB_STEP_SUMMARY"

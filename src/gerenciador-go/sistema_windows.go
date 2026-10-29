@@ -3,12 +3,16 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
+	"unsafe"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/w32"
+	"golang.org/x/sys/windows"
 
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
@@ -36,6 +40,8 @@ func opcoesDoSistema(o *application.Options) {
 	o.Windows = application.WindowsOptions{
 		// Fechar a janela não encerra quando o gerenciador fica na bandeja (fechou, em gerenciador.go).
 		DisableQuitOnLastWindowClosed: true,
+		// Uma classe só nossa, para o avisarNaBandeja achar a janela do ícone (e não a de outro programa com Wails).
+		WndClass: classeDaJanela,
 		// O cache do WebView2 na pasta do Finanças Local do usuário, e não em AppData\Roaming\<exe>.
 		WebviewUserDataPath: filepath.Join(os.Getenv("LOCALAPPDATA"), "FinancasLocal", "Gerenciador", "WebView2"),
 	}
@@ -91,3 +97,47 @@ func comandoParaAtualizar(instalacao.Instalacao) string { return "" }
 func lerSemLogin() string                               { return "" }
 func manterNoArSemLogin() error                         { return errors.ErrUnsupported }
 func registroDoServico() *tela.Notas                    { return nil }
+
+// classeDaJanela é a classe das janelas do Wails (a da página e a do ícone da bandeja).
+const classeDaJanela = "FinancasLocalGerenciador"
+
+var findWindowEx = windows.NewLazySystemDLL("user32.dll").NewProc("FindWindowExW")
+
+// avisarNaBandeja mostra o balão no ícone da bandeja (no Windows 10 e 11, a notificação no canto), como o
+// ShowBalloonTip do C#. O Wails v3.0.0-beta.34 não tem balão: o ícone é dele, da janela só de mensagens (HWND_MESSAGE)
+// que ele cria com a nossa classe, e tem o id 1 (a nossa única bandeja). O aviso troca só o balão (NIF_INFO).
+func avisarNaBandeja(a tela.AvisoNaBandeja) {
+	classe, err := windows.UTF16PtrFromString(classeDaJanela)
+	if err != nil {
+		return
+	}
+	var anterior uintptr
+	for {
+		h, _, _ := findWindowEx.Call(uintptr(w32.HWND_MESSAGE), anterior, uintptr(unsafe.Pointer(classe)), 0)
+		if h == 0 {
+			log.Print("aviso na bandeja: o ícone não foi achado")
+			return
+		}
+		anterior = h
+		if _, pid := w32.GetWindowThreadProcessId(w32.HWND(h)); pid != os.Getpid() {
+			continue
+		}
+		nid := w32.NOTIFYICONDATA{HWnd: w32.HWND(h), UID: 1, UFlags: w32.NIF_INFO, DwInfoFlags: w32.NIIF_INFO}
+		nid.CbSize = uint32(unsafe.Sizeof(nid))
+		if a.Alerta {
+			nid.DwInfoFlags = w32.NIIF_WARNING
+		}
+		// O último caractere de cada campo fica zero: o texto longo é cortado e continua terminado em zero.
+		copiarTexto(nid.SzInfoTitle[:len(nid.SzInfoTitle)-1], "Finanças Local")
+		copiarTexto(nid.SzInfo[:len(nid.SzInfo)-1], a.Texto)
+		if w32.ShellNotifyIcon(w32.NIM_MODIFY, &nid) {
+			return
+		}
+	}
+}
+
+func copiarTexto(campo []uint16, texto string) {
+	if t, err := windows.UTF16FromString(texto); err == nil {
+		copy(campo, t)
+	}
+}

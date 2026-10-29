@@ -87,7 +87,7 @@ func fechamentosImportados(faturas []Fatura) []tipos.Data {
 	return datas
 }
 
-func comparar(a, b tipos.Data) int { return a.DiasDesde(b) }
+func comparar(a, b tipos.Data) int { return a.NumeroDoDia() - b.NumeroDoDia() }
 
 // diaDeFechamento é o informado no cartão ou, sem ele, o dia da última fatura importada; nil quando nenhum dos dois.
 func diaDeFechamento(informado *int64, fechamentos []tipos.Data) *int {
@@ -207,7 +207,7 @@ func MesesDeCobranca(lancamentos []Lancamento, faturas []Fatura, diaFechamento *
 	dia := diaDeFechamento(diaFechamento, fechamentos)
 	pelaData := func(data tipos.Data) tipos.Data {
 		for _, f := range fechamentos {
-			if !f.Antes(data) && f.DiasDesde(data) <= 40 {
+			if !f.Antes(data) && f.NumeroDoDia()-data.NumeroDoDia() <= 40 {
 				return primeiroDia(f)
 			}
 		}

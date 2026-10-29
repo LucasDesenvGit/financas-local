@@ -23,6 +23,8 @@ A API sobe direto pelo Kestrel (sem IIS nem proxy) e roda como serviço do siste
 
 O Angular é publicado dentro da própria API (`wwwroot`), então site e API têm a mesma origem: sem CORS, cookies `__Host-` e proteção CSRF simples.
 
+O que sai para a internet e como o site se protege (login, sessão, CSRF, cabeçalhos, segredos): [SEGURANCA.md](SEGURANCA.md).
+
 ## Back-end — `src/backend/Financas.Api`
 
 | Pasta | Responsabilidade |

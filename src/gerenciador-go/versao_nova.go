@@ -85,6 +85,7 @@ func (g *gerenciador) procurar() {
 	disponivel, err := g.nova.cliente.Procurar(ctx, desenvolvimento)
 	cancelar()
 	atual := g.versaoAtual()
+	aberta := g.janelaAberta()
 
 	g.trava.Lock()
 	defer g.trava.Unlock()
@@ -101,6 +102,9 @@ func (g *gerenciador) procurar() {
 		g.nova.disponivel, g.nova.procura.Nova, versaoNova = disponivel, disponivel.Versao.String(), disponivel.Versao.String()
 	}
 	g.nova.resultado = tela.ResultadoDaProcura(nova, desenvolvimento, versaoNova)
+	if aviso, ok := tela.AvisoDaVersaoNova(versaoNova, aberta); ok {
+		go avisarNaBandeja(aviso)
+	}
 }
 
 // esquecerProcura: trocou o tipo de versão, a procura anterior não vale mais.

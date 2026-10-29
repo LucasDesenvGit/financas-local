@@ -416,6 +416,29 @@ func TestLerFiltro(t *testing.T) {
 
 // Regra: o período é em dias de Brasília, pela última ocorrência: o fim inclui até 23h59 de Brasília (03:00 UTC do
 // dia seguinte), e o início começa às 03:00 UTC.
+// O hexadecimal são os 32 bits do Convert.ToInt32(texto, 16): acima de 0x7FFFFFFF dá negativo, e não "não válido".
+func TestLerInt32(t *testing.T) {
+	casos := []struct {
+		bruto string
+		valor int
+		erro  string
+	}{
+		{" 42 ", 42, ""},
+		{"0x7FFFFFFF", 2147483647, ""},
+		{"0x80000000", -2147483648, ""},
+		{"&hFFFFFFFF", -1, ""},
+		{"0x1FFFFFFFF", 0, "The value '0x1FFFFFFFF' is not valid for Pagina."},
+		{"0x", 0, "The input was not valid."},
+		{"abc", 0, "The value 'abc' is not valid for Pagina."},
+	}
+	for _, c := range casos {
+		valor, erro := lerInt32(c.bruto, "Pagina")
+		if valor != c.valor || erro != c.erro {
+			t.Errorf("lerInt32(%q) = %d, %q; esperado %d, %q", c.bruto, valor, erro, c.valor, c.erro)
+		}
+	}
+}
+
 func TestPeriodoEmDiasDeBrasilia(t *testing.T) {
 	db := testeapoio.NovoBanco(t)
 	for i, ultima := range []string{"2026-10-06 02:59:59.9999999", "2026-10-06 03:00:00", "2026-10-07 02:59:59", "2026-10-07 03:00:00"} {

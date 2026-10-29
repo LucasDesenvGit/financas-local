@@ -2,6 +2,54 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.5] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **README mais curto, com diagramas** (#461). Caiu de ~2.230 para ~1.030 palavras, sem perder informação: o que saiu foi para documentos ligados por link.
+  - Diagramas Mermaid: **Como funciona** (contexto, com o que vai para cada endereço da internet), os 4 passos do Meu Pluggy e a atualização pelo gerenciador.
+  - Seção nova **Instalar no Linux**, com os três comandos (antes, o Linux só tinha um link).
+  - Detalhe movido para `docs/SEGURANCA.md` (tabela completa do que sai e detalhes técnicos), `docs/PROBLEMAS-COMUNS.md`, `docs/INSTALADOR-E-GERENCIADOR.md` (opções do `.msi`, gerenciador, voltar de versão, desinstalar) e `docs/INSTALACAO-PELO-CODIGO.md` (passar dos scripts para o `.msi`).
+  - A pilha no fim cita o Go (ADR 0049). O `CLAUDE.md` passa a citar o Project do GitHub e o `olinda.bcb.gov.br` entre as saídas de rede.
+
+## [2.50.4] — 2026-10-29 · desenvolvimento
+
+### Correções
+- **Alertas do CodeQL** (code scanning). Nada muda para quem usa. Junta num PR só as correções que valem das sugeridas pelo Copilot Autofix (#491 a #494), e reescreve a #490:
+  - a falha de rede com a Pluggy vai para o log só com o nome do recurso (`items`, `accounts`…), sem os ids de item e de conta que iam no caminho (alertas 4 e 5); o código da moeda vai sem quebra de linha, para que nenhum texto vindo de fora forje uma linha nova (alerta 6);
+  - a regex que lê a CSP do `Seguranca.cs` no servidor dos testes no navegador não tem mais quantificador aninhado (alerta 3);
+  - o ⓘ do gerenciador em Go acha a explicação por `getElementById`, e não pelo `$` com o texto do atributo (alerta 1);
+  - o `lerInt32` do Go converte o hexadecimal sem estreitar o tipo: `0xFFFFFFFF` continua -1, como o `Convert.ToInt32(texto, 16)` (alerta 7), agora com teste em tabela.
+
+## [2.50.3] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Base dos relatórios e totais de empréstimos em Go** (#447; épico #70). Nada muda para quem usa: o .NET continua atendendo tudo, e esta parte não tem rota. Para quem desenvolve, o que a #79 (orçamentos, metas e contas a pagar) e a #80 (painel e relatórios) vão reaproveitar, portado do `RelatorioService` e do `EmprestimoService` com os mesmos números:
+  - `internal/relatorios`: as transações que entram nos relatórios (sem transferências, ADR 0031, e sem as marcadas para ignorar, ADR 0036), o total por categoria (subcategoria somada no pai, estorno abatendo a despesa), o orçamento do mês contra o gasto (percentual com arredondamento bancário e a situação `ok`, `alerta`, `emergencia` ou `estourado`), as contas a pagar com o próximo vencimento e os pagamentos que faltam, a janela dos últimos meses completos e a renda média com as parcelas do cartão;
+  - `internal/emprestimos`: saldo devedor e parcela mensal de financiamentos e de empréstimos (ADR 0014);
+  - o vencimento mensal imita o `AddMonths` do .NET (31/01 + 1 mês = 28/02), e não o `AddDate` do Go (03/03): `Data.SomarMeses` em `internal/tipos`, junto de `NumeroDoDia` (o `DayNumber`) e `Decimal.NaEscalaDoBanco`;
+  - o dinheiro é somado e comparado em Go, com decimal, e nunca no SQL; a soma sai na escala que o `ef_sum` do EF Core devolvia (`21.0`, e não `21.00`);
+  - os dois pacotes entram no teste de mutação com piso 100% e no piso de cobertura; a fábrica dos testes ganha conexão bancária, empréstimo, orçamento e conta agendada.
+
+## [2.50.2] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Análise de segurança do código com o CodeQL** (#451, ADR 0054). Nada muda para quem usa. Um workflow novo (`codeql.yml`) analisa o código em C#, Go, TypeScript, Python e os próprios workflows em todo PR, no push do `develop` e do `main` e toda quinta. Ele procura dado de fora chegando a SQL, comando do sistema, caminho de arquivo ou HTML, e injeção nos workflows. Os achados vão para Security › Code scanning e viram anotações no PR, sem bloquear o merge. O Go é compilado à mão, com o GTK 4 e o WebKitGTK do gerenciador. O Dependabot passa a olhar também as bibliotecas do gerenciador em Go (menos o Wails, que sobe à mão, ADR 0052).
+
+## [2.50.1] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@angular/build` e `@angular/cli` 22.2.4 → 22.2.5** (#453, Dependabot, alertas 2 a 7). Leva o `vite` de 8.3.0 a 8.3.5, que corrige 6 falhas de segurança do servidor de desenvolvimento (`ng serve`), entre elas as do `launch-editor` que vem dentro dele. Só as ferramentas de build do front-end mudam; nada muda no site publicado. Fica aberto o alerta do `deepmerge` (12), que ainda não tem versão corrigida e só entra pelo Jest, nos testes.
+
+## [2.50.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: aviso na bandeja com a janela fechada** (#448, épico #70). Nada muda para quem usa: o gerenciador instalado continua o de C#. Como o de C#, com a janela fechada, o gerenciador em Go avisa quando o site que estava no ar desliga ou para de responder, e quando acha versão nova ("Versão nova: X."). No Windows, é a notificação do ícone da bandeja; no Linux, a da área de trabalho, pelo `notify-send`. Com o site parado por fora (pelo `services.msc`), o "desligando…" no meio não impede mais o aviso, como impedia no C#. O `.exe` passa a se chamar "Finanças Local" no topo da notificação e no Gerenciador de Tarefas. Era o que faltava do gerenciador em C# no de Go, fora a atualização do próprio gerenciador (#430).
+
+## [2.49.2] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **Agente `dev-go` e skill `migrar-para-go` no Sonnet** (épico #70). Nada muda para quem usa. Os dois rodavam no modelo da conversa (Opus) e passam a fixar o Sonnet, mais barato. A "Aula rápida" dos PRs do épico passa a pedir link nas 3 a 5 afirmações técnicas principais, e não em todas; o que não tiver link não é citado como fato.
+
 ## [2.49.1] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação

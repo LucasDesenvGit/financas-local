@@ -273,12 +273,14 @@ jobs:
         run: go test ./...
 
       # #435 (ADR 0052): o ícone (o cofrinho) e o manifesto do .exe, no rsrc_windows_amd64.syso que o go build junta
-      # sozinho. A CI gera de novo, com o go-winres (versão fixa), e confere com o do repositório: assim ninguém precisa
-      # rodar o go-winres na própria máquina. Faltando ou diferente, falha e deixa o gerado no artefato "icone-gerenciador".
+      # sozinho. A descrição "Finanças Local" é o nome no topo das notificações e no Gerenciador de Tarefas (#448); sem
+      # número de versão, para o .syso não mudar a cada PR. A CI gera de novo, com o go-winres (versão fixa), e confere
+      # com o do repositório: assim ninguém precisa rodar o go-winres na própria máquina. Faltando ou diferente, falha e
+      # deixa o gerado no artefato "icone-gerenciador".
       - name: Ícone do .exe em dia (go-winres)
         run: |
           mkdir -p "$RUNNER_TEMP/winres"
-          go run github.com/tc-hib/go-winres@v0.3.3 simply --arch amd64 --manifest gui --icon icone.ico --out "$RUNNER_TEMP/winres/rsrc"
+          go run github.com/tc-hib/go-winres@v0.3.3 simply --arch amd64 --manifest gui --icon icone.ico --file-description "Finanças Local" --product-name "Finanças Local" --out "$RUNNER_TEMP/winres/rsrc"
           if ! cmp -s "$RUNNER_TEMP/winres/rsrc_windows_amd64.syso" rsrc_windows_amd64.syso; then
             echo "::error::O rsrc_windows_amd64.syso não está em dia com o icone.ico: baixe o artefato icone-gerenciador e suba o arquivo em src/gerenciador-go/."
             exit 1
