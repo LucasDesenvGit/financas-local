@@ -58,6 +58,27 @@ func (d Data) SomarAnos(n int) Data {
 	return NovaData(ano, mes, min(d.Dia(), ultimo))
 }
 
+// SomarMeses é o DateOnly.AddMonths do C#: o dia que não existe no mês de chegada vira o último dia dele (31/01 + 1
+// mês = 28/02, ou 29/02 em ano bissexto; 31/03 - 1 mês = 28/02). O AddDate do Go passaria para o mês seguinte
+// (31/01 + 1 mês = 03/03). Cada soma parte da data recebida: somar um mês duas vezes a 31/01 dá 28/03, e não 31/03.
+// O C# lança exceção quando o resultado sai do ano 1 a 9999; aqui o resultado não é conferido.
+// O DateOnly.AddMonths chama o DateTime.AddMonths, que descreve a regra do último dia válido do mês:
+// https://learn.microsoft.com/dotnet/api/system.datetime.addmonths (Remarks) e
+// https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/DateOnly.cs
+func (d Data) SomarMeses(n int) Data {
+	// O time.Date normaliza o mês fora de 1 a 12 (inclusive o negativo): dia 1 do mês de chegada, sem estourar.
+	primeiro := time.Date(d.Ano(), d.Mes()+time.Month(n), 1, 0, 0, 0, 0, time.UTC)
+	ultimo := time.Date(primeiro.Year(), primeiro.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	return NovaData(primeiro.Year(), primeiro.Month(), min(d.Dia(), ultimo))
+}
+
+// diaNumeroDe1970 é o DateOnly.DayNumber de 01/01/1970: os dias desde 01/01/0001, que é o dia 0.
+const diaNumeroDe1970 = 719162
+
+// NumeroDoDia é o DateOnly.DayNumber do C#: quantos dias passaram desde 01/01/0001 (o dia 0). A diferença entre dois
+// números é o número de dias entre as datas (a conta "dias para vencer").
+func (d Data) NumeroDoDia() int { return int(d.t.Unix()/86400) + diaNumeroDe1970 }
+
 // Value grava "2026-10-15" (driver.Valuer).
 func (d Data) Value() (driver.Value, error) { return d.String(), nil }
 

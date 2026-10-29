@@ -16,6 +16,10 @@ O que os testes dos assuntos do #70 dividem, para cada um não escrever o seu (#
 | `fab.Subcategoria(pai, ajustes...)` | categoria filha, com o tipo do pai |
 | `fab.Transacao(conta, ajustes...)` | despesa efetivada de `-10.00`, sem categoria, com a data de hoje em Brasília (pelo relógio da fábrica) |
 | `fab.RegraCategorizacao(categoria, ajustes...)` | regra ativa "contém", prioridade 100 |
+| `fab.ConexaoBancaria(ajustes...)` | conexão do Open Finance ativa, "Banco de teste N" (#447) |
+| `fab.Emprestimo(conexao, ajustes...)` | empréstimo (Natureza 1) da conexão: contratado 10000.0, saldo devedor 5000.0, sem parcela (#447) |
+| `fab.Orcamento(categoria, ajustes...)` | orçamento de 500.0 da categoria no mês de hoje em Brasília (#447) |
+| `fab.ContaAgendada(ajustes...)` | conta a pagar ativa de 100.0, mensal, paga à mão, que vence hoje em Brasília (#447) |
 | `fab.CotacaoMoeda(ajustes...)` | PTAX do dólar de hoje (em Brasília): compra 5.4123, venda 5.4129 (#81) |
 | `fab.CotacaoCripto(ajustes...)` | bitcoin agora (UTC): 612345.67 (#81) |
 | `fab.Configuracao(chave, valor)` | configuração que não é segredo (`Protegido = 0`) |

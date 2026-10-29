@@ -22,3 +22,5 @@ internal/categorizacao   100
 internal/regrasdescricao 100
 internal/transferencias  100
 internal/categorias      100
+internal/relatorios     100
+internal/emprestimos    100

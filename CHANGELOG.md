@@ -2,6 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.3] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Base dos relatórios e totais de empréstimos em Go** (#447; épico #70). Nada muda para quem usa: o .NET continua atendendo tudo, e esta parte não tem rota. Para quem desenvolve, o que a #79 (orçamentos, metas e contas a pagar) e a #80 (painel e relatórios) vão reaproveitar, portado do `RelatorioService` e do `EmprestimoService` com os mesmos números:
+  - `internal/relatorios`: as transações que entram nos relatórios (sem transferências, ADR 0031, e sem as marcadas para ignorar, ADR 0036), o total por categoria (subcategoria somada no pai, estorno abatendo a despesa), o orçamento do mês contra o gasto (percentual com arredondamento bancário e a situação `ok`, `alerta`, `emergencia` ou `estourado`), as contas a pagar com o próximo vencimento e os pagamentos que faltam, a janela dos últimos meses completos e a renda média com as parcelas do cartão;
+  - `internal/emprestimos`: saldo devedor e parcela mensal de financiamentos e de empréstimos (ADR 0014);
+  - o vencimento mensal imita o `AddMonths` do .NET (31/01 + 1 mês = 28/02), e não o `AddDate` do Go (03/03): `Data.SomarMeses` em `internal/tipos`, junto de `NumeroDoDia` (o `DayNumber`) e `Decimal.NaEscalaDoBanco`;
+  - o dinheiro é somado e comparado em Go, com decimal, e nunca no SQL; a soma sai na escala que o `ef_sum` do EF Core devolvia (`21.0`, e não `21.00`);
+  - os dois pacotes entram no teste de mutação com piso 100% e no piso de cobertura; a fábrica dos testes ganha conexão bancária, empréstimo, orçamento e conta agendada.
+
 ## [2.50.2] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação

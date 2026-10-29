@@ -15,6 +15,8 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/transferencias` | o `TransferenciasService` (#77, ADR 0031): transferência entre contas suas fica fora dos relatórios; pagamento de fatura pareado no cartão |
 | `internal/tipolancamento` | o `TipoLancamentoService` (#77, ADR 0025): como o dinheiro entrou ou saiu (Pix, fatura, estorno…) |
 | `internal/transacoes` | a `Transacao` como as regras a leem e mudam; `Gravar` manda só as colunas que mudaram, como o `SaveChanges` do EF Core |
+| `internal/relatorios` | a base do `RelatorioService` (#447, ADRs 0031 e 0036): as transações que entram nos relatórios, o total por categoria, o orçamento do mês contra o gasto, as contas a pagar e o próximo vencimento, a janela dos últimos meses completos e a renda; sem rota, a #79 e a #80 usam |
+| `internal/emprestimos` | os totais do `EmprestimoService` (#447, ADR 0014): saldo devedor e parcela mensal de financiamentos e de empréstimos; sem rota |
 | `internal/texto` | as normalizações de texto das regras do C# (sem acento, maiúsculas, palavras inteiras), conferidas contra o C# por um gabarito |
 | `internal/tarefas` | tarefas em segundo plano (o `BackgroundService` do .NET): só as de `Go:Tarefas`, com `context`, espera ao parar e `recover` por ciclo |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
