@@ -36,6 +36,24 @@ const (
 	Dinheiro              Tipo = 18
 )
 
+// Grupos são os do filtro "Lançamento" da tela de Transações (o código na URL → os tipos), como no C#.
+var Grupos = map[string][]Tipo{
+	"cartao":         {CompraCartao, EstornoCartao},
+	"debito":         {CompraDebito},
+	"pix":            {PixEnviado, PixRecebido},
+	"transferencia":  {TransferenciaEnviada, TransferenciaRecebida},
+	"entre-contas":   {EntreContas},
+	"fatura":         {PagamentoFatura},
+	"boleto":         {Boleto},
+	"saque-deposito": {Saque, Deposito},
+	"tarifas":        {TarifaJuros},
+	"investimentos":  {Rendimento, AplicacaoResgate},
+	"salario":        {Salario},
+	"credito":        {Credito},
+	"dinheiro":       {Dinheiro},
+	"outros":         {Outro},
+}
+
 // Tipos de conta (o enum TipoConta do C#) que mudam a classificação.
 const (
 	ContaCorrente = 1

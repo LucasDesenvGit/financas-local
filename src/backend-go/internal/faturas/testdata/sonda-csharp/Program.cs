@@ -251,7 +251,10 @@ static object? Converter(Type tipo, string valor)
     try { return System.ComponentModel.TypeDescriptor.GetConverter(tipo).ConvertFrom(null, CultureInfo.InvariantCulture, valor); }
     catch (Exception) { return "erro"; }
 }
-var query = valoresDaQuery.Select(v => new { valor = v, inteiro = Converter(typeof(int), v)?.ToString(), booleano = Converter(typeof(bool), v)?.ToString() }).ToList();
+string[] longos = ["9223372036854775807", "9223372036854775808", "-9223372036854775808", "0xFFFFFFFFFFFFFFFF",
+    "0x8000000000000000", "0x7FFFFFFFFFFFFFFF", "0x10000000000000000", "2147483648", " 12 ", "+5", "1.0", "", "x"];
+var query = valoresDaQuery.Concat(longos).Select(v => new { valor = v, inteiro = Converter(typeof(int), v)?.ToString(),
+    longo = Converter(typeof(long), v)?.ToString(), booleano = Converter(typeof(bool), v)?.ToString() }).ToList();
 
 // O saldo das contas pelo próprio EF Core (CalcularSaldosAsync), num SQLite temporário com o esquema de verdade: o Sum
 // do decimal volta do banco no formato dele, e a escala do saldo depende disso.
@@ -295,6 +298,17 @@ using (var db = new Financas.Api.Data.FinancasDbContext(opcoesDb.Options))
 }
 File.Delete(arquivoBanco);
 
+// #9: as letras úteis da descrição (sem acento, pontuação, números soltos e termos genéricos).
+string[] descricoesPoucoInformativas =
+[
+    "PIX ENVIADO", "PAGAMENTO", "TED 123456", "Banco Inter", "99APP", "UBER *TRIP", "Pix enviado para João", "", "   ", "A",
+    "PIX - ENVIADO*12/10", "Lançamento da conta antiga", "SUPERMERCADO EXEMPLO", "PAGAMENTO FATURA CARTAO", "PIX RECEBIDO JOAO FICTICIO",
+    "ab", "abc", "abcd", "Ação", "ﬁo", "straße", "ı", "𝐀𝐁𝐂𝐃", "日本語テキスト", "한국어", "Ǆ", "x1y2", "12 34", "COMPRA PENDENTE MERCADINHO",
+    "TRANSFERENCIA PARA POUPANCA", "Transferência da conta corrente", "Feira", "nu bank", "NU PAGAMENTOS SA", "c6 bank", "C6BANK",
+    "Pix enviado", "PAG*JOSE", "DEB AUT", "e-commerce", "café", "ÉÉÉ", "ĳ", "Ⅻ",
+];
+var letras = descricoesPoucoInformativas.Select(d => new { descricao = d, letras = DescricaoPoucoInformativaService.LetrasUteis(d) }).ToList();
+
 var opcoes = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 string Gravar(string relativo, object conteudo)
 {
@@ -324,6 +338,10 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "parcelas", "testdata", "compr
 Console.WriteLine(Gravar(Path.Combine("..", "..", "contas", "testdata", "saldos.json"), new Dictionary<string, object>
 {
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["saldos"] = saldos,
+}));
+Console.WriteLine(Gravar(Path.Combine("..", "..", "poucoinformativa", "testdata", "letras.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["letras"] = letras,
 }));
 Console.WriteLine(Gravar(Path.Combine("..", "..", "respostas", "testdata", "query.json"), new Dictionary<string, object>
 {

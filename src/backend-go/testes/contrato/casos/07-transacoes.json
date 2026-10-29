@@ -1,0 +1,370 @@
+{
+  "descricao": "Transações (#78, TransacoesController), parte 1: a lista com os filtros, a ordem, a paginação e os totais, e obter. Roda com a sessão 'principal', logada pelo 00-auth, depois do 05 e do 06, que mudam categorias e regras (e o reaplicar recategoriza as transações da base). Só leitura: não deixa rastro no banco.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "Sem filtro: 50 por página, da data mais recente para a mais antiga (e o Id no empate). Os totais somam receitas e despesas fora das transferências e das ignoradas, pelo tipo (estorno é despesa positiva e abate).",
+      "metodo": "GET",
+      "caminho": "/api/transacoes"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/transacoes",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "página 2 com 20 por página",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?pagina=2&tamanhoPagina=20"
+    },
+    {
+      "nome": "última página",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?pagina=9&tamanhoPagina=20"
+    },
+    {
+      "nome": "página além do fim",
+      "comentario": "Lista vazia, com o total e as somas do filtro.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?pagina=100&tamanhoPagina=5"
+    },
+    {
+      "nome": "página 0",
+      "comentario": "[Range(1, int.MaxValue)]: o 400 do ValidationProblemDetails.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?pagina=0"
+    },
+    {
+      "nome": "tamanho 501",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?tamanhoPagina=501"
+    },
+    {
+      "nome": "página que não é número",
+      "comentario": "Erro do model binding numa propriedade do filtro: a mensagem cita o nome dela.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?pagina=um&tamanhoPagina=dois"
+    },
+    {
+      "nome": "período",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?inicio=2026-09-01&fim=2026-09-30&tamanhoPagina=5"
+    },
+    {
+      "nome": "período com a data no formato americano",
+      "comentario": "O DateOnly da query passa pelo TypeConverter, na cultura invariante.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?inicio=09/01/2026&fim=09/30/2026&tamanhoPagina=5"
+    },
+    {
+      "nome": "data inválida",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?inicio=2026-13-01"
+    },
+    {
+      "nome": "conta",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?contaId=2&tamanhoPagina=5"
+    },
+    {
+      "nome": "conta que não é número",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?contaId=abc"
+    },
+    {
+      "nome": "categoria com as subcategorias",
+      "comentario": "Alimentação traz também Restaurantes e Padaria.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?categoriaId=1&tamanhoPagina=5"
+    },
+    {
+      "nome": "várias categorias e sem categoria",
+      "comentario": "Basta atender a uma das condições (OU).",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?categoriaIds=3&categoriaIds=4&semCategoria=true&tamanhoPagina=5"
+    },
+    {
+      "nome": "categorias no formato com índice",
+      "comentario": "O model binding de coleção também lê nome[índice].",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?categoriaIds[0]=3&categoriaIds[1]=4&tamanhoPagina=5"
+    },
+    {
+      "nome": "categoria e categoriaIds juntas",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?categoriaId=2&categoriaIds=2&categoriaIds=3&tamanhoPagina=5"
+    },
+    {
+      "nome": "só sem categoria",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?semCategoria=true"
+    },
+    {
+      "nome": "natureza essencial",
+      "comentario": "A da categoria ou, sem ela, a da categoria pai.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?naturezas=1&tamanhoPagina=5"
+    },
+    {
+      "nome": "natureza pelo nome",
+      "comentario": "O enum na query aceita o nome.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?naturezas=EstiloDeVida&tamanhoPagina=5"
+    },
+    {
+      "nome": "sem natureza",
+      "comentario": "Inclusive as sem categoria.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?semNatureza=true&tamanhoPagina=5"
+    },
+    {
+      "nome": "natureza e sem natureza",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?naturezas=Essencial&semNatureza=true&tamanhoPagina=5"
+    },
+    {
+      "nome": "natureza fora do enum",
+      "comentario": "Número que não existe no enum passa no binding e não acha nada.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?naturezas=9&tamanhoPagina=5"
+    },
+    {
+      "nome": "natureza que não existe",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?naturezas=luxo"
+    },
+    {
+      "nome": "tipo receita",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?tipo=2&tamanhoPagina=5"
+    },
+    {
+      "nome": "tipo pelo nome",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?tipo=transferencia&tamanhoPagina=5"
+    },
+    {
+      "nome": "tipo que não existe",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?tipo=abc"
+    },
+    {
+      "nome": "só emergências",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?somenteEmergencias=true"
+    },
+    {
+      "nome": "bool que não é bool",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?somenteEmergencias=sim"
+    },
+    {
+      "nome": "busca sem diferença de maiúsculas",
+      "comentario": "O LIKE do SQLite ignora a caixa das letras sem acento.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=supermercado&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca na descrição do banco",
+      "comentario": "A Conta de luz tem 'DEBITO AUTOMATICO ENERGIA FICTICIA' na descrição original.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=energia&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca no estabelecimento e na observação",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=fict&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca com o % como texto",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=%25"
+    },
+    {
+      "nome": "busca com o _ como texto",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=_"
+    },
+    {
+      "nome": "busca com a barra invertida como texto",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=%5C"
+    },
+    {
+      "nome": "busca com acento na mesma caixa",
+      "comentario": "'lançamento' acha 'Lançamento': o L é ASCII, e o ç é o mesmo.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=lan%C3%A7amento&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca com acento em outra caixa",
+      "comentario": "'Ç' não acha 'ç': o LIKE só ignora a caixa em ASCII.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=LAN%C3%87AMENTO&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca só com espaços",
+      "comentario": "Em branco não filtra.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=%20%20&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca aparada",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=%20pix%20&tamanhoPagina=5"
+    },
+    {
+      "nome": "busca longa demais",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "nome": "lançamento pix",
+      "comentario": "O tipo de lançamento é calculado (ADR 0025): a conta é na memória, sobre o que os outros filtros deixaram.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?lancamento=pix&tamanhoPagina=5"
+    },
+    {
+      "nome": "lançamento cartão",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?lancamento=cartao&tamanhoPagina=5"
+    },
+    {
+      "nome": "lançamento fatura",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?lancamento=fatura&tamanhoPagina=5"
+    },
+    {
+      "nome": "lançamento entre contas",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?lancamento=entre-contas&tamanhoPagina=5"
+    },
+    {
+      "nome": "lançamento que não existe",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?lancamento=foo"
+    },
+    {
+      "nome": "lançamento em maiúsculas",
+      "comentario": "O [RegularExpression] diferencia maiúsculas.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?lancamento=PIX"
+    },
+    {
+      "nome": "pouco informativa",
+      "comentario": "#9: as que ainda pedem atenção, com menos letras úteis que o mínimo dos parâmetros (' 4 ').",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?poucoInformativa=true"
+    },
+    {
+      "nome": "ids",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ids=1&ids=2&ids=999"
+    },
+    {
+      "nome": "ids que não são número",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ids=1&ids=x"
+    },
+    {
+      "nome": "ordem por valor",
+      "comentario": "Pelo valor sem o sinal, do maior para o menor; a data mais recente e o Id desempatam.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=valor&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por valor crescente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=valor&direcao=asc&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por categoria",
+      "comentario": "Sem categoria no fim nas duas direções; o nome sem diferença de maiúsculas.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=categoria&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por categoria crescente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=categoria&direcao=asc&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por categoria na última página",
+      "comentario": "A sem categoria fica no fim.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=categoria&direcao=asc&pagina=34&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por conta",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=conta&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por conta crescente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=conta&direcao=asc&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por data crescente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?direcao=asc&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem por data explícita",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=data&tamanhoPagina=5"
+    },
+    {
+      "nome": "ordem que não existe",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?ordem=nome"
+    },
+    {
+      "nome": "direção que não existe",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?direcao=cima"
+    },
+    {
+      "nome": "vários erros de uma vez",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?pagina=0&tamanhoPagina=0&ordem=x&direcao=y&lancamento=z"
+    },
+    {
+      "nome": "filtros combinados",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?contaId=1&inicio=2026-01-01&tipo=1&busca=a&ordem=valor&tamanhoPagina=5"
+    },
+    {
+      "nome": "parâmetro com o nome em maiúsculas",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?CONTAID=3&TamanhoPagina=5"
+    },
+    {
+      "nome": "obter",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/1"
+    },
+    {
+      "nome": "obter do cartão com parcela",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/26"
+    },
+    {
+      "nome": "obter inexistente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/999999"
+    },
+    {
+      "nome": "obter com id que não é número",
+      "comentario": "{id:long} não casa: 404 sem corpo.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/abc"
+    },
+    {
+      "nome": "obter com id maior que long",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/9223372036854775808"
+    }
+  ]
+}

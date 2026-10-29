@@ -19,6 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
@@ -44,14 +45,16 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	})
 
 	// Uma linha por assunto, na ordem do épico #70.
-	saude.Registrar(mux, d.DB, d.Log, d.Relogio)                 // #231: o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco)
-	parametros.Registrar(mux, parametros.Novo(parametros.Opcoes{ // #76
+	saude.Registrar(mux, d.DB, d.Log, d.Relogio) // #231: o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco)
+	par := parametros.Novo(parametros.Opcoes{
 		DB: d.DB, Relogio: d.Relogio, Log: d.Log, Versao: versao.Atual,
 		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves, Padroes: parametros.PadroesDoAppsettings(d.Config),
-	}))
+	})
+	parametros.Registrar(mux, par)                                            // #76
 	cambio.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: câmbio pela PTAX (ADR 0007)
 	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
 	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log)) // #77: categorias, regras e regras de descrição
 	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))         // #77: contas e faturas do cartão
+	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (a lista, obter e o lançamento manual)
 	return mux
 }

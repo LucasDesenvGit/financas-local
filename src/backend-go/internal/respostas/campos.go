@@ -189,9 +189,10 @@ func (c *CampoBoolOpcional) ler(t json.Token) bool {
 func (c *CampoBoolOpcional) validar(map[string][]string) {}
 
 // CampoDecimal é um parâmetro decimal (não anulável) de um record: sem a propriedade no JSON fica zero, e null é erro
-// de conversão. Lê como o CampoDecimalOpcional.
+// de conversão. Lê como o CampoDecimalOpcional; com Faixa, o [Range] dele.
 type CampoDecimal struct {
 	Propriedade string
+	Faixa       *Faixa
 	Valor       tipos.Decimal
 }
 
@@ -209,7 +210,34 @@ func (c *CampoDecimal) ler(t json.Token) bool {
 	return true
 }
 
-func (c *CampoDecimal) validar(map[string][]string) {}
+func (c *CampoDecimal) validar(erros map[string][]string) {
+	opcional := CampoDecimalOpcional{Propriedade: c.Propriedade, Faixa: c.Faixa, Valor: &c.Valor}
+	opcional.validar(erros)
+}
+
+// CampoData é um parâmetro DateOnly (não anulável) de um record: o System.Text.Json lê só o texto "aaaa-mm-dd"; null,
+// número ou outro formato é erro de conversão. Sem a propriedade no JSON, fica a data zero (01/01/0001).
+type CampoData struct {
+	Propriedade string
+	Valor       tipos.Data
+}
+
+func (c *CampoData) propriedade() string { return c.Propriedade }
+
+func (c *CampoData) ler(t json.Token) bool {
+	texto, ok := t.(string)
+	if !ok || len(texto) != len("2006-01-02") {
+		return false
+	}
+	d, err := tipos.LerData(texto)
+	if err != nil {
+		return false
+	}
+	c.Valor = d
+	return true
+}
+
+func (c *CampoData) validar(map[string][]string) {}
 
 // CampoDecimalOpcional é um parâmetro decimal? de um record: número JSON (com a escala que veio) ou número em texto
 // (AllowReadingFromString). null ou ausente fica nil. Com Faixa, o [Range] em double, como o RangeAttribute(double,
@@ -267,6 +295,10 @@ func NovoPadrao(expressao string) *Padrao {
 	return &Padrao{Expressao: expressao, re: regexp.MustCompile(`^(?:` + expressao + `)$`)}
 }
 
-func (p *Padrao) mensagem(propriedade string) string {
+// Casa é o RegularExpressionAttribute: o texto inteiro casa com a expressão; nulo e vazio passam.
+func (p *Padrao) Casa(valor string) bool { return valor == "" || p.re.MatchString(valor) }
+
+// Mensagem é a do RegularExpressionAttribute, com a expressão como está no C#.
+func (p *Padrao) Mensagem(propriedade string) string {
 	return fmt.Sprintf("The field %s must match the regular expression '%s'.", propriedade, p.Expressao)
 }

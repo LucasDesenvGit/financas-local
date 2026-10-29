@@ -121,7 +121,7 @@ func (c *CampoTexto) validar(erros map[string][]string) {
 			}
 		}
 		if c.Padrao != nil && *c.Valor != "" && !c.Padrao.re.MatchString(*c.Valor) {
-			lista = append(lista, c.Padrao.mensagem(c.Propriedade))
+			lista = append(lista, c.Padrao.Mensagem(c.Propriedade))
 		}
 	}
 	if len(lista) > 0 {

@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.7] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 1** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado em `Go:Prefixos`, depois das 18 rotas. Para quem desenvolve:
+  - `GET /api/transacoes` (os filtros, a ordem, a paginação e os totais), `GET /api/transacoes/{id}` e o lançamento manual (`POST`), com o mesmo JSON e o mesmo banco do .NET: o contrato `07-transacoes` (68 casos), gravado do .NET, passa com o Go atendendo, e o `/api/transacoes` passa a ser conferido pelo Go atrás do .NET;
+  - a ordem por valor reproduz a do .NET, com o defeito dela: em pt-BR, valores com centavos saem fora de ordem (#499, aberta para corrigir nos dois lados);
+  - a descrição pouco informativa (#9) num pacote próprio, que o painel (#80) vai usar;
+  - a prévia das regras de descrição passa a recusar o número que não existe no enum, como o .NET já fazia.
+
 ## [2.50.6] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação

@@ -1,10 +1,12 @@
 package categorias
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -137,19 +139,6 @@ func TestTrocarOTipoRefazAsTransacoesEmLotes(t *testing.T) {
 // Regra: a query da prévia como o model binding do ASP.NET: tipo pelo nome (sem diferença de maiúsculas), pelo
 // número ou pela combinação com vírgula; decimal na cultura invariante, com vírgula de milhar.
 func TestLerDaQuery(t *testing.T) {
-	enums := []struct {
-		valor    string
-		esperado int64
-		ok       bool
-	}{
-		{"Igual", 3, true}, {"comecacom", 2, true}, {" CONTEM ", 1, true}, {"2", 2, true}, {"9", 9, true},
-		{"Contem, Igual", 3, true}, {"Igual,Contem", 3, true}, {"2,1", 3, true}, {"abc", 0, false}, {"256", 0, false}, {"-1", 0, false}, {"", 0, false},
-	}
-	for _, e := range enums {
-		if got, ok := lerEnumDaQuery(e.valor, nomesDoTipoCorrespondencia); got != e.esperado || ok != e.ok {
-			t.Errorf("lerEnumDaQuery(%q) = %d, %v; esperado %d, %v", e.valor, got, ok, e.esperado, e.ok)
-		}
-	}
 	decimais := []struct {
 		valor, esperado string
 		ok              bool
@@ -165,7 +154,8 @@ func TestLerDaQuery(t *testing.T) {
 	}
 }
 
-// Regra: a prévia responde o 400 automático com o nome do parâmetro e, sem texto, zero e lista vazia.
+// Regra: a prévia responde o 400 automático com o nome do parâmetro (o tipo fora do enum também) e, sem texto, zero e
+// lista vazia.
 func TestPreviaPelaRota(t *testing.T) {
 	mux, _, _ := rotasDeTeste(t)
 	resp := testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&TIPO=xyz&valorMaximo=1,0,0.x", "")
@@ -175,6 +165,13 @@ func TestPreviaPelaRota(t *testing.T) {
 		t.Errorf("400 da prévia: %s", resp.Corpo)
 	}
 	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa", "").ConferirJSON(t, `{"quantidade":0,"exemplos":[]}`)
+	// O número que não existe no enum é o 400 do EnumTypeModelBinder (ele confere o Enum.IsDefined), e não passa.
+	fora := testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&tipo=9", "")
+	fora.ConferirStatus(t, http.StatusBadRequest)
+	if !strings.Contains(string(fora.Corpo), `"tipo":["The value '9' is invalid."]`) {
+		t.Errorf("400 do tipo fora do enum: %s", fora.Corpo)
+	}
+	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&tipo=Igual", "").ConferirStatus(t, http.StatusOK)
 }
 
 // Regra: erro do banco nas listas é o 500 genérico.
@@ -186,4 +183,46 @@ func TestListasComErroDoBanco(t *testing.T) {
 	for _, caminho := range []string{"/api/categorias", "/api/regras", "/api/regras-descricao", "/api/regras-descricao/previa?texto=x"} {
 		testeapoio.Chamar(t, mux, "GET", caminho, "").ConferirStatus(t, http.StatusInternalServerError)
 	}
+	// E nas que gravam: o 500, sem o erro do banco na resposta.
+	categoria := `{"nome":"X","tipo":1,"cor":"#64748b"}`
+	regra := `{"texto":"XX","tipoCorrespondencia":1,"categoriaId":1,"prioridade":1}`
+	descricao := `{"texto":"XX","tipoCorrespondencia":1,"novaDescricao":"Y"}`
+	for _, c := range []struct{ metodo, caminho, corpo string }{
+		{"POST", "/api/categorias", categoria}, {"PUT", "/api/categorias/1", categoria}, {"DELETE", "/api/categorias/1", ""},
+		{"POST", "/api/regras", regra}, {"PUT", "/api/regras/1", regra}, {"DELETE", "/api/regras/1", ""},
+		{"POST", "/api/regras/reaplicar", ""},
+		{"POST", "/api/regras-descricao", descricao}, {"PUT", "/api/regras-descricao/1", descricao},
+		{"DELETE", "/api/regras-descricao/1", ""},
+	} {
+		testeapoio.Chamar(t, mux, c.metodo, c.caminho, c.corpo).ConferirStatus(t, http.StatusInternalServerError)
+	}
+}
+
+// Regra: requisição cancelada (o navegador desistiu) não responde o 500 nem registra erro.
+func TestRequisicaoCanceladaNaoResponde(t *testing.T) {
+	mux, db, _ := rotasDeTeste(t)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancelar := context.WithCancel(t.Context())
+	cancelar()
+	for _, caminho := range []string{"/api/categorias", "/api/regras", "/api/regras-descricao"} {
+		gravador := httptest.NewRecorder()
+		mux.ServeHTTP(gravador, httptest.NewRequestWithContext(ctx, "GET", caminho, nil))
+		if gravador.Code != http.StatusOK || gravador.Body.Len() != 0 {
+			t.Errorf("%s cancelado: %d %q", caminho, gravador.Code, gravador.Body.String())
+		}
+	}
+}
+
+// Regra: categoria que tem subcategorias não pode virar subcategoria de outra (só um nível).
+func TestCategoriaComFilhasNaoViraSubcategoria(t *testing.T) {
+	mux, _, fab := rotasDeTeste(t)
+	lazer := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Lazer" })
+	fab.Subcategoria(lazer, func(c *testeapoio.Categoria) { c.Nome = "Shows" })
+	outra := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Diversão" })
+	resp := testeapoio.Chamar(t, mux, "PUT", fmt.Sprintf("/api/categorias/%d", lazer.Id),
+		fmt.Sprintf(`{"nome":"Lazer","tipo":1,"cor":"#64748b","categoriaPaiId":%d}`, outra.Id))
+	resp.ConferirStatus(t, http.StatusBadRequest)
+	resp.ConferirJSON(t, `{"mensagem":"Esta categoria possui subcategorias e não pode virar subcategoria."}`)
 }

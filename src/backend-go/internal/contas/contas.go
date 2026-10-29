@@ -144,17 +144,6 @@ func lerConta(ctx context.Context, q consultas.DBTX, id int64) (*conta, error) {
 	return &lista[0], nil
 }
 
-// noFormatoDoBanco é o decimal como ele volta do SQLite quando o EF Core faz a conta no banco (o Sum é o ef_sum, e o
-// resultado volta em texto como ele grava: "0.0" e até 28 casas, sem zeros à direita). -0.25 + -0.75 vira -1.0, e não
-// -1.00, e a escala aparece no JSON (gabarito testdata/saldos.json, do próprio CalcularSaldosAsync).
-func noFormatoDoBanco(d tipos.Decimal) tipos.Decimal {
-	lido, err := tipos.NovoDecimal(d.TextoNoBanco())
-	if err != nil {
-		return d
-	}
-	return lido
-}
-
 // Saldos é o CalcularSaldosAsync do C#: o saldo de cada conta. A do Open Finance vale o saldo que a instituição
 // informa; a manual, o saldo inicial mais as transações efetivadas.
 func Saldos(ctx context.Context, q consultas.DBTX) (map[int64]tipos.Decimal, error) {
@@ -183,7 +172,9 @@ func Saldos(ctx context.Context, q consultas.DBTX) (map[int64]tipos.Decimal, err
 		return nil, fmt.Errorf("ler os saldos: %w", err)
 	}
 
-	// Dinheiro é texto no banco: a soma é feita aqui, e não com SUM no SQL.
+	// Dinheiro é texto no banco: a soma é feita aqui, e não com SUM no SQL. O Sum do EF Core é feito no SQLite (o
+	// ef_sum) e volta no formato em que ele grava: -0.25 + -0.75 é -1.0, e não -1.00 (gabarito testdata/saldos.json,
+	// do próprio CalcularSaldosAsync). Por isso o NaEscalaDoBanco na soma.
 	linhas, err = q.QueryContext(ctx, `SELECT t."ContaId", t."Valor" FROM "Transacao" AS t
 		INNER JOIN "Conta" AS c ON t."ContaId" = c."Id" WHERE c."Origem" = 1 AND t."Status" = 1`)
 	if err != nil {
@@ -210,7 +201,7 @@ func Saldos(ctx context.Context, q consultas.DBTX) (map[int64]tipos.Decimal, err
 		case c.origem == OpenFinance:
 			saldos[id] = c.saldo
 		case ok:
-			saldos[id] = tipos.Somar(c.saldoInicial, noFormatoDoBanco(soma))
+			saldos[id] = tipos.Somar(c.saldoInicial, soma.NaEscalaDoBanco())
 		default:
 			saldos[id] = c.saldoInicial
 		}

@@ -8,7 +8,7 @@ cambio /api/cambio;/api/cripto
 
 cadastros /api/categorias;/api/regras;/api/regras-descricao;/api/contas
 
-# transacoes /api/transacoes
+transacoes /api/transacoes
 
 # planejamento /api/orcamentos;/api/metas;/api/contas-agendadas
 
