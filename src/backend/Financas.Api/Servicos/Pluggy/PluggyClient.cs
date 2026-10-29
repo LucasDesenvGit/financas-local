@@ -145,7 +145,7 @@ public class PluggyClient
             catch (HttpRequestException ex) when (tentativa < 3)
             {
                 _logger.LogWarning("Falha de rede ao chamar Pluggy ({Caminho}): {Erro}. Tentativa {T}.",
-                    CaminhoSemQuery(caminho), ex.Message, tentativa);
+                    SanitizarParaLog(CaminhoSemQuery(caminho)), ex.Message, tentativa);
                 await Task.Delay(TimeSpan.FromSeconds(2 * tentativa), ct);
                 continue;
             }
@@ -173,8 +173,8 @@ public class PluggyClient
                 throw new PluggyException(status switch
                 {
                     401 or 403 => "Acesso negado pela Pluggy. Verifique as credenciais e a autorização do Meu Pluggy.",
-                    404 => $"Recurso não encontrado na Pluggy ({CaminhoSemQuery(caminho)}). Confira o Item ID.",
-                    _ => $"Erro HTTP {status} da Pluggy em {CaminhoSemQuery(caminho)}: {corpo}"
+                    404 => $"Recurso não encontrado na Pluggy ({SanitizarParaLog(CaminhoSemQuery(caminho))}). Confira o Item ID.",
+                    _ => $"Erro HTTP {status} da Pluggy em {SanitizarParaLog(CaminhoSemQuery(caminho))}: {corpo}"
                 }, status);
             }
         }
@@ -185,4 +185,7 @@ public class PluggyClient
         var i = caminho.IndexOf('?');
         return i < 0 ? caminho : caminho[..i];
     }
+
+    private static string SanitizarParaLog(string valor)
+        => valor.Replace("\r", string.Empty).Replace("\n", string.Empty);
 }
