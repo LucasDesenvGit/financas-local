@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.6] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Contas em Go** (#77, parte 2; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `cadastros` ser ligado em `Go:Prefixos` (passo 2 da ADR 0049). Para quem desenvolve:
+  - as 9 rotas de `/api/contas` (lista, criar, editar, excluir, a fatura do mês de cada cartão, as faturas importadas, os bancos e o "você reduziu o limite no app?"), com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: o contrato `04-contas` (63 casos), gravado do .NET, passa com o Go atendendo;
+  - a fatura do cartão (ciclo, mês de cobrança de cada lançamento, pago e situação) no pacote `faturas`, que o painel (#80) vai usar, conferida contra o próprio C# por um gabarito de mais de 1.900 combinações gravado por uma sonda;
+  - o banco de cada conta (ADR 0024) em `bancos`, e o reconhecimento das parcelas da mesma compra em `parcelas`, com a regex do .NET escrita à mão (no Go, `\d`, `\s` e `\b` são só ASCII);
+  - a ordem de texto da cultura pt-BR (`golang.org/x/text/collate`, na ADR 0049): no empate da fatura do mês, "árvore" vem antes de "Bolsa", como no C#;
+  - a leitura da query (`[FromQuery]`) num lugar só, no pacote `respostas`, com o int e o bool lidos como o ASP.NET lê.
+  - A conferência com o banco (`/api/conferencia-banco`) fica para a #445, junto com as reservas (#82).
+
 ## [2.50.5] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação
