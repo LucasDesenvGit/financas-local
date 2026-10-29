@@ -115,6 +115,8 @@ func TestValoresDaQuery(t *testing.T) {
 		{"ids=1&ids[0]=9", "[1]"},
 		{"ids[1]=6", "[]"},
 		{"ids[x]=1&idsx=2", "[]"},
+		{"zzzz0]=9&ids[0=8", "[]"},
+		{"outro=1&ids[0]=5", "[5]"},
 		{"", "[]"},
 	}
 	for _, c := range casos {

@@ -33,3 +33,7 @@ internal/contas | rotas.go | CONDITIONALS_NEGATION | if len(contaIds) == 0 { | a
 internal/respostas | query.go | ARITHMETIC_BASE | return int32(int64(n) - 1<<32), true | o int32 fica com os 32 bits de baixo: somar 2^32 em vez de subtrair dá o mesmo número
 internal/respostas | query.go | INVERT_NEGATIVES | return int32(int64(n) - 1<<32), true | o int32 fica com os 32 bits de baixo: somar ou subtrair 2^32 dá o mesmo número
 internal/respostas | query.go | INVERT_BITWISE | return int32(int64(n) - 1<<32), true | o int32 fica com os 32 bits de baixo: tirar 2^32 (1<<32) ou nada (1>>32 = 0) dá o mesmo número
+internal/extrato | criar.go | INVERT_LOGICAL | if err != nil || len(lista) == 0 { | logo depois do INSERT, a releitura só volta vazia com erro: as duas condições andam juntas
+internal/extrato | extrato.go | INVERT_LOGICAL | if errors.Is(err, context.Canceled) || r.Context().Err() != nil { | o context.Canceled só chega com o contexto da requisição cancelado: as duas condições andam juntas
+internal/extrato | extrato.go | CONDITIONALS_BOUNDARY | if pular >= int64(len(todas)) { | com pular igual ao tamanho, a fatia sai vazia e a consulta dos Ids (IN vazio) não acha nada: a mesma lista vazia
+internal/respostas | query.go | ARITHMETIC_BASE | return int64(n-math.MaxInt64-1) + math.MinInt64, true // complemento de dois | em 64 bits, -MinInt64 é o próprio MinInt64: somar ou subtrair dá o mesmo número

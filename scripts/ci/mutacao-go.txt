@@ -28,3 +28,5 @@ internal/bancos          100
 internal/parcelas        100
 internal/faturas         100
 internal/contas          100
+internal/poucoinformativa 100
+internal/extrato         100

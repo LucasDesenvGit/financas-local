@@ -163,6 +163,9 @@ func TestFiltros(t *testing.T) {
 		{"lancamento=pix", []int64{c.pix}},
 		{"lancamento=cartao", []int64{c.restauranteJantar}},
 		{"poucoInformativa=true", []int64{c.pix}},
+		{"naturezas=1&naturezas=2", []int64{c.mercadoMes, c.restauranteJantar, c.padaria}},
+		// Vazio vale null: sem filtro de lançamento, e não "nenhum lançamento".
+		{"lancamento=&ordem=&direcao=", []int64{c.ignorada, c.semCategoria, c.salarioMes, c.pix, c.mercadoMes, c.restauranteJantar, c.padaria}},
 	}
 	for _, caso := range casos {
 		esperado := make([]string, len(caso.esperado))
@@ -261,6 +264,9 @@ func TestErrosDoFiltro(t *testing.T) {
 	// Vazio nos opcionais (data, conta, texto) não é erro: vale null.
 	listar(t, mux, "inicio=&contaId=&categoriaId=&ordem=&direcao=&lancamento=&busca=&tipo=")
 	listar(t, mux, "tamanhoPagina=500&ordem=data&direcao=desc&lancamento=outros")
+	// Os limites exatos valem: 1 por página, 100 letras na busca, 200 ids e 200 categorias.
+	listar(t, mux, "tamanhoPagina=1&busca="+strings.Repeat("x", 100))
+	listar(t, mux, "ids="+strings.Repeat("1&ids=", 199)+"1&categoriaIds="+strings.Repeat("1&categoriaIds=", 199)+"1")
 }
 
 // Regra: obter devolve o DTO com a conta, a categoria, o tipo de lançamento calculado e o "veio do Open Finance";

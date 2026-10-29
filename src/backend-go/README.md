@@ -14,6 +14,8 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/faturas` | a fatura do cartão do `ContaService` (#77): o ciclo (#144), o mês de cobrança de cada lançamento (#167), o pago e a situação (#251) e a fatura do mês de cada cartão (#323); o painel (#80) usa o mesmo |
 | `internal/bancos` | o `BancoService` (#77, ADR 0024): o catálogo e o banco de cada conta (escolhido, da conta do cartão ou detectado pelo nome) |
 | `internal/parcelas` | o que reconhece as parcelas da mesma compra (o `ParcelasFuturas.Compra`, com a regex do .NET escrita à mão) |
+| `internal/extrato` | transações (#78): as rotas de `/api/transacoes` (a lista com os filtros, a ordem e os totais, obter e o lançamento manual, por enquanto); o modelo da transação fica em `internal/transacoes` |
+| `internal/poucoinformativa` | a descrição pouco informativa (#9): as letras úteis, conferidas contra o C# por um gabarito; o painel (#80) usa a mesma |
 | `internal/categorizacao` | o `CategorizacaoService` (#77): a categoria pelas regras e pelo mapa da Pluggy, e o tipo pela categoria e pelo valor (ADR 0036); a sincronização (#83) usa o mesmo |
 | `internal/regrasdescricao` | o `RegraDescricaoService` (#77, ADR 0030): nome pela descrição do banco, em cadeia (#250) e com faixa de valor (#241) |
 | `internal/transferencias` | o `TransferenciasService` (#77, ADR 0031): transferência entre contas suas fica fora dos relatórios; pagamento de fatura pareado no cartão |

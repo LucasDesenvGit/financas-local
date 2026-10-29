@@ -6,14 +6,14 @@
 # - "fora" tira o pacote da conta, com o motivo na mesma linha. Só para código que não é escrito à mão.
 #
 # pacote                piso
-api                     81.8
+api                     84.6
 auditoria               100.0
 autenticacao            76.0
 banco                   80.5
 banco/esquema           81.8
 bancos                  96.4
-cambio                  85.6
-categorias              83.9
+cambio                  87.9
+categorias              87.0
 categorizacao           91.9
 config                  86.7
 configuracao            89.3
@@ -21,9 +21,11 @@ contas                  88.0
 cripto                  86.5
 emprestimos             90.9
 erros                   93.3
+extrato                 93.0
 faturas                 94.2
 parametros              81.5
 parcelas                100.0
+poucoinformativa        100.0
 regrasdescricao         88.4
 relatorios              96.9
 relogio                 95.4

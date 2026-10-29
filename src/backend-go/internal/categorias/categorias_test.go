@@ -1,10 +1,12 @@
 package categorias
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -181,4 +183,46 @@ func TestListasComErroDoBanco(t *testing.T) {
 	for _, caminho := range []string{"/api/categorias", "/api/regras", "/api/regras-descricao", "/api/regras-descricao/previa?texto=x"} {
 		testeapoio.Chamar(t, mux, "GET", caminho, "").ConferirStatus(t, http.StatusInternalServerError)
 	}
+	// E nas que gravam: o 500, sem o erro do banco na resposta.
+	categoria := `{"nome":"X","tipo":1,"cor":"#64748b"}`
+	regra := `{"texto":"XX","tipoCorrespondencia":1,"categoriaId":1,"prioridade":1}`
+	descricao := `{"texto":"XX","tipoCorrespondencia":1,"novaDescricao":"Y"}`
+	for _, c := range []struct{ metodo, caminho, corpo string }{
+		{"POST", "/api/categorias", categoria}, {"PUT", "/api/categorias/1", categoria}, {"DELETE", "/api/categorias/1", ""},
+		{"POST", "/api/regras", regra}, {"PUT", "/api/regras/1", regra}, {"DELETE", "/api/regras/1", ""},
+		{"POST", "/api/regras/reaplicar", ""},
+		{"POST", "/api/regras-descricao", descricao}, {"PUT", "/api/regras-descricao/1", descricao},
+		{"DELETE", "/api/regras-descricao/1", ""},
+	} {
+		testeapoio.Chamar(t, mux, c.metodo, c.caminho, c.corpo).ConferirStatus(t, http.StatusInternalServerError)
+	}
+}
+
+// Regra: requisição cancelada (o navegador desistiu) não responde o 500 nem registra erro.
+func TestRequisicaoCanceladaNaoResponde(t *testing.T) {
+	mux, db, _ := rotasDeTeste(t)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancelar := context.WithCancel(t.Context())
+	cancelar()
+	for _, caminho := range []string{"/api/categorias", "/api/regras", "/api/regras-descricao"} {
+		gravador := httptest.NewRecorder()
+		mux.ServeHTTP(gravador, httptest.NewRequestWithContext(ctx, "GET", caminho, nil))
+		if gravador.Code != http.StatusOK || gravador.Body.Len() != 0 {
+			t.Errorf("%s cancelado: %d %q", caminho, gravador.Code, gravador.Body.String())
+		}
+	}
+}
+
+// Regra: categoria que tem subcategorias não pode virar subcategoria de outra (só um nível).
+func TestCategoriaComFilhasNaoViraSubcategoria(t *testing.T) {
+	mux, _, fab := rotasDeTeste(t)
+	lazer := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Lazer" })
+	fab.Subcategoria(lazer, func(c *testeapoio.Categoria) { c.Nome = "Shows" })
+	outra := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Diversão" })
+	resp := testeapoio.Chamar(t, mux, "PUT", fmt.Sprintf("/api/categorias/%d", lazer.Id),
+		fmt.Sprintf(`{"nome":"Lazer","tipo":1,"cor":"#64748b","categoriaPaiId":%d}`, outra.Id))
+	resp.ConferirStatus(t, http.StatusBadRequest)
+	resp.ConferirJSON(t, `{"mensagem":"Esta categoria possui subcategorias e não pode virar subcategoria."}`)
 }
