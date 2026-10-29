@@ -9,6 +9,13 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco) |
 | `internal/cambio` | câmbio pela PTAX (#81, ADR 0007): cliente do Banco Central, conversor para reais, `/api/cambio` e a tarefa de 15 em 15 minutos |
 | `internal/cripto` | criptomoedas pelo Mercado Bitcoin (#81, ADR 0048): cliente, `/api/cripto` e a tarefa de 30 em 30 minutos |
+| `internal/categorias` | categorias, regras de categorização e regras de descrição (#77): as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` |
+| `internal/categorizacao` | o `CategorizacaoService` (#77): a categoria pelas regras e pelo mapa da Pluggy, e o tipo pela categoria e pelo valor (ADR 0036); a sincronização (#83) usa o mesmo |
+| `internal/regrasdescricao` | o `RegraDescricaoService` (#77, ADR 0030): nome pela descrição do banco, em cadeia (#250) e com faixa de valor (#241) |
+| `internal/transferencias` | o `TransferenciasService` (#77, ADR 0031): transferência entre contas suas fica fora dos relatórios; pagamento de fatura pareado no cartão |
+| `internal/tipolancamento` | o `TipoLancamentoService` (#77, ADR 0025): como o dinheiro entrou ou saiu (Pix, fatura, estorno…) |
+| `internal/transacoes` | a `Transacao` como as regras a leem e mudam; `Gravar` manda só as colunas que mudaram, como o `SaveChanges` do EF Core |
+| `internal/texto` | as normalizações de texto das regras do C# (sem acento, maiúsculas, palavras inteiras), conferidas contra o C# por um gabarito |
 | `internal/tarefas` | tarefas em segundo plano (o `BackgroundService` do .NET): só as de `Go:Tarefas`, com `context`, espera ao parar e `recover` por ciclo |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
 | `internal/sessao` | quem está logado, no contexto da requisição |
