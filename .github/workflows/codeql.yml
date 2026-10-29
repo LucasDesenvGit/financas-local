@@ -91,13 +91,14 @@ jobs:
       - name: Resumo do que foi analisado
         if: always()
         env:
-          BANCO: ${{ runner.temp }}/codeql_databases/${{ matrix.linguagem }}
           LINGUAGEM: ${{ matrix.linguagem }}
         run: |
-          # O src.zip guarda o código lido, com o caminho inteiro e sem a / do começo.
+          # O src.zip guarda o código lido, com o caminho inteiro e sem a / do começo. Um banco só por job; a pasta
+          # dele nem sempre tem o nome da linguagem (a do javascript-typescript é "javascript").
+          fonte=$(find "$RUNNER_TEMP/codeql_databases" -maxdepth 2 -name src.zip | head -n 1)
           resumo=$(
             echo "arquivos analisados por pasta:"
-            unzip -Z1 "$BANCO/src.zip" | sed "s|^${GITHUB_WORKSPACE#/}/||" | grep -v '/$' |
+            unzip -Z1 "$fonte" | sed "s|^${GITHUB_WORKSPACE#/}/||" | grep -v '/$' |
               awk -F/ '{print (NF > 2 ? $1"/"$2 : $1)}' | sort | uniq -c | sort -rn | head -n 15
           )
           echo "$resumo"
