@@ -9,6 +9,7 @@ internal/tipos | data.go | ARITHMETIC_BASE | return DataHora{t: parede.Truncate(
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() > 0 { | com expoente 0, NewFromBigInt(v.BigInt(), 0) é o mesmo valor
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() < -casasMaximas { | com 28 casas, RoundBank(28) não muda nada
 internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if d.v.Exponent() >= 0 { | com expoente 0, -Exponent() também é 0
+internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | for expoente < -1 { | com o expoente -1 e o número terminado em zero, tirar o zero (expoente 0) e pôr de volta no if logo abaixo dá o mesmo decimal (#447)
 internal/parametros | entrada.go | INVERT_LOGICAL | if c < '0' || c > '9' { | o ParseInt logo depois recusa o que não é dígito do mesmo jeito
 internal/configuracao | configuracao.go | INVERT_LOGICAL | if c < '0' || c > '9' { | o ParseInt logo depois recusa o que não é dígito do mesmo jeito (#400)
 internal/configuracao | configuracao.go | ARITHMETIC_BASE | return Instante{t: t.Truncate(100 * time.Nanosecond), tipo: tipo}, true | 100 / time.Nanosecond também é 100 ns: o nanossegundo vale 1 (#400)

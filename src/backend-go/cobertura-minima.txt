@@ -17,9 +17,11 @@ categorizacao           91.9
 config                  86.7
 configuracao            89.3
 cripto                  86.5
+emprestimos             90.9
 erros                   93.3
 parametros              81.5
 regrasdescricao         88.4
+relatorios              96.9
 relogio                 95.4
 respostas               95.6
 saude                   54.5
@@ -27,10 +29,10 @@ segredos                77.7
 servidor                88.8
 sessao                  100.0
 tarefas                 100.0
-testeapoio              92.5
+testeapoio              94.5
 texto                   100.0
 tipolancamento          100.0
-tipos                   89.7
+tipos                   90.5
 transacoes              93.1
 transferencias          90.2
 
