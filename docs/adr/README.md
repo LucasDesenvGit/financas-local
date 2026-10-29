@@ -91,3 +91,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md) | Testes do back-end em Go: cada regra com teste unitário, além do contrato; SQLite real, `httptest` e só a biblioteca padrão; teste de mutação semanal com o gremlins (#373) | Aceita |
 | [0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md) | Gerenciador em Go: ícone na bandeja e janela própria com o Wails (#276) | Aceita |
 | [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) | Receber versões de desenvolvimento por escolha, no gerenciador em Go | Aceita |
+| [0054](0054-analise-de-seguranca-do-codigo-com-o-codeql.md) | Análise de segurança do código com o CodeQL, por workflow próprio, nas 5 linguagens (#451) | Aceita |
