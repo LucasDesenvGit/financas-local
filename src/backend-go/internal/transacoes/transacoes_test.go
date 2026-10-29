@@ -115,3 +115,69 @@ func TestListarComErroDoBanco(t *testing.T) {
 		t.Error("consulta errada não deu erro")
 	}
 }
+
+// Regra: as colunas que as telas mudam também vão no UPDATE quando mudam (conta, data, descrição do banco, valor,
+// status, emergência, nome escolhido à mão, observação); o valor compara como decimal, como o EF Core: 60 e 60.00 são o
+// mesmo, e o texto do banco fica como estava.
+func TestGravarAsColunasDasTelas(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	conta, outra := fab.Conta(), fab.Conta()
+	gravada := fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.Valor = testeapoio.Valor("-60.0") })
+	ler := func() *Transacao {
+		t.Helper()
+		lista, err := Listar(t.Context(), db, `WHERE "Id" = ?`, gravada.Id)
+		if err != nil || len(lista) != 1 {
+			t.Fatalf("Listar = %v, %v", lista, err)
+		}
+		return lista[0]
+	}
+	tr := ler()
+	tr.Valor = testeapoio.Valor("-60.00")
+	if tr.Mudou() {
+		t.Error("60.00 e 60.0 são o mesmo valor")
+	}
+	tr.ContaId, tr.Data, tr.DescricaoOriginal, tr.Valor = outra.Id, tipos.NovaData(2026, 10, 1), p("DO BANCO"), testeapoio.Valor("61.5")
+	tr.Status, tr.Emergencia, tr.DescricaoManual, tr.Observacao = 2, true, true, p("nota")
+	if err := Gravar(t.Context(), db, tr); err != nil {
+		t.Fatal(err)
+	}
+	var contaId, status int64
+	var data, original, valor, observacao string
+	var emergencia, manual bool
+	if err := db.QueryRow(`SELECT ContaId, Data, DescricaoOriginal, Valor, Status, Emergencia, DescricaoManual, Observacao
+		FROM Transacao WHERE Id = ?`, tr.Id).Scan(&contaId, &data, &original, &valor, &status, &emergencia, &manual, &observacao); err != nil {
+		t.Fatal(err)
+	}
+	if contaId != outra.Id || data != "2026-10-01" || original != "DO BANCO" || valor != "61.5" || status != 2 || !emergencia ||
+		!manual || observacao != "nota" {
+		t.Errorf("gravado: %d %s %s %s %d %v %v %s", contaId, data, original, valor, status, emergencia, manual, observacao)
+	}
+	tr = ler()
+	tr.DescricaoOriginal, tr.Observacao = nil, nil
+	if err := Gravar(t.Context(), db, tr); err != nil {
+		t.Fatal(err)
+	}
+	var originalNulo, observacaoNula *string
+	if err := db.QueryRow(`SELECT DescricaoOriginal, Observacao FROM Transacao WHERE Id = ?`, tr.Id).Scan(&originalNulo, &observacaoNula); err != nil {
+		t.Fatal(err)
+	}
+	if originalNulo != nil || observacaoNula != nil {
+		t.Errorf("de texto para nulo: %v, %v", originalNulo, observacaoNula)
+	}
+}
+
+// Regra: a comparação de texto anulável (nulo só é igual a nulo).
+func TestTextosIguais(t *testing.T) {
+	casos := []struct {
+		a, b     *string
+		esperado bool
+	}{
+		{nil, nil, true}, {p("x"), p("x"), true}, {p("x"), p("y"), false}, {nil, p("x"), false}, {p("x"), nil, false},
+	}
+	for _, c := range casos {
+		if obtido := textosIguais(c.a, c.b); obtido != c.esperado {
+			t.Errorf("textosIguais(%v, %v) = %v", c.a, c.b, obtido)
+		}
+	}
+}
