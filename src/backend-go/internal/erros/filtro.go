@@ -144,11 +144,11 @@ func lerInt32(bruto, propriedade string) (int, string) {
 			if hex == "" {
 				return 0, "The input was not valid."
 			}
-			n, err := strconv.ParseUint(hex, 16, 32)
+			n, err := strconv.ParseInt(hex, 16, 32)
 			if err != nil {
 				return 0, naoValido(bruto, propriedade)
 			}
-			return int(int32(uint32(n))), ""
+			return int(n), ""
 		}
 	}
 	n, ok := configuracao.LerInteiro(texto)
