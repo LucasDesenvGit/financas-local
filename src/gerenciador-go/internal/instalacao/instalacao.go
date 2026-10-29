@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -81,6 +82,25 @@ func PastaDaLinhaDoServico(linha string) string {
 	}
 	// O caminho é do Windows: a pasta vai até a última barra invertida, em qualquer sistema.
 	return achado[1][:strings.LastIndex(achado[1], `\`)]
+}
+
+// dllDaApi acha a API no ExecStart da unidade do systemd (scripts no Linux): ".../dotnet .../Financas.Api.dll".
+var dllDaApi = regexp.MustCompile(`(/\S*?Financas\.Api\.dll)`)
+
+// PastaDaUnidade é a pasta da API pelas propriedades da unidade do systemd --user, como o PastaDaApi do
+// ServicoLinux.cs: a WorkingDirectory; sem ela, a pasta do Financas.Api.dll do ExecStart; "" sem a unidade.
+func PastaDaUnidade(p map[string]string) string {
+	if p["LoadState"] != "loaded" {
+		return ""
+	}
+	if pasta := p["WorkingDirectory"]; strings.HasPrefix(pasta, "/") {
+		return pasta
+	}
+	achado := dllDaApi.FindStringSubmatch(p["ExecStart"])
+	if achado == nil {
+		return ""
+	}
+	return path.Dir(achado[1])
 }
 
 // absoluto é o Path.GetFullPath(Path.Combine(base, caminho)) do C#: caminho absoluto fica como está.

@@ -7,9 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -66,6 +63,10 @@ type gerenciador struct {
 	ultimaCopia string // o arquivo da última cópia do banco, para "Abrir a pasta"
 	nova        versaoNova
 	dev         develop
+	// No Linux: o comando para atualizar pelos scripts e o "sem login" (linger) do serviço.
+	comando      string
+	semLogin     string
+	erroSemLogin string
 
 	bandeja      *application.SystemTray
 	itemSituacao *application.MenuItem
@@ -73,11 +74,11 @@ type gerenciador struct {
 
 func novoGerenciador(inst instalacao.Instalacao) *gerenciador {
 	return &gerenciador{inst: inst, consulta: situacao.Nova(inst), situacao: tela.Verificando,
-		nova: versaoNova{cliente: atualizacao.NovoCliente(versao)}}
+		nova: versaoNova{cliente: atualizacao.NovoCliente(versao)}, comando: comandoParaAtualizar(inst)}
 }
 
 func (g *gerenciador) iniciar(comJanela bool) {
-	g.app = application.New(application.Options{
+	opcoes := application.Options{
 		Name:   titulo,
 		Assets: application.AssetOptions{Handler: g.rotas()},
 		Icon:   icone,
@@ -86,13 +87,9 @@ func (g *gerenciador) iniciar(comJanela bool) {
 			UniqueID:               "br.financaslocal.gerenciador",
 			OnSecondInstanceLaunch: func(application.SecondInstanceData) { g.abrir() },
 		},
-		Windows: application.WindowsOptions{
-			// Fechar a janela não encerra quando o gerenciador fica na bandeja (fechou, abaixo).
-			DisableQuitOnLastWindowClosed: true,
-			// O cache do WebView2 na pasta do Finanças Local do usuário, e não em AppData\Roaming\<exe>.
-			WebviewUserDataPath: filepath.Join(os.Getenv("LOCALAPPDATA"), "FinancasLocal", "Gerenciador", "WebView2"),
-		},
-	})
+	}
+	opcoesDoSistema(&opcoes)
+	g.app = application.New(opcoes)
 	g.montarBandeja()
 	if comJanela {
 		g.abrir()
@@ -100,6 +97,7 @@ func (g *gerenciador) iniciar(comJanela bool) {
 	go func() {
 		g.atualizarSituacao()
 		go g.procurarClone()
+		go g.verSemLogin()
 		// Como o IniciarAsync do C#: depois da primeira situação (que diz a versão do site), procura a versão nova.
 		if g.inst.PeloMsi && preferencias.ProcurarAoAbrir() {
 			go g.procurar()
@@ -132,6 +130,11 @@ func (g *gerenciador) tela() tela.Tela {
 		ReceberDesenvolvimento: receberDesenvolvimento(g.situacao.VersaoSite),
 		Procura:                g.nova.procura,
 		Develop:                g.developNaTela(),
+
+		Linux:        linux,
+		Comando:      g.comando,
+		SemLogin:     g.semLogin,
+		ErroSemLogin: g.erroSemLogin,
 	}
 }
 
@@ -189,11 +192,11 @@ func (g *gerenciador) acaoNoServico(acao string) {
 		return
 	}
 	g.ocupado = true
-	g.situacao = tela.Situacao{Estado: tela.Mudando, Titulo: enquanto[acao], Detalhe: "O Windows vai pedir permissão de administrador."}
+	g.situacao = tela.Situacao{Estado: tela.Mudando, Titulo: enquanto[acao], Detalhe: avisoAoMudar}
 	g.trava.Unlock()
 	g.mostrarNaBandeja()
 
-	resultado := elevacao.Executar("--servico", acao)
+	resultado, motivo := executarNoServico(acao)
 
 	g.trava.Lock()
 	g.ocupado = false
@@ -203,11 +206,11 @@ func (g *gerenciador) acaoNoServico(acao string) {
 	case elevacao.Cancelado:
 		g.trocarDetalhe("Cancelado: nada mudou.")
 	case elevacao.Falhou:
-		g.trocarDetalhe("Não deu certo. Veja os eventos do Windows (Visualizador de Eventos › Aplicativo, origem FinancasLocal).")
+		g.trocarDetalhe(tela.NaoDeuCerto(motivo, ondeVerOErro))
 	}
 }
 
-// salvarCopia pergunta onde salvar, copia elevado e devolve o aviso para a janela mostrar (nil: escolha cancelada).
+// salvarCopia pergunta onde salvar, copia (no Windows, elevado) e devolve o aviso para a janela mostrar (nil: escolha cancelada).
 func (g *gerenciador) salvarCopia() *tela.Aviso {
 	opcoes := &application.SaveFileDialogOptions{
 		Title:     "Salvar uma cópia do banco",
@@ -224,7 +227,7 @@ func (g *gerenciador) salvarCopia() *tela.Aviso {
 	if err != nil || destino == "" {
 		return nil
 	}
-	resultado := elevacao.Executar("--backup", destino)
+	resultado := copiarBanco(g.inst.CaminhoBanco, destino)
 	if resultado == elevacao.Feito {
 		g.trava.Lock()
 		g.ultimaCopia = destino
@@ -234,7 +237,32 @@ func (g *gerenciador) salvarCopia() *tela.Aviso {
 	return &aviso
 }
 
-// abrirPasta abre o Explorer com a última cópia selecionada. O caminho é o que o próprio gerenciador salvou, nunca
+// verSemLogin lê se o site fica no ar sem a sessão aberta (Linux; o loginctl leva um instante).
+func (g *gerenciador) verSemLogin() {
+	semLogin := lerSemLogin()
+	g.trava.Lock()
+	g.semLogin = semLogin
+	g.trava.Unlock()
+}
+
+// manterNoArSemLogin liga o linger e lê de novo; não dando certo, a janela diz o motivo.
+func (g *gerenciador) manterSemLogin() {
+	erro := ""
+	if err := manterNoArSemLogin(); err != nil {
+		erro = err.Error()
+	}
+	g.trava.Lock()
+	g.erroSemLogin = erro
+	g.trava.Unlock()
+	g.verSemLogin()
+}
+
+// copiarComando põe o comando para atualizar na área de transferência.
+func (g *gerenciador) copiarComando() bool {
+	return g.comando != "" && g.app.Clipboard.SetText(g.comando)
+}
+
+// abrirPasta mostra a última cópia no gerenciador de arquivos. O caminho é o que o próprio gerenciador salvou, nunca
 // um que venha da página.
 func (g *gerenciador) abrirPasta() {
 	g.trava.Lock()
@@ -243,7 +271,7 @@ func (g *gerenciador) abrirPasta() {
 	if arquivo == "" {
 		return
 	}
-	if err := exec.Command("explorer.exe", "/select,"+arquivo).Start(); err != nil {
+	if err := mostrarNaPasta(arquivo); err != nil {
 		log.Print(err)
 	}
 }
@@ -299,6 +327,13 @@ func (g *gerenciador) rotas() http.Handler {
 			}
 		case "abrir-pasta":
 			g.abrirPasta()
+		case "copiar-comando":
+			if !g.copiarComando() {
+				http.Error(w, "não deu para copiar", http.StatusInternalServerError)
+				return
+			}
+		case "sem-login":
+			go g.manterSemLogin()
 		case "baixar-msi":
 			g.abrirNoNavegador(releases)
 		case "procurar":
@@ -345,6 +380,7 @@ func (g *gerenciador) rotas() http.Handler {
 		responderJSON(w, g.confirmacao())
 	})
 	mux.HandleFunc("GET /notas", func(w http.ResponseWriter, _ *http.Request) { responderJSON(w, g.notas()) })
+	mux.HandleFunc("GET /registro", func(w http.ResponseWriter, _ *http.Request) { responderJSON(w, registroDoServico()) })
 	mux.HandleFunc("POST /abrir-link", func(w http.ResponseWriter, r *http.Request) {
 		endereco := r.URL.Query().Get("url")
 		if !linkDaWeb(endereco) {
@@ -444,8 +480,7 @@ func (g *gerenciador) montarBandeja() {
 	menu.AddSeparator()
 	menu.Add("Sair").OnClick(func(*application.Context) { g.app.Quit() })
 	g.bandeja.SetMenu(menu)
-	// Duplo clique mostra a janela; o clique simples abre o menu.
-	g.bandeja.OnDoubleClick(g.abrir)
+	prepararBandeja(g.bandeja, g.abrir)
 	g.mostrarNaBandeja()
 }
 
