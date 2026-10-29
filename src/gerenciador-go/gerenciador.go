@@ -53,9 +53,11 @@ type gerenciador struct {
 	inst     instalacao.Instalacao
 	consulta situacao.Consulta
 
-	trava       sync.Mutex
-	janela      *application.WebviewWindow
-	situacao    tela.Situacao
+	trava    sync.Mutex
+	janela   *application.WebviewWindow
+	situacao tela.Situacao
+	// firme é a última situação que não era de passagem (ligando, desligando), para o aviso de que o site caiu.
+	firme       tela.Situacao
 	exemplo     bool // -mostrar: a situação fica fixa
 	ocupado     bool // ligando, desligando ou reiniciando
 	consultando bool
@@ -163,10 +165,23 @@ func (g *gerenciador) atualizarSituacao() {
 	nova := g.consulta.Consultar(ctx)
 	cancelar()
 
+	aberta := g.janelaAberta()
 	g.trava.Lock()
-	g.situacao, g.consultando = nova, false
+	anterior := g.firme
+	g.situacao, g.firme, g.consultando = nova, tela.Firme(g.firme, nova), false
 	g.trava.Unlock()
 	g.mostrarNaBandeja()
+	if aviso, ok := tela.AvisoDoSiteQueCaiu(anterior, nova, aberta); ok {
+		go avisarNaBandeja(aviso)
+	}
+}
+
+// janelaAberta: a janela existe e está à vista (no Windows, fechar destrói a janela; no Linux, só a esconde).
+func (g *gerenciador) janelaAberta() bool {
+	g.trava.Lock()
+	j := g.janela
+	g.trava.Unlock()
+	return j != nil && j.IsVisible()
 }
 
 // trocarDetalhe mostra o resultado de uma ação até a próxima consulta, como o _detalhe.Text do C#.
@@ -201,6 +216,8 @@ func (g *gerenciador) acaoNoServico(acao string) {
 	}
 	g.ocupado = true
 	g.situacao = tela.Situacao{Estado: tela.Mudando, Titulo: enquanto[acao], Detalhe: avisoAoMudar}
+	// Quem desligou foi você: o site que cai depois disso não é aviso.
+	g.firme = g.situacao
 	g.trava.Unlock()
 	g.mostrarNaBandeja()
 

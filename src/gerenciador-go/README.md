@@ -7,8 +7,9 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 | Janela igual à do `FormPrincipal.cs`, ícone na bandeja, uma cópia só, `--bandeja`, fechar destrói a janela (#418) | Atualizar o gerenciador e reabrir (#430, depois da #277) |
 | Situação do site (de 5 em 5 s, na janela e no ícone da bandeja), ligar, desligar e reiniciar pelo UAC, cópia do banco, preferências (#419) | |
 | Versão nova pelo GitHub Releases: procurar, "O que mudou", baixar conferindo o SHA-256 e abrir o instalador; "Receber versões de desenvolvimento" (#420, ADR 0053) | Instalar no Linux pelos scripts: o WebKitGTK 6.0 e o atalho `br.financaslocal.Gerenciador.desktop` (#277) |
-| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432) | Aviso na bandeja quando o site cai com a janela fechada |
+| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432) | |
 | Linux (#417): `systemctl --user` sem senha, tema pelo portal, "Iniciar com o sistema" (`~/.config/autostart`), registro do serviço, comando para atualizar, "sem login" (linger), ícones em SVG | |
+| Aviso na bandeja com a janela fechada: o site caiu, versão nova (#448) | |
 
 ## Organização
 
@@ -53,5 +54,5 @@ CGO_ENABLED=0 go build -tags production -trimpath -ldflags "-s -w -H=windowsgui 
 - `-tags production` tira o F12 e o menu do botão direito; `-H=windowsgui`, a janela do console.
 - Para comparar com o C# sem mexer no serviço: `gerenciador-go.exe -mostrar=desligado -mais-opcoes` (ou `no-ar`, `ligando`, `sem-resposta`, `nao-instalado`). Sem `-mostrar`, a situação é a de verdade.
 - **"Iniciar com o Windows" usa a mesma entrada do C#:** ligar aqui faz o Windows abrir o gerenciador em Go no lugar do de C#.
-- **Ícone e manifesto do `.exe`:** o `rsrc_windows_amd64.syso` (o cofrinho do `icone.ico` e o manifesto "gui": controles comuns v6 e DPI por monitor), que o `go build` junta sozinho. Ele é gerado pelo [go-winres](https://github.com/tc-hib/go-winres) na CI (job "gerenciador em Go"), que confere se o do repositório está em dia; mudou o `icone.ico`, baixe o artefato `icone-gerenciador` da CI e suba o `.syso` novo.
+- **Ícone e manifesto do `.exe`:** o `rsrc_windows_amd64.syso` (o cofrinho do `icone.ico`, o manifesto "gui": controles comuns v6 e DPI por monitor, e o nome "Finanças Local", o do topo das notificações), que o `go build` junta sozinho. Ele é gerado pelo [go-winres](https://github.com/tc-hib/go-winres) na CI (job "gerenciador em Go"), que confere se o do repositório está em dia; mudou o `icone.ico`, baixe o artefato `icone-gerenciador` da CI e suba o `.syso` novo.
 - O cache do WebView2 fica em `%LOCALAPPDATA%\FinancasLocal\Gerenciador\WebView2`.

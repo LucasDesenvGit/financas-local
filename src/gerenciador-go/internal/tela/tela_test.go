@@ -367,6 +367,82 @@ func TestResultadoDaProcura(t *testing.T) {
 	}
 }
 
+// Regra: o balão só quando o site estava no ar e desligou ou parou de responder, com a janela fechada (o
+// ShowBalloonTip do FormPrincipal.cs), com o título da situação e o ícone de alerta.
+func TestAvisoDoSiteQueCaiu(t *testing.T) {
+	t.Parallel()
+	noAr := Situacao{Estado: NoAr, Titulo: "O site está no ar."}
+	desligado := Situacao{Estado: Desligado, Titulo: "O site está desligado."}
+	semResposta := Situacao{Estado: SemResposta, Titulo: "O site não responde."}
+	mudando := Situacao{Estado: Mudando, Titulo: "O site está ligando…"}
+	naoInstalado := Situacao{Estado: NaoInstalado, Titulo: "O site não está instalado."}
+	casos := []struct {
+		nome             string
+		anterior, nova   Situacao
+		janelaAberta, ok bool
+	}{
+		{"desligou", noAr, desligado, false, true},
+		{"parou de responder", noAr, semResposta, false, true},
+		{"com a janela aberta", noAr, desligado, true, false},
+		{"continua no ar", noAr, noAr, false, false},
+		{"ligando", noAr, mudando, false, false},
+		{"desinstalado", noAr, naoInstalado, false, false},
+		{"já estava desligado", desligado, desligado, false, false},
+		{"sem resposta para desligado", semResposta, desligado, false, false},
+		{"da primeira consulta", Verificando, desligado, false, false},
+	}
+	for _, c := range casos {
+		aviso, ok := AvisoDoSiteQueCaiu(c.anterior, c.nova, c.janelaAberta)
+		quer := AvisoNaBandeja{}
+		if c.ok {
+			quer = AvisoNaBandeja{Texto: c.nova.Titulo, Alerta: true}
+		}
+		if ok != c.ok || aviso != quer {
+			t.Errorf("%s: %+v, %v", c.nome, aviso, ok)
+		}
+	}
+}
+
+// Regra: o "ligando…" e o "desligando…" não trocam a situação firme; as outras trocam.
+func TestFirme(t *testing.T) {
+	t.Parallel()
+	noAr := Situacao{Estado: NoAr, Titulo: "O site está no ar."}
+	desligando := Situacao{Estado: Mudando, Titulo: "O site está desligando…"}
+	for _, nova := range []Situacao{
+		{Estado: NaoInstalado, Titulo: "O site não está instalado."},
+		{Estado: Desligado, Titulo: "O site está desligado."},
+		{Estado: SemResposta, Titulo: "O site não responde."},
+		{Estado: NoAr, Titulo: "O site está no ar de novo."},
+	} {
+		if obtido := Firme(noAr, nova); obtido != nova {
+			t.Errorf("%v: %+v", nova.Estado, obtido)
+		}
+	}
+	if obtido := Firme(noAr, desligando); obtido != noAr {
+		t.Errorf("desligando: %+v", obtido)
+	}
+	// Parado pelo services.msc: no ar, desligando, desligado; o aviso sai, comparando com o "no ar".
+	if _, ok := AvisoDoSiteQueCaiu(Firme(noAr, desligando), Situacao{Estado: Desligado}, false); !ok {
+		t.Error("services.msc: sem aviso")
+	}
+}
+
+// Regra: o balão da versão nova só com a janela fechada e versão achada, com o ícone de informação.
+func TestAvisoDaVersaoNova(t *testing.T) {
+	t.Parallel()
+	if aviso, ok := AvisoDaVersaoNova("2.50.0", false); !ok || aviso != (AvisoNaBandeja{Texto: "Versão nova: 2.50.0."}) {
+		t.Errorf("janela fechada: %+v, %v", aviso, ok)
+	}
+	for _, c := range []struct {
+		versao       string
+		janelaAberta bool
+	}{{"2.50.0", true}, {"", false}, {"", true}} {
+		if aviso, ok := AvisoDaVersaoNova(c.versao, c.janelaAberta); ok || aviso != (AvisoNaBandeja{}) {
+			t.Errorf("%+v: %+v, %v", c, aviso, ok)
+		}
+	}
+}
+
 // Regra: a pergunta antes de atualizar, com o texto do C#.
 func TestConfirmarAtualizacao(t *testing.T) {
 	t.Parallel()
