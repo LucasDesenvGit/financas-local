@@ -176,3 +176,14 @@ func TestPreviaPelaRota(t *testing.T) {
 	}
 	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa", "").ConferirJSON(t, `{"quantidade":0,"exemplos":[]}`)
 }
+
+// Regra: erro do banco nas listas é o 500 genérico.
+func TestListasComErroDoBanco(t *testing.T) {
+	mux, db, _ := rotasDeTeste(t)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for _, caminho := range []string{"/api/categorias", "/api/regras", "/api/regras-descricao", "/api/regras-descricao/previa?texto=x"} {
+		testeapoio.Chamar(t, mux, "GET", caminho, "").ConferirStatus(t, http.StatusInternalServerError)
+	}
+}

@@ -104,7 +104,7 @@ func TestEfetivos(t *testing.T) {
 func TestCarregar(t *testing.T) {
 	db := testeapoio.NovoBancoVazio(t)
 	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
-	conexao := fab.Conexao(func(c *testeapoio.Conexao) { c.NomeInstituicao = p("Banco Inter S.A.") })
+	conexao := fab.ConexaoBancaria(func(c *testeapoio.ConexaoBancaria) { c.NomeInstituicao = p("Banco Inter S.A.") })
 	daConexao := fab.Conta(func(c *testeapoio.Conta) { c.Nome, c.ConexaoBancariaId = "Conta", &conexao.Id })
 	manual := fab.Conta(func(c *testeapoio.Conta) { c.Nome = "Poupança Caixa" })
 	bancos, err := Carregar(t.Context(), db)

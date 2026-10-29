@@ -91,3 +91,19 @@ func TestRotasDoCambioSemLogin(t *testing.T) {
 		resposta.ConferirStatus(t, http.StatusUnauthorized)
 	}
 }
+
+// Regra: erro do banco na rota é o 500 genérico, com o erro no log.
+func TestRotaDoCambioComErroDoBanco(t *testing.T) {
+	t.Parallel()
+	s, db, _ := novoServicoDeTeste(t, testeapoio.AgoraEmBrasilia(2026, 10, 14, 15, 0), &fonteFalsa{})
+	mux := http.NewServeMux()
+	log, saida := logDoTeste()
+	RegistrarCom(mux, s, log)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	testeapoio.Chamar(t, mux, "GET", "/api/cambio/cotacao?moeda=USD", "").ConferirStatus(t, http.StatusInternalServerError)
+	if saida.Len() == 0 {
+		t.Error("o erro não foi para o log")
+	}
+}
