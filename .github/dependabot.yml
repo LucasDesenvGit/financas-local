@@ -15,6 +15,17 @@ updates:
     labels: [dependencias, api]
     open-pull-requests-limit: 5
 
+  # #451: o gerenciador em Go (ADR 0052), um módulo à parte. O Wails sai versão prévia quase todo dia e só sobe num PR
+  # próprio, com o teste de instalação passando (ADR 0052): fica fora daqui.
+  - package-ecosystem: gomod
+    directory: /src/gerenciador-go
+    schedule: { interval: weekly, day: monday }
+    target-branch: develop
+    labels: [dependencias]
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: github.com/wailsapp/wails/v3
+
   - package-ecosystem: npm
     directory: /src/frontend
     schedule: { interval: weekly, day: monday }

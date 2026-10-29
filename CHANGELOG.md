@@ -5,7 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [2.50.1] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação
-- **Análise de segurança do código com o CodeQL** (#451, ADR 0054). Nada muda para quem usa. Um workflow novo (`codeql.yml`) analisa o código em C#, Go, TypeScript, Python e os próprios workflows em todo PR, no push do `develop` e do `main` e toda quinta. Ele procura dado de fora chegando a SQL, comando do sistema, caminho de arquivo ou HTML, e injeção nos workflows. Os achados vão para Security › Code scanning e viram anotações no PR, sem bloquear o merge. O Go é compilado à mão, com o GTK 4 e o WebKitGTK do gerenciador.
+- **Análise de segurança do código com o CodeQL** (#451, ADR 0054). Nada muda para quem usa. Um workflow novo (`codeql.yml`) analisa o código em C#, Go, TypeScript, Python e os próprios workflows em todo PR, no push do `develop` e do `main` e toda quinta. Ele procura dado de fora chegando a SQL, comando do sistema, caminho de arquivo ou HTML, e injeção nos workflows. Os achados vão para Security › Code scanning e viram anotações no PR, sem bloquear o merge. O Go é compilado à mão, com o GTK 4 e o WebKitGTK do gerenciador. O Dependabot passa a olhar também as bibliotecas do gerenciador em Go (menos o Wails, que sobe à mão, ADR 0052).
 
 ## [2.50.0] — 2026-10-28 · desenvolvimento
 
