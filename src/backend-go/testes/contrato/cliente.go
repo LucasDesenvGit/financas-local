@@ -54,8 +54,9 @@ func (s *Sessao) limpar() error {
 		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			DialContext: discador.DialContext,
-			// O servidor sob teste usa um certificado descartável, criado para a execução.
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // só 127.0.0.1, certificado de teste
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
 		},
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
