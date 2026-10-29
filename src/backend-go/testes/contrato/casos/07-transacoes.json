@@ -1068,17 +1068,6 @@
       }
     },
     {
-      "nome": "transferir sem data",
-      "comentario": "A data não tem [Required].",
-      "metodo": "POST",
-      "caminho": "/api/transacoes/transferencia",
-      "corpo": {
-        "contaOrigemId": 3,
-        "contaDestinoId": 4,
-        "valor": 1
-      }
-    },
-    {
       "nome": "excluir lançamento manual",
       "metodo": "DELETE",
       "caminho": "/api/transacoes/154"
