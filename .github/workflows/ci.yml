@@ -240,8 +240,8 @@ jobs:
       - name: Vulnerabilidades (govulncheck)
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
-  # #418 (ADR 0052): o gerenciador em Go (src/gerenciador-go), por enquanto só no Windows: no Linux, o Wails pede cgo,
-  # GTK 4 e WebKitGTK, que entram com a #417. No Windows ele compila sem cgo, então o teste roda sem o -race.
+  # #418 (ADR 0052): o gerenciador em Go (src/gerenciador-go) no Windows. Lá ele compila sem cgo, então o teste roda
+  # sem o -race; o do Linux é o job abaixo.
   gerenciador-go:
     name: gerenciador em Go
     needs: mudancas
@@ -301,6 +301,54 @@ jobs:
 
       - name: Vulnerabilidades (govulncheck)
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # #417 (ADR 0052): o gerenciador em Go no Linux. Lá o Wails pede cgo, o GTK 4 e o WebKitGTK 6.0 (os -dev, para
+  # compilar), então o teste roda com o -race. O resumo do job anota o tempo de instalar os pacotes e de compilar, e o
+  # tamanho do executável (critério de aceite da #417). O gofmt e o govulncheck ficam no job do Windows.
+  gerenciador-go-linux:
+    name: gerenciador em Go (Linux)
+    needs: mudancas
+    if: needs.mudancas.outputs.gerenciador == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/gerenciador-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/gerenciador-go/go.mod
+          cache-dependency-path: src/gerenciador-go/go.sum
+
+      - name: GTK 4 e WebKitGTK 6.0
+        run: |
+          inicio=$SECONDS
+          antes=$(df --output=used -B1M / | tail -1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+          depois=$(df --output=used -B1M / | tail -1)
+          {
+            echo "### Gerenciador em Go no Linux (#417)"
+            echo "- pacotes de compilar (GTK 4 e WebKitGTK 6.0, -dev): $((SECONDS - inicio)) s, $((depois - antes)) MB no disco do runner"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes
+        run: go test -race ./...
+
+      # Como no Windows: sem F12 nem menu do botão direito (-tags production). O cache do Go guarda os pacotes já
+      # compilados entre as rodadas, então o tempo é o de uma compilação com o cache do setup-go.
+      - name: Compila
+        run: |
+          inicio=$SECONDS
+          CGO_ENABLED=1 go build -tags production -trimpath -ldflags "-s -w" -o gerenciador-go .
+          echo "- compilação com cgo: $((SECONDS - inicio)) s; executável: $(du -h gerenciador-go | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- bibliotecas que o executável pede: $(objdump -p gerenciador-go | awk '/NEEDED/ {print $2}' | tr '\n' ' ')" >> "$GITHUB_STEP_SUMMARY"
 
   # #72 (ADR 0049): testes de contrato. Sobe o .NET sobre o banco fictício, sem rede e com o relógio começando em
   # 2026-10-15 01:00 UTC (libfaketime), e confere que ele responde e grava igual a src/backend-go/testes/contrato/esperado.

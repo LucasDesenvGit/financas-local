@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.48.2] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o gerenciador em Go compilado e testado no Linux** (#417, épico #70, ADR 0052). Nada muda para quem usa. O job "gerenciador em Go (Linux)" instala o GTK 4 e o WebKitGTK 6.0 num Ubuntu 24.04, roda o `go vet` e o `go test -race` (no Linux o Wails pede cgo) e compila o gerenciador, anotando no resumo o tempo dos pacotes e da compilação, o tamanho do executável e as bibliotecas que ele pede. Roda junto com o do Windows, quando o `src/gerenciador-go/` muda.
+
 ## [2.48.1] — 2026-10-28 · desenvolvimento
 
 ### Correções
