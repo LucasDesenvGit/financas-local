@@ -11,9 +11,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/comando"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/copia"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
@@ -30,13 +32,22 @@ const (
 	avisoAoMudar = "Aguarde alguns segundos."
 	ondeVerOErro = "Em “Mais opções”, “Ver o registro do serviço” mostra o motivo."
 	reinstalando = "Código atualizado. Reinstalando o site…"
+	// esconderAoFechar: no Linux, a janela destruída deixa o WebKitWebProcess dela vivo (Wails v3.0.0-beta.34 com o
+	// WebKitGTK 6.0: +58 MB a cada abrir e fechar, medido na #417). Escondida, a mesma janela volta, sem vazar.
+	esconderAoFechar = true
+	// esperaAoLigar: depois de ligar ou reiniciar, quanto esperar o site responder (EsperaAoLigar do C# no Linux).
+	esperaAoLigar = 30 * time.Second
 )
+
+// idDoAplicativo é o id do GTK (GApplication) e o app_id da janela no Wayland.
+const idDoAplicativo = "br.financaslocal.Gerenciador"
 
 func opcoesDoSistema(o *application.Options) {
 	o.Linux = application.LinuxOptions{
 		DisableQuitOnLastWindowClosed: true,
-		// O nome do programa para o KDE e o GNOME agruparem a janela com o atalho do menu.
-		ProgramName: "financaslocal-gerenciador",
+		// No GTK 4, o ícone da janela vem do atalho com o nome do id (br.financaslocal.Gerenciador.desktop), que a
+		// instalação cria (#277); o id também é o app_id da janela no Wayland. Sem ele, o Wails usa org.wails.<nome>.
+		ApplicationID: idDoAplicativo,
 	}
 }
 
@@ -47,6 +58,13 @@ func opcoesDoSistema(o *application.Options) {
 func prepararBandeja(b *application.SystemTray, abrir func()) {
 	b.SetLabel("Finanças Local")
 	b.OnClick(abrir)
+}
+
+// temBandeja: há quem mostre o ícone (o StatusNotifierWatcher do KDE, ou do GNOME com a extensão de AppIndicator).
+func temBandeja() bool {
+	saida, err := comando.Rodar(context.Background(), 3*time.Second, "busctl", "--user", "call", "org.freedesktop.DBus",
+		"/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner", "s", "org.kde.StatusNotifierWatcher")
+	return err == nil && strings.TrimSpace(saida) == "b true"
 }
 
 // executarNoServico pelo systemctl --user, com a mensagem dele quando não dá certo.

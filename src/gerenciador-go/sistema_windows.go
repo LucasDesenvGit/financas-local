@@ -26,6 +26,10 @@ const (
 	// ondeVerOErro completa o "Não deu certo" de ligar, desligar e reiniciar.
 	ondeVerOErro = "Veja os eventos do Windows (Visualizador de Eventos › Aplicativo, origem FinancasLocal)."
 	reinstalando = "Código atualizado. Reinstalando o site (permita no aviso do Windows)…"
+	// esconderAoFechar: no Windows, fechar destrói a janela e os processos do WebView2 (parado na bandeja, ~50 MB).
+	esconderAoFechar = false
+	// esperaAoLigar: o gerenciador em C# do Windows não esperava o site responder depois de ligar.
+	esperaAoLigar = 0
 )
 
 func opcoesDoSistema(o *application.Options) {
@@ -82,6 +86,7 @@ func mostrarNaPasta(arquivo string) error {
 
 // O que é só do Linux: o comando para atualizar pelos scripts, o "sem login" (linger) e o registro do serviço.
 
+func temBandeja() bool                                  { return true }
 func comandoParaAtualizar(instalacao.Instalacao) string { return "" }
 func lerSemLogin() string                               { return "" }
 func manterNoArSemLogin() error                         { return errors.ErrUnsupported }

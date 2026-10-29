@@ -1,7 +1,7 @@
 # 0052. Gerenciador em Go: ícone na bandeja e janela própria com o Wails
 
 - **Status:** Aceita (#276; opção E escolhida pelo @JulioCezarSP em 27/10/2026)
-- **Data:** 2026-10-25 (proposta); 2026-10-27 (aceita)
+- **Data:** 2026-10-25 (proposta); 2026-10-27 (aceita); 2026-10-28 (testada num Linux de verdade, #417)
 - **Relacionadas:** [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e [0033](0033-gerenciador-no-linux-com-avalonia.md) (o gerenciador de hoje, em C#, que esta substituiria); [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) (atualizar pelo develop); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi`); [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (o back-end em Go); épico #70
 
 ## Contexto
@@ -91,6 +91,37 @@ O que **não** deu para conferir:
 - Tamanho: 11,1 MB. Memória privada: 199 a 203 MB em 7 processos (o gerenciador sozinho, 52 MB), com a janela aberta, três rodadas.
 - Leitor de tela: a UI Automation vê todos os botões, os links e o interruptor, com os nomes limpos (os glifos ficam fora, com `aria-hidden`). A primeira consulta volta vazia: o Chromium só monta a árvore quando um leitor pergunta. O Narrador e o NVDA perguntam de novo; *a conferir com o Narrador ligado.*
 
+## O teste num Linux de verdade (#417, 28/10/2026)
+
+**Resultado: funciona, com ressalvas.** O gerenciador em Go do `develop` (e não mais o protótipo E), com a parte do Linux feita na própria #417, numa máquina de verdade: CachyOS (Arch), KDE Plasma 6.8 em Wayland, GTK 4.24.1 e WebKitGTK 6.0 2.54.2, com o site instalado pelos scripts (`financaslocal.service` do `systemd --user`). O Ubuntu 24.04 com GNOME **não foi testado** (sem máquina nem VM à mão); o roteiro da issue continua valendo para ele.
+
+| | Resultado | Como foi conferido |
+|---|---|---|
+| Janela | abre e mostra a página inteira, nos temas claro e escuro (o do sistema, pelo portal do freedesktop), com a altura acompanhando o conteúdo e sem barra de rolagem | prints da janela; o tema trocado no KDE (BreezeLight × BreezeDark) |
+| Ícones dos botões | os do lucide em SVG (a fonte de ícones do Windows não existe no Linux), na cor do texto | print |
+| Ícone na barra de título | no GTK 4 vem do atalho `.desktop` com o nome do id do aplicativo (o Wails não consegue pôr, `setIcon` vazio no GTK 4). Com o id `br.financaslocal.Gerenciador` e o atalho com esse nome, aparece o cofrinho; sem o atalho, sai o "W" do Wails | print, com um atalho de teste |
+| Bandeja (KDE) | aparece, com o cofrinho e o ponto da cor da situação; o menu tem a situação na primeira linha, "Abrir o site", "Mostrar o gerenciador" e "Sair"; o clique simples mostra a janela | StatusNotifierItem e dbusmenu lidos e clicados pelo D-Bus; "Sair" encerra tudo |
+| Ligar, desligar, reiniciar | pelo `systemctl --user`, **sem senha**; "Reiniciar" pelo botão: o site voltou em ~5 s | o botão apertado pelo AT-SPI; o horário de início da unidade mudou |
+| Situação | a do serviço e a do site, igual à do Windows | "O site está no ar. Versão 2.37.3" com o site de verdade |
+| Registro do serviço, comando para atualizar, "sem login" | o journald do usuário no diálogo das notas; o comando com a pasta do projeto; o linger lido pelo `loginctl` | pelo AT-SPI |
+| Leitor de tela (AT-SPI, o que o Orca lê) | os landmarks ("Situação do site", "Versão"), a situação como `status`, todos os botões com o nome limpo (os ícones ficam fora), o campo do comando com rótulo, o interruptor como botão de alternar | a árvore lida pelo AT-SPI. *A conferir:* ouvir com o Orca |
+| Instância única | abrir de novo mostra a janela da cópia que já roda, e a segunda sai | rodado duas vezes |
+| Compilar | com cgo, 16 s nesta máquina, sem cache; na CI (Ubuntu 24.04, #440), pacotes 20 s, `go vet` 53 s, `go test -race` 66 s e compilação 45 s (3 min 20 s o job) | relógio e os passos do job |
+| Tamanho | 16 MB num arquivo só (com o SQLite da cópia do banco), contra 17 MB no Windows | `du` |
+| Bibliotecas que pede | `libwebkitgtk-6.0`, `libgtk-4`, `libjavascriptcoregtk-6.0`, `libsoup-3.0`, pango, cairo, harfbuzz, gdk-pixbuf, graphene, vulkan, X11 e a glib | `objdump -p` |
+| Pacotes a instalar | nesta máquina, só o `webkitgtk-6.0` (38,5 MiB para baixar, 138,6 MiB instalado), porque o GTK 4 já vem com o KDE; no Ubuntu sem nada, até 113 pacotes e ~231 MB (medido no WSL, #276) | `pacman` |
+| Memória, só na bandeja | **51 MB** (PSS), um processo | `smaps_rollup`, três leituras |
+| Memória com a janela | **~245 a 260 MB** (PSS), 8 processos: o gerenciador, o `WebKitWebProcess`, o `WebKitNetworkProcess` e o sandbox (`bwrap`, `xdg-dbus-proxy`) | `smaps_rollup`, somando os filhos |
+
+**As ressalvas:**
+- **Fechar a janela não pode destruí-la no Linux.** No Wails v3.0.0-beta.34 com o WebKitGTK 6.0, a janela destruída deixa o `WebKitWebProcess` dela vivo: cada abrir e fechar somou ~58 MB (316 → 374 → 432 MB em três vezes). No Linux, fechar **esconde** a janela (como o gerenciador em C# com o Avalonia), e a mesma volta: três vezes, ficou em ~242 MB. O custo: depois de abrir a janela uma vez, o gerenciador parado na bandeja fica em ~245 MB, e não nos 51 MB de quem nunca abriu. No Windows, continua destruindo (o WebView2 sai junto). Vale abrir uma issue no Wails.
+- **A dica do ícone na bandeja não acompanha a situação:** no Wails v3.0.0-beta.34, a dica no Linux não está feita (`setTooltip` vazio). O ícone mostra "Finanças Local" (pelo `SetLabel`; sem ele, "Wails"), e a situação fica na primeira linha do menu e na cor do ponto.
+- **Sem duplo clique na bandeja:** no padrão StatusNotifierItem, o clique simples é "ativar"; ele mostra a janela, como no C# do Linux.
+- **A janela aberta pela bandeja pode ficar atrás da ativa:** a proteção do KWin contra roubo de foco (o C# do Linux já dizia isso).
+- **Copiar para a área de transferência no Wayland** só vale depois de um clique ou tecla de verdade na janela; pelo AT-SPI, a janela diz "Copiado" e nada é copiado. *A conferir com o mouse.*
+- **A instalação (#277)** tem de: pedir o WebKitGTK 6.0 (e o GTK 4); criar o atalho `br.financaslocal.Gerenciador.desktop` com o ícone; pôr o `icone.png` ao lado do executável (o "Iniciar com o sistema" aponta para ele).
+- **GNOME:** não testado. Sem a extensão de AppIndicator, não há bandeja: começando com o sistema (`--bandeja`), o gerenciador pergunta ao D-Bus se há quem mostre o ícone (`org.kde.StatusNotifierWatcher`) e, sem ninguém, abre a janela minimizada, como o C# do Linux (conferido num D-Bus à parte, sem bandeja).
+
 ## Alternativas consideradas
 
 - **Manter em C# (opção a da #276).** Custo quase zero, mas contraria a decisão do time: o SDK do .NET continua na CI e nos scripts só por causa do gerenciador.
@@ -106,6 +137,8 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
   - No Linux, os glifos vão em SVG do lucide (os do site), porque a Segoe Fluent Icons é do Windows.
   - O teclado, o leitor de tela e o contraste seguem os padrões do site (WCAG 2.2, `CLAUDE.md`).
 - **Fechar destrói a janela** (e os processos do WebView2); a bandeja cria outra ao abrir. Parado, o gerenciador fica em ~50 MB (medido acima). Ao iniciar com o sistema, começa sem janela.
+  - **No Linux, fechar esconde a janela** (#417): destruída, ela deixa o `WebKitWebProcess` vivo, ~58 MB a mais a cada vez (ver "O teste num Linux de verdade").
+- **No Linux** (#417), o serviço é a unidade `financaslocal.service` do `systemd --user` (ADR 0033): ligar, desligar, reiniciar, copiar o banco e reinstalar pelo develop rodam no próprio gerenciador, sem senha. O que muda entre os dois sistemas fica em `sistema_windows.go` e `sistema_linux.go`; as regras que dão para testar em qualquer sistema (as propriedades da unidade, o atalho de início, o tema pelo portal), em arquivos sem sufixo de sistema.
 - **Sem porta aberta:** o HTML e as ações são servidos por dentro do programa (`AssetOptions.Handler` do Wails), e não por um servidor na máquina.
 - **Bandeja e instância única:** as do próprio Wails (`SystemTray`, `SingleInstanceOptions`), com o menu "Abrir o gerenciador", "Ligar o site", "Desligar o site", "Abrir o site" e "Sair". No Linux, o ícone vai em PNG.
 - **Ícone no `.exe`:** recurso `.syso` gerado do `icone.ico` de hoje (`wails3 generate syso` ou go-winres), na CI.
@@ -134,7 +167,7 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
   - **memória com a janela aberta:** ~200 MB (o WebView2), contra 14–15 MB de memória privada do C#. Fechada a janela, volta a ~50 MB;
   - **Wails v3 é versão prévia**, com versões novas quase todo dia: risco de quebra ao subir e de mudança de API;
   - **Linux pede mais coisa:** o GTK 4 e o WebKitGTK 6.0 (até ~231 MB de pacotes, que a instalação tem de pedir) e cgo para compilar. No Windows compila sem cgo (conferido);
-  - **não testado num Linux de verdade:** no WSLg, a página do Wails não carregou (é do ambiente, mas fica sem prova). A bandeja no GNOME e no KDE e o Orca também. Isso é a primeira história; se o Wails não servir no Linux, volta para cá;
+  - **no Linux, com ressalvas** (#417, testado no KDE): a janela escondida em vez de destruída (~245 MB parado depois de abrir uma vez), a dica do ícone parada, o ícone da janela pelo atalho `.desktop`. O GNOME não foi testado;
   - **bandeja no GNOME:** depende do StatusNotifierItem. *Inferido, não testado:* o Ubuntu traz a extensão de AppIndicator ligada, e outras distribuições podem não trazer;
   - **reescrever ~3.600 linhas,** inclusive a atualização com SHA-256, que é sensível.
 - **Na prática:**

@@ -91,8 +91,16 @@ func (g *gerenciador) iniciar(comJanela bool) {
 	opcoesDoSistema(&opcoes)
 	g.app = application.New(opcoes)
 	g.montarBandeja()
-	if comJanela {
+	switch {
+	case comJanela:
 		g.abrir()
+	case !temBandeja():
+		// Começando com o sistema sem quem mostre o ícone (o GNOME sem a extensão de AppIndicator): a janela
+		// minimizada, como o App.axaml.cs do Linux, para o gerenciador não ficar invisível.
+		g.abrir()
+		g.trava.Lock()
+		g.janela.Minimise()
+		g.trava.Unlock()
 	}
 	go func() {
 		g.atualizarSituacao()
@@ -197,6 +205,9 @@ func (g *gerenciador) acaoNoServico(acao string) {
 	g.mostrarNaBandeja()
 
 	resultado, motivo := executarNoServico(acao)
+	if resultado == elevacao.Feito && acao != "desligar" {
+		g.esperarResponder()
+	}
 
 	g.trava.Lock()
 	g.ocupado = false
@@ -207,6 +218,21 @@ func (g *gerenciador) acaoNoServico(acao string) {
 		g.trocarDetalhe("Cancelado: nada mudou.")
 	case elevacao.Falhou:
 		g.trocarDetalhe(tela.NaoDeuCerto(motivo, ondeVerOErro))
+	}
+}
+
+// esperarResponder: o serviço sobe antes do site responder; a janela continua em "Ligando o site…" até ele responder
+// (no máximo esperaAoLigar), para não dizer "não responde" à toa (Nielsen 1), como o ServicoAsync do C# no Linux.
+func (g *gerenciador) esperarResponder() {
+	limite := time.Now().Add(esperaAoLigar)
+	for time.Now().Before(limite) {
+		ctx, cancelar := context.WithTimeout(context.Background(), 10*time.Second)
+		s := g.consulta.Consultar(ctx)
+		cancelar()
+		if s.Estado != tela.SemResposta && s.Estado != tela.Mudando {
+			return
+		}
+		time.Sleep(time.Second)
 	}
 }
 
@@ -446,7 +472,15 @@ func (g *gerenciador) abrir() {
 		DefaultContextMenuDisabled: true,
 		BackgroundColour:           fundo,
 	})
-	j.RegisterHook(events.Common.WindowClosing, func(*application.WindowEvent) { g.fechou(j) })
+	j.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+		// No Linux, com o gerenciador ficando na bandeja, a janela só se esconde (esconderAoFechar).
+		if esconderAoFechar && preferencias.IniciarComSistema() {
+			e.Cancel()
+			j.Hide()
+			return
+		}
+		g.fechou(j)
+	})
 	// A janela nova também vem para a frente (e com o foco), e não só a que já existia.
 	var desligar func()
 	desligar = j.OnWindowEvent(events.Common.WindowShow, func(*application.WindowEvent) {
