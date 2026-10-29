@@ -13,7 +13,7 @@ São *characterization tests*: não dizem o que o sistema deveria fazer, congela
 | `assuntos-no-go.txt` | os assuntos com código Go que a rodada contra o Go confere (`--go`, e a CI), um por linha |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (63), `05-categorias` (33), `06-regras` (38), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
 
 ## Rodar contra o .NET
 
@@ -94,7 +94,7 @@ Cada assunto do épico #70 já tem o número dele, para os assuntos feitos em pa
 | `01-parametros` | parâmetros e configurações | #76 | `/api/parametros` | nenhuma: entra na inversão (#85) |
 | `02-cambio` | câmbio (PTAX) | #81 | `/api/cambio` | `cambio` |
 | `03-cripto` | cripto | #81 | `/api/cripto` | `cambio` |
-| `04-contas` | contas e conferência do banco | #77 | `/api/contas`, `/api/conferencia-banco` | `cadastros` |
+| `04-contas` | contas e conferência do banco | #77 (contas), #445 (conferência) | `/api/contas`, `/api/conferencia-banco` | `cadastros` |
 | `05-categorias` | categorias | #77 | `/api/categorias` | `cadastros` |
 | `06-regras` | regras e regras de descrição | #77 | `/api/regras`, `/api/regras-descricao` | `cadastros` |
 | `07-transacoes` | transações | #78 | `/api/transacoes` | `transacoes` |

@@ -2,6 +2,7 @@ package respostas
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -31,6 +32,8 @@ func TestCampoInteiro(t *testing.T) {
 		{"número", `{"p":70}`, "", 70, map[string][]string{}},
 		{"número em texto", `{"p":"70"}`, "", 70, map[string][]string{}},
 		{"ausente fica o padrão", `{}`, "", 5, map[string][]string{}},
+		{"no limite de baixo", `{"p":0}`, "", 0, map[string][]string{}},
+		{"no limite de cima", `{"p":10000}`, "", 10000, map[string][]string{}},
 		{"negativo fora da faixa", `{"p":-1}`, "", -1, map[string][]string{"P": {"The field P must be between 0 and 10000."}}},
 		{"acima da faixa", `{"p":10001}`, "", 10001, map[string][]string{"P": {"The field P must be between 0 and 10000."}}},
 		{"casa decimal", `{"p":7.0}`, "$.p", 0, nil},
@@ -110,6 +113,8 @@ func TestCampoDecimalOpcional(t *testing.T) {
 		{"número com a escala", `{"p":200.50}`, "", "200.50", map[string][]string{}},
 		{"em texto", `{"p":"100"}`, "", "100", map[string][]string{}},
 		{"null", `{"p":null}`, "", "", map[string][]string{}},
+		{"no limite de baixo", `{"p":0.01}`, "", "0.01", map[string][]string{}},
+		{"no limite de cima", `{"p":999999999}`, "", "999999999", map[string][]string{}},
 		{"zero fora da faixa", `{"p":0}`, "", "0", map[string][]string{"P": {mensagem}}},
 		{"acima da faixa", `{"p":1000000000}`, "", "1000000000", map[string][]string{"P": {mensagem}}},
 		{"texto que não é número", `{"p":"abc"}`, "$.p", "", nil},
@@ -154,3 +159,81 @@ func TestCampoTextoComPadrao(t *testing.T) {
 func p[T any](v T) *T { return &v }
 
 func mesmo(a, b *int64) bool { return (a == nil && b == nil) || (a != nil && b != nil && *a == *b) }
+
+// Regra: byte? com [Range(1, 31)] (o dia do mês): número de 0 a 255 ou em texto; null fica nil; fora de 0 a 255, com
+// casas ou com "+" é erro de conversão; fora da faixa, a mensagem do RangeAttribute.
+func TestCampoByteOpcional(t *testing.T) {
+	mensagem := "The field P must be between 1 and 31."
+	casos := []struct {
+		nome, corpo, conversao, valor string
+		erros                         map[string][]string
+	}{
+		{"número", `{"p":31}`, "", "31", map[string][]string{}},
+		{"no limite de baixo", `{"p":1}`, "", "1", map[string][]string{}},
+		{"em texto", `{"p":"5"}`, "", "5", map[string][]string{}},
+		{"null", `{"p":null}`, "", "<nil>", map[string][]string{}},
+		{"ausente", `{}`, "", "<nil>", map[string][]string{}},
+		{"zero fora da faixa", `{"p":0}`, "", "0", map[string][]string{"P": {mensagem}}},
+		{"32 fora da faixa", `{"p":32}`, "", "32", map[string][]string{"P": {mensagem}}},
+		{"256 não é byte", `{"p":256}`, "$.p", "", nil},
+		{"negativo", `{"p":-1}`, "$.p", "", nil},
+		{"com casas", `{"p":5.0}`, "$.p", "", nil},
+		{"com sinal", `{"p":"+5"}`, "$.p", "", nil},
+		{"bool", `{"p":true}`, "$.p", "", nil},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			campo := &CampoByteOpcional{Propriedade: "P", Faixa: &Faixa{1, 31}}
+			conversao, erros := lerCampos(t, c.corpo, campo)
+			valor := "<nil>"
+			if campo.Valor != nil {
+				valor = strconv.FormatInt(*campo.Valor, 10)
+			}
+			if conversao != c.conversao || (conversao == "" && (valor != c.valor || !reflect.DeepEqual(erros, c.erros))) {
+				t.Errorf("conversão %q, valor %q, erros %v; esperado %q, %q, %v", conversao, valor, erros, c.conversao, c.valor, c.erros)
+			}
+		})
+	}
+}
+
+// Regra: bool? aceita true, false e null; texto e número são erro de conversão.
+func TestCampoBoolOpcional(t *testing.T) {
+	casos := []struct{ corpo, conversao, valor string }{
+		{`{"p":true}`, "", "true"},
+		{`{"p":false}`, "", "false"},
+		{`{"p":null}`, "", "<nil>"},
+		{`{}`, "", "<nil>"},
+		{`{"p":"true"}`, "$.p", ""},
+		{`{"p":1}`, "$.p", ""},
+	}
+	for _, c := range casos {
+		campo := &CampoBoolOpcional{Propriedade: "P"}
+		conversao, _ := lerCampos(t, c.corpo, campo)
+		valor := "<nil>"
+		if campo.Valor != nil {
+			valor = strconv.FormatBool(*campo.Valor)
+		}
+		if conversao != c.conversao || (conversao == "" && valor != c.valor) {
+			t.Errorf("%s: conversão %q, valor %q; esperado %q, %q", c.corpo, conversao, valor, c.conversao, c.valor)
+		}
+	}
+}
+
+// Regra: decimal (não anulável): ausente fica zero, a escala que veio fica, null e texto que não é número são erro.
+func TestCampoDecimal(t *testing.T) {
+	casos := []struct{ corpo, conversao, valor string }{
+		{`{"p":1000.50}`, "", "1000.50"},
+		{`{"p":"-0.01"}`, "", "-0.01"},
+		{`{}`, "", "0"},
+		{`{"p":null}`, "$.p", ""},
+		{`{"p":"x"}`, "$.p", ""},
+		{`{"p":[]}`, "$.p", ""},
+	}
+	for _, c := range casos {
+		campo := &CampoDecimal{Propriedade: "P"}
+		conversao, _ := lerCampos(t, c.corpo, campo)
+		if conversao != c.conversao || (conversao == "" && campo.Valor.String() != c.valor) {
+			t.Errorf("%s: conversão %q, valor %s; esperado %q, %s", c.corpo, conversao, campo.Valor, c.conversao, c.valor)
+		}
+	}
+}

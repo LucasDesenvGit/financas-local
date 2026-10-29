@@ -25,3 +25,11 @@ internal/categorias | categorias.go | INVERT_LOGICAL | if errors.Is(err, context
 internal/transacoes | transacoes.go | ARITHMETIC_BASE | argumentos := make([]any, 0, len(lista)+1) | é só a capacidade inicial do slice: o append cresce do mesmo jeito
 internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | if n < 0 { | com n = 0, -n também é 0
 internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | (distancia == d && o.id < melhor.id) | o mesmo lançamento não é candidato duas vezes: o.id nunca é igual a melhor.id
+internal/parcelas | parcelas.go | CONDITIONALS_BOUNDARY | if fim >= 0 { | fim é -1 (não casou) ou pelo menos 4 (o tamanho de PARC): nunca 0
+internal/parcelas | parcelas.go | CONDITIONALS_NEGATION | if fim < len(cs) && cs[fim] == '.' { | depois de PARC vem um caractere que não é de palavra (o \b): consumi-lo ou não muda o trecho tirado, mas nunca as letras da compra
+internal/faturas | faturas.go | INVERT_LOGICAL | if err != nil || len(cartoes) == 0 { | o SQLite aceita IN () vazio: sem cartões, as consultas não acham nada e a lista sai vazia do mesmo jeito
+internal/contas | contas.go | INVERT_LOGICAL | if errors.Is(err, context.Canceled) || r.Context().Err() != nil { | o context.Canceled só chega com o contexto da requisição cancelado: as duas condições andam juntas
+internal/contas | rotas.go | CONDITIONALS_NEGATION | if len(contaIds) == 0 { | as transações da conta saem na mesma instrução do DELETE, e o SQLite confere a FK no fim da instrução: sem desvincular antes, o banco termina igual
+internal/respostas | query.go | ARITHMETIC_BASE | return int32(int64(n) - 1<<32), true | o int32 fica com os 32 bits de baixo: somar 2^32 em vez de subtrair dá o mesmo número
+internal/respostas | query.go | INVERT_NEGATIVES | return int32(int64(n) - 1<<32), true | o int32 fica com os 32 bits de baixo: somar ou subtrair 2^32 dá o mesmo número
+internal/respostas | query.go | INVERT_BITWISE | return int32(int64(n) - 1<<32), true | o int32 fica com os 32 bits de baixo: tirar 2^32 (1<<32) ou nada (1>>32 = 0) dá o mesmo número

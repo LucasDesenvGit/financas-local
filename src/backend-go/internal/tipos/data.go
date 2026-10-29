@@ -179,6 +179,15 @@ func (d DataHora) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.t.Format(formatoDataHoraNoJSON))
 }
 
+// DataHoraUtc é o DateTime com Kind Utc: o DateTime.UtcNow que o C# acabou de gravar e devolve da memória, no criar e
+// no editar. No JSON, com "Z" no fim ("2026-10-15T01:00:00.1234567Z"); lido de volta do banco, o mesmo carimbo vem sem
+// fuso, como DataHora.
+type DataHoraUtc struct{ DataHora }
+
+func (d DataHoraUtc) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.t.Format(formatoDataHoraNoJSON) + "Z")
+}
+
 func (d *DataHora) UnmarshalJSON(dados []byte) error {
 	var texto string
 	if err := json.Unmarshal(dados, &texto); err != nil {

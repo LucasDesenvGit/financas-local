@@ -163,9 +163,6 @@ func TestLerDaQuery(t *testing.T) {
 			t.Errorf("lerDecimalDaQuery(%q) = %s, %v; esperado %s, %v", d.valor, got, ok, d.esperado, d.ok)
 		}
 	}
-	if m := mensagemDaQuery(""); m != "The value '' is invalid." {
-		t.Errorf("mensagem do vazio: %q", m)
-	}
 }
 
 // Regra: a prévia responde o 400 automático com o nome do parâmetro e, sem texto, zero e lista vazia.
@@ -178,4 +175,15 @@ func TestPreviaPelaRota(t *testing.T) {
 		t.Errorf("400 da prévia: %s", resp.Corpo)
 	}
 	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa", "").ConferirJSON(t, `{"quantidade":0,"exemplos":[]}`)
+}
+
+// Regra: erro do banco nas listas é o 500 genérico.
+func TestListasComErroDoBanco(t *testing.T) {
+	mux, db, _ := rotasDeTeste(t)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for _, caminho := range []string{"/api/categorias", "/api/regras", "/api/regras-descricao", "/api/regras-descricao/previa?texto=x"} {
+		testeapoio.Chamar(t, mux, "GET", caminho, "").ConferirStatus(t, http.StatusInternalServerError)
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -76,14 +75,13 @@ func (s *Servico) listarRegrasDescricao(w http.ResponseWriter, r *http.Request) 
 // automático uma regra nova renomearia, e alguns exemplos. Os parâmetros são lidos como o model binding do ASP.NET lê a
 // query (cultura invariante); o que não vira o tipo é o 400 automático, com o nome do parâmetro.
 func (s *Servico) previa(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
 	erros := map[string][]string{}
 	tipo := int64(categorizacao.Contem)
-	if valor, ok := parametro(q, "tipo"); ok {
+	if valor, ok := respostas.ParametroDaQuery(r, "tipo"); ok {
 		if v, ok := lerEnumDaQuery(valor, nomesDoTipoCorrespondencia); ok {
 			tipo = v
 		} else {
-			erros["tipo"] = []string{mensagemDaQuery(valor)}
+			erros["tipo"] = []string{respostas.MensagemDaQuery(valor)}
 		}
 	}
 	var minimo, maximo *tipos.Decimal
@@ -91,21 +89,21 @@ func (s *Servico) previa(w http.ResponseWriter, r *http.Request) {
 		nome  string
 		valor **tipos.Decimal
 	}{{"valorMinimo", &minimo}, {"valorMaximo", &maximo}} {
-		valor, ok := parametro(q, p.nome)
+		valor, ok := respostas.ParametroDaQuery(r, p.nome)
 		if !ok || strings.TrimSpace(valor) == "" {
 			continue
 		}
 		if d, ok := lerDecimalDaQuery(valor); ok {
 			*p.valor = &d
 		} else {
-			erros[p.nome] = []string{mensagemDaQuery(valor)}
+			erros[p.nome] = []string{respostas.MensagemDaQuery(valor)}
 		}
 	}
 	if len(erros) > 0 {
 		respostas.Validacao(w, erros)
 		return
 	}
-	texto, _ := parametro(q, "texto")
+	texto, _ := respostas.ParametroDaQuery(r, "texto")
 	if strings.TrimSpace(texto) == "" {
 		respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, previaDto{Exemplos: []string{}})
 		return
@@ -121,25 +119,6 @@ func (s *Servico) previa(w http.ResponseWriter, r *http.Request) {
 type previaDto struct {
 	Quantidade int      `json:"quantidade"`
 	Exemplos   []string `json:"exemplos"`
-}
-
-// parametro é o [FromQuery] do ASP.NET: o nome não diferencia maiúsculas, e vale o primeiro valor.
-func parametro(q url.Values, nome string) (string, bool) {
-	for chave, valores := range q {
-		if strings.EqualFold(chave, nome) && len(valores) > 0 {
-			return valores[0], true
-		}
-	}
-	return "", false
-}
-
-// mensagemDaQuery é a do 400 automático para o valor da query que não vira o tipo do parâmetro: "The value 'abc' is
-// not valid." (contrato 06-regras e 02-cambio). Vazio num tipo que não aceita null é "The value ” is invalid.".
-func mensagemDaQuery(valor string) string {
-	if strings.TrimSpace(valor) == "" {
-		return "The value '" + valor + "' is invalid."
-	}
-	return "The value '" + valor + "' is not valid."
 }
 
 var nomesDoTipoCorrespondencia = map[string]int64{"contem": 1, "comecacom": 2, "igual": 3}

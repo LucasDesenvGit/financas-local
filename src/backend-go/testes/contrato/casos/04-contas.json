@@ -1,0 +1,671 @@
+{
+  "descricao": "Contas (#77, ContasController): lista, obter, criar, editar e excluir; a fatura do mês de cada cartão (#144, #167, #251, #323), as faturas importadas do cartão, os bancos (ADR 0024) e a resposta do limite ajustado (#171). Roda com a sessão 'principal', logada pelo 00-auth. Cria só as contas 7 a 11 e as apaga no fim: as da base voltam como estavam, menos o AtualizadoEm. A conferência com o banco (/api/conferencia-banco) não entra aqui: ela depende das reservas e da carteira, e vai junto com os investimentos.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "Sem as arquivadas. Ordem: Arquivada, Tipo e Nome no ORDER BY do SQLite. Saldo: o do banco (Open Finance) ou o inicial mais as efetivadas (manual); banco detectado, herdado da conta do cartão ou escolhido; a fatura do mês no cartão (hoje é 14/10/2026 em Brasília: a de outubro já fechou e vem com a de novembro em 'proxima').",
+      "metodo": "GET",
+      "caminho": "/api/contas"
+    },
+    {
+      "nome": "listar com as arquivadas",
+      "metodo": "GET",
+      "caminho": "/api/contas?incluirArquivadas=true"
+    },
+    {
+      "nome": "listar com incluirArquivadas que não é bool",
+      "comentario": "Erro do model binding da query: 400 com o ValidationProblemDetails.",
+      "metodo": "GET",
+      "caminho": "/api/contas?incluirArquivadas=talvez"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/contas",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "obter o cartão do Open Finance",
+      "metodo": "GET",
+      "caminho": "/api/contas/2"
+    },
+    {
+      "nome": "obter conta manual com banco escolhido",
+      "metodo": "GET",
+      "caminho": "/api/contas/3"
+    },
+    {
+      "nome": "obter inexistente",
+      "metodo": "GET",
+      "caminho": "/api/contas/999"
+    },
+    {
+      "nome": "obter com id que não é número",
+      "comentario": "{id:int} não casa: 404 sem corpo.",
+      "metodo": "GET",
+      "caminho": "/api/contas/abc"
+    },
+    {
+      "nome": "bancos",
+      "comentario": "O catálogo da ADR 0024, na ordem dele, com o 'outro' no fim.",
+      "metodo": "GET",
+      "caminho": "/api/contas/bancos"
+    },
+    {
+      "nome": "faturas do mês atual",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2026&mes=10"
+    },
+    {
+      "nome": "faturas de novembro",
+      "comentario": "Fatura importada ainda aberta (fecha em 03/11): a situação pelo ciclo, sem 'proxima'.",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2026&mes=11"
+    },
+    {
+      "nome": "faturas de março",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2026&mes=3"
+    },
+    {
+      "nome": "faturas de antes dos dados",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2025&mes=10"
+    },
+    {
+      "nome": "faturas no limite do período",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2100&mes=12"
+    },
+    {
+      "nome": "faturas com ano antes de 2000",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=1999&mes=5"
+    },
+    {
+      "nome": "faturas com mês 13",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2026&mes=13"
+    },
+    {
+      "nome": "faturas sem ano e mês",
+      "comentario": "Sem os parâmetros, o int da query vale 0: 'Período inválido.'.",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes"
+    },
+    {
+      "nome": "faturas com mês que não é número",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2026&mes=dez"
+    },
+    {
+      "nome": "criar conta corrente",
+      "comentario": "Id 7. Nome e número aparados; limite e dias só valem para cartão. A resposta repete a escala do que veio no saldoInicial, e o saldo vem do banco (o EF Core grava 1000.5).",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "  Conta Nova  ",
+        "tipo": 1,
+        "numero": " 123-4 ",
+        "saldoInicial": 1000.50,
+        "limiteCredito": 500,
+        "diaFechamento": 5,
+        "diaVencimento": 12,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      },
+      "capturar": {
+        "idCorrente": "/id"
+      }
+    },
+    {
+      "nome": "criar cartão manual",
+      "comentario": "Id 8. Banco: a conta vinculada não tem, então vale o detectado pelo nome do próprio cartão (nubank).",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "Cartão Nubank Roxinho",
+        "tipo": 3,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": 2000.00,
+        "diaFechamento": 28,
+        "diaVencimento": 5,
+        "cor": "#820AD1",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": 7
+      }
+    },
+    {
+      "nome": "criar conta com o banco 'outro'",
+      "comentario": "Id 9. 'outro' impede a detecção (o nome tem Itaú): banco null e bancoDefinido true.",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "Conta Itaú Sem Selo",
+        "tipo": 2,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": false,
+        "arquivada": true,
+        "banco": "outro",
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar cartão sem dia de fechamento",
+      "comentario": "Id 10. Sem fechamento conhecido: o ciclo é o mês do calendário, sem vencimento nem situação.",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "Bolsa",
+        "tipo": 3,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar cartão com fechamento no dia 1 e vencimento no 31",
+      "comentario": "Id 11. Nome em minúscula e com acento: no empate da fatura do mês, a ordem é a da cultura (árvore antes de Bolsa), não a dos bytes.",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "árvore",
+        "tipo": 3,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": 1,
+        "diaVencimento": 31,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar investimento com saldo negativo",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "Corretora",
+        "tipo": 4,
+        "numero": null,
+        "saldoInicial": -0.01,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar com banco que não existe",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "X",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": "banco-x",
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar conta com conta vinculada",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "X",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": 3
+      }
+    },
+    {
+      "nome": "criar cartão vinculado a outro cartão",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "X",
+        "tipo": 3,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": 2
+      }
+    },
+    {
+      "nome": "criar cartão com conta vinculada inexistente",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "X",
+        "tipo": 3,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": 999
+      }
+    },
+    {
+      "nome": "criar com os campos inválidos",
+      "comentario": "Sem nome, número e banco longos, cor fora do padrão e dias fora de 1 a 31: todos os erros de uma vez, no ValidationProblemDetails.",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "tipo": 1,
+        "numero": "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN",
+        "cor": "vermelho",
+        "diaFechamento": 32,
+        "diaVencimento": 0,
+        "banco": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "incluirNoSaldo": true,
+        "arquivada": false
+      }
+    },
+    {
+      "nome": "criar com nome longo",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar com tipo em texto",
+      "comentario": "Enum só como número no JSON.",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpo": {
+        "nome": "X",
+        "tipo": "1",
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "criar com corpo vazio",
+      "metodo": "POST",
+      "caminho": "/api/contas",
+      "corpoTexto": ""
+    },
+    {
+      "nome": "lançar uma compra no cartão novo",
+      "comentario": "Atendido pelo .NET (transações ainda não estão no Go): só para o saldo, o limite disponível e a fatura do cartão manual.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes",
+      "corpo": {
+        "contaId": 8,
+        "data": "2026-10-10",
+        "descricao": "Compra de teste",
+        "valor": 120.35,
+        "tipo": 1,
+        "categoriaId": null,
+        "ignorarRelatorios": false
+      }
+    },
+    {
+      "nome": "obter o cartão novo com a compra",
+      "comentario": "Saldo -120.35; limite disponível = limite + saldo; fatura aberta do ciclo 29/09 a 28/10, que vence em 05/11.",
+      "metodo": "GET",
+      "caminho": "/api/contas/8"
+    },
+    {
+      "nome": "faturas do mês com os cartões novos",
+      "comentario": "Ordem: valor do mês, do maior para o menor, e o nome pela cultura no empate.",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2026&mes=10"
+    },
+    {
+      "nome": "faturas de fevereiro de ano bissexto",
+      "comentario": "Vencimento no dia 31 vira o último dia do mês.",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2028&mes=2"
+    },
+    {
+      "nome": "faturas de fevereiro",
+      "metodo": "GET",
+      "caminho": "/api/contas/faturas-do-mes?ano=2027&mes=2"
+    },
+    {
+      "nome": "editar a conta nova",
+      "comentario": "Conta manual: tudo muda, inclusive o tipo; número em branco fica texto vazio.",
+      "metodo": "PUT",
+      "caminho": "/api/contas/7",
+      "corpo": {
+        "nome": " Conta Nova Editada ",
+        "tipo": 5,
+        "numero": "  ",
+        "saldoInicial": 10,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#ABCDEF",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": "nubank",
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "editar a conta do Open Finance",
+      "comentario": "Do Open Finance só mudam nome, cor, incluir no saldo, arquivada e banco; para a conta vinculada vale o tipo da conta (corrente).",
+      "metodo": "PUT",
+      "caminho": "/api/contas/1",
+      "corpo": {
+        "nome": "Conta Corrente Fictícia",
+        "tipo": 3,
+        "numero": "9999",
+        "saldoInicial": 99,
+        "limiteCredito": 1,
+        "diaFechamento": 1,
+        "diaVencimento": 1,
+        "cor": "#820ad1",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": "itau",
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "voltar a conta do Open Finance",
+      "comentario": "Volta o banco para null (detectar), como na base.",
+      "metodo": "PUT",
+      "caminho": "/api/contas/1",
+      "corpo": {
+        "nome": "Conta Corrente Fictícia",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#820ad1",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "editar cartão do Open Finance vinculado a ele mesmo",
+      "comentario": "O tipo que vale é o da conta (cartão), não o do corpo.",
+      "metodo": "PUT",
+      "caminho": "/api/contas/2",
+      "corpo": {
+        "nome": "Cartão Fictício Platinum",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#4c1d95",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": 2
+      }
+    },
+    {
+      "nome": "editar cartão do Open Finance sem mudar nada",
+      "comentario": "Só o AtualizadoEm muda no banco.",
+      "metodo": "PUT",
+      "caminho": "/api/contas/2",
+      "corpo": {
+        "nome": "Cartão Fictício Platinum",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#4c1d95",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": 1
+      }
+    },
+    {
+      "nome": "editar conta manual para cartão vinculado",
+      "metodo": "PUT",
+      "caminho": "/api/contas/9",
+      "corpo": {
+        "nome": "Conta Itaú Sem Selo",
+        "tipo": 3,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": 300.5,
+        "diaFechamento": 15,
+        "diaVencimento": 25,
+        "cor": "#123abc",
+        "incluirNoSaldo": false,
+        "arquivada": true,
+        "banco": "outro",
+        "contaVinculadaId": 7
+      }
+    },
+    {
+      "nome": "editar inexistente",
+      "metodo": "PUT",
+      "caminho": "/api/contas/999",
+      "corpo": {
+        "nome": "X",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "editar com id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/contas/abc",
+      "corpo": {
+        "nome": "X",
+        "tipo": 1,
+        "numero": null,
+        "saldoInicial": 0,
+        "limiteCredito": null,
+        "diaFechamento": null,
+        "diaVencimento": null,
+        "cor": "#123abc",
+        "incluirNoSaldo": true,
+        "arquivada": false,
+        "banco": null,
+        "contaVinculadaId": null
+      }
+    },
+    {
+      "nome": "faturas do cartão",
+      "comentario": "Até 24, do vencimento mais novo ao mais velho, com a quantidade de transações ligadas e o pago (o maior entre o informado e o lançado no cartão, #251).",
+      "metodo": "GET",
+      "caminho": "/api/contas/2/faturas"
+    },
+    {
+      "nome": "faturas de conta sem faturas",
+      "metodo": "GET",
+      "caminho": "/api/contas/3/faturas"
+    },
+    {
+      "nome": "faturas de conta inexistente",
+      "metodo": "GET",
+      "caminho": "/api/contas/999/faturas"
+    },
+    {
+      "nome": "limite ajustado: sim",
+      "comentario": "Guarda a diferença de agora: limite − disponível − dívida.",
+      "metodo": "PUT",
+      "caminho": "/api/contas/2/limite-ajustado",
+      "corpo": {
+        "ajustado": true
+      }
+    },
+    {
+      "nome": "limite ajustado: não",
+      "metodo": "PUT",
+      "caminho": "/api/contas/2/limite-ajustado",
+      "corpo": {
+        "ajustado": false
+      }
+    },
+    {
+      "nome": "limite ajustado: desfazer",
+      "metodo": "PUT",
+      "caminho": "/api/contas/2/limite-ajustado",
+      "corpo": {
+        "ajustado": null
+      }
+    },
+    {
+      "nome": "limite ajustado do cartão manual",
+      "comentario": "Sem limite disponível gravado (manual): a diferença fica null.",
+      "metodo": "PUT",
+      "caminho": "/api/contas/8/limite-ajustado",
+      "corpo": {
+        "ajustado": true
+      }
+    },
+    {
+      "nome": "limite ajustado de conta que não é cartão",
+      "metodo": "PUT",
+      "caminho": "/api/contas/1/limite-ajustado",
+      "corpo": {
+        "ajustado": true
+      }
+    },
+    {
+      "nome": "limite ajustado de inexistente",
+      "metodo": "PUT",
+      "caminho": "/api/contas/999/limite-ajustado",
+      "corpo": {
+        "ajustado": true
+      }
+    },
+    {
+      "nome": "excluir conta do Open Finance",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/1"
+    },
+    {
+      "nome": "excluir a conta nova com cartões vinculados",
+      "comentario": "Os cartões 8 e 9 ficam sem conta vinculada (não há FK).",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/7"
+    },
+    {
+      "nome": "excluir o cartão com a compra",
+      "comentario": "A compra sai junto, pela FK em cascata.",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/8"
+    },
+    {
+      "nome": "excluir inexistente",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/999"
+    },
+    {
+      "nome": "excluir com id que não é número",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/abc"
+    },
+    {
+      "nome": "excluir a conta 9",
+      "comentario": "Limpeza: os arquivos seguintes veem as contas da base.",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/9"
+    },
+    {
+      "nome": "excluir a conta 10",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/10"
+    },
+    {
+      "nome": "excluir a conta 11",
+      "metodo": "DELETE",
+      "caminho": "/api/contas/11"
+    },
+    {
+      "nome": "listar no fim",
+      "comentario": "As contas da base de volta, com o que os casos deixaram (AtualizadoEm; a resposta do limite desfeita).",
+      "metodo": "GET",
+      "caminho": "/api/contas?incluirArquivadas=true"
+    }
+  ]
+}

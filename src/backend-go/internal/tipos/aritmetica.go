@@ -71,6 +71,14 @@ func Multiplicar(a, b Decimal) Decimal { return DeDecimal(a.v.Mul(b.v)) }
 func Somar(a, b Decimal) Decimal    { return DeDecimal(a.v.Add(b.v)) }
 func Subtrair(a, b Decimal) Decimal { return DeDecimal(a.v.Sub(b.v)) }
 
+// Maior é o Math.Max do decimal do C#: no empate devolve o primeiro, com a escala dele (Max(100, 100.0) = 100).
+func Maior(a, b Decimal) Decimal {
+	if a.v.Cmp(b.v) >= 0 {
+		return a
+	}
+	return b
+}
+
 // Arredondar é o Math.Round(x, casas) do C#, sem o MidpointRounding: arredonda pelo método bancário (2.565 →
 // 2.56; 0.125 → 0.12) e só mexe quando o valor tem mais casas que o pedido (250.0 continua 250.0, não 250.00).
 func Arredondar(d Decimal, casas int32) Decimal {

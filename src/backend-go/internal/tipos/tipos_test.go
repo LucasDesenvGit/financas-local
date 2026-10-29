@@ -200,3 +200,14 @@ func TestDataEGuidRecusamJSONInvalido(t *testing.T) {
 		t.Errorf("Guid válido: %v %s", err, g)
 	}
 }
+
+// Regra: o carimbo que o C# devolve da memória (Kind Utc) sai com "Z"; o lido do banco, sem.
+func TestDataHoraUtcNoJSON(t *testing.T) {
+	t.Parallel()
+	d := NovaDataHora(time.Date(2026, 10, 15, 1, 0, 0, 123456700, time.UTC))
+	utc, _ := json.Marshal(DataHoraUtc{d})
+	semFuso, _ := json.Marshal(d)
+	if string(utc) != `"2026-10-15T01:00:00.1234567Z"` || string(semFuso) != `"2026-10-15T01:00:00.1234567"` {
+		t.Errorf("JSON %s e %s", utc, semFuso)
+	}
+}

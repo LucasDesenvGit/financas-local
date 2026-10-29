@@ -90,6 +90,10 @@ public static class RepasseGo
         using var pedido = new HttpRequestMessage(new HttpMethod(metodo), endereco);
         if (ctx.Request.ContentLength > 0 || ctx.Request.Headers.TransferEncoding.Count > 0)
             pedido.Content = new StreamContent(ctx.Request.Body);
+        else if (ctx.Request.ContentType is not null)
+            // Corpo vazio com Content-Type: sem um conteúdo, o cabeçalho não passa, e o Go responderia 415 (sem tipo) no
+            // lugar do 400 do corpo vazio que o .NET dá (contrato 04-contas, "criar com corpo vazio").
+            pedido.Content = new ByteArrayContent([]);
         foreach (var (nome, valores) in ctx.Request.Headers)
         {
             if (NaoRepassar.Contains(nome) || nome.StartsWith(PrefixoCabecalhoInterno, StringComparison.OrdinalIgnoreCase))
