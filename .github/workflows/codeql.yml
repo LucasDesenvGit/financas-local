@@ -93,13 +93,13 @@ jobs:
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
           BANCO: ${{ runner.temp }}/codeql_databases/${{ matrix.linguagem }}
+          LINGUAGEM: ${{ matrix.linguagem }}
         run: |
-          {
-            echo "### CodeQL (${{ matrix.linguagem }})"
-            echo '```'
+          resumo=$(
             "$CODEQL" database print-baseline "$BANCO" 2>&1 | tail -n 5
             echo
             echo "arquivos analisados por pasta:"
             unzip -Z1 "$BANCO/src.zip" | sed -E "s|^.*$GITHUB_WORKSPACE/||" | grep -v '/$' | awk -F/ '{print $1"/"$2}' | sort | uniq -c | sort -rn | head -n 15
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          )
+          echo "$resumo"
+          printf '### CodeQL (%s)\n```\n%s\n```\n' "$LINGUAGEM" "$resumo" >> "$GITHUB_STEP_SUMMARY"
