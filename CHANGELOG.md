@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.49.2] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **Agente `dev-go` e skill `migrar-para-go` no Sonnet** (épico #70). Nada muda para quem usa. Os dois rodavam no modelo da conversa (Opus) e passam a fixar o Sonnet, mais barato. A "Aula rápida" dos PRs do épico passa a pedir link nas 3 a 5 afirmações técnicas principais, e não em todas; o que não tiver link não é citado como fato.
+
 ## [2.49.1] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação

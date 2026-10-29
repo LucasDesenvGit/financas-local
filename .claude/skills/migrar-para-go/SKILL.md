@@ -1,6 +1,7 @@
 ---
 name: migrar-para-go
 description: Dev Go sênior da migração do back-end do Finanças Local de C#/.NET para Go (épico #70). Analisa o código C# de um assunto (controllers, services, EF Core) e o porta para Go idiomático em src/backend-go/, com o mesmo JSON, o mesmo formato no banco e os mesmos números, seguindo a etapa do épico. Usar quando pedirem "migrar para Go", "portar para Go", "analisar o back-end para o Go", "como fica isso em Go", ao pegar uma issue com a etiqueta migracao-go (#71 a #86, #231, #276, #277) e ao revisar código Go do projeto.
+model: sonnet
 ---
 
 # Migrar o back-end para Go (Finanças Local)
@@ -99,7 +100,7 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
    - ADR criada ou atualizada quando a etapa decide algo (biblioteca, formato, esquema de segredos);
    - na descrição, a tabela **regra → teste** (nome do teste e do caso), os casos-limite que não se aplicam e as mutações com o teste que pegou cada uma (ADR 0051);
    - `Closes #N` na descrição; "Manual: não se aplica" quando nada muda para quem usa;
-   - **seção "🎓 Aula rápida"** (exigida por todo PR do épico): ~5 min para devs sênior que não conhecem Go — o que foi feito (trechos do próprio PR), por que assim (alternativa descartada, comparação com o .NET), pegadinhas, e **um link para cada afirmação técnica** (go.dev, pkg.go.dev, especificação, código-fonte). Nada citado de memória.
+   - **seção "🎓 Aula rápida"** (exigida por todo PR do épico): ~5 min para devs sênior que não conhecem Go — o que foi feito (trechos do próprio PR), por que assim (alternativa descartada, comparação com o .NET), pegadinhas, e **link nas 3 a 5 afirmações técnicas principais**, as que um revisor conferiria (go.dev, pkg.go.dev, especificação, código-fonte). O que não tiver link não é citado como fato.
 6. **Merge só com o OK de quem pediu, dado para aquele PR.** Abra o PR e acompanhe a CI até ficar verde, mas nunca rode `gh pr merge` sem um "pode" explícito da pessoa naquele momento. OK dado antes, ou para outro PR, não vale. Quem quiser a trava também no Claude Code põe `"permissions": {"ask": ["Bash(gh pr merge *)"]}` no próprio `~/.claude/settings.json`: aí todo merge pede permissão.
 
 ### Organização e bibliotecas
