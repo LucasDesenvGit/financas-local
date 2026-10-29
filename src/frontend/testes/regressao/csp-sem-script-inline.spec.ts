@@ -20,7 +20,7 @@ describe('Regressão: index.html sem script inline que a CSP bloqueie', () => {
 
   it('o index.html do código-fonte não tem <script> escrito dentro dele', () => {
     const html = readFileSync(join(raiz, 'src/index.html'), 'utf8');
-    const inline = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(([, , corpo]) => corpo.trim());
+    const inline = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)].filter(([, , corpo]) => corpo.trim());
     expect(inline).toEqual([]);
   });
 });

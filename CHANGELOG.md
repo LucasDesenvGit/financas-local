@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Alertas do CodeQL** (code scanning). Nada muda para quem usa. Junta num PR só as correções que valem das sugeridas pelo Copilot Autofix (#491 a #494), e reescreve a #490:
   - a falha de rede com a Pluggy vai para o log só com o nome do recurso (`items`, `accounts`…), sem os ids de item e de conta que iam no caminho (alertas 4 e 5); o código da moeda vai sem quebra de linha, para que nenhum texto vindo de fora forje uma linha nova (alerta 6);
   - a regex que lê a CSP do `Seguranca.cs` no servidor dos testes no navegador não tem mais quantificador aninhado (alerta 3);
+  - o teste que procura script inline no `index.html` passa a reconhecer também o fechamento com espaço ou atributo (`</script >`), que antes escapava (alerta 2);
   - o ⓘ do gerenciador em Go acha a explicação por `getElementById`, e não pelo `$` com o texto do atributo (alerta 1);
   - o `lerInt32` do Go converte o hexadecimal sem estreitar o tipo: `0xFFFFFFFF` continua -1, como o `Convert.ToInt32(texto, 16)` (alerta 7), agora com teste em tabela.
 
