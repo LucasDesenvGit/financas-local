@@ -201,7 +201,10 @@
   // ⓘ: a explicação abre e fecha por clique ou teclado (Disclosure), e não só no title=.
   document.querySelectorAll('.info').forEach(function (b) {
     b.addEventListener('click', function () {
-      var alvo = $(b.getAttribute('aria-controls'));
+      var controleId = b.getAttribute('aria-controls');
+      if (!controleId) return;
+      var alvo = document.getElementById(controleId);
+      if (!alvo) return;
       alvo.hidden = !alvo.hidden;
       b.setAttribute('aria-expanded', String(!alvo.hidden));
       ajustarAltura();
