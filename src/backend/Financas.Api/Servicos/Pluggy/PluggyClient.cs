@@ -145,7 +145,7 @@ public class PluggyClient
             catch (HttpRequestException ex) when (tentativa < 3)
             {
                 _logger.LogWarning("Falha de rede ao chamar Pluggy ({Caminho}): {Erro}. Tentativa {T}.",
-                    CaminhoSemQuery(caminho), ex.Message, tentativa);
+                    "PluggyEndpoint", ex.Message, tentativa);
                 await Task.Delay(TimeSpan.FromSeconds(2 * tentativa), ct);
                 continue;
             }
