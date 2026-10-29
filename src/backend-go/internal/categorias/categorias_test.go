@@ -143,7 +143,7 @@ func TestLerDaQuery(t *testing.T) {
 		ok       bool
 	}{
 		{"Igual", 3, true}, {"comecacom", 2, true}, {" CONTEM ", 1, true}, {"2", 2, true}, {"9", 9, true},
-		{"Contem, Igual", 3, true}, {"abc", 0, false}, {"256", 0, false}, {"-1", 0, false}, {"", 0, false},
+		{"Contem, Igual", 3, true}, {"Igual,Contem", 3, true}, {"2,1", 3, true}, {"abc", 0, false}, {"256", 0, false}, {"-1", 0, false}, {"", 0, false},
 	}
 	for _, e := range enums {
 		if got, ok := lerEnumDaQuery(e.valor, nomesDoTipoCorrespondencia); got != e.esperado || ok != e.ok {

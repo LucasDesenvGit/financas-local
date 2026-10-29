@@ -170,8 +170,8 @@ func (s *Servico) excluirRegra(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// loteDoReaplicar é o Take(2000) do C#.
-const loteDoReaplicar = 2000
+// loteDoReaplicar é o Take(2000) do C#. Variável só para o teste dos vários lotes.
+var loteDoReaplicar = 2000
 
 // reaplicar recategoriza todas as transações de categoria automática com as regras de agora e o mapa da Pluggy, acerta
 // o tipo de cada uma e, no fim, as transferências entre contas suas (ADR 0031). Um lote por vez, cada um gravado numa

@@ -19,3 +19,6 @@ internal/configuracao | configuracao.go | ARITHMETIC_BASE | return Instante{t: t
 internal/erros | gravador.go | INVERT_LOOPCTRL | break | dentro da janela de 24 h, cada assinatura tem no máximo uma linha no lote: pegar a primeira ou a última dá no mesmo (#401)
 internal/erros | handler.go | CONDITIONALS_BOUNDARY | if lista := e.Unwrap(); len(lista) > 0 { | o erro do errors.Join sempre tem pelo menos um erro dentro (#401)
 internal/cambio | rotas.go | CONDITIONALS_BOUNDARY | if strings.EqualFold(chave, nome) && len(valores) > 0 { | o url.Values da URL (ParseQuery) nunca tem chave com lista vazia: cada chave vem com pelo menos um valor
+internal/categorias | regrasdescricao.go | CONDITIONALS_BOUNDARY | if strings.EqualFold(chave, nome) && len(valores) > 0 { | o url.Values da query nunca tem chave com a lista vazia
+internal/categorias | categorias.go | INVERT_LOGICAL | if errors.Is(err, context.Canceled) || r.Context().Err() != nil { | o erro de contexto cancelado só vem com o contexto da requisição cancelado: os dois lados andam juntos
+internal/transacoes | transacoes.go | ARITHMETIC_BASE | argumentos := make([]any, 0, len(lista)+1) | é só a capacidade inicial do slice: o append cresce do mesmo jeito

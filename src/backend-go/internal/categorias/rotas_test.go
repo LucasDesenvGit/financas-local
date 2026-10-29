@@ -100,10 +100,13 @@ func TestRegrasPelaRota(t *testing.T) {
 			x.Descricao, x.DescricaoOriginal, x.CategoriaId, x.CategoriaManual = descricao, p(descricao), categoria, manual
 		}).Id
 	}
+	nova("SUPERMERCADO JA CERTO", &mercado.Id, false) // a primeira do lote não muda: as seguintes continuam
 	semRegra := nova("SUPERMERCADO EXEMPLO", nil, false)
 	cinema := nova("CINEMA CENTRO", &mercado.Id, false)
 	manual := nova("CINEMA MANUAL", &mercado.Id, true)
 	solta := nova("LOJA", &lazer.Id, false)
+	loteDoReaplicar = 2 // vários lotes, como com mais de 2000 transações
+	t.Cleanup(func() { loteDoReaplicar = 2000 })
 	chamar("POST", "/api/regras/reaplicar", "").ConferirJSON(t, `{"transacoesAtualizadas":3}`)
 	chamar("POST", "/api/regras/reaplicar", "").ConferirJSON(t, `{"transacoesAtualizadas":0}`)
 	categoriaDe := func(id int64) *int64 {
@@ -134,6 +137,17 @@ func TestRegrasDescricaoPelaRota(t *testing.T) {
 	moradia := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Moradia" })
 	fab.RegraCategorizacao(moradia, func(r *testeapoio.RegraCategorizacao) { r.Texto = "ALUGUEL" })
 	conta := fab.Conta()
+	manual := fab.Transacao(conta, func(x *testeapoio.Transacao) { // categoria manual, primeira da lista: fica
+		x.Descricao, x.DescricaoOriginal, x.CategoriaManual, x.Valor = "PIX IMOBILIARIA", p("PIX IMOBILIARIA"), true, tipos.Decimal{}
+		x.Valor, _ = tipos.NovoDecimal("-1850")
+	})
+	// Uma TED na genérica, com o par na poupança e ainda como despesa: o reclassificar das transferências, que roda
+	// depois de a regra mudar uma categoria, a acerta.
+	generica := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome, c.Tipo = "Transferências", 3 })
+	ted := fab.Transacao(conta, func(x *testeapoio.Transacao) {
+		x.CategoriaId, x.Descricao, x.Tipo = &generica.Id, "TED", transacoes.Despesa
+	})
+	fab.Transacao(fab.Conta(), func(x *testeapoio.Transacao) { x.Valor, _ = tipos.NovoDecimal("10.00") })
 	var ids []int64
 	for _, valor := range []string{"-1850", "-1850", "-90"} {
 		ids = append(ids, fab.Transacao(conta, func(x *testeapoio.Transacao) {
@@ -145,9 +159,17 @@ func TestRegrasDescricaoPelaRota(t *testing.T) {
 		return testeapoio.Chamar(t, mux, metodo, caminho, corpo)
 	}
 
-	chamar("GET", "/api/regras-descricao/previa?texto=imobiliaria&tipo=1&valorMinimo=1000", "").ConferirJSON(t, `{"quantidade":2,"exemplos":["PIX IMOBILIARIA"]}`)
+	chamar("GET", "/api/regras-descricao/previa?texto=imobiliaria&tipo=1&valorMinimo=1000&valorMaximo=", "").ConferirJSON(t, `{"quantidade":3,"exemplos":["PIX IMOBILIARIA"]}`)
 	chamar("POST", "/api/regras-descricao", `{"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":" Aluguel ","valorMinimo":1800,"valorMaximo":"1900.00"}`).
-		ConferirJSON(t, `{"id":1,"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel","ativa":true,"transacoes":2,"valorMinimo":1800,"valorMaximo":1900.00}`)
+		ConferirJSON(t, `{"id":1,"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel","ativa":true,"transacoes":3,"valorMinimo":1800,"valorMaximo":1900.00}`)
+	var categoriaManual *int64
+	var tipoTed int64
+	if err := db.QueryRow(`SELECT CategoriaId FROM Transacao WHERE Id = ?`, manual.Id).Scan(&categoriaManual); err != nil || categoriaManual != nil {
+		t.Errorf("a de categoria manual foi recategorizada: %v %v", categoriaManual, err)
+	}
+	if err := db.QueryRow(`SELECT Tipo FROM Transacao WHERE Id = ?`, ted.Id).Scan(&tipoTed); err != nil || tipoTed != transacoes.Transferencia {
+		t.Errorf("a TED com par não foi reclassificada como transferência: %d %v", tipoTed, err)
+	}
 	var descricao string
 	var categoria *int64
 	var tipo int64
@@ -157,7 +179,7 @@ func TestRegrasDescricaoPelaRota(t *testing.T) {
 	}
 	// A lista lê do banco, no formato do EF Core (1800.0); a resposta do criar devolve o valor como veio, como o C#.
 	chamar("GET", "/api/regras-descricao", "").ConferirJSON(t,
-		`[{"id":1,"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel","ativa":true,"transacoes":2,"valorMinimo":1800.0,"valorMaximo":1900.0}]`)
+		`[{"id":1,"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel","ativa":true,"transacoes":3,"valorMinimo":1800.0,"valorMaximo":1900.0}]`)
 
 	chamar("POST", "/api/regras-descricao", `{"texto":"xx","tipoCorrespondencia":0,"novaDescricao":"Y"}`).ConferirJSON(t, `{"mensagem":"Tipo de correspondência inválido."}`)
 	chamar("POST", "/api/regras-descricao", `{"texto":"xx","tipoCorrespondencia":1,"novaDescricao":"Y","valorMinimo":2,"valorMaximo":1}`).
@@ -165,7 +187,7 @@ func TestRegrasDescricaoPelaRota(t *testing.T) {
 	chamar("PUT", "/api/regras-descricao/999", `{"texto":"nada","tipoCorrespondencia":1,"novaDescricao":"Nada"}`).ConferirJSON(t, `{"mensagem":"Registro não encontrado."}`)
 	chamar("PUT", "/api/regras-descricao/999", `{"texto":"x","tipoCorrespondencia":1,"novaDescricao":"Nada"}`).ConferirStatus(t, http.StatusBadRequest)
 	chamar("PUT", "/api/regras-descricao/1", `{"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel apto"}`).
-		ConferirJSON(t, `{"id":1,"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel apto","ativa":true,"transacoes":3,"valorMinimo":null,"valorMaximo":null}`)
+		ConferirJSON(t, `{"id":1,"texto":"PIX IMOBILIARIA","tipoCorrespondencia":3,"novaDescricao":"Aluguel apto","ativa":true,"transacoes":4,"valorMinimo":null,"valorMaximo":null}`)
 
 	chamar("DELETE", "/api/regras-descricao/999", "").ConferirJSON(t, `{"mensagem":"Registro não encontrado."}`)
 	chamar("DELETE", "/api/regras-descricao/1", "").ConferirStatus(t, http.StatusNoContent)

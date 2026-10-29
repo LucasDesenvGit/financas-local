@@ -76,6 +76,29 @@ func TestListarEGravarSoOQueMudou(t *testing.T) {
 	}
 }
 
+// Regra: GravarTodas grava todas as que mudaram, não só a primeira.
+func TestGravarTodas(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	conta := fab.Conta()
+	fab.Transacao(conta)
+	fab.Transacao(conta)
+	lista, err := Listar(t.Context(), db, `ORDER BY "Id"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tr := range lista {
+		tr.Descricao = "mudou"
+	}
+	if err := GravarTodas(t.Context(), db, lista); err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM Transacao WHERE Descricao = 'mudou'`).Scan(&n); err != nil || n != 2 {
+		t.Errorf("gravou %d de 2 (%v)", n, err)
+	}
+}
+
 // Regra: transação montada à mão (sem ter sido lida) não tem o que gravar.
 func TestGravarSemLeituraNaoFazNada(t *testing.T) {
 	db := testeapoio.NovoBancoVazio(t)
