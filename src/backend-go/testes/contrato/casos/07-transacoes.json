@@ -1219,6 +1219,9 @@
         "descricao": "APLICACAO CDB BANCO FICTICIO",
         "voltarOriginal": false,
         "aplicarNasOutras": false
+      },
+      "normalizar": {
+        "/desfazer": "texto"
       }
     },
     {
@@ -1415,7 +1418,7 @@
     },
     {
       "nome": "renomear em lote com as regras que já existem",
-      "comentario": "Nada muda: sem chave.",
+      "comentario": "As do salário já estão com o nome da regra e não mudam. Muda a 151: no lote anterior, ela ainda estava no banco com o nome escolhido à mão, e a reaplicação (que consulta o banco) a deixou de fora; agora ela está com o nome automático, e a regra do mercado vale para ela.",
       "metodo": "PATCH",
       "caminho": "/api/transacoes/descricao/em-lote",
       "corpo": {
@@ -1424,6 +1427,9 @@
         ],
         "descricao": "Salário da empresa",
         "criarRegras": true
+      },
+      "normalizar": {
+        "/desfazer": "texto"
       }
     },
     {
