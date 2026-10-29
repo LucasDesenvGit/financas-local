@@ -70,7 +70,9 @@ No Windows sem bash, rode o `instalar-windows.cmd` de novo. Ele atualiza e, se a
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
 
-No Windows, dá para passar desta instalação para o `.msi` a qualquer momento: veja [Instalado pelos scripts e quer passar para o instalador](../README.md#instalado-pelos-scripts-e-quer-passar-para-o-instalador).
+### Instalado pelos scripts e quer passar para o instalador
+
+No Windows, dá para passar desta instalação (feita com o `instalar-windows.cmd` ou o `3-publicar-atualizar.sh`) para o `.msi` a qualquer momento: baixe o `.msi` da [versão mais recente](https://github.com/LucasDesenvGit/financas-local/releases/latest) e abra. Ele encontra a instalação antiga, **copia o banco e as chaves** para `C:\ProgramData\FinancasLocal\dados` e troca o serviço antigo pelo dele. A pasta antiga **não é apagada**, e se o banco antigo não for achado, ele para sem mudar nada e o site antigo volta a rodar. O Client Secret da Pluggy continua funcionando. Daí em diante, a versão nova chega pelo gerenciador ([Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md)).
 
 ## Parar e desinstalar
 
