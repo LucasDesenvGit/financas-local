@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: aviso na bandeja com a janela fechada** (#448, épico #70). Nada muda para quem usa: o gerenciador instalado continua o de C#. Como o de C#, com a janela fechada, o gerenciador em Go avisa quando o site que estava no ar desliga ou para de responder, e quando acha versão nova ("Versão nova: X."). No Windows, é a notificação do ícone da bandeja; no Linux, a da área de trabalho, pelo `notify-send`. Com o site parado por fora (pelo `services.msc`), o "desligando…" no meio não impede mais o aviso, como impedia no C#. O `.exe` passa a se chamar "Finanças Local" no topo da notificação e no Gerenciador de Tarefas. Era o que faltava do gerenciador em C# no de Go, fora a atualização do próprio gerenciador (#430).
+
 ## [2.49.2] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação

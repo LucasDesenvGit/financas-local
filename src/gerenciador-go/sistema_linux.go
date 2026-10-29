@@ -149,3 +149,19 @@ func registroDoServico() *tela.Notas {
 	return &tela.Notas{Titulo: "Registro do serviço (as últimas " + strconv.Itoa(linhasDoRegistro) + " linhas)",
 		Novidades: template.HTML("<pre>" + html.EscapeString(texto) + "</pre>")}
 }
+
+// avisarNaBandeja: a notificação da área de trabalho pelo notify-send, como o Bandeja.cs; sem ele (libnotify), não
+// avisa e segue. O ícone é o cofrinho, gravado no cache do usuário, porque o notify-send pede um arquivo; o de alerta
+// e o de informação não mudam nada aqui, como no C#.
+func avisarNaBandeja(a tela.AvisoNaBandeja) {
+	argumentos := []string{"--app-name=Finanças Local"}
+	if cache, err := os.UserCacheDir(); err == nil {
+		arquivo := filepath.Join(cache, "financas-local", "icone.png")
+		if os.MkdirAll(filepath.Dir(arquivo), 0o700) == nil && os.WriteFile(arquivo, icone, 0o600) == nil {
+			argumentos = append(argumentos, "--icon="+arquivo)
+		}
+	}
+	if _, err := comando.Rodar(context.Background(), 5*time.Second, "notify-send", append(argumentos, "Finanças Local", a.Texto)...); err != nil {
+		log.Print(err)
+	}
+}

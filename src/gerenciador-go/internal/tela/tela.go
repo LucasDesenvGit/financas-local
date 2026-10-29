@@ -197,6 +197,39 @@ func ResultadoDaProcura(nova, desenvolvimento bool, versao string) string {
 	}
 }
 
+// AvisoNaBandeja é o balão do ícone da bandeja com a janela fechada, o ShowBalloonTip do FormPrincipal.cs.
+type AvisoNaBandeja struct {
+	Texto  string
+	Alerta bool // o ícone de alerta; sem ele, o de informação
+}
+
+// Firme é a situação que vale para o aviso de que o site caiu: a de passagem (ligando, desligando) não troca a anterior.
+// Parado pelo services.msc, o site passa alguns segundos "desligando…", e a consulta de 5 em 5 s pode pegar esse meio.
+func Firme(anterior, nova Situacao) Situacao {
+	if nova.Estado == Mudando {
+		return anterior
+	}
+	return nova
+}
+
+// AvisoDoSiteQueCaiu: com a janela fechada, o site que estava no ar (anterior, a última Firme) desligou ou parou de
+// responder. Sem nada a avisar, ok é false.
+func AvisoDoSiteQueCaiu(anterior, nova Situacao, janelaAberta bool) (aviso AvisoNaBandeja, ok bool) {
+	caiu := nova.Estado == Desligado || nova.Estado == SemResposta
+	if janelaAberta || anterior.Estado != NoAr || !caiu {
+		return AvisoNaBandeja{}, false
+	}
+	return AvisoNaBandeja{Texto: nova.Titulo, Alerta: true}, true
+}
+
+// AvisoDaVersaoNova: com a janela fechada, a procura achou versão nova ("" quando não achou).
+func AvisoDaVersaoNova(versao string, janelaAberta bool) (aviso AvisoNaBandeja, ok bool) {
+	if janelaAberta || versao == "" {
+		return AvisoNaBandeja{}, false
+	}
+	return AvisoNaBandeja{Texto: "Versão nova: " + versao + "."}, true
+}
+
 // Ponto é a classe da cor do ponto da situação (Tema.DaSituacao); a cor nunca é a única pista (WCAG 1.4.1).
 func (t Tela) Ponto() string {
 	switch t.Situacao.Estado {
