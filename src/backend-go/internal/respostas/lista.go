@@ -6,12 +6,16 @@ import (
 	"strconv"
 )
 
-// tipoListaLong é o nome do List<long> nas mensagens do System.Text.Json.
-const tipoListaLong = "System.Collections.Generic.List`1[System.Int64]"
+// Os nomes do List<long> e do long nas mensagens do System.Text.Json: o valor que não é lista cita a lista, e o item
+// que não é long cita o long (contrato 07-transacoes, "emergência em lote").
+const (
+	tipoListaLong = "System.Collections.Generic.List`1[System.Int64]"
+	tipoLong      = "System.Int64"
+)
 
 // CampoListaLong é um List<long> de um DTO, com [Required] e, se Minimo ou Maximo não forem 0, o [MinLength] e o
 // [MaxLength]. Cada item é um long em número ou em texto (AllowReadingFromString); null fica nil. O erro de um item
-// cita a lista e o índice ("$.ids[1]").
+// cita o índice ("$.ids[1]").
 type CampoListaLong struct {
 	Propriedade    string
 	Minimo, Maximo int
@@ -42,7 +46,7 @@ func (c *CampoListaLong) lerValor(l *LeitorJSON, inicio json.Token, caminho stri
 		}
 		n, ok := inteiroDoTokenEm(t, 64)
 		if !ok {
-			return l.Conversao(caminho+"["+strconv.Itoa(i)+"]", tipoListaLong)
+			return l.Conversao(caminho+"["+strconv.Itoa(i)+"]", tipoLong)
 		}
 		lista = append(lista, n)
 	}
