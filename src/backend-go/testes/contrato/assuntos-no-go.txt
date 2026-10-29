@@ -6,7 +6,7 @@
 
 cambio /api/cambio;/api/cripto
 
-# cadastros /api/contas;/api/conferencia-banco;/api/categorias;/api/regras;/api/regras-descricao
+cadastros /api/categorias;/api/regras;/api/regras-descricao
 
 # transacoes /api/transacoes
 

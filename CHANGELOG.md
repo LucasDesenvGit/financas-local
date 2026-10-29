@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.49.1] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **Categorias, regras de categorização e regras de descrição em Go** (#77, parte 1; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `cadastros` ser ligado em `Go:Prefixos` (passo 2 da ADR 0049, depois da parte 2). Para quem desenvolve:
+  - as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` (prévia, cadeia #250, faixa de valor #241), com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: o contrato `05-categorias` (33 casos) e `06-regras` (38 casos), gravado do .NET, passa com o Go atendendo;
+  - a regra fica em pacotes que a sincronização (#83) vai reaproveitar: `categorizacao` (o `CategorizacaoService`), `regrasdescricao`, `transferencias` (ADR 0031), `tipolancamento` (ADR 0025) e o modelo de `Transacao`, que grava só as colunas que mudaram;
+  - a normalização de texto das regras (sem acento, maiúsculas) em `internal/texto`, conferida contra o próprio C# por um gabarito de 79 casos; usa o `golang.org/x/text`, que entrou na lista de bibliotecas da ADR 0049;
+  - o padrão de um assunto em Go (camadas, entrada e saída iguais às do .NET, gravar como o EF Core, testes) em `src/backend-go/internal/README.md`.
+
 ## [2.49.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades

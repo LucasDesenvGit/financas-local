@@ -85,7 +85,8 @@ type CampoTexto struct {
 	Propriedade string // o nome da propriedade no C#, que é a chave em "errors" ("Login", "SenhaAtual")
 	Minimo      int
 	Maximo      int
-	Opcional    bool // sem [Required] (string? no C#)
+	Opcional    bool    // sem [Required] (string? no C#)
+	Padrao      *Padrao // [RegularExpression], se houver
 	Valor       *string
 }
 
@@ -118,6 +119,9 @@ func (c *CampoTexto) validar(erros map[string][]string) {
 			} else {
 				lista = append(lista, fmt.Sprintf("The field %s must be a string with a maximum length of %d.", c.Propriedade, c.Maximo))
 			}
+		}
+		if c.Padrao != nil && *c.Valor != "" && !c.Padrao.re.MatchString(*c.Valor) {
+			lista = append(lista, c.Padrao.mensagem(c.Propriedade))
 		}
 	}
 	if len(lista) > 0 {
