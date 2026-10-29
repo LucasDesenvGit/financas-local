@@ -68,6 +68,7 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
 
       - name: Iniciar o CodeQL
+        id: codeql
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.linguagem }}
@@ -84,3 +85,21 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.linguagem }}"
+
+      # O que entrou na análise, por pasta: uma pasta que some daqui (o gerenciador em Go sem compilar, por exemplo)
+      # deixa de ser analisada sem nenhum erro.
+      - name: Resumo do que foi analisado
+        if: always()
+        env:
+          CODEQL: ${{ steps.codeql.outputs.codeql-path }}
+          BANCO: ${{ runner.temp }}/codeql_databases/${{ matrix.linguagem }}
+        run: |
+          {
+            echo "### CodeQL (${{ matrix.linguagem }})"
+            echo '```'
+            "$CODEQL" database print-baseline "$BANCO" 2>&1 | tail -n 5
+            echo
+            echo "arquivos analisados por pasta:"
+            unzip -Z1 "$BANCO/src.zip" | sed -E "s|^.*$GITHUB_WORKSPACE/||" | grep -v '/$' | awk -F/ '{print $1"/"$2}' | sort | uniq -c | sort -rn | head -n 15
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
