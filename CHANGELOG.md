@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.48.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: o cofrinho no `.exe`** (#435, épico #70, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. O `.exe` do gerenciador em Go passa a ter o ícone do Finanças Local no Explorer, na barra de tarefas e no Alt+Tab, e o manifesto do Windows (controles comuns v6 e escala por monitor). O arquivo do ícone é gerado pelo go-winres na CI, que confere se o do repositório está em dia: ninguém precisa rodar a ferramenta na própria máquina.
+
 ## [2.47.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades
