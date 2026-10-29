@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -52,7 +51,7 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 	ctx := req.Context()
 	// O model binding do ASP.NET roda antes da ação: data inválida é o 400 automático, antes de olhar a moeda.
 	var data *tipos.Data
-	if bruta := parametro(req.URL.Query(), "data"); bruta != "" {
+	if bruta, _ := respostas.ParametroDaQuery(req, "data"); bruta != "" {
 		d, ok := lerDataDaQuery(bruta)
 		if !ok {
 			// O 400 automático do [ApiController] quando o texto não vira o tipo do parâmetro (DateOnly?).
@@ -62,7 +61,8 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 		data = &d
 	}
 
-	codigo, ok := NormalizarMoeda(parametro(req.URL.Query(), "moeda"))
+	moeda, _ := respostas.ParametroDaQuery(req, "moeda")
+	codigo, ok := NormalizarMoeda(moeda)
 	if !ok {
 		respostas.Mensagem(w, http.StatusBadRequest, "Informe a moeda com o código de 3 letras (ex.: USD, EUR).")
 		return
@@ -90,16 +90,6 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 		return
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, c)
-}
-
-// parametro é o [FromQuery] do ASP.NET: o nome não diferencia maiúsculas, e vale o primeiro valor.
-func parametro(q url.Values, nome string) string {
-	for chave, valores := range q {
-		if strings.EqualFold(chave, nome) && len(valores) > 0 {
-			return valores[0]
-		}
-	}
-	return ""
 }
 
 // lerDataDaQuery é o DateOnly do model binding, que lê a query na cultura invariante: "2026-10-15" (o que o

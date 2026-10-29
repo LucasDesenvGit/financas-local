@@ -163,9 +163,6 @@ func TestLerDaQuery(t *testing.T) {
 			t.Errorf("lerDecimalDaQuery(%q) = %s, %v; esperado %s, %v", d.valor, got, ok, d.esperado, d.ok)
 		}
 	}
-	if m := mensagemDaQuery(""); m != "The value '' is invalid." {
-		t.Errorf("mensagem do vazio: %q", m)
-	}
 }
 
 // Regra: a prévia responde o 400 automático com o nome do parâmetro e, sem texto, zero e lista vazia.

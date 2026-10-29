@@ -1,0 +1,36 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "valores": [
+    {"valor":"2026","inteiro":"2026","booleano":"erro"},
+    {"valor":" 2026 ","inteiro":"2026","booleano":"erro"},
+    {"valor":"+12","inteiro":"12","booleano":"erro"},
+    {"valor":"-1","inteiro":"-1","booleano":"erro"},
+    {"valor":"0","inteiro":"0","booleano":"erro"},
+    {"valor":"007","inteiro":"7","booleano":"erro"},
+    {"valor":"0x7EA","inteiro":"2026","booleano":"erro"},
+    {"valor":"0X7ea","inteiro":"2026","booleano":"erro"},
+    {"valor":"#7EA","inteiro":"2026","booleano":"erro"},
+    {"valor":"&h7EA","inteiro":"2026","booleano":"erro"},
+    {"valor":"1e3","inteiro":"erro","booleano":"erro"},
+    {"valor":"1.0","inteiro":"erro","booleano":"erro"},
+    {"valor":"1,000","inteiro":"erro","booleano":"erro"},
+    {"valor":"2026x","inteiro":"erro","booleano":"erro"},
+    {"valor":"","inteiro":"erro","booleano":"erro"},
+    {"valor":" ","inteiro":"erro","booleano":"erro"},
+    {"valor":"2147483647","inteiro":"2147483647","booleano":"erro"},
+    {"valor":"2147483648","inteiro":"erro","booleano":"erro"},
+    {"valor":"-2147483648","inteiro":"-2147483648","booleano":"erro"},
+    {"valor":"-2147483649","inteiro":"erro","booleano":"erro"},
+    {"valor":"١٢","inteiro":"erro","booleano":"erro"},
+    {"valor":"true","inteiro":"erro","booleano":"True"},
+    {"valor":"True","inteiro":"erro","booleano":"True"},
+    {"valor":" TRUE ","inteiro":"erro","booleano":"True"},
+    {"valor":"false","inteiro":"erro","booleano":"False"},
+    {"valor":"1","inteiro":"1","booleano":"erro"},
+    {"valor":"sim","inteiro":"erro","booleano":"erro"},
+    {"valor":"yes","inteiro":"erro","booleano":"erro"},
+    {"valor":"x","inteiro":"erro","booleano":"erro"}
+  ]
+}
