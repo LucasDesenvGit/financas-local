@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.48.1] — 2026-10-28 · desenvolvimento
+
+### Correções
+- **Trocar o tipo de uma categoria para despesa ou receita** (#438). Dava "Ocorreu um erro interno" e deixava a categoria com o tipo novo, mas as transações dela continuavam como transferência, fora dos relatórios. Agora as transações ficam com o tipo pelo sinal (no cartão, entrada é estorno, ADR 0036) e voltam aos relatórios.
+
 ## [2.48.0] — 2026-10-28 · desenvolvimento
 
 ### Funcionalidades
