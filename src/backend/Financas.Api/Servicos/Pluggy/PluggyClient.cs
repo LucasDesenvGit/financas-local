@@ -145,7 +145,7 @@ public class PluggyClient
             catch (HttpRequestException ex) when (tentativa < 3)
             {
                 _logger.LogWarning("Falha de rede ao chamar Pluggy ({Caminho}): {Erro}. Tentativa {T}.",
-                    SanitizarParaLog(CaminhoSemQuery(caminho)), ex.Message, tentativa);
+                    RecursoParaLog(caminho), ex.Message, tentativa);
                 await Task.Delay(TimeSpan.FromSeconds(2 * tentativa), ct);
                 continue;
             }
@@ -185,6 +185,18 @@ public class PluggyClient
         var i = caminho.IndexOf('?');
         return i < 0 ? caminho : caminho[..i];
     }
+
+    /// <summary>Só o nome do recurso, sem os ids de item e de conta que vão no caminho.</summary>
+    private static string RecursoParaLog(string caminho) => caminho.Split('/', '?')[0] switch
+    {
+        "items" => "items",
+        "accounts" => "accounts",
+        "categories" => "categories",
+        "investments" => "investments",
+        "loans" => "loans",
+        "v2" => "v2/transactions",
+        _ => "outro"
+    };
 
     private static string SanitizarParaLog(string valor)
         => valor.Replace("\r", string.Empty).Replace("\n", string.Empty);

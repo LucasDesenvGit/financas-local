@@ -149,11 +149,10 @@ func lerInt32(bruto, propriedade string) (int, string) {
 			if err != nil {
 				return 0, naoValido(bruto, propriedade)
 			}
-			v := int64(n)
-			if v > math.MaxInt32 {
-				v -= 1 << 32 // os 32 bits em complemento de dois: 0xFFFFFFFF é -1
+			if n > math.MaxInt32 {
+				return int(int64(n) - 1<<32), "" // os 32 bits em complemento de dois: 0xFFFFFFFF é -1
 			}
-			return int(v), ""
+			return int(n), ""
 		}
 	}
 	n, ok := configuracao.LerInteiro(texto)
