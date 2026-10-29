@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.5] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **README mais curto, com diagramas** (#461). Caiu de ~2.230 para ~1.030 palavras, sem perder informação: o que saiu foi para documentos ligados por link.
+  - Diagramas Mermaid: **Como funciona** (contexto, com o que vai para cada endereço da internet), os 4 passos do Meu Pluggy e a atualização pelo gerenciador.
+  - Seção nova **Instalar no Linux**, com os três comandos (antes, o Linux só tinha um link).
+  - Detalhe movido para `docs/SEGURANCA.md` (tabela completa do que sai e detalhes técnicos), `docs/PROBLEMAS-COMUNS.md`, `docs/INSTALADOR-E-GERENCIADOR.md` (opções do `.msi`, gerenciador, voltar de versão, desinstalar) e `docs/INSTALACAO-PELO-CODIGO.md` (passar dos scripts para o `.msi`).
+  - A pilha no fim cita o Go (ADR 0049). O `CLAUDE.md` passa a citar o Project do GitHub e o `olinda.bcb.gov.br` entre as saídas de rede.
+
 ## [2.50.4] — 2026-10-29 · desenvolvimento
 
 ### Correções
