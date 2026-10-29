@@ -2,10 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.49.1] — 2026-10-28 · desenvolvimento
+## [2.49.2] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação
 - **Agente `dev-go` e skill `migrar-para-go` no Sonnet** (épico #70). Nada muda para quem usa. Os dois rodavam no modelo da conversa (Opus) e passam a fixar o Sonnet, mais barato. A "Aula rápida" dos PRs do épico passa a pedir link nas 3 a 5 afirmações técnicas principais, e não em todas; o que não tiver link não é citado como fato.
+
+## [2.49.1] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
 - **Categorias, regras de categorização e regras de descrição em Go** (#77, parte 1; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `cadastros` ser ligado em `Go:Prefixos` (passo 2 da ADR 0049, depois da parte 2). Para quem desenvolve:
   - as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` (prévia, cadeia #250, faixa de valor #241), com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: o contrato `05-categorias` (33 casos) e `06-regras` (38 casos), gravado do .NET, passa com o Go atendendo;
   - a regra fica em pacotes que a sincronização (#83) vai reaproveitar: `categorizacao` (o `CategorizacaoService`), `regrasdescricao`, `transferencias` (ADR 0031), `tipolancamento` (ADR 0025) e o modelo de `Transacao`, que grava só as colunas que mudaram;
