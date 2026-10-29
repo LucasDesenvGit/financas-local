@@ -93,18 +93,19 @@ O que **não** deu para conferir:
 
 ## O teste num Linux de verdade (#417, 28/10/2026)
 
-**Resultado: funciona, com ressalvas.** O gerenciador em Go do `develop` (e não mais o protótipo E), com a parte do Linux feita na própria #417, numa máquina de verdade: CachyOS (Arch), KDE Plasma 6.8 em Wayland, GTK 4.24.1 e WebKitGTK 6.0 2.54.2, com o site instalado pelos scripts (`financaslocal.service` do `systemd --user`). O Ubuntu 24.04 com GNOME **não foi testado** (sem máquina nem VM à mão); o roteiro da issue continua valendo para ele.
+**Resultado: funciona, com ressalvas.** O gerenciador em Go do `develop` (e não mais o protótipo E), com a parte do Linux feita na própria #417, numa máquina de verdade: CachyOS (Arch), KDE Plasma 6.8 em Wayland, GTK 4.24.1 e WebKitGTK 6.0 2.54.2, com o site instalado pelos scripts (`financaslocal.service` do `systemd --user`). As conferências à mão (Orca, Tab, copiar com o mouse, cópia do banco e a bandeja no painel) foram feitas pelo @FelipeJun no mesmo dia. O Ubuntu 24.04 com GNOME **não foi testado** (sem máquina nem VM à mão); o roteiro da issue continua valendo para ele.
 
 | | Resultado | Como foi conferido |
 |---|---|---|
 | Janela | abre e mostra a página inteira, nos temas claro e escuro (o do sistema, pelo portal do freedesktop), com a altura acompanhando o conteúdo e sem barra de rolagem | prints da janela; o tema trocado no KDE (BreezeLight × BreezeDark) |
 | Ícones dos botões | os do lucide em SVG (a fonte de ícones do Windows não existe no Linux), na cor do texto | print |
 | Ícone na barra de título | no GTK 4 vem do atalho `.desktop` com o nome do id do aplicativo (o Wails não consegue pôr, `setIcon` vazio no GTK 4). Com o id `br.financaslocal.Gerenciador` e o atalho com esse nome, aparece o cofrinho; sem o atalho, sai o "W" do Wails | print, com um atalho de teste |
-| Bandeja (KDE) | aparece, com o cofrinho e o ponto da cor da situação; o menu tem a situação na primeira linha, "Abrir o site", "Mostrar o gerenciador" e "Sair"; o clique simples mostra a janela | StatusNotifierItem e dbusmenu lidos e clicados pelo D-Bus; "Sair" encerra tudo |
+| Bandeja (KDE) | aparece no painel, com o cofrinho e o ponto da cor da situação; o menu (botão direito) tem a situação na primeira linha, "Abrir o site", "Mostrar o gerenciador" e "Sair"; o clique simples mostra a janela | StatusNotifierItem e dbusmenu lidos e clicados pelo D-Bus; "Sair" encerra tudo; conferido à mão pelo @FelipeJun |
 | Ligar, desligar, reiniciar | pelo `systemctl --user`, **sem senha**; "Reiniciar" pelo botão: o site voltou em ~5 s | o botão apertado pelo AT-SPI; o horário de início da unidade mudou |
 | Situação | a do serviço e a do site, igual à do Windows | "O site está no ar. Versão 2.37.3" com o site de verdade |
-| Registro do serviço, comando para atualizar, "sem login" | o journald do usuário no diálogo das notas; o comando com a pasta do projeto; o linger lido pelo `loginctl` | pelo AT-SPI |
-| Leitor de tela (AT-SPI, o que o Orca lê) | os landmarks ("Situação do site", "Versão"), a situação como `status`, todos os botões com o nome limpo (os ícones ficam fora), o campo do comando com rótulo, o interruptor como botão de alternar | a árvore lida pelo AT-SPI. *A conferir:* ouvir com o Orca |
+| Registro do serviço, comando para atualizar, "sem login" | o journald do usuário no diálogo das notas; o comando com a pasta do projeto, e "Copiar o comando" com o mouse cola no terminal; o linger lido pelo `loginctl` | pelo AT-SPI; a cópia, à mão |
+| Cópia do banco | o diálogo de salvar do GTK 4 abre e a cópia é salva, sem senha | à mão |
+| Leitor de tela (AT-SPI, o que o Orca lê) | os landmarks ("Situação do site", "Versão"), a situação como `status`, todos os botões com o nome limpo (os ícones ficam fora), o campo do comando com rótulo, o interruptor como botão de alternar | a árvore lida pelo AT-SPI; ouvido com o Orca (lê a situação e o nome de cada botão), e o Tab percorre os botões com o foco visível, à mão |
 | Instância única | abrir de novo mostra a janela da cópia que já roda, e a segunda sai | rodado duas vezes |
 | Compilar | com cgo, 16 s nesta máquina, sem cache; na CI (Ubuntu 24.04, #440), pacotes 20 s, `go vet` 53 s, `go test -race` 66 s e compilação 45 s (3 min 20 s o job) | relógio e os passos do job |
 | Tamanho | 16 MB num arquivo só (com o SQLite da cópia do banco), contra 17 MB no Windows | `du` |
@@ -118,7 +119,7 @@ O que **não** deu para conferir:
 - **A dica do ícone na bandeja não acompanha a situação:** no Wails v3.0.0-beta.34, a dica no Linux não está feita (`setTooltip` vazio). O ícone mostra "Finanças Local" (pelo `SetLabel`; sem ele, "Wails"), e a situação fica na primeira linha do menu e na cor do ponto.
 - **Sem duplo clique na bandeja:** no padrão StatusNotifierItem, o clique simples é "ativar"; ele mostra a janela, como no C# do Linux.
 - **A janela aberta pela bandeja pode ficar atrás da ativa:** a proteção do KWin contra roubo de foco (o C# do Linux já dizia isso).
-- **Copiar para a área de transferência no Wayland** só vale depois de um clique ou tecla de verdade na janela; pelo AT-SPI, a janela diz "Copiado" e nada é copiado. *A conferir com o mouse.*
+- **Copiar para a área de transferência no Wayland** só vale depois de um clique ou tecla de verdade na janela: com o mouse, copia (conferido); pelo AT-SPI, sem clique de verdade, a janela diz "Copiado" e nada é copiado.
 - **A instalação (#277)** tem de: pedir o WebKitGTK 6.0 (e o GTK 4); criar o atalho `br.financaslocal.Gerenciador.desktop` com o ícone; pôr o `icone.png` ao lado do executável (o "Iniciar com o sistema" aponta para ele).
 - **GNOME:** não testado. Sem a extensão de AppIndicator, não há bandeja: começando com o sistema (`--bandeja`), o gerenciador pergunta ao D-Bus se há quem mostre o ícone (`org.kde.StatusNotifierWatcher`) e, sem ninguém, abre a janela minimizada, como o C# do Linux (conferido num D-Bus à parte, sem bandeja).
 
