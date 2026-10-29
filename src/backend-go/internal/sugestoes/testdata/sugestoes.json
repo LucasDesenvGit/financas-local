@@ -62,7 +62,8 @@
     {"descricao":"PAGAMENTO FATURA CARTAO","palavras":["FATURA"],"chave":"FATURA"},
     {"descricao":"SALARIO EMPRESA FICTICIA LTDA","palavras":["SALARIO","FICTICIA"],"chave":"SALARIO FICTICIA"},
     {"descricao":"Restaurante Ação","palavras":["RESTAURANTE","ACAO"],"chave":"RESTAURANTE ACAO"},
-    {"descricao":"straße ßß","palavras":["STRAßE"],"chave":"STRAßE"}
+    {"descricao":"straße ßß","palavras":["STRAßE"],"chave":"STRAßE"},
+    {"descricao":"ABC\uD800\uDC00DEF","palavras":["ABC","DEF"],"chave":"ABC DEF"}
   ],
   "textosRegra": [
     {"descricoes":["UBER *TRIP 12/10","UBER *TRIP 13/10","UBER EATS"],"texto":"UBER"},
@@ -78,6 +79,12 @@
     {"descricoes":["LOJA DE MOVEIS FICTICIA 1/10","LOJA DE MOVEIS FICTICIA 2/10"],"texto":"MOVEIS"},
     {"descricoes":["SUPERMERCADO EXEMPLO","SUPERMERCADO EXEMPLO","SUPERMERCADO OUTRO","SUPERMERCADO EXEMPLO","SUPERMERCADO EXEMPLO"],"texto":"SUPERMERCADO"},
     {"descricoes":["ABC","ABD"],"texto":""},
-    {"descricoes":["PAGAMENTO RECEBIDO","PAGAMENTO RECEBIDO"],"texto":""}
+    {"descricoes":["PAGAMENTO RECEBIDO","PAGAMENTO RECEBIDO"],"texto":""},
+    {"descricoes":["UBER TRIP","UBER TRIP","UBER TRIP","UBER TRIP","CABIFY X"],"texto":""},
+    {"descricoes":["UBER","UBER *"],"texto":"UBER"},
+    {"descricoes":["ABC DEF GH 1","ABC DEF GH 2"],"texto":"ABC DEF GH"},
+    {"descricoes":["ABC DEF GHI*X","ABC DEF GHI#Y"],"texto":"ABC DEF GHI"},
+    {"descricoes":["ABC DEF GHIJ","ABC DEF GHI"],"texto":"ABC DEF GHI"},
+    {"descricoes":["ABC DEF GHI XYZ1","ABC DEF GHI XYZ2"],"texto":"ABC DEF GHI"}
   ]
 }

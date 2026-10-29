@@ -47,7 +47,7 @@ func Palavras(descricao string) []string {
 	normalizado := texto.ParaRegras(descricao)
 	var sb strings.Builder
 	for _, r := range normalizado {
-		if r <= 0xFFFF && unicode.IsLetter(r) {
+		if r < 0x10000 && unicode.IsLetter(r) {
 			sb.WriteRune(r)
 		} else {
 			sb.WriteByte(' ')
@@ -132,20 +132,23 @@ func prefixoComum(textos []string) string {
 	}
 	prefixo := cs[0][:n]
 	if n < len(cs[0]) && letraOuDigito(cs[0][n]) && !slices.ContainsFunc(cs, func(c []uint16) bool { return len(c) <= n }) {
-		ultimo := -1
+		// O prefixo[..Math.Max(0, prefixo.LastIndexOf(' '))] do C#: sem espaço, não sobra nada.
+		corte := 0
 		for i, c := range prefixo {
 			if c == ' ' {
-				ultimo = i
+				corte = i
 			}
 		}
-		prefixo = prefixo[:max(0, ultimo)]
+		prefixo = prefixo[:corte]
 	}
 	return strings.TrimSpace(string(utf16.Decode(prefixo)))
 }
 
+// letraOuDigito é o char.IsLetterOrDigit do C#: as letras e os dígitos decimais (Nd). A metade de um surrogate é da
+// categoria Cs, que não é nenhum dos dois.
 func letraOuDigito(c uint16) bool {
 	r := rune(c)
-	return !utf16.IsSurrogate(r) && (unicode.IsLetter(r) || unicode.Is(unicode.Nd, r))
+	return unicode.IsLetter(r) || unicode.Is(unicode.Nd, r)
 }
 
 // percentual é o "P0" do C# na cultura pt-BR: o valor exato do double vezes 100, arredondado para o par no empate

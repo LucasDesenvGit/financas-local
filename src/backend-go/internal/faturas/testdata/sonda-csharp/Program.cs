@@ -322,6 +322,8 @@ string[] descricoesSugestao =
     "PIX ENVIADO JOAO DA SILVA", "UBER *TRIP 12/10", "IFOOD *RESTAURANTE SABOR", "COMPRA CARTAO MERCADO LIVRE 3/10", "",
     "Supermercado Exemplo LTDA", "PAG*JoseDaSilva", "99APP *99POP", "Netflix.com", "Açaí da Praça", "ab cd efg hij klm",
     "DROGA RAIA 1234 SAO PAULO BR", "PAGAMENTO FATURA CARTAO", "SALARIO EMPRESA FICTICIA LTDA", "Restaurante Ação", "straße ßß",
+    // U+10000 é letra (Lo), mas fora do plano básico: no C#, as duas metades viram espaço.
+    "ABC\U00010000DEF",
 ];
 var palavras = descricoesSugestao.Select(d => new { descricao = d, palavras = SugestaoCategoriaService.Palavras(d), chave = SugestaoCategoriaService.Chave(d) }).ToList();
 string[][] gruposRegra =
@@ -340,6 +342,16 @@ string[][] gruposRegra =
     ["SUPERMERCADO EXEMPLO", "SUPERMERCADO EXEMPLO", "SUPERMERCADO OUTRO", "SUPERMERCADO EXEMPLO", "SUPERMERCADO EXEMPLO"],
     ["ABC", "ABD"],
     ["PAGAMENTO RECEBIDO", "PAGAMENTO RECEBIDO"],
+    // As repetidas contam uma vez só: sem isso, "UBER" estaria em 4 das 5.
+    ["UBER TRIP", "UBER TRIP", "UBER TRIP", "UBER TRIP", "CABIFY X"],
+    // A palavra curta que é a última não tem com quem fazer dupla.
+    ["UBER", "UBER *"],
+    // O começo comum: com 10 letras exatas; parado num sinal (não corta); quando um texto acaba ali (não corta); no
+    // meio de uma palavra de todos (corta na última palavra inteira).
+    ["ABC DEF GH 1", "ABC DEF GH 2"],
+    ["ABC DEF GHI*X", "ABC DEF GHI#Y"],
+    ["ABC DEF GHIJ", "ABC DEF GHI"],
+    ["ABC DEF GHI XYZ1", "ABC DEF GHI XYZ2"],
 ];
 var textosRegra = gruposRegra.Select(g => new { descricoes = g, texto = SugestaoCategoriaService.TextoRegra(g) }).ToList();
 

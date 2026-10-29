@@ -511,13 +511,10 @@ func Grupos(ctx context.Context, q consultas.DBTX, hoje tipos.Data, somenteSemCa
 		d.AvisoRegra = ix.avisoRegra(textoRegra, principal)
 		resultado = append(resultado, d)
 	}
+	// O C# ordena pela confiança e depois pela quantidade (ThenByDescending). A segunda não muda nada: os grupos já
+	// vêm do maior para o menor, e a ordenação é estável.
 	ordem := map[string]int{"alta": 0, "media": 1, "baixa": 2, "nenhuma": 3}
-	slices.SortStableFunc(resultado, func(a, b SugestaoDto) int {
-		if c := ordem[a.Confianca] - ordem[b.Confianca]; c != 0 {
-			return c
-		}
-		return b.Quantidade - a.Quantidade
-	})
+	slices.SortStableFunc(resultado, func(a, b SugestaoDto) int { return ordem[a.Confianca] - ordem[b.Confianca] })
 	return resultado, nil
 }
 
