@@ -454,14 +454,14 @@
     },
     {
       "nome": "alterar trocando de conta, com categoria e como receita",
-      "comentario": "O valor fica positivo (o tipo decide o sinal); observação só com espaços vira null; emergência não vale para entrada; ignorar nos relatórios e o status pendente valem.",
+      "comentario": "O tipo decide o sinal (receita, positivo); observação só com espaços vira null; emergência não vale para entrada; ignorar nos relatórios e o status pendente valem.",
       "metodo": "PUT",
       "caminho": "/api/transacoes/168",
       "corpo": {
         "contaId": 3,
         "data": "2026-10-12",
         "descricao": "Venda de pão",
-        "valor": -12.75,
+        "valor": 12.75,
         "tipo": 2,
         "categoriaId": 21,
         "observacao": "   ",
