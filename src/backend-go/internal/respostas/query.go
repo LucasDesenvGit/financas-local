@@ -1,6 +1,7 @@
 package respostas
 
 import (
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -43,8 +44,15 @@ func InteiroDaQuery(valor string) (int32, bool) {
 	minusculo := strings.ToLower(texto)
 	for _, prefixo := range []string{"0x", "&h", "#"} {
 		if strings.HasPrefix(minusculo, prefixo) {
-			n, err := strconv.ParseUint(texto[len(prefixo):], 16, 32) // Convert.ToInt32(texto, 16): FFFFFFFF é -1
-			return int32(uint32(n)), err == nil
+			n, err := strconv.ParseUint(texto[len(prefixo):], 16, 32)
+			switch {
+			case err != nil:
+				return 0, false
+			case n <= math.MaxInt32:
+				return int32(n), true
+			}
+			// Convert.ToInt32(texto, 16) lê os 32 bits em complemento de dois: FFFFFFFF é -1, 80000000 é o menor int.
+			return int32(int64(n) - 1<<32), true
 		}
 	}
 	n, err := strconv.ParseInt(texto, 10, 32)

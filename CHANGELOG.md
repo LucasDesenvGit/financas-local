@@ -11,6 +11,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - o banco de cada conta (ADR 0024) em `bancos`, e o reconhecimento das parcelas da mesma compra em `parcelas`, com a regex do .NET escrita à mão (no Go, `\d`, `\s` e `\b` são só ASCII);
   - a ordem de texto da cultura pt-BR (`golang.org/x/text/collate`, na ADR 0049): no empate da fatura do mês, "árvore" vem antes de "Bolsa", como no C#;
   - a leitura da query (`[FromQuery]`) num lugar só, no pacote `respostas`, com o int e o bool lidos como o ASP.NET lê.
+  - o repasse do .NET ao Go passa o `Content-Type` também quando o corpo vem vazio: antes, o Go respondia 415 (sem tipo) no lugar do 400 do corpo vazio que o .NET dá;
   - A conferência com o banco (`/api/conferencia-banco`) fica para a #445, junto com as reservas (#82).
 
 ## [2.50.5] — 2026-10-29 · desenvolvimento

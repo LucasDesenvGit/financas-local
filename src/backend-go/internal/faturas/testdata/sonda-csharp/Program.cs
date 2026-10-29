@@ -244,7 +244,7 @@ if (!ordenados.SequenceEqual(invariante)) throw new InvalidOperationException("p
 string[] valoresDaQuery =
 [
     "2026", " 2026 ", "+12", "-1", "0", "007", "0x7EA", "0X7ea", "#7EA", "&h7EA", "1e3", "1.0", "1,000", "2026x", "", " ",
-    "2147483647", "2147483648", "-2147483648", "-2147483649", "١٢", "true", "True", " TRUE ", "false", "1", "sim", "yes", "x",
+    "2147483647", "2147483648", "-2147483648", "-2147483649", "١٢", "0xFFFFFFFF", "0x80000000", "0x7FFFFFFF", "0x100000000", "0x-1", "0x", "# 7EA", " 0x7EA ", "true", "True", " TRUE ", "false", "1", "sim", "yes", "x",
 ];
 static object? Converter(Type tipo, string valor)
 {

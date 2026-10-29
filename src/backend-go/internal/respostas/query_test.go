@@ -23,7 +23,7 @@ func TestQueryIgualAoASPNET(t *testing.T) {
 	if err := json.Unmarshal(dados, &g); err != nil {
 		t.Fatal(err)
 	}
-	if len(g.Valores) < 25 {
+	if len(g.Valores) < 35 {
 		t.Fatalf("o gabarito tem só %d casos: a sonda mudou?", len(g.Valores))
 	}
 	for _, c := range g.Valores {
@@ -38,9 +38,6 @@ func TestQueryIgualAoASPNET(t *testing.T) {
 		if inteiro != c.Inteiro || booleano != c.Booleano {
 			t.Errorf("%q: inteiro %s e bool %s; o .NET dá %s e %s", c.Valor, inteiro, booleano, c.Inteiro, c.Booleano)
 		}
-	}
-	if n, ok := InteiroDaQuery("0xFFFFFFFF"); !ok || n != -1 {
-		t.Errorf("0xFFFFFFFF = %d, %v; o Convert.ToInt32 em base 16 dá -1", n, ok)
 	}
 }
 
