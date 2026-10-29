@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.48.2] — 2026-10-28 · desenvolvimento
+## [2.48.3] — 2026-10-28 · desenvolvimento
 
 ### Publicação e documentação
 - **Categorias, regras de categorização e regras de descrição em Go** (#77, parte 1; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `cadastros` ser ligado em `Go:Prefixos` (passo 2 da ADR 0049, depois da parte 2). Para quem desenvolve:
@@ -10,6 +10,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - a regra fica em pacotes que a sincronização (#83) vai reaproveitar: `categorizacao` (o `CategorizacaoService`), `regrasdescricao`, `transferencias` (ADR 0031), `tipolancamento` (ADR 0025) e o modelo de `Transacao`, que grava só as colunas que mudaram;
   - a normalização de texto das regras (sem acento, maiúsculas) em `internal/texto`, conferida contra o próprio C# por um gabarito de 79 casos; usa o `golang.org/x/text`, que entrou na lista de bibliotecas da ADR 0049;
   - o padrão de um assunto em Go (camadas, entrada e saída iguais às do .NET, gravar como o EF Core, testes) em `src/backend-go/internal/README.md`.
+
+## [2.48.2] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o gerenciador em Go compilado e testado no Linux** (#417, épico #70, ADR 0052). Nada muda para quem usa. O job "gerenciador em Go (Linux)" instala o GTK 4 e o WebKitGTK 6.0 num Ubuntu 24.04, roda o `go vet` e o `go test -race` (no Linux o Wails pede cgo) e compila o gerenciador, anotando no resumo o tempo dos pacotes e da compilação, o tamanho do executável e as bibliotecas que ele pede. Roda junto com o do Windows, quando o `src/gerenciador-go/` muda.
 
 ## [2.48.1] — 2026-10-28 · desenvolvimento
 
