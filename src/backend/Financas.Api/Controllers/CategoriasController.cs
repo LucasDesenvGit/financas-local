@@ -58,10 +58,13 @@ public class CategoriasController : BaseController
             }
             else
             {
-                // No cartão, entrada é estorno: despesa (ADR 0036).
+                // No cartão, entrada é estorno: despesa (ADR 0036). #438: os cartões vêm antes, pelo id; com a navegação
+                // (t.Conta.Tipo) no valor do SetProperty, o EF Core monta um JOIN que não consegue gerar (500).
+                var cartoes = await _db.Contas.AsNoTracking().Where(x => x.Tipo == TipoConta.CartaoCredito)
+                    .Select(x => x.Id).ToListAsync(ct);
                 await _db.Transacoes.Where(t => t.CategoriaId == id && t.TransferenciaGrupo == null)
                     .ExecuteUpdateAsync(s => s
-                        .SetProperty(t => t.Tipo, t => t.Valor < 0 || t.Conta!.Tipo == TipoConta.CartaoCredito
+                        .SetProperty(t => t.Tipo, t => t.Valor < 0 || cartoes.Contains(t.ContaId)
                             ? TipoTransacao.Despesa : TipoTransacao.Receita)
                         .SetProperty(t => t.IgnorarRelatorios, false), ct);
             }
