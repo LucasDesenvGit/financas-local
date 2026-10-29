@@ -73,6 +73,8 @@
     {"descricao":"1 DE 2345 LOJA","compra":"LOJA"},
     {"descricao":"12DE345 LOJA","compra":"LOJA"},
     {"descricao":"PARCELADE 1 LOJA","compra":"PARCELAD"},
-    {"descricao":"1DE PARC 2 LOJA","compra":"DELOJA"}
+    {"descricao":"1DE PARC 2 LOJA","compra":"DELOJA"},
+    {"descricao":"1/2DE3 LOJA","compra":"DELOJA"},
+    {"descricao":"1DE2345DE6 LOJA","compra":"LOJA"}
   ]
 }

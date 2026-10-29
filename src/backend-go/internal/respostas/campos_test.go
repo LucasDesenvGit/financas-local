@@ -32,6 +32,8 @@ func TestCampoInteiro(t *testing.T) {
 		{"número", `{"p":70}`, "", 70, map[string][]string{}},
 		{"número em texto", `{"p":"70"}`, "", 70, map[string][]string{}},
 		{"ausente fica o padrão", `{}`, "", 5, map[string][]string{}},
+		{"no limite de baixo", `{"p":0}`, "", 0, map[string][]string{}},
+		{"no limite de cima", `{"p":10000}`, "", 10000, map[string][]string{}},
 		{"negativo fora da faixa", `{"p":-1}`, "", -1, map[string][]string{"P": {"The field P must be between 0 and 10000."}}},
 		{"acima da faixa", `{"p":10001}`, "", 10001, map[string][]string{"P": {"The field P must be between 0 and 10000."}}},
 		{"casa decimal", `{"p":7.0}`, "$.p", 0, nil},
@@ -111,6 +113,8 @@ func TestCampoDecimalOpcional(t *testing.T) {
 		{"número com a escala", `{"p":200.50}`, "", "200.50", map[string][]string{}},
 		{"em texto", `{"p":"100"}`, "", "100", map[string][]string{}},
 		{"null", `{"p":null}`, "", "", map[string][]string{}},
+		{"no limite de baixo", `{"p":0.01}`, "", "0.01", map[string][]string{}},
+		{"no limite de cima", `{"p":999999999}`, "", "999999999", map[string][]string{}},
 		{"zero fora da faixa", `{"p":0}`, "", "0", map[string][]string{"P": {mensagem}}},
 		{"acima da faixa", `{"p":1000000000}`, "", "1000000000", map[string][]string{"P": {mensagem}}},
 		{"texto que não é número", `{"p":"abc"}`, "$.p", "", nil},
@@ -165,6 +169,7 @@ func TestCampoByteOpcional(t *testing.T) {
 		erros                         map[string][]string
 	}{
 		{"número", `{"p":31}`, "", "31", map[string][]string{}},
+		{"no limite de baixo", `{"p":1}`, "", "1", map[string][]string{}},
 		{"em texto", `{"p":"5"}`, "", "5", map[string][]string{}},
 		{"null", `{"p":null}`, "", "<nil>", map[string][]string{}},
 		{"ausente", `{}`, "", "<nil>", map[string][]string{}},

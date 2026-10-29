@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
@@ -128,5 +129,105 @@ func TestDoMesComErroDoBanco(t *testing.T) {
 	}
 	if _, err := DoMesDosCartoes(t.Context(), db, tipos.NovaData(2026, 10, 1), tipos.NovaData(2026, 10, 31), tipos.NovaData(2026, 10, 15)); err == nil {
 		t.Error("banco fechado não deu erro")
+	}
+}
+
+// Regra: o mês de cobrança das parcelas (#167): só conta como parcelada a compra em mais de uma parcela (a 1/1 vai pela
+// data); a âncora é a parcela ligada de maior número (com duas ligadas de números diferentes, a maior; com duas de
+// mesmo número, a primeira); grupo sem âncora não para os seguintes; parcelada sem número vai pela data.
+func TestMesesDeCobrancaPelaAncora(t *testing.T) {
+	d := func(mes time.Month, dia int) tipos.Data { return tipos.NovaData(2026, mes, dia) }
+	v := func(s string) tipos.Decimal {
+		x, err := tipos.NovoDecimal(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return x
+	}
+	faturas := []Fatura{
+		{Id: 1, ContaId: 1, DataFechamento: p(d(3, 3)), DataVencimento: d(3, 10), ValorTotal: v("1")},
+		{Id: 2, ContaId: 1, DataFechamento: p(d(4, 3)), DataVencimento: d(4, 10), ValorTotal: v("1")},
+		{Id: 3, ContaId: 1, DataFechamento: p(d(5, 3)), DataVencimento: d(5, 10), ValorTotal: v("1")},
+	}
+	l := func(id int64, data tipos.Data, valor string, fatura, numero, total *int64, descricao string) Lancamento {
+		return Lancamento{Id: id, ContaId: 1, Data: data, Valor: v(valor), FaturaCartaoId: fatura, ParcelaNumero: numero,
+			ParcelaTotal: total, Descricao: descricao}
+	}
+	n := func(x int64) *int64 { return &x }
+	lancamentos := []Lancamento{
+		l(1, d(2, 20), "-10.00", n(2), n(1), n(1), "LOJA 1/1"),     // ligada a abril
+		l(2, d(2, 21), "-10.00", nil, n(1), n(1), "LOJA 1/1"),      // 1/1 não é parcelada: pela data (março)
+		l(3, d(2, 10), "-7.00", nil, n(1), n(2), "SEM ANCORA 1/2"), // o primeiro grupo, sem âncora
+		l(4, d(1, 15), "-30.00", n(1), n(1), n(3), "MOVEL 1/3"),    // âncora 1, em março
+		l(5, d(2, 15), "-30.00", n(3), n(2), n(3), "MOVEL 2/3"),    // âncora 2, em maio: vale a de maior número
+		l(6, d(3, 15), "-30.00", nil, n(3), n(3), "MOVEL 3/3"),     // maio + 1
+		l(7, d(1, 10), "-40.00", n(2), n(1), n(2), "DUP 1/2"),      // duas 1/2 ligadas: vale a primeira (abril)
+		l(8, d(1, 11), "-40.00", n(3), n(1), n(2), "DUP 1/2"),
+		l(9, d(2, 10), "-40.00", nil, n(2), n(2), "DUP 2/2"),    // abril + 1
+		l(10, d(2, 12), "-20.00", nil, nil, n(3), "SEM NUMERO"), // parcelada sem número: pela data
+	}
+	esperado := map[int64]tipos.Data{1: d(4, 1), 2: d(3, 1), 3: d(3, 1), 4: d(3, 1), 5: d(5, 1), 6: d(6, 1), 7: d(4, 1),
+		8: d(5, 1), 9: d(5, 1), 10: d(3, 1)}
+	obtido := MesesDeCobranca(lancamentos, faturas, nil)
+	for id, mes := range esperado {
+		if !obtido[id].Igual(mes) {
+			t.Errorf("lançamento %d: %s, esperado %s", id, obtido[id], mes)
+		}
+	}
+}
+
+// Regra: a situação da fatura do mês em cada caminho (hoje é 15/10/2026):
+//   - cartão sem dia de fechamento, com a fatura importada que vence no mês: vale o total informado contra o pago
+//     informado, e sem fechamento conhecido continua aberta até vencer (a soma das compras não entra na conta);
+//   - fatura importada sem data de fechamento: vale o fechamento do ciclo (já passou: fechada);
+//   - cartão sem fatura cujo ciclo já fechou: sem compras, paga; a próxima vem junto, com o mês seguinte;
+//   - num mês passado, a próxima também já fechou e não vem.
+func TestSituacaoDaFaturaDoMes(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	v := func(s string) tipos.Decimal {
+		x, err := tipos.NovoDecimal(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return x
+	}
+	semDia := fab.Conta(func(c *testeapoio.Conta) { c.Nome, c.Tipo = "Sem dia", 3 })
+	semDiaFatura := fab.Fatura(semDia, tipos.NovaData(2026, 10, 20), v("300.0"), func(f *testeapoio.FaturaCartao) {
+		f.ValorPago = p(v("100.0"))
+	})
+	fab.Transacao(semDia, func(x *testeapoio.Transacao) { x.Data, x.Valor = tipos.NovaData(2026, 10, 5), v("-50.00") })
+	diaTres := fab.Conta(func(c *testeapoio.Conta) { c.Nome, c.Tipo, c.DiaFechamento = "Dia três", 3, p(int64(3)) })
+	diaTresFatura := fab.Fatura(diaTres, tipos.NovaData(2026, 10, 20), v("200.0"))
+	diaDez := fab.Conta(func(c *testeapoio.Conta) {
+		c.Nome, c.Tipo, c.DiaFechamento, c.DiaVencimento = "Dia dez", 3, p(int64(10)), p(int64(17))
+	})
+
+	hoje := tipos.NovaData(2026, 10, 15)
+	lista, err := DoMesDosCartoes(t.Context(), db, tipos.NovaData(2026, 10, 1), tipos.NovaData(2026, 10, 31), hoje)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testeapoio.ConferirJSON(t, mustJSON(t, lista), fmt.Sprintf(`[
+		{"contaId":%[1]d,"cartao":"Dia três","valorMes":200.0,"parcelasMes":0,"faturaId":%[2]d,"vencimento":"2026-10-20",
+		 "situacao":"fechada","banco":null,"fechamento":"2026-10-03",
+		 "proxima":{"contaId":%[1]d,"cartao":"Dia três","valorMes":0,"parcelasMes":0,"faturaId":null,"vencimento":"2026-11-20",
+		  "situacao":"aberta","banco":null,"fechamento":"2026-11-03","proxima":null}},
+		{"contaId":%[3]d,"cartao":"Sem dia","valorMes":50.0,"parcelasMes":0,"faturaId":%[4]d,"vencimento":"2026-10-20",
+		 "situacao":"aberta","banco":null,"fechamento":null,"proxima":null},
+		{"contaId":%[5]d,"cartao":"Dia dez","valorMes":0,"parcelasMes":0,"faturaId":null,"vencimento":"2026-10-17",
+		 "situacao":"paga","banco":null,"fechamento":"2026-10-10",
+		 "proxima":{"contaId":%[5]d,"cartao":"Dia dez","valorMes":0,"parcelasMes":0,"faturaId":null,"vencimento":"2026-11-17",
+		  "situacao":"aberta","banco":null,"fechamento":"2026-11-10","proxima":null}}]`,
+		diaTres.Id, diaTresFatura.Id, semDia.Id, semDiaFatura.Id, diaDez.Id))
+
+	agosto, err := DoMesDosCartoes(t.Context(), db, tipos.NovaData(2026, 8, 1), tipos.NovaData(2026, 8, 31), hoje)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range agosto {
+		if f.Proxima != nil {
+			t.Errorf("%s em agosto: veio a próxima (%s), que também já fechou", f.Cartao, txt(f.Proxima.Fechamento))
+		}
 	}
 }

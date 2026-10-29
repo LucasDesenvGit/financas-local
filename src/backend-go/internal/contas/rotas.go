@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -462,13 +463,15 @@ func (s *Servico) lerFaturasDaConta(ctx context.Context, id int64) ([]faturaDto,
 		return nil, err
 	}
 	hoje := relogio.Hoje(s.relogio)
-	desde := hoje
 	vencimentos := make([]tipos.Data, len(lista))
 	for i, f := range lista {
 		vencimentos[i] = f.DataVencimento
-		if i == 0 || f.DataVencimento.Antes(desde) {
-			desde = f.DataVencimento
-		}
+	}
+	// #251: o banco nem sempre manda os pagamentos da fatura; o lançado no cartão também vale, desde 2 meses antes do
+	// vencimento mais velho da lista (ou de hoje, sem faturas).
+	desde := hoje
+	if len(vencimentos) > 0 {
+		desde = slices.MinFunc(vencimentos, func(a, b tipos.Data) int { return a.NumeroDoDia() - b.NumeroDoDia() })
 	}
 	pagamentos, err := faturas.LerPagamentos(ctx, s.db, []any{id}, desde.SomarMeses(-2))
 	if err != nil {

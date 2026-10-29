@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
@@ -249,6 +250,15 @@ func TestErrosDasRotas(t *testing.T) {
 	validacao("/api/contas/faturas-do-mes?ano=x&mes=dez", `{"ano":["The value 'x' is not valid."],"mes":["The value 'dez' is not valid."]}`)
 	// O int da query também vem em hexadecimal, como no TypeConverter do ASP.NET.
 	testeapoio.Chamar(t, mux, "GET", "/api/contas/faturas-do-mes?ano=0x7EA&mes=10", "").ConferirStatus(t, http.StatusOK)
+	// Os limites do período valem; sem o ano, o mês inválido ainda é o 400 do model binding.
+	testeapoio.Chamar(t, mux, "GET", "/api/contas/faturas-do-mes?ano=2000&mes=1", "").ConferirStatus(t, http.StatusOK)
+	testeapoio.Chamar(t, mux, "GET", "/api/contas/faturas-do-mes?ano=2100&mes=12", "").ConferirStatus(t, http.StatusOK)
+	validacao("/api/contas/faturas-do-mes?mes=dez", `{"mes":["The value 'dez' is not valid."]}`)
+	// Saldo inicial negativo só é recusado no investimento; investimento com saldo zero passa.
+	testeapoio.Chamar(t, mux, "POST", "/api/contas", `{"nome":"Cheque especial","tipo":1,"saldoInicial":-5,"cor":"#000000"}`).
+		ConferirStatus(t, http.StatusCreated)
+	testeapoio.Chamar(t, mux, "POST", "/api/contas", `{"nome":"Corretora","tipo":4,"saldoInicial":0,"cor":"#000000"}`).
+		ConferirStatus(t, http.StatusCreated)
 
 	resp := testeapoio.Chamar(t, mux, "POST", "/api/contas", `{"tipo":1,"numero":"",
 		"cor":"vermelho","diaFechamento":32,"diaVencimento":0,"banco":"1234567890123456789012345678901"}`)
@@ -270,7 +280,8 @@ func TestErrosDasRotas(t *testing.T) {
 // da instituição). A resposta traz o carimbo com "Z".
 func TestEditar(t *testing.T) {
 	mux, db, fab := rotasDeTeste(t)
-	manual := fab.Conta(func(c *testeapoio.Conta) { c.Nome, c.SaldoInicial = "Antiga", dec(t, "5.0") })
+	antigo := tipos.NovaDataHora(time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC))
+	manual := fab.Conta(func(c *testeapoio.Conta) { c.Nome, c.SaldoInicial, c.AtualizadoEm = "Antiga", dec(t, "5.0"), antigo })
 	vinculada := fab.Conta()
 	testeapoio.Chamar(t, mux, "PUT", fmt.Sprintf("/api/contas/%d", manual.Id), fmt.Sprintf(`{"nome":" Cartão Novo ",
 		"tipo":3,"numero":"  ","saldoInicial":10,"limiteCredito":300.5,"diaFechamento":15,"diaVencimento":25,"cor":"#ABCDEF",
@@ -280,6 +291,33 @@ func TestEditar(t *testing.T) {
 		"cor":"#ABCDEF","incluirNoSaldo":false,"arquivada":true,"conexaoBancariaId":null,"nomeInstituicao":null,
 		"atualizadoEm":"2026-10-15T15:00:00Z","banco":null,"bancoDefinido":true,"contaVinculadaId":%d,"faturaMes":null,
 		"limiteAjustadoNoApp":null,"limiteDiferencaAvaliada":null}`, manual.Id, vinculada.Id))
+
+	var tipoGravado, incluirGravado int64
+	var atualizadoGravado string
+	if err := db.QueryRow(`SELECT Tipo, IncluirNoSaldo, AtualizadoEm FROM Conta WHERE Id = ?`, manual.Id).
+		Scan(&tipoGravado, &incluirGravado, &atualizadoGravado); err != nil {
+		t.Fatal(err)
+	}
+	if tipoGravado != CartaoCredito || incluirGravado != 0 || atualizadoGravado != "2026-10-15 15:00:00" {
+		t.Errorf("gravado: tipo %d, incluir no saldo %d, atualizado em %q", tipoGravado, incluirGravado, atualizadoGravado)
+	}
+
+	// Muda o que já tinha valor: número, banco, dia, limite e conta do cartão.
+	outraVinculada := fab.Conta()
+	testeapoio.Chamar(t, mux, "PUT", fmt.Sprintf("/api/contas/%d", manual.Id), fmt.Sprintf(`{"nome":"Cartão Novo",
+		"tipo":3,"numero":"9","saldoInicial":10,"limiteCredito":400,"diaFechamento":20,"diaVencimento":25,"cor":"#ABCDEF",
+		"incluirNoSaldo":false,"arquivada":true,"banco":"nubank","contaVinculadaId":%d}`, outraVinculada.Id)).
+		ConferirStatus(t, http.StatusOK)
+	var numeroGravado, bancoGravado, limiteGravado string
+	var diaGravado, vinculadaGravada int64
+	if err := db.QueryRow(`SELECT Numero, Banco, LimiteCredito, DiaFechamento, ContaVinculadaId FROM Conta WHERE Id = ?`,
+		manual.Id).Scan(&numeroGravado, &bancoGravado, &limiteGravado, &diaGravado, &vinculadaGravada); err != nil {
+		t.Fatal(err)
+	}
+	if numeroGravado != "9" || bancoGravado != "nubank" || limiteGravado != "400.0" || diaGravado != 20 ||
+		vinculadaGravada != outraVinculada.Id {
+		t.Errorf("gravado: %q %q %q %d %d", numeroGravado, bancoGravado, limiteGravado, diaGravado, vinculadaGravada)
+	}
 
 	// Volta a ser conta corrente: limite, dias e conta do cartão saem.
 	testeapoio.Chamar(t, mux, "PUT", fmt.Sprintf("/api/contas/%d", manual.Id), `{"nome":"Corrente","tipo":1,
@@ -380,13 +418,17 @@ func TestFaturasDaConta(t *testing.T) {
 		vencimento := tipos.NovaData(2024, 9, 10).SomarMeses(i)
 		ultima = fab.Fatura(cartao, vencimento, dec(t, "100.0"), func(f *testeapoio.FaturaCartao) {
 			f.DataFechamento = p(vencimento.SomarDias(-7))
-			if i < 24 {
+			if i >= 3 && i < 24 { // a mais velha da lista (i = 2) fica sem o pago informado
 				f.ValorPago = p(dec(t, "100.0"))
 			}
 		})
 	}
 	fab.Transacao(cartao, func(x *testeapoio.Transacao) { x.FaturaCartaoId = &ultima.Id })
 	fab.Transacao(cartao, func(x *testeapoio.Transacao) { x.FaturaCartaoId = &ultima.Id })
+	// Pagamento lançado no cartão para a mais velha da lista: os pagamentos são lidos desde 2 meses antes dela.
+	fab.Transacao(cartao, func(x *testeapoio.Transacao) {
+		x.Valor, x.Tipo, x.Data = dec(t, "25.00"), 3, tipos.NovaData(2024, 11, 1)
+	})
 	// Pagamento lançado no cartão (entrada que virou transferência) para a penúltima, que o banco não informou pago.
 	fab.Transacao(cartao, func(x *testeapoio.Transacao) {
 		x.Valor, x.Tipo, x.Data = dec(t, "40.00"), 3, tipos.NovaData(2026, 9, 1)
@@ -413,6 +455,9 @@ func TestFaturasDaConta(t *testing.T) {
 	}
 	if string(lista[2].ValorPago) != "100.0" || lista[2].Situacao != "paga" {
 		t.Errorf("a antepenúltima, paga: %+v (%s)", lista[2], lista[2].ValorPago)
+	}
+	if string(lista[23].ValorPago) != "25.0" || lista[23].Situacao != "fechada" {
+		t.Errorf("a mais velha, paga em parte no cartão: %+v (%s)", lista[23], lista[23].ValorPago)
 	}
 	semFaturas := fab.Conta()
 	testeapoio.Chamar(t, mux, "GET", fmt.Sprintf("/api/contas/%d/faturas", semFaturas.Id), "").ConferirJSON(t, `[]`)
@@ -502,5 +547,30 @@ func TestErroDoBanco(t *testing.T) {
 		{"PUT", "/api/contas/1/limite-ajustado", `{"ajustado":true}`},
 	} {
 		testeapoio.Chamar(t, mux, c.metodo, c.caminho, c.corpo).ConferirStatus(t, http.StatusInternalServerError)
+	}
+}
+
+// Regra: o limite disponível só é recalculado (limite + saldo) no cartão manual; o do Open Finance, cartão ou conta, é
+// o que a instituição informa.
+func TestLimiteDisponivelDoOpenFinance(t *testing.T) {
+	mux, _, fab := rotasDeTeste(t)
+	conexao := fab.ConexaoBancaria()
+	cartao := fab.Conta(func(c *testeapoio.Conta) {
+		c.Tipo, c.Origem, c.ConexaoBancariaId, c.Saldo = CartaoCredito, OpenFinance, &conexao.Id, dec(t, "-300.0")
+		c.LimiteCredito, c.LimiteDisponivel = p(dec(t, "1000.0")), p(dec(t, "650.0"))
+	})
+	corrente := fab.Conta(func(c *testeapoio.Conta) {
+		c.Origem, c.ConexaoBancariaId, c.Saldo = OpenFinance, &conexao.Id, dec(t, "100.0")
+		c.LimiteCredito, c.LimiteDisponivel = p(dec(t, "500.0")), p(dec(t, "300.0"))
+	})
+	for id, esperado := range map[int64]string{cartao.Id: "650.0", corrente.Id: "300.0"} {
+		resp := testeapoio.Chamar(t, mux, "GET", fmt.Sprintf("/api/contas/%d", id), "")
+		var dto struct{ LimiteDisponivel json.RawMessage }
+		if err := json.Unmarshal(resp.Corpo, &dto); err != nil {
+			t.Fatal(err)
+		}
+		if string(dto.LimiteDisponivel) != esperado {
+			t.Errorf("conta %d: limite disponível %s, esperado %s", id, dto.LimiteDisponivel, esperado)
+		}
 	}
 }

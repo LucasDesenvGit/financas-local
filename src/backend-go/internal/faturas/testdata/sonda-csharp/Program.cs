@@ -221,7 +221,7 @@ string[] descricoes =
     "PARCELA.LOJA", "PARC..LOJA", "١٢٣٤/٥ LOJA", "1\u2003/\u20032 LOJA", "1\u200b/2 LOJA", "1\u0085/2 LOJA", "1 DE 2 LOJA",
     "1\u3000/2 LOJA", "1\u000b/2 LOJA", "PARC𝐀 LOJA", "𝐀PARC LOJA", "PARC² LOJA", "PARCⅫ LOJA", "1 De 2 LOJA", "1 de 2 loja",
     "ﬀ ﬁ ﬂ loja", "µ loja", "ÿ loja", "ß ẞ loja", "ǰ loja",
-    "1\u200bDE2 LOJA", "1\u0085DE2 LOJA", "1\u000bDE2 LOJA", "1\u2003DE\u20032 LOJA", "1\u3000DE2 LOJA", "1\u001cDE2 LOJA", "1\u180eDE2 LOJA", "1\u2028DE2 LOJA", "1\u000cDE2 LOJA", "1 DE 2345 LOJA", "12DE345 LOJA", "PARCELADE 1 LOJA", "1DE PARC 2 LOJA",
+    "1\u200bDE2 LOJA", "1\u0085DE2 LOJA", "1\u000bDE2 LOJA", "1\u2003DE\u20032 LOJA", "1\u3000DE2 LOJA", "1\u001cDE2 LOJA", "1\u180eDE2 LOJA", "1\u2028DE2 LOJA", "1\u000cDE2 LOJA", "1 DE 2345 LOJA", "12DE345 LOJA", "PARCELADE 1 LOJA", "1DE PARC 2 LOJA", "1/2DE3 LOJA", "1DE2345DE6 LOJA",
 ];
 var compras = descricoes.Select(d => new { descricao = d, compra = (string)compra.Invoke(null, [d])! }).ToList();
 

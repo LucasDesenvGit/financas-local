@@ -366,16 +366,14 @@ func DoMesDosCartoes(ctx context.Context, q consultas.DBTX, inicio, fim, hoje ti
 		return nil, err
 	}
 	ciclos := make(map[int64]Ciclo, len(cartoes))
-	desde := inicio
+	inicios := make([]tipos.Data, len(cartoes))
 	for i, c := range cartoes {
 		ciclos[c.id] = CicloDaFatura(inicio, fim, c.diaFechamento, c.diaVencimento, faturas[c.id])
-		if i == 0 || ciclos[c.id].Inicio.Antes(desde) {
-			desde = ciclos[c.id].Inicio
-		}
+		inicios[i] = ciclos[c.id].Inicio
 	}
 	// #167: uma janela larga, para achar a parcela já ligada a uma fatura de cada compra (até 24 meses) e as parcelas
-	// com data futura.
-	desde = desde.SomarMeses(-24)
+	// com data futura. Começa no início de ciclo mais velho entre os cartões.
+	desde := slices.MinFunc(inicios, comparar).SomarMeses(-24)
 	lancamentos, err := lerLancamentos(ctx, q, ids, desde)
 	if err != nil {
 		return nil, err
