@@ -44,6 +44,11 @@ public partial class CambioService
     [GeneratedRegex("^[A-Z]{3}$")]
     private static partial Regex FormatoMoeda();
 
+    private static string SanitizarParaLog(string? valor) =>
+        string.IsNullOrEmpty(valor)
+            ? string.Empty
+            : valor.Replace("\r", string.Empty).Replace("\n", string.Empty);
+
     /// <summary>Normaliza e valida um código ISO 4217 (ex.: " usd" → "USD"). Retorna null se inválido.</summary>
     public static string? NormalizarMoeda(string? moeda)
     {
@@ -230,7 +235,7 @@ public partial class CambioService
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
-                _logger.LogWarning(ex, "Não foi possível consultar a cotação de {Moeda} no Banco Central.", moeda);
+                _logger.LogWarning(ex, "Não foi possível consultar a cotação de {Moeda} no Banco Central.", SanitizarParaLog(moeda));
                 _db.ChangeTracker.Clear();
             }
         }

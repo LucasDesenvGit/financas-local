@@ -2,6 +2,7 @@ package erros
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -148,7 +149,11 @@ func lerInt32(bruto, propriedade string) (int, string) {
 			if err != nil {
 				return 0, naoValido(bruto, propriedade)
 			}
-			return int(int32(uint32(n))), ""
+			v := int64(n)
+			if v > math.MaxInt32 {
+				v -= 1 << 32 // os 32 bits em complemento de dois: 0xFFFFFFFF é -1
+			}
+			return int(v), ""
 		}
 	}
 	n, ok := configuracao.LerInteiro(texto)
