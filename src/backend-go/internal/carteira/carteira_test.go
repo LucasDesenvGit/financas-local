@@ -25,12 +25,24 @@ import (
 
 // Os falsos da carteira: o conversor, as reservas e a Selic que o teste escolher.
 type cambioFalso struct {
-	conversor *cambio.Conversor
-	erro      error
+	conversor   *cambio.Conversor
+	erro        error
+	cotacao     *cambio.Cotacao
+	erroCotacao error
+	moedas      []cambio.Moeda
+	erroMoedas  error
 }
 
 func (c cambioFalso) ObterConversor(context.Context, *tipos.Data) (*cambio.Conversor, error) {
 	return c.conversor, c.erro
+}
+
+func (c cambioFalso) ObterCotacao(context.Context, string, *tipos.Data) (*cambio.Cotacao, error) {
+	return c.cotacao, c.erroCotacao
+}
+
+func (c cambioFalso) ListarMoedas(context.Context) ([]cambio.Moeda, error) {
+	return c.moedas, c.erroMoedas
 }
 
 type reservasFalsas struct {
@@ -68,6 +80,12 @@ type cena struct {
 	mux   *http.ServeMux
 }
 
+// cofreFalso guarda o segredo com uma marca, para o teste ver que passou pelo cofre.
+type cofreFalso struct{}
+
+func (cofreFalso) Cifrar(_, segredo string) (string, error)   { return "cifrado:" + segredo, nil }
+func (cofreFalso) Decifrar(_, gravado string) (string, error) { return gravado, nil }
+
 // cotacoesFalsas anotam o que foi pedido.
 type cotacoesFalsas struct {
 	resultado cotacoes.Resultado
@@ -97,7 +115,7 @@ func cenaComCotacoes(t *testing.T, c cambioFalso, r reservasFalsas, sf selicFals
 		sf.serie = selic.NovaSerie(nil)
 	}
 	var saida bytes.Buffer
-	s := NovoServico(db, c, r, sf, a, rel, slog.New(slog.NewTextHandler(&saida, nil)))
+	s := NovoServico(db, c, r, sf, a, cofreFalso{}, rel, slog.New(slog.NewTextHandler(&saida, nil)))
 	mux := http.NewServeMux()
 	Registrar(mux, s)
 	return cena{s: s, db: db, fab: testeapoio.NovaFabrica(t, db, rel), saida: &saida, mux: mux}

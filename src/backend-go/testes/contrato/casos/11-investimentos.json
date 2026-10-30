@@ -1,5 +1,5 @@
 {
-  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
+  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
   "casos": [
     {
       "nome": "listar reservas",
@@ -274,6 +274,723 @@
       "metodo": "POST",
       "caminho": "/api/carteira/atualizar-cotacoes",
       "sessao": "visitante"
+    },
+    {
+      "nome": "configuração da cotação",
+      "comentario": "Só diz se há token, nunca o valor.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/configuracao"
+    },
+    {
+      "nome": "token com espaço no meio",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/configuracao",
+      "corpo": {
+        "tokenBrapi": "abc def"
+      }
+    },
+    {
+      "nome": "token longo demais",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/configuracao",
+      "corpo": {
+        "tokenBrapi": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "nome": "token em branco não muda nada",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/configuracao",
+      "corpo": {
+        "tokenBrapi": "   "
+      }
+    },
+    {
+      "nome": "gravar o token",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/configuracao",
+      "corpo": {
+        "tokenBrapi": "  token-de-contrato  "
+      }
+    },
+    {
+      "nome": "configuração com o token",
+      "metodo": "GET",
+      "caminho": "/api/carteira/configuracao"
+    },
+    {
+      "nome": "remover o token",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/configuracao",
+      "corpo": {
+        "remover": true
+      }
+    },
+    {
+      "nome": "configuração sem o token",
+      "metodo": "GET",
+      "caminho": "/api/carteira/configuracao"
+    },
+    {
+      "nome": "configuração sem login",
+      "metodo": "GET",
+      "caminho": "/api/carteira/configuracao",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "criar a compra de um ativo novo",
+      "comentario": "O código é normalizado, e o ativo é criado como FII pelo final 11. Sem rede, a cotação falha, e o cadastro segue.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": " knri11 ",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "as operações do ativo novo",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/6/operacoes"
+    },
+    {
+      "nome": "criar a venda",
+      "comentario": "A observação é aparada.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 2,
+        "data": "2026-10-02",
+        "quantidade": 1,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "observacao": "  Venda parcial  "
+      }
+    },
+    {
+      "nome": "venda maior que a carteira",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 2,
+        "data": "2026-10-03",
+        "quantidade": 2,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "venda antes da compra",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 2,
+        "data": "2026-09-30",
+        "quantidade": 1,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "compra de ativo novo no exterior, com o câmbio",
+      "comentario": "A moeda e o código são normalizados, e o tipo é ação.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "msft",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "usd",
+        "cambio": 5.4321
+      }
+    },
+    {
+      "nome": "compra em dólar pela PTAX da data",
+      "comentario": "Sem câmbio, vale a PTAX de venda gravada na base.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "VOO",
+        "tipo": 1,
+        "data": "2026-10-14",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "USD"
+      }
+    },
+    {
+      "nome": "as operações em dólar",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/4/operacoes"
+    },
+    {
+      "nome": "compra em dólar sem cotação na data",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "VOO",
+        "tipo": 1,
+        "data": "2025-01-02",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "USD"
+      }
+    },
+    {
+      "nome": "compra na moeda errada",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "VOO",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "EUR",
+        "cambio": 6
+      }
+    },
+    {
+      "nome": "compra sem a moeda de um ativo em dólar",
+      "comentario": "Sem a moeda, é a B3, e o código VOO não é da B3.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "VOO",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "moeda inválida",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "1"
+      }
+    },
+    {
+      "nome": "código da B3 inválido",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "ABC",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "código do exterior inválido",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "PETR4",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "USD"
+      }
+    },
+    {
+      "nome": "FII no exterior",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "AAPL",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "USD",
+        "tipoAtivo": 1,
+        "cambio": 5
+      }
+    },
+    {
+      "nome": "data no futuro",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-15",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "data antiga demais",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "1994-12-31",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "sem a data",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "data em outro formato",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "01/10/2026",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "tipo de operação inválido",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 3,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "tipo de operação em texto",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": "1",
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "tipo de ativo inválido",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "tipoAtivo": 9
+      }
+    },
+    {
+      "nome": "quantidade zero",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 0,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "preço negativo",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": -1,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "taxas demais",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 10000001
+      }
+    },
+    {
+      "nome": "câmbio zero",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "cambio": 0
+      }
+    },
+    {
+      "nome": "observação longa demais",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "observacao": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "nome": "moeda com 4 letras",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1,
+        "moeda": "USDT"
+      }
+    },
+    {
+      "nome": "sem o código",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "código vazio",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "criar operação sem login",
+      "metodo": "POST",
+      "caminho": "/api/carteira/operacoes",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      },
+      "sessao": "visitante"
+    },
+    {
+      "nome": "alterar a compra",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/8",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 3,
+        "precoUnitario": 151,
+        "taxas": 0,
+        "observacao": "Corrigida"
+      }
+    },
+    {
+      "nome": "as operações depois da alteração",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/6/operacoes"
+    },
+    {
+      "nome": "alterar deixando a venda maior",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/8",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 0.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "alterar trocando o ativo",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/8",
+      "corpo": {
+        "ticker": "MXRF11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "alterar uma operação que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/999",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "alterar com o id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/abc",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "alterar com a data no futuro",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/8",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-15",
+        "quantidade": 2.5,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "alterar com a quantidade zero",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/operacoes/8",
+      "corpo": {
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "data": "2026-10-01",
+        "quantidade": 0,
+        "precoUnitario": 150.55,
+        "taxas": 0.1
+      }
+    },
+    {
+      "nome": "excluir a compra de que a venda depende",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/operacoes/8"
+    },
+    {
+      "nome": "excluir a venda",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/operacoes/9"
+    },
+    {
+      "nome": "excluir a compra",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/operacoes/8"
+    },
+    {
+      "nome": "excluir uma operação que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/operacoes/999"
+    },
+    {
+      "nome": "excluir com o id que não é número",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/operacoes/abc"
+    },
+    {
+      "nome": "alterar o ativo",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "nome": "  Kinea Renda  ",
+        "tipo": 1,
+        "segmento": " Híbrido ",
+        "precoManual": false
+      }
+    },
+    {
+      "nome": "alterar o ativo para preço manual",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 1,
+        "precoManual": true,
+        "precoAtual": 152.75
+      }
+    },
+    {
+      "nome": "as operações com o preço manual",
+      "comentario": "Sem operações, a lista vazia.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/6/operacoes"
+    },
+    {
+      "nome": "tirar o preço manual",
+      "comentario": "Busca a cotação de novo: sem rede, fica o último preço.",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 1,
+        "precoManual": false
+      }
+    },
+    {
+      "nome": "preço manual sem o preço",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 1,
+        "precoManual": true
+      }
+    },
+    {
+      "nome": "tipo de ativo fora da lista",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 9
+      }
+    },
+    {
+      "nome": "segmento fora da lista",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 1,
+        "segmento": "Fazendas"
+      }
+    },
+    {
+      "nome": "FII num ativo no exterior",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/4",
+      "corpo": {
+        "tipo": 1
+      }
+    },
+    {
+      "nome": "alterar um ativo que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/999",
+      "corpo": {
+        "tipo": 1
+      }
+    },
+    {
+      "nome": "alterar o ativo com o id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/abc",
+      "corpo": {
+        "tipo": 1
+      }
+    },
+    {
+      "nome": "nome longo demais",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 1,
+        "nome": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "nome": "preço negativo no ativo",
+      "metodo": "PUT",
+      "caminho": "/api/carteira/ativos/6",
+      "corpo": {
+        "tipo": 1,
+        "precoManual": true,
+        "precoAtual": -1
+      }
+    },
+    {
+      "nome": "excluir o ativo",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/ativos/6"
+    },
+    {
+      "nome": "excluir um ativo que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/ativos/6"
+    },
+    {
+      "nome": "excluir o ativo com o id que não é número",
+      "metodo": "DELETE",
+      "caminho": "/api/carteira/ativos/abc"
+    },
+    {
+      "nome": "carteira depois de tudo",
+      "metodo": "GET",
+      "caminho": "/api/carteira"
     }
   ]
 }
