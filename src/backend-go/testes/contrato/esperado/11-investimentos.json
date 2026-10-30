@@ -484,5 +484,547 @@
         "ultimoMovimento": null
       }
     ]
+  },
+  {
+    "nome": "carteira",
+    "requisicao": "GET /api/carteira",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "cotacoesAtualizadasEm": "2026-10-14T21:00:00",
+      "cotacoesDesatualizadas": true,
+      "cotasDiferentes": [],
+      "distribuicao": [
+        {
+          "nome": "Renda fixa",
+          "valor": 12873.42
+        },
+        {
+          "nome": "ETFs",
+          "valor": 7968.05
+        },
+        {
+          "nome": "Fundos imobiliários",
+          "valor": 4394.80
+        },
+        {
+          "nome": "Fundos de investimento",
+          "valor": 2530.07
+        },
+        {
+          "nome": "Reservas",
+          "valor": 800.0
+        },
+        {
+          "nome": "Ações",
+          "valor": 731.50
+        }
+      ],
+      "evolucao": [
+        {
+          "ano": 2025,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
+          "mes": 11,
+          "valorMercado": null
+        },
+        {
+          "ano": 2025,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
+          "mes": 12,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
+          "mes": 1,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4360.20,
+          "aplicadoNaSelic": 4360.20,
+          "mes": 2,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 10872.54,
+          "aplicadoNaSelic": 10872.54,
+          "mes": 3,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12862.54,
+          "aplicadoNaSelic": 12862.54,
+          "mes": 4,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12862.54,
+          "aplicadoNaSelic": 12862.54,
+          "mes": 5,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 6,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 7,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 8,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 9,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12590.83,
+          "mes": 10,
+          "valorMercado": 13094.35
+        }
+      ],
+      "moedasSemCotacao": [],
+      "openFinance": [
+        {
+          "atualizadoEm": "2026-10-14T09:00:00",
+          "codigo": null,
+          "dataAplicacao": "2025-11-07",
+          "dataVencimento": "2028-11-07",
+          "emissor": "Banco Fictício",
+          "id": 1,
+          "jaNaCarteira": false,
+          "moeda": "BRL",
+          "nome": "CDB Banco Fictício 110% CDI",
+          "nomeExibicao": "CDB Banco Fictício 110% CDI",
+          "nomeInstituicao": "Banco Fictício",
+          "nomePersonalizado": null,
+          "percentualDaSelic": 1654.5,
+          "rendaVariavel": false,
+          "rentabilidade": 7.28,
+          "saldo": 12873.42,
+          "saldoEmReais": 12873.42,
+          "selicNoPeriodo": 0.44,
+          "subtipo": "CDB",
+          "taxaAnual": 110.0,
+          "tipo": "FIXED_INCOME",
+          "valorAplicado": 12000.0
+        },
+        {
+          "atualizadoEm": "2026-10-14T09:00:00",
+          "codigo": null,
+          "dataAplicacao": "2026-06-01",
+          "dataVencimento": null,
+          "emissor": null,
+          "id": 2,
+          "jaNaCarteira": false,
+          "moeda": "BRL",
+          "nome": "Fundo DI Fictício",
+          "nomeExibicao": "Fundo DI Fictício",
+          "nomeInstituicao": "Banco Fictício",
+          "nomePersonalizado": null,
+          "percentualDaSelic": 272.7,
+          "rendaVariavel": false,
+          "rentabilidade": 1.20,
+          "saldo": 2530.07,
+          "saldoEmReais": 2530.07,
+          "selicNoPeriodo": 0.44,
+          "subtipo": "INVESTMENT_FUND",
+          "taxaAnual": null,
+          "tipo": "MUTUAL_FUND",
+          "valorAplicado": 2500.0
+        }
+      ],
+      "openFinanceNaoRegistrados": 0,
+      "posicoes": [
+        {
+          "custo": 6512.34,
+          "diferencaSelic": 391.64,
+          "dividendYield12Meses": null,
+          "fonteCotacao": "yahoo",
+          "id": 4,
+          "lucroRealizado": 0,
+          "moeda": "USD",
+          "nome": "Vanguard S&P 500 ETF",
+          "precoAnterior": 509.8,
+          "precoAtual": 512.37,
+          "precoAtualEmReais": 2773.1002,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 480.5,
+          "primeiraCompra": "2026-03-05",
+          "proventos12Meses": 0,
+          "proventosRecebidos": 0,
+          "quantidade": 2.5,
+          "resultadoSelicPercentual": 0.44,
+          "resultadoTotal": 420.41,
+          "resultadoTotalPercentual": 6.46,
+          "segmento": null,
+          "semCotacao": false,
+          "ticker": "VOO",
+          "tipo": 3,
+          "ultimoProvento": null,
+          "valorMercado": 6932.75,
+          "valorSeFosseSelic": 6541.11,
+          "valorizacao": 420.41,
+          "valorizacaoPercentual": 6.46,
+          "variacaoDia": 0.50
+        },
+        {
+          "custo": 2382.70,
+          "diferencaSelic": 32.04,
+          "dividendYield12Meses": 2.12,
+          "fonteCotacao": "yahoo",
+          "id": 1,
+          "lucroRealizado": 0,
+          "moeda": "BRL",
+          "nome": "CSHG Logística FII",
+          "precoAnterior": 157.9,
+          "precoAtual": 158.32,
+          "precoAtualEmReais": 158.32,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 158.8467,
+          "primeiraCompra": "2025-11-10",
+          "proventos12Meses": 50.25,
+          "proventosRecebidos": 50.25,
+          "quantidade": 15.0,
+          "resultadoSelicPercentual": 0.43,
+          "resultadoTotal": 42.35,
+          "resultadoTotalPercentual": 1.78,
+          "segmento": "Logística",
+          "semCotacao": false,
+          "ticker": "HGLG11",
+          "tipo": 1,
+          "ultimoProvento": {
+            "dataCom": "2026-09-30",
+            "valorPorCota": 1.15
+          },
+          "valorMercado": 2374.80,
+          "valorSeFosseSelic": 2342.76,
+          "valorizacao": -7.90,
+          "valorizacaoPercentual": -0.33,
+          "variacaoDia": 0.27
+        },
+        {
+          "custo": 1990.00,
+          "diferencaSelic": 39.69,
+          "dividendYield12Meses": 0.91,
+          "fonteCotacao": null,
+          "id": 5,
+          "lucroRealizado": 0,
+          "moeda": "BRL",
+          "nome": "XP Malls FII",
+          "precoAnterior": null,
+          "precoAtual": 101.0,
+          "precoAtualEmReais": 101.0,
+          "precoAtualizadoEm": "2026-09-30T21:00:00",
+          "precoManual": true,
+          "precoMedio": 99.5,
+          "primeiraCompra": "2026-04-01",
+          "proventos12Meses": 18.40,
+          "proventosRecebidos": 18.40,
+          "quantidade": 20.0,
+          "resultadoSelicPercentual": 0.44,
+          "resultadoTotal": 48.40,
+          "resultadoTotalPercentual": 2.43,
+          "segmento": "Shoppings",
+          "semCotacao": false,
+          "ticker": "XPML11",
+          "tipo": 1,
+          "ultimoProvento": {
+            "dataCom": "2026-09-30",
+            "valorPorCota": 0.92
+          },
+          "valorMercado": 2020.00,
+          "valorSeFosseSelic": 1980.31,
+          "valorizacao": 30.00,
+          "valorizacaoPercentual": 1.51,
+          "variacaoDia": null
+        },
+        {
+          "custo": 990.00,
+          "diferencaSelic": 40.93,
+          "dividendYield12Meses": null,
+          "fonteCotacao": "yahoo",
+          "id": 3,
+          "lucroRealizado": 0,
+          "moeda": "BRL",
+          "nome": "iShares S&P 500",
+          "precoAnterior": 343.87,
+          "precoAtual": 345.1,
+          "precoAtualEmReais": 345.1,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 330.0,
+          "primeiraCompra": "2026-02-10",
+          "proventos12Meses": 0,
+          "proventosRecebidos": 0,
+          "quantidade": 3.0,
+          "resultadoSelicPercentual": 0.44,
+          "resultadoTotal": 45.30,
+          "resultadoTotalPercentual": 4.58,
+          "segmento": null,
+          "semCotacao": false,
+          "ticker": "IVVB11",
+          "tipo": 3,
+          "ultimoProvento": null,
+          "valorMercado": 1035.30,
+          "valorSeFosseSelic": 994.37,
+          "valorizacao": 45.30,
+          "valorizacaoPercentual": 4.58,
+          "variacaoDia": 0.36
+        },
+        {
+          "custo": 691.25,
+          "diferencaSelic": 69.48,
+          "dividendYield12Meses": 0.18,
+          "fonteCotacao": "yahoo",
+          "id": 2,
+          "lucroRealizado": 30.85,
+          "moeda": "BRL",
+          "nome": "Itaúsa PN",
+          "precoAnterior": 10.51,
+          "precoAtual": 10.45,
+          "precoAtualEmReais": 10.45,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 9.875,
+          "primeiraCompra": "2025-11-10",
+          "proventos12Meses": 1.30,
+          "proventosRecebidos": 1.30,
+          "quantidade": 70.0,
+          "resultadoSelicPercentual": 0.29,
+          "resultadoTotal": 72.40,
+          "resultadoTotalPercentual": 7.33,
+          "segmento": null,
+          "semCotacao": false,
+          "ticker": "ITSA4",
+          "tipo": 2,
+          "ultimoProvento": {
+            "dataCom": "2026-08-20",
+            "valorPorCota": 0.0185
+          },
+          "valorMercado": 731.50,
+          "valorSeFosseSelic": 662.02,
+          "valorizacao": 40.25,
+          "valorizacaoPercentual": 5.82,
+          "variacaoDia": -0.57
+        }
+      ],
+      "rendaVariavel": {
+        "custo": 12566.29,
+        "diferencaSelic": 573.78,
+        "lucroRealizado": 30.85,
+        "proventos12Meses": 69.95,
+        "proventosRecebidos": 69.95,
+        "resultadoSelicPercentual": 0.43,
+        "resultadoTotal": 628.86,
+        "resultadoTotalPercentual": 4.89,
+        "valorMercado": 13094.35,
+        "valorSeFosseSelic": 12520.57,
+        "valorizacao": 528.06,
+        "valorizacaoPercentual": 4.20
+      },
+      "reservas": [
+        {
+          "conferenciaAntiga": false,
+          "contaId": 1,
+          "cotacao": null,
+          "dataConferencia": null,
+          "foraDaListaDoBanco": false,
+          "guardado": 0,
+          "informadoPeloBanco": true,
+          "moeda": "BRL",
+          "movimentos": 0,
+          "nome": "Caixinha viagem",
+          "nomeConta": "Conta Corrente Fictícia",
+          "podeTerSaldoAnterior": false,
+          "primeiroMovimento": null,
+          "quantidade": null,
+          "restanteDoBanco": false,
+          "retirado": 0,
+          "saldo": 800.0,
+          "saldoConferido": null,
+          "totalDoBanco": null,
+          "ultimoMovimento": null
+        }
+      ],
+      "selic": {
+        "acumulado12Meses": 0.44,
+        "acumuladoAno": 0.44,
+        "atualizadaAte": "2026-10-14",
+        "metaAnual": null
+      },
+      "totalGeral": 29297.84,
+      "totalInvestimentosManuais": 0,
+      "totalOpenFinance": 15403.49,
+      "totalReservas": 800.0
+    }
+  },
+  {
+    "nome": "carteira sem login",
+    "requisicao": "GET /api/carteira",
+    "status": 401
+  },
+  {
+    "nome": "operações de um FII",
+    "requisicao": "GET /api/carteira/ativos/1/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 1,
+        "cambio": 1.0,
+        "data": "2026-02-10",
+        "id": 2,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 158.32,
+        "precoUnitario": 155.8,
+        "quantidade": 5.0,
+        "taxas": 1.2,
+        "ticker": "HGLG11",
+        "tipo": 1,
+        "valorAtual": 791.60,
+        "valorSeFosseSelic": 783.65,
+        "valorTotal": 780.20,
+        "variacaoPreco": 1.62
+      },
+      {
+        "ativoId": 1,
+        "cambio": 1.0,
+        "data": "2025-11-10",
+        "id": 1,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 158.32,
+        "precoUnitario": 160.25,
+        "quantidade": 10.0,
+        "taxas": 0.0,
+        "ticker": "HGLG11",
+        "tipo": 1,
+        "valorAtual": 1583.20,
+        "valorSeFosseSelic": 1609.58,
+        "valorTotal": 1602.50,
+        "variacaoPreco": -1.20
+      }
+    ]
+  },
+  {
+    "nome": "operações com venda",
+    "requisicao": "GET /api/carteira/ativos/2/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2026-06-15",
+        "id": 4,
+        "moeda": "BRL",
+        "observacao": "Venda parcial",
+        "origem": 1,
+        "precoAtual": 10.45,
+        "precoUnitario": 10.92,
+        "quantidade": 30.0,
+        "taxas": 0.5,
+        "ticker": "ITSA4",
+        "tipo": 2,
+        "valorAtual": null,
+        "valorSeFosseSelic": 328.55,
+        "valorTotal": 327.10,
+        "variacaoPreco": null
+      },
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2025-11-10",
+        "id": 3,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 10.45,
+        "precoUnitario": 9.87,
+        "quantidade": 100.0,
+        "taxas": 0.5,
+        "ticker": "ITSA4",
+        "tipo": 1,
+        "valorAtual": 1045.00,
+        "valorSeFosseSelic": 991.86,
+        "valorTotal": 987.50,
+        "variacaoPreco": 5.88
+      }
+    ]
+  },
+  {
+    "nome": "operações de um ativo em dólar",
+    "requisicao": "GET /api/carteira/ativos/4/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 4,
+        "cambio": 5.4213,
+        "data": "2026-03-05",
+        "id": 6,
+        "moeda": "USD",
+        "observacao": "Compra no exterior",
+        "origem": 1,
+        "precoAtual": 512.37,
+        "precoUnitario": 480.1,
+        "quantidade": 2.5,
+        "taxas": 1.0,
+        "ticker": "VOO",
+        "tipo": 1,
+        "valorAtual": 6932.75,
+        "valorSeFosseSelic": 6541.11,
+        "valorTotal": 6512.34,
+        "variacaoPreco": 6.72
+      }
+    ]
+  },
+  {
+    "nome": "operações de um ativo que não existe",
+    "requisicao": "GET /api/carteira/ativos/999/operacoes",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "operações com o id que não é número",
+    "requisicao": "GET /api/carteira/ativos/abc/operacoes",
+    "status": 404
+  },
+  {
+    "nome": "operações sem login",
+    "requisicao": "GET /api/carteira/ativos/1/operacoes",
+    "status": 401
   }
 ]
