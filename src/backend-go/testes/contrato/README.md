@@ -170,6 +170,7 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 | Caminhos dentro da pasta temporária | `<dados>/...` | a pasta muda a cada execução |
 | `Usuario.SenhaHash` | `<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>` | o sal é aleatório; o resto tem de ser igual para o .NET ler a senha que o Go gravar |
 | Valor dos cookies | `<valor>` | cifrado pelo Data Protection |
+| `Configuracao.Valor` cifrado | `<segredo cifrado>` | cada gravação cifra diferente, e o Go e o .NET usam esquemas diferentes até a troca dos segredos (#85) |
 
 **Exceção documentada:** em `GET /api/parametros/sistema`, a versão do runtime (`dotNet`) e do sistema operacional, a hora em que o processo subiu (`iniciadoEm`, que é a do processo e não passa pela libfaketime) e o tamanho do arquivo do banco são do ambiente: o caso confere só o tipo (`normalizar`). O Go vai devolver outro texto em `dotNet`, e isso é esperado.
 

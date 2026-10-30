@@ -22,8 +22,14 @@ func (f Faixa) mensagem(propriedade string) string {
 	return fmt.Sprintf("The field %s must be between %s and %s.", propriedade, numeroPtBR(f.Minimo), numeroPtBR(f.Maximo))
 }
 
+// numeroPtBR é o double.ToString da cultura pt-BR: com o expoente abaixo de -4, o .NET passa para a notação científica
+// (0,0001, mas 1E-05).
 func numeroPtBR(v float64) string {
-	return strings.Replace(strconv.FormatFloat(v, 'f', -1, 64), ".", ",", 1)
+	formato := byte('f')
+	if v != 0 && math.Abs(v) < 0.0001 {
+		formato = 'E'
+	}
+	return strings.Replace(strconv.FormatFloat(v, formato, -1, 64), ".", ",", 1)
 }
 
 // inteiroDoToken lê um int do C# (32 bits): número JSON inteiro ou, como as opções web do ASP.NET leem

@@ -250,3 +250,15 @@ func TestMensagemDoPadrao(t *testing.T) {
 		t.Errorf("mensagem própria: %q", m)
 	}
 }
+
+// Regra: os limites do [Range] saem como o double.ToString em pt-BR: vírgula decimal e, com muitos zeros, a notação
+// científica (contrato 11-investimentos, "quantidade zero").
+func TestNumeroPtBR(t *testing.T) {
+	t.Parallel()
+	casos := map[float64]string{0: "0", 1: "1", 0.01: "0,01", 0.0001: "0,0001", 0.00001: "1E-05", 0.000001: "1E-06", 0.0000015: "1,5E-06", 1000000000: "1000000000", -0.000001: "-1E-06"}
+	for v, esperado := range casos {
+		if n := numeroPtBR(v); n != esperado {
+			t.Errorf("numeroPtBR(%v) = %q, esperado %q", v, n, esperado)
+		}
+	}
+}

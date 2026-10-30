@@ -24,6 +24,7 @@ import (
 //   - a pasta temporária dos dados: "<dados>", com o resto do caminho com "/" (no Windows o .NET e o Go usam "\\", e o
 //     esperado gravado no Linux vale nos dois);
 //   - o hash da senha (sal aleatório): "<hash v3 ...>" com os parâmetros, que têm de ser os mesmos;
+//   - o segredo cifrado da Configuracao: "<segredo cifrado>";
 //   - o valor dos cookies (cifrado pelo Data Protection): "<valor>".
 type Normalizador struct {
 	Inicio     time.Time // instante em que o relógio do servidor começou
@@ -155,6 +156,9 @@ func (n Normalizador) geral(chave string, v any) any {
 func (n Normalizador) colunaTexto(tabela, coluna, valor string) string {
 	if tabela == "Usuario" && coluna == "SenhaHash" {
 		return hashSenha(valor)
+	}
+	if tabela == "Configuracao" && coluna == "Valor" && (strings.HasPrefix(valor, "CfDJ8") || strings.HasPrefix(valor, "v2:")) {
+		return "<segredo cifrado>" // Data Protection no .NET, "v2:" no Go: muda a cada gravação
 	}
 	return n.texto(valor)
 }

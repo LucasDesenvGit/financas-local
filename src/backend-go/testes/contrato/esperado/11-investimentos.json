@@ -225,7 +225,7 @@
         "quantidade": 100.12,
         "restanteDoBanco": false,
         "retirado": 0,
-        "saldo": 541.90,
+        "saldo": 541.9,
         "saldoConferido": 100.12345679,
         "totalDoBanco": null,
         "ultimoMovimento": null
@@ -505,7 +505,7 @@
         },
         {
           "nome": "Fundos imobiliários",
-          "valor": 4394.80
+          "valor": 4394.8
         },
         {
           "nome": "Fundos de investimento",
@@ -517,35 +517,35 @@
         },
         {
           "nome": "Ações",
-          "valor": 731.50
+          "valor": 731.5
         }
       ],
       "evolucao": [
         {
           "ano": 2025,
-          "aplicado": 2590.00,
-          "aplicadoNaSelic": 2590.00,
+          "aplicado": 2590.0,
+          "aplicadoNaSelic": 2590.0,
           "mes": 11,
           "valorMercado": null
         },
         {
           "ano": 2025,
-          "aplicado": 2590.00,
-          "aplicadoNaSelic": 2590.00,
+          "aplicado": 2590.0,
+          "aplicadoNaSelic": 2590.0,
           "mes": 12,
           "valorMercado": null
         },
         {
           "ano": 2026,
-          "aplicado": 2590.00,
-          "aplicadoNaSelic": 2590.00,
+          "aplicado": 2590.0,
+          "aplicadoNaSelic": 2590.0,
           "mes": 1,
           "valorMercado": null
         },
         {
           "ano": 2026,
-          "aplicado": 4360.20,
-          "aplicadoNaSelic": 4360.20,
+          "aplicado": 4360.2,
+          "aplicadoNaSelic": 4360.2,
           "mes": 2,
           "valorMercado": null
         },
@@ -647,7 +647,7 @@
           "nomePersonalizado": null,
           "percentualDaSelic": 272.7,
           "rendaVariavel": false,
-          "rentabilidade": 1.20,
+          "rentabilidade": 1.2,
           "saldo": 2530.07,
           "saldoEmReais": 2530.07,
           "selicNoPeriodo": 0.44,
@@ -690,10 +690,10 @@
           "valorSeFosseSelic": 6541.11,
           "valorizacao": 420.41,
           "valorizacaoPercentual": 6.46,
-          "variacaoDia": 0.50
+          "variacaoDia": 0.5
         },
         {
-          "custo": 2382.70,
+          "custo": 2382.7,
           "diferencaSelic": 32.04,
           "dividendYield12Meses": 2.12,
           "fonteCotacao": "yahoo",
@@ -722,14 +722,14 @@
             "dataCom": "2026-09-30",
             "valorPorCota": 1.15
           },
-          "valorMercado": 2374.80,
+          "valorMercado": 2374.8,
           "valorSeFosseSelic": 2342.76,
-          "valorizacao": -7.90,
+          "valorizacao": -7.9,
           "valorizacaoPercentual": -0.33,
           "variacaoDia": 0.27
         },
         {
-          "custo": 1990.00,
+          "custo": 1990.0,
           "diferencaSelic": 39.69,
           "dividendYield12Meses": 0.91,
           "fonteCotacao": null,
@@ -744,11 +744,11 @@
           "precoManual": true,
           "precoMedio": 99.5,
           "primeiraCompra": "2026-04-01",
-          "proventos12Meses": 18.40,
-          "proventosRecebidos": 18.40,
+          "proventos12Meses": 18.4,
+          "proventosRecebidos": 18.4,
           "quantidade": 20.0,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 48.40,
+          "resultadoTotal": 48.4,
           "resultadoTotalPercentual": 2.43,
           "segmento": "Shoppings",
           "semCotacao": false,
@@ -758,14 +758,14 @@
             "dataCom": "2026-09-30",
             "valorPorCota": 0.92
           },
-          "valorMercado": 2020.00,
+          "valorMercado": 2020.0,
           "valorSeFosseSelic": 1980.31,
-          "valorizacao": 30.00,
+          "valorizacao": 30.0,
           "valorizacaoPercentual": 1.51,
           "variacaoDia": null
         },
         {
-          "custo": 990.00,
+          "custo": 990.0,
           "diferencaSelic": 40.93,
           "dividendYield12Meses": null,
           "fonteCotacao": "yahoo",
@@ -784,16 +784,16 @@
           "proventosRecebidos": 0,
           "quantidade": 3.0,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 45.30,
+          "resultadoTotal": 45.3,
           "resultadoTotalPercentual": 4.58,
           "segmento": null,
           "semCotacao": false,
           "ticker": "IVVB11",
           "tipo": 3,
           "ultimoProvento": null,
-          "valorMercado": 1035.30,
+          "valorMercado": 1035.3,
           "valorSeFosseSelic": 994.37,
-          "valorizacao": 45.30,
+          "valorizacao": 45.3,
           "valorizacaoPercentual": 4.58,
           "variacaoDia": 0.36
         },
@@ -813,11 +813,11 @@
           "precoManual": false,
           "precoMedio": 9.875,
           "primeiraCompra": "2025-11-10",
-          "proventos12Meses": 1.30,
-          "proventosRecebidos": 1.30,
+          "proventos12Meses": 1.3,
+          "proventosRecebidos": 1.3,
           "quantidade": 70.0,
           "resultadoSelicPercentual": 0.29,
-          "resultadoTotal": 72.40,
+          "resultadoTotal": 72.4,
           "resultadoTotalPercentual": 7.33,
           "segmento": null,
           "semCotacao": false,
@@ -827,7 +827,7 @@
             "dataCom": "2026-08-20",
             "valorPorCota": 0.0185
           },
-          "valorMercado": 731.50,
+          "valorMercado": 731.5,
           "valorSeFosseSelic": 662.02,
           "valorizacao": 40.25,
           "valorizacaoPercentual": 5.82,
@@ -846,7 +846,7 @@
         "valorMercado": 13094.35,
         "valorSeFosseSelic": 12520.57,
         "valorizacao": 528.06,
-        "valorizacaoPercentual": 4.20
+        "valorizacaoPercentual": 4.2
       },
       "reservas": [
         {
@@ -909,9 +909,9 @@
         "taxas": 1.2,
         "ticker": "HGLG11",
         "tipo": 1,
-        "valorAtual": 791.60,
+        "valorAtual": 791.6,
         "valorSeFosseSelic": 783.65,
-        "valorTotal": 780.20,
+        "valorTotal": 780.2,
         "variacaoPreco": 1.62
       },
       {
@@ -928,10 +928,10 @@
         "taxas": 0.0,
         "ticker": "HGLG11",
         "tipo": 1,
-        "valorAtual": 1583.20,
+        "valorAtual": 1583.2,
         "valorSeFosseSelic": 1609.58,
-        "valorTotal": 1602.50,
-        "variacaoPreco": -1.20
+        "valorTotal": 1602.5,
+        "variacaoPreco": -1.2
       }
     ]
   },
@@ -957,7 +957,7 @@
         "tipo": 2,
         "valorAtual": null,
         "valorSeFosseSelic": 328.55,
-        "valorTotal": 327.10,
+        "valorTotal": 327.1,
         "variacaoPreco": null
       },
       {
@@ -974,9 +974,9 @@
         "taxas": 0.5,
         "ticker": "ITSA4",
         "tipo": 1,
-        "valorAtual": 1045.00,
+        "valorAtual": 1045.0,
         "valorSeFosseSelic": 991.86,
-        "valorTotal": 987.50,
+        "valorTotal": 987.5,
         "variacaoPreco": 5.88
       }
     ]
@@ -1089,5 +1089,1525 @@
     "nome": "atualizar as cotações sem login",
     "requisicao": "POST /api/carteira/atualizar-cotacoes",
     "status": 401
+  },
+  {
+    "nome": "configuração da cotação",
+    "requisicao": "GET /api/carteira/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "tokenBrapiConfigurado": false
+    }
+  },
+  {
+    "nome": "token com espaço no meio",
+    "requisicao": "PUT /api/carteira/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Token inválido."
+    }
+  },
+  {
+    "nome": "token longo demais",
+    "requisicao": "PUT /api/carteira/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "TokenBrapi": [
+          "The field TokenBrapi must be a string with a maximum length of 200."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "token em branco não muda nada",
+    "requisicao": "PUT /api/carteira/configuracao",
+    "status": 204
+  },
+  {
+    "nome": "gravar o token",
+    "requisicao": "PUT /api/carteira/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Cotacao.BrapiToken",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "configuração com o token",
+    "requisicao": "GET /api/carteira/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "tokenBrapiConfigurado": true
+    }
+  },
+  {
+    "nome": "remover o token",
+    "requisicao": "PUT /api/carteira/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Cotacao.BrapiToken"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Protegido": {
+                "antes": 1,
+                "depois": 0
+              },
+              "Valor": {
+                "antes": "<segredo cifrado>",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "configuração sem o token",
+    "requisicao": "GET /api/carteira/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "tokenBrapiConfigurado": false
+    }
+  },
+  {
+    "nome": "configuração sem login",
+    "requisicao": "GET /api/carteira/configuracao",
+    "status": 401
+  },
+  {
+    "nome": "criar a compra de um ativo novo",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativoId": 6,
+      "id": 8,
+      "ticker": "KNRI11"
+    },
+    "banco": {
+      "Ativo": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "FonteCotacao": null,
+            "Id": 6,
+            "Moeda": "BRL",
+            "Nome": null,
+            "PrecoAnterior": null,
+            "PrecoAtual": null,
+            "PrecoAtualizadoEm": null,
+            "PrecoManual": 0,
+            "Segmento": null,
+            "Ticker": "KNRI11",
+            "Tipo": 1
+          }
+        ]
+      },
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 6,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-01",
+            "Id": 8,
+            "Observacao": null,
+            "Origem": 1,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "150.55",
+            "Quantidade": "2.5",
+            "Taxas": "0.1",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "as operações do ativo novo",
+    "requisicao": "GET /api/carteira/ativos/6/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 6,
+        "cambio": 1.0,
+        "data": "2026-10-01",
+        "id": 8,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": null,
+        "precoUnitario": 150.55,
+        "quantidade": 2.5,
+        "taxas": 0.1,
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "valorAtual": null,
+        "valorSeFosseSelic": 378.14,
+        "valorTotal": 376.48,
+        "variacaoPreco": null
+      }
+    ]
+  },
+  {
+    "nome": "criar a venda",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativoId": 6,
+      "id": 9,
+      "ticker": "KNRI11"
+    },
+    "banco": {
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 6,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-02",
+            "Id": 9,
+            "Observacao": "Venda parcial",
+            "Origem": 1,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "150.55",
+            "Quantidade": "1.0",
+            "Taxas": "0.1",
+            "Tipo": 2,
+            "TransacaoId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "venda maior que a carteira",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A quantidade vendida é maior do que a quantidade em carteira nessa data."
+    }
+  },
+  {
+    "nome": "venda antes da compra",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A quantidade vendida é maior do que a quantidade em carteira nessa data."
+    }
+  },
+  {
+    "nome": "compra de ativo novo no exterior, com o câmbio",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativoId": 7,
+      "id": 10,
+      "ticker": "MSFT"
+    },
+    "banco": {
+      "Ativo": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "FonteCotacao": null,
+            "Id": 7,
+            "Moeda": "USD",
+            "Nome": null,
+            "PrecoAnterior": null,
+            "PrecoAtual": null,
+            "PrecoAtualizadoEm": null,
+            "PrecoManual": 0,
+            "Segmento": null,
+            "Ticker": "MSFT",
+            "Tipo": 2
+          }
+        ]
+      },
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 7,
+            "Cambio": "5.4321",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-01",
+            "Id": 10,
+            "Observacao": null,
+            "Origem": 1,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "150.55",
+            "Quantidade": "2.5",
+            "Taxas": "0.1",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "compra em dólar pela PTAX da data",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativoId": 4,
+      "id": 11,
+      "ticker": "VOO"
+    },
+    "banco": {
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 4,
+            "Cambio": "5.4129",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 11,
+            "Observacao": null,
+            "Origem": 1,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "150.55",
+            "Quantidade": "2.5",
+            "Taxas": "0.1",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "as operações em dólar",
+    "requisicao": "GET /api/carteira/ativos/4/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 4,
+        "cambio": 5.4129,
+        "data": "2026-10-14",
+        "id": 11,
+        "moeda": "USD",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 512.37,
+        "precoUnitario": 150.55,
+        "quantidade": 2.5,
+        "taxas": 0.1,
+        "ticker": "VOO",
+        "tipo": 1,
+        "valorAtual": 6932.75,
+        "valorSeFosseSelic": 2037.82,
+        "valorTotal": 2037.82,
+        "variacaoPreco": 240.33
+      },
+      {
+        "ativoId": 4,
+        "cambio": 5.4213,
+        "data": "2026-03-05",
+        "id": 6,
+        "moeda": "USD",
+        "observacao": "Compra no exterior",
+        "origem": 1,
+        "precoAtual": 512.37,
+        "precoUnitario": 480.1,
+        "quantidade": 2.5,
+        "taxas": 1.0,
+        "ticker": "VOO",
+        "tipo": 1,
+        "valorAtual": 6932.75,
+        "valorSeFosseSelic": 6541.11,
+        "valorTotal": 6512.34,
+        "variacaoPreco": 6.72
+      }
+    ]
+  },
+  {
+    "nome": "compra em dólar sem cotação na data",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe o câmbio (R$ por 1 USD): não há cotação do Banco Central para essa data."
+    }
+  },
+  {
+    "nome": "compra na moeda errada",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "VOO já está lançado em USD. A moeda de um ativo não muda: use USD."
+    }
+  },
+  {
+    "nome": "compra sem a moeda de um ativo em dólar",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Código inválido. Use o código da B3, por exemplo MXRF11 ou PETR4."
+    }
+  },
+  {
+    "nome": "moeda inválida",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Moeda inválida. Use o código de 3 letras (ex.: USD)."
+    }
+  },
+  {
+    "nome": "código da B3 inválido",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Código inválido. Use o código da B3, por exemplo MXRF11 ou PETR4."
+    }
+  },
+  {
+    "nome": "código do exterior inválido",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Código inválido. Use o código como no Yahoo Finance, por exemplo AAPL, VOO ou SAP.DE (ativos da B3 ficam em reais)."
+    }
+  },
+  {
+    "nome": "FII no exterior",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "FIIs e BDRs são da B3: lance em reais."
+    }
+  },
+  {
+    "nome": "data no futuro",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A data não pode estar no futuro."
+    }
+  },
+  {
+    "nome": "data antiga demais",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Data inválida."
+    }
+  },
+  {
+    "nome": "sem a data",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Data inválida."
+    }
+  },
+  {
+    "nome": "data em outro formato",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.data": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SalvarOperacaoDto. Path: $.data | LineNumber: 3 | BytePositionInLine: 28."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tipo de operação inválido",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Tipo de operação inválido."
+    }
+  },
+  {
+    "nome": "tipo de operação em texto",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.tipo": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SalvarOperacaoDto. Path: $.tipo | LineNumber: 2 | BytePositionInLine: 19."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tipo de ativo inválido",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Tipo de ativo inválido."
+    }
+  },
+  {
+    "nome": "quantidade zero",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Quantidade": [
+          "The field Quantidade must be between 1E-06 and 1000000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "preço negativo",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "PrecoUnitario": [
+          "The field PrecoUnitario must be between 0 and 100000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "taxas demais",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Taxas": [
+          "The field Taxas must be between 0 and 10000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "câmbio zero",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Cambio": [
+          "The field Cambio must be between 1E-06 and 100000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "observação longa demais",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Observacao": [
+          "The field Observacao must be a string with a maximum length of 300."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "moeda com 4 letras",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Moeda": [
+          "The field Moeda must be a string with a maximum length of 3."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "sem o código",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ticker": [
+          "The Ticker field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "código vazio",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ticker": [
+          "The Ticker field is required.",
+          "The field Ticker must be a string with a minimum length of 1 and a maximum length of 12."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar operação sem login",
+    "requisicao": "POST /api/carteira/operacoes",
+    "status": 401
+  },
+  {
+    "nome": "alterar a compra",
+    "requisicao": "PUT /api/carteira/operacoes/8",
+    "status": 204,
+    "banco": {
+      "OperacaoAtivo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "Observacao": {
+                "antes": null,
+                "depois": "Corrigida"
+              },
+              "PrecoUnitario": {
+                "antes": "150.55",
+                "depois": "151.0"
+              },
+              "Quantidade": {
+                "antes": "2.5",
+                "depois": "3.0"
+              },
+              "Taxas": {
+                "antes": "0.1",
+                "depois": "0.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "as operações depois da alteração",
+    "requisicao": "GET /api/carteira/ativos/6/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 6,
+        "cambio": 1.0,
+        "data": "2026-10-02",
+        "id": 9,
+        "moeda": "BRL",
+        "observacao": "Venda parcial",
+        "origem": 1,
+        "precoAtual": null,
+        "precoUnitario": 150.55,
+        "quantidade": 1.0,
+        "taxas": 0.1,
+        "ticker": "KNRI11",
+        "tipo": 2,
+        "valorAtual": null,
+        "valorSeFosseSelic": 151.03,
+        "valorTotal": 150.45,
+        "variacaoPreco": null
+      },
+      {
+        "ativoId": 6,
+        "cambio": 1.0,
+        "data": "2026-10-01",
+        "id": 8,
+        "moeda": "BRL",
+        "observacao": "Corrigida",
+        "origem": 1,
+        "precoAtual": null,
+        "precoUnitario": 151.0,
+        "quantidade": 3.0,
+        "taxas": 0.0,
+        "ticker": "KNRI11",
+        "tipo": 1,
+        "valorAtual": null,
+        "valorSeFosseSelic": 455.0,
+        "valorTotal": 453.0,
+        "variacaoPreco": null
+      }
+    ]
+  },
+  {
+    "nome": "alterar deixando a venda maior",
+    "requisicao": "PUT /api/carteira/operacoes/8",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Com essa alteração, alguma venda ficaria maior do que a quantidade em carteira."
+    }
+  },
+  {
+    "nome": "alterar trocando o ativo",
+    "requisicao": "PUT /api/carteira/operacoes/8",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não é possível trocar o ativo de uma operação. Exclua e lance novamente."
+    }
+  },
+  {
+    "nome": "alterar uma operação que não existe",
+    "requisicao": "PUT /api/carteira/operacoes/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "alterar com o id que não é número",
+    "requisicao": "PUT /api/carteira/operacoes/abc",
+    "status": 404
+  },
+  {
+    "nome": "alterar com a data no futuro",
+    "requisicao": "PUT /api/carteira/operacoes/8",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A data não pode estar no futuro."
+    }
+  },
+  {
+    "nome": "alterar com a quantidade zero",
+    "requisicao": "PUT /api/carteira/operacoes/8",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Quantidade": [
+          "The field Quantidade must be between 1E-06 and 1000000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "excluir a compra de que a venda depende",
+    "requisicao": "DELETE /api/carteira/operacoes/8",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Sem essa compra, uma venda posterior ficaria maior do que a quantidade em carteira."
+    }
+  },
+  {
+    "nome": "excluir a venda",
+    "requisicao": "DELETE /api/carteira/operacoes/9",
+    "status": 204,
+    "banco": {
+      "OperacaoAtivo": {
+        "removidas": [
+          {
+            "AtivoId": 6,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-02",
+            "Id": 9,
+            "Observacao": "Venda parcial",
+            "Origem": 1,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "150.55",
+            "Quantidade": "1.0",
+            "Taxas": "0.1",
+            "Tipo": 2,
+            "TransacaoId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a compra",
+    "requisicao": "DELETE /api/carteira/operacoes/8",
+    "status": 204,
+    "banco": {
+      "OperacaoAtivo": {
+        "removidas": [
+          {
+            "AtivoId": 6,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-01",
+            "Id": 8,
+            "Observacao": "Corrigida",
+            "Origem": 1,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "151.0",
+            "Quantidade": "3.0",
+            "Taxas": "0.0",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir uma operação que não existe",
+    "requisicao": "DELETE /api/carteira/operacoes/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir com o id que não é número",
+    "requisicao": "DELETE /api/carteira/operacoes/abc",
+    "status": 404
+  },
+  {
+    "nome": "alterar o ativo",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 204,
+    "banco": {
+      "Ativo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "Nome": {
+                "antes": null,
+                "depois": "Kinea Renda"
+              },
+              "Segmento": {
+                "antes": null,
+                "depois": "Híbrido"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "alterar o ativo para preço manual",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 204,
+    "banco": {
+      "Ativo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "FonteCotacao": {
+                "antes": null,
+                "depois": "Manual"
+              },
+              "Nome": {
+                "antes": "Kinea Renda",
+                "depois": null
+              },
+              "PrecoAtual": {
+                "antes": null,
+                "depois": "152.75"
+              },
+              "PrecoAtualizadoEm": {
+                "antes": null,
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "PrecoManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Segmento": {
+                "antes": "Híbrido",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "as operações com o preço manual",
+    "requisicao": "GET /api/carteira/ativos/6/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "tirar o preço manual",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 204,
+    "banco": {
+      "Ativo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "PrecoManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "preço manual sem o preço",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe o preço atual para usar preço manual."
+    }
+  },
+  {
+    "nome": "tipo de ativo fora da lista",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Tipo de ativo inválido."
+    }
+  },
+  {
+    "nome": "segmento fora da lista",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Segmento inválido."
+    }
+  },
+  {
+    "nome": "FII num ativo no exterior",
+    "requisicao": "PUT /api/carteira/ativos/4",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "FIIs e BDRs são da B3: um ativo no exterior não pode ter esse tipo."
+    }
+  },
+  {
+    "nome": "alterar um ativo que não existe",
+    "requisicao": "PUT /api/carteira/ativos/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "alterar o ativo com o id que não é número",
+    "requisicao": "PUT /api/carteira/ativos/abc",
+    "status": 404
+  },
+  {
+    "nome": "nome longo demais",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "The field Nome must be a string with a maximum length of 150."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "preço negativo no ativo",
+    "requisicao": "PUT /api/carteira/ativos/6",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "PrecoAtual": [
+          "The field PrecoAtual must be between 0 and 100000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "excluir o ativo",
+    "requisicao": "DELETE /api/carteira/ativos/6",
+    "status": 204,
+    "banco": {
+      "Ativo": {
+        "removidas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "FonteCotacao": "Manual",
+            "Id": 6,
+            "Moeda": "BRL",
+            "Nome": null,
+            "PrecoAnterior": null,
+            "PrecoAtual": "152.75",
+            "PrecoAtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "PrecoManual": 0,
+            "Segmento": null,
+            "Ticker": "KNRI11",
+            "Tipo": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir um ativo que não existe",
+    "requisicao": "DELETE /api/carteira/ativos/6",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir o ativo com o id que não é número",
+    "requisicao": "DELETE /api/carteira/ativos/abc",
+    "status": 404
+  },
+  {
+    "nome": "carteira depois de tudo",
+    "requisicao": "GET /api/carteira",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "cotacoesAtualizadasEm": "2026-10-14T21:00:00",
+      "cotacoesDesatualizadas": true,
+      "cotasDiferentes": [],
+      "distribuicao": [
+        {
+          "nome": "ETFs",
+          "valor": 14900.8
+        },
+        {
+          "nome": "Renda fixa",
+          "valor": 12873.42
+        },
+        {
+          "nome": "Fundos imobiliários",
+          "valor": 4394.8
+        },
+        {
+          "nome": "Ações",
+          "valor": 2776.55
+        },
+        {
+          "nome": "Fundos de investimento",
+          "valor": 2530.07
+        },
+        {
+          "nome": "Reservas",
+          "valor": 800.0
+        }
+      ],
+      "evolucao": [
+        {
+          "ano": 2025,
+          "aplicado": 2590.0,
+          "aplicadoNaSelic": 2590.0,
+          "mes": 11,
+          "valorMercado": null
+        },
+        {
+          "ano": 2025,
+          "aplicado": 2590.0,
+          "aplicadoNaSelic": 2590.0,
+          "mes": 12,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 2590.0,
+          "aplicadoNaSelic": 2590.0,
+          "mes": 1,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4360.2,
+          "aplicadoNaSelic": 4360.2,
+          "mes": 2,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 10872.54,
+          "aplicadoNaSelic": 10872.54,
+          "mes": 3,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12862.54,
+          "aplicadoNaSelic": 12862.54,
+          "mes": 4,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12862.54,
+          "aplicadoNaSelic": 12862.54,
+          "mes": 5,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 6,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 7,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 8,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 12535.44,
+          "aplicadoNaSelic": 12535.44,
+          "mes": 9,
+          "valorMercado": null
+        },
+        {
+          "ano": 2026,
+          "aplicado": 16618.31,
+          "aplicadoNaSelic": 16682.74,
+          "mes": 10,
+          "valorMercado": 22072.15
+        }
+      ],
+      "moedasSemCotacao": [],
+      "openFinance": [
+        {
+          "atualizadoEm": "2026-10-14T09:00:00",
+          "codigo": null,
+          "dataAplicacao": "2025-11-07",
+          "dataVencimento": "2028-11-07",
+          "emissor": "Banco Fictício",
+          "id": 1,
+          "jaNaCarteira": false,
+          "moeda": "BRL",
+          "nome": "CDB Banco Fictício 110% CDI",
+          "nomeExibicao": "CDB Banco Fictício 110% CDI",
+          "nomeInstituicao": "Banco Fictício",
+          "nomePersonalizado": null,
+          "percentualDaSelic": 1654.5,
+          "rendaVariavel": false,
+          "rentabilidade": 7.28,
+          "saldo": 12873.42,
+          "saldoEmReais": 12873.42,
+          "selicNoPeriodo": 0.44,
+          "subtipo": "CDB",
+          "taxaAnual": 110.0,
+          "tipo": "FIXED_INCOME",
+          "valorAplicado": 12000.0
+        },
+        {
+          "atualizadoEm": "2026-10-14T09:00:00",
+          "codigo": null,
+          "dataAplicacao": "2026-06-01",
+          "dataVencimento": null,
+          "emissor": null,
+          "id": 2,
+          "jaNaCarteira": false,
+          "moeda": "BRL",
+          "nome": "Fundo DI Fictício",
+          "nomeExibicao": "Fundo DI Fictício",
+          "nomeInstituicao": "Banco Fictício",
+          "nomePersonalizado": null,
+          "percentualDaSelic": 272.7,
+          "rendaVariavel": false,
+          "rentabilidade": 1.2,
+          "saldo": 2530.07,
+          "saldoEmReais": 2530.07,
+          "selicNoPeriodo": 0.44,
+          "subtipo": "INVESTMENT_FUND",
+          "taxaAnual": null,
+          "tipo": "MUTUAL_FUND",
+          "valorAplicado": 2500.0
+        }
+      ],
+      "openFinanceNaoRegistrados": 0,
+      "posicoes": [
+        {
+          "custo": 8550.16,
+          "diferencaSelic": 5286.56,
+          "dividendYield12Meses": null,
+          "fonteCotacao": "yahoo",
+          "id": 4,
+          "lucroRealizado": 0,
+          "moeda": "USD",
+          "nome": "Vanguard S&P 500 ETF",
+          "precoAnterior": 509.8,
+          "precoAtual": 512.37,
+          "precoAtualEmReais": 2773.1002,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 315.545,
+          "primeiraCompra": "2026-03-05",
+          "proventos12Meses": 0,
+          "proventosRecebidos": 0,
+          "quantidade": 5.0,
+          "resultadoSelicPercentual": 0.34,
+          "resultadoTotal": 5315.34,
+          "resultadoTotalPercentual": 62.17,
+          "segmento": null,
+          "semCotacao": false,
+          "ticker": "VOO",
+          "tipo": 3,
+          "ultimoProvento": null,
+          "valorMercado": 13865.5,
+          "valorSeFosseSelic": 8578.94,
+          "valorizacao": 5315.34,
+          "valorizacaoPercentual": 62.17,
+          "variacaoDia": 0.5
+        },
+        {
+          "custo": 2382.7,
+          "diferencaSelic": 32.04,
+          "dividendYield12Meses": 2.12,
+          "fonteCotacao": "yahoo",
+          "id": 1,
+          "lucroRealizado": 0,
+          "moeda": "BRL",
+          "nome": "CSHG Logística FII",
+          "precoAnterior": 157.9,
+          "precoAtual": 158.32,
+          "precoAtualEmReais": 158.32,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 158.8467,
+          "primeiraCompra": "2025-11-10",
+          "proventos12Meses": 50.25,
+          "proventosRecebidos": 50.25,
+          "quantidade": 15.0,
+          "resultadoSelicPercentual": 0.43,
+          "resultadoTotal": 42.35,
+          "resultadoTotalPercentual": 1.78,
+          "segmento": "Logística",
+          "semCotacao": false,
+          "ticker": "HGLG11",
+          "tipo": 1,
+          "ultimoProvento": {
+            "dataCom": "2026-09-30",
+            "valorPorCota": 1.15
+          },
+          "valorMercado": 2374.8,
+          "valorSeFosseSelic": 2342.76,
+          "valorizacao": -7.9,
+          "valorizacaoPercentual": -0.33,
+          "variacaoDia": 0.27
+        },
+        {
+          "custo": 2045.05,
+          "diferencaSelic": -9.04,
+          "dividendYield12Meses": null,
+          "fonteCotacao": null,
+          "id": 7,
+          "lucroRealizado": 0,
+          "moeda": "USD",
+          "nome": null,
+          "precoAnterior": null,
+          "precoAtual": null,
+          "precoAtualEmReais": null,
+          "precoAtualizadoEm": null,
+          "precoManual": false,
+          "precoMedio": 150.59,
+          "primeiraCompra": "2026-10-01",
+          "proventos12Meses": 0,
+          "proventosRecebidos": 0,
+          "quantidade": 2.5,
+          "resultadoSelicPercentual": 0.44,
+          "resultadoTotal": 0.0,
+          "resultadoTotalPercentual": 0,
+          "segmento": null,
+          "semCotacao": true,
+          "ticker": "MSFT",
+          "tipo": 2,
+          "ultimoProvento": null,
+          "valorMercado": 2045.05,
+          "valorSeFosseSelic": 2054.09,
+          "valorizacao": 0.0,
+          "valorizacaoPercentual": 0,
+          "variacaoDia": null
+        },
+        {
+          "custo": 1990.0,
+          "diferencaSelic": 39.69,
+          "dividendYield12Meses": 0.91,
+          "fonteCotacao": null,
+          "id": 5,
+          "lucroRealizado": 0,
+          "moeda": "BRL",
+          "nome": "XP Malls FII",
+          "precoAnterior": null,
+          "precoAtual": 101.0,
+          "precoAtualEmReais": 101.0,
+          "precoAtualizadoEm": "2026-09-30T21:00:00",
+          "precoManual": true,
+          "precoMedio": 99.5,
+          "primeiraCompra": "2026-04-01",
+          "proventos12Meses": 18.4,
+          "proventosRecebidos": 18.4,
+          "quantidade": 20.0,
+          "resultadoSelicPercentual": 0.44,
+          "resultadoTotal": 48.4,
+          "resultadoTotalPercentual": 2.43,
+          "segmento": "Shoppings",
+          "semCotacao": false,
+          "ticker": "XPML11",
+          "tipo": 1,
+          "ultimoProvento": {
+            "dataCom": "2026-09-30",
+            "valorPorCota": 0.92
+          },
+          "valorMercado": 2020.0,
+          "valorSeFosseSelic": 1980.31,
+          "valorizacao": 30.0,
+          "valorizacaoPercentual": 1.51,
+          "variacaoDia": null
+        },
+        {
+          "custo": 990.0,
+          "diferencaSelic": 40.93,
+          "dividendYield12Meses": null,
+          "fonteCotacao": "yahoo",
+          "id": 3,
+          "lucroRealizado": 0,
+          "moeda": "BRL",
+          "nome": "iShares S&P 500",
+          "precoAnterior": 343.87,
+          "precoAtual": 345.1,
+          "precoAtualEmReais": 345.1,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 330.0,
+          "primeiraCompra": "2026-02-10",
+          "proventos12Meses": 0,
+          "proventosRecebidos": 0,
+          "quantidade": 3.0,
+          "resultadoSelicPercentual": 0.44,
+          "resultadoTotal": 45.3,
+          "resultadoTotalPercentual": 4.58,
+          "segmento": null,
+          "semCotacao": false,
+          "ticker": "IVVB11",
+          "tipo": 3,
+          "ultimoProvento": null,
+          "valorMercado": 1035.3,
+          "valorSeFosseSelic": 994.37,
+          "valorizacao": 45.3,
+          "valorizacaoPercentual": 4.58,
+          "variacaoDia": 0.36
+        },
+        {
+          "custo": 691.25,
+          "diferencaSelic": 69.48,
+          "dividendYield12Meses": 0.18,
+          "fonteCotacao": "yahoo",
+          "id": 2,
+          "lucroRealizado": 30.85,
+          "moeda": "BRL",
+          "nome": "Itaúsa PN",
+          "precoAnterior": 10.51,
+          "precoAtual": 10.45,
+          "precoAtualEmReais": 10.45,
+          "precoAtualizadoEm": "2026-10-14T21:00:00",
+          "precoManual": false,
+          "precoMedio": 9.875,
+          "primeiraCompra": "2025-11-10",
+          "proventos12Meses": 1.3,
+          "proventosRecebidos": 1.3,
+          "quantidade": 70.0,
+          "resultadoSelicPercentual": 0.29,
+          "resultadoTotal": 72.4,
+          "resultadoTotalPercentual": 7.33,
+          "segmento": null,
+          "semCotacao": false,
+          "ticker": "ITSA4",
+          "tipo": 2,
+          "ultimoProvento": {
+            "dataCom": "2026-08-20",
+            "valorPorCota": 0.0185
+          },
+          "valorMercado": 731.5,
+          "valorSeFosseSelic": 662.02,
+          "valorizacao": 40.25,
+          "valorizacaoPercentual": 5.82,
+          "variacaoDia": -0.57
+        }
+      ],
+      "rendaVariavel": {
+        "custo": 16649.16,
+        "diferencaSelic": 5459.66,
+        "lucroRealizado": 30.85,
+        "proventos12Meses": 69.95,
+        "proventosRecebidos": 69.95,
+        "resultadoSelicPercentual": 0.38,
+        "resultadoTotal": 5523.79,
+        "resultadoTotalPercentual": 32.6,
+        "valorMercado": 22072.15,
+        "valorSeFosseSelic": 16612.49,
+        "valorizacao": 5422.99,
+        "valorizacaoPercentual": 32.57
+      },
+      "reservas": [
+        {
+          "conferenciaAntiga": false,
+          "contaId": 1,
+          "cotacao": null,
+          "dataConferencia": null,
+          "foraDaListaDoBanco": false,
+          "guardado": 0,
+          "informadoPeloBanco": true,
+          "moeda": "BRL",
+          "movimentos": 0,
+          "nome": "Caixinha viagem",
+          "nomeConta": "Conta Corrente Fictícia",
+          "podeTerSaldoAnterior": false,
+          "primeiroMovimento": null,
+          "quantidade": null,
+          "restanteDoBanco": false,
+          "retirado": 0,
+          "saldo": 800.0,
+          "saldoConferido": null,
+          "totalDoBanco": null,
+          "ultimoMovimento": null
+        }
+      ],
+      "selic": {
+        "acumulado12Meses": 0.44,
+        "acumuladoAno": 0.44,
+        "atualizadaAte": "2026-10-14",
+        "metaAnual": null
+      },
+      "totalGeral": 38275.64,
+      "totalInvestimentosManuais": 0,
+      "totalOpenFinance": 15403.49,
+      "totalReservas": 800.0
+    }
   }
 ]
