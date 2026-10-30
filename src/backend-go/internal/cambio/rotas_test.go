@@ -1,8 +1,12 @@
 package cambio
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"testing"
 
@@ -105,5 +109,31 @@ func TestRotaDoCambioComErroDoBanco(t *testing.T) {
 	testeapoio.Chamar(t, mux, "GET", "/api/cambio/cotacao?moeda=USD", "").ConferirStatus(t, http.StatusInternalServerError)
 	if saida.Len() == 0 {
 		t.Error("o erro não foi para o log")
+	}
+}
+
+// Regra: pedido cancelado não é erro (nem resposta, nem log), venha o cancelamento no erro ou no contexto do pedido.
+func TestPedidoCanceladoNaoEhErro(t *testing.T) {
+	t.Parallel()
+	cancelado, cancelar := context.WithCancel(t.Context())
+	cancelar()
+	casos := []struct {
+		nome string
+		ctx  context.Context
+		err  error
+	}{
+		{"o erro é o cancelamento", t.Context(), fmt.Errorf("ler: %w", context.Canceled)},
+		{"o pedido foi cancelado", cancelado, errors.New("outro erro")},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			gravador := httptest.NewRecorder()
+			log, saida := logDoTeste()
+			erroInterno(gravador, log, c.ctx, c.err)
+			if gravador.Body.Len() != 0 || saida.Len() != 0 {
+				t.Errorf("corpo %q, log %q", gravador.Body.String(), saida.String())
+			}
+		})
 	}
 }
