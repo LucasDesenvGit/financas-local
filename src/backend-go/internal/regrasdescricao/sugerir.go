@@ -14,32 +14,15 @@ import (
 // controle). O RE2 do Go entende \d só como 0 a 9, por isso o laço à mão. O C# olha um char (UTF-16) por vez: a letra
 // fora do plano básico chega em duas metades, que não são letra nem dígito.
 func SugerirTexto(descricaoOriginal string) string {
-	var b strings.Builder
-	espaco := false
-	escrever := func(pedaco string) {
-		if pedaco == "" {
-			return
-		}
-		if strings.ContainsFunc(pedaco, func(r rune) bool { return unicode.Is(unicode.Nd, r) }) {
-			espaco = true
-			return
-		}
-		if espaco && b.Len() > 0 {
-			b.WriteByte(' ')
-		}
-		espaco = false
-		b.WriteString(pedaco)
-	}
-	inicio := 0
-	for i, r := range descricaoOriginal {
-		if unicode.IsSpace(r) {
-			escrever(descricaoOriginal[inicio:i])
-			espaco = true
-			inicio = i + len(string(r))
+	// Trocar cada pedaço com dígito por um espaço, juntar os espaços e aparar as pontas é o mesmo que juntar com um
+	// espaço só os pedaços sem dígito.
+	var mantidos []string
+	for _, pedaco := range strings.Fields(descricaoOriginal) {
+		if !strings.ContainsFunc(pedaco, func(r rune) bool { return unicode.Is(unicode.Nd, r) }) {
+			mantidos = append(mantidos, pedaco)
 		}
 	}
-	escrever(descricaoOriginal[inicio:])
-	sem := strings.Trim(b.String(), " -*/.,")
+	sem := strings.Trim(strings.Join(mantidos, " "), " -*/.,")
 	letras := 0
 	for _, r := range sem {
 		if r < 0x10000 && unicode.IsLetter(r) {

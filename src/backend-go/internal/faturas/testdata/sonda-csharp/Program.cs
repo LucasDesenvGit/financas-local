@@ -360,9 +360,11 @@ var textosRegra = gruposRegra.Select(g => new { descricoes = g, texto = Sugestao
 string[] descricoesParaSugerir =
 [
     "LOJA DE MOVEIS FICTICIA 1/10", "UBER *TRIP 12/10", "PIX ENVIADO 123456", "12/10 34", "AB 12 CD", " - IFOOD *RESTAURANTE - ",
-    "PAG*JOSE 2026-10-01", "Açaí ٣٤ da Praça", "TED 123 FIM", "COMPRA  CARTAO\t\tMERCADO", "ABC\U0001D400 1",
+    "PAG*JOSE 2026-10-01", "Açaí \u0663\u0664 da Praça", "TED\u00A0123\u2003FIM", "COMPRA  CARTAO\t\tMERCADO", "ABC\U0001D400 1",
     "", "   ", "12345", "A1 B2 C3", "XY 1 Z", "...ABC...", "VIVO*FIBRA", "NETFLIX.COM 12", "DROGA RAIA 1234 SAO PAULO BR",
-    "AB\U0001D400\U0001D401 9", "  ab  ", "-*/.,", "ÁÉÍ 7", "x1y PAGAMENTO", "MERCADO　LIVRE 3",
+    "AB\U0001D400\U0001D401 9", "  ab  ", "-*/.,", "ÁÉÍ 7", "x1y PAGAMENTO", "MERCADO\u3000LIVRE 3",
+    // U+10000 é letra (Lo), mas no C# chega em duas metades: AB e ela têm 2 letras, menos que 3.
+    "AB\U00010000 9",
 ];
 var sugeridos = descricoesParaSugerir.Select(d => new { descricao = d, texto = RegraDescricaoService.SugerirTexto(d) }).ToList();
 
