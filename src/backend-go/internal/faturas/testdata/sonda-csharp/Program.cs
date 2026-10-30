@@ -1,13 +1,20 @@
 // Gabaritos das contas (#77), chamados no código da própria API: o ciclo da fatura (CicloDaFatura), o mês de cobrança
 // de cada lançamento (MesesDeCobranca), o pago (PagoNasTransacoes, Pago) e a situação (SituacaoFatura), do ContaService;
 // a detecção do banco (BancoService); a "compra" de uma parcela (ParcelasFuturas.Compra); e a ordem de texto da cultura
-// pt-BR, a do ThenBy(f => f.Cartao) da fatura do mês.
+// pt-BR, a do ThenBy(f => f.Cartao) da fatura do mês. E as reservas (#82): o ReservaService sobre um banco de cenário.
 using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Financas.Api.Data;
 using Financas.Api.Servicos;
+using Financas.Api.Servicos.Cambio;
+using Financas.Api.Servicos.Investimentos;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 const BindingFlags Todos = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 var conta = typeof(ContaService);
@@ -418,4 +425,62 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "texto", "testdata", "ordem.js
 Console.WriteLine(Gravar(Path.Combine("..", "..", "regrasdescricao", "testdata", "sugerir.json"), new Dictionary<string, object>
 {
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["sugeridos"] = sugeridos,
+}));
+
+// As reservas (#82): o ReservaService sobre o cenário fictício de internal/reservas/testdata/cenario.sql, num SQLite
+// temporário com o esquema real. O câmbio não vai à internet: o cenário tem o histórico do dólar, e o HttpClient aponta
+// para lugar nenhum. O "hoje" é o do Relogio do C# no dia em que a sonda rodou: o teste do Go usa o mesmo.
+var arquivoReservas = Path.Combine(Path.GetTempPath(), $"sonda-reservas-{Guid.NewGuid():N}.db");
+using (var c = new SqliteConnection($"Data Source={arquivoReservas};Pooling=False"))
+{
+    c.Open();
+    foreach (var f in new[] { Path.Combine(raiz, "banco", "01-estrutura.sql"),
+                 Path.Combine(raiz, "src", "backend-go", "internal", "reservas", "testdata", "cenario.sql") })
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = File.ReadAllText(f);
+        cmd.ExecuteNonQuery();
+    }
+}
+List<JsonElement> reservasListadas;
+var hojeReservas = Relogio.Hoje;
+using (var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>()
+           .UseSqlite($"Data Source={arquivoReservas};Pooling=False").Options))
+{
+    var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+    var cambioReservas = new CambioService(semRede, db, new ConfiguracaoService(db, new EphemeralDataProtectionProvider()),
+        NullLogger<CambioService>.Instance);
+    var web = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    reservasListadas = (await new ReservaService(db, cambioReservas).ListarAsync(CancellationToken.None))
+        .Select(r => JsonSerializer.SerializeToElement(r, web)).ToList();
+}
+File.Delete(arquivoReservas);
+Console.WriteLine(Gravar(Path.Combine("..", "..", "reservas", "testdata", "listar.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["hoje"] = new[] { hojeReservas.ToString("yyyy-MM-dd") },
+    ["reservas"] = reservasListadas,
+}));
+
+// O texto das reservas (#82): a quantidade de dólares na descrição do Méli Dólar (o Regex do .NET, com \d e \s de Unicode,
+// e o decimal.TryParse invariante), o nome da reserva e o "é Méli Dólar".
+string[] descricoesMusd =
+[
+    "Venda de Meli Dólar MUSD 32,09161263", "MUSD 1.000", "MUSD 1.000,50", "MUSD 2.5", "MUSD 2.50", "MUSD 1.2.3", "MUSD 1,2,3",
+    "musd 10", "MUSD10", "MUSD   7", "MUSD 0", "MUSD -5", "MUSD 0,00", "MUSD 1.", "MUSD .5", "MUSD 12\u0663", "MUSD \u0663",
+    "MU\u017FD 5", "MUSD\u00A05", "MUSD\v5", "MUSD\u20035", "sem nada", "", "MUSD 99999999999999999999999999999",
+    "MUSD 79228162514264337593543950335", "MUSD 79228162514264337593543950336", "MUSD 1.234.567,891", "Compra MUSD 3,5 e MUSD 4", "MUSD 000,10",
+];
+var quantidades = descricoesMusd.Select(d => new { descricao = d, quantidade = ReservaService.QuantidadeNaDescricao(d)?.ToString(CultureInfo.InvariantCulture) }).ToList();
+string?[] descricoesReserva =
+[
+    "Dinheiro reservado Viagem", "dinheiro RETIRADO  Casa  ", "Dinheiro reservado ", "Dinheiro reservado", "Dinheiro reservadoX",
+    " Dinheiro reservado Viagem", "", "   ", null, "Dinheiro reservado " + new string('x', 150), "Dinheiro retirado \tCofre\u00A0",
+    "Dinheiro reservado Méli Dólar",
+];
+var nomesReserva = descricoesReserva.Select(d => new { descricao = d, nome = ReservaService.ExtrairNome(d), movimento = ReservaService.EhMovimentoDeReserva(d) }).ToList();
+string[] descricoesMeli = ["Compra de Méli Dólar", "MELI DOLAR", "melidolar", "Meli  Dolar", "Venda de meli dólar MUSD 2", "Méli Dólares", ""];
+var meli = descricoesMeli.Select(d => new { descricao = d, meli = ReservaService.EhMeliDolar(d) }).ToList();
+Console.WriteLine(Gravar(Path.Combine("..", "..", "reservas", "testdata", "texto.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["quantidades"] = quantidades, ["nomes"] = nomesReserva, ["meli"] = meli,
 }));
