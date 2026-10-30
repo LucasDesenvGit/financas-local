@@ -113,12 +113,12 @@ func lerCategoriasEmLote(w http.ResponseWriter, r *http.Request) (itens []*escol
 		return nil, nil, escolha{}, false
 	}
 	for _, campos := range itensCampo.Itens {
-		if campos == nil {
-			itens = append(itens, nil)
-			continue
+		var e *escolha // o item null fica nil
+		if campos != nil {
+			e = &escolha{campos[0].(*respostas.CampoLong).Valor, campos[1].(*respostas.CampoInteiroOpcional).Valor,
+				campos[2].(*respostas.CampoBool).Valor}
 		}
-		itens = append(itens, &escolha{campos[0].(*respostas.CampoLong).Valor, campos[1].(*respostas.CampoInteiroOpcional).Valor,
-			campos[2].(*respostas.CampoBool).Valor})
+		itens = append(itens, e)
 	}
 	if filtroCampo.Veio {
 		x := filtroCampos.filtro()
@@ -298,7 +298,7 @@ func (s *Servico) doFiltro(r *http.Request, f filtro) ([]*transacoes.Transacao, 
 	if err := linhas.Err(); err != nil {
 		return nil, 0, err
 	}
-	if len(ids) == 0 || len(ids) > maximoPorFiltro {
+	if len(ids) > maximoPorFiltro {
 		return nil, len(ids), nil
 	}
 	em, argumentos := emLista(ids)

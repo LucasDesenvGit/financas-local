@@ -1793,6 +1793,22 @@
         },
         "automatica": true
       }
+    },
+    {
+      "nome": "prévia de renomear com o tipo vazio",
+      "comentario": "O tipo não aceita null: vazio não é o padrão.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo="
+    },
+    {
+      "nome": "prévia de renomear com o tipo só com espaços",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo=%20%20"
+    },
+    {
+      "nome": "sugestões com o período vazio",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?dias=&somenteSemCategoria="
     }
   ]
 }

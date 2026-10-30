@@ -128,7 +128,8 @@ func (s *Servico) previaRenomear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tipo := int64(igual)
-	if v, ok := respostas.ParametroDaQuery(r, "tipo"); ok && strings.TrimSpace(v) != "" {
+	// Vazio também é erro: o tipo não aceita null ("The value '' is invalid.").
+	if v, ok := respostas.ParametroDaQuery(r, "tipo"); ok {
 		switch n, converte, definido := respostas.EnumDaQuery(v, nomesDaCorrespondencia); {
 		case !converte:
 			respostas.Validacao(w, map[string][]string{"tipo": {respostas.MensagemDaQuery(v)}})
@@ -382,10 +383,8 @@ func (s *Servico) renomearEmLote(w http.ResponseWriter, r *http.Request) {
 		for _, t := range selecionadas {
 			anteriores[t.Id] = nomeDe(t)
 		}
-		if len(originais) > 0 {
-			if err := s.regrasDoLote(r, tx, agora, originais, nome, &estado); err != nil {
-				return err
-			}
+		if err := s.regrasDoLote(r, tx, agora, originais, nome, &estado); err != nil {
+			return err
 		}
 		for _, t := range selecionadas {
 			if len(originais) > 0 && t.DescricaoOriginal != nil {
@@ -435,6 +434,9 @@ func (s *Servico) renomearEmLote(w http.ResponseWriter, r *http.Request) {
 // regrasDoLote cria uma regra "é igual a" por descrição do banco, ou reaproveita a que já existe com o mesmo texto
 // (sem faixa de valor, #241), que passa a usar o nome novo e fica ativa. Guarda no estado o que criou e o que mudou.
 func (s *Servico) regrasDoLote(r *http.Request, tx *sql.Tx, agora tipos.DataHora, originais []string, nome string, estado *desfazerNome) error {
+	if len(originais) == 0 { // sem criar regras, ou só lançamentos manuais
+		return nil
+	}
 	type existente struct {
 		id            int64
 		texto         string

@@ -13520,5 +13520,59 @@
       "traceId": "<traceId>",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
+  },
+  {
+    "nome": "prévia de renomear com o tipo vazio",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value '' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "prévia de renomear com o tipo só com espaços",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=%20%20",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value '  ' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "sugestões com o período vazio",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?dias=&somenteSemCategoria=",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "dias": [
+          "The value '' is invalid."
+        ],
+        "somenteSemCategoria": [
+          "The value '' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
   }
 ]
