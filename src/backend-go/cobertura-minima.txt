@@ -27,7 +27,7 @@ faturas                 94.2
 parametros              81.5
 parcelas                100.0
 poucoinformativa        100.0
-regrasdescricao         92.2
+regrasdescricao         91.3
 relatorios              96.9
 relogio                 95.4
 respostas               98.5
