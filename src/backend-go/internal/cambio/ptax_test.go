@@ -2,13 +2,11 @@ package cambio
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
@@ -18,47 +16,36 @@ import (
 //   - usd-fim-de-semana-e-feriado.json: de 10 a 12/10, sem nenhum boletim ("value": []);
 //   - usd-todos-os-boletins.json: 13 e 14/10 sem o $filter (Abertura, Intermediário e Fechamento).
 
-// ptaxGravada é um servidor HTTPS de teste que responde com os arquivos gravados. A URL base tem o mesmo caminho da
-// de produção, para conferir que o endereço montado é o mesmo do .NET.
-func ptaxGravada(t *testing.T, responder func(w http.ResponseWriter, r *http.Request)) (*ClientePTAX, *[]string) {
+// ptaxGravada é a PTAX num serviço falso (testeapoio.ServicoDeFora, #460) que dá a mesma resposta a todo pedido e
+// confere os cabeçalhos do .NET. A URL base tem o mesmo caminho da de produção, para conferir que o endereço montado é
+// o mesmo do .NET.
+func ptaxGravada(t *testing.T, resposta testeapoio.RespostaDeFora) (*ClientePTAX, *testeapoio.ServicoDeFora) {
 	t.Helper()
-	pedidos := &[]string{}
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		*pedidos = append(*pedidos, r.URL.RequestURI())
-		if r.Header.Get("User-Agent") != "FinancasLocal/1.0" || r.Header.Get("Accept") != "application/json" {
-			t.Errorf("cabeçalhos diferentes do .NET: User-Agent %q, Accept %q", r.Header.Get("User-Agent"), r.Header.Get("Accept"))
-		}
-		responder(w, r)
-	}))
-	t.Cleanup(srv.Close)
-	c, err := NovoClientePTAX(srv.URL+"/olinda/servico/PTAX/versao/v1/odata/", srv.Client())
+	ptax := testeapoio.NovoServicoDeFora(t)
+	ptax.Exigir("User-Agent", "FinancasLocal/1.0")
+	ptax.Exigir("Accept", "application/json")
+	ptax.Em("GET", "*", resposta)
+	c, err := NovoClientePTAX(ptax.URL()+"/olinda/servico/PTAX/versao/v1/odata/", ptax.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return c, pedidos
+	return c, ptax
 }
 
-func arquivo(t *testing.T, nome string) func(http.ResponseWriter, *http.Request) {
-	t.Helper()
-	corpo, err := os.ReadFile("testdata/" + nome)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		_, _ = w.Write(corpo)
-	}
+// arquivo é a resposta gravada em testdata/, com o Content-Type da PTAX.
+func arquivo(nome string) testeapoio.RespostaDeFora {
+	return testeapoio.RespostaDeFora{Arquivo: nome, TipoConteudo: "application/json;charset=UTF-8"}
 }
 
 func TestListarMoedasDaPTAX(t *testing.T) {
 	t.Parallel()
-	c, pedidos := ptaxGravada(t, arquivo(t, "moedas.json"))
+	c, ptax := ptaxGravada(t, arquivo("moedas.json"))
 	moedas, err := c.ListarMoedas(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if (*pedidos)[0] != "/olinda/servico/PTAX/versao/v1/odata/Moedas?$format=json" {
-		t.Errorf("endereço %s", (*pedidos)[0])
+	if ptax.URIs()[0] != "/olinda/servico/PTAX/versao/v1/odata/Moedas?$format=json" {
+		t.Errorf("endereço %s", ptax.URIs()[0])
 	}
 	codigos := []string{}
 	for _, m := range moedas {
@@ -91,7 +78,7 @@ func TestBuscarFechamentosDaPTAX(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, pedidos := ptaxGravada(t, arquivo(t, c.arquivo))
+			cliente, ptax := ptaxGravada(t, arquivo(c.arquivo))
 			fechamentos, err := cliente.BuscarFechamentos(context.Background(), "USD", c.de, c.ate)
 			if err != nil {
 				t.Fatal(err)
@@ -106,8 +93,8 @@ func TestBuscarFechamentosDaPTAX(t *testing.T) {
 			// O mesmo endereço do CambioService.BaixarAsync, com as datas em MM-dd-yyyy.
 			esperado := "/olinda/servico/PTAX/versao/v1/odata/CotacaoMoedaPeriodo(moeda=@moeda,dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)" +
 				"?@moeda='USD'&@dataInicial='" + mesDiaAno(c.de) + "'&@dataFinalCotacao='" + mesDiaAno(c.ate) + "'&$filter=tipoBoletim%20eq%20'Fechamento'&$format=json"
-			if (*pedidos)[0] != esperado {
-				t.Errorf("endereço\n%s\nesperado\n%s", (*pedidos)[0], esperado)
+			if ptax.URIs()[0] != esperado {
+				t.Errorf("endereço\n%s\nesperado\n%s", ptax.URIs()[0], esperado)
 			}
 		})
 	}
@@ -125,7 +112,7 @@ func TestBuscarFechamentosIgnoraOQueOdotnetIgnora(t *testing.T) {
 		{"tipoBoletim":"Abertura","dataHoraCotacao":"2026-10-14 10:00:00","cotacaoCompra":5.1,"cotacaoVenda":5.2},
 		{"tipoBoletim":"Fechamento","dataHoraCotacao":"2026-10-15 13:00:00","cotacaoCompra":5.10,"cotacaoVenda":5.20}
 	]}`
-	c, _ := ptaxGravada(t, func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(corpo)) })
+	c, _ := ptaxGravada(t, testeapoio.RespostaDeFora{Corpo: corpo})
 	fechamentos, err := c.BuscarFechamentos(context.Background(), "USD", tipos.NovaData(2026, 10, 1), tipos.NovaData(2026, 10, 15))
 	if err != nil {
 		t.Fatal(err)
@@ -138,19 +125,21 @@ func TestBuscarFechamentosIgnoraOQueOdotnetIgnora(t *testing.T) {
 func TestPTAXComFalha(t *testing.T) {
 	t.Parallel()
 	casos := []struct {
-		nome      string
-		responder func(http.ResponseWriter, *http.Request)
-		vazio     bool // sem erro, lista vazia
+		nome     string
+		resposta testeapoio.RespostaDeFora
+		vazio    bool // sem erro, lista vazia
 	}{
-		{"erro 500", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusInternalServerError) }, false},
-		{"não é JSON", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("<html>manutenção</html>")) }, false},
-		{"JSON sem a lista value", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`{"erro":1}`)) }, true},
-		{"value que não é lista", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`{"value":{}}`)) }, true},
+		{"erro 500", testeapoio.ErroDoServidor, false},
+		{"não é JSON", testeapoio.RespostaDeFora{Corpo: "<html>manutenção</html>", TipoConteudo: "text/html"}, false},
+		{"JSON quebrado", testeapoio.JSONQuebrado, false},
+		{"JSON sem a lista value", testeapoio.RespostaDeFora{Corpo: `{"erro":1}`}, true},
+		{"value que não é lista", testeapoio.RespostaDeFora{Corpo: `{"value":{}}`}, true},
+		{"página vazia", testeapoio.PaginaVazia("value"), true},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, _ := ptaxGravada(t, c.responder)
+			cliente, _ := ptaxGravada(t, c.resposta)
 			moedas, err := cliente.ListarMoedas(context.Background())
 			if c.vazio {
 				if err != nil || len(moedas) != 0 {
@@ -168,11 +157,11 @@ func TestPTAXComFalha(t *testing.T) {
 func TestPTAXComTempoEsgotado(t *testing.T) {
 	t.Parallel()
 	// O servidor só responde quando o cliente desiste: o tempo limite do cliente (aqui, curto) é que encerra.
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { <-r.Context().Done() }))
-	t.Cleanup(srv.Close)
-	cliente := srv.Client()
+	ptax := testeapoio.NovoServicoDeFora(t)
+	ptax.Em("GET", "*", testeapoio.TempoEsgotado)
+	cliente := ptax.Cliente()
 	cliente.Timeout = 50 * time.Millisecond
-	c, err := NovoClientePTAX(srv.URL, cliente)
+	c, err := NovoClientePTAX(ptax.URL(), cliente)
 	if err != nil {
 		t.Fatal(err)
 	}

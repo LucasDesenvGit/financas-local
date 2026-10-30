@@ -20,7 +20,7 @@ func Registrar(mux *http.ServeMux, db *sql.DB, log *slog.Logger, r relogio.Relog
 	RegistrarCom(mux, NovoServico(db, ClientePadrao(), r, log), log)
 }
 
-// RegistrarCom é o Registrar com o serviço pronto (os testes passam um com o Mercado Bitcoin do httptest).
+// RegistrarCom é o Registrar com o serviço pronto (os testes passam um com o Mercado Bitcoin do testeapoio.ServicoDeFora).
 func RegistrarCom(mux *http.ServeMux, s *Servico, log *slog.Logger) {
 	mux.HandleFunc("GET /api/cripto/cotacoes", func(w http.ResponseWriter, req *http.Request) {
 		if _, ok := sessao.Usuario(req.Context()); !ok {

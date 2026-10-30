@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.13] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **Apoio para testar os serviços de fora sem rede** (#460; épico #374). Nada muda para quem usa. Para quem desenvolve: o `testeapoio.ServicoDeFora` faz o papel de um serviço de fora (PTAX, Mercado Bitcoin, e os que vêm na #82 e na #83: Yahoo, brapi, BCB, Pluggy) num servidor HTTPS de teste, com as rotas cadastradas, as respostas de `testdata/` e os erros prontos (tempo esgotado, 401, 429, 500, JSON quebrado, página vazia). Ele confere os cabeçalhos que o .NET manda e guarda os pedidos sem o valor dos segredos. O câmbio e a cripto passam a usá-lo, e a ADR 0051 diz como testar integração de fora.
+
 ## [2.50.12] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação
