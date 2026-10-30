@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.11] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 4: o renomear e a categoria em lote com Desfazer** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado. Com esta parte, as 18 rotas de `/api/transacoes` têm o código Go. Para quem desenvolve:
+  - a prévia do renomear, o renomear de uma e em lote, a categoria em lote (por transação e pelo filtro) e os dois Desfazer em Go, com o mesmo JSON e o mesmo banco do .NET: 67 casos novos no contrato `07-transacoes`, gravados do .NET, passam com o Go atendendo;
+  - o pacote `desfazer`: o estado de antes de uma alteração em lote, na memória, por 10 minutos, com a chave de uso único;
+  - o 415 do Go (corpo que não é JSON) sai com `application/json`, como o do .NET;
+  - a prévia do renomear recusa o tipo vazio, como o .NET ("The value '' is invalid.").
+
 ## [2.50.10] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação

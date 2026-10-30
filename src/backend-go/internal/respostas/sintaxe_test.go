@@ -26,7 +26,7 @@ func TestErroDeSintaxeIgualAoDotnet(t *testing.T) {
 		}
 		var login, senha CampoTexto
 		login, senha = CampoTexto{Propriedade: "Login", Maximo: 100}, CampoTexto{Propriedade: "Senha", Maximo: 100}
-		_, e := lerObjeto([]byte(g.Corpo), "Credenciais", []Campo{&login, &senha})
+		_, e := lerObjeto([]byte(g.Corpo), "Credenciais", doRecord("Credenciais"), []Campo{&login, &senha})
 		if e == nil {
 			t.Errorf("%q: Go leu sem erro; .NET: %s | %s", g.Corpo, g.Caminho, g.Mensagem)
 			continue

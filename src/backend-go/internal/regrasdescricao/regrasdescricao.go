@@ -177,6 +177,11 @@ func mesmoId(a, b *int64) bool {
 const ondeNomeAutomatico = `NOT "DescricaoManual" AND "DescricaoOriginal" IS NOT NULL
 	AND ("RegraDescricaoId" IS NOT NULL OR "Descricao" = "DescricaoOriginal")`
 
+// NomeAutomaticoNoBanco lê as transações que estão com o nome automático no banco (a consulta do ReaplicarAsync).
+func NomeAutomaticoNoBanco(ctx context.Context, q consultas.DBTX) ([]*transacoes.Transacao, error) {
+	return transacoes.Listar(ctx, q, `WHERE `+ondeNomeAutomatico)
+}
+
 // Reaplicar (o ReaplicarAsync) aplica as regras em todas as transações de nome automático e devolve as que mudaram,
 // com AtualizadoEm = agora. Não grava: quem chama decide (transacoes.GravarTodas).
 func Reaplicar(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) ([]*transacoes.Transacao, error) {
@@ -184,7 +189,7 @@ func Reaplicar(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) ([]*
 	if err != nil {
 		return nil, err
 	}
-	lista, err := transacoes.Listar(ctx, q, `WHERE `+ondeNomeAutomatico)
+	lista, err := NomeAutomaticoNoBanco(ctx, q)
 	if err != nil {
 		return nil, err
 	}

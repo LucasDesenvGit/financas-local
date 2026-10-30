@@ -9,7 +9,7 @@ import (
 // lerCampos lê o corpo com os campos e devolve o erro de conversão (o caminho) ou os erros de validação.
 func lerCampos(t *testing.T, corpo string, campos ...Campo) (string, map[string][]string) {
 	t.Helper()
-	_, erro := lerObjeto([]byte(corpo), "Dto", campos)
+	_, erro := lerObjeto([]byte(corpo), "Dto", doRecord("Dto"), campos)
 	if erro != nil {
 		return erro.Caminho, nil
 	}

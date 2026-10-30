@@ -355,6 +355,19 @@ string[][] gruposRegra =
 ];
 var textosRegra = gruposRegra.Select(g => new { descricoes = g, texto = SugestaoCategoriaService.TextoRegra(g) }).ToList();
 
+// O texto sugerido para a regra de descrição (#123): sem os pedaços com número; com menos de 3 letras, a descrição
+// inteira. Os dígitos e os espaços de Unicode contam (o \d e o \s do Regex do .NET).
+string[] descricoesParaSugerir =
+[
+    "LOJA DE MOVEIS FICTICIA 1/10", "UBER *TRIP 12/10", "PIX ENVIADO 123456", "12/10 34", "AB 12 CD", " - IFOOD *RESTAURANTE - ",
+    "PAG*JOSE 2026-10-01", "Açaí \u0663\u0664 da Praça", "TED\u00A0123\u2003FIM", "COMPRA  CARTAO\t\tMERCADO", "ABC\U0001D400 1",
+    "", "   ", "12345", "A1 B2 C3", "XY 1 Z", "...ABC...", "VIVO*FIBRA", "NETFLIX.COM 12", "DROGA RAIA 1234 SAO PAULO BR",
+    "AB\U0001D400\U0001D401 9", "  ab  ", "-*/.,", "ÁÉÍ 7", "x1y PAGAMENTO", "MERCADO\u3000LIVRE 3",
+    // U+10000 é letra (Lo), mas no C# chega em duas metades: AB e ela têm 2 letras, menos que 3.
+    "AB\U00010000 9",
+];
+var sugeridos = descricoesParaSugerir.Select(d => new { descricao = d, texto = RegraDescricaoService.SugerirTexto(d) }).ToList();
+
 var opcoes = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 string Gravar(string relativo, object conteudo)
 {
@@ -401,4 +414,8 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "respostas", "testdata", "quer
 Console.WriteLine(Gravar(Path.Combine("..", "..", "texto", "testdata", "ordem.json"), new Dictionary<string, object>
 {
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["nomes"] = nomes, ["ordenados"] = ordenados,
+}));
+Console.WriteLine(Gravar(Path.Combine("..", "..", "regrasdescricao", "testdata", "sugerir.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["sugeridos"] = sugeridos,
 }));

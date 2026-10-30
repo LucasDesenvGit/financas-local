@@ -1,5 +1,5 @@
 {
-  "descricao": "Transações (#78, TransacoesController): parte 1, a lista com os filtros, a ordem, a paginação e os totais, e obter; parte 2, as sugestões de categoria; parte 3, alterar, ajustar, excluir, as alterações em lote e a transferência. Roda com a sessão 'principal', logada pelo 00-auth, depois do 05 e do 06, que mudam categorias e regras (e o reaplicar recategoriza as transações da base). Os de leitura vêm primeiro; os que gravam, no fim.",
+  "descricao": "Transações (#78, TransacoesController): parte 1, a lista com os filtros, a ordem, a paginação e os totais, e obter; parte 2, as sugestões de categoria; parte 3, alterar, ajustar, excluir, as alterações em lote e a transferência; parte 4, o renomear e a categoria em lote, com o Desfazer. Roda com a sessão 'principal', logada pelo 00-auth, depois do 05 e do 06, que mudam categorias e regras (e o reaplicar recategoriza as transações da base). Os de leitura vêm primeiro; os que gravam, no fim.",
   "casos": [
     {
       "nome": "listar",
@@ -1104,6 +1104,711 @@
       "metodo": "DELETE",
       "caminho": "/api/transacoes/166",
       "sessao": "visitante"
+    },
+    {
+      "nome": "prévia de renomear",
+      "comentario": "Sem texto e com 'é igual a': a descrição do banco inteira; o texto sugerido sem os pedaços com número.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/151/renomear/previa"
+    },
+    {
+      "nome": "prévia de renomear com texto e tipo",
+      "comentario": "O texto aparado; 'começa com' acha as outras contas de luz, menos esta.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?texto=%20DEBITO%20AUTOMATICO%20&tipo=2"
+    },
+    {
+      "nome": "prévia de renomear pelo nome do tipo",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo=Contem"
+    },
+    {
+      "nome": "prévia de renomear com o texto sugerido",
+      "comentario": "Sem texto e sem 'é igual a': o sugerido (sem o 1/10).",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/26/renomear/previa?tipo=1"
+    },
+    {
+      "nome": "prévia de renomear lançamento manual",
+      "comentario": "Sem descrição do banco: nada a sugerir.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/166/renomear/previa"
+    },
+    {
+      "nome": "prévia de renomear inexistente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/999999/renomear/previa"
+    },
+    {
+      "nome": "prévia de renomear com id que não é número",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/abc/renomear/previa"
+    },
+    {
+      "nome": "prévia de renomear com tipo fora do enum",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo=9"
+    },
+    {
+      "nome": "prévia de renomear com tipo que não existe",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo=parecido"
+    },
+    {
+      "nome": "renomear só nesta",
+      "comentario": "O nome fica escolhido à mão (as regras não mexem mais); a chave do Desfazer volta.",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/162/descricao",
+      "corpo": {
+        "descricao": "  Aplicação no CDB ",
+        "voltarOriginal": false,
+        "aplicarNasOutras": false
+      },
+      "capturar": {
+        "chaveNome": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer o renomear",
+      "comentario": "Volta o nome de antes, a regra e o 'escolhido à mão'.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveNome}}"
+    },
+    {
+      "nome": "desfazer o renomear de novo",
+      "comentario": "A chave vale uma vez só.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveNome}}"
+    },
+    {
+      "nome": "desfazer o renomear com chave que não existe",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/naoexiste"
+    },
+    {
+      "nome": "renomear voltando ao nome do banco",
+      "comentario": "A regra deixa de valer para ela: o nome do banco fica escolhido à mão.",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/149/descricao",
+      "corpo": {
+        "descricao": null,
+        "voltarOriginal": true,
+        "aplicarNasOutras": false
+      },
+      "capturar": {
+        "chaveVoltar": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer o voltar ao nome do banco",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveVoltar}}"
+    },
+    {
+      "nome": "renomear com o mesmo nome",
+      "comentario": "Muda só o 'escolhido à mão': conta como alterada.",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/162/descricao",
+      "corpo": {
+        "descricao": "APLICACAO CDB BANCO FICTICIO",
+        "voltarOriginal": false,
+        "aplicarNasOutras": false
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "renomear criando a regra",
+      "comentario": "Sem texto: a regra 'é igual a' com a descrição do banco inteira. Vale nas outras de nome automático e nesta.",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao",
+      "corpo": {
+        "descricao": "Rendimento da poupança",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true
+      },
+      "capturar": {
+        "chaveRegra": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer a regra criada",
+      "comentario": "A regra sai, e os nomes voltam.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveRegra}}"
+    },
+    {
+      "nome": "renomear criando a regra com o texto",
+      "comentario": "'Começa com' e o texto aparado: renomeia os aluguéis de todos os meses.",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/45/descricao",
+      "corpo": {
+        "descricao": "Aluguel do apartamento",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true,
+        "tipoCorrespondencia": 2,
+        "texto": " PIX ENVIADO IMOB "
+      },
+      "capturar": {
+        "chaveAluguel": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer a regra do aluguel",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveAluguel}}"
+    },
+    {
+      "nome": "renomear com regra mais específica",
+      "comentario": "A regra 'contém DEBITO AUTOMATICO ENERGIA', de texto mais longo, vem antes: a nova não vale para esta. Nada fica gravado (a regra criada sai junto).",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/149/descricao",
+      "corpo": {
+        "descricao": "Luz",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true,
+        "tipoCorrespondencia": 1,
+        "texto": "ENERGIA"
+      }
+    },
+    {
+      "nome": "renomear com texto que não bate",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao",
+      "corpo": {
+        "descricao": "X",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true,
+        "tipoCorrespondencia": 1,
+        "texto": "XYZW"
+      }
+    },
+    {
+      "nome": "renomear com texto curto demais para regra",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao",
+      "corpo": {
+        "descricao": "X",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true,
+        "texto": "1 -"
+      }
+    },
+    {
+      "nome": "renomear lançamento manual criando regra",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/166/descricao",
+      "corpo": {
+        "descricao": "X",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true
+      }
+    },
+    {
+      "nome": "renomear sem a descrição",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao",
+      "corpo": {
+        "descricao": "   ",
+        "voltarOriginal": false,
+        "aplicarNasOutras": false
+      }
+    },
+    {
+      "nome": "renomear com tipo fora do enum",
+      "comentario": "O JSON não confere o enum: quem recusa é a action.",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao",
+      "corpo": {
+        "descricao": "X",
+        "voltarOriginal": false,
+        "aplicarNasOutras": true,
+        "tipoCorrespondencia": 9
+      }
+    },
+    {
+      "nome": "renomear com descrição longa demais",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao",
+      "corpo": {
+        "descricao": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "nome": "renomear inexistente",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/999999/descricao",
+      "corpo": {
+        "descricao": "X"
+      }
+    },
+    {
+      "nome": "renomear com id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/abc/descricao",
+      "corpo": {
+        "descricao": "X"
+      }
+    },
+    {
+      "nome": "renomear sem corpo",
+      "metodo": "PUT",
+      "caminho": "/api/transacoes/157/descricao"
+    },
+    {
+      "nome": "renomear em lote só nelas",
+      "comentario": "O nome fica escolhido à mão em cada uma; a repetida conta uma vez.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [
+          159,
+          142,
+          159
+        ],
+        "descricao": " Salário ",
+        "criarRegras": false
+      },
+      "capturar": {
+        "chaveLote": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer o renomear em lote",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveLote}}"
+    },
+    {
+      "nome": "renomear em lote criando regras",
+      "comentario": "Uma regra 'é igual a' por descrição do banco (o salário; a do mercado já existe e passa a usar o nome novo); o lançamento manual fica com o nome à mão. Vale nas outras de nome automático.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [
+          159,
+          142,
+          166,
+          151
+        ],
+        "descricao": "Salário da empresa",
+        "criarRegras": true
+      },
+      "capturar": {
+        "chaveRegras": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "renomear em lote com as regras que já existem",
+      "comentario": "As do salário já estão com o nome da regra e não mudam. Muda a 151: no lote anterior, ela ainda estava no banco com o nome escolhido à mão, e a reaplicação (que consulta o banco) a deixou de fora; agora ela está com o nome automático, e a regra do mercado vale para ela.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [
+          159
+        ],
+        "descricao": "Salário da empresa",
+        "criarRegras": true
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer o renomear em lote com regras",
+      "comentario": "A regra criada sai; a que já existia volta ao nome de antes.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/descricao/desfazer/{{chaveRegras}}"
+    },
+    {
+      "nome": "renomear em lote com transação inexistente",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [
+          159,
+          999999
+        ],
+        "descricao": "X",
+        "criarRegras": false
+      }
+    },
+    {
+      "nome": "renomear em lote sem ids",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [],
+        "descricao": "X",
+        "criarRegras": false
+      }
+    },
+    {
+      "nome": "renomear em lote sem o nome",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [
+          159
+        ],
+        "descricao": "  ",
+        "criarRegras": false
+      }
+    },
+    {
+      "nome": "renomear em lote com o nome longo demais",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/descricao/em-lote",
+      "corpo": {
+        "ids": [
+          159
+        ],
+        "descricao": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "nome": "categorias em lote por transação",
+      "comentario": "Cada uma com a sua, à mão ou pelas regras; a que fica com a mesma categoria e o mesmo 'à mão' não conta.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "categoriaId": 7,
+            "automatica": false
+          },
+          {
+            "id": 151,
+            "categoriaId": null,
+            "automatica": true
+          },
+          {
+            "id": 162,
+            "categoriaId": 24,
+            "automatica": false
+          }
+        ]
+      },
+      "capturar": {
+        "chaveCategorias": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer as categorias em lote",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/em-lote/desfazer/{{chaveCategorias}}"
+    },
+    {
+      "nome": "desfazer as categorias em lote de novo",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/em-lote/desfazer/{{chaveCategorias}}"
+    },
+    {
+      "nome": "categorias em lote pelo filtro",
+      "comentario": "Todas as da busca, na mesma categoria, à mão.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "busca": "STREAMFLIX"
+        },
+        "categoriaId": 7,
+        "automatica": false
+      },
+      "capturar": {
+        "chaveFiltro": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "ajustar uma depois das categorias em lote",
+      "comentario": "Mudou de novo depois do lote: o Desfazer não passa por cima.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/153",
+      "corpo": {
+        "descricao": "ASSINATURA STREAMFLIX",
+        "categoriaId": 9,
+        "observacao": null,
+        "ignorarRelatorios": false
+      }
+    },
+    {
+      "nome": "desfazer as categorias pelo filtro",
+      "comentario": "Volta as outras; a que mudou depois fica como está.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/em-lote/desfazer/{{chaveFiltro}}"
+    },
+    {
+      "nome": "categorias em lote pelo filtro sem mudar nada",
+      "comentario": "Nenhuma transação: sem chave.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "busca": "nada assim"
+        },
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote pelo filtro com o período",
+      "comentario": "O filtro do corpo tem os mesmos campos da busca da tela.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "inicio": "2026-09-01",
+          "fim": "2026-09-30",
+          "contaId": 2,
+          "categoriaIds": [
+            9
+          ],
+          "tipo": 1
+        },
+        "automatica": true
+      },
+      "capturar": {
+        "chavePeriodo": "/desfazer"
+      },
+      "normalizar": {
+        "/desfazer": "texto"
+      }
+    },
+    {
+      "nome": "desfazer as categorias pelo período",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/em-lote/desfazer/{{chavePeriodo}}"
+    },
+    {
+      "nome": "categorias em lote com itens e filtro",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "automatica": true
+          }
+        ],
+        "filtro": {
+          "busca": "x"
+        },
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote sem itens nem filtro",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "categoriaId": 7
+      }
+    },
+    {
+      "nome": "categorias em lote com a lista vazia",
+      "comentario": "Lista vazia conta como sem itens.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [],
+        "categoriaId": 7
+      }
+    },
+    {
+      "nome": "categorias em lote sem categoria e sem automática",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "automatica": false
+          }
+        ]
+      }
+    },
+    {
+      "nome": "categorias em lote com categoria inexistente",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "categoriaId": 999
+          }
+        ]
+      }
+    },
+    {
+      "nome": "categorias em lote com transação repetida",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "automatica": true
+          },
+          {
+            "id": 166,
+            "categoriaId": 7
+          }
+        ]
+      }
+    },
+    {
+      "nome": "categorias em lote com transação inexistente",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 999999,
+            "automatica": true
+          }
+        ]
+      }
+    },
+    {
+      "nome": "categorias em lote com o filtro inválido",
+      "comentario": "As validações do filtro valem dentro do corpo.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "tamanhoPagina": 0,
+          "busca": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote com o item que não é número",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": "x",
+            "automatica": true
+          }
+        ]
+      }
+    },
+    {
+      "nome": "desfazer as categorias com chave que não existe",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/em-lote/desfazer/naoexiste"
+    },
+    {
+      "nome": "categorias em lote sem login",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "automatica": true
+          }
+        ]
+      },
+      "sessao": "visitante"
+    },
+    {
+      "nome": "categorias em lote com a categoria que não é número",
+      "comentario": "O DTO do lote é uma classe com propriedades, e não um record como os outros.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "automatica": true
+          }
+        ],
+        "categoriaId": "x"
+      }
+    },
+    {
+      "nome": "categorias em lote com o filtro que não é objeto",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": 5,
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote com um campo do filtro que não converte",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "pagina": "x"
+        },
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote com os itens que não são lista",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": 5
+      }
+    },
+    {
+      "nome": "categorias em lote com o tipo do filtro em texto",
+      "comentario": "No corpo, o enum é só número (sem o JsonStringEnumConverter).",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "tipo": "Receita"
+        },
+        "automatica": true
+      }
+    },
+    {
+      "nome": "prévia de renomear com o tipo vazio",
+      "comentario": "O tipo não aceita null: vazio não é o padrão.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo="
+    },
+    {
+      "nome": "prévia de renomear com o tipo só com espaços",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/149/renomear/previa?tipo=%20%20"
+    },
+    {
+      "nome": "sugestões com o período vazio",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?dias=&somenteSemCategoria="
     }
   ]
 }

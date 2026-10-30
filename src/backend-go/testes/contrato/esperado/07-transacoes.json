@@ -10233,5 +10233,3346 @@
     "nome": "excluir sem login",
     "requisicao": "DELETE /api/transacoes/166",
     "status": 401
+  },
+  {
+    "nome": "prévia de renomear",
+    "requisicao": "GET /api/transacoes/151/renomear/previa",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+      "exemplos": [
+        "SUPERMERCADO EXEMPLO"
+      ],
+      "quantidade": 10,
+      "textoSugerido": "SUPERMERCADO EXEMPLO"
+    }
+  },
+  {
+    "nome": "prévia de renomear com texto e tipo",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?texto=%20DEBITO%20AUTOMATICO%20&tipo=2",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+      "exemplos": [
+        "DEBITO AUTOMATICO ENERGIA FICTICIA"
+      ],
+      "quantidade": 11,
+      "textoSugerido": "DEBITO AUTOMATICO ENERGIA FICTICIA"
+    }
+  },
+  {
+    "nome": "prévia de renomear pelo nome do tipo",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=Contem",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+      "exemplos": [
+        "DEBITO AUTOMATICO ENERGIA FICTICIA"
+      ],
+      "quantidade": 11,
+      "textoSugerido": "DEBITO AUTOMATICO ENERGIA FICTICIA"
+    }
+  },
+  {
+    "nome": "prévia de renomear com o texto sugerido",
+    "requisicao": "GET /api/transacoes/26/renomear/previa?tipo=1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "descricaoOriginal": "LOJA DE MOVEIS FICTICIA 1/10",
+      "exemplos": [
+        "LOJA DE MOVEIS FICTICIA 2/10",
+        "LOJA DE MOVEIS FICTICIA 3/10",
+        "LOJA DE MOVEIS FICTICIA 4/10"
+      ],
+      "quantidade": 9,
+      "textoSugerido": "LOJA DE MOVEIS FICTICIA"
+    }
+  },
+  {
+    "nome": "prévia de renomear lançamento manual",
+    "requisicao": "GET /api/transacoes/166/renomear/previa",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "descricaoOriginal": null,
+      "exemplos": [],
+      "quantidade": 0,
+      "textoSugerido": ""
+    }
+  },
+  {
+    "nome": "prévia de renomear inexistente",
+    "requisicao": "GET /api/transacoes/999999/renomear/previa",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "prévia de renomear com id que não é número",
+    "requisicao": "GET /api/transacoes/abc/renomear/previa",
+    "status": 404
+  },
+  {
+    "nome": "prévia de renomear com tipo fora do enum",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=9",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value '9' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "prévia de renomear com tipo que não existe",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=parecido",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value 'parecido' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "renomear só nesta",
+    "requisicao": "PUT /api/transacoes/162/descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 1,
+      "desfazer": "<texto>",
+      "regraId": null
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "TransacaoRenomeada",
+            "Id": 19,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 162
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-07 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "APLICACAO CDB BANCO FICTICIO",
+                "depois": "Aplicação no CDB"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o renomear",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveNome}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearDesfeito (1)",
+            "Id": 20,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 162
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aplicação no CDB",
+                "depois": "APLICACAO CDB BANCO FICTICIO"
+              },
+              "DescricaoManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o renomear de novo",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveNome}}",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  },
+  {
+    "nome": "desfazer o renomear com chave que não existe",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/naoexiste",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  },
+  {
+    "nome": "renomear voltando ao nome do banco",
+    "requisicao": "PUT /api/transacoes/149/descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 1,
+      "desfazer": "<texto>",
+      "regraId": null
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "TransacaoRenomeada",
+            "Id": 21,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 149
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Conta de luz",
+                "depois": "DEBITO AUTOMATICO ENERGIA FICTICIA"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "RegraDescricaoId": {
+                "antes": 2,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o voltar ao nome do banco",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveVoltar}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearDesfeito (1)",
+            "Id": 22,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 149
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+                "depois": "Conta de luz"
+              },
+              "DescricaoManual": {
+                "antes": 1,
+                "depois": 0
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear com o mesmo nome",
+    "requisicao": "PUT /api/transacoes/162/descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 1,
+      "desfazer": "<texto>",
+      "regraId": null
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "TransacaoRenomeada",
+            "Id": 23,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 162
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear criando a regra",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 1,
+      "desfazer": "<texto>",
+      "regraId": 6
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RegraDescricaoCriada (1)",
+            "Id": 24,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "RegraDescricao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 6,
+            "NovaDescricao": "Rendimento da poupança",
+            "Texto": "RENDIMENTO POUPANCA",
+            "TipoCorrespondencia": 3,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 157
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "RENDIMENTO POUPANCA",
+                "depois": "Rendimento da poupança"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 6
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer a regra criada",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveRegra}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearDesfeito (1)",
+            "Id": 25,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "RegraDescricao": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 6,
+            "NovaDescricao": "Rendimento da poupança",
+            "Texto": "RENDIMENTO POUPANCA",
+            "TipoCorrespondencia": 3,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 157
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Rendimento da poupança",
+                "depois": "RENDIMENTO POUPANCA"
+              },
+              "RegraDescricaoId": {
+                "antes": 6,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear criando a regra com o texto",
+    "requisicao": "PUT /api/transacoes/45/descricao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 12,
+      "desfazer": "<texto>",
+      "regraId": 7
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RegraDescricaoCriada (12)",
+            "Id": 26,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "RegraDescricao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 7,
+            "NovaDescricao": "Aluguel do apartamento",
+            "Texto": "PIX ENVIADO IMOB",
+            "TipoCorrespondencia": 2,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 17
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 31
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 45
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 59
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 73
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 87
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 101
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 115
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 132
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 146
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 163
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO IMOBILIARIA FICTICIA",
+                "depois": "Aluguel do apartamento"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 7
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer a regra do aluguel",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveAluguel}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 12
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearDesfeito (12)",
+            "Id": 27,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "RegraDescricao": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 7,
+            "NovaDescricao": "Aluguel do apartamento",
+            "Texto": "PIX ENVIADO IMOB",
+            "TipoCorrespondencia": 2,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 17
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 31
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 45
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 59
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 73
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 87
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 101
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 115
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 132
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 146
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 163
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Aluguel do apartamento",
+                "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
+              },
+              "RegraDescricaoId": {
+                "antes": 7,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear com regra mais específica",
+    "requisicao": "PUT /api/transacoes/149/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Já existe uma regra mais específica para esta descrição (\"DEBITO AUTOMATICO ENERGIA\"). Edite-a em Categorias › Regras automáticas."
+    }
+  },
+  {
+    "nome": "renomear com texto que não bate",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A descrição do banco desta transação (\"RENDIMENTO POUPANCA\") não bate com \"XYZW\"."
+    }
+  },
+  {
+    "nome": "renomear com texto curto demais para regra",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O texto da regra precisa de pelo menos 2 letras ou números."
+    }
+  },
+  {
+    "nome": "renomear lançamento manual criando regra",
+    "requisicao": "PUT /api/transacoes/166/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Só transações que vieram do banco podem virar regra: esta foi lançada à mão."
+    }
+  },
+  {
+    "nome": "renomear sem a descrição",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escreva a nova descrição."
+    }
+  },
+  {
+    "nome": "renomear com tipo fora do enum",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Tipo de correspondência inválido."
+    }
+  },
+  {
+    "nome": "renomear com descrição longa demais",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The field Descricao must be a string with a maximum length of 300."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "renomear inexistente",
+    "requisicao": "PUT /api/transacoes/999999/descricao",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "renomear com id que não é número",
+    "requisicao": "PUT /api/transacoes/abc/descricao",
+    "status": 404
+  },
+  {
+    "nome": "renomear sem corpo",
+    "requisicao": "PUT /api/transacoes/157/descricao",
+    "status": 415,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "status": 415,
+      "title": "Unsupported Media Type",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.16"
+    }
+  },
+  {
+    "nome": "renomear em lote só nelas",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 2,
+      "desfazer": "<texto>",
+      "regrasAlteradas": 0,
+      "regrasCriadas": 0
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearEmLote (2, 0 regra)",
+            "Id": 28,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 142
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 159
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o renomear em lote",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveLote}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 2
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearDesfeito (2)",
+            "Id": 29,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 142
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "DescricaoManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 159
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "DescricaoManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear em lote criando regras",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 24,
+      "desfazer": "<texto>",
+      "regrasAlteradas": 1,
+      "regrasCriadas": 1
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearEmLote (24, 1 regra)",
+            "Id": 30,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "RegraDescricao": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 8,
+            "NovaDescricao": "Salário da empresa",
+            "Texto": "SALARIO EMPRESA FICTICIA LTDA",
+            "TipoCorrespondencia": 3,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "NovaDescricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 27
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 35
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 41
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 49
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 55
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 63
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 69
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 77
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 83
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 91
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 97
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 105
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 111
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 120
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 128
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 136
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "Salário da empresa"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 142
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "DescricaoManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 159
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SALARIO EMPRESA FICTICIA LTDA",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 8
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Feira do sábado",
+                "depois": "Salário da empresa"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear em lote com as regras que já existem",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 1,
+      "desfazer": "<texto>",
+      "regrasAlteradas": 0,
+      "regrasCriadas": 0
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearEmLote (1, 0 regra)",
+            "Id": 31,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "SUPERMERCADO EXEMPLO",
+                "depois": "Salário da empresa"
+              },
+              "RegraDescricaoId": {
+                "antes": null,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 159
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o renomear em lote com regras",
+    "requisicao": "POST /api/transacoes/descricao/desfazer/{{chaveRegras}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 24
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "RenomearDesfeito (24)",
+            "Id": 32,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "RegraDescricao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "NovaDescricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          }
+        ],
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 8,
+            "NovaDescricao": "Salário da empresa",
+            "Texto": "SALARIO EMPRESA FICTICIA LTDA",
+            "TipoCorrespondencia": 3,
+            "ValorMaximo": null,
+            "ValorMinimo": null
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 27
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 35
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 41
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 49
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 55
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 63
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 69
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 77
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 83
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 91
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 97
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 105
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 111
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 120
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 128
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 136
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Supermercado da vila"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 142
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SUPERMERCADO EXEMPLO"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 159
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "SALARIO EMPRESA FICTICIA LTDA"
+              },
+              "RegraDescricaoId": {
+                "antes": 8,
+                "depois": null
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Salário da empresa",
+                "depois": "Feira do sábado"
+              },
+              "DescricaoManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "renomear em lote com transação inexistente",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Alguma transação não existe mais. Atualize a lista."
+    }
+  },
+  {
+    "nome": "renomear em lote sem ids",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The field Ids must be a string or array type with a minimum length of '1'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "renomear em lote sem o nome",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The Descricao field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "renomear em lote com o nome longo demais",
+    "requisicao": "PATCH /api/transacoes/descricao/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The field Descricao must be a string with a minimum length of 1 and a maximum length of 300."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote por transação",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 2,
+      "desfazer": "<texto>"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CategoriaEmLote (2)",
+            "Id": 33,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 162
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "IgnorarRelatorios": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer as categorias em lote",
+    "requisicao": "POST /api/transacoes/em-lote/desfazer/{{chaveCategorias}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 2
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CategoriaEmLoteDesfeita (2)",
+            "Id": 34,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 162
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              },
+              "IgnorarRelatorios": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": null
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer as categorias em lote de novo",
+    "requisicao": "POST /api/transacoes/em-lote/desfazer/{{chaveCategorias}}",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  },
+  {
+    "nome": "categorias em lote pelo filtro",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 11,
+      "desfazer": "<texto>"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CategoriaEmLote (11)",
+            "Id": 35,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 10
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-11-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 23
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-12-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 37
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-01-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 51
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-02-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 65
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-03-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 79
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-04-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 93
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-05-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 107
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-06-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 123
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-07-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 138
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-08-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 153
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-20 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 9,
+                "depois": 7
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar uma depois das categorias em lote",
+    "requisicao": "PATCH /api/transacoes/153",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": "#a7a3f5",
+      "categoriaId": 9,
+      "categoriaNome": "Serviços e assinaturas",
+      "contaId": 2,
+      "contaNome": "Cartão Fictício Platinum",
+      "data": "2026-09-20",
+      "descricao": "ASSINATURA STREAMFLIX",
+      "descricaoOriginal": "ASSINATURA STREAMFLIX",
+      "emergencia": false,
+      "estabelecimento": null,
+      "id": 153,
+      "ignorarRelatorios": false,
+      "observacao": null,
+      "openFinance": true,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 1,
+      "tipoLancamento": 1,
+      "valor": -39.9
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 153
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer as categorias pelo filtro",
+    "requisicao": "POST /api/transacoes/em-lote/desfazer/{{chaveFiltro}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 10
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CategoriaEmLoteDesfeita (10)",
+            "Id": 36,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 10
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 23
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 37
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 51
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 65
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 79
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 93
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 107
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 123
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 138
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 7,
+                "depois": 9
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "categorias em lote pelo filtro sem mudar nada",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 0,
+      "desfazer": null
+    }
+  },
+  {
+    "nome": "categorias em lote pelo filtro com o período",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "alteradas": 1,
+      "desfazer": "<texto>"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CategoriaEmLote (1)",
+            "Id": 37,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 153
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer as categorias pelo período",
+    "requisicao": "POST /api/transacoes/em-lote/desfazer/{{chavePeriodo}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CategoriaEmLoteDesfeita (1)",
+            "Id": 38,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 153
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "categorias em lote com itens e filtro",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe as transações ou o filtro (um dos dois)."
+    }
+  },
+  {
+    "nome": "categorias em lote sem itens nem filtro",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe as transações ou o filtro (um dos dois)."
+    }
+  },
+  {
+    "nome": "categorias em lote com a lista vazia",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe as transações ou o filtro (um dos dois)."
+    }
+  },
+  {
+    "nome": "categorias em lote sem categoria e sem automática",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha uma categoria ou a categorização automática."
+    }
+  },
+  {
+    "nome": "categorias em lote com categoria inexistente",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "categorias em lote com transação repetida",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Transação repetida na lista."
+    }
+  },
+  {
+    "nome": "categorias em lote com transação inexistente",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Alguma transação não existe mais. Atualize a lista."
+    }
+  },
+  {
+    "nome": "categorias em lote com o filtro inválido",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Filtro.Busca": [
+          "The field Busca must be a string with a maximum length of 100."
+        ],
+        "Filtro.TamanhoPagina": [
+          "The field TamanhoPagina must be between 1 and 500."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com o item que não é número",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.itens[0].id": [
+          "The JSON value could not be converted to Financas.Api.Dtos.AlteracaoCategoriaDto. Path: $.itens[0].id | LineNumber: 3 | BytePositionInLine: 21."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "desfazer as categorias com chave que não existe",
+    "requisicao": "POST /api/transacoes/em-lote/desfazer/naoexiste",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  },
+  {
+    "nome": "categorias em lote sem login",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 401
+  },
+  {
+    "nome": "categorias em lote com a categoria que não é número",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.categoriaId": [
+          "The JSON value could not be converted to System.Nullable`1[System.Int32]. Path: $.categoriaId | LineNumber: 7 | BytePositionInLine: 26."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com o filtro que não é objeto",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.filtro": [
+          "The JSON value could not be converted to Financas.Api.Dtos.FiltroTransacoesDto. Path: $.filtro | LineNumber: 1 | BytePositionInLine: 19."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com um campo do filtro que não converte",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.filtro.pagina": [
+          "The JSON value could not be converted to System.Int32. Path: $.filtro.pagina | LineNumber: 2 | BytePositionInLine: 23."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com os itens que não são lista",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.itens": [
+          "The JSON value could not be converted to System.Collections.Generic.List`1[Financas.Api.Dtos.AlteracaoCategoriaDto]. Path: $.itens | LineNumber: 1 | BytePositionInLine: 18."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com o tipo do filtro em texto",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.filtro.tipo": [
+          "The JSON value could not be converted to System.Nullable`1[Financas.Api.Entidades.TipoTransacao]. Path: $.filtro.tipo | LineNumber: 2 | BytePositionInLine: 27."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "prévia de renomear com o tipo vazio",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value '' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "prévia de renomear com o tipo só com espaços",
+    "requisicao": "GET /api/transacoes/149/renomear/previa?tipo=%20%20",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "tipo": [
+          "The value '  ' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "sugestões com o período vazio",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?dias=&somenteSemCategoria=",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "dias": [
+          "The value '' is invalid."
+        ],
+        "somenteSemCategoria": [
+          "The value '' is invalid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
   }
 ]

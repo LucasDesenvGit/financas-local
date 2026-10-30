@@ -1,0 +1,34 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "sugeridos": [
+    {"descricao":"LOJA DE MOVEIS FICTICIA 1/10","texto":"LOJA DE MOVEIS FICTICIA"},
+    {"descricao":"UBER *TRIP 12/10","texto":"UBER *TRIP"},
+    {"descricao":"PIX ENVIADO 123456","texto":"PIX ENVIADO"},
+    {"descricao":"12/10 34","texto":"12/10 34"},
+    {"descricao":"AB 12 CD","texto":"AB CD"},
+    {"descricao":" - IFOOD *RESTAURANTE - ","texto":"IFOOD *RESTAURANTE"},
+    {"descricao":"PAG*JOSE 2026-10-01","texto":"PAG*JOSE"},
+    {"descricao":"Açaí ٣٤ da Praça","texto":"Açaí da Praça"},
+    {"descricao":"TED\u00A0123\u2003FIM","texto":"TED FIM"},
+    {"descricao":"COMPRA  CARTAO\t\tMERCADO","texto":"COMPRA CARTAO MERCADO"},
+    {"descricao":"ABC\uD835\uDC00 1","texto":"ABC\uD835\uDC00"},
+    {"descricao":"","texto":""},
+    {"descricao":"   ","texto":""},
+    {"descricao":"12345","texto":"12345"},
+    {"descricao":"A1 B2 C3","texto":"A1 B2 C3"},
+    {"descricao":"XY 1 Z","texto":"XY Z"},
+    {"descricao":"...ABC...","texto":"ABC"},
+    {"descricao":"VIVO*FIBRA","texto":"VIVO*FIBRA"},
+    {"descricao":"NETFLIX.COM 12","texto":"NETFLIX.COM"},
+    {"descricao":"DROGA RAIA 1234 SAO PAULO BR","texto":"DROGA RAIA SAO PAULO BR"},
+    {"descricao":"AB\uD835\uDC00\uD835\uDC01 9","texto":"AB\uD835\uDC00\uD835\uDC01 9"},
+    {"descricao":"  ab  ","texto":"ab"},
+    {"descricao":"-*/.,","texto":"-*/.,"},
+    {"descricao":"ÁÉÍ 7","texto":"ÁÉÍ"},
+    {"descricao":"x1y PAGAMENTO","texto":"PAGAMENTO"},
+    {"descricao":"MERCADO\u3000LIVRE 3","texto":"MERCADO LIVRE"},
+    {"descricao":"AB\uD800\uDC00 9","texto":"AB\uD800\uDC00 9"}
+  ]
+}
