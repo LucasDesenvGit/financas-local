@@ -19,6 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/categorias"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
@@ -62,7 +63,9 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	cambioDaCarteira := cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log)
 	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
 	reservas.Registrar(mux, reservasDaCarteira) // #82: as reservas (ADRs 0010, 0037 e 0038)
+	// O cofre fica nil até a troca dos segredos (#85, ADR 0049): sem ele, a brapi não entra.
 	carteira.Registrar(mux, carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,
-		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log), d.Relogio, d.Log)) // #82: a carteira
+		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log),
+		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, nil, d.Relogio, d.Log), d.Relogio, d.Log)) // #82: a carteira
 	return mux
 }

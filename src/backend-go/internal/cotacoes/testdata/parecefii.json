@@ -1,0 +1,29 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "nomes": [
+    {"nome":"FII Fictício","fii":true},
+    {"nome":"Fiagro Fictício","fii":true},
+    {"nome":"Fundo de Investimento Imobiliário","fii":true},
+    {"nome":"FDO INV IMOB","fii":true},
+    {"nome":"FUND IMOB","fii":true},
+    {"nome":"FUNDOS IMOB","fii":true},
+    {"nome":"Fundo Imobiliário de Índice","fii":false},
+    {"nome":"ETF Imobiliário","fii":false},
+    {"nome":"Ação Comum","fii":false},
+    {"nome":"FIIS","fii":false},
+    {"nome":"AFII","fii":false},
+    {"nome":"FII_X","fii":false},
+    {"nome":"fii","fii":true},
+    {"nome":"ÉFII","fii":false},
+    {"nome":"FII1","fii":false},
+    {"nome":"Fundo de Ações","fii":false},
+    {"nome":"IMOB","fii":false},
+    {"nome":"","fii":false},
+    {"nome":null,"fii":false},
+    {"nome":"   ","fii":false},
+    {"nome":"Fundo Índice Imob","fii":false},
+    {"nome":"INDICEFUNDO IMOB","fii":false}
+  ]
+}

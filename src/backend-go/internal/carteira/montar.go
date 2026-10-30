@@ -11,6 +11,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/selic"
@@ -52,19 +53,25 @@ type taxaSelic interface {
 	MetaAtual(ctx context.Context) (*tipos.Decimal, error)
 }
 
+// atualizacao é o que a carteira usa das cotações.
+type atualizacao interface {
+	Atualizar(ctx context.Context, somente []int64) (cotacoes.Resultado, error)
+}
+
 // Servico é o CarteiraService.
 type Servico struct {
 	db       *sql.DB
 	cambio   conversao
 	reservas listaDeReservas
 	selic    taxaSelic
+	cotacoes atualizacao
 	relogio  relogio.Relogio
 	log      *slog.Logger
 }
 
 // NovoServico monta o serviço com as dependências.
-func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, rel relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, cambio: c, reservas: r, selic: s, relogio: rel, log: log}
+func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, rel relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, relogio: rel, log: log}
 }
 
 // SelicResumoDto é o do C#.

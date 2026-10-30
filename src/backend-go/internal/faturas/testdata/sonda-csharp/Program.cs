@@ -716,3 +716,179 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "posic
 {
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["sequencias"] = sequencias,
 }));
+
+// As cotações (#82): o CotacaoService de verdade, com o Yahoo e a brapi respondendo testdata/respostas.json, e o banco como
+// ficou depois, nos textos gravados.
+var arquivoCotacoes = Path.Combine(Path.GetTempPath(), $"sonda-cotacoes-{Guid.NewGuid():N}.db");
+using (var c = new SqliteConnection($"Data Source={arquivoCotacoes};Pooling=False"))
+{
+    c.Open();
+    foreach (var f in new[] { Path.Combine(raiz, "banco", "01-estrutura.sql"),
+                 Path.Combine(raiz, "src", "backend-go", "internal", "cotacoes", "testdata", "cenario.sql") })
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = File.ReadAllText(f);
+        cmd.ExecuteNonQuery();
+    }
+}
+var respostasFalsas = new RespostasFalsas(File.ReadAllText(Path.Combine(raiz, "src", "backend-go", "internal", "cotacoes", "testdata", "respostas.json")));
+object resultadoCotacoes;
+using (var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>()
+           .UseSqlite($"Data Source={arquivoCotacoes};Pooling=False").Options))
+{
+    var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+    var configCotacoes = new ConfiguracaoService(db, new EphemeralDataProtectionProvider());
+    await configCotacoes.DefinirAsync(CotacaoService.ChaveTokenBrapi, "token-de-teste", protegido: true);
+    await db.SaveChangesAsync();
+    var cambioCotacoes = new CambioService(semRede, db, configCotacoes, NullLogger<CambioService>.Instance);
+    var r = await new CotacaoService(new FabricaFalsa(respostasFalsas), db, configCotacoes, cambioCotacoes, NullLogger<CotacaoService>.Instance)
+        .AtualizarAsync(null, CancellationToken.None);
+    resultadoCotacoes = new { atualizados = r.Atualizados, proventosNovos = r.ProventosNovos, falhas = r.Falhas };
+}
+List<Dictionary<string, object?>> LerTabela(SqliteConnection c, string consulta)
+{
+    using var cmd = c.CreateCommand();
+    cmd.CommandText = consulta;
+    using var leitor = cmd.ExecuteReader();
+    var linhas = new List<Dictionary<string, object?>>();
+    while (leitor.Read())
+    {
+        var linha = new Dictionary<string, object?>();
+        for (var i = 0; i < leitor.FieldCount; i++) linha[leitor.GetName(i)] = leitor.IsDBNull(i) ? null : leitor.GetValue(i);
+        linhas.Add(linha);
+    }
+    return linhas;
+}
+Dictionary<string, object> estadoDasCotacoes;
+using (var c = new SqliteConnection($"Data Source={arquivoCotacoes};Pooling=False"))
+{
+    c.Open();
+    estadoDasCotacoes = new Dictionary<string, object>
+    {
+        ["dotnet"] = new[] { Environment.Version.ToString() }, ["resultado"] = new[] { resultadoCotacoes },
+        ["ativos"] = LerTabela(c, "SELECT Id, Ticker, Nome, Tipo, PrecoAtual, PrecoAnterior, PrecoAtualizadoEm IS NOT NULL AS Atualizado, FonteCotacao FROM Ativo ORDER BY Id"),
+        ["proventos"] = LerTabela(c, "SELECT AtivoId, DataCom, ValorPorCota FROM ProventoAtivo ORDER BY AtivoId, DataCom"),
+        ["mensais"] = LerTabela(c, "SELECT AtivoId, Mes, Fechamento FROM PrecoMensalAtivo ORDER BY AtivoId, Mes"),
+        ["indices"] = LerTabela(c, "SELECT Codigo, Mes, Fechamento FROM IndiceMensal ORDER BY Codigo, Mes"),
+        ["pedidos"] = respostasFalsas.Pedidos,
+    };
+}
+File.Delete(arquivoCotacoes);
+Console.WriteLine(Gravar(Path.Combine("..", "..", "cotacoes", "testdata", "atualizar.json"), estadoDasCotacoes));
+string?[] nomesDeFundos =
+[
+    "FII Fictício", "Fiagro Fictício", "Fundo de Investimento Imobiliário", "FDO INV IMOB", "FUND IMOB", "FUNDOS IMOB", "Fundo Imobiliário de Índice", "ETF Imobiliário",
+    "Ação Comum", "FIIS", "AFII", "FII_X", "fii", "ÉFII", "FII1", "Fundo de Ações", "IMOB", "", null, "   ", "Fundo Índice Imob", "INDICEFUNDO IMOB",
+];
+Console.WriteLine(Gravar(Path.Combine("..", "..", "cotacoes", "testdata", "parecefii.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() },
+    ["nomes"] = nomesDeFundos.Select(n => new { nome = n, fii = ClassificacaoAtivo.PareceFii(n) }).ToList(),
+}));
+
+// As respostas estranhas (#82): o que o CotacaoService faz com cada uma, com os avisos que dá.
+var arquivoFormatos = Path.Combine(Path.GetTempPath(), $"sonda-formatos-{Guid.NewGuid():N}.db");
+using (var c = new SqliteConnection($"Data Source={arquivoFormatos};Pooling=False"))
+{
+    c.Open();
+    using var cmd = c.CreateCommand();
+    cmd.CommandText = File.ReadAllText(Path.Combine(raiz, "banco", "01-estrutura.sql"));
+    cmd.ExecuteNonQuery();
+}
+var resultadosDosFormatos = new List<object>();
+foreach (var f in JsonSerializer.Deserialize<List<JsonElement>>(File.ReadAllText(Path.Combine(raiz, "src", "backend-go", "internal", "cotacoes", "testdata", "formatos.json")))!)
+{
+    using (var c = new SqliteConnection($"Data Source={arquivoFormatos};Pooling=False"))
+    {
+        c.Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"DELETE FROM ProventoAtivo; DELETE FROM PrecoMensalAtivo; DELETE FROM Ativo; DELETE FROM Configuracao;
+            INSERT INTO Ativo (Id, Ticker, Tipo, Moeda, PrecoManual, CriadoEm) VALUES (1, 'ZZZZ3', 2, 'BRL', 0, '2025-01-01 00:00:00');";
+        cmd.ExecuteNonQuery();
+    }
+    string Texto(string nome) => f.GetProperty(nome).GetString()!;
+    var rotas = new Dictionary<string, object[]>
+    {
+        ["/v8/finance/chart/ZZZZ3.SA"] = new object[]
+        {
+            new { status = f.GetProperty("statusDia").GetInt32(), corpo = Texto("dia") == "" ? "{}" : Texto("dia") },
+            new { status = f.GetProperty("statusMes").GetInt32(), corpo = Texto("mes") == "" ? "{}" : Texto("mes") },
+        },
+    };
+    if (Texto("brapi") != "") rotas["/api/quote/ZZZZ3"] = new object[] { new { status = 200, corpo = Texto("brapi") } };
+    var logDoFormato = new LogContado();
+    object resultadoDoFormato;
+    using (var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>().UseSqlite($"Data Source={arquivoFormatos};Pooling=False").Options))
+    {
+        var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+        var configFormato = new ConfiguracaoService(db, new EphemeralDataProtectionProvider());
+        await configFormato.DefinirAsync(CotacaoService.ChaveTokenBrapi, "token-de-teste", protegido: true);
+        await db.SaveChangesAsync();
+        var r = await new CotacaoService(new FabricaFalsa(new RespostasFalsas(JsonSerializer.Serialize(rotas))), db, configFormato,
+                new CambioService(semRede, db, configFormato, NullLogger<CambioService>.Instance), logDoFormato)
+            .AtualizarAsync(null, CancellationToken.None);
+        resultadoDoFormato = new { atualizados = r.Atualizados, falhas = r.Falhas.Count };
+    }
+    using (var c = new SqliteConnection($"Data Source={arquivoFormatos};Pooling=False"))
+    {
+        c.Open();
+        resultadosDosFormatos.Add(new
+        {
+            nome = Texto("nome"), resultado = resultadoDoFormato, avisos = logDoFormato.Avisos, ativo = LerTabela(c, "SELECT Nome, PrecoAtual, PrecoAnterior, FonteCotacao FROM Ativo"),
+            proventos = LerTabela(c, "SELECT DataCom, ValorPorCota FROM ProventoAtivo ORDER BY DataCom"), mensais = LerTabela(c, "SELECT Mes, Fechamento FROM PrecoMensalAtivo ORDER BY Mes"),
+        });
+    }
+}
+File.Delete(arquivoFormatos);
+Console.WriteLine(Gravar(Path.Combine("..", "..", "cotacoes", "testdata", "formatos-gabarito.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["casos"] = resultadosDosFormatos,
+}));
+
+/// <summary>Conta as falhas de consulta que o CotacaoService registra.</summary>
+sealed class LogContado : Microsoft.Extensions.Logging.ILogger<CotacaoService>
+{
+    public int Avisos { get; private set; }
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+    public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    {
+        if (formatter(state, exception).StartsWith("Falha ao consultar")) Avisos++;
+    }
+}
+
+/// <summary>O Yahoo e a brapi das cotações: por caminho, as respostas em sequência; a última se repete.</summary>
+sealed class RespostasFalsas : HttpMessageHandler
+{
+    private readonly Dictionary<string, List<JsonElement>> _rotas;
+    private readonly Dictionary<string, int> _vistas = new();
+    public List<string> Pedidos { get; } = new();
+
+    public RespostasFalsas(string json) => _rotas = JsonSerializer.Deserialize<Dictionary<string, List<JsonElement>>>(json)!;
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage pedido, CancellationToken ct)
+    {
+        var caminho = Uri.UnescapeDataString(pedido.RequestUri!.AbsolutePath);
+        Pedidos.Add(pedido.RequestUri.PathAndQuery);
+        if (!_rotas.TryGetValue(caminho, out var respostas))
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound) { Content = new StringContent("{}") });
+        var n = _vistas.GetValueOrDefault(caminho);
+        _vistas[caminho] = n + 1;
+        var r = respostas[Math.Min(n, respostas.Count - 1)];
+        return Task.FromResult(new HttpResponseMessage((System.Net.HttpStatusCode)r.GetProperty("status").GetInt32())
+        {
+            Content = new StringContent(r.GetProperty("corpo").GetString()!),
+        });
+    }
+}
+
+sealed class FabricaFalsa : IHttpClientFactory
+{
+    private readonly HttpMessageHandler _respostas;
+    public FabricaFalsa(HttpMessageHandler respostas) => _respostas = respostas;
+
+    public HttpClient CreateClient(string nome) => new(_respostas, false)
+    {
+        BaseAddress = new Uri(nome == CotacaoService.ClienteYahoo ? "https://query1.finance.yahoo.com/" : "https://brapi.dev/"),
+    };
+}
