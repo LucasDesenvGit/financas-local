@@ -15,6 +15,7 @@ import (
 	"net/http"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/carteira"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/categorias"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
@@ -24,6 +25,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/selic"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
 
@@ -57,7 +59,10 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log)) // #77: categorias, regras e regras de descrição
 	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))         // #77: contas e faturas do cartão
 	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (as 18 rotas)
-	reservas.Registrar(mux, reservas.NovoServico(d.DB, cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log),
-		d.Relogio, d.Log)) // #82: as reservas (ADRs 0010, 0037 e 0038)
+	cambioDaCarteira := cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log)
+	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
+	reservas.Registrar(mux, reservasDaCarteira) // #82: as reservas (ADRs 0010, 0037 e 0038)
+	carteira.Registrar(mux, carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,
+		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log), d.Relogio, d.Log)) // #82: a carteira
 	return mux
 }

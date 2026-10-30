@@ -13,7 +13,7 @@ transacoes /api/transacoes
 # planejamento /api/orcamentos;/api/metas;/api/contas-agendadas
 
 # A #82 liga os prefixos dela aos poucos (a carteira, depois); a linha inteira só no site, com a #299 e a #80 prontas.
-investimentos /api/reservas
+investimentos /api/reservas;/api/carteira
 
 # painel /api/painel;/api/relatorios;/api/emprestimos
 

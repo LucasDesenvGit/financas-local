@@ -45,3 +45,7 @@ internal/tipos | aritmetica.go | CONDITIONALS_BOUNDARY | if d.Escala() <= casas 
 internal/tipos | aritmetica.go | CONDITIONALS_BOUNDARY | if (n.Sign() < 0) != (d.Sign() < 0) { | d nunca é zero, e n só é zero com resto zero, que sai antes: o sinal zero não chega aqui (#82)
 internal/tipos | aritmetica.go | CONDITIONALS_BOUNDARY | if n <= 0 { | com n = 0, a conta logo abaixo também dá 1 (#82)
 internal/tipos | conversoes.go | CONDITIONALS_BOUNDARY | if casas < 0 { | com 0 casas não há zero para tirar: os dois caminhos dão o mesmo número (#82)
+internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 { | o caber deixa como está o número que já cabe: entrar nele a mais não muda nada (#82)
+internal/tipos | decimal.go | INVERT_NEGATIVES | if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 { | o caber deixa como está o número que já cabe: entrar nele a mais não muda nada (#82)
+internal/tipos | decimal.go | ARITHMETIC_BASE | if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 { | o caber deixa como está o número que já cabe: entrar nele a mais não muda nada (#82)
+internal/carteira | posicao.go | INVERT_LOOPCTRL | break | as operações vêm pela data: depois da primeira além do limite, todas estão além (#82)

@@ -1,5 +1,5 @@
 {
-  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
+  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
   "casos": [
     {
       "nome": "listar reservas",
@@ -200,6 +200,52 @@
       "nome": "listar depois de tirar as conferências",
       "metodo": "GET",
       "caminho": "/api/reservas"
+    },
+    {
+      "nome": "carteira",
+      "comentario": "A visão completa: as posições (FII, ação com venda parcial, ETF, ativo em dólar, preço manual), os totais, a evolução mensal, o Open Finance comparado com a Selic, a distribuição e as reservas. Sem rede, a Selic e a meta ficam com o que está na base.",
+      "metodo": "GET",
+      "caminho": "/api/carteira"
+    },
+    {
+      "nome": "carteira sem login",
+      "metodo": "GET",
+      "caminho": "/api/carteira",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "operações de um FII",
+      "comentario": "As compras comparadas com o preço de hoje e com a Selic.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/1/operacoes"
+    },
+    {
+      "nome": "operações com venda",
+      "comentario": "A venda não tem variação nem valor de hoje.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/2/operacoes"
+    },
+    {
+      "nome": "operações de um ativo em dólar",
+      "comentario": "O valor em reais vai pelo câmbio da operação; o de hoje, pela cotação atual.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/4/operacoes"
+    },
+    {
+      "nome": "operações de um ativo que não existe",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/999/operacoes"
+    },
+    {
+      "nome": "operações com o id que não é número",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/abc/operacoes"
+    },
+    {
+      "nome": "operações sem login",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/1/operacoes",
+      "sessao": "visitante"
     }
   ]
 }

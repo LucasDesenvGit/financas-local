@@ -574,3 +574,61 @@ func TestLimiteDisponivelDoOpenFinance(t *testing.T) {
 		}
 	}
 }
+
+// Regra: o nome da conexão vem dos bancos das contas dela, sem repetir, juntos com " + "; sem conta com banco, dos
+// investimentos; sem nenhum, o nome da instituição, ou "Instituição".
+func TestNomesDasConexoes(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.RelogioDosTestes())
+	semNome := func(c *testeapoio.ConexaoBancaria) { c.NomeInstituicao = nil }
+	contaDo := func(conexao testeapoio.ConexaoBancaria, banco string) {
+		fab.Conta(func(c *testeapoio.Conta) { c.ConexaoBancariaId, c.Origem, c.Banco = &conexao.Id, 2, &banco })
+	}
+	emissor := "NU FINANCEIRA S.A."
+
+	duasContas := fab.ConexaoBancaria(semNome)
+	contaDo(duasContas, "itau")
+	contaDo(duasContas, "nubank")
+	contaDo(duasContas, "itau")
+	comInvestimento := fab.ConexaoBancaria(semNome)
+	fab.Investimento(comInvestimento, func(i *testeapoio.Investimento) { i.Emissor = &emissor })
+	fab.Investimento(comInvestimento, func(i *testeapoio.Investimento) { i.Emissor = &emissor })
+	contaVence := fab.ConexaoBancaria(semNome)
+	contaDo(contaVence, "itau")
+	fab.Investimento(contaVence, func(i *testeapoio.Investimento) { i.Emissor = &emissor })
+	soInstituicao := fab.ConexaoBancaria(func(c *testeapoio.ConexaoBancaria) { c.NomeInstituicao = new("Corretora Fictícia") })
+	semNada := fab.ConexaoBancaria(semNome)
+
+	nomes, err := NomesDasConexoes(t.Context(), db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	esperados := map[int64]string{duasContas.Id: "Itaú + Nubank", comInvestimento.Id: "Nubank", contaVence.Id: "Itaú",
+		soInstituicao.Id: "Corretora Fictícia", semNada.Id: "Instituição"}
+	if len(nomes) != len(esperados) {
+		t.Errorf("nomes %v", nomes)
+	}
+	for id, esperado := range esperados {
+		if nomes[id] != esperado {
+			t.Errorf("conexão %d: %q, esperado %q", id, nomes[id], esperado)
+		}
+	}
+}
+
+// Regra: erro de cada leitura sobe.
+func TestNomesDasConexoesComErroDoBanco(t *testing.T) {
+	t.Parallel()
+	for _, tabela := range []string{"Conta", "Investimento", "ConexaoBancaria"} {
+		t.Run(tabela, func(t *testing.T) {
+			t.Parallel()
+			db := testeapoio.NovoBancoVazio(t)
+			if _, err := db.Exec(`DROP TABLE "` + tabela + `"`); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := NomesDasConexoes(t.Context(), db); err == nil {
+				t.Error("sem erro")
+			}
+		})
+	}
+}

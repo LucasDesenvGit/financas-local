@@ -25,6 +25,13 @@ type gabaritoDeConversoes struct {
 		Texto string  `json:"texto"`
 		Valor *string `json:"valor"`
 	} `json:"numeros"`
+	Contas []struct {
+		A         string  `json:"a"`
+		B         string  `json:"b"`
+		Produto   *string `json:"produto"`
+		Soma      *string `json:"soma"`
+		Diferenca *string `json:"diferenca"`
+	} `json:"contas"`
 	Divisoes []struct {
 		A         string `json:"a"`
 		B         string `json:"b"`
@@ -136,4 +143,54 @@ func TestDividirComExpoentePositivo(t *testing.T) {
 	if _, err := Dividir(um, mil); err == nil {
 		t.Error("divisor aceito")
 	}
+}
+
+// Regra: as contas do decimal do C#: o resultado que não cabe nos 96 bits perde casas, arredondando pelo método bancário
+// a partir do número exato. As que estouram no C# ficam de fora: lá é erro, e estas funções não devolvem erro.
+func TestContasIguaisAoCSharp(t *testing.T) {
+	t.Parallel()
+	g := lerGabaritoDeConversoes(t)
+	if len(g.Contas) < 400 {
+		t.Fatal("gabarito pequeno: a sonda mudou?")
+	}
+	conferir := func(nome string, c func(a, b Decimal) Decimal, a, b Decimal, esperado *string) {
+		t.Helper()
+		if esperado != nil && c(a, b).String() != *esperado {
+			t.Errorf("%s(%s, %s) = %s, o C# dá %s", nome, a, b, c(a, b), *esperado)
+		}
+	}
+	for _, c := range g.Contas {
+		a, err := NovoDecimal(c.A)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, err := NovoDecimal(c.B)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conferir("Multiplicar", Multiplicar, a, b, c.Produto)
+		conferir("Somar", Somar, a, b, c.Soma)
+		conferir("Subtrair", Subtrair, a, b, c.Diferenca)
+	}
+}
+
+// Regra: o Math.Min do decimal devolve o segundo no empate, e a escala é a dele.
+func TestMenor(t *testing.T) {
+	t.Parallel()
+	casos := []struct{ a, b, esperado string }{{"1.0", "1.00", "1.00"}, {"1.00", "1.0", "1.0"}, {"2", "3", "2"}, {"3", "2", "2"}, {"-1", "1", "-1"}}
+	for _, c := range casos {
+		a, b := mustDecimal(t, c.a), mustDecimal(t, c.b)
+		if r := Menor(a, b); r.String() != c.esperado {
+			t.Errorf("Menor(%s, %s) = %s", c.a, c.b, r)
+		}
+	}
+}
+
+func mustDecimal(t *testing.T, texto string) Decimal {
+	t.Helper()
+	d, err := NovoDecimal(texto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
 }

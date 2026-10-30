@@ -539,9 +539,42 @@ var divisoes = pares.Select(p => new
     a = p.A, b = p.B,
     resultado = (decimal.Parse(p.A, CultureInfo.InvariantCulture) / decimal.Parse(p.B, CultureInfo.InvariantCulture)).ToString(CultureInfo.InvariantCulture),
 }).ToList();
+string? Conta(Func<decimal> f)
+{
+    try { return f().ToString(CultureInfo.InvariantCulture); }
+    catch (OverflowException) { return null; }
+}
+var contasDecimais = new List<object>();
+for (var i = 0; i < 400; i++)
+{
+    var x = decimais[sorteio.Next(decimais.Count)];
+    var y = i % 2 == 0
+        ? decimais[sorteio.Next(decimais.Count)]
+        : new decimal(sorteio.Next(1, 100000000), 0, 0, sorteio.Next(2) == 0, (byte)sorteio.Next(0, 9));
+    contasDecimais.Add(new
+    {
+        a = x.ToString(CultureInfo.InvariantCulture), b = y.ToString(CultureInfo.InvariantCulture),
+        produto = Conta(() => x * y), soma = Conta(() => x + y), diferenca = Conta(() => x - y),
+    });
+}
+string[][] pontas =
+[
+    ["1234.5678901234567890123456789", "12345.678"], ["0.3333333333333333333333333333", "3"], ["1.5", "2.5"], ["0.0000000000000000000000000001", "0.1"],
+    ["0.0000000000000000000000000005", "0.1"], ["0.0000000000000000000000000015", "0.1"], ["7922816251426433759354395033.5", "1"], ["7922816251426433759354395033.5", "0.1"],
+    ["39614081257132168796771975167.5", "2"], ["79228162514264337593543950335", "0.5"], ["79228162514264337593543950335", "0.3"], ["1.00", "1.000"],
+    ["0.0000000000000000000000000001", "0.0000000000000000000000000001"], ["0.00000000000000000001", "0.0000000000000000000000000001"],
+    ["0.0000000000000000001", "0.0000000000000000000000000001"], ["0.00", "1.5"], ["0.0", "4294967295"], ["0.0", "4294967296"], ["4294967295", "0.0"], ["4294967296", "0.0"], ["0.00", "42949672.96"],
+    ["0.000000000000000000000000", "0.000000000000000000000000"], ["5.0", "0.0000000000000000000000000000"],
+];
+foreach (var par in pontas)
+{
+    var x = decimal.Parse(par[0], CultureInfo.InvariantCulture);
+    var y = decimal.Parse(par[1], CultureInfo.InvariantCulture);
+    contasDecimais.Add(new { a = par[0], b = par[1], produto = Conta(() => x * y), soma = Conta(() => x + y), diferenca = Conta(() => x - y) });
+}
 Console.WriteLine(Gravar(Path.Combine("..", "..", "tipos", "testdata", "conversoes.json"), new Dictionary<string, object>
 {
-    ["dotnet"] = new[] { Environment.Version.ToString() }, ["doDouble"] = doDouble, ["paraDouble"] = paraDouble, ["numeros"] = numeros, ["divisoes"] = divisoes,
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["doDouble"] = doDouble, ["paraDouble"] = paraDouble, ["numeros"] = numeros, ["divisoes"] = divisoes, ["contas"] = contasDecimais,
 }));
 
 string[] valoresDasTaxas = ["0.055131", "0.052531", "0.000000", "0.1", "0.040168", "1.2345678"];
@@ -572,4 +605,114 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "selic", "testdata", "serie.js
     ["dotnet"] = new[] { Environment.Version.ToString() },
     ["taxas"] = taxasSelic.Select(t => new { data = t.Data.ToString("yyyy-MM-dd"), taxa = t.Taxa.ToString(CultureInfo.InvariantCulture) }).ToList(),
     ["fatores"] = fatoresSelic,
+}));
+
+// A carteira (#82): a visão completa e as operações, com o CarteiraService de verdade sobre o cenário fictício; a posição
+// (preço médio) em sequências sorteadas, para pegar as contas de decimal; e os textos: tickers, segmento e nome.
+var arquivoCarteira = Path.Combine(Path.GetTempPath(), $"sonda-carteira-{Guid.NewGuid():N}.db");
+using (var c = new SqliteConnection($"Data Source={arquivoCarteira};Pooling=False"))
+{
+    c.Open();
+    foreach (var f in new[] { Path.Combine(raiz, "banco", "01-estrutura.sql"),
+                 Path.Combine(raiz, "src", "backend-go", "internal", "carteira", "testdata", "cenario.sql") })
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = File.ReadAllText(f);
+        cmd.ExecuteNonQuery();
+    }
+}
+JsonElement carteiraMontada;
+var operacoesDosAtivos = new Dictionary<string, object?>();
+string inicioDaSelic;
+var hojeCarteira = Relogio.Hoje;
+var agoraCarteira = DateTime.UtcNow;
+using (var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>()
+           .UseSqlite($"Data Source={arquivoCarteira};Pooling=False").Options))
+{
+    var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+    var cambioCarteira = new CambioService(semRede, db, new ConfiguracaoService(db, new EphemeralDataProtectionProvider()),
+        NullLogger<CambioService>.Instance);
+    var carteira = new CarteiraService(db, new ContaService(db), cambioCarteira, new ReservaService(db, cambioCarteira));
+    var web = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    var diasSelic = new List<Financas.Api.Entidades.TaxaSelicDiaria>();
+    for (var dia = new DateOnly(2024, 1, 2); dia <= hojeCarteira; dia = dia.AddDays(1))
+        if (dia.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday) && dia != hojeCarteira)
+            diasSelic.Add(new Financas.Api.Entidades.TaxaSelicDiaria { Data = dia, Taxa = dia.Day % 2 == 0 ? 0.040168m : 0.052531m });
+    var serieCarteira = new SerieSelic(diasSelic);
+    carteiraMontada = JsonSerializer.SerializeToElement(await carteira.MontarAsync(serieCarteira, 15.00m, CancellationToken.None), web);
+    foreach (var id in new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 999 })
+        operacoesDosAtivos[id.ToString(CultureInfo.InvariantCulture)] = await carteira.OperacoesAsync(id, serieCarteira, CancellationToken.None) is { } lista
+            ? lista.Select(o => JsonSerializer.SerializeToElement(o, web)).ToList() : null;
+    inicioDaSelic = (await carteira.InicioSerieSelicAsync(CancellationToken.None)).ToString("yyyy-MM-dd");
+}
+File.Delete(arquivoCarteira);
+var sequencias = new List<object>();
+for (var i = 0; i < 60; i++)
+{
+    var dia = new DateOnly(2025, 1, 1);
+    var operacoes = new List<Financas.Api.Entidades.OperacaoAtivo>();
+    for (var j = 0; j < sorteio.Next(1, 12); j++)
+    {
+        dia = dia.AddDays(sorteio.Next(0, 3));
+        operacoes.Add(new Financas.Api.Entidades.OperacaoAtivo
+        {
+            Id = j + 1, Tipo = sorteio.Next(3) == 0 ? Financas.Api.Entidades.TipoOperacao.Venda : Financas.Api.Entidades.TipoOperacao.Compra, Data = dia,
+            Quantidade = sorteio.Next(1, 100000000) / (decimal)Math.Pow(10, sorteio.Next(0, 7)),
+            PrecoUnitario = sorteio.Next(1, 10000000) / (decimal)Math.Pow(10, sorteio.Next(0, 5)),
+            Taxas = sorteio.Next(0, 1000) / 100m,
+            Cambio = sorteio.Next(2) == 0 ? 1m : sorteio.Next(10000, 90000) / 10000m,
+        });
+    }
+    var ate = sorteio.Next(3) == 0 ? (DateOnly?)new DateOnly(2025, 1, 1).AddDays(sorteio.Next(0, 12)) : null;
+    var posicao = CarteiraService.Calcular(operacoes, ate);
+    sequencias.Add(new
+    {
+        ate = ate?.ToString("yyyy-MM-dd"),
+        operacoes = operacoes.Select(o => new
+        {
+            id = o.Id, tipo = (int)o.Tipo, data = o.Data.ToString("yyyy-MM-dd"), quantidade = o.Quantidade.ToString(CultureInfo.InvariantCulture),
+            precoUnitario = o.PrecoUnitario.ToString(CultureInfo.InvariantCulture), taxas = o.Taxas.ToString(CultureInfo.InvariantCulture),
+            cambio = o.Cambio.ToString(CultureInfo.InvariantCulture),
+        }).ToList(),
+        quantidade = posicao.Quantidade.ToString(CultureInfo.InvariantCulture), custo = posicao.Custo.ToString(CultureInfo.InvariantCulture),
+        custoNaMoeda = posicao.CustoNaMoeda.ToString(CultureInfo.InvariantCulture), lucroRealizado = posicao.LucroRealizado.ToString(CultureInfo.InvariantCulture),
+        precoMedio = posicao.PrecoMedio.ToString(CultureInfo.InvariantCulture), precoMedioNaMoeda = posicao.PrecoMedioNaMoeda.ToString(CultureInfo.InvariantCulture),
+    });
+}
+string?[] tickers =
+[
+    "mxrf11 ", "MXRF11", "PETR4", "PETR4F", "MXRF11F", "petr4.sa", "HGLG11.SA", "AAPL", "aapl", "SAP.DE", "BRK-B", "VOO", "1234", "A", "PETR", "PETR44F", "XXXX123",
+    "ABCD1F", "ABC1F", "F", "", " ", null, "MXRF12", "AB-C", ".SA", "A.SA", "PETR4.SA.SA", "Ã1", "ABCDEFGHIJKL", "ABCDEFGHIJKLM", "123.45", "1A", "-A", "petr4f", "\tKNRI11\n",
+];
+var tickersLidos = tickers.Select(t => new
+{
+    ticker = t, b3 = CotacaoService.NormalizarTicker(t), exterior = CotacaoService.NormalizarTickerExterior(t),
+    real = CotacaoService.NormalizarTicker(t, "BRL"), dolar = CotacaoService.NormalizarTicker(t, "USD"),
+}).ToList();
+string[] segmentosTestados = ["HGLG11", "hglg11", "KNRI11", "MXRF11", "HCTR11", "PETR4", ""];
+var segmentos = segmentosTestados.Select(t => new { ticker = t, segmento = SegmentosFii.Sugerir(t) }).ToList();
+(string Nome, string Tipo, string? Emissor, string? Personalizado)[] nomesTestados =
+[
+    ("CDB - NU FINANCEIRA S.A. - SOCIEDADE DE CREDITO, F", "FIXED_INCOME", "NU FINANCEIRA S.A.", null),
+    ("CDB", "FIXED_INCOME", "NU FINANCEIRA S.A.", null), ("  CDB  ", "FIXED_INCOME", "NU FINANCEIRA S.A.", null),
+    ("Caixinha", "FIXED_INCOME", "Banco Fictício", null), ("Caixinha", "FIXED_INCOME", "Banco Fictício", "  Viagem "), ("Caixinha", "FIXED_INCOME", "NUBANK", "   "),
+    ("NU FINANCEIRA", "FIXED_INCOME", "NUBANK", null), ("PETR4", "EQUITY", "NUBANK", null), ("BOVA11", "ETF", "NUBANK", null),
+    ("Um nome de produto com mais de vinte e quatro letras", "FIXED_INCOME", "NUBANK", null), ("Produto com 24 letras xx", "FIXED_INCOME", "NUBANK", null),
+    ("Produto com 25 letras xxx", "FIXED_INCOME", "NUBANK", null), ("CDB - Banco Fictício", "FIXED_INCOME", "NUBANK", null), ("NUBANK - NUBANK", "FIXED_INCOME", "NUBANK", null),
+    (" - NUBANK", "FIXED_INCOME", "NUBANK", null), ("CDB - NUBANK - MAIS", "FIXED_INCOME", null, null), ("LCI  -  NUBANK", "FIXED_INCOME", null, null), ("", "FIXED_INCOME", "NUBANK", null),
+];
+var nomesDeInvestimento = nomesTestados.Select(n => new { n.Nome, n.Tipo, n.Emissor, n.Personalizado, exibicao = NomeInvestimento.Exibicao(n.Nome, n.Tipo, n.Emissor, n.Personalizado) }).ToList();
+Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "carteira.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["hoje"] = new[] { hojeCarteira.ToString("yyyy-MM-dd") },
+    ["agora"] = new[] { agoraCarteira.ToString("O") }, ["inicioDaSelic"] = new[] { inicioDaSelic },
+    ["carteira"] = new[] { carteiraMontada }, ["operacoes"] = new[] { operacoesDosAtivos },
+}));
+Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "texto.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["tickers"] = tickersLidos, ["segmentos"] = segmentos, ["nomes"] = nomesDeInvestimento,
+}));
+Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "posicoes.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["sequencias"] = sequencias,
 }));

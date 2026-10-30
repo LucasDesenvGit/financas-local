@@ -130,15 +130,25 @@ numero:
 		return Decimal{}, false
 	}
 	m, _ := new(big.Int).SetString(string(digitos), 10)
-	// Tira casas até caber: sempre a partir do número inteiro, para não arredondar duas vezes.
+	if negativo {
+		m.Neg(m)
+	}
+	arredondado, escala, ok := caber(m, casas)
+	if !ok {
+		return Decimal{}, false
+	}
+	return Decimal{v: decimal.NewFromBigInt(arredondado, int32(-escala))}, true
+}
+
+// caber arredonda o número m / 10^casas pelo método bancário para a maior escala, até 28, em que ele cabe nos 96 bits do
+// decimal do C#, como as contas do C# fazem. Tira as casas sempre a partir do número inteiro, para não arredondar duas
+// vezes. false se nem sem casas ele couber.
+func caber(m *big.Int, casas int) (*big.Int, int, bool) {
 	for escala := min(casas, casasMaximas); escala >= 0; escala-- {
 		arredondado := dividirArredondandoAoPar(m, potencia(casas-escala))
-		if arredondado.Cmp(limite96) < 0 {
-			if negativo {
-				arredondado.Neg(arredondado)
-			}
-			return Decimal{v: decimal.NewFromBigInt(arredondado, int32(-escala))}, true
+		if new(big.Int).Abs(arredondado).Cmp(limite96) < 0 {
+			return arredondado, escala, true
 		}
 	}
-	return Decimal{}, false
+	return nil, 0, false
 }

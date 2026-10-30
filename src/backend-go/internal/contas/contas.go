@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -142,6 +143,84 @@ func lerConta(ctx context.Context, q consultas.DBTX, id int64) (*conta, error) {
 		return nil, err
 	}
 	return &lista[0], nil
+}
+
+// NomesDasConexoes é o NomesDasConexoesAsync do C#: o nome de cada conexão, pelos bancos das contas dela (ou, sem conta,
+// pelos dos investimentos), juntos com " + ". Sem banco conhecido, o nome da instituição, ou "Instituição".
+func NomesDasConexoes(ctx context.Context, q consultas.DBTX) (map[int64]string, error) {
+	bancosDasContas, err := bancos.Carregar(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	nomes := map[int64][]string{}
+	guardar := func(conexao int64, banco *string, destino map[int64][]string) {
+		if nome := bancos.Nome(banco); nome != nil && !slices.Contains(destino[conexao], *nome) {
+			destino[conexao] = append(destino[conexao], *nome)
+		}
+	}
+	linhas, err := q.QueryContext(ctx, `SELECT "Id", "ConexaoBancariaId" FROM "Conta" WHERE "ConexaoBancariaId" IS NOT NULL`)
+	if err != nil {
+		return nil, fmt.Errorf("ler as contas das conexões: %w", err)
+	}
+	defer linhas.Close()
+	for linhas.Next() {
+		var conta, conexao int64
+		if err := linhas.Scan(&conta, &conexao); err != nil {
+			return nil, fmt.Errorf("ler conta da conexão: %w", err)
+		}
+		guardar(conexao, bancosDasContas[conta], nomes)
+	}
+	if err := linhas.Err(); err != nil {
+		return nil, fmt.Errorf("ler as contas das conexões: %w", err)
+	}
+	linhas.Close()
+
+	nomesDosInvestimentos := map[int64][]string{}
+	investimentos, err := q.QueryContext(ctx, `SELECT "ConexaoBancariaId", "Emissor", "Nome" FROM "Investimento"`)
+	if err != nil {
+		return nil, fmt.Errorf("ler os investimentos das conexões: %w", err)
+	}
+	defer investimentos.Close()
+	for investimentos.Next() {
+		var conexao int64
+		var emissor *string
+		var nome string
+		if err := investimentos.Scan(&conexao, &emissor, &nome); err != nil {
+			return nil, fmt.Errorf("ler investimento da conexão: %w", err)
+		}
+		guardar(conexao, bancos.Detectar(emissor, &nome), nomesDosInvestimentos)
+	}
+	if err := investimentos.Err(); err != nil {
+		return nil, fmt.Errorf("ler os investimentos das conexões: %w", err)
+	}
+	investimentos.Close()
+
+	conexoes, err := q.QueryContext(ctx, `SELECT "Id", "NomeInstituicao" FROM "ConexaoBancaria"`)
+	if err != nil {
+		return nil, fmt.Errorf("ler as conexões: %w", err)
+	}
+	defer conexoes.Close()
+	resultado := map[int64]string{}
+	for conexoes.Next() {
+		var id int64
+		var instituicao *string
+		if err := conexoes.Scan(&id, &instituicao); err != nil {
+			return nil, fmt.Errorf("ler conexão: %w", err)
+		}
+		lista := nomes[id]
+		if len(lista) == 0 {
+			lista = nomesDosInvestimentos[id]
+		}
+		switch {
+		case len(lista) > 0:
+			resultado[id] = strings.Join(lista, " + ")
+		case instituicao != nil:
+			resultado[id] = *instituicao
+		default:
+			resultado[id] = "Instituição"
+		}
+	}
+	return resultado, conexoes.Err()
 }
 
 // Saldos é o CalcularSaldosAsync do C#: o saldo de cada conta. A do Open Finance vale o saldo que a instituição

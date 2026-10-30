@@ -46,8 +46,10 @@ func DeDecimal(v decimal.Decimal) Decimal {
 	if v.Exponent() > 0 {
 		v = decimal.NewFromBigInt(v.BigInt(), 0)
 	}
-	if v.Exponent() < -casasMaximas {
-		v = v.RoundBank(casasMaximas)
+	if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 {
+		if m, escala, ok := caber(v.Coefficient(), int(-v.Exponent())); ok {
+			v = decimal.NewFromBigInt(m, int32(-escala))
+		}
 	}
 	return Decimal{v: v}
 }
