@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -176,20 +175,16 @@ func TestTarefaNasBordas(t *testing.T) {
 // Regra: a URL base sem a barra no fim ganha a barra, como o BaseAddress do HttpClient.
 func TestPTAXComURLBaseSemBarraNoFim(t *testing.T) {
 	t.Parallel()
-	var pedido string
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pedido = r.URL.RequestURI()
-		_, _ = w.Write([]byte(`{"value":[]}`))
-	}))
-	t.Cleanup(srv.Close)
-	c, err := NovoClientePTAX(srv.URL+"/odata", srv.Client())
+	ptax := testeapoio.NovoServicoDeFora(t)
+	ptax.Em("GET", "*", testeapoio.PaginaVazia("value"))
+	c, err := NovoClientePTAX(ptax.URL()+"/odata", ptax.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := c.ListarMoedas(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if pedido != "/odata/Moedas?$format=json" {
+	if pedido := ptax.URIs()[0]; pedido != "/odata/Moedas?$format=json" {
 		t.Errorf("endereço %s", pedido)
 	}
 }
@@ -212,10 +207,7 @@ func TestPTAXNasBordas(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, _ := ptaxGravada(t, func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(c.status)
-				_, _ = w.Write([]byte(c.corpo))
-			})
+			cliente, _ := ptaxGravada(t, testeapoio.RespostaDeFora{Status: c.status, Corpo: c.corpo})
 			fechamentos, err := cliente.BuscarFechamentos(context.Background(), "USD", tipos.NovaData(2026, 10, 1), tipos.NovaData(2026, 10, 15))
 			if err != nil || len(fechamentos) != 1 || fechamentos[0].Data.String() != "2026-10-14" {
 				t.Errorf("fechamentos %+v, erro %v", fechamentos, err)
@@ -227,10 +219,7 @@ func TestPTAXNasBordas(t *testing.T) {
 // Regra: status fora de 200 a 299 é erro, mesmo com um JSON que daria para ler.
 func TestPTAXComErroEJSONValido(t *testing.T) {
 	t.Parallel()
-	cliente, _ := ptaxGravada(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = w.Write([]byte(`{"value":[]}`))
-	})
+	cliente, _ := ptaxGravada(t, testeapoio.RespostaDeFora{Status: http.StatusServiceUnavailable, Corpo: `{"value":[]}`})
 	if _, err := cliente.ListarMoedas(context.Background()); err == nil {
 		t.Error("503 aceito")
 	}

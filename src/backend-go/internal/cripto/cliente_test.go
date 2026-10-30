@@ -4,47 +4,40 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 )
 
 // testdata/tickers.json foi gravado do Mercado Bitcoin de verdade (api.mercadobitcoin.net), em 24/10/2026, com os 4
 // pares: os preços vêm como texto, e "date" em segundos (10 dígitos), não em nanossegundos como diz a especificação.
 
-func mercadoGravado(t *testing.T, responder func(http.ResponseWriter, *http.Request)) (*Cliente, *[]string) {
+// mercadoGravado é o Mercado Bitcoin num serviço falso (testeapoio.ServicoDeFora, #460) que dá a mesma resposta a
+// todo pedido e confere os cabeçalhos do .NET.
+func mercadoGravado(t *testing.T, resposta testeapoio.RespostaDeFora) (*Cliente, *testeapoio.ServicoDeFora) {
 	t.Helper()
-	pedidos := &[]string{}
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		*pedidos = append(*pedidos, r.URL.RequestURI())
-		if r.Header.Get("User-Agent") != "FinancasLocal/1.0" || r.Header.Get("Accept") != "application/json" {
-			t.Errorf("cabeçalhos diferentes do .NET: %v", r.Header)
-		}
-		responder(w, r)
-	}))
-	t.Cleanup(srv.Close)
-	c, err := NovoCliente(srv.URL+"/api/v4/", srv.Client())
+	mercado := testeapoio.NovoServicoDeFora(t)
+	mercado.Exigir("User-Agent", "FinancasLocal/1.0")
+	mercado.Exigir("Accept", "application/json")
+	mercado.Em("GET", "*", resposta)
+	c, err := NovoCliente(mercado.URL()+"/api/v4/", mercado.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return c, pedidos
+	return c, mercado
 }
 
 func TestUltimosNegociosGravados(t *testing.T) {
 	t.Parallel()
-	corpo, err := os.ReadFile("testdata/tickers.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	c, pedidos := mercadoGravado(t, func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(corpo) })
+	c, mercado := mercadoGravado(t, testeapoio.RespostaDeFora{Arquivo: "tickers.json"})
 	negocios, err := c.UltimosNegocios(context.Background(), Moedas)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if (*pedidos)[0] != "/api/v4/tickers?symbols=BTC-BRL,ETH-BRL,SOL-BRL,USDT-BRL" {
-		t.Errorf("endereço %s", (*pedidos)[0])
+	if mercado.URIs()[0] != "/api/v4/tickers?symbols=BTC-BRL,ETH-BRL,SOL-BRL,USDT-BRL" {
+		t.Errorf("endereço %s", mercado.URIs()[0])
 	}
 	if len(negocios) != 4 {
 		t.Fatalf("%d moedas, esperado 4: %v", len(negocios), negocios)
@@ -68,7 +61,7 @@ func TestUltimosNegociosIgnoraOQueOdotnetIgnora(t *testing.T) {
 		{"pair":"BTC-USD","last":"1","date":` + itoa(segundos) + `},
 		{"pair":"XRP-BRL","last":"1","date":"` + itoa(segundos) + `"}
 	]`
-	c, _ := mercadoGravado(t, func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(corpo)) })
+	c, _ := mercadoGravado(t, testeapoio.RespostaDeFora{Corpo: corpo})
 	negocios, err := c.UltimosNegocios(context.Background(), Moedas)
 	if err != nil {
 		t.Fatal(err)
@@ -100,18 +93,20 @@ func TestUltimosNegociosIgnoraOQueOdotnetIgnora(t *testing.T) {
 func TestUltimosNegociosComFalha(t *testing.T) {
 	t.Parallel()
 	casos := []struct {
-		nome      string
-		responder func(http.ResponseWriter, *http.Request)
-		deRede    bool // a HttpRequestException do .NET: a tarefa avisa e tenta de novo
+		nome     string
+		resposta testeapoio.RespostaDeFora
+		deRede   bool // a HttpRequestException do .NET: a tarefa avisa e tenta de novo
 	}{
-		{"erro 503", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusServiceUnavailable) }, true},
-		{"objeto em vez de lista", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`{"erro":"x"}`)) }, false},
-		{"não é JSON", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`<html>`)) }, false},
+		{"erro 503", testeapoio.RespostaDeFora{Status: http.StatusServiceUnavailable}, true},
+		{"muitos pedidos", testeapoio.MuitosPedidos, true},
+		{"objeto em vez de lista", testeapoio.RespostaDeFora{Corpo: `{"erro":"x"}`}, false},
+		{"não é JSON", testeapoio.RespostaDeFora{Corpo: `<html>`, TipoConteudo: "text/html"}, false},
+		{"JSON quebrado", testeapoio.JSONQuebrado, false},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, _ := mercadoGravado(t, c.responder)
+			cliente, _ := mercadoGravado(t, c.resposta)
 			_, err := cliente.UltimosNegocios(context.Background(), Moedas)
 			if err == nil {
 				t.Fatal("esperado erro")
@@ -125,11 +120,11 @@ func TestUltimosNegociosComFalha(t *testing.T) {
 
 func TestUltimosNegociosComTempoEsgotado(t *testing.T) {
 	t.Parallel()
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { <-r.Context().Done() }))
-	t.Cleanup(srv.Close)
-	cliente := srv.Client()
+	mercado := testeapoio.NovoServicoDeFora(t)
+	mercado.Em("GET", "*", testeapoio.TempoEsgotado)
+	cliente := mercado.Cliente()
 	cliente.Timeout = 50 * time.Millisecond
-	c, err := NovoCliente(srv.URL, cliente)
+	c, err := NovoCliente(mercado.URL(), cliente)
 	if err != nil {
 		t.Fatal(err)
 	}

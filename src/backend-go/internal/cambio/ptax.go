@@ -26,13 +26,13 @@ const (
 	tamanhoMaximoRes = 10 << 20 // 10 MB: um ano de boletins de uma moeda tem poucos KB
 )
 
-// ClientePTAX consulta a PTAX. Faz só HTTPS: a URL base é configurável para os testes (httptest.NewTLSServer).
+// ClientePTAX consulta a PTAX. Faz só HTTPS: a URL base é configurável para os testes (o testeapoio.ServicoDeFora, #460).
 type ClientePTAX struct {
 	base *url.URL
 	http *http.Client
 }
 
-// NovoClientePTAX cria o cliente. http nil usa um com o tempo limite de 30 s; nos testes, o do httptest.NewTLSServer
+// NovoClientePTAX cria o cliente. http nil usa um com o tempo limite de 30 s; nos testes, o do testeapoio.ServicoDeFora
 // (que confia no certificado do servidor de teste).
 func NovoClientePTAX(urlBase string, cliente *http.Client) (*ClientePTAX, error) {
 	base, err := url.Parse(urlBase)

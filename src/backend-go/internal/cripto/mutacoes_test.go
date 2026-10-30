@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -19,20 +18,16 @@ import (
 // o último pedaço do caminho).
 func TestURLBaseSemBarraNoFim(t *testing.T) {
 	t.Parallel()
-	var pedido string
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pedido = r.URL.RequestURI()
-		_, _ = w.Write([]byte(`[]`))
-	}))
-	t.Cleanup(srv.Close)
-	c, err := NovoCliente(srv.URL+"/api/v4", srv.Client())
+	mercado := testeapoio.NovoServicoDeFora(t)
+	mercado.Em("GET", "*", testeapoio.RespostaDeFora{Corpo: `[]`})
+	c, err := NovoCliente(mercado.URL()+"/api/v4", mercado.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := c.UltimosNegocios(context.Background(), []string{"BTC"}); err != nil {
 		t.Fatal(err)
 	}
-	if pedido != "/api/v4/tickers?symbols=BTC-BRL" {
+	if pedido := mercado.URIs()[0]; pedido != "/api/v4/tickers?symbols=BTC-BRL" {
 		t.Errorf("endereço %s", pedido)
 	}
 }
@@ -54,10 +49,7 @@ func TestRespostaNasBordas(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, _ := mercadoGravado(t, func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(c.status)
-				_, _ = w.Write([]byte(c.corpo))
-			})
+			cliente, _ := mercadoGravado(t, testeapoio.RespostaDeFora{Status: c.status, Corpo: c.corpo})
 			negocios, err := cliente.UltimosNegocios(context.Background(), []string{"BTC"})
 			if err != nil || len(negocios) != 1 {
 				t.Errorf("%d moedas, erro %v", len(negocios), err)
@@ -77,7 +69,7 @@ func TestItemIgnoradoAntesDeUmValido(t *testing.T) {
 		{"pair":"BTC-BRL","last":"2","date":1792858672},
 		{"pair":"SOL-BRL","last":"3","date":1792858672}
 	]`
-	c, _ := mercadoGravado(t, func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(corpo)) })
+	c, _ := mercadoGravado(t, testeapoio.RespostaDeFora{Corpo: corpo})
 	negocios, err := c.UltimosNegocios(context.Background(), Moedas)
 	if err != nil {
 		t.Fatal(err)

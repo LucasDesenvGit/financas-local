@@ -20,7 +20,7 @@ func Registrar(mux *http.ServeMux, db *sql.DB, log *slog.Logger, r relogio.Relog
 	RegistrarCom(mux, NovoServico(db, ClientePadrao(), r, log), log)
 }
 
-// RegistrarCom é o Registrar com o serviço pronto (os testes passam um com a PTAX do httptest).
+// RegistrarCom é o Registrar com o serviço pronto (os testes passam um com a PTAX do testeapoio.ServicoDeFora).
 func RegistrarCom(mux *http.ServeMux, s *Servico, log *slog.Logger) {
 	mux.Handle("GET /api/cambio/moedas", soLogado(func(w http.ResponseWriter, req *http.Request) {
 		moedas, err := s.ListarMoedas(req.Context())
