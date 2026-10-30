@@ -8742,5 +8742,1496 @@
     "nome": "sugestões para id que não é número",
     "requisicao": "GET /api/transacoes/abc/sugestoes-categoria",
     "status": 404
+  },
+  {
+    "nome": "alterar lançamento manual",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": null,
+      "categoriaId": null,
+      "categoriaNome": null,
+      "contaId": 4,
+      "contaNome": "Carteira (dinheiro)",
+      "data": "2026-10-11",
+      "descricao": "Feira do sábado",
+      "descricaoOriginal": null,
+      "emergencia": true,
+      "estabelecimento": null,
+      "id": 166,
+      "ignorarRelatorios": false,
+      "observacao": "orgânicos",
+      "openFinance": false,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 1,
+      "tipoLancamento": 18,
+      "valor": -65.5
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-11 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 2,
+                "depois": null
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              },
+              "Descricao": {
+                "antes": "Feira",
+                "depois": "Feira do sábado"
+              },
+              "Emergencia": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Observacao": {
+                "antes": null,
+                "depois": "orgânicos"
+              },
+              "Valor": {
+                "antes": "-60.0",
+                "depois": "-65.5"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "alterar trocando de conta, com categoria e como receita",
+    "requisicao": "PUT /api/transacoes/168",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": "#64748b",
+      "categoriaId": 21,
+      "categoriaNome": "Outras receitas",
+      "contaId": 3,
+      "contaNome": "Poupança",
+      "data": "2026-10-12",
+      "descricao": "Venda de pão",
+      "descricaoOriginal": null,
+      "emergencia": false,
+      "estabelecimento": null,
+      "id": 168,
+      "ignorarRelatorios": true,
+      "observacao": null,
+      "openFinance": false,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 2,
+      "tipo": 2,
+      "tipoLancamento": 0,
+      "valor": 12.75
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 168
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-12 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 21
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "ContaId": {
+                "antes": 4,
+                "depois": 3
+              },
+              "Descricao": {
+                "antes": "Padaria do bairro",
+                "depois": "Venda de pão"
+              },
+              "IgnorarRelatorios": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Status": {
+                "antes": 1,
+                "depois": 2
+              },
+              "Tipo": {
+                "antes": 1,
+                "depois": 2
+              },
+              "Valor": {
+                "antes": "-12.75",
+                "depois": "12.75"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "alterar para a categoria Transferências",
+    "requisicao": "PUT /api/transacoes/154",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": "#9ccfc6",
+      "categoriaId": 22,
+      "categoriaNome": "Transferências",
+      "contaId": 6,
+      "contaNome": "Conta em Dólar",
+      "data": "2026-09-20",
+      "descricao": "ONLINE STORE (USD)",
+      "descricaoOriginal": null,
+      "emergencia": false,
+      "estabelecimento": null,
+      "id": 154,
+      "ignorarRelatorios": false,
+      "observacao": null,
+      "openFinance": false,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 1,
+      "tipoLancamento": 0,
+      "valor": -45.99
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 154
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 22
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "alterar transação do Open Finance",
+    "requisicao": "PUT /api/transacoes/2",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Transações do Open Finance só permitem alterar descrição, categoria e observação."
+    }
+  },
+  {
+    "nome": "alterar transferência",
+    "requisicao": "PUT /api/transacoes/4",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para alterar uma transferência, exclua-a e lance novamente."
+    }
+  },
+  {
+    "nome": "alterar inexistente",
+    "requisicao": "PUT /api/transacoes/999999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "alterar inexistente com o corpo inválido",
+    "requisicao": "PUT /api/transacoes/999999",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar com id que não é número",
+    "requisicao": "PUT /api/transacoes/abc",
+    "status": 404
+  },
+  {
+    "nome": "alterar para conta do Open Finance",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não é possível lançar manualmente em contas do Open Finance. Os lançamentos chegam pela sincronização."
+    }
+  },
+  {
+    "nome": "alterar como transferência",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para transferências use a opção 'Transferência'."
+    }
+  },
+  {
+    "nome": "alterar com conta inexistente",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "alterar com categoria inexistente",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "alterar com valor zero",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar sem descrição",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The Descricao field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar com data inválida",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.data": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SalvarTransacaoDto. Path: $.data | LineNumber: 2 | BytePositionInLine: 28."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "alterar sem login",
+    "requisicao": "PUT /api/transacoes/166",
+    "status": 401
+  },
+  {
+    "nome": "ajustar transação do Open Finance",
+    "requisicao": "PATCH /api/transacoes/150",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": "#d4a5e8",
+      "categoriaId": 3,
+      "categoriaNome": "Moradia",
+      "contaId": 1,
+      "contaNome": "Conta Corrente Fictícia",
+      "data": "2026-09-14",
+      "descricao": "Pix para o síndico",
+      "descricaoOriginal": "PIX ENVIADO",
+      "emergencia": true,
+      "estabelecimento": null,
+      "id": 150,
+      "ignorarRelatorios": false,
+      "observacao": "condomínio",
+      "openFinance": true,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 1,
+      "tipoLancamento": 4,
+      "valor": -50.0
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 150
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-09-14 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 3
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Descricao": {
+                "antes": "PIX ENVIADO",
+                "depois": "Pix para o síndico"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Emergencia": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Observacao": {
+                "antes": null,
+                "depois": "condomínio"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar voltando à categorização automática",
+    "requisicao": "PATCH /api/transacoes/151",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": "#f2d98b",
+      "categoriaId": 2,
+      "categoriaNome": "Mercado",
+      "contaId": 1,
+      "contaNome": "Conta Corrente Fictícia",
+      "data": "2026-09-15",
+      "descricao": "SUPERMERCADO EXEMPLO",
+      "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+      "emergencia": false,
+      "estabelecimento": "Supermercado Exemplo",
+      "id": 151,
+      "ignorarRelatorios": true,
+      "observacao": null,
+      "openFinance": true,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 1,
+      "tipoLancamento": 0,
+      "valor": -553.2
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "Supermercado da vila",
+                "depois": "SUPERMERCADO EXEMPLO"
+              },
+              "DescricaoManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "IgnorarRelatorios": {
+                "antes": 0,
+                "depois": 1
+              },
+              "RegraDescricaoId": {
+                "antes": 3,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar receita como emergência",
+    "requisicao": "PATCH /api/transacoes/169",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": "#64748b",
+      "categoriaId": 21,
+      "categoriaNome": "Outras receitas",
+      "contaId": 1,
+      "contaNome": "Conta Corrente Fictícia",
+      "data": "2026-10-13",
+      "descricao": "PIX RECEBIDO JOAO FICTICIO",
+      "descricaoOriginal": "PIX RECEBIDO JOAO FICTICIO",
+      "emergencia": false,
+      "estabelecimento": null,
+      "id": 169,
+      "ignorarRelatorios": false,
+      "observacao": null,
+      "openFinance": true,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 2,
+      "tipoLancamento": 5,
+      "valor": 120.35
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 169
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 21
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar uma transferência",
+    "requisicao": "PATCH /api/transacoes/3",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaCor": null,
+      "categoriaId": null,
+      "categoriaNome": null,
+      "contaId": 1,
+      "contaNome": "Conta Corrente Fictícia",
+      "data": "2025-11-06",
+      "descricao": "TRANSFERENCIA PARA POUPANCA",
+      "descricaoOriginal": "TRANSFERENCIA PARA POUPANCA",
+      "emergencia": false,
+      "estabelecimento": null,
+      "id": 3,
+      "ignorarRelatorios": true,
+      "observacao": null,
+      "openFinance": true,
+      "parcelaNumero": null,
+      "parcelaTotal": null,
+      "regraDescricaoId": null,
+      "status": 1,
+      "tipo": 3,
+      "tipoLancamento": 8,
+      "valor": -500.0
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar com categoria inexistente",
+    "requisicao": "PATCH /api/transacoes/150",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "ajustar inexistente",
+    "requisicao": "PATCH /api/transacoes/999999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "ajustar com id que não é número",
+    "requisicao": "PATCH /api/transacoes/abc",
+    "status": 404
+  },
+  {
+    "nome": "ajustar sem descrição",
+    "requisicao": "PATCH /api/transacoes/150",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The Descricao field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "ajustar com descrição longa demais",
+    "requisicao": "PATCH /api/transacoes/150",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The field Descricao must be a string with a maximum length of 300."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "marcar emergência em lote",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desmarcar emergência em lote",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 2
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 126
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Emergencia": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 169
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "emergência em lote com os ids em texto",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 126
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Emergencia": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "emergência em lote sem ids",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The field Ids must be a string or array type with a minimum length of '1'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "emergência em lote sem a lista",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The Ids field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "emergência em lote com a lista nula",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The Ids field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "emergência em lote com id que não é número",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.ids[1]": [
+          "The JSON value could not be converted to System.Int64. Path: $.ids[1] | LineNumber: 3 | BytePositionInLine: 13."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "emergência em lote com 1001 ids",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The field Ids must be a string or array type with a maximum length of '1000'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "emergência em lote com a lista que não é lista",
+    "requisicao": "PUT /api/transacoes/emergencia-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.ids": [
+          "The JSON value could not be converted to System.Collections.Generic.List`1[System.Int64]. Path: $.ids | LineNumber: 1 | BytePositionInLine: 16."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "marcar como revisada em lote",
+    "requisicao": "PUT /api/transacoes/revisada-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 150
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "DescricaoRevisada": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desmarcar revisada em lote",
+    "requisicao": "PUT /api/transacoes/revisada-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 150
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "DescricaoRevisada": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "revisada em lote sem ids",
+    "requisicao": "PUT /api/transacoes/revisada-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The Ids field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categoria em lote",
+    "requisicao": "PUT /api/transacoes/categoria-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 2
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 2
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 168
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 21,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "categoria em lote automática",
+    "requisicao": "PUT /api/transacoes/categoria-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 2
+    },
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 151
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 166
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 2,
+                "depois": null
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "categoria em lote com categoria inexistente",
+    "requisicao": "PUT /api/transacoes/categoria-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "categoria em lote de transação inexistente",
+    "requisicao": "PUT /api/transacoes/categoria-em-lote",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "categoria em lote sem ids",
+    "requisicao": "PUT /api/transacoes/categoria-em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The field Ids must be a string or array type with a minimum length of '1'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "transferir entre contas manuais",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Saque para Carteira (dinheiro)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 172,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "-200.5"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 4,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Saque de Poupança",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 173,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "200.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "transferir sem descrição",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 4,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Transferência para Poupança",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 174,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "-10.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Transferência de Carteira (dinheiro)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 175,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "10.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "transferir de uma conta do Open Finance",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 4,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Saque de Conta Corrente Fictícia",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 176,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "50.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "transferir para a mesma conta",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha contas diferentes."
+    }
+  },
+  {
+    "nome": "transferir com conta inexistente",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "transferir entre contas do Open Finance",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Entre contas do Open Finance as transferências são importadas automaticamente."
+    }
+  },
+  {
+    "nome": "transferir valor zero",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "transferir com descrição longa demais",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The field Descricao must be a string with a maximum length of 300."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "excluir lançamento manual",
+    "requisicao": "DELETE /api/transacoes/154",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 6,
+            "CriadoEm": "2026-09-20 09:00:00",
+            "Data": "2026-09-20",
+            "Descricao": "ONLINE STORE (USD)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 154,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-45.99"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir um lado da transferência entre contas manuais",
+    "requisicao": "DELETE /api/transacoes/172",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Saque para Carteira (dinheiro)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 172,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "-200.5"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 22,
+            "CategoriaManual": 1,
+            "ContaId": 4,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-13",
+            "Descricao": "Saque de Poupança",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 173,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "200.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o lado manual de uma transferência com o Open Finance",
+    "requisicao": "DELETE /api/transacoes/4",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "2025-11-06 09:00:00",
+            "Data": "2025-11-06",
+            "Descricao": "TRANSFERENCIA PARA POUPANCA",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "TRANSFERENCIA PARA POUPANCA",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 3,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": 1,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tx-202511-poup",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "-500.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 3,
+            "CriadoEm": "2025-11-06 09:00:00",
+            "Data": "2025-11-06",
+            "Descricao": "Transferência da conta corrente",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 4,
+            "IgnorarRelatorios": 1,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 3,
+            "TransferenciaGrupo": "<GUID>",
+            "Valor": "500.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir transação do Open Finance",
+    "requisicao": "DELETE /api/transacoes/2",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Transações do Open Finance não podem ser excluídas. Marque 'Ignorar nos relatórios' se necessário."
+    }
+  },
+  {
+    "nome": "excluir inexistente",
+    "requisicao": "DELETE /api/transacoes/999999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir com id que não é número",
+    "requisicao": "DELETE /api/transacoes/abc",
+    "status": 404
+  },
+  {
+    "nome": "excluir sem login",
+    "requisicao": "DELETE /api/transacoes/166",
+    "status": 401
   }
 ]

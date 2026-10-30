@@ -21,7 +21,7 @@ contas                  88.0
 cripto                  86.5
 emprestimos             90.9
 erros                   93.3
-extrato                 93.0
+extrato                 94.8
 faturas                 94.2
 parametros              81.5
 parcelas                100.0
@@ -40,7 +40,7 @@ testeapoio              94.5
 texto                   100.0
 tipolancamento          100.0
 tipos                   90.5
-transacoes              93.1
+transacoes              96.0
 transferencias          91.5
 
 banco/consultas         fora  código gerado pelo sqlc (go generate); as consultas são testadas pelos pacotes que as usam

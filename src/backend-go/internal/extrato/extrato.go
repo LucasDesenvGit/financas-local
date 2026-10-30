@@ -3,8 +3,8 @@
 // as rotas ficam aqui para esses pacotes não dependerem de quem responde HTTP.
 //
 // Parte 1 (#78): a lista, com os filtros, a ordem, a paginação e os totais, obter e o lançamento manual (o 04-contas
-// lança uma compra por ele). Parte 2: as sugestões de categoria (o pacote sugestoes). As outras rotas que gravam vêm
-// depois.
+// lança uma compra por ele). Parte 2: as sugestões de categoria (o pacote sugestoes). Parte 3: alterar, ajustar,
+// excluir, as alterações em lote e a transferência. O renomear e a categoria em lote com "Desfazer" vêm depois.
 package extrato
 
 import (
@@ -58,6 +58,13 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("POST /api/transacoes", s.criar)
 	mux.HandleFunc("GET /api/transacoes/sugestoes-categoria", s.sugestoesDeCategoria)
 	mux.HandleFunc("GET /api/transacoes/{id}/sugestoes-categoria", s.sugestoesDaTransacao)
+	mux.HandleFunc("PUT /api/transacoes/{id}", s.atualizar)
+	mux.HandleFunc("PATCH /api/transacoes/{id}", s.ajustar)
+	mux.HandleFunc("DELETE /api/transacoes/{id}", s.excluir)
+	mux.HandleFunc("PUT /api/transacoes/emergencia-em-lote", s.emergenciaEmLote)
+	mux.HandleFunc("PUT /api/transacoes/revisada-em-lote", s.revisadaEmLote)
+	mux.HandleFunc("PUT /api/transacoes/categoria-em-lote", s.categoriaEmLote)
+	mux.HandleFunc("POST /api/transacoes/transferencia", s.transferir)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {

@@ -14,7 +14,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/faturas` | a fatura do cartão do `ContaService` (#77): o ciclo (#144), o mês de cobrança de cada lançamento (#167), o pago e a situação (#251) e a fatura do mês de cada cartão (#323); o painel (#80) usa o mesmo |
 | `internal/bancos` | o `BancoService` (#77, ADR 0024): o catálogo e o banco de cada conta (escolhido, da conta do cartão ou detectado pelo nome) |
 | `internal/parcelas` | o que reconhece as parcelas da mesma compra (o `ParcelasFuturas.Compra`, com a regex do .NET escrita à mão) |
-| `internal/extrato` | transações (#78): as rotas de `/api/transacoes` (a lista com os filtros, a ordem e os totais, obter, o lançamento manual e as sugestões de categoria, por enquanto); o modelo da transação fica em `internal/transacoes` |
+| `internal/extrato` | transações (#78): as rotas de `/api/transacoes` (a lista com os filtros, a ordem e os totais, obter, o lançamento manual, as sugestões de categoria, alterar, ajustar, excluir, as alterações em lote e a transferência, por enquanto); o modelo da transação fica em `internal/transacoes` |
 | `internal/sugestoes` | as sugestões de categoria (#78, o `SugestaoCategoriaService`): pelo histórico e pelas palavras-chave, os grupos, o texto da regra e o aviso dela (#254) |
 | `internal/poucoinformativa` | a descrição pouco informativa (#9): as letras úteis, conferidas contra o C# por um gabarito; o painel (#80) usa a mesma |
 | `internal/categorizacao` | o `CategorizacaoService` (#77): a categoria pelas regras e pelo mapa da Pluggy, e o tipo pela categoria e pelo valor (ADR 0036); a sincronização (#83) usa o mesmo |

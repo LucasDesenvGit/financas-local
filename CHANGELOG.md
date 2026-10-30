@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.10] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 3: as rotas que gravam** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado. Para quem desenvolve:
+  - alterar (`PUT /api/transacoes/{id}`), ajustar (`PATCH`), excluir, emergência, revisada e categoria em lote, e a transferência em Go, com o mesmo JSON e o mesmo banco do .NET: 57 casos novos no contrato `07-transacoes`, gravados do .NET, passam com o Go atendendo;
+  - o contrato achou um bug do C#, na #503: a transferência sem data grava `0001-01-01`, e todo acerto das transferências seguinte quebra.
+
 ## [2.50.9] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação

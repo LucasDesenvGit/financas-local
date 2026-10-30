@@ -79,6 +79,12 @@ type Campo interface {
 	validar(erros map[string][]string)
 }
 
+// campoComposto é o campo cujo valor é uma lista: ele mesmo lê o valor inteiro, a partir do primeiro token.
+type campoComposto interface {
+	Campo
+	lerValor(l *LeitorJSON, inicio json.Token, caminho string) *ErroJSON
+}
+
 // CampoTexto é um parâmetro string de um DTO com [StringLength(maximo, MinimumLength = minimo)] e, se não for
 // Opcional, [Required].
 type CampoTexto struct {
@@ -212,6 +218,12 @@ func lerObjeto(corpo []byte, tipoDto string, campos []Campo) (bool, *ErroJSON) {
 		campo := campoDe(campos, nome)
 		if campo == nil {
 			if erro := l.Pular(valor); erro != nil {
+				return false, erro
+			}
+			continue
+		}
+		if composto, ok := campo.(campoComposto); ok {
+			if erro := composto.lerValor(l, valor, CaminhoDaChave("$", nome)); erro != nil {
 				return false, erro
 			}
 			continue
