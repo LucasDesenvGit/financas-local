@@ -80,8 +80,10 @@ func esperarComContexto(ctx context.Context, d time.Duration) error {
 	}
 }
 
+// avisar registra o aviso com a origem e o texto do C#: a tela de erros soma pelo texto, e um aviso por ativo fica uma
+// linha por ativo.
 func (s *Servico) avisar(msg string, args ...any) {
-	s.log.Warn(msg, append([]any{"origem", "Cotações"}, args...)...)
+	s.log.Warn(msg, append([]any{"origem", "Investimentos"}, args...)...)
 }
 
 // Resultado é o ResultadoCotacoes.
@@ -170,11 +172,11 @@ func (s *Servico) consultar(ctx context.Context, a *ativo, token string, hoje ti
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		s.avisar("Falha ao consultar um ativo no Yahoo Finance.", "ticker", a.ticker, "erro", err)
+		s.avisar(fmt.Sprintf("Falha ao consultar %s no Yahoo Finance.", a.ticker), "erro", err)
 		cotacao = nil
 	}
 	if cotacao != nil && cotacao.Moeda != nil && *cotacao.Moeda != a.moeda {
-		s.avisar("A cotação veio em outra moeda e foi ignorada.", "ticker", a.ticker, "moedaDaFonte", *cotacao.Moeda, "moeda", a.moeda)
+		s.avisar(fmt.Sprintf("Cotação de %s veio em %s, mas o ativo está em %s; ignorada.", a.ticker, *cotacao.Moeda, a.moeda))
 		cotacao = nil
 	}
 	if exterior {
@@ -188,7 +190,7 @@ func (s *Servico) consultar(ctx context.Context, a *ativo, token string, hoje ti
 		case ctx.Err() != nil:
 			return nil, ctx.Err()
 		case err != nil:
-			s.avisar("Falha ao consultar um ativo na brapi.", "ticker", a.ticker, "erro", err)
+			s.avisar(fmt.Sprintf("Falha ao consultar %s na brapi.", a.ticker), "erro", err)
 		case pela != nil:
 			cotacao = pela
 		}
@@ -381,7 +383,7 @@ func (s *Servico) FechamentosDiarios(ctx context.Context, ticker string, de, ate
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		s.avisar("Falha ao consultar o histórico de um ativo.", "ticker", ticker, "erro", err)
+		s.avisar(fmt.Sprintf("Falha ao consultar o histórico de %s.", ticker), "erro", err)
 		return nil, nil
 	}
 	return serie, nil

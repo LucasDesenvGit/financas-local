@@ -477,7 +477,7 @@ func TestFechamentosDiarios(t *testing.T) {
 		t.Fatalf("ativo que a fonte não tem: %+v, %v, log %q", serie, err, c.saida.String())
 	}
 	serie, err = c.s.FechamentosDiarios(t.Context(), "ABCD3", testeapoio.Dia(2026, 3, 10), testeapoio.Dia(2026, 3, 20))
-	if err != nil || serie != nil || !strings.Contains(c.saida.String(), "histórico de um ativo") {
+	if err != nil || serie != nil || !strings.Contains(c.saida.String(), "histórico de ABCD3") {
 		t.Errorf("%+v, %v, log %q", serie, err, c.saida.String())
 	}
 	cancelado, cancelar := context.WithCancel(t.Context())

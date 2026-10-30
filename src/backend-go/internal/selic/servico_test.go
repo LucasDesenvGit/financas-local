@@ -204,7 +204,7 @@ func TestBancoCentralFalhaNoMeio(t *testing.T) {
 	if configuracaoGuardada(t, db, chaveUltimaConsulta) != "" {
 		t.Error("anotou a consulta que falhou")
 	}
-	if !strings.Contains(saida.String(), errFora) || !strings.Contains(saida.String(), "origem=Selic") {
+	if !strings.Contains(saida.String(), errFora) || !strings.Contains(saida.String(), "origem=Investimentos") {
 		t.Errorf("log %q", saida.String())
 	}
 }
