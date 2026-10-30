@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.12] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **Transações atendidas pelo Go** (#78, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `transacoes` entra em `Go:Prefixos` com `/api/transacoes`: a lista, obter, o lançamento manual, as sugestões de categoria, alterar, ajustar, excluir, as alterações em lote, a transferência, o renomear e a categoria em lote com o Desfazer. Para voltar ao .NET, basta esvaziar a linha do `transacoes` no `appsettings.json`. O C# do assunto só sai depois de uma versão publicada sem precisar voltar. Quem estiver com a tela aberta na hora da atualização perde o "Desfazer" do que acabou de fazer (ele fica na memória de quem atende).
+
 ## [2.50.11] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação
