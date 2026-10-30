@@ -225,7 +225,7 @@
         "quantidade": 100.12,
         "restanteDoBanco": false,
         "retirado": 0,
-        "saldo": 541.9,
+        "saldo": 541.90,
         "saldoConferido": 100.12345679,
         "totalDoBanco": null,
         "ultimoMovimento": null
@@ -505,7 +505,7 @@
         },
         {
           "nome": "Fundos imobiliários",
-          "valor": 4394.8
+          "valor": 4394.80
         },
         {
           "nome": "Fundos de investimento",
@@ -517,35 +517,35 @@
         },
         {
           "nome": "Ações",
-          "valor": 731.5
+          "valor": 731.50
         }
       ],
       "evolucao": [
         {
           "ano": 2025,
-          "aplicado": 2590.0,
-          "aplicadoNaSelic": 2590.0,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
           "mes": 11,
           "valorMercado": null
         },
         {
           "ano": 2025,
-          "aplicado": 2590.0,
-          "aplicadoNaSelic": 2590.0,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
           "mes": 12,
           "valorMercado": null
         },
         {
           "ano": 2026,
-          "aplicado": 2590.0,
-          "aplicadoNaSelic": 2590.0,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
           "mes": 1,
           "valorMercado": null
         },
         {
           "ano": 2026,
-          "aplicado": 4360.2,
-          "aplicadoNaSelic": 4360.2,
+          "aplicado": 4360.20,
+          "aplicadoNaSelic": 4360.20,
           "mes": 2,
           "valorMercado": null
         },
@@ -647,7 +647,7 @@
           "nomePersonalizado": null,
           "percentualDaSelic": 272.7,
           "rendaVariavel": false,
-          "rentabilidade": 1.2,
+          "rentabilidade": 1.20,
           "saldo": 2530.07,
           "saldoEmReais": 2530.07,
           "selicNoPeriodo": 0.44,
@@ -690,10 +690,10 @@
           "valorSeFosseSelic": 6541.11,
           "valorizacao": 420.41,
           "valorizacaoPercentual": 6.46,
-          "variacaoDia": 0.5
+          "variacaoDia": 0.50
         },
         {
-          "custo": 2382.7,
+          "custo": 2382.70,
           "diferencaSelic": 32.04,
           "dividendYield12Meses": 2.12,
           "fonteCotacao": "yahoo",
@@ -722,14 +722,14 @@
             "dataCom": "2026-09-30",
             "valorPorCota": 1.15
           },
-          "valorMercado": 2374.8,
+          "valorMercado": 2374.80,
           "valorSeFosseSelic": 2342.76,
-          "valorizacao": -7.9,
+          "valorizacao": -7.90,
           "valorizacaoPercentual": -0.33,
           "variacaoDia": 0.27
         },
         {
-          "custo": 1990.0,
+          "custo": 1990.00,
           "diferencaSelic": 39.69,
           "dividendYield12Meses": 0.91,
           "fonteCotacao": null,
@@ -744,11 +744,11 @@
           "precoManual": true,
           "precoMedio": 99.5,
           "primeiraCompra": "2026-04-01",
-          "proventos12Meses": 18.4,
-          "proventosRecebidos": 18.4,
+          "proventos12Meses": 18.40,
+          "proventosRecebidos": 18.40,
           "quantidade": 20.0,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 48.4,
+          "resultadoTotal": 48.40,
           "resultadoTotalPercentual": 2.43,
           "segmento": "Shoppings",
           "semCotacao": false,
@@ -758,14 +758,14 @@
             "dataCom": "2026-09-30",
             "valorPorCota": 0.92
           },
-          "valorMercado": 2020.0,
+          "valorMercado": 2020.00,
           "valorSeFosseSelic": 1980.31,
-          "valorizacao": 30.0,
+          "valorizacao": 30.00,
           "valorizacaoPercentual": 1.51,
           "variacaoDia": null
         },
         {
-          "custo": 990.0,
+          "custo": 990.00,
           "diferencaSelic": 40.93,
           "dividendYield12Meses": null,
           "fonteCotacao": "yahoo",
@@ -784,16 +784,16 @@
           "proventosRecebidos": 0,
           "quantidade": 3.0,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 45.3,
+          "resultadoTotal": 45.30,
           "resultadoTotalPercentual": 4.58,
           "segmento": null,
           "semCotacao": false,
           "ticker": "IVVB11",
           "tipo": 3,
           "ultimoProvento": null,
-          "valorMercado": 1035.3,
+          "valorMercado": 1035.30,
           "valorSeFosseSelic": 994.37,
-          "valorizacao": 45.3,
+          "valorizacao": 45.30,
           "valorizacaoPercentual": 4.58,
           "variacaoDia": 0.36
         },
@@ -813,11 +813,11 @@
           "precoManual": false,
           "precoMedio": 9.875,
           "primeiraCompra": "2025-11-10",
-          "proventos12Meses": 1.3,
-          "proventosRecebidos": 1.3,
+          "proventos12Meses": 1.30,
+          "proventosRecebidos": 1.30,
           "quantidade": 70.0,
           "resultadoSelicPercentual": 0.29,
-          "resultadoTotal": 72.4,
+          "resultadoTotal": 72.40,
           "resultadoTotalPercentual": 7.33,
           "segmento": null,
           "semCotacao": false,
@@ -827,7 +827,7 @@
             "dataCom": "2026-08-20",
             "valorPorCota": 0.0185
           },
-          "valorMercado": 731.5,
+          "valorMercado": 731.50,
           "valorSeFosseSelic": 662.02,
           "valorizacao": 40.25,
           "valorizacaoPercentual": 5.82,
@@ -846,7 +846,7 @@
         "valorMercado": 13094.35,
         "valorSeFosseSelic": 12520.57,
         "valorizacao": 528.06,
-        "valorizacaoPercentual": 4.2
+        "valorizacaoPercentual": 4.20
       },
       "reservas": [
         {
@@ -909,9 +909,9 @@
         "taxas": 1.2,
         "ticker": "HGLG11",
         "tipo": 1,
-        "valorAtual": 791.6,
+        "valorAtual": 791.60,
         "valorSeFosseSelic": 783.65,
-        "valorTotal": 780.2,
+        "valorTotal": 780.20,
         "variacaoPreco": 1.62
       },
       {
@@ -928,10 +928,10 @@
         "taxas": 0.0,
         "ticker": "HGLG11",
         "tipo": 1,
-        "valorAtual": 1583.2,
+        "valorAtual": 1583.20,
         "valorSeFosseSelic": 1609.58,
-        "valorTotal": 1602.5,
-        "variacaoPreco": -1.2
+        "valorTotal": 1602.50,
+        "variacaoPreco": -1.20
       }
     ]
   },
@@ -957,7 +957,7 @@
         "tipo": 2,
         "valorAtual": null,
         "valorSeFosseSelic": 328.55,
-        "valorTotal": 327.1,
+        "valorTotal": 327.10,
         "variacaoPreco": null
       },
       {
@@ -974,9 +974,9 @@
         "taxas": 0.5,
         "ticker": "ITSA4",
         "tipo": 1,
-        "valorAtual": 1045.0,
+        "valorAtual": 1045.00,
         "valorSeFosseSelic": 991.86,
-        "valorTotal": 987.5,
+        "valorTotal": 987.50,
         "variacaoPreco": 5.88
       }
     ]
@@ -1819,8 +1819,8 @@
         "ticker": "KNRI11",
         "tipo": 1,
         "valorAtual": null,
-        "valorSeFosseSelic": 455.0,
-        "valorTotal": 453.0,
+        "valorSeFosseSelic": 455.00,
+        "valorTotal": 453.00,
         "variacaoPreco": null
       }
     ]
@@ -2190,7 +2190,7 @@
       "distribuicao": [
         {
           "nome": "ETFs",
-          "valor": 14900.8
+          "valor": 14900.80
         },
         {
           "nome": "Renda fixa",
@@ -2198,7 +2198,7 @@
         },
         {
           "nome": "Fundos imobiliários",
-          "valor": 4394.8
+          "valor": 4394.80
         },
         {
           "nome": "Ações",
@@ -2216,29 +2216,29 @@
       "evolucao": [
         {
           "ano": 2025,
-          "aplicado": 2590.0,
-          "aplicadoNaSelic": 2590.0,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
           "mes": 11,
           "valorMercado": null
         },
         {
           "ano": 2025,
-          "aplicado": 2590.0,
-          "aplicadoNaSelic": 2590.0,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
           "mes": 12,
           "valorMercado": null
         },
         {
           "ano": 2026,
-          "aplicado": 2590.0,
-          "aplicadoNaSelic": 2590.0,
+          "aplicado": 2590.00,
+          "aplicadoNaSelic": 2590.00,
           "mes": 1,
           "valorMercado": null
         },
         {
           "ano": 2026,
-          "aplicado": 4360.2,
-          "aplicadoNaSelic": 4360.2,
+          "aplicado": 4360.20,
+          "aplicadoNaSelic": 4360.20,
           "mes": 2,
           "valorMercado": null
         },
@@ -2340,7 +2340,7 @@
           "nomePersonalizado": null,
           "percentualDaSelic": 272.7,
           "rendaVariavel": false,
-          "rentabilidade": 1.2,
+          "rentabilidade": 1.20,
           "saldo": 2530.07,
           "saldoEmReais": 2530.07,
           "selicNoPeriodo": 0.44,
@@ -2379,14 +2379,14 @@
           "ticker": "VOO",
           "tipo": 3,
           "ultimoProvento": null,
-          "valorMercado": 13865.5,
+          "valorMercado": 13865.50,
           "valorSeFosseSelic": 8578.94,
           "valorizacao": 5315.34,
           "valorizacaoPercentual": 62.17,
-          "variacaoDia": 0.5
+          "variacaoDia": 0.50
         },
         {
-          "custo": 2382.7,
+          "custo": 2382.70,
           "diferencaSelic": 32.04,
           "dividendYield12Meses": 2.12,
           "fonteCotacao": "yahoo",
@@ -2415,9 +2415,9 @@
             "dataCom": "2026-09-30",
             "valorPorCota": 1.15
           },
-          "valorMercado": 2374.8,
+          "valorMercado": 2374.80,
           "valorSeFosseSelic": 2342.76,
-          "valorizacao": -7.9,
+          "valorizacao": -7.90,
           "valorizacaoPercentual": -0.33,
           "variacaoDia": 0.27
         },
@@ -2441,7 +2441,7 @@
           "proventosRecebidos": 0,
           "quantidade": 2.5,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 0.0,
+          "resultadoTotal": 0.00,
           "resultadoTotalPercentual": 0,
           "segmento": null,
           "semCotacao": true,
@@ -2450,12 +2450,12 @@
           "ultimoProvento": null,
           "valorMercado": 2045.05,
           "valorSeFosseSelic": 2054.09,
-          "valorizacao": 0.0,
+          "valorizacao": 0.00,
           "valorizacaoPercentual": 0,
           "variacaoDia": null
         },
         {
-          "custo": 1990.0,
+          "custo": 1990.00,
           "diferencaSelic": 39.69,
           "dividendYield12Meses": 0.91,
           "fonteCotacao": null,
@@ -2470,11 +2470,11 @@
           "precoManual": true,
           "precoMedio": 99.5,
           "primeiraCompra": "2026-04-01",
-          "proventos12Meses": 18.4,
-          "proventosRecebidos": 18.4,
+          "proventos12Meses": 18.40,
+          "proventosRecebidos": 18.40,
           "quantidade": 20.0,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 48.4,
+          "resultadoTotal": 48.40,
           "resultadoTotalPercentual": 2.43,
           "segmento": "Shoppings",
           "semCotacao": false,
@@ -2484,14 +2484,14 @@
             "dataCom": "2026-09-30",
             "valorPorCota": 0.92
           },
-          "valorMercado": 2020.0,
+          "valorMercado": 2020.00,
           "valorSeFosseSelic": 1980.31,
-          "valorizacao": 30.0,
+          "valorizacao": 30.00,
           "valorizacaoPercentual": 1.51,
           "variacaoDia": null
         },
         {
-          "custo": 990.0,
+          "custo": 990.00,
           "diferencaSelic": 40.93,
           "dividendYield12Meses": null,
           "fonteCotacao": "yahoo",
@@ -2510,16 +2510,16 @@
           "proventosRecebidos": 0,
           "quantidade": 3.0,
           "resultadoSelicPercentual": 0.44,
-          "resultadoTotal": 45.3,
+          "resultadoTotal": 45.30,
           "resultadoTotalPercentual": 4.58,
           "segmento": null,
           "semCotacao": false,
           "ticker": "IVVB11",
           "tipo": 3,
           "ultimoProvento": null,
-          "valorMercado": 1035.3,
+          "valorMercado": 1035.30,
           "valorSeFosseSelic": 994.37,
-          "valorizacao": 45.3,
+          "valorizacao": 45.30,
           "valorizacaoPercentual": 4.58,
           "variacaoDia": 0.36
         },
@@ -2539,11 +2539,11 @@
           "precoManual": false,
           "precoMedio": 9.875,
           "primeiraCompra": "2025-11-10",
-          "proventos12Meses": 1.3,
-          "proventosRecebidos": 1.3,
+          "proventos12Meses": 1.30,
+          "proventosRecebidos": 1.30,
           "quantidade": 70.0,
           "resultadoSelicPercentual": 0.29,
-          "resultadoTotal": 72.4,
+          "resultadoTotal": 72.40,
           "resultadoTotalPercentual": 7.33,
           "segmento": null,
           "semCotacao": false,
@@ -2553,7 +2553,7 @@
             "dataCom": "2026-08-20",
             "valorPorCota": 0.0185
           },
-          "valorMercado": 731.5,
+          "valorMercado": 731.50,
           "valorSeFosseSelic": 662.02,
           "valorizacao": 40.25,
           "valorizacaoPercentual": 5.82,
@@ -2568,7 +2568,7 @@
         "proventosRecebidos": 69.95,
         "resultadoSelicPercentual": 0.38,
         "resultadoTotal": 5523.79,
-        "resultadoTotalPercentual": 32.6,
+        "resultadoTotalPercentual": 32.60,
         "valorMercado": 22072.15,
         "valorSeFosseSelic": 16612.49,
         "valorizacao": 5422.99,
