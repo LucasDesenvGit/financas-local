@@ -70,16 +70,23 @@ func (l *LeitorJSON) Conversao(caminho, tipo string) *ErroJSON {
 		tipo, caminho, Posicao(l.corpo, int(l.dec.InputOffset())))}
 }
 
-// Campo é uma propriedade de um DTO lido por LerObjeto.
+// Campo é uma propriedade de um DTO lido por LerObjeto: um campoSimples (o valor é um token só) ou um campoComposto
+// (lista ou objeto).
 type Campo interface {
 	propriedade() string
-	// ler guarda o valor do token; false se o token não é do tipo do campo.
-	ler(t json.Token) bool
 	// validar acrescenta as mensagens dos atributos de validação ([Required], [StringLength]).
 	validar(erros map[string][]string)
 }
 
-// campoComposto é o campo cujo valor é uma lista: ele mesmo lê o valor inteiro, a partir do primeiro token.
+// campoSimples é o campo cujo valor é um token só (texto, número, bool ou null).
+type campoSimples interface {
+	Campo
+	// ler guarda o valor do token; false se o token não é do tipo do campo.
+	ler(t json.Token) bool
+}
+
+// campoComposto é o campo cujo valor é uma lista ou um objeto: ele mesmo lê o valor inteiro, a partir do primeiro
+// token.
 type campoComposto interface {
 	Campo
 	lerValor(l *LeitorJSON, inicio json.Token, caminho string) *ErroJSON
@@ -255,14 +262,15 @@ func lerPropriedades(l *LeitorJSON, caminho string, tipo tipoDoErro, campos []Ca
 			}
 			continue
 		}
-		if composto, ok := campo.(campoComposto); ok {
-			if erro := composto.lerValor(l, valor, CaminhoDaChave(caminho, nome)); erro != nil {
+		switch c := campo.(type) {
+		case campoComposto:
+			if erro := c.lerValor(l, valor, CaminhoDaChave(caminho, nome)); erro != nil {
 				return erro
 			}
-			continue
-		}
-		if !campo.ler(valor) {
-			return l.Conversao(CaminhoDaChave(caminho, nome), tipo(campo))
+		case campoSimples:
+			if !c.ler(valor) {
+				return l.Conversao(CaminhoDaChave(caminho, nome), tipo(campo))
+			}
 		}
 	}
 	_, erro := l.Token() // o "}"

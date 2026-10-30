@@ -19,17 +19,18 @@ config                  86.7
 configuracao            89.3
 contas                  88.0
 cripto                  86.5
+desfazer                100.0
 emprestimos             90.9
 erros                   93.3
-extrato                 94.8
+extrato                 95.4
 faturas                 94.2
 parametros              81.5
 parcelas                100.0
 poucoinformativa        100.0
-regrasdescricao         88.4
+regrasdescricao         92.2
 relatorios              96.9
 relogio                 95.4
-respostas               97.0
+respostas               98.5
 saude                   54.5
 segredos                77.7
 servidor                88.8
@@ -40,7 +41,7 @@ testeapoio              94.5
 texto                   100.0
 tipolancamento          100.0
 tipos                   90.5
-transacoes              96.0
+transacoes              97.3
 transferencias          91.5
 
 banco/consultas         fora  código gerado pelo sqlc (go generate); as consultas são testadas pelos pacotes que as usam

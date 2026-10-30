@@ -31,3 +31,4 @@ internal/contas          100
 internal/poucoinformativa 100
 internal/extrato         100
 internal/sugestoes       100
+internal/desfazer        100

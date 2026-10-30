@@ -47,12 +47,6 @@ type CampoLista struct {
 
 func (c *CampoLista) propriedade() string { return c.Propriedade }
 
-// ler só é chamado para o null: a lista em si vem por lerValor.
-func (c *CampoLista) ler(t json.Token) bool {
-	c.Valor = nil
-	return t == nil
-}
-
 func (c *CampoLista) lerValor(l *LeitorJSON, inicio json.Token, caminho string) *ErroJSON {
 	if inicio == nil {
 		c.Valor = nil

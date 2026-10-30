@@ -16,9 +16,6 @@ func (c *CampoBool) tipoCSharp() string            { return "System.Boolean" }
 func (c *CampoInteiro) tipoCSharp() string         { return "System.Int32" }
 func (c *CampoInteiroOpcional) tipoCSharp() string { return anulavel("System.Int32") }
 func (c *CampoDataOpcional) tipoCSharp() string    { return anulavel("System.DateOnly") }
-func (c *CampoLista) tipoCSharp() string {
-	return "System.Collections.Generic.List`1[" + c.Item.nome + "]"
-}
 
 func (c *CampoEnum) tipoCSharp() string {
 	if c.Anulavel {
@@ -79,13 +76,6 @@ type CampoObjeto struct {
 }
 
 func (c *CampoObjeto) propriedade() string { return c.Propriedade }
-func (c *CampoObjeto) tipoCSharp() string  { return c.Tipo }
-
-// ler só é chamado para o null: o objeto em si vem por lerValor.
-func (c *CampoObjeto) ler(t json.Token) bool {
-	c.Veio = false
-	return t == nil
-}
 
 func (c *CampoObjeto) lerValor(l *LeitorJSON, inicio json.Token, caminho string) *ErroJSON {
 	if inicio == nil {
@@ -124,15 +114,6 @@ type CampoListaDeObjetos struct {
 }
 
 func (c *CampoListaDeObjetos) propriedade() string { return c.Propriedade }
-func (c *CampoListaDeObjetos) tipoCSharp() string {
-	return "System.Collections.Generic.List`1[" + c.TipoItem + "]"
-}
-
-// ler só é chamado para o null: a lista em si vem por lerValor.
-func (c *CampoListaDeObjetos) ler(t json.Token) bool {
-	c.Itens = nil
-	return t == nil
-}
 
 func (c *CampoListaDeObjetos) lerValor(l *LeitorJSON, inicio json.Token, caminho string) *ErroJSON {
 	if inicio == nil {
@@ -140,7 +121,7 @@ func (c *CampoListaDeObjetos) lerValor(l *LeitorJSON, inicio json.Token, caminho
 		return nil
 	}
 	if inicio != json.Delim('[') {
-		return l.Conversao(caminho, c.tipoCSharp())
+		return l.Conversao(caminho, "System.Collections.Generic.List`1["+c.TipoItem+"]")
 	}
 	itens := [][]Campo{}
 	for i := 0; l.Mais(); i++ {

@@ -24,7 +24,9 @@ func TestCategoriasEmLotePorTransacao(t *testing.T) {
 	fab.RegraCategorizacao(mercado, func(r *testeapoio.RegraCategorizacao) { r.Texto = "FEIRA" })
 	lazer := fab.Categoria(func(x *testeapoio.Categoria) { x.Nome = "Lazer" })
 	feira := fab.Transacao(conta, func(x *testeapoio.Transacao) { x.Descricao = "FEIRA" })
-	cinema := fab.Transacao(conta, func(x *testeapoio.Transacao) { x.Descricao, x.CategoriaId, x.CategoriaManual = "CINEMA", &lazer.Id, true })
+	cinema := fab.Transacao(conta, func(x *testeapoio.Transacao) {
+		x.Descricao, x.CategoriaId, x.CategoriaManual = "CINEMA", &lazer.Id, true
+	})
 
 	resp := testeapoio.Chamar(t, mux, "PATCH", "/api/transacoes/em-lote", fmt.Sprintf(`{"itens":[
 		{"id":%d,"categoriaId":%d,"automatica":false},{"id":%d,"categoriaId":%d}]}`, feira.Id, lazer.Id, cinema.Id, lazer.Id))

@@ -276,3 +276,10 @@ func TestRenomearEmLoteComRegrasDemais(t *testing.T) {
 	resp.ConferirStatus(t, http.StatusBadRequest)
 	resp.ConferirJSON(t, `{"mensagem":"As selecionadas têm 51 descrições do banco diferentes; o limite é 50 regras de uma vez. Selecione menos, ou crie uma regra \"contém\" em Categorias › Regras automáticas."}`)
 }
+
+// Regra: a mensagem do 400 que o renomear devolve de dentro da transação do banco é o próprio texto.
+func TestErroDeRenomear(t *testing.T) {
+	if e := erroDeRenomear("Escreva."); e.Error() != "Escreva." {
+		t.Errorf("%q", e.Error())
+	}
+}
