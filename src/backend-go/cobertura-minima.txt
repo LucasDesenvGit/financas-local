@@ -34,6 +34,7 @@ reservas                93.2
 respostas               98.5
 saude                   54.5
 segredos                77.7
+selic                   93.8
 servidor                88.8
 sessao                  100.0
 sugestoes               94.9
@@ -41,7 +42,7 @@ tarefas                 100.0
 testeapoio              94.5
 texto                   100.0
 tipolancamento          100.0
-tipos                   90.5
+tipos                   93.3
 transacoes              97.3
 transferencias          91.5
 

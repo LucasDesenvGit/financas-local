@@ -7,7 +7,6 @@
 package reservas
 
 import (
-	"math/big"
 	"regexp"
 	"strings"
 	"unicode"
@@ -98,14 +97,10 @@ func QuantidadeNaDescricao(descricao string) *tipos.Decimal {
 	} else if strings.Count(numero, ".") != 1 || len(numero)-strings.Index(numero, ".")-1 == 3 {
 		numero = strings.ReplaceAll(numero, ".", "")
 	}
-	// O NovoDecimal, como o decimal.TryParse invariante, lê só os dígitos de 0 a 9: o dígito de outro sistema não é
-	// número. O número que não cabe nos 96 bits do decimal do C# faz o TryParse falhar.
-	q, err := tipos.NovoDecimal(numero)
-	if err != nil || !q.Decimal().IsPositive() || q.Decimal().BigInt().Cmp(limiteDoDecimal) >= 0 {
+	// O decimal.TryParse invariante lê só os dígitos de 0 a 9 e recusa o que não cabe no decimal do C#.
+	q, ok := tipos.LerNumero(numero)
+	if !ok || !q.Decimal().IsPositive() {
 		return nil
 	}
 	return &q
 }
-
-// limiteDoDecimal é 2^96: o decimal do C# guarda o número sem a vírgula em 96 bits.
-var limiteDoDecimal = new(big.Int).Lsh(big.NewInt(1), 96)

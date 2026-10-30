@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.15] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **A Selic em Go, ainda sem uso** (#82, parte 2; épico #70). Nada muda para quem usa. Para quem desenvolve: o pacote `internal/selic` traz o `SelicService` do C# (a Selic diária, a meta e o fator), conferido contra o .NET 10 por gabaritos, e `internal/tipos` ganha as conversões do .NET entre `decimal` e `double` e o `decimal.TryParse`. O `(decimal)double` muda no .NET 11: ver o PR antes de atualizar o .NET. O `internal/tipos` volta a ter mutação 100%.
+
 ## [2.50.14] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação
