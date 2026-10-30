@@ -506,3 +506,27 @@ func TestPedidoCanceladoNaoEhErro(t *testing.T) {
 		})
 	}
 }
+
+// Regra: os nomes das classes da distribuição, os do Open Finance sem diferença de maiúsculas, e o segmento válido.
+func TestNomesDasClasses(t *testing.T) {
+	t.Parallel()
+	classes := map[int64]string{tipoFii: "Fundos imobiliários", tipoAcao: "Ações", tipoEtf: "ETFs", tipoBdr: "BDRs", tipoOutro: "Outros (renda variável)", 99: "Outros (renda variável)"}
+	for tipo, esperado := range classes {
+		if n := nomeDoTipo(tipo); n != esperado {
+			t.Errorf("nomeDoTipo(%d) = %q", tipo, n)
+		}
+	}
+	pluggy := map[string]string{"fixed_income": "Renda fixa", "SECURITY": "Previdência", "MUTUAL_FUND": "Fundos de investimento", "EQUITY": "Ações",
+		"Etf": "ETFs", "coe": "COE", "OUTRO": "Outros investimentos", "": "Outros investimentos"}
+	for tipo, esperado := range pluggy {
+		if n := nomeDoTipoPluggy(tipo); n != esperado {
+			t.Errorf("nomeDoTipoPluggy(%q) = %q", tipo, n)
+		}
+	}
+	if !ehRendaVariavel("equity") || !ehRendaVariavel("ETF") || ehRendaVariavel("COE") {
+		t.Error("renda variável")
+	}
+	if !SegmentoValido(nil) || !SegmentoValido(textoDe("Logística")) || SegmentoValido(textoDe("logística")) || SegmentoValido(textoDe("")) {
+		t.Error("segmento válido")
+	}
+}
