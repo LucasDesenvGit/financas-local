@@ -5,7 +5,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 7,
@@ -97,7 +97,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 1,
@@ -145,7 +145,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 3,
@@ -180,7 +180,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 2,
@@ -215,7 +215,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 7,
@@ -276,7 +276,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 7,
@@ -337,7 +337,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 4,
@@ -372,7 +372,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 7,
@@ -542,7 +542,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 2,
@@ -577,7 +577,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 4,
@@ -612,7 +612,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 4,
@@ -647,7 +647,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 4,
@@ -682,7 +682,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 4,
@@ -717,7 +717,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 7,
@@ -769,7 +769,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 1,
@@ -817,7 +817,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [],
       "origens": [
         "API",
@@ -895,7 +895,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 10,
+      "abertos": 12,
       "itens": [
         {
           "id": 4,
@@ -1104,10 +1104,10 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 11,
+      "abertos": 13,
       "itens": [
         {
-          "id": 13,
+          "id": 15,
           "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido]) CPF [removido], valor R$ [removido]",
           "nivel": 4,
           "ocorrencias": 1,
@@ -1141,7 +1141,7 @@
     "corpo": {
       "categoria": "Front-end",
       "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?[removido]\n    Authorization: Bearer [removido]",
-      "id": 13
+      "id": 15
     }
   },
   {
@@ -1202,10 +1202,10 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 9,
+      "abertos": 11,
       "itens": [
         {
-          "id": 13,
+          "id": 15,
           "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido]) CPF [removido], valor R$ [removido]",
           "nivel": 4,
           "ocorrencias": 2,
@@ -1237,7 +1237,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 9,
+      "abertos": 11,
       "itens": [
         {
           "id": 7,
