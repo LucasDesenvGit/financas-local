@@ -1,6 +1,7 @@
 package extrato
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -16,6 +17,24 @@ type contaDaTransferencia struct {
 	id     int64
 	nome   string
 	manual bool
+}
+
+// contasDaTransferencia lê as duas contas pelo Id (o ToDictionaryAsync do C#).
+func (s *Servico) contasDaTransferencia(ctx context.Context, origem, destino int64) (map[int64]contaDaTransferencia, error) {
+	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "Nome", "Origem" = 1 FROM "Conta" WHERE "Id" = ? OR "Id" = ?`, origem, destino)
+	if err != nil {
+		return nil, err
+	}
+	defer linhas.Close()
+	contas := map[int64]contaDaTransferencia{}
+	for linhas.Next() {
+		var c contaDaTransferencia
+		if err := linhas.Scan(&c.id, &c.nome, &c.manual); err != nil {
+			return nil, err
+		}
+		contas[c.id] = c
+	}
+	return contas, linhas.Err()
 }
 
 // transferir é o POST /api/transacoes/transferencia: a transferência entre contas, lançada só nas contas manuais (o
@@ -35,22 +54,7 @@ func (s *Servico) transferir(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusBadRequest, "Escolha contas diferentes.")
 		return
 	}
-	contas := map[int64]contaDaTransferencia{}
-	linhas, err := s.db.QueryContext(r.Context(), `SELECT "Id", "Nome", "Origem" = 1 FROM "Conta" WHERE "Id" = ? OR "Id" = ?`,
-		origemId.Valor, destinoId.Valor)
-	if err == nil {
-		for linhas.Next() {
-			var c contaDaTransferencia
-			if err = linhas.Scan(&c.id, &c.nome, &c.manual); err != nil {
-				break
-			}
-			contas[c.id] = c
-		}
-		linhas.Close()
-		if err == nil {
-			err = linhas.Err()
-		}
-	}
+	contas, err := s.contasDaTransferencia(r.Context(), origemId.Valor, destinoId.Valor)
 	if err != nil {
 		s.erroInterno(w, r, "ler as contas da transferência", err)
 		return

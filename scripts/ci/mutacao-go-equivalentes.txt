@@ -38,3 +38,6 @@ internal/extrato | extrato.go | INVERT_LOGICAL | if errors.Is(err, context.Cance
 internal/extrato | extrato.go | CONDITIONALS_BOUNDARY | if pular >= int64(len(todas)) { | com pular igual ao tamanho, a fatia sai vazia e a consulta dos Ids (IN vazio) não acha nada: a mesma lista vazia
 internal/respostas | query.go | ARITHMETIC_BASE | return int64(n-math.MaxInt64-1) + math.MinInt64, true // complemento de dois | em 64 bits, -MinInt64 é o próprio MinInt64: somar ou subtrair dá o mesmo número
 internal/sugestoes | sugestoes.go | INVERT_LOOPCTRL | break | achar a primeira transação de outra categoria já decide que o grupo não é de uma categoria só: seguir o laço não muda nada
+internal/extrato | categorias.go | CONDITIONALS_BOUNDARY | if len(categorias) > 0 { | o SQLite aceita IN (): sem categoria escolhida, a contagem dá 0 e confere com as 0 pedidas
+internal/extrato | escrever.go | INVERT_LOGICAL | if err != nil || len(lista) == 0 { | logo depois de gravar a transação, a releitura só volta vazia com erro: as duas condições andam juntas
+internal/extrato | renomear.go | CONDITIONALS_BOUNDARY | if len(estado.criadas) > 0 { | o SQLite aceita IN (): sem regra criada, o DELETE não apaga nada
