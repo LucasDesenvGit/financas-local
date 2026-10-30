@@ -1,0 +1,205 @@
+{
+  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
+  "casos": [
+    {
+      "nome": "listar reservas",
+      "comentario": "A conta 1 tem o reservado informado pelo banco (Open Finance, #168), com a lista detalhada: a 'Caixinha viagem' vale o que o banco diz, e a conferência dela não entra. A base não tem lançamento de reserva no extrato.",
+      "metodo": "GET",
+      "caminho": "/api/reservas"
+    },
+    {
+      "nome": "listar reservas sem login",
+      "metodo": "GET",
+      "caminho": "/api/reservas",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "conferir uma reserva",
+      "comentario": "Conta do Open Finance sem o reservado do banco: a reserva só com a conferência aparece na lista. O nome é aparado e o saldo vai com 2 casas (arredondado).",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "  Cofrinho ",
+        "saldo": 150.555,
+        "data": "2026-10-10"
+      }
+    },
+    {
+      "nome": "listar com a reserva conferida",
+      "metodo": "GET",
+      "caminho": "/api/reservas"
+    },
+    {
+      "nome": "conferir de novo, com outra caixa no nome",
+      "comentario": "A mesma reserva (o nome sem diferença de maiúsculas): substitui o saldo e a data, que sem vir é hoje em Brasília.",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "COFRINHO",
+        "saldo": 200
+      }
+    },
+    {
+      "nome": "conferir o Méli Dólar em reais",
+      "comentario": "#169 (ADR 0038): o Méli Dólar guarda a quantidade em dólar, convertida pela PTAX de compra da data (já gravada na base), com 8 casas; o nome fica o padrão.",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "meli dolar",
+        "saldo": 541.23,
+        "data": "2026-10-14",
+        "moeda": "BRL"
+      }
+    },
+    {
+      "nome": "conferir o Méli Dólar em dólar",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Méli Dólar",
+        "saldo": 100.123456789,
+        "data": "2026-10-14",
+        "moeda": "USD"
+      }
+    },
+    {
+      "nome": "listar com o Méli Dólar",
+      "comentario": "O saldo em reais é a quantidade pela última PTAX guardada.",
+      "metodo": "GET",
+      "caminho": "/api/reservas"
+    },
+    {
+      "nome": "conferir o Méli Dólar em reais sem cotação na data",
+      "comentario": "Sem a PTAX da data gravada (e sem internet no contrato).",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Méli Dólar",
+        "saldo": 10,
+        "data": "2025-01-02",
+        "moeda": "BRL"
+      }
+    },
+    {
+      "nome": "conferir com a data no futuro",
+      "comentario": "Hoje em Brasília é 14/10.",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Cofrinho",
+        "saldo": 1,
+        "data": "2026-10-15"
+      }
+    },
+    {
+      "nome": "conferir com conta inexistente",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 999,
+        "nome": "Cofrinho",
+        "saldo": 1
+      }
+    },
+    {
+      "nome": "conferir sem o nome",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "  ",
+        "saldo": 1
+      }
+    },
+    {
+      "nome": "conferir com o nome longo demais",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "saldo": 1
+      }
+    },
+    {
+      "nome": "conferir com saldo negativo",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Cofrinho",
+        "saldo": -1
+      }
+    },
+    {
+      "nome": "conferir com a moeda inválida",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Cofrinho",
+        "saldo": 1,
+        "moeda": "EUR"
+      }
+    },
+    {
+      "nome": "conferir com a data inválida",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Cofrinho",
+        "saldo": 1,
+        "data": "14/10/2026"
+      }
+    },
+    {
+      "nome": "conferir sem login",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": {
+        "contaId": 2,
+        "nome": "Cofrinho",
+        "saldo": 1
+      },
+      "sessao": "visitante"
+    },
+    {
+      "nome": "tirar a conferência",
+      "comentario": "O nome aparado e sem diferença de maiúsculas.",
+      "metodo": "DELETE",
+      "caminho": "/api/reservas/conferencia?contaId=2&nome=%20cofrinho%20"
+    },
+    {
+      "nome": "tirar a conferência de novo",
+      "metodo": "DELETE",
+      "caminho": "/api/reservas/conferencia?contaId=2&nome=Cofrinho"
+    },
+    {
+      "nome": "tirar a conferência sem os parâmetros",
+      "metodo": "DELETE",
+      "caminho": "/api/reservas/conferencia"
+    },
+    {
+      "nome": "tirar a conferência com a conta que não é número",
+      "metodo": "DELETE",
+      "caminho": "/api/reservas/conferencia?contaId=abc&nome=x"
+    },
+    {
+      "nome": "tirar a conferência do Méli Dólar",
+      "metodo": "DELETE",
+      "caminho": "/api/reservas/conferencia?contaId=2&nome=M%C3%A9li%20D%C3%B3lar"
+    },
+    {
+      "nome": "listar depois de tirar as conferências",
+      "metodo": "GET",
+      "caminho": "/api/reservas"
+    }
+  ]
+}
