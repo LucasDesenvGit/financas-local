@@ -7996,5 +7996,751 @@
     "nome": "obter com id maior que long",
     "requisicao": "GET /api/transacoes/9223372036854775808",
     "status": 404
+  },
+  {
+    "nome": "sugestões de categoria",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#e7b3ea",
+        "categoriaId": 16,
+        "categoriaNome": "Cuidados pessoais",
+        "chave": "LOJA MOVEIS FICTICIA",
+        "confianca": "media",
+        "exemplo": "LOJA DE MOVEIS FICTICIA 10/10",
+        "motivo": "Usada em transações com \"LOJA\" (100% das 1 parecidas)",
+        "quantidade": 10,
+        "textoRegra": "MOVEIS",
+        "total": -2999.0,
+        "transacaoIds": [
+          158,
+          141,
+          127,
+          110,
+          96,
+          82,
+          68,
+          54,
+          40,
+          26
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#8fd5b4",
+        "categoriaId": 19,
+        "categoriaNome": "Salário",
+        "chave": "SALARIO FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "SALARIO EMPRESA FICTICIA LTDA",
+        "motivo": "Palavra-chave \"SALARIO\"",
+        "quantidade": 12,
+        "textoRegra": "SALARIO",
+        "total": 78000.0,
+        "transacaoIds": [
+          159,
+          142,
+          128,
+          111,
+          97,
+          83,
+          69,
+          55,
+          41,
+          27,
+          13,
+          2
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#d4a5e8",
+        "categoriaId": 3,
+        "categoriaNome": "Moradia",
+        "chave": "ENERGIA FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "Conta de luz",
+        "motivo": "Palavra-chave \"ENERGIA\"",
+        "quantidade": 12,
+        "textoRegra": "ENERGIA",
+        "total": -2285.10,
+        "transacaoIds": [
+          167,
+          149,
+          135,
+          119,
+          104,
+          90,
+          76,
+          62,
+          48,
+          34,
+          20,
+          7
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "chave": "RESTAURANTE SABOR",
+        "confianca": "baixa",
+        "exemplo": "RESTAURANTE SABOR FICTICIO",
+        "motivo": "Palavra-chave \"RESTAURANTE\"",
+        "quantidade": 11,
+        "textoRegra": "RESTAURANTE",
+        "total": -1060.4,
+        "transacaoIds": [
+          152,
+          137,
+          122,
+          106,
+          92,
+          78,
+          64,
+          50,
+          36,
+          22,
+          9
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#b8b0a8",
+        "categoriaId": 12,
+        "categoriaNome": "Tarifas bancárias",
+        "chave": "TARIFA PACOTE",
+        "confianca": "baixa",
+        "exemplo": "TARIFA PACOTE DE SERVICOS",
+        "motivo": "Palavra-chave \"TARIFA\"",
+        "quantidade": 11,
+        "textoRegra": "TARIFA",
+        "total": -361.9,
+        "transacaoIds": [
+          156,
+          140,
+          125,
+          109,
+          95,
+          81,
+          67,
+          53,
+          39,
+          25,
+          12
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f4a89a",
+        "categoriaId": 5,
+        "categoriaNome": "Saúde",
+        "chave": "FARMACIA FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "FARMACIA FICTICIA",
+        "motivo": "Palavra-chave \"FARMACIA\"",
+        "quantidade": 1,
+        "textoRegra": "FARMACIA",
+        "total": -320.47,
+        "transacaoIds": [
+          126
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "chave": "PADARIA BAIRRO",
+        "confianca": "baixa",
+        "exemplo": "Padaria do bairro",
+        "motivo": "Palavra-chave \"PADARIA\"",
+        "quantidade": 1,
+        "textoRegra": "PADARIA",
+        "total": -12.75,
+        "transacaoIds": [
+          168
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#a8dcb9",
+        "categoriaId": 20,
+        "categoriaNome": "Rendimentos",
+        "chave": "RENDIMENTO POUPANCA",
+        "confianca": "baixa",
+        "exemplo": "RENDIMENTO POUPANCA",
+        "motivo": "Palavra-chave \"RENDIMENTO\"",
+        "quantidade": 1,
+        "textoRegra": "RENDIMENTO",
+        "total": 0.01,
+        "transacaoIds": [
+          157
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "IMOBILIARIA FICTICIA",
+        "confianca": "nenhuma",
+        "exemplo": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "motivo": null,
+        "quantidade": 12,
+        "textoRegra": "IMOBILIARIA",
+        "total": -22200.0,
+        "transacaoIds": [
+          163,
+          146,
+          132,
+          115,
+          101,
+          87,
+          73,
+          59,
+          45,
+          31,
+          17,
+          6
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "ESTORNO LOJA ROUPAS",
+        "confianca": "nenhuma",
+        "exemplo": "ESTORNO LOJA DE ROUPAS FICTICIA",
+        "motivo": null,
+        "quantidade": 1,
+        "textoRegra": "ROUPAS",
+        "total": 249.9,
+        "transacaoIds": [
+          121
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "JOAO FICTICIO",
+        "confianca": "nenhuma",
+        "exemplo": "PIX RECEBIDO JOAO FICTICIO",
+        "motivo": null,
+        "quantidade": 1,
+        "textoRegra": "JOAO FICTICIO",
+        "total": 120.35,
+        "transacaoIds": [
+          169
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "PIX ENVIADO",
+        "confianca": "nenhuma",
+        "exemplo": "PIX ENVIADO",
+        "motivo": null,
+        "quantidade": 1,
+        "textoRegra": "",
+        "total": -50.0,
+        "transacaoIds": [
+          150
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "STORE USD",
+        "confianca": "nenhuma",
+        "exemplo": "ONLINE STORE (USD)",
+        "motivo": null,
+        "quantidade": 1,
+        "textoRegra": "STORE",
+        "total": -45.99,
+        "transacaoIds": [
+          154
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "PENDENTE MERCADINHO",
+        "confianca": "nenhuma",
+        "exemplo": "COMPRA PENDENTE MERCADINHO",
+        "motivo": null,
+        "quantidade": 1,
+        "textoRegra": "PENDENTE",
+        "total": -18.9,
+        "transacaoIds": [
+          170
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "LANCAMENTO ANTIGA",
+        "confianca": "nenhuma",
+        "exemplo": "Lançamento da conta antiga",
+        "motivo": null,
+        "quantidade": 1,
+        "textoRegra": "LANCAMENTO",
+        "total": -10.0,
+        "transacaoIds": [
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "nome": "sugestões de todas as transações",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?somenteSemCategoria=false&dias=3660",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#e7b3ea",
+        "categoriaId": 16,
+        "categoriaNome": "Cuidados pessoais",
+        "chave": "LOJA MOVEIS FICTICIA",
+        "confianca": "media",
+        "exemplo": "LOJA DE MOVEIS FICTICIA 10/10",
+        "motivo": "Usada em transações com \"LOJA\" (100% das 1 parecidas)",
+        "quantidade": 10,
+        "textoRegra": "MOVEIS",
+        "total": -2999.0,
+        "transacaoIds": [
+          158,
+          141,
+          127,
+          110,
+          96,
+          82,
+          68,
+          54,
+          40,
+          26
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#8fd5b4",
+        "categoriaId": 19,
+        "categoriaNome": "Salário",
+        "chave": "SALARIO FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "SALARIO EMPRESA FICTICIA LTDA",
+        "motivo": "Palavra-chave \"SALARIO\"",
+        "quantidade": 12,
+        "textoRegra": "SALARIO",
+        "total": 78000.0,
+        "transacaoIds": [
+          159,
+          142,
+          128,
+          111,
+          97,
+          83,
+          69,
+          55,
+          41,
+          27,
+          13,
+          2
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#d4a5e8",
+        "categoriaId": 3,
+        "categoriaNome": "Moradia",
+        "chave": "ENERGIA FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "Conta de luz",
+        "motivo": "Palavra-chave \"ENERGIA\"",
+        "quantidade": 12,
+        "textoRegra": "ENERGIA",
+        "total": -2285.10,
+        "transacaoIds": [
+          167,
+          149,
+          135,
+          119,
+          104,
+          90,
+          76,
+          62,
+          48,
+          34,
+          20,
+          7
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "chave": "RESTAURANTE SABOR",
+        "confianca": "baixa",
+        "exemplo": "RESTAURANTE SABOR FICTICIO",
+        "motivo": "Palavra-chave \"RESTAURANTE\"",
+        "quantidade": 11,
+        "textoRegra": "RESTAURANTE",
+        "total": -1060.4,
+        "transacaoIds": [
+          152,
+          137,
+          122,
+          106,
+          92,
+          78,
+          64,
+          50,
+          36,
+          22,
+          9
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#b8b0a8",
+        "categoriaId": 12,
+        "categoriaNome": "Tarifas bancárias",
+        "chave": "TARIFA PACOTE",
+        "confianca": "baixa",
+        "exemplo": "TARIFA PACOTE DE SERVICOS",
+        "motivo": "Palavra-chave \"TARIFA\"",
+        "quantidade": 11,
+        "textoRegra": "TARIFA",
+        "total": -361.9,
+        "transacaoIds": [
+          156,
+          140,
+          125,
+          109,
+          95,
+          81,
+          67,
+          53,
+          39,
+          25,
+          12
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f4a89a",
+        "categoriaId": 5,
+        "categoriaNome": "Saúde",
+        "chave": "FARMACIA FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "FARMACIA FICTICIA",
+        "motivo": "Palavra-chave \"FARMACIA\"",
+        "quantidade": 1,
+        "textoRegra": "FARMACIA",
+        "total": -320.47,
+        "transacaoIds": [
+          126
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "chave": "PADARIA BAIRRO",
+        "confianca": "baixa",
+        "exemplo": "Padaria do bairro",
+        "motivo": "Palavra-chave \"PADARIA\"",
+        "quantidade": 1,
+        "textoRegra": "PADARIA",
+        "total": -12.75,
+        "transacaoIds": [
+          168
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#a8dcb9",
+        "categoriaId": 20,
+        "categoriaNome": "Rendimentos",
+        "chave": "RENDIMENTO POUPANCA",
+        "confianca": "baixa",
+        "exemplo": "RENDIMENTO POUPANCA",
+        "motivo": "Palavra-chave \"RENDIMENTO\"",
+        "quantidade": 1,
+        "textoRegra": "RENDIMENTO",
+        "total": 0.01,
+        "transacaoIds": [
+          157
+        ]
+      }
+    ]
+  },
+  {
+    "nome": "sugestões de 30 dias",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?somenteSemCategoria=false&dias=30",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#e7b3ea",
+        "categoriaId": 16,
+        "categoriaNome": "Cuidados pessoais",
+        "chave": "LOJA MOVEIS FICTICIA",
+        "confianca": "media",
+        "exemplo": "LOJA DE MOVEIS FICTICIA 10/10",
+        "motivo": "Usada em transações com \"LOJA\" (100% das 1 parecidas)",
+        "quantidade": 1,
+        "textoRegra": "MOVEIS",
+        "total": -299.9,
+        "transacaoIds": [
+          158
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#8fd5b4",
+        "categoriaId": 19,
+        "categoriaNome": "Salário",
+        "chave": "SALARIO FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "SALARIO EMPRESA FICTICIA LTDA",
+        "motivo": "Palavra-chave \"SALARIO\"",
+        "quantidade": 1,
+        "textoRegra": "SALARIO",
+        "total": 6500.0,
+        "transacaoIds": [
+          159
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#d4a5e8",
+        "categoriaId": 3,
+        "categoriaNome": "Moradia",
+        "chave": "ENERGIA FICTICIA",
+        "confianca": "baixa",
+        "exemplo": "Conta de luz",
+        "motivo": "Palavra-chave \"ENERGIA\"",
+        "quantidade": 1,
+        "textoRegra": "ENERGIA",
+        "total": -230.85,
+        "transacaoIds": [
+          167
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "chave": "RESTAURANTE SABOR",
+        "confianca": "baixa",
+        "exemplo": "RESTAURANTE SABOR FICTICIO",
+        "motivo": "Palavra-chave \"RESTAURANTE\"",
+        "quantidade": 1,
+        "textoRegra": "RESTAURANTE",
+        "total": -106.9,
+        "transacaoIds": [
+          152
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#b8b0a8",
+        "categoriaId": 12,
+        "categoriaNome": "Tarifas bancárias",
+        "chave": "TARIFA PACOTE",
+        "confianca": "baixa",
+        "exemplo": "TARIFA PACOTE DE SERVICOS",
+        "motivo": "Palavra-chave \"TARIFA\"",
+        "quantidade": 1,
+        "textoRegra": "TARIFA",
+        "total": -32.9,
+        "transacaoIds": [
+          156
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "chave": "PADARIA BAIRRO",
+        "confianca": "baixa",
+        "exemplo": "Padaria do bairro",
+        "motivo": "Palavra-chave \"PADARIA\"",
+        "quantidade": 1,
+        "textoRegra": "PADARIA",
+        "total": -12.75,
+        "transacaoIds": [
+          168
+        ]
+      },
+      {
+        "alternativas": [],
+        "avisoRegra": null,
+        "categoriaCor": "#a8dcb9",
+        "categoriaId": 20,
+        "categoriaNome": "Rendimentos",
+        "chave": "RENDIMENTO POUPANCA",
+        "confianca": "baixa",
+        "exemplo": "RENDIMENTO POUPANCA",
+        "motivo": "Palavra-chave \"RENDIMENTO\"",
+        "quantidade": 1,
+        "textoRegra": "RENDIMENTO",
+        "total": 0.01,
+        "transacaoIds": [
+          157
+        ]
+      }
+    ]
+  },
+  {
+    "nome": "sugestões com o período em zero",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?dias=0",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "sugestões com o período longo demais",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?dias=3661",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "sugestões com parâmetros que não convertem",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria?dias=muitos&somenteSemCategoria=talvez",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "dias": [
+          "The value 'muitos' is not valid."
+        ],
+        "somenteSemCategoria": [
+          "The value 'talvez' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "sugestões sem login",
+    "requisicao": "GET /api/transacoes/sugestoes-categoria",
+    "status": 401
+  },
+  {
+    "nome": "sugestões para uma transação",
+    "requisicao": "GET /api/transacoes/26/sugestoes-categoria",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": 16,
+        "cor": "#e7b3ea",
+        "motivo": "Usada em transações com \"LOJA\" (100% das 1 parecidas)",
+        "nome": "Cuidados pessoais"
+      }
+    ]
+  },
+  {
+    "nome": "sugestões para uma transferência",
+    "requisicao": "GET /api/transacoes/3/sugestoes-categoria",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "sugestões para uma receita",
+    "requisicao": "GET /api/transacoes/2/sugestoes-categoria",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": 19,
+        "cor": "#8fd5b4",
+        "motivo": "Palavra-chave \"SALARIO\"",
+        "nome": "Salário"
+      }
+    ]
+  },
+  {
+    "nome": "sugestões para a transação da conta antiga",
+    "requisicao": "GET /api/transacoes/1/sugestoes-categoria",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "sugestões para transação inexistente",
+    "requisicao": "GET /api/transacoes/999999/sugestoes-categoria",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "sugestões para id que não é número",
+    "requisicao": "GET /api/transacoes/abc/sugestoes-categoria",
+    "status": 404
   }
 ]

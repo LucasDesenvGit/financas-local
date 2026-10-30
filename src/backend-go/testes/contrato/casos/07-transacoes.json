@@ -1,5 +1,5 @@
 {
-  "descricao": "Transações (#78, TransacoesController), parte 1: a lista com os filtros, a ordem, a paginação e os totais, e obter. Roda com a sessão 'principal', logada pelo 00-auth, depois do 05 e do 06, que mudam categorias e regras (e o reaplicar recategoriza as transações da base). Só leitura: não deixa rastro no banco.",
+  "descricao": "Transações (#78, TransacoesController): parte 1, a lista com os filtros, a ordem, a paginação e os totais, e obter; parte 2, as sugestões de categoria. Roda com a sessão 'principal', logada pelo 00-auth, depois do 05 e do 06, que mudam categorias e regras (e o reaplicar recategoriza as transações da base). Só leitura: não deixa rastro no banco.",
   "casos": [
     {
       "nome": "listar",
@@ -365,6 +365,75 @@
       "nome": "obter com id maior que long",
       "metodo": "GET",
       "caminho": "/api/transacoes/9223372036854775808"
+    },
+    {
+      "nome": "sugestões de categoria",
+      "comentario": "Parte 2 (#78): os grupos de transações sem categoria do último ano, pela descrição parecida, com a categoria sugerida pelo histórico (o que você escolheu à mão pesa mais) e pelas palavras-chave, o texto da regra e o aviso da regra (#254).",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria"
+    },
+    {
+      "nome": "sugestões de todas as transações",
+      "comentario": "Com as já categorizadas: só os grupos em que a sugestão muda a categoria de hoje.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?somenteSemCategoria=false&dias=3660"
+    },
+    {
+      "nome": "sugestões de 30 dias",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?somenteSemCategoria=false&dias=30"
+    },
+    {
+      "nome": "sugestões com o período em zero",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?dias=0"
+    },
+    {
+      "nome": "sugestões com o período longo demais",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?dias=3661"
+    },
+    {
+      "nome": "sugestões com parâmetros que não convertem",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria?dias=muitos&somenteSemCategoria=talvez"
+    },
+    {
+      "nome": "sugestões sem login",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/sugestoes-categoria",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "sugestões para uma transação",
+      "comentario": "Até 3 categorias, menos a que ela já tem.",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/26/sugestoes-categoria"
+    },
+    {
+      "nome": "sugestões para uma transferência",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/3/sugestoes-categoria"
+    },
+    {
+      "nome": "sugestões para uma receita",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/2/sugestoes-categoria"
+    },
+    {
+      "nome": "sugestões para a transação da conta antiga",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/1/sugestoes-categoria"
+    },
+    {
+      "nome": "sugestões para transação inexistente",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/999999/sugestoes-categoria"
+    },
+    {
+      "nome": "sugestões para id que não é número",
+      "metodo": "GET",
+      "caminho": "/api/transacoes/abc/sugestoes-categoria"
     }
   ]
 }

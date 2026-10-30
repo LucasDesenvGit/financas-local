@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.9] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 2: as sugestões de categoria** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado. Para quem desenvolve:
+  - `GET /api/transacoes/sugestoes-categoria` e `GET /api/transacoes/{id}/sugestoes-categoria` em Go, com o mesmo JSON do .NET: 13 casos novos no contrato `07-transacoes`, gravados do .NET, passam com o Go atendendo;
+  - o pacote `sugestoes`: o histórico (o que você escolheu à mão pesa mais), as palavras-chave, os grupos por descrição parecida, o texto da regra e o aviso dela (#254), conferidos contra o próprio C# por um gabarito, inclusive o percentual do motivo em pt-BR.
+
 ## [2.50.8] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação

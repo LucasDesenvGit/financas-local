@@ -3,7 +3,8 @@
 // as rotas ficam aqui para esses pacotes não dependerem de quem responde HTTP.
 //
 // Parte 1 (#78): a lista, com os filtros, a ordem, a paginação e os totais, obter e o lançamento manual (o 04-contas
-// lança uma compra por ele). As sugestões de categoria e as outras rotas que gravam vêm depois.
+// lança uma compra por ele). Parte 2: as sugestões de categoria (o pacote sugestoes). As outras rotas que gravam vêm
+// depois.
 package extrato
 
 import (
@@ -55,6 +56,8 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("GET /api/transacoes", s.listar)
 	mux.HandleFunc("GET /api/transacoes/{id}", s.obter)
 	mux.HandleFunc("POST /api/transacoes", s.criar)
+	mux.HandleFunc("GET /api/transacoes/sugestoes-categoria", s.sugestoesDeCategoria)
+	mux.HandleFunc("GET /api/transacoes/{id}/sugestoes-categoria", s.sugestoesDaTransacao)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {

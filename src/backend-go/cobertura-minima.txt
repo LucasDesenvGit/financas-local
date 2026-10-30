@@ -34,6 +34,7 @@ saude                   54.5
 segredos                77.7
 servidor                88.8
 sessao                  100.0
+sugestoes               94.9
 tarefas                 100.0
 testeapoio              94.5
 texto                   100.0

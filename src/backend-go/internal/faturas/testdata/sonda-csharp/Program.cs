@@ -309,6 +309,52 @@ string[] descricoesPoucoInformativas =
 ];
 var letras = descricoesPoucoInformativas.Select(d => new { descricao = d, letras = DescricaoPoucoInformativaService.LetrasUteis(d) }).ToList();
 
+// As sugestões de categoria (#78): o percentual "P0" na cultura pt-BR, o Math.Round do total de parecidas, as palavras
+// e a chave de uma descrição e o texto sugerido para a regra de um grupo.
+var ptBrSugestoes = CultureInfo.GetCultureInfo("pt-BR");
+double[] razoes = [1, 0.5, 2.0 / 3, 1.0 / 3, 0.125, 0.375, 0.625, 0.875, 0.145, 0.285, 0.005, 0.995, 0.9995, 1.0 / 7, 2.0 / 7,
+    0.25, 0.75, 0.0049, 0.015, 0.0, 3.0 / 11, 0.065, 0.135, 0.665, 0.335, 1.0 / 6, 5.0 / 6, 0.045, 0.055];
+var percentuais = razoes.Select(r => new { razao = r.ToString("R", CultureInfo.InvariantCulture), texto = r.ToString("P0", ptBrSugestoes) }).ToList();
+double[] totaisParecidas = [0.5, 1.5, 2.5, 3.5, 1, 2.4, 2.6, 7.000000001, 0.4, 4.5, 3];
+var arredondados = totaisParecidas.Select(t => new { total = t.ToString("R", CultureInfo.InvariantCulture), inteiro = Math.Max(1, (int)Math.Round(t)) }).ToList();
+string[] descricoesSugestao =
+[
+    "PIX ENVIADO JOAO DA SILVA", "UBER *TRIP 12/10", "IFOOD *RESTAURANTE SABOR", "COMPRA CARTAO MERCADO LIVRE 3/10", "",
+    "Supermercado Exemplo LTDA", "PAG*JoseDaSilva", "99APP *99POP", "Netflix.com", "Açaí da Praça", "ab cd efg hij klm",
+    "DROGA RAIA 1234 SAO PAULO BR", "PAGAMENTO FATURA CARTAO", "SALARIO EMPRESA FICTICIA LTDA", "Restaurante Ação", "straße ßß",
+    // U+10000 é letra (Lo), mas fora do plano básico: no C#, as duas metades viram espaço.
+    "ABC\U00010000DEF",
+];
+var palavras = descricoesSugestao.Select(d => new { descricao = d, palavras = SugestaoCategoriaService.Palavras(d), chave = SugestaoCategoriaService.Chave(d) }).ToList();
+string[][] gruposRegra =
+[
+    ["UBER *TRIP 12/10", "UBER *TRIP 13/10", "UBER EATS"],
+    ["UBER EATS 1", "UBER EATS 2", "UBER EATS 3"],
+    ["PIX ENVIADO JOAO", "PIX ENVIADO MARIA"],
+    ["PAGAMENTO CARTAO CREDITO BCE 1", "PAGAMENTO CARTAO CREDITO BCE 2"],
+    ["NETFLIX.COM", "NETFLIX.COM", "NETFLIX SERVICOS"],
+    ["BANCO DO BRASIL", "BANCO DO BRASIL SA"],
+    ["IFD*RESTAURANTE A", "IFD*RESTAURANTE B", "IFD*LANCHONETE C", "IFD*PADARIA D", "IFD*MERCADO E"],
+    ["TED 123", "TED 456"],
+    ["Açaí da Praça", "ACAI DA PRACA"],
+    ["", "  "],
+    ["LOJA DE MOVEIS FICTICIA 1/10", "LOJA DE MOVEIS FICTICIA 2/10"],
+    ["SUPERMERCADO EXEMPLO", "SUPERMERCADO EXEMPLO", "SUPERMERCADO OUTRO", "SUPERMERCADO EXEMPLO", "SUPERMERCADO EXEMPLO"],
+    ["ABC", "ABD"],
+    ["PAGAMENTO RECEBIDO", "PAGAMENTO RECEBIDO"],
+    // As repetidas contam uma vez só: sem isso, "UBER" estaria em 4 das 5.
+    ["UBER TRIP", "UBER TRIP", "UBER TRIP", "UBER TRIP", "CABIFY X"],
+    // A palavra curta que é a última não tem com quem fazer dupla.
+    ["UBER", "UBER *"],
+    // O começo comum: com 10 letras exatas; parado num sinal (não corta); quando um texto acaba ali (não corta); no
+    // meio de uma palavra de todos (corta na última palavra inteira).
+    ["ABC DEF GH 1", "ABC DEF GH 2"],
+    ["ABC DEF GHI*X", "ABC DEF GHI#Y"],
+    ["ABC DEF GHIJ", "ABC DEF GHI"],
+    ["ABC DEF GHI XYZ1", "ABC DEF GHI XYZ2"],
+];
+var textosRegra = gruposRegra.Select(g => new { descricoes = g, texto = SugestaoCategoriaService.TextoRegra(g) }).ToList();
+
 var opcoes = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 string Gravar(string relativo, object conteudo)
 {
@@ -338,6 +384,11 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "parcelas", "testdata", "compr
 Console.WriteLine(Gravar(Path.Combine("..", "..", "contas", "testdata", "saldos.json"), new Dictionary<string, object>
 {
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["saldos"] = saldos,
+}));
+Console.WriteLine(Gravar(Path.Combine("..", "..", "sugestoes", "testdata", "sugestoes.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["percentuais"] = percentuais, ["arredondados"] = arredondados,
+    ["palavras"] = palavras, ["textosRegra"] = textosRegra,
 }));
 Console.WriteLine(Gravar(Path.Combine("..", "..", "poucoinformativa", "testdata", "letras.json"), new Dictionary<string, object>
 {
