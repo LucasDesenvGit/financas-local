@@ -1026,5 +1026,68 @@
     "nome": "operações sem login",
     "requisicao": "GET /api/carteira/ativos/1/operacoes",
     "status": 401
+  },
+  {
+    "nome": "atualizar as cotações",
+    "requisicao": "POST /api/carteira/atualizar-cotacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "atualizados": 0,
+      "falhas": [
+        "HGLG11",
+        "ITSA4",
+        "IVVB11",
+        "VOO",
+        "XPML11"
+      ],
+      "proventosNovos": 0
+    }
+  },
+  {
+    "nome": "atualizar as cotações de um ativo",
+    "requisicao": "POST /api/carteira/atualizar-cotacoes?ativoId=1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "atualizados": 0,
+      "falhas": [
+        "HGLG11"
+      ],
+      "proventosNovos": 0
+    }
+  },
+  {
+    "nome": "atualizar as cotações de um ativo que não existe",
+    "requisicao": "POST /api/carteira/atualizar-cotacoes?ativoId=999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "atualizados": 0,
+      "falhas": [],
+      "proventosNovos": 0
+    }
+  },
+  {
+    "nome": "atualizar as cotações com o ativoId que não é número",
+    "requisicao": "POST /api/carteira/atualizar-cotacoes?ativoId=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ativoId": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "atualizar as cotações sem login",
+    "requisicao": "POST /api/carteira/atualizar-cotacoes",
+    "status": 401
   }
 ]

@@ -47,7 +47,10 @@ func NovoServico(db *sql.DB, f fonte, r relogio.Relogio, log *slog.Logger) *Serv
 	return &Servico{db: db, config: configuracao.Novo(db, r), fonte: f, relogio: r, log: log}
 }
 
-func (s *Servico) avisar(msg string, err error) { s.log.Warn(msg, "origem", "Selic", "erro", err) }
+// avisar registra o aviso com a origem do C#: o SelicService fica em Servicos.Investimentos.
+func (s *Servico) avisar(msg string, err error) {
+	s.log.Warn(msg, "origem", "Investimentos", "erro", err)
+}
 
 // faixa é um período que falta buscar.
 type faixa struct{ de, ate tipos.Data }

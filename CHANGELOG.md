@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.17] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **As cotações em Go, ainda desligadas** (#82, parte 4; épico #70). Nada muda para quem usa. Para quem desenvolve: o pacote `internal/cotacoes` traz o `CotacaoService` do C# (Yahoo Finance, brapi, proventos, históricos mensais e o IFIX) e a rota `POST /api/carteira/atualizar-cotacoes`, conferidos contra o C# por gabaritos, inclusive com 106 respostas estranhas das fontes. A brapi só entra no Go com a troca dos segredos (#85, ADR 0049). Os avisos da Selic passam a sair com a origem "Investimentos", como no .NET.
+
 ## [2.50.16] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação

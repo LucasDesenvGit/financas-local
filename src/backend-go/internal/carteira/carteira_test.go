@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/selic"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
@@ -66,7 +68,25 @@ type cena struct {
 	mux   *http.ServeMux
 }
 
+// cotacoesFalsas anotam o que foi pedido.
+type cotacoesFalsas struct {
+	resultado cotacoes.Resultado
+	erro      error
+	pedidos   *[][]int64
+}
+
+func (c cotacoesFalsas) Atualizar(_ context.Context, somente []int64) (cotacoes.Resultado, error) {
+	if c.pedidos != nil {
+		*c.pedidos = append(*c.pedidos, somente)
+	}
+	return c.resultado, c.erro
+}
+
 func novaCena(t *testing.T, c cambioFalso, r reservasFalsas, sf selicFalsa) cena {
+	return cenaComCotacoes(t, c, r, sf, cotacoesFalsas{})
+}
+
+func cenaComCotacoes(t *testing.T, c cambioFalso, r reservasFalsas, sf selicFalsa, a cotacoesFalsas) cena {
 	t.Helper()
 	db := testeapoio.NovoBancoVazio(t)
 	rel := testeapoio.AgoraEmBrasilia(2026, 10, 30, 15, 0)
@@ -77,7 +97,7 @@ func novaCena(t *testing.T, c cambioFalso, r reservasFalsas, sf selicFalsa) cena
 		sf.serie = selic.NovaSerie(nil)
 	}
 	var saida bytes.Buffer
-	s := NovoServico(db, c, r, sf, rel, slog.New(slog.NewTextHandler(&saida, nil)))
+	s := NovoServico(db, c, r, sf, a, rel, slog.New(slog.NewTextHandler(&saida, nil)))
 	mux := http.NewServeMux()
 	Registrar(mux, s)
 	return cena{s: s, db: db, fab: testeapoio.NovaFabrica(t, db, rel), saida: &saida, mux: mux}
@@ -529,4 +549,41 @@ func TestNomesDasClasses(t *testing.T) {
 	if !SegmentoValido(nil) || !SegmentoValido(textoDe("Logística")) || SegmentoValido(textoDe("logística")) || SegmentoValido(textoDe("")) {
 		t.Error("segmento válido")
 	}
+}
+
+// Regra: atualizar as cotações: sem o ativoId, ou vazio, são todos; com ele, só aquele; o que não é número é o 400 do model
+// binding; erro é o 500.
+func TestRotaAtualizarCotacoes(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		nome     string
+		consulta string
+		status   int
+		pedidos  string
+	}{
+		{"todos", "", 200, "[[]]"},
+		{"vazio", "?ativoId=", 200, "[[]]"},
+		{"só espaços", "?ativoId=%20", 200, "[[]]"},
+		{"um", "?ativoId=7", 200, "[[7]]"},
+		{"sem diferença de maiúsculas", "?ATIVOID=7", 200, "[[7]]"},
+		{"não é número", "?ativoId=abc", 400, "[]"},
+	}
+	for _, x := range casos {
+		t.Run(x.nome, func(t *testing.T) {
+			t.Parallel()
+			var pedidos [][]int64
+			c := cenaComCotacoes(t, cambioFalso{}, reservasFalsas{}, selicFalsa{}, cotacoesFalsas{
+				resultado: cotacoes.Resultado{Atualizados: 2, ProventosNovos: 1, Falhas: []string{"PETR4"}}, pedidos: &pedidos})
+			r := testeapoio.Chamar(t, c.mux, "POST", "/api/carteira/atualizar-cotacoes"+x.consulta, "")
+			r.ConferirStatus(t, x.status)
+			if x.status == 200 {
+				r.ConferirJSON(t, `{"atualizados":2,"proventosNovos":1,"falhas":["PETR4"]}`)
+			}
+			if obtido := strings.ReplaceAll(fmt.Sprint(pedidos), " ", ","); obtido != x.pedidos {
+				t.Errorf("pedidos %s, esperado %s", obtido, x.pedidos)
+			}
+		})
+	}
+	c := cenaComCotacoes(t, cambioFalso{}, reservasFalsas{}, selicFalsa{}, cotacoesFalsas{erro: errors.New("falhou")})
+	testeapoio.Chamar(t, c.mux, "POST", "/api/carteira/atualizar-cotacoes", "").ConferirStatus(t, http.StatusInternalServerError)
 }

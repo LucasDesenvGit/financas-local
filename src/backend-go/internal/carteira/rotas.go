@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
@@ -19,6 +20,7 @@ import (
 func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("GET /api/carteira", s.obter)
 	mux.HandleFunc("GET /api/carteira/ativos/{id}/operacoes", s.operacoes)
+	mux.HandleFunc("POST /api/carteira/atualizar-cotacoes", s.atualizarCotacoes)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
@@ -91,4 +93,24 @@ func (s *Servico) operacoes(w http.ResponseWriter, r *http.Request) {
 	default:
 		respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista)
 	}
+}
+
+// atualizarCotacoes é o POST /api/carteira/atualizar-cotacoes?ativoId=: as cotações e os proventos de todos os ativos, ou
+// de um só. O ativoId é int?: sem ele, ou vazio, são todos.
+func (s *Servico) atualizarCotacoes(w http.ResponseWriter, r *http.Request) {
+	var somente []int64
+	if v, ok := respostas.ParametroDaQuery(r, "ativoId"); ok && strings.TrimFunc(v, unicode.IsSpace) != "" {
+		id, ok := respostas.InteiroDaQuery(v)
+		if !ok {
+			respostas.Validacao(w, map[string][]string{"ativoId": {respostas.MensagemDaQuery(v)}})
+			return
+		}
+		somente = []int64{int64(id)}
+	}
+	resultado, err := s.cotacoes.Atualizar(r.Context(), somente)
+	if err != nil {
+		s.erroInterno(w, r, "atualizar as cotações", err)
+		return
+	}
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, resultado)
 }

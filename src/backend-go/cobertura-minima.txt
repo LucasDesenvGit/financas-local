@@ -19,6 +19,7 @@ categorizacao           91.9
 config                  86.7
 configuracao            89.3
 contas                  88.0
+cotacoes                95.2
 cripto                  86.5
 desfazer                100.0
 emprestimos             90.9

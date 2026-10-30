@@ -22,6 +22,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/desfazer` | o estado de antes de uma alteração em lote, na memória e por 10 minutos, para o "Desfazer" (#78, o `IMemoryCache` do C#) |
 | `internal/reservas` | o `ReservaService` (#82, ADRs 0010, 0037 e 0038): as reservas pelo extrato, pela conferência e pelo que o banco informa, e o Méli Dólar pela PTAX; as metas (#79), o painel (#80) e a carteira usam |
 | `internal/carteira` | o `CarteiraService` (#82): preço médio, posições, proventos, comparação com a Selic e os investimentos do Open Finance; `GET /api/carteira` e as operações de um ativo |
+| `internal/cotacoes` | o `CotacaoService` (#82): cotações, proventos e históricos mensais pelo Yahoo Finance e pela brapi, e o IFIX; o token da brapi só vale depois da troca dos segredos (#85) |
 | `internal/selic` | o `SelicService` (#82): a Selic diária e a meta pelo Banco Central, guardadas no banco, e o fator para comparar rentabilidades (em `float64`, como no C#); a carteira usa |
 | `internal/transferencias` | o `TransferenciasService` (#77, ADR 0031): transferência entre contas suas fica fora dos relatórios; pagamento de fatura pareado no cartão |
 | `internal/tipolancamento` | o `TipoLancamentoService` (#77, ADR 0025): como o dinheiro entrou ou saiu (Pix, fatura, estorno…) |

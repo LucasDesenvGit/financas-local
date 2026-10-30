@@ -246,6 +246,34 @@
       "metodo": "GET",
       "caminho": "/api/carteira/ativos/1/operacoes",
       "sessao": "visitante"
+    },
+    {
+      "nome": "atualizar as cotações",
+      "comentario": "Sem rede: todos os ativos falham, e nada muda na carteira.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/atualizar-cotacoes"
+    },
+    {
+      "nome": "atualizar as cotações de um ativo",
+      "metodo": "POST",
+      "caminho": "/api/carteira/atualizar-cotacoes?ativoId=1"
+    },
+    {
+      "nome": "atualizar as cotações de um ativo que não existe",
+      "comentario": "Sem ativo, nada é consultado.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/atualizar-cotacoes?ativoId=999"
+    },
+    {
+      "nome": "atualizar as cotações com o ativoId que não é número",
+      "metodo": "POST",
+      "caminho": "/api/carteira/atualizar-cotacoes?ativoId=abc"
+    },
+    {
+      "nome": "atualizar as cotações sem login",
+      "metodo": "POST",
+      "caminho": "/api/carteira/atualizar-cotacoes",
+      "sessao": "visitante"
     }
   ]
 }
