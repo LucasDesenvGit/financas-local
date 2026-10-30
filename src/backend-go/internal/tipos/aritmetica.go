@@ -13,6 +13,10 @@ import (
 // A escala aparece no JSON (o System.Text.Json escreve 250.0, e não 250), então não basta o valor estar certo: o
 // shopspring/decimal divide com 16 casas e arredonda "para cima" no .5, e o C# não faz nem um nem outro.
 
+// casasDoInt64 são as casas que um número de 64 bits tem: acima de 28 mais elas, o VarDecMul arredonda para zero sem
+// fazer a conta.
+const casasDoInt64 = 19
+
 // ErrDivisaoPorZero é a DivideByZeroException do C#.
 var ErrDivisaoPorZero = errors.New("divisão por zero")
 
@@ -64,8 +68,20 @@ func Dividir(a, b Decimal) (Decimal, error) {
 	return Decimal{}, ErrEstouro
 }
 
-// Multiplicar é a multiplicação do decimal do C#: a escala é a soma das escalas (10.0 * 5.4123 = 54.12300), até 28.
-func Multiplicar(a, b Decimal) Decimal { return DeDecimal(a.v.Mul(b.v)) }
+// Multiplicar é a multiplicação do decimal do C#: a escala é a soma das escalas (10.0 * 5.4123 = 54.12300), até 28, e
+// o resultado que não cabe nos 96 bits perde casas. O zero depende do caminho do VarDecMul: com os dois números em até
+// 32 bits, guarda a escala (0.00 * 1.5 = 0.000), salvo acima de 47 casas; com um deles maior, não tem casas.
+func Multiplicar(a, b Decimal) Decimal {
+	pequenos := a.v.Coefficient().BitLen() <= 32 && b.v.Coefficient().BitLen() <= 32
+	if pequenos && a.Escala()+b.Escala() > casasMaximas+casasDoInt64 {
+		return Zero
+	}
+	produto := a.v.Mul(b.v)
+	if !pequenos && produto.IsZero() {
+		return Zero
+	}
+	return DeDecimal(produto)
+}
 
 // Somar e Subtrair mantêm a maior escala, como no C# (1.5 + 2.25 = 3.75; 2.50 - 1 = 1.50).
 func Somar(a, b Decimal) Decimal    { return DeDecimal(a.v.Add(b.v)) }
@@ -74,6 +90,15 @@ func Subtrair(a, b Decimal) Decimal { return DeDecimal(a.v.Sub(b.v)) }
 // Maior é o Math.Max do decimal do C#: no empate devolve o primeiro, com a escala dele (Max(100, 100.0) = 100).
 func Maior(a, b Decimal) Decimal {
 	if a.v.Cmp(b.v) >= 0 {
+		return a
+	}
+	return b
+}
+
+// Menor é o Math.Min do decimal do C#: no empate devolve o segundo, com a escala dele (Min(1.0, 1.00) = 1.00), o
+// contrário do Math.Max.
+func Menor(a, b Decimal) Decimal {
+	if a.v.LessThan(b.v) {
 		return a
 	}
 	return b

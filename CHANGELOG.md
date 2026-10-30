@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.16] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **A leitura da carteira em Go, ainda desligada** (#82, parte 3; épico #70). Nada muda para quem usa: a rota continua no .NET até o resto dos investimentos ficar pronto. Para quem desenvolve: o pacote `internal/carteira` traz o `CarteiraService` do C# (`GET /api/carteira` e as operações de um ativo), conferido contra o C# por gabaritos e por 8 casos novos de contrato. O `internal/tipos` passa a reduzir as casas quando o resultado não cabe nos 96 bits do decimal, como o C#.
+
 ## [2.50.15] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação
