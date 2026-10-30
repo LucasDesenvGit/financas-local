@@ -1,0 +1,488 @@
+[
+  {
+    "nome": "listar reservas",
+    "requisicao": "GET /api/reservas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conferenciaAntiga": false,
+        "contaId": 1,
+        "cotacao": null,
+        "dataConferencia": null,
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": true,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Caixinha viagem",
+        "nomeConta": "Conta Corrente Fictícia",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 800.0,
+        "saldoConferido": null,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      }
+    ]
+  },
+  {
+    "nome": "listar reservas sem login",
+    "requisicao": "GET /api/reservas",
+    "status": 401
+  },
+  {
+    "nome": "conferir uma reserva",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 2,
+            "DataConferencia": "2026-10-10",
+            "Id": 2,
+            "Nome": "Cofrinho",
+            "SaldoConferido": "150.56"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar com a reserva conferida",
+    "requisicao": "GET /api/reservas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conferenciaAntiga": false,
+        "contaId": 1,
+        "cotacao": null,
+        "dataConferencia": null,
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": true,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Caixinha viagem",
+        "nomeConta": "Conta Corrente Fictícia",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 800.0,
+        "saldoConferido": null,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      },
+      {
+        "conferenciaAntiga": false,
+        "contaId": 2,
+        "cotacao": null,
+        "dataConferencia": "2026-10-10",
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": false,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Cofrinho",
+        "nomeConta": "Cartão Fictício Platinum",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 150.56,
+        "saldoConferido": 150.56,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      }
+    ]
+  },
+  {
+    "nome": "conferir de novo, com outra caixa no nome",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "DataConferencia": {
+                "antes": "2026-10-10",
+                "depois": "2026-10-14"
+              },
+              "SaldoConferido": {
+                "antes": "150.56",
+                "depois": "200.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conferir o Méli Dólar em reais",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 2,
+            "DataConferencia": "2026-10-14",
+            "Id": 3,
+            "Nome": "Méli Dólar",
+            "SaldoConferido": "100.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conferir o Méli Dólar em dólar",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "SaldoConferido": {
+                "antes": "100.0",
+                "depois": "100.12345679"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar com o Méli Dólar",
+    "requisicao": "GET /api/reservas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conferenciaAntiga": false,
+        "contaId": 1,
+        "cotacao": null,
+        "dataConferencia": null,
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": true,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Caixinha viagem",
+        "nomeConta": "Conta Corrente Fictícia",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 800.0,
+        "saldoConferido": null,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      },
+      {
+        "conferenciaAntiga": false,
+        "contaId": 2,
+        "cotacao": 5.4123,
+        "dataConferencia": "2026-10-14",
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": false,
+        "moeda": "USD",
+        "movimentos": 0,
+        "nome": "Méli Dólar",
+        "nomeConta": "Cartão Fictício Platinum",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": 100.12,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 541.90,
+        "saldoConferido": 100.12345679,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      },
+      {
+        "conferenciaAntiga": false,
+        "contaId": 2,
+        "cotacao": null,
+        "dataConferencia": "2026-10-14",
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": false,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Cofrinho",
+        "nomeConta": "Cartão Fictício Platinum",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 200.0,
+        "saldoConferido": 200.0,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      }
+    ]
+  },
+  {
+    "nome": "conferir o Méli Dólar em reais sem cotação na data",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não há cotação do dólar para essa data. Informe o saldo em dólares (US$)."
+    }
+  },
+  {
+    "nome": "conferir com a data no futuro",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A data da conferência não pode estar no futuro."
+    }
+  },
+  {
+    "nome": "conferir com conta inexistente",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "conferir sem o nome",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "The Nome field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conferir com o nome longo demais",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "The field Nome must be a string with a maximum length of 100."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conferir com saldo negativo",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Saldo": [
+          "The field Saldo must be between 0 and 999999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conferir com a moeda inválida",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Moeda": [
+          "Moeda inválida: use BRL ou USD."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conferir com a data inválida",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.data": [
+          "The JSON value could not be converted to Financas.Api.Dtos.ConferirReservaDto. Path: $.data | LineNumber: 4 | BytePositionInLine: 28."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conferir sem login",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 401
+  },
+  {
+    "nome": "tirar a conferência",
+    "requisicao": "DELETE /api/reservas/conferencia?contaId=2&nome=%20cofrinho%20",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 2,
+            "DataConferencia": "2026-10-14",
+            "Id": 2,
+            "Nome": "Cofrinho",
+            "SaldoConferido": "200.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "tirar a conferência de novo",
+    "requisicao": "DELETE /api/reservas/conferencia?contaId=2&nome=Cofrinho",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "tirar a conferência sem os parâmetros",
+    "requisicao": "DELETE /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "nome": [
+          "The nome field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tirar a conferência com a conta que não é número",
+    "requisicao": "DELETE /api/reservas/conferencia?contaId=abc&nome=x",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "contaId": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tirar a conferência do Méli Dólar",
+    "requisicao": "DELETE /api/reservas/conferencia?contaId=2&nome=M%C3%A9li%20D%C3%B3lar",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 2,
+            "DataConferencia": "2026-10-14",
+            "Id": 3,
+            "Nome": "Méli Dólar",
+            "SaldoConferido": "100.12345679"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar depois de tirar as conferências",
+    "requisicao": "GET /api/reservas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conferenciaAntiga": false,
+        "contaId": 1,
+        "cotacao": null,
+        "dataConferencia": null,
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": true,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Caixinha viagem",
+        "nomeConta": "Conta Corrente Fictícia",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 800.0,
+        "saldoConferido": null,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      }
+    ]
+  }
+]
