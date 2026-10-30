@@ -23,6 +23,8 @@ func filtroDeTeste() (*CampoObjeto, *CampoDataOpcional, *CampoLista, *CampoEnum,
 func TestClasseEObjetoAninhado(t *testing.T) {
 	casos := []struct{ corpo, caminho, tipo string }{
 		{`{"filtro":{"inicio":5}}`, "$.filtro.inicio", "System.Nullable`1[System.DateOnly]"},
+		// O DateOnly do System.Text.Json não apara: com espaço, não é data (o LerData aparava).
+		{`{"filtro":{"inicio":" 2026-10-01"}}`, "$.filtro.inicio", "System.Nullable`1[System.DateOnly]"},
 		{`{"filtro":{"tipo":"Receita"}}`, "$.filtro.tipo", "System.Nullable`1[Ns.Tipo]"},
 		{`{"filtro":{"pagina":"x"}}`, "$.filtro.pagina", "System.Int32"},
 		{`{"filtro":{"sem":1}}`, "$.filtro.sem", "System.Boolean"},
