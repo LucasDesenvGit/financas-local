@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.14] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **As reservas em Go, ainda desligadas** (#82, parte 1; épico #70). Nada muda para quem usa: a rota continua no .NET até o resto dos investimentos ficar pronto. Para quem desenvolve: o pacote `internal/reservas` traz o `ReservaService` do C# (`GET /api/reservas`, conferir e tirar a conferência), com o Méli Dólar pela PTAX e o reservado informado pelo banco, conferido contra o C# por gabaritos e por 23 casos de contrato. Mutação 100%.
+
 ## [2.50.13] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação
