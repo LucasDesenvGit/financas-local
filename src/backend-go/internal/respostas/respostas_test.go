@@ -57,6 +57,9 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 			if ok || w.Code != c.status {
 				t.Fatalf("status %d (%v), esperado %d", w.Code, ok, c.status)
 			}
+			if tipo := w.Header().Get("Content-Type"); tipo != ConteudoJSON {
+				t.Errorf("Content-Type %q, o .NET manda %q", tipo, ConteudoJSON)
+			}
 			if c.erros == nil {
 				return
 			}

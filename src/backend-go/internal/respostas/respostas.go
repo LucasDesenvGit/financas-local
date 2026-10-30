@@ -133,8 +133,10 @@ func Validacao(w http.ResponseWriter, erros map[string][]string) {
 	})
 }
 
+// TipoNaoSuportado é o 415 do corpo que não é JSON. Como o 400 de validação, o .NET grava com "application/json" (o
+// Accept do Angular): contrato 07-transacoes, "renomear sem corpo".
 func TipoNaoSuportado(w http.ResponseWriter) {
-	JSON(w, http.StatusUnsupportedMediaType, ConteudoProblem, map[string]any{
+	JSON(w, http.StatusUnsupportedMediaType, ConteudoJSON, map[string]any{
 		"type": tipoUnsupportedMedia, "title": "Unsupported Media Type", "status": http.StatusUnsupportedMediaType,
 		"traceId": NovoTraceID(),
 	})
