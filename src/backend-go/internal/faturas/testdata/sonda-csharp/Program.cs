@@ -484,3 +484,92 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "reservas", "testdata", "texto
 {
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["quantidades"] = quantidades, ["nomes"] = nomesReserva, ["meli"] = meli,
 }));
+
+// A Selic (#82): o fator da série usa double, e o (decimal) do .NET guarda só 15 dígitos. Os gabaritos conferem as duas
+// conversões, o decimal.TryParse com NumberStyles.Number (a taxa vem em texto do Banco Central) e o fator da SerieSelic.
+var sorteio = new Random(8201);
+var duplas = new List<double>
+{
+    0d, 1d, -1d, 0.1d, 0.5d, 2.5d, 1.1d, 100d, 1e-5, 1e14, 1e15, 1e16, 999999999999999d, 9999999999999995d, 99999999999999.95d,
+    1.00000000000001d, 1.000000000000005d, 1.0000000000000002d, 123456789012345678d, 1e28, 7.9e28, 7.9228162514264337e28, 7.93e28, 1e29,
+    1e-28, 5e-29, 5.04e-29, 5.1e-29, 2.6e-29, 4.9e-29, 1e-29, 1e-30, 5.0000000000000001e-29, double.Epsilon, 1.2345678901234567e-10, 0.000001d, 1000000d, 150d,
+    double.NaN, double.PositiveInfinity, double.NegativeInfinity,
+};
+for (var i = 0; i < 300; i++)
+{
+    duplas.Add(1d + sorteio.NextDouble());
+    duplas.Add(sorteio.NextDouble() * Math.Pow(10, sorteio.Next(-30, 29)));
+    duplas.Add(-sorteio.NextDouble() * Math.Pow(10, sorteio.Next(0, 16)));
+}
+string DecimalDoDouble(double d)
+{
+    try { return ((decimal)d).ToString(CultureInfo.InvariantCulture); }
+    catch (OverflowException) { return "estouro"; }
+}
+var doDouble = duplas.Select(d => new { bits = BitConverter.DoubleToInt64Bits(d).ToString(CultureInfo.InvariantCulture), valor = DecimalDoDouble(d) }).ToList();
+var decimais = new List<decimal>
+{
+    0m, 1m, -1.5m, 0.055131m, 0.000001m, 13.65m, 0.1m, 100.00m, decimal.MaxValue, decimal.MinValue, 18446744073709551616m, 18446744073709551615m,
+    0.0000000000000000000000000001m, 1.0000000000000000000000000001m,
+};
+for (var i = 0; i < 200; i++)
+    decimais.Add(new decimal(sorteio.Next(int.MinValue, int.MaxValue), sorteio.Next(int.MinValue, int.MaxValue),
+        sorteio.Next(int.MinValue, int.MaxValue), sorteio.Next(2) == 0, (byte)sorteio.Next(0, 29)));
+var paraDouble = decimais.Select(d => new { valor = d.ToString(CultureInfo.InvariantCulture), bits = BitConverter.DoubleToInt64Bits((double)d).ToString(CultureInfo.InvariantCulture) }).ToList();
+string[] numerosEmTexto =
+[
+    "0.055131", "13.65", "15.00", "\r1\r", "\v2\f", " 1.5 ", "\t7\n", "1,234.5", "1,2,3", "1,,2", ",1", "1,", ".5", "5.", ".", "", " ", "-1", "+1", "1-", "1+", "--1", "-1-",
+    "(1)", "1e3", "1E3", "1.5.2", "1.2,3", "$1", "- 1", "1 -", " - 1", " -1 ", "1 2", "00.10", "-0", "0.00", "-0.00", "abc", "1a", "1\0", "\01", "1 \0",
+    "\u0661", "1\u00A0", "\u00A01", "79228162514264337593543950335", "79228162514264337593543950336", "-79228162514264337593543950335",
+    "0.1234567890123456789012345678901234", "7922816251426433759354395033.5", "7922816251426433759354395033.55", "79228162514264337593543950335.5",
+    "79228162514264337593543950335.4", "0.00000000000000000000000000005", "0.00000000000000000000000000015", "0.000000000000000000000000000049",
+    "1.0000000000000000000000000000", "100000000000000000000000000000", "000000000000000000000000000000000001",
+];
+var numeros = numerosEmTexto.Select(t => new
+{
+    texto = t,
+    valor = decimal.TryParse(t, NumberStyles.Number, CultureInfo.InvariantCulture, out var v) ? v.ToString(CultureInfo.InvariantCulture) : null,
+}).ToList();
+(string A, string B)[] pares =
+[
+    ("79228162514264337593543950335", "1"), ("39614081257132168796771975168", "5"), ("1", "3"), ("22", "7"), ("-79228162514264337593543950335", "2"),
+];
+var divisoes = pares.Select(p => new
+{
+    a = p.A, b = p.B,
+    resultado = (decimal.Parse(p.A, CultureInfo.InvariantCulture) / decimal.Parse(p.B, CultureInfo.InvariantCulture)).ToString(CultureInfo.InvariantCulture),
+}).ToList();
+Console.WriteLine(Gravar(Path.Combine("..", "..", "tipos", "testdata", "conversoes.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["doDouble"] = doDouble, ["paraDouble"] = paraDouble, ["numeros"] = numeros, ["divisoes"] = divisoes,
+}));
+
+string[] valoresDasTaxas = ["0.055131", "0.052531", "0.000000", "0.1", "0.040168", "1.2345678"];
+var taxasSelic = new List<Financas.Api.Entidades.TaxaSelicDiaria>();
+var diaDaTaxa = new DateOnly(2026, 1, 2);
+for (var i = 0; i < 120; i++, diaDaTaxa = diaDaTaxa.AddDays(diaDaTaxa.DayOfWeek == DayOfWeek.Friday ? 3 : 1))
+    if (i % 17 != 16) // um feriado de vez em quando
+        taxasSelic.Add(new Financas.Api.Entidades.TaxaSelicDiaria { Data = diaDaTaxa, Taxa = decimal.Parse(valoresDasTaxas[i % valoresDasTaxas.Length], CultureInfo.InvariantCulture) });
+var serieSelic = new SerieSelic(Enumerable.Reverse(taxasSelic));
+var fatoresSelic = new List<object>();
+foreach (var (de, ate) in new[]
+{
+    (new DateOnly(2026, 1, 2), new DateOnly(2026, 1, 2)), (new DateOnly(2026, 1, 5), new DateOnly(2026, 1, 2)),
+    (new DateOnly(2026, 1, 2), new DateOnly(2026, 1, 5)), (new DateOnly(2026, 1, 3), new DateOnly(2026, 1, 6)),
+    (new DateOnly(2025, 12, 1), new DateOnly(2026, 1, 6)), (new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15)),
+    (new DateOnly(2026, 1, 2), new DateOnly(2027, 1, 1)), (new DateOnly(2027, 1, 1), new DateOnly(2027, 2, 1)),
+    (new DateOnly(2025, 1, 1), new DateOnly(2025, 2, 1)),
+})
+    fatoresSelic.Add(new { de = de.ToString("yyyy-MM-dd"), ate = ate.ToString("yyyy-MM-dd"), fator = serieSelic.Fator(de, ate).ToString(CultureInfo.InvariantCulture) });
+for (var i = 0; i < 80; i++)
+{
+    var de = new DateOnly(2025, 12, 1).AddDays(sorteio.Next(0, 200));
+    var ate = de.AddDays(sorteio.Next(0, 200));
+    fatoresSelic.Add(new { de = de.ToString("yyyy-MM-dd"), ate = ate.ToString("yyyy-MM-dd"), fator = serieSelic.Fator(de, ate).ToString(CultureInfo.InvariantCulture) });
+}
+Console.WriteLine(Gravar(Path.Combine("..", "..", "selic", "testdata", "serie.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() },
+    ["taxas"] = taxasSelic.Select(t => new { data = t.Data.ToString("yyyy-MM-dd"), taxa = t.Taxa.ToString(CultureInfo.InvariantCulture) }).ToList(),
+    ["fatores"] = fatoresSelic,
+}));
