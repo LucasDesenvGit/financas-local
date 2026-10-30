@@ -1738,6 +1738,61 @@
         ]
       },
       "sessao": "visitante"
+    },
+    {
+      "nome": "categorias em lote com a categoria que não é número",
+      "comentario": "O DTO do lote é uma classe com propriedades, e não um record como os outros.",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": [
+          {
+            "id": 166,
+            "automatica": true
+          }
+        ],
+        "categoriaId": "x"
+      }
+    },
+    {
+      "nome": "categorias em lote com o filtro que não é objeto",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": 5,
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote com um campo do filtro que não converte",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "pagina": "x"
+        },
+        "automatica": true
+      }
+    },
+    {
+      "nome": "categorias em lote com os itens que não são lista",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "itens": 5
+      }
+    },
+    {
+      "nome": "categorias em lote com o tipo do filtro em texto",
+      "comentario": "No corpo, o enum é só número (sem o JsonStringEnumConverter).",
+      "metodo": "PATCH",
+      "caminho": "/api/transacoes/em-lote",
+      "corpo": {
+        "filtro": {
+          "tipo": "Receita"
+        },
+        "automatica": true
+      }
     }
   ]
 }
