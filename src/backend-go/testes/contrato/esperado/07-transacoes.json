@@ -13420,5 +13420,105 @@
     "nome": "categorias em lote sem login",
     "requisicao": "PATCH /api/transacoes/em-lote",
     "status": 401
+  },
+  {
+    "nome": "categorias em lote com a categoria que não é número",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.categoriaId": [
+          "The JSON value could not be converted to System.Nullable`1[System.Int32]. Path: $.categoriaId | LineNumber: 7 | BytePositionInLine: 26."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com o filtro que não é objeto",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.filtro": [
+          "The JSON value could not be converted to Financas.Api.Dtos.FiltroTransacoesDto. Path: $.filtro | LineNumber: 1 | BytePositionInLine: 19."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com um campo do filtro que não converte",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.filtro.pagina": [
+          "The JSON value could not be converted to System.Int32. Path: $.filtro.pagina | LineNumber: 2 | BytePositionInLine: 23."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com os itens que não são lista",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.itens": [
+          "The JSON value could not be converted to System.Collections.Generic.List`1[Financas.Api.Dtos.AlteracaoCategoriaDto]. Path: $.itens | LineNumber: 1 | BytePositionInLine: 18."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias em lote com o tipo do filtro em texto",
+    "requisicao": "PATCH /api/transacoes/em-lote",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.filtro.tipo": [
+          "The JSON value could not be converted to System.Nullable`1[Financas.Api.Entidades.TipoTransacao]. Path: $.filtro.tipo | LineNumber: 2 | BytePositionInLine: 27."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
   }
 ]
