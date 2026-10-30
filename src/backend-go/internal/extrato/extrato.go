@@ -4,7 +4,8 @@
 //
 // Parte 1 (#78): a lista, com os filtros, a ordem, a paginação e os totais, obter e o lançamento manual (o 04-contas
 // lança uma compra por ele). Parte 2: as sugestões de categoria (o pacote sugestoes). Parte 3: alterar, ajustar,
-// excluir, as alterações em lote e a transferência. O renomear e a categoria em lote com "Desfazer" vêm depois.
+// excluir, as alterações em lote e a transferência. Parte 4: o renomear (#123) e a categoria em lote com o Desfazer
+// (#87, o pacote desfazer).
 package extrato
 
 import (
@@ -21,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/desfazer"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/poucoinformativa"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
@@ -44,11 +46,15 @@ type Servico struct {
 	relogio    relogio.Relogio
 	parametros parametros
 	log        *slog.Logger
+	// O estado de antes das alterações em lote, para o Desfazer: na memória, por 10 minutos (o IMemoryCache do C#).
+	memoriaCategorias *desfazer.Memoria[[]categoriaAntes]
+	memoriaNomes      *desfazer.Memoria[desfazerNome]
 }
 
 // NovoServico monta o serviço com o banco, o relógio, os parâmetros e o log.
 func NovoServico(db *sql.DB, r relogio.Relogio, p parametros, log *slog.Logger) *Servico {
-	return &Servico{db: db, relogio: r, parametros: p, log: log}
+	return &Servico{db: db, relogio: r, parametros: p, log: log,
+		memoriaCategorias: desfazer.Nova[[]categoriaAntes](r), memoriaNomes: desfazer.Nova[desfazerNome](r)}
 }
 
 // Registrar põe as rotas no mux.
@@ -65,6 +71,12 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("PUT /api/transacoes/revisada-em-lote", s.revisadaEmLote)
 	mux.HandleFunc("PUT /api/transacoes/categoria-em-lote", s.categoriaEmLote)
 	mux.HandleFunc("POST /api/transacoes/transferencia", s.transferir)
+	mux.HandleFunc("PATCH /api/transacoes/em-lote", s.categoriasEmLote)
+	mux.HandleFunc("POST /api/transacoes/em-lote/desfazer/{chave}", s.desfazerCategorias)
+	mux.HandleFunc("GET /api/transacoes/{id}/renomear/previa", s.previaRenomear)
+	mux.HandleFunc("PUT /api/transacoes/{id}/descricao", s.renomear)
+	mux.HandleFunc("PATCH /api/transacoes/descricao/em-lote", s.renomearEmLote)
+	mux.HandleFunc("POST /api/transacoes/descricao/desfazer/{chave}", s.desfazerRenomear)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {

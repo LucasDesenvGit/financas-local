@@ -97,6 +97,7 @@ func (c *CampoInteiroOpcional) validar(map[string][]string) {}
 type CampoEnum struct {
 	Propriedade string
 	Anulavel    bool
+	Tipo        string // o nome completo do enum no C#, para o erro de conversão numa classe (LerClasse)
 	Valor       *int64
 }
 

@@ -159,11 +159,21 @@ func (c *CampoBool) validar(map[string][]string) {}
 //     record, e não o do campo (o contrato 17-erros mostra: "could not be converted to ...ErroFrontEndDto");
 //   - nomes sem diferença de maiúsculas, propriedades a mais ignoradas, a última repetida vale.
 func LerObjeto(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, campos ...Campo) bool {
+	return lerEValidar(w, r, parametro, tipoDto, doRecord(tipoDto), campos)
+}
+
+// LerClasse é o LerObjeto de uma classe com propriedades (o AlterarCategoriasEmLoteDto), e não de um record: o erro de
+// tipo num campo cita o tipo do campo ("System.Nullable`1[System.Int32]"), e não o da classe.
+func LerClasse(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, campos ...Campo) bool {
+	return lerEValidar(w, r, parametro, tipoDto, daClasse, campos)
+}
+
+func lerEValidar(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, tipo tipoDoErro, campos []Campo) bool {
 	corpo, ok := LerCorpo(w, r, parametro)
 	if !ok {
 		return false
 	}
-	nulo, erroJSON := lerObjeto(corpo, tipoDto, campos)
+	nulo, erroJSON := lerObjeto(corpo, tipoDto, tipo, campos)
 	switch {
 	case erroJSON != nil:
 		Validacao(w, map[string][]string{erroJSON.Caminho: {erroJSON.Mensagem}, parametro: {Obrigatorio(parametro)}})
@@ -192,8 +202,22 @@ func LerTextos(w http.ResponseWriter, r *http.Request, parametro, tipoDto string
 	return LerObjeto(w, r, parametro, tipoDto, todos...)
 }
 
+// tipoDoErro diz o tipo que o erro de conversão de um campo cita.
+type tipoDoErro func(Campo) string
+
+// doRecord: num record com construtor, o erro cita o próprio record.
+func doRecord(tipoDto string) tipoDoErro { return func(Campo) string { return tipoDto } }
+
+// daClasse: numa classe com propriedades, o erro cita o tipo da propriedade.
+func daClasse(c Campo) string { return c.(comTipo).tipoCSharp() }
+
+// comTipo é o campo que sabe o nome do tipo dele no C#, para o erro de conversão numa classe.
+type comTipo interface {
+	tipoCSharp() string
+}
+
 // lerObjeto lê o objeto e devolve se o JSON inteiro era "null" (o ASP.NET trata como corpo vazio).
-func lerObjeto(corpo []byte, tipoDto string, campos []Campo) (bool, *ErroJSON) {
+func lerObjeto(corpo []byte, tipoDto string, tipo tipoDoErro, campos []Campo) (bool, *ErroJSON) {
 	l := NovoLeitorJSON(corpo)
 	primeiro, erro := l.Token()
 	if erro != nil {
@@ -205,37 +229,44 @@ func lerObjeto(corpo []byte, tipoDto string, campos []Campo) (bool, *ErroJSON) {
 	if primeiro != json.Delim('{') {
 		return false, l.Conversao("$", tipoDto)
 	}
+	if erro := lerPropriedades(l, "$", tipo, campos); erro != nil {
+		return false, erro
+	}
+	return false, l.Fim()
+}
+
+// lerPropriedades lê os pares nome e valor de um objeto já aberto, até o "}" (que consome). caminho é o do objeto ("$",
+// "$.filtro", "$.itens[0]").
+func lerPropriedades(l *LeitorJSON, caminho string, tipo tipoDoErro, campos []Campo) *ErroJSON {
 	for l.Mais() {
 		nomeToken, erro := l.Token()
 		if erro != nil {
-			return false, erro
+			return erro
 		}
 		nome, _ := nomeToken.(string)
 		valor, erro := l.Token()
 		if erro != nil {
-			return false, erro
+			return erro
 		}
 		campo := campoDe(campos, nome)
 		if campo == nil {
 			if erro := l.Pular(valor); erro != nil {
-				return false, erro
+				return erro
 			}
 			continue
 		}
 		if composto, ok := campo.(campoComposto); ok {
-			if erro := composto.lerValor(l, valor, CaminhoDaChave("$", nome)); erro != nil {
-				return false, erro
+			if erro := composto.lerValor(l, valor, CaminhoDaChave(caminho, nome)); erro != nil {
+				return erro
 			}
 			continue
 		}
 		if !campo.ler(valor) {
-			return false, l.Conversao(CaminhoDaChave("$", nome), tipoDto)
+			return l.Conversao(CaminhoDaChave(caminho, nome), tipo(campo))
 		}
 	}
-	if _, erro := l.Token(); erro != nil { // o "}"
-		return false, erro
-	}
-	return false, l.Fim()
+	_, erro := l.Token() // o "}"
+	return erro
 }
 
 func campoDe(campos []Campo, nome string) Campo {

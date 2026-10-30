@@ -22,7 +22,7 @@ type ResultadoAplicacaoDto struct {
 // lerIds é o model binding de um DTO de lote: Ids ([Required, MinLength(1), MaxLength(1000)] List<long>) e mais os
 // campos do DTO. Devolve os ids sem repetição (o Distinct do C#).
 func lerIds(w http.ResponseWriter, r *http.Request, tipoDto string, outros ...respostas.Campo) ([]int64, bool) {
-	ids := respostas.CampoListaLong{Propriedade: "Ids", Minimo: 1, Maximo: 1000}
+	ids := respostas.CampoLista{Propriedade: "Ids", Item: respostas.ItemLong, Minimo: 1, Maximo: 1000}
 	if !respostas.LerObjeto(w, r, "dto", tipoDto, append([]respostas.Campo{&ids}, outros...)...) {
 		return nil, false
 	}
