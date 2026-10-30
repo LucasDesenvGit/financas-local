@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.8] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Categorias, regras e contas atendidas pelo Go** (#77, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `cadastros` entra em `Go:Prefixos` com `/api/categorias`, `/api/regras`, `/api/regras-descricao` e `/api/contas`; a conferência com o banco (`/api/conferencia-banco`) continua no .NET até a #445. Para voltar ao .NET, basta esvaziar a linha do `cadastros` no `appsettings.json`. O C# desses assuntos só sai depois de uma versão publicada sem precisar voltar.
+
 ## [2.50.7] — 2026-10-29 · desenvolvimento
 
 ### Publicação e documentação
