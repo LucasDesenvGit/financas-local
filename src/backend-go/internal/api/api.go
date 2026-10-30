@@ -22,6 +22,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
@@ -55,6 +56,8 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
 	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log)) // #77: categorias, regras e regras de descrição
 	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))         // #77: contas e faturas do cartão
-	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (a lista, obter e o lançamento manual)
+	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (as 18 rotas)
+	reservas.Registrar(mux, reservas.NovoServico(d.DB, cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log),
+		d.Relogio, d.Log)) // #82: as reservas (ADRs 0010, 0037 e 0038)
 	return mux
 }

@@ -24,7 +24,7 @@ internal/categorias | regrasdescricao.go | CONDITIONALS_BOUNDARY | if strings.Eq
 internal/categorias | categorias.go | INVERT_LOGICAL | if errors.Is(err, context.Canceled) || r.Context().Err() != nil { | o erro de contexto cancelado só vem com o contexto da requisição cancelado: os dois lados andam juntos
 internal/transacoes | transacoes.go | ARITHMETIC_BASE | argumentos := make([]any, 0, len(lista)+1) | é só a capacidade inicial do slice: o append cresce do mesmo jeito
 internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | if n < 0 { | com n = 0, -n também é 0
-internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | (distancia == d && o.id < melhor.id) | o mesmo lançamento não é candidato duas vezes: o.id nunca é igual a melhor.id
+internal/transferencias | transferencias.go | CONDITIONALS_BOUNDARY | if d := abs(dias(melhor.data, t.Data)); !achou || distancia < d || (distancia == d && o.id < melhor.id) { | o mesmo lançamento não é candidato duas vezes: o.id nunca é igual a melhor.id
 internal/parcelas | parcelas.go | CONDITIONALS_BOUNDARY | if fim >= 0 { | fim é -1 (não casou) ou pelo menos 4 (o tamanho de PARC): nunca 0
 internal/parcelas | parcelas.go | CONDITIONALS_NEGATION | if fim < len(cs) && cs[fim] == '.' { | depois de PARC vem um caractere que não é de palavra (o \b): consumi-lo ou não muda o trecho tirado, mas nunca as letras da compra
 internal/faturas | faturas.go | INVERT_LOGICAL | if err != nil || len(cartoes) == 0 { | o SQLite aceita IN () vazio: sem cartões, as consultas não acham nada e a lista sai vazia do mesmo jeito

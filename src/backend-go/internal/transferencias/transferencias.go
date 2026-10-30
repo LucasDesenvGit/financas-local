@@ -19,6 +19,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/categorizacao"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipolancamento"
@@ -140,23 +141,7 @@ func EntreContasSuas(t *transacoes.Transacao, temPar bool, meuNome []string) boo
 	if t.DescricaoOriginal != nil {
 		descricao = *t.DescricaoOriginal
 	}
-	return temPar || EhMovimentoDeReserva(&descricao) || (meuNome != nil && CitaONome(&descricao, meuNome))
-}
-
-var prefixosDeReserva = []string{"Dinheiro reservado ", "Dinheiro retirado "}
-
-// EhMovimentoDeReserva é o ReservaService.EhMovimentoDeReserva: dinheiro indo para uma reserva ou voltando dela
-// (o começo da descrição, sem diferença de maiúsculas).
-func EhMovimentoDeReserva(descricao *string) bool {
-	if descricao == nil {
-		return false
-	}
-	for _, p := range prefixosDeReserva {
-		if len(*descricao) >= len(p) && strings.EqualFold((*descricao)[:len(p)], p) {
-			return true
-		}
-	}
-	return false
+	return temPar || reservas.EhMovimentoDeReserva(&descricao) || (meuNome != nil && CitaONome(&descricao, meuNome))
 }
 
 var conectivos = map[string]bool{"DE": true, "DA": true, "DO": true, "DAS": true, "DOS": true, "E": true}

@@ -30,6 +30,7 @@ poucoinformativa        100.0
 regrasdescricao         91.3
 relatorios              96.9
 relogio                 95.4
+reservas                93.2
 respostas               98.5
 saude                   54.5
 segredos                77.7

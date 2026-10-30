@@ -158,11 +158,8 @@ func TestCategoriaGenerica(t *testing.T) {
 	}
 }
 
-// Regra: as pontas das regras de nome: o prefixo inteiro da reserva, nome de duas letras.
+// Regra: as pontas das regras de nome: nome de duas letras (o prefixo da reserva é testado no pacote reservas).
 func TestPontasDoNomeEDaReserva(t *testing.T) {
-	if !EhMovimentoDeReserva(p("Dinheiro reservado ")) || EhMovimentoDeReserva(p("Dinheiro reservado")) || EhMovimentoDeReserva(nil) {
-		t.Error("o prefixo da reserva é o texto inteiro, com o espaço")
-	}
 	if got := PalavrasDoNome(p("Lu Silva")); len(got) != 2 || got[0] != "LU" || got[1] != "SILVA" {
 		t.Errorf("nome de duas letras: %q", got)
 	}

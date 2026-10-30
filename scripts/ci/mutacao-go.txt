@@ -15,6 +15,7 @@ internal/erros          100
 internal/respostas      100
 internal/cambio         100
 internal/cripto         100
+internal/reservas       100
 internal/texto           100
 internal/tipolancamento  100
 internal/transacoes      100

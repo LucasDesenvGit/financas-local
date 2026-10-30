@@ -1,0 +1,59 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "quantidades": [
+    {"descricao":"Venda de Meli Dólar MUSD 32,09161263","quantidade":"32.09161263"},
+    {"descricao":"MUSD 1.000","quantidade":"1000"},
+    {"descricao":"MUSD 1.000,50","quantidade":"1000.50"},
+    {"descricao":"MUSD 2.5","quantidade":"2.5"},
+    {"descricao":"MUSD 2.50","quantidade":"2.50"},
+    {"descricao":"MUSD 1.2.3","quantidade":"123"},
+    {"descricao":"MUSD 1,2,3","quantidade":null},
+    {"descricao":"musd 10","quantidade":"10"},
+    {"descricao":"MUSD10","quantidade":"10"},
+    {"descricao":"MUSD   7","quantidade":"7"},
+    {"descricao":"MUSD 0","quantidade":null},
+    {"descricao":"MUSD -5","quantidade":null},
+    {"descricao":"MUSD 0,00","quantidade":null},
+    {"descricao":"MUSD 1.","quantidade":"1"},
+    {"descricao":"MUSD .5","quantidade":null},
+    {"descricao":"MUSD 12٣","quantidade":null},
+    {"descricao":"MUSD ٣","quantidade":null},
+    {"descricao":"MUſD 5","quantidade":null},
+    {"descricao":"MUSD\u00A05","quantidade":"5"},
+    {"descricao":"MUSD\u000B5","quantidade":"5"},
+    {"descricao":"MUSD\u20035","quantidade":"5"},
+    {"descricao":"sem nada","quantidade":null},
+    {"descricao":"","quantidade":null},
+    {"descricao":"MUSD 99999999999999999999999999999","quantidade":null},
+    {"descricao":"MUSD 79228162514264337593543950335","quantidade":"79228162514264337593543950335"},
+    {"descricao":"MUSD 79228162514264337593543950336","quantidade":null},
+    {"descricao":"MUSD 1.234.567,891","quantidade":"1234567.891"},
+    {"descricao":"Compra MUSD 3,5 e MUSD 4","quantidade":"3.5"},
+    {"descricao":"MUSD 000,10","quantidade":"0.10"}
+  ],
+  "nomes": [
+    {"descricao":"Dinheiro reservado Viagem","nome":"Viagem","movimento":true},
+    {"descricao":"dinheiro RETIRADO  Casa  ","nome":"Casa","movimento":true},
+    {"descricao":"Dinheiro reservado ","nome":null,"movimento":true},
+    {"descricao":"Dinheiro reservado","nome":null,"movimento":false},
+    {"descricao":"Dinheiro reservadoX","nome":null,"movimento":false},
+    {"descricao":" Dinheiro reservado Viagem","nome":null,"movimento":false},
+    {"descricao":"","nome":null,"movimento":false},
+    {"descricao":"   ","nome":null,"movimento":false},
+    {"descricao":null,"nome":null,"movimento":false},
+    {"descricao":"Dinheiro reservado xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","nome":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","movimento":true},
+    {"descricao":"Dinheiro retirado \tCofre\u00A0","nome":"Cofre","movimento":true},
+    {"descricao":"Dinheiro reservado Méli Dólar","nome":"Méli Dólar","movimento":true}
+  ],
+  "meli": [
+    {"descricao":"Compra de Méli Dólar","meli":true},
+    {"descricao":"MELI DOLAR","meli":true},
+    {"descricao":"melidolar","meli":false},
+    {"descricao":"Meli  Dolar","meli":false},
+    {"descricao":"Venda de meli dólar MUSD 2","meli":true},
+    {"descricao":"Méli Dólares","meli":true},
+    {"descricao":"","meli":false}
+  ]
+}

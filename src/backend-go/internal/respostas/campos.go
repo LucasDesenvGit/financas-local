@@ -292,7 +292,9 @@ func (c *CampoDecimalOpcional) validar(erros map[string][]string) {
 // deixa passar nulo e ""), e o texto inteiro tem de casar.
 type Padrao struct {
 	Expressao string // como está no atributo do C#, que aparece na mensagem
-	re        *regexp.Regexp
+	// MensagemPropria é o ErrorMessage do atributo, quando o C# dá um ("Moeda inválida: use BRL ou USD.").
+	MensagemPropria string
+	re              *regexp.Regexp
 }
 
 func NovoPadrao(expressao string) *Padrao {
@@ -304,5 +306,8 @@ func (p *Padrao) Casa(valor string) bool { return valor == "" || p.re.MatchStrin
 
 // Mensagem é a do RegularExpressionAttribute, com a expressão como está no C#.
 func (p *Padrao) Mensagem(propriedade string) string {
+	if p.MensagemPropria != "" {
+		return p.MensagemPropria
+	}
 	return fmt.Sprintf("The field %s must match the regular expression '%s'.", propriedade, p.Expressao)
 }

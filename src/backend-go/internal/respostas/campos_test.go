@@ -237,3 +237,16 @@ func TestCampoDecimal(t *testing.T) {
 		}
 	}
 }
+
+// Regra: o ErrorMessage do atributo vale no lugar da mensagem padrão do RegularExpressionAttribute.
+func TestMensagemDoPadrao(t *testing.T) {
+	t.Parallel()
+	padrao := NovoPadrao(`^(BRL|USD)$`)
+	if m := padrao.Mensagem("Moeda"); m != "The field Moeda must match the regular expression '^(BRL|USD)$'." {
+		t.Errorf("mensagem padrão: %q", m)
+	}
+	padrao.MensagemPropria = "Moeda inválida: use BRL ou USD."
+	if m := padrao.Mensagem("Moeda"); m != "Moeda inválida: use BRL ou USD." {
+		t.Errorf("mensagem própria: %q", m)
+	}
+}
