@@ -28,6 +28,7 @@
     {"descricao":"-*/.,","texto":"-*/.,"},
     {"descricao":"ÁÉÍ 7","texto":"ÁÉÍ"},
     {"descricao":"x1y PAGAMENTO","texto":"PAGAMENTO"},
-    {"descricao":"MERCADO\u3000LIVRE 3","texto":"MERCADO LIVRE"}
+    {"descricao":"MERCADO\u3000LIVRE 3","texto":"MERCADO LIVRE"},
+    {"descricao":"AB\uD800\uDC00 9","texto":"AB\uD800\uDC00 9"}
   ]
 }
