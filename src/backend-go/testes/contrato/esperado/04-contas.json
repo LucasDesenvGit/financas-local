@@ -774,7 +774,7 @@
       "numero": "123-4",
       "origem": 1,
       "saldo": 1000.5,
-      "saldoInicial": 1000.50,
+      "saldoInicial": 1000.5,
       "tipo": 1
     },
     "banco": {
@@ -841,9 +841,9 @@
       "id": 8,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
-      "limiteCredito": 2000.00,
+      "limiteCredito": 2000.0,
       "limiteDiferencaAvaliada": null,
-      "limiteDisponivel": 2000.00,
+      "limiteDisponivel": 2000.0,
       "moeda": "BRL",
       "nome": "Cartão Nubank Roxinho",
       "nomeInstituicao": null,
@@ -2617,5 +2617,194 @@
         "tipo": 1
       }
     ]
+  },
+  {
+    "nome": "conferir com o banco",
+    "requisicao": "GET /api/conferencia-banco",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "cartoes": [
+        {
+          "banco": null,
+          "dividaTotal": 299.9,
+          "faturaMes": 474.15,
+          "fechamento": "2026-10-03",
+          "id": 2,
+          "nome": "Cartão Fictício Platinum",
+          "pistas": [
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "Fatura paga: vale o total que o banco informou.",
+              "valor": null
+            },
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "Parcelas nesta fatura (o app pode mostrá-las à parte)",
+              "valor": 299.9
+            }
+          ],
+          "situacao": "paga",
+          "vencimento": "2026-10-10"
+        }
+      ],
+      "contas": [
+        {
+          "banco": null,
+          "id": 4,
+          "nome": "Carteira (dinheiro)",
+          "openFinance": false,
+          "pistas": [
+            {
+              "parametros": {
+                "conta": "4"
+              },
+              "rota": "/transacoes",
+              "texto": "Conta manual: o saldo é o inicial mais os lançamentos. Falta algum, ou há um a mais?",
+              "valor": null
+            }
+          ],
+          "saldo": 77.25
+        },
+        {
+          "banco": null,
+          "id": 1,
+          "nome": "Conta Corrente Fictícia",
+          "openFinance": true,
+          "pistas": [
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "O saldo vem do banco, atualizado em 14/10/2026. O que entrou ou saiu depois ainda não chegou.",
+              "valor": null
+            },
+            {
+              "parametros": {
+                "aba": "reservas"
+              },
+              "rota": "/investimentos",
+              "texto": "Reservas e caixinhas desta conta (o app pode mostrar o saldo com elas)",
+              "valor": 800.0
+            },
+            {
+              "parametros": {
+                "conta": "1"
+              },
+              "rota": "/transacoes",
+              "texto": "1 lançamento pendente (o app pode já contar ou não)",
+              "valor": 18.9
+            }
+          ],
+          "saldo": 28028.29
+        },
+        {
+          "banco": null,
+          "id": 6,
+          "nome": "Conta em Dólar",
+          "openFinance": false,
+          "pistas": [
+            {
+              "parametros": {
+                "conta": "6"
+              },
+              "rota": "/transacoes",
+              "texto": "Conta manual: o saldo é o inicial mais os lançamentos. Falta algum, ou há um a mais?",
+              "valor": null
+            }
+          ],
+          "saldo": 1154.01
+        },
+        {
+          "banco": "caixa",
+          "id": 3,
+          "nome": "Poupança",
+          "openFinance": false,
+          "pistas": [
+            {
+              "parametros": {
+                "conta": "3"
+              },
+              "rota": "/transacoes",
+              "texto": "Conta manual: o saldo é o inicial mais os lançamentos. Falta algum, ou há um a mais?",
+              "valor": null
+            }
+          ],
+          "saldo": 11000.0
+        }
+      ],
+      "investimentos": [
+        {
+          "chave": "of-1",
+          "nome": "CDB Banco Fictício 110% CDI",
+          "origem": "Open Finance",
+          "pistas": [
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "Valor do banco, atualizado em 14/10/2026. O Meu Pluggy atualiza cerca de uma vez por dia: o rendimento de hoje pode não ter chegado.",
+              "valor": null
+            }
+          ],
+          "saldo": 12873.42
+        },
+        {
+          "chave": "of-2",
+          "nome": "Fundo DI Fictício",
+          "origem": "Open Finance",
+          "pistas": [
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "Valor do banco, atualizado em 14/10/2026. O Meu Pluggy atualiza cerca de uma vez por dia: o rendimento de hoje pode não ter chegado.",
+              "valor": null
+            }
+          ],
+          "saldo": 2530.07
+        },
+        {
+          "chave": "reserva-1-Caixinha viagem",
+          "nome": "Caixinha viagem (Conta Corrente Fictícia)",
+          "origem": "Reserva",
+          "pistas": [
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "Valor que o banco informa pelo Open Finance.",
+              "valor": null
+            }
+          ],
+          "saldo": 800.0
+        },
+        {
+          "chave": "carteira",
+          "nome": "Carteira de renda variável (lançada por você)",
+          "origem": "Carteira",
+          "pistas": [
+            {
+              "parametros": null,
+              "rota": null,
+              "texto": "Pela última cotação guardada; o app da corretora usa a cotação do momento.",
+              "valor": null
+            },
+            {
+              "parametros": {
+                "conferir": "1"
+              },
+              "rota": "/investimentos",
+              "texto": "Cotas diferentes das da corretora aparecem em “Conferir investimentos”.",
+              "valor": null
+            }
+          ],
+          "saldo": 13094.35
+        }
+      ]
+    }
+  },
+  {
+    "nome": "conferir com o banco sem login",
+    "requisicao": "GET /api/conferencia-banco",
+    "status": 401
   }
 ]
