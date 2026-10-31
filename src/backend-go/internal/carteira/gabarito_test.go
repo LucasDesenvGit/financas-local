@@ -75,7 +75,7 @@ func cenarioDoGabarito(t *testing.T, g gabarito) (*Servico, *sql.DB, relogio.Rel
 	}
 	log := slog.New(slog.DiscardHandler)
 	c := cambio.NovoServico(db, cliente, r, log)
-	return NovoServico(db, c, reservas.NovoServico(db, c, r, log), nil, nil, r, log), db, r
+	return NovoServico(db, c, reservas.NovoServico(db, c, r, log), nil, nil, nil, r, log), db, r
 }
 
 // Regra: a visão completa é a do CarteiraService do C# sobre o mesmo cenário: posições, totais, evolução, Open Finance,

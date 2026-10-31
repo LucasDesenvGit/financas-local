@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -21,6 +20,13 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("GET /api/carteira", s.obter)
 	mux.HandleFunc("GET /api/carteira/ativos/{id}/operacoes", s.operacoes)
 	mux.HandleFunc("POST /api/carteira/atualizar-cotacoes", s.atualizarCotacoes)
+	mux.HandleFunc("POST /api/carteira/operacoes", s.criarOperacao)
+	mux.HandleFunc("PUT /api/carteira/operacoes/{id}", s.atualizarOperacao)
+	mux.HandleFunc("DELETE /api/carteira/operacoes/{id}", s.excluirOperacao)
+	mux.HandleFunc("PUT /api/carteira/ativos/{id}", s.atualizarAtivo)
+	mux.HandleFunc("DELETE /api/carteira/ativos/{id}", s.excluirAtivo)
+	mux.HandleFunc("GET /api/carteira/configuracao", s.obterConfiguracao)
+	mux.HandleFunc("PUT /api/carteira/configuracao", s.salvarConfiguracao)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
@@ -68,10 +74,8 @@ func (s *Servico) primeiraDataDoAtivo(ctx context.Context, id int64) (tipos.Data
 }
 
 func (s *Servico) operacoes(w http.ResponseWriter, r *http.Request) {
-	// A restrição {id:int} do C#: o que não é um int não casa com a rota, e a resposta é o 404 sem corpo.
-	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 32)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+	id, ok := idDaRota(w, r)
+	if !ok {
 		return
 	}
 	inicio, err := s.primeiraDataDoAtivo(r.Context(), id)
@@ -89,7 +93,7 @@ func (s *Servico) operacoes(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		s.erroInterno(w, r, "operações", err)
 	case lista == nil:
-		respostas.Mensagem(w, http.StatusNotFound, "Registro não encontrado.")
+		registroNaoEncontrado(w)
 	default:
 		respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista)
 	}

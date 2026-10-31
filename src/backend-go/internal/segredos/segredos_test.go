@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -173,5 +174,41 @@ func TestBytesAMaisNoWindows(t *testing.T) {
 	}
 	if lido, err := abrir(t, pasta).Decifrar("Pluggy.ClientSecret", gravado); err != nil || lido != "abc" {
 		t.Errorf("%q, %v", lido, err)
+	}
+}
+
+// Regra: o cofre tardio não toca na pasta até o primeiro uso, e cifra e decifra como o Cofre; a chave que não abre é o
+// erro de quem pediu, nas duas direções.
+func TestTardio(t *testing.T) {
+	t.Parallel()
+	pasta := filepath.Join(t.TempDir(), "chaves")
+	cofre := NovoTardio(pasta)
+	if _, err := os.Stat(pasta); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("a pasta já existe: %v", err)
+	}
+	gravado, err := cofre.Cifrar("Cotacao.BrapiToken", "abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(pasta, ArquivoChave)); err != nil {
+		t.Fatalf("sem a chave depois do primeiro uso: %v", err)
+	}
+	if lido, err := cofre.Decifrar("Cotacao.BrapiToken", gravado); err != nil || lido != "abc" {
+		t.Errorf("decifrou %q, %v", lido, err)
+	}
+	if lido, err := NovoTardio(pasta).Decifrar("Cotacao.BrapiToken", gravado); err != nil || lido != "abc" {
+		t.Errorf("outro cofre na mesma pasta: %q, %v", lido, err)
+	}
+
+	arquivo := filepath.Join(t.TempDir(), "arquivo")
+	if err := os.WriteFile(arquivo, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	quebrado := NovoTardio(filepath.Join(arquivo, "chaves"))
+	if _, err := quebrado.Cifrar("x", "y"); err == nil {
+		t.Error("cifrou sem a chave")
+	}
+	if _, err := quebrado.Decifrar("x", "v2:abc"); err == nil {
+		t.Error("decifrou sem a chave")
 	}
 }

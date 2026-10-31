@@ -12,7 +12,7 @@
 //   - Valor antigo (do Data Protection, sem "v2:"): não se lê, e Decifrar devolve ErrInformarDeNovo. Ninguém apaga
 //     nem regrava a linha sozinho: quem usa informa o segredo de novo na tela.
 //
-// Até a #85 este pacote não está ligado a nenhuma rota: quem lê e grava segredo no site é o .NET.
+// Até a #85 nenhuma rota de segredo está em uso: quem lê e grava segredo no site é o .NET, e o Go só tem o Tardio pronto.
 package segredos
 
 import (
@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // ArquivoChave é o arquivo da chave, na pasta das chaves (Seguranca:PastaChaves).
@@ -58,6 +59,38 @@ func Abrir(pasta string) (*Cofre, error) {
 		return nil, err
 	}
 	return novoCofre(chave)
+}
+
+// Tardio é o Cofre que só lê a chave no primeiro uso. Até a troca dos segredos (#85), nenhuma rota de segredo está ligada,
+// e o Go que sobe atrás do .NET não pode criar o arquivo da chave por nada.
+type Tardio struct {
+	pasta string
+	abrir func() (*Cofre, error)
+}
+
+// NovoTardio prepara o cofre da pasta, sem tocar nela.
+func NovoTardio(pasta string) *Tardio {
+	t := &Tardio{pasta: pasta}
+	t.abrir = sync.OnceValues(func() (*Cofre, error) { return Abrir(t.pasta) })
+	return t
+}
+
+// Cifrar é o Cofre.Cifrar, abrindo a chave se preciso.
+func (t *Tardio) Cifrar(chave, segredo string) (string, error) {
+	c, err := t.abrir()
+	if err != nil {
+		return "", err
+	}
+	return c.Cifrar(chave, segredo)
+}
+
+// Decifrar é o Cofre.Decifrar, abrindo a chave se preciso.
+func (t *Tardio) Decifrar(chave, gravado string) (string, error) {
+	c, err := t.abrir()
+	if err != nil {
+		return "", err
+	}
+	return c.Decifrar(chave, gravado)
 }
 
 func novoCofre(chave []byte) (*Cofre, error) {

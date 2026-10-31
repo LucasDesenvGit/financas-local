@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.18] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **A escrita da carteira em Go, ainda desligada** (#82, parte 5; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ter as rotas que gravam (operações, ativos e o token da brapi), conferidas contra o C# pelos casos de contrato. O cofre dos segredos só abre a chave no primeiro uso (`segredos.Tardio`), para o Go atrás do .NET não criar o arquivo da chave antes da troca dos segredos (#85).
+
 ## [2.50.17] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação

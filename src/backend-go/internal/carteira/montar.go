@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
@@ -40,6 +41,8 @@ var (
 // conversao é o que a carteira usa do câmbio. A interface é de quem usa: o de verdade é o internal/cambio.
 type conversao interface {
 	ObterConversor(ctx context.Context, historicoDesde *tipos.Data) (*cambio.Conversor, error)
+	ObterCotacao(ctx context.Context, moeda string, data *tipos.Data) (*cambio.Cotacao, error)
+	ListarMoedas(ctx context.Context) ([]cambio.Moeda, error)
 }
 
 // listaDeReservas é o que a carteira usa das reservas.
@@ -65,13 +68,15 @@ type Servico struct {
 	reservas listaDeReservas
 	selic    taxaSelic
 	cotacoes atualizacao
+	config   *configuracao.Servico
+	cofre    configuracao.Cofre
 	relogio  relogio.Relogio
 	log      *slog.Logger
 }
 
 // NovoServico monta o serviço com as dependências.
-func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, rel relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, relogio: rel, log: log}
+func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, cofre configuracao.Cofre, rel relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), cofre: cofre, relogio: rel, log: log}
 }
 
 // SelicResumoDto é o do C#.

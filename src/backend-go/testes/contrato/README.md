@@ -13,7 +13,7 @@ São *characterization tests*: não dizem o que o sistema deveria fazer, congela
 | `assuntos-no-go.txt` | os assuntos com código Go que a rodada contra o Go confere (`--go`, e a CI), um por linha |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (63), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `11-investimentos` (36), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (63), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `11-investimentos` (105), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
 
 ## Rodar contra o .NET
 
@@ -170,6 +170,7 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 | Caminhos dentro da pasta temporária | `<dados>/...` | a pasta muda a cada execução |
 | `Usuario.SenhaHash` | `<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>` | o sal é aleatório; o resto tem de ser igual para o .NET ler a senha que o Go gravar |
 | Valor dos cookies | `<valor>` | cifrado pelo Data Protection |
+| `Configuracao.Valor` cifrado | `<segredo cifrado>` | cada gravação cifra diferente, e o Go e o .NET usam esquemas diferentes até a troca dos segredos (#85) |
 
 **Exceção documentada:** em `GET /api/parametros/sistema`, a versão do runtime (`dotNet`) e do sistema operacional, a hora em que o processo subiu (`iniciadoEm`, que é a do processo e não passa pela libfaketime) e o tamanho do arquivo do banco são do ambiente: o caso confere só o tipo (`normalizar`). O Go vai devolver outro texto em `dotNet`, e isso é esperado.
 
