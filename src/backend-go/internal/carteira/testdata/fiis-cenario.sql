@@ -16,7 +16,7 @@ INSERT INTO Ativo (Id, Ticker, Nome, Tipo, Moeda, PrecoAtual, PrecoAnterior, Pre
     (5, 'ZERA11', 'Vendido por inteiro', 1, 'BRL', '60.0', '61.0', 0, 'yahoo', NULL, '2025-01-01 00:00:00'),
     (6, 'SEMO11', 'Sem operações', 1, 'BRL', '10.0', '10.0', 0, 'yahoo', NULL, '2025-01-01 00:00:00'),
     (7, 'PETR4', 'Ação fica de fora', 2, 'BRL', '30.0', '29.0', 0, 'yahoo', NULL, '2025-01-01 00:00:00'),
-    (8, 'VELH11', 'Mais de 180 meses', 1, 'BRL', '100.0', '100.0', 1, NULL, 'Híbrido', '2025-01-01 00:00:00'),
+    (8, 'VELH11', 'Mais de 180 meses', 1, 'BRL', '100.0', '100.0', 1, NULL, 'Logística', '2025-01-01 00:00:00'),
     (9, 'NOVO11', 'Comprado neste mês', 1, 'BRL', NULL, NULL, 0, NULL, NULL, '2025-01-01 00:00:00'),
     (10, 'TAXA11', 'Sem cotação nem preço', 1, 'BRL', NULL, NULL, 0, NULL, NULL, '2025-01-01 00:00:00'),
     (11, 'GRAT11', 'Sem custo, com cotação', 1, 'BRL', '7.5', NULL, 0, 'yahoo', NULL, '2025-01-01 00:00:00');
