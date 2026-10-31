@@ -246,6 +246,34 @@ jobs:
       - name: Vulnerabilidades (govulncheck)
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
+  # #459 (ADR 0051): o back-end em Go também no Windows, onde ele vai rodar como serviço. O job "Go" acima só compila
+  # para Windows; aqui rodam os testes dos arquivos _windows.go (DPAPI dos segredos, descrição do sistema) e, depois, os
+  # do serviço do Windows (#84). Sem o -race: no Windows ele pede cgo, como no job do gerenciador.
+  go-windows:
+    name: Go (Windows)
+    needs: mudancas
+    if: needs.mudancas.outputs.go == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: src/backend-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend-go/go.mod
+          cache-dependency-path: src/backend-go/go.sum
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes
+        run: go test ./...
+
   # #418 (ADR 0052): o gerenciador em Go (src/gerenciador-go) no Windows. Lá ele compila sem cgo, então o teste roda
   # sem o -race; o do Linux é o job abaixo.
   gerenciador-go:

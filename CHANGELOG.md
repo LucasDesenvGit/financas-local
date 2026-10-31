@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.34] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do código Go só do Windows na CI** (#459, épico #374). Nada muda para quem usa. O back-end em Go só rodava teste no Linux: o código só do Windows (a DPAPI que protege a chave dos segredos e a descrição do sistema) compilava, mas nunca rodava. Um job novo, "Go (Windows)", roda o `go vet` e o `go test` do back-end num `windows-latest`. Entram testes da DPAPI (a chave vai cifrada e só abre na mesma conta, com a mesma entropia), da descrição do Windows e das preferências do gerenciador no registro (numa chave só de teste, apagada no fim). É o que a #84 precisa para o serviço do Windows em Go nascer com teste. ADR 0051 atualizada.
+
 ## [2.50.33] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
