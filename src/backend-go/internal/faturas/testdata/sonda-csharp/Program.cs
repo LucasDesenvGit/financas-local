@@ -1037,6 +1037,7 @@ await PassoConferencia("desfazer os trocos sem nada guardado", async s => await 
 await PassoConferencia("corrigir as taxas", async s => await Corrigir(s, new(null, null, null, null, [1, 14, 15])));
 Mudar("UPDATE OperacaoAtivo SET Taxas = '9.0' WHERE Id = 1; DELETE FROM OperacaoAtivo WHERE Id = 14");
 await PassoConferencia("desfazer as taxas", async s => await s.DesfazerAsync(chaveConferencia!, "teste", CancellationToken.None));
+Mudar("UPDATE Transacao SET CategoriaId = 3, CategoriaManual = 1 WHERE Id = 122");
 await PassoConferencia("corrigir os créditos", async s => await Corrigir(s, new(null, null, [122, 151, 132, 113], null)));
 Mudar("UPDATE Transacao SET CategoriaId = NULL WHERE Id = 151; UPDATE Transacao SET CategoriaId = 1 WHERE Id = 113; UPDATE Transacao SET CategoriaId = NULL WHERE CategoriaId = 2; DELETE FROM RegraCategorizacao; DELETE FROM Categoria WHERE Id = 2");
 await PassoConferencia("desfazer os créditos", async s => await s.DesfazerAsync(chaveConferencia!, "teste", CancellationToken.None));

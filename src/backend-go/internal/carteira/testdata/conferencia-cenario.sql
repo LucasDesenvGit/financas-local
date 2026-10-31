@@ -158,7 +158,7 @@ INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, T
     (222, 1, '2026-01-21', 'Valor recebido de Investimentos', NULL, '0.9', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (223, 1, '2026-02-19', 'Valor recebido de Investimentos', NULL, '30.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (224, 1, '2026-02-07', 'Valor recebido de Investimentos', NULL, '35.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
-    (225, 1, '2025-12-29', 'Compra de Renda Variável', NULL, '-10.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (225, 1, '2025-12-29', 'Compra de Renda Variável', NULL, '-10.1', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (227, 1, '2026-03-02', 'Compra de Renda Variável', NULL, '-25.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (228, 1, '2026-05-05', 'Compra de Renda Variável', NULL, '-104.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (229, 1, '2026-05-05', 'Compra de Renda Variável', NULL, '-1015.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
@@ -166,3 +166,18 @@ INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, T
     (231, 1, '2026-02-14', 'Compra de Rénda Variável', NULL, '-9.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (232, 1, '2026-02-14', 'Valor recebido de Ínvestimentos', NULL, '9.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (233, 1, '2026-02-25', 'Valor recebido de Investimentos', NULL, '40.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00');
+
+-- Quarta leva: o crédito grande antes do troco numa compra sem operação (com operação, ele volta como sobra); o primeiro dia
+-- com uma compra ligada e outra solta; o fechamento mensal zerado antes do que vale; e uma segunda compra para o fundo que
+-- já tem a sua, antes da dos outros fundos.
+INSERT INTO OperacaoAtivo (Id, AtivoId, Tipo, Data, Quantidade, PrecoUnitario, Taxas, Cambio, Origem, TransacaoId, CriadoEm) VALUES
+    (38, 14, 1, '2025-12-30', '1.0', '10.0', '0.0', '1.0', 1, NULL, '2025-12-30 12:00:00');
+
+INSERT INTO PrecoMensalAtivo (AtivoId, Mes, Fechamento) VALUES (8, '2026-01-01', '0.0');
+
+INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, Tipo, Status, CategoriaId, CategoriaManual, IgnorarRelatorios, Emergencia, DescricaoRevisada, DescricaoManual, CriadoEm, AtualizadoEm) VALUES
+    (234, 1, '2026-01-26', 'Compra de Renda Variável', NULL, '-60.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (235, 1, '2026-01-27', 'Valor recebido de Investimentos', NULL, '30.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (236, 1, '2026-01-28', 'Valor recebido de Investimentos', NULL, '0.7', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (237, 1, '2025-12-29', 'Compra de Renda Variável', NULL, '-5.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (238, 1, '2026-05-05', 'Compra de Renda Variável', NULL, '-1001.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00');
