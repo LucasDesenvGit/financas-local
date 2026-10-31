@@ -323,7 +323,7 @@ func TestCotasNaCorretora(t *testing.T) {
 		{Nome: "PETR4", Tipo: "ETF", Quantidade: um, Saldo: saldo},
 	}
 	cotas := cotasNaCorretora(lista)
-	if len(cotas) != 1 || cotas["PETR4"].String() != "6.5" {
+	if len(cotas) != 1 || cotas[0].ticker != "PETR4" || cotas[0].quantidade.String() != "6.5" {
 		t.Errorf("cotas %v", cotas)
 	}
 }

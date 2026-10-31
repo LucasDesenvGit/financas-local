@@ -99,10 +99,10 @@ type taxaDaOperacao struct {
 
 // taxaDoDia é a taxa da B3 de um dia de compras (#173 a), e a parte de cada operação.
 type taxaDoDia struct {
-	data                                    tipos.Data
-	conta                                   string
-	debitado, trocos, valorDasCotas, taxa   tipos.Decimal
-	operacoes                               []taxaDaOperacao
+	data                                  tipos.Data
+	conta                                 string
+	debitado, trocos, valorDasCotas, taxa tipos.Decimal
+	operacoes                             []taxaDaOperacao
 }
 
 // analise é o que o extrato diz. trocosSemDuvida (#173 b): os trocos dos dias em que a conta fecha, só sobrando a taxa.
@@ -122,7 +122,9 @@ func somarOperacoes(lista []*Operacao, campo func(*Operacao) tipos.Decimal) tipo
 	return somarPor(lista, campo)
 }
 
-func cotasVezesPreco(o *Operacao) tipos.Decimal { return tipos.Multiplicar(o.Quantidade, o.PrecoUnitario) }
+func cotasVezesPreco(o *Operacao) tipos.Decimal {
+	return tipos.Multiplicar(o.Quantidade, o.PrecoUnitario)
+}
 
 func valorAbsoluto(d tipos.Decimal) tipos.Decimal { return tipos.DeDecimal(d.Decimal().Abs()) }
 
@@ -223,14 +225,14 @@ type parDoDia struct {
 
 // analisador guarda o estado da análise entre os dias.
 type analisador struct {
-	a            *analise
-	c            *conta
-	hoje         tipos.Data
-	livres       []*Operacao
-	usados       map[int64]bool
-	ligadas      map[int64]*Operacao
-	doDebito     map[int64][]*Operacao
-	tickerDoId   map[int64]string
+	a          *analise
+	c          *conta
+	hoje       tipos.Data
+	livres     []*Operacao
+	usados     map[int64]bool
+	ligadas    map[int64]*Operacao
+	doDebito   map[int64][]*Operacao
+	tickerDoId map[int64]string
 }
 
 func (x *analisador) ligarOrdens(dia []movimento, data tipos.Data) (pares []parDoDia, soltos []movimento) {
@@ -627,14 +629,14 @@ type (
 	}
 	// CotasDiferentesDto são as cotas na corretora × na carteira, com o débito sugerido quando faltam.
 	CotasDiferentesDto struct {
-		AtivoId         int64          `json:"ativoId"`
-		Ticker          string         `json:"ticker"`
-		NaCorretora     tipos.Decimal  `json:"naCorretora"`
-		NaCarteira      tipos.Decimal  `json:"naCarteira"`
-		PosicaoEm       tipos.DataHora `json:"posicaoEm"`
-		DebitoSugeridoId *int64        `json:"debitoSugeridoId"`
-		PrecoSugerido   *tipos.Decimal `json:"precoSugerido"`
-		FechamentoNoDia *tipos.Decimal `json:"fechamentoNoDia"`
+		AtivoId          int64          `json:"ativoId"`
+		Ticker           string         `json:"ticker"`
+		NaCorretora      tipos.Decimal  `json:"naCorretora"`
+		NaCarteira       tipos.Decimal  `json:"naCarteira"`
+		PosicaoEm        tipos.DataHora `json:"posicaoEm"`
+		DebitoSugeridoId *int64         `json:"debitoSugeridoId"`
+		PrecoSugerido    *tipos.Decimal `json:"precoSugerido"`
+		FechamentoNoDia  *tipos.Decimal `json:"fechamentoNoDia"`
 	}
 	// CompraSemOperacaoDto é o débito de compra que nenhuma operação explica.
 	CompraSemOperacaoDto struct {
@@ -661,13 +663,13 @@ type (
 	}
 	// RendimentoComoInvestimentoDto é o provento numa categoria de transferência.
 	RendimentoComoInvestimentoDto struct {
-		TransacaoId        int64         `json:"transacaoId"`
-		Data               tipos.Data    `json:"data"`
-		Valor              tipos.Decimal `json:"valor"`
-		Descricao          string        `json:"descricao"`
-		Conta              string        `json:"conta"`
-		Categoria          *string       `json:"categoria"`
-		CategoriaAutomatica string       `json:"categoriaAutomatica"`
+		TransacaoId         int64         `json:"transacaoId"`
+		Data                tipos.Data    `json:"data"`
+		Valor               tipos.Decimal `json:"valor"`
+		Descricao           string        `json:"descricao"`
+		Conta               string        `json:"conta"`
+		Categoria           *string       `json:"categoria"`
+		CategoriaAutomatica string        `json:"categoriaAutomatica"`
 	}
 	// CategoriaDoTrocoDto é a categoria para onde vai o troco.
 	CategoriaDoTrocoDto struct {

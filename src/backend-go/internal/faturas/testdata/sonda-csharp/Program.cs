@@ -962,7 +962,10 @@ async Task PassoConferencia(string nome, Func<ConferenciaInvestimentosService, T
         var configConferencia = new ConfiguracaoService(db, new EphemeralDataProtectionProvider());
         var cotacoesConferencia = new CotacaoService(new FabricaFalsa(respostasConferencia), db, configConferencia,
             new CambioService(semRede, db, configConferencia, NullLogger<CambioService>.Instance), NullLogger<CotacaoService>.Instance);
-        var servico = new ConferenciaInvestimentosService(db, cotacoesConferencia, new CategorizacaoService(db), cacheConferencia,
+        // Na API, quem chama o "classificar" já carregou as regras (a sincronização e a partida usam o mesmo CategorizacaoService).
+        var categorizacaoConferencia = new CategorizacaoService(db);
+        await categorizacaoConferencia.CarregarAsync(CancellationToken.None);
+        var servico = new ConferenciaInvestimentosService(db, cotacoesConferencia, categorizacaoConferencia, cacheConferencia,
             new AuditoriaService(db, new Microsoft.AspNetCore.Http.HttpContextAccessor()), configConferencia);
         resultado = await acao(servico);
     }

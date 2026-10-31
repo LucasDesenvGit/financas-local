@@ -27,6 +27,11 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("DELETE /api/carteira/ativos/{id}", s.excluirAtivo)
 	mux.HandleFunc("GET /api/carteira/extrato/sugestoes", s.sugestoesDoExtrato)
 	mux.HandleFunc("POST /api/carteira/extrato/importar", s.importarDoExtrato)
+	mux.HandleFunc("GET /api/carteira/conferencia", s.conferir)
+	mux.HandleFunc("POST /api/carteira/conferencia/corrigir", s.corrigir)
+	mux.HandleFunc("POST /api/carteira/conferencia/desfazer/{chave}", s.desfazerConferencia)
+	mux.HandleFunc("POST /api/carteira/conferencia/trocos-automaticos/desfazer", s.desfazerTrocos)
+	mux.HandleFunc("POST /api/carteira/conferencia/trocos-automaticos/dispensar", s.dispensarTrocos)
 	mux.HandleFunc("GET /api/carteira/configuracao", s.obterConfiguracao)
 	mux.HandleFunc("PUT /api/carteira/configuracao", s.salvarConfiguracao)
 }

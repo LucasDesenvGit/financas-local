@@ -21,6 +21,7 @@ type Operacao struct {
 	Cambio        tipos.Decimal
 	Observacao    *string
 	Origem        int64
+	TransacaoId   *int64 // o lançamento do extrato que originou a operação
 }
 
 // Provento é uma linha de ProventoAtivo: o valor por cota, na moeda do ativo.

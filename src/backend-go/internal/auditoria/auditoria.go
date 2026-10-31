@@ -31,6 +31,12 @@ func Registrar(ctx context.Context, q *consultas.Queries, r *http.Request, agora
 	})
 }
 
+// RegistrarSemPedido é o Registrar fora de uma requisição (a sincronização, as rotinas de partida): sem login, IP nem
+// navegador.
+func RegistrarSemPedido(ctx context.Context, q *consultas.Queries, agora tipos.DataHora, evento string) error {
+	return q.InserirAuditoria(ctx, consultas.InserirAuditoriaParams{DataHora: agora, Evento: evento})
+}
+
 // IP é o Connection.RemoteIpAddress do ASP.NET: o endereço de quem abriu a conexão, sem a porta.
 func IP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
