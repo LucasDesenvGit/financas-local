@@ -53,3 +53,4 @@ internal/carteira | extrato.go | CONDITIONALS_BOUNDARY | for i := 0; i < len(t);
 internal/carteira | conferencia.go | CONDITIONALS_BOUNDARY | if len(g) > 1 { | o grupo de uma operação repete a ordem dela, e a repetição cai no "todasLivres" (#299)
 internal/carteira | conferencia.go | INVERT_LOOPCTRL | continue // em ordem de data: daqui em diante, tudo passou do prazo do troco | a lista está em ordem de data: parar aqui é o mesmo que seguir (#299)
 internal/carteira | conferencia.go | INVERT_LOOPCTRL | break // em ordem de valor: os próximos também passam do que sobra | a lista está em ordem de valor: seguir é o mesmo que parar (#299)
+internal/conferenciabanco | conferenciabanco.go | INVERT_LOGICAL | if errors.Is(err, context.Canceled) || r.Context().Err() != nil { | o context.Canceled só chega com o contexto da requisição cancelado: as duas condições andam juntas (#445)

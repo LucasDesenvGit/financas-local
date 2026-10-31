@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -148,6 +149,11 @@ func TestCancelado(t *testing.T) {
 	if _, err := c.s.Montar(ctx); !errors.Is(err, context.Canceled) {
 		t.Errorf("erro %v", err)
 	}
+	gravador := httptest.NewRecorder()
+	c.mux.ServeHTTP(gravador, httptest.NewRequest("GET", "/api/conferencia-banco", nil).WithContext(ctx))
+	if gravador.Body.Len() != 0 {
+		t.Errorf("resposta %s", gravador.Body)
+	}
 }
 
 // Regra: as pistas da reserva: o valor do banco, o restante, a conferência, a estimativa, a lista do banco e a PTAX.
@@ -184,6 +190,20 @@ func TestPistasDaReserva(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Regra: a cotação na pista é o N4 do pt-BR: 4 casas, com o ponto no milhar.
+func TestNumeroN4(t *testing.T) {
+	t.Parallel()
+	casos := []struct{ valor, esperado string }{
+		{"0.5", "0,5000"}, {"5.42135", "5,4214"}, {"5.42134", "5,4213"}, {"123.4", "123,4000"}, {"1234.5", "1.234,5000"},
+		{"123456.7", "123.456,7000"}, {"1234567.89", "1.234.567,8900"},
+	}
+	for _, c := range casos {
+		if n := numeroN4(testeapoio.Valor(c.valor)); n != c.esperado {
+			t.Errorf("numeroN4(%s) = %s, esperado %s", c.valor, n, c.esperado)
+		}
 	}
 }
 
