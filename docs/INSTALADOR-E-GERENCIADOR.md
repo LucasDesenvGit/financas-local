@@ -24,7 +24,8 @@ Nenhuma atualização apaga dados. Antes de mudar a estrutura do banco, a versã
 
 - **Pelo gerenciador:** quando aparecer **"Tem versão nova"**, veja **O que mudou** e clique em **Atualizar**. Ele baixa, confere e abre o instalador; é só **Avançar**, **Instalar** e **Sim**. O site fica fora do ar por alguns segundos.
 - **Sem o gerenciador:** baixe o `.msi` novo da [versão mais recente](https://github.com/LucasDesenvGit/financas-local/releases/latest) e abra. Ele troca a versão instalada e mantém os dados.
-- **Voltar a uma versão anterior:** desinstale a atual antes (os dados ficam) e instale o `.msi` da versão que quer.
+- **Voltar a uma versão anterior:** desinstale a atual antes (os dados ficam) e instale o `.msi` da versão que quer. Veja [Atualização que falhou](OPERACAO.md#atualização-que-falhou).
+- **Voltar a uma cópia do banco:** veja [Restaurar uma cópia](OPERACAO.md#restaurar-uma-cópia).
 - **Instalou pelos scripts?** Veja [Passar para o instalador `.msi`](INSTALACAO-PELO-CODIGO.md#instalado-pelos-scripts-e-quer-passar-para-o-instalador).
 
 ## Desinstalar
