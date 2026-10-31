@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.50.31] — 2026-10-31 · desenvolvimento
+## [2.50.32] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
 - **CI: o cache do NuGet deixa de mudar a cada PR** (#526). Nada muda para quem usa. A chave do cache do NuGet (`ci.yml` e `versao.yml`) incluía o `Directory.Build.props`, que só guarda a versão e sobe em todo PR: cada PR criava um cache novo de ~700 MB, o repositório chegou a 10,4 GB (o limite do Actions é 10 GB) e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A chave passa a ser os `.csproj` e a versão do SDK do .NET. ADR 0047 atualizada.
+
+## [2.50.31] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Restaurar uma cópia testado no `.msi`** (#527). Nada muda para quem usa. O workflow do instalador agora segue o guia de restaurar num Windows limpo e confere que a senha volta para a da data da cópia, que era a parte que faltava da #468.
 
 ## [2.50.30] — 2026-10-31 · desenvolvimento
 

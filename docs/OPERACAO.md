@@ -10,7 +10,7 @@ Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) 
 
 ## Restaurar uma cópia
 
-Os passos abaixo são testados nos workflows "Teste de instalação" a cada mudança nos scripts (#468).
+Os passos abaixo são testados nos workflows "Teste de instalação" a cada mudança nos scripts (#468), e os do `.msi` no workflow "Versão (instalador .msi)" a cada merge (#527).
 
 ### Antes de começar
 

@@ -186,6 +186,65 @@ jobs:
             [IO.File]::Open("$env:ProgramData\FinancasLocal\dados\$p", "Open", "Read", "ReadWrite").Dispose()
           }
 
+      # Os comandos do guia, "No Windows, pelo .msi" (docs/OPERACAO.md). A senha trocada depois da cópia é a prova de que
+      # ela voltou: o guia diz que a senha volta junto, e isso confere também o login depois de restaurar.
+      - name: Restaurar a cópia (docs/OPERACAO.md)
+        shell: pwsh
+        run: |
+          function EsperarSite {
+            for ($i = 0; $i -lt 30; $i++) {
+              curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" 2>$null | Out-Null
+              if ($LASTEXITCODE -eq 0) { return }
+              Start-Sleep 2
+            }
+            throw "o site não voltou"
+          }
+          function Enviar([string]$rota, [string]$corpo) {
+            curl.exe --ssl-no-revoke -fsS -c r.txt -b r.txt "$env:SITE/api/auth/estado" | Out-Null
+            $xsrf = (Get-Content r.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
+            $corpo | Set-Content corpo.json -NoNewline
+            curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" -c r.txt -b r.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE$rota"
+          }
+          function Entrar([string]$senha) {
+            Remove-Item r.txt -ErrorAction SilentlyContinue
+            Enviar "/api/auth/entrar" "{`"login`":`"verificador`",`"senha`":`"$senha`"}"
+          }
+
+          $copia = "$env:RUNNER_TEMP\FinancasLocal-copia.db"
+          $dados = "$env:ProgramData\FinancasLocal\dados"
+
+          Stop-Service FinancasLocal
+          Copy-Item "$dados\sql\FinancasLocal.db" $copia
+          Start-Service FinancasLocal
+          EsperarSite
+
+          $codigo = Entrar "Teste#Msi2026"
+          if ($codigo -ne "200") { throw "login antes de trocar a senha: $codigo" }
+          $codigo = Enviar "/api/auth/alterar-senha" '{"senhaAtual":"Teste#Msi2026","novaSenha":"Outra#Msi2026"}'
+          if ($codigo -ne "204") { throw "trocar a senha: $codigo" }
+
+          Stop-Service FinancasLocal
+          New-Item -ItemType Directory -Force "$dados\antes-de-restaurar" | Out-Null
+          Copy-Item "$dados\sql\FinancasLocal.db*" "$dados\antes-de-restaurar\"
+          Copy-Item $copia "$dados\sql\FinancasLocal.db" -Force
+          Remove-Item "$dados\sql\FinancasLocal.db-wal", "$dados\sql\FinancasLocal.db-shm" -ErrorAction SilentlyContinue
+          Start-Service FinancasLocal
+          EsperarSite
+
+          if (-not (Test-Path "$dados\antes-de-restaurar\FinancasLocal.db")) { throw "o banco de antes não foi guardado" }
+          $codigo = Entrar "Outra#Msi2026"
+          if ($codigo -ne "401") { throw "a senha trocada depois da cópia ainda entra: $codigo (a cópia não voltou)" }
+          $codigo = Entrar "Teste#Msi2026"
+          if ($codigo -ne "200") { throw "a senha da cópia não entra: $codigo" }
+          # O Go sobe de novo com o serviço e lê o banco restaurado.
+          $saude = $null
+          for ($i = 0; $i -lt 15; $i++) {
+            $saude = curl.exe --ssl-no-revoke -fsS -b r.txt "$env:SITE/api/go/saude" 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0 -and $saude) { break }
+            Start-Sleep 2
+          }
+          if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador") { throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)" }
+
       - name: Desinstalar (mantém os dados, tira o certificado)
         shell: pwsh
         run: |
