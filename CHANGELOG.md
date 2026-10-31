@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.26] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **O banco e os fluxos em desenho** (#463; épico #465). Nada muda para quem usa. Para quem desenvolve: `docs/BANCO-DE-DADOS.md` passa a ter o modelo de dados em diagramas por assunto, gerados do `01-estrutura.sql` pelo `scripts/ci/gerar-diagrama-banco.py`, e a CI confere que estão em dia. O novo `docs/arquitetura/fluxos.md` mostra o login, o repasse ao Go, a partida da API, a sincronização com a Pluggy e a atualização pelo gerenciador, e `docs/ARQUITETURA.md` ganha as camadas do Angular.
+
 ## [2.50.25] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação

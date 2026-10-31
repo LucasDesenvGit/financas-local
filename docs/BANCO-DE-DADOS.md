@@ -11,6 +11,197 @@ O banco é **SQLite**, num arquivo local (`dados/sql/FinancasLocal.db`), criado 
 
 O `01-estrutura.sql` é uma baseline limpa da troca SQL Server → SQLite: as colunas que antes chegavam por `ALTER TABLE` incremental (blocos `v4`–`v7`) já nascem dentro do `CREATE TABLE`.
 
+## O modelo em diagramas
+
+Um diagrama por assunto, com as chaves primárias e estrangeiras. A seta diz a coluna e o que acontece ao apagar a linha referenciada: `CASCADE` apaga junto, `SET NULL` deixa a coluna vazia e `bloqueia` recusa. Tabela de outro assunto aparece sem colunas, só para mostrar a ligação.
+
+O que o SQL não mostra:
+- **Dinheiro em `TEXT`**, no formato do EF Core (`-5000.0`). Por isso, somar e comparar valores é feito no código, nunca no SQL.
+- **Datas e horas em `TEXT`:** data de negócio no fuso de Brasília (`2026-10-15`); carimbo em UTC (`2026-10-15 22:55:31.3481471`).
+- **GUID em maiúsculas**, e `bool` e `enum` em `INTEGER`.
+- **Ligações sem chave estrangeira:** `Conta.ContaVinculadaId`, `Transacao.RegraDescricaoId`, `OperacaoAtivo.TransacaoId` e `HistoricoInvestimento.ConexaoBancariaId` apontam para outra tabela, mas o banco não confere.
+
+<!-- diagramas-do-banco: início (gerado por scripts/ci/gerar-diagrama-banco.py) -->
+
+### Segurança
+
+```mermaid
+erDiagram
+    Usuario {
+        INTEGER Id PK
+    }
+    AuditoriaAcesso {
+        INTEGER Id PK
+    }
+    Configuracao {
+        TEXT Chave PK
+    }
+```
+
+### Open Finance
+
+```mermaid
+erDiagram
+    ConexaoBancaria {
+        INTEGER Id PK
+    }
+    SincronizacaoLog {
+        INTEGER Id PK
+        INTEGER ConexaoBancariaId FK
+    }
+    CategoriaPluggy {
+        TEXT PluggyCategoriaId PK
+        INTEGER CategoriaId FK
+    }
+    ConexaoBancaria |o--o{ SincronizacaoLog : "ConexaoBancariaId: SET NULL"
+    Categoria |o--o{ CategoriaPluggy : "CategoriaId: SET NULL"
+```
+
+### Financeiro
+
+```mermaid
+erDiagram
+    Conta {
+        INTEGER Id PK
+        INTEGER ConexaoBancariaId FK
+    }
+    FaturaCartao {
+        INTEGER Id PK
+        INTEGER ContaId FK
+    }
+    Transacao {
+        INTEGER Id PK
+        INTEGER ContaId FK
+        INTEGER CategoriaId FK
+        INTEGER FaturaCartaoId FK
+    }
+    Categoria {
+        INTEGER Id PK
+        INTEGER CategoriaPaiId FK
+    }
+    RegraCategorizacao {
+        INTEGER Id PK
+        INTEGER CategoriaId FK
+    }
+    RegraDescricao {
+        INTEGER Id PK
+    }
+    ConexaoBancaria |o--o{ Conta : "ConexaoBancariaId: CASCADE"
+    Conta ||--o{ FaturaCartao : "ContaId: CASCADE"
+    Conta ||--o{ Transacao : "ContaId: CASCADE"
+    Categoria |o--o{ Transacao : "CategoriaId: SET NULL"
+    FaturaCartao |o--o{ Transacao : "FaturaCartaoId: bloqueia"
+    Categoria |o--o{ Categoria : "CategoriaPaiId: bloqueia"
+    Categoria ||--o{ RegraCategorizacao : "CategoriaId: CASCADE"
+```
+
+### Planejamento
+
+```mermaid
+erDiagram
+    Orcamento {
+        INTEGER Id PK
+        INTEGER CategoriaId FK
+    }
+    Meta {
+        INTEGER Id PK
+        INTEGER ContaId FK
+    }
+    MetaAporte {
+        INTEGER Id PK
+        INTEGER MetaId FK
+    }
+    ContaAgendada {
+        INTEGER Id PK
+        INTEGER CategoriaId FK
+        INTEGER ContaId FK
+    }
+    Categoria ||--o{ Orcamento : "CategoriaId: CASCADE"
+    Conta |o--o{ Meta : "ContaId: SET NULL"
+    Meta ||--o{ MetaAporte : "MetaId: CASCADE"
+    Categoria |o--o{ ContaAgendada : "CategoriaId: SET NULL"
+    Conta |o--o{ ContaAgendada : "ContaId: SET NULL"
+```
+
+### Investimentos
+
+```mermaid
+erDiagram
+    Investimento {
+        INTEGER Id PK
+        INTEGER ConexaoBancariaId FK
+    }
+    HistoricoInvestimento {
+        INTEGER Id PK
+    }
+    Ativo {
+        INTEGER Id PK
+    }
+    OperacaoAtivo {
+        INTEGER Id PK
+        INTEGER AtivoId FK
+    }
+    ProventoAtivo {
+        INTEGER Id PK
+        INTEGER AtivoId FK
+    }
+    PrecoMensalAtivo {
+        INTEGER AtivoId PK,FK
+        TEXT Mes PK
+    }
+    Emprestimo {
+        INTEGER Id PK
+        INTEGER ConexaoBancariaId FK
+    }
+    PagamentoEmprestimo {
+        INTEGER Id PK
+        INTEGER EmprestimoId FK
+    }
+    ReservaConferencia {
+        INTEGER Id PK
+        INTEGER ContaId FK
+    }
+    ConexaoBancaria ||--o{ Investimento : "ConexaoBancariaId: CASCADE"
+    Ativo ||--o{ OperacaoAtivo : "AtivoId: CASCADE"
+    Ativo ||--o{ ProventoAtivo : "AtivoId: CASCADE"
+    Ativo ||--o{ PrecoMensalAtivo : "AtivoId: CASCADE"
+    ConexaoBancaria ||--o{ Emprestimo : "ConexaoBancariaId: CASCADE"
+    Emprestimo ||--o{ PagamentoEmprestimo : "EmprestimoId: CASCADE"
+    Conta ||--o{ ReservaConferencia : "ContaId: CASCADE"
+```
+
+### Índices e cotações
+
+```mermaid
+erDiagram
+    TaxaSelicDiaria {
+        TEXT Data PK
+    }
+    IndiceMensal {
+        TEXT Codigo PK
+        TEXT Mes PK
+    }
+    CotacaoMoeda {
+        TEXT Moeda PK
+        TEXT Data PK
+    }
+    CotacaoCripto {
+        TEXT Moeda PK
+        TEXT DataHora PK
+    }
+```
+
+### Sistema
+
+```mermaid
+erDiagram
+    ErroSistema {
+        INTEGER Id PK
+    }
+```
+
+<!-- diagramas-do-banco: fim -->
+
 ## Como alterar a estrutura
 
 ### Tabela nova
