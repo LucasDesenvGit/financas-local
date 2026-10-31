@@ -70,13 +70,7 @@
         ],
         "taxas": []
       },
-      "comentario": "Ação para FII, a compra que faltou (o id repetido conta uma vez), o crédito como troco e o provento na categoria automática.",
-      "capturar": {
-        "chaveConferencia": "/desfazer"
-      },
-      "normalizar": {
-        "/desfazer": "texto"
-      }
+      "comentario": "Ação para FII, a compra que faltou (o id repetido conta uma vez), o crédito como troco e o provento na categoria automática."
     },
     {
       "nome": "conferir depois de corrigir",
@@ -91,18 +85,18 @@
     {
       "nome": "desfazer sem login",
       "metodo": "POST",
-      "caminho": "/api/carteira/conferencia/desfazer/{{chaveConferencia}}",
+      "caminho": "/api/carteira/conferencia/desfazer/sonda",
       "sessao": "visitante"
     },
     {
       "nome": "desfazer a correção",
       "metodo": "POST",
-      "caminho": "/api/carteira/conferencia/desfazer/{{chaveConferencia}}"
+      "caminho": "/api/carteira/conferencia/desfazer/sonda"
     },
     {
       "nome": "desfazer de novo",
       "metodo": "POST",
-      "caminho": "/api/carteira/conferencia/desfazer/{{chaveConferencia}}"
+      "caminho": "/api/carteira/conferencia/desfazer/sonda"
     },
     {
       "nome": "desfazer com chave que não existe",
