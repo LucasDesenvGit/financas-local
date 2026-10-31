@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.27] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **O domínio em desenho** (#467; épico #465). Nada muda para quem usa. Para quem desenvolve: o novo `docs/arquitetura/dominio.md` tem os diagramas de estados da conexão com a Pluggy, da transação, da conta a pagar e do gerenciador, as classes do centro do domínio e a lista de termos usados no código.
+
 ## [2.50.26] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
