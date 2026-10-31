@@ -520,3 +520,55 @@ func TestAtualizarSemFalhar(t *testing.T) {
 		})
 	}
 }
+
+const rotaImportar = "/api/carteira/extrato/importar"
+
+// Regra: importar do extrato: a lista é obrigatória, com 1 a 500 itens; os atributos de cada item valem com a chave do
+// item; o que passa cria a operação, e o resultado conta as criadas.
+func TestRotasDoExtrato(t *testing.T) {
+	t.Parallel()
+	c := cenaSimples(t)
+	conta := c.fab.Conta()
+	tr := c.fab.Transacao(conta, func(x *testeapoio.Transacao) {
+		x.Data, x.Descricao, x.Valor = diaDoAno(4, 1), "COMPRA PETR4 10 x 20,50", testeapoio.Valor("-205.0")
+	})
+	lista := testeapoio.Chamar(t, c.mux, "GET", "/api/carteira/extrato/sugestoes", "")
+	lista.ConferirStatus(t, http.StatusOK)
+	if !strings.Contains(string(lista.Corpo), `"origem":"extrato"`) {
+		t.Errorf("sugestões %s", lista.Corpo)
+	}
+
+	item := func(ticker string) string {
+		return fmt.Sprintf(`{"transacaoId":%d,"ticker":%q,"tipo":1,"quantidade":10,"precoUnitario":20.5,"taxas":0}`, tr.Id, ticker)
+	}
+	r := testeapoio.Chamar(t, c.mux, "POST", rotaImportar, `{"itens":[`+item("PETR4")+`]}`)
+	r.ConferirStatus(t, http.StatusOK)
+	r.ConferirJSON(t, `{"transacoesAtualizadas":1}`)
+	if o := umaLinha(t, c, `SELECT Origem, TransacaoId, Observacao, Data FROM OperacaoAtivo`); o != fmt.Sprintf("3 | %d | Importada do extrato | 2026-04-01", tr.Id) {
+		t.Errorf("operação %q", o)
+	}
+	testeapoio.Chamar(t, c.mux, "POST", rotaImportar, `{"itens":[`+item("PETR4")+`]}`).ConferirJSON(t, `{"transacoesAtualizadas":0}`)
+
+	erros := []struct{ nome, corpo, chave string }{
+		{"sem a lista", `{}`, "Itens"},
+		{"lista nula", `{"itens":null}`, "Itens"},
+		{"lista vazia", `{"itens":[]}`, "Itens"},
+		{"lista grande demais", `{"itens":[` + strings.TrimSuffix(strings.Repeat(item("PETR4")+",", 501), ",") + `]}`, "Itens"},
+		{"código curto", `{"itens":[` + item("AB") + `]}`, "Itens[0].Ticker"},
+		{"no segundo item", `{"itens":[` + item("PETR4") + `,` + item("AB") + `]}`, "Itens[1].Ticker"},
+	}
+	for _, x := range erros {
+		r := testeapoio.Chamar(t, c.mux, "POST", rotaImportar, x.corpo)
+		r.ConferirStatus(t, http.StatusBadRequest)
+		var corpo struct {
+			Errors map[string][]string `json:"errors"`
+		}
+		if err := json.Unmarshal(r.Corpo, &corpo); err != nil {
+			t.Fatal(err)
+		}
+		if len(corpo.Errors) != 1 || corpo.Errors[x.chave] == nil {
+			t.Errorf("%s: %s", x.nome, r.Corpo)
+		}
+	}
+	testeapoio.Chamar(t, c.mux, "POST", rotaImportar, `{"itens":[null]}`).ConferirStatus(t, http.StatusInternalServerError)
+}

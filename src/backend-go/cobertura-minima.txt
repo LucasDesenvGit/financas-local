@@ -13,7 +13,7 @@ banco                   80.5
 banco/esquema           81.8
 bancos                  96.4
 cambio                  87.9
-carteira                95.7
+carteira                97.3
 categorias              87.0
 categorizacao           91.9
 config                  86.7

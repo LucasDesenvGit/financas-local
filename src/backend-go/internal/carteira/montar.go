@@ -59,6 +59,7 @@ type taxaSelic interface {
 // atualizacao é o que a carteira usa das cotações.
 type atualizacao interface {
 	Atualizar(ctx context.Context, somente []int64) (cotacoes.Resultado, error)
+	FechamentosDiarios(ctx context.Context, ticker string, de, ate tipos.Data) ([]cotacoes.Fechamento, error)
 }
 
 // Servico é o CarteiraService.

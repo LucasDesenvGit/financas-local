@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.19] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **O extrato da carteira em Go, ainda desligado** (#82, parte 6; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ler as compras e vendas nas descrições do extrato (`GET /api/carteira/extrato/sugestoes`) e a importá-las (`POST /api/carteira/extrato/importar`), conferido contra o C# por gabaritos, que chamam as próprias regex e o `Interpretar` do .NET. `respostas.CampoListaDeObjetos` passa a ter o `[MinLength]`, o `[Required]` e a validar os campos de cada item.
+
 ## [2.50.18] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação

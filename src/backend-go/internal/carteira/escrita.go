@@ -307,9 +307,9 @@ func (s *Servico) gravarCriacao(ctx context.Context, c *criacao, o Operacao) (in
 	return idDaOperacao, err
 }
 
-// atualizarSemFalhar pede as cotações de um ativo: a falha não impede o que acabou de ser gravado.
-func (s *Servico) atualizarSemFalhar(ctx context.Context, id int64) error {
-	if _, err := s.cotacoes.Atualizar(ctx, []int64{id}); err != nil && ctx.Err() != nil {
+// atualizarSemFalhar pede as cotações dos ativos: a falha não impede o que acabou de ser gravado.
+func (s *Servico) atualizarSemFalhar(ctx context.Context, ids ...int64) error {
+	if _, err := s.cotacoes.Atualizar(ctx, ids); err != nil && ctx.Err() != nil {
 		return ctx.Err()
 	}
 	return nil
