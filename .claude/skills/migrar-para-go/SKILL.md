@@ -139,7 +139,7 @@ Bibliotecas sugeridas na #71 (valem as que a ADR fixar): `net/http` puro (rotas 
 
 O épico promete instalação menor e menos memória; os números "com Go" são **estimativas** até a medição (#277, #86). Ao falar de ganho:
 
-- compare com a **linha de base** do épico (pasta instalada 157 MB, API ~225 MB de memória) e diga como mediu;
+- compare com a **linha de base** do épico (pasta instalada 157 MB, API ~225 MB de memória) e com as metas de `docs/REQUISITOS-NAO-FUNCIONAIS.md`, e diga como mediu;
 - lembre que o ganho de pasta só aparece inteiro com o gerenciador também em Go (#276). Trocar para Go é decisão do time: não proponha otimizar o .NET como alternativa;
 - para código quente (relatórios, sincronização): `go test -bench . -benchmem` e `pprof` antes de otimizar; otimização que complica o código precisa de número que a justifique.
 

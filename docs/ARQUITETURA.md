@@ -203,6 +203,25 @@ O detalhe do que é estável hoje (o LLD), em diagramas:
 - **[Fluxos principais](arquitetura/fluxos.md):** login e sessão, pedido repassado ao Go, partida da API, sincronização com a Pluggy e atualização pelo gerenciador.
 - **[Domínio](arquitetura/dominio.md):** os estados da conexão, da transação, da conta a pagar e do gerenciador, as classes do centro do domínio e os termos usados no código.
 
+## Índice da documentação
+
+As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento.
+
+| Seção | Onde está |
+|---|---|
+| 1. Introdução e objetivos | [README](../README.md) |
+| 2. Restrições | [`CLAUDE.md`](../CLAUDE.md) e as [ADRs](adr/README.md) |
+| 3. Contexto | [Contexto](#contexto), nesta página |
+| 4. Estratégia | [Decisões em resumo](#decisões-em-resumo), nesta página |
+| 5. Blocos | [Contêineres](#contêineres) e [Mapa de contextos](#mapa-de-contextos), nesta página. **Falta** o nível 3 do Go (#464, depois da #86) |
+| 6. Execução | [Fluxos principais](arquitetura/fluxos.md) |
+| 7. Implantação | [Onde roda o quê](#onde-roda-o-quê), nesta página |
+| 8. Conceitos transversais | [Segurança](SEGURANCA.md), [modelo de ameaças](MODELO-DE-AMEACAS.md), [dados pessoais](DADOS-PESSOAIS.md), [erros](adr/0022-erros-do-sistema-gravados-no-banco.md), [domínio](arquitetura/dominio.md) e [testes](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md). **Falta** o contrato da API (#472, depois da #86) |
+| 9. Decisões | [ADRs](adr/README.md) |
+| 10. Qualidade | [Requisitos não funcionais](REQUISITOS-NAO-FUNCIONAIS.md) |
+| 11. Riscos e dívidas | [Modelo de ameaças](MODELO-DE-AMEACAS.md), a [#68](https://github.com/LucasDesenvGit/financas-local/issues/68) e as consequências das ADRs |
+| 12. Glossário | [`glossario.ts`](../src/frontend/src/app/compartilhado/glossario.ts) e os [termos para quem desenvolve](arquitetura/dominio.md#termos-para-quem-desenvolve) |
+
 ## Decisões em resumo
 
 | Decisão | Por quê | ADR |

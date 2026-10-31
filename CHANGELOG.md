@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.30] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Requisitos não funcionais e índice da documentação** (#470; épico #465). Nada muda para quem usa. Para quem desenvolve: o novo `docs/REQUISITOS-NAO-FUNCIONAIS.md` diz quanto o sistema pode gastar e o que ele garante, com medida, meta e como medir, e `docs/ARQUITETURA.md` ganha o índice no formato arc42.
+
 ## [2.50.29] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
