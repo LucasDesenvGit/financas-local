@@ -32,7 +32,9 @@ INSERT INTO OperacaoAtivo (Id, AtivoId, Tipo, Data, Quantidade, PrecoUnitario, T
     (9, 7, 1, '2026-01-05', '10.0', '25.0', '0.0', '1.0', 1, NULL, '2026-01-05 12:00:00'),
     (10, 8, 1, '2008-03-03', '2.0', '80.0', '0.0', '1.0', 1, NULL, '2008-03-03 12:00:00'),
     (11, 9, 1, '2026-10-20', '1.0', '10.0', '0.0', '1.0', 1, NULL, '2026-10-20 12:00:00'),
-    (12, 10, 1, '2026-06-02', '1.0', '0.0', '0.0', '1.0', 1, NULL, '2026-06-02 12:00:00');
+    (12, 10, 1, '2026-06-02', '1.0', '0.0', '0.0', '1.0', 1, NULL, '2026-06-02 12:00:00'),
+    (13, 2, 2, '2026-01-10', '1.0', '100.0', '0.0', '1.0', 1, NULL, '2026-01-10 12:00:00'),
+    (14, 2, 1, '2026-02-10', '1.0', '100.0', '0.0', '1.0', 1, NULL, '2026-02-10 12:00:00');
 
 INSERT INTO ProventoAtivo (AtivoId, DataCom, ValorPorCota) VALUES
     (1, '2025-02-28', '1.1'), (1, '2025-03-31', '1.1'), (1, '2025-04-30', '1.1'), (1, '2025-10-31', '1.12'), (1, '2025-12-30', '1.12'),
@@ -46,7 +48,7 @@ INSERT INTO ProventoAtivo (AtivoId, DataCom, ValorPorCota) VALUES
 
 INSERT INTO PrecoMensalAtivo (AtivoId, Mes, Fechamento) VALUES
     (1, '2025-12-01', '152.0'), (1, '2026-01-01', '153.0'), (1, '2026-03-01', '156.0'), (1, '2026-10-01', '159.9'),
-    (1, '2023-01-01', '120.0'),
+    (1, '2023-01-01', '120.0'), (1, '2023-10-01', '121.0'), (1, '2023-11-01', '122.0'), (1, '2023-12-01', '123.0'),
     (3, '2026-02-01', '8.7'),
     (9, '2026-10-01', '11.5');
 
@@ -75,8 +77,10 @@ INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, T
     (207, 1, '2026-08-20', 'Valor recebido de Investimentos', NULL, '6.3', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     -- 100 cotas × 0,085, com 0,04 de diferença: dentro da tolerância.
     (208, 1, '2026-04-10', 'Valor recebido de Investimentos', NULL, '8.54', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
-    -- Com o código e o valor certo: guarda o provento, e o sem código do lado fica sem fundo.
-    (209, 1, '2026-08-10', 'RENDIMENTOS HGLG11', NULL, '13.2', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
-    (210, 1, '2026-08-11', 'Valor recebido de Investimentos', NULL, '13.2', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    -- Com o código e o valor certo (15 cotas × 1,10): guarda o provento, e o sem código do lado fica sem fundo.
+    (209, 1, '2026-08-10', 'RENDIMENTOS HGLG11', NULL, '16.5', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (210, 1, '2026-08-11', 'Valor recebido de Investimentos', NULL, '16.5', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    -- Dois créditos do mesmo fundo no mês: uma linha só.
+    (212, 1, '2026-08-12', 'RENDIMENTOS HGLG11', NULL, '1.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     -- Dois fundos pagam o mesmo mês com valores parecidos: fica o mais perto do valor.
     (211, 1, '2026-02-10', 'Valor recebido de Investimentos', NULL, '2.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00');

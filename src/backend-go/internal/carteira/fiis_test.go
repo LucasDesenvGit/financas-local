@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
@@ -143,5 +144,72 @@ func TestFiisComErroDoBanco(t *testing.T) {
 			executar(t, c, x.comando)
 			testeapoio.Chamar(t, c.mux, "GET", "/api/carteira/fiis", "").ConferirStatus(t, http.StatusInternalServerError)
 		})
+	}
+}
+
+// Regra: o provento de um crédito é o livre que dá o valor mais perto, até a tolerância, com a data-com até 40 dias antes; no
+// empate, o de data mais perto; e o primeiro, se a data também empatar.
+func TestMelhorProvento(t *testing.T) {
+	t.Parallel()
+	dia := func(mes time.Month, d int) tipos.Data { return tipos.NovaData(2025, mes, d) }
+	onze, perto, longe := testeapoio.Valor("11.0"), testeapoio.Valor("11.02"), testeapoio.Valor("11.06")
+	b := "BBBB11"
+	casos := []struct {
+		nome      string
+		esperados []proventoEsperado
+		usados    map[int]bool
+		data      tipos.Data
+		ticker    *string
+		achado    int
+	}{
+		{"sem nenhum", nil, nil, dia(4, 10), nil, -1},
+		{"exato", []proventoEsperado{{"AAAA11", dia(3, 31), onze}}, nil, dia(4, 10), nil, 0},
+		{"na tolerância", []proventoEsperado{{"AAAA11", dia(3, 31), perto}}, nil, dia(4, 10), nil, 0},
+		{"fora da tolerância", []proventoEsperado{{"AAAA11", dia(3, 31), longe}}, nil, dia(4, 10), nil, -1},
+		{"antes da data-com", []proventoEsperado{{"AAAA11", dia(3, 31), onze}}, nil, dia(3, 30), nil, -1},
+		{"no dia da data-com", []proventoEsperado{{"AAAA11", dia(3, 31), onze}}, nil, dia(3, 31), nil, 0},
+		{"no 40º dia", []proventoEsperado{{"AAAA11", dia(3, 31), onze}}, nil, dia(5, 10), nil, 0},
+		{"no 41º dia", []proventoEsperado{{"AAAA11", dia(3, 31), onze}}, nil, dia(5, 11), nil, -1},
+		{"o primeiro é melhor que o seguinte", []proventoEsperado{{"AAAA11", dia(3, 31), onze}, {"AAAA11", dia(4, 2), perto}}, nil, dia(4, 10), nil, 0},
+		{"o seguinte é melhor que o primeiro", []proventoEsperado{{"AAAA11", dia(3, 31), perto}, {"AAAA11", dia(4, 2), onze}}, nil, dia(4, 10), nil, 1},
+		{"valor mais perto vale mais que a data", []proventoEsperado{{"AAAA11", dia(3, 31), onze}, {"BBBB11", dia(4, 30), perto}}, nil, dia(5, 5), nil, 0},
+		{"no empate, a data mais perto", []proventoEsperado{{"AAAA11", dia(3, 31), onze}, {"BBBB11", dia(4, 30), onze}}, nil, dia(5, 5), nil, 1},
+		{"no empate, sem trocar pela data mais longe", []proventoEsperado{{"AAAA11", dia(4, 30), onze}, {"BBBB11", dia(3, 31), onze}}, nil, dia(5, 5), nil, 0},
+		{"tudo igual, o primeiro", []proventoEsperado{{"AAAA11", dia(3, 31), onze}, {"BBBB11", dia(3, 31), onze}}, nil, dia(4, 10), nil, 0},
+		{"só o do fundo", []proventoEsperado{{"AAAA11", dia(3, 31), onze}, {"BBBB11", dia(3, 31), onze}}, nil, dia(4, 10), &b, 1},
+		{"o usado fica de fora", []proventoEsperado{{"AAAA11", dia(3, 31), onze}, {"BBBB11", dia(3, 31), onze}}, map[int]bool{0: true}, dia(4, 10), nil, 1},
+	}
+	for _, x := range casos {
+		t.Run(x.nome, func(t *testing.T) {
+			t.Parallel()
+			l := ligacaoDeProventos{x.esperados, x.usados}
+			if i := l.melhor(x.data, onze, x.ticker); i != x.achado {
+				t.Errorf("melhor = %d, esperado %d", i, x.achado)
+			}
+		})
+	}
+}
+
+// Regra: o crédito com o código guarda o provento do fundo, mesmo sendo o primeiro da lista; o sem código fica com o que
+// sobrou ou sem fundo, e cada provento serve a um crédito só.
+func TestFundoDeCadaCredito(t *testing.T) {
+	t.Parallel()
+	dia := func(d int) tipos.Data { return tipos.NovaData(2026, 5, d) }
+	dez := testeapoio.Valor("10.0")
+	f := &fundo{ativo: &Ativo{Ticker: "AAAA11"}, operacoes: []Operacao{{Tipo: operacaoCompra, Data: dia(1), Quantidade: dez, PrecoUnitario: dez, Taxas: tipos.Zero, Cambio: um}},
+		proventos: []Provento{{dia(2), testeapoio.Valor("1.0")}, {dia(3), testeapoio.Valor("0.0")}}}
+	fundos := []*fundo{f}
+	var c conta
+	semCodigo := c.fundoDeCadaCredito(fundos, nil, []CreditoRecebido{{1, dia(5), dez}, {2, dia(6), dez}})
+	if semCodigo[1] == nil || *semCodigo[1] != "AAAA11" || semCodigo[2] != nil {
+		t.Errorf("sem código: %v, %v", semCodigo[1], semCodigo[2])
+	}
+	comCodigo := c.fundoDeCadaCredito(fundos, []ProventoRecebido{{Id: 1, Ticker: "AAAA11", Data: dia(5), Valor: dez}},
+		[]CreditoRecebido{{1, dia(5), dez}, {2, dia(6), dez}})
+	if comCodigo[1] == nil || *comCodigo[1] != "AAAA11" || comCodigo[2] != nil {
+		t.Errorf("com código: %v, %v", comCodigo[1], comCodigo[2])
+	}
+	if c.err != nil {
+		t.Error(c.err)
 	}
 }

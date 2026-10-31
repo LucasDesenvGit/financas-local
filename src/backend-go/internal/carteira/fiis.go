@@ -203,9 +203,7 @@ type fundo struct {
 
 func (c *conta) posicaoEm(f *fundo, data *tipos.Data) Posicao {
 	p, err := Calcular(f.operacoes, data)
-	if err != nil && c.err == nil {
-		c.err = err
-	}
+	c.anotar(err)
 	return p
 }
 
