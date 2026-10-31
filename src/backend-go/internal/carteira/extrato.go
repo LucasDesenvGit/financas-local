@@ -596,12 +596,13 @@ func camposDoItemDoExtrato() []respostas.Campo {
 		&respostas.CampoDecimal{Propriedade: "Taxas", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 10000000}}}
 }
 
-// itensDaLista lê os itens já validados. O item null chega ao C# como null, e ele para com o 500.
-func (s *Servico) itensDaLista(w http.ResponseWriter, r *http.Request, campos [][]respostas.Campo) ([]ItemDoExtrato, bool) {
+// itensDaLista lê os itens já validados. O item null chega ao C# como null, e ele para com o 500. A etapa é a da rota: o
+// registro de erros soma as linhas com a mesma mensagem, e o C# tem uma linha por rota.
+func (s *Servico) itensDaLista(w http.ResponseWriter, r *http.Request, etapa string, campos [][]respostas.Campo) ([]ItemDoExtrato, bool) {
 	lista := make([]ItemDoExtrato, 0, len(campos))
 	for _, c := range campos {
 		if c == nil {
-			s.erroInterno(w, r, "itens do extrato", errors.New("item nulo na lista"))
+			s.erroInterno(w, r, etapa, errors.New("item nulo na lista"))
 			return nil, false
 		}
 		lista = append(lista, ItemDoExtrato{TransacaoId: c[0].(*respostas.CampoLong).Valor, Ticker: *c[1].(*respostas.CampoTexto).Valor, Tipo: c[2].(*respostas.CampoEnum).Ou(0),
@@ -616,7 +617,7 @@ func (s *Servico) importarDoExtrato(w http.ResponseWriter, r *http.Request) {
 	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ImportarExtratoDto", &itens) {
 		return
 	}
-	lista, ok := s.itensDaLista(w, r, itens.Itens)
+	lista, ok := s.itensDaLista(w, r, "importar do extrato", itens.Itens)
 	if !ok {
 		return
 	}

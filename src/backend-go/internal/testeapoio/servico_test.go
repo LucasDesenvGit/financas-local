@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
@@ -178,3 +179,19 @@ type fatal struct {
 
 func (f *fatal) Fatal(args ...any)                  { f.falhou = true; panic("fatal") }
 func (f *fatal) Fatalf(formato string, args ...any) { f.falhou = true; panic("fatal") }
+
+// Regra: o serviço travado nunca responde: com o pedido cancelado, ele derruba a conexão em vez de devolver um 200 vazio,
+// que o cliente leria como resposta inesperada, e não como tempo esgotado.
+func TestTravadoNaoRespondeDepoisDoCancelamento(t *testing.T) {
+	s := NovoServicoDeFora(t)
+	s.Em("GET", "/lento", TempoEsgotado)
+	ctx, cancelar := context.WithCancel(t.Context())
+	cancelar()
+	pedido := httptest.NewRequest("GET", "/lento", nil).WithContext(ctx)
+	defer func() {
+		if p := recover(); p != http.ErrAbortHandler {
+			t.Errorf("panic = %v", p)
+		}
+	}()
+	s.atender(httptest.NewRecorder(), pedido)
+}

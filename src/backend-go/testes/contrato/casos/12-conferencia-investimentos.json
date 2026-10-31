@@ -54,7 +54,7 @@
         ],
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "itsa4",
             "tipo": 1,
             "quantidade": 1.1234567,
@@ -156,7 +156,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -164,7 +164,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -232,7 +232,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ZZZZ3",
             "tipo": 1,
             "quantidade": 1,
@@ -249,7 +249,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 2,
             "quantidade": 1,
@@ -266,7 +266,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -526,7 +526,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -534,7 +534,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -542,7 +542,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -550,7 +550,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -558,7 +558,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -566,7 +566,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -574,7 +574,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -582,7 +582,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -590,7 +590,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -598,7 +598,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -606,7 +606,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -614,7 +614,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -622,7 +622,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -630,7 +630,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -638,7 +638,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -646,7 +646,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -654,7 +654,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -662,7 +662,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -670,7 +670,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -678,7 +678,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -686,7 +686,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -694,7 +694,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -702,7 +702,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -710,7 +710,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -718,7 +718,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -726,7 +726,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -734,7 +734,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -742,7 +742,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -750,7 +750,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -758,7 +758,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -766,7 +766,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -774,7 +774,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -782,7 +782,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -790,7 +790,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -798,7 +798,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -806,7 +806,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -814,7 +814,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -822,7 +822,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -830,7 +830,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -838,7 +838,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -846,7 +846,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -854,7 +854,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -862,7 +862,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -870,7 +870,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -878,7 +878,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -886,7 +886,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -894,7 +894,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -902,7 +902,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -910,7 +910,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -918,7 +918,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -926,7 +926,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -934,7 +934,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -942,7 +942,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -950,7 +950,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -958,7 +958,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -966,7 +966,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -974,7 +974,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -982,7 +982,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -990,7 +990,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -998,7 +998,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1006,7 +1006,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1014,7 +1014,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1022,7 +1022,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1030,7 +1030,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1038,7 +1038,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1046,7 +1046,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1054,7 +1054,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1062,7 +1062,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1070,7 +1070,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1078,7 +1078,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1086,7 +1086,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1094,7 +1094,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1102,7 +1102,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1110,7 +1110,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1118,7 +1118,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1126,7 +1126,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1134,7 +1134,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1142,7 +1142,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1150,7 +1150,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1158,7 +1158,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1166,7 +1166,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1174,7 +1174,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1182,7 +1182,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1190,7 +1190,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1198,7 +1198,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1206,7 +1206,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1214,7 +1214,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1222,7 +1222,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1230,7 +1230,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1238,7 +1238,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1246,7 +1246,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1254,7 +1254,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1262,7 +1262,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1270,7 +1270,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1278,7 +1278,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1286,7 +1286,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1294,7 +1294,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1302,7 +1302,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1310,7 +1310,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1318,7 +1318,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1326,7 +1326,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1334,7 +1334,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1342,7 +1342,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1350,7 +1350,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1358,7 +1358,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1366,7 +1366,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1374,7 +1374,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1382,7 +1382,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1390,7 +1390,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1398,7 +1398,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1406,7 +1406,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1414,7 +1414,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1422,7 +1422,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1430,7 +1430,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1438,7 +1438,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1446,7 +1446,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1454,7 +1454,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1462,7 +1462,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1470,7 +1470,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1478,7 +1478,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1486,7 +1486,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1494,7 +1494,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1502,7 +1502,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1510,7 +1510,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1518,7 +1518,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1526,7 +1526,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1534,7 +1534,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1542,7 +1542,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1550,7 +1550,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1558,7 +1558,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1566,7 +1566,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1574,7 +1574,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1582,7 +1582,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1590,7 +1590,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1598,7 +1598,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1606,7 +1606,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1614,7 +1614,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1622,7 +1622,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1630,7 +1630,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1638,7 +1638,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1646,7 +1646,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1654,7 +1654,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1662,7 +1662,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1670,7 +1670,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1678,7 +1678,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1686,7 +1686,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1694,7 +1694,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1702,7 +1702,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1710,7 +1710,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1718,7 +1718,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1726,7 +1726,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1734,7 +1734,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1742,7 +1742,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1750,7 +1750,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1758,7 +1758,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1766,7 +1766,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1774,7 +1774,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1782,7 +1782,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1790,7 +1790,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1798,7 +1798,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1806,7 +1806,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1814,7 +1814,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1822,7 +1822,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1830,7 +1830,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1838,7 +1838,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1846,7 +1846,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1854,7 +1854,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1862,7 +1862,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1870,7 +1870,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1878,7 +1878,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1886,7 +1886,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1894,7 +1894,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1902,7 +1902,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1910,7 +1910,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1918,7 +1918,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1926,7 +1926,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1934,7 +1934,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1942,7 +1942,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1950,7 +1950,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1958,7 +1958,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1966,7 +1966,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1974,7 +1974,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1982,7 +1982,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1990,7 +1990,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -1998,7 +1998,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2006,7 +2006,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2014,7 +2014,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2022,7 +2022,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2030,7 +2030,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2038,7 +2038,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2046,7 +2046,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2054,7 +2054,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2062,7 +2062,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2070,7 +2070,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2078,7 +2078,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2086,7 +2086,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2094,7 +2094,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2102,7 +2102,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2110,7 +2110,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2118,7 +2118,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2126,7 +2126,7 @@
             "taxas": 0
           },
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
@@ -2171,7 +2171,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "AB",
             "tipo": 1,
             "quantidade": 1,
@@ -2188,7 +2188,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 0,
@@ -2205,7 +2205,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 3,
+            "transacaoId": 8,
             "ticker": "ITSA4",
             "tipo": "Compra",
             "quantidade": 1,

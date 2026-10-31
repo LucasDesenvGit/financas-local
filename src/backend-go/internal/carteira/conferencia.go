@@ -332,7 +332,7 @@ func (x *analisador) analisarDia(dia, creditos []movimento) {
 	slices.SortStableFunc(abertos, func(a, b movimento) int { return b.valor.Decimal().Cmp(a.valor.Decimal()) })
 	for _, c := range perto {
 		if c.data.Depois(data.SomarDias(diasDoTroco)) {
-			continue
+			continue // em ordem de data: daqui em diante, tudo passou do prazo do troco
 		}
 		i := slices.IndexFunc(abertos, func(d movimento) bool {
 			_, tem := trocoDe[d.id]
@@ -370,7 +370,7 @@ func (x *analisador) analisarDia(dia, creditos []movimento) {
 		slices.SortStableFunc(livresDoDia, func(a, b movimento) int { return a.valor.Decimal().Cmp(b.valor.Decimal()) })
 		for _, c := range livresDoDia {
 			if maiorQue(c.valor, restante) {
-				break
+				break // em ordem de valor: os próximos também passam do que sobra
 			}
 			restante = tipos.Subtrair(restante, c.valor)
 			sobras = append(sobras, c)
@@ -575,7 +575,7 @@ func (s *Servico) categoriaDoTroco(ctx context.Context) (*CategoriaDoTrocoDto, e
 		return nil, fmt.Errorf("ler as categorias de transferência: %w", err)
 	}
 	i := slices.IndexFunc(categorias, func(c CategoriaDoTrocoDto) bool { return c.Nome == "Investimentos" })
-	if i < 0 {
+	if i == -1 {
 		i = slices.IndexFunc(categorias, func(c CategoriaDoTrocoDto) bool { return strings.Contains(texto.ParaRegras(c.Nome), "INVEST") })
 	}
 	if i < 0 {

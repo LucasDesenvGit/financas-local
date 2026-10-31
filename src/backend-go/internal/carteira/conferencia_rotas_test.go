@@ -130,6 +130,7 @@ func TestCorrigirComEntradaErrada(t *testing.T) {
 		{"2001 taxas", `{"taxas":[` + numeros(2001) + `]}`, http.StatusBadRequest, "Taxas"},
 		{"compra inválida", `{"compras":[{"transacaoId":131,"ticker":"AB","tipo":1,"quantidade":1,"precoUnitario":1,"taxas":0}]}`, http.StatusBadRequest, "Compras[0].Ticker"},
 		{"compra nula", `{"compras":[null]}`, http.StatusInternalServerError, ""},
+		{"um FII antes de uma ação", `{"ativosParaFii":[6,10]}`, http.StatusOK, `"tipos":1`},
 		{"sem as listas", `{}`, http.StatusOK, `"desfazer":null`},
 		{"tudo nulo", `{"ativosParaFii":null,"compras":null,"trocos":null,"rendimentos":null,"taxas":null}`, http.StatusOK, `"desfazer":null`},
 	}
@@ -169,6 +170,38 @@ func TestTrocosGuardadosNoMaximo(t *testing.T) {
 	}
 	if len(guardados) != 500 || guardados[0].Id != int64(10000+n) || guardados[499].Id < 100 || guardados[499].Id >= 10000 {
 		t.Errorf("%d guardados, de %d a %d", len(guardados), guardados[0].Id, guardados[499].Id)
+	}
+}
+
+// Regra: sem a categoria do troco, os trocos continuam na conferência.
+func TestClassificarSemCategoriaDoTroco(t *testing.T) {
+	t.Parallel()
+	c := cenaDaConferencia(t, cotacoesFalsas{})
+	executar(t, c, `UPDATE Categoria SET Nome = 'Caixinha' WHERE Id = 3`)
+	if n, err := c.s.ClassificarTrocosSemDuvida(t.Context()); err != nil || n != 0 {
+		t.Errorf("%d, %v", n, err)
+	}
+}
+
+// Regra: a conta do dia espera os 5 dias da sobra do troco: o dia 25 entra, com hoje em 30, e o dia 26 ainda não.
+func TestContaDoDiaEsperaOsDiasDaSobra(t *testing.T) {
+	t.Parallel()
+	c := cenaDaConferencia(t, cotacoesFalsas{})
+	executar(t, c, `INSERT INTO OperacaoAtivo (Id, AtivoId, Tipo, Data, Quantidade, PrecoUnitario, Taxas, Cambio, Origem, CriadoEm) VALUES
+		(901, 1, 1, '2026-10-25', '10.0', '10.0', '0.0', '1.0', 1, '2026-10-25 12:00:00'), (902, 2, 1, '2026-10-26', '10.0', '10.0', '0.0', '1.0', 1, '2026-10-26 12:00:00');
+		INSERT INTO Transacao (Id, ContaId, Data, Descricao, Valor, Tipo, Status, CategoriaManual, IgnorarRelatorios, Emergencia, DescricaoRevisada, DescricaoManual, CriadoEm, AtualizadoEm) VALUES
+		(901, 1, '2026-10-25', 'Compra de Renda Variável', '-100.5', 1, 1, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+		(902, 1, '2026-10-26', 'Compra de Renda Variável', '-100.5', 1, 1, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00')`)
+	d, err := c.s.Conferir(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	dados, err := json.Marshal(d.Taxas)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(dados), `"data":"2026-10-25"`) || strings.Contains(string(dados), `"data":"2026-10-26"`) {
+		t.Errorf("taxas %s", dados)
 	}
 }
 

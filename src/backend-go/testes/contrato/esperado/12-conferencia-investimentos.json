@@ -1,0 +1,774 @@
+[
+  {
+    "nome": "conferir",
+    "requisicao": "GET /api/carteira/conferencia",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaDoTroco": {
+        "id": 24,
+        "nome": "Investimentos"
+      },
+      "comprasSemOperacao": [],
+      "cotas": [],
+      "rendimentos": [],
+      "taxas": [],
+      "tipos": [],
+      "trocos": []
+    }
+  },
+  {
+    "nome": "conferir sem login",
+    "requisicao": "GET /api/carteira/conferencia",
+    "status": 401
+  },
+  {
+    "nome": "corrigir sem nada",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compras": 0,
+      "desfazer": null,
+      "rendimentos": 0,
+      "taxas": 0,
+      "tipos": 0,
+      "trocos": 0
+    }
+  },
+  {
+    "nome": "corrigir com as listas nulas",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compras": 0,
+      "desfazer": null,
+      "rendimentos": 0,
+      "taxas": 0,
+      "tipos": 0,
+      "trocos": 0
+    }
+  },
+  {
+    "nome": "corrigir com as listas vazias",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compras": 0,
+      "desfazer": null,
+      "rendimentos": 0,
+      "taxas": 0,
+      "tipos": 0,
+      "trocos": 0
+    }
+  },
+  {
+    "nome": "corrigir tudo de uma vez",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "compras": 1,
+      "desfazer": "<texto>",
+      "rendimentos": 0,
+      "taxas": 0,
+      "tipos": 1,
+      "trocos": 1
+    },
+    "banco": {
+      "Ativo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "Tipo": {
+                "antes": 2,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      },
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ConferenciaInvestimentos (1 tipo, 1 compra, 1 troco, 0 rendimento, 0 taxa)",
+            "Id": 39,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 2,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2025-11-15",
+            "Id": 13,
+            "Observacao": "Compra que faltou no Open Finance (Conferir investimentos)",
+            "Origem": 3,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "10.5",
+            "Quantidade": "1.123457",
+            "Taxas": "0.12",
+            "Tipo": 1,
+            "TransacaoId": 8
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 24
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              },
+              "IgnorarRelatorios": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Tipo": {
+                "antes": 2,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conferir depois de corrigir",
+    "requisicao": "GET /api/carteira/conferencia",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaDoTroco": {
+        "id": 24,
+        "nome": "Investimentos"
+      },
+      "comprasSemOperacao": [],
+      "cotas": [],
+      "rendimentos": [],
+      "taxas": [],
+      "tipos": [],
+      "trocos": []
+    }
+  },
+  {
+    "nome": "as operações depois de corrigir",
+    "requisicao": "GET /api/carteira/ativos/2/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2026-06-15",
+        "id": 4,
+        "moeda": "BRL",
+        "observacao": "Venda parcial",
+        "origem": 1,
+        "precoAtual": 10.45,
+        "precoUnitario": 10.92,
+        "quantidade": 30.0,
+        "taxas": 0.5,
+        "ticker": "ITSA4",
+        "tipo": 2,
+        "valorAtual": null,
+        "valorSeFosseSelic": 328.55,
+        "valorTotal": 327.10,
+        "variacaoPreco": null
+      },
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2025-11-15",
+        "id": 13,
+        "moeda": "BRL",
+        "observacao": "Compra que faltou no Open Finance (Conferir investimentos)",
+        "origem": 3,
+        "precoAtual": 10.45,
+        "precoUnitario": 10.5,
+        "quantidade": 1.123457,
+        "taxas": 0.12,
+        "ticker": "ITSA4",
+        "tipo": 1,
+        "valorAtual": 11.74,
+        "valorSeFosseSelic": 11.97,
+        "valorTotal": 11.92,
+        "variacaoPreco": -0.48
+      },
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2025-11-10",
+        "id": 3,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 10.45,
+        "precoUnitario": 9.87,
+        "quantidade": 100.0,
+        "taxas": 0.5,
+        "ticker": "ITSA4",
+        "tipo": 1,
+        "valorAtual": 1045.00,
+        "valorSeFosseSelic": 991.86,
+        "valorTotal": 987.50,
+        "variacaoPreco": 5.88
+      }
+    ]
+  },
+  {
+    "nome": "desfazer sem login",
+    "requisicao": "POST /api/carteira/conferencia/desfazer/{{chaveConferencia}}",
+    "status": 401
+  },
+  {
+    "nome": "desfazer a correção",
+    "requisicao": "POST /api/carteira/conferencia/desfazer/{{chaveConferencia}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 3
+    },
+    "banco": {
+      "Ativo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "Tipo": {
+                "antes": 1,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      },
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ConferenciaInvestimentosDesfeita (3)",
+            "Id": 40,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "OperacaoAtivo": {
+        "removidas": [
+          {
+            "AtivoId": 2,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2025-11-15",
+            "Id": 13,
+            "Observacao": "Compra que faltou no Open Finance (Conferir investimentos)",
+            "Origem": 3,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "10.5",
+            "Quantidade": "1.123457",
+            "Taxas": "0.12",
+            "Tipo": 1,
+            "TransacaoId": 8
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": 24,
+                "depois": null
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              },
+              "IgnorarRelatorios": {
+                "antes": 1,
+                "depois": 0
+              },
+              "Tipo": {
+                "antes": 3,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer de novo",
+    "requisicao": "POST /api/carteira/conferencia/desfazer/{{chaveConferencia}}",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  },
+  {
+    "nome": "desfazer com chave que não existe",
+    "requisicao": "POST /api/carteira/conferencia/desfazer/naoexiste",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  },
+  {
+    "nome": "conferir depois de desfazer",
+    "requisicao": "GET /api/carteira/conferencia",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categoriaDoTroco": {
+        "id": 24,
+        "nome": "Investimentos"
+      },
+      "comprasSemOperacao": [],
+      "cotas": [],
+      "rendimentos": [],
+      "taxas": [],
+      "tipos": [],
+      "trocos": []
+    }
+  },
+  {
+    "nome": "as operações depois de desfazer",
+    "requisicao": "GET /api/carteira/ativos/2/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2026-06-15",
+        "id": 4,
+        "moeda": "BRL",
+        "observacao": "Venda parcial",
+        "origem": 1,
+        "precoAtual": 10.45,
+        "precoUnitario": 10.92,
+        "quantidade": 30.0,
+        "taxas": 0.5,
+        "ticker": "ITSA4",
+        "tipo": 2,
+        "valorAtual": null,
+        "valorSeFosseSelic": 328.55,
+        "valorTotal": 327.10,
+        "variacaoPreco": null
+      },
+      {
+        "ativoId": 2,
+        "cambio": 1.0,
+        "data": "2025-11-10",
+        "id": 3,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 10.45,
+        "precoUnitario": 9.87,
+        "quantidade": 100.0,
+        "taxas": 0.5,
+        "ticker": "ITSA4",
+        "tipo": 1,
+        "valorAtual": 1045.00,
+        "valorSeFosseSelic": 991.86,
+        "valorTotal": 987.50,
+        "variacaoPreco": 5.88
+      }
+    ]
+  },
+  {
+    "nome": "um ativo que não existe",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Algum ativo não existe mais. Confira de novo."
+    }
+  },
+  {
+    "nome": "um ativo no exterior para FII",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "VOO é do exterior: não pode ser FII."
+    }
+  },
+  {
+    "nome": "uma taxa que não está na conferência",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Alguma taxa da B3 mudou desde a conferência. Confira de novo."
+    }
+  },
+  {
+    "nome": "o mesmo débito duas vezes",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O mesmo débito foi escolhido para duas compras."
+    }
+  },
+  {
+    "nome": "um débito que já tem operação",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Algum débito já tem uma operação na carteira. Confira de novo."
+    }
+  },
+  {
+    "nome": "um débito que não existe",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha um débito de compra do extrato."
+    }
+  },
+  {
+    "nome": "um crédito no lugar do débito",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha um débito de compra do extrato."
+    }
+  },
+  {
+    "nome": "um ativo fora da carteira",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "ZZZZ3 não está na carteira."
+    }
+  },
+  {
+    "nome": "uma venda no lugar da compra",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe cotas e preço da compra de ITSA4."
+    }
+  },
+  {
+    "nome": "compra sem preço",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe cotas e preço da compra de ITSA4."
+    }
+  },
+  {
+    "nome": "o mesmo crédito como troco e rendimento",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Um crédito não pode ser troco e rendimento ao mesmo tempo."
+    }
+  },
+  {
+    "nome": "um crédito que não existe",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Algum crédito não existe mais. Confira de novo."
+    }
+  },
+  {
+    "nome": "um débito no lugar do crédito",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Algum crédito não existe mais. Confira de novo."
+    }
+  },
+  {
+    "nome": "lista de ativos grande demais",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "AtivosParaFii": [
+          "The field AtivosParaFii must be a string or array type with a maximum length of '200'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "lista de compras grande demais",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Compras": [
+          "The field Compras must be a string or array type with a maximum length of '200'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "lista de ativos em texto",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.ativosParaFii": [
+          "The JSON value could not be converted to System.Collections.Generic.List`1[System.Int32]. Path: $.ativosParaFii | LineNumber: 1 | BytePositionInLine: 28."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "id de troco em texto",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.trocos[0]": [
+          "The JSON value could not be converted to System.Int64. Path: $.trocos[0] | LineNumber: 2 | BytePositionInLine: 13."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "id de ativo fora do int",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.ativosParaFii[0]": [
+          "The JSON value could not be converted to System.Int32. Path: $.ativosParaFii[0] | LineNumber: 2 | BytePositionInLine: 20."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "compra com o código curto",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Compras[0].Ticker": [
+          "The field Ticker must be a string with a minimum length of 3 and a maximum length of 12."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "compra com a quantidade zero",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Compras[0].Quantidade": [
+          "The field Quantidade must be between 1E-06 and 1000000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "compra com o tipo em texto",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.compras[0].tipo": [
+          "The JSON value could not be converted to Financas.Api.Dtos.ImportarExtratoItemDto. Path: $.compras[0].tipo | LineNumber: 5 | BytePositionInLine: 28."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "compra nula",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 500,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Ocorreu um erro interno. Ele foi registrado em Configurações › Erros."
+    }
+  },
+  {
+    "nome": "corrigir sem corpo",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 415,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "status": 415,
+      "title": "Unsupported Media Type",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.16"
+    }
+  },
+  {
+    "nome": "corrigir sem login",
+    "requisicao": "POST /api/carteira/conferencia/corrigir",
+    "status": 401
+  },
+  {
+    "nome": "desfazer os trocos sem nada guardado",
+    "requisicao": "POST /api/carteira/conferencia/trocos-automaticos/desfazer",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "TrocosAutomaticosDesfeitos (0)",
+            "Id": 41,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Investimentos.TrocosAutomaticos",
+            "Protegido": 0,
+            "Valor": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer os trocos sem login",
+    "requisicao": "POST /api/carteira/conferencia/trocos-automaticos/desfazer",
+    "status": 401
+  },
+  {
+    "nome": "dispensar os trocos",
+    "requisicao": "POST /api/carteira/conferencia/trocos-automaticos/dispensar",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Investimentos.TrocosAutomaticos"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "dispensar os trocos sem login",
+    "requisicao": "POST /api/carteira/conferencia/trocos-automaticos/dispensar",
+    "status": 401
+  }
+]

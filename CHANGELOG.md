@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.20] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Conferir investimentos em Go, ainda desligado** (#299; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ter o `ConferenciaInvestimentosService` do C# (ADRs 0027 e 0044): a análise do extrato (a compra ligada à operação, o troco, a sobra de centavos, o valor da venda e a taxa da B3 que falta), `GET /api/carteira/conferencia`, corrigir, desfazer e os trocos automáticos, com `ClassificarTrocosSemDuvida`, `ResumoTrocosAutomaticos`, `CreditosComoReceita` e `ProventosDaCorretora` prontos para a sincronização (#83), o painel (#80) e os FIIs. O comportamento é conferido contra o C# de verdade: a sonda grava um gabarito de 43 passos (`testdata/conferencia.json`), com o banco depois de cada passo, e o `12-conferencia-investimentos` tem 42 casos de contrato gravados do .NET.
+
 ## [2.50.19] — 2026-10-30 · desenvolvimento
 
 ### Publicação e documentação

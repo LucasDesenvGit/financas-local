@@ -394,26 +394,6 @@ jobs:
       - name: Compilar API
         run: dotnet build src/backend/Financas.Api/Financas.Api.csproj -c Release
 
-      # TEMPORÁRIO (#299): grava os esperados no Linux da CI, duas vezes, e publica como artefato. Sai antes do merge.
-      - name: TEMPORÁRIO – gravar os esperados (#299)
-        run: |
-          esperado=src/backend-go/testes/contrato/esperado
-          bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar
-          mkdir -p "$RUNNER_TEMP/primeira" && cp "$esperado"/*.json "$RUNNER_TEMP/primeira/"
-          MANTER_PASTA=1 bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar 2>&1 | tee "$RUNNER_TEMP/gravacao.log"
-          pasta="$(grep -o 'Pasta mantida: .*' "$RUNNER_TEMP/gravacao.log" | cut -d' ' -f3)"
-          echo "Erros que a API registrou nas transações:"
-          sqlite3 "$pasta/dados/sql/FinancasLocal.db" "SELECT Id, Rota, Mensagem, substr(Detalhe, 1, 3000) FROM ErroSistema WHERE Rota LIKE '%transacoes%'" || true
-          if diff -r "$RUNNER_TEMP/primeira" "$esperado"; then echo "As duas gravações deram o mesmo."; else echo "::error::As duas gravações deram diferente."; fi
-          echo "Esperados que mudaram ou entraram:"; git status --short -- "$esperado"
-
-      - name: TEMPORÁRIO – publicar os esperados (#299)
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: esperados-contrato
-          path: src/backend-go/testes/contrato/esperado/
-
       - name: Contrato contra o .NET (com o Go atrás dele)
         run: bash src/backend-go/testes/contrato/rodar-dotnet.sh
 
