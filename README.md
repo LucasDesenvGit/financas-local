@@ -101,7 +101,7 @@ No Windows: **Configurações › Aplicativos › Aplicativos instalados › Fin
 - **Segredos** (como o Client Secret da Pluggy) ficam criptografados, e o site nunca os devolve.
 - **Recomendado:** criptografia do disco (BitLocker ou LUKS) e, de vez em quando, uma cópia do banco pelo gerenciador num disco externo.
 
-A tabela completa do que sai e os detalhes técnicos (login, sessão, CSRF, cabeçalhos, auditoria): [docs/SEGURANCA.md](docs/SEGURANCA.md).
+A tabela completa do que sai e os detalhes técnicos (login, sessão, CSRF, cabeçalhos, auditoria): [docs/SEGURANCA.md](docs/SEGURANCA.md). O que é guardado, por quanto tempo e como apagar: [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md).
 
 ## Problemas comuns
 

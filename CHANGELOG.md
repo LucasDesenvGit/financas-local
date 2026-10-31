@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.28] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Inventário de dados pessoais** (#471; épico #465). Novo `docs/DADOS-PESSOAIS.md`: o que o sistema guarda, de onde vem, o que sai do computador, por quanto tempo fica e como apagar, inclusive nas cópias e nos logs.
+
 ## [2.50.27] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
