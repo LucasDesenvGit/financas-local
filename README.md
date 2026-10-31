@@ -124,3 +124,7 @@ Os outros, com mais detalhe: [Problemas comuns](docs/PROBLEMAS-COMUNS.md).
 - [CHANGELOG.md](CHANGELOG.md): o que mudou em cada versão.
 
 Front-end em Angular e banco SQLite. A API em .NET 10 fica na frente e o back-end está passando para Go, um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Tudo publicado junto, como serviço do sistema.
+
+## Licença
+
+[MIT](LICENSE). Os ícones de terceiros têm licença própria: [bandeiras](src/frontend/public/bandeiras/LICENSE.txt) e [criptomoedas](src/frontend/public/cripto/LICENSE.txt).

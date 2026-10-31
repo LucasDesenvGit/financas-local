@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.33] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Licença MIT** (#473; épico #465). Nada muda para quem usa. O repositório passa a dizer o que se pode fazer com o código.
+
 ## [2.50.32] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
