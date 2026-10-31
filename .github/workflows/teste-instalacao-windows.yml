@@ -113,6 +113,35 @@ jobs:
           powershell.exe -NoProfile -Command "if (-not (Select-String -Path instaladores\instalacao-windows.log -SimpleMatch 'certificado existente reaproveitado' -Quiet)) { exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
 
+      # #468: o passo a passo do docs/OPERACAO.md: a copia volta, e o que veio depois dela sai.
+      - name: Restaurar a copia (docs/OPERACAO.md)
+        shell: powershell
+        run: |
+          $sqlite = "ferramentas\sqlite\sqlite3.exe"
+          $banco = "dados\sql\FinancasLocal.db"
+          $copia = Get-ChildItem backups\FinancasLocal-antes-instalacao-*.db | Sort-Object LastWriteTime | Select-Object -Last 1
+          & $sqlite $banco "INSERT INTO Configuracao (Chave, Valor, AtualizadoEm) VALUES ('teste.depois-da-copia', 'x', '2026-01-01 00:00:00');"
+          if ($LASTEXITCODE -ne 0) { throw "nao deu para gravar a marca no banco" }
+
+          Stop-Service FinancasLocal
+          New-Item -ItemType Directory -Force dados\antes-de-restaurar | Out-Null
+          Copy-Item "$banco*" dados\antes-de-restaurar\
+          Copy-Item $copia.FullName $banco -Force
+          Remove-Item "$banco-wal", "$banco-shm" -ErrorAction SilentlyContinue
+          Start-Service FinancasLocal
+
+          foreach ($i in 1..30) {
+            curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado
+            if ($LASTEXITCODE -eq 0) { break }
+            Start-Sleep -Seconds 1
+          }
+          if ($LASTEXITCODE -ne 0) { throw "o site nao voltou depois de restaurar" }
+          $marcas = & $sqlite $banco "SELECT COUNT(*) FROM Configuracao WHERE Chave = 'teste.depois-da-copia';"
+          if ($marcas -ne "0") { throw "a copia nao voltou: $marcas marca(s) no banco" }
+          $integridade = & $sqlite $banco "PRAGMA integrity_check;"
+          if ($integridade -ne "ok") { throw "banco corrompido depois de restaurar: $integridade" }
+          if (-not (Test-Path dados\antes-de-restaurar\FinancasLocal.db)) { throw "o banco de antes nao foi guardado" }
+
       # parar-windows.cmd (sem o UAC: o runner ja e Administrador): para, tira do inicio automatico e confere que
       # nada ficou de pe; depois o instalador sobe de novo e devolve o inicio automatico.
       - name: Parar (parar-windows.cmd -Desativar)
