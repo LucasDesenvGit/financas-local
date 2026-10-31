@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -53,9 +54,10 @@ func TestExemploDeIntegracao(t *testing.T) {
 	}
 	decorrido := time.Since(inicio)
 	t.Logf("banco temporário + fábrica + consulta: %v", decorrido)
-	// Com -race (a CI), o SQLite em Go puro fica dezenas de vezes mais lento e o tempo depende da máquina e dos
-	// outros testes paralelos: a trava de tempo dos testes é da #371. Sem -race, o exemplo leva uns 5 ms.
-	if !comRace && decorrido > time.Second {
+	// Na CI, o tempo depende da máquina e dos outros testes paralelos: com -race (Linux), o SQLite em Go puro fica
+	// dezenas de vezes mais lento; no Windows (#459, sem -race), o disco do runner chegou a 1,4 s. Lá, a trava de tempo
+	// é a da #371. Na máquina de quem desenvolve, sem -race, o exemplo leva uns 5 ms.
+	if !comRace && os.Getenv("GITHUB_ACTIONS") == "" && decorrido > time.Second {
 		t.Errorf("o exemplo levou %v, esperado menos de 1 s", decorrido)
 	}
 }
