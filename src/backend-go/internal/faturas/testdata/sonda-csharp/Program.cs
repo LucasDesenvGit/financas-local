@@ -987,7 +987,7 @@ await PassoConferencia("créditos como receita", async s => { var r = await s.Cr
 await PassoConferencia("proventos da corretora", async s => (await s.ProventosDaCorretoraAsync(CancellationToken.None)).Select(p => new { p.Id, p.Data, p.Valor }).ToList());
 await PassoConferencia("corrigir", async s =>
 {
-    var (r, erro) = await s.CorrigirAsync(new Financas.Api.Dtos.CorrigirInvestimentosDto([3, 4, 3], [new(131, "falt11", Financas.Api.Entidades.TipoOperacao.Compra, 20.1234567m, 50m, 0.125m)], [102, 103, 141], [151], [1]), "teste", CancellationToken.None);
+    var (r, erro) = await s.CorrigirAsync(new Financas.Api.Dtos.CorrigirInvestimentosDto([3, 4, 3], [new(131, "falt11", Financas.Api.Entidades.TipoOperacao.Compra, 20.1234567m, 50m, 0.125m)], [102, 103, 141], [151, 213], [1]), "teste", CancellationToken.None);
     chaveConferencia = r?.Desfazer;
     return new { erro, tipos = r?.Tipos, compras = r?.Compras, trocos = r?.Trocos, rendimentos = r?.Rendimentos, taxas = r?.Taxas, temChave = r?.Desfazer is not null };
 });
@@ -1013,10 +1013,44 @@ var errosDeCorrigir = new (string Nome, Financas.Api.Dtos.CorrigirInvestimentosD
     ("sem cotas", new(null, [new(133, "FALT11", Financas.Api.Entidades.TipoOperacao.Compra, 0m, 1m, 0m)], null, null)),
     ("sem preço", new(null, [new(133, "FALT11", Financas.Api.Entidades.TipoOperacao.Compra, 1m, 0m, 0m)], null, null)),
     ("troco e rendimento", new(null, null, [102], [102])), ("crédito que não existe", new(null, null, [999], null)), ("débito no lugar do crédito", new(null, null, [101], null)),
-    ("nada a corrigir", new(null, null, null, null)), ("provento que as regras não mudam", new(null, null, null, [181])),
+    ("nada a corrigir", new(null, null, null, null)), ("provento que as regras não mudam", new(null, null, null, [181])), ("ativo que já é FII", new([6], null, null, null)),
 };
 foreach (var (nomeErro, dtoErro) in errosDeCorrigir)
     await PassoConferencia("erro: " + nomeErro, async s => { var (r, erro) = await s.CorrigirAsync(dtoErro, "teste", CancellationToken.None); return new { erro, tipos = r?.Tipos, temChave = r?.Desfazer is not null }; });
+// Segunda parte: o que depende de o banco mudar entre um passo e outro. O passo "mudar" não tem resultado: o teste do Go roda o mesmo SQL.
+void Mudar(string sql)
+{
+    using var c = new SqliteConnection($"Data Source={arquivoConferencia};Pooling=False");
+    c.Open();
+    using var cmd = c.CreateCommand();
+    cmd.CommandText = sql;
+    cmd.ExecuteNonQuery();
+    passosConferencia.Add(new { nome = "mudar: " + sql });
+}
+async Task<object> Corrigir(ConferenciaInvestimentosService s, Financas.Api.Dtos.CorrigirInvestimentosDto dto)
+{
+    var (r, erro) = await s.CorrigirAsync(dto, "teste", CancellationToken.None);
+    chaveConferencia = r?.Desfazer;
+    return new { erro, tipos = r?.Tipos, trocos = r?.Trocos, taxas = r?.Taxas, temChave = r?.Desfazer is not null };
+}
+await PassoConferencia("desfazer os trocos sem nada guardado", async s => await s.DesfazerTrocosAutomaticosAsync("teste", CancellationToken.None));
+await PassoConferencia("corrigir as taxas", async s => await Corrigir(s, new(null, null, null, null, [1, 14, 15])));
+Mudar("UPDATE OperacaoAtivo SET Taxas = '9.0' WHERE Id = 1; DELETE FROM OperacaoAtivo WHERE Id = 14");
+await PassoConferencia("desfazer as taxas", async s => await s.DesfazerAsync(chaveConferencia!, "teste", CancellationToken.None));
+await PassoConferencia("corrigir os créditos", async s => await Corrigir(s, new(null, null, [132, 113], null)));
+Mudar("UPDATE Transacao SET CategoriaId = 1 WHERE Id = 113; UPDATE Transacao SET CategoriaId = NULL WHERE CategoriaId = 2; DELETE FROM RegraCategorizacao; DELETE FROM Categoria WHERE Id = 2");
+await PassoConferencia("desfazer os créditos", async s => await s.DesfazerAsync(chaveConferencia!, "teste", CancellationToken.None));
+Mudar("INSERT OR REPLACE INTO Configuracao (Chave, Valor, AtualizadoEm) VALUES ('Investimentos.TrocosAutomaticos', '[{\"Id\":102,\"CategoriaId\":2,\"CategoriaManual\":false,\"Tipo\":2,\"IgnorarRelatorios\":false,\"Aplicada\":1}]', '2026-01-01 12:00:00')");
+await PassoConferencia("resumo com os trocos mudados", async s => await s.ResumoTrocosAutomaticosAsync(CancellationToken.None));
+Mudar("UPDATE Configuracao SET Valor = 'isso não é JSON' WHERE Chave = 'Investimentos.TrocosAutomaticos'");
+await PassoConferencia("resumo com o texto inválido", async s => await s.ResumoTrocosAutomaticosAsync(CancellationToken.None));
+Mudar("DELETE FROM Configuracao WHERE Chave = 'Investimentos.TrocosAutomaticos'; UPDATE Categoria SET Nome = 'Meus investimentos' WHERE Id = 3");
+await PassoConferencia("conferir com outra categoria", async s => await s.ConferirAsync(CancellationToken.None));
+Mudar("UPDATE Categoria SET Nome = 'Caixinha' WHERE Id = 3");
+await PassoConferencia("conferir sem categoria", async s => await s.ConferirAsync(CancellationToken.None));
+await PassoConferencia("troco sem categoria", async s => await Corrigir(s, new(null, null, [132], null)));
+Mudar("DELETE FROM OperacaoAtivo");
+await PassoConferencia("conferir sem operações", async s => await s.ConferirAsync(CancellationToken.None));
 File.Delete(arquivoConferencia);
 Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "conferencia.json"), new Dictionary<string, object>
 {

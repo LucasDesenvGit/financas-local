@@ -71,3 +71,52 @@ INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, T
     (182, 1, '2026-04-20', 'Fundo de Investimentos', NULL, '31.0', 2, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (191, 1, '2026-03-02', 'Venda de Renda Variável', NULL, '-1.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (192, 1, '2026-03-02', 'Pix', 'Compra de renda variavel', '-1.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00');
+
+-- Segunda leva, em fevereiro, longe do resto: a ordem com a segunda operação maior, a operação sem custo, dois débitos no dia
+-- com mais de um crédito de sobra, dois débitos para uma ordem só, vendas fora de ordem e sem valor, o nome do fundo na
+-- corretora, a data sem fechamento, a corretora antes dos débitos e o ativo fora da carteira.
+INSERT INTO Ativo (Id, Ticker, Nome, Tipo, Moeda, PrecoManual, CriadoEm) VALUES
+    (12, 'GGGG3', 'Duas ordens no dia', 2, 'BRL', 0, '2025-01-01 00:00:00'),
+    (13, 'HHHH3', 'Sem custo', 2, 'BRL', 0, '2025-01-01 00:00:00'),
+    (14, 'IIII3', 'Dois débitos, A', 2, 'BRL', 0, '2025-01-01 00:00:00'),
+    (15, 'JJJJ3', 'Dois débitos, B', 2, 'BRL', 0, '2025-01-01 00:00:00'),
+    (16, 'LLLL3', 'Uma ordem, dois débitos', 2, 'BRL', 0, '2025-01-01 00:00:00'),
+    (17, 'KKKK3', 'Vendas', 2, 'BRL', 0, '2025-01-01 00:00:00'),
+    (18, 'SEMF11', 'Sem fechamento', 1, 'BRL', 0, '2025-01-01 00:00:00'),
+    (19, 'NDEB11', 'Sem débito', 1, 'BRL', 0, '2025-01-01 00:00:00');
+
+INSERT INTO OperacaoAtivo (Id, AtivoId, Tipo, Data, Quantidade, PrecoUnitario, Taxas, Cambio, Origem, TransacaoId, CriadoEm) VALUES
+    (14, 12, 1, '2026-02-02', '5.0', '10.0', '0.0', '1.0', 1, NULL, '2026-02-02 12:00:00'),
+    (15, 12, 1, '2026-02-02', '15.0', '10.0', '0.0', '1.0', 1, NULL, '2026-02-02 12:00:00'),
+    (16, 13, 1, '2026-02-09', '1.0', '0.0', '0.0', '1.0', 1, NULL, '2026-02-09 12:00:00'),
+    (17, 14, 1, '2026-02-16', '10.0', '10.0', '0.0', '1.0', 1, NULL, '2026-02-16 12:00:00'),
+    (18, 15, 1, '2026-02-16', '10.0', '20.0', '0.0', '1.0', 1, NULL, '2026-02-16 12:00:00'),
+    (19, 16, 1, '2026-02-23', '10.0', '10.0', '0.0', '1.0', 1, NULL, '2026-02-23 12:00:00'),
+    (20, 17, 2, '2026-02-10', '1.0', '10.0', '0.0', '1.0', 1, NULL, '2026-02-10 12:00:00'),
+    (21, 17, 2, '2026-02-04', '1.0', '20.0', '0.0', '1.0', 1, NULL, '2026-02-04 12:00:00'),
+    (22, 17, 2, '2026-02-12', '1.0', '0.0', '0.0', '1.0', 1, NULL, '2026-02-12 12:00:00'),
+    (23, 17, 1, '2026-01-05', '10.0', '10.0', '0.0', '1.0', 1, NULL, '2026-01-05 12:00:00'),
+    (24, 18, 1, '2026-01-05', '1.0', '10.0', '0.0', '1.0', 1, NULL, '2026-01-05 12:00:00'),
+    (25, 19, 1, '2026-01-05', '1.0', '10.0', '0.0', '1.0', 1, NULL, '2026-01-05 12:00:00');
+
+INSERT INTO Investimento (ConexaoBancariaId, PluggyInvestmentId, Nome, Tipo, Subtipo, Codigo, Emissor, Moeda, Saldo, Quantidade, AtualizadoEm) VALUES
+    (1, 'i-7', 'Fundo de Investimento Imobiliário H', 'EQUITY', 'STOCK', 'HHHH3', NULL, 'BRL', '100.0', '1.0', '2026-05-20 12:00:00'),
+    (1, 'i-8', 'Sem fechamento', 'EQUITY', 'STOCK', 'SEMF11', NULL, 'BRL', '100.0', '3.0', '2026-05-20 12:00:00'),
+    (1, 'i-9', 'Sem débito', 'EQUITY', 'STOCK', 'NDEB11', NULL, 'BRL', '100.0', '5.0', '2025-12-01 12:00:00'),
+    (1, 'i-10', 'Fora da carteira', 'EQUITY', 'STOCK', 'ZZZZ11', NULL, 'BRL', '100.0', '5.0', '2026-05-20 12:00:00');
+
+INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, Tipo, Status, CategoriaId, CategoriaManual, IgnorarRelatorios, Emergencia, DescricaoRevisada, DescricaoManual, CriadoEm, AtualizadoEm) VALUES
+    (201, 1, '2026-02-02', 'Compra de Renda Variável', NULL, '-204.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (202, 1, '2026-02-03', 'Valor recebido de Investimentos', NULL, '3.9', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (203, 1, '2026-02-09', 'Compra de Renda Variável', NULL, '-50.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (204, 1, '2026-02-16', 'Compra de Renda Variável', NULL, '-100.5', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (205, 1, '2026-02-16', 'Compra de Renda Variável', NULL, '-201.0', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (206, 1, '2026-02-17', 'Valor recebido de Investimentos', NULL, '0.2', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (207, 1, '2026-02-18', 'Valor recebido de Investimentos', NULL, '0.1', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (208, 1, '2026-02-18', 'Valor recebido de Investimentos', NULL, '0.1', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (209, 1, '2026-02-19', 'Valor recebido de Investimentos', NULL, '0.05', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (210, 1, '2026-02-23', 'Compra de Renda Variável', NULL, '-100.5', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (211, 1, '2026-02-23', 'Compra de Renda Variável', NULL, '-100.5', 1, 1, NULL, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (212, 1, '2026-02-05', 'Valor recebido de Investimentos', NULL, '20.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (213, 1, '2026-04-21', 'Valor recebido de Investimentos', 'Valor recebido de Investimentos - original', '13.0', 3, 1, 3, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    (215, 1, '2026-02-11', 'Valor recebido de Investimentos', NULL, '10.02', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00');

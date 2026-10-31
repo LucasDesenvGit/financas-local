@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
@@ -69,7 +70,7 @@ func TestConferenciaIgualAoCSharp(t *testing.T) {
 	if err := json.Unmarshal(dados, &g); err != nil {
 		t.Fatal(err)
 	}
-	if len(g.Passos) != 30 {
+	if len(g.Passos) < 40 {
 		t.Fatalf("%d passos: a sonda mudou?", len(g.Passos))
 	}
 	db := testeapoio.NovoBancoVazio(t)
@@ -123,7 +124,7 @@ func TestConferenciaIgualAoCSharp(t *testing.T) {
 		"corrigir": func(ctx context.Context) (any, error) {
 			compra := ItemDoExtrato{TransacaoId: 131, Ticker: "falt11", Tipo: 1, Quantidade: valor(t, "20.1234567"), PrecoUnitario: valor(t, "50"), Taxas: valor(t, "0.125")}
 			resultado, mensagem, err := s.Corrigir(ctx, pedido, EntradaDaCorrecao{AtivosParaFii: []int64{3, 4, 3}, Compras: []ItemDoExtrato{compra},
-				Trocos: []int64{102, 103, 141}, Rendimentos: []int64{151}, Taxas: []int64{1}}, &login)
+				Trocos: []int64{102, 103, 141}, Rendimentos: []int64{151, 213}, Taxas: []int64{1}}, &login)
 			if err != nil || mensagem != "" {
 				t.Fatalf("corrigir: %v %q", err, mensagem)
 			}
@@ -182,12 +183,53 @@ func TestConferenciaIgualAoCSharp(t *testing.T) {
 			return corrigir(ctx, EntradaDaCorrecao{Rendimentos: []int64{181}})
 		},
 	}
+	guardarChave := func(ctx context.Context, e EntradaDaCorrecao) (any, error) {
+		resultado, mensagem, err := s.Corrigir(ctx, pedido, e, &login)
+		if err != nil {
+			return nil, err
+		}
+		saida := map[string]any{"erro": nil, "tipos": nil, "trocos": nil, "taxas": nil, "temChave": false}
+		if mensagem != "" {
+			saida["erro"] = mensagem
+		}
+		if resultado != nil {
+			chave = resultado.Desfazer
+			saida["tipos"], saida["trocos"], saida["taxas"], saida["temChave"] = resultado.Tipos, resultado.Trocos, resultado.Taxas, chave != nil
+		}
+		return saida, nil
+	}
+	acoes["corrigir as taxas"] = func(ctx context.Context) (any, error) {
+		return guardarChave(ctx, EntradaDaCorrecao{Taxas: []int64{1, 14, 15}})
+	}
+	acoes["corrigir os créditos"] = func(ctx context.Context) (any, error) {
+		return guardarChave(ctx, EntradaDaCorrecao{Trocos: []int64{132, 113}})
+	}
+	acoes["troco sem categoria"] = func(ctx context.Context) (any, error) {
+		return guardarChave(ctx, EntradaDaCorrecao{Trocos: []int64{132}})
+	}
+	acoes["erro: ativo que já é FII"] = func(ctx context.Context) (any, error) {
+		return corrigir(ctx, EntradaDaCorrecao{AtivosParaFii: []int64{6}})
+	}
+	acoes["desfazer as taxas"] = acoes["desfazer"]
+	acoes["desfazer os créditos"] = acoes["desfazer"]
+	acoes["desfazer os trocos sem nada guardado"] = acoes["desfazer os trocos"]
+	acoes["resumo com os trocos mudados"] = acoes["resumo dos trocos"]
+	acoes["resumo com o texto inválido"] = acoes["resumo dos trocos"]
+	acoes["conferir com outra categoria"] = acoes["conferir"]
+	acoes["conferir sem categoria"] = acoes["conferir"]
+	acoes["conferir sem operações"] = acoes["conferir"]
 	acoes["conferir depois de corrigir"] = acoes["conferir"]
 	acoes["desfazer de novo"] = acoes["desfazer"]
 	acoes["resumo depois de desfazer"] = acoes["resumo dos trocos"]
 	acoes["classificar de novo"] = acoes["classificar os trocos"]
 
 	for _, p := range g.Passos {
+		if sql, ok := strings.CutPrefix(p.Nome, "mudar: "); ok {
+			if _, err := db.Exec(sql); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
 		if !t.Run(p.Nome, func(t *testing.T) {
 			acao, ok := acoes[p.Nome]
 			if !ok {

@@ -13,7 +13,7 @@ São *characterization tests*: não dizem o que o sistema deveria fazer, congela
 | `assuntos-no-go.txt` | os assuntos com código Go que a rodada contra o Go confere (`--go`, e a CI), um por linha |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (63), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `11-investimentos` (121), `12-conferencia-investimentos` (41), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (63), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `11-investimentos` (121), `12-conferencia-investimentos` (42), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
 
 ## Rodar contra o .NET
 
