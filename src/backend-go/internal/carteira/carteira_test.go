@@ -88,13 +88,14 @@ func (cofreFalso) Decifrar(_, gravado string) (string, error) { return gravado, 
 
 // cotacoesFalsas anotam o que foi pedido.
 type cotacoesFalsas struct {
-	resultado cotacoes.Resultado
-	erro      error
-	pedidos   *[][]int64
+	resultado       cotacoes.Resultado
+	erro            error
+	erroFechamentos error
+	pedidos         *[][]int64
 }
 
 func (c cotacoesFalsas) FechamentosDiarios(context.Context, string, tipos.Data, tipos.Data) ([]cotacoes.Fechamento, error) {
-	return nil, nil
+	return nil, c.erroFechamentos
 }
 
 func (c cotacoesFalsas) Atualizar(_ context.Context, somente []int64) (cotacoes.Resultado, error) {
