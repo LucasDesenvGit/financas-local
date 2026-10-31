@@ -50,10 +50,10 @@ type estadoAnterior struct {
 type tipoAnterior struct{ ativo, tipo int64 }
 
 type transacaoAnterior struct {
-	id                  int64
-	categoria, aplicada *int64
-	manual, ignorar     bool
-	tipo                int64
+	id, aplicada    int64
+	categoria       *int64
+	manual, ignorar bool
+	tipo            int64
 }
 
 type taxaAnterior struct {
@@ -269,7 +269,7 @@ func (s *Servico) corrigirCreditos(ctx context.Context, trocos, rendimentos []in
 		if nova == nil || (t.CategoriaId != nil && *t.CategoriaId == *nova && t.CategoriaManual == ehTroco) {
 			continue // as regras não dizem que é rendimento, ou já está certo
 		}
-		c.anterior.transacoes = append(c.anterior.transacoes, transacaoAnterior{t.Id, t.CategoriaId, nova, t.CategoriaManual, t.IgnorarRelatorios, t.Tipo})
+		c.anterior.transacoes = append(c.anterior.transacoes, transacaoAnterior{t.Id, *nova, t.CategoriaId, t.CategoriaManual, t.IgnorarRelatorios, t.Tipo})
 		t.CategoriaId, t.CategoriaManual, t.AtualizadoEm = nova, ehTroco, agora // o provento volta para a categoria automática
 		rs.AplicarTipo(t)
 		c.mudadas = append(c.mudadas, t)
@@ -403,10 +403,6 @@ func categoriasExistentes(ctx context.Context, tx *sql.Tx) (map[int64]bool, erro
 	return ids, linhas.Err()
 }
 
-func mesmaCategoria(a, b *int64) bool {
-	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
-}
-
 // voltarTransacoes devolve cada transação ao que era, se ela ainda está na categoria aplicada. A categoria que não existe
 // mais fica vazia.
 func (s *Servico) voltarTransacoes(ctx context.Context, tx *sql.Tx, lista []transacaoAnterior, manual func(transacaoAnterior) bool) (int, error) {
@@ -430,7 +426,7 @@ func (s *Servico) voltarTransacoes(ctx context.Context, tx *sql.Tx, lista []tran
 	var mudadas []*transacoes.Transacao
 	for _, a := range lista {
 		i := slices.IndexFunc(atuais, func(t *transacoes.Transacao) bool { return t.Id == a.id })
-		if i < 0 || !mesmaCategoria(atuais[i].CategoriaId, a.aplicada) {
+		if i < 0 || atuais[i].CategoriaId == nil || *atuais[i].CategoriaId != a.aplicada {
 			continue
 		}
 		t := atuais[i]
@@ -458,19 +454,17 @@ func (s *Servico) Desfazer(ctx context.Context, r *http.Request, chave string, l
 		if err != nil {
 			return err
 		}
-		desfeitas += n
-		if len(anterior.operacoesCriadas) > 0 {
-			em, argumentos := listaDeIds(anterior.operacoesCriadas)
-			res, err := tx.ExecContext(ctx, `DELETE FROM "OperacaoAtivo" WHERE "Id" IN `+em, argumentos...)
-			if err != nil {
-				return fmt.Errorf("apagar as compras: %w", err)
-			}
-			apagadas, err := res.RowsAffected()
-			if err != nil {
-				return err
-			}
-			desfeitas += int(apagadas)
+		desfeitas = n
+		em, argumentos := listaDeIds(anterior.operacoesCriadas)
+		res, err := tx.ExecContext(ctx, `DELETE FROM "OperacaoAtivo" WHERE "Id" IN `+em, argumentos...)
+		if err != nil {
+			return fmt.Errorf("apagar as compras: %w", err)
 		}
+		apagadas, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		desfeitas += int(apagadas)
 		if n, err = desfazerTaxas(ctx, tx, anterior.taxas); err != nil {
 			return err
 		}
@@ -541,9 +535,7 @@ func (s *Servico) ClassificarTrocosSemDuvida(ctx context.Context) (int, error) {
 		t.CategoriaId, t.CategoriaManual, t.AtualizadoEm = &categoria.Id, true, agora // como na conferência: as regras não trocam de volta
 		rs.AplicarTipo(t)
 	}
-	if n := len(guardados) - maximoTrocosGuardados; n > 0 {
-		guardados = guardados[n:]
-	}
+	guardados = guardados[max(0, len(guardados)-maximoTrocosGuardados):]
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
 		if err := transacoes.GravarTodas(ctx, tx, lista); err != nil {
 			return err
@@ -572,7 +564,7 @@ type TrocosAutomaticosDto struct {
 // para o aviso do Painel (#80). nil se não houver.
 func (s *Servico) ResumoTrocosAutomaticos(ctx context.Context) (*TrocosAutomaticosDto, error) {
 	guardados, err := s.trocosGuardados(ctx)
-	if err != nil || len(guardados) == 0 {
+	if err != nil {
 		return nil, err
 	}
 	ids := make([]int64, len(guardados))
@@ -613,8 +605,7 @@ func (s *Servico) DesfazerTrocosAutomaticos(ctx context.Context, r *http.Request
 	}
 	lista := make([]transacaoAnterior, len(guardados))
 	for i, g := range guardados {
-		aplicada := g.Aplicada
-		lista[i] = transacaoAnterior{g.Id, g.CategoriaId, &aplicada, true, g.IgnorarRelatorios, g.Tipo}
+		lista[i] = transacaoAnterior{g.Id, g.Aplicada, g.CategoriaId, true, g.IgnorarRelatorios, g.Tipo}
 	}
 	desfeitos := 0
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {

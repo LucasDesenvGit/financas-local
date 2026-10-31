@@ -202,10 +202,13 @@ func TestConferenciaIgualAoCSharp(t *testing.T) {
 		return guardarChave(ctx, EntradaDaCorrecao{Taxas: []int64{1, 14, 15}})
 	}
 	acoes["corrigir os créditos"] = func(ctx context.Context) (any, error) {
-		return guardarChave(ctx, EntradaDaCorrecao{Trocos: []int64{132, 113}})
+		return guardarChave(ctx, EntradaDaCorrecao{Trocos: []int64{122, 151, 132, 113}})
 	}
 	acoes["troco sem categoria"] = func(ctx context.Context) (any, error) {
 		return guardarChave(ctx, EntradaDaCorrecao{Trocos: []int64{132}})
+	}
+	acoes["rendimento sem categoria do troco"] = func(ctx context.Context) (any, error) {
+		return guardarChave(ctx, EntradaDaCorrecao{Rendimentos: []int64{213}})
 	}
 	acoes["erro: ativo que já é FII"] = func(ctx context.Context) (any, error) {
 		return corrigir(ctx, EntradaDaCorrecao{AtivosParaFii: []int64{6}})

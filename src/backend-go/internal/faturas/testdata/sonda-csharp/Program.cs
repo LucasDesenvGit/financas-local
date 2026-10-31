@@ -1037,8 +1037,8 @@ await PassoConferencia("desfazer os trocos sem nada guardado", async s => await 
 await PassoConferencia("corrigir as taxas", async s => await Corrigir(s, new(null, null, null, null, [1, 14, 15])));
 Mudar("UPDATE OperacaoAtivo SET Taxas = '9.0' WHERE Id = 1; DELETE FROM OperacaoAtivo WHERE Id = 14");
 await PassoConferencia("desfazer as taxas", async s => await s.DesfazerAsync(chaveConferencia!, "teste", CancellationToken.None));
-await PassoConferencia("corrigir os créditos", async s => await Corrigir(s, new(null, null, [132, 113], null)));
-Mudar("UPDATE Transacao SET CategoriaId = 1 WHERE Id = 113; UPDATE Transacao SET CategoriaId = NULL WHERE CategoriaId = 2; DELETE FROM RegraCategorizacao; DELETE FROM Categoria WHERE Id = 2");
+await PassoConferencia("corrigir os créditos", async s => await Corrigir(s, new(null, null, [122, 151, 132, 113], null)));
+Mudar("UPDATE Transacao SET CategoriaId = NULL WHERE Id = 151; UPDATE Transacao SET CategoriaId = 1 WHERE Id = 113; UPDATE Transacao SET CategoriaId = NULL WHERE CategoriaId = 2; DELETE FROM RegraCategorizacao; DELETE FROM Categoria WHERE Id = 2");
 await PassoConferencia("desfazer os créditos", async s => await s.DesfazerAsync(chaveConferencia!, "teste", CancellationToken.None));
 Mudar("INSERT OR REPLACE INTO Configuracao (Chave, Valor, AtualizadoEm) VALUES ('Investimentos.TrocosAutomaticos', '[{\"Id\":102,\"CategoriaId\":2,\"CategoriaManual\":false,\"Tipo\":2,\"IgnorarRelatorios\":false,\"Aplicada\":1}]', '2026-01-01 12:00:00')");
 await PassoConferencia("resumo com os trocos mudados", async s => await s.ResumoTrocosAutomaticosAsync(CancellationToken.None));
@@ -1049,6 +1049,7 @@ await PassoConferencia("conferir com outra categoria", async s => await s.Confer
 Mudar("UPDATE Categoria SET Nome = 'Caixinha' WHERE Id = 3");
 await PassoConferencia("conferir sem categoria", async s => await s.ConferirAsync(CancellationToken.None));
 await PassoConferencia("troco sem categoria", async s => await Corrigir(s, new(null, null, [132], null)));
+await PassoConferencia("rendimento sem categoria do troco", async s => await Corrigir(s, new(null, null, null, [213])));
 Mudar("DELETE FROM OperacaoAtivo");
 await PassoConferencia("conferir sem operações", async s => await s.ConferirAsync(CancellationToken.None));
 File.Delete(arquivoConferencia);
