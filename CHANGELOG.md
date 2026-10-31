@@ -2,6 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.22] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Conferir com o banco passa a ser atendido pelo Go** (#445; épico #70). Nada muda para quem usa: a tela é a mesma e as respostas são conferidas contra as do .NET. Para quem desenvolve: o pacote `internal/conferenciabanco` traz o `ConferenciaBancoService` do C#, e `/api/conferencia-banco` entra no assunto `cadastros` de `Go:Prefixos`. Para voltar ao .NET, basta tirar o prefixo.
+
+## [2.50.21] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **O painel dos FIIs em Go, ainda desligado** (#82, parte 7; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ter o `FiiService` do C# e `GET /api/carteira/fiis`: a renda de cada fundo, as compras comparadas com hoje, os proventos por mês, a evolução contra Selic e IFIX e o crédito ligado ao fundo, conferidos contra o C# de verdade (`testdata/fiis.json`). O porte achou uma diferença em `tipos.Dividir`: o quociente que arredonda para zero é o `0` sem casas no decimal do .NET, e o Go devolvia `0.00`.
+
 ## [2.50.20] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação

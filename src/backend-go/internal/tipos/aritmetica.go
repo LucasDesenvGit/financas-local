@@ -33,12 +33,14 @@ var dez = big.NewInt(10)
 //   - quando ela não basta, a divisão continua até a maior escala, até 28, em que o número cabe em 96 bits
 //     (1 / 3 = 0.3333333333333333333333333333; 22 / 7 tem 29 dígitos), com a última casa arredondada pelo método
 //     bancário (5 / 2e28 = 2e-28);
-//   - os zeros à direita saem, mas só até a escala natural (10 / 4 = 2.5; 123.4500 / 1.5 = 82.300).
+//   - se a divisão termina na escala natural, os zeros dela ficam (10.00 / 4 = 2.50; 123.4500 / 1.5 = 82.300); se não
+//     termina, os zeros à direita saem todos, e o quociente que arredonda para zero é o 0 sem casas (1E-26 / 699.94 = 0).
 func Dividir(a, b Decimal) (Decimal, error) {
 	if b.v.IsZero() {
 		return Decimal{}, ErrDivisaoPorZero
 	}
 	natural := max(int(a.Escala())-int(b.Escala()), 0)
+	piso := 0
 
 	// a / b = (ma / 10^sa) / (mb / 10^sb) = (ma * 10^sb) / (mb * 10^sa).
 	num := new(big.Int).Mul(a.v.Coefficient(), potencia(int(-b.v.Exponent())))
@@ -48,14 +50,17 @@ func Dividir(a, b Decimal) (Decimal, error) {
 		return Decimal{}, errors.New("decimal com expoente positivo")
 	}
 
+	if new(big.Int).Rem(new(big.Int).Mul(num, potencia(natural)), den).Sign() == 0 {
+		piso = natural
+	}
 	for escala := casasMaximas; escala >= 0; escala-- {
 		m := dividirArredondandoAoPar(new(big.Int).Mul(num, potencia(escala)), den)
 		if new(big.Int).Abs(m).Cmp(limite96) >= 0 {
 			continue // não cabe: uma casa a menos
 		}
-		// Tira os zeros à direita até a escala natural.
+		// Tira os zeros à direita.
 		resto := new(big.Int)
-		for escala > natural {
+		for escala > piso {
 			q, r := new(big.Int).QuoRem(m, dez, resto)
 			if r.Sign() != 0 {
 				break

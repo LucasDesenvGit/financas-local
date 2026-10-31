@@ -1105,6 +1105,66 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "conferenciabanco", "testdata"
     ["hoje"] = new[] { hojeConfBanco.ToString("yyyy-MM-dd") }, ["passos"] = passosConfBanco,
 }));
 
+// FIIs (#82): o FiiService de verdade sobre o cenário de testdata/fiis-cenario.sql, com passos que mudam o banco entre si.
+var arquivoFiis = Path.Combine(Path.GetTempPath(), $"sonda-fiis-{Guid.NewGuid():N}.db");
+using (var c = new SqliteConnection($"Data Source={arquivoFiis};Pooling=False"))
+{
+    c.Open();
+    foreach (var f in new[] { Path.Combine(raiz, "banco", "01-estrutura.sql"), Path.Combine(raiz, "src", "backend-go", "internal", "carteira", "testdata", "fiis-cenario.sql") })
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = File.ReadAllText(f);
+        cmd.ExecuteNonQuery();
+    }
+}
+var passosFiis = new List<object>();
+var hojeFiis = Relogio.Hoje;
+var diasDaSelicFiis = new List<Financas.Api.Entidades.TaxaSelicDiaria>();
+for (var dia = new DateOnly(2024, 1, 2); dia < hojeFiis; dia = dia.AddDays(1))
+    if (dia.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday))
+        diasDaSelicFiis.Add(new Financas.Api.Entidades.TaxaSelicDiaria { Data = dia, Taxa = dia.Day % 2 == 0 ? 0.040168m : 0.052531m });
+var serieFiis = new SerieSelic(diasDaSelicFiis);
+async Task PassoFiis(string nome)
+{
+    using var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>().UseSqlite($"Data Source={arquivoFiis};Pooling=False").Options);
+    var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+    var config = new ConfiguracaoService(db, new EphemeralDataProtectionProvider());
+    var cotacoes = new CotacaoService(new FabricaFalsa(respostasConferencia), db, config, new CambioService(semRede, db, config, NullLogger<CambioService>.Instance), NullLogger<CotacaoService>.Instance);
+    var extrato = new ExtratoCarteiraService(db, cotacoes);
+    var categorizacao = new CategorizacaoService(db);
+    var conferencia = new ConferenciaInvestimentosService(db, cotacoes, categorizacao, new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
+        new AuditoriaService(db, new Microsoft.AspNetCore.Http.HttpContextAccessor()), config);
+    var painel = await new FiiService(db, extrato, conferencia).MontarAsync(serieFiis, CancellationToken.None);
+    passosFiis.Add(new { nome, resultado = JsonSerializer.SerializeToElement(painel, webConferencia) });
+}
+void MudarFiis(string sql)
+{
+    using var c = new SqliteConnection($"Data Source={arquivoFiis};Pooling=False");
+    c.Open();
+    using var cmd = c.CreateCommand();
+    cmd.CommandText = sql;
+    cmd.ExecuteNonQuery();
+    passosFiis.Add(new { nome = "mudar: " + sql });
+}
+await PassoFiis("painel");
+MudarFiis("DELETE FROM IndiceMensal WHERE Mes = '2011-10-01'");
+await PassoFiis("sem a base do IFIX");
+MudarFiis("DELETE FROM OperacaoAtivo WHERE AtivoId = 8; INSERT INTO IndiceMensal (Codigo, Mes, Fechamento) VALUES ('IFIX', '2025-02-01', '3100.0'), ('IFIX', '2025-03-01', '3200.0')");
+await PassoFiis("o IFIX do mês anterior");
+MudarFiis("DELETE FROM IndiceMensal WHERE Mes = '2025-02-01'");
+await PassoFiis("o IFIX do primeiro mês");
+MudarFiis("UPDATE OperacaoAtivo SET Data = '2026-03-02' WHERE Data < '2026-03-02'");
+await PassoFiis("a primeira compra há menos de um ano");
+MudarFiis("DELETE FROM OperacaoAtivo WHERE AtivoId <> 1; UPDATE Ativo SET PrecoAtual = NULL; UPDATE PrecoMensalAtivo SET Fechamento = '0.001' WHERE AtivoId = 1 AND Mes = '2026-03-01'");
+await PassoFiis("retorno abaixo do piso");
+MudarFiis("DELETE FROM OperacaoAtivo");
+await PassoFiis("sem fundos");
+File.Delete(arquivoFiis);
+Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "fiis.json"), new Dictionary<string, object>
+{
+    ["hoje"] = new[] { hojeFiis.ToString("yyyy-MM-dd") }, ["passos"] = passosFiis,
+}));
+
 /// <summary>Conta as falhas de consulta que o CotacaoService registra.</summary>
 sealed class LogContado : Microsoft.Extensions.Logging.ILogger<CotacaoService>
 {

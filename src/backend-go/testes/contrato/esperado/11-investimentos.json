@@ -2879,5 +2879,667 @@
         "variacaoPreco": 5.46
       }
     ]
+  },
+  {
+    "nome": "painel dos FIIs",
+    "requisicao": "GET /api/carteira/fiis",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "evolucao": [
+        {
+          "ano": 2025,
+          "aplicado": 1827.81,
+          "mes": 11,
+          "valorMercado": 1827.81
+        },
+        {
+          "ano": 2025,
+          "aplicado": 1827.81,
+          "mes": 12,
+          "valorMercado": 1827.81
+        },
+        {
+          "ano": 2026,
+          "aplicado": 1827.81,
+          "mes": 1,
+          "valorMercado": 1827.81
+        },
+        {
+          "ano": 2026,
+          "aplicado": 2608.01,
+          "mes": 2,
+          "valorMercado": 2608.01
+        },
+        {
+          "ano": 2026,
+          "aplicado": 2608.01,
+          "mes": 3,
+          "valorMercado": 2608.01
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 4,
+          "valorMercado": 4598.01
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 5,
+          "valorMercado": 4598.01
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 6,
+          "valorMercado": 4598.01
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 7,
+          "valorMercado": 4570.60
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 8,
+          "valorMercado": 4582.48
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 9,
+          "valorMercado": 4595.35
+        },
+        {
+          "ano": 2026,
+          "aplicado": 4598.01,
+          "mes": 10,
+          "valorMercado": 4632.28
+        }
+      ],
+      "fiis": [
+        {
+          "custo": 2608.01,
+          "dataComUltimo": "2026-09-30",
+          "dy12Meses": 2.12,
+          "dyMensal": 0.73,
+          "fonteCotacao": "yahoo",
+          "id": 1,
+          "nome": "CSHG Logística FII",
+          "pesoCarteira": 56.39,
+          "precoAtual": 158.32,
+          "precoManual": false,
+          "precoMedio": 158.0609,
+          "proventos12Meses": 55.28,
+          "proventosTotal": 55.28,
+          "quantidade": 16.5,
+          "recebidoExtrato12Meses": 0,
+          "rendaMensalEstimada": 18.98,
+          "rendimentosPorCota12Meses": 3.35,
+          "segmento": "Logística",
+          "segmentoSugerido": false,
+          "ticker": "HGLG11",
+          "ultimoRendimento": 1.15,
+          "valorMercado": 2612.28,
+          "valorizacao": 4.27,
+          "valorizacaoPercentual": 0.16,
+          "variacaoDia": 0.27,
+          "yieldOnCost12Meses": 2.12,
+          "yieldOnCostMensal": 0.73
+        },
+        {
+          "custo": 1990.00,
+          "dataComUltimo": "2026-09-30",
+          "dy12Meses": 0.91,
+          "dyMensal": 0.91,
+          "fonteCotacao": null,
+          "id": 5,
+          "nome": "XP Malls FII",
+          "pesoCarteira": 43.61,
+          "precoAtual": 101.0,
+          "precoManual": true,
+          "precoMedio": 99.50,
+          "proventos12Meses": 18.40,
+          "proventosTotal": 18.40,
+          "quantidade": 20.0,
+          "recebidoExtrato12Meses": 0,
+          "rendaMensalEstimada": 18.40,
+          "rendimentosPorCota12Meses": 0.92,
+          "segmento": "Shoppings",
+          "segmentoSugerido": false,
+          "ticker": "XPML11",
+          "ultimoRendimento": 0.92,
+          "valorMercado": 2020.00,
+          "valorizacao": 30.00,
+          "valorizacaoPercentual": 1.51,
+          "variacaoDia": null,
+          "yieldOnCost12Meses": 0.92,
+          "yieldOnCostMensal": 0.92
+        }
+      ],
+      "historicos": [
+        {
+          "pontos": [
+            {
+              "ano": 2026,
+              "fechamento": 156.4,
+              "mes": 7
+            },
+            {
+              "ano": 2026,
+              "fechamento": 157.12,
+              "mes": 8
+            },
+            {
+              "ano": 2026,
+              "fechamento": 157.9,
+              "mes": 9
+            },
+            {
+              "ano": 2026,
+              "fechamento": 158.32,
+              "mes": 10
+            }
+          ],
+          "ticker": "HGLG11"
+        },
+        {
+          "pontos": [
+            {
+              "ano": 2026,
+              "fechamento": 101.0,
+              "mes": 10
+            }
+          ],
+          "ticker": "XPML11"
+        }
+      ],
+      "lotes": [
+        {
+          "ativoId": 5,
+          "data": "2026-04-01",
+          "dyAtual12Meses": 0.91,
+          "dyNaCompra": null,
+          "operacaoId": 7,
+          "origem": 1,
+          "precoAtual": 101.0,
+          "precoPago": 99.5,
+          "proventosRecebidosLote": 18.40,
+          "quantidade": 20.0,
+          "rendaMensalLote": 18.40,
+          "ticker": "XPML11",
+          "valorAtual": 2020.00,
+          "valorPago": 1990.00,
+          "variacaoPercentual": 1.51,
+          "yieldOnCost12Meses": 0.92
+        },
+        {
+          "ativoId": 1,
+          "data": "2026-02-10",
+          "dyAtual12Meses": 2.12,
+          "dyNaCompra": null,
+          "operacaoId": 2,
+          "origem": 1,
+          "precoAtual": 158.32,
+          "precoPago": 155.8,
+          "proventosRecebidosLote": 16.75,
+          "quantidade": 5.0,
+          "rendaMensalLote": 5.75,
+          "ticker": "HGLG11",
+          "valorAtual": 791.60,
+          "valorPago": 780.20,
+          "variacaoPercentual": 1.62,
+          "yieldOnCost12Meses": 2.15
+        },
+        {
+          "ativoId": 1,
+          "data": "2025-11-10",
+          "dyAtual12Meses": 2.12,
+          "dyNaCompra": null,
+          "operacaoId": 1,
+          "origem": 1,
+          "precoAtual": 158.32,
+          "precoPago": 160.25,
+          "proventosRecebidosLote": 33.50,
+          "quantidade": 10.0,
+          "rendaMensalLote": 11.50,
+          "ticker": "HGLG11",
+          "valorAtual": 1583.20,
+          "valorPago": 1602.50,
+          "variacaoPercentual": -1.20,
+          "yieldOnCost12Meses": 2.09
+        },
+        {
+          "ativoId": 1,
+          "data": "2025-11-03",
+          "dyAtual12Meses": 2.12,
+          "dyNaCompra": null,
+          "operacaoId": 12,
+          "origem": 3,
+          "precoAtual": 158.32,
+          "precoPago": 150.123457,
+          "proventosRecebidosLote": 5.02,
+          "quantidade": 1.5,
+          "rendaMensalLote": 1.72,
+          "ticker": "HGLG11",
+          "valorAtual": 237.48,
+          "valorPago": 225.31,
+          "variacaoPercentual": 5.46,
+          "yieldOnCost12Meses": 2.23
+        }
+      ],
+      "mesAMes": [
+        {
+          "ano": 2025,
+          "aportes": 1827.69,
+          "idsAportes": [
+            1
+          ],
+          "idsRendimentos": [],
+          "mes": 11,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 1827.81,
+          "subscricoes": 0,
+          "valorizacao": 0.12
+        },
+        {
+          "ano": 2025,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 12,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 1827.81,
+          "subscricoes": 0,
+          "valorizacao": 0.00
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 1,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 1827.81,
+          "subscricoes": 0,
+          "valorizacao": 0.00
+        },
+        {
+          "ano": 2026,
+          "aportes": 779.00,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 2,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 2608.01,
+          "subscricoes": 0,
+          "valorizacao": 1.20
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 3,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 2608.01,
+          "subscricoes": 0,
+          "valorizacao": 0.00
+        },
+        {
+          "ano": 2026,
+          "aportes": 1990.00,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 4,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4598.01,
+          "subscricoes": 0,
+          "valorizacao": 0.00
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 5,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4598.01,
+          "subscricoes": 0,
+          "valorizacao": 0.00
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 6,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4598.01,
+          "subscricoes": 0,
+          "valorizacao": 0.00
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 7,
+          "porFii": [],
+          "rendimentosEstimados": 18.15,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4570.60,
+          "subscricoes": 0,
+          "valorizacao": -27.41
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 8,
+          "porFii": [],
+          "rendimentosEstimados": 18.15,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4582.48,
+          "subscricoes": 0,
+          "valorizacao": 11.88
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 9,
+          "porFii": [],
+          "rendimentosEstimados": 37.38,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4595.35,
+          "subscricoes": 0,
+          "valorizacao": 12.87
+        },
+        {
+          "ano": 2026,
+          "aportes": 0,
+          "idsAportes": [],
+          "idsRendimentos": [],
+          "mes": 10,
+          "porFii": [],
+          "rendimentosEstimados": 0,
+          "rendimentosRecebidos": 0,
+          "resgates": 0,
+          "saldo": 4632.28,
+          "subscricoes": 0,
+          "valorizacao": 36.93
+        }
+      ],
+      "proventos": [
+        {
+          "ano": 2025,
+          "mes": 11,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2025,
+          "mes": 12,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 1,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 2,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 3,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 4,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 5,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 6,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        },
+        {
+          "ano": 2026,
+          "mes": 7,
+          "porAtivo": [
+            {
+              "ticker": "HGLG11",
+              "valor": 18.15
+            }
+          ],
+          "recebidoExtrato": 0,
+          "total": 18.15
+        },
+        {
+          "ano": 2026,
+          "mes": 8,
+          "porAtivo": [
+            {
+              "ticker": "HGLG11",
+              "valor": 18.15
+            }
+          ],
+          "recebidoExtrato": 0,
+          "total": 18.15
+        },
+        {
+          "ano": 2026,
+          "mes": 9,
+          "porAtivo": [
+            {
+              "ticker": "HGLG11",
+              "valor": 18.98
+            },
+            {
+              "ticker": "XPML11",
+              "valor": 18.40
+            }
+          ],
+          "recebidoExtrato": 0,
+          "total": 37.38
+        },
+        {
+          "ano": 2026,
+          "mes": 10,
+          "porAtivo": [],
+          "recebidoExtrato": 0,
+          "total": 0
+        }
+      ],
+      "rentabilidade": [
+        {
+          "ano": 2025,
+          "carteira": 0.01,
+          "ifix": null,
+          "mes": 11,
+          "selic": 0
+        },
+        {
+          "ano": 2025,
+          "carteira": 0.01,
+          "ifix": null,
+          "mes": 12,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.01,
+          "ifix": null,
+          "mes": 1,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.05,
+          "ifix": null,
+          "mes": 2,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.05,
+          "ifix": null,
+          "mes": 3,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.05,
+          "ifix": null,
+          "mes": 4,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.05,
+          "ifix": null,
+          "mes": 5,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.05,
+          "ifix": null,
+          "mes": 6,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": -0.15,
+          "ifix": null,
+          "mes": 7,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 0.51,
+          "ifix": null,
+          "mes": 8,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 1.61,
+          "ifix": null,
+          "mes": 9,
+          "selic": 0
+        },
+        {
+          "ano": 2026,
+          "carteira": 2.43,
+          "ifix": null,
+          "mes": 10,
+          "selic": 0.44
+        }
+      ],
+      "resumo": {
+        "custo": 4598.01,
+        "dy12Meses": 1.59,
+        "quantidadeFiis": 2,
+        "recebidoExtrato12Meses": 0,
+        "renda12Meses": 73.68,
+        "rendaMediaMensal": 6.70,
+        "rendaMensalEstimada": 37.38,
+        "rentabilidadeIfix": null,
+        "rentabilidadeSelic": 0.44,
+        "rentabilidadeTotal": 2.43,
+        "valorMercado": 4632.28,
+        "valorizacao": 34.27,
+        "valorizacaoPercentual": 0.75,
+        "yieldOnCost12Meses": 1.60
+      },
+      "segmentos": [
+        {
+          "nome": "Logística",
+          "valor": 2612.28
+        },
+        {
+          "nome": "Shoppings",
+          "valor": 2020.00
+        }
+      ],
+      "segmentosDisponiveis": [
+        "Logística",
+        "Shoppings",
+        "Lajes corporativas",
+        "Papel (recebíveis)",
+        "Híbrido",
+        "Fundo de fundos",
+        "Renda urbana",
+        "Agronegócio",
+        "Residencial",
+        "Hotéis",
+        "Hospitais/Educação",
+        "Desenvolvimento",
+        "Outros"
+      ]
+    }
+  },
+  {
+    "nome": "painel dos FIIs sem login",
+    "requisicao": "GET /api/carteira/fiis",
+    "status": 401
   }
 ]

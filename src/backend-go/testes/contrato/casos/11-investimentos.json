@@ -1,5 +1,5 @@
 {
-  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
+  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato; parte 7, o painel dos FIIs. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
   "casos": [
     {
       "nome": "listar reservas",
@@ -1205,6 +1205,18 @@
       "nome": "as operações depois de importar",
       "metodo": "GET",
       "caminho": "/api/carteira/ativos/1/operacoes"
+    },
+    {
+      "nome": "painel dos FIIs",
+      "comentario": "Os FIIs da base (HGLG11 e XPML11), com as compras, os proventos, os fechamentos e o IFIX; a operação importada do extrato entra no mês dela.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/fiis"
+    },
+    {
+      "nome": "painel dos FIIs sem login",
+      "metodo": "GET",
+      "caminho": "/api/carteira/fiis",
+      "sessao": "visitante"
     }
   ]
 }
