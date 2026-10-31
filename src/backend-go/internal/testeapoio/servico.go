@@ -160,7 +160,7 @@ func (s *ServicoDeFora) atender(w http.ResponseWriter, r *http.Request) {
 	}
 	if resposta.Travar {
 		<-r.Context().Done()
-		return
+		panic(http.ErrAbortHandler) // sair daqui seria um 200 vazio, se o pedido caísse antes do tempo do cliente
 	}
 	dados := []byte(resposta.Corpo)
 	if resposta.Arquivo != "" {

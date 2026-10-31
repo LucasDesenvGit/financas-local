@@ -587,28 +587,39 @@ type resultadoDaAplicacao struct {
 	TransacoesAtualizadas int `json:"transacoesAtualizadas"`
 }
 
-// importarDoExtrato é o POST /api/carteira/extrato/importar. O item null chega ao C# como null, e ele para com o 500.
+// camposDoItemDoExtrato são os campos do ImportarExtratoItemDto.
+func camposDoItemDoExtrato() []respostas.Campo {
+	return []respostas.Campo{&respostas.CampoLong{Propriedade: "TransacaoId"}, &respostas.CampoTexto{Propriedade: "Ticker", Minimo: 3, Maximo: 12},
+		&respostas.CampoEnum{Propriedade: "Tipo"},
+		&respostas.CampoDecimal{Propriedade: "Quantidade", Faixa: &respostas.Faixa{Minimo: 0.000001, Maximo: 1000000000}},
+		&respostas.CampoDecimal{Propriedade: "PrecoUnitario", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 100000000}},
+		&respostas.CampoDecimal{Propriedade: "Taxas", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 10000000}}}
+}
+
+// itensDaLista lê os itens já validados. O item null chega ao C# como null, e ele para com o 500. A etapa é a da rota: o
+// registro de erros soma as linhas com a mesma mensagem, e o C# tem uma linha por rota.
+func (s *Servico) itensDaLista(w http.ResponseWriter, r *http.Request, etapa string, campos [][]respostas.Campo) ([]ItemDoExtrato, bool) {
+	lista := make([]ItemDoExtrato, 0, len(campos))
+	for _, c := range campos {
+		if c == nil {
+			s.erroInterno(w, r, etapa, errors.New("item nulo na lista"))
+			return nil, false
+		}
+		lista = append(lista, ItemDoExtrato{TransacaoId: c[0].(*respostas.CampoLong).Valor, Ticker: *c[1].(*respostas.CampoTexto).Valor, Tipo: c[2].(*respostas.CampoEnum).Ou(0),
+			Quantidade: c[3].(*respostas.CampoDecimal).Valor, PrecoUnitario: c[4].(*respostas.CampoDecimal).Valor, Taxas: c[5].(*respostas.CampoDecimal).Valor})
+	}
+	return lista, true
+}
+
+// importarDoExtrato é o POST /api/carteira/extrato/importar.
 func (s *Servico) importarDoExtrato(w http.ResponseWriter, r *http.Request) {
-	itens := respostas.CampoListaDeObjetos{Propriedade: "Itens", TipoItem: "Financas.Api.Dtos.ImportarExtratoItemDto", Minimo: 1, Maximo: 500, Obrigatoria: true,
-		Novo: func() []respostas.Campo {
-			return []respostas.Campo{&respostas.CampoLong{Propriedade: "TransacaoId"}, &respostas.CampoTexto{Propriedade: "Ticker", Minimo: 3, Maximo: 12},
-				&respostas.CampoEnum{Propriedade: "Tipo"},
-				&respostas.CampoDecimal{Propriedade: "Quantidade", Faixa: &respostas.Faixa{Minimo: 0.000001, Maximo: 1000000000}},
-				&respostas.CampoDecimal{Propriedade: "PrecoUnitario", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 100000000}},
-				&respostas.CampoDecimal{Propriedade: "Taxas", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 10000000}}}
-		}}
+	itens := respostas.CampoListaDeObjetos{Propriedade: "Itens", TipoItem: "Financas.Api.Dtos.ImportarExtratoItemDto", Minimo: 1, Maximo: 500, Obrigatoria: true, Novo: camposDoItemDoExtrato}
 	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ImportarExtratoDto", &itens) {
 		return
 	}
-	lista := make([]ItemDoExtrato, 0, len(itens.Itens))
-	for _, campos := range itens.Itens {
-		if campos == nil {
-			s.erroInterno(w, r, "importar do extrato", errors.New("item nulo na lista"))
-			return
-		}
-		lista = append(lista, ItemDoExtrato{TransacaoId: campos[0].(*respostas.CampoLong).Valor, Ticker: *campos[1].(*respostas.CampoTexto).Valor,
-			Tipo: campos[2].(*respostas.CampoEnum).Ou(0), Quantidade: campos[3].(*respostas.CampoDecimal).Valor,
-			PrecoUnitario: campos[4].(*respostas.CampoDecimal).Valor, Taxas: campos[5].(*respostas.CampoDecimal).Valor})
+	lista, ok := s.itensDaLista(w, r, "importar do extrato", itens.Itens)
+	if !ok {
+		return
 	}
 	criadas, err := s.Importar(r.Context(), lista)
 	if err != nil {

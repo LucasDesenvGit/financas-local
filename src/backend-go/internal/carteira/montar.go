@@ -13,6 +13,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/desfazer"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/selic"
@@ -71,13 +72,14 @@ type Servico struct {
 	cotacoes atualizacao
 	config   *configuracao.Servico
 	cofre    configuracao.Cofre
+	desfazer *desfazer.Memoria[estadoAnterior]
 	relogio  relogio.Relogio
 	log      *slog.Logger
 }
 
 // NovoServico monta o serviço com as dependências.
 func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, cofre configuracao.Cofre, rel relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), cofre: cofre, relogio: rel, log: log}
+	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), cofre: cofre, desfazer: desfazer.Nova[estadoAnterior](rel), relogio: rel, log: log}
 }
 
 // SelicResumoDto é o do C#.
@@ -260,7 +262,7 @@ func (s *Servico) lerAtivos(ctx context.Context, onde string, argumentos ...any)
 
 func (s *Servico) lerOperacoes(ctx context.Context, ativos []Ativo, indices map[int64]int) error {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "AtivoId", "Tipo", "Data", "Quantidade", "PrecoUnitario", "Taxas", "Cambio",
-		"Observacao", "Origem" FROM "OperacaoAtivo" ORDER BY "Id"`)
+		"Observacao", "Origem", "TransacaoId" FROM "OperacaoAtivo" ORDER BY "Id"`)
 	if err != nil {
 		return fmt.Errorf("ler as operações: %w", err)
 	}
@@ -268,7 +270,7 @@ func (s *Servico) lerOperacoes(ctx context.Context, ativos []Ativo, indices map[
 	for linhas.Next() {
 		var o Operacao
 		if err := linhas.Scan(&o.Id, &o.AtivoId, &o.Tipo, &o.Data, &o.Quantidade, &o.PrecoUnitario, &o.Taxas, &o.Cambio,
-			&o.Observacao, &o.Origem); err != nil {
+			&o.Observacao, &o.Origem, &o.TransacaoId); err != nil {
 			return fmt.Errorf("ler operação: %w", err)
 		}
 		if i, ok := indices[o.AtivoId]; ok {
@@ -308,13 +310,17 @@ type investimento struct {
 	AtualizadoEm                         tipos.DataHora
 }
 
-// lerInvestimentos lê os investimentos das conexões ativas, por tipo e pelo maior saldo. O EF ordena o saldo com a
-// colação EF_DECIMAL, pelo valor; no SQL, o texto "100.5" viria antes de "9.5", por isso a segunda ordem é aqui.
-func (s *Servico) lerInvestimentos(ctx context.Context) ([]investimento, error) {
+// lerRendaVariavel lê as ações e os ETFs das conexões ativas, para a conferência.
+func (s *Servico) lerRendaVariavel(ctx context.Context) ([]investimento, error) {
+	return s.lerInvestimentosOnde(ctx, ` AND i."Tipo" IN ('EQUITY', 'ETF')`)
+}
+
+// lerInvestimentosOnde lê os investimentos das conexões ativas, com o filtro a mais.
+func (s *Servico) lerInvestimentosOnde(ctx context.Context, filtro string) ([]investimento, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT i."Id", i."ConexaoBancariaId", i."Nome", i."Tipo", i."Moeda", i."Subtipo", i."Codigo",
 		i."Emissor", i."NomePersonalizado", i."Saldo", i."ValorAplicado", i."TaxaAnual", i."Quantidade", i."DataAplicacao",
 		i."DataVencimento", i."AtualizadoEm" FROM "Investimento" AS i
-		INNER JOIN "ConexaoBancaria" AS c ON i."ConexaoBancariaId" = c."Id" WHERE c."Ativa" ORDER BY i."Tipo"`)
+		INNER JOIN "ConexaoBancaria" AS c ON i."ConexaoBancariaId" = c."Id" WHERE c."Ativa"`+filtro)
 	if err != nil {
 		return nil, fmt.Errorf("ler os investimentos: %w", err)
 	}
@@ -328,8 +334,15 @@ func (s *Servico) lerInvestimentos(ctx context.Context) ([]investimento, error) 
 		}
 		lista = append(lista, i)
 	}
-	if err := linhas.Err(); err != nil {
-		return nil, fmt.Errorf("ler os investimentos: %w", err)
+	return lista, linhas.Err()
+}
+
+// lerInvestimentos lê os investimentos das conexões ativas, por tipo e pelo maior saldo. O EF ordena o saldo com a
+// colação EF_DECIMAL, pelo valor; no SQL, o texto "100.5" viria antes de "9.5", por isso a segunda ordem é aqui.
+func (s *Servico) lerInvestimentos(ctx context.Context) ([]investimento, error) {
+	lista, err := s.lerInvestimentosOnde(ctx, ` ORDER BY i."Tipo"`)
+	if err != nil {
+		return nil, err
 	}
 	slices.SortStableFunc(lista, func(a, b investimento) int {
 		return cmp.Or(cmp.Compare(a.Tipo, b.Tipo), b.Saldo.Decimal().Cmp(a.Saldo.Decimal()))
@@ -554,22 +567,41 @@ func somarPor[T any](lista []T, campo func(T) tipos.Decimal) tipos.Decimal {
 	return soma
 }
 
-// cotasNaCorretora é o CotasNaCorretora: as cotas de ações e ETFs do Open Finance, por ticker, das posições com saldo.
-func cotasNaCorretora(lista []investimento) map[string]tipos.Decimal {
-	cotas := map[string]tipos.Decimal{}
+// cotaNaCorretora são as cotas de um ativo na corretora, somando as conexões, pela última sincronização.
+type cotaNaCorretora struct {
+	ticker     string
+	quantidade tipos.Decimal
+	em         tipos.DataHora
+}
+
+// tickerDoInvestimento é o TickerDe: o do código, ou o do nome.
+func tickerDoInvestimento(i investimento) *string {
+	if t := NormalizarTicker(i.Codigo); t != nil {
+		return t
+	}
+	return NormalizarTicker(&i.Nome)
+}
+
+// cotasNaCorretora é o CotasNaCorretora: as cotas de ações e ETFs do Open Finance, por ticker, na ordem em que aparecem. A
+// posição zerada (resgate total, direito de subscrição exercido) fica de fora.
+func cotasNaCorretora(lista []investimento) []cotaNaCorretora {
+	var cotas []cotaNaCorretora
 	for _, i := range lista {
-		if i.Tipo != "EQUITY" && i.Tipo != "ETF" {
+		if (i.Tipo != "EQUITY" && i.Tipo != "ETF") || i.Quantidade == nil || !positivo(*i.Quantidade) || !positivo(i.Saldo) {
 			continue
 		}
-		if i.Quantidade == nil || !positivo(*i.Quantidade) || !positivo(i.Saldo) {
-			continue
-		}
-		t := NormalizarTicker(i.Codigo)
+		t := tickerDoInvestimento(i)
 		if t == nil {
-			t = NormalizarTicker(&i.Nome)
+			continue
 		}
-		if t != nil {
-			cotas[*t] = tipos.Somar(cotas[*t], *i.Quantidade)
+		j := slices.IndexFunc(cotas, func(c cotaNaCorretora) bool { return c.ticker == *t })
+		if j < 0 {
+			cotas = append(cotas, cotaNaCorretora{*t, *i.Quantidade, i.AtualizadoEm})
+			continue
+		}
+		cotas[j].quantidade = tipos.Somar(cotas[j].quantidade, *i.Quantidade)
+		if i.AtualizadoEm.Tempo().After(cotas[j].em.Tempo()) {
+			cotas[j].em = i.AtualizadoEm
 		}
 	}
 	return cotas
@@ -780,10 +812,10 @@ func (s *Servico) Montar(ctx context.Context, serie *selic.Serie, meta *tipos.De
 
 	// Cotas na corretora × na carteira: "Conferir investimentos" mostra a diferença e a correção.
 	cotasDiferentes := []string{}
-	for ticker, quantidade := range cotasNaCorretora(investimentos) {
-		i := slices.IndexFunc(posicoes, func(p PosicaoAtivoDto) bool { return p.Ticker == ticker })
-		if i >= 0 && !posicoes[i].Quantidade.Decimal().Sub(quantidade.Decimal()).Abs().LessThan(diferencaDeCotas.Decimal()) {
-			cotasDiferentes = append(cotasDiferentes, ticker)
+	for _, cota := range cotasNaCorretora(investimentos) {
+		i := slices.IndexFunc(posicoes, func(p PosicaoAtivoDto) bool { return p.Ticker == cota.ticker })
+		if i >= 0 && !posicoes[i].Quantidade.Decimal().Sub(cota.quantidade.Decimal()).Abs().LessThan(diferencaDeCotas.Decimal()) {
+			cotasDiferentes = append(cotasDiferentes, cota.ticker)
 		}
 	}
 	slices.Sort(cotasDiferentes)

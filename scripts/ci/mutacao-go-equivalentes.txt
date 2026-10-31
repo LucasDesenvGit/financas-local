@@ -50,3 +50,6 @@ internal/tipos | decimal.go | INVERT_NEGATIVES | if v.Exponent() < -casasMaximas
 internal/tipos | decimal.go | ARITHMETIC_BASE | if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 { | o caber deixa como está o número que já cabe: entrar nele a mais não muda nada (#82)
 internal/carteira | posicao.go | INVERT_LOOPCTRL | break | as operações vêm pela data: depois da primeira além do limite, todas estão além (#82)
 internal/carteira | extrato.go | CONDITIONALS_BOUNDARY | for i := 0; i < len(t); { | com i no fim do texto não há número: o numeroEm não acha nada, e o laço termina do mesmo jeito (#82)
+internal/carteira | conferencia.go | CONDITIONALS_BOUNDARY | if len(g) > 1 { | o grupo de uma operação repete a ordem dela, e a repetição cai no "todasLivres" (#299)
+internal/carteira | conferencia.go | INVERT_LOOPCTRL | continue // em ordem de data: daqui em diante, tudo passou do prazo do troco | a lista está em ordem de data: parar aqui é o mesmo que seguir (#299)
+internal/carteira | conferencia.go | INVERT_LOOPCTRL | break // em ordem de valor: os próximos também passam do que sobra | a lista está em ordem de valor: seguir é o mesmo que parar (#299)
