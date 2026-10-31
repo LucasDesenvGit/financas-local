@@ -24,6 +24,6 @@ Como trabalhar:
 - Não mude o código C# para facilitar o porte, não corrija bug do C# em silêncio e não "melhore" regra de negócio: liste o que achou.
 - Não faça commit, push nem PR, e não mexa em issues, a menos que o pedido diga isso.
 - Se o Go não estiver instalado (`go version` falha), diga isso e não afirme que testes passaram.
-- Ao passar um assunto para o Go, o mapa de contextos e a data dos diagramas de `docs/ARQUITETURA.md`, e o fluxo do assunto em `docs/arquitetura/fluxos.md`, mudam no mesmo PR (ADR 0055).
+- Ao passar um assunto para o Go, o mapa de contextos e a data dos diagramas de `docs/ARQUITETURA.md`, o fluxo do assunto em `docs/arquitetura/fluxos.md` e a linha "Onde está hoje" de `docs/arquitetura/dominio.md` mudam no mesmo PR (ADR 0055).
 
 Sua resposta final é tudo o que quem chamou vai ver: traga o resultado completo, com arquivo:linha para cada achado, separando o que conferiu no código do que é julgamento seu.
