@@ -1307,6 +1307,24 @@ export const MANUAL: CapituloManual[] = [
         ]
       },
       {
+        id: 'restaurar',
+        titulo: 'Restaurar uma cópia',
+        paraQueServe: 'Voltar o banco para uma cópia salva, depois de um problema.',
+        passos: [
+          'Pare o serviço do Finanças Local.',
+          'Guarde o banco atual: copie os arquivos FinancasLocal.db* da pasta dados/sql para outra pasta.',
+          'Copie a cópia por cima de dados/sql/FinancasLocal.db.',
+          'Apague os arquivos FinancasLocal.db-wal e FinancasLocal.db-shm da pasta dados/sql. Se ficarem, a cópia pode corromper.',
+          'Ligue o serviço, abra o site e confira a última transação.'
+        ],
+        dicas: [
+          'Tudo volta para a data da cópia, inclusive a senha do site: entre com a senha que valia naquele dia.',
+          'O que veio do Open Finance depois da cópia volta na próxima sincronização; o que você lançou à mão, não.',
+          'Antes de cada atualização que muda o banco, o sistema guarda uma cópia em dados/backups.',
+          'Os comandos prontos, para Windows e Linux, estão em docs/OPERACAO.md, no repositório do projeto.'
+        ]
+      },
+      {
         id: 'atualizar',
         titulo: 'Atualizar e parar o sistema',
         paraQueServe: 'Manter o site em dia e saber desligar tudo.',

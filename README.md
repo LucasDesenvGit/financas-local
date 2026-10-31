@@ -110,6 +110,8 @@ A tabela completa do que sai e os detalhes técnicos (login, sessão, CSRF, cabe
 | O gerenciador diz "ligado, mas não responde" | Espere alguns segundos e clique em **Reiniciar** |
 | O navegador alerta sobre o certificado | Abra o mesmo `.msi` e escolha **Reparar** |
 | A sincronização falha com 401/403 | Confira o Client ID, o Secret e se o MeuPluggy foi autorizado para aquele banco |
+| Perdi dados ou quero voltar a uma cópia do banco | Siga [Restaurar uma cópia](docs/OPERACAO.md#restaurar-uma-cópia) |
+| Uma atualização não funcionou | Siga [Atualização que falhou](docs/OPERACAO.md#atualização-que-falhou) |
 | Algo deu errado e não sei o quê | Veja **Configurações › Erros** |
 
 Os outros, com mais detalhe: [Problemas comuns](docs/PROBLEMAS-COMUNS.md).

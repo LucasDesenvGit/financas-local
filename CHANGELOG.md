@@ -2,6 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.25] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Guia para quando algo dá errado** (#468; épico #465). O Manual ganhou a seção **Restaurar uma cópia**, e o novo `docs/OPERACAO.md` tem os comandos para Windows e Linux, o que fazer com as chaves perdidas e com uma atualização que falhou. O README e os Problemas comuns apontam para ele.
+
+## [2.50.24] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Restaurar a cópia do banco é testado de verdade** (#468; épico #465). Nada muda para quem usa. Para quem desenvolve: os workflows "Teste de instalação" do Linux e do Windows agora restauram uma cópia com o serviço de verdade, conferem que o que veio depois dela saiu e que o banco está íntegro.
+
 ## [2.50.23] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
