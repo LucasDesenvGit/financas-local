@@ -9,7 +9,7 @@ O que o Finanças Local guarda, onde, o que sai do computador, por quanto tempo 
 - **Tudo fica no seu computador**, na pasta `dados`. Não há servidor do projeto: ninguém além de você recebe esses dados.
 - **O que sai** vai para os serviços da [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet), sempre o mínimo. Quantidades, valores e dados pessoais não saem.
 - **Para quem o sistema traz dados:** a Pluggy entrega extratos, saldos e investimentos dos bancos que você autorizou no Meu Pluggy.
-- **O banco não é criptografado.** Só os segredos são. Por isso, a recomendação é criptografar o disco (BitLocker ou LUKS).
+- **O banco não é criptografado.** Só os segredos são. Por isso, a recomendação é criptografar o disco (BitLocker ou LUKS). De quem o sistema se protege: [modelo de ameaças](MODELO-DE-AMEACAS.md).
 
 ## Por grupo de dados
 

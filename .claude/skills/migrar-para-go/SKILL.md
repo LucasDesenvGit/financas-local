@@ -151,4 +151,5 @@ No fim, diga ao usuário, separando fato de julgamento próprio:
 - resultado dos testes (`go vet`, `go test -race`, contrato: quantos casos, quantos passaram) — se algo falhou ou não rodou (ex.: Go não instalado), diga;
 - diferenças de comportamento encontradas no C# (bugs inclusive): **não corrija em silêncio**, liste e proponha issue;
 - ADR criada ou atualizada, versão de → para, e o que falta para a próxima etapa;
+- na inversão do .NET e do Go (#85, #86): revisar a fronteira API ↔ Go em `docs/MODELO-DE-AMEACAS.md`;
 - ao passar um assunto para o Go: mapa de contextos e data dos diagramas de `docs/ARQUITETURA.md`, o fluxo do assunto em `docs/arquitetura/fluxos.md` e a linha "Onde está hoje" de `docs/arquitetura/dominio.md`, atualizados no mesmo PR ([ADR 0055](../../../docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md)).

@@ -1,6 +1,6 @@
 # Segurança
 
-O resumo está no [README](../README.md#segurança). Aqui fica o detalhe: o que sai para a internet, as recomendações e como o site se protege.
+O resumo está no [README](../README.md#segurança). Aqui fica o detalhe: o que sai para a internet, as recomendações e como o site se protege. De quem ele se protege e o que fica de fora: [modelo de ameaças](MODELO-DE-AMEACAS.md). Achou uma falha? Veja o [SECURITY.md](../SECURITY.md).
 
 **Seus dados ficam no seu computador**, na pasta `C:\ProgramData\FinancasLocal\dados` (no Windows, só o sistema e os administradores acessam). O site só responde no próprio computador, por HTTPS, e pede usuário e senha.
 
