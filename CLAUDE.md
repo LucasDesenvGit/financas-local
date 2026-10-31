@@ -23,6 +23,7 @@ cd src/frontend && npm start                    # front-end em dev (http://local
 
 # CI roda também:
 python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura.sql é idempotente
+python3 scripts/ci/gerar-diagrama-banco.py --conferir   # confere que os diagramas de docs/BANCO-DE-DADOS.md estão em dia
 python3 scripts/ci/testes-afetados.py --base origin/develop   # no PR, a CI roda só os testes afetados (ADR 0047): mostra quais
 # Job "Go" (#231): gofmt, go vet, go test -race (com cobertura por pacote que só sobe, #370, e trava de tempo, #371), go generate em dia, build Windows, govulncheck (src/backend-go/README.md)
 # Workflow "Fuzz do Go" (#372): o -fuzz dos alvos FuzzXxx, toda segunda e à mão; não roda no PR
@@ -96,7 +97,7 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - **Pastas dos scripts (#154):** `scripts/geral/` é o bash que roda nos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/` têm o que só funciona num deles; `scripts/ci/`, o que só a CI usa. Script novo vai na pasta do sistema em que roda. Os `.cmd` ficam na raiz.
 - Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa). Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
 - Versão do sistema: só no `Directory.Build.props` (API e gerenciador); a tag `vX.Y.Z` tem de ser igual. **Todo PR para o `develop` sobe esse número** (ver Git / commits).
-- Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+- Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, rodar `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 
 ## Decisões de arquitetura (ADRs) — obrigatório
 

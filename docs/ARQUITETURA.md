@@ -196,6 +196,12 @@ flowchart TB
     gerenciador -- "systemctl --user, sem senha" --> servico
 ```
 
+## Por dentro
+
+O detalhe do que é estável hoje (o LLD), em diagramas:
+- **[Modelo de dados](BANCO-DE-DADOS.md#o-modelo-em-diagramas):** as tabelas por assunto, geradas do `01-estrutura.sql`.
+- **[Fluxos principais](arquitetura/fluxos.md):** login e sessão, pedido repassado ao Go, partida da API, sincronização com a Pluggy e atualização pelo gerenciador.
+
 ## Decisões em resumo
 
 | Decisão | Por quê | ADR |
@@ -261,6 +267,23 @@ A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-bac
 | `internal/config`, `internal/relogio`, `internal/sessao`, `internal/tipos`, `internal/versao` | Configuração, fuso de Brasília, usuário logado, tipos do EF Core e versão. |
 
 ## Front-end — `src/frontend`
+
+```mermaid
+flowchart TB
+    layout["layout/<br/>Barra superior e menu lateral"]
+    paginas["paginas/<br/>Uma página por rota"]
+    compartilhado["compartilhado/<br/>Gráfico, modal, paginação, pipe de moeda"]
+    core["core/<br/>ApiService, autenticação, tema, privacidade"]
+    api["API<br/>[.NET, que repassa ao Go o que já migrou]"]
+
+    layout -- "mostra a página da rota" --> paginas
+    paginas --> compartilhado
+    paginas --> core
+    compartilhado --> core
+    core -- "só o ApiService chama, na mesma origem" --> api
+```
+
+O caminho de uma tela até a API: a página chama um método do `ApiService`, que faz o pedido HTTP com o cookie de sessão e o token CSRF. Nenhum componente usa o `HttpClient` direto.
 
 | Pasta | Responsabilidade |
 |---|---|
