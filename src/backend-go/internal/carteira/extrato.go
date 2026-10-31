@@ -577,9 +577,7 @@ func (s *Servico) Importar(ctx context.Context, itens []ItemDoExtrato) (int, err
 		return 0, err
 	}
 	if len(novos) > 0 {
-		if _, err := s.cotacoes.Atualizar(ctx, novos); err != nil && ctx.Err() != nil {
-			return criadas, ctx.Err()
-		}
+		return criadas, s.atualizarSemFalhar(ctx, novos...)
 	}
 	return criadas, nil
 }
