@@ -38,16 +38,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - id: dotnet
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      # #255: o publish self-contained baixa os pacotes do runtime do win-x64 a cada execução sem isto.
+      # #255: o publish self-contained baixa os pacotes do runtime do win-x64 a cada execução sem isto. #526: a chave
+      # leva a versão do SDK (que decide os pacotes do runtime) e não o Directory.Build.props, que muda em todo PR.
       - name: Cache dos pacotes NuGet
         uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-msi-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          key: nuget-${{ runner.os }}-msi-${{ steps.dotnet.outputs.dotnet-version }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-msi-
 
       - uses: actions/setup-node@v4
