@@ -63,10 +63,10 @@
           }
         ],
         "trocos": [
-          2
+          13
         ],
         "rendimentos": [
-          4
+          27
         ],
         "taxas": []
       },
@@ -215,7 +215,7 @@
       "corpo": {
         "compras": [
           {
-            "transacaoId": 2,
+            "transacaoId": 13,
             "ticker": "ITSA4",
             "tipo": 1,
             "quantidade": 1,
