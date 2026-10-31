@@ -113,7 +113,7 @@ As decisões ficam em `docs/adr/` (índice, critérios e ciclo de vida em [docs/
 
 Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoint que só segue padrões já registrados.
 
-**Requisitos não funcionais** ([docs/REQUISITOS-NAO-FUNCIONAIS.md](docs/REQUISITOS-NAO-FUNCIONAIS.md)): mudança que mexe numa meta (memória, tamanho, partida) mede antes e depois no PR, como já se faz com o tempo dos testes.
+**Requisitos não funcionais** ([docs/REQUISITOS-NAO-FUNCIONAIS.md](docs/REQUISITOS-NAO-FUNCIONAIS.md)): mudança que mexe numa meta (memória, tamanho, partida) mede antes e depois no PR, como já se faz com o tempo dos testes. Partida e telas: `python3 scripts/geral/medir-desempenho.py --api <pasta publicada>`.
 
 **Diagramas sempre junto** ([ADR 0055](docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md)): mudou um contêiner, uma saída de rede ou uma fronteira? Atualize os diagramas de Contexto, de Contêineres e de implantação em `docs/ARQUITETURA.md` **no mesmo PR**, como o Manual (#177). Termo novo do domínio entra na lista de [`docs/arquitetura/dominio.md`](docs/arquitetura/dominio.md), e estado novo (enum, `Status`) atualiza o diagrama de estados de lá.
 

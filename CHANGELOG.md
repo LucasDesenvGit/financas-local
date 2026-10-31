@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.50.32] — 2026-10-31 · desenvolvimento
+## [2.50.33] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
 - **CI: o cache do NuGet deixa de mudar a cada PR** (#526). Nada muda para quem usa. A chave do cache do NuGet (`ci.yml` e `versao.yml`) incluía o `Directory.Build.props`, que só guarda a versão e sobe em todo PR: cada PR criava um cache novo de ~700 MB, o repositório chegou a 10,4 GB (o limite do Actions é 10 GB) e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A chave passa a ser os `.csproj` e a versão do SDK do .NET. ADR 0047 atualizada.
+
+## [2.50.32] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Metas e primeira medição dos requisitos não funcionais** (#470; épico #465). Nada muda para quem usa. Para quem desenvolve: `docs/REQUISITOS-NAO-FUNCIONAIS.md` agora tem as metas de memória, disco, partida e telas, e o novo `scripts/geral/medir-desempenho.py` mede partida e telas com 5 anos de transações fictícias.
 
 ## [2.50.31] — 2026-10-31 · desenvolvimento
 
