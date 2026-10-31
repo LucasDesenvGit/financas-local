@@ -18,6 +18,7 @@ internal/cripto         100
 internal/reservas       100
 internal/selic          100
 internal/carteira       100
+internal/conferenciabanco 100
 internal/cotacoes       100
 internal/texto           100
 internal/tipolancamento  100

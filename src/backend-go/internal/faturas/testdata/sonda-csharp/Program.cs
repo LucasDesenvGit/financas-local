@@ -1059,6 +1059,52 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "confe
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["hoje"] = new[] { hojeConferencia.ToString("yyyy-MM-dd") }, ["passos"] = passosConferencia,
 }));
 
+// Conferir com o banco (#445): o ConferenciaBancoService de verdade sobre o cenário de conferenciabanco/testdata/cenario.sql.
+var arquivoConfBanco = Path.Combine(Path.GetTempPath(), $"sonda-conferencia-banco-{Guid.NewGuid():N}.db");
+var hojeConfBanco = Relogio.Hoje;
+using (var c = new SqliteConnection($"Data Source={arquivoConfBanco};Pooling=False"))
+{
+    c.Open();
+    foreach (var f in new[] { Path.Combine(raiz, "banco", "01-estrutura.sql"), Path.Combine(raiz, "src", "backend-go", "internal", "conferenciabanco", "testdata", "cenario.sql") })
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = File.ReadAllText(f).Replace("@MES", hojeConfBanco.ToString("yyyy-MM"));
+        cmd.ExecuteNonQuery();
+    }
+}
+var passosConfBanco = new List<object>();
+async Task PassoConfBanco(string nome)
+{
+    using var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>().UseSqlite($"Data Source={arquivoConfBanco};Pooling=False").Options);
+    var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+    var cambioBanco = new CambioService(semRede, db, new ConfiguracaoService(db, new EphemeralDataProtectionProvider()), NullLogger<CambioService>.Instance);
+    var contasBanco = new ContaService(db);
+    var reservasBanco = new ReservaService(db, cambioBanco);
+    var servico = new ConferenciaBancoService(db, contasBanco, reservasBanco, new CarteiraService(db, contasBanco, cambioBanco, reservasBanco), cambioBanco);
+    passosConfBanco.Add(new { nome, resultado = JsonSerializer.SerializeToElement(await servico.MontarAsync(CancellationToken.None), webConferencia) });
+}
+void MudarConfBanco(string sql)
+{
+    using var c = new SqliteConnection($"Data Source={arquivoConfBanco};Pooling=False");
+    c.Open();
+    using var cmd = c.CreateCommand();
+    cmd.CommandText = sql;
+    cmd.ExecuteNonQuery();
+    passosConfBanco.Add(new { nome = "mudar: " + sql });
+}
+await PassoConfBanco("tudo");
+MudarConfBanco("UPDATE Conta SET Arquivada = 1 WHERE Tipo <> 3");
+await PassoConfBanco("só os cartões");
+MudarConfBanco("UPDATE FaturaCartao SET ValorPago = '400.0'");
+await PassoConfBanco("fatura paga");
+MudarConfBanco("DELETE FROM OperacaoAtivo; DELETE FROM Investimento; UPDATE Conta SET Arquivada = 1");
+await PassoConfBanco("sem nada");
+File.Delete(arquivoConfBanco);
+Console.WriteLine(Gravar(Path.Combine("..", "..", "conferenciabanco", "testdata", "conferencia.json"), new Dictionary<string, object>
+{
+    ["hoje"] = new[] { hojeConfBanco.ToString("yyyy-MM-dd") }, ["passos"] = passosConfBanco,
+}));
+
 /// <summary>Conta as falhas de consulta que o CotacaoService registra.</summary>
 sealed class LogContado : Microsoft.Extensions.Logging.ILogger<CotacaoService>
 {

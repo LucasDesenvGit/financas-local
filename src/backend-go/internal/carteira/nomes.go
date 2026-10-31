@@ -105,10 +105,10 @@ func SegmentoValido(segmento *string) bool {
 // social.
 const tamanhoMaximoProduto = 24
 
-// nomeDeExibicao é o NomeInvestimento.Exibicao (#170): o nome que você reconhece. O banco manda a razão social do
+// NomeDeExibicao é o NomeInvestimento.Exibicao (#170): o nome que você reconhece. O banco manda a razão social do
 // emissor ("CDB - NU FINANCEIRA S.A. - SOCIEDADE DE CREDITO, F…"), e aqui vira "CDB · Nubank". O nome escolhido vale
 // sempre; ações e ETFs ficam como vieram (o ticker já é o nome).
-func nomeDeExibicao(nome, tipo string, emissor, personalizado *string) string {
+func NomeDeExibicao(nome, tipo string, emissor, personalizado *string) string {
 	aparar := func(s string) string { return strings.TrimFunc(s, unicode.IsSpace) }
 	if personalizado != nil && aparar(*personalizado) != "" {
 		return aparar(*personalizado)

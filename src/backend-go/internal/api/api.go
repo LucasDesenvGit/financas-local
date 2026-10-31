@@ -17,6 +17,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/carteira"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/categorias"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/conferenciabanco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
@@ -66,8 +67,10 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	reservas.Registrar(mux, reservasDaCarteira) // #82: as reservas (ADRs 0010, 0037 e 0038)
 	// O token da brapi só vale depois da troca dos segredos (#85, ADR 0049): o cofre abre a chave no primeiro uso.
 	cofre := segredos.NovoTardio(d.Config.PastaChaves)
-	carteira.Registrar(mux, carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,
+	daCarteira := carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,
 		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log),
-		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log), cofre, d.Relogio, d.Log)) // #82: a carteira
+		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log), cofre, d.Relogio, d.Log)
+	carteira.Registrar(mux, daCarteira)                                                                                                     // #82: a carteira
+	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
 	return mux
 }

@@ -536,7 +536,7 @@ func comparadoComSelic(i investimento, serie *selic.Serie, conversor *cambio.Con
 	d := InvestimentoComparadoDto{Id: i.Id, Nome: i.Nome, Tipo: i.Tipo, Subtipo: i.Subtipo, Codigo: i.Codigo, Emissor: i.Emissor,
 		Moeda: i.Moeda, Saldo: i.Saldo, SaldoEmReais: conversor.ParaReais(i.Saldo, i.Moeda), ValorAplicado: i.ValorAplicado,
 		DataAplicacao: i.DataAplicacao, DataVencimento: i.DataVencimento, TaxaAnual: i.TaxaAnual, RendaVariavel: ehRendaVariavel(i.Tipo),
-		JaNaCarteira: noCodigo(i.Codigo, tickers), AtualizadoEm: i.AtualizadoEm, NomeExibicao: nomeDeExibicao(i.Nome, i.Tipo, i.Emissor, i.Personal),
+		JaNaCarteira: noCodigo(i.Codigo, tickers), AtualizadoEm: i.AtualizadoEm, NomeExibicao: NomeDeExibicao(i.Nome, i.Tipo, i.Emissor, i.Personal),
 		NomePersonalizado: i.Personal}
 	if nome, ok := instituicoes[i.ConexaoBancariaId]; ok {
 		d.NomeInstituicao = &nome

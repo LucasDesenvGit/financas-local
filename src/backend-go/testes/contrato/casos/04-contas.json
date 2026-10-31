@@ -107,7 +107,7 @@
         "nome": "  Conta Nova  ",
         "tipo": 1,
         "numero": " 123-4 ",
-        "saldoInicial": 1000.50,
+        "saldoInicial": 1000.5,
         "limiteCredito": 500,
         "diaFechamento": 5,
         "diaVencimento": 12,
@@ -131,7 +131,7 @@
         "tipo": 3,
         "numero": null,
         "saldoInicial": 0,
-        "limiteCredito": 2000.00,
+        "limiteCredito": 2000.0,
         "diaFechamento": 28,
         "diaVencimento": 5,
         "cor": "#820AD1",
@@ -666,6 +666,18 @@
       "comentario": "As contas da base de volta, com o que os casos deixaram (AtualizadoEm; a resposta do limite desfeita).",
       "metodo": "GET",
       "caminho": "/api/contas?incluirArquivadas=true"
+    },
+    {
+      "nome": "conferir com o banco",
+      "comentario": "#445: cada conta, fatura e investimento, com as pistas do que pode explicar a diferença para o app do banco.",
+      "metodo": "GET",
+      "caminho": "/api/conferencia-banco"
+    },
+    {
+      "nome": "conferir com o banco sem login",
+      "metodo": "GET",
+      "caminho": "/api/conferencia-banco",
+      "sessao": "visitante"
     }
   ]
 }
