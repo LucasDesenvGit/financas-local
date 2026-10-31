@@ -124,8 +124,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "nao deu para gravar a marca no banco" }
 
           Stop-Service FinancasLocal
-          New-Item -ItemType Directory -Force dadosntes-de-restaurar | Out-Null
-          Copy-Item "$banco*" dadosntes-de-restaurar          Copy-Item $copia.FullName $banco -Force
+          New-Item -ItemType Directory -Force dados\antes-de-restaurar | Out-Null
+          Copy-Item "$banco*" dados\antes-de-restaurar          Copy-Item $copia.FullName $banco -Force
           Remove-Item "$banco-wal", "$banco-shm" -ErrorAction SilentlyContinue
           Start-Service FinancasLocal
 
@@ -139,7 +139,7 @@ jobs:
           if ($marcas -ne "0") { throw "a copia nao voltou: $marcas marca(s) no banco" }
           $integridade = & $sqlite $banco "PRAGMA integrity_check;"
           if ($integridade -ne "ok") { throw "banco corrompido depois de restaurar: $integridade" }
-          if (-not (Test-Path dadosntes-de-restaurar\FinancasLocal.db)) { throw "o banco de antes nao foi guardado" }
+          if (-not (Test-Path dados\antes-de-restaurar\FinancasLocal.db)) { throw "o banco de antes nao foi guardado" }
 
       # parar-windows.cmd (sem o UAC: o runner ja e Administrador): para, tira do inicio automatico e confere que
       # nada ficou de pe; depois o instalador sobe de novo e devolve o inicio automatico.
