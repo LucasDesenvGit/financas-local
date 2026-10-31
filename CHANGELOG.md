@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.24] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Restaurar a cópia do banco é testado de verdade** (#468; épico #465). Nada muda para quem usa. Para quem desenvolve: os workflows "Teste de instalação" do Linux e do Windows agora restauram uma cópia com o serviço de verdade, conferem que o que veio depois dela saiu e que o banco está íntegro.
+
 ## [2.50.23] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
