@@ -651,7 +651,7 @@ func (s *Servico) corrigir(w http.ResponseWriter, r *http.Request) {
 	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.CorrigirInvestimentosDto", &fii, &compras, &trocos, &rendimentos, &taxas) {
 		return
 	}
-	itens, ok := s.itensDaLista(w, r, compras.Itens)
+	itens, ok := s.itensDaLista(w, r, "corrigir", compras.Itens)
 	if !ok {
 		return
 	}
