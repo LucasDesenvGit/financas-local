@@ -252,8 +252,8 @@ func TestTextoIgualAoCSharp(t *testing.T) {
 		}
 	}
 	for _, c := range g.Nomes {
-		if n := nomeDeExibicao(c.Nome, c.Tipo, c.Emissor, c.Personalizado); n != c.Exibicao {
-			t.Errorf("nomeDeExibicao(%q, %q, %s, %s) = %q; o C# dá %q", c.Nome, c.Tipo, texto(c.Emissor), texto(c.Personalizado), n, c.Exibicao)
+		if n := NomeDeExibicao(c.Nome, c.Tipo, c.Emissor, c.Personalizado); n != c.Exibicao {
+			t.Errorf("NomeDeExibicao(%q, %q, %s, %s) = %q; o C# dá %q", c.Nome, c.Tipo, texto(c.Emissor), texto(c.Personalizado), n, c.Exibicao)
 		}
 	}
 }
