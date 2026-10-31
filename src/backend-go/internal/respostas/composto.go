@@ -102,13 +102,17 @@ func (c *CampoObjeto) validar(erros map[string][]string) {
 	}
 }
 
-// CampoListaDeObjetos é uma lista de records de um DTO (List<AlteracaoCategoriaDto>), com [MaxLength] se Maximo não
-// for 0. Novo dá os campos de um item; cada item é lido como um record, e o erro de tipo num campo dele cita o record
-// do item e o caminho do campo ("$.itens[0].id"). null fica nil; um item null fica nil na lista (o C# o recebe null).
+// CampoListaDeObjetos é uma lista de records de um DTO (List<AlteracaoCategoriaDto>), com [MinLength] e [MaxLength] se
+// Minimo e Maximo não forem 0, e [Required] com Obrigatoria. Novo dá os campos de um item; cada item é lido como um
+// record, e o erro de tipo num campo dele cita o record do item e o caminho do campo ("$.itens[0].id"). Os atributos dos
+// campos de um item valem com a chave "Itens[0].Ticker". null fica nil; um item null fica nil na lista (o C# o recebe
+// null).
 type CampoListaDeObjetos struct {
 	Propriedade string
 	TipoItem    string // o nome completo do record do item no C#
+	Minimo      int
 	Maximo      int
+	Obrigatoria bool
 	Novo        func() []Campo
 	Itens       [][]Campo
 }
@@ -152,5 +156,14 @@ func (c *CampoListaDeObjetos) lerValor(l *LeitorJSON, inicio json.Token, caminho
 }
 
 func (c *CampoListaDeObjetos) validar(erros map[string][]string) {
-	validarTamanhoDaLista(erros, c.Propriedade, c.Itens == nil, len(c.Itens), true, 0, c.Maximo)
+	validarTamanhoDaLista(erros, c.Propriedade, c.Itens == nil, len(c.Itens), !c.Obrigatoria, c.Minimo, c.Maximo)
+	for i, campos := range c.Itens {
+		internos := map[string][]string{}
+		for _, campo := range campos {
+			campo.validar(internos)
+		}
+		for chave, mensagens := range internos {
+			erros[c.Propriedade+"["+strconv.Itoa(i)+"]."+chave] = mensagens
+		}
+	}
 }

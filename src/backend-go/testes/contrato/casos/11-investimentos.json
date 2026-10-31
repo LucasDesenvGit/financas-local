@@ -1,5 +1,5 @@
 {
-  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
+  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
   "casos": [
     {
       "nome": "listar reservas",
@@ -991,6 +991,220 @@
       "nome": "carteira depois de tudo",
       "metodo": "GET",
       "caminho": "/api/carteira"
+    },
+    {
+      "nome": "sugestões do extrato",
+      "comentario": "Sem rede, sem os fechamentos do dia.",
+      "metodo": "GET",
+      "caminho": "/api/carteira/extrato/sugestoes"
+    },
+    {
+      "nome": "sugestões sem login",
+      "metodo": "GET",
+      "caminho": "/api/carteira/extrato/sugestoes",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "importar do extrato",
+      "comentario": "Quantidade e preço com 6 casas, taxas com 2.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar de novo o mesmo lançamento",
+      "comentario": "Uma operação por lançamento.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar um lançamento que não existe",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 999999,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar um código inválido",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 2,
+            "ticker": "ABCDEF",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar sem a lista",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {}
+    },
+    {
+      "nome": "importar com a lista nula",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": null
+      }
+    },
+    {
+      "nome": "importar com a lista vazia",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": []
+      }
+    },
+    {
+      "nome": "importar com o código curto",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "AB",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar com a quantidade zero",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 0,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar com o preço negativo",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          },
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": -1,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar com o tipo em texto",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": "1",
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      }
+    },
+    {
+      "nome": "importar com um item nulo",
+      "comentario": "O C# recebe o item nulo e para com o erro genérico.",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          null
+        ]
+      }
+    },
+    {
+      "nome": "importar sem login",
+      "metodo": "POST",
+      "caminho": "/api/carteira/extrato/importar",
+      "corpo": {
+        "itens": [
+          {
+            "transacaoId": 1,
+            "ticker": "HGLG11",
+            "tipo": 1,
+            "quantidade": 1.5,
+            "precoUnitario": 150.123456789,
+            "taxas": 0.125
+          }
+        ]
+      },
+      "sessao": "visitante"
+    },
+    {
+      "nome": "as operações depois de importar",
+      "metodo": "GET",
+      "caminho": "/api/carteira/ativos/1/operacoes"
     }
   ]
 }

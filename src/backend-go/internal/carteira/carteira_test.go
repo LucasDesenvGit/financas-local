@@ -93,6 +93,10 @@ type cotacoesFalsas struct {
 	pedidos   *[][]int64
 }
 
+func (c cotacoesFalsas) FechamentosDiarios(context.Context, string, tipos.Data, tipos.Data) ([]cotacoes.Fechamento, error) {
+	return nil, nil
+}
+
 func (c cotacoesFalsas) Atualizar(_ context.Context, somente []int64) (cotacoes.Resultado, error) {
 	if c.pedidos != nil {
 		*c.pedidos = append(*c.pedidos, somente)

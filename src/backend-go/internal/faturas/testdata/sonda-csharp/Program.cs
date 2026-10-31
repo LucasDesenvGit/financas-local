@@ -845,6 +845,96 @@ Console.WriteLine(Gravar(Path.Combine("..", "..", "cotacoes", "testdata", "forma
     ["dotnet"] = new[] { Environment.Version.ToString() }, ["casos"] = resultadosDosFormatos,
 }));
 
+// O extrato da carteira (#82): o ExtratoCarteiraService de verdade sobre o cenário fictício, com o Yahoo respondendo
+// testdata/extrato-respostas.json: as sugestões, os proventos recebidos e a importação.
+var arquivoExtrato = Path.Combine(Path.GetTempPath(), $"sonda-extrato-{Guid.NewGuid():N}.db");
+using (var c = new SqliteConnection($"Data Source={arquivoExtrato};Pooling=False"))
+{
+    c.Open();
+    foreach (var f in new[] { Path.Combine(raiz, "banco", "01-estrutura.sql"), Path.Combine(raiz, "src", "backend-go", "internal", "carteira", "testdata", "extrato-cenario.sql") })
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = File.ReadAllText(f);
+        cmd.ExecuteNonQuery();
+    }
+}
+var hojeExtrato = Relogio.Hoje;
+List<JsonElement> sugestoesExtrato;
+object proventosExtrato;
+int criadasExtrato;
+using (var db = new FinancasDbContext(new DbContextOptionsBuilder<FinancasDbContext>().UseSqlite($"Data Source={arquivoExtrato};Pooling=False").Options))
+{
+    var semRede = new HttpClient { BaseAddress = new Uri("https://127.0.0.1:9/"), Timeout = TimeSpan.FromSeconds(1) };
+    var configExtrato = new ConfiguracaoService(db, new EphemeralDataProtectionProvider());
+    var respostasExtrato = new RespostasFalsas(File.ReadAllText(Path.Combine(raiz, "src", "backend-go", "internal", "carteira", "testdata", "extrato-respostas.json")));
+    var cotacoesExtrato = new CotacaoService(new FabricaFalsa(respostasExtrato), db, configExtrato,
+        new CambioService(semRede, db, configExtrato, NullLogger<CambioService>.Instance), NullLogger<CotacaoService>.Instance);
+    var extrato = new ExtratoCarteiraService(db, cotacoesExtrato);
+    var webExtrato = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    sugestoesExtrato = (await extrato.SugestoesAsync(CancellationToken.None)).Select(x => JsonSerializer.SerializeToElement(x, webExtrato)).ToList();
+    proventosExtrato = (await extrato.ProventosRecebidosAsync(CancellationToken.None))
+        .Select(p => new { id = p.Id, ticker = p.Ticker, data = p.Data.ToString("yyyy-MM-dd"), valor = p.Valor.ToString(CultureInfo.InvariantCulture) }).ToList();
+    criadasExtrato = await extrato.ImportarAsync(new List<Financas.Api.Dtos.ImportarExtratoItemDto>
+    {
+        new(2, "mxrf11", Financas.Api.Entidades.TipoOperacao.Compra, 10.1234567m, 10.0000005m, 1.125m),
+        new(2, "MXRF11", Financas.Api.Entidades.TipoOperacao.Compra, 1m, 1m, 0m),
+        new(1, "MXRF11", Financas.Api.Entidades.TipoOperacao.Compra, 1m, 1m, 0m),
+        new(999, "MXRF11", Financas.Api.Entidades.TipoOperacao.Compra, 1m, 1m, 0m),
+        new(3, "XX", Financas.Api.Entidades.TipoOperacao.Compra, 1m, 1m, 0m),
+        new(4, "MXRF11", Financas.Api.Entidades.TipoOperacao.Compra, 0m, 1m, 0m),
+        new(5, "MXRF11", Financas.Api.Entidades.TipoOperacao.Compra, 1m, -1m, 0m),
+        new(6, "MXRF11", (Financas.Api.Entidades.TipoOperacao)9, 1m, 1m, 0m),
+        new(7, "KNRI11", Financas.Api.Entidades.TipoOperacao.Compra, 2m, 150m, -1m),
+        new(8, "KNRI11", Financas.Api.Entidades.TipoOperacao.Venda, 1m, 151m, 0.5m),
+        new(9, "WEGE3", Financas.Api.Entidades.TipoOperacao.Compra, 1m, 40m, 0m),
+    }, CancellationToken.None);
+}
+Dictionary<string, object> gabaritoExtrato;
+using (var c = new SqliteConnection($"Data Source={arquivoExtrato};Pooling=False"))
+{
+    c.Open();
+    gabaritoExtrato = new Dictionary<string, object>
+    {
+        ["dotnet"] = new[] { Environment.Version.ToString() }, ["hoje"] = new[] { hojeExtrato.ToString("yyyy-MM-dd") }, ["sugestoes"] = sugestoesExtrato,
+        ["proventos"] = proventosExtrato, ["criadas"] = new[] { criadasExtrato },
+        ["ativos"] = LerTabela(c, "SELECT Id, Ticker, Tipo, Moeda FROM Ativo ORDER BY Id"),
+        ["operacoes"] = LerTabela(c, "SELECT AtivoId, Tipo, Data, Quantidade, PrecoUnitario, Taxas, Cambio, Observacao, Origem, TransacaoId FROM OperacaoAtivo ORDER BY Id"),
+    };
+}
+File.Delete(arquivoExtrato);
+Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "extrato.json"), gabaritoExtrato));
+var regexNumero = (System.Text.RegularExpressions.Regex)typeof(ExtratoCarteiraService)
+    .GetMethod("RegexNumero", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+string[] textosComNumeros =
+[
+    "10 x 9,85", "1.234", "1.234,56", "1.234.567", "1.234.567,8", "1,2,3", "1,90,5", "1,09,5", "1.2349", "1.2340", "1.23", "12.34", "1234.5", "123,456,789", "1.2.39", "9,9,12", "x5y", "5", "a 5 b 6",
+    "", ".5", ",5", "5.", "5,", "0", "00,10", "1.000.", "1.000,", ".1.000", "1.0000", "10.000,50 e 3", "2,5x3", "3x2,5",
+];
+var numerosNosTextos = textosComNumeros.Select(t => new { texto = t, numeros = regexNumero.Matches(t).Select(m => m.Value).ToList() }).ToList();
+var metodoInterpretar = typeof(ExtratoCarteiraService).GetMethod("Interpretar", BindingFlags.NonPublic | BindingFlags.Static)!;
+(string Texto, decimal Valor, decimal? Fechamento)[] interpretacoes =
+[
+    ("COMPRA PETR4 10 X 9,85", 98.5m, null), ("COMPRA PETR4 10 X 9,85", 101.5m, null), ("COMPRA PETR4 10 X 9,85", 101.6m, null), ("COMPRA PETR4 10", 100m, 10m), ("COMPRA PETR4 10", 100m, 100m),
+    ("COMPRA PETR4 10", 100m, 14.2m), ("COMPRA PETR4 10", 100m, 14.3m), ("COMPRA PETR4 10", 100m, 7.7m), ("COMPRA PETR4 10", 100m, 7.6m), ("COMPRA PETR4 10", 100m, 7.69m), ("COMPRA PETR4 5,00", 1m, null),
+    ("COMPRA PETR4 10,00 2,00", 10m, null), ("COMPRA PETR4 10,005 2,00", 10m, null), ("COMPRA PETR4 10,02 2,00", 10m, null), ("COMPRA PETR4 0,00", 10m, null), ("COMPRA PETR4 0,00", 10m, 5m), ("COMPRA PETR4", 10m, 4m),
+    ("COMPRA PETR4", 10m, 30m), ("COMPRA PETR4", 10m, 0m), ("COMPRA PETR4", 0m, 5m), ("COMPRA PETR4", 3m, 2m), ("COMPRA PETR4", 5m, 2m), ("COMPRA PETR4 7 8 2,00", 16m, null), ("COMPRA PETR4 7 8 1,00 2,00", 16m, null),
+    ("COMPRA PETR4 7,00 2,00 3", 6m, null), ("COMPRA PETR44 10 X 2,00", 20m, null), ("COMPRA PETR4PETR4 3", 9m, null), ("Ç12 COMPRA PETR4", 12m, null), ("12/04 03/2026 PETR4", 12m, null), ("3/4/20264", 12m, null),
+    ("A1/2 PETR4", 12m, null), ("1/2B PETR4", 12m, null), ("Ç1/2 PETR4", 12m, null), ("1/2Ç PETR4", 12m, null),
+];
+var interpretados = interpretacoes.Select(i =>
+{
+    var r = ((decimal? Quantidade, decimal? Preco, string? Origem))metodoInterpretar.Invoke(null, [i.Texto, "PETR4", i.Valor, i.Fechamento])!;
+    return new
+    {
+        texto = i.Texto, valor = i.Valor.ToString(CultureInfo.InvariantCulture), fechamento = i.Fechamento?.ToString(CultureInfo.InvariantCulture),
+        quantidade = r.Quantidade?.ToString(CultureInfo.InvariantCulture), preco = r.Preco?.ToString(CultureInfo.InvariantCulture), origem = r.Origem,
+    };
+}).ToList();
+Console.WriteLine(Gravar(Path.Combine("..", "..", "carteira", "testdata", "interpretar.json"), new Dictionary<string, object>
+{
+    ["dotnet"] = new[] { Environment.Version.ToString() }, ["numeros"] = numerosNosTextos, ["interpretar"] = interpretados,
+}));
+
 /// <summary>Conta as falhas de consulta que o CotacaoService registra.</summary>
 sealed class LogContado : Microsoft.Extensions.Logging.ILogger<CotacaoService>
 {

@@ -3,12 +3,14 @@ package carteira
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/selic"
@@ -252,6 +254,229 @@ func TestTextoIgualAoCSharp(t *testing.T) {
 	for _, c := range g.Nomes {
 		if n := nomeDeExibicao(c.Nome, c.Tipo, c.Emissor, c.Personalizado); n != c.Exibicao {
 			t.Errorf("nomeDeExibicao(%q, %q, %s, %s) = %q; o C# dá %q", c.Nome, c.Tipo, texto(c.Emissor), texto(c.Personalizado), n, c.Exibicao)
+		}
+	}
+}
+
+// cotacoesDoGabarito são as cotações com o Yahoo de testdata/extrato-respostas.json, o mesmo arquivo da sonda.
+func cotacoesDoGabarito(t *testing.T, db *sql.DB, r relogio.Relogio) *cotacoes.Servico {
+	t.Helper()
+	dados, err := os.ReadFile("testdata/extrato-respostas.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rotas map[string][]struct {
+		Status int    `json:"status"`
+		Corpo  string `json:"corpo"`
+	}
+	if err := json.Unmarshal(dados, &rotas); err != nil {
+		t.Fatal(err)
+	}
+	srv := testeapoio.NovoServicoDeFora(t)
+	srv.Em("GET", "*", testeapoio.RespostaDeFora{Status: 404, Corpo: "{}"})
+	for caminho, lista := range rotas {
+		srv.Em("GET", caminho, testeapoio.RespostaDeFora{Status: lista[0].Status, Corpo: lista[0].Corpo})
+	}
+	cliente, err := cotacoes.NovoCliente(srv.URL(), srv.URL(), srv.Cliente())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cotacoes.NovoServico(db, cliente, nil, nil, r, slog.New(slog.DiscardHandler))
+}
+
+// Regra: o extrato é o do ExtratoCarteiraService do C# sobre o mesmo cenário (testdata/extrato.json): o que vira sugestão e o
+// que fica de fora (o contexto de investimento, o \\b de Unicode, o lançamento antigo, o transferido), o tipo, a quantidade e
+// o preço pelo texto e pela cotação do dia, as datas e os números no texto, o que já foi importado, a duplicata, os
+// proventos recebidos e a importação.
+func TestExtratoIgualAoCSharp(t *testing.T) {
+	dados, err := os.ReadFile("testdata/extrato.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var g struct {
+		Hoje      []string          `json:"hoje"`
+		Sugestoes []json.RawMessage `json:"sugestoes"`
+		Proventos []struct {
+			Id     int64  `json:"id"`
+			Ticker string `json:"ticker"`
+			Data   string `json:"data"`
+			Valor  string `json:"valor"`
+		} `json:"proventos"`
+		Criadas   []int             `json:"criadas"`
+		Ativos    []json.RawMessage `json:"ativos"`
+		Operacoes []json.RawMessage `json:"operacoes"`
+	}
+	if err := json.Unmarshal(dados, &g); err != nil {
+		t.Fatal(err)
+	}
+	if len(g.Sugestoes) < 30 {
+		t.Fatal("gabarito pequeno: a sonda mudou?")
+	}
+	db := testeapoio.NovoBancoVazio(t)
+	cenario, err := os.ReadFile("testdata/extrato-cenario.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(string(cenario)); err != nil {
+		t.Fatal(err)
+	}
+	hoje, err := tipos.LerData(g.Hoje[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := testeapoio.HojeEmBrasilia(hoje.Ano(), hoje.Mes(), hoje.Dia())
+	s := NovoServico(db, nil, nil, nil, cotacoesDoGabarito(t, db, r), nil, r, slog.New(slog.DiscardHandler))
+
+	sugestoes, err := s.Sugestoes(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	obtido, err := json.Marshal(sugestoes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	esperado, err := json.Marshal(g.Sugestoes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testeapoio.ConferirJSON(t, obtido, string(esperado))
+
+	proventos, err := s.ProventosRecebidos(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(proventos) != len(g.Proventos) {
+		t.Fatalf("proventos %+v, o C# dá %+v", proventos, g.Proventos)
+	}
+	for i, p := range proventos {
+		e := g.Proventos[i]
+		if p.Id != e.Id || p.Ticker != e.Ticker || p.Data.String() != e.Data || p.Valor.String() != e.Valor {
+			t.Errorf("provento %+v, o C# dá %+v", p, e)
+		}
+	}
+
+	item := func(id int64, ticker string, tipo int64, q, p, x string) ItemDoExtrato {
+		return ItemDoExtrato{TransacaoId: id, Ticker: ticker, Tipo: tipo, Quantidade: testeapoio.Valor(q), PrecoUnitario: testeapoio.Valor(p), Taxas: testeapoio.Valor(x)}
+	}
+	criadas, err := s.Importar(t.Context(), []ItemDoExtrato{item(2, "mxrf11", 1, "10.1234567", "10.0000005", "1.125"), item(2, "MXRF11", 1, "1", "1", "0"),
+		item(1, "MXRF11", 1, "1", "1", "0"), item(999, "MXRF11", 1, "1", "1", "0"), item(3, "XX", 1, "1", "1", "0"), item(4, "MXRF11", 1, "0", "1", "0"),
+		item(5, "MXRF11", 1, "1", "-1", "0"), item(6, "MXRF11", 9, "1", "1", "0"), item(7, "KNRI11", 1, "2", "150", "-1"), item(8, "KNRI11", 2, "1", "151", "0.5"),
+		item(9, "WEGE3", 1, "1", "40", "0")})
+	if err != nil || criadas != g.Criadas[0] {
+		t.Fatalf("criadas %d, %v; o C# dá %d", criadas, err, g.Criadas[0])
+	}
+	conferirTabela(t, db, `SELECT Id, Ticker, Tipo, Moeda FROM Ativo ORDER BY Id`, g.Ativos)
+	conferirTabela(t, db, `SELECT AtivoId, Tipo, Data, Quantidade, PrecoUnitario, Taxas, Cambio, Observacao, Origem, TransacaoId FROM OperacaoAtivo ORDER BY Id`, g.Operacoes)
+}
+
+// conferirTabela compara o que a consulta devolve com as linhas gravadas pela sonda.
+func conferirTabela(t *testing.T, db *sql.DB, consulta string, esperado []json.RawMessage) {
+	t.Helper()
+	linhas, err := db.Query(consulta)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer linhas.Close()
+	colunas, err := linhas.Columns()
+	if err != nil {
+		t.Fatal(err)
+	}
+	lista := []map[string]any{}
+	for linhas.Next() {
+		valores := make([]any, len(colunas))
+		ponteiros := make([]any, len(colunas))
+		for i := range valores {
+			ponteiros[i] = &valores[i]
+		}
+		if err := linhas.Scan(ponteiros...); err != nil {
+			t.Fatal(err)
+		}
+		linha := map[string]any{}
+		for i, c := range colunas {
+			linha[c] = valores[i]
+		}
+		lista = append(lista, linha)
+	}
+	obtido, err := json.Marshal(lista)
+	if err != nil {
+		t.Fatal(err)
+	}
+	esperadoJSON, err := json.Marshal(esperado)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var a, b any
+	if err := json.Unmarshal(obtido, &a); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(esperadoJSON, &b); err != nil {
+		t.Fatal(err)
+	}
+	if fmt.Sprint(a) != fmt.Sprint(b) {
+		t.Errorf("%s:\n%s\no C# dá:\n%s", consulta, obtido, esperadoJSON)
+	}
+}
+
+// Regra: os números do texto e a interpretação são os do RegexNumero e do Interpretar do C#, chamados pela sonda: as formas
+// de número, o que fica colado nas pontas, a folga de 3%, a plausibilidade de 30% em volta da cotação, o preço igual ao
+// valor, a quantidade menor que 1, e as datas e os códigos no meio do texto.
+func TestInterpretarIgualAoCSharp(t *testing.T) {
+	t.Parallel()
+	dados, err := os.ReadFile("testdata/interpretar.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var g struct {
+		Numeros []struct {
+			Texto   string   `json:"texto"`
+			Numeros []string `json:"numeros"`
+		} `json:"numeros"`
+		Interpretar []struct {
+			Texto      string  `json:"texto"`
+			Valor      string  `json:"valor"`
+			Fechamento *string `json:"fechamento"`
+			Quantidade *string `json:"quantidade"`
+			Preco      *string `json:"preco"`
+			Origem     *string `json:"origem"`
+		} `json:"interpretar"`
+	}
+	if err := json.Unmarshal(dados, &g); err != nil {
+		t.Fatal(err)
+	}
+	if len(g.Numeros) < 30 || len(g.Interpretar) < 30 {
+		t.Fatal("gabarito pequeno: a sonda mudou?")
+	}
+	for _, c := range g.Numeros {
+		if obtido := numerosDoTexto(c.Texto); fmt.Sprint(obtido) != fmt.Sprint(c.Numeros) {
+			t.Errorf("numerosDoTexto(%q) = %v, o C# dá %v", c.Texto, obtido, c.Numeros)
+		}
+	}
+	textoDe := func(d *tipos.Decimal) string {
+		if d == nil {
+			return "<nil>"
+		}
+		return d.String()
+	}
+	simples := func(s *string) string {
+		if s == nil {
+			return "<nil>"
+		}
+		return *s
+	}
+	for _, c := range g.Interpretar {
+		var fechamento *tipos.Decimal
+		if c.Fechamento != nil {
+			f := testeapoio.Valor(*c.Fechamento)
+			fechamento = &f
+		}
+		var calculo conta
+		r := interpretar(c.Texto, "PETR4", testeapoio.Valor(c.Valor), fechamento, &calculo)
+		if calculo.err != nil {
+			t.Errorf("interpretar(%q): %v", c.Texto, calculo.err)
+		}
+		if textoDe(r.quantidade) != simples(c.Quantidade) || textoDe(r.preco) != simples(c.Preco) || simples(r.origem) != simples(c.Origem) {
+			t.Errorf("interpretar(%q, %s, %s) = %s, %s, %s; o C# dá %s, %s, %s", c.Texto, c.Valor, simples(c.Fechamento), textoDe(r.quantidade), textoDe(r.preco),
+				simples(r.origem), simples(c.Quantidade), simples(c.Preco), simples(c.Origem))
 		}
 	}
 }

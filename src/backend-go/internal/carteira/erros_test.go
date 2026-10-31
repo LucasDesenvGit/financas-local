@@ -125,3 +125,74 @@ func TestCanceladoDepoisDeGravar(t *testing.T) {
 		})
 	}
 }
+
+// Regra: a importação só pede a cotação dos ativos novos; a falha dela não impede o que foi gravado, e só o pedido
+// cancelado volta como erro.
+func TestImportarPedeACotacaoDosNovos(t *testing.T) {
+	t.Parallel()
+	preparar := func(t *testing.T, a atualizacao) (cena, []ItemDoExtrato) {
+		t.Helper()
+		c := cenaSimples(t)
+		c.s.cotacoes = a
+		c.fab.Ativo(func(x *testeapoio.Ativo) { x.Ticker = "PETR4" })
+		tr := c.fab.Transacao(c.fab.Conta())
+		item := ItemDoExtrato{TransacaoId: tr.Id, Ticker: "PETR4", Tipo: 1, Quantidade: testeapoio.Valor("1"), PrecoUnitario: testeapoio.Valor("1"), Taxas: testeapoio.Valor("0")}
+		return c, []ItemDoExtrato{item}
+	}
+	t.Run("ativo que já existe", func(t *testing.T) {
+		t.Parallel()
+		var pedidos [][]int64
+		c, itens := preparar(t, cotacoesFalsas{pedidos: &pedidos})
+		if n, err := c.s.Importar(t.Context(), itens); err != nil || n != 1 || len(pedidos) != 0 {
+			t.Errorf("%d, %v, pedidos %v", n, err, pedidos)
+		}
+	})
+	t.Run("ativo novo", func(t *testing.T) {
+		t.Parallel()
+		var pedidos [][]int64
+		c, itens := preparar(t, cotacoesFalsas{erro: errors.New("sem rede"), pedidos: &pedidos})
+		itens[0].Ticker = "WEGE3"
+		if n, err := c.s.Importar(t.Context(), itens); err != nil || n != 1 || len(pedidos) != 1 {
+			t.Errorf("%d, %v, pedidos %v", n, err, pedidos)
+		}
+	})
+	t.Run("cancelado depois de gravar", func(t *testing.T) {
+		t.Parallel()
+		ctx, cancelar := context.WithCancel(t.Context())
+		defer cancelar()
+		c, itens := preparar(t, cotacoesQueCancelam{cancelar})
+		itens[0].Ticker = "WEGE3"
+		if n, err := c.s.Importar(ctx, itens); !errors.Is(err, context.Canceled) || n != 1 {
+			t.Errorf("%d, %v", n, err)
+		}
+	})
+}
+
+// Regra: o filtro dos proventos recebidos olha a descrição e o texto original, cada um com os seus termos, e o código do
+// ativo pode vir só na descrição.
+func TestProventosRecebidosFiltro(t *testing.T) {
+	t.Parallel()
+	c := cenaSimples(t)
+	conta := c.fab.Conta()
+	lancar := func(descricao string, original *string, valor string) {
+		c.fab.Transacao(conta, func(x *testeapoio.Transacao) {
+			x.Descricao, x.DescricaoOriginal, x.Valor = descricao, original, testeapoio.Valor(valor)
+		})
+	}
+	lancar("RENDIMENTO PETR4", nil, "1.0")
+	lancar("PETR4", textoDe("RENDIMENTO"), "2.0")
+	lancar("JRS CAP WEGE3", nil, "3.0")
+	lancar("WEGE3", textoDe("JRS CAP"), "4.0")
+	lancar("RENDIMENTO ITSA4", nil, "-5.0")
+	proventos, err := c.s.ProventosRecebidos(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var obtido []string
+	for _, p := range proventos {
+		obtido = append(obtido, p.Ticker+" "+p.Valor.String())
+	}
+	if strings.Join(obtido, ", ") != "PETR4 1.0, PETR4 2.0, WEGE3 3.0" {
+		t.Errorf("proventos %v", obtido)
+	}
+}
