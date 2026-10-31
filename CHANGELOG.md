@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.31] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Restaurar uma cópia testado no `.msi`** (#527). Nada muda para quem usa. O workflow do instalador agora segue o guia de restaurar num Windows limpo e confere que a senha volta para a da data da cópia, que era a parte que faltava da #468.
+
 ## [2.50.30] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação

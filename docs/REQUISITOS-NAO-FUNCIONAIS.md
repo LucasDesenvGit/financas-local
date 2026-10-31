@@ -35,7 +35,7 @@ As metas de memória e de disco valem **para o Go no fim** (#86): antes disso, o
 |---|---|---|---|---|
 | Nenhuma atualização apaga dados | Dados depois de atualizar | Todos ficam | Os workflows "Teste de instalação" atualizam em cima de uma instalação, mas não comparam os dados | Medida: nada compara os dados antes e depois |
 | Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `EsquemaBanco` | Medida no código |
-| Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts. O `.msi` não é coberto |
+| Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts e no `.msi` |
 | Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar | À mão | Sem medida |
 | Go fora do ar | Rotas do Go | 503 com mensagem, e reinício sozinho | Passo 9 do `scripts/ci/testar-go-atras-do-dotnet.sh` | Conferida na CI |
 
