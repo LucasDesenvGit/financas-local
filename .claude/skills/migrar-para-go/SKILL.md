@@ -150,4 +150,5 @@ No fim, diga ao usuário, separando fato de julgamento próprio:
 - etapa e issue, o que foi portado (rotas e regras) e o que ficou de fora, com o motivo;
 - resultado dos testes (`go vet`, `go test -race`, contrato: quantos casos, quantos passaram) — se algo falhou ou não rodou (ex.: Go não instalado), diga;
 - diferenças de comportamento encontradas no C# (bugs inclusive): **não corrija em silêncio**, liste e proponha issue;
-- ADR criada ou atualizada, versão de → para, e o que falta para a próxima etapa.
+- ADR criada ou atualizada, versão de → para, e o que falta para a próxima etapa;
+- ao passar um assunto para o Go: mapa de contextos e data dos diagramas de `docs/ARQUITETURA.md` atualizados no mesmo PR ([ADR 0055](../../../docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md)).

@@ -1,29 +1,212 @@
 # Arquitetura
 
+Esta página começa pela visão de cima (o **HLD**): quem usa o sistema, as partes dele, onde cada uma roda e o que sai do computador. O detalhe por pasta vem depois. O padrão dos diagramas está na [ADR 0055](adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
+
+> **Data dos diagramas:** 31/10/2026, na fase "Go atrás do .NET" (#231, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Os diagramas de contêineres e de implantação mudam quando o .NET sair (#86).
+
+## Contexto
+
+Quem usa, o que é o sistema e com quem ele fala (nível 1 do [modelo C4](https://c4model.com/)). Cada seta diz o que vai. Quantidades, valores e dados pessoais não saem do computador; a tabela completa está em [SEGURANCA.md](SEGURANCA.md#o-que-sai-para-a-internet).
+
+```mermaid
+flowchart TB
+    pessoa["Você<br/>[Pessoa]<br/>Acompanha as próprias finanças"]
+    sistema["Finanças Local<br/>[Sistema]<br/>Painel, transações, orçamentos, metas e<br/>investimentos, tudo no seu computador"]
+    pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]<br/>Open Finance: extratos, saldos<br/>e investimentos dos bancos"]
+    bcb["Banco Central<br/>[Sistema de fora]<br/>Selic e PTAX"]
+    cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
+    mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
+    github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
+
+    pessoa -- "usa pelo navegador, em 127.0.0.1" --> sistema
+    sistema -- "as credenciais da Pluggy que você informou" --> pluggy
+    sistema -- "só datas e o código da moeda" --> bcb
+    sistema -- "só o código do ativo" --> cotacoes
+    sistema -- "só os pares fixos, como BTC-BRL" --> mercado
+    sistema -- "só o gerenciador: procura e baixa a versão nova" --> github
 ```
-Navegador (Angular)  ──HTTPS 127.0.0.1:5443──►  Financas.Api (.NET 10, Kestrel)
-                                                   │  login, CSRF, segredos, esquema do banco
-                                                   │
-                                                   ├─► financas-go (processo filho; HTTP 127.0.0.1:<porta da partida>)
-                                                   │     só os prefixos de Go:Prefixos (ex.: /api/go), com o segredo
-                                                   │     interno e o Id de quem está logado (#231, ADR 0049)
-                                                   │
-                                                   ├─► SQLite (dados/sql/FinancasLocal.db, arquivo local, WAL;
-                                                   │           o Go lê e grava no mesmo arquivo)
-                                                   ├─► api.pluggy.ai          (Open Finance)
-                                                   ├─► api.bcb.gov.br         (Selic)
-                                                   ├─► olinda.bcb.gov.br      (câmbio — PTAX)
-                                                   ├─► api.mercadobitcoin.net (cripto, ADR 0048)
-                                                   └─► Yahoo Finance/brapi    (cotações)
+
+## Contêineres
+
+As partes que rodam e como conversam (nível 2 do C4). A fronteira é o computador: nada escuta fora de `127.0.0.1`.
+
+```mermaid
+flowchart TB
+    pessoa["Você<br/>[Pessoa]"]
+
+    subgraph computador["Seu computador: nada escuta fora de 127.0.0.1"]
+        navegador["Navegador<br/>[Contêiner: Angular]<br/>O site, servido pela própria API"]
+        servico["Serviço do sistema<br/>[Serviço do Windows ou systemd]<br/>Sobe a API e a mantém no ar"]
+        gerenciador["Gerenciador<br/>[Contêiner: C#; em migração para Go, ADR 0052]<br/>Liga, desliga, copia o banco e atualiza"]
+        api["API<br/>[Contêiner: .NET no Kestrel, 127.0.0.1:5443]<br/>Login, CSRF, segredos, esquema do banco<br/>e o que ainda não foi para o Go"]
+        go["Back-end Go<br/>[Contêiner: Go, processo filho da API]<br/>Porta escolhida na partida, com segredo interno<br/>Atende os prefixos já migrados"]
+        banco[("Banco<br/>[SQLite em WAL]<br/>dados/sql/FinancasLocal.db")]
+        chaves[("Chaves<br/>[Data Protection]<br/>dados/chaves")]
+    end
+
+    pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]"]
+    selic["Banco Central: Selic<br/>[Sistema de fora]"]
+    ptax["Banco Central: PTAX<br/>[Sistema de fora]"]
+    cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]"]
+    mercado["Mercado Bitcoin<br/>[Sistema de fora]"]
+    github["GitHub<br/>[Sistema de fora]"]
+
+    pessoa -- "abre o site" --> navegador
+    pessoa -- "abre o gerenciador" --> gerenciador
+    navegador -- "HTTPS, /api" --> api
+    servico -- "sobe" --> api
+    gerenciador -- "liga e desliga" --> servico
+    gerenciador -- "confere se responde" --> api
+    gerenciador -- "copia" --> banco
+    api -- "sobe e repassa os prefixos, em HTTP local" --> go
+    api -- "lê e grava" --> banco
+    api -- "cifra os segredos" --> chaves
+    go -- "lê e grava" --> banco
+    api -- "HTTPS" --> pluggy
+    api -- "HTTPS" --> selic
+    api -- "HTTPS" --> cotacoes
+    go -- "HTTPS" --> ptax
+    go -- "HTTPS" --> mercado
+    gerenciador -- "HTTPS" --> github
 ```
 
-A API sobe direto pelo Kestrel (sem IIS nem proxy) e roda como serviço do sistema: `UseSystemd` no Linux e `UseWindowsService` no Windows, com os mesmos scripts bash nos dois.
-
-**O back-end em Go roda atrás da API** ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), #231): o back-end está sendo trocado para Go um assunto de cada vez, e o .NET fica na frente até a inversão (#85). Veja [Back-end em Go](#back-end-em-go--srcbackend-go).
-
-O Angular é publicado dentro da própria API (`wwwroot`), então site e API têm a mesma origem: sem CORS, cookies `__Host-` e proteção CSRF simples.
+Cada caixa, em uma frase:
+- **Navegador:** o Angular é publicado dentro da própria API (`wwwroot`), então site e API têm a mesma origem: sem CORS, cookies `__Host-` e proteção CSRF simples.
+- **API:** sobe direto pelo Kestrel, sem IIS nem proxy, como serviço do sistema (`UseSystemd` no Linux e `UseWindowsService` no Windows). Os scripts bash são os mesmos nos dois (`scripts/geral/`, no Windows pelo Git Bash); o `instalar-windows.cmd` faz o mesmo sem bash, e o `.msi` instala sem precisar do código. Ao iniciar, ela aplica o esquema do banco, com uma cópia antes de mudar um banco existente.
+- **Back-end Go:** a API o sobe como processo filho e repassa só os prefixos de `Go:Prefixos`, com o segredo interno e o Id de quem está logado. Login, CSRF e segredos continuam na API até a inversão (#85), e cada assunto volta para o .NET tirando o prefixo da lista. Detalhes em [Back-end em Go](#back-end-em-go--srcbackend-go).
+- **Banco:** o mesmo arquivo para os dois back-ends. O acesso é a permissão do sistema operacional sobre a pasta `dados`.
+- **Gerenciador:** roda como o usuário, fora da API.
 
 O que sai para a internet e como o site se protege (login, sessão, CSRF, cabeçalhos, segredos): [SEGURANCA.md](SEGURANCA.md).
+
+## Mapa de contextos
+
+Os assuntos do back-end e quem usa quem. A seta vai de quem usa para quem é usado, e a seta para uma moldura quer dizer que ele usa vários assuntos de dentro. Borda tracejada: o assunto ainda está só no .NET.
+
+```mermaid
+flowchart TB
+    subgraph juntam["Quem junta os outros"]
+        openfinance["Open Finance<br/>sincronização com a Pluggy (#83)"]
+        painel["Painel e relatórios (#80)"]
+        conferencia["Conferir com o banco"]
+    end
+
+    subgraph nucleo["Núcleo financeiro"]
+        planejamento["Planejamento<br/>orçamentos, metas, contas a pagar (#79)"]
+        cadastros["Cadastros<br/>categorias, regras, regras de descrição"]
+        transacoes["Transações<br/>extrato, categorização, transferências"]
+        contas["Contas e faturas"]
+    end
+
+    subgraph cotacoes["Investimentos e cotações"]
+        investimentos["Investimentos<br/>carteira, reservas, cotações, Selic, FIIs"]
+        cambio["Câmbio<br/>PTAX"]
+        cripto["Cripto"]
+    end
+
+    subgraph modulos["Módulos (#190)"]
+        nenhum["Nenhum ainda"]
+    end
+
+    openfinance --> nucleo
+    openfinance --> investimentos
+    painel --> nucleo
+    painel --> cotacoes
+    conferencia --> contas
+    conferencia --> cotacoes
+    planejamento --> transacoes
+    planejamento --> contas
+    planejamento --> investimentos
+    cadastros --> transacoes
+    transacoes --> investimentos
+    investimentos --> transacoes
+    investimentos --> contas
+    investimentos --> cambio
+
+    classDef soNoDotNet stroke-dasharray: 6 4
+    class openfinance,painel,planejamento,nenhum soNoDotNet
+```
+
+- **Quando as setas foram conferidas:** nos pacotes em Go, pelos imports (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`). No que está só no .NET, pelos serviços que cada classe recebe no construtor (`SincronizacaoService`, `PainelController`, `RelatorioService` e `PlanejamentoControllers`).
+- **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
+- **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos. O Painel já tem partes em Go (`internal/relatorios`, `internal/emprestimos`), mas as rotas dele ainda são do .NET.
+- **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191). Ainda não há nenhum.
+
+## Onde roda o quê
+
+### Windows, pelo `.msi`
+
+```mermaid
+flowchart TB
+    subgraph windows["Computador com Windows"]
+        servico["Serviço do Windows FinancasLocal<br/>conta LocalSystem, início automático"]
+        atalho["Atalhos do gerenciador<br/>menu Iniciar e área de trabalho"]
+        confianca["Certificado de 127.0.0.1 e localhost<br/>nas Autoridades Raiz"]
+
+        subgraph programas["%ProgramFiles%\FinancasLocal"]
+            api["API .NET, sem precisar do .NET instalado<br/>com o site no wwwroot"]
+            go["financas-go.exe"]
+            gerenciador["Gerenciador<br/>pede administrador (UAC) para agir"]
+        end
+
+        subgraph dados["%ProgramData%\FinancasLocal\dados<br/>só SYSTEM e Administradores"]
+            banco[("sql\FinancasLocal.db")]
+            chaves[("chaves<br/>protegidas por DPAPI")]
+            certificado["certificado\financaslocal.pfx"]
+        end
+    end
+
+    servico --> api
+    api -- "processo filho" --> go
+    api --> banco
+    go --> banco
+    api --> chaves
+    api --> certificado
+    atalho --> gerenciador
+    gerenciador --> servico
+```
+
+### Linux, pelos scripts
+
+```mermaid
+flowchart TB
+    subgraph linux["Computador com Linux: tudo na conta do usuário"]
+        servico["Unidade financaslocal.service<br/>systemctl --user, em ~/.config/systemd/user"]
+        confianca["Certificado de 127.0.0.1 e localhost<br/>confiado à mão, com os comandos que o script mostra"]
+
+        subgraph codigo["Pasta do repositório"]
+            subgraph publicado["publicado"]
+                api["api: API .NET, com o site no wwwroot"]
+                go["api/financas-go"]
+                gerenciador["gerenciador: janela Avalonia"]
+            end
+            subgraph dados["dados"]
+                banco[("sql/FinancasLocal.db")]
+                chaves[("chaves<br/>protegidas pela permissão de arquivo")]
+            end
+            backups["backups"]
+        end
+    end
+
+    servico --> api
+    api -- "processo filho" --> go
+    api --> banco
+    go --> banco
+    api --> chaves
+    gerenciador -- "systemctl --user, sem senha" --> servico
+```
+
+## Decisões em resumo
+
+| Decisão | Por quê | ADR |
+|---|---|---|
+| Tudo local, sem exposição na rede | Os dados financeiros ficam no computador de quem usa | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) |
+| Kestrel, sem IIS nem proxy | Os mesmos scripts no Windows e no Linux | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) |
+| SQLite, sem migrations | O banco é um arquivo, e o esquema vem de scripts idempotentes | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md), [0003](adr/0003-esquema-por-scripts-sql-idempotentes.md) |
+| Site no `wwwroot` da API | Mesma origem: sem CORS, com cookies `__Host-` | [0004](adr/0004-front-end-publicado-no-wwwroot-da-api.md) |
+| Go atrás do .NET | A troca acontece um assunto por vez, com volta fácil | [0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
+| CSP restritiva, sem script inline | Nada de terceiros carregado no site | [0034](adr/0034-sem-sri-no-build-do-front-end.md) |
+| Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md), por exemplo |
 
 ## Back-end — `src/backend/Financas.Api`
 
