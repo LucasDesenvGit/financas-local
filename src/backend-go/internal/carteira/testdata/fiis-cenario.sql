@@ -18,7 +18,8 @@ INSERT INTO Ativo (Id, Ticker, Nome, Tipo, Moeda, PrecoAtual, PrecoAnterior, Pre
     (7, 'PETR4', 'Ação fica de fora', 2, 'BRL', '30.0', '29.0', 0, 'yahoo', NULL, '2025-01-01 00:00:00'),
     (8, 'VELH11', 'Mais de 180 meses', 1, 'BRL', '100.0', '100.0', 1, NULL, 'Híbrido', '2025-01-01 00:00:00'),
     (9, 'NOVO11', 'Comprado neste mês', 1, 'BRL', NULL, NULL, 0, NULL, NULL, '2025-01-01 00:00:00'),
-    (10, 'TAXA11', 'Sem cotação nem preço', 1, 'BRL', NULL, NULL, 0, NULL, NULL, '2025-01-01 00:00:00');
+    (10, 'TAXA11', 'Sem cotação nem preço', 1, 'BRL', NULL, NULL, 0, NULL, NULL, '2025-01-01 00:00:00'),
+    (11, 'GRAT11', 'Sem custo, com cotação', 1, 'BRL', '7.5', NULL, 0, 'yahoo', NULL, '2025-01-01 00:00:00');
 
 INSERT INTO OperacaoAtivo (Id, AtivoId, Tipo, Data, Quantidade, PrecoUnitario, Taxas, Cambio, Origem, TransacaoId, CriadoEm) VALUES
     (1, 1, 1, '2025-03-10', '10.0', '150.0', '1.25', '1.0', 1, 101, '2025-03-10 12:00:00'),
@@ -34,7 +35,8 @@ INSERT INTO OperacaoAtivo (Id, AtivoId, Tipo, Data, Quantidade, PrecoUnitario, T
     (11, 9, 1, '2026-10-20', '1.0', '10.0', '0.0', '1.0', 1, NULL, '2026-10-20 12:00:00'),
     (12, 10, 1, '2026-06-02', '1.0', '0.0', '0.0', '1.0', 1, NULL, '2026-06-02 12:00:00'),
     (13, 2, 2, '2026-01-10', '1.0', '100.0', '0.0', '1.0', 1, NULL, '2026-01-10 12:00:00'),
-    (14, 2, 1, '2026-02-10', '1.0', '100.0', '0.0', '1.0', 1, NULL, '2026-02-10 12:00:00');
+    (14, 2, 1, '2026-02-10', '1.0', '100.0', '0.0', '1.0', 1, NULL, '2026-02-10 12:00:00'),
+    (15, 11, 1, '2026-05-04', '2.0', '0.0', '0.0', '1.0', 1, NULL, '2026-05-04 12:00:00');
 
 INSERT INTO ProventoAtivo (AtivoId, DataCom, ValorPorCota) VALUES
     (1, '2025-02-28', '1.1'), (1, '2025-03-31', '1.1'), (1, '2025-04-30', '1.1'), (1, '2025-10-31', '1.12'), (1, '2025-12-30', '1.12'),
@@ -80,6 +82,8 @@ INSERT INTO Transacao (Id, ContaId, Data, Descricao, DescricaoOriginal, Valor, T
     -- Com o código e o valor certo (15 cotas × 1,10): guarda o provento, e o sem código do lado fica sem fundo.
     (209, 1, '2026-08-10', 'RENDIMENTOS HGLG11', NULL, '16.5', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     (210, 1, '2026-08-11', 'Valor recebido de Investimentos', NULL, '16.5', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
+    -- Dois fundos no mês: o maior primeiro, mesmo vindo depois.
+    (213, 1, '2026-06-15', 'RENDIMENTOS ABCD11', NULL, '5.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     -- Dois créditos do mesmo fundo no mês: uma linha só.
     (212, 1, '2026-08-12', 'RENDIMENTOS HGLG11', NULL, '1.0', 2, 1, 2, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00'),
     -- Dois fundos pagam o mesmo mês com valores parecidos: fica o mais perto do valor.

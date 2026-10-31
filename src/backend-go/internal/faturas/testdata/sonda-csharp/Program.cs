@@ -1109,7 +1109,7 @@ MudarFiis("DELETE FROM IndiceMensal WHERE Mes = '2025-02-01'");
 await PassoFiis("o IFIX do primeiro mês");
 MudarFiis("UPDATE OperacaoAtivo SET Data = '2026-03-02' WHERE Data < '2026-03-02'");
 await PassoFiis("a primeira compra há menos de um ano");
-MudarFiis("UPDATE OperacaoAtivo SET PrecoUnitario = '1.0E-5', Quantidade = '1000000000.0' WHERE Id = 1; UPDATE OperacaoAtivo SET Quantidade = '999999999.0', PrecoUnitario = '1000000.0' WHERE Id = 3");
+MudarFiis("DELETE FROM OperacaoAtivo WHERE AtivoId <> 1; UPDATE Ativo SET PrecoAtual = NULL; UPDATE PrecoMensalAtivo SET Fechamento = '0.001' WHERE AtivoId = 1 AND Mes = '2026-03-01'");
 await PassoFiis("retorno abaixo do piso");
 MudarFiis("DELETE FROM OperacaoAtivo");
 await PassoFiis("sem fundos");
