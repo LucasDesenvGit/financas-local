@@ -125,7 +125,8 @@ jobs:
 
           Stop-Service FinancasLocal
           New-Item -ItemType Directory -Force dados\antes-de-restaurar | Out-Null
-          Copy-Item "$banco*" dados\antes-de-restaurar          Copy-Item $copia.FullName $banco -Force
+          Copy-Item "$banco*" dados\antes-de-restaurar\
+          Copy-Item $copia.FullName $banco -Force
           Remove-Item "$banco-wal", "$banco-shm" -ErrorAction SilentlyContinue
           Start-Service FinancasLocal
 
