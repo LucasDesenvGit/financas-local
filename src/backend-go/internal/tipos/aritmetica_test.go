@@ -85,6 +85,42 @@ func TestArredondarIgualAoMathRound(t *testing.T) {
 	}
 }
 
+// Regra: a divisão exata na escala natural guarda os zeros dela; a que não é exata perde todos os zeros à direita, até o zero
+// sem casas, quando o quociente arredonda para zero. Os valores são os do decimal do .NET 10.
+func TestDividirOsZerosDaEscala(t *testing.T) {
+	t.Parallel()
+	casos := []struct{ a, b, resultado string }{
+		{"-0.00000000000000000000000001", "699.94", "0"},
+		{"0.00000000000000000000000001", "699.94", "0"},
+		{"0.0000000000000000000000000001", "3", "0"},
+		{"0.0000000000000000000000000001", "2", "0"},
+		{"0.0000000000000000000000000100", "300", "0"},
+		{"0.0000000000000000000000000100", "299.9999", "0"},
+		{"0.00000000000000000000000100", "1000000000000000000000000000", "0"},
+		{"0.0000000000000000000000000003", "2", "0.0000000000000000000000000002"},
+		{"0.0000000000000000000000000002", "3", "0.0000000000000000000000000001"},
+		{"0.00", "3", "0.00"},
+		{"0.0000000000000000000000000000", "3", "0.0000000000000000000000000000"},
+		{"0.00000000000000000000000", "699.94", "0.000000000000000000000"},
+		{"10.00", "4", "2.50"},
+		{"123.4500", "1.5", "82.300"},
+		{"0.1000000000000000000000000000", "1.0000000000001", "0.099999999999990000000000001"},
+		{"7.0000000000000000000000000000", "7.000000000000000000000000001", "0.9999999999999999999999999999"},
+	}
+	for _, c := range casos {
+		t.Run(c.a+"/"+c.b, func(t *testing.T) {
+			t.Parallel()
+			obtido, err := Dividir(dec(t, c.a), dec(t, c.b))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if obtido.String() != c.resultado {
+				t.Errorf("%s / %s = %s, o C# dá %s", c.a, c.b, obtido, c.resultado)
+			}
+		})
+	}
+}
+
 func TestDividirPorZero(t *testing.T) {
 	t.Parallel()
 	if _, err := Dividir(dec(t, "1"), dec(t, "0.00")); !errors.Is(err, ErrDivisaoPorZero) {

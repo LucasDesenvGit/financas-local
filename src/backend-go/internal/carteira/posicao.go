@@ -51,19 +51,22 @@ type Ativo struct {
 // legível como a do C#. Quem usa confere o err no fim.
 type conta struct{ err error }
 
-func (c *conta) dividir(a, b tipos.Decimal) tipos.Decimal {
-	r, err := tipos.Dividir(a, b)
+// anotar guarda o primeiro erro.
+func (c *conta) anotar(err error) {
 	if err != nil && c.err == nil {
 		c.err = err
 	}
+}
+
+func (c *conta) dividir(a, b tipos.Decimal) tipos.Decimal {
+	r, err := tipos.Dividir(a, b)
+	c.anotar(err)
 	return r
 }
 
 func (c *conta) fator(s *selic.Serie, de, ate tipos.Data) tipos.Decimal {
 	r, err := s.Fator(de, ate)
-	if err != nil && c.err == nil {
-		c.err = err
-	}
+	c.anotar(err)
 	return r
 }
 
