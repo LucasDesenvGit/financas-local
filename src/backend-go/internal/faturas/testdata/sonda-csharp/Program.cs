@@ -915,7 +915,7 @@ var metodoInterpretar = typeof(ExtratoCarteiraService).GetMethod("Interpretar", 
 (string Texto, decimal Valor, decimal? Fechamento)[] interpretacoes =
 [
     ("COMPRA PETR4 10 X 9,85", 98.5m, null), ("COMPRA PETR4 10 X 9,85", 101.5m, null), ("COMPRA PETR4 10 X 9,85", 101.6m, null), ("COMPRA PETR4 10", 100m, 10m), ("COMPRA PETR4 10", 100m, 100m),
-    ("COMPRA PETR4 10", 100m, 14.2m), ("COMPRA PETR4 10", 100m, 14.3m), ("COMPRA PETR4 10", 100m, 7.7m), ("COMPRA PETR4 10", 100m, 7.6m), ("COMPRA PETR4 10", 100m, 7.69m), ("COMPRA PETR4 5,00", 1m, null),
+    ("COMPRA PETR4 10", 100m, 14.2m), ("COMPRA PETR4 10", 100m, 14.3m), ("COMPRA PETR4 10", 100m, 7.7m), ("COMPRA PETR4 10", 100m, 7.6m), ("COMPRA PETR4 10", 100m, 7.69m), ("COMPRA PETR4 5,00", 1m, null), ("COMPRA PETR4 5,00", 16m, null),
     ("COMPRA PETR4 10,00 2,00", 10m, null), ("COMPRA PETR4 10,005 2,00", 10m, null), ("COMPRA PETR4 10,02 2,00", 10m, null), ("COMPRA PETR4 0,00", 10m, null), ("COMPRA PETR4 0,00", 10m, 5m), ("COMPRA PETR4", 10m, 4m),
     ("COMPRA PETR4", 10m, 30m), ("COMPRA PETR4", 10m, 0m), ("COMPRA PETR4", 0m, 5m), ("COMPRA PETR4", 3m, 2m), ("COMPRA PETR4", 5m, 2m), ("COMPRA PETR4 7 8 2,00", 16m, null), ("COMPRA PETR4 7 8 1,00 2,00", 16m, null),
     ("COMPRA PETR4 7,00 2,00 3", 6m, null), ("COMPRA PETR44 10 X 2,00", 20m, null), ("COMPRA PETR4PETR4 3", 9m, null), ("Ç12 COMPRA PETR4", 12m, null), ("12/04 03/2026 PETR4", 12m, null), ("3/4/20264", 12m, null),

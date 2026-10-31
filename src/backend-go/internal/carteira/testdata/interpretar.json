@@ -49,6 +49,7 @@
     {"texto":"COMPRA PETR4 10","valor":"100","fechamento":"7.6","quantidade":"13","preco":"7.6923","origem":"cotação do dia"},
     {"texto":"COMPRA PETR4 10","valor":"100","fechamento":"7.69","quantidade":"13","preco":"7.6923","origem":"cotação do dia"},
     {"texto":"COMPRA PETR4 5,00","valor":"1","fechamento":null,"quantidade":null,"preco":null,"origem":null},
+    {"texto":"COMPRA PETR4 5,00","valor":"16","fechamento":null,"quantidade":null,"preco":null,"origem":null},
     {"texto":"COMPRA PETR4 10,00 2,00","valor":"10","fechamento":null,"quantidade":"5","preco":"2.00","origem":"preço do extrato"},
     {"texto":"COMPRA PETR4 10,005 2,00","valor":"10","fechamento":null,"quantidade":"5","preco":"2.00","origem":"preço do extrato"},
     {"texto":"COMPRA PETR4 10,02 2,00","valor":"10","fechamento":null,"quantidade":"1","preco":"10.02","origem":"preço do extrato"},

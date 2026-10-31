@@ -49,3 +49,4 @@ internal/tipos | decimal.go | CONDITIONALS_BOUNDARY | if v.Exponent() < -casasMa
 internal/tipos | decimal.go | INVERT_NEGATIVES | if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 { | o caber deixa como está o número que já cabe: entrar nele a mais não muda nada (#82)
 internal/tipos | decimal.go | ARITHMETIC_BASE | if v.Exponent() < -casasMaximas || v.Coefficient().BitLen() > 96 { | o caber deixa como está o número que já cabe: entrar nele a mais não muda nada (#82)
 internal/carteira | posicao.go | INVERT_LOOPCTRL | break | as operações vêm pela data: depois da primeira além do limite, todas estão além (#82)
+internal/carteira | extrato.go | CONDITIONALS_BOUNDARY | for i := 0; i < len(t); { | com i no fim do texto não há número: o numeroEm não acha nada, e o laço termina do mesmo jeito (#82)
