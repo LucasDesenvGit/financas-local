@@ -2609,5 +2609,275 @@
       "totalOpenFinance": 15403.49,
       "totalReservas": 800.0
     }
+  },
+  {
+    "nome": "sugestões do extrato",
+    "requisicao": "GET /api/carteira/extrato/sugestoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "sugestões sem login",
+    "requisicao": "GET /api/carteira/extrato/sugestoes",
+    "status": 401
+  },
+  {
+    "nome": "importar do extrato",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 1,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2025-11-03",
+            "Id": 12,
+            "Observacao": "Importada do extrato",
+            "Origem": 3,
+            "PluggyTransacaoId": null,
+            "PrecoUnitario": "150.123457",
+            "Quantidade": "1.5",
+            "Taxas": "0.12",
+            "Tipo": 1,
+            "TransacaoId": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "importar de novo o mesmo lançamento",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "importar um lançamento que não existe",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "importar um código inválido",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "importar sem a lista",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens": [
+          "The Itens field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com a lista nula",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens": [
+          "The Itens field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com a lista vazia",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens": [
+          "The field Itens must be a string or array type with a minimum length of '1'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com o código curto",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens[0].Ticker": [
+          "The field Ticker must be a string with a minimum length of 3 and a maximum length of 12."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com a quantidade zero",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens[0].Quantidade": [
+          "The field Quantidade must be between 1E-06 and 1000000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com o preço negativo",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens[1].PrecoUnitario": [
+          "The field PrecoUnitario must be between 0 and 100000000."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com o tipo em texto",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.itens[0].tipo": [
+          "The JSON value could not be converted to Financas.Api.Dtos.ImportarExtratoItemDto. Path: $.itens[0].tipo | LineNumber: 5 | BytePositionInLine: 23."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "importar com um item nulo",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 500,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Ocorreu um erro interno. Ele foi registrado em Configurações › Erros."
+    }
+  },
+  {
+    "nome": "importar sem login",
+    "requisicao": "POST /api/carteira/extrato/importar",
+    "status": 401
+  },
+  {
+    "nome": "as operações depois de importar",
+    "requisicao": "GET /api/carteira/ativos/1/operacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativoId": 1,
+        "cambio": 1.0,
+        "data": "2026-02-10",
+        "id": 2,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 158.32,
+        "precoUnitario": 155.8,
+        "quantidade": 5.0,
+        "taxas": 1.2,
+        "ticker": "HGLG11",
+        "tipo": 1,
+        "valorAtual": 791.60,
+        "valorSeFosseSelic": 783.65,
+        "valorTotal": 780.20,
+        "variacaoPreco": 1.62
+      },
+      {
+        "ativoId": 1,
+        "cambio": 1.0,
+        "data": "2025-11-10",
+        "id": 1,
+        "moeda": "BRL",
+        "observacao": null,
+        "origem": 1,
+        "precoAtual": 158.32,
+        "precoUnitario": 160.25,
+        "quantidade": 10.0,
+        "taxas": 0.0,
+        "ticker": "HGLG11",
+        "tipo": 1,
+        "valorAtual": 1583.20,
+        "valorSeFosseSelic": 1609.58,
+        "valorTotal": 1602.50,
+        "variacaoPreco": -1.20
+      },
+      {
+        "ativoId": 1,
+        "cambio": 1.0,
+        "data": "2025-11-03",
+        "id": 12,
+        "moeda": "BRL",
+        "observacao": "Importada do extrato",
+        "origem": 3,
+        "precoAtual": 158.32,
+        "precoUnitario": 150.123457,
+        "quantidade": 1.5,
+        "taxas": 0.12,
+        "ticker": "HGLG11",
+        "tipo": 1,
+        "valorAtual": 237.48,
+        "valorSeFosseSelic": 226.30,
+        "valorTotal": 225.31,
+        "variacaoPreco": 5.46
+      }
+    ]
   }
 ]
