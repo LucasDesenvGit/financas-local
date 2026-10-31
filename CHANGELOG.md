@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.29] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Como avisar de uma falha, e o modelo de ameaças** (#469; épico #465). O novo `SECURITY.md` diz como avisar de uma falha de segurança sem abrir uma issue pública. O `docs/MODELO-DE-AMEACAS.md` diz de quem o sistema se protege e o que fica de fora, com STRIDE por fronteira de confiança e os pontos da #68 ligados.
+
 ## [2.50.28] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
