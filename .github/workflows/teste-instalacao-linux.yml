@@ -129,6 +129,28 @@ jobs:
           env PATH="$PATH_LIMPO" bash scripts/geral/4-backup.sh
           ls backups/FinancasLocal_*.db
 
+      # #468: o passo a passo do docs/OPERACAO.md: a copia volta, e o que veio depois dela sai.
+      - name: Restaurar a copia (docs/OPERACAO.md)
+        run: |
+          sqlite=ferramentas/sqlite/sqlite3
+          banco=dados/sql/FinancasLocal.db
+          copia="$(ls -t backups/FinancasLocal_*.db | head -1)"
+          "$sqlite" "$banco" "INSERT INTO Configuracao (Chave, Valor, AtualizadoEm) VALUES ('teste.depois-da-copia', 'x', '2026-01-01 00:00:00');"
+
+          systemctl --user stop financaslocal.service
+          mkdir -p dados/antes-de-restaurar
+          cp "$banco"* dados/antes-de-restaurar/
+          cp "$copia" "$banco"
+          rm -f "$banco-wal" "$banco-shm"
+          systemctl --user start financaslocal.service
+
+          for _ in $(seq 1 30); do curl -k -fsS https://127.0.0.1:5443/api/auth/estado && break; sleep 1; done
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+          marcas="$("$sqlite" "$banco" "SELECT COUNT(*) FROM Configuracao WHERE Chave = 'teste.depois-da-copia';")"
+          [[ "$marcas" == 0 ]] || { echo "::error::a copia nao voltou: $marcas marca(s) no banco"; exit 1; }
+          [[ "$("$sqlite" "$banco" 'PRAGMA integrity_check;')" == ok ]] || { echo "::error::banco corrompido depois de restaurar"; exit 1; }
+          [[ -e dados/antes-de-restaurar/FinancasLocal.db ]] || { echo "::error::o banco de antes nao foi guardado"; exit 1; }
+
       - name: Parar (parar.sh --desativar)
         run: |
           env PATH="$PATH_LIMPO" bash scripts/geral/parar.sh --desativar
