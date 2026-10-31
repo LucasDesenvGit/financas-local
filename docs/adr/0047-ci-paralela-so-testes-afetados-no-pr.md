@@ -42,6 +42,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - Cache do `setup-go`, com chave no `go.sum`: módulos e compilação, inclusive do `sqlc` e do `govulncheck`, que rodam por `go run` numa versão fixa.
 - *(Substituído pela [ADR 0050](0050-msi-gerado-no-merge-e-nao-no-pr.md): o .msi não roda mais no PR, só no merge para o develop, na tag e à mão.)* **.msi só quando o PR precisa** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API, o próprio workflow, ou o `Directory.Build.props` **além da linha `<Version>`**. No push do `develop` e na tag, sempre.
 - **Caches:** módulos e compilação do Go (`setup-go`), `node_modules` (pula o `npm ci`), build do Angular (`angular.json`: `cli.cache.environment: "all"`, porque o padrão desliga na CI), Jest (`--cacheDirectory`), NuGet (também no job do .msi, que publica self-contained para win-x64), e o Chromium do Playwright, como antes.
+  - **Chave de cache só com o que muda o conteúdo** (#526): nada que mude em todo PR, como o `Directory.Build.props`, que só guarda a versão (ADR 0039). Com ele na chave do NuGet, cada PR criava um cache novo de ~700 MB, o repositório passou do limite de 10 GB do Actions, e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A do NuGet leva os `.csproj` e a versão do SDK do .NET (que decide os pacotes do runtime do `.msi`).
 
 ## Consequências
 
@@ -53,6 +54,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
 - **Negativas:**
   - **um teste afetado pode escapar no PR:** dependência que o grafo não vê (ex.: CSS de componente que muda outra tela por cascata, teste que abre a tela por um caminho sem a rota escrita). Mitigação: tudo no merge e arquivos globais disparam tudo;
   - **mais minutos de CI no total** (cada job prepara a própria máquina), em troca de menos tempo de relógio;
+  - **cache grande demais:** o limite do Actions é de 10 GB por repositório, e o GitHub apaga os mais antigos sem avisar. O total fica em Actions › Caches (#526);
   - **cache que vale demais:** um `node_modules` ou build do Angular estragado no cache pode passar adiante. As chaves mudam com o `package-lock.json`, e o build do Angular por commit, com volta ao mais recente;
   - os scripts de seleção são código a manter (regras do que é global).
 - **Na prática:**
