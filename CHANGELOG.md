@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.23] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **A arquitetura em desenho** (#462; épico #465). Nada muda para quem usa. Para quem desenvolve: `docs/ARQUITETURA.md` passa a começar pelos diagramas Mermaid de Contexto, Contêineres, mapa de contextos e implantação no Windows e no Linux, com as decisões em resumo, no lugar do diagrama em texto. A [ADR 0055](docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md) registra o padrão e a regra de manter o desenho em dia no mesmo PR.
+
 ## [2.50.22] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
