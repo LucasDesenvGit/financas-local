@@ -24,6 +24,7 @@ Como trabalhar:
 - Não mude o código C# para facilitar o porte, não corrija bug do C# em silêncio e não "melhore" regra de negócio: liste o que achou.
 - Não faça commit, push nem PR, e não mexa em issues, a menos que o pedido diga isso.
 - Se o Go não estiver instalado (`go version` falha), diga isso e não afirme que testes passaram.
+- Ao falar de desempenho, meça contra as metas de `docs/REQUISITOS-NAO-FUNCIONAIS.md`.
 - Na inversão do .NET e do Go (#85, #86), a fronteira API ↔ Go de `docs/MODELO-DE-AMEACAS.md` é revista no mesmo PR.
 - Ao passar um assunto para o Go, o mapa de contextos e a data dos diagramas de `docs/ARQUITETURA.md`, o fluxo do assunto em `docs/arquitetura/fluxos.md` e a linha "Onde está hoje" de `docs/arquitetura/dominio.md` mudam no mesmo PR (ADR 0055).
 
