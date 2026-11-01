@@ -19,7 +19,7 @@ O que o SQL não mostra:
 - **Dinheiro em `TEXT`**, no formato do EF Core (`-5000.0`). Por isso, somar e comparar valores é feito no código, nunca no SQL.
 - **Datas e horas em `TEXT`:** data de negócio no fuso de Brasília (`2026-10-15`); carimbo em UTC (`2026-10-15 22:55:31.3481471`).
 - **GUID em maiúsculas**, e `bool` e `enum` em `INTEGER`.
-- **Ligações sem chave estrangeira:** `Conta.ContaVinculadaId`, `Transacao.RegraDescricaoId`, `OperacaoAtivo.TransacaoId` e `HistoricoInvestimento.ConexaoBancariaId` apontam para outra tabela, mas o banco não confere.
+- **Ligações sem chave estrangeira:** `Conta.ContaVinculadaId`, `Transacao.RegraDescricaoId`, `Transacao.PluggyCategoriaId` (para `CategoriaPluggy`), `CategoriaPluggy.PaiPluggyId`, `OperacaoAtivo.TransacaoId`, `HistoricoInvestimento.ConexaoBancariaId` e `HistoricoInvestimento.PluggyInvestmentId` (para `Investimento`, de propósito: o histórico do investimento resgatado fica) apontam para outra tabela, mas o banco não confere. Quem apaga a linha de cima cuida delas no código.
 
 <!-- diagramas-do-banco: início (gerado por scripts/ci/gerar-diagrama-banco.py) -->
 
@@ -240,11 +240,12 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
 4. Em `src/backend-go`, rode `go generate ./...` e suba o que ele mudar: o back-end em Go leva uma cópia dos scripts dentro do executável e um esquema para o `sqlc` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha.
-5. No commit, use `feat(banco)!:` para indicar que é preciso rodar o script do banco.
+5. Tabela nova: entra em `ASSUNTOS` no `scripts/ci/gerar-diagrama-banco.py`. Rode `python3 scripts/ci/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
+6. No commit, use `feat(banco)!:` para marcar que a estrutura mudou. Quem atualiza não precisa fazer nada: a API aplica o esquema ao iniciar ([ADR 0039](adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
 
 Regras:
 - Nunca apague ou renomeie colunas em uso sem um bloco de transição.
 - Nada de sintaxe do SQL Server (`GO`, `dbo.`, `[...]`, `IDENTITY`, `N'...'`, `OBJECT_ID`, `COL_LENGTH`): o `verificar-sql.py` recusa.
-- Restrições com nome explícito (`PK_`, `FK_`, `UQ_`, `CK_`, `IX_`).
+- Restrições e índices com nome explícito: `PK_`, `FK_`, `UQ_`, `CK_`, `DF_` (valor padrão), `IX_` (índice) e `UX_` (índice único, inclusive o parcial, com `WHERE`).
 - Decimais e datas são gravados como `TEXT` (é como o provider SQLite do EF Core os guarda); a precisão vale pelo `HasPrecision` no `FinancasDbContext`.
 - Chaves estrangeiras só valem com `PRAGMA foreign_keys = ON`, que o EF Core já envia em toda conexão — não desligue isso no provider, senão os `ON DELETE CASCADE/SET NULL` deixam de valer.

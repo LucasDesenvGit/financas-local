@@ -62,10 +62,20 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `Ativo`, `OperacaoAtivo`, `ProventoAtivo` e `PrecoMensalAtivo`: o que você tem, as quantidades e os preços |
-| **De onde vem** | De você, do extrato e do Open Finance. As cotações vêm de Yahoo Finance, brapi e Mercado Bitcoin |
+| **De onde vem** | De você, do extrato e do Open Finance. As cotações e os proventos vêm do Yahoo Finance e da brapi |
 | **Sai do computador?** | Só o código do ativo, para buscar a cotação. Quantidades e valores não saem |
 | **Por quanto tempo** | Até você apagar |
 | **Como apagar** | Em **Investimentos**: excluir a operação ou o ativo |
+
+### Cotações, índices e categorias públicas
+
+| | |
+|---|---|
+| **O que é** | `CotacaoMoeda` (PTAX), `CotacaoCripto`, `TaxaSelicDiaria`, `IndiceMensal` (como o IFIX) e `CategoriaPluggy` (as categorias que a Pluggy usa e a sua categoria para cada uma). Não são dados seus, a não ser a escolha da categoria |
+| **De onde vem** | Do Banco Central, do Mercado Bitcoin, do Yahoo Finance e da brapi, e da Pluggy |
+| **Sai do computador?** | Não: só entram. O que sai para buscá-los está na [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) |
+| **Por quanto tempo** | Sem prazo |
+| **Como apagar** | Só apagando tudo |
 
 ### Erros do sistema
 
@@ -74,7 +84,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **O que é** | `ErroSistema`: mensagem, detalhe técnico, rota e usuário de cada erro ou aviso |
 | **De onde vem** | Do próprio sistema |
 | **Sai do computador?** | Não |
-| **Por quanto tempo** | 90 dias pela última ocorrência, por padrão (de 7 a 365, em Parâmetros) |
+| **Por quanto tempo** | 90 dias pela última ocorrência, por padrão (de 7 a 365, em **Configurações › Parametrização**) |
 | **Como apagar** | Sozinho, pelo prazo |
 
 Antes de gravar, o `Sanitizador` tira o que está no padrão de segredo, CPF e valor em reais ([ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md)). É uma limpeza por padrão de texto, e não uma garantia.

@@ -18,7 +18,7 @@ Os mais frequentes também estão no [README](../README.md#problemas-comuns). In
 
 | Sintoma | O que fazer |
 |---|---|
-| O gerenciador diz "ligado, mas não responde" | Espere alguns segundos (o site está subindo) e clique em **Reiniciar**. Se continuar, veja o Visualizador de Eventos do Windows › Aplicativo, origem FinancasLocal |
+| O gerenciador diz "ligado, mas não responde" | Espere alguns segundos (o site está subindo) e clique em **Reiniciar**. Se continuar, veja o Visualizador de Eventos do Windows › Aplicativo: os erros da API têm a origem `Financas.Api`, e o serviço que não sobe aparece com a origem `Service Control Manager` |
 | O gerenciador não oferece a versão nova | Sem internet, ele avisa e o site continua funcionando. Você também pode baixar o `.msi` novo e abrir |
 
 ## Open Finance e o site
