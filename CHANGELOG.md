@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.53.6] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`govulncheck` também no Linux e com `GOOS=windows`** (#449). O `govulncheck` só olha os arquivos do sistema em que roda: o do gerenciador em Go rodava só no Windows, e o código só de Linux (os `_linux.go` e o Wails do Linux: WebKitGTK, GTK 4, bandeja pelo D-Bus) nunca era analisado; o do back-end rodava só no Linux, e os `_windows.go` (DPAPI dos segredos) ficavam de fora. Agora o job "gerenciador em Go (Linux)" roda o `govulncheck`, e o job "Go" roda duas vezes, a segunda com `GOOS=windows`. Não cobre as falhas das bibliotecas do sistema (WebKitGTK, GTK, WebView2), que chegam pelas atualizações da distribuição e do Windows. Nada muda para quem usa.
+
 ## [2.53.5] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
