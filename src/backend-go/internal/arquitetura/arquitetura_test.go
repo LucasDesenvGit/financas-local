@@ -53,7 +53,8 @@ const apoioAosTestes = "internal/testeapoio"
 var proibidosNaRegra = []string{"net/http", "internal/respostas", "internal/servidor"}
 
 var regraSemHTTP = []string{
-	"internal/banco", "internal/banco/consultas", "internal/bancos", "internal/categorizacao", "internal/configuracao",
+	"internal/banco", "internal/banco/consultas", "internal/bancos", "internal/categorizacao", "internal/cobrancas",
+	"internal/configuracao",
 	"internal/desfazer", "internal/emprestimos", "internal/faturas", "internal/parcelas", "internal/poucoinformativa",
 	"internal/regrasdescricao", "internal/relatorios", "internal/relogio", "internal/segredos", "internal/sugestoes",
 	"internal/texto", "internal/tipolancamento", "internal/tipos", "internal/transacoes",
@@ -103,6 +104,11 @@ var dependencias = []struct {
 		"internal/transferencias"}, "as rotas de categorias e regras reaplicam as regras nas transações (#77)"},
 	{"internal/categorizacao", []string{"internal/tipolancamento", "internal/transacoes"},
 		"a regra de categoria olha o tipo do lançamento e grava na transação"},
+	{"internal/cobrancas", []string{"internal/relatorios", "internal/sugestoes"},
+		"a conciliação avança o vencimento como a lista e usa a chave do extrato das sugestões (#79, #158, #205)"},
+	{"internal/contasagendadas", []string{"internal/categorizacao", "internal/cobrancas", "internal/relatorios",
+		"internal/sugestoes", "internal/transacoes"},
+		"as contas a pagar listam pela base dos relatórios, conciliam e lançam a despesa do pagamento (#79)"},
 	{"internal/conferenciabanco", []string{"internal/bancos", "internal/cambio", "internal/carteira", "internal/contas",
 		"internal/faturas", "internal/reservas"}, "a conferência do banco compara os saldos de todos esses (#445)"},
 	{"internal/contas", []string{"internal/bancos", "internal/faturas"}, "a conta mostra o banco e a fatura do cartão"},

@@ -80,3 +80,40 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 		})
 	}
 }
+
+// Regra (#79): o [StringLength(ErrorMessage = ...)] do record troca a mensagem padrão do tamanho; o limite exato passa.
+func TestMensagemDoTamanho(t *testing.T) {
+	const mensagem = "O texto da cobrança pode ter até 100 caracteres."
+	for _, c := range []struct {
+		nome     string
+		tamanho  int
+		esperado []string
+	}{
+		{"no limite", 100, nil},
+		{"um a mais", 101, []string{mensagem}},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodPost, "/api/contas-agendadas",
+				strings.NewReader(`{"textoCobranca":"`+strings.Repeat("A", c.tamanho)+`"}`))
+			r.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			texto := &CampoTexto{Propriedade: "TextoCobranca", Maximo: 100, Opcional: true, MensagemDoTamanho: mensagem}
+			ok := LerTextos(w, r, "dto", "Financas.Api.Dtos.SalvarContaAgendadaDto", texto)
+			if c.esperado == nil {
+				if !ok {
+					t.Fatalf("recusou: %d %s", w.Code, w.Body)
+				}
+				return
+			}
+			var corpo struct {
+				Errors map[string][]string `json:"errors"`
+			}
+			if err := json.Unmarshal(w.Body.Bytes(), &corpo); err != nil {
+				t.Fatal(err)
+			}
+			if ok || !reflect.DeepEqual(corpo.Errors["TextoCobranca"], c.esperado) {
+				t.Errorf("%v: %v", ok, corpo.Errors)
+			}
+		})
+	}
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/conferenciabanco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contasagendadas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
@@ -56,12 +57,13 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 		DB: d.DB, Relogio: d.Relogio, Log: d.Log, Versao: versao.Atual,
 		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves, Padroes: parametros.PadroesDoAppsettings(d.Config),
 	})
-	parametros.Registrar(mux, par)                                            // #76
-	cambio.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: câmbio pela PTAX (ADR 0007)
-	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
-	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log)) // #77: categorias, regras e regras de descrição
-	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))         // #77: contas e faturas do cartão
-	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (as 18 rotas)
+	parametros.Registrar(mux, par)                                                      // #76
+	cambio.Registrar(mux, d.DB, d.Log, d.Relogio)                                       // #81: câmbio pela PTAX (ADR 0007)
+	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                                       // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
+	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log))           // #77: categorias, regras e regras de descrição
+	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))                   // #77: contas e faturas do cartão
+	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))            // #78: transações (as 18 rotas)
+	contasagendadas.Registrar(mux, contasagendadas.NovoServico(d.DB, d.Relogio, d.Log)) // #79: contas a pagar
 	cambioDaCarteira := cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log)
 	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
 	reservas.Registrar(mux, reservasDaCarteira) // #82: as reservas (ADRs 0010, 0037 e 0038)
