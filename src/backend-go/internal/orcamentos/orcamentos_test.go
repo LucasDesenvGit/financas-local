@@ -259,3 +259,21 @@ func TestSugerir(t *testing.T) {
 		t.Errorf("sem caber: falta %v, avisos %q", s.FaltaParaCaber, s.Avisos)
 	}
 }
+
+// Regra: falha do banco é 500 com a mensagem genérica, nas rotas de leitura e de gravação.
+func TestErroDoBanco(t *testing.T) {
+	t.Parallel()
+	db, _, mux := ambiente(t)
+	_ = db.Close()
+	for _, c := range []struct{ metodo, caminho, corpo string }{
+		{"GET", "/api/orcamentos", ""},
+		{"GET", "/api/orcamentos/sugestao", ""},
+		{"PUT", "/api/orcamentos", `{"categoriaId":1,"ano":2026,"mes":10,"valor":1}`},
+		{"DELETE", "/api/orcamentos/1", ""},
+		{"POST", "/api/orcamentos/copiar-mes-anterior", `{"ano":2026,"mes":11}`},
+	} {
+		if r := testeapoio.Chamar(t, mux, c.metodo, c.caminho, c.corpo); r.Status != http.StatusInternalServerError {
+			t.Errorf("%s %s: %d", c.metodo, c.caminho, r.Status)
+		}
+	}
+}
