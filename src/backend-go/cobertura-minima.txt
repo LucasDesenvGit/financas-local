@@ -28,6 +28,7 @@ emprestimos             90.9
 erros                   93.3
 extrato                 95.4
 faturas                 94.2
+metas                   88.0
 orcamentos              83.5
 parametros              81.5
 parcelas                100.0

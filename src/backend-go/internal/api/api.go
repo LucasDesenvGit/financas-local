@@ -24,6 +24,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/metas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/orcamentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
@@ -68,7 +69,8 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	orcamentos.Registrar(mux, orcamentos.NovoServico(d.DB, par, d.Relogio, d.Log))      // #79: orçamentos e a sugestão (#39)
 	cambioDaCarteira := cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log)
 	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
-	reservas.Registrar(mux, reservasDaCarteira) // #82: as reservas (ADRs 0010, 0037 e 0038)
+	reservas.Registrar(mux, reservasDaCarteira)                                              // #82: as reservas (ADRs 0010, 0037 e 0038)
+	metas.Registrar(mux, metas.NovoServico(d.DB, reservasDaCarteira, par, d.Relogio, d.Log)) // #79: metas e o plano do caixa
 	// O token da brapi só vale depois da troca dos segredos (#85, ADR 0049): o cofre abre a chave no primeiro uso.
 	cofre := segredos.NovoTardio(d.Config.PastaChaves)
 	daCarteira := carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,

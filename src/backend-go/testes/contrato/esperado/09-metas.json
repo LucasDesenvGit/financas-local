@@ -1,0 +1,2430 @@
+[
+  {
+    "nome": "listar",
+    "requisicao": "GET /api/metas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "aporteMensalSugerido": 499.29,
+        "concluida": false,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "cor": "#0f766e",
+        "dataAlvo": "2027-12-31",
+        "guardarPorMes": null,
+        "icone": "escudo",
+        "id": 1,
+        "nome": "Reserva de emergência",
+        "percentual": 76.7,
+        "prioridade": 1,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 10510.0,
+        "saldoReserva": null,
+        "valorAlvo": 30000.0,
+        "valorAtual": 23010.0,
+        "valorInicial": 12500.0
+      },
+      {
+        "aporteMensalSugerido": 712.44,
+        "concluida": false,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "cor": "#2563eb",
+        "dataAlvo": "2027-06-30",
+        "guardarPorMes": null,
+        "icone": "aviao",
+        "id": 2,
+        "nome": "Viagem de férias",
+        "percentual": 28.8,
+        "prioridade": 2,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": "Caixinha viagem",
+        "saldoConta": 0,
+        "saldoReserva": 800.0,
+        "valorAlvo": 8000.0,
+        "valorAtual": 2300.5,
+        "valorInicial": 1500.5
+      },
+      {
+        "aporteMensalSugerido": null,
+        "concluida": true,
+        "contaId": null,
+        "contaNome": null,
+        "cor": "#9333ea",
+        "dataAlvo": "2026-08-31",
+        "guardarPorMes": null,
+        "icone": null,
+        "id": 3,
+        "nome": "Notebook novo",
+        "percentual": 100,
+        "prioridade": 0,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 0,
+        "saldoReserva": null,
+        "valorAlvo": 4500.0,
+        "valorAtual": 4500.0,
+        "valorInicial": 4500.0
+      }
+    ]
+  },
+  {
+    "nome": "listar sem login",
+    "requisicao": "GET /api/metas",
+    "status": 401
+  },
+  {
+    "nome": "plano",
+    "requisicao": "GET /api/metas/plano",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2026,
+      "disponivel": true,
+      "faturaAPagar": 0,
+      "margemPercentual": 10,
+      "melhorMesRecente": 3871.56,
+      "mes": 10,
+      "meses": [
+        {
+          "ano": 2026,
+          "despesas": 3578.77,
+          "faturas": 474.15,
+          "mes": 10,
+          "parcelas": 299.9,
+          "receitas": 6620.35,
+          "sobra": 2567.43
+        },
+        {
+          "ano": 2026,
+          "despesas": 2577.60,
+          "faturas": 410.94,
+          "mes": 11,
+          "parcelas": 299.9,
+          "receitas": 6500.00,
+          "sobra": 3511.47
+        },
+        {
+          "ano": 2026,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2027,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 161.01,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3761.40
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2028,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2029,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2030,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2031,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 161.01,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3761.40
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2032,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2033,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2034,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 155.45,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3766.95
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2035,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 161.01,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3761.40
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 166.56,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3755.85
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        },
+        {
+          "ano": 2036,
+          "despesas": 2577.60,
+          "faturas": 172.11,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "sobra": 3750.30
+        }
+      ],
+      "mesesConsiderados": 6,
+      "saldoContas": 39862.79,
+      "saldoFimDoMes": 38449.27
+    }
+  },
+  {
+    "nome": "plano sem login",
+    "requisicao": "GET /api/metas/plano",
+    "status": 401
+  },
+  {
+    "nome": "aportes da meta 1",
+    "requisicao": "GET /api/metas/1/aportes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "data": "2026-08-06",
+        "hora": "09:00",
+        "valor": 500.0
+      },
+      {
+        "data": "2026-09-06",
+        "hora": "09:00",
+        "valor": 500.0
+      },
+      {
+        "data": "2026-10-06",
+        "hora": "09:00",
+        "valor": 500.0
+      }
+    ]
+  },
+  {
+    "nome": "aportes da meta 2, com retirada",
+    "requisicao": "GET /api/metas/2/aportes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "data": "2026-09-20",
+        "hora": "09:00",
+        "valor": 1600.5
+      },
+      {
+        "data": "2026-10-02",
+        "hora": "09:00",
+        "valor": -100.0
+      }
+    ]
+  },
+  {
+    "nome": "aportes de meta que não existe",
+    "requisicao": "GET /api/metas/9999/aportes",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "aportes com id que não é número",
+    "requisicao": "GET /api/metas/abc/aportes",
+    "status": 404
+  },
+  {
+    "nome": "criar (id 4)",
+    "requisicao": "POST /api/metas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": 1333.33,
+      "concluida": false,
+      "contaId": null,
+      "contaNome": null,
+      "cor": "#123abc",
+      "dataAlvo": "2028-01-31",
+      "guardarPorMes": 500.5,
+      "icone": "carro",
+      "id": 4,
+      "nome": "Carro",
+      "percentual": 0,
+      "prioridade": 3,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 0,
+      "saldoReserva": null,
+      "valorAlvo": 20000.0,
+      "valorAtual": 0.0,
+      "valorInicial": 0.0
+    },
+    "banco": {
+      "Meta": {
+        "inseridas": [
+          {
+            "Concluida": 0,
+            "ContaId": null,
+            "Cor": "#123abc",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataAlvo": "2028-01-31",
+            "GuardarPorMes": "500.5",
+            "Icone": "carro",
+            "Id": 4,
+            "Nome": "Carro",
+            "Prioridade": 3,
+            "ReservaNome": null,
+            "ValorAlvo": "20000.0",
+            "ValorAtual": "0.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar com cofrinho (id 5)",
+    "requisicao": "POST /api/metas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": null,
+      "concluida": false,
+      "contaId": 1,
+      "contaNome": "Conta Corrente Fictícia",
+      "cor": "#AABBCC",
+      "dataAlvo": null,
+      "guardarPorMes": null,
+      "icone": null,
+      "id": 5,
+      "nome": "Presente",
+      "percentual": 85.0,
+      "prioridade": 4,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": "Caixinha viagem",
+      "saldoConta": 0,
+      "saldoReserva": 800.0,
+      "valorAlvo": 1000.0,
+      "valorAtual": 850.25,
+      "valorInicial": 50.25
+    },
+    "banco": {
+      "Meta": {
+        "inseridas": [
+          {
+            "Concluida": 0,
+            "ContaId": 1,
+            "Cor": "#AABBCC",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataAlvo": null,
+            "GuardarPorMes": null,
+            "Icone": null,
+            "Id": 5,
+            "Nome": "Presente",
+            "Prioridade": 4,
+            "ReservaNome": "Caixinha viagem",
+            "ValorAlvo": "1000.0",
+            "ValorAtual": "50.25"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar com cofrinho sem conta",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha a conta do cofrinho."
+    }
+  },
+  {
+    "nome": "criar com cofrinho que não é da conta",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Cofrinho inválido para esta conta."
+    }
+  },
+  {
+    "nome": "criar com conta que não existe",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "criar sem nome",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "The Nome field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com o nome longo demais",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "The field Nome must be a string with a maximum length of 120."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com o alvo zero",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ValorAlvo": [
+          "The field ValorAlvo must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com o valor atual negativo",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ValorAtual": [
+          "The field ValorAtual must be between 0 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com a cor fora do formato",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Cor": [
+          "The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar sem cor",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Cor": [
+          "The Cor field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com o ícone fora do formato",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Icone": [
+          "The field Icone must match the regular expression '^[a-z-]+$'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar guardando zero por mês",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "GuardarPorMes": [
+          "The field GuardarPorMes must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com o cofrinho de nome longo demais",
+    "requisicao": "POST /api/metas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ReservaNome": [
+          "The field ReservaNome must be a string with a maximum length of 100."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar sem login",
+    "requisicao": "POST /api/metas",
+    "status": 401
+  },
+  {
+    "nome": "editar a 4",
+    "requisicao": "PUT /api/metas/4",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": 878.0,
+      "concluida": false,
+      "contaId": 3,
+      "contaNome": "Poupança",
+      "cor": "#123abc",
+      "dataAlvo": "2027-03-15",
+      "guardarPorMes": null,
+      "icone": "carro",
+      "id": 4,
+      "nome": "Carro usado",
+      "percentual": 70.7,
+      "prioridade": 3,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 10510.0,
+      "saldoReserva": null,
+      "valorAlvo": 15000.0,
+      "valorAtual": 10610.0,
+      "valorInicial": 100.0
+    },
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "ContaId": {
+                "antes": null,
+                "depois": 3
+              },
+              "DataAlvo": {
+                "antes": "2028-01-31",
+                "depois": "2027-03-15"
+              },
+              "GuardarPorMes": {
+                "antes": "500.5",
+                "depois": null
+              },
+              "Nome": {
+                "antes": "Carro",
+                "depois": "Carro usado"
+              },
+              "ValorAlvo": {
+                "antes": "20000.0",
+                "depois": "15000.0"
+              },
+              "ValorAtual": {
+                "antes": "0.0",
+                "depois": "100.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar a 5 tirando a conta",
+    "requisicao": "PUT /api/metas/5",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": 474.88,
+      "concluida": false,
+      "contaId": null,
+      "contaNome": null,
+      "cor": "#AABBCC",
+      "dataAlvo": "2026-12-24",
+      "guardarPorMes": null,
+      "icone": null,
+      "id": 5,
+      "nome": "Presente",
+      "percentual": 5.0,
+      "prioridade": 4,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 0,
+      "saldoReserva": null,
+      "valorAlvo": 1000.0,
+      "valorAtual": 50.25,
+      "valorInicial": 50.25
+    },
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "ContaId": {
+                "antes": 1,
+                "depois": null
+              },
+              "DataAlvo": {
+                "antes": null,
+                "depois": "2026-12-24"
+              },
+              "ReservaNome": {
+                "antes": "Caixinha viagem",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar a que não existe",
+    "requisicao": "PUT /api/metas/9999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "editar com id que não é número",
+    "requisicao": "PUT /api/metas/abc",
+    "status": 404
+  },
+  {
+    "nome": "editar com conta que não existe",
+    "requisicao": "PUT /api/metas/4",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "aporte na 5",
+    "requisicao": "POST /api/metas/5/aporte",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": 374.62,
+      "concluida": false,
+      "contaId": null,
+      "contaNome": null,
+      "cor": "#AABBCC",
+      "dataAlvo": "2026-12-24",
+      "guardarPorMes": null,
+      "icone": null,
+      "id": 5,
+      "nome": "Presente",
+      "percentual": 25.1,
+      "prioridade": 4,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 0,
+      "saldoReserva": null,
+      "valorAlvo": 1000.0,
+      "valorAtual": 250.75,
+      "valorInicial": 250.75
+    },
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "ValorAtual": {
+                "antes": "50.25",
+                "depois": "250.75"
+              }
+            }
+          }
+        ]
+      },
+      "MetaAporte": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 7,
+            "MetaId": 5,
+            "Valor": "200.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "retirada maior que o guardado na 5",
+    "requisicao": "POST /api/metas/5/aporte",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": 500.0,
+      "concluida": false,
+      "contaId": null,
+      "contaNome": null,
+      "cor": "#AABBCC",
+      "dataAlvo": "2026-12-24",
+      "guardarPorMes": null,
+      "icone": null,
+      "id": 5,
+      "nome": "Presente",
+      "percentual": 0,
+      "prioridade": 4,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 0,
+      "saldoReserva": null,
+      "valorAlvo": 1000.0,
+      "valorAtual": 0.0,
+      "valorInicial": 0.0
+    },
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "ValorAtual": {
+                "antes": "250.75",
+                "depois": "0.0"
+              }
+            }
+          }
+        ]
+      },
+      "MetaAporte": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 8,
+            "MetaId": 5,
+            "Valor": "-250.75"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "retirada com a meta já no zero",
+    "requisicao": "POST /api/metas/5/aporte",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": 500.0,
+      "concluida": false,
+      "contaId": null,
+      "contaNome": null,
+      "cor": "#AABBCC",
+      "dataAlvo": "2026-12-24",
+      "guardarPorMes": null,
+      "icone": null,
+      "id": 5,
+      "nome": "Presente",
+      "percentual": 0,
+      "prioridade": 4,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 0,
+      "saldoReserva": null,
+      "valorAlvo": 1000.0,
+      "valorAtual": 0.0,
+      "valorInicial": 0.0
+    }
+  },
+  {
+    "nome": "aporte que chega ao alvo",
+    "requisicao": "POST /api/metas/5/aporte",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aporteMensalSugerido": null,
+      "concluida": true,
+      "contaId": null,
+      "contaNome": null,
+      "cor": "#AABBCC",
+      "dataAlvo": "2026-12-24",
+      "guardarPorMes": null,
+      "icone": null,
+      "id": 5,
+      "nome": "Presente",
+      "percentual": 100,
+      "prioridade": 4,
+      "reservaConferir": false,
+      "reservaNaoEncontrada": false,
+      "reservaNome": null,
+      "saldoConta": 0,
+      "saldoReserva": null,
+      "valorAlvo": 1000.0,
+      "valorAtual": 1000.0,
+      "valorInicial": 1000.0
+    },
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "Concluida": {
+                "antes": 0,
+                "depois": 1
+              },
+              "ValorAtual": {
+                "antes": "0.0",
+                "depois": "1000.0"
+              }
+            }
+          }
+        ]
+      },
+      "MetaAporte": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 9,
+            "MetaId": 5,
+            "Valor": "1000.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "aporte em meta que não existe",
+    "requisicao": "POST /api/metas/9999/aporte",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "aporte fora da faixa",
+    "requisicao": "POST /api/metas/5/aporte",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between -999999999 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "aporte sem login",
+    "requisicao": "POST /api/metas/5/aporte",
+    "status": 401
+  },
+  {
+    "nome": "listar com as novas",
+    "requisicao": "GET /api/metas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "aporteMensalSugerido": 499.29,
+        "concluida": false,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "cor": "#0f766e",
+        "dataAlvo": "2027-12-31",
+        "guardarPorMes": null,
+        "icone": "escudo",
+        "id": 1,
+        "nome": "Reserva de emergência",
+        "percentual": 76.7,
+        "prioridade": 1,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 10510.0,
+        "saldoReserva": null,
+        "valorAlvo": 30000.0,
+        "valorAtual": 23010.0,
+        "valorInicial": 12500.0
+      },
+      {
+        "aporteMensalSugerido": 712.44,
+        "concluida": false,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "cor": "#2563eb",
+        "dataAlvo": "2027-06-30",
+        "guardarPorMes": null,
+        "icone": "aviao",
+        "id": 2,
+        "nome": "Viagem de férias",
+        "percentual": 28.8,
+        "prioridade": 2,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": "Caixinha viagem",
+        "saldoConta": 0,
+        "saldoReserva": 800.0,
+        "valorAlvo": 8000.0,
+        "valorAtual": 2300.5,
+        "valorInicial": 1500.5
+      },
+      {
+        "aporteMensalSugerido": 878.0,
+        "concluida": false,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "cor": "#123abc",
+        "dataAlvo": "2027-03-15",
+        "guardarPorMes": null,
+        "icone": "carro",
+        "id": 4,
+        "nome": "Carro usado",
+        "percentual": 70.7,
+        "prioridade": 3,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 10510.0,
+        "saldoReserva": null,
+        "valorAlvo": 15000.0,
+        "valorAtual": 10610.0,
+        "valorInicial": 100.0
+      },
+      {
+        "aporteMensalSugerido": null,
+        "concluida": true,
+        "contaId": null,
+        "contaNome": null,
+        "cor": "#AABBCC",
+        "dataAlvo": "2026-12-24",
+        "guardarPorMes": null,
+        "icone": null,
+        "id": 5,
+        "nome": "Presente",
+        "percentual": 100,
+        "prioridade": 4,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 0,
+        "saldoReserva": null,
+        "valorAlvo": 1000.0,
+        "valorAtual": 1000.0,
+        "valorInicial": 1000.0
+      },
+      {
+        "aporteMensalSugerido": null,
+        "concluida": true,
+        "contaId": null,
+        "contaNome": null,
+        "cor": "#9333ea",
+        "dataAlvo": "2026-08-31",
+        "guardarPorMes": null,
+        "icone": null,
+        "id": 3,
+        "nome": "Notebook novo",
+        "percentual": 100,
+        "prioridade": 0,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 0,
+        "saldoReserva": null,
+        "valorAlvo": 4500.0,
+        "valorAtual": 4500.0,
+        "valorInicial": 4500.0
+      }
+    ]
+  },
+  {
+    "nome": "nova ordem de prioridade",
+    "requisicao": "PUT /api/metas/prioridades",
+    "status": 204,
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "Prioridade": {
+                "antes": 1,
+                "depois": 3
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "Prioridade": {
+                "antes": 0,
+                "depois": 5
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "Prioridade": {
+                "antes": 3,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar na ordem nova",
+    "requisicao": "GET /api/metas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "aporteMensalSugerido": 878.0,
+        "concluida": false,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "cor": "#123abc",
+        "dataAlvo": "2027-03-15",
+        "guardarPorMes": null,
+        "icone": "carro",
+        "id": 4,
+        "nome": "Carro usado",
+        "percentual": 70.7,
+        "prioridade": 1,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 10510.0,
+        "saldoReserva": null,
+        "valorAlvo": 15000.0,
+        "valorAtual": 10610.0,
+        "valorInicial": 100.0
+      },
+      {
+        "aporteMensalSugerido": 712.44,
+        "concluida": false,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "cor": "#2563eb",
+        "dataAlvo": "2027-06-30",
+        "guardarPorMes": null,
+        "icone": "aviao",
+        "id": 2,
+        "nome": "Viagem de férias",
+        "percentual": 28.8,
+        "prioridade": 2,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": "Caixinha viagem",
+        "saldoConta": 0,
+        "saldoReserva": 800.0,
+        "valorAlvo": 8000.0,
+        "valorAtual": 2300.5,
+        "valorInicial": 1500.5
+      },
+      {
+        "aporteMensalSugerido": 499.29,
+        "concluida": false,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "cor": "#0f766e",
+        "dataAlvo": "2027-12-31",
+        "guardarPorMes": null,
+        "icone": "escudo",
+        "id": 1,
+        "nome": "Reserva de emergência",
+        "percentual": 76.7,
+        "prioridade": 3,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 10510.0,
+        "saldoReserva": null,
+        "valorAlvo": 30000.0,
+        "valorAtual": 23010.0,
+        "valorInicial": 12500.0
+      },
+      {
+        "aporteMensalSugerido": null,
+        "concluida": true,
+        "contaId": null,
+        "contaNome": null,
+        "cor": "#AABBCC",
+        "dataAlvo": "2026-12-24",
+        "guardarPorMes": null,
+        "icone": null,
+        "id": 5,
+        "nome": "Presente",
+        "percentual": 100,
+        "prioridade": 4,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 0,
+        "saldoReserva": null,
+        "valorAlvo": 1000.0,
+        "valorAtual": 1000.0,
+        "valorInicial": 1000.0
+      },
+      {
+        "aporteMensalSugerido": null,
+        "concluida": true,
+        "contaId": null,
+        "contaNome": null,
+        "cor": "#9333ea",
+        "dataAlvo": "2026-08-31",
+        "guardarPorMes": null,
+        "icone": null,
+        "id": 3,
+        "nome": "Notebook novo",
+        "percentual": 100,
+        "prioridade": 5,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 0,
+        "saldoReserva": null,
+        "valorAlvo": 4500.0,
+        "valorAtual": 4500.0,
+        "valorInicial": 4500.0
+      }
+    ]
+  },
+  {
+    "nome": "ordem com meta repetida",
+    "requisicao": "PUT /api/metas/prioridades",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Meta repetida na ordem."
+    }
+  },
+  {
+    "nome": "ordem com meta que não existe",
+    "requisicao": "PUT /api/metas/prioridades",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Meta inválida."
+    }
+  },
+  {
+    "nome": "ordem vazia",
+    "requisicao": "PUT /api/metas/prioridades",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The field Ids must be a string or array type with a minimum length of '1'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "ordem sem a lista",
+    "requisicao": "PUT /api/metas/prioridades",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ids": [
+          "The Ids field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "excluir sem login",
+    "requisicao": "DELETE /api/metas/4",
+    "status": 401
+  },
+  {
+    "nome": "excluir a 4",
+    "requisicao": "DELETE /api/metas/4",
+    "status": 204,
+    "banco": {
+      "Meta": {
+        "removidas": [
+          {
+            "Concluida": 0,
+            "ContaId": 3,
+            "Cor": "#123abc",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataAlvo": "2027-03-15",
+            "GuardarPorMes": null,
+            "Icone": "carro",
+            "Id": 4,
+            "Nome": "Carro usado",
+            "Prioridade": 1,
+            "ReservaNome": null,
+            "ValorAlvo": "15000.0",
+            "ValorAtual": "100.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 5, com os aportes",
+    "requisicao": "DELETE /api/metas/5",
+    "status": 204,
+    "banco": {
+      "Meta": {
+        "removidas": [
+          {
+            "Concluida": 1,
+            "ContaId": null,
+            "Cor": "#AABBCC",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataAlvo": "2026-12-24",
+            "GuardarPorMes": null,
+            "Icone": null,
+            "Id": 5,
+            "Nome": "Presente",
+            "Prioridade": 4,
+            "ReservaNome": null,
+            "ValorAlvo": "1000.0",
+            "ValorAtual": "1000.0"
+          }
+        ]
+      },
+      "MetaAporte": {
+        "removidas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 7,
+            "MetaId": 5,
+            "Valor": "200.5"
+          },
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 8,
+            "MetaId": 5,
+            "Valor": "-250.75"
+          },
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 9,
+            "MetaId": 5,
+            "Valor": "1000.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a que não existe",
+    "requisicao": "DELETE /api/metas/9999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir com id que não é número",
+    "requisicao": "DELETE /api/metas/abc",
+    "status": 404
+  },
+  {
+    "nome": "devolver a ordem",
+    "requisicao": "PUT /api/metas/prioridades",
+    "status": 204,
+    "banco": {
+      "Meta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "Prioridade": {
+                "antes": 3,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "Prioridade": {
+                "antes": 5,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar de novo",
+    "requisicao": "GET /api/metas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "aporteMensalSugerido": 499.29,
+        "concluida": false,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "cor": "#0f766e",
+        "dataAlvo": "2027-12-31",
+        "guardarPorMes": null,
+        "icone": "escudo",
+        "id": 1,
+        "nome": "Reserva de emergência",
+        "percentual": 76.7,
+        "prioridade": 1,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 10510.0,
+        "saldoReserva": null,
+        "valorAlvo": 30000.0,
+        "valorAtual": 23010.0,
+        "valorInicial": 12500.0
+      },
+      {
+        "aporteMensalSugerido": 712.44,
+        "concluida": false,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "cor": "#2563eb",
+        "dataAlvo": "2027-06-30",
+        "guardarPorMes": null,
+        "icone": "aviao",
+        "id": 2,
+        "nome": "Viagem de férias",
+        "percentual": 28.8,
+        "prioridade": 2,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": "Caixinha viagem",
+        "saldoConta": 0,
+        "saldoReserva": 800.0,
+        "valorAlvo": 8000.0,
+        "valorAtual": 2300.5,
+        "valorInicial": 1500.5
+      },
+      {
+        "aporteMensalSugerido": null,
+        "concluida": true,
+        "contaId": null,
+        "contaNome": null,
+        "cor": "#9333ea",
+        "dataAlvo": "2026-08-31",
+        "guardarPorMes": null,
+        "icone": null,
+        "id": 3,
+        "nome": "Notebook novo",
+        "percentual": 100,
+        "prioridade": 3,
+        "reservaConferir": false,
+        "reservaNaoEncontrada": false,
+        "reservaNome": null,
+        "saldoConta": 0,
+        "saldoReserva": null,
+        "valorAlvo": 4500.0,
+        "valorAtual": 4500.0,
+        "valorInicial": 4500.0
+      }
+    ]
+  }
+]
