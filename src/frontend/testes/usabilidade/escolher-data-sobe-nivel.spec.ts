@@ -5,7 +5,7 @@ import { CampoDataComponent, inicioDaPaginaDeAnos } from '../../src/app/comparti
 import { MesAno, SeletorMesComponent } from '../../src/app/compartilhado/seletor-mes.component';
 
 /**
- * #342 — regra do projeto (CLAUDE.md, padrões de UI): todo quadro de escolher data ou mês tem o título como botão que
+ * #342 — regra do projeto (docs/UI-UX.md, padrões adotados): todo quadro de escolher data ou mês tem o título como botão que
  * sobe de nível (dia → mês → ano), para chegar a outro ano sem dezenas de cliques (Nielsen 7) e com o mesmo jeito em
  * todas as telas (Nielsen 4). O calendário dos campos de data já fazia (#264); o seletor de mês (Painel, Contas,
  * Orçamentos…) ficou de fora. Componente novo de data entra neste teste.

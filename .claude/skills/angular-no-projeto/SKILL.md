@@ -12,8 +12,8 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 
 | Assunto | Fonte (a regra está lá) |
 |---|---|
-| UI/UX: as referências obrigatórias (Shneiderman, Nielsen, WCAG 2.2, NN/g, WAI-ARIA) e os padrões já adotados | `CLAUDE.md`, "UI/UX — referências obrigatórias" (já está no seu contexto) |
-| `Eager`, `ApiService`, standalone, signals, pastas de `src/app` | `CLAUDE.md`, "Arquitetura › Front-end", e o teste de arquitetura (`testes-arquitetura/arquitetura.spec.ts`) |
+| UI/UX: as referências obrigatórias (Shneiderman, Nielsen, WCAG 2.2, NN/g, WAI-ARIA) e os padrões já adotados | [`docs/UI-UX.md`](../../../docs/UI-UX.md): leia antes de propor, avaliar ou desenhar |
+| `Eager`, `ApiService`, standalone, signals, pastas de `src/app` | `CLAUDE.md`, "Arquitetura" (`Eager` e `ApiService`), `CONTRIBUINDO.md`, "Convenções de código", [`docs/ARQUITETURA.md`](../../../docs/ARQUITETURA.md) e o teste de arquitetura (`testes-arquitetura/arquitetura.spec.ts`) |
 | Mesma origem, sem CORS, nada de terceiros | [ADR 0004](../../../docs/adr/0004-front-end-publicado-no-wwwroot-da-api.md) e [ADR 0034](../../../docs/adr/0034-sem-sri-no-build-do-front-end.md) (CSP sem script inline) |
 | Preferência de exibição no `localStorage` (`financas.*`) | [ADR 0017](../../../docs/adr/0017-preferencias-de-exibicao-no-navegador.md) |
 | Estado na URL, detalhe por navegação, chips de filtro | [ADR 0018](../../../docs/adr/0018-estado-da-tela-na-url-e-detalhe-por-navegacao.md) |
@@ -43,7 +43,7 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 4. **Lógica fora do componente:** cálculo, texto e decisão vão para funções puras num `.ts` ao lado da tela (`paginas/<tela>.ts`) ou em `compartilhado/` se mais de uma tela usa, testadas no Jest sem `TestBed` (`referencias/testes.md`). A divisão das páginas grandes ainda está em discussão na #475: siga o que ela decidir quando a ADR for aceita.
 5. **Componente** em `paginas/<tela>.component.ts`, na forma de `referencias/estilo.md` (standalone, `Eager`, template inline, `inject()`, signals, `@if`/`@for`), com os componentes de `compartilhado/` (`referencias/componentes.md`).
 6. **Rota e menu:** `loadComponent` e `title: '<Tela> · Finanças Local'` em `app.routes.ts`; a tela no grupo do assunto em `MENU` (`layout/shell.component.ts`, ADR 0046).
-7. **UI/UX:** cada decisão de desenho cita o princípio da tabela do `CLAUDE.md` que a sustenta, separando o que vem da fonte do que é julgamento seu.
+7. **UI/UX:** cada decisão de desenho cita o princípio de `docs/UI-UX.md` que a sustenta, separando o que vem da fonte do que é julgamento seu.
 8. **Manual:** seção da tela em `paginas/manual-conteudo.ts` e a rota em `AJUDA_POR_ROTA` (ADR 0026); termo técnico novo no glossário (`compartilhado/glossario.ts`) e, se for do domínio, em `docs/arquitetura/dominio.md`.
 9. **Testes:** a tela em `TELAS` (`testes-navegador/base.ts`) e os endpoints dela em `testes-navegador/api-falsa.ts`; a lógica no Jest (`referencias/testes.md`).
 

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.5] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`CLAUDE.md` enxuto, cada bloco no lugar dele** (#566, épico #486). Nada muda para quem usa. O `CLAUDE.md`, que entra inteiro em toda sessão e em todo subagente do Claude, cai de 36,7 KB para 17,7 KB. Fica o que vale em qualquer tarefa ou dispara no meio de outra (idioma, git, versão, CHANGELOG, ADRs, banco, dado pessoal, Manual, dinheiro no Go, segurança); o resto vai para o lugar dele, com uma linha dizendo quando ler. As referências de UI/UX e os padrões de tela adotados passam para um **`docs/UI-UX.md`** novo, com o mesmo conteúdo, porque as pessoas também precisam deles; o `README.md`, o `CONTRIBUINDO.md`, as ADRs 0013, 0018, 0020, 0021, 0046 e 0052, as skills e os comentários dos testes de usabilidade passam a citá-lo. O `CONTRIBUINDO.md` ganha a seção "O que a CI roda" (os scripts e os workflows, antes listados no `CLAUDE.md`), os comandos de *blocked by* e de sub-issue e o Project do backlog; as pegadinhas do Playwright, os testes do Go e a arquitetura do C# ficam só onde já estavam (`CONTRIBUINDO.md`, skill `testar-no-navegador`, ADR 0051, `docs/ARQUITETURA.md`). As convenções do código Go passam a ter como fonte a ADR 0049 e a skill `go-no-projeto`; no `CLAUDE.md` ficam a funcionalidade nova em Go e o dinheiro fora do `float64`.
+
 ## [2.54.4] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação

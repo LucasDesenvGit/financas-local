@@ -15,7 +15,7 @@ Um comportamento testado num lugar só (#204). Não repita no Jest o que o naveg
 - **Dados de teste:** as fábricas de `testes/apoio/` (`conta()`, `contas.ts`; uma por assunto). Assunto novo com dados repetidos ganha a sua.
 - **Título do teste:** `describe('Regressão: <o que> (#N)')` em `regressao/` e `describe('Usabilidade: ...')` em `usabilidade/`, com o número da issue; o comentário diz a regra que o teste garante.
 - **Teste prova que falha:** estrague o código (ou o CSS do build, em `dist/`), veja falhar e desfaça. Não passou a falhar? Os dados não exercitam o caso.
-- **Padrão novo com teste próprio:** escolher data ou mês entra em `testes/usabilidade/escolher-data-sobe-nivel.spec.ts`; clique em linha ou bloco com equivalente de teclado, em `testes/regressao/clique-com-teclado.spec.ts`; cor nova do tema, em `testes/regressao/contraste-tema.spec.ts` (`CLAUDE.md`, padrões adotados).
+- **Padrão novo com teste próprio:** escolher data ou mês entra em `testes/usabilidade/escolher-data-sobe-nivel.spec.ts`; clique em linha ou bloco com equivalente de teclado, em `testes/regressao/clique-com-teclado.spec.ts`; cor nova do tema, em `testes/regressao/contraste-tema.spec.ts` (`docs/UI-UX.md`, padrões adotados).
 
 ## Pegadinhas que custam um ciclo da CI
 

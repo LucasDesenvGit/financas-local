@@ -136,7 +136,7 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
 
 - **Janela igual à de hoje** (tabela "O E com cara do gerenciador de hoje", acima): o desenho do `FormPrincipal.cs` (cores do `Tema.cs`, medidas do `Controles.cs`), os mesmos glifos, os mesmos bloqueios com o site desligado, tamanho fixo no centro, sem barra de rolagem (a janela acompanha o conteúdo), sem F12 nem menu do botão direito (`-tags production`). Os textos são os de hoje.
   - No Linux, os glifos vão em SVG do lucide (os do site), porque a Segoe Fluent Icons é do Windows.
-  - O teclado, o leitor de tela e o contraste seguem os padrões do site (WCAG 2.2, `CLAUDE.md`).
+  - O teclado, o leitor de tela e o contraste seguem os padrões do site (WCAG 2.2, [docs/UI-UX.md](../UI-UX.md)).
 - **Fechar destrói a janela** (e os processos do WebView2); a bandeja cria outra ao abrir. Parado, o gerenciador fica em ~50 MB (medido acima). Ao iniciar com o sistema, começa sem janela.
   - **No Linux, fechar esconde a janela** (#417): destruída, ela deixa o `WebKitWebProcess` vivo, ~58 MB a mais a cada vez (ver "O teste num Linux de verdade").
 - **No Linux** (#417), o serviço é a unidade `financaslocal.service` do `systemd --user` (ADR 0033): ligar, desligar, reiniciar, copiar o banco e reinstalar pelo develop rodam no próprio gerenciador, sem senha. O que muda entre os dois sistemas fica em `sistema_windows.go` e `sistema_linux.go`; as regras que dão para testar em qualquer sistema (as propriedades da unidade, o atalho de início, o tema pelo portal), em arquivos sem sufixo de sistema.
