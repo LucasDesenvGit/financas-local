@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.38] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0056: a arquitetura do código Go** (#474, épico #70). Nada muda para quem usa. Registra, com o time de acordo, como o back-end em Go se organiza: as camadas (HTTP, regra, banco) dentro de cada assunto, e não um pacote por camada; a regra de negócio sem HTTP; o mapa de contextos, que passa a ser a tabela `dependencias` do teste de arquitetura; objetos de valor e agregados só onde pagam; interface só com duas implementações de verdade; e o que não se adota (Clean Architecture completa, N-tier, ferramenta pronta), com o porquê. O teste de arquitetura ganha a regra dos módulos (#191): o núcleo não importa módulo, e um módulo não importa outro. `internal/README.md`, `CLAUDE.md`, a skill `migrar-para-go`, o agente `dev-go` e o `ARQUITETURA.md` apontam para a ADR.
+
 ## [2.50.37] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação

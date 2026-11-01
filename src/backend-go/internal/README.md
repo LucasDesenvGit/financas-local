@@ -1,5 +1,7 @@
 # O padrão de um assunto em Go (#77)
 
+A decisão por trás deste padrão está na [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md): camadas dentro de cada assunto, regra sem HTTP, mapa de contextos e o que **não** se adota (um pacote por camada, Clean Architecture completa, N-tier). O teste de arquitetura local confere (`go test -tags arquitetura ./internal/arquitetura/`, #476).
+
 Cada assunto do épico #70 é um pacote em `internal/<assunto>`, com a mesma forma. O modelo é o `internal/categorias`, com as regras em `internal/categorizacao`, `regrasdescricao` e `transferencias`.
 
 ## As três camadas
@@ -13,6 +15,13 @@ Cada assunto do épico #70 é um pacote em `internal/<assunto>`, com a mesma for
 - **`Registrar(mux, servico)`** põe as rotas do assunto no `ServeMux`; o `internal/api` tem uma linha por assunto.
 - **`Servico`** recebe as dependências no construtor (`NovoServico(db, relogio, log)`): sem container de injeção.
 - **Interface só onde há duas implementações de verdade** (o cliente da PTAX de verdade e o falso dos testes), declarada por quem usa ([Effective Go](https://go.dev/doc/effective_go#interfaces)). Não há um `IXxxService` ao lado de cada `XxxService`.
+
+## Assunto novo (ADR 0056)
+
+- **Uma linha em `dependencias`** (`internal/arquitetura/arquitetura_test.go`): com quais assuntos ele conversa e por quê. É o mapa de contextos.
+- **Regra que outro assunto usa** vai para um pacote próprio, na lista `regraSemHTTP`: ele não importa `net/http`, `respostas` nem `servidor`.
+- **Termo novo do domínio** entra nos [termos para quem desenvolve](../../../docs/arquitetura/dominio.md#termos-para-quem-desenvolve), com o mesmo nome do código.
+- **Interface** só quando há duas implementações de verdade, declarada por quem usa. Objetos de valor e agregados, só onde pagam (ADR 0056).
 
 ## Entrada e saída iguais às do .NET
 

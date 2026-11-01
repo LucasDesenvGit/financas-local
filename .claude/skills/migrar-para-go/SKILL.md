@@ -106,6 +106,8 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
 
 ### Organização e bibliotecas
 
+A forma do código é a da [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) (camadas dentro do assunto, regra sem HTTP, mapa de contextos). O assunto migrado ganha a linha dele em `dependencias`, no teste de arquitetura, com o motivo.
+
 Layout em `src/backend-go/` ([Organizing a Go module](https://go.dev/doc/modules/layout)): `cmd/financas/main.go`, `internal/config`, `internal/servidor`, `internal/banco`, `internal/relogio` e **um pacote por assunto** (`internal/contas`, `internal/transacoes`…), cada um com handler, serviço e consultas do assunto.
 
 Bibliotecas sugeridas na #71 (valem as que a ADR fixar): `net/http` puro (rotas do Go 1.22+), `modernc.org/sqlite` (sem C, compila para Windows de qualquer lugar), `sqlc` + `database/sql`, `github.com/shopspring/decimal`, `log/slog`, `golang.org/x/sys/windows/svc`. Dependência fora dessa lista = pergunte e registre na ADR; prefira a biblioteca padrão.
