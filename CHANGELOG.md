@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.53.6] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do Go sem `time.Sleep` de espera e as regras de ouro conferidas na CI** (#457, #458, ADR 0051). Nada muda na tela. Os testes que dormiam para esperar trocaram o sono por sinal: o servidor avisa pelo `Opcoes.AoEscutar` quando já aceita conexões, o gravador de erros e o relógio de teste rodam no `testing/synctest` e a data do arquivo do esquema vai para o passado com `os.Chtimes`. Um teste do gravador que falhava uma vez em 20 (dependia de qual goroutine corria primeiro) ficou determinístico. No job "Go", o `scripts/ci/verificar-regras-go.py` agora falha com `float64` (e `Float64()`, `ParseFloat`), com `time.Now` fora do `internal/relogio` e com `time.Sleep` de teste fora do `synctest`, dizendo o que usar no lugar; as 52 exceções (nenhum `float64` era dinheiro) estão em `scripts/ci/regras-go-excecoes.txt`, cada uma com o motivo, e o script tem teste próprio. Manual: não se aplica.
+
 ## [2.53.5] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
