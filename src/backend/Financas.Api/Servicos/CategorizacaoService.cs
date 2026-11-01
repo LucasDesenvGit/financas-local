@@ -244,12 +244,13 @@ public class CategorizacaoService
     /// <summary>
     /// Regras padrão (→ Investimentos) que chegaram depois da instalação: a marca em <c>Configuracao</c> faz cada grupo ser
     /// criado uma vez só, e uma regra apagada por você não volta. Os mesmos textos estão no 02-dados-iniciais.sql.
-    /// <c>Filtros</c> é o LIKE que acha os candidatos no banco; a comparação certa é pelo texto normalizado.
+    /// <c>Filtros</c> é o LIKE que acha os candidatos no banco; a comparação certa é pelo texto normalizado. O LIKE do
+    /// SQLite só ignora a caixa em ASCII: a letra que pode vir com acento vai como "_" no filtro (#567).
     /// </summary>
     private static readonly (string Chave, string[] Textos, string[] Filtros)[] RegrasPadraoNovas =
     [
         // #169 (ADR 0038): comprar e vender dólar é mover o próprio dinheiro, não gasto nem receita.
-        (ChaveRegraMeliDolar, new[] { TextoRegraMeliDolar }, new[] { "%meli d_lar%" }),
+        (ChaveRegraMeliDolar, new[] { TextoRegraMeliDolar }, new[] { "%m_li d_lar%" }),
         // #172: aplicação e resgate de renda fixa são movimento seu. O produto vai junto no texto para não pegar
         // "resgate de pontos" ou "resgate de cashback"; "aplicação financeira" sozinha ficou de fora porque também aparece
         // em "rendimento de aplicação financeira", que é receita.

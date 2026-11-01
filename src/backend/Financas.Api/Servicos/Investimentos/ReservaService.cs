@@ -174,7 +174,7 @@ public partial class ReservaService
                             && t.Conta!.Origem == OrigemConta.OpenFinance
                             && !t.Conta.Arquivada && t.Conta.IncluirNoSaldo
                             && (t.Conta.ConexaoBancaria == null || t.Conta.ConexaoBancaria.Ativa)
-                            && EF.Functions.Like(t.DescricaoOriginal ?? t.Descricao, "%meli d_lar%"))
+                            && EF.Functions.Like(t.DescricaoOriginal ?? t.Descricao, "%m_li d_lar%"))
                 .Select(t => new { t.ContaId, NomeConta = t.Conta!.Nome, Descricao = t.DescricaoOriginal ?? t.Descricao, t.Data, t.Valor })
                 .ToListAsync(ct))
             .Where(m => EhMeliDolar(m.Descricao)).ToList();

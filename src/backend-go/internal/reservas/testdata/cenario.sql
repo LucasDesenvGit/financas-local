@@ -3,7 +3,8 @@
 --
 -- Conta 1: o extrato de reservas de um banco tipo Mercado Pago (a "Viagem" com conferência antiga, a "Casa" que
 --          ficaria negativa, o nome em outra caixa, a descrição renomeada, o pendente, o sem nome) e o Méli Dólar
---          (com e sem a quantidade na descrição, o "Méli" com acento que o LIKE não acha, a conferência no meio).
+--          (com e sem a quantidade na descrição, o "Méli" com acento, que o LIKE achava só depois da #567, a conferência no
+--          meio).
 -- Conta 2: Open Finance com a conexão desligada: os lançamentos ficam de fora; a conferência, não.
 -- Conta 3: arquivada. Conta 6: fora do saldo. Conta 8: manual. Nada delas aparece.
 -- Conta 4: o banco informa só o total reservado: a linha "Reservado (restante)", porque já há uma reserva "Reservado".
