@@ -22,6 +22,7 @@ Cada assunto do épico #70 é um pacote em `internal/<assunto>`, com a mesma for
 - **Regra que outro assunto usa** vai para um pacote próprio, na lista `regraSemHTTP`: ele não importa `net/http`, `respostas` nem `servidor`.
 - **Termo novo do domínio** entra nos [termos para quem desenvolve](../../../docs/arquitetura/dominio.md#termos-para-quem-desenvolve), com o mesmo nome do código.
 - **Interface** só quando há duas implementações de verdade, declarada por quem usa. Objetos de valor e agregados, só onde pagam (ADR 0056).
+- **Testes que a CI cobra do pacote novo:** 80% de cobertura já no primeiro PR (`scripts/ci/verificar-cobertura-go.py`) e uma linha em `scripts/ci/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/mutacao-go-fora.txt`, com o motivo. Pacote que não está em nenhum dos dois faz a CI falhar (#456, ADR 0051).
 
 ## Entrada e saída iguais às do .NET
 

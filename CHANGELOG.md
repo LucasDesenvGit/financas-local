@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.9] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Documentação do Go e das skills de acordo com o código** (#575, seção 4 da varredura de 01/11/2026). A skill `migrar-para-go` manda arredondar com `tipos.Arredondar`, e não com o `RoundBank` do `shopspring/decimal`, que mexe na escala e muda o JSON, e passa a citar o `tipos.Dividir` para a divisão; a cascata ao apagar se confere no `01-estrutura.sql` e no `FinancasDbContext.cs`, e não numa tabela da #74 que não está no repositório. A revisão da `go-no-projeto` põe o `float64`, o `time.Now()` e o `time.Sleep` entre o que a CI já pega (#457), e pacote novo passa a pedir 80% de cobertura e um lugar numa das listas de mutação (#456). O README do Go ganha os pacotes que faltavam na tabela (contas a pagar, orçamentos, metas, conferência com o banco, cobranças, partida, erros e o teste de arquitetura), as 18 rotas da carteira, o Go sozinho como ele é hoje (com login e todas as rotas) e o job "Go (Windows)". O README do contrato lista os arquivos 08, 09 e 10; o exemplo do `testeapoio` usa um `Registrar` que existe; o do gerenciador cita os `foco_*.go`; o `CLAUDE.md` diz o que o agente `dev-go` carrega. Manual: não se aplica.
+
 ## [2.54.8] — 2026-11-01 · desenvolvimento
 
 ### Correções
