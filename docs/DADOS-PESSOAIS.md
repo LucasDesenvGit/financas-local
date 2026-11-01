@@ -43,7 +43,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **De onde vem** | Do Open Finance, pela Pluggy, dos bancos que você autorizou |
 | **Sai do computador?** | Não. Esses dados só entram |
 | **Por quanto tempo** | Sem prazo, enquanto a conexão existir |
-| **Como apagar** | **Remover a conexão** em Configurações apaga, em cascata, as contas, transações, investimentos e empréstimos dela. Uma transação do Open Finance sozinha não pode ser excluída; dá para marcá-la para ignorar nos relatórios |
+| **Como apagar** | **Remover a conexão** em Configurações apaga tudo o que veio dela: as contas, transações, faturas, investimentos e empréstimos, o histórico dos investimentos e o registro das sincronizações. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma delas, fica. Uma transação do Open Finance sozinha não pode ser excluída; dá para marcá-la para ignorar nos relatórios |
 
 **Dados de terceiros:** o nome e o CPF/CNPJ do outro lado de um Pix ou TED não são gravados em campo próprio. Do documento, fica só o sim ou não de "mesmo titular" (`MesmaTitularidade`, [ADR 0025](adr/0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md)). **Mas a descrição vem do banco como está**, e ela costuma trazer o nome de quem recebeu ou pagou, como em "PIX ENVIADO FULANO". Esse texto fica em `Descricao` e `DescricaoOriginal`.
 
