@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-23 (issue #368, épico de testes #374)
-- **Relacionadas:** [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (back-end em Go, bibliotecas e testes de contrato da #72); [0013](0013-testes-do-front-end-com-jest.md) e [0041](0041-testes-no-navegador-com-playwright.md) (testes do front-end, de onde vêm "um comportamento testado num lugar só" e "bug corrigido ganha teste"); [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) (o job "Go" da CI); épico #70
+- **Relacionadas:** [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (back-end em Go, bibliotecas e testes de contrato da #72); [0013](0013-testes-do-front-end-com-jest.md) e [0041](0041-testes-no-navegador-com-playwright.md) (testes do front-end, de onde vêm "um comportamento testado num lugar só" e "bug corrigido ganha teste"); [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) (o job "Go" da CI); [0054](0054-analise-de-seguranca-do-codigo-com-o-codeql.md) (o CodeQL, que confere o SQL montado com texto); épico #70
 
 ## Contexto
 
@@ -140,20 +140,38 @@ Quem pode importar quem fica num teste no estilo do ArchUnit do Java, em `intern
 - **A lista não envelhece:** exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo também fazem o teste falhar, com o que fazer.
 - O teste se testa: um grafo de mentira com um import proibido faz cada regra falhar.
 
+### Regras de ouro conferidas pela CI (#457)
+
+`float64`, `time.Now()` e `time.Sleep` de teste deixaram de depender só da revisão: o job "Go" roda `scripts/ci/verificar-regras-go.py`, antes do `go test`, e falha com uma mensagem que diz o que usar no lugar.
+
+| Regra | O que pega | O que passa sem exceção |
+|---|---|---|
+| `float64` | `float64`, `float32`, `Float64()`, `ParseFloat` e `FormatFloat`, em qualquer `.go` (teste inclusive) | nada: dinheiro, quantidade e taxa são `tipos.Decimal` |
+| `time.Now` | `time.Now`, com ou sem parênteses, fora do `internal/relogio` | dentro de um `synctest.Test`, onde o relógio é de mentira |
+| `time.Sleep` | só em `_test.go` | dentro de um `synctest.Test` |
+
+- **Só o código conta:** comentário e texto entre aspas não entram, então um comentário que explica "nunca use float64" não precisa de exceção.
+- **Exceção:** uma linha em `scripts/ci/regras-go-excecoes.txt`, no formato do `mutacao-go-equivalentes.txt` (regra, arquivo, texto da linha do código e o motivo). Vale pelo texto da linha, e não pelo número. A exceção que não casa mais com nenhuma linha também falha, para a lista não juntar lixo. Só entra o que foi conferido à mão.
+- **O teste do script** (`scripts/ci/test_verificar_regras_go.py`, só `unittest`) roda antes dele no mesmo job: a regra pega o caso ruim, deixa passar o permitido e a exceção, e a mensagem manda usar o `relogio`, o `tipos.Decimal` ou o sinal.
+- **Primeira conferência (1/11/2026): nenhum `float64` era dinheiro.** Todos repetem um `double` do C# (o `[Range(0.01d, ...)]` das validações, o fator da Selic, a pontuação das sugestões de categoria) ou são de teste dessas contas. Os `time.Now` são hora de sistema (processo, certificado, duração de requisição, limite por IP) ou o tempo que o teste mede. Cada um tem o motivo na lista.
+- **Por que um script em Python, e não um analisador do `go vet`:** o `go/analysis` é do `golang.org/x/tools`, uma dependência fora da lista da [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md); com só o `go/ast` da biblioteca padrão daria um programa em Go à parte, e os scripts de CI do projeto já são Python. O preço (*julgamento*): a conferência é por texto, sem os tipos do Go. Um `import t "time"` escapa, e `time.Since`/`time.Until`, que leem o relógio por dentro, não são conferidos.
+
 ### Proibido em teste
 
 | Proibido | Use | Exceção aceita |
 |---|---|---|
-| `time.Now()`, no código testado ou para montar dado | `relogio.Fixo` (o código de regra recebe um `relogio.Relogio`) | medir o próprio tempo real, quando ele é o assunto (o teste de WAL entre dois processos, `internal/banco/wal_test.go`) |
+| `time.Now()`, no código testado ou para montar dado | `relogio.Fixo` (o código de regra recebe um `relogio.Relogio`) | medir o próprio tempo real, quando ele é o assunto (o teste de WAL entre dois processos, `internal/banco/wal_test.go`); a CI só deixa passar com a exceção escrita em `scripts/ci/regras-go-excecoes.txt` (#457) |
 | `time.Sleep` para **esperar** algo acontecer | um sinal: canal, `sync.WaitGroup`, a linha `{"porta":N}` lida da saída (como `cmd/financas/main_test.go`); código com temporizador (tarefas em segundo plano), [`testing/synctest`](https://pkg.go.dev/testing/synctest), que roda o teste com um relógio falso e adianta o tempo quando todos estão parados (Go 1.25+; [blog do Go](https://go.dev/blog/testing-time)) | um teto, para o teste não travar: `time.After` num `select`, ou um contexto com prazo |
 | rede de verdade (internet, outro serviço) | o `testeapoio.ServicoDeFora` com as respostas de `testdata/` | o próprio teste ouvindo em `127.0.0.1` (o servidor do Go, o `httptest`) |
 | dado real (o repositório é compartilhado) | dado inventado; resposta gravada de API externa com os valores trocados à mão antes de entrar no `testdata` (nunca token, conta, documento ou saldo de verdade) | os testes manuais que já existem, que leem uma **cópia** do banco (`FINANCAS_COPIA_BANCO`) ou comparam com o .NET rodando (`FINANCAS_DOTNET_URL`): só leem, não mostram valores, pulam sozinhos sem a variável e nada deles vai para o repositório |
 | biblioteca de asserção ou de mock | `if obtido != esperado { t.Errorf(...) }` e um *fake* escrito à mão, pequeno, onde há interface | — |
 
 - **Dívidas que já existem** (conferidas; ficam até alguém mexer no arquivo, ou numa história do épico #374. *Inferido.*):
-  - `internal/servidor/servidor_test.go:273-278`: tenta o servidor a cada 20 ms, até 50 vezes, esperando ele subir;
-  - `internal/banco/esquema_banco_test.go:234`: dorme 20 ms para a data do arquivo mudar;
+  - ~~`internal/servidor/servidor_test.go:273-278`: tentava o servidor a cada 20 ms, até 50 vezes, esperando ele subir~~: resolvida na #458. O `Rodar` abre a porta antes de servir e chama o `Opcoes.AoEscutar` com o endereço de verdade; o teste espera esse sinal (num `select` com teto de 5 s) e pede a porta `:0`;
+  - ~~`internal/banco/esquema_banco_test.go:234`: dormia 20 ms para a data do arquivo mudar~~: resolvida na #458, com `os.Chtimes` pondo a data do arquivo no passado antes de aplicar o esquema de novo;
+  - ~~`internal/erros/erros_test.go:359` (espera em laço de 5 ms) e `internal/relogio/relogio_test.go:113` (dormia 20 ms)~~: resolvidas na #458, as duas com o `testing/synctest` (`synctest.Wait` no gravador; relógio de mentira no `APartirDe`);
   - ~~`internal/banco/banco_test.go:89`: `time.Now()` para preencher uma data que o teste não confere~~: resolvida na #369, com o `instanteDosTestes`.
+- **O que continua com `time.Sleep` e `time.Now()` de verdade, de propósito** (lista conferida pelo `scripts/ci/verificar-regras-go.py`, #457, em `scripts/ci/regras-go-excecoes.txt`, cada linha com o motivo): o ajudante de WAL (`internal/banco/wal_test.go`), em que o tempo é o que se testa (segurar a trava do banco por 5 ms, descansar 5 ms e gravar por N segundos, para quem grava junto, o .NET, encontrar o banco ocupado), e o teste que mede o próprio tempo do `testeapoio`. Dentro do `synctest.Test` o `time.Sleep` e o `time.Now()` são do relógio de mentira e a guarda os deixa passar.
 
 ### Como escrever
 
@@ -221,7 +239,7 @@ Benchmark só para código quente, antes de otimizar (skill `go-no-projeto`, "De
   - **sobreposição:** um mesmo comportamento pode acabar no unitário e no contrato. A regra "num lugar só" pede julgamento a cada PR;
   - **o gabarito precisa de disciplina:** regravar sem olhar a diferença esconde uma regressão;
   - **`t.Parallel()` mal usado** dá teste instável (variável de pacote, banco dividido). O `-race` só pega parte disso;
-  - as três dívidas listadas continuam até alguém mexer nos arquivos.
+  - as dívidas de espera por `time.Sleep` foram todas pagas na #458; sobram só as exceções escritas, com o motivo, em `scripts/ci/regras-go-excecoes.txt`.
 - **Na prática:**
   - antes de subir: `gofmt -l .`, `go vet ./...` e `go test -race ./...` em `src/backend-go` (o job "Go" da CI roda os mesmos);
   - **regra nova:** linha na tabela do teste unitário do pacote; **consulta nova:** teste com o SQLite real; **endpoint novo:** caso de contrato gravado do .NET, mais o teste HTTP dos ramos de validação;

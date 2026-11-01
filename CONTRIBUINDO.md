@@ -180,6 +180,10 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
 - biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
 
+**A CI confere as regras de ouro (#457):** `python3 scripts/ci/verificar-regras-go.py` (em `src/backend-go`, o mesmo do job "Go") falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
+- **Exceção:** uma linha em `scripts/ci/regras-go-excecoes.txt`, com o motivo, pelo texto da linha do código (como o `mutacao-go-equivalentes.txt`). Exceção que não casa mais com nenhuma linha também falha.
+- **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro; `time.Now` só para hora de sistema (duração, validade de certificado); `time.Sleep` só quando o tempo é o que se testa.
+
 **`t.Parallel()`:**
 - **use** nos testes de banco e de HTTP que têm o próprio banco no próprio `t.TempDir()`;
 - **não use** com `t.Setenv` ou `t.Chdir` (o Go recusa), variável de pacote, banco dividido, tempo real ou processo filho, nem no contrato (casos em ordem, no mesmo banco).
