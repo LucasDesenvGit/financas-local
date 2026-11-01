@@ -273,11 +273,12 @@ public class CategorizacaoService
         foreach (var (chave, textos, filtros) in RegrasPadraoNovas)
         {
             if (await config.ExisteAsync(chave, ct)) continue;
-            await config.DefinirAsync(chave, DateTime.UtcNow.ToString("O"), ct: ct);
             investimentos ??= (await _db.Categorias.AsNoTracking().Where(x => x.Tipo == TipoCategoria.Transferencia)
                     .Select(x => new { x.Id, x.Nome }).ToListAsync(ct))
                 .FirstOrDefault(x => Normalizar(x.Nome) == "INVESTIMENTOS")?.Id;
-            if (investimentos is not int categoria) continue;
+            // Sem a categoria, nenhum grupo nasce nem ganha marca: nascem na partida seguinte à volta dela (#568).
+            if (investimentos is not int categoria) return mudaram;
+            await config.DefinirAsync(chave, DateTime.UtcNow.ToString("O"), ct: ct);
             foreach (var regra in textos)
                 if (!await _db.RegrasCategorizacao.AnyAsync(r => r.Texto == regra, ct))
                     _db.RegrasCategorizacao.Add(new RegraCategorizacao
