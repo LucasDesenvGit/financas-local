@@ -40,3 +40,4 @@ internal/desfazer        100
 internal/cobrancas       100
 internal/contasagendadas 100
 internal/orcamentos      100
+internal/metas           100

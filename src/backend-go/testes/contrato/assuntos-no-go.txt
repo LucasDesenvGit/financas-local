@@ -11,7 +11,7 @@ cadastros /api/categorias;/api/regras;/api/regras-descricao;/api/contas;/api/con
 transacoes /api/transacoes
 
 # A #79 liga os prefixos dela aos poucos: as contas a pagar primeiro; orçamentos e metas, nas partes 2 e 3.
-planejamento /api/contas-agendadas;/api/orcamentos
+planejamento /api/contas-agendadas;/api/orcamentos;/api/metas
 
 # A #82 liga os prefixos dela aos poucos (a carteira, depois); a linha inteira só no site, com a #299 e a #80 prontas.
 investimentos /api/reservas;/api/carteira
