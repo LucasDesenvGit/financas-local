@@ -348,8 +348,8 @@ func (r *relogioMovel) Agora() time.Time { return r.agora }
 //
 // Antes (#458) o teste também registrava um erro logo depois de cancelar e esperava 2 linhas no fim: isso dependia de
 // qual goroutine corria primeiro (se o Rodar pegasse o erro pela fila já com o contexto cancelado, o gravarLote falhava
-// com context.Canceled e o erro se perdia, e o teste falhava 1 vez em 20). O mesmo acontece no .NET
-// (GravadorErrosHostedService, SaveChangesAsync com o token cancelado): fica como está, e a lacuna vai para uma issue.
+// com context.Canceled e o erro se perdia, e o teste falhava 1 vez em 20). Esse caso tem teste próprio, determinístico
+// (TestRodarGravaOLoteQueSaiuDaFilaNoDesligamento, #569).
 // Dentro do synctest, o synctest.Wait volta quando o gravador terminou de gravar e parou de novo na fila (#458); o banco
 // nasce fora da bolha, porque as goroutines do database/sql são dele e não do teste.
 func TestRodarGravaOQueChegaNaFila(t *testing.T) {
@@ -373,6 +373,44 @@ func TestRodarGravaOQueChegaNaFila(t *testing.T) {
 		parar()
 		<-parou
 	})
+}
+
+// Regra (#569): o lote que já saiu da fila é gravado mesmo que o desligamento comece no meio da gravação.
+//
+// O contexto canceladoAoSairDaFila acaba no instante em que o gravador tira o erro da fila: o select do Rodar só vê a
+// fila pronta e escolhe ela, e a gravação já encontra o contexto cancelado. É a corrida que fazia o teste antigo falhar
+// 1 vez em 20 (#458), agora sempre do mesmo jeito.
+func TestRodarGravaOLoteQueSaiuDaFilaNoDesligamento(t *testing.T) {
+	db := testeapoio.NovoBanco(t)
+	fila := NovaFila()
+	g := NovoGravador(db, fila, testeapoio.RelogioDosTestes(), parametrosFixos(90), slog.New(slog.DiscardHandler))
+	fila.Registrar(Registro{Em: testeapoio.InstanteDosTestes, Nivel: Erro, Origem: "Sistema", Categoria: "c", Mensagem: "no desligamento"})
+	g.Rodar(canceladoAoSairDaFila{Context: t.Context(), fila: fila})
+	if l := linhasDaTabela(t, db); len(l) != 1 {
+		t.Fatalf("gravou %d, esperado 1: o erro que saiu da fila no desligamento se perdeu", len(l))
+	}
+}
+
+// canceladoAoSairDaFila é um contexto que fica cancelado quando a fila esvazia.
+type canceladoAoSairDaFila struct {
+	context.Context
+	fila *Fila
+}
+
+var jaFechado = func() chan struct{} { c := make(chan struct{}); close(c); return c }()
+
+func (c canceladoAoSairDaFila) Done() <-chan struct{} {
+	if len(c.fila.canal) > 0 {
+		return nil // nil nunca fica pronto: o select escolhe a fila
+	}
+	return jaFechado
+}
+
+func (c canceladoAoSairDaFila) Err() error {
+	if len(c.fila.canal) > 0 {
+		return nil
+	}
+	return context.Canceled
 }
 
 // Regra: falha ao gravar vai para o log sem a captura, e não volta para a fila nem derruba nada.

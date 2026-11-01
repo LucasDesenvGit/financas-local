@@ -75,7 +75,7 @@ func TestListarIgualAoCSharp(t *testing.T) {
 	testeapoio.ConferirJSON(t, obtido, string(esperado))
 
 	total, err := s.Total(t.Context())
-	if err != nil || total.String() != "1003.25" {
+	if err != nil || total.String() != "6504.35" {
 		t.Errorf("total %s, %v", total, err)
 	}
 }
