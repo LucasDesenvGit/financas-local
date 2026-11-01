@@ -24,6 +24,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/orcamentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
@@ -64,6 +65,7 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))                   // #77: contas e faturas do cartão
 	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))            // #78: transações (as 18 rotas)
 	contasagendadas.Registrar(mux, contasagendadas.NovoServico(d.DB, d.Relogio, d.Log)) // #79: contas a pagar
+	orcamentos.Registrar(mux, orcamentos.NovoServico(d.DB, par, d.Relogio, d.Log))      // #79: orçamentos e a sugestão (#39)
 	cambioDaCarteira := cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log)
 	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
 	reservas.Registrar(mux, reservasDaCarteira) // #82: as reservas (ADRs 0010, 0037 e 0038)

@@ -1,0 +1,210 @@
+{
+  "descricao": "Orçamentos (#79, OrcamentosController): lista do mês, salvar (cria ou altera), excluir, a sugestão por categoria (#39) e aplicá-la, e copiar do mês anterior. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Os orçamentos da base são os ids 1 a 7 (setembro e outubro de 2026). Cria os ids 8 a 15 e os apaga no fim, e devolve o de outubro do Mercado (id 4) aos 650.0: os arquivos seguintes veem a base como estava.",
+  "casos": [
+    {
+      "nome": "listar o mês atual",
+      "comentario": "Sem ano e mês: outubro de 2026. Pelo nome da categoria, com o gasto, a porcentagem e a situação.",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos"
+    },
+    {
+      "nome": "listar setembro",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos?ano=2026&mes=9"
+    },
+    {
+      "nome": "listar com o ano fora",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos?ano=1999&mes=9"
+    },
+    {
+      "nome": "listar com o mês 13",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos?mes=13"
+    },
+    {
+      "nome": "listar com o ano que não é número",
+      "comentario": "Erro do model binding da query: 400 com o ValidationProblemDetails.",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos?ano=abc"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "sugestão do mês atual",
+      "comentario": "#39: base dos 6 meses completos, folga dos essenciais, uso do limite do cartão, caber na renda e arredondar para R$ 10, com os motivos e os avisos em pt-BR.",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos/sugestao"
+    },
+    {
+      "nome": "sugestão de novembro",
+      "comentario": "Sem orçamentos em novembro: todas as categorias com valor vêm selecionadas.",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos/sugestao?ano=2026&mes=11"
+    },
+    {
+      "nome": "sugestão com o período inválido",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos/sugestao?ano=2101"
+    },
+    {
+      "nome": "salvar um novo (id 8)",
+      "comentario": "Lazer em outubro ainda não tem orçamento: cria.",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 7, "ano": 2026, "mes": 10, "valor": 250.5 }
+    },
+    {
+      "nome": "salvar o que já existe",
+      "comentario": "Mercado em outubro (id 4): só o valor muda.",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 2, "ano": 2026, "mes": 10, "valor": 700 }
+    },
+    {
+      "nome": "salvar para categoria de receita",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 19, "ano": 2026, "mes": 10, "valor": 100 }
+    },
+    {
+      "nome": "salvar para categoria que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 9999, "ano": 2026, "mes": 10, "valor": 100 }
+    },
+    {
+      "nome": "salvar com o ano fora",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 7, "ano": 1999, "mes": 10, "valor": 100 }
+    },
+    {
+      "nome": "salvar com o mês 13",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 7, "ano": 2026, "mes": 13, "valor": 100 }
+    },
+    {
+      "nome": "salvar com o valor negativo",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 7, "ano": 2026, "mes": 10, "valor": -1 }
+    },
+    {
+      "nome": "salvar sem login",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "sessao": "visitante",
+      "corpo": { "categoriaId": 7, "ano": 2026, "mes": 10, "valor": 100 }
+    },
+    {
+      "nome": "aplicar a sugestão (cria o id 9)",
+      "comentario": "Altera o Mercado de outubro e cria o da Saúde; devolve quantos itens.",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/aplicar-sugestao",
+      "corpo": { "ano": 2026, "mes": 10, "itens": [ { "categoriaId": 2, "valor": 680 }, { "categoriaId": 5, "valor": 300.25 } ] }
+    },
+    {
+      "nome": "aplicar com categoria repetida",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/aplicar-sugestao",
+      "corpo": { "ano": 2026, "mes": 10, "itens": [ { "categoriaId": 2, "valor": 10 }, { "categoriaId": 2, "valor": 20 } ] }
+    },
+    {
+      "nome": "aplicar com categoria de receita",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/aplicar-sugestao",
+      "corpo": { "ano": 2026, "mes": 10, "itens": [ { "categoriaId": 2, "valor": 10 }, { "categoriaId": 19, "valor": 20 } ] }
+    },
+    {
+      "nome": "aplicar sem itens",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/aplicar-sugestao",
+      "corpo": { "ano": 2026, "mes": 10, "itens": [] }
+    },
+    {
+      "nome": "aplicar sem a lista",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/aplicar-sugestao",
+      "corpo": { "ano": 2026, "mes": 10 }
+    },
+    {
+      "nome": "aplicar com valor zero num item",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/aplicar-sugestao",
+      "corpo": { "ano": 2026, "mes": 10, "itens": [ { "categoriaId": 2, "valor": 0 } ] }
+    },
+    {
+      "nome": "copiar outubro para novembro (ids 10 a 15)",
+      "comentario": "Os seis de outubro (os 4 da base, o do Lazer e o da Saúde), com o valor de lá.",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/copiar-mes-anterior",
+      "corpo": { "ano": 2026, "mes": 11 }
+    },
+    {
+      "nome": "copiar de novo não repete",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/copiar-mes-anterior",
+      "corpo": { "ano": 2026, "mes": 11 }
+    },
+    {
+      "nome": "copiar para janeiro, sem nada em dezembro",
+      "comentario": "O mês anterior de janeiro é dezembro do ano anterior.",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/copiar-mes-anterior",
+      "corpo": { "ano": 2027, "mes": 1 }
+    },
+    {
+      "nome": "copiar com o mês 0",
+      "metodo": "POST",
+      "caminho": "/api/orcamentos/copiar-mes-anterior",
+      "corpo": { "ano": 2026, "mes": 0 }
+    },
+    {
+      "nome": "listar novembro",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos?ano=2026&mes=11"
+    },
+    {
+      "nome": "excluir o que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/orcamentos/9999"
+    },
+    {
+      "nome": "excluir com id que não é número",
+      "metodo": "DELETE",
+      "caminho": "/api/orcamentos/abc"
+    },
+    {
+      "nome": "excluir sem login",
+      "metodo": "DELETE",
+      "caminho": "/api/orcamentos/1",
+      "sessao": "visitante"
+    },
+    { "nome": "excluir o 8", "metodo": "DELETE", "caminho": "/api/orcamentos/8" },
+    { "nome": "excluir o 9", "metodo": "DELETE", "caminho": "/api/orcamentos/9" },
+    { "nome": "excluir o 10", "metodo": "DELETE", "caminho": "/api/orcamentos/10" },
+    { "nome": "excluir o 11", "metodo": "DELETE", "caminho": "/api/orcamentos/11" },
+    { "nome": "excluir o 12", "metodo": "DELETE", "caminho": "/api/orcamentos/12" },
+    { "nome": "excluir o 13", "metodo": "DELETE", "caminho": "/api/orcamentos/13" },
+    { "nome": "excluir o 14", "metodo": "DELETE", "caminho": "/api/orcamentos/14" },
+    { "nome": "excluir o 15", "metodo": "DELETE", "caminho": "/api/orcamentos/15" },
+    {
+      "nome": "devolver o Mercado de outubro aos 650",
+      "comentario": "Limpeza: os arquivos seguintes veem o valor da base.",
+      "metodo": "PUT",
+      "caminho": "/api/orcamentos",
+      "corpo": { "categoriaId": 2, "ano": 2026, "mes": 10, "valor": 650.0 }
+    },
+    {
+      "nome": "listar o mês atual de novo",
+      "metodo": "GET",
+      "caminho": "/api/orcamentos"
+    }
+  ]
+}

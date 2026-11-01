@@ -1,0 +1,1037 @@
+[
+  {
+    "nome": "listar o mês atual",
+    "requisicao": "GET /api/orcamentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 5,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 400.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 4,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 650.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 7,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 120.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#92c8f0",
+        "categoriaId": 4,
+        "categoriaNome": "Transporte",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 6,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 150.5
+      }
+    ]
+  },
+  {
+    "nome": "listar setembro",
+    "requisicao": "GET /api/orcamentos?ano=2026&mes=9",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 2,
+        "mes": 9,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 400.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f3b3d3",
+        "categoriaId": 7,
+        "categoriaNome": "Lazer",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 3,
+        "mes": 9,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 200.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 1,
+        "mes": 9,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 600.0
+      }
+    ]
+  },
+  {
+    "nome": "listar com o ano fora",
+    "requisicao": "GET /api/orcamentos?ano=1999&mes=9",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "listar com o mês 13",
+    "requisicao": "GET /api/orcamentos?mes=13",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "listar com o ano que não é número",
+    "requisicao": "GET /api/orcamentos?ano=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ano": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "listar sem login",
+    "requisicao": "GET /api/orcamentos",
+    "status": 401
+  },
+  {
+    "nome": "sugestão do mês atual",
+    "requisicao": "GET /api/orcamentos/sugestao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2026,
+      "avisos": [],
+      "cartoes": [
+        {
+          "contaId": 2,
+          "faturaMedia": 472.05,
+          "limite": 12000.0,
+          "nome": "Cartão Fictício Platinum",
+          "percentual": 3.9
+        }
+      ],
+      "disponivel": 4950.10,
+      "faltaParaCaber": null,
+      "itens": [
+        {
+          "atual": 650.0,
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "media": 427.82,
+          "mediana": 506.76,
+          "mesesComGasto": 5,
+          "motivos": [
+            "mediana de 6 meses",
+            "+5% de folga (essencial)"
+          ],
+          "natureza": 1,
+          "nome": "Mercado",
+          "pagoNoCartaoPercentual": 0,
+          "selecionado": false,
+          "sugerido": 530,
+          "tendencia": "queda",
+          "ultimoMes": 0
+        },
+        {
+          "atual": null,
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "media": 39.9,
+          "mediana": 39.9,
+          "mesesComGasto": 6,
+          "motivos": [
+            "mediana de 6 meses"
+          ],
+          "natureza": 2,
+          "nome": "Serviços e assinaturas",
+          "pagoNoCartaoPercentual": 100,
+          "selecionado": true,
+          "sugerido": 30,
+          "tendencia": "estavel",
+          "ultimoMes": 39.9
+        },
+        {
+          "atual": 150.5,
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "media": 27.45,
+          "mediana": 27.45,
+          "mesesComGasto": 6,
+          "motivos": [
+            "mediana de 6 meses",
+            "+5% de folga (essencial)"
+          ],
+          "natureza": 1,
+          "nome": "Transporte",
+          "pagoNoCartaoPercentual": 100,
+          "selecionado": false,
+          "sugerido": 30,
+          "tendencia": "estavel",
+          "ultimoMes": 27.45
+        },
+        {
+          "atual": null,
+          "categoriaId": 16,
+          "cor": "#e7b3ea",
+          "media": 41.65,
+          "mediana": 0,
+          "mesesComGasto": 1,
+          "motivos": [
+            "gasto em só 1 dos últimos 6 meses (jul/26): sem dados suficientes"
+          ],
+          "natureza": 2,
+          "nome": "Cuidados pessoais",
+          "pagoNoCartaoPercentual": 100,
+          "selecionado": false,
+          "sugerido": null,
+          "tendencia": null,
+          "ultimoMes": 0
+        },
+        {
+          "atual": 400.0,
+          "categoriaId": 1,
+          "cor": "#f8c09a",
+          "media": 0,
+          "mediana": 0,
+          "mesesComGasto": 0,
+          "motivos": [],
+          "natureza": 2,
+          "nome": "Alimentação",
+          "pagoNoCartaoPercentual": 0,
+          "selecionado": false,
+          "sugerido": null,
+          "tendencia": null,
+          "ultimoMes": 0
+        }
+      ],
+      "limiteAlerta": 10,
+      "limiteAtencao": 30,
+      "mes": 10,
+      "mesesBase": 6,
+      "mesesRenda": 10,
+      "metaPoupanca": 0.00,
+      "nivelCartao": "ok",
+      "parcelasCartao": 299.9,
+      "parcelasEmprestimos": 0,
+      "parcelasFinanciamentos": 1250.0,
+      "percentualPoupanca": 0,
+      "rendaMedia": 6500.00,
+      "totalSugerido": 1230.5,
+      "usoLimiteCartoes": 3.9
+    }
+  },
+  {
+    "nome": "sugestão de novembro",
+    "requisicao": "GET /api/orcamentos/sugestao?ano=2026&mes=11",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2026,
+      "avisos": [],
+      "cartoes": [
+        {
+          "contaId": 2,
+          "faturaMedia": 472.05,
+          "limite": 12000.0,
+          "nome": "Cartão Fictício Platinum",
+          "percentual": 3.9
+        }
+      ],
+      "disponivel": 4950.10,
+      "faltaParaCaber": null,
+      "itens": [
+        {
+          "atual": null,
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "media": 427.82,
+          "mediana": 506.76,
+          "mesesComGasto": 5,
+          "motivos": [
+            "mediana de 6 meses",
+            "+5% de folga (essencial)"
+          ],
+          "natureza": 1,
+          "nome": "Mercado",
+          "pagoNoCartaoPercentual": 0,
+          "selecionado": true,
+          "sugerido": 530,
+          "tendencia": "queda",
+          "ultimoMes": 0
+        },
+        {
+          "atual": null,
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "media": 39.9,
+          "mediana": 39.9,
+          "mesesComGasto": 6,
+          "motivos": [
+            "mediana de 6 meses"
+          ],
+          "natureza": 2,
+          "nome": "Serviços e assinaturas",
+          "pagoNoCartaoPercentual": 100,
+          "selecionado": true,
+          "sugerido": 30,
+          "tendencia": "estavel",
+          "ultimoMes": 39.9
+        },
+        {
+          "atual": null,
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "media": 27.45,
+          "mediana": 27.45,
+          "mesesComGasto": 6,
+          "motivos": [
+            "mediana de 6 meses",
+            "+5% de folga (essencial)"
+          ],
+          "natureza": 1,
+          "nome": "Transporte",
+          "pagoNoCartaoPercentual": 100,
+          "selecionado": true,
+          "sugerido": 30,
+          "tendencia": "estavel",
+          "ultimoMes": 27.45
+        },
+        {
+          "atual": null,
+          "categoriaId": 16,
+          "cor": "#e7b3ea",
+          "media": 41.65,
+          "mediana": 0,
+          "mesesComGasto": 1,
+          "motivos": [
+            "gasto em só 1 dos últimos 6 meses (jul/26): sem dados suficientes"
+          ],
+          "natureza": 2,
+          "nome": "Cuidados pessoais",
+          "pagoNoCartaoPercentual": 100,
+          "selecionado": false,
+          "sugerido": null,
+          "tendencia": null,
+          "ultimoMes": 0
+        }
+      ],
+      "limiteAlerta": 10,
+      "limiteAtencao": 30,
+      "mes": 11,
+      "mesesBase": 6,
+      "mesesRenda": 10,
+      "metaPoupanca": 0.00,
+      "nivelCartao": "ok",
+      "parcelasCartao": 299.9,
+      "parcelasEmprestimos": 0,
+      "parcelasFinanciamentos": 1250.0,
+      "percentualPoupanca": 0,
+      "rendaMedia": 6500.00,
+      "totalSugerido": 590,
+      "usoLimiteCartoes": 3.9
+    }
+  },
+  {
+    "nome": "sugestão com o período inválido",
+    "requisicao": "GET /api/orcamentos/sugestao?ano=2101",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "salvar um novo (id 8)",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "inseridas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 7,
+            "Id": 8,
+            "Mes": 10,
+            "Valor": "250.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "salvar o que já existe",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "Valor": {
+                "antes": "650.0",
+                "depois": "700.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "salvar para categoria de receita",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Orçamentos são definidos para categorias de despesa."
+    }
+  },
+  {
+    "nome": "salvar para categoria que não existe",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "salvar com o ano fora",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ano": [
+          "The field Ano must be between 2000 and 2100."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com o mês 13",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Mes": [
+          "The field Mes must be between 1 and 12."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com o valor negativo",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between 0 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar sem login",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 401
+  },
+  {
+    "nome": "aplicar a sugestão (cria o id 9)",
+    "requisicao": "POST /api/orcamentos/aplicar-sugestao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 2
+    },
+    "banco": {
+      "Orcamento": {
+        "inseridas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 5,
+            "Id": 9,
+            "Mes": 10,
+            "Valor": "300.25"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "Valor": {
+                "antes": "700.0",
+                "depois": "680.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "aplicar com categoria repetida",
+    "requisicao": "POST /api/orcamentos/aplicar-sugestao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria repetida na sugestão."
+    }
+  },
+  {
+    "nome": "aplicar com categoria de receita",
+    "requisicao": "POST /api/orcamentos/aplicar-sugestao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Orçamentos são definidos para categorias de despesa."
+    }
+  },
+  {
+    "nome": "aplicar sem itens",
+    "requisicao": "POST /api/orcamentos/aplicar-sugestao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens": [
+          "The field Itens must be a string or array type with a minimum length of '1'."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "aplicar sem a lista",
+    "requisicao": "POST /api/orcamentos/aplicar-sugestao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens": [
+          "The Itens field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "aplicar com valor zero num item",
+    "requisicao": "POST /api/orcamentos/aplicar-sugestao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Itens[0].Valor": [
+          "The field Valor must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "copiar outubro para novembro (ids 10 a 15)",
+    "requisicao": "POST /api/orcamentos/copiar-mes-anterior",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 6
+    },
+    "banco": {
+      "Orcamento": {
+        "inseridas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 2,
+            "Id": 10,
+            "Mes": 11,
+            "Valor": "680.0"
+          },
+          {
+            "Ano": 2026,
+            "CategoriaId": 1,
+            "Id": 11,
+            "Mes": 11,
+            "Valor": "400.0"
+          },
+          {
+            "Ano": 2026,
+            "CategoriaId": 4,
+            "Id": 12,
+            "Mes": 11,
+            "Valor": "150.5"
+          },
+          {
+            "Ano": 2026,
+            "CategoriaId": 25,
+            "Id": 13,
+            "Mes": 11,
+            "Valor": "120.0"
+          },
+          {
+            "Ano": 2026,
+            "CategoriaId": 7,
+            "Id": 14,
+            "Mes": 11,
+            "Valor": "250.5"
+          },
+          {
+            "Ano": 2026,
+            "CategoriaId": 5,
+            "Id": 15,
+            "Mes": 11,
+            "Valor": "300.25"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "copiar de novo não repete",
+    "requisicao": "POST /api/orcamentos/copiar-mes-anterior",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "copiar para janeiro, sem nada em dezembro",
+    "requisicao": "POST /api/orcamentos/copiar-mes-anterior",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "copiar com o mês 0",
+    "requisicao": "POST /api/orcamentos/copiar-mes-anterior",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Mes": [
+          "The field Mes must be between 1 and 12."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "listar novembro",
+    "requisicao": "GET /api/orcamentos?ano=2026&mes=11",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 11,
+        "mes": 11,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 400.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f3b3d3",
+        "categoriaId": 7,
+        "categoriaNome": "Lazer",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 14,
+        "mes": 11,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 250.5
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 10,
+        "mes": 11,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 680.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 13,
+        "mes": 11,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 120.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f4a89a",
+        "categoriaId": 5,
+        "categoriaNome": "Saúde",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 15,
+        "mes": 11,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 300.25
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#92c8f0",
+        "categoriaId": 4,
+        "categoriaNome": "Transporte",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 12,
+        "mes": 11,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 150.5
+      }
+    ]
+  },
+  {
+    "nome": "excluir o que não existe",
+    "requisicao": "DELETE /api/orcamentos/9999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir com id que não é número",
+    "requisicao": "DELETE /api/orcamentos/abc",
+    "status": 404
+  },
+  {
+    "nome": "excluir sem login",
+    "requisicao": "DELETE /api/orcamentos/1",
+    "status": 401
+  },
+  {
+    "nome": "excluir o 8",
+    "requisicao": "DELETE /api/orcamentos/8",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 7,
+            "Id": 8,
+            "Mes": 10,
+            "Valor": "250.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 9",
+    "requisicao": "DELETE /api/orcamentos/9",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 5,
+            "Id": 9,
+            "Mes": 10,
+            "Valor": "300.25"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 10",
+    "requisicao": "DELETE /api/orcamentos/10",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 2,
+            "Id": 10,
+            "Mes": 11,
+            "Valor": "680.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 11",
+    "requisicao": "DELETE /api/orcamentos/11",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 1,
+            "Id": 11,
+            "Mes": 11,
+            "Valor": "400.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 12",
+    "requisicao": "DELETE /api/orcamentos/12",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 4,
+            "Id": 12,
+            "Mes": 11,
+            "Valor": "150.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 13",
+    "requisicao": "DELETE /api/orcamentos/13",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 25,
+            "Id": 13,
+            "Mes": 11,
+            "Valor": "120.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 14",
+    "requisicao": "DELETE /api/orcamentos/14",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 7,
+            "Id": 14,
+            "Mes": 11,
+            "Valor": "250.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o 15",
+    "requisicao": "DELETE /api/orcamentos/15",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "removidas": [
+          {
+            "Ano": 2026,
+            "CategoriaId": 5,
+            "Id": 15,
+            "Mes": 11,
+            "Valor": "300.25"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "devolver o Mercado de outubro aos 650",
+    "requisicao": "PUT /api/orcamentos",
+    "status": 204,
+    "banco": {
+      "Orcamento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "Valor": {
+                "antes": "680.0",
+                "depois": "650.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar o mês atual de novo",
+    "requisicao": "GET /api/orcamentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 1,
+        "categoriaNome": "Alimentação",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 5,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 400.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 4,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 650.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#f8c09a",
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 7,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 120.0
+      },
+      {
+        "ano": 2026,
+        "categoriaCor": "#92c8f0",
+        "categoriaId": 4,
+        "categoriaNome": "Transporte",
+        "gasto": 0,
+        "gastoEmergencia": 0,
+        "id": 6,
+        "mes": 10,
+        "percentual": 0,
+        "situacao": "ok",
+        "valor": 150.5
+      }
+    ]
+  }
+]

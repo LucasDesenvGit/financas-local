@@ -39,3 +39,4 @@ internal/sugestoes       100
 internal/desfazer        100
 internal/cobrancas       100
 internal/contasagendadas 100
+internal/orcamentos      100
