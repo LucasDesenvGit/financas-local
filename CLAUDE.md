@@ -205,6 +205,8 @@ Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para 
 
 **Código Go:** a skill `go-no-projeto` (`.claude/skills/`) é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão), com as referências de estilo, exemplos e revisão; na migração do épico #70, a skill `migrar-para-go` acrescenta o que é só dela (contrato idêntico, levantamento do C#, ordem das etapas). O agente `dev-go` (`.claude/agents/`) usa as duas, para analisar, portar ou revisar assuntos em paralelo (#560).
 
+**Código Angular:** a skill `angular-no-projeto` (`.claude/skills/`) é o roteiro de todo trabalho no front-end (tela nova, mudança, avaliação de UI/UX, revisão), com as referências de estilo, componentes, testes, revisão e exemplos; a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` (`.claude/agents/`) carrega as duas, para avaliar telas em paralelo (um agente por tela), implementar ou revisar (#559).
+
 **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` (`.claude/skills/`) em uma frase. Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento. Ofereça quando **qualquer um** destes for verdade, e não só quando o pedido "parecer grande" (#280: numa sessão de muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou no limite):
 - o pedido cita **mais de uma issue ou PR**, ou um **épico**;
 - é a **2ª issue ou PR na mesma conversa**, ou a conversa **já foi resumida** (sessão longa);

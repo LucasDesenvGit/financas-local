@@ -246,7 +246,8 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 ## Claude Code no projeto
 
 Quem usa o Claude Code no projeto recebe, pelo repositório:
-- **as skills de `.claude/skills/`**: `testar-no-navegador` e `trabalho-longo`;
+- **as skills de `.claude/skills/`**: `angular-no-projeto` e `testar-no-navegador` (front-end), `go-no-projeto` e `migrar-para-go` (Go) e `trabalho-longo`;
+- **os agentes de `.claude/agents/`**: `dev-angular` (#559) e `dev-go` (#560), que carregam as skills do assunto e têm um hook só deles (`.claude/hooks/bloquear-merge-em-agente.sh`) que barra `gh pr merge` e `git push` forçado;
 - **o hook de `.claude/settings.json`** (#280). A cada pedido, ele roda `.claude/hooks/lembrar-trabalho-longo.sh` (bash, sem dependência nova; no Windows, pelo Git Bash). Quando o pedido tem link de issue ou PR, cita um épico ou a sessão fica longa, ele lembra o Claude de oferecer a skill `trabalho-longo`, para o trabalho continuar sozinho quando o limite de uso voltar.
   - O hook nunca bloqueia o pedido.
   - Ele avisa uma vez por motivo e por sessão.

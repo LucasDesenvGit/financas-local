@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.4] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Skill `angular-no-projeto` e agente `dev-angular`** (#559, épico #486). Nada muda para quem usa. O front-end ganha a mesma estrutura do Go (#560): uma skill permanente com o roteiro de tela nova, de mudança, de avaliação de UI/UX e de revisão, que aponta a fonte de cada regra (`CLAUDE.md`, ADRs 0013, 0017, 0018, 0020, 0021, 0026, 0032, 0041 e 0046, `CONTRIBUINDO.md`) em vez de copiá-la. As referências são lidas sob demanda: estilo, com os pontos em que o projeto diverge do angular.dev (`Eager` com zone.js no lugar de OnPush, template inline, pastas por tipo, testes fora da pasta do código, `MoedaPipe` no lugar do `CurrencyPipe`, nada de biblioteca de componentes), e a regra até então não escrita de que OnPush só vale com todo o estado em signal; os componentes de `compartilhado/` para cada padrão (gráfico, campo de valor e de data, seletor de mês, interruptor, termo, modal); onde mora cada teste e o que rodar antes do push; o checklist de avaliação de tela e de revisão do que a CI não pega; e exemplos que apontam para telas reais. O agente `dev-angular` tem três modos (avaliação de UI/UX, implementação e revisão), carrega as skills `angular-no-projeto` e `testar-no-navegador` na partida e usa o mesmo hook do `dev-go`, que barra `gh pr merge` e `git push` forçado. O `CONTRIBUINDO.md` passa a listar as skills e os agentes do projeto.
+
 ## [2.54.3] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
