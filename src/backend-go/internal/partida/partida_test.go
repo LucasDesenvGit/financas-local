@@ -306,10 +306,10 @@ func (c *cena) falhaNaRotina(t *testing.T, gatilho string) {
 	}
 }
 
-// Regra: erro numa rotina não derruba a subida: a partida devolve o erro dela, registra um aviso, para ali (como o try/catch
-// único do Program.cs: as seguintes ficam para a próxima partida) e deixa o que as rotinas de antes já gravaram. A que
-// falhou desfaz o que fez pela metade (o SaveChanges único do .NET).
-func TestPartidaErroParaAsSeguintesEMantemOQueJaGravou(t *testing.T) {
+// Regra: erro numa rotina não derruba a subida: a partida devolve o erro dela, registra um aviso e segue para as seguintes
+// (#444; o try/catch único do Program.cs parava ali), e deixa o que as rotinas de antes já gravaram. A que falhou desfaz o
+// que fez pela metade (o SaveChanges único do .NET) e acerta na próxima partida.
+func TestPartidaErroNumaRotinaSegueParaAsSeguintes(t *testing.T) {
 	t.Parallel()
 	c := novaCena(t)
 	// A rotina 3 falha ao marcar a compra parcelada.
@@ -319,9 +319,14 @@ func TestPartidaErroParaAsSeguintesEMantemOQueJaGravou(t *testing.T) {
 
 	resultados := Executar(t.Context(), opcoes(c.db, log))
 
-	if len(resultados) != 3 || resultados[2].Rotina != ComprasParceladasEstornadas || resultados[2].Erro == nil ||
+	if len(resultados) != 6 || resultados[2].Rotina != ComprasParceladasEstornadas || resultados[2].Erro == nil ||
 		!strings.Contains(resultados[2].Erro.Error(), "banco recusou") {
-		t.Fatalf("a partida deveria parar na rotina 3 com o erro do banco: %+v", resultados)
+		t.Fatalf("a partida deveria rodar as seis, com o erro do banco na rotina 3: %+v", resultados)
+	}
+	for _, r := range resultados[3:] {
+		if r.Erro != nil || r.Mudaram != 1 {
+			t.Errorf("%s deveria ter rodado depois da falha da 3: %+v", r.Rotina, r)
+		}
 	}
 	if resultados[0].Erro != nil || resultados[1].Erro != nil || resultados[0].Mudaram != 1 || resultados[1].Mudaram != 1 {
 		t.Errorf("as rotinas 1 e 2 rodaram direito: %+v", resultados[:2])
@@ -339,16 +344,16 @@ func TestPartidaErroParaAsSeguintesEMantemOQueJaGravou(t *testing.T) {
 			t.Errorf("a rotina 3 desfaz tudo o que fez: %d ficou fora dos relatórios", id)
 		}
 	}
-	// As seguintes não rodaram: a TED sem acerto e a conta a pagar sem baixa.
-	if e := c.estado(t, c.saidaComPar); e.tipo != transacoes.Despesa || e.deHoje() {
-		t.Errorf("a rotina 4 não deveria ter rodado: %+v", e)
+	// As seguintes rodaram assim mesmo: a TED acertada, a conta a pagar com baixa e o troco na categoria da compra.
+	if e := c.estado(t, c.saidaComPar); e.tipo != transacoes.Transferencia || !e.deHoje() {
+		t.Errorf("a rotina 4 deveria ter rodado: %+v", e)
 	}
 	var ultimo *string
-	if err := c.db.QueryRow(`SELECT UltimoPagamentoEm FROM ContaAgendada WHERE Id = ?`, c.contaAPagar).Scan(&ultimo); err != nil || ultimo != nil {
-		t.Errorf("a rotina 5 não deveria ter rodado: %v, %v", ultimo, err)
+	if err := c.db.QueryRow(`SELECT UltimoPagamentoEm FROM ContaAgendada WHERE Id = ?`, c.contaAPagar).Scan(&ultimo); err != nil || ultimo == nil {
+		t.Errorf("a rotina 5 deveria ter rodado: %v, %v", ultimo, err)
 	}
-	if e := c.estado(t, c.trocoDaCompra); e.naCategoria(c.investimentos.Id) {
-		t.Errorf("a rotina 6 não deveria ter rodado: %+v", e)
+	if e := c.estado(t, c.trocoDaCompra); !e.naCategoria(c.investimentos.Id) {
+		t.Errorf("a rotina 6 deveria ter rodado: %+v", e)
 	}
 	// O aviso vai para o log (e, no Go sozinho, para Configurações › Erros) com a rotina e o erro.
 	texto := saida.String()
@@ -358,13 +363,13 @@ func TestPartidaErroParaAsSeguintesEMantemOQueJaGravou(t *testing.T) {
 		}
 	}
 
-	// Sem o defeito, a próxima partida termina o que faltava.
+	// Sem o defeito, a próxima partida acerta só o que a rotina 3 deixou.
 	if _, err := c.db.Exec(`DROP TRIGGER falha_rotina_3`); err != nil {
 		t.Fatal(err)
 	}
 	proxima := Executar(t.Context(), opcoes(c.db, slog.New(slog.DiscardHandler)))
-	if len(proxima) != 6 || proxima[2].Mudaram != 4 || proxima[3].Mudaram != 1 || proxima[5].Mudaram != 1 {
-		t.Errorf("a próxima partida deveria acertar o resto: %+v", proxima)
+	if len(proxima) != 6 || proxima[2].Mudaram != 4 || proxima[3].Mudaram != 0 || proxima[4].Mudaram != 0 || proxima[5].Mudaram != 0 {
+		t.Errorf("a próxima partida deveria acertar só a rotina 3: %+v", proxima)
 	}
 	for _, r := range proxima {
 		if r.Erro != nil {
@@ -374,7 +379,7 @@ func TestPartidaErroParaAsSeguintesEMantemOQueJaGravou(t *testing.T) {
 }
 
 // Regra: a rotina que falha no meio desfaz o que fez, a marca das regras padrão inclusive (uma transação por rotina), e a
-// partida registra o erro e para.
+// partida registra o erro e segue.
 func TestPartidaRotinaQueFalhaNoMeioDesfazTudo(t *testing.T) {
 	t.Parallel()
 	c := novaCena(t)
@@ -384,8 +389,8 @@ func TestPartidaRotinaQueFalhaNoMeioDesfazTudo(t *testing.T) {
 
 	resultados := Executar(t.Context(), opcoes(c.db, log))
 
-	if len(resultados) != 1 || resultados[0].Rotina != RegrasPadrao || resultados[0].Erro == nil || resultados[0].Mudaram != 0 {
-		t.Fatalf("a partida deveria parar na rotina 1: %+v", resultados)
+	if len(resultados) != 6 || resultados[0].Rotina != RegrasPadrao || resultados[0].Erro == nil || resultados[0].Mudaram != 0 {
+		t.Fatalf("a partida deveria registrar o erro na rotina 1 e seguir: %+v", resultados)
 	}
 	var n int
 	if err := c.db.QueryRow(`SELECT COUNT(*) FROM RegraCategorizacao`).Scan(&n); err != nil || n != 0 {
@@ -399,8 +404,8 @@ func TestPartidaRotinaQueFalhaNoMeioDesfazTudo(t *testing.T) {
 	}
 }
 
-// Regra: erro ou pânico numa rotina vira o erro dela, sem derrubar o processo; as seguintes não rodam, e as anteriores
-// ficam como estão. A rotina que roda é a que está na lista, na ordem dela.
+// Regra: erro ou pânico numa rotina vira o erro dela, sem derrubar o processo; as seguintes rodam assim mesmo, e as
+// anteriores ficam como estão. A rotina que roda é a que está na lista, na ordem dela.
 func TestExecutarComRotinasQueFalhamEEntramEmPanico(t *testing.T) {
 	t.Parallel()
 	var rodaram []string
@@ -423,8 +428,8 @@ func TestExecutarComRotinasQueFalhamEEntramEmPanico(t *testing.T) {
 		{"todas dão certo", []rotina{registrar("a", 1, nil, false), registrar("b", 0, nil, false), registrar("c", 3, nil, false)},
 			[]string{"a", "b", "c"}, []int{1, 0, 3}, ""},
 		{"erro na do meio", []rotina{registrar("a", 1, nil, false), registrar("b", 0, errors.New("falhou"), false), registrar("c", 3, nil, false)},
-			[]string{"a", "b"}, []int{1, 0}, "b"},
-		{"pânico na primeira", []rotina{registrar("a", 0, nil, true), registrar("b", 1, nil, false)}, []string{"a"}, []int{0}, "a"},
+			[]string{"a", "b", "c"}, []int{1, 0, 3}, "b"},
+		{"pânico na primeira", []rotina{registrar("a", 0, nil, true), registrar("b", 1, nil, false)}, []string{"a", "b"}, []int{0, 1}, "a"},
 		{"sem rotinas", nil, nil, nil, ""},
 	}
 	for _, caso := range casos {
@@ -453,6 +458,22 @@ func TestExecutarComRotinasQueFalhamEEntramEmPanico(t *testing.T) {
 	resultados := executar(t.Context(), slog.New(slog.DiscardHandler), []rotina{registrar("x", 0, nil, true)})
 	if e := resultados[0].Erro; e == nil || !strings.Contains(e.Error(), `"x"`) || !strings.Contains(e.Error(), "bug de programação") {
 		t.Errorf("erro do pânico: %v", e)
+	}
+
+	// O contexto cancelado no meio (o sistema parando) interrompe a partida: as seguintes falhariam do mesmo jeito.
+	ctx, cancelar := context.WithCancel(t.Context())
+	rodaram = nil
+	resultados = executar(ctx, slog.New(slog.DiscardHandler), []rotina{
+		registrar("a", 1, nil, false),
+		{"b", func(ctx context.Context) (int, error) {
+			rodaram = append(rodaram, "b")
+			cancelar()
+			return 0, ctx.Err()
+		}},
+		registrar("c", 1, nil, false),
+	})
+	if strings.Join(rodaram, ",") != "a,b" || len(resultados) != 2 || !errors.Is(resultados[1].Erro, context.Canceled) {
+		t.Errorf("com o contexto cancelado na b, a c não roda: rodaram %v, resultados %+v", rodaram, resultados)
 	}
 }
 

@@ -63,8 +63,10 @@ type rotina struct {
 }
 
 // Executar roda as seis rotinas, na ordem do .NET, e devolve o que cada uma fez (só as que rodaram). Erro numa rotina não
-// derruba a subida: é registrado como aviso (que vai para Configurações › Erros) e a partida para ali, como o try/catch
-// único do Program.cs; as rotinas que sobraram rodam na próxima partida. O que as anteriores gravaram fica.
+// derruba a subida: é registrado como aviso (que vai para Configurações › Erros) e a partida segue para a próxima (#444);
+// a que falhou desfez o que fez e roda de novo na próxima partida. Diferente do try/catch único do Program.cs, que para
+// na primeira: cada rotina tem a transação dela, então seguir não deixa nada pela metade, e uma rotina quebrada não
+// segura as outras a cada subida. Só o contexto cancelado (o sistema parando) interrompe a partida.
 func Executar(ctx context.Context, o Opcoes) []Resultado {
 	return executar(ctx, o.Log, rotinas(o))
 }
@@ -107,17 +109,20 @@ func rotinas(o Opcoes) []rotina {
 	}
 }
 
-// executar roda as rotinas na ordem até uma falhar. Pânico em rotina vira erro (o .NET pega toda exceção): a API sobe
-// do mesmo jeito.
+// executar roda as rotinas na ordem, todas, mesmo quando uma falha; para só com o contexto cancelado, em que as seguintes
+// falhariam do mesmo jeito. Pânico em rotina vira erro (o .NET pega toda exceção): a API sobe do mesmo jeito.
 func executar(ctx context.Context, log *slog.Logger, lista []rotina) []Resultado {
 	resultados := make([]Resultado, 0, len(lista))
 	for _, r := range lista {
 		n, err := rodar(ctx, r)
 		resultados = append(resultados, Resultado{Rotina: r.nome, Mudaram: n, Erro: err})
 		if err != nil {
-			log.Warn("Não foi possível acertar os dados ao iniciar: a rotina falhou e as seguintes ficam para a próxima partida.",
+			log.Warn("Não foi possível acertar os dados ao iniciar: a rotina falhou e roda de novo na próxima partida.",
 				"rotina", r.nome, "erro", err)
-			break
+			if ctx.Err() != nil {
+				break
+			}
+			continue
 		}
 		if n > 0 {
 			log.Info("rotina de partida acertou dados", "rotina", r.nome, "mudaram", n)
