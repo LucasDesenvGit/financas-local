@@ -53,7 +53,7 @@ export const MANUAL: CapituloManual[] = [
           'O site abre no seu navegador, mas quem responde é um programa instalado no seu computador (o endereço começa com https://localhost ou https://127.0.0.1).',
           'Os dados ficam num arquivo de banco de dados na pasta “dados” da instalação.',
           'Os extratos dos bancos chegam pelo Open Finance, através do Meu Pluggy, só quando você configura isso.',
-          'Para a internet saem só pedidos de cotação e de taxas (códigos de ativos e datas) e a conversa com a Pluggy. Valores e dados pessoais não saem.'
+          'Para a internet saem só pedidos de cotação e de taxas (códigos de ativos e de moedas e datas), a conversa com a Pluggy e, no gerenciador, a procura de versão nova no GitHub. Valores e dados pessoais não saem.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
         dicas: ['Veja o capítulo “Privacidade, backup e atualização” para saber exatamente o que sai do computador.']
@@ -83,6 +83,7 @@ export const MANUAL: CapituloManual[] = [
           'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
           'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
           'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',
+          'O sino, também na barra de cima, junta as notificações de qualquer tela: orçamentos estourados e avisos (conta vencida, consentimento vencendo, falha de sincronização, reserva para conferir, erros). O número nele conta o que está pendente. Detalhes em “Painel”, no capítulo das análises.',
           'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
           'A calculadora abre no botão ao lado ou com Alt+C.',
           'No menu do usuário ficam o tema (claro, escuro ou do sistema), as cores do site e o “Sair”.',
@@ -289,7 +290,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Consentimento vencendo e erros de conexão',
         paraQueServe: 'Saber o que fazer quando um banco para de atualizar.',
         passos: [
-          'O Painel avisa quando o consentimento de um banco vai expirar (padrão: 30 dias antes). Renove no Meu Pluggy.',
+          'As notificações (o sino da barra de cima) avisam quando o consentimento de um banco vai expirar (padrão: 30 dias antes). Renove no Meu Pluggy.',
           'Se a barra de cima mostrar “1 conexão com erro”, clique nela: ela leva à lista de conexões, com o último erro de cada uma.',
           'Se pedir “ação no Meu Pluggy”, entre no Meu Pluggy e reautorize o banco.',
           'Detalhes técnicos de falhas ficam em Configurações › Erros.'
@@ -592,7 +593,7 @@ export const MANUAL: CapituloManual[] = [
           'Abra Transações com o filtro “Sem categoria” e categorize (de preferência no “Editar categorias”).',
           'Marque o filtro “Descrição pouco informativa”: aparecem as transações cuja descrição não diz o que foi (“PIX ENVIADO”, “PAGAMENTO”).',
           'Para cada uma: escolha a categoria, dê um nome melhor na descrição ou clique em “✓ marcar como revisada”.',
-          'O Painel avisa, discretamente, quantas descrições pouco informativas há nos últimos 90 dias.'
+          'As notificações (o sino da barra de cima) mostram, discretamente, quantas descrições pouco informativas há nos últimos 90 dias, com o link “Revisar”.'
         ],
         abrir: [
           { rotulo: 'Ver as sem categoria', rota: '/transacoes', params: { categoria: 'sem' } },
@@ -916,10 +917,10 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber quando uma cobrança que se repete não veio, mudou de cartão, mudou de valor, ou cai num cartão que você arquivou.',
         passos: [
           'Os avisos aparecem no topo de Contas a pagar, com a ação ao lado quando dá para resolver no site.',
-          '“Não veio”: a cobrança automática passou 5 dias do vencimento e não apareceu no extrato. Pode ter sido cancelada, ou o cartão recusou. Também aparece no Painel.',
+          '“Não veio”: a cobrança automática passou 5 dias do vencimento e não apareceu no extrato. Pode ter sido cancelada, ou o cartão recusou. Também aparece nas notificações (o sino da barra de cima).',
           '“Mudou de cartão”: a última cobrança veio em outra conta ou cartão. “Atualizar o catálogo” passa a conta a pagar para lá.',
           '“Aumentou” (ou baixou): a última cobrança passou 5% do valor cadastrado. “Atualizar o valor” grava o novo. Conta que muda de valor todo mês, como a de luz, não gera esse aviso.',
-          '“Cartão arquivado”: a cobrança ainda cai num cartão ou conta que você arquivou. Troque nos serviços. Também aparece no Painel.',
+          '“Cartão arquivado”: a cobrança ainda cai num cartão ou conta que você arquivou. Troque nos serviços. Também aparece nas notificações (o sino da barra de cima).',
           'Ao marcar “Arquivada” num cartão ou conta em Contas e cartões, a tela lista o que ainda cobra ali, antes de salvar.'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
@@ -1118,6 +1119,19 @@ export const MANUAL: CapituloManual[] = [
         termos: ['selic', 'ifix']
       },
       {
+        id: 'fonte-das-cotacoes',
+        titulo: 'Fonte das cotações e token da brapi',
+        paraQueServe: 'Saber de onde vêm as cotações e, se quiser, informar o token da brapi para quando o Yahoo Finance não responder.',
+        passos: [
+          'Abra Investimentos, na aba Renda variável, e clique em “fonte das cotações”, ao lado de “Mostrar encerradas”.',
+          'As cotações e os proventos vêm do Yahoo Finance (gratuito, sem cadastro e não oficial), e a Selic, do Banco Central. Só o código do ativo é enviado.',
+          'Opcional: crie um token gratuito na brapi.dev, cole em “Token da brapi.dev” e clique em “Salvar”. Ele só é usado quando o Yahoo não responde.',
+          'O token fica criptografado no banco do seu computador e não aparece de novo na tela: o campo mostra só “configurado”. Para trocar, cole o novo e salve; para tirar, use “Remover token”.'
+        ],
+        abrir: [{ rotulo: 'Abrir a Renda variável', rota: '/investimentos', params: { aba: 'rv' } }],
+        dicas: ['O token vai para a brapi junto com o código do ativo, a cada cotação buscada lá. Valores e quantidades não saem.']
+      },
+      {
         id: 'mes-a-mes',
         titulo: 'Mês a mês dos FIIs',
         paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
@@ -1170,7 +1184,7 @@ export const MANUAL: CapituloManual[] = [
           'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
           'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
-          'Reservas marcadas “para conferir” geram aviso no Painel.'
+          'Reservas marcadas “para conferir” geram aviso nas notificações (o sino da barra de cima).'
         ],
         abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
         termos: ['reservaEmergencia']
@@ -1252,7 +1266,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
-          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou no site, senha errada, login bloqueado, regras criadas e credenciais alteradas. “Acesso local” quer dizer que veio deste computador (o site só aceita acesso dele).'
+          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador (o site só aceita acesso dele).'
         ],
         abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
       },
@@ -1281,9 +1295,10 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber exatamente para onde vão os seus dados.',
         passos: [
           'Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.',
-          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), datas para a taxa Selic e a cotação de moedas no Banco Central, e códigos de ativos para as cotações (Yahoo Finance e brapi).',
+          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance e brapi, que recebe também o seu token, se você informou um); e o pedido das cotações de criptomoedas ao Mercado Bitcoin, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
+          'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
           'Não sai: valores, quantidades e dados pessoais.',
-          'Do Pix e da TED, só fica guardado o meio e se quem pagou e quem recebeu são a mesma pessoa — nunca nome ou CPF de terceiros.'
+          'Do Pix e da TED, o nome e o CPF de quem pagou ou recebeu não são guardados à parte: fica o meio e se as duas pontas são a mesma pessoa. Mas a descrição vem do banco como está e costuma trazer o nome (“PIX ENVIADO FULANO”); ela fica guardada, só no seu computador.'
         ]
       },
       {
@@ -1301,8 +1316,9 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Backup',
         paraQueServe: 'Não perder os seus dados se o computador der problema.',
         passos: [
-          'Rode o script scripts/geral/4-backup.sh (de preferência agendado) para copiar o banco para a pasta “backups”.',
-          'Copie de vez em quando a pasta “backups” para um disco externo ou outro lugar seguro.',
+          'Pelo gerenciador (Windows e Linux): abra “Mais opções”, clique em “Salvar uma cópia do banco…” e escolha onde guardar (pendrive, disco externo, nuvem). No Windows, ele pede permissão de administrador.',
+          'Instalou pelos scripts? Você também pode rodar scripts/geral/4-backup.sh (de preferência agendado), que copia o banco para a pasta “backups” do projeto. Copie essa pasta de vez em quando para um disco externo ou outro lugar seguro.',
+          'A cópia tem todos os seus dados financeiros: guarde em lugar seguro.',
           'Ative a criptografia do disco (BitLocker no Windows, LUKS no Linux): o arquivo do banco não é criptografado.'
         ]
       },
@@ -1311,11 +1327,12 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Restaurar uma cópia',
         paraQueServe: 'Voltar o banco para uma cópia salva, depois de um problema.',
         passos: [
-          'Pare o serviço do Finanças Local.',
+          'Pare o site: “Desligar” no gerenciador (ou o serviço do Finanças Local, se instalou pelos scripts).',
+          'Ache a pasta de dados: C:\\ProgramData\\FinancasLocal\\dados, se instalou pelo .msi (só abre como administrador), ou a pasta “dados” do projeto, se instalou pelos scripts.',
           'Guarde o banco atual: copie os arquivos FinancasLocal.db* da pasta dados/sql para outra pasta.',
           'Copie a cópia por cima de dados/sql/FinancasLocal.db.',
           'Apague os arquivos FinancasLocal.db-wal e FinancasLocal.db-shm da pasta dados/sql. Se ficarem, a cópia pode corromper.',
-          'Ligue o serviço, abra o site e confira a última transação.'
+          'Ligue o site (“Ligar” no gerenciador), abra-o e confira a última transação.'
         ],
         dicas: [
           'Tudo volta para a data da cópia, inclusive a senha do site: entre com a senha que valia naquele dia.',
@@ -1329,9 +1346,10 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Atualizar e parar o sistema',
         paraQueServe: 'Manter o site em dia e saber desligar tudo.',
         passos: [
-          'Para atualizar, rode scripts/geral/3-publicar-atualizar.sh (ou o instalador do Windows de novo): ele faz backup do banco antes.',
-          'Para parar tudo: parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.',
-          'De tempos em tempos, rode scripts/geral/1-preparar-ambiente.sh para receber as correções de segurança do .NET.'
+          'Pelo gerenciador do Windows (instalação pelo .msi): quando aparecer “Tem versão nova”, veja “O que mudou” e clique em “Atualizar para …”. Ele baixa, confere e abre o instalador; é só avançar. O site fica fora do ar por alguns segundos. Sem o gerenciador, baixe o .msi novo da página de versões no GitHub e abra.',
+          'Nenhuma atualização apaga dados. Antes de mudar a estrutura do banco, a versão nova guarda uma cópia em dados/backups.',
+          'Para parar o site: “Desligar” no gerenciador; “Ligar” volta. Sem isso, o site liga sozinho com o computador.',
+          'Instalou pelos scripts: para atualizar, rode scripts/geral/instalar.sh na pasta do projeto, que também traz o .NET e o Go das versões novas e faz backup do banco antes; para parar tudo, parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.'
         ]
       },
       {
@@ -1339,8 +1357,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Problemas comuns',
         paraQueServe: 'Resolver sozinho os tropeços mais frequentes.',
         passos: [
-          'O navegador alerta sobre o certificado: rode o 3-publicar-atualizar.sh de novo; ele recoloca o certificado nos confiáveis.',
-          '“Não foi possível falar com a API”: confira se o serviço Financas Local está rodando.',
+          'O navegador alerta sobre o certificado: abra o mesmo .msi de novo e escolha “Reparar”, que recoloca o certificado nos confiáveis. Instalou pelos scripts? Rode scripts/geral/instalar.sh de novo.',
+          '“Não foi possível falar com a API”: abra o gerenciador e veja a situação. Desligado, clique em “Ligar”; “ligado, mas não responde”, espere alguns segundos e clique em “Reiniciar”.',
           'O Client Secret da Pluggy não abre mais (depois de trocar de computador): informe o Client Secret de novo em Configurações.',
           'Algo deu errado e você não sabe o quê: veja Configurações › Erros.'
         ],
