@@ -15,11 +15,13 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-const (
+// As chaves são variáveis só para o teste trocar por chaves de teste, sem mexer nas preferências de quem desenvolve.
+var (
 	chave        = `Software\FinancasLocal\Gerenciador`
 	chaveIniciar = `Software\Microsoft\Windows\CurrentVersion\Run`
-	nomeIniciar  = "FinancasLocalGerenciador"
 )
+
+const nomeIniciar = "FinancasLocalGerenciador"
 
 // IniciarComSistema: abre na área de notificação quando o Windows inicia (padrão: não).
 func IniciarComSistema() bool {
