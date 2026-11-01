@@ -11,7 +11,8 @@
     "test:usabilidade": "jest testes/usabilidade",
     "test:tipos": "tsc -p tsconfig.spec.json --noEmit",
     "test:navegador": "ng build --configuration production && playwright test",
-    "test:afetados": "node testes/rodar-afetados.mjs"
+    "test:afetados": "node testes/rodar-afetados.mjs",
+    "test:arquitetura": "jest --roots \"<rootDir>/testes-arquitetura\""
   },
   "dependencies": {
     "@angular/common": "^22.2.3",

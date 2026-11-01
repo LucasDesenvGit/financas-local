@@ -18,7 +18,8 @@ Como trabalhar:
   - cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste no SQLite real;
   - cada endpoint tem caso de contrato;
   - os casos-limite que se aplicam estão cobertos;
-  - o teste novo provou que falha, com o código estragado de propósito.
+  - o teste novo provou que falha, com o código estragado de propósito;
+  - o teste de arquitetura passa (`go test -tags arquitetura ./internal/arquitetura/`, #476), com o assunto na tabela `dependencias`, dizendo quem ele importa e por quê.
 
   Na análise, já diga que teste cada regra vai ter.
 - Não mude o código C# para facilitar o porte, não corrija bug do C# em silêncio e não "melhore" regra de negócio: liste o que achou.

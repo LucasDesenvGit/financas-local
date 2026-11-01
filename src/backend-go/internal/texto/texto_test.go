@@ -69,3 +69,15 @@ func TestTemPalavra(t *testing.T) {
 		})
 	}
 }
+
+// Regra: o tamanho é o string.Length do C#, em unidades UTF-16: acento conta 1 e o que está fora do plano básico
+// (emoji) conta 2.
+func TestTamanhoUtf16(t *testing.T) {
+	t.Parallel()
+	casos := map[string]int{"": 0, "abc": 3, "ação": 4, "R$ 1.234,56": 11, "😀": 2, "a😀b": 4, "日本": 2}
+	for entrada, quer := range casos {
+		if obtido := TamanhoUtf16(entrada); obtido != quer {
+			t.Errorf("TamanhoUtf16(%q) = %d, quer %d", entrada, obtido, quer)
+		}
+	}
+}
