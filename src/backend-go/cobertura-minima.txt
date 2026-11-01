@@ -20,7 +20,7 @@ cobrancas               89.2
 config                  86.7
 configuracao            89.3
 contas                  88.0
-contasagendadas         80.0
+contasagendadas         84.7
 cotacoes                95.2
 cripto                  86.5
 desfazer                100.0
