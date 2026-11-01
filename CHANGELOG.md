@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.52.1] — 2026-11-01 · desenvolvimento
+## [2.53.1] — 2026-11-01 · desenvolvimento
 
 ### Correções
 - **Testes do Go mais rápidos: o banco de teste vem de um modelo** (#542). Cada teste aplicava o esquema inteiro num banco novo, o que custa ~370 ms com o `-race`; o `internal/carteira`, com uns 68 bancos, batia no limite de 60 s da CI e derrubava o job "Go" sem nada quebrado. Agora o esquema é aplicado uma vez por execução e cada teste recebe uma cópia do arquivo. Com `-race` e 4 núcleos, o pacote foi de 22 s para 10 s aqui. Nada muda para quem usa.
+
+## [2.53.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Metas em Go** (#79, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`. As 8 rotas de `/api/metas` (lista com o progresso pelo saldo da conta ou do cofrinho, o plano do caixa mês a mês, a ordem de prioridade, criar, editar, aportes e excluir) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 49 casos do contrato `09-metas`, gravados do .NET, passam com o Go atendendo. Com isso, as 23 rotas de planejamento (orçamentos, metas e contas a pagar) estão em Go. As parcelas futuras do cartão (#165) passam a ser projetadas no pacote `internal/parcelas`, que a projeção (#80) também vai usar.
 
 ## [2.52.0] — 2026-11-01 · desenvolvimento
 
