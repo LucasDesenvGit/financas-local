@@ -31,7 +31,8 @@ const (
 const prioridadeDaRegraPadrao = 50
 
 // regraPadraoNova é um grupo do RegrasPadraoNovas do C#. Filtros é o LIKE que acha os candidatos no banco; a
-// comparação certa é pelo texto normalizado.
+// comparação certa é pelo texto normalizado. O LIKE do SQLite só ignora a caixa em ASCII: a letra que pode vir com
+// acento vai como "_" no filtro (#567).
 type regraPadraoNova struct {
 	chave   string
 	textos  []string
@@ -42,7 +43,7 @@ type regraPadraoNova struct {
 // banco/02-dados-iniciais.sql.
 var regrasPadraoNovas = []regraPadraoNova{
 	// #169 (ADR 0038): comprar e vender dólar é mover o próprio dinheiro, não gasto nem receita.
-	{ChaveRegraMeliDolar, []string{"MELI DOLAR"}, []string{"%meli d_lar%"}},
+	{ChaveRegraMeliDolar, []string{"MELI DOLAR"}, []string{"%m_li d_lar%"}},
 	// #172: aplicação e resgate de renda fixa são movimento seu. O produto vai junto no texto para não pegar "resgate
 	// de pontos" ou "resgate de cashback"; "aplicação financeira" sozinha ficou de fora porque também aparece em
 	// "rendimento de aplicação financeira", que é receita.

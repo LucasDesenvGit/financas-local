@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.6] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Méli Dólar reconhecido também com acento ("MÉLI DÓLAR")** (#567). A busca das transações de Méli Dólar no banco usava um `LIKE` que só ignora maiúsculas e minúsculas nas letras sem acento: "Méli", com o "é", ficava de fora. Isso valia em dois lugares, que agora aceitam o acento: a rotina de partida que passa para "Investimentos" as compras e vendas já importadas quando a regra padrão é criada (ADR 0038), e a reserva do Méli Dólar em Investimentos › Reservas, que deixava de somar essas compras e vendas. A comparação final continua pelo texto sem acento e sem caixa, então "MALI DOLAR" não entra. Nos dados reais conferidos o banco manda "MELI" sem acento; a correção protege quem receber com acento. Quem já tem a regra não refaz a busca da partida (sem marca nova); a reserva, que é calculada na hora, já passa a contar. Vale no C# e no Go, com os gabaritos gravados de novo pelas sondas do C#. Manual: não se aplica.
+
 ## [2.54.5] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
