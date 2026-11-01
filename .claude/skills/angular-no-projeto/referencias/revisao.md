@@ -1,6 +1,6 @@
 # Avaliação de tela e revisão de código Angular
 
-Use ao avaliar uma tela, ao revisar um PR com front-end e no fim do seu próprio trabalho. Cada achado sai com `arquivo:linha` (ou o print), o que dá errado (quem usa faz X → acontece Y) e a fonte: o princípio da tabela de UI/UX do `CLAUDE.md`, a ADR ou a regra. O que for gosto, sem fonte, diga que é julgamento.
+Use ao avaliar uma tela, ao revisar um PR com front-end e no fim do seu próprio trabalho. Cada achado sai com `arquivo:linha` (ou o print), o que dá errado (quem usa faz X → acontece Y) e a fonte: o princípio de `docs/UI-UX.md`, a ADR ou a regra. O que for gosto, sem fonte, diga que é julgamento.
 
 ## O que a CI já pega (não gaste a revisão nisso)
 
@@ -44,5 +44,5 @@ Separe o que viu no print do que leu no código, e diga o que não deu para ver 
 - [ ] Manual: a seção da tela, os passos e os termos; tela nova em `AJUDA_POR_ROTA`. Ou "Manual: não se aplica".
 - [ ] Tela nova no grupo certo do `MENU` (ADR 0046).
 - [ ] Cada decisão de desenho no PR cita o princípio de UI/UX, separando fonte de julgamento, e diz o que não foi validado com uso real.
-- [ ] Padrão novo de UI: na lista de padrões do `CLAUDE.md` e, se mudar decisão, ADR.
+- [ ] Padrão novo de UI: na lista de padrões de `docs/UI-UX.md` e, se mudar decisão, ADR.
 - [ ] Termo novo do domínio em `docs/arquitetura/dominio.md`; dado pessoal novo em `docs/DADOS-PESSOAIS.md`.

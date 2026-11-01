@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-16 (registrada depois das decisões, nos PRs #53 e #56 — UX-9 e UX-11)
-- **Relacionadas:** [0017](0017-preferencias-de-exibicao-no-navegador.md) (escolha de abrir/fechar guardada no navegador); referências de UI/UX do `CLAUDE.md`
+- **Relacionadas:** [0017](0017-preferencias-de-exibicao-no-navegador.md) (escolha de abrir/fechar guardada no navegador); referências de UI/UX em [docs/UI-UX.md](../UI-UX.md) (até a #566, no `CLAUDE.md`)
 
 ## Contexto
 

@@ -26,7 +26,7 @@ function montar() {
 }
 
 /**
- * Usabilidade do glossário (UX-10, #42). Padrão do CLAUDE.md: termo técnico com definição no contexto, que abre por
+ * Usabilidade do glossário (UX-10, #42). Padrão de docs/UI-UX.md: termo técnico com definição no contexto, que abre por
  * clique/teclado e vem de um glossário único — nunca só em title=. Referências: Nielsen 2 (linguagem de quem usa) e
  * 10 (ajuda no contexto); WCAG 1.4.13 (conteúdo em foco: dispensável e persistente) e 4.1.2 (nome, papel, estado).
  */

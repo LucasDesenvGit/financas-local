@@ -1,6 +1,6 @@
 # Estilo do Go no projeto
 
-O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regra de ouro do projeto (dinheiro, SQL, relógio, bibliotecas) está no `CLAUDE.md` e não se repete aqui.
+O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regra de ouro do projeto (dinheiro, SQL, relógio, bibliotecas) está na ADR 0049 ("Convenções do código Go" e a tabela de bibliotecas) e, o dinheiro, também no `CLAUDE.md`; não se repete aqui.
 
 ## O que seguimos
 
@@ -14,7 +14,7 @@ O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regr
 | Dependências | pelo construtor (`NovoServico(db, relogio, log)`), sem container de injeção | ADR 0056 |
 | Interface | pequena, declarada por quem usa, só com duas implementações de verdade (a real e a falsa do teste) | [CodeReviewComments: interfaces](https://go.dev/wiki/CodeReviewComments#interfaces), ADR 0056 |
 | Goroutine | só com motivo, com dono que a encerra pelo `context`, e `go test -race` limpo; tarefa em segundo plano pelo `internal/tarefas` | [CodeReviewComments: goroutine lifetimes](https://go.dev/wiki/CodeReviewComments#goroutine-lifetimes), [race detector](https://go.dev/doc/articles/race_detector) |
-| Hora | `relogio.Relogio` injetado; `relogio.Hoje(r)` e `relogio.AgoraLocal(r)` para data de negócio em Brasília; carimbo (`CriadoEm`) em UTC | `CLAUDE.md`, `internal/relogio/relogio.go` |
+| Hora | `relogio.Relogio` injetado; `relogio.Hoje(r)` e `relogio.AgoraLocal(r)` para data de negócio em Brasília; carimbo (`CriadoEm`) em UTC | ADR 0049, `internal/relogio/relogio.go` |
 | Tipos do banco | `tipos.Decimal`, `Data`, `DataHora`, `Guid`: `sql.Scanner`, `driver.Valuer` e JSON, com teste de ida e volta e fuzz. Objeto de valor novo (`Dinheiro`, `Mes`, `Ticker`) só quando um assunto precisar | ADR 0056 ("DDD tático, só onde paga") |
 | Ordem que é contrato | `slices.SortStableFunc` com o desempate explícito (`sort.Slice` não é estável) | [pacote slices](https://pkg.go.dev/slices) |
 | Log | `log/slog` em JSON, com o atributo `"origem"` pelas constantes de `internal/erros` (`erros.OrigemAPI`…), para cair no lugar certo de Configurações › Erros | README do Go, "Como roda no site" |

@@ -163,7 +163,7 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
   - **Código Go em `src/backend-go/`** ([Organizing a Go module](https://go.dev/doc/modules/layout)):
     - `cmd/financas/main.go`;
     - `internal/` com um pacote por assunto e os pacotes de apoio (`config`, `servidor`, `banco`, `relogio`). Cada assunto exporta `Registrar(mux, <o que usa>)`, e o `internal/api` tem uma linha por assunto (#363).
-  - **Convenções do código Go** (também no `CLAUDE.md`):
+  - **Convenções do código Go** (esta lista é a fonte; o `CLAUDE.md` guarda só a do dinheiro, e o roteiro está na skill `go-no-projeto`, #566):
     - nomes em português;
     - erro como valor, embrulhado com `%w`;
     - `context.Context` como primeiro parâmetro de quem faz I/O;

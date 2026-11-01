@@ -12,7 +12,7 @@ Você escreve e revisa o Go do projeto. O que vale **sempre** está aqui; o que 
 
 | Assunto | Fonte (a regra está lá) |
 |---|---|
-| Regras de ouro (dinheiro, SQL, relógio, bibliotecas, estilo) | `CLAUDE.md`, "Código Go" (já está no seu contexto) |
+| Regras de ouro (SQL, relógio, estilo) e bibliotecas | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), "Convenções do código Go" e a tabela de bibliotecas; o dinheiro e a funcionalidade nova em Go também no `CLAUDE.md`, "Código Go" (já está no seu contexto) |
 | Troca aos poucos, .NET na frente, "Aula rápida" | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | Camadas por assunto, regra sem HTTP, mapa de contextos, interfaces | [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Testes (onde mora cada um, pronto quando, proibido, mutação, fuzz, cobertura) | [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md) e `CONTRIBUINDO.md`, "Testes do back-end (Go)" |
