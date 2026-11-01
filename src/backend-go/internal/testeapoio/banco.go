@@ -6,25 +6,79 @@
 package testeapoio
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 )
 
+// modelo é o banco novo com o esquema aplicado, montado uma vez por execução de testes: aplicar os scripts custa
+// ~370 ms com o -race, e um pacote com 60 testes passava a maior parte do tempo nisso (#542).
+var modelo struct {
+	sync.Once
+	dados []byte
+	err   error
+}
+
+// bancoModelo monta o banco-modelo numa pasta temporária, apagada logo em seguida, e devolve os bytes do arquivo.
+func bancoModelo() ([]byte, error) {
+	modelo.Do(func() {
+		pasta, err := os.MkdirTemp("", "financas-modelo-*")
+		if err != nil {
+			modelo.err = fmt.Errorf("criar a pasta do banco-modelo: %w", err)
+			return
+		}
+		defer os.RemoveAll(pasta)
+		modelo.dados, modelo.err = montarModelo(pasta)
+	})
+	return modelo.dados, modelo.err
+}
+
+// montarModelo aplica o esquema num banco na pasta, junta o WAL no arquivo principal (o único copiado) e lê o arquivo.
+func montarModelo(pasta string) ([]byte, error) {
+	ctx := context.Background()
+	caminho := filepath.Join(pasta, "FinancasLocal.db")
+	if err := banco.AplicarEsquema(ctx, caminho, RelogioDosTestes(), slog.New(slog.DiscardHandler)); err != nil {
+		return nil, fmt.Errorf("aplicar o esquema no banco-modelo: %w", err)
+	}
+	db, err := banco.Abrir(ctx, caminho)
+	if err != nil {
+		return nil, fmt.Errorf("abrir o banco-modelo: %w", err)
+	}
+	_, err = db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)")
+	if errFechar := db.Close(); err == nil {
+		err = errFechar
+	}
+	if err != nil {
+		return nil, fmt.Errorf("juntar o WAL e fechar o banco-modelo: %w", err)
+	}
+	return os.ReadFile(caminho)
+}
+
 // NovoBanco cria um banco SQLite num arquivo do t.TempDir(), com o esquema real: os scripts de banco/ embutidos,
 // aplicados pelo banco.AplicarEsquema, como num banco novo do usuário. Por isso ele já vem com os dados iniciais
 // (categorias padrão, regras das corretoras, configurações); para começar sem eles, use NovoBancoVazio.
+//
+// O esquema é aplicado uma vez por execução, num banco-modelo, e cada chamada recebe uma cópia do arquivo (#542): o
+// resultado é o mesmo de aplicar de novo, porque o relógio dos testes é fixo.
 //
 // O banco fecha sozinho no fim do teste (t.Cleanup), antes de a pasta temporária ser apagada. Cada chamada cria um
 // arquivo próprio, então testes com t.Parallel() não dividem banco.
 func NovoBanco(t testing.TB) *sql.DB {
 	t.Helper()
+	dados, err := bancoModelo()
+	if err != nil {
+		t.Fatalf("montar o banco-modelo: %v", err)
+	}
 	caminho := filepath.Join(t.TempDir(), "FinancasLocal.db")
-	if err := banco.AplicarEsquema(t.Context(), caminho, RelogioDosTestes(), slog.New(slog.DiscardHandler)); err != nil {
-		t.Fatalf("aplicar o esquema no banco temporário: %v", err)
+	if err := os.WriteFile(caminho, dados, 0o600); err != nil {
+		t.Fatalf("copiar o banco-modelo: %v", err)
 	}
 	db, err := banco.Abrir(t.Context(), caminho)
 	if err != nil {
