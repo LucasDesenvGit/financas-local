@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
@@ -310,13 +309,13 @@ func DescreverModalidade(modalidade *string, natureza int64) string {
 func titulo(s string) string {
 	var b strings.Builder
 	anterior := ' '
-	for i := 0; i < len(s); {
-		r, tamanho := utf8.DecodeRuneInString(s[i:])
+	for _, r := range s {
+		atual := r
 		if unicode.IsLetter(r) && !unicode.IsLetter(anterior) && !unicode.IsDigit(anterior) {
 			r = unicode.ToUpper(r)
 		}
 		b.WriteRune(r)
-		anterior, i = r, i+tamanho
+		anterior = atual
 	}
 	return b.String()
 }
