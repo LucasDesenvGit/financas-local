@@ -24,7 +24,7 @@ contasagendadas         84.7
 cotacoes                95.2
 cripto                  86.5
 desfazer                100.0
-emprestimos             90.9
+emprestimos             92.5
 erros                   93.3
 extrato                 95.4
 faturas                 94.2

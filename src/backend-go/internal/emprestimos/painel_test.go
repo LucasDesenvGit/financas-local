@@ -1,9 +1,13 @@
 package emprestimos
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"strings"
 	"testing"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
@@ -164,5 +168,39 @@ func TestPainelComErroDoBanco(t *testing.T) {
 	db := testeapoio.NovoBancoVazio(t)
 	if _, err := NovoServico(bancoQueFalha{db}).Painel(t.Context(), testeapoio.Dia(2026, 10, 14)); err == nil {
 		t.Error("o erro do banco sumiu")
+	}
+}
+
+// bancoQueFalhaEm é o banco de verdade, mas a consulta que tem o trecho dado devolve erro.
+type bancoQueFalhaEm struct {
+	consultas.DBTX
+	trecho string
+}
+
+func (b bancoQueFalhaEm) QueryContext(ctx context.Context, consulta string, argumentos ...any) (*sql.Rows, error) {
+	if strings.Contains(consulta, b.trecho) {
+		return nil, errDeTeste
+	}
+	return b.DBTX.QueryContext(ctx, consulta, argumentos...)
+}
+
+// Regra: o erro de cada leitura do painel sobe (os contratos, os pagamentos de cada um e os pagamentos por mês), e o
+// quitado gravado antes do aberto vai para o fim.
+func TestPainelErrosEOrdem(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	conexao := fab.ConexaoBancaria()
+	quitado := fab.Emprestimo(conexao, func(e *testeapoio.Emprestimo) { e.SaldoDevedor = dec("0.0") })
+	aberto := fab.Emprestimo(conexao)
+	hoje := testeapoio.Dia(2026, 10, 14)
+	p, err := NovoServico(db).Painel(t.Context(), hoje)
+	if err != nil || p.Contratos[0].Id != aberto.Id || p.Contratos[1].Id != quitado.Id {
+		t.Errorf("ordem: %+v %v", p.Contratos, err)
+	}
+	for _, trecho := range []string{`ORDER BY e."Id"`, `FROM "PagamentoEmprestimo" ORDER BY`, `JOIN "Emprestimo" e ON`} {
+		if _, err := NovoServico(bancoQueFalhaEm{db, trecho}).Painel(t.Context(), hoje); !errors.Is(err, errDeTeste) {
+			t.Errorf("%s: %v", trecho, err)
+		}
 	}
 }
