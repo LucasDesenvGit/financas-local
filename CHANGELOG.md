@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.51.1] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de Metas no navegador não depende mais do mês** (#546). A meta fictícia "Viagem" vencia em julho do ano seguinte: a partir de novembro, o plano dela tinha menos de 10 meses e o teste "o plano mês a mês aberto com 5 meses" falhava na CI, inclusive no `develop`. Agora ela vence 12 meses depois do mês atual. Nada muda para quem usa.
+
 ## [2.51.0] — 2026-11-01 · desenvolvimento
 
 ### Funcionalidades
