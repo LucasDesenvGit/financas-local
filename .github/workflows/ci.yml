@@ -82,14 +82,15 @@ jobs:
           fi
 
       # #231: o Go também lê o esquema (banco/, 2-criar-banco.sh) e a CSP do Seguranca.cs, que os testes dele conferem.
-      # #370/#371: e os scripts da cobertura e do tempo, que rodam no job dele.
+      # #370/#371: e os scripts da cobertura e do tempo, que rodam no job dele. #457: e o das regras de ouro, com a lista
+      # de exceções e o teste dele.
       - name: Go afetado
         id: go
         run: |
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend-go/|banco/|scripts/geral/2-criar-banco\.sh$|src/backend/Financas\.Api/Seguranca/|scripts/ci/verificar-(cobertura|tempo-testes)-go\.py$|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend-go/|banco/|scripts/geral/2-criar-banco\.sh$|src/backend/Financas\.Api/Seguranca/|scripts/ci/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
@@ -209,6 +210,13 @@ jobs:
 
       - name: go vet
         run: go vet ./...
+
+      # #457 (ADR 0051): float64, time.Now() e time.Sleep de teste fora das exceções escritas (regras-go-excecoes.txt, com
+      # o motivo de cada uma). O teste do próprio script roda antes: regra que não pega o caso ruim não guarda nada.
+      - name: Regras de ouro (float64, time.Now, time.Sleep)
+        run: |
+          python3 -B ../../scripts/ci/test_verificar_regras_go.py
+          python3 -B ../../scripts/ci/verificar-regras-go.py
 
       # #370 e #371: um go test só dá o resultado, a cobertura e o tempo. Com -json, quem mostra a saída do que
       # falhou é o verificar-tempo-testes-go.py, que também confere o tempo de cada teste e de cada pacote.

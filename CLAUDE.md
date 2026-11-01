@@ -28,7 +28,7 @@ python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura
 python3 scripts/ci/gerar-diagrama-banco.py --conferir   # confere que os diagramas de docs/BANCO-DE-DADOS.md estão em dia
 python3 scripts/ci/testes-afetados.py --base origin/develop   # no PR, a CI roda só os testes afetados (ADR 0047): mostra quais
 # Job "Go (Windows)" (#459): go vet e go test do back-end no windows-latest (os _windows.go: DPAPI, serviço)
-# Job "Go" (#231): gofmt, go vet, go test -race (com cobertura por pacote que só sobe, #370, e trava de tempo, #371), go generate em dia, build Windows, govulncheck (src/backend-go/README.md)
+# Job "Go" (#231): gofmt, go vet, regras de ouro (#457: float64, time.Now e time.Sleep de teste fora de scripts/ci/regras-go-excecoes.txt), go test -race (com cobertura por pacote que só sobe, #370, e trava de tempo, #371), go generate em dia, build Windows, govulncheck (src/backend-go/README.md)
 # Workflow "Fuzz do Go" (#372): o -fuzz dos alvos FuzzXxx, toda segunda e à mão; não roda no PR
 # Workflow "CodeQL" (#451, ADR 0054): segurança do código (C#, Go, TS, Python, workflows) em todo PR; achados em Security › Code scanning, sem bloquear
 # Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam

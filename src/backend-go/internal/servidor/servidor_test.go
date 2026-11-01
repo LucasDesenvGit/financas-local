@@ -242,6 +242,26 @@ func TestCarregarPFX(t *testing.T) {
 	}
 }
 
+// Regra: porta ocupada é erro na hora (com o endereço na mensagem), e não um servidor que nunca atende.
+func TestRodarComPortaOcupada(t *testing.T) {
+	certificado, err := CertificadoTemporario()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ocupada, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ocupada.Close()
+	opcoes := Opcoes{PastaSite: "testdata/wwwroot", Certificado: certificado, Log: logDescartado}
+	opcoes.Config.Endereco = ocupada.Addr().String()
+
+	err = Rodar(t.Context(), opcoes)
+	if err == nil || !strings.Contains(err.Error(), "escutar em "+opcoes.Config.Endereco) {
+		t.Errorf("Rodar numa porta ocupada: erro %v, esperado um erro com \"escutar em %s\"", err, opcoes.Config.Endereco)
+	}
+}
+
 func TestRodarSoLocalEParaComElegancia(t *testing.T) {
 	certificado, err := CertificadoTemporario()
 	if err != nil {
@@ -254,28 +274,29 @@ func TestRodarSoLocalEParaComElegancia(t *testing.T) {
 		t.Fatal("deveria recusar escutar fora do computador")
 	}
 
-	ouvinte, err := net.Listen("tcp", "127.0.0.1:0") // uma porta livre
-	if err != nil {
-		t.Fatal(err)
-	}
-	opcoes.Config.Endereco = ouvinte.Addr().String()
-	ouvinte.Close()
+	// Porta 0: o sistema escolhe uma livre, e o AoEscutar diz qual foi quando o servidor já aceita conexões.
+	opcoes.Config.Endereco = "127.0.0.1:0"
+	escutando := make(chan string, 1)
+	opcoes.AoEscutar = func(endereco string) { escutando <- endereco }
 
 	ctx, parar := context.WithCancel(context.Background())
 	terminou := make(chan error, 1)
 	go func() { terminou <- Rodar(ctx, opcoes) }()
 
+	var endereco string
+	select {
+	case endereco = <-escutando:
+	case err := <-terminou:
+		t.Fatalf("o servidor parou antes de escutar: %v", err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("o servidor não avisou que estava escutando")
+	}
+
 	cliente := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true}, // certificado temporário do próprio teste
 		ForceAttemptHTTP2: true,                                  // com TLSClientConfig próprio, o cliente não tenta HTTP/2 sozinho
 	}}
-	var resposta *http.Response
-	for range 50 {
-		if resposta, err = cliente.Get("https://" + opcoes.Config.Endereco + "/"); err == nil {
-			break
-		}
-		time.Sleep(20 * time.Millisecond)
-	}
+	resposta, err := cliente.Get("https://" + endereco + "/")
 	if err != nil {
 		t.Fatal(err)
 	}
