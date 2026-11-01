@@ -16,9 +16,11 @@ cambio                  87.9
 carteira                97.3
 categorias              87.0
 categorizacao           91.9
+cobrancas               89.2
 config                  86.7
 configuracao            89.3
 contas                  88.0
+contasagendadas         84.7
 cotacoes                95.2
 cripto                  86.5
 desfazer                100.0

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.51.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar em Go** (#79, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`, depois de orçamentos e metas. As 9 rotas de `/api/contas-agendadas` (lista, avisos, sugestões do extrato, criar, editar, "é a mesma", pagar e excluir) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 44 casos do contrato `10-contas-agendadas`, gravados do .NET, passam com o Go atendendo. A conciliação com o extrato (#158) fica no pacote de regra `internal/cobrancas`, que a partida (#444) e a sincronização (#83) também vão usar.
+
 ## [2.50.38] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
