@@ -36,13 +36,13 @@ func lerJSON[T any](t *testing.T, corpo []byte) T {
 	return v
 }
 
-// Regra: os textos em pt-BR do .NET: o ToString("C0") (R$, espaço não separável, milhar com ponto, meio para longe do
+// Regra: os textos em pt-BR do .NET: o ToString("C0") (R$, espaço comum, milhar com ponto, meio para longe do
 // zero), o mês "MMM/yy" sem o ponto e o {x:0}.
 func TestFormatos(t *testing.T) {
 	t.Parallel()
 	for entrada, quer := range map[string]string{
-		"1234.5": "R$ 1.235", "999.5": "R$ 1.000", "12": "R$ 12", "1234567.49": "R$ 1.234.567",
-		"0.4": "R$ 0", "-1500": "-R$ 1.500",
+		"1234.5": "R$ 1.235", "999.5": "R$ 1.000", "12": "R$ 12", "1234567.49": "R$ 1.234.567",
+		"0.4": "R$ 0", "-1500": "-R$ 1.500",
 	} {
 		if obtido := reais(dec(entrada)); obtido != quer {
 			t.Errorf("reais(%s) = %q, quer %q", entrada, obtido, quer)
@@ -81,12 +81,12 @@ func TestCalcularBase(t *testing.T) {
 		{"essencial com folga", []string{"100", "100", "100", "100", "100", "100"}, &essencial, "0", "105", "estavel",
 			[]string{"mediana de 6 meses", "+5% de folga (essencial)"}},
 		{"pico e alta", []string{"100", "100", "100", "100", "100", "300"}, &estilo, "0", "100", "alta",
-			[]string{"mediana de 6 meses", "pico em set/26 (R$ 300) fora da base", "tendência de alta nos últimos 3 meses (não aumenta o orçamento)"}},
+			[]string{"mediana de 6 meses", "pico em set/26 (R$ 300) fora da base", "tendência de alta nos últimos 3 meses (não aumenta o orçamento)"}},
 		{"queda", []string{"200", "200", "200", "100", "100", "100"}, nil, "0", "150", "queda",
 			[]string{"mediana de 6 meses"}},
 		{"irregular usa a média", []string{"0", "0", "0", "0", "300", "300"}, nil, "50", "100", "alta",
 			[]string{"gasto irregular (2 de 6 meses): usa a média mensal", "tendência de alta nos últimos 3 meses (não aumenta o orçamento)",
-				"sem as emergências (R$ 50)"}},
+				"sem as emergências (R$ 50)"}},
 		{"um mês só", []string{"0", "0", "0", "80", "0", "0"}, nil, "0", "", "",
 			[]string{"gasto em só 1 dos últimos 6 meses (jul/26): sem dados suficientes"}},
 		{"nenhum mês", []string{"0", "0", "0", "0", "0", "0"}, nil, "0", "", "", nil},
@@ -255,7 +255,7 @@ func TestSugerir(t *testing.T) {
 	// Com o Mercado já orçado em 2000 no mês, ele fica fixo e o estilo de vida não basta: falta para caber.
 	fab.Orcamento(mercado, func(o *testeapoio.Orcamento) { o.Ano, o.Mes, o.Valor = 2026, 11, testeapoio.Valor("2000.0") })
 	s = lerJSON[SugestaoDto](t, testeapoio.Chamar(t, mux, "GET", "/api/orcamentos/sugestao?ano=2026&mes=11", "").Corpo)
-	if s.FaltaParaCaber == nil || len(s.Avisos) != 2 || !strings.Contains(s.Avisos[1], "faltam R$ ") {
+	if s.FaltaParaCaber == nil || len(s.Avisos) != 2 || !strings.Contains(s.Avisos[1], "faltam R$ ") {
 		t.Errorf("sem caber: falta %v, avisos %q", s.FaltaParaCaber, s.Avisos)
 	}
 }

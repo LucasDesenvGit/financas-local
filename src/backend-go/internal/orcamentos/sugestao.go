@@ -707,8 +707,9 @@ func nomeMes(inicio tipos.Data, indice int) string {
 	return fmt.Sprintf("%s/%02d", mesesAbreviados[m.Mes()-1], m.Ano()%100)
 }
 
-// reais é o ToString("C0", pt-BR) do .NET: "R$ 1.235", com o espaço não separável depois do R$ e o milhar com ponto,
-// arredondado para longe do zero no meio.
+// reais é o ToString("C0", pt-BR) do .NET: "R$ 1.235", com o milhar com ponto, arredondado para longe do zero no meio.
+// O espaço depois do R$ é o comum (U+0020), como no .NET do Windows (ICU do sistema) em que o Finanças roda; a libicu
+// do Linux pode trazer o não separável (U+00A0).
 func reais(v decimal.Decimal) string {
 	n := v.Round(0)
 	sinal := ""
@@ -722,5 +723,5 @@ func reais(v decimal.Decimal) string {
 		digitos = digitos[:len(digitos)-3]
 	}
 	partes = append([]string{digitos}, partes...)
-	return sinal + "R$ " + strings.Join(partes, ".")
+	return sinal + "R$ " + strings.Join(partes, ".")
 }
