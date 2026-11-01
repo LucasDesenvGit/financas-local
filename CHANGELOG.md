@@ -6,6 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Funcionalidades
 - **Orçamentos em Go** (#79, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`, depois das metas. As 6 rotas de `/api/orcamentos` (lista do mês, salvar, excluir, sugestão por categoria, aplicar a sugestão e copiar do mês anterior) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 41 casos do contrato `08-orcamentos`, gravados do .NET, passam com o Go atendendo. A sugestão (#39) refaz no Go a base pela mediana dos 6 meses, a folga dos essenciais, o corte pelo uso do limite do cartão, o encaixe na renda e o arredondamento para R$ 10, com os motivos e avisos nos mesmos textos.
+
 ## [2.51.1] — 2026-11-01 · desenvolvimento
 
 ### Correções
