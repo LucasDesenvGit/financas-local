@@ -450,23 +450,6 @@ jobs:
       - name: Compilar API
         run: dotnet build src/backend/Financas.Api/Financas.Api.csproj -c Release
 
-      # TEMPORÁRIO (#80): grava os esperados no Linux da CI, duas vezes, e publica como artefato. Sai antes do merge.
-      - name: TEMPORÁRIO – gravar os esperados (#80)
-        run: |
-          esperado=src/backend-go/testes/contrato/esperado
-          bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar
-          mkdir -p "$RUNNER_TEMP/primeira" && cp "$esperado"/*.json "$RUNNER_TEMP/primeira/"
-          bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar
-          if diff -r "$RUNNER_TEMP/primeira" "$esperado"; then echo "As duas gravações deram o mesmo."; else echo "::error::As duas gravações deram diferente."; fi
-          echo "Esperados que mudaram ou entraram:"; git status --short -- "$esperado"
-
-      - name: TEMPORÁRIO – publicar os esperados (#80)
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: esperados-contrato
-          path: src/backend-go/testes/contrato/esperado/
-
       - name: Contrato contra o .NET (com o Go atrás dele)
         run: bash src/backend-go/testes/contrato/rodar-dotnet.sh
 
