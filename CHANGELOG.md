@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.3] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Skill `go-no-projeto` e agente `dev-go` enxuto** (#560, épico #486). Nada muda para quem usa. O Go do projeto ganha uma skill permanente: o roteiro de funcionalidade nova em Go, mudança e revisão, que aponta a fonte de cada regra (`CLAUDE.md`, ADRs 0049, 0051 e 0056, `CONTRIBUINDO.md`) em vez de copiá-la. Ela traz as referências lidas sob demanda: estilo, com os pontos em que o projeto diverge dos guias de fora (nomes em português, `Id`, `[]` no JSON, só a biblioteca padrão nos testes, camadas por assunto); exemplos, que apontam para pacotes reais; o checklist de revisão do que a CI não pega; e as fontes conferidas para a "Aula rápida". A `migrar-para-go` fica só com o que é da migração e perde o que tinha vencido (a ADR do Go "a aceitar", o govulncheck "quando estiver na CI", o `collate` como dependência nova). O agente `dev-go` passa a ter quatro modos (análise, porte, funcionalidade nova e revisão), carrega a skill na partida e tem um hook que barra `gh pr merge` e `git push` forçado. O `CONTRIBUINDO.md` e o README do Go passam a dizer que a mutação roda também no PR (#456).
+
 ## [2.54.2] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação

@@ -115,7 +115,7 @@ GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
 ```
 
-Teste de mutação (#373, ADR 0051): não roda em PR, por ser lento. Roda toda segunda pelo workflow "Teste de mutação (Go)", e à mão:
+Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação (Go)" mede só os pacotes que o PR mudou; toda segunda, todos. À mão, antes de subir um pacote com regra:
 
 ```bash
 python3 ../../scripts/ci/mutacao-go.py internal/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
