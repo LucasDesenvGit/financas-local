@@ -54,8 +54,8 @@ var regrasPadraoNovas = []regraPadraoNova{
 
 // CriarRegrasPadrao é o CriarRegrasPadraoAsync: cria, uma vez por banco, as regras padrão novas para quem instalou antes
 // delas e passa para "Investimentos" as transações já importadas que batem com elas e cuja categoria você não escolheu.
-// A marca em Configuracao faz cada grupo ser criado uma vez só (a marca é gravada mesmo sem a categoria "Investimentos",
-// como no C#), e uma regra apagada por você não volta. Devolve quantas transações mudaram.
+// A marca em Configuracao faz cada grupo ser criado uma vez só, e uma regra apagada por você não volta. Sem a categoria
+// "Investimentos", a marca não é gravada, e as regras nascem quando ela voltar (#568). Devolve quantas transações mudaram.
 //
 // As regras lidas para o AplicarTipo são as de antes das criadas aqui: no C# elas ainda estão só na memória do contexto
 // (Add, sem SaveChanges) quando o CarregarAsync lê o banco, então não entram. Só o texto de estorno no cartão olha as
@@ -74,16 +74,17 @@ func CriarRegrasPadrao(ctx context.Context, q consultas.DBTX, rel relogio.Relogi
 		if existe {
 			continue
 		}
-		if err := config.DefinirData(ctx, grupo.chave, rel.Agora()); err != nil {
-			return mudaram, err
-		}
 		if investimentos == nil {
 			if investimentos, err = categoriaInvestimentos(ctx, q); err != nil {
 				return mudaram, err
 			}
 		}
 		if investimentos == nil {
-			continue
+			// Sem a categoria, nenhum grupo nasce nem ganha marca: nascem na partida seguinte à volta dela (#568).
+			return mudaram, nil
+		}
+		if err := config.DefinirData(ctx, grupo.chave, rel.Agora()); err != nil {
+			return mudaram, err
 		}
 		if regras == nil {
 			if regras, err = Carregar(ctx, q); err != nil {
