@@ -6,6 +6,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Correções
 - **`minimatch` 11 no front-end** (#550, Dependabot #14, GHSA-g3hv-75wg-m249). O `minimatch` abaixo da 11.0.1 pode travar com certos padrões de glob; ele vinha do `glob` e do `test-exclude` (a cobertura do Jest), só em desenvolvimento, e nem o `test-exclude` mais novo aceita a 11. Agora é forçado pelo `overrides` do `package.json`. Nada muda para quem usa: não entra no site publicado.
+## [2.53.1] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes do Go mais rápidos: o banco de teste vem de um modelo** (#542). Cada teste aplicava o esquema inteiro num banco novo, o que custa ~370 ms com o `-race`; o `internal/carteira`, com uns 68 bancos, batia no limite de 60 s da CI e derrubava o job "Go" sem nada quebrado. Agora o esquema é aplicado uma vez por execução e cada teste recebe uma cópia do arquivo. Com `-race` e 4 núcleos, o pacote foi de 22 s para 10 s aqui. Nada muda para quem usa.
 
 ## [2.53.0] — 2026-11-01 · desenvolvimento
 
