@@ -96,6 +96,7 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 - O `-certificado-temporario` cria um certificado só em memória, e o navegador vai avisar que não confia nele.
 - Para usar o `.pfx` e os caminhos de uma instalação, aponte `-pasta` para a pasta da publicação (onde está o `appsettings.Production.json`).
 - O `-aplicar-esquema` cria e atualiza o banco antes de atender, como o .NET faz ao iniciar (#297). Fica desligado por padrão: até a inversão (#85), quem faz isso é o .NET. Use só com uma cópia do banco.
+- O `-rotinas-de-partida` roda as seis rotinas que acertam dados ao subir (`internal/partida`, #444): regras padrão novas, entradas nos cartões, compras parceladas estornadas, transferências, contas a pagar cobradas sozinhas e trocos sem dúvida, nesta ordem, uma transação por rotina. Também desligado por padrão, e só vale sozinho (não atrás do .NET, que as roda por conta própria: rodar nos dois acertaria duas vezes). Use junto de `-aplicar-esquema` e só com uma cópia do banco. Erro numa rotina vira aviso (Configurações › Erros), a partida segue para as seguintes e o Go sobe do mesmo jeito (o `try/catch` do `Program.cs` parava na primeira; ADR 0049).
 - O `-inicio-do-relogio 2026-10-15T01:00:00Z` é **só para teste** (#363): o relógio começa nesse instante e anda dali, como a libfaketime faz com o .NET no contrato. Sem ele, o relógio do sistema. Atrás do .NET, quem passa a opção é o .NET, quando `Go:InicioDoRelogio` (vazio por padrão) tem um instante com fuso; ele passa o instante já validado, mais o tempo desde a partida dele. Ligado, o Go deixa um aviso no log (Configurações › Erros).
 
 ## Antes de subir (push)
@@ -103,9 +104,12 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 ```bash
 gofmt -l .                 # não pode listar nada
 go vet ./...
+python3 ../../scripts/ci/verificar-regras-go.py   # float64, time.Now() e time.Sleep de teste só com a exceção escrita (#457)
 go test -race ./...
 go generate ./... && git diff --exit-code -- .   # código gerado e cópia dos scripts do banco em dia
 go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+# e com GOOS=windows (os _windows.go, #449): instale antes, porque "GOOS=windows go run" compila o govulncheck para Windows
+go install golang.org/x/vuln/cmd/govulncheck@v1.9.0 && GOOS=windows "$(go env GOPATH)/bin/govulncheck" ./...
 GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 # De ponta a ponta, com o .NET compilado (dotnet build FinancasLocal.sln -c Release, na raiz):
 bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
@@ -117,7 +121,7 @@ Teste de mutação (#373, ADR 0051): não roda em PR, por ser lento. Roda toda s
 python3 ../../scripts/ci/mutacao-go.py internal/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
-A CI roda os cinco primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco". No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
+A CI roda os seis primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco". No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
 
 **Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe atrás do .NET, como no site. Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go, e confere o Go com `PREFIXOS_GO="<prefixos do assunto>" testes/contrato/rodar-dotnet.sh` (os mesmos esperados). A CI roda o contrato no job "contrato (.NET)".
 

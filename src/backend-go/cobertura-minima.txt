@@ -15,7 +15,7 @@ bancos                  96.4
 cambio                  87.9
 carteira                97.3
 categorias              87.0
-categorizacao           91.9
+categorizacao           96.1
 cobrancas               89.2
 config                  86.7
 configuracao            89.3
@@ -32,6 +32,7 @@ metas                   88.0
 orcamentos              83.5
 parametros              81.5
 parcelas                100.0
+partida                 100.0
 poucoinformativa        100.0
 regrasdescricao         91.3
 relatorios              96.9

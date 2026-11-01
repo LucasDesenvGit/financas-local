@@ -229,8 +229,13 @@ func TestEsquemaIgualAoDotnet(t *testing.T) {
 	})
 
 	t.Run("semMudanca", func(t *testing.T) {
+		// A data do arquivo vai para o passado: se o esquema gravar de novo, a data volta a ser a de agora e a
+		// impressão muda. Dormir até o relógio andar seria esperar sem sinal (#458).
+		passado := time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
+		if err := os.Chtimes(novo, passado, passado); err != nil {
+			t.Fatal(err)
+		}
 		antes := impressao(t, novo)
-		time.Sleep(20 * time.Millisecond) // para uma gravação mudar a data do arquivo
 		aplicar(t, novo)
 		if igual := impressao(t, novo) == antes; igual != g.Cenarios.SemMudanca.ArquivoIgual {
 			t.Errorf("arquivo igual depois de aplicar de novo = %v, no .NET %v", igual, g.Cenarios.SemMudanca.ArquivoIgual)
