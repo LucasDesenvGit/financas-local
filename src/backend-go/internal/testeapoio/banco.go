@@ -26,21 +26,22 @@ var modelo struct {
 	err   error
 }
 
-// bancoModelo aplica o esquema num banco numa pasta temporária, junta o WAL no arquivo principal e devolve os bytes
-// do arquivo. A pasta é apagada logo em seguida.
+// bancoModelo monta o banco-modelo numa pasta temporária, apagada logo em seguida, e devolve os bytes do arquivo.
 func bancoModelo() ([]byte, error) {
 	modelo.Do(func() {
-		modelo.dados, modelo.err = montarModelo()
+		pasta, err := os.MkdirTemp("", "financas-modelo-*")
+		if err != nil {
+			modelo.err = fmt.Errorf("criar a pasta do banco-modelo: %w", err)
+			return
+		}
+		defer os.RemoveAll(pasta)
+		modelo.dados, modelo.err = montarModelo(pasta)
 	})
 	return modelo.dados, modelo.err
 }
 
-func montarModelo() ([]byte, error) {
-	pasta, err := os.MkdirTemp("", "financas-modelo-*")
-	if err != nil {
-		return nil, fmt.Errorf("criar a pasta do banco-modelo: %w", err)
-	}
-	defer os.RemoveAll(pasta)
+// montarModelo aplica o esquema num banco na pasta, junta o WAL no arquivo principal (o único copiado) e lê o arquivo.
+func montarModelo(pasta string) ([]byte, error) {
 	ctx := context.Background()
 	caminho := filepath.Join(pasta, "FinancasLocal.db")
 	if err := banco.AplicarEsquema(ctx, caminho, RelogioDosTestes(), slog.New(slog.DiscardHandler)); err != nil {
@@ -50,13 +51,12 @@ func montarModelo() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("abrir o banco-modelo: %w", err)
 	}
-	// Tudo o que está no WAL vai para o arquivo principal, que é o único copiado.
-	if _, err := db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("juntar o WAL do banco-modelo: %w", err)
+	_, err = db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)")
+	if errFechar := db.Close(); err == nil {
+		err = errFechar
 	}
-	if err := db.Close(); err != nil {
-		return nil, fmt.Errorf("fechar o banco-modelo: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("juntar o WAL e fechar o banco-modelo: %w", err)
 	}
 	return os.ReadFile(caminho)
 }
