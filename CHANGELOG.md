@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.53.6] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Modelos de issue de manutenção e de investigação** (#562). Além de "Problema" e "Melhoria", o *New issue* passa a ter **Manutenção (chore)**, para a tarefa interna que o usuário não vê (dependência, CI, script, documentação, limpeza), e **Investigação (spike)**, para uma pergunta a responder antes de decidir, com prazo e com o que sai no fim (resposta, ADR ou issues novas). Cada um aplica a sua etiqueta, `chore` ou `spike`. Nada muda para quem usa.
+
 ## [2.53.5] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
