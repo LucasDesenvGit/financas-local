@@ -6,6 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Correções
 - **`minimatch` 11 no front-end** (#550, Dependabot #14, GHSA-g3hv-75wg-m249). O `minimatch` abaixo da 11.0.1 pode travar com certos padrões de glob; ele vinha do `glob` e do `test-exclude` (a cobertura do Jest), só em desenvolvimento, e nem o `test-exclude` mais novo aceita a 11. Agora é forçado pelo `overrides` do `package.json`. Nada muda para quem usa: não entra no site publicado.
+
 ## [2.53.1] — 2026-11-01 · desenvolvimento
 
 ### Correções
