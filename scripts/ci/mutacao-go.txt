@@ -49,3 +49,5 @@ internal/config          100
 internal/relogio         100
 internal/servidor        100
 internal/tarefas         100
+internal/investimentos   100
+internal/painel          100
