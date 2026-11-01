@@ -20,7 +20,8 @@ describe('Regressão: index.html sem script inline que a CSP bloqueie', () => {
 
   it('o index.html do código-fonte não tem <script> escrito dentro dele', () => {
     const html = readFileSync(join(raiz, 'src/index.html'), 'utf8');
-    const inline = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(([, , corpo]) => corpo.trim());
+    // O fechamento pode ter espaço ou atributo antes do ">" ("</script >"), que o HTML aceita (#551, CodeQL js/bad-tag-filter).
+    const inline = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)].filter(([, , corpo]) => corpo.trim());
     expect(inline).toEqual([]);
   });
 });

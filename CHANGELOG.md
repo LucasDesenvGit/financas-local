@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.53.3] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de CSP reconhece `</script >`** (#551, code scanning #2, CodeQL `js/bad-tag-filter`). A regex que procura `<script>` escrito no `index.html` só reconhecia o fechamento exato `</script>`; agora aceita espaço ou atributo antes do `>`. Era só o teste, sem risco real. Nada muda para quem usa.
+
 ## [2.53.0] — 2026-11-01 · desenvolvimento
 
 ### Funcionalidades
