@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -209,5 +210,85 @@ func TestErros(t *testing.T) {
 		if r := testeapoio.Chamar(t, mux2, c.metodo, c.caminho, c.corpo); r.Status != http.StatusInternalServerError {
 			t.Errorf("%s %s: %d", c.metodo, c.caminho, r.Status)
 		}
+	}
+}
+
+// Regra (bordas do mês a mês): registro no dia 1 conta no mês dele (e não é "desde" o meio do mês); a série que já
+// acabou não esconde as que vêm depois; o rendimento parte do último registro antes do mês; sem valor aplicado no
+// começo, o rendimento é null; a ordem é pelo saldo, e não pelo nome; e "hoje" no dia 1 ainda mostra o mês.
+func TestMesAMesBordas(t *testing.T) {
+	t.Parallel()
+	db, _, _, s := ambiente(t, testeapoio.HojeEmBrasilia(2026, 9, 1), cambioFalso{})
+	registrar(t, db, "c", "Meio", "2026-07-31", "5.0", ptr("5.0"))
+	registrar(t, db, "a", "Zeta", "2026-08-01", "100.0", nil)
+	registrar(t, db, "b", "Alfa", "2026-08-05", "30.0", ptr("30.0"))
+	registrar(t, db, "a", "Zeta", "2026-08-20", "110.0", ptr("50.0"))
+	registrar(t, db, "a", "Zeta", "2026-09-01", "120.0", ptr("50.0"))
+	h, err := s.MesAMes(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	texto := func(d *tipos.Decimal) string {
+		if d == nil {
+			return "null"
+		}
+		return d.String()
+	}
+	var linhas []string
+	for _, m := range h.Meses {
+		var itens []string
+		for _, i := range m.PorInvestimento {
+			itens = append(itens, i.Nome+"="+i.Saldo.String()+"/"+texto(i.Rendimento))
+		}
+		desde := "null"
+		if m.Desde != nil {
+			desde = m.Desde.String()
+		}
+		linhas = append(linhas, fmt.Sprintf("%d desde %s rend %s saldo %s [%s]", m.Mes, desde, texto(m.Rendimento),
+			m.Saldo, strings.Join(itens, " ")))
+	}
+	quer := []string{
+		"7 desde 2026-07-31 rend 0.0 saldo 5.0 [Meio=5.0/0.0]",
+		"8 desde null rend 0.0 saldo 110.0 [Zeta=110.0/null Alfa=0/0.0]",
+		"9 desde null rend 10.0 saldo 120.0 [Zeta=120.0/10.0]",
+	}
+	if strings.Join(linhas, "\n") != strings.Join(quer, "\n") {
+		t.Errorf("mês a mês:\n%s\nquer\n%s", strings.Join(linhas, "\n"), strings.Join(quer, "\n"))
+	}
+}
+
+// Regra: na gravação do histórico, o excluído (renda variável, outra moeda) não interrompe os que vêm depois, e dois
+// investimentos do mesmo dia são atualizados na mesma chamada.
+func TestRegistrarHistoricoVarios(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	hoje := testeapoio.Dia(2026, 10, 14)
+	agora := time.Date(2026, 10, 14, 15, 0, 0, 0, time.UTC)
+	lista := []Investimento{
+		{PluggyInvestmentId: "acao", Nome: "PETR4", Tipo: "EQUITY", Moeda: "BRL", Saldo: dec("50.0")},
+		{PluggyInvestmentId: "cdb", Nome: "CDB", Tipo: "FIXED_INCOME", Moeda: "BRL", Saldo: dec("100.0")},
+		{PluggyInvestmentId: "lci", Nome: "LCI", Tipo: "FIXED_INCOME", Moeda: "BRL", Saldo: dec("200.0")},
+	}
+	for _, saldo := range []string{"", "1"} {
+		if saldo != "" {
+			lista[1].Saldo, lista[2].Saldo = dec("101.0"), dec("201.0")
+		}
+		if err := RegistrarHistorico(t.Context(), db, lista, hoje, agora); err != nil {
+			t.Fatal(err)
+		}
+	}
+	linhas, err := db.Query(`SELECT "PluggyInvestmentId", "Saldo" FROM "HistoricoInvestimento" ORDER BY "PluggyInvestmentId"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer linhas.Close()
+	var obtido []string
+	for linhas.Next() {
+		var id, saldo string
+		_ = linhas.Scan(&id, &saldo)
+		obtido = append(obtido, id+"="+saldo)
+	}
+	if strings.Join(obtido, " ") != "cdb=101.0 lci=201.0" {
+		t.Errorf("histórico: %v", obtido)
 	}
 }
