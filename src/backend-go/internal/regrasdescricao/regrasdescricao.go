@@ -11,7 +11,6 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/categorizacao"
-	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/transacoes"
@@ -70,7 +69,7 @@ func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
 		if a.tipo != b.tipo {
 			return int(b.tipo - a.tipo)
 		}
-		if ta, tb := respostas.TamanhoUtf16(a.texto), respostas.TamanhoUtf16(b.texto); ta != tb {
+		if ta, tb := texto.TamanhoUtf16(a.texto), texto.TamanhoUtf16(b.texto); ta != tb {
 			return tb - ta
 		}
 		if a.criadoEm != b.criadoEm { // "2006-01-02 15:04:05.9999999": a ordem do texto é a do tempo

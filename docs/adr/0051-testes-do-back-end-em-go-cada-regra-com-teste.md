@@ -125,6 +125,19 @@ A mutação à mão continua no PR. A ferramenta mede, toda semana, se os testes
 - **Equivalentes conhecidas** (a mutação que não muda o resultado, como `100 * time.Nanosecond` por `100 / time.Nanosecond`): ficam em `scripts/ci/mutacao-go-equivalentes.txt`, pelo texto da linha, com o porquê, e saem da conta. Só entra o que foi conferido à mão.
 - **Ponto cego:** a cobertura do Go conta comandos, e a condição de um `case` não é comando. Por isso, mutação dentro de `case` sai como "NOT COVERED" e o gremlins nunca a testa. No nosso estilo (`switch { case …: }`), isso cobre boa parte das regras. Nelas, a mutação à mão no PR é o que vale. *Conferido na primeira medição: o `validar` dos parâmetros tem teste, e as mutações dos `case` dele saíram como "NOT COVERED".*
 
+### Teste de arquitetura local (#476)
+
+Quem pode importar quem fica num teste no estilo do ArchUnit do Java, em `internal/arquitetura/arquitetura_test.go`.
+- **Só local** (decisão de 29/10/2026): a build tag `arquitetura` o tira do `go test ./...` de todo dia e da CI. Roda com `go test -tags arquitetura ./internal/arquitetura/` antes de subir um PR que mexe em import ou pacote novo.
+- **Só a biblioteca padrão:** o grafo vem do `go list -json ./...`. As ferramentas prontas (`arch-go`, `go-arch-lint`, `depguard`) seriam dependência nova, e as regras cabem em poucas centenas de linhas.
+- **As regras, cada uma com o motivo e as exceções explicadas:**
+  1. só o `internal/banco` (e o contrato) importam o driver do SQLite;
+  2. o `internal/testeapoio` só entra em `_test.go`;
+  3. pacote de regra (a lista `regraSemHTTP`) não chega a `net/http`, `internal/respostas` nem `internal/servidor`, nem por outro pacote;
+  4. todo pacote está num grupo (base, transversal, montador ou assunto), e um assunto só importa outro se o par estiver na tabela `dependencias`. Essa tabela é a semente do mapa de contextos (#474).
+- **A lista não envelhece:** exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo também fazem o teste falhar, com o que fazer.
+- O teste se testa: um grafo de mentira com um import proibido faz cada regra falhar.
+
 ### Proibido em teste
 
 | Proibido | Use | Exceção aceita |

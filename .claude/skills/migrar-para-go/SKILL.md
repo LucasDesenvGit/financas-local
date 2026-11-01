@@ -64,6 +64,7 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
    cd src/backend-go
    gofmt -l . && go vet ./...
    go test -race ./...
+   go test -tags arquitetura ./internal/arquitetura/   # só local (#476): o assunto novo entra na tabela dependencias
    govulncheck ./...        # quando estiver na CI (#231/#84)
    # Contrato (Linux, libfaketime; detalhes em testes/contrato/README.md):
    testes/contrato/rodar-dotnet.sh --atualizar                    # grava os casos novos, do .NET

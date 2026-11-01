@@ -19,6 +19,8 @@ cd src/frontend && npm run build                # front-end (produção)
 cd src/frontend && npm test                     # testes do front-end (Jest): test:regressao | test:usabilidade | test:tipos
 cd src/frontend && npm run test:navegador       # testes no navegador (Playwright): build de produção + CSP da API + API falsa (ADR 0041)
 cd src/frontend && npm run test:afetados        # antes do push: Jest + navegador só no que mudou desde o develop (#286, mesma escolha da CI)
+cd src/frontend && npm run test:arquitetura     # só local (#476): quem pode importar quem em src/app; fora do npm test e da CI
+cd src/backend-go && go test -tags arquitetura ./internal/arquitetura/   # só local (#476): quem pode importar quem no Go
 cd src/frontend && npm start                    # front-end em dev (http://localhost:4200, proxy /api -> API)
 
 # CI roda também:
@@ -55,6 +57,7 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
   - Ele roda o Jest, o build e o navegador **só no que o PR afeta**, inclusive o que não foi commitado, com a mesma escolha da CI (ADR 0047). Arquivo global roda tudo.
   - Numa tela só: ~45 s, contra ~2,7 min da suíte inteira, que continua rodando na CI, no merge.
   - Não rode a suíte inteira a cada envio. O Edge do computador continua para o dia a dia.
+- **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura` (#476). Ele é só local, por decisão de 29/10/2026, e a CI não o roda. Dependência nova de propósito entra na tabela do teste, com o motivo, no mesmo PR.
 - **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
 - **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
 - No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).
