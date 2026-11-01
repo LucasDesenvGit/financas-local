@@ -294,8 +294,8 @@ func regrasDoBanco(t *testing.T, db *sql.DB) []string {
 	return lista
 }
 
-// Regra: a categoria é a primeira de transferência chamada "Investimentos" (sem acento nem caixa, pelo Id); sem ela a
-// marca é gravada do mesmo jeito e nenhuma regra nasce (no C# a marca vem antes da procura).
+// Regra: a categoria é a primeira de transferência chamada "Investimentos" (sem acento nem caixa, pelo Id); sem ela
+// nenhuma regra nasce e a marca não é gravada, para as regras nascerem quando a categoria voltar (#568).
 func TestCriarRegrasPadraoSemACategoria(t *testing.T) {
 	t.Parallel()
 	casos := []struct {
@@ -329,10 +329,54 @@ func TestCriarRegrasPadraoSemACategoria(t *testing.T) {
 					t.Errorf("%d regras na categoria certa", n)
 				}
 			}
-			if n := contar(t, db, `SELECT COUNT(*) FROM Configuracao WHERE Chave IN (?, ?)`, ChaveRegraMeliDolar, ChaveRegrasAplicacaoResgate); n != 2 {
-				t.Errorf("as duas marcas deveriam estar gravadas: %d", n)
+			marcas := 0
+			if caso.categoria >= 0 {
+				marcas = 2
+			}
+			if n := contar(t, db, `SELECT COUNT(*) FROM Configuracao WHERE Chave IN (?, ?)`, ChaveRegraMeliDolar, ChaveRegrasAplicacaoResgate); n != marcas {
+				t.Errorf("%d marcas gravadas, esperado %d", n, marcas)
 			}
 		})
+	}
+}
+
+// Regra (#568): quem não tinha a categoria "Investimentos" na primeira partida recebe as regras padrão novas na primeira
+// partida depois de criá-la, uma vez só; e a regra que você apaga depois não volta.
+func TestCriarRegrasPadraoQuandoACategoriaVolta(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, ontem)
+	conta := fab.Conta()
+	dolar := fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.Descricao = "MELI DOLAR" }).Id
+	partida := func(dia int) int {
+		return emTx(t, db, func(tx *sql.Tx) (int, error) {
+			return CriarRegrasPadrao(t.Context(), tx, testeapoio.AgoraEmBrasilia(2026, 10, dia, 9, 0))
+		})
+	}
+
+	if n := partida(15); n != 0 {
+		t.Errorf("sem a categoria, mudaram %d", n)
+	}
+	investimentos := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome, c.Tipo = "Investimentos", CategoriaTransferencia })
+
+	if n := partida(16); n != 1 {
+		t.Errorf("com a categoria de volta, mudaram %d, esperado 1 (a do dólar)", n)
+	}
+	if n := contar(t, db, `SELECT COUNT(*) FROM RegraCategorizacao WHERE CategoriaId = ?`, investimentos.Id); n != 9 {
+		t.Errorf("%d regras na categoria, esperado 9", n)
+	}
+	if e := estadoDe(t, db, dolar); e.categoria == nil || *e.categoria != investimentos.Id {
+		t.Errorf("a transação do dólar deveria ir para Investimentos: %+v", e)
+	}
+
+	if _, err := db.ExecContext(t.Context(), `DELETE FROM RegraCategorizacao WHERE Texto = 'MELI DOLAR'`); err != nil {
+		t.Fatal(err)
+	}
+	if n := partida(17); n != 0 {
+		t.Errorf("terceira partida mudou %d", n)
+	}
+	if n := contar(t, db, `SELECT COUNT(*) FROM RegraCategorizacao`); n != 8 {
+		t.Errorf("%d regras: a que você apagou não volta, e nenhuma é duplicada", n)
 	}
 }
 

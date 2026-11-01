@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.54.6] — 2026-11-01 · desenvolvimento
+## [2.54.7] — 2026-11-01 · desenvolvimento
 
 ### Correções
 - **Erro que acontece na hora de parar a API deixa de se perder** (#569). O gravador de Configurações › Erros tira um lote da fila e grava no banco. Se o desligamento da API começava no meio dessa gravação, ela era cancelada e o lote, que já tinha saído da fila, se perdia; o erro só ficava no log do sistema. Agora o lote retirado é gravado com um prazo próprio, de 5 segundos, que não acaba com o desligamento, e o que ainda está na fila é gravado no fim também quando o laço termina sem exceção. Vale no C#, que é quem grava hoje, e no Go, que grava depois da inversão (#85); o Go ganha um teste determinístico da corrida, que fazia um teste antigo falhar 1 vez em 20 (#458). Manual: não se aplica.
+
+## [2.54.6] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Regras padrão novas criadas quando a categoria "Investimentos" volta** (#568). As regras padrão que chegaram depois da instalação (Méli Dólar, ADR 0038; aplicação e resgate, #172) passam para "Investimentos" as transações já importadas, uma vez por banco, e uma marca em `Configuracao` guarda que isso já foi feito. A marca era gravada antes de procurar a categoria: quem estava sem a categoria "Investimentos" (de transferência) na primeira subida da API, por tê-la apagado, renomeado ou trocado de tipo, nunca recebia essas regras, nem depois de criar a categoria de novo. Agora a marca só é gravada quando a categoria existe, e as regras nascem na primeira subida depois de ela voltar. Uma regra que você apagou continua sem voltar. A correção vale no C# e no Go, que tem o teste do caso. Manual: não se aplica.
 
 ## [2.54.5] — 2026-11-01 · desenvolvimento
 
