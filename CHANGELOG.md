@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.9] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Instalação e contribuição de acordo com o que os scripts e a CI fazem** (#575, seção 3 da varredura de 01/11/2026). Quem instala pelos scripts passa a ser orientado a atualizar com `git pull` e `scripts/geral/instalar.sh`: só o `3-publicar-atualizar.sh` falha quando o `go.mod` pede um Go mais novo, que só a etapa 1 baixa (README, `INSTALACAO-PELO-CODIGO.md`, `CONTRIBUINDO.md` e o modelo de PR). O guia de instalação pelo código ganha o Go no desenvolvimento local (sem o `financas-go` ao lado da API, as rotas do Go respondem 503), os dois processos do sistema instalado, a árvore de pastas de hoje, o que desinstalar além da pasta (a unidade do systemd, o *linger* e o certificado) e o que os gerenciadores fazem de fato; o .NET é conferido só pelo SHA-512. O `CONTRIBUINDO.md` ganha a tabela completa dos jobs da CI, a exceção dos jobs fora do `build` (Go no Windows e gerenciador em Go, até a #84/#85 ou o gerenciador em Go no `.msi`), o `feat(banco)!` como marca de estrutura (a API aplica o esquema sozinha), o `test:afetados` no checklist e as convenções do Go. O modelo de PR acompanha o `CLAUDE.md`; o de bug pede Configurações › Erros e o log do Linux. O `CLAUDE.md` cita o gerenciador em Go e o workflow do `.msi` entre os que seguem o guia de restaurar. Também: as telas do README, "Procurar versão nova ao abrir", o passo do diagrama e os prefixos `DF_`/`UX_` no guia do banco, as ligações sem chave estrangeira, as cotações e índices públicos no `DADOS-PESSOAIS.md` e a origem dos erros no Visualizador de Eventos (`Financas.Api`, pelo código; não conferido num Windows). Manual: não se aplica.
+
 ## [2.54.8] — 2026-11-01 · desenvolvimento
 
 ### Correções

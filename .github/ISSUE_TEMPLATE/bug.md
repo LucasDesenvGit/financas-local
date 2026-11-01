@@ -14,4 +14,4 @@ labels: bug
 
 **Onde**: página / script / sincronização
 
-**Log** (Visualizador de Eventos → Aplicativo, sem dados pessoais):
+**Erro ou log** (sem dados pessoais): primeiro, **Configurações › Erros** no site (o "detalhe" do erro). Se o site nem abre: no Windows, Visualizador de Eventos → Aplicativo; no Linux, `journalctl --user -u financaslocal.service`.

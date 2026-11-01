@@ -67,15 +67,16 @@ flowchart LR
     a --> b --> c --> d
 ```
 
-A primeira carga traz os últimos 365 dias; depois, o site sincroniza sozinho a cada 6 horas. O consentimento vale até 12 meses, e o Painel avisa 30 dias antes de vencer. O passo a passo está no capítulo **Conectar seus bancos** do Manual.
+A primeira carga traz os últimos 365 dias; depois, o site sincroniza sozinho a cada 6 horas. O consentimento vale até 12 meses, e as notificações (o sino da barra de cima) avisam 30 dias antes de vencer. O passo a passo está no capítulo **Conectar seus bancos** do Manual.
 
 ## O que tem
 
 - **Painel:** como você está hoje e como está o mês.
 - **Transações:** tudo o que entrou e saiu, com filtros, categorização em lote e lançamentos manuais.
-- **Contas e cartões:** saldos, faturas e dívida de cada cartão.
+- **Contas e cartões:** saldos, faturas e dívida de cada cartão, e o **Conferir com o banco**, que ajuda a achar por que o app do banco mostra outro número.
 - **Orçamentos, Metas e Contas a pagar:** limites por categoria, quanto guardar por mês e vencimentos.
-- **Investimentos:** ações, FIIs, cripto, reservas e empréstimos, comparados com a Selic.
+- **Investimentos:** ações, FIIs, cripto e reservas, comparados com a Selic.
+- **Empréstimos e financiamentos:** saldo devedor, parcelas e custo de cada contrato que veio do Open Finance.
 - **Relatórios, Visão anual e Projeção:** para onde foi o dinheiro, como foi o ano e quanto você vai ter.
 - **Categorias e regras:** regras automáticas ("descrição contém UBER → Transporte").
 
@@ -88,7 +89,7 @@ flowchart LR
     a["Gerenciador:<br/>Tem versão nova"] --> b["O que mudou"] --> c["Atualizar:<br/>baixa e confere"] --> d["Instalador:<br/>Avançar, Instalar, Sim"] --> e["Site no ar na versão nova<br/>cópia do banco em dados\backups"]
 ```
 
-Nenhuma atualização apaga dados, e o site fica fora do ar só por alguns segundos. Sem o gerenciador, baixe o `.msi` novo e abra. No Linux: `git pull` e `scripts/geral/3-publicar-atualizar.sh`. Voltar de versão e passar dos scripts para o `.msi`: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md#atualizar).
+Nenhuma atualização apaga dados, e o site fica fora do ar só por alguns segundos. Sem o gerenciador, baixe o `.msi` novo e abra. No Linux: `git pull` e `scripts/geral/instalar.sh`, que também traz o .NET e o Go das versões novas. Voltar de versão e passar dos scripts para o `.msi`: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md#atualizar).
 
 ## Desinstalar
 
