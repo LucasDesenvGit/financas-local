@@ -213,7 +213,8 @@ func TestPainelSomasEBordas(t *testing.T) {
 	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 1))
 	conexao := fab.ConexaoBancaria()
 	var abertos []testeapoio.Emprestimo
-	for k, saldo := range []string{"100.0", "200.0", "300.0"} {
+	// Gravados fora de ordem (200, 100, 300): a ordem certa é 300, 200, 100.
+	for k, saldo := range []string{"200.0", "100.0", "300.0"} {
 		abertos = append(abertos, fab.Emprestimo(conexao, func(e *testeapoio.Emprestimo) {
 			e.SaldoDevedor, e.ParcelasEmAtraso = dec(saldo), ptr(int64(k))
 		}))
@@ -229,7 +230,7 @@ func TestPainelSomasEBordas(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.Contratos[0].Id != abertos[2].Id || p.Contratos[1].Id != abertos[1].Id || p.Contratos[2].Id != abertos[0].Id {
+	if p.Contratos[0].Id != abertos[2].Id || p.Contratos[1].Id != abertos[0].Id || p.Contratos[2].Id != abertos[1].Id {
 		t.Errorf("ordem dos abertos: %d %d %d", p.Contratos[0].Id, p.Contratos[1].Id, p.Contratos[2].Id)
 	}
 	e := p.Emprestimos

@@ -219,7 +219,7 @@ func TestErros(t *testing.T) {
 func TestMesAMesBordas(t *testing.T) {
 	t.Parallel()
 	db, _, _, s := ambiente(t, testeapoio.HojeEmBrasilia(2026, 9, 1), cambioFalso{})
-	registrar(t, db, "c", "Meio", "2026-07-31", "5.0", ptr("5.0"))
+	registrar(t, db, "c", "Meio", "2026-07-01", "5.0", ptr("5.0")) // no dia 1: o mês não é "desde" o meio
 	registrar(t, db, "a", "Zeta", "2026-08-01", "100.0", nil)
 	registrar(t, db, "b", "Alfa", "2026-08-05", "30.0", ptr("30.0"))
 	registrar(t, db, "a", "Zeta", "2026-08-20", "110.0", ptr("50.0"))
@@ -248,7 +248,7 @@ func TestMesAMesBordas(t *testing.T) {
 			m.Saldo, strings.Join(itens, " ")))
 	}
 	quer := []string{
-		"7 desde 2026-07-31 rend 0.0 saldo 5.0 [Meio=5.0/0.0]",
+		"7 desde null rend 0.0 saldo 5.0 [Meio=5.0/0.0]",
 		"8 desde null rend 0.0 saldo 110.0 [Zeta=110.0/null Alfa=0/0.0]",
 		"9 desde null rend 10.0 saldo 120.0 [Zeta=120.0/10.0]",
 	}
