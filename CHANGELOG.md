@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.9] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Privacidade e Manual de acordo com o que o sistema faz** (#575, seção 1 da varredura de 01/11/2026). O Manual passa a listar tudo o que sai do computador: o Mercado Bitcoin (cotação das criptomoedas, só os pares fixos), o token da brapi (quando você informou um) e o GitHub, que o gerenciador consulta para achar versão nova. Ele deixa de dizer "nunca nome ou CPF de terceiros": o nome não fica em campo próprio, mas a descrição vem do banco como está e costuma trazer o nome de quem pagou ou recebeu. Os avisos que foram para o sino (#327) deixam de aparecer como "o Painel avisa": consentimento vencendo, descrições pouco informativas, cobranças que não vieram, cartão arquivado e reservas para conferir; "Conhecendo a tela" ganha o sino. Cópia do banco, restauração, atualização e problemas comuns passam a ter os passos pelo gerenciador, para quem instalou pelo `.msi`, além dos scripts. Seção nova "Fonte das cotações e token da brapi", em Investimentos. A Segurança do Manual lista tudo o que a auditoria registra. Em `docs/`: o `DADOS-PESSOAIS.md` ganha "Seu nome nos Pix" e diz onde se informa o token da brapi; o `SEGURANCA.md` diz que o token vai no cabeçalho `Authorization`, que o bloqueio do login se ajusta em Parametrização e onde fica a pasta `dados` em cada jeito de instalar; o `MODELO-DE-AMEACAS.md` acompanha a auditoria, o bloqueio e a pasta `dados`.
+
 ## [2.54.8] — 2026-11-01 · desenvolvimento
 
 ### Correções
