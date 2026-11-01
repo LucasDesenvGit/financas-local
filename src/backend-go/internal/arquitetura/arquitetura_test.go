@@ -120,6 +120,8 @@ var dependencias = []struct {
 		"internal/regrasdescricao", "internal/sugestoes", "internal/tipolancamento", "internal/transacoes",
 		"internal/transferencias"}, "a tela de transações junta as regras, as sugestões e o desfazer (#78)"},
 	{"internal/faturas", []string{"internal/bancos", "internal/parcelas"}, "a fatura soma as parcelas do cartão"},
+	{"internal/orcamentos", []string{"internal/emprestimos", "internal/parametros", "internal/relatorios", "internal/transacoes"},
+		"a lista do mês e a sugestão (#39) usam a base dos relatórios, os totais de empréstimos, os parâmetros e o tipo da transação (#79)"},
 	{"internal/parametros", nil, "só os transversais (auditoria, configuração)"},
 	{"internal/parcelas", nil, "parcelas de compras no cartão"},
 	{"internal/poucoinformativa", nil, "descrição que não diz nada"},
