@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.54.6] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Erro que acontece na hora de parar a API deixa de se perder** (#569). O gravador de Configurações › Erros tira um lote da fila e grava no banco. Se o desligamento da API começava no meio dessa gravação, ela era cancelada e o lote, que já tinha saído da fila, se perdia; o erro só ficava no log do sistema. Agora o lote retirado é gravado com um prazo próprio, de 5 segundos, que não acaba com o desligamento, e o que ainda está na fila é gravado no fim também quando o laço termina sem exceção. Vale no C#, que é quem grava hoje, e no Go, que grava depois da inversão (#85); o Go ganha um teste determinístico da corrida, que fazia um teste antigo falhar 1 vez em 20 (#458). Manual: não se aplica.
+
 ## [2.54.5] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
