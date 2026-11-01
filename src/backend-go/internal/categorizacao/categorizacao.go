@@ -3,8 +3,8 @@
 // mapeamento da categoria que a Pluggy sugere. Também acerta o tipo (despesa, receita, transferência) e o "fora dos
 // relatórios" pela categoria e pelo valor (ADR 0036). Fica num pacote próprio porque a sincronização (#83) usa o mesmo.
 //
-// As rotinas de partida do C# (regras padrão novas, entradas nos cartões, compras parceladas estornadas) continuam no
-// .NET até a inversão (#85): quem sobe primeiro e acerta o banco é ele.
+// Os acertos de dados da partida (regras padrão novas, entradas nos cartões, compras parceladas estornadas) estão em
+// acertos.go (#444); quem os chama ao subir é o internal/partida, só quando o Go está na frente do .NET.
 package categorizacao
 
 import (

@@ -128,6 +128,70 @@ func TestAtrasDoDotnetDoComecoAoFim(t *testing.T) {
 	}
 }
 
+// Atrás do .NET, quem roda as rotinas de partida é o .NET (#444, ADR 0049): o Go subir e atender não acerta nenhum dado, nem
+// as regras padrão novas, para elas não rodarem duas vezes.
+func TestAtrasDoDotnetNaoRodaAsRotinasDePartida(t *testing.T) {
+	caminho := bancoComUsuario(t)
+	db, err := sql.Open("sqlite", caminho)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	for _, comando := range []string{
+		`INSERT INTO "Categoria" ("Id", "Nome", "Tipo") VALUES (1, 'Mercado', 1), (2, 'Investimentos', 3)`,
+		`INSERT INTO "Conta" ("Id", "Nome", "Tipo", "Origem", "Moeda", "SaldoInicial", "Saldo", "Cor", "IncluirNoSaldo", "Arquivada", "CriadoEm", "AtualizadoEm")
+		 VALUES (1, 'Conta', 1, 1, 'BRL', '0.0', '0.0', '#000000', 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00')`,
+		`INSERT INTO "Transacao" ("Id", "ContaId", "Data", "Descricao", "Valor", "Tipo", "Status", "CategoriaId", "CategoriaManual", "IgnorarRelatorios",
+			"Emergencia", "DescricaoRevisada", "DescricaoManual", "CriadoEm", "AtualizadoEm")
+		 VALUES (1, 1, '2026-10-10', 'MELI DOLAR', '-10.0', 1, 1, 1, 0, 0, 0, 0, 0, '2026-01-01 12:00:00', '2026-01-01 12:00:00')`,
+	} {
+		if _, err := db.Exec(comando); err != nil {
+			t.Fatalf("%s: %v", comando[:min(len(comando), 40)], err)
+		}
+	}
+	entradaLeitor, entradaEscritor := io.Pipe()
+	saidaLeitor, saidaEscritor := io.Pipe()
+	terminou := make(chan error, 1)
+	go func() {
+		terminou <- rodarAtrasDoDotnet(context.Background(), config.Config{BancoCaminho: caminho}, relogio.Sistema{}, slog.New(slog.DiscardHandler), entradaLeitor, saidaEscritor)
+	}()
+	if _, err := io.WriteString(entradaEscritor, segredo+"\n"); err != nil {
+		t.Fatal(err)
+	}
+	linhas := make(chan string, 1)
+	go func() {
+		linha, _ := bufio.NewReader(saidaLeitor).ReadString('\n')
+		linhas <- linha
+	}()
+	select {
+	case <-linhas: // já aceita conexões: a partida, se houvesse, já teria rodado
+	case err := <-terminou:
+		t.Fatalf("parou antes de subir: %v", err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("não subiu em 10 s")
+	}
+	entradaEscritor.Close()
+	select {
+	case err := <-terminou:
+		if err != nil {
+			t.Fatalf("parou com erro: %v", err)
+		}
+	case <-time.After(15 * time.Second):
+		t.Fatal("o Go não parou em 15 s")
+	}
+
+	var marcas, categoria int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM "Configuracao" WHERE "Chave" LIKE 'Regras.%'`).Scan(&marcas); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`SELECT "CategoriaId" FROM "Transacao" WHERE "Id" = 1`).Scan(&categoria); err != nil {
+		t.Fatal(err)
+	}
+	if marcas != 0 || categoria != 1 {
+		t.Errorf("o Go atrás do .NET acertou dados: %d marcas de regras padrão, categoria da transação %d (era 1)", marcas, categoria)
+	}
+}
+
 func TestAtrasDoDotnetSemSegredoNaoSobe(t *testing.T) {
 	cfg := config.Config{BancoCaminho: bancoComUsuario(t)}
 	err := rodarAtrasDoDotnet(context.Background(), cfg, relogio.Sistema{}, slog.New(slog.DiscardHandler), strings.NewReader(""), io.Discard)
