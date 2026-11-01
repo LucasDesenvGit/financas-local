@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.50.34] — 2026-10-31 · desenvolvimento
+## [2.50.35] — 2026-11-01 · desenvolvimento
 
 ### Correções
 - **Teste de mutação do back-end em Go verde de novo** (#455, épico #374). Nada muda para quem usa. A medição semanal falhava desde 26/10: os 7 mutantes vivos do `internal/tipos` já tinham saído (#82, #447), mas o `internal/carteira` derrubava a máquina da CI. Trocar o `if m == ""` (ou tirar o `i += len(m)`) do laço dos números do extrato fazia ele acrescentar "" sem fim, até acabar a memória. O laço passa a dar uma volta por caractere, com o mesmo resultado (gabarito do C#), e o teste de mutação do back-end passa a mostrar o andamento no log, como o do gerenciador (#433). Os 31 pacotes medidos ficam em 100%.
+
+## [2.50.34] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do código Go só do Windows na CI** (#459, épico #374). Nada muda para quem usa. O back-end em Go só rodava teste no Linux: o código só do Windows (a DPAPI que protege a chave dos segredos e a descrição do sistema) compilava, mas nunca rodava. Um job novo, "Go (Windows)", roda o `go vet` e o `go test` do back-end num `windows-latest`. Entram testes da DPAPI (a chave vai cifrada e só abre na mesma conta, com a mesma entropia), da descrição do Windows e das preferências do gerenciador no registro (numa chave só de teste, apagada no fim). É o que a #84 precisa para o serviço do Windows em Go nascer com teste. ADR 0051 atualizada.
 
 ## [2.50.33] — 2026-10-31 · desenvolvimento
 
