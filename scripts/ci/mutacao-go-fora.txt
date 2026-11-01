@@ -1,0 +1,16 @@
+# Pacotes do back-end em Go fora do teste de mutação de propósito (#456, ADR 0051), com o motivo.
+#
+# Todo pacote de src/backend-go/internal com código fora de teste está em mutacao-go.txt (com o piso) ou aqui: o
+# scripts/ci/mutacao-go.py confere, e a CI falha com pacote novo que não está em nenhum dos dois. Só entra aqui o que
+# não tem regra de negócio a proteger; na dúvida, meça e ponha na lista.
+#
+# Formato: pacote e, depois de um espaço, o motivo.
+
+internal/api                    só junta as rotas dos assuntos num ServeMux; quem confere o que cada rota faz é o contrato
+internal/banco/consultas        código gerado pelo sqlc (go generate em dia na CI); as consultas são testadas pelos assuntos
+internal/banco/esquema/embutido só o //go:embed dos scripts de banco/
+internal/banco/esquema/gerar    o programa do go generate que copia os scripts; a CI confere que a cópia está em dia
+internal/saude                  o diagnóstico GET /api/go/saude, sem regra; conferido pelo contrato 90-go
+internal/sessao                 só lê o usuário que o .NET pôs na requisição (18 linhas); usado em todos os testes de rota
+internal/testeapoio             apoio aos testes (banco temporário, fábrica, HTTP); não entra no executável
+internal/versao                 só a variável da versão, gravada na compilação

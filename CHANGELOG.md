@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.53.4] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Teste de mutação do back-end no PR** (#456, ADR 0051). Antes ele só rodava toda segunda e à mão, e uma regressão nos testes aparecia dias depois. Agora o PR que mexe no back-end mede os pacotes que mudou e falha abaixo do piso; o semanal continua medindo tudo. A CI também falha quando um pacote de `internal/` não está na lista da mutação nem na lista de fora de propósito (com o motivo). Entraram os 7 pacotes que faltavam (`auditoria`, `banco`, `banco/esquema`, `config`, `relogio`, `servidor`, `tarefas`), todos com 100%, depois de 3 mutações vivas no `config` e no `tarefas` mortas por teste novo. Nada muda para quem usa.
+
 ## [2.53.3] — 2026-11-01 · desenvolvimento
 
 ### Correções

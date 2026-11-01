@@ -118,10 +118,12 @@ A mutação à mão continua no PR. A ferramenta mede, toda semana, se os testes
   - [ooze](https://github.com/gtramontina/ooze) (sem versão publicada): é biblioteca, entra no `go.mod` e roda como teste com build tag. Dependência nova no módulo só para medir.
   - [go-mutesting original](https://github.com/zimmski/go-mutesting): sem versão desde 2021.
 - **Onde e quando:** `scripts/ci/mutacao-go.py`, nos pacotes de `scripts/ci/mutacao-go.txt` (regra de negócio e dinheiro), pelo workflow "Teste de mutação (Go)":
-  - toda segunda e à mão, **nunca em PR**: ~1 min por pacote;
+  - **no PR que mexe no back-end (#456): só os pacotes da lista que o PR mudou** (código, teste ou `testdata/` deles), comparando com a base como o `testes-afetados.py` (ADR 0047). Falha abaixo do piso, antes do merge. Se o PR só muda a própria mutação (script, listas, workflow), mede o `internal/tipos`, para provar que ela ainda roda. *Julgamento:* medir também quem importa o pacote mudado pegaria mais, mas multiplicaria o tempo (~1 min por pacote);
+  - toda segunda e à mão: a lista inteira;
   - todos os operadores ligados;
   - 4 workers, com folga de 30× no tempo de cada teste (no padrão de 5×, a compilação em paralelo estourava o tempo).
 - **Piso por pacote, que só sobe:** eficácia = mortas / (mortas + vivas). Assunto novo com regra entra na lista no PR dele.
+- **Nenhum pacote fica de fora sem ninguém perceber (#456):** todo pacote de `internal/` com código fora de teste está em `scripts/ci/mutacao-go.txt` ou em `scripts/ci/mutacao-go-fora.txt`, com o motivo (código gerado, só montagem de rotas, apoio a teste). O script confere antes de medir, e a CI falha com o pacote que não está em nenhum dos dois, dizendo como medir e onde pôr. Na primeira conferência, 7 pacotes com regra entraram na lista (todos com 100%, depois de 3 mutações vivas mortas por teste) e 8 ficaram de fora, cada um com o porquê.
 - **Equivalentes conhecidas** (a mutação que não muda o resultado, como `100 * time.Nanosecond` por `100 / time.Nanosecond`): ficam em `scripts/ci/mutacao-go-equivalentes.txt`, pelo texto da linha, com o porquê, e saem da conta. Só entra o que foi conferido à mão.
 - **Ponto cego:** a cobertura do Go conta comandos, e a condição de um `case` não é comando. Por isso, mutação dentro de `case` sai como "NOT COVERED" e o gremlins nunca a testa. No nosso estilo (`switch { case …: }`), isso cobre boa parte das regras. Nelas, a mutação à mão no PR é o que vale. *Conferido na primeira medição: o `validar` dos parâmetros tem teste, e as mutações dos `case` dele saíram como "NOT COVERED".*
 
@@ -214,7 +216,7 @@ Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, se
 - **Negativas:**
   - **mais tempo por etapa:** a tabela de casos, os testes de integração e as mutações à mão vêm antes de o PR estar pronto;
   - **a regra depende de revisão:** a CI não sabe se "cada regra tem teste". A cobertura da #370 é só um indicador, e a mutação da #373 também;
-  - **a mutação automática não vê `case` nem remove comandos** (limites do gremlins). Ela também não roda no PR: o buraco aparece na semana seguinte, e não antes do merge;
+  - **a mutação automática não vê `case` nem remove comandos** (limites do gremlins). No PR, ela só mede os pacotes mudados (#456): o teste mais fraco num pacote que o PR não tocou continua aparecendo só na semana seguinte;
   - **teste mais verboso** sem asserção pronta: cada `if` escreve a própria mensagem. A tabela dilui esse custo;
   - **sobreposição:** um mesmo comportamento pode acabar no unitário e no contrato. A regra "num lugar só" pede julgamento a cada PR;
   - **o gabarito precisa de disciplina:** regravar sem olhar a diferença esconde uma regressão;
