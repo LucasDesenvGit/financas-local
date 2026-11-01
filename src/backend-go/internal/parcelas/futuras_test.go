@@ -53,6 +53,12 @@ func TestProjetar(t *testing.T) {
 			{2, 7, data("2026-10-01"), valor("-10"), 0, 3, "número zero"},
 			{3, 7, data("2026-10-01"), valor("-10"), 4, 3, "número acima do total"},
 			{4, 7, data("2026-10-01"), valor("0"), 1, 3, "zerada"}}, ""},
+		{"compra de uma parcela só (à vista) com data futura também fica de fora", []Parcela{
+			{1, 7, data("2026-11-05"), valor("-10"), 1, 1, "à vista"}}, ""},
+		{"parcela de hoje já no banco não é futura", []Parcela{{1, 7, data("2026-10-14"), valor("-10"), 4, 4, "CURSO 4/4"}}, ""},
+		{"duas parcelas com o mesmo número: vale a primeira da lista (o MaxBy do LINQ)", []Parcela{
+			{1, 7, data("2026-10-05"), valor("-10"), 1, 3, "D 1/3"}, {2, 7, data("2026-10-06"), valor("-10"), 1, 3, "D 1/3"}},
+			"7 2026-11-05 10 false 1 1; 7 2026-12-05 10 false 1 2"},
 		{"fim de mês (AddMonths)", []Parcela{{1, 7, data("2026-08-31"), valor("-1"), 1, 4, "C"}},
 			"7 2026-10-31 1 false 1 2; 7 2026-11-30 1 false 1 3"},
 	}

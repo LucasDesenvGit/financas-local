@@ -95,4 +95,4 @@ Vale para assunto novo e para assunto que ainda vai migrar (#79, #80, #83, #84).
 - **Na prática:**
   - **assunto novo:** `internal/<assunto>` com HTTP, regra e banco, uma linha em `dependencias` (com quem ele importa e por quê) e o termo novo na lista de termos;
   - **regra usada por outro assunto:** pacote próprio, na lista `regraSemHTTP`;
-  - antes de subir, `go test -tags arquitetura ./internal/arquitetura/` (CLAUDE.md, skill `migrar-para-go`, agente `dev-go`).
+  - antes de subir, `go test -tags arquitetura ./internal/arquitetura/` (CLAUDE.md, skill `go-no-projeto`, agente `dev-go`).

@@ -2,7 +2,7 @@
 
 Os estados pelos quais as coisas passam, as classes do centro do domínio e os termos usados no código. As colunas estão no [modelo de dados](../BANCO-DE-DADOS.md#o-modelo-em-diagramas). O padrão dos diagramas está na [ADR 0055](../adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
 
-> **Data dos diagramas:** 31/10/2026. As regras valem nas duas linguagens, então o desenho sobrevive à troca para Go. Só a linha "Onde está hoje" de cada parte muda.
+> **Data dos diagramas:** 01/11/2026. As regras valem nas duas linguagens, então o desenho sobrevive à troca para Go. Só a linha "Onde está hoje" de cada parte muda.
 
 ## Estados
 
@@ -46,7 +46,7 @@ O sistema não decide o status: a cada sincronização, ele grava o que a Pluggy
 
 ### Transação
 
-**Onde está hoje:** a sincronização, em .NET (`Servicos/Pluggy/SincronizacaoService.cs`). A leitura e a edição, em Go (`internal/extrato`).
+**Onde está hoje:** a sincronização, em .NET (`Servicos/Pluggy/SincronizacaoService.cs`). A leitura e a edição, em Go (`internal/extrato`). Os acertos que a API faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em Go (`internal/categorizacao`, `internal/parcelas`, `internal/transferencias`, chamados por `internal/partida`, #444), ligados só com o Go na frente.
 
 ```mermaid
 stateDiagram-v2
@@ -68,7 +68,7 @@ stateDiagram-v2
 
 ### Conta a pagar
 
-**Onde está hoje:** .NET, em `Controllers/PlanejamentoControllers.cs` (`Pagar`), `Servicos/ContaAgendadaService.cs` (`ConciliarAsync`) e `Controllers/PainelController.cs` (`AlertasAsync`).
+**Onde está hoje:** .NET, em `Controllers/PlanejamentoControllers.cs` (`Pagar`), `Servicos/ContaAgendadaService.cs` (`ConciliarAsync`) e `Controllers/PainelController.cs` (`AlertasAsync`). A conciliação também existe em Go (`internal/cobrancas`), e a partida em Go (`internal/partida`, #444) a chama.
 
 ```mermaid
 stateDiagram-v2

@@ -43,4 +43,4 @@ Usamos **diagramas Mermaid em `flowchart`, com a notação do C4 escrita nas cai
   - confira o desenho nos temas claro e escuro antes do PR;
   - as setas do mapa de contextos vêm do código: `go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...` no Go e os construtores no C#;
   - o [modelo de ameaças](../MODELO-DE-AMEACAS.md) é revisado quando muda uma fronteira: saída de rede nova, processo, porta, pasta `dados`, login e a remoção do .NET (#86);
-  - a regra está no `CLAUDE.md`, na skill `migrar-para-go` e no agente `dev-go`.
+  - a regra está no `CLAUDE.md` e nas skills `migrar-para-go` e `go-no-projeto` (que o agente `dev-go` usa).

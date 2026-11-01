@@ -2,6 +2,7 @@ package relogio
 
 import (
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
@@ -105,19 +106,22 @@ func TestAPartirDe(t *testing.T) {
 	}
 }
 
-// Com o time.Now de verdade: começa no início e anda para a frente.
+// Com o time.Now: começa no início e anda para a frente. Dentro do synctest o time.Now é de mentira e o time.Sleep
+// só adianta esse relógio (sem esperar nada de verdade), então o tempo que passou é exatamente o do Sleep (#458).
 func TestNovoAPartirDeAnda(t *testing.T) {
-	inicio := time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)
-	r := NovoAPartirDe(inicio)
-	primeiro := r.Agora()
-	time.Sleep(20 * time.Millisecond)
-	segundo := r.Agora()
-	if primeiro.Before(inicio) || primeiro.Sub(inicio) > time.Second {
-		t.Errorf("primeira leitura %s longe do início %s", primeiro, inicio)
-	}
-	if d := segundo.Sub(primeiro); d < 20*time.Millisecond || d > 5*time.Second {
-		t.Errorf("andou %s em 20 ms", d)
-	}
+	synctest.Test(t, func(t *testing.T) {
+		inicio := time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)
+		r := NovoAPartirDe(inicio)
+		primeiro := r.Agora()
+		time.Sleep(20 * time.Millisecond)
+		segundo := r.Agora()
+		if !primeiro.Equal(inicio) {
+			t.Errorf("primeira leitura %s, esperado o início %s", primeiro, inicio)
+		}
+		if d := segundo.Sub(primeiro); d != 20*time.Millisecond {
+			t.Errorf("andou %s em 20 ms", d)
+		}
+	})
 }
 
 func TestLerInicio(t *testing.T) {
