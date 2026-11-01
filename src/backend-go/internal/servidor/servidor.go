@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"path"
 	"strings"
@@ -27,6 +28,10 @@ type Opcoes struct {
 	// API atende /api (#75: as rotas dos assuntos com a autenticação na frente). Nil: toda rota /api responde 404,
 	// como no esqueleto da #73.
 	API http.Handler
+	// AoEscutar, se não for nil, é chamada com o endereço de verdade (a porta escolhida, se o endereço pedido era
+	// ":0") quando o servidor já aceita conexões. É o sinal de "subiu" para o teste, no lugar de tentar de novo até
+	// responder (#458); o modo atrás do .NET faz o mesmo com o AvisarPorta.
+	AoEscutar func(endereco string)
 }
 
 // NovoHandler monta o pipeline, na ordem do Program.cs: filtro de hosts → cabeçalhos de segurança → erro → rotas.
@@ -107,11 +112,19 @@ func Rodar(ctx context.Context, o Opcoes) error {
 		ErrorLog:          slog.NewLogLogger(o.Log.Handler(), slog.LevelWarn),
 	}
 
+	// A porta é aberta aqui, e não dentro do ListenAndServeTLS: quando o Listen volta, o sistema já aceita conexões
+	// (elas esperam na fila), e quem espera pelo AoEscutar não precisa tentar de novo.
+	ouvinte, err := net.Listen("tcp", o.Config.Endereco)
+	if err != nil {
+		return fmt.Errorf("escutar em %s: %w", o.Config.Endereco, err)
+	}
+	endereco := ouvinte.Addr().String()
+	o.Log.Info("escutando", "endereco", "https://"+endereco)
 	erros := make(chan error, 1)
-	go func() {
-		o.Log.Info("escutando", "endereco", "https://"+o.Config.Endereco)
-		erros <- servidor.ListenAndServeTLS("", "")
-	}()
+	go func() { erros <- servidor.ServeTLS(ouvinte, "", "") }()
+	if o.AoEscutar != nil {
+		o.AoEscutar(endereco)
+	}
 
 	select {
 	case err := <-erros:
