@@ -8,7 +8,7 @@ O que os testes dos assuntos do #70 dividem, para cada um não escrever o seu (#
 
 | Função | Para quê |
 |---|---|
-| `NovoBanco(t) *sql.DB` | SQLite num arquivo do `t.TempDir()`, com o **esquema real** (`banco.AplicarEsquema`: os scripts de `banco/` embutidos, inclusive as colunas novas do `2-criar-banco.sh`), aberto pelo `banco.Abrir` (chave estrangeira ligada) e fechado no `t.Cleanup`. Vem com os dados iniciais, como um banco novo do usuário. |
+| `NovoBanco(t) *sql.DB` | SQLite num arquivo do `t.TempDir()`, com o **esquema real** (`banco.AplicarEsquema`: os scripts de `banco/` embutidos, inclusive as colunas novas do `2-criar-banco.sh`), aberto pelo `banco.Abrir` (chave estrangeira ligada) e fechado no `t.Cleanup`. Vem com os dados iniciais, como um banco novo do usuário. O esquema é aplicado uma vez por execução, num banco-modelo, e cada teste recebe uma cópia do arquivo (#542: aplicar custava ~370 ms por teste com o `-race`). |
 | `NovoBancoVazio(t) *sql.DB` | o mesmo, sem as categorias e regras padrão e com o `AUTOINCREMENT` delas zerado: o primeiro Id é 1. Para conferir uma lista inteira ou os Ids no JSON. |
 | `NovaFabrica(t, db, relogio) *Fabrica` | grava dados inventados no formato do EF Core. `db` pode ser `*sql.DB` ou `*sql.Tx`. |
 | `fab.Conta(ajustes...)` | conta corrente manual, em reais, saldo zero, entra no saldo |

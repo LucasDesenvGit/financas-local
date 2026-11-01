@@ -340,3 +340,20 @@ func TestSoImportadoPorTestes(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// Regra (#542): o banco-modelo é um SQLite com o esquema inteiro e sem WAL pendente (a cópia é só o arquivo
+// principal); quando a pasta é um arquivo, o erro diz em que passo parou.
+func TestMontarModelo(t *testing.T) {
+	t.Parallel()
+	dados, err := montarModelo(t.TempDir())
+	if err != nil || len(dados) == 0 || !strings.HasPrefix(string(dados), "SQLite format 3\x00") {
+		t.Fatalf("modelo: %d bytes, %v", len(dados), err)
+	}
+	arquivo := filepath.Join(t.TempDir(), "um arquivo")
+	if err := os.WriteFile(arquivo, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := montarModelo(arquivo); err == nil || !strings.Contains(err.Error(), "banco-modelo") {
+		t.Errorf("pasta que é um arquivo: %v", err)
+	}
+}
