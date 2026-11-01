@@ -7,7 +7,7 @@ O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regr
 | Ponto | Como fica aqui | Fonte |
 |---|---|---|
 | Erro é valor | `if err != nil { return fmt.Errorf("salvar conta %d: %w", id, err) }`, caminho feliz sem `else` | [Go 1.13 errors](https://go.dev/blog/go1.13-errors), [CodeReviewComments: indent error flow](https://go.dev/wiki/CodeReviewComments#indent-error-flow) |
-| Status HTTP a partir do erro | `errors.Is`/`errors.As` nas rotas do assunto (`internal/contas/rotas.go`, `internal/reservas/rotas.go`), com erro tipado exportado pela regra (`ErrContaInvalida`); o corpo do erro pelo `internal/respostas` | ADR 0056 (regra sem HTTP) |
+| Status HTTP a partir do erro | `errors.Is`/`errors.As` nas rotas do assunto, com erro exportado pela regra (`internal/reservas/rotas.go` com o `ErrContaInvalida` e o `ErrSemCotacao` de `reservas.go`; `internal/contas/rotas.go` com o `sql.ErrNoRows`); o corpo do erro pelo `internal/respostas` | ADR 0056 (regra sem HTTP) |
 | Texto do erro | minúsculo e sem ponto final, porque é encadeado | [CodeReviewComments: error strings](https://go.dev/wiki/CodeReviewComments#error-strings) |
 | `panic` | só para bug de programação; o `recover` do `internal/servidor` responde 500 com a mensagem genérica, e o de `internal/tarefas` segura cada ciclo | [CodeReviewComments: don't panic](https://go.dev/wiki/CodeReviewComments#dont-panic) |
 | `context.Context` | primeiro parâmetro de tudo que faz I/O, e respeitado (`QueryContext`, `NewRequestWithContext`); em teste, `t.Context()` | [CodeReviewComments: contexts](https://go.dev/wiki/CodeReviewComments#contexts), [Go blog: context](https://go.dev/blog/context) |
