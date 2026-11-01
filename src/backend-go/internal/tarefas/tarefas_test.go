@@ -150,6 +150,7 @@ func TestLigadas(t *testing.T) {
 		{"", nil, false},
 		{"Cambio", []string{"Cambio"}, false},
 		{" cambio ; CRIPTO ;", []string{"Cambio", "Cripto"}, false},
+		{"Cambio; ;Cripto", []string{"Cambio", "Cripto"}, false}, // a parte vazia no meio não para a leitura (#456)
 		{"Cambio;Cambio", []string{"Cambio"}, false},
 		{"Sincronizacao", []string{"Sincronizacao"}, false},
 		{"Cambio;Cotacoes", nil, true},
