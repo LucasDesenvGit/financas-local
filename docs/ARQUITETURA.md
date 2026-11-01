@@ -2,7 +2,7 @@
 
 Esta página começa pela visão de cima (o **HLD**): quem usa o sistema, as partes dele, onde cada uma roda e o que sai do computador. O detalhe por pasta vem depois. O padrão dos diagramas está na [ADR 0055](adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
 
-> **Data dos diagramas:** 31/10/2026, na fase "Go atrás do .NET" (#231, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Os diagramas de contêineres e de implantação mudam quando o .NET sair (#86).
+> **Data dos diagramas:** 01/11/2026, na fase "Go atrás do .NET" (#231, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Os diagramas de contêineres e de implantação mudam quando o .NET sair (#86).
 
 ## Contexto
 
@@ -89,6 +89,7 @@ flowchart TB
         openfinance["Open Finance<br/>sincronização com a Pluggy (#83)"]
         painel["Painel e relatórios (#80)"]
         conferencia["Conferir com o banco"]
+        partida["Partida da API<br/>rotinas que acertam dados ao subir (#444)"]
     end
 
     subgraph nucleo["Núcleo financeiro"]
@@ -114,6 +115,8 @@ flowchart TB
     painel --> cotacoes
     conferencia --> contas
     conferencia --> cotacoes
+    partida --> nucleo
+    partida --> investimentos
     planejamento --> transacoes
     planejamento --> contas
     planejamento --> investimentos
@@ -131,6 +134,7 @@ flowchart TB
 - **Quando as setas foram conferidas:** nos pacotes em Go, pelos imports (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`). No que está só no .NET, pelos serviços que cada classe recebe no construtor (`SincronizacaoService`, `PainelController`, `RelatorioService` e `PlanejamentoControllers`).
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos. O Painel já tem partes em Go (`internal/relatorios`, `internal/emprestimos`), mas as rotas dele ainda são do .NET.
+- **Partida:** as seis rotinas que acertam dados ao subir a API (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem do .NET. Estão em Go, mas só rodam com o Go na frente (depois da #85); até lá o .NET as roda.
 - **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191). Ainda não há nenhum.
 
 ## Onde roda o quê

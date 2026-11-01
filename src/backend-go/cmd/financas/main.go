@@ -44,6 +44,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/partida"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tarefas"
@@ -70,6 +71,7 @@ func rodar() error {
 		atras       = flag.Bool("atras-do-dotnet", false, "rodar como processo filho do .NET (#231): segredo pela entrada padrão, porta pela saída padrão")
 		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho (o .NET passa o dele)")
 		aplicar     = flag.Bool("aplicar-esquema", false, "sozinho: criar e atualizar o banco antes de atender, como o .NET faz (até a #85 quem faz isso é o .NET)")
+		partidaSo   = flag.Bool("rotinas-de-partida", false, "sozinho: rodar as seis rotinas que acertam dados ao subir (#444), como o .NET faz depois do esquema; use junto de -aplicar-esquema (até a #85 quem faz isso é o .NET)")
 		pastaChaves = flag.String("chaves", "", "sozinho: pasta da chave da sessão, no lugar do Seguranca:PastaChaves (padrão: dados/chaves, ao lado do banco)")
 		inicioRel   = flag.String("inicio-do-relogio", "", "só para teste (#363): o relógio começa neste instante e anda dali (RFC 3339 com fuso, ex.: 2026-10-15T01:00:00Z); vazio é o relógio do sistema")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")
@@ -145,6 +147,12 @@ func rodar() error {
 		return err
 	}
 	defer db.Close()
+	// #444: as rotinas de partida (regras padrão novas, entradas nos cartões, transferências...). Desligadas por padrão e
+	// fora do atrás-do-.NET (acima, que já voltou): quem as roda até a inversão é o .NET, e rodar nos dois acertaria duas
+	// vezes. Erro numa rotina só é registrado, como no .NET.
+	if *partidaSo {
+		partida.Executar(ctx, partida.Opcoes{DB: db, Relogio: rel, Log: log})
+	}
 	if *pastaChaves != "" {
 		cfg.PastaChaves = *pastaChaves
 	} else if _, err := os.Stat(cfg.PastaChaves); err != nil {

@@ -96,6 +96,7 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 - O `-certificado-temporario` cria um certificado só em memória, e o navegador vai avisar que não confia nele.
 - Para usar o `.pfx` e os caminhos de uma instalação, aponte `-pasta` para a pasta da publicação (onde está o `appsettings.Production.json`).
 - O `-aplicar-esquema` cria e atualiza o banco antes de atender, como o .NET faz ao iniciar (#297). Fica desligado por padrão: até a inversão (#85), quem faz isso é o .NET. Use só com uma cópia do banco.
+- O `-rotinas-de-partida` roda as seis rotinas que acertam dados ao subir (`internal/partida`, #444): regras padrão novas, entradas nos cartões, compras parceladas estornadas, transferências, contas a pagar cobradas sozinhas e trocos sem dúvida, nesta ordem, uma transação por rotina. Também desligado por padrão, e só vale sozinho (não atrás do .NET, que as roda por conta própria: rodar nos dois acertaria duas vezes). Use junto de `-aplicar-esquema` e só com uma cópia do banco. Erro numa rotina vira aviso (Configurações › Erros), a partida segue para as seguintes e o Go sobe do mesmo jeito (o `try/catch` do `Program.cs` parava na primeira; ADR 0049).
 - O `-inicio-do-relogio 2026-10-15T01:00:00Z` é **só para teste** (#363): o relógio começa nesse instante e anda dali, como a libfaketime faz com o .NET no contrato. Sem ele, o relógio do sistema. Atrás do .NET, quem passa a opção é o .NET, quando `Go:InicioDoRelogio` (vazio por padrão) tem um instante com fuso; ele passa o instante já validado, mais o tempo desde a partida dele. Ligado, o Go deixa um aviso no log (Configurações › Erros).
 
 ## Antes de subir (push)
@@ -107,6 +108,8 @@ python3 ../../scripts/ci/verificar-regras-go.py   # float64, time.Now() e time.S
 go test -race ./...
 go generate ./... && git diff --exit-code -- .   # código gerado e cópia dos scripts do banco em dia
 go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+# e com GOOS=windows (os _windows.go, #449): instale antes, porque "GOOS=windows go run" compila o govulncheck para Windows
+go install golang.org/x/vuln/cmd/govulncheck@v1.9.0 && GOOS=windows "$(go env GOPATH)/bin/govulncheck" ./...
 GOOS=windows go build ./...   # o executável do Windows compila sem cgo
 # De ponta a ponta, com o .NET compilado (dotnet build FinancasLocal.sln -c Release, na raiz):
 bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release

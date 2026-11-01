@@ -2,10 +2,20 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.53.6] — 2026-11-01 · desenvolvimento
+## [2.54.1] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
 - **Testes do Go sem `time.Sleep` de espera e as regras de ouro conferidas na CI** (#457, #458, ADR 0051). Nada muda na tela. Os testes que dormiam para esperar trocaram o sono por sinal: o servidor avisa pelo `Opcoes.AoEscutar` quando já aceita conexões, o gravador de erros e o relógio de teste rodam no `testing/synctest` e a data do arquivo do esquema vai para o passado com `os.Chtimes`. Um teste do gravador que falhava uma vez em 20 (dependia de qual goroutine corria primeiro) ficou determinístico. No job "Go", o `scripts/ci/verificar-regras-go.py` agora falha com `float64` (e `Float64()`, `ParseFloat`), com `time.Now` fora do `internal/relogio` e com `time.Sleep` de teste fora do `synctest`, dizendo o que usar no lugar; as 52 exceções (nenhum `float64` era dinheiro) estão em `scripts/ci/regras-go-excecoes.txt`, cada uma com o motivo, e o script tem teste próprio. Manual: não se aplica.
+
+## [2.54.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Rotinas de partida em Go** (#444, épico #70). Nada muda para quem usa: o .NET continua rodando as seis rotinas que acertam dados toda vez que a API sobe, e o Go só as roda quando estiver na frente (opção `-rotinas-de-partida`, depois da inversão, #85). O pacote `internal/partida` chama, na ordem do `Program.cs`, a regra de cada assunto: regras padrão novas (com a marca em `Configuracao`), entradas nos cartões, compras parceladas estornadas (`ParcelasFuturas.ComprasEstornadas` portada para `internal/parcelas`), transferências, contas a pagar cobradas sozinhas e trocos sem dúvida. Cada rotina grava numa transação própria antes da próxima; erro numa vira aviso e a partida segue para as seguintes (o `try/catch` do .NET para na primeira; diferença registrada na ADR 0049). As três rotinas novas têm gabarito gravado pelo `CategorizacaoService` de verdade (sonda em C#), com 149 transações, e a segunda partida não muda nada.
+
+## [2.53.6] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`govulncheck` também no Linux e com `GOOS=windows`** (#449). O `govulncheck` só olha os arquivos do sistema em que roda: o do gerenciador em Go rodava só no Windows, e o código só de Linux (os `_linux.go` e o Wails do Linux: WebKitGTK, GTK 4, bandeja pelo D-Bus) nunca era analisado; o do back-end rodava só no Linux, e os `_windows.go` (DPAPI dos segredos) ficavam de fora. Agora o job "gerenciador em Go (Linux)" roda o `govulncheck`, e o job "Go" roda duas vezes, a segunda com `GOOS=windows`. Não cobre as falhas das bibliotecas do sistema (WebKitGTK, GTK, WebView2), que chegam pelas atualizações da distribuição e do Windows. Nada muda para quem usa.
 
 ## [2.53.5] — 2026-11-01 · desenvolvimento
 

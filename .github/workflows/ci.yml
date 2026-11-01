@@ -251,8 +251,14 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build ./...
 
       # Falha só se o código chama uma função com vulnerabilidade conhecida (não basta o módulo estar no go.mod).
-      - name: Vulnerabilidades (govulncheck)
-        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      # #449: o govulncheck só olha os arquivos do GOOS em que roda; a segunda rodada, com GOOS=windows, cobre os
+      # _windows.go (DPAPI dos segredos, serviço do Windows). O back-end não usa cgo, então a análise cruzada vale.
+      # Instalado antes, porque um "GOOS=windows go run" compilaria o próprio govulncheck para Windows.
+      - name: Vulnerabilidades (govulncheck, Linux e Windows)
+        run: |
+          GOBIN="$RUNNER_TEMP/bin" go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          "$RUNNER_TEMP/bin/govulncheck" ./...
+          GOOS=windows "$RUNNER_TEMP/bin/govulncheck" ./...
 
   # #459 (ADR 0051): o back-end em Go também no Windows, onde ele vai rodar como serviço. O job "Go" acima só compila
   # para Windows; aqui rodam os testes dos arquivos _windows.go (DPAPI dos segredos, descrição do sistema) e, depois, os
@@ -348,7 +354,8 @@ jobs:
 
   # #417 (ADR 0052): o gerenciador em Go no Linux. Lá o Wails pede cgo, o GTK 4 e o WebKitGTK 6.0 (os -dev, para
   # compilar), então o teste roda com o -race. O resumo do job anota o tempo de instalar os pacotes e de compilar, e o
-  # tamanho do executável (critério de aceite da #417). O gofmt e o govulncheck ficam no job do Windows.
+  # tamanho do executável (critério de aceite da #417). O gofmt fica no job do Windows; o govulncheck roda nos dois,
+  # porque ele só olha os arquivos do sistema em que roda (#449).
   gerenciador-go-linux:
     name: gerenciador em Go (Linux)
     needs: mudancas
@@ -393,6 +400,12 @@ jobs:
           CGO_ENABLED=1 go build -tags production -trimpath -ldflags "-s -w" -o gerenciador-go .
           echo "- compilação com cgo: $((SECONDS - inicio)) s; executável: $(du -h gerenciador-go | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
           echo "- bibliotecas que o executável pede: $(objdump -p gerenciador-go | awk '/NEEDED/ {print $2}' | tr '\n' ' ')" >> "$GITHUB_STEP_SUMMARY"
+
+      # #449: o código só de Linux (os _linux.go e o Wails do Linux: WebKitGTK, GTK 4, bandeja pelo D-Bus) só é
+      # analisado aqui. Precisa do GTK e do WebKitGTK -dev instalados acima, para carregar os pacotes com cgo. Não cobre
+      # as falhas das próprias bibliotecas do sistema (C/C++): essas chegam pelas atualizações da distribuição.
+      - name: Vulnerabilidades (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   # #72 (ADR 0049): testes de contrato. Sobe o .NET sobre o banco fictício, sem rede e com o relógio começando em
   # 2026-10-15 01:00 UTC (libfaketime), e confere que ele responde e grava igual a src/backend-go/testes/contrato/esperado.
