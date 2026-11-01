@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.36] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes no navegador não falham mais no fim do mês** (#540). Nada muda para quem usa. O navegador do teste já rodava no fuso de Brasília, mas o código do teste e a API falsa rodavam no Node, que na CI fica em UTC: das 21h à meia-noite do último dia do mês, o teste via um mês e o site, o anterior, e 4 testes falhavam (metas, plano das metas, investimentos mês a mês e notificações). O `playwright.config.ts` passa a pôr o Node também no fuso de Brasília.
+
 ## [2.50.35] — 2026-11-01 · desenvolvimento
 
 ### Correções
