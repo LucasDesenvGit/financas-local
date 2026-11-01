@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.53.5] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Planejamento atendido pelo Go** (#555, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `planejamento` entra em `Go:Prefixos` com `/api/contas-agendadas`, `/api/orcamentos` e `/api/metas`: as contas a pagar (lista, avisos, sugestões do extrato, criar, editar, "é a mesma", pagar e excluir), os orçamentos (lista do mês, salvar, excluir, a sugestão por categoria, aplicar e copiar do mês anterior) e as metas (lista, o plano do caixa, a ordem, criar, editar, aportes e excluir). Para voltar ao .NET: esvaziar a linha `planejamento` no `appsettings.json` e reiniciar o serviço.
+
 ## [2.53.4] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
