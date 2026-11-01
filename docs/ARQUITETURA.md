@@ -127,6 +127,7 @@ flowchart TB
     class openfinance,painel,planejamento,nenhum soNoDotNet
 ```
 
+- **A fonte do mapa** ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)): a tabela `dependencias` do teste de arquitetura (`src/backend-go/internal/arquitetura/arquitetura_test.go`), par a par, com o motivo. Este diagrama agrupa os mesmos pares para quem lê, e muda quando muda uma seta entre os grupos.
 - **Quando as setas foram conferidas:** nos pacotes em Go, pelos imports (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`). No que está só no .NET, pelos serviços que cada classe recebe no construtor (`SincronizacaoService`, `PainelController`, `RelatorioService` e `PlanejamentoControllers`).
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos. O Painel já tem partes em Go (`internal/relatorios`, `internal/emprestimos`), mas as rotas dele ainda são do .NET.
@@ -230,6 +231,7 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 | Kestrel, sem IIS nem proxy | Os mesmos scripts no Windows e no Linux | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) |
 | SQLite, sem migrations | O banco é um arquivo, e o esquema vem de scripts idempotentes | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md), [0003](adr/0003-esquema-por-scripts-sql-idempotentes.md) |
 | Site no `wwwroot` da API | Mesma origem: sem CORS, com cookies `__Host-` | [0004](adr/0004-front-end-publicado-no-wwwroot-da-api.md) |
+| Código Go com as camadas dentro de cada assunto | Uma mudança num assunto fica num pacote; a regra não conhece HTTP; o mapa de contextos é conferido por teste | [0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Go atrás do .NET | A troca acontece um assunto por vez, com volta fácil | [0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | CSP restritiva, sem script inline | Nada de terceiros carregado no site | [0034](adr/0034-sem-sri-no-build-do-front-end.md) |
 | Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md), por exemplo |

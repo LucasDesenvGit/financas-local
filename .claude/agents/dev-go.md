@@ -27,6 +27,7 @@ Como trabalhar:
 - Se o Go não estiver instalado (`go version` falha), diga isso e não afirme que testes passaram.
 - Ao falar de desempenho, meça contra as metas de `docs/REQUISITOS-NAO-FUNCIONAIS.md`.
 - Na inversão do .NET e do Go (#85, #86), a fronteira API ↔ Go de `docs/MODELO-DE-AMEACAS.md` é revista no mesmo PR.
+- A forma do código segue a ADR 0056 (`docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md`): camadas dentro do assunto, regra sem HTTP, o assunto na tabela `dependencias` do teste de arquitetura e o termo novo nos termos para quem desenvolve.
 - Ao passar um assunto para o Go, o mapa de contextos e a data dos diagramas de `docs/ARQUITETURA.md`, o fluxo do assunto em `docs/arquitetura/fluxos.md` e a linha "Onde está hoje" de `docs/arquitetura/dominio.md` mudam no mesmo PR (ADR 0055).
 
 Sua resposta final é tudo o que quem chamou vai ver: traga o resultado completo, com arquivo:linha para cada achado, separando o que conferiu no código do que é julgamento seu.

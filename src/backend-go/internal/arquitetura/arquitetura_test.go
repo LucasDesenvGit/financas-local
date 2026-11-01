@@ -8,7 +8,8 @@
 //	go test -tags arquitetura ./internal/arquitetura/
 //
 // O grafo vem do "go list -json ./..." (só a biblioteca padrão, ADR 0051). Cada regra tem o motivo e, quando há, as
-// exceções explicadas. Mudou a arquitetura de propósito? Mude a tabela aqui no mesmo PR, com o motivo.
+// exceções explicadas. Mudou a arquitetura de propósito? Mude a tabela aqui no mesmo PR, com o motivo. As regras de
+// arquitetura (regra sem HTTP, mapa de contextos, módulos) são as da ADR 0056.
 package arquitetura
 
 import (
@@ -80,6 +81,9 @@ var (
 	}
 	// montadores: juntam tudo (rotas e programa) e podem importar qualquer assunto.
 	montadores = []string{"internal/api", "cmd/financas", "testes/contrato", "internal/arquitetura"}
+	// modulos (#190, #191, ADR 0056): visualizações que se ligam e desligam. Um módulo usa o núcleo (assuntos, base e
+	// transversais), mas o núcleo não importa módulo, e um módulo não importa outro. O primeiro módulo entra aqui.
+	modulos = []string{}
 )
 
 // dependencias é a tabela de quem pode importar quem entre os assuntos: a semente do mapa de contextos (#462, #474).
@@ -196,6 +200,9 @@ func violacoes(pacotes []pacote) []string {
 	for _, c := range montadores {
 		grupo[c] = "montador"
 	}
+	for _, c := range modulos {
+		grupo[c] = "modulo"
+	}
 	permitido := map[string]map[string]bool{}
 	for _, d := range dependencias {
 		grupo[d.De] = "assunto"
@@ -215,6 +222,22 @@ func violacoes(pacotes []pacote) []string {
 			continue
 		}
 		for _, imp := range p.Imports {
+			// Regra 5: os módulos (ADR 0056).
+			if grupo[imp] == "modulo" && grupo[p.Caminho] == "modulo" {
+				v = append(v, fmt.Sprintf("regra 5 (um módulo não depende de outro): %s importa %s. O que fazer: o que "+
+					"os dois usam vai para o núcleo (um assunto ou a base); cada módulo se liga e desliga sozinho.",
+					p.Caminho, imp))
+				continue
+			}
+			if grupo[imp] == "modulo" {
+				v = append(v, fmt.Sprintf("regra 5 (o núcleo não depende de módulo): %s importa o módulo %s. O que "+
+					"fazer: o módulo usa o núcleo, e não o contrário; o que o núcleo precisa vai para um assunto.",
+					p.Caminho, imp))
+				continue
+			}
+			if grupo[p.Caminho] == "modulo" {
+				continue // o módulo pode usar qualquer assunto do núcleo
+			}
 			if grupo[imp] != "assunto" || permitido[p.Caminho][imp] {
 				continue
 			}
@@ -318,11 +341,14 @@ func TestArquitetura(t *testing.T) {
 
 // Regra: cada regra falha com um import proibido de mentira, e a mensagem diz a regra e o que fazer.
 func TestCadaRegraFalha(t *testing.T) {
+	antes := modulos
+	modulos = []string{"internal/trabalho", "internal/noticias"}
+	defer func() { modulos = antes }()
 	limpo := func() []pacote {
 		var r []pacote
 		// Um grafo mínimo que passa: os pacotes das listas, sem import nenhum, e as exceções chegando ao HTTP.
 		vistos := map[string]bool{}
-		for _, grupo := range [][]string{base, transversais, regraSemHTTP} {
+		for _, grupo := range [][]string{base, transversais, regraSemHTTP, modulos} {
 			for _, c := range grupo {
 				if !vistos[c] {
 					vistos[c] = true
@@ -356,6 +382,10 @@ func TestCadaRegraFalha(t *testing.T) {
 		}
 		return append(r, func() pacote { p := pacote{Caminho: caminho}; f(&p); return p }())
 	}
+	// O módulo pode usar o núcleo: um assunto, sem linha na tabela.
+	if v := violacoes(mudar("internal/trabalho", func(p *pacote) { p.Imports = []string{"internal/transacoes"} })); len(v) > 0 {
+		t.Errorf("módulo usando um assunto do núcleo: %v", v)
+	}
 	casos := []struct {
 		nome     string
 		grafo    []pacote
@@ -374,6 +404,10 @@ func TestCadaRegraFalha(t *testing.T) {
 			"regra 4: internal/novo não está em nenhum grupo"},
 		{"assunto fora do mapa", mudar("internal/selic", func(p *pacote) { p.Imports = []string{"internal/carteira"} }),
 			"regra 4 (mapa de contextos): internal/selic importa internal/carteira"},
+		{"módulo importa módulo", mudar("internal/noticias", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
+			"regra 5 (um módulo não depende de outro): internal/noticias importa internal/trabalho"},
+		{"núcleo importa módulo", mudar("internal/contas", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
+			"regra 5 (o núcleo não depende de módulo): internal/contas importa o módulo internal/trabalho"},
 		{"base que depende de assunto", mudar("internal/tipos", func(p *pacote) { p.Imports = []string{"internal/contas"} }),
 			"regra 4: internal/tipos (base) importa o assunto internal/contas"},
 	}

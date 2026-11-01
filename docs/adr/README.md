@@ -93,3 +93,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) | Receber versões de desenvolvimento por escolha, no gerenciador em Go | Aceita |
 | [0054](0054-analise-de-seguranca-do-codigo-com-o-codeql.md) | Análise de segurança do código com o CodeQL, por workflow próprio, nas 5 linguagens (#451) | Aceita |
 | [0055](0055-documentacao-de-arquitetura-em-diagramas-mermaid.md) | Documentação de arquitetura em diagramas Mermaid, do HLD ao LLD (#462) | Aceita |
+| [0056](0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) | Arquitetura do código Go: camadas dentro de cada assunto, regra sem HTTP, DDD estratégico (mapa de contextos no teste de arquitetura) e o que não se adota (#474) | Aceita |
