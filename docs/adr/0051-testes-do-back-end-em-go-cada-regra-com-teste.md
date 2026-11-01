@@ -203,7 +203,7 @@ Os princípios estão aqui. Os números e as ferramentas, nelas (*inferido*, at�
   - **primeira rodada:** achou 2 bugs, um no começo do dia no horário de verão e outro no GUID com hífen fora do lugar. O mesmo começo do dia lança exceção no C# (#393);
 - **#373:** o teste de mutação automático nas regras de negócio (feito: seção acima).
 
-Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, seção 5).
+Benchmark só para código quente, antes de otimizar (skill `go-no-projeto`, "Desempenho").
 
 ## Consequências
 
@@ -227,4 +227,4 @@ Benchmark só para código quente, antes de otimizar (skill `migrar-para-go`, se
   - **regra nova:** linha na tabela do teste unitário do pacote; **consulta nova:** teste com o SQLite real; **endpoint novo:** caso de contrato gravado do .NET, mais o teste HTTP dos ramos de validação;
   - **no PR:** a tabela regra → teste, os casos-limite que não se aplicam e a lista de mutações;
   - o C# continua sem teste automatizado, só com o checklist do PR: ele sai aos poucos, e cada assunto ganha teste ao vir para o Go;
-  - a regra está também no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), na skill `migrar-para-go`, no agente `dev-go` e no modelo de PR.
+  - a regra está também no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), nas skills `go-no-projeto` e `migrar-para-go`, no agente `dev-go` e no modelo de PR.
