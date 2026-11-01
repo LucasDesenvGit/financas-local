@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.50.35] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de mutação do back-end em Go verde de novo** (#455, épico #374). Nada muda para quem usa. A medição semanal falhava desde 26/10: os 7 mutantes vivos do `internal/tipos` já tinham saído (#82, #447), mas o `internal/carteira` derrubava a máquina da CI. Trocar o `if m == ""` (ou tirar o `i += len(m)`) do laço dos números do extrato fazia ele acrescentar "" sem fim, até acabar a memória. O laço passa a dar uma volta por caractere, com o mesmo resultado (gabarito do C#), e o teste de mutação do back-end passa a mostrar o andamento no log, como o do gerenciador (#433). Os 31 pacotes medidos ficam em 100%.
+
 ## [2.50.34] — 2026-10-31 · desenvolvimento
 
 ### Publicação e documentação
