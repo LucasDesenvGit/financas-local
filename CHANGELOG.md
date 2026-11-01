@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.50.36] — 2026-11-01 · desenvolvimento
+## [2.50.37] — 2026-11-01 · desenvolvimento
 
 ### Publicação e documentação
 - **Testes de arquitetura locais, no Go e no front-end** (#476, épico #485). Nada muda para quem usa. Dois testes, no estilo do ArchUnit do Java, conferem quem pode importar quem: no Go, o driver do SQLite só no `internal/banco`, o apoio aos testes só em `_test.go`, a regra de negócio sem HTTP e um mapa de quais assuntos importam quais; no front-end, o HTTP só pelo `ApiService` e as pastas `core`, `compartilhado`, `layout` e `paginas` em camadas. São só locais (`go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura`), fora da CI por decisão de 29/10/2026. O `TamanhoUtf16` foi para o `internal/texto`, e o `regrasdescricao` deixou de depender do pacote do HTTP. ADRs 0051 e 0013, `CLAUDE.md`, skills e o agente `dev-go` atualizados.
+
+## [2.50.36] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes no navegador não falham mais no fim do mês** (#540). Nada muda para quem usa. O navegador do teste já rodava no fuso de Brasília, mas o código do teste e a API falsa rodavam no Node, que na CI fica em UTC: das 21h à meia-noite do último dia do mês, o teste via um mês e o site, o anterior, e 4 testes falhavam (metas, plano das metas, investimentos mês a mês e notificações). O `playwright.config.ts` passa a pôr o Node também no fuso de Brasília.
 
 ## [2.50.35] — 2026-11-01 · desenvolvimento
 
