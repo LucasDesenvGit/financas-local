@@ -82,6 +82,13 @@ func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atua
 	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), cofre: cofre, desfazer: desfazer.Nova[estadoAnterior](rel), relogio: rel, log: log}
 }
 
+// NovoServicoDeAcertos monta o serviço só com o que o ClassificarTrocosSemDuvida usa (o banco, a configuração, o relógio e o
+// log), para a partida da API (#444): ela não precisa de câmbio, reservas, Selic, cotações nem do cofre. Qualquer outro
+// método do serviço feito assim entra em pânico, por falta de dependência: para ele, use o NovoServico.
+func NovoServicoDeAcertos(db *sql.DB, rel relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, config: configuracao.Novo(db, rel), relogio: rel, log: log}
+}
+
 // SelicResumoDto é o do C#.
 type SelicResumoDto struct {
 	MetaAnual        *tipos.Decimal `json:"metaAnual"`

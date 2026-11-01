@@ -31,6 +31,22 @@ gh pr create --base develop --fill    # na descrição: Closes #<número>
 
 Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --assignee @me`): todo PR fecha a issue dele. **Épicos e as histórias deles ficam sem ninguém atribuído:** só a história que alguém pega para fazer vai para o nome dessa pessoa; o épico continua sem dono. Ao começar a trabalhar numa issue, ponha a etiqueta "em progresso" (`gh issue edit <número> --add-label "em progresso"`) e tire ao fechar.
 
+**Dependência entre issues vai no GitHub** (painel **Relationships**), além do "Depende de: #N" no texto, para ninguém pegar uma issue ainda bloqueada. O `<id>` é o id numérico da issue, não o número dela:
+
+```bash
+gh api repos/LucasDesenvGit/financas-local/issues/<N> -q .id                                  # o id de uma issue
+gh api -X POST repos/LucasDesenvGit/financas-local/issues/<bloqueada>/dependencies/blocked_by -F issue_id=<id da que bloqueia>
+gh api -X POST repos/LucasDesenvGit/financas-local/issues/<épico>/sub_issues -F sub_issue_id=<id da história>   # ligar ao épico
+```
+
+Ligar uma história ao épico (sub-issue) é outra coisa e não substitui o *blocked by*. Só dependência real bloqueia: "de preferência antes" não.
+
+### Backlog no Project
+
+As issues e o andamento ficam no Project **"ClaudioFinancas"** ([users/LucasDesenvGit/projects/2](https://github.com/users/LucasDesenvGit/projects/2)). Issue nova (e sub-issue) entra sozinha, pelo workflow "Auto-add to project", com o Status `Backlog`.
+- **Campos:** **Status** (Backlog, In progress, In review, Done, Epic), **Priority** (P0–P2) e **Size** (XS–XL). Na prática, a prioridade vai na etiqueta `prioridade: alta|média|baixa`.
+- **Pelo `gh`** (a conta precisa do escopo `project`): `gh project item-list 2 --owner LucasDesenvGit`, `gh project field-list 2 --owner LucasDesenvGit` e `gh project item-edit`.
+
 **Todo PR para o `develop` sobe a versão** no `Directory.Build.props`, pelo tipo do título ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)). O check "versão subiu" da CI confere.
 
 | Tipo do PR | Sobe | Exemplo |
@@ -71,6 +87,27 @@ Exemplos:
 - `fix(open-finance): não duplicar transações ao renovar o consentimento`
 - `feat(banco)!: nova coluna Transacao.Emergencia` (o `!` indica que é preciso rodar `2-criar-banco.sh`)
 
+## O que a CI roda
+
+Além do build e dos testes do back-end e do front-end, a CI confere o que dá para rodar aqui também:
+
+```bash
+python3 scripts/ci/verificar-sql.py                           # banco/01-estrutura.sql é idempotente (e é aplicado a um SQLite descartável)
+python3 scripts/ci/gerar-diagrama-banco.py --conferir         # os diagramas de docs/BANCO-DE-DADOS.md estão em dia
+python3 scripts/ci/testes-afetados.py --base origin/develop   # no PR, só os testes afetados (ADR 0047): mostra quais
+python3 scripts/ci/verificar-changelog.py                     # CHANGELOG: uma seção por versão, sem tipo repetido (#294)
+```
+
+| Workflow ou job | Quando | O que faz |
+|---|---|---|
+| **Go** (#231) | todo PR | `gofmt`, `go vet`, regras de ouro (#457: `float64`, `time.Now` e `time.Sleep` de teste fora de `scripts/ci/regras-go-excecoes.txt`), `go test -race` com cobertura por pacote que só sobe (#370) e trava de tempo (#371), `go generate` em dia, build do Windows, govulncheck ([README do Go](src/backend-go/README.md)) |
+| **Go (Windows)** (#459) | todo PR | `go vet` e `go test` no `windows-latest`, para os `_windows.go` (DPAPI, serviço) |
+| **Teste de mutação (Go)** (#373, #456) | PR que mexe no Go, toda segunda e à mão | no PR, os pacotes de `scripts/ci/mutacao-go.txt` que ele mudou, com piso; no agendamento, a lista inteira |
+| **Fuzz do Go** (#372) | toda segunda e à mão | o `-fuzz` dos alvos `FuzzXxx`; não roda no PR |
+| **CodeQL** (#451, [ADR 0054](docs/adr/0054-analise-de-seguranca-do-codigo-com-o-codeql.md)) | todo PR | segurança do código (C#, Go, TS, Python, workflows); achados em Security › Code scanning, sem bloquear |
+| **Teste de instalação no Linux/Windows** | quando `scripts/` ou `banco/` mudam | instala do zero num runner limpo e restaura uma cópia, seguindo o [guia de operação](docs/OPERACAO.md) |
+| **Versão (instalador .msi)** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)) | push do `develop`, tag `vX.Y.Z` e à mão | gera e testa o `.msi` (`instalador/gerar-msi.ps1`, WiX 5, ADR 0029); na tag, publica o Release |
+
 ## Testes rápidos (padrões de CI)
 
 Em outubro de 2026 o Jest chegou a levar ~6 min na CI (#204): um pacote pesado importado nos testes custava ~15 s em **cada** arquivo de teste. Para não voltar:
@@ -99,7 +136,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - **Teste novo de estilo prova que falha:** estrague a regra no CSS do build (`dist/…/styles-*.css`), rode o teste, veja falhar e restaure. Se não falhar, os dados da API falsa provavelmente não exercitam o caso (ex.: dois cards com o mesmo conteúdo ficam iguais mesmo sem a regra): use conteúdos de tamanhos diferentes.
 
 **Antes de subir (push) mudança no front-end, rode os testes no navegador com o mesmo navegador da CI** (#264: passou no Edge daqui e falhou na CI):
-- `npx playwright install chromium` uma vez; depois `NAVEGADOR=chromium npx playwright test` (o Chromium do Playwright, o mesmo da CI). O Edge do computador continua para o dia a dia.
+- `npx playwright install chromium` uma vez; depois `NAVEGADOR=chromium npm run test:afetados` (o Chromium do Playwright, o mesmo da CI, só no que o PR afeta; #286). Não rode a suíte inteira a cada envio: ela roda na CI, no merge. O Edge do computador continua para o dia a dia.
 - **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
 - **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
 - No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).
@@ -168,7 +205,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 
 **Teste novo prova que falha:** estrague o código de propósito (troque `RoundBank` por `Round`, tire um filtro, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta.
 
-**Teste de mutação semanal (#373):** o workflow "Teste de mutação (Go)" roda o gremlins toda segunda nos pacotes de `scripts/ci/mutacao-go.txt`, e falha quando um pacote fica abaixo do piso dele.
+**Teste de mutação (#373, #456):** o workflow "Teste de mutação (Go)" roda o gremlins nos pacotes de `scripts/ci/mutacao-go.txt`: no PR, só nos que o PR mudou; toda segunda, em todos. Falha quando um pacote fica abaixo do piso dele.
 - **Assunto novo com regra de negócio ou dinheiro:** entra nessa lista no PR dele, com o piso da primeira medição: `python3 scripts/ci/mutacao-go.py internal/<assunto>`, uns 2 min.
 - **Mutação viva:** vira teste. Se ela não muda o resultado (é equivalente), vai para `scripts/ci/mutacao-go-equivalentes.txt` com o porquê.
 - **Ponto cego:** o gremlins não testa mutação dentro de `case`. Ali, a mutação à mão no PR continua valendo.
@@ -179,6 +216,10 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - rede de verdade: respostas gravadas. O próprio teste ouvindo em `127.0.0.1` pode;
 - dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
 - biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
+
+**A CI confere as regras de ouro (#457):** `python3 scripts/ci/verificar-regras-go.py` (em `src/backend-go`, o mesmo do job "Go") falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
+- **Exceção:** uma linha em `scripts/ci/regras-go-excecoes.txt`, com o motivo, pelo texto da linha do código (como o `mutacao-go-equivalentes.txt`). Exceção que não casa mais com nenhuma linha também falha.
+- **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro; `time.Now` só para hora de sistema (duração, validade de certificado); `time.Sleep` só quando o tempo é o que se testa.
 
 **`t.Parallel()`:**
 - **use** nos testes de banco e de HTTP que têm o próprio banco no próprio `t.TempDir()`;
@@ -242,7 +283,8 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 ## Claude Code no projeto
 
 Quem usa o Claude Code no projeto recebe, pelo repositório:
-- **as skills de `.claude/skills/`**: `testar-no-navegador` e `trabalho-longo`;
+- **as skills de `.claude/skills/`**: `angular-no-projeto` e `testar-no-navegador` (front-end), `go-no-projeto` e `migrar-para-go` (Go) e `trabalho-longo`;
+- **os agentes de `.claude/agents/`**: `dev-angular` (#559) e `dev-go` (#560), que carregam as skills do assunto e têm um hook só deles (`.claude/hooks/bloquear-merge-em-agente.sh`) que barra `gh pr merge` e `git push` forçado;
 - **o hook de `.claude/settings.json`** (#280). A cada pedido, ele roda `.claude/hooks/lembrar-trabalho-longo.sh` (bash, sem dependência nova; no Windows, pelo Git Bash). Quando o pedido tem link de issue ou PR, cita um épico ou a sessão fica longa, ele lembra o Claude de oferecer a skill `trabalho-longo`, para o trabalho continuar sozinho quando o limite de uso voltar.
   - O hook nunca bloqueia o pedido.
   - Ele avisa uma vez por motivo e por sessão.
@@ -252,5 +294,6 @@ Quem usa o Claude Code no projeto recebe, pelo repositório:
 
 - Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Back-end: um serviço por assunto em `Servicos/`, controllers finos, DTOs em `Dtos/Dtos.cs`.
-- Front-end: componentes standalone, signals e control flow (`@if`, `@for`); chamadas HTTP só pelo `ApiService`.
+- Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
+- Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").
 - Formatação definida no `.editorconfig`.

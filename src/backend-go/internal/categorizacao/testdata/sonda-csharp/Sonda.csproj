@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sonda dos acertos da partida (#444): roda o CategorizacaoService da própria API, na ordem do Program.cs, sobre o
+       cenário de ../acertos-cenario.sql e grava o gabarito ../acertos.json. Fora da solução. Rodar com dotnet run,
+       apontando para esta pasta. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\backend\Financas.Api\Financas.Api.csproj" />
+  </ItemGroup>
+</Project>

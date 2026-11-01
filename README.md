@@ -121,6 +121,7 @@ Os outros, com mais detalhe: [Problemas comuns](docs/PROBLEMAS-COMUNS.md).
 - [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md): scripts, Visual Studio, testes e pastas.
 - [CONTRIBUINDO.md](CONTRIBUINDO.md): branches, commits, versão e pull requests.
 - [Arquitetura](docs/ARQUITETURA.md), [Banco de dados](docs/BANCO-DE-DADOS.md) e as [decisões (ADRs)](docs/adr/README.md).
+- [UI/UX](docs/UI-UX.md): as referências (Nielsen, WCAG 2.2, Shneiderman) e os padrões de tela que o site segue.
 - [CHANGELOG.md](CHANGELOG.md): o que mudou em cada versão.
 
 Front-end em Angular e banco SQLite. A API em .NET 10 fica na frente e o back-end está passando para Go, um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Tudo publicado junto, como serviço do sistema.
