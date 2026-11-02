@@ -47,12 +47,15 @@ func (c cambioFalso) ListarMoedas(context.Context) ([]cambio.Moeda, error) {
 
 type reservasFalsas struct {
 	lista []reservas.ReservaDto
+	total tipos.Decimal
 	erro  error
 }
 
 func (r reservasFalsas) Listar(context.Context) ([]reservas.ReservaDto, error) {
 	return r.lista, r.erro
 }
+
+func (r reservasFalsas) Total(context.Context) (tipos.Decimal, error) { return r.total, r.erro }
 
 type selicFalsa struct {
 	serie    *selic.Serie

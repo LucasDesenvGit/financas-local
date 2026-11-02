@@ -80,7 +80,7 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log), cofre, d.Relogio, d.Log)
 	carteira.Registrar(mux, daCarteira)                                                                                                     // #82: a carteira
 	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
+	painel.Registrar(mux, painel.NovoServico(d.DB, daCarteira, reservasDaCarteira, cambioDaCarteira, d.Relogio, d.Log))                     // #80: empréstimos e relatórios
 	investimentos.Registrar(mux, investimentos.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log))                                       // #80: os do Open Finance
-	painel.Registrar(mux, painel.NovoServico(d.DB, d.Relogio, d.Log))                                                                       // #80: empréstimos
 	return mux
 }
