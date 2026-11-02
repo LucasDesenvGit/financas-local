@@ -7,6 +7,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Funcionalidades
 - **O Go pronto para rodar como serviço e gerar o próprio certificado** (#84, parte 1; épico #70). Nada muda para quem usa: o serviço continua sendo o .NET, e os scripts ainda não usam isso. No Windows, o executável agora conversa com o gerenciador de serviços e escreve avisos e erros no Log de Eventos. O subcomando `gerar-certificado` reaproveita o `.pfx` que ainda vale e gera outro quando faltam 30 dias, com a parte pública num `.pem` ao lado.
 
+## [2.61.2] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Gerenciador manda atualizar a instalação pelos scripts com o `instalar.sh`** (#598). Na instalação pelos scripts, o gerenciador do Linux mostrava o comando `git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh`, e o do Windows citava o `3-publicar-atualizar.sh`. Quando o código novo pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha. Agora o comando é `git pull && scripts/geral/instalar.sh`, que traz o .NET e o Go das versões novas e, no Linux, já atualiza o gerenciador no fim; o texto do Windows pede o `git pull` e o `instalar-windows.cmd` (ou o `instalar.sh`). Vale nas duas janelas em C# e no gerenciador em Go. Manual: não se aplica (o Manual já manda usar o `instalar.sh`).
+
+## [2.61.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Arquitetura de acordo com o que o Go já atende** (#575, seção 2 da varredura de 01/11/2026, revista com o `develop` de 02/11). O `ARQUITETURA.md` passa a dizer que todos os assuntos já têm código Go: o planejamento atende o site, e os investimentos, o painel e o Open Finance estão portados e passam no contrato, mas desligados em `Go:Prefixos` (o Open Finance, até a troca dos segredos, #85). O mapa de contextos ganha a seta do planejamento para o painel e marca os assuntos desligados no site; o diagrama de contêineres, a PTAX que o .NET ainda consulta; o Go sozinho deixa de ser "o esqueleto da #73"; a lista dos serviços do .NET fica completa, com o câmbio e a cripto rodando pelo `Go:Tarefas`; e a tabela de pastas do Go remete ao README dele. Nos fluxos: o planejamento entre o que o Go atende, as seis rotinas da partida e o carimbo da sessão conferido em todo pedido (só o CSRF é dos que gravam). No domínio, conta a pagar, orçamento e meta em Go. O modelo de ameaças ganha a fronteira do gerenciador com a API e o banco (o certificado aceito sem conferir no loopback e a cópia como administrador) e as cópias automáticas em `dados/backups`. O índice das ADRs diz que a 0047 está em parte substituída pela 0050, que a 0052 substitui a 0028 e a 0033 quando o gerenciador em Go for publicado, e que a mutação da 0051 roda também no PR (#456). Os requisitos não funcionais ganham o limite de 60 s por pacote do Go. Manual: não se aplica.
+
 ## [2.61.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades

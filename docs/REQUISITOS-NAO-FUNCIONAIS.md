@@ -59,6 +59,6 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
 | Tempo dos testes do Jest | Segundos | Até 20 s por arquivo e 150 s por suíte | `scripts/ci/verificar-tempo-testes.py` | Conferida na CI |
-| Tempo dos testes do Go | Segundos | Até 20 s por teste e 120 s por suíte | `scripts/ci/verificar-tempo-testes-go.py` | Conferida na CI |
+| Tempo dos testes do Go | Segundos | Até 20 s por teste, 60 s por pacote e 120 s por suíte | `scripts/ci/verificar-tempo-testes-go.py` | Conferida na CI |
 | Cobertura do Go | % por pacote | Só sobe (#370); pacote novo nasce com 80% | `cobertura-minima.txt` e `verificar-cobertura-go.py` | Conferida na CI |
 | Mutação do Go | % por pacote | O piso de `mutacao-go.txt` só sobe (#373) | `scripts/ci/mutacao-go.py` | Conferida na CI, toda segunda e quando muda |

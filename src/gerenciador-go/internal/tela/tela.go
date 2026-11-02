@@ -102,13 +102,13 @@ func TextoPelosScriptsNoLinux(comComando bool) string {
 		return "Instalado pelos scripts: a versão nova vem do código. Para atualizar o site e o gerenciador, rode no " +
 			"terminal (o site fica fora do ar por alguns segundos e o banco ganha uma cópia antes):"
 	}
-	return "Instalado pelos scripts: para atualizar, rode git pull, scripts/geral/3-publicar-atualizar.sh e " +
-		"scripts/linux/instalar-gerenciador.sh na pasta do projeto."
+	return "Instalado pelos scripts: para atualizar, rode git pull e scripts/geral/instalar.sh na pasta do projeto."
 }
 
-// ComandoParaAtualizar é o comando que atualiza o site e o gerenciador pelos scripts, na pasta do projeto.
+// ComandoParaAtualizar é o comando que atualiza o site e o gerenciador pelos scripts, na pasta do projeto. É o
+// instalar.sh, e não só a publicação: ele traz o .NET e o Go que o código novo pede e, no fim, o gerenciador (#598).
 func ComandoParaAtualizar(raiz string) string {
-	return "cd " + aspasDoShell(raiz) + " && git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh"
+	return "cd " + aspasDoShell(raiz) + " && git pull && scripts/geral/instalar.sh"
 }
 
 // aspasDoShell põe o texto entre aspas simples para o bash (a aspa simples dentro vira '\”).
@@ -330,8 +330,8 @@ func (t Tela) Atualizacao() Atualizacao {
 // resultado da procura, ou o convite para procurar.
 func TextoDaVersao(instalada string, peloMsi, siteInformouVersao bool, resultadoDaProcura string) string {
 	if !peloMsi {
-		return "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd " +
-			"(ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi " +
+		return "Instalado pelos scripts: para atualizar o site, rode git pull e, de novo, o instalar-windows.cmd " +
+			"(ou o scripts/geral/instalar.sh) na pasta do projeto. Ou passe para o instalador: o .msi " +
 			"traz o banco e as chaves, e daí em diante a versão nova chega por aqui."
 	}
 	var partes []string

@@ -325,8 +325,8 @@ internal sealed class FormPrincipal : Form
         }
         if (!_instalacao.PeloMsi)
         {
-            _versao.Text = "Instalado pelos scripts: para atualizar o site, rode de novo o instalar-windows.cmd "
-                           + "(ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o instalador: o .msi "
+            _versao.Text = "Instalado pelos scripts: para atualizar o site, rode git pull e, de novo, o instalar-windows.cmd "
+                           + "(ou o scripts/geral/instalar.sh) na pasta do projeto. Ou passe para o instalador: o .msi "
                            + "traz o banco e as chaves, e daí em diante a versão nova chega por aqui.";
             return;
         }
