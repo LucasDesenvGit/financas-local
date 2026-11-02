@@ -65,12 +65,12 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md) | Tipo de lançamento: dado do Open Finance, com a descrição como reserva | Aceita |
 | [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
 | [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita (em parte substituída pela 0044) |
-| [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Aceita (em parte substituída pela 0040) |
+| [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Aceita (em parte substituída pela 0040; a 0052 a substitui quando o gerenciador em Go for publicado) |
 | [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita (em parte substituída pela 0039) |
 | [0030](0030-regras-de-descricao-em-tabela-propria.md) | Regras de descrição em tabela própria, com o nome do banco sempre guardado | Aceita |
 | [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md) | Transferência só fica fora dos relatórios quando é entre contas suas | Aceita |
 | [0032](0032-controles-padrao-interruptor-e-campo-de-valor.md) | Controles padrão: interruptor, caixa de marcar, campo de valor, campo de data e lista suspensa | Aceita |
-| [0033](0033-gerenciador-no-linux-com-avalonia.md) | Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows | Aceita (em parte substituída pela 0040) |
+| [0033](0033-gerenciador-no-linux-com-avalonia.md) | Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows | Aceita (em parte substituída pela 0040; a 0052 a substitui quando o gerenciador em Go for publicado) |
 | [0034](0034-sem-sri-no-build-do-front-end.md) | Build do front-end sem SRI, para manter a CSP sem script inline | Aceita |
 | [0035](0035-plano-das-metas-pelo-caixa-calculado-na-tela.md) | Plano das metas pelo caixa do mês (fatura que vence entra), com a divisão calculada na tela | Aceita |
 | [0036](0036-receita-e-despesa-pelo-tipo-estorno-abate-gasto.md) | Receita e despesa pelo tipo, não pelo sinal; estorno no cartão abate o gasto | Aceita |
@@ -84,11 +84,11 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0044](0044-trocos-sem-duvida-classificados-na-sincronizacao.md) | Trocos "sem dúvida" classificados na sincronização, com aviso e "Desfazer" | Aceita |
 | [0045](0045-historico-de-saldo-dos-investimentos-do-open-finance.md) | Histórico de saldo dos investimentos do Open Finance, um registro por dia | Aceita |
 | [0046](0046-menu-lateral-em-grupos-que-abrem-e-fecham.md) | Menu lateral em grupos que abrem e fecham (sanfona), vários abertos ao mesmo tempo | Aceita |
-| [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) | CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele | Aceita |
+| [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) | CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele | Aceita (a parte do .msi no PR, substituída pela 0050) |
 | [0048](0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md) | Cotação de criptomoedas pela API pública do Mercado Bitcoin | Aceita |
 | [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) | Back-end em Go, trocado aos poucos atrás do .NET (strangler fig), com sqlc, modernc.org/sqlite e shopspring/decimal; o .NET sobe o Go como processo filho e repassa os prefixos de `Go:Prefixos` (#231) | Aceita |
 | [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) | O .msi é gerado no merge para o develop (e na tag), e não no PR | Aceita |
-| [0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md) | Testes do back-end em Go: cada regra com teste unitário, além do contrato; SQLite real, `httptest` e só a biblioteca padrão; teste de mutação semanal com o gremlins (#373); regras de ouro (float64, time.Now, time.Sleep) conferidas na CI (#457) | Aceita |
+| [0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md) | Testes do back-end em Go: cada regra com teste unitário, além do contrato; SQLite real, `httptest` e só a biblioteca padrão; teste de mutação com o gremlins, no PR (só os pacotes mudados, #456) e toda semana (#373); regras de ouro (float64, time.Now, time.Sleep) conferidas na CI (#457) | Aceita |
 | [0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md) | Gerenciador em Go: ícone na bandeja e janela própria com o Wails (#276) | Aceita |
 | [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) | Receber versões de desenvolvimento por escolha, no gerenciador em Go | Aceita |
 | [0054](0054-analise-de-seguranca-do-codigo-com-o-codeql.md) | Análise de segurança do código com o CodeQL, por workflow próprio, nas 5 linguagens (#451) | Aceita |
