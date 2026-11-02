@@ -23,3 +23,4 @@ Usamos um cliente HTTP próprio em `Servicos/Pluggy/` (`PluggyClient` registrado
 - **Positivas:** controle total sobre o que é enviado e recebido; sem dependência extra; o mesmo padrão serve para as outras integrações (Banco Central, Yahoo Finance, brapi).
 - **Negativas:** mudanças na API da Pluggy (campos, versões de endpoint, paginação) precisam ser acompanhadas à mão; não há tipagem gerada.
 - **Na prática:** integração externa nova segue o mesmo padrão — `HttpClient` registrado em `Program.cs` com `BaseAddress` HTTPS, timeout e `User-Agent`, envio do dado mínimo, e o domínio acrescentado na lista de saídas para a internet do `README.md`.
+- **No Go (#83):** o mesmo cliente, em `internal/pluggy`, também sem SDK. A mais do que o .NET: não segue redirecionamento para fora do host configurado, porque o `net/http` repassa o `X-API-KEY`.
