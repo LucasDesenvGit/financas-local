@@ -17,7 +17,7 @@ cd financas-local/scripts/geral
 
 ```bash
 cd financas-local/scripts/geral
-./1-preparar-ambiente.sh     # .NET 10 SDK, Node.js e sqlite3 (poucos minutos)
+./1-preparar-ambiente.sh     # .NET 10 SDK, Go, Node.js e sqlite3 (poucos minutos)
 ./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
 ./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
@@ -32,7 +32,7 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1
 ```
 
-Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não oferece o `.msi`, porque nessa instalação a versão nova vem pelos scripts. Rode o mesmo comando de novo para atualizar o gerenciador.
+Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não baixa a versão nova, porque nessa instalação ela vem pelos scripts: diz como atualizar por eles e sugere passar para o `.msi`, que traz o banco e as chaves e, daí em diante, recebe a versão nova pelo gerenciador. Rode o mesmo comando de novo para atualizar o gerenciador.
 
 **Linux:** o `instalar.sh` já instala o gerenciador no fim, sem `sudo` (#300). Para não instalar, use `scripts/geral/instalar.sh --sem-gerenciador`. Para instalar ou atualizar só ele:
 
@@ -42,7 +42,7 @@ scripts/linux/instalar-gerenciador.sh
 
 - **Onde fica:** publicado em `publicado/gerenciador`, com o atalho **Gerenciador do Finanças Local** no menu de aplicativos e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
 - **O que faz:** mostra se o site está no ar, liga, desliga e reinicia o serviço (sem senha: ele é do seu usuário), copia o banco e mostra o registro do serviço (**Ver o registro do serviço**, quando o site não sobe).
-- **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet.
+- **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet, a não ser na instalação de desenvolvimento (clone na branch `develop`), em que o botão **Atualizar para a última do develop** traz o código do GitHub ([abaixo](#atualizar)).
 - **Ao sair da conta:** o serviço do usuário para, e o site junto. Em **Mais opções**, **Manter o site no ar sem login** liga o *linger* do systemd (`loginctl enable-linger`).
 - **Iniciar com o sistema:** deixa o ícone na bandeja e avisa se o site cair. No GNOME, a bandeja precisa da extensão AppIndicator; sem ela, a janela abre minimizada.
 - **No terminal:** `publicado/gerenciador/Financas.Gerenciador.Linux --situacao` mostra a situação sem abrir a janela.
@@ -51,7 +51,7 @@ scripts/linux/instalar-gerenciador.sh
 
 | Componente | Origem | Verificação |
 |---|---|---|
-| .NET 10 SDK (portátil em `ferramentas/dotnet`) | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 + assinatura do instalador |
+| .NET 10 SDK (portátil em `ferramentas/dotnet`) | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 publicado nos metadados oficiais (não há verificação de assinatura) |
 | Go (portátil em `ferramentas/go`, compila o back-end em Go que roda atrás da API: [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)) | índice oficial `go.dev/dl`, arquivo de `dl.google.com`; os módulos do `go.sum` vêm de `proxy.golang.org` | SHA-256 do índice oficial; os módulos, pelo `go.sum` do repositório |
 | Node.js LTS (portátil em `ferramentas/node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
 | `sqlite3` (CLI) | o do sistema, se houver; senão portátil em `ferramentas/sqlite`, baixado de `www.sqlite.org` (Linux arm64: gerenciador de pacotes) | SHA3-256 publicado na página oficial de download |
@@ -62,11 +62,10 @@ scripts/linux/instalar-gerenciador.sh
 
 ```bash
 git pull
-scripts/geral/3-publicar-atualizar.sh     # no Windows, num Git Bash aberto como Administrador
-scripts/linux/instalar-gerenciador.sh     # só no Linux, se usa o gerenciador
+scripts/geral/instalar.sh     # no Windows, num Git Bash aberto como Administrador; no Linux, atualiza também o gerenciador
 ```
 
-No Windows sem bash, rode o `instalar-windows.cmd` de novo. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
+Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend-go/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). O mesmo vale para o .NET. No Windows sem bash, rode o `instalar-windows.cmd` de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
 
@@ -76,14 +75,17 @@ No Windows, dá para passar desta instalação (feita com o `instalar-windows.cm
 
 ## Parar e desinstalar
 
-O sistema instalado é **um processo só**: a API, rodando como serviço do sistema. O front-end (Angular) é publicado dentro dela e roda no navegador, e o banco (SQLite) é só o arquivo `dados/sql/FinancasLocal.db`, aberto pela própria API, sem serviço nem porta.
+O sistema instalado são **dois processos**: a API (.NET), rodando como serviço do sistema, e o back-end em Go (`financas-go`), que a API sobe como processo filho e que para junto com ela ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O front-end (Angular) é publicado dentro da API e roda no navegador, e o banco (SQLite) é só o arquivo `dados/sql/FinancasLocal.db`, aberto pelos dois, sem serviço nem porta.
 
 - **Parar no Windows:** dê dois cliques em `parar-windows.cmd`, na raiz (pede permissão de Administrador; não precisa de bash).
 - **Parar no Linux/macOS:** `scripts/geral/parar.sh`.
 
 Os dois param o serviço, a API rodando fora dele (`dotnet run`, Visual Studio) e o front de desenvolvimento (`npm start`), e avisam se algum programa ainda está com o banco aberto. Opções: `--desativar` / `-Desativar` (não sobe sozinho no próximo login/boot) e `--compiladores` / `-Compiladores` (encerra também os servidores de build do .NET). Para subir de novo, rode a publicação (`3-publicar-atualizar.sh` ou `instalar-windows.cmd`).
 
-**Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/geral/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela. No Windows, remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. No Linux, com o gerenciador, apague também `~/.local/share/applications/financaslocal-gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho.
+**Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/geral/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela.
+
+- **Windows:** remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. O certificado do site fica nos confiáveis: pelo `instalar-windows.cmd`, nos do computador (`Cert:\LocalMachine\Root`, com o nome amigável `FinancasLocal`), que se apagam em `certlm.msc` › **Autoridades de Certificação Raiz Confiáveis**; pelo Git Bash, nos da sua conta, pelo `dotnet dev-certs https --trust`, que se apagam com `dotnet dev-certs https --clean`.
+- **Linux:** apague a unidade do serviço, `~/.config/systemd/user/financaslocal.service`, e rode `systemctl --user daemon-reload`. Se ligou **Manter o site no ar sem login**, desligue com `loginctl disable-linger`. Com o gerenciador, apague também `~/.local/share/applications/financaslocal-gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. O certificado que você pôs nos confiáveis (tabela em [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado)) sai com o comando de remoção da sua distribuição.
 
 ## Migrar de uma instalação com SQL Server
 
@@ -108,9 +110,16 @@ A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de lin
 ## Desenvolvimento (Visual Studio ou VS Code)
 
 - Abra `FinancasLocal.sln`. O perfil *Desenvolvimento (Kestrel)* sobe a API em `https://localhost:7443`. Em desenvolvimento, as chaves ficam em `dados\chaves-dev`, então o Client Secret precisa ser informado de novo.
+- **Back-end em Go:** a API sobe o Go como processo filho e repassa a ele as rotas de `Go:Prefixos` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Compile-o para a pasta de saída da API antes de subi-la, e de novo a cada mudança no Go; **sem o `financas-go` em `bin/Debug/net10.0/`, essas rotas respondem 503**:
+  ```bash
+  cd src/backend-go
+  go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go ./cmd/financas        # Linux
+  go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go.exe ./cmd/financas    # Windows
+  ```
+  O resto (rodar sozinho, testes, contrato) está no [README do Go](../src/backend-go/README.md).
 - No front-end, rode `npm start` em `src\frontend`. O Angular abre em `http://localhost:4200` e redireciona `/api` para a API.
-- Sem o .NET 10 e o Node instalados, use as ferramentas portáteis do `1-preparar-ambiente.sh`, pondo-as na frente do PATH (troque o caminho pelo da sua pasta do projeto):
-  `$env:PATH = "C:\caminho\financas-local\ferramentas\dotnet;C:\caminho\financas-local\ferramentas\node;$env:PATH"`
+- Sem o .NET 10, o Go e o Node instalados, use as ferramentas portáteis do `1-preparar-ambiente.sh`, pondo-as na frente do PATH (troque o caminho pelo da sua pasta do projeto):
+  `$env:PATH = "C:\caminho\financas-local\ferramentas\dotnet;C:\caminho\financas-local\ferramentas\go\bin;C:\caminho\financas-local\ferramentas\node;$env:PATH"`
 - **Banco:** não há migrations. Toda a estrutura está em `banco/01-estrutura.sql`, que é idempotente. Para mudar o banco, veja [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
 - **Testes do front-end**, em `src/frontend`:
   - `npm test` e `npm run test:tipos`: Jest, sem navegador ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md));
@@ -123,19 +132,25 @@ A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de lin
 
 ```
 financas-local/
+├── .claude/               skills, agentes e hooks do Claude Code (ver CONTRIBUINDO.md)
 ├── .github/               CI, templates de PR/issue, CODEOWNERS, Dependabot
 ├── banco/                 scripts SQL (estrutura, dados iniciais)
 ├── docs/                  arquitetura, guia do banco, esta página e ADRs (docs/adr)
 ├── instalador/            instalador .msi do Windows (WiX): FinancasLocal.wxs, configurar.ps1 e gerar-msi.ps1
-├── scripts/               instalação, publicação, backup e parada (bash; no Windows também instalar-windows.ps1 e parar-windows.ps1)
-│   └── git/              configuração do repositório no GitHub (PowerShell)
+├── scripts/
+│   ├── geral/            o bash dos dois sistemas (no Windows, pelo Git Bash): instalar, publicar, banco, backup, parar
+│   ├── windows/          o que só roda no Windows (instalar, parar e atualizar, o gerenciador e o configurar-github.ps1)
+│   ├── linux/            o que só roda no Linux (gerenciador)
+│   └── ci/               o que só a CI usa (verificadores, mutação, cobertura)
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
+├── src/backend-go/        o back-end em Go, atrás da API (ADR 0049)
 ├── src/frontend/          financas-web (Angular)
 ├── src/gerenciador/       Gerenciador: núcleo comum, app do Windows (WinForms, .msi) e do Linux (Avalonia)
+├── src/gerenciador-go/    o gerenciador em Go, que vai substituir os dois (ADR 0052)
 ├── dados/                 [gerado] banco (SQLite), chaves, logs — acesso restrito
 ├── backups/               [gerado] backups do banco
 ├── publicado/             [gerado] aplicação publicada
-├── ferramentas/           [gerado] .NET SDK, Node.js, sqlite3 (se preciso), caches NuGet/npm
+├── ferramentas/           [gerado] .NET SDK, Go, Node.js, sqlite3 (se preciso), caches NuGet/npm
 └── instaladores/          [gerado] instaladores baixados (podem ser apagados)
 ```
 

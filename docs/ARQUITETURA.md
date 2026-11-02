@@ -2,7 +2,7 @@
 
 Esta página começa pela visão de cima (o **HLD**): quem usa o sistema, as partes dele, onde cada uma roda e o que sai do computador. O detalhe por pasta vem depois. O padrão dos diagramas está na [ADR 0055](adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
 
-> **Data dos diagramas:** 31/10/2026, na fase "Go atrás do .NET" (#231, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Os diagramas de contêineres e de implantação mudam quando o .NET sair (#86).
+> **Data dos diagramas:** 01/11/2026, na fase "Go atrás do .NET" (#231, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Os diagramas de contêineres e de implantação mudam quando o .NET sair (#86).
 
 ## Contexto
 
@@ -89,6 +89,7 @@ flowchart TB
         openfinance["Open Finance<br/>sincronização com a Pluggy (#83)"]
         painel["Painel e relatórios (#80)"]
         conferencia["Conferir com o banco"]
+        partida["Partida da API<br/>rotinas que acertam dados ao subir (#444)"]
     end
 
     subgraph nucleo["Núcleo financeiro"]
@@ -114,6 +115,8 @@ flowchart TB
     painel --> cotacoes
     conferencia --> contas
     conferencia --> cotacoes
+    partida --> nucleo
+    partida --> investimentos
     planejamento --> transacoes
     planejamento --> contas
     planejamento --> investimentos
@@ -127,9 +130,11 @@ flowchart TB
     class openfinance,painel,planejamento,nenhum soNoDotNet
 ```
 
+- **A fonte do mapa** ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)): a tabela `dependencias` do teste de arquitetura (`src/backend-go/internal/arquitetura/arquitetura_test.go`), par a par, com o motivo. Este diagrama agrupa os mesmos pares para quem lê, e muda quando muda uma seta entre os grupos.
 - **Quando as setas foram conferidas:** nos pacotes em Go, pelos imports (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`). No que está só no .NET, pelos serviços que cada classe recebe no construtor (`SincronizacaoService`, `PainelController`, `RelatorioService` e `PlanejamentoControllers`).
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos. O Painel já tem partes em Go (`internal/relatorios`, `internal/emprestimos`), mas as rotas dele ainda são do .NET.
+- **Partida:** as seis rotinas que acertam dados ao subir a API (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem do .NET. Estão em Go, mas só rodam com o Go na frente (depois da #85); até lá o .NET as roda.
 - **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191). Ainda não há nenhum.
 
 ## Onde roda o quê
@@ -230,6 +235,7 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 | Kestrel, sem IIS nem proxy | Os mesmos scripts no Windows e no Linux | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) |
 | SQLite, sem migrations | O banco é um arquivo, e o esquema vem de scripts idempotentes | [0002](adr/0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md), [0003](adr/0003-esquema-por-scripts-sql-idempotentes.md) |
 | Site no `wwwroot` da API | Mesma origem: sem CORS, com cookies `__Host-` | [0004](adr/0004-front-end-publicado-no-wwwroot-da-api.md) |
+| Código Go com as camadas dentro de cada assunto | Uma mudança num assunto fica num pacote; a regra não conhece HTTP; o mapa de contextos é conferido por teste | [0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Go atrás do .NET | A troca acontece um assunto por vez, com volta fácil | [0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | CSP restritiva, sem script inline | Nada de terceiros carregado no site | [0034](adr/0034-sem-sri-no-build-do-front-end.md) |
 | Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md), por exemplo |
@@ -273,7 +279,7 @@ A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-bac
 - **Parada:** a entrada padrão do Go fica aberta enquanto o .NET vive; quando ela fecha (o .NET parou ou caiu), o Go para. No Windows, um Job Object com "matar ao fechar" garante isso mesmo com o Go travado. Se o Go cair, as rotas dele respondem 503 e o .NET o inicia de novo.
 - **Banco:** o mesmo arquivo, em WAL (o `EsquemaBanco` passa o banco para WAL ao iniciar), com espera de banco ocupado nos dois lados e transações curtas. O Go grava no formato do EF Core e não aplica esquema.
 - **Tarefas em segundo plano:** quando um assunto passa para o Go, a tarefa dele sai do .NET por `Go:Tarefas` (`Sincronizacao`, `Cambio`, `Cripto`).
-- **No site hoje:** o Go atende o câmbio e a cripto (`/api/cambio`, `/api/cripto`) e roda as tarefas dos dois (#81), os cadastros: categorias, regras de categorização, regras de descrição e contas (`/api/categorias`, `/api/regras`, `/api/regras-descricao`, `/api/contas`; #77), e as transações (`/api/transacoes`, as 18 rotas da tela de Transações; #78). A conferência com o banco (`/api/conferencia-banco`, #445) também, em `internal/conferenciabanco`, lendo as reservas e a carteira de Go. O resto continua no .NET.
+- **No site hoje:** o Go atende o câmbio e a cripto (`/api/cambio`, `/api/cripto`) e roda as tarefas dos dois (#81), os cadastros: categorias, regras de categorização, regras de descrição e contas (`/api/categorias`, `/api/regras`, `/api/regras-descricao`, `/api/contas`; #77), as transações (`/api/transacoes`, as 18 rotas da tela de Transações; #78), e o planejamento: contas a pagar, orçamentos e metas (`/api/contas-agendadas`, `/api/orcamentos`, `/api/metas`, as 23 rotas; #79, #555). A conferência com o banco (`/api/conferencia-banco`, #445) também, em `internal/conferenciabanco`, lendo as reservas e a carteira de Go. O resto continua no .NET.
 - **Erros:** o Go escreve o log em JSON na saída de erro, e o .NET registra cada linha na categoria `Financas.Go` (avisos e erros vão para Configurações › Erros, ADR 0022).
 - **Testes** ([ADR 0051](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): cada regra tem teste unitário em tabela no pacote do assunto, além do caso de contrato do endpoint (`testes/contrato`, #72). Consultas se testam num SQLite de verdade num arquivo temporário, com o esquema real; handlers, com `httptest`. Só a biblioteca padrão, sem asserção nem mock de terceiros. O C# continua sem teste automatizado.
 

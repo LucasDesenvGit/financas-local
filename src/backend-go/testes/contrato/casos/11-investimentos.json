@@ -1,5 +1,5 @@
 {
-  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato; parte 7, o painel dos FIIs. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07.",
+  "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato; parte 7, o painel dos FIIs. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07. No fim, as 3 rotas de /api/investimentos (#80): os investimentos do Open Finance, o histórico e o renomear, que volta ao nome automático.",
   "casos": [
     {
       "nome": "listar reservas",
@@ -1216,6 +1216,86 @@
       "nome": "painel dos FIIs sem login",
       "metodo": "GET",
       "caminho": "/api/carteira/fiis",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "investimentos do Open Finance",
+      "comentario": "#80: pelo tipo e, dentro dele, pelo saldo (maior primeiro), com o saldo em reais e o nome de exibição.",
+      "metodo": "GET",
+      "caminho": "/api/investimentos"
+    },
+    {
+      "nome": "histórico dos investimentos",
+      "comentario": "#173 e) (ADR 0045): o rendimento de cada mês pelo histórico de saldo.",
+      "metodo": "GET",
+      "caminho": "/api/investimentos/historico"
+    },
+    {
+      "nome": "renomear um investimento",
+      "comentario": "#170: o nome sem os espaços das pontas.",
+      "metodo": "PUT",
+      "caminho": "/api/investimentos/1/nome",
+      "corpo": {
+        "nome": "  Caixinha do CDB  "
+      }
+    },
+    {
+      "nome": "investimentos com o nome novo",
+      "metodo": "GET",
+      "caminho": "/api/investimentos"
+    },
+    {
+      "nome": "renomear com nome longo demais",
+      "metodo": "PUT",
+      "caminho": "/api/investimentos/1/nome",
+      "corpo": {
+        "nome": "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901"
+      }
+    },
+    {
+      "nome": "renomear o que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/investimentos/9999/nome",
+      "corpo": {
+        "nome": "X"
+      }
+    },
+    {
+      "nome": "renomear com id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/investimentos/abc/nome",
+      "corpo": {
+        "nome": "X"
+      }
+    },
+    {
+      "nome": "renomear sem login",
+      "metodo": "PUT",
+      "caminho": "/api/investimentos/1/nome",
+      "sessao": "visitante",
+      "corpo": {
+        "nome": "X"
+      }
+    },
+    {
+      "nome": "voltar ao nome automático",
+      "comentario": "Vazio (só espaços) volta ao automático: os arquivos seguintes veem a base como estava.",
+      "metodo": "PUT",
+      "caminho": "/api/investimentos/1/nome",
+      "corpo": {
+        "nome": "   "
+      }
+    },
+    {
+      "nome": "investimentos sem login",
+      "metodo": "GET",
+      "caminho": "/api/investimentos",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "histórico sem login",
+      "metodo": "GET",
+      "caminho": "/api/investimentos/historico",
       "sessao": "visitante"
     }
   ]

@@ -1,7 +1,7 @@
 import { abrirTransacoes, parametrosDaUrl } from '../apoio/transacoes';
 
 /**
- * Usabilidade do filtro ativo em Transações (UX-2, #32). Padrão do CLAUDE.md: "filtro ativo sempre visível" (chips
+ * Usabilidade do filtro ativo em Transações (UX-2, #32). Padrão de docs/UI-UX.md: "filtro ativo sempre visível" (chips
  * com ✕ e "Limpar filtros") em tela que pode abrir já filtrada. Nielsen 1 (visibilidade do estado), 3 (controle e
  * liberdade: desfazer um filtro só) e 8 (sem a faixa quando não há filtro).
  */

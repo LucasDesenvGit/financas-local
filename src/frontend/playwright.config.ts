@@ -9,6 +9,11 @@ import { defineConfig, devices } from '@playwright/test';
  * NAVEGADOR=chromium usa aqui o mesmo Chromium da CI (`npx playwright install chromium` uma vez): rode assim antes de
  * subir (push). O Edge deixou passar um teste que falhou na CI (#264).
  */
+// #540: o teste e a API falsa rodam no Node, e o site no navegador (timezoneId, abaixo). Os dois no fuso de Brasília:
+// com o Node em UTC (o runner da CI), das 21h à meia-noite do último dia do mês, o teste via um mês e o site, o anterior.
+// Vale também para os workers, que herdam o ambiente.
+process.env['TZ'] = 'America/Sao_Paulo';
+
 const naCi = !!process.env['CI'];
 const canal = naCi || process.env['NAVEGADOR'] === 'chromium' ? undefined : process.env['NAVEGADOR'] ?? 'msedge';
 const porta = Number(process.env['PORTA'] ?? 4300);

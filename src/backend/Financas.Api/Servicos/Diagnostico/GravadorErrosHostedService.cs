@@ -15,6 +15,7 @@ public class GravadorErrosHostedService : BackgroundService
 {
     private const int MaximoPorLote = 100;
     private static readonly TimeSpan JanelaAgrupamento = TimeSpan.FromHours(24);
+    private static readonly TimeSpan PrazoParaGravar = TimeSpan.FromSeconds(5);
 
     private readonly FilaErros _fila;
     private readonly IServiceScopeFactory _scopes;
@@ -41,31 +42,34 @@ public class GravadorErrosHostedService : BackgroundService
                     try { await _fila.Leitor.WaitToReadAsync(espera.Token); }
                     catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested) { }
                 }
-                await GravarLoteAsync(stoppingToken);
+                await GravarLoteAsync();
                 await LimparSeVenceuAsync(stoppingToken);
             }
         }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-        {
-            // Desligando: grava o que ainda estiver na fila, sem esperar por mais.
-            using var prazo = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            try { await GravarLoteAsync(prazo.Token); } catch (Exception) { /* sem banco no desligamento: paciência */ }
-        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
+        // Desligando: grava o que ainda estiver na fila, sem esperar por mais. Fica fora do catch porque o laço também
+        // termina sem exceção, quando o desligamento começa no meio de um lote (#569).
+        await GravarLoteAsync();
     }
 
-    private async Task GravarLoteAsync(CancellationToken ct)
+    /// <summary>
+    /// Tira um lote da fila e grava. O prazo é próprio, de 5 s, e não acaba com o desligamento: cancelado no meio, o
+    /// lote se perderia, porque não volta para a fila (#569). Não lança exceção: o que der errado vai para o log.
+    /// </summary>
+    private async Task GravarLoteAsync()
     {
         var lote = new List<RegistroErro>();
         while (lote.Count < MaximoPorLote && _fila.Leitor.TryRead(out var r)) lote.Add(r);
         if (lote.Count == 0) return;
         try
         {
+            using var prazo = new CancellationTokenSource(PrazoParaGravar);
             using var scope = _scopes.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<FinancasDbContext>();
-            foreach (var r in lote) await GravarAsync(db, r, ct);
-            await db.SaveChangesAsync(ct);
+            foreach (var r in lote) await GravarAsync(db, r, prazo.Token);
+            await db.SaveChangesAsync(prazo.Token);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
             // Categoria fora da captura: vai só para o log de eventos, sem voltar para a fila.
             _logger.LogError(ex, "Não foi possível gravar {Quantidade} erro(s) na tabela de erros.", lote.Count);

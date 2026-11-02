@@ -20,7 +20,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/categorizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
-	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
@@ -157,7 +156,7 @@ func PalavrasDoNome(nome *string) []string {
 	var palavras []string
 	for _, p := range pedacos {
 		p = strings.TrimSpace(p)
-		if respostas.TamanhoUtf16(p) >= 2 && !conectivos[p] {
+		if texto.TamanhoUtf16(p) >= 2 && !conectivos[p] {
 			palavras = append(palavras, p)
 		}
 	}

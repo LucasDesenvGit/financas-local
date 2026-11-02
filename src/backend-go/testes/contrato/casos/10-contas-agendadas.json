@@ -1,0 +1,282 @@
+{
+  "descricao": "Contas a pagar (#79, ContasAgendadasController): lista, avisos (#158), sugestões do extrato (#62, #205), criar e editar com a conciliação da cobrança automática (#158, ADR 0043), o 'é a mesma' (#205), pagar com e sem lançar a despesa (#69) e excluir. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Só mexe nas contas a pagar que cria (ids 7 a 10) e na transação que o 'Pagar' lança, e apaga tudo no fim: as da base ficam como estavam, para os arquivos seguintes.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "Todas, inclusive a inativa (Academia) e as encerradas, pelo vencimento mais próximo; empate pela ordem do Id. A lista é a do RelatorioService.ContasAgendadasAsync (já em Go na #447).",
+      "metodo": "GET",
+      "caminho": "/api/contas-agendadas"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/contas-agendadas",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "avisos",
+      "comentario": "Só as recorrentes ativas. A Streaming é cobrada no cartão pelo texto STREAMFLIX: os avisos olham as cobranças dos últimos 70 dias.",
+      "metodo": "GET",
+      "caminho": "/api/contas-agendadas/avisos"
+    },
+    {
+      "nome": "sugestões do extrato",
+      "comentario": "Pagamentos mensais do extrato que ainda não estão cadastrados; o próximo vencimento nunca é passado (#62).",
+      "metodo": "GET",
+      "caminho": "/api/contas-agendadas/sugestoes"
+    },
+    {
+      "nome": "criar à mão (id 7)",
+      "comentario": "Descrição e observação aparadas; texto da cobrança só espaços vira null; à mão não concilia.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "  Aluguel do contrato  ", "valor": 1800.5, "proximoVencimento": "2026-11-05", "recorrencia": 1,
+        "categoriaId": null, "contaId": 3, "ativa": true, "formaCobranca": 1, "textoCobranca": "   ", "observacao": "  Pago no dia 5  " }
+    },
+    {
+      "nome": "criar no cartão com a cobrança já no extrato (id 8)",
+      "comentario": "Texto em minúsculas e com acento vira maiúsculas sem acento. A conciliação ao salvar acha a ASSINATURA STREAMFLIX de setembro no cartão, dá baixa, avança o vencimento e grava a chave do extrato (#205).",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Assinatura de vídeo", "valor": 39.9, "proximoVencimento": "2026-09-25", "recorrencia": 1,
+        "categoriaId": null, "contaId": 2, "formaCobranca": 3, "textoCobranca": "assinatura streamflíx" }
+    },
+    {
+      "nome": "criar com forma de cobrança fora do enum (id 9)",
+      "comentario": "Enum.IsDefined falso: grava 'à mão'. Ativa ausente vale true (o padrão do record).",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Condomínio", "valor": 600, "proximoVencimento": "2026-10-30", "recorrencia": 1,
+        "categoriaId": null, "contaId": null, "formaCobranca": 9, "dataLimite": "2027-03-30" }
+    },
+    {
+      "nome": "criar única com data limite (id 10)",
+      "comentario": "Na conta única a data limite não vale: grava null. Com a chave do extrato que veio da sugestão (#205).",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Matrícula", "valor": 250, "proximoVencimento": "2026-10-16", "recorrencia": 0,
+        "categoriaId": null, "contaId": 4, "dataLimite": "2026-12-01", "chaveExtrato": "  MATRICULA  " }
+    },
+    {
+      "nome": "criar sem descrição",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null }
+    },
+    {
+      "nome": "criar com descrição só de espaços",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "   ", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null }
+    },
+    {
+      "nome": "criar com valor zero",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Zero", "valor": 0, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null }
+    },
+    {
+      "nome": "criar com texto da cobrança comprido",
+      "comentario": "A mensagem do StringLength do texto da cobrança é a do ErrorMessage do record.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Longa", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null,
+        "textoCobranca": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }
+    },
+    {
+      "nome": "criar com categoria que não existe",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Sem categoria", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": 9999, "contaId": null }
+    },
+    {
+      "nome": "criar com conta que não existe",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Sem conta", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": 9999 }
+    },
+    {
+      "nome": "criar com a data limite antes do vencimento",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Limite errado", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null,
+        "contaId": null, "dataLimite": "2026-10-31" }
+    },
+    {
+      "nome": "criar encerrada com a data limite antes do vencimento",
+      "comentario": "Inativa pode ter o limite antes do vencimento: não valida. Não cria nada útil, mas grava (id 11), e é apagada no fim.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Encerrada", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null,
+        "contaId": null, "ativa": false, "dataLimite": "2026-10-31" }
+    },
+    {
+      "nome": "criar sem login",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "sessao": "visitante",
+      "corpo": { "descricao": "Visitante", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null }
+    },
+    {
+      "nome": "editar",
+      "comentario": "Chave do extrato vazia na edição: a ligação que já existe fica.",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/10",
+      "corpo": { "descricao": "Matrícula do curso", "valor": 275.25, "proximoVencimento": "2026-10-16", "recorrencia": 0,
+        "categoriaId": null, "contaId": 4, "observacao": "", "chaveExtrato": "" }
+    },
+    {
+      "nome": "editar com conta que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/7",
+      "corpo": { "descricao": "Aluguel do contrato", "valor": 1800.5, "proximoVencimento": "2026-11-05", "recorrencia": 1, "categoriaId": null, "contaId": 9999 }
+    },
+    {
+      "nome": "editar a que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/9999",
+      "corpo": { "descricao": "Nada", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null }
+    },
+    {
+      "nome": "editar com id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/abc",
+      "corpo": { "descricao": "Nada", "valor": 10, "proximoVencimento": "2026-11-01", "recorrencia": 1, "categoriaId": null, "contaId": null }
+    },
+    {
+      "nome": "é a mesma: ligar ao extrato",
+      "comentario": "#205: a chave é aparada e gravada.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/7/ligar-extrato",
+      "corpo": { "chaveExtrato": "  ALUGUEL  " }
+    },
+    {
+      "nome": "é a mesma: chave só de espaços",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/7/ligar-extrato",
+      "corpo": { "chaveExtrato": "   " }
+    },
+    {
+      "nome": "é a mesma: sem a chave",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/7/ligar-extrato",
+      "corpo": {}
+    },
+    {
+      "nome": "é a mesma: conta a pagar que não existe",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/9999/ligar-extrato",
+      "corpo": { "chaveExtrato": "ALUGUEL" }
+    },
+    {
+      "nome": "desfazer o é a mesma",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/7/ligar-extrato"
+    },
+    {
+      "nome": "desfazer o é a mesma de uma que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/9999/ligar-extrato"
+    },
+    {
+      "nome": "pagar sem lançar, com data",
+      "comentario": "Último pagamento na data informada; o vencimento mensal avança um mês.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/7/pagar",
+      "corpo": { "lancarTransacao": false, "data": "2026-11-04" }
+    },
+    {
+      "nome": "pagar lançando a despesa numa conta manual",
+      "comentario": "Sem data: a de hoje (14/10/2026). A despesa vai para a Poupança (manual), com o valor negativo e o tipo do lançamento aplicado.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/7/pagar",
+      "corpo": { "lancarTransacao": true }
+    },
+    {
+      "nome": "achar a despesa lançada",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=Aluguel%20do%20contrato&tamanhoPagina=1",
+      "capturar": { "idDespesa": "/itens/0/id" }
+    },
+    {
+      "nome": "pagar lançando numa conta do Open Finance",
+      "comentario": "A conta 8 cai no cartão (Open Finance): o pagamento chega pela sincronização.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/8/pagar",
+      "corpo": { "lancarTransacao": true, "data": "2026-10-14" }
+    },
+    {
+      "nome": "pagar lançando sem conta",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/9/pagar",
+      "corpo": { "lancarTransacao": true }
+    },
+    {
+      "nome": "pagar a única",
+      "comentario": "A conta única é desativada depois do pagamento.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/10/pagar",
+      "corpo": { "lancarTransacao": false, "data": "2026-10-14" }
+    },
+    {
+      "nome": "pagar com a data limite ainda longe",
+      "comentario": "#69: o vencimento de 30/10 vai a 30/11; até 30/03/2027 a conta continua ativa.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/9/pagar",
+      "corpo": { "lancarTransacao": false, "data": "2026-10-14" }
+    },
+    {
+      "nome": "pagar a que não existe",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/9999/pagar",
+      "corpo": { "lancarTransacao": false }
+    },
+    {
+      "nome": "listar depois das mudanças",
+      "metodo": "GET",
+      "caminho": "/api/contas-agendadas"
+    },
+    {
+      "nome": "apagar a despesa lançada",
+      "comentario": "Limpeza: os arquivos seguintes não veem a transação.",
+      "metodo": "DELETE",
+      "caminho": "/api/transacoes/{{idDespesa}}"
+    },
+    {
+      "nome": "excluir a 7",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/7"
+    },
+    {
+      "nome": "excluir a 8",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/8"
+    },
+    {
+      "nome": "excluir a 9",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/9"
+    },
+    {
+      "nome": "excluir a 10",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/10"
+    },
+    {
+      "nome": "excluir a 11",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/11"
+    },
+    {
+      "nome": "excluir a que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/9999"
+    },
+    {
+      "nome": "excluir sem login",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/1",
+      "sessao": "visitante"
+    }
+  ]
+}

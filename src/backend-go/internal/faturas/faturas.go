@@ -374,7 +374,7 @@ func DoMesDosCartoes(ctx context.Context, q consultas.DBTX, inicio, fim, hoje ti
 	// #167: uma janela larga, para achar a parcela já ligada a uma fatura de cada compra (até 24 meses) e as parcelas
 	// com data futura. Começa no início de ciclo mais velho entre os cartões.
 	desde := slices.MinFunc(inicios, comparar).SomarMeses(-24)
-	lancamentos, err := lerLancamentos(ctx, q, ids, desde)
+	lancamentos, err := LerLancamentos(ctx, q, ids, desde)
 	if err != nil {
 		return nil, err
 	}
@@ -531,9 +531,9 @@ func LerFaturas(ctx context.Context, q consultas.DBTX, onde string, argumentos .
 	return porCartao, nil
 }
 
-// lerLancamentos: os lançamentos dos cartões desde a data, sem as transferências e os pagamentos de fatura, na ordem do
+// LerLancamentos são os lançamentos dos cartões desde a data, sem as transferências e os pagamentos de fatura, na ordem do
 // índice IX_Transacao_Conta_Data (ContaId, Data DESC), a da consulta do C#.
-func lerLancamentos(ctx context.Context, q consultas.DBTX, ids []any, desde tipos.Data) (map[int64][]Lancamento, error) {
+func LerLancamentos(ctx context.Context, q consultas.DBTX, ids []any, desde tipos.Data) (map[int64][]Lancamento, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "ContaId", "Data", "Valor", "FaturaCartaoId", "ParcelaNumero",
 		"ParcelaTotal", COALESCE("DescricaoOriginal", "Descricao") FROM "Transacao"
 		WHERE "ContaId" IN (`+marcadores(len(ids))+`) AND "Data" >= ? AND "Tipo" <> 3

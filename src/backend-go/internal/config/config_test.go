@@ -115,8 +115,33 @@ func TestSemArquivosUsaOPadrao(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.Endereco != "127.0.0.1:5443" || c.MinutosSessao != 120 {
+	if c.Endereco != "127.0.0.1:5443" || c.MinutosSessao != 120 || c.CertificadoCaminho != "" {
 		t.Errorf("padrão errado: %+v", c)
+	}
+}
+
+// Regra (#456): o certificado com caminho relativo é resolvido a partir da pasta base, como os outros caminhos.
+func TestCertificadoRelativoAPartirDaPastaBase(t *testing.T) {
+	pasta := t.TempDir()
+	escrever(t, pasta, "appsettings.json", `{ "Kestrel": { "Endpoints": { "Https": { "Certificate": { "Path": "dados/x.pfx" } } } } }`)
+	c, err := Carregar(pasta, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.CertificadoCaminho != filepath.Join(pasta, "dados", "x.pfx") {
+		t.Errorf("CertificadoCaminho = %s", c.CertificadoCaminho)
+	}
+}
+
+// Regra (#456): o endereço do Kestrel sem host é erro, e não um endereço vazio. "localhost:5443" sem o https:// é lido
+// pelo url.Parse como o esquema "localhost", sem erro e sem host.
+func TestEnderecoSemHostDaErro(t *testing.T) {
+	for _, endereco := range []string{"localhost:5443", "https://[::1"} {
+		pasta := t.TempDir()
+		escrever(t, pasta, "appsettings.json", `{ "Kestrel": { "Endpoints": { "Https": { "Url": "`+endereco+`" } } } }`)
+		if c, err := Carregar(pasta, ""); err == nil || !strings.Contains(err.Error(), "Https:Url") {
+			t.Errorf("%s: endereço %q, erro %v", endereco, c.Endereco, err)
+		}
 	}
 }
 

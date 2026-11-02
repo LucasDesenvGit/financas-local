@@ -2,10 +2,180 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.50.33] — 2026-10-31 · desenvolvimento
+## [2.58.6] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação
 - **Licença MIT** (#473; épico #465). Nada muda para quem usa. O repositório passa a dizer o que se pode fazer com o código.
+
+## [2.58.5] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Um comando resolve o conflito de versão e de CHANGELOG dos PRs** (#587). Nada muda para quem usa. Todo PR sobe a versão e escreve no topo do CHANGELOG (ADR 0039), então cada merge deixava os outros PRs abertos em conflito nesses dois arquivos. Agora `scripts/geral/atualizar-pr.sh <número do PR>` traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no nível em que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo com o número novo e a data de hoje, confere e envia; conflito em outro arquivo, ele desfaz e lista. O check "versão subiu" passa a pular o Dependabot pelo autor do PR: um `@dependabot rebase` pedido por uma pessoa disparava em nome dela e o check cobrava a versão. ADR 0039 atualizada. Manual: não se aplica.
+
+## [2.58.4] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instalação e contribuição de acordo com o que os scripts e a CI fazem** (#575, seção 3 da varredura de 01/11/2026). Quem instala pelos scripts passa a ser orientado a atualizar com `git pull` e `scripts/geral/instalar.sh`: só o `3-publicar-atualizar.sh` falha quando o `go.mod` pede um Go mais novo, que só a etapa 1 baixa (README, `INSTALACAO-PELO-CODIGO.md`, `CONTRIBUINDO.md` e o modelo de PR). O guia de instalação pelo código ganha o Go no desenvolvimento local (sem o `financas-go` ao lado da API, as rotas do Go respondem 503), os dois processos do sistema instalado, a árvore de pastas de hoje, o que desinstalar além da pasta (a unidade do systemd, o *linger* e o certificado) e o que os gerenciadores fazem de fato; o .NET é conferido só pelo SHA-512. O `CONTRIBUINDO.md` ganha a tabela completa dos jobs da CI, a exceção dos jobs fora do `build` (Go no Windows e gerenciador em Go, até a #84/#85 ou o gerenciador em Go no `.msi`), o `feat(banco)!` como marca de estrutura (a API aplica o esquema sozinha), o `test:afetados` no checklist e as convenções do Go. O modelo de PR acompanha o `CLAUDE.md`; o de bug pede Configurações › Erros e o log do Linux. O `CLAUDE.md` cita o gerenciador em Go e o workflow do `.msi` entre os que seguem o guia de restaurar. Também: as telas do README, "Procurar versão nova ao abrir", o passo do diagrama e os prefixos `DF_`/`UX_` no guia do banco, as ligações sem chave estrangeira, as cotações e índices públicos no `DADOS-PESSOAIS.md` e a origem dos erros no Visualizador de Eventos (`Financas.Api`, pelo código; não conferido num Windows). Manual: não se aplica.
+
+## [2.58.3] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Privacidade e Manual de acordo com o que o sistema faz** (#575, seção 1 da varredura de 01/11/2026). O Manual passa a listar tudo o que sai do computador: o Mercado Bitcoin (cotação das criptomoedas, só os pares fixos), o token da brapi (quando você informou um) e o GitHub, que o gerenciador consulta para achar versão nova. Ele deixa de dizer "nunca nome ou CPF de terceiros": o nome não fica em campo próprio, mas a descrição vem do banco como está e costuma trazer o nome de quem pagou ou recebeu. Os avisos que foram para o sino (#327) deixam de aparecer como "o Painel avisa": consentimento vencendo, descrições pouco informativas, cobranças que não vieram, cartão arquivado e reservas para conferir; "Conhecendo a tela" ganha o sino. Cópia do banco, restauração, atualização e problemas comuns passam a ter os passos pelo gerenciador, para quem instalou pelo `.msi`, além dos scripts. Seção nova "Fonte das cotações e token da brapi", em Investimentos. A Segurança do Manual lista tudo o que a auditoria registra. Em `docs/`: o `DADOS-PESSOAIS.md` ganha "Seu nome nos Pix" e diz onde se informa o token da brapi; o `SEGURANCA.md` diz que o token vai no cabeçalho `Authorization`, que o bloqueio do login se ajusta em Parametrização e onde fica a pasta `dados` em cada jeito de instalar; o `MODELO-DE-AMEACAS.md` acompanha a auditoria, o bloqueio e a pasta `dados`.
+
+## [2.58.2] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Documentação do Go e das skills de acordo com o código** (#575, seção 4 da varredura de 01/11/2026). A skill `migrar-para-go` manda arredondar com `tipos.Arredondar`, e não com o `RoundBank` do `shopspring/decimal`, que mexe na escala e muda o JSON, e passa a citar o `tipos.Dividir` para a divisão; a cascata ao apagar se confere no `01-estrutura.sql` e no `FinancasDbContext.cs`, e não numa tabela da #74 que não está no repositório. A revisão da `go-no-projeto` põe o `float64`, o `time.Now()` e o `time.Sleep` entre o que a CI já pega (#457), e pacote novo passa a pedir 80% de cobertura e um lugar numa das listas de mutação (#456). O README do Go ganha os pacotes que faltavam na tabela (contas a pagar, orçamentos, metas, conferência com o banco, cobranças, partida, erros e o teste de arquitetura), as 18 rotas da carteira, o Go sozinho como ele é hoje (com login e todas as rotas) e o job "Go (Windows)". O README do contrato lista os arquivos 08, 09 e 10; o exemplo do `testeapoio` usa um `Registrar` que existe; o do gerenciador cita os `foco_*.go`; o `CLAUDE.md` diz o que o agente `dev-go` carrega. Manual: não se aplica.
+
+## [2.58.1] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Remover a conexão apaga mesmo tudo o que veio dela** (#575). Ao remover uma conexão em Configurações, o banco já apagava em cascata as contas, transações, faturas, investimentos e empréstimos dela, mas duas tabelas ficavam: o histórico dos investimentos (`HistoricoInvestimento`, sem chave estrangeira de propósito, para guardar o investimento resgatado) e o registro das sincronizações (`SincronizacaoLog`, que só perdia o vínculo). Agora a API apaga as duas junto, numa transação só, e o texto de privacidade (`docs/DADOS-PESSOAIS.md`) diz exatamente o que sai. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma, continua. Quem já removeu uma conexão antes continua com o que sobrou dela: a correção não limpa o que ficou de remoções antigas. O contrato ganha o `16-open-finance`, com a remoção. Manual: não se aplica (o Manual não detalha o que a remoção apaga, e a confirmação da tela continua certa).
+
+## [2.58.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Cliente da Pluggy em Go** (#83, parte 1 de 5; épico #70). Nada muda para quem usa: o pacote `internal/pluggy` ainda não tem rota nem é chamado por ninguém. É a base da sincronização em Go, com as mesmas tentativas e mensagens do .NET, e não segue redirecionamento para fora do host configurado, para a API key não sair dele.
+
+## [2.57.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Painel em Go** (#80, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/painel` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, `GET /api/painel` (saldos, dívidas dos cartões e dos financiamentos, investido, patrimônio com e sem renda variável, receitas e despesas de emergência do mês, orçamentos e os estourados, faturas do mês, últimas e próximas transações, evolução de 12 meses) e `GET /api/painel/avisos` (os alertas na mesma ordem do C#: contas vencidas, moedas sem cotação, contas em outra moeda, cobranças, reservas a conferir, conexões do Open Finance, erros do sistema e contratos em atraso, além das descrições pouco informativas). Os 10 casos do contrato `13-painel`, gravados do .NET, passam com o Go atendendo. Com as partes 1 e 2, todas as rotas da #80 estão em Go. Manual: não se aplica.
+
+## [2.56.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Relatórios do painel em Go** (#80, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/relatorios` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, as rotas de Relatórios que faltavam: despesas por categoria, fluxo mensal (com as despesas de emergência), a visão anual (resumo do ano, comparação com outro ano, anos disponíveis, despesas por natureza e a saúde financeira com o patrimônio da carteira, das reservas e do Open Finance), a projeção dos próximos meses (médias, parcelas futuras e faturas dos cartões do Open Finance) e as maiores despesas do período. Os 29 casos do contrato `14-relatorios`, gravados do .NET, passam com o Go atendendo. Manual: não se aplica.
+
+## [2.55.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Empréstimos e investimentos do Open Finance em Go** (#80, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar os prefixos `painel` e `investimentos`. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET: `GET /api/emprestimos` (os contratos com os totais de financiamentos e de empréstimos separados e os pagamentos dos últimos 12 meses, ADR 0014) e as 3 rotas de `/api/investimentos` (a lista com o saldo em reais, o histórico de rendimento mês a mês, ADR 0045, e o renomear). Os casos do contrato `15-emprestimos` e os novos de `11-investimentos`, gravados do .NET, passam com o Go atendendo. A gravação do histórico fica pronta para a sincronização do Open Finance (#83).
+
+## [2.54.8] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Méli Dólar reconhecido também com acento ("MÉLI DÓLAR")** (#567). A busca das transações de Méli Dólar no banco usava um `LIKE` que só ignora maiúsculas e minúsculas nas letras sem acento: "Méli", com o "é", ficava de fora. Isso valia em dois lugares, que agora aceitam o acento: a rotina de partida que passa para "Investimentos" as compras e vendas já importadas quando a regra padrão é criada (ADR 0038), e a reserva do Méli Dólar em Investimentos › Reservas, que deixava de somar essas compras e vendas. A comparação final continua pelo texto sem acento e sem caixa, então "MALI DOLAR" não entra. Nos dados reais conferidos o banco manda "MELI" sem acento; a correção protege quem receber com acento. Quem já tem a regra não refaz a busca da partida (sem marca nova); a reserva, que é calculada na hora, já passa a contar. Vale no C# e no Go, com os gabaritos gravados de novo pelas sondas do C#. Manual: não se aplica.
+
+## [2.54.7] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Erro que acontece na hora de parar a API deixa de se perder** (#569). O gravador de Configurações › Erros tira um lote da fila e grava no banco. Se o desligamento da API começava no meio dessa gravação, ela era cancelada e o lote, que já tinha saído da fila, se perdia; o erro só ficava no log do sistema. Agora o lote retirado é gravado com um prazo próprio, de 5 segundos, que não acaba com o desligamento, e o que ainda está na fila é gravado no fim também quando o laço termina sem exceção. Vale no C#, que é quem grava hoje, e no Go, que grava depois da inversão (#85); o Go ganha um teste determinístico da corrida, que fazia um teste antigo falhar 1 vez em 20 (#458). Manual: não se aplica.
+
+## [2.54.6] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Regras padrão novas criadas quando a categoria "Investimentos" volta** (#568). As regras padrão que chegaram depois da instalação (Méli Dólar, ADR 0038; aplicação e resgate, #172) passam para "Investimentos" as transações já importadas, uma vez por banco, e uma marca em `Configuracao` guarda que isso já foi feito. A marca era gravada antes de procurar a categoria: quem estava sem a categoria "Investimentos" (de transferência) na primeira subida da API, por tê-la apagado, renomeado ou trocado de tipo, nunca recebia essas regras, nem depois de criar a categoria de novo. Agora a marca só é gravada quando a categoria existe, e as regras nascem na primeira subida depois de ela voltar. Uma regra que você apagou continua sem voltar. A correção vale no C# e no Go, que tem o teste do caso. Manual: não se aplica.
+
+## [2.54.5] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`CLAUDE.md` enxuto, cada bloco no lugar dele** (#566, épico #486). Nada muda para quem usa. O `CLAUDE.md`, que entra inteiro em toda sessão e em todo subagente do Claude, cai de 36,7 KB para 17,7 KB. Fica o que vale em qualquer tarefa ou dispara no meio de outra (idioma, git, versão, CHANGELOG, ADRs, banco, dado pessoal, Manual, dinheiro no Go, segurança); o resto vai para o lugar dele, com uma linha dizendo quando ler. As referências de UI/UX e os padrões de tela adotados passam para um **`docs/UI-UX.md`** novo, com o mesmo conteúdo, porque as pessoas também precisam deles; o `README.md`, o `CONTRIBUINDO.md`, as ADRs 0013, 0018, 0020, 0021, 0046 e 0052, as skills e os comentários dos testes de usabilidade passam a citá-lo. O `CONTRIBUINDO.md` ganha a seção "O que a CI roda" (os scripts e os workflows, antes listados no `CLAUDE.md`), os comandos de *blocked by* e de sub-issue e o Project do backlog; as pegadinhas do Playwright, os testes do Go e a arquitetura do C# ficam só onde já estavam (`CONTRIBUINDO.md`, skill `testar-no-navegador`, ADR 0051, `docs/ARQUITETURA.md`). As convenções do código Go passam a ter como fonte a ADR 0049 e a skill `go-no-projeto`; no `CLAUDE.md` ficam a funcionalidade nova em Go e o dinheiro fora do `float64`.
+
+## [2.54.4] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Skill `angular-no-projeto` e agente `dev-angular`** (#559, épico #486). Nada muda para quem usa. O front-end ganha a mesma estrutura do Go (#560): uma skill permanente com o roteiro de tela nova, de mudança, de avaliação de UI/UX e de revisão, que aponta a fonte de cada regra (`CLAUDE.md`, ADRs 0013, 0017, 0018, 0020, 0021, 0026, 0032, 0041 e 0046, `CONTRIBUINDO.md`) em vez de copiá-la. As referências são lidas sob demanda: estilo, com os pontos em que o projeto diverge do angular.dev (`Eager` com zone.js no lugar de OnPush, template inline, pastas por tipo, testes fora da pasta do código, `MoedaPipe` no lugar do `CurrencyPipe`, nada de biblioteca de componentes), e a regra até então não escrita de que OnPush só vale com todo o estado em signal; os componentes de `compartilhado/` para cada padrão (gráfico, campo de valor e de data, seletor de mês, interruptor, termo, modal); onde mora cada teste e o que rodar antes do push; o checklist de avaliação de tela e de revisão do que a CI não pega; e exemplos que apontam para telas reais. O agente `dev-angular` tem três modos (avaliação de UI/UX, implementação e revisão), carrega as skills `angular-no-projeto` e `testar-no-navegador` na partida e usa o mesmo hook do `dev-go`, que barra `gh pr merge` e `git push` forçado. O `CONTRIBUINDO.md` passa a listar as skills e os agentes do projeto.
+
+## [2.54.3] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Skill `go-no-projeto` e agente `dev-go` enxuto** (#560, épico #486). Nada muda para quem usa. O Go do projeto ganha uma skill permanente: o roteiro de funcionalidade nova em Go, mudança e revisão, que aponta a fonte de cada regra (`CLAUDE.md`, ADRs 0049, 0051 e 0056, `CONTRIBUINDO.md`) em vez de copiá-la. Ela traz as referências lidas sob demanda: estilo, com os pontos em que o projeto diverge dos guias de fora (nomes em português, `Id`, `[]` no JSON, só a biblioteca padrão nos testes, camadas por assunto); exemplos, que apontam para pacotes reais; o checklist de revisão do que a CI não pega; e as fontes conferidas para a "Aula rápida". A `migrar-para-go` fica só com o que é da migração e perde o que tinha vencido (a ADR do Go "a aceitar", o govulncheck "quando estiver na CI", o `collate` como dependência nova). O agente `dev-go` passa a ter quatro modos (análise, porte, funcionalidade nova e revisão), carrega a skill na partida e tem um hook que barra `gh pr merge` e `git push` forçado. O `CONTRIBUINDO.md` e o README do Go passam a dizer que a mutação roda também no PR (#456).
+
+## [2.54.2] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Modelos de issue de manutenção e de investigação** (#562). Além de "Problema" e "Melhoria", o *New issue* passa a ter **Manutenção (chore)**, para a tarefa interna que o usuário não vê (dependência, CI, script, documentação, limpeza), e **Investigação (spike)**, para uma pergunta a responder antes de decidir, com prazo e com o que sai no fim (resposta, ADR ou issues novas). Cada um aplica a sua etiqueta, `chore` ou `spike`. Nada muda para quem usa.
+
+## [2.54.1] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do Go sem `time.Sleep` de espera e as regras de ouro conferidas na CI** (#457, #458, ADR 0051). Nada muda na tela. Os testes que dormiam para esperar trocaram o sono por sinal: o servidor avisa pelo `Opcoes.AoEscutar` quando já aceita conexões, o gravador de erros e o relógio de teste rodam no `testing/synctest` e a data do arquivo do esquema vai para o passado com `os.Chtimes`. Um teste do gravador que falhava uma vez em 20 (dependia de qual goroutine corria primeiro) ficou determinístico. No job "Go", o `scripts/ci/verificar-regras-go.py` agora falha com `float64` (e `Float64()`, `ParseFloat`), com `time.Now` fora do `internal/relogio` e com `time.Sleep` de teste fora do `synctest`, dizendo o que usar no lugar; as 52 exceções (nenhum `float64` era dinheiro) estão em `scripts/ci/regras-go-excecoes.txt`, cada uma com o motivo, e o script tem teste próprio. Manual: não se aplica.
+
+## [2.54.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Rotinas de partida em Go** (#444, épico #70). Nada muda para quem usa: o .NET continua rodando as seis rotinas que acertam dados toda vez que a API sobe, e o Go só as roda quando estiver na frente (opção `-rotinas-de-partida`, depois da inversão, #85). O pacote `internal/partida` chama, na ordem do `Program.cs`, a regra de cada assunto: regras padrão novas (com a marca em `Configuracao`), entradas nos cartões, compras parceladas estornadas (`ParcelasFuturas.ComprasEstornadas` portada para `internal/parcelas`), transferências, contas a pagar cobradas sozinhas e trocos sem dúvida. Cada rotina grava numa transação própria antes da próxima; erro numa vira aviso e a partida segue para as seguintes (o `try/catch` do .NET para na primeira; diferença registrada na ADR 0049). As três rotinas novas têm gabarito gravado pelo `CategorizacaoService` de verdade (sonda em C#), com 149 transações, e a segunda partida não muda nada.
+
+## [2.53.6] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`govulncheck` também no Linux e com `GOOS=windows`** (#449). O `govulncheck` só olha os arquivos do sistema em que roda: o do gerenciador em Go rodava só no Windows, e o código só de Linux (os `_linux.go` e o Wails do Linux: WebKitGTK, GTK 4, bandeja pelo D-Bus) nunca era analisado; o do back-end rodava só no Linux, e os `_windows.go` (DPAPI dos segredos) ficavam de fora. Agora o job "gerenciador em Go (Linux)" roda o `govulncheck`, e o job "Go" roda duas vezes, a segunda com `GOOS=windows`. Não cobre as falhas das bibliotecas do sistema (WebKitGTK, GTK, WebView2), que chegam pelas atualizações da distribuição e do Windows. Nada muda para quem usa.
+
+## [2.53.5] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Planejamento atendido pelo Go** (#555, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `planejamento` entra em `Go:Prefixos` com `/api/contas-agendadas`, `/api/orcamentos` e `/api/metas`: as contas a pagar (lista, avisos, sugestões do extrato, criar, editar, "é a mesma", pagar e excluir), os orçamentos (lista do mês, salvar, excluir, a sugestão por categoria, aplicar e copiar do mês anterior) e as metas (lista, o plano do caixa, a ordem, criar, editar, aportes e excluir). Para voltar ao .NET: esvaziar a linha `planejamento` no `appsettings.json` e reiniciar o serviço.
+
+## [2.53.4] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Teste de mutação do back-end no PR** (#456, ADR 0051). Antes ele só rodava toda segunda e à mão, e uma regressão nos testes aparecia dias depois. Agora o PR que mexe no back-end mede os pacotes que mudou e falha abaixo do piso; o semanal continua medindo tudo. A CI também falha quando um pacote de `internal/` não está na lista da mutação nem na lista de fora de propósito (com o motivo). Entraram os 7 pacotes que faltavam (`auditoria`, `banco`, `banco/esquema`, `config`, `relogio`, `servidor`, `tarefas`), todos com 100%, depois de 3 mutações vivas no `config` e no `tarefas` mortas por teste novo. Nada muda para quem usa.
+
+## [2.53.3] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de CSP reconhece `</script >`** (#551, code scanning #2, CodeQL `js/bad-tag-filter`). A regex que procura `<script>` escrito no `index.html` só reconhecia o fechamento exato `</script>`; agora aceita espaço ou atributo antes do `>`. Era só o teste, sem risco real. Nada muda para quem usa.
+
+## [2.53.2] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **`minimatch` 11 no front-end** (#550, Dependabot #14, GHSA-g3hv-75wg-m249). O `minimatch` abaixo da 11.0.1 pode travar com certos padrões de glob; ele vinha do `glob` e do `test-exclude` (a cobertura do Jest), só em desenvolvimento, e nem o `test-exclude` mais novo aceita a 11. Agora é forçado pelo `overrides` do `package.json`. Nada muda para quem usa: não entra no site publicado.
+
+## [2.53.1] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes do Go mais rápidos: o banco de teste vem de um modelo** (#542). Cada teste aplicava o esquema inteiro num banco novo, o que custa ~370 ms com o `-race`; o `internal/carteira`, com uns 68 bancos, batia no limite de 60 s da CI e derrubava o job "Go" sem nada quebrado. Agora o esquema é aplicado uma vez por execução e cada teste recebe uma cópia do arquivo. Com `-race` e 4 núcleos, o pacote foi de 22 s para 10 s aqui. Nada muda para quem usa.
+
+## [2.53.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Metas em Go** (#79, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`. As 8 rotas de `/api/metas` (lista com o progresso pelo saldo da conta ou do cofrinho, o plano do caixa mês a mês, a ordem de prioridade, criar, editar, aportes e excluir) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 49 casos do contrato `09-metas`, gravados do .NET, passam com o Go atendendo. Com isso, as 23 rotas de planejamento (orçamentos, metas e contas a pagar) estão em Go. As parcelas futuras do cartão (#165) passam a ser projetadas no pacote `internal/parcelas`, que a projeção (#80) também vai usar.
+
+## [2.52.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Orçamentos em Go** (#79, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`, depois das metas. As 6 rotas de `/api/orcamentos` (lista do mês, salvar, excluir, sugestão por categoria, aplicar a sugestão e copiar do mês anterior) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 41 casos do contrato `08-orcamentos`, gravados do .NET, passam com o Go atendendo. A sugestão (#39) refaz no Go a base pela mediana dos 6 meses, a folga dos essenciais, o corte pelo uso do limite do cartão, o encaixe na renda e o arredondamento para R$ 10, com os motivos e avisos nos mesmos textos.
+
+## [2.51.1] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de Metas no navegador não depende mais do mês** (#546). A meta fictícia "Viagem" vencia em julho do ano seguinte: a partir de novembro, o plano dela tinha menos de 10 meses e o teste "o plano mês a mês aberto com 5 meses" falhava na CI, inclusive no `develop`. Agora ela vence 12 meses depois do mês atual. Nada muda para quem usa.
+
+## [2.51.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar em Go** (#79, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`, depois de orçamentos e metas. As 9 rotas de `/api/contas-agendadas` (lista, avisos, sugestões do extrato, criar, editar, "é a mesma", pagar e excluir) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 44 casos do contrato `10-contas-agendadas`, gravados do .NET, passam com o Go atendendo. A conciliação com o extrato (#158) fica no pacote de regra `internal/cobrancas`, que a partida (#444) e a sincronização (#83) também vão usar.
+
+## [2.50.38] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0056: a arquitetura do código Go** (#474, épico #70). Nada muda para quem usa. Registra, com o time de acordo, como o back-end em Go se organiza: as camadas (HTTP, regra, banco) dentro de cada assunto, e não um pacote por camada; a regra de negócio sem HTTP; o mapa de contextos, que passa a ser a tabela `dependencias` do teste de arquitetura; objetos de valor e agregados só onde pagam; interface só com duas implementações de verdade; e o que não se adota (Clean Architecture completa, N-tier, ferramenta pronta), com o porquê. O teste de arquitetura ganha a regra dos módulos (#191): o núcleo não importa módulo, e um módulo não importa outro. `internal/README.md`, `CLAUDE.md`, a skill `migrar-para-go`, o agente `dev-go` e o `ARQUITETURA.md` apontam para a ADR.
+
+## [2.50.37] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Testes de arquitetura locais, no Go e no front-end** (#476, épico #485). Nada muda para quem usa. Dois testes, no estilo do ArchUnit do Java, conferem quem pode importar quem: no Go, o driver do SQLite só no `internal/banco`, o apoio aos testes só em `_test.go`, a regra de negócio sem HTTP e um mapa de quais assuntos importam quais; no front-end, o HTTP só pelo `ApiService` e as pastas `core`, `compartilhado`, `layout` e `paginas` em camadas. São só locais (`go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura`), fora da CI por decisão de 29/10/2026. O `TamanhoUtf16` foi para o `internal/texto`, e o `regrasdescricao` deixou de depender do pacote do HTTP. ADRs 0051 e 0013, `CLAUDE.md`, skills e o agente `dev-go` atualizados.
+
+## [2.50.36] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes no navegador não falham mais no fim do mês** (#540). Nada muda para quem usa. O navegador do teste já rodava no fuso de Brasília, mas o código do teste e a API falsa rodavam no Node, que na CI fica em UTC: das 21h à meia-noite do último dia do mês, o teste via um mês e o site, o anterior, e 4 testes falhavam (metas, plano das metas, investimentos mês a mês e notificações). O `playwright.config.ts` passa a pôr o Node também no fuso de Brasília.
+
+## [2.50.35] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de mutação do back-end em Go verde de novo** (#455, épico #374). Nada muda para quem usa. A medição semanal falhava desde 26/10: os 7 mutantes vivos do `internal/tipos` já tinham saído (#82, #447), mas o `internal/carteira` derrubava a máquina da CI. Trocar o `if m == ""` (ou tirar o `i += len(m)`) do laço dos números do extrato fazia ele acrescentar "" sem fim, até acabar a memória. O laço passa a dar uma volta por caractere, com o mesmo resultado (gabarito do C#), e o teste de mutação do back-end passa a mostrar o andamento no log, como o do gerenciador (#433). Os 31 pacotes medidos ficam em 100%.
+
+## [2.50.34] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do código Go só do Windows na CI** (#459, épico #374). Nada muda para quem usa. O back-end em Go só rodava teste no Linux: o código só do Windows (a DPAPI que protege a chave dos segredos e a descrição do sistema) compilava, mas nunca rodava. Um job novo, "Go (Windows)", roda o `go vet` e o `go test` do back-end num `windows-latest`. Entram testes da DPAPI (a chave vai cifrada e só abre na mesma conta, com a mesma entropia), da descrição do Windows e das preferências do gerenciador no registro (numa chave só de teste, apagada no fim). É o que a #84 precisa para o serviço do Windows em Go nascer com teste. ADR 0051 atualizada.
+
+## [2.50.33] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o cache do NuGet deixa de mudar a cada PR** (#526). Nada muda para quem usa. A chave do cache do NuGet (`ci.yml` e `versao.yml`) incluía o `Directory.Build.props`, que só guarda a versão e sobe em todo PR: cada PR criava um cache novo de ~700 MB, o repositório chegou a 10,4 GB (o limite do Actions é 10 GB) e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A chave passa a ser os `.csproj` e a versão do SDK do .NET. ADR 0047 atualizada.
 
 ## [2.50.32] — 2026-10-31 · desenvolvimento
 

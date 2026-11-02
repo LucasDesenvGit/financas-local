@@ -11,7 +11,8 @@
     "test:usabilidade": "jest testes/usabilidade",
     "test:tipos": "tsc -p tsconfig.spec.json --noEmit",
     "test:navegador": "ng build --configuration production && playwright test",
-    "test:afetados": "node testes/rodar-afetados.mjs"
+    "test:afetados": "node testes/rodar-afetados.mjs",
+    "test:arquitetura": "jest --roots \"<rootDir>/testes-arquitetura\""
   },
   "dependencies": {
     "@angular/common": "^22.2.3",
@@ -37,5 +38,8 @@
     "jest-environment-jsdom": "^30.5.2",
     "jest-preset-angular": "^17.0.3",
     "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
   }
 }

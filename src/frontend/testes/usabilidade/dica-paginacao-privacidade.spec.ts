@@ -75,7 +75,7 @@ describe('Usabilidade: paginação', () => {
   });
 });
 
-/** "Ocultar valores": privacidade na tela, respeitada também nas frases dos gráficos (padrão do CLAUDE.md). */
+/** "Ocultar valores": privacidade na tela, respeitada também nas frases dos gráficos (padrão de docs/UI-UX.md). */
 describe('Usabilidade: ocultar valores', () => {
   afterEach(() => document.documentElement.classList.remove('valores-ocultos'));
 

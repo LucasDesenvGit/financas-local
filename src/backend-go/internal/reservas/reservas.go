@@ -334,8 +334,8 @@ func (s *Servico) Total(ctx context.Context) (tipos.Decimal, error) {
 // ("MUSD 32,09") ou do valor em reais pela PTAX do dia; compra soma, venda subtrai. A conferência guarda a quantidade
 // em dólar, e os lançamentos seguintes somam a partir dela. O saldo em reais é a quantidade pela última PTAX guardada.
 func (s *Servico) meliDolar(ctx context.Context) ([]ReservaDto, error) {
-	// O LIKE do SQLite ignora a caixa só em ASCII: "Méli", com o acento no e, fica de fora, como no C#.
-	todos, err := s.movimentos(ctx, `COALESCE(t."DescricaoOriginal", t."Descricao") LIKE '%meli d_lar%'`)
+	// O LIKE do SQLite ignora a caixa só em ASCII: o "_" cobre o "é" de "Méli" e o "ó" de "Dólar" (#567).
+	todos, err := s.movimentos(ctx, `COALESCE(t."DescricaoOriginal", t."Descricao") LIKE '%m_li d_lar%'`)
 	if err != nil {
 		return nil, err
 	}

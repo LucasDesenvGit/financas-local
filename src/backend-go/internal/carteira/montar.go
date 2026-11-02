@@ -49,6 +49,7 @@ type conversao interface {
 // listaDeReservas é o que a carteira usa das reservas.
 type listaDeReservas interface {
 	Listar(ctx context.Context) ([]reservas.ReservaDto, error)
+	Total(ctx context.Context) (tipos.Decimal, error)
 }
 
 // taxaSelic é o que a carteira usa da Selic.
@@ -80,6 +81,13 @@ type Servico struct {
 // NovoServico monta o serviço com as dependências.
 func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, cofre configuracao.Cofre, rel relogio.Relogio, log *slog.Logger) *Servico {
 	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), cofre: cofre, desfazer: desfazer.Nova[estadoAnterior](rel), relogio: rel, log: log}
+}
+
+// NovoServicoDeAcertos monta o serviço só com o que o ClassificarTrocosSemDuvida usa (o banco, a configuração, o relógio e o
+// log), para a partida da API (#444): ela não precisa de câmbio, reservas, Selic, cotações nem do cofre. Qualquer outro
+// método do serviço feito assim entra em pânico, por falta de dependência: para ele, use o NovoServico.
+func NovoServicoDeAcertos(db *sql.DB, rel relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, config: configuracao.Novo(db, rel), relogio: rel, log: log}
 }
 
 // SelicResumoDto é o do C#.

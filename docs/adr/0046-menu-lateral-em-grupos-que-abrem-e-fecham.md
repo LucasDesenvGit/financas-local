@@ -10,7 +10,7 @@ O menu lateral era uma lista corrida: 13 telas (mais o Manual), sem divisão. V�
 
 O roteiro de primeiro uso (#193) já divide o site em módulos com nome: Início, Movimentação, Planejamento, Patrimônio, Trabalho, Análises e Ajustes. O menu continua tendo de funcionar no computador (menu fixo que o ☰ esconde) e no celular (gaveta), como na #131.
 
-Fontes de UI/UX usadas (CLAUDE.md):
+Fontes de UI/UX usadas ([docs/UI-UX.md](../UI-UX.md); até a #566, no `CLAUDE.md`):
 - Nielsen, *Progressive Disclosure*, e heurística 8 (*Aesthetic and Minimalist Design*): mostrar primeiro o essencial, o resto a um clique.
 - Heurística 6 (*Recognition Rather than Recall*): o nome do grupo leva à tela pelo assunto, sem decorar a posição.
 - Heurística 4 (*Consistency and Standards*): os mesmos nomes no menu, no roteiro e no Manual.

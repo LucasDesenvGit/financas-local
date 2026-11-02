@@ -65,6 +65,7 @@ FOTOS=painel,metas,investimentos?aba=fii FOTOS_PASTA=<pasta temporária da sess�
 - **Interação importante** (botão, filtro, navegação): um teste em `testes-navegador/*.spec.ts` que faz o que o usuário faz, pelos papéis e nomes acessíveis (`getByRole`, `getByLabel`), como em `celular.spec.ts`. Se o nome acessível não acha o controle, isso já é um problema de acessibilidade a corrigir na tela.
 - Todo teste já liga a API falsa e confere os erros sozinho (fixtures `auto` em `base.ts`).
 - Prove que o teste pega o defeito: estrague de propósito, veja falhar, desfaça.
+- **Arquivo novo ou import entre pastas** (`core`, `compartilhado`, `layout`, `paginas`): rode `npm run test:arquitetura` (#476, só local).
 
 ## 4. No fim: nada rodando
 

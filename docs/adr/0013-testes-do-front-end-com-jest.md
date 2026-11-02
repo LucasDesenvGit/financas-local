@@ -19,7 +19,7 @@ Até aqui o projeto não tinha nenhum teste automatizado: a validação era buil
 
 Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`, fora do build do Angular:
 
-- ficam em `src/frontend/testes/`, separados por objetivo: `regressao/` (comportamento que já quebrou ou que um PR garantiu) e `usabilidade/` (critérios de UI/UX do CLAUDE.md — Nielsen, WCAG 2.2 — que dá para verificar sem navegador: nome/estado acessível, teclado, Esc, conteúdo carregado só sob demanda, filtro ativo visível); `apoio/` tem o que os testes compartilham;
+- ficam em `src/frontend/testes/`, separados por objetivo: `regressao/` (comportamento que já quebrou ou que um PR garantiu) e `usabilidade/` (critérios de UI/UX de [docs/UI-UX.md](../UI-UX.md), até a #566 no CLAUDE.md — Nielsen, WCAG 2.2 — que dá para verificar sem navegador: nome/estado acessível, teclado, Esc, conteúdo carregado só sob demanda, filtro ativo visível); `apoio/` tem o que os testes compartilham;
 - `npm test` roda tudo; `npm run test:regressao` e `npm run test:usabilidade` rodam cada grupo; `npm run test:tipos` confere os tipos dos testes (o ts-jest só transpila);
 - a CI roda `test:tipos` e `npm test` logo depois do build do front-end.
 
@@ -31,7 +31,7 @@ Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`,
   - o jsdom não calcula layout nem implementa a Popover API: tamanho de alvo (24×24), contraste e posição real ficam fora — a posição do balão é testada com `getBoundingClientRect` simulado, e a Popover API com um substituto mínimo (`testes/apoio/popover.ts`);
   - se o Angular padronizar o Vitest, migrar os testes será trabalho extra (a API do Vitest é quase igual à do Jest);
   - o back-end (.NET) continua sem testes automatizados.
-- **Na prática:** bug corrigido ganha teste em `testes/regressao/` no mesmo PR; padrão novo de UI/UX do CLAUDE.md ganha teste em `testes/usabilidade/`. Telas que usam o roteador são abertas com `RouterTestingHarness` (veja `testes/apoio/transacoes.ts`), sempre com a API falsa (nunca HTTP de verdade). O `import` do `jest-preset-angular/setup-env/zone` tem de ser o primeiro do `testes/configurar-jest.ts`.
+- **Na prática:** bug corrigido ganha teste em `testes/regressao/` no mesmo PR; padrão novo de UI/UX ([docs/UI-UX.md](../UI-UX.md)) ganha teste em `testes/usabilidade/`. Telas que usam o roteador são abertas com `RouterTestingHarness` (veja `testes/apoio/transacoes.ts`), sempre com a API falsa (nunca HTTP de verdade). O `import` do `jest-preset-angular/setup-env/zone` tem de ser o primeiro do `testes/configurar-jest.ts`.
 
 ## Atualização de 2026-10-20: ícones substituídos nos testes (issue #204)
 
@@ -45,3 +45,15 @@ Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`,
 ## Atualização de 2026-10-20: testes de estilo saíram do Jest (issue #204)
 
 Os 43 casos que liam o `styles.css` por `cssRules` ou pela ordem das regras foram para o navegador (ADR 0041, `testes-navegador/estilos.spec.ts`), que mede o efeito de verdade. No Jest ficam a lógica, o componente, o texto, a acessibilidade e as propriedades simples que o jsdom calcula (`width`, `min-height`, `visibility`), além do contraste do tema calculado a partir das cores.
+
+## Atualização de 2026-11-01: teste de arquitetura local (issue #476)
+
+Quem pode importar quem em `src/app` fica em `testes-arquitetura/arquitetura.spec.ts`, no estilo do ArchUnit do Java.
+- **Só local** (decisão de 29/10/2026): a pasta fica fora de `testes/`, e o `jest.config.js` só procura lá, então o `npm test` e a CI não o rodam. Roda com `npm run test:arquitetura`.
+- **Sem dependência nova:** os imports são lidos com uma expressão regular, como nos outros testes que leem o código.
+- **As regras:**
+  1. o `@angular/common/http` só no `core/` e no `app.config.ts`, e o `HttpClient` injetado só no `ApiService` (exceção registrada: o `auth.service.ts`);
+  2. a 4. o `core/` não importa `compartilhado/`, `layout/` nem `paginas/`; o `compartilhado/` não importa `paginas/` nem `layout/`; o `layout/` não importa `paginas/`. Há três exceções registradas, que parecem estar no lugar errado;
+  5. uma página com rota (as do `app.routes.ts`) não importa outra página com rota. Aba e janela de uma página podem.
+- A regra do componente de apresentação, que não importa o `ApiService`, entra com a #475.
+

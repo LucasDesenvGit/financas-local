@@ -10,9 +10,20 @@ package texto
 import (
 	"strings"
 	"unicode"
+	"unicode/utf16"
 
 	"golang.org/x/text/unicode/norm"
 )
+
+// TamanhoUtf16 é o string.Length do C#: unidades UTF-16 (um emoji conta 2). Mora aqui, e não no respostas, para a
+// regra que só mede texto não depender do pacote do HTTP (#476).
+func TamanhoUtf16(s string) int {
+	n := 0
+	for _, r := range s {
+		n += utf16.RuneLen(r)
+	}
+	return n
+}
 
 // ParaRegras é o CategorizacaoService.Normalizar do C#: tira os espaços das pontas, decompõe (FormD), descarta os
 // acentos (as marcas sem espaço, a categoria Mn), recompõe (FormC) e passa para maiúsculas como o ToUpperInvariant.

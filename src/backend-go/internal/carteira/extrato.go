@@ -286,20 +286,19 @@ func numeroEm(t string, i int) string {
 	return ""
 }
 
-// numerosDoTexto é o RegexNumero: os números soltos do texto, sem dígito, vírgula ou ponto colado nas pontas.
+// numerosDoTexto é o RegexNumero: os números soltos do texto, sem dígito, vírgula ou ponto colado nas pontas. Um número
+// só tem dígito, vírgula e ponto, então dentro dele (e logo depois) o caractere anterior já pula a posição: não é preciso
+// saltar o número. Uma volta por caractere, sem índice que anda à mão: no teste de mutação, um laço que deixasse de
+// andar acrescentava "" sem parar até acabar a memória da CI (#455, como na #433).
 func numerosDoTexto(t string) []string {
 	var numeros []string
-	for i := 0; i < len(t); {
-		m := ""
-		if i == 0 || !ehSeparadorDeNumero(t[i-1]) {
-			m = numeroEm(t, i)
-		}
-		if m == "" {
-			i++
+	for i := range len(t) {
+		if i > 0 && ehSeparadorDeNumero(t[i-1]) {
 			continue
 		}
-		numeros = append(numeros, m)
-		i += len(m)
+		if m := numeroEm(t, i); m != "" {
+			numeros = append(numeros, m)
+		}
 	}
 	return numeros
 }

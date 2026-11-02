@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
@@ -343,27 +344,73 @@ type relogioMovel struct{ agora time.Time }
 
 func (r *relogioMovel) Agora() time.Time { return r.agora }
 
-// Regra: o gravador grava o que chega na fila e, ao parar, grava o que sobrou antes de voltar.
-func TestRodarGravaAoParar(t *testing.T) {
+// Regra: o gravador grava o que chega na fila, sem esperar o desligamento, e volta quando o contexto acaba.
+//
+// Antes (#458) o teste também registrava um erro logo depois de cancelar e esperava 2 linhas no fim: isso dependia de
+// qual goroutine corria primeiro (se o Rodar pegasse o erro pela fila já com o contexto cancelado, o gravarLote falhava
+// com context.Canceled e o erro se perdia, e o teste falhava 1 vez em 20). Esse caso tem teste próprio, determinístico
+// (TestRodarGravaOLoteQueSaiuDaFilaNoDesligamento, #569).
+// Dentro do synctest, o synctest.Wait volta quando o gravador terminou de gravar e parou de novo na fila (#458); o banco
+// nasce fora da bolha, porque as goroutines do database/sql são dele e não do teste.
+func TestRodarGravaOQueChegaNaFila(t *testing.T) {
+	db := testeapoio.NovoBanco(t)
+	synctest.Test(t, func(t *testing.T) {
+		fila := NovaFila()
+		g := NovoGravador(db, fila, testeapoio.RelogioDosTestes(), parametrosFixos(90), slog.New(slog.DiscardHandler))
+		ctx, parar := context.WithCancel(t.Context())
+		parou := make(chan struct{})
+		go func() { g.Rodar(ctx); close(parou) }()
+		fila.Registrar(Registro{Em: testeapoio.InstanteDosTestes, Nivel: Erro, Origem: "Sistema", Categoria: "c", Mensagem: "primeiro"})
+		synctest.Wait()
+		if l := linhasDaTabela(t, db); len(l) != 1 {
+			t.Fatalf("antes de parar, gravou %d, esperado 1:\n%s", len(l), strings.Join(l, "\n"))
+		}
+		fila.Registrar(Registro{Em: testeapoio.InstanteDosTestes, Nivel: Erro, Origem: "Sistema", Categoria: "c", Mensagem: "segundo"})
+		synctest.Wait()
+		if l := linhasDaTabela(t, db); len(l) != 2 {
+			t.Fatalf("antes de parar, gravou %d, esperado 2:\n%s", len(l), strings.Join(l, "\n"))
+		}
+		parar()
+		<-parou
+	})
+}
+
+// Regra (#569): o lote que já saiu da fila é gravado mesmo que o desligamento comece no meio da gravação.
+//
+// O contexto canceladoAoSairDaFila acaba no instante em que o gravador tira o erro da fila: o select do Rodar só vê a
+// fila pronta e escolhe ela, e a gravação já encontra o contexto cancelado. É a corrida que fazia o teste antigo falhar
+// 1 vez em 20 (#458), agora sempre do mesmo jeito.
+func TestRodarGravaOLoteQueSaiuDaFilaNoDesligamento(t *testing.T) {
 	db := testeapoio.NovoBanco(t)
 	fila := NovaFila()
 	g := NovoGravador(db, fila, testeapoio.RelogioDosTestes(), parametrosFixos(90), slog.New(slog.DiscardHandler))
-	ctx, parar := context.WithCancel(t.Context())
-	parou := make(chan struct{})
-	go func() { g.Rodar(ctx); close(parou) }()
-	fila.Registrar(Registro{Em: testeapoio.InstanteDosTestes, Nivel: Erro, Origem: "Sistema", Categoria: "c", Mensagem: "primeiro"})
-	for range 200 {
-		if len(linhasDaTabela(t, db)) == 1 {
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
+	fila.Registrar(Registro{Em: testeapoio.InstanteDosTestes, Nivel: Erro, Origem: "Sistema", Categoria: "c", Mensagem: "no desligamento"})
+	g.Rodar(canceladoAoSairDaFila{Context: t.Context(), fila: fila})
+	if l := linhasDaTabela(t, db); len(l) != 1 {
+		t.Fatalf("gravou %d, esperado 1: o erro que saiu da fila no desligamento se perdeu", len(l))
 	}
-	parar()
-	fila.Registrar(Registro{Em: testeapoio.InstanteDosTestes, Nivel: Erro, Origem: "Sistema", Categoria: "c", Mensagem: "no desligar"})
-	<-parou
-	if l := linhasDaTabela(t, db); len(l) != 2 {
-		t.Errorf("gravou %d, esperado 2:\n%s", len(l), strings.Join(l, "\n"))
+}
+
+// canceladoAoSairDaFila é um contexto que fica cancelado quando a fila esvazia.
+type canceladoAoSairDaFila struct {
+	context.Context
+	fila *Fila
+}
+
+var jaFechado = func() chan struct{} { c := make(chan struct{}); close(c); return c }()
+
+func (c canceladoAoSairDaFila) Done() <-chan struct{} {
+	if len(c.fila.canal) > 0 {
+		return nil // nil nunca fica pronto: o select escolhe a fila
 	}
+	return jaFechado
+}
+
+func (c canceladoAoSairDaFila) Err() error {
+	if len(c.fila.canal) > 0 {
+		return nil
+	}
+	return context.Canceled
 }
 
 // Regra: falha ao gravar vai para o log sem a captura, e não volta para a fila nem derruba nada.

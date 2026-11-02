@@ -15,7 +15,8 @@ import (
 	"mime"
 	"net/http"
 	"strings"
-	"unicode/utf16"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/texto"
 )
 
 // Mensagem é a resposta do Erro(...) do BaseController: {"mensagem": "..."}.
@@ -144,14 +145,8 @@ func TipoNaoSuportado(w http.ResponseWriter) {
 
 func Obrigatorio(nome string) string { return "The " + nome + " field is required." }
 
-// tamanhoUtf16 é o string.Length do C#: unidades UTF-16 (um emoji conta 2).
-func TamanhoUtf16(s string) int {
-	n := 0
-	for _, r := range s {
-		n += utf16.RuneLen(r)
-	}
-	return n
-}
+// TamanhoUtf16 é o string.Length do C# (texto.TamanhoUtf16), para quem já fala HTTP e valida a entrada.
+func TamanhoUtf16(s string) int { return texto.TamanhoUtf16(s) }
 
 // erroDoJSON é o erro do System.Text.Json: a chave em "errors" é o caminho ("$" ou "$.login").
 type ErroJSON struct {

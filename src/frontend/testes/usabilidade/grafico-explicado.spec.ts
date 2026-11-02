@@ -14,7 +14,7 @@ class Hospedeiro {
 }
 
 /**
- * Usabilidade dos gráficos (UX-9, #41). Padrão do CLAUDE.md: "gráfico se explica" — conclusão + como ler.
+ * Usabilidade dos gráficos (UX-9, #41). Padrão de docs/UI-UX.md: "gráfico se explica" — conclusão + como ler.
  * WCAG 1.1.1: o <canvas> tem alternativa em texto, montada com a frase-resumo e a linha "como ler".
  */
 describe('Usabilidade: gráfico explicado', () => {

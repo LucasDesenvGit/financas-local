@@ -100,7 +100,10 @@ type CampoTexto struct {
 	Maximo      int
 	Opcional    bool    // sem [Required] (string? no C#)
 	Padrao      *Padrao // [RegularExpression], se houver
-	Valor       *string
+	// MensagemDoTamanho é o ErrorMessage do [StringLength], quando o record dá um ("O texto da cobrança pode ter até
+	// 100 caracteres."); vazio, vale a mensagem padrão do .NET.
+	MensagemDoTamanho string
+	Valor             *string
 }
 
 func (c *CampoTexto) propriedade() string { return c.Propriedade }
@@ -126,7 +129,9 @@ func (c *CampoTexto) validar(erros map[string][]string) {
 	if c.Valor != nil {
 		// [StringLength] conta caracteres UTF-16, como string.Length do C#; nulo passa (quem recusa é o Required).
 		if n := TamanhoUtf16(*c.Valor); n > c.Maximo || n < c.Minimo {
-			if c.Minimo > 0 {
+			if c.MensagemDoTamanho != "" {
+				lista = append(lista, c.MensagemDoTamanho)
+			} else if c.Minimo > 0 {
 				lista = append(lista, fmt.Sprintf("The field %s must be a string with a minimum length of %d and a maximum length of %d.",
 					c.Propriedade, c.Minimo, c.Maximo))
 			} else {

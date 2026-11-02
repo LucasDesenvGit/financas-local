@@ -1,0 +1,300 @@
+{
+  "descricao": "Metas (#79, MetasController): lista com o progresso (saldo da conta ou do cofrinho), o plano do caixa (#90, #149), a ordem de prioridade, criar, editar, aportes e excluir. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. As metas da base são os ids 1 a 3 (a 2 guarda no cofrinho 'Caixinha viagem' da conta 1). Cria as metas 4 e 5 (com aportes) e as apaga no fim, com os aportes junto. A ordem de prioridade volta a 1, 2 e 3: a meta 3, sem ordem na base (0), fica com a 3, porque a API não tem como voltar ao 0. Não lista os aportes novos: a hora deles sai do relógio, que anda.",
+  "casos": [
+    {
+      "nome": "listar",
+      "comentario": "Concluídas no fim; depois pela prioridade (0 vai para o fim), pela data (sem data no fim) e pelo nome.",
+      "metodo": "GET",
+      "caminho": "/api/metas"
+    },
+    {
+      "nome": "listar sem login",
+      "metodo": "GET",
+      "caminho": "/api/metas",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "plano",
+      "comentario": "O caixa mês a mês (120 meses): receitas e despesas das contas de dinheiro, faturas pelo vencimento, o saldo no fim do mês e o melhor mês recente. A margem da base ('dez') não é número: vale o padrão.",
+      "metodo": "GET",
+      "caminho": "/api/metas/plano"
+    },
+    {
+      "nome": "plano sem login",
+      "metodo": "GET",
+      "caminho": "/api/metas/plano",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "aportes da meta 1",
+      "comentario": "Do mais antigo ao mais novo, com a hora de Brasília (gravada em UTC).",
+      "metodo": "GET",
+      "caminho": "/api/metas/1/aportes"
+    },
+    {
+      "nome": "aportes da meta 2, com retirada",
+      "metodo": "GET",
+      "caminho": "/api/metas/2/aportes"
+    },
+    {
+      "nome": "aportes de meta que não existe",
+      "metodo": "GET",
+      "caminho": "/api/metas/9999/aportes"
+    },
+    {
+      "nome": "aportes com id que não é número",
+      "metodo": "GET",
+      "caminho": "/api/metas/abc/aportes"
+    },
+    {
+      "nome": "criar (id 4)",
+      "comentario": "O nome sem os espaços das pontas; entra no fim da ordem de prioridade.",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "  Carro  ", "valorAlvo": 20000, "valorAtual": 0, "dataAlvo": "2028-01-31", "contaId": null, "cor": "#123abc", "concluida": false, "icone": "carro", "guardarPorMes": 500.5 }
+    },
+    {
+      "nome": "criar com cofrinho (id 5)",
+      "comentario": "O cofrinho é achado sem diferenciar maiúsculas e gravado com o nome do extrato.",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "Presente", "valorAlvo": 1000, "valorAtual": 50.25, "dataAlvo": null, "contaId": 1, "cor": "#AABBCC", "concluida": false, "reservaNome": " caixinha VIAGEM " }
+    },
+    {
+      "nome": "criar com cofrinho sem conta",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false, "reservaNome": "Caixinha viagem" }
+    },
+    {
+      "nome": "criar com cofrinho que não é da conta",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "contaId": 3, "cor": "#123abc", "concluida": false, "reservaNome": "Caixinha viagem" }
+    },
+    {
+      "nome": "criar com conta que não existe",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "contaId": 9999, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "criar sem nome",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "criar com o nome longo demais",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "criar com o alvo zero",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 0, "valorAtual": 0, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "criar com o valor atual negativo",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": -1, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "criar com a cor fora do formato",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "azul", "concluida": false }
+    },
+    {
+      "nome": "criar sem cor",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "concluida": false }
+    },
+    {
+      "nome": "criar com o ícone fora do formato",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false, "icone": "Carro!" }
+    },
+    {
+      "nome": "criar guardando zero por mês",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false, "guardarPorMes": 0 }
+    },
+    {
+      "nome": "criar com o cofrinho de nome longo demais",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "contaId": 1, "cor": "#123abc", "concluida": false, "reservaNome": "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901" }
+    },
+    {
+      "nome": "criar sem login",
+      "metodo": "POST",
+      "caminho": "/api/metas",
+      "sessao": "visitante",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "editar a 4",
+      "comentario": "Passa a usar a conta 3 (o saldo dela entra no progresso), sem cofrinho.",
+      "metodo": "PUT",
+      "caminho": "/api/metas/4",
+      "corpo": { "nome": "Carro usado", "valorAlvo": 15000, "valorAtual": 100, "dataAlvo": "2027-03-15", "contaId": 3, "cor": "#123abc", "concluida": false, "icone": "carro", "guardarPorMes": null }
+    },
+    {
+      "nome": "editar a 5 tirando a conta",
+      "comentario": "Sem conta, o cofrinho é descartado.",
+      "metodo": "PUT",
+      "caminho": "/api/metas/5",
+      "corpo": { "nome": "Presente", "valorAlvo": 1000, "valorAtual": 50.25, "dataAlvo": "2026-12-24", "contaId": null, "cor": "#AABBCC", "concluida": false }
+    },
+    {
+      "nome": "editar a que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/metas/9999",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "editar com id que não é número",
+      "metodo": "PUT",
+      "caminho": "/api/metas/abc",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "editar com conta que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/metas/4",
+      "corpo": { "nome": "X", "valorAlvo": 100, "valorAtual": 0, "contaId": 9999, "cor": "#123abc", "concluida": false }
+    },
+    {
+      "nome": "aporte na 5",
+      "metodo": "POST",
+      "caminho": "/api/metas/5/aporte",
+      "corpo": { "valor": 200.5 }
+    },
+    {
+      "nome": "retirada maior que o guardado na 5",
+      "comentario": "Para no zero; o aporte gravado é só o que de fato mudou.",
+      "metodo": "POST",
+      "caminho": "/api/metas/5/aporte",
+      "corpo": { "valor": -5000 }
+    },
+    {
+      "nome": "retirada com a meta já no zero",
+      "comentario": "Nada muda: nenhum aporte é gravado.",
+      "metodo": "POST",
+      "caminho": "/api/metas/5/aporte",
+      "corpo": { "valor": -10 }
+    },
+    {
+      "nome": "aporte que chega ao alvo",
+      "comentario": "Marca a meta como concluída.",
+      "metodo": "POST",
+      "caminho": "/api/metas/5/aporte",
+      "corpo": { "valor": 1000 }
+    },
+    {
+      "nome": "aporte em meta que não existe",
+      "metodo": "POST",
+      "caminho": "/api/metas/9999/aporte",
+      "corpo": { "valor": 10 }
+    },
+    {
+      "nome": "aporte fora da faixa",
+      "metodo": "POST",
+      "caminho": "/api/metas/5/aporte",
+      "corpo": { "valor": 1000000000 }
+    },
+    {
+      "nome": "aporte sem login",
+      "metodo": "POST",
+      "caminho": "/api/metas/5/aporte",
+      "sessao": "visitante",
+      "corpo": { "valor": 10 }
+    },
+    {
+      "nome": "listar com as novas",
+      "metodo": "GET",
+      "caminho": "/api/metas"
+    },
+    {
+      "nome": "nova ordem de prioridade",
+      "comentario": "As da lista primeiro; as outras depois, na ordem que tinham (sem ordem no fim).",
+      "metodo": "PUT",
+      "caminho": "/api/metas/prioridades",
+      "corpo": { "ids": [4, 2] }
+    },
+    {
+      "nome": "listar na ordem nova",
+      "metodo": "GET",
+      "caminho": "/api/metas"
+    },
+    {
+      "nome": "ordem com meta repetida",
+      "metodo": "PUT",
+      "caminho": "/api/metas/prioridades",
+      "corpo": { "ids": [1, 1] }
+    },
+    {
+      "nome": "ordem com meta que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/metas/prioridades",
+      "corpo": { "ids": [1, 9999] }
+    },
+    {
+      "nome": "ordem vazia",
+      "metodo": "PUT",
+      "caminho": "/api/metas/prioridades",
+      "corpo": { "ids": [] }
+    },
+    {
+      "nome": "ordem sem a lista",
+      "metodo": "PUT",
+      "caminho": "/api/metas/prioridades",
+      "corpo": {}
+    },
+    {
+      "nome": "excluir sem login",
+      "metodo": "DELETE",
+      "caminho": "/api/metas/4",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "excluir a 4",
+      "metodo": "DELETE",
+      "caminho": "/api/metas/4"
+    },
+    {
+      "nome": "excluir a 5, com os aportes",
+      "metodo": "DELETE",
+      "caminho": "/api/metas/5"
+    },
+    {
+      "nome": "excluir a que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/metas/9999"
+    },
+    {
+      "nome": "excluir com id que não é número",
+      "metodo": "DELETE",
+      "caminho": "/api/metas/abc"
+    },
+    {
+      "nome": "devolver a ordem",
+      "comentario": "Limpeza: 1, 2 e 3 (a 3 era 0 na base).",
+      "metodo": "PUT",
+      "caminho": "/api/metas/prioridades",
+      "corpo": { "ids": [1, 2, 3] }
+    },
+    {
+      "nome": "listar de novo",
+      "metodo": "GET",
+      "caminho": "/api/metas"
+    }
+  ]
+}

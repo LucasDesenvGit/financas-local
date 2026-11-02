@@ -1,17 +1,21 @@
 name: Teste de mutação (Go)
 
 # #373 (ADR 0051): mede se os testes do Go pegam erro de verdade. O gremlins estraga o código de propósito, numa cópia
-# (troca < por <=, && por ||, + por -...), e conta as mudanças que os testes não pegaram. É lento (~1 min por pacote),
-# então o do back-end não roda em PR: toda segunda de manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow).
+# (troca < por <=, && por ||, + por -...), e conta as mudanças que os testes não pegaram. É lento (~1 min por pacote).
+# #456: no PR que mexe no back-end, mede só os pacotes da lista que o PR mudou, e falha abaixo do piso; toda segunda de
+# manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow), mede a lista inteira. Antes de medir, confere que
+# todo pacote de internal/ está na lista ou em scripts/ci/mutacao-go-fora.txt, com o motivo.
 # Os pacotes e os pisos ficam em scripts/ci/mutacao-go.txt; o relatório sai no resumo do job e no artefato.
-# #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/mutacao-gerenciador-go.txt) roda também no PR que mexe
-# nele, para o teste pesado não rodar na máquina de quem desenvolve (chegava a 8 GB de memória).
+# #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/mutacao-gerenciador-go.txt) roda no PR que mexe nele,
+# para o teste pesado não rodar na máquina de quem desenvolve (chegava a 8 GB de memória).
 on:
   pull_request:
     branches: [develop, main]
     paths:
+      - 'src/backend-go/**'
       - 'src/gerenciador-go/**'
       - 'scripts/ci/mutacao-go.py'
+      - 'scripts/ci/mutacao-go*.txt'
       - 'scripts/ci/mutacao-gerenciador-go*.txt'
       - '.github/workflows/mutacao-go.yml'
   schedule:
@@ -33,11 +37,12 @@ concurrency:
 jobs:
   mutacao:
     name: Teste de mutação (Go)
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # no PR, o script compara com a base (base...HEAD)
 
       - name: Go
         uses: actions/setup-go@v7
@@ -48,7 +53,13 @@ jobs:
       - name: Teste de mutação
         env:
           PACOTES: ${{ inputs.pacotes }}
-        run: python3 scripts/ci/mutacao-go.py $PACOTES
+          BASE: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE" ]; then
+            python3 scripts/ci/mutacao-go.py --base "origin/$BASE"   # PR: só os pacotes mudados
+          else
+            python3 scripts/ci/mutacao-go.py $PACOTES               # semanal e à mão
+          fi
 
       - name: Relatório e resultados
         if: always()
@@ -66,6 +77,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # no PR, o script compara com a base (base...HEAD)
 
       - name: Go
         uses: actions/setup-go@v7
@@ -74,7 +87,10 @@ jobs:
           cache-dependency-path: src/gerenciador-go/go.sum
 
       - name: Teste de mutação
-        run: python3 scripts/ci/mutacao-go.py --gerenciador
+        env:
+          BASE: ${{ github.base_ref }}
+        # No PR, só se o gerenciador (ou a própria mutação) mudou: o workflow agora roda também nos PRs do back-end.
+        run: python3 scripts/ci/mutacao-go.py --gerenciador ${BASE:+--base "origin/$BASE"}
 
       - name: Relatório e resultados
         if: always()

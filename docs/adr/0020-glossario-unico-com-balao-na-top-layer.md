@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-16 (registrada depois da decisão, no PR #55 — UX-10)
-- **Relacionadas:** referências de UI/UX do `CLAUDE.md`
+- **Relacionadas:** referências de UI/UX em [docs/UI-UX.md](../UI-UX.md) (até a #566, no `CLAUDE.md`)
 
 ## Contexto
 

@@ -2,7 +2,7 @@
 
 Como as partes conversam nos caminhos que cruzam o sistema. Os nomes dos participantes são os do [diagrama de Contêineres](../ARQUITETURA.md#contêineres). O padrão está na [ADR 0055](../adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
 
-> **Data dos diagramas:** 31/10/2026, na fase "Go atrás do .NET" (#231). Cada fluxo diz quem atende hoje. Quando um assunto passa para o Go, o fluxo dele muda no mesmo PR.
+> **Data dos diagramas:** 01/11/2026, na fase "Go atrás do .NET" (#231). Cada fluxo diz quem atende hoje. Quando um assunto passa para o Go, o fluxo dele muda no mesmo PR.
 
 ## Login e sessão
 
@@ -77,7 +77,7 @@ sequenceDiagram
 
 ## Partida da API
 
-**Quem atende:** a API .NET.
+**Quem atende:** a API .NET. As seis rotinas de partida já existem em Go (`internal/partida`, #444), cada uma com a regra no pacote do assunto dela, mas só rodam com o Go na frente (opção `-rotinas-de-partida`, depois da inversão, #85). Atrás do .NET, quem as roda é o .NET: rodar nos dois seria acertar duas vezes.
 
 ```mermaid
 sequenceDiagram

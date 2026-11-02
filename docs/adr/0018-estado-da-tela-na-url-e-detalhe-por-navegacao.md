@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-16 (registrada depois das decisões, nos PRs #44, #45, #47, #48, #49 e #57 — UX-1 a UX-6)
-- **Relacionadas:** épico de UX #30; referências de UI/UX do `CLAUDE.md`
+- **Relacionadas:** épico de UX #30; referências de UI/UX em [docs/UI-UX.md](../UI-UX.md) (até a #566, no `CLAUDE.md`)
 
 ## Contexto
 

@@ -66,3 +66,17 @@ A partir desta ADR, o `develop` foi para **2.2.0**, contando o que entrou desde 
   - `scripts/ci/verificar-changelog.py`, no check "versão subiu", falha com: tipo repetido na mesma versão; versão repetida ou fora de ordem; versão acima da do `Directory.Build.props`;
   - depois de publicar, a `main` volta para o `develop`.
 
+## Atualização de 2026-11-02: o conflito da versão resolvido por um comando (issue #587)
+
+- **Problema:** a consequência negativa "Conflito na versão" virou rotina. Com vários PRs por dia, cada merge deixava todos os outros em conflito no `Directory.Build.props` e no `CHANGELOG.md` (os dois mudam no mesmo lugar), e alguém precisava trazer o `develop`, subir a versão de novo e mover a entrada à mão. No mesmo dia, o #578 conflitou duas vezes.
+- **O que mudou:** a decisão continua (cada PR sobe a versão pelo tipo); o conflito passa a ser resolvido por `scripts/geral/atualizar-pr.sh <número do PR>`:
+  - traz o `origin/develop` numa worktree temporária, sem mexer na pasta de quem roda;
+  - conflito só nos dois arquivos: sobe a versão do `develop` no nível em que o PR tinha subido em relação à base dele (o primeiro, o do meio ou o último número), nunca menos do que o tipo do título pede, e põe a seção do PR no topo do CHANGELOG com o número novo e a data de hoje (`scripts/geral/atualizar-versao-do-pr.py`, com teste em `test_atualizar_versao_do_pr.py`, rodado no check "versão subiu");
+  - confere com o `verificar-versao.py` e o `verificar-changelog.py` e envia com a conta de quem rodou;
+  - conflito em outro arquivo: desfaz e lista os arquivos.
+- **Alternativas consideradas:**
+  - **A CI sobe a versão no merge**, com um arquivo de CHANGELOG por PR: acabaria com o conflito, mas grava no `develop` protegido. Continua descartada, pelo mesmo motivo de 2026-10-20;
+  - **um workflow que roda o mesmo script sozinho quando o `develop` anda:** o commit feito com o `GITHUB_TOKEN` não dispara a CI do PR ([documentação do GitHub](https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs)), então precisaria de um token próprio nos segredos do repositório. Fica para depois, se o comando local não bastar (decisão do usuário);
+  - **`merge=union` no `.gitattributes`:** o GitHub não usa esse ajuste na tela de conflito nem no botão de merge, e a versão continuaria errada.
+- **Consequência negativa:** o conflito continua acontecendo; só deixa de ser trabalho à mão. Alguém precisa rodar o comando, e cada atualização roda a CI do PR de novo.
+- **Dependabot:** o check "versão subiu" passa a pular os PRs pelo **autor** do PR, e não por quem disparou a execução. Com o `github.actor`, um `@dependabot rebase` pedido por uma pessoa disparava em nome dela, e o check cobrava a versão de um PR do Dependabot (#584).

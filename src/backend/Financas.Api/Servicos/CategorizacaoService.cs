@@ -244,12 +244,13 @@ public class CategorizacaoService
     /// <summary>
     /// Regras padrão (→ Investimentos) que chegaram depois da instalação: a marca em <c>Configuracao</c> faz cada grupo ser
     /// criado uma vez só, e uma regra apagada por você não volta. Os mesmos textos estão no 02-dados-iniciais.sql.
-    /// <c>Filtros</c> é o LIKE que acha os candidatos no banco; a comparação certa é pelo texto normalizado.
+    /// <c>Filtros</c> é o LIKE que acha os candidatos no banco; a comparação certa é pelo texto normalizado. O LIKE do
+    /// SQLite só ignora a caixa em ASCII: a letra que pode vir com acento vai como "_" no filtro (#567).
     /// </summary>
     private static readonly (string Chave, string[] Textos, string[] Filtros)[] RegrasPadraoNovas =
     [
         // #169 (ADR 0038): comprar e vender dólar é mover o próprio dinheiro, não gasto nem receita.
-        (ChaveRegraMeliDolar, new[] { TextoRegraMeliDolar }, new[] { "%meli d_lar%" }),
+        (ChaveRegraMeliDolar, new[] { TextoRegraMeliDolar }, new[] { "%m_li d_lar%" }),
         // #172: aplicação e resgate de renda fixa são movimento seu. O produto vai junto no texto para não pegar
         // "resgate de pontos" ou "resgate de cashback"; "aplicação financeira" sozinha ficou de fora porque também aparece
         // em "rendimento de aplicação financeira", que é receita.
@@ -272,11 +273,12 @@ public class CategorizacaoService
         foreach (var (chave, textos, filtros) in RegrasPadraoNovas)
         {
             if (await config.ExisteAsync(chave, ct)) continue;
-            await config.DefinirAsync(chave, DateTime.UtcNow.ToString("O"), ct: ct);
             investimentos ??= (await _db.Categorias.AsNoTracking().Where(x => x.Tipo == TipoCategoria.Transferencia)
                     .Select(x => new { x.Id, x.Nome }).ToListAsync(ct))
                 .FirstOrDefault(x => Normalizar(x.Nome) == "INVESTIMENTOS")?.Id;
-            if (investimentos is not int categoria) continue;
+            // Sem a categoria, nenhum grupo nasce nem ganha marca: nascem na partida seguinte à volta dela (#568).
+            if (investimentos is not int categoria) return mudaram;
+            await config.DefinirAsync(chave, DateTime.UtcNow.ToString("O"), ct: ct);
             foreach (var regra in textos)
                 if (!await _db.RegrasCategorizacao.AnyAsync(r => r.Texto == regra, ct))
                     _db.RegrasCategorizacao.Add(new RegraCategorizacao

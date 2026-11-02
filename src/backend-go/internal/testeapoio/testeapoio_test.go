@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -53,9 +54,10 @@ func TestExemploDeIntegracao(t *testing.T) {
 	}
 	decorrido := time.Since(inicio)
 	t.Logf("banco temporário + fábrica + consulta: %v", decorrido)
-	// Com -race (a CI), o SQLite em Go puro fica dezenas de vezes mais lento e o tempo depende da máquina e dos
-	// outros testes paralelos: a trava de tempo dos testes é da #371. Sem -race, o exemplo leva uns 5 ms.
-	if !comRace && decorrido > time.Second {
+	// Na CI, o tempo depende da máquina e dos outros testes paralelos: com -race (Linux), o SQLite em Go puro fica
+	// dezenas de vezes mais lento; no Windows (#459, sem -race), o disco do runner chegou a 1,4 s. Lá, a trava de tempo
+	// é a da #371. Na máquina de quem desenvolve, sem -race, o exemplo leva uns 5 ms.
+	if !comRace && os.Getenv("GITHUB_ACTIONS") == "" && decorrido > time.Second {
 		t.Errorf("o exemplo levou %v, esperado menos de 1 s", decorrido)
 	}
 }
@@ -336,5 +338,22 @@ func TestSoImportadoPorTestes(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Regra (#542): o banco-modelo é um SQLite com o esquema inteiro e sem WAL pendente (a cópia é só o arquivo
+// principal); quando a pasta é um arquivo, o erro diz em que passo parou.
+func TestMontarModelo(t *testing.T) {
+	t.Parallel()
+	dados, err := montarModelo(t.TempDir())
+	if err != nil || len(dados) == 0 || !strings.HasPrefix(string(dados), "SQLite format 3\x00") {
+		t.Fatalf("modelo: %d bytes, %v", len(dados), err)
+	}
+	arquivo := filepath.Join(t.TempDir(), "um arquivo")
+	if err := os.WriteFile(arquivo, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := montarModelo(arquivo); err == nil || !strings.Contains(err.Error(), "banco-modelo") {
+		t.Errorf("pasta que é um arquivo: %v", err)
 	}
 }

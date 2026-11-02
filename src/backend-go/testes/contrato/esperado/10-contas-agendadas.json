@@ -1,0 +1,1289 @@
+[
+  {
+    "nome": "listar",
+    "requisicao": "GET /api/contas-agendadas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Academia (cancelada)",
+        "diasParaVencer": -157,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 6,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-05-10",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-04-10",
+        "valor": 99.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": 13,
+        "categoriaNome": "Seguros",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Seguro do carro",
+        "diasParaVencer": 4,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 2,
+        "observacao": "Parcela única",
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-18",
+        "recorrencia": 0,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": null,
+        "valor": 2100.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": 9,
+        "categoriaNome": "Serviços e assinaturas",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Internet",
+        "diasParaVencer": 6,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 1,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-20",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-09-20",
+        "valor": 119.9
+      },
+      {
+        "ativa": true,
+        "categoriaId": 9,
+        "categoriaNome": "Serviços e assinaturas",
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "dataLimite": null,
+        "descricao": "Streaming",
+        "diasParaVencer": 6,
+        "encerrada": false,
+        "formaCobranca": 3,
+        "id": 4,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-20",
+        "recorrencia": 1,
+        "textoCobranca": "STREAMFLIX",
+        "ultimoPagamentoEm": "2026-09-20",
+        "valor": 39.9
+      },
+      {
+        "ativa": true,
+        "categoriaId": 6,
+        "categoriaNome": "Educação",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": "2026-12-25",
+        "descricao": "Curso de inglês",
+        "diasParaVencer": 11,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 5,
+        "observacao": null,
+        "pagamentosRestantes": 3,
+        "proximoVencimento": "2026-10-25",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-09-25",
+        "valor": 350.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": 11,
+        "categoriaNome": "Impostos e taxas",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "IPVA",
+        "diasParaVencer": 93,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 3,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2027-01-15",
+        "recorrencia": 2,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-01-15",
+        "valor": 1450.0
+      }
+    ]
+  },
+  {
+    "nome": "listar sem login",
+    "requisicao": "GET /api/contas-agendadas",
+    "status": 401
+  },
+  {
+    "nome": "avisos",
+    "requisicao": "GET /api/contas-agendadas/avisos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "sugestões do extrato",
+    "requisicao": "GET /api/contas-agendadas/sugestoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "RESTAURANTE SABOR",
+        "chaveExtrato": "RESTAURANTE SABOR",
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "descricao": "RESTAURANTE SABOR FICTICIO",
+        "diaHabitual": 18,
+        "formaCobranca": 3,
+        "meses": 7,
+        "pagamentos": 7,
+        "pareceSerId": null,
+        "pareceSerNome": null,
+        "primeiroPagamento": "2026-03-18",
+        "proximoVencimento": "2026-10-18",
+        "recorrencia": 1,
+        "termoBusca": "Restaurante",
+        "textoCobranca": "RESTAURANTE",
+        "ultimoPagamento": "2026-09-18",
+        "valor": 104.8,
+        "valorMaximo": 106.9,
+        "valorMinimo": 94.3,
+        "valorVariavel": false,
+        "vencimentoSemPagamento": null
+      },
+      {
+        "categoriaId": 4,
+        "categoriaNome": "Transporte",
+        "chave": "TRANSPORTE FICTICIO VIAGEM",
+        "chaveExtrato": "TRANSPORTE FICTICIO VIAGEM",
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "descricao": "APP TRANSPORTE FICTICIO *VIAGEM",
+        "diaHabitual": 22,
+        "formaCobranca": 3,
+        "meses": 7,
+        "pagamentos": 7,
+        "pareceSerId": null,
+        "pareceSerNome": null,
+        "primeiroPagamento": "2026-03-22",
+        "proximoVencimento": "2026-10-22",
+        "recorrencia": 1,
+        "termoBusca": "TRANSPORTE",
+        "textoCobranca": "TRANSPORTE",
+        "ultimoPagamento": "2026-09-22",
+        "valor": 27.45,
+        "valorMaximo": 27.45,
+        "valorMinimo": 27.45,
+        "valorVariavel": false,
+        "vencimentoSemPagamento": null
+      },
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "TARIFA PACOTE",
+        "chaveExtrato": "TARIFA PACOTE",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "descricao": "TARIFA PACOTE DE SERVICOS",
+        "diaHabitual": 25,
+        "formaCobranca": 1,
+        "meses": 7,
+        "pagamentos": 7,
+        "pareceSerId": null,
+        "pareceSerNome": null,
+        "primeiroPagamento": "2026-03-25",
+        "proximoVencimento": "2026-10-25",
+        "recorrencia": 1,
+        "termoBusca": "TARIFA",
+        "textoCobranca": "TARIFA",
+        "ultimoPagamento": "2026-09-25",
+        "valor": 32.9,
+        "valorMaximo": 32.9,
+        "valorMinimo": 32.9,
+        "valorVariavel": false,
+        "vencimentoSemPagamento": null
+      },
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "IMOBILIARIA FICTICIA",
+        "chaveExtrato": "IMOBILIARIA FICTICIA",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "descricao": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "diaHabitual": 8,
+        "formaCobranca": 1,
+        "meses": 7,
+        "pagamentos": 7,
+        "pareceSerId": null,
+        "pareceSerNome": null,
+        "primeiroPagamento": "2026-04-08",
+        "proximoVencimento": "2026-11-08",
+        "recorrencia": 1,
+        "termoBusca": "IMOBILIARIA",
+        "textoCobranca": "IMOBILIARIA",
+        "ultimoPagamento": "2026-10-08",
+        "valor": 1850.0,
+        "valorMaximo": 1850.0,
+        "valorMinimo": 1850.0,
+        "valorVariavel": false,
+        "vencimentoSemPagamento": null
+      },
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "chave": "ENERGIA FICTICIA",
+        "chaveExtrato": "ENERGIA FICTICIA",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "descricao": "Conta de luz",
+        "diaHabitual": 12,
+        "formaCobranca": 2,
+        "meses": 7,
+        "pagamentos": 7,
+        "pareceSerId": null,
+        "pareceSerNome": null,
+        "primeiroPagamento": "2026-04-12",
+        "proximoVencimento": "2026-11-12",
+        "recorrencia": 1,
+        "termoBusca": "Conta de luz",
+        "textoCobranca": "FICTICIA",
+        "ultimoPagamento": "2026-10-12",
+        "valor": 223.5,
+        "valorMaximo": 230.85,
+        "valorMinimo": 186.75,
+        "valorVariavel": true,
+        "vencimentoSemPagamento": null
+      }
+    ]
+  },
+  {
+    "nome": "criar à mão (id 7)",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Aluguel do contrato",
+            "FormaCobranca": 1,
+            "Id": 7,
+            "Observacao": "Pago no dia 5",
+            "ProximoVencimento": "2026-11-05",
+            "Recorrencia": 1,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "1800.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar no cartão com a cobrança já no extrato (id 8)",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": "ASSINATURA STREAMFLIX",
+            "ContaId": 2,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Assinatura de vídeo",
+            "FormaCobranca": 3,
+            "Id": 8,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-25",
+            "Recorrencia": 1,
+            "TextoCobranca": "ASSINATURA STREAMFLIX",
+            "UltimoPagamentoEm": "2026-09-20",
+            "Valor": "39.9"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar com forma de cobrança fora do enum (id 9)",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": "2027-03-30",
+            "Descricao": "Condomínio",
+            "FormaCobranca": 1,
+            "Id": 9,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-30",
+            "Recorrencia": 1,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "600.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar única com data limite (id 10)",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": "MATRICULA",
+            "ContaId": 4,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Matrícula",
+            "FormaCobranca": 1,
+            "Id": 10,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-16",
+            "Recorrencia": 0,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "250.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar sem descrição",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The Descricao field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com descrição só de espaços",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Descricao": [
+          "The Descricao field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com valor zero",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com texto da cobrança comprido",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "TextoCobranca": [
+          "O texto da cobrança pode ter até 100 caracteres."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com categoria que não existe",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "criar com conta que não existe",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "criar com a data limite antes do vencimento",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A data limite (até 31/10/2026) não pode ser antes do próximo vencimento (01/11/2026)."
+    }
+  },
+  {
+    "nome": "criar encerrada com a data limite antes do vencimento",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "inseridas": [
+          {
+            "Ativa": 0,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": "2026-10-31",
+            "Descricao": "Encerrada",
+            "FormaCobranca": 1,
+            "Id": 11,
+            "Observacao": null,
+            "ProximoVencimento": "2026-11-01",
+            "Recorrencia": 1,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "10.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar sem login",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 401
+  },
+  {
+    "nome": "editar",
+    "requisicao": "PUT /api/contas-agendadas/10",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 10
+            },
+            "colunas": {
+              "Descricao": {
+                "antes": "Matrícula",
+                "depois": "Matrícula do curso"
+              },
+              "Valor": {
+                "antes": "250.0",
+                "depois": "275.25"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar com conta que não existe",
+    "requisicao": "PUT /api/contas-agendadas/7",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conta inválida."
+    }
+  },
+  {
+    "nome": "editar a que não existe",
+    "requisicao": "PUT /api/contas-agendadas/9999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "editar com id que não é número",
+    "requisicao": "PUT /api/contas-agendadas/abc",
+    "status": 404
+  },
+  {
+    "nome": "é a mesma: ligar ao extrato",
+    "requisicao": "POST /api/contas-agendadas/7/ligar-extrato",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "ChaveExtrato": {
+                "antes": null,
+                "depois": "ALUGUEL"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "é a mesma: chave só de espaços",
+    "requisicao": "POST /api/contas-agendadas/7/ligar-extrato",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ChaveExtrato": [
+          "The ChaveExtrato field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "é a mesma: sem a chave",
+    "requisicao": "POST /api/contas-agendadas/7/ligar-extrato",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ChaveExtrato": [
+          "The ChaveExtrato field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "é a mesma: conta a pagar que não existe",
+    "requisicao": "POST /api/contas-agendadas/9999/ligar-extrato",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "desfazer o é a mesma",
+    "requisicao": "DELETE /api/contas-agendadas/7/ligar-extrato",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "ChaveExtrato": {
+                "antes": "ALUGUEL",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o é a mesma de uma que não existe",
+    "requisicao": "DELETE /api/contas-agendadas/9999/ligar-extrato",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "pagar sem lançar, com data",
+    "requisicao": "POST /api/contas-agendadas/7/pagar",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "ProximoVencimento": {
+                "antes": "2026-11-05",
+                "depois": "2026-12-05"
+              },
+              "UltimoPagamentoEm": {
+                "antes": null,
+                "depois": "2026-11-04"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "pagar lançando a despesa numa conta manual",
+    "requisicao": "POST /api/contas-agendadas/7/pagar",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "ProximoVencimento": {
+                "antes": "2026-12-05",
+                "depois": "2027-01-05"
+              },
+              "UltimoPagamentoEm": {
+                "antes": "2026-11-04",
+                "depois": "2026-10-14"
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Aluguel do contrato",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 177,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-1800.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "achar a despesa lançada",
+    "requisicao": "GET /api/transacoes?busca=Aluguel%20do%20contrato&tamanhoPagina=1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "itens": [
+        {
+          "categoriaCor": null,
+          "categoriaId": null,
+          "categoriaNome": null,
+          "contaId": 3,
+          "contaNome": "Poupança",
+          "data": "2026-10-14",
+          "descricao": "Aluguel do contrato",
+          "descricaoOriginal": null,
+          "emergencia": false,
+          "estabelecimento": null,
+          "id": 177,
+          "ignorarRelatorios": false,
+          "observacao": null,
+          "openFinance": false,
+          "parcelaNumero": null,
+          "parcelaTotal": null,
+          "regraDescricaoId": null,
+          "status": 1,
+          "tipo": 1,
+          "tipoLancamento": 0,
+          "valor": -1800.5
+        }
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 1,
+      "total": 1,
+      "totalDespesas": 1800.5,
+      "totalReceitas": 0.0
+    }
+  },
+  {
+    "nome": "pagar lançando numa conta do Open Finance",
+    "requisicao": "POST /api/contas-agendadas/8/pagar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para lançar a despesa, vincule uma conta manual. Em contas do Open Finance o pagamento chega pela sincronização."
+    }
+  },
+  {
+    "nome": "pagar lançando sem conta",
+    "requisicao": "POST /api/contas-agendadas/9/pagar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para lançar a despesa, vincule uma conta manual. Em contas do Open Finance o pagamento chega pela sincronização."
+    }
+  },
+  {
+    "nome": "pagar a única",
+    "requisicao": "POST /api/contas-agendadas/10/pagar",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 10
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 1,
+                "depois": 0
+              },
+              "UltimoPagamentoEm": {
+                "antes": null,
+                "depois": "2026-10-14"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "pagar com a data limite ainda longe",
+    "requisicao": "POST /api/contas-agendadas/9/pagar",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 9
+            },
+            "colunas": {
+              "ProximoVencimento": {
+                "antes": "2026-10-30",
+                "depois": "2026-11-30"
+              },
+              "UltimoPagamentoEm": {
+                "antes": null,
+                "depois": "2026-10-14"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "pagar a que não existe",
+    "requisicao": "POST /api/contas-agendadas/9999/pagar",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "listar depois das mudanças",
+    "requisicao": "GET /api/contas-agendadas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Academia (cancelada)",
+        "diasParaVencer": -157,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 6,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-05-10",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-04-10",
+        "valor": 99.0
+      },
+      {
+        "ativa": false,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 4,
+        "contaNome": "Carteira (dinheiro)",
+        "dataLimite": null,
+        "descricao": "Matrícula do curso",
+        "diasParaVencer": 2,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 10,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-16",
+        "recorrencia": 0,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-10-14",
+        "valor": 275.25
+      },
+      {
+        "ativa": true,
+        "categoriaId": 13,
+        "categoriaNome": "Seguros",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Seguro do carro",
+        "diasParaVencer": 4,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 2,
+        "observacao": "Parcela única",
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-18",
+        "recorrencia": 0,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": null,
+        "valor": 2100.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": 9,
+        "categoriaNome": "Serviços e assinaturas",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Internet",
+        "diasParaVencer": 6,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 1,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-20",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-09-20",
+        "valor": 119.9
+      },
+      {
+        "ativa": true,
+        "categoriaId": 9,
+        "categoriaNome": "Serviços e assinaturas",
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "dataLimite": null,
+        "descricao": "Streaming",
+        "diasParaVencer": 6,
+        "encerrada": false,
+        "formaCobranca": 3,
+        "id": 4,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-20",
+        "recorrencia": 1,
+        "textoCobranca": "STREAMFLIX",
+        "ultimoPagamentoEm": "2026-09-20",
+        "valor": 39.9
+      },
+      {
+        "ativa": true,
+        "categoriaId": 6,
+        "categoriaNome": "Educação",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": "2026-12-25",
+        "descricao": "Curso de inglês",
+        "diasParaVencer": 11,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 5,
+        "observacao": null,
+        "pagamentosRestantes": 3,
+        "proximoVencimento": "2026-10-25",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-09-25",
+        "valor": 350.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "dataLimite": null,
+        "descricao": "Assinatura de vídeo",
+        "diasParaVencer": 11,
+        "encerrada": false,
+        "formaCobranca": 3,
+        "id": 8,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-10-25",
+        "recorrencia": 1,
+        "textoCobranca": "ASSINATURA STREAMFLIX",
+        "ultimoPagamentoEm": "2026-09-20",
+        "valor": 39.9
+      },
+      {
+        "ativa": false,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": null,
+        "contaNome": null,
+        "dataLimite": "2026-10-31",
+        "descricao": "Encerrada",
+        "diasParaVencer": 18,
+        "encerrada": true,
+        "formaCobranca": 1,
+        "id": 11,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-11-01",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": null,
+        "valor": 10.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": null,
+        "contaNome": null,
+        "dataLimite": "2027-03-30",
+        "descricao": "Condomínio",
+        "diasParaVencer": 47,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 9,
+        "observacao": null,
+        "pagamentosRestantes": 5,
+        "proximoVencimento": "2026-11-30",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-10-14",
+        "valor": 600.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 3,
+        "contaNome": "Poupança",
+        "dataLimite": null,
+        "descricao": "Aluguel do contrato",
+        "diasParaVencer": 83,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 7,
+        "observacao": "Pago no dia 5",
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2027-01-05",
+        "recorrencia": 1,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-10-14",
+        "valor": 1800.5
+      },
+      {
+        "ativa": true,
+        "categoriaId": 11,
+        "categoriaNome": "Impostos e taxas",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "IPVA",
+        "diasParaVencer": 93,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 3,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2027-01-15",
+        "recorrencia": 2,
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-01-15",
+        "valor": 1450.0
+      }
+    ]
+  },
+  {
+    "nome": "apagar a despesa lançada",
+    "requisicao": "DELETE /api/transacoes/{{idDespesa}}",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Aluguel do contrato",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 177,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-1800.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 7",
+    "requisicao": "DELETE /api/contas-agendadas/7",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": 3,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Aluguel do contrato",
+            "FormaCobranca": 1,
+            "Id": 7,
+            "Observacao": "Pago no dia 5",
+            "ProximoVencimento": "2027-01-05",
+            "Recorrencia": 1,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": "2026-10-14",
+            "Valor": "1800.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 8",
+    "requisicao": "DELETE /api/contas-agendadas/8",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": "ASSINATURA STREAMFLIX",
+            "ContaId": 2,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Assinatura de vídeo",
+            "FormaCobranca": 3,
+            "Id": 8,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-25",
+            "Recorrencia": 1,
+            "TextoCobranca": "ASSINATURA STREAMFLIX",
+            "UltimoPagamentoEm": "2026-09-20",
+            "Valor": "39.9"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 9",
+    "requisicao": "DELETE /api/contas-agendadas/9",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": "2027-03-30",
+            "Descricao": "Condomínio",
+            "FormaCobranca": 1,
+            "Id": 9,
+            "Observacao": null,
+            "ProximoVencimento": "2026-11-30",
+            "Recorrencia": 1,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": "2026-10-14",
+            "Valor": "600.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 10",
+    "requisicao": "DELETE /api/contas-agendadas/10",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "CategoriaId": null,
+            "ChaveExtrato": "MATRICULA",
+            "ContaId": 4,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Matrícula do curso",
+            "FormaCobranca": 1,
+            "Id": 10,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-16",
+            "Recorrencia": 0,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": "2026-10-14",
+            "Valor": "275.25"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 11",
+    "requisicao": "DELETE /api/contas-agendadas/11",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": "2026-10-31",
+            "Descricao": "Encerrada",
+            "FormaCobranca": 1,
+            "Id": 11,
+            "Observacao": null,
+            "ProximoVencimento": "2026-11-01",
+            "Recorrencia": 1,
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "10.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a que não existe",
+    "requisicao": "DELETE /api/contas-agendadas/9999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir sem login",
+    "requisicao": "DELETE /api/contas-agendadas/1",
+    "status": 401
+  }
+]

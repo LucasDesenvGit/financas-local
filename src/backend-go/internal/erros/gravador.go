@@ -21,7 +21,7 @@ const (
 	maximoPorLote      = 100
 	janelaAgrupamento  = 24 * time.Hour
 	esperaMaxima       = time.Hour // acorda pelo menos de hora em hora, para a limpeza diária rodar mesmo sem erros
-	prazoNoDesligar    = 5 * time.Second
+	prazoParaGravar    = 5 * time.Second
 	chaveDiasRetencao  = "Diagnostico.DiasRetencaoErros"
 	intervaloDeLimpeza = 24 * time.Hour
 )
@@ -47,21 +47,19 @@ func NovoGravador(db *sql.DB, fila *Fila, r relogio.Relogio, p Parametros, log *
 	return &Gravador{db: db, fila: fila, relogio: r, parametros: p, log: log}
 }
 
-// Rodar grava até o contexto acabar. Ao parar, grava mais um lote do que estiver na fila (até 5 s), sem esperar por
-// mais, e só então volta: quem chama espera o Rodar terminar antes de fechar o banco.
+// Rodar grava até o contexto acabar. Ao parar, grava mais um lote do que estiver na fila, sem esperar por mais, e só
+// então volta: quem chama espera o Rodar terminar antes de fechar o banco.
 func (g *Gravador) Rodar(ctx context.Context) {
 	for {
 		espera := time.NewTimer(esperaMaxima)
 		select {
 		case <-ctx.Done():
 			espera.Stop()
-			prazo, cancelar := context.WithTimeout(context.Background(), prazoNoDesligar)
-			g.gravarLote(prazo, g.lerLote(nil))
-			cancelar()
+			g.gravarRetirado(ctx, g.lerLote(nil))
 			return
 		case primeiro := <-g.fila.canal:
 			espera.Stop()
-			g.gravarLote(ctx, g.lerLote([]Registro{primeiro}))
+			g.gravarRetirado(ctx, g.lerLote([]Registro{primeiro}))
 		case <-espera.C:
 		}
 		g.limparSeVenceu(ctx)
@@ -79,6 +77,14 @@ func (g *Gravador) lerLote(lote []Registro) []Registro {
 		}
 	}
 	return lote
+}
+
+// gravarRetirado grava o lote que já saiu da fila com um prazo próprio de 5 s, que não acaba com o desligamento:
+// cancelado no meio, ele se perderia, porque não volta para a fila (#569).
+func (g *Gravador) gravarRetirado(ctx context.Context, lote []Registro) {
+	prazo, cancelar := context.WithTimeout(context.WithoutCancel(ctx), prazoParaGravar)
+	defer cancelar()
+	g.gravarLote(prazo, lote)
 }
 
 // gravarLote grava o lote numa transação. Erro ao gravar vai só para o log, e o lote é descartado (não volta para a

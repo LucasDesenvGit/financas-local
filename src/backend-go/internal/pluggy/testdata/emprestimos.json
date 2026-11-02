@@ -1,0 +1,43 @@
+{
+  "total": 1,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "emprestimo-1",
+      "kind": "FINANCING",
+      "contractNumber": "CONTRATO-FICTICIO",
+      "productName": "Financiamento Fictício",
+      "type": "FINANCIAMENTO_HABITACIONAL_SFH",
+      "contractDate": "2024-05-10T03:00:00.000Z",
+      "contractAmount": 200000,
+      "currencyCode": "BRL",
+      "dueDate": "2044-05-10T03:00:00.000Z",
+      "installmentPeriodicity": "MENSAL",
+      "firstInstallmentDueDate": "2024-06-10T03:00:00.000Z",
+      "CET": 0.0975,
+      "amortizationScheduled": "SAC",
+      "interestRates": [
+        {
+          "taxPeriodicity": "AA",
+          "referentialRateIndexerType": "POS_FIXADO",
+          "referentialRateIndexerSubType": "TR_TBF",
+          "preFixedRate": 0.0875,
+          "postFixedRate": 0
+        }
+      ],
+      "installments": {
+        "totalNumberOfInstallments": 240,
+        "paidInstallments": "29",
+        "dueInstallments": 211,
+        "pastDueInstallments": 0
+      },
+      "payments": {
+        "contractOutstandingBalance": 185000.5,
+        "releases": [
+          { "isOverParcelPayment": false, "paidDate": "2026-10-10T03:00:00.000Z", "paidAmount": 1890.12 }
+        ]
+      }
+    }
+  ]
+}

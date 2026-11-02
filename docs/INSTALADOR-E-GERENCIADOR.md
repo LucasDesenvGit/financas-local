@@ -15,7 +15,7 @@ O site liga sozinho com o computador e só responde nele mesmo. No Menu Iniciar 
 - Mostra se o site está **no ar** (com a versão), **desligado** ou **ligado, mas sem responder**.
 - **Abrir o site**, **Ligar/Desligar** e **Reiniciar** (as duas últimas pedem permissão de administrador).
 - **Versão nova:** avisa, mostra **O que mudou** e atualiza com um clique.
-- **Mais opções:** salvar uma cópia do banco onde você escolher (pendrive, nuvem…), ver os erros do site, abrir o manual e **iniciar com o Windows** (fica na área de notificação e avisa se o site cair).
+- **Mais opções:** salvar uma cópia do banco onde você escolher (pendrive, nuvem…), ver os erros do site, abrir o manual, **iniciar com o Windows** (fica na área de notificação e avisa se o site cair) e **Procurar versão nova ao abrir** (ligado por padrão: ele procura sozinho a cada vez que abre; desligado, só quando você clica em **Procurar versão nova**).
 - **Botão direito no ícone da área de notificação:** mostra a situação do site ("Finanças Local · No ar") e tem **Abrir o site**, **Mostrar o gerenciador** e **Sair**, nas cores do site.
 
 ## Atualizar
