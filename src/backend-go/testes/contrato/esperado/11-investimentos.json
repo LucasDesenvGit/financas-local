@@ -3596,11 +3596,25 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "desde": "2026-05-31",
+      "desde": "2026-02-28",
       "meses": [
         {
           "ano": 2026,
-          "desde": "2026-05-31",
+          "desde": "2026-02-28",
+          "mes": 2,
+          "porInvestimento": [
+            {
+              "nome": "CDB Banco Desconectado",
+              "rendimento": 0.0,
+              "saldo": 1015.0
+            }
+          ],
+          "rendimento": 0.0,
+          "saldo": 1015.0
+        },
+        {
+          "ano": 2026,
+          "desde": null,
           "mes": 5,
           "porInvestimento": [
             {

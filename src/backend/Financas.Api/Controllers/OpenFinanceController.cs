@@ -154,7 +154,11 @@ public class OpenFinanceController : BaseController
         return alteradas == 0 ? NaoEncontrado() : NoContent();
     }
 
-    /// <summary>Remove a conexão e todos os dados importados por ela (contas, transações, faturas e investimentos).</summary>
+    /// <summary>
+    /// Remove a conexão e todos os dados importados por ela (contas, transações, faturas, investimentos, empréstimos,
+    /// o histórico dos investimentos e o registro das sincronizações). O banco apaga em cascata o que tem chave estrangeira;
+    /// o histórico (sem chave estrangeira, de propósito) e o registro (ON DELETE SET NULL) são apagados aqui (#575).
+    /// </summary>
     [HttpDelete("conexoes/{id:int}")]
     public async Task<IActionResult> RemoverConexao(int id, CancellationToken ct)
     {
@@ -162,11 +166,15 @@ public class OpenFinanceController : BaseController
         var conexao = await _db.ConexoesBancarias.FirstOrDefaultAsync(c => c.Id == id, ct);
         if (conexao is null) return NaoEncontrado();
 
+        await using var transacao = await _db.Database.BeginTransactionAsync(ct);
         var contaIds = await _db.Contas.Where(c => c.ConexaoBancariaId == id).Select(c => c.Id).ToListAsync(ct);
         await _contas.DesvincularFaturasAsync(contaIds, ct);
+        await _db.HistoricosInvestimento.Where(h => h.ConexaoBancariaId == id).ExecuteDeleteAsync(ct);
+        await _db.SincronizacaoLogs.Where(l => l.ConexaoBancariaId == id).ExecuteDeleteAsync(ct);
         await _db.ConexoesBancarias.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
         _auditoria.Registrar("ConexaoRemovida", User.Identity?.Name);
         await _db.SaveChangesAsync(ct);
+        await transacao.CommitAsync(ct);
         return NoContent();
     }
 
