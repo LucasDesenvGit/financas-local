@@ -101,7 +101,7 @@ Cada assunto do épico #70 já tem o número dele, para os assuntos feitos em pa
 | `08-orcamentos` | orçamentos | #79 | `/api/orcamentos` | `planejamento` |
 | `09-metas` | metas | #79 | `/api/metas` | `planejamento` |
 | `10-contas-agendadas` | contas a pagar | #79 | `/api/contas-agendadas` | `planejamento` |
-| `11-investimentos` | carteira, reservas, investimentos | #82 | `/api/carteira`, `/api/reservas`, `/api/investimentos` (este ainda sem casos) | `investimentos` |
+| `11-investimentos` | carteira, reservas, investimentos | #82, #80 | `/api/carteira`, `/api/reservas`, `/api/investimentos` (os casos deste, da #80, estão no fim do arquivo) | `investimentos` |
 | `12-conferencia-investimentos` | conferir investimentos | #299 | `/api/carteira/conferencia` (dentro de `/api/carteira`: no site, a entrada `investimentos` só liga com a #299 pronta; no contrato, a #82 passa os caminhos dela, mais compridos) | `investimentos` |
 | `13-painel` | painel | #80 | `/api/painel` | `painel` |
 | `14-relatorios` | relatórios | #80 | `/api/relatorios` | `painel` |
