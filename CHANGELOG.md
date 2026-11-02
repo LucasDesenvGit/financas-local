@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.66.2] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instaladores com o Go: fechamento** (#277, parte 6; épico #70). O README ganha dois problemas comuns: o instalador que recusa um Windows antigo e o gerenciador que não abre sem o WebView2. A ADR 0029 registra por que a assinatura do `.msi`, o Windows ARM e um pacote pronto no Linux ficam de fora. A CI do instalador passa a anotar o tamanho e a memória do pacote de hoje e do "só Go".
+
 ## [2.66.1] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação

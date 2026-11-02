@@ -133,6 +133,7 @@ jobs:
           $pastaMb = [math]::Round(($pasta | Measure-Object Length -Sum).Sum / 1MB, 1)
           $gerMb = [math]::Round((Get-Item "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe").Length / 1MB, 1)
           "### Tamanhos`n`n| O quê | Tamanho |`n|---|---|`n| .msi | $msiMb MB |`n| Pasta instalada | $pastaMb MB ($($pasta.Count) arquivos) |`n| Gerenciador | $gerMb MB |" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "TAMANHO .NET+Go: .msi $msiMb MB, pasta instalada $pastaMb MB ($($pasta.Count) arquivos), gerenciador $gerMb MB"
           # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
           if ($estado.versao -ne "${{ steps.versao.outputs.rotulo }}") { throw "versão do site: $($estado.versao)" }
@@ -159,6 +160,12 @@ jobs:
           $api = Get-CimInstance Win32_Process -Filter "Name='Financas.Api.exe'"
           if ($go.Count -ne 1 -or $go[0].ParentProcessId -ne $api.ProcessId) { throw "o Go não é processo filho da API: $($go | Select-Object ProcessId, ParentProcessId | ConvertTo-Json -Compress)" }
           "Go atrás do .NET: $($saude | ConvertTo-Json -Compress)"
+          # #277: memória com o site no ar e um usuário logado (conjunto de trabalho e bytes privados, o método da #86).
+          # Num runner, não num computador de uso: serve para comparar uma versão com a outra, não como número absoluto.
+          foreach ($nome in "Financas.Api", "financas-go") {
+            $proc = Get-Process $nome
+            Write-Host ("MEMORIA .NET+Go {0}: conjunto de trabalho {1} MB, privados {2} MB" -f $nome, [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
+          }
 
       - name: Trocar pela mesma versão do Release (a de desenvolvimento não fica instalada junto)
         if: github.ref_type != 'tag'
@@ -295,6 +302,11 @@ jobs:
           if ($codigo -ne "200") { throw "login no Go sozinho: $codigo" }
           $saude = curl.exe --ssl-no-revoke -fsS -b g.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
           if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador") { throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)" }
+          # #277: as mesmas medidas do pacote de hoje, agora só com o Go.
+          $proc = Get-Process financas-go
+          Write-Host ("MEMORIA so Go financas-go: conjunto de trabalho {0} MB, privados {1} MB" -f [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
+          $arquivos = Get-ChildItem "$env:ProgramFiles\FinancasLocal" -Recurse -File
+          Write-Host ("TAMANHO so Go: .msi {0} MB, pasta instalada {1} MB ({2} arquivos)" -f [math]::Round((Get-Item $msi).Length / 1MB, 1), [math]::Round(($arquivos | Measure-Object Length -Sum).Sum / 1MB, 1), $arquivos.Count)
           $p = Start-Process msiexec.exe -ArgumentList "/x `"$msi`" /qn /l*v so-go-desinstalar.log" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "msiexec /x terminou com $($p.ExitCode) (veja so-go-desinstalar.log)" }
           if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }

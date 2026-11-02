@@ -2,6 +2,11 @@
 # Windows de verdade, com o Windows PowerShell 5.1. O PATH e reduzido ao do Windows puro para
 # esconder o dotnet/node/go/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
 # computador novo. Nao cobre o pedido de elevacao (UAC): o runner ja roda como Administrador.
+# O que o runner (Windows Server) ainda esconde (#277), e por que nao pesa: o WebView2 e o Edge ja vem instalados (o
+# aviso do .msi sem WebView2 nao e exercitado; no Windows 11 ele tambem vem); a ICU vem no proprio Windows; os
+# pacotes do Visual C++ ficam de fora porque a API e self-contained e o Go e o gerenciador compilam sem cgo; e nao ha
+# SmartScreen ("O Windows protegeu o computador", .msi sem assinatura) nem Windows 10 anterior ao 1809 (o .msi recusa).
+# O Linux tem o teste num conteiner minimo de verdade (teste-instalacao-linux.yml, job "minimo").
 name: Teste de instalação no Windows
 
 on:
