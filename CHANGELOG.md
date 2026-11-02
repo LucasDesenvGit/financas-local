@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.67.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go também pelos scripts do Windows, e o "Atualizar o gerenciador e reabrir"** (#430; épico #70; ADR 0052). O `instalar-gerenciador.ps1` passa a compilar o gerenciador novo, um `.exe` só, no lugar do de C#. Os atalhos e o "Iniciar com o Windows" continuam valendo. Na instalação de desenvolvimento, depois de "Atualizar para a última do develop" dar certo, aparece o botão **Atualizar o gerenciador e reabrir**, como no gerenciador em C#. Ele fecha, instala o gerenciador da versão nova numa janela que mostra o andamento e abre de novo.
+
 ## [2.66.3] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação

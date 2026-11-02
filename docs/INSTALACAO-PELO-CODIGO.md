@@ -32,7 +32,7 @@ Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuári
 powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1
 ```
 
-Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não baixa a versão nova, porque nessa instalação ela vem pelos scripts: diz como atualizar por eles e sugere passar para o `.msi`, que traz o banco e as chaves e, daí em diante, recebe a versão nova pelo gerenciador. Rode o mesmo comando de novo para atualizar o gerenciador.
+Ele compila o gerenciador em Go (#430) em `publicado\gerenciador`, um `.exe` só, e cria os atalhos no Menu Iniciar e na área de trabalho (`-SemAtalhoNaAreaDeTrabalho` para não criar este último). O gerenciador acha o site pelo serviço e mostra a situação e a versão, liga, desliga e copia o banco. Ele não baixa a versão nova, porque nessa instalação ela vem pelos scripts: diz como atualizar por eles e sugere passar para o `.msi`, que traz o banco e as chaves e, daí em diante, recebe a versão nova pelo gerenciador. Rode o mesmo comando de novo para atualizar o gerenciador.
 
 **Linux:** o `instalar.sh` já instala o gerenciador no fim, sem `sudo` (#300). Para não instalar, use `scripts/geral/instalar.sh --sem-gerenciador`. Para instalar ou atualizar só ele:
 

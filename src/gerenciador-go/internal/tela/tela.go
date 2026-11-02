@@ -143,6 +143,8 @@ type Develop struct {
 	Saida      string
 	// Notas: depois de trazer o develop, há o "O que mudou" desde a versão de antes (#432).
 	Notas bool
+	// ReabrirGerenciador: a reinstalação deu certo, e o "Atualizar o gerenciador e reabrir" aparece (#430).
+	ReabrirGerenciador bool
 }
 
 // TextoDeDesenvolvimento é o cartão "Versão" da instalação de desenvolvimento (MostrarVersao do C#).
@@ -306,6 +308,7 @@ type Atualizacao struct {
 	DevelopRodando      bool   `json:"developRodando"`
 	Saida               string `json:"saida"`
 	NotasDevelop        bool   `json:"notasDevelop"`
+	ReabrirGerenciador  bool   `json:"reabrirGerenciador"`
 	SemLogin            string `json:"semLogin"`
 	TextoSemLogin       string `json:"textoSemLogin"`
 }
@@ -321,7 +324,7 @@ func (t Tela) Atualizacao() Atualizacao {
 		ProcurarHabilitado: t.ProcurarHabilitado(), Nova: t.Procura.Nova, AtualizarTexto: t.AtualizarTexto(),
 		Baixando: t.Procura.Baixando, Progresso: t.Procura.Progresso,
 		Develop: t.Develop.Disponivel, DevelopRodando: t.Develop.Rodando, Saida: t.Develop.Saida,
-		NotasDevelop: t.Develop.Notas, SemLogin: t.SemLogin, TextoSemLogin: t.TextoSemLogin(),
+		NotasDevelop: t.Develop.Notas, ReabrirGerenciador: t.Develop.ReabrirGerenciador, SemLogin: t.SemLogin, TextoSemLogin: t.TextoSemLogin(),
 	}
 }
 

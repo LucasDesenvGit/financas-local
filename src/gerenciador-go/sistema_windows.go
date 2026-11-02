@@ -72,7 +72,21 @@ func reinstalar(raiz string, escrever func(string)) elevacao.Resultado {
 	return resultado
 }
 
-// textoDaReinstalacao: os textos do C#. O "Atualizar o gerenciador e reabrir" entra com a #430.
+// reabrirDepoisDeInstalar abre o PowerShell numa janela própria (o andamento fica à vista, e o aviso, se falhar) com o
+// comando que espera o gerenciador fechar, roda o instalar-gerenciador.ps1 do clone e o abre de novo (#430). O
+// processo segue depois de o gerenciador fechar.
+func reabrirDepoisDeInstalar(raiz, executavel string) error {
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+		desenvolvimento.ComandoReabrirWindows(raiz, executavel))
+	cmd.Dir = raiz
+	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NEW_CONSOLE}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	return cmd.Process.Release()
+}
+
+// textoDaReinstalacao: os textos do C#. Feito, aparece o "Atualizar o gerenciador e reabrir" (#430).
 func textoDaReinstalacao(r elevacao.Resultado) string {
 	switch r {
 	case elevacao.Feito:

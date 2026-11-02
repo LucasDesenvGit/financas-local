@@ -8,6 +8,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/atualizacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
 
@@ -21,6 +22,8 @@ type develop struct {
 	saida   []string
 	texto   string      // durante e depois da atualização, substitui o texto do cartão
 	notas   *tela.Notas // o "O que mudou" da última atualização (#432), ou nil
+	// reabrir: a reinstalação deu certo, e o gerenciador pode se atualizar e reabrir (#430).
+	reabrir bool
 }
 
 // procurarClone vê, sem travar a janela, se a instalação é de desenvolvimento (o git leva um instante).
@@ -69,7 +72,7 @@ func (g *gerenciador) atualizarDevelop() {
 		g.trava.Unlock()
 		return
 	}
-	g.dev.rodando, g.ocupado, g.dev.saida, g.dev.notas = true, true, nil, nil
+	g.dev.rodando, g.ocupado, g.dev.saida, g.dev.notas, g.dev.reabrir = true, true, nil, nil, false
 	g.dev.texto = "Buscando o develop no GitHub…"
 	g.trava.Unlock()
 	antes, temAntes := versaoDoClone(raiz)
@@ -98,13 +101,38 @@ func (g *gerenciador) atualizarDevelop() {
 	g.dev.notas = notas
 	g.trava.Unlock()
 	g.textoDoDevelop(reinstalando)
-	g.textoDoDevelop(textoDaReinstalacao(reinstalar(raiz, g.escrever)))
+	resultado := reinstalar(raiz, g.escrever)
+	g.trava.Lock()
+	g.dev.reabrir = resultado == elevacao.Feito
+	g.trava.Unlock()
+	g.textoDoDevelop(textoDaReinstalacao(resultado))
+}
+
+// atualizarGerenciador é o "Atualizar o gerenciador e reabrir" (#430): deixa o instalador do gerenciador rodando à
+// parte, com o comando que reabre, e fecha. Só depois de a reinstalação pelo develop dar certo.
+func (g *gerenciador) atualizarGerenciador() {
+	g.trava.Lock()
+	raiz, pode := g.dev.raiz, g.dev.reabrir && !g.dev.rodando
+	g.trava.Unlock()
+	if !pode {
+		return
+	}
+	executavel, err := os.Executable()
+	if err != nil {
+		g.escrever("Não deu para achar o próprio gerenciador: " + err.Error())
+		return
+	}
+	if err := reabrirDepoisDeInstalar(raiz, executavel); err != nil {
+		g.escrever("Não deu para atualizar o gerenciador: " + err.Error())
+		return
+	}
+	g.app.Quit()
 }
 
 // developNaTela é o que a tela mostra do develop; chamado com a trava.
 func (g *gerenciador) developNaTela() tela.Develop {
 	return tela.Develop{Disponivel: g.dev.raiz != "", Rodando: g.dev.rodando, Saida: strings.Join(g.dev.saida, "\n"),
-		Notas: g.dev.notas != nil}
+		Notas: g.dev.notas != nil, ReabrirGerenciador: g.dev.reabrir && !g.dev.rodando}
 }
 
 // versaoDoClone é a versão do Directory.Build.props do clone (antes ou depois de trazer o develop).

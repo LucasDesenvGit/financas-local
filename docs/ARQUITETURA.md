@@ -358,10 +358,10 @@ App pequeno que mostra se o site está no ar, liga, desliga e reinicia o serviç
 | Projeto | O que tem |
 |---|---|
 | `Financas.Gerenciador.Nucleo` (`net10.0`) | O que vale nos dois sistemas: `Instalacao` (pasta da API pelo serviço, banco e endereço pelo `appsettings`), `VerificadorSituacao` (serviço + `GET /api/auth/estado`), `CopiaDoBanco` (`VACUUM INTO`) e o serviço do sistema (`ServicoWindows`, `ServicoLinux`). |
-| `Financas.Gerenciador` (WinForms) | Janela do Windows. Pede administrador (UAC) para ligar, desligar e copiar o banco, e atualiza pelo `.msi` do GitHub Releases. Vai pelo `scripts\windows\instalar-gerenciador.ps1` (no `.msi`, desde a #277, vai o em Go). |
+| `Financas.Gerenciador` (WinForms) | Janela do Windows. Pede administrador (UAC) para ligar, desligar e copiar o banco, e atualiza pelo `.msi` do GitHub Releases. Não é mais instalado: o `.msi` (#277) e o `scripts\windows\instalar-gerenciador.ps1` (#430) levam o em Go. |
 | `Financas.Gerenciador.Linux` (Avalonia) | Janela do Linux. Usa o `systemctl --user` sem senha, mostra o registro do serviço (journald) e o comando para atualizar pelos scripts. Vai pelo `scripts/linux/instalar-gerenciador.sh`. |
 
-**Em migração para Go** ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), #418 a #420): `src/gerenciador-go/`, um módulo Go à parte com o Wails v3 (janela em HTML pelo WebView2, ícone na bandeja). Funciona no Windows e no Linux (no Linux, com o `systemctl --user`, GTK 4 e WebKitGTK 6.0; #417). É o que o `.msi` instala desde a #277; pelos scripts, ainda vai o de C#. Veja o [README](../src/gerenciador-go/README.md).
+**Em migração para Go** ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), #418 a #420): `src/gerenciador-go/`, um módulo Go à parte com o Wails v3 (janela em HTML pelo WebView2, ícone na bandeja). Funciona no Windows e no Linux (no Linux, com o `systemctl --user`, GTK 4 e WebKitGTK 6.0; #417). É o que o `.msi` e os scripts instalam (#277, #430); no Linux sem o GTK 4 e o WebKitGTK 6.0, os scripts ainda instalam o de C#. Veja o [README](../src/gerenciador-go/README.md).
 
 ## Scripts — `scripts/`
 
@@ -379,7 +379,7 @@ Separados pelo sistema em que rodam (#154): `geral/` é o bash que roda nos dois
 | `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, caminho nativo no Windows, extração de `.zip`, conferência de hash, helpers de coluna do banco). |
 | `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash; chamado por `instalar-windows.cmd` (na raiz), que pede elevação. Lê a lista de colunas novas do `geral/2-criar-banco.sh`. Mudanças nas etapas 1 e 3 do bash precisam ser refletidas aqui. |
 | `windows/parar-windows.ps1` | O `parar.sh` em PowerShell; chamado por `parar-windows.cmd` (na raiz). |
-| `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: publicam o gerenciador em `publicado/gerenciador` (no Linux, o em Go em `publicado/gerenciador-go`, #277) e criam os atalhos (Menu Iniciar no Windows, menu de aplicativos no Linux, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
+| `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: compilam o gerenciador em Go em `publicado/gerenciador` (Windows, #430) ou `publicado/gerenciador-go` (Linux, #277) e criam os atalhos (Menu Iniciar no Windows, menu de aplicativos no Linux, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
 | `windows/configurar-github.ps1` | Cria o repositório no GitHub, envia as branches e aplica as proteções. |
 | `ci/verificar-sql.py`, `ci/verificar-manual.py`, `ci/verificar-versao.py`, `ci/verificar-tempo-testes.py` | Usados na CI: banco idempotente e sem T-SQL, aviso de Manual desatualizado, versão subiu (ADR 0039) e tempo dos testes do Jest (#204). |
 | `3-publicar-atualizar.sh`, `4-backup.sh`, `instalar-gerenciador.sh` (na raiz de `scripts/`) | **Repasses temporários** para os caminhos novos: o backup agendado antes da mudança e o comando que o gerenciador do Linux antigo mostra continuam funcionando. Podem ser apagados numa versão futura. |
