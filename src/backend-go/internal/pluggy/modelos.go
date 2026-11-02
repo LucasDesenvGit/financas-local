@@ -3,8 +3,8 @@ package pluggy
 import (
 	"encoding/json"
 	"errors"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
@@ -31,9 +31,11 @@ func (p *paginaComCursor) proximo() string {
 	return *p.Next
 }
 
-// Numero é o double? do .NET com AllowReadingFromString: vem como número ou como texto. A conversão para decimal é a do
-// .NET (tipos.DecimalDeFloat64), na hora de gravar: o dinheiro não fica em float64.
-type Numero float64
+// Numero é o double? do .NET com AllowReadingFromString: vem como número ou como texto. Fica como veio, em texto: o
+// dinheiro só passa pelo double dentro do Decimal.
+type Numero string
+
+var formatoDoNumero = regexp.MustCompile(`^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$`)
 
 // UnmarshalJSON lê o número ou o texto com um número.
 func (n *Numero) UnmarshalJSON(b []byte) error {
@@ -41,12 +43,22 @@ func (n *Numero) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	v, err := strconv.ParseFloat(texto, 64)
-	if err != nil {
+	if !formatoDoNumero.MatchString(texto) {
 		return errors.New("número da Pluggy inválido")
 	}
-	*n = Numero(v)
+	*n = Numero(texto)
 	return nil
+}
+
+// Decimal é o (decimal)double do .NET: o C# lê todo valor da Pluggy em double e o converte, guardando 15 dígitos.
+// Passar pelo double é o que dá o mesmo centavo: 19.884999999999998 vira 19.885 e arredonda para 19,89, e o decimal
+// direto do texto daria 19,88. É o único lugar do pacote com float64.
+func (n Numero) Decimal() (tipos.Decimal, error) {
+	v, err := strconv.ParseFloat(string(n), 64)
+	if err != nil {
+		return tipos.Decimal{}, errors.New("número da Pluggy fora do limite")
+	}
+	return tipos.DecimalDeFloat64(v)
 }
 
 // Inteiro é o int do .NET com AllowReadingFromString.
@@ -66,17 +78,13 @@ func (n *Inteiro) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// textoDoNumero tira as aspas do número. Dentro delas só valem dígitos, sinal, ponto e expoente: o strconv aceitaria
-// também "NaN", "Inf" e hexadecimal, que o .NET recusa.
+// textoDoNumero tira as aspas do número.
 func textoDoNumero(b []byte) (string, error) {
 	if len(b) == 0 || b[0] != '"' {
 		return string(b), nil
 	}
 	var texto string
 	if err := json.Unmarshal(b, &texto); err != nil {
-		return "", errors.New("número da Pluggy inválido")
-	}
-	if texto == "" || strings.Trim(texto, "0123456789+-.eE") != "" {
 		return "", errors.New("número da Pluggy inválido")
 	}
 	return texto, nil

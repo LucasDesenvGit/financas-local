@@ -12,27 +12,32 @@ import (
 
 func TestNumero(t *testing.T) {
 	casos := []struct {
-		nome, json string
-		esperado   float64
-		erro       bool
+		nome, json, decimal string
+		erro                bool
 	}{
-		{"número", `12.5`, 12.5, false},
-		{"negativo", `-3`, -3, false},
-		{"expoente", `1e2`, 100, false},
-		{"texto", `"12.5"`, 12.5, false},
-		{"texto com sinal", `"+1.5"`, 1.5, false},
-		{"texto com expoente", `"1E2"`, 100, false},
-		{"texto com escape", `"12"`, 12, false},
-		{"texto vazio", `""`, 0, true},
-		{"texto que não é número", `"abc"`, 0, true},
-		{"vírgula", `"1,5"`, 0, true},
-		{"NaN", `"NaN"`, 0, true},
-		{"infinito", `"Infinity"`, 0, true},
-		{"Inf", `"Inf"`, 0, true},
-		{"hexadecimal", `"0x10"`, 0, true},
-		{"grande demais", `1e400`, 0, true},
-		{"booleano", `true`, 0, true},
-		{"objeto", `{}`, 0, true},
+		{"número", `12.5`, "12.5", false},
+		{"negativo", `-3`, "-3", false},
+		{"expoente", `1e2`, "100", false},
+		{"texto", `"12.5"`, "12.5", false},
+		{"texto com sinal", `"+1.5"`, "1.5", false},
+		{"texto com expoente", `"1E2"`, "100", false},
+		{"texto com escape", `"1\u0032"`, "12", false},
+		{"texto que começa no ponto", `".5"`, "0.5", false},
+		{"texto que termina no ponto", `"5."`, "5", false},
+		{"texto vazio", `""`, "", true},
+		{"texto que não é número", `"abc"`, "", true},
+		{"vírgula", `"1,5"`, "", true},
+		{"dois pontos", `"1.2.3"`, "", true},
+		{"dois sinais", `"--1"`, "", true},
+		{"só o sinal", `"-"`, "", true},
+		{"só o ponto", `"."`, "", true},
+		{"NaN", `"NaN"`, "", true},
+		{"infinito", `"Infinity"`, "", true},
+		{"Inf", `"Inf"`, "", true},
+		{"hexadecimal", `"0x10"`, "", true},
+		{"espaço", `" 1"`, "", true},
+		{"booleano", `true`, "", true},
+		{"objeto", `{}`, "", true},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -41,8 +46,15 @@ func TestNumero(t *testing.T) {
 			if (err != nil) != c.erro {
 				t.Fatalf("Unmarshal(%s) = %v, esperado erro: %v", c.json, err, c.erro)
 			}
-			if err == nil && float64(n) != c.esperado {
-				t.Errorf("Unmarshal(%s) = %v, esperado %v", c.json, n, c.esperado)
+			if err != nil {
+				return
+			}
+			d, err := n.Decimal()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if d.String() != c.decimal {
+				t.Errorf("Decimal(%s) = %s, esperado %s", c.json, d, c.decimal)
 			}
 		})
 	}
@@ -55,6 +67,37 @@ func TestNumero(t *testing.T) {
 			t.Errorf("Balance = %v", *conta.Balance)
 		}
 	})
+}
+
+// O (decimal)double do .NET guarda 15 dígitos. Os valores abaixo saem diferentes do decimal direto do texto, e é isso
+// que dá o mesmo centavo do .NET (ADR 0049, contrato idêntico).
+func TestNumeroPassaPeloDoubleComoONET(t *testing.T) {
+	casos := []struct{ nome, texto, decimal string }{
+		{"ruído perto do meio centavo", "19.884999999999998", "19.885"},
+		{"ruído acima", "0.30000000000000004", "0.3"},
+		{"16 dígitos", "1234567890123456", "1234567890123460"},
+		{"zero", "0", "0"},
+		{"menos zero", "-0.0", "0"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			d, err := Numero(c.texto).Decimal()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if d.String() != c.decimal {
+				t.Errorf("Decimal(%s) = %s, esperado %s", c.texto, d, c.decimal)
+			}
+		})
+	}
+}
+
+func TestNumeroForaDoLimite(t *testing.T) {
+	for _, texto := range []string{"1e400", "1e29", "-1e29"} {
+		if _, err := Numero(texto).Decimal(); err == nil {
+			t.Errorf("Decimal(%s) sem erro", texto)
+		}
+	}
 }
 
 func TestInteiro(t *testing.T) {
@@ -208,16 +251,16 @@ func TestLerContas(t *testing.T) {
 	banco, cartao := contas[0], contas[1]
 	if banco.Id != "conta-corrente-1" || *banco.Type != "BANK" || *banco.Subtype != "CHECKING_ACCOUNT" ||
 		*banco.Number != "0001/12345-0" || *banco.Name != "Conta Corrente" || *banco.MarketingName != "Conta Fictícia" ||
-		*banco.Balance != 1520.35 || *banco.CurrencyCode != "BRL" || banco.CreditData != nil {
+		*banco.Balance != "1520.35" || *banco.CurrencyCode != "BRL" || banco.CreditData != nil {
 		t.Errorf("conta = %+v", banco)
 	}
 	dados := banco.BankData
-	if *dados.ClosingBalance != 1520.35 || *dados.AutomaticallyInvestedBalance != 300.5 || !*dados.HasReservedBalance ||
+	if *dados.ClosingBalance != "1520.35" || *dados.AutomaticallyInvestedBalance != "300.5" || !*dados.HasReservedBalance ||
 		len(dados.ReservedBalances) != 2 {
 		t.Errorf("bankData = %+v", dados)
 	}
 	credito := cartao.CreditData
-	if cartao.MarketingName != nil || cartao.BankData != nil || *credito.CreditLimit != 5000 || *credito.AvailableCreditLimit != 4159.9 ||
+	if cartao.MarketingName != nil || cartao.BankData != nil || *credito.CreditLimit != "5000" || *credito.AvailableCreditLimit != "4159.9" ||
 		credito.BalanceCloseDate.Data() != tipos.NovaData(2026, 10, 20) || credito.BalanceDueDate.Data() != tipos.NovaData(2026, 10, 28) {
 		t.Errorf("cartão = %+v, %+v", cartao, credito)
 	}
@@ -232,14 +275,14 @@ func TestLerTransacoes(t *testing.T) {
 		t.Fatal(err)
 	}
 	a, b := lidas[0], lidas[1]
-	if a.Date.Data() != tipos.NovaData(2026, 10, 14) || *a.Description != "PADARIA FICTICIA" || *a.Amount != 25.5 ||
+	if a.Date.Data() != tipos.NovaData(2026, 10, 14) || *a.Description != "PADARIA FICTICIA" || *a.Amount != "25.5" ||
 		a.AmountInAccountCurrency != nil || *a.Type != "DEBIT" || *a.Status != "POSTED" || *a.CategoryId != "05000000" ||
 		*a.CreditCardMetadata.InstallmentNumber != 2 || *a.CreditCardMetadata.TotalInstallments != 6 ||
 		*a.CreditCardMetadata.BillId != "fatura-1" || *a.Merchant.Name != "Padaria" ||
 		*a.Merchant.BusinessName != "Padaria Ficticia LTDA" || *a.OperationType != "CARTAO" || a.PaymentData != nil {
 		t.Errorf("transação = %+v", a)
 	}
-	if *b.AmountInAccountCurrency != 98.76 || b.CategoryId != nil || b.Merchant != nil || b.OperationType != nil ||
+	if *b.AmountInAccountCurrency != "98.76" || b.CategoryId != nil || b.Merchant != nil || b.OperationType != nil ||
 		*b.PaymentData.PaymentMethod != "PIX" || b.PaymentData.Payer.Documento() != "00000000191" ||
 		b.PaymentData.Receiver.Documento() != "***.000.001-**" {
 		t.Errorf("transação = %+v", b)
@@ -257,7 +300,7 @@ func TestLerFaturas(t *testing.T) {
 	}
 	f := faturas[0]
 	if f.Id != "f-1" || f.DueDate.Data() != tipos.NovaData(2026, 10, 28) || f.BillClosingDate.Data() != tipos.NovaData(2026, 10, 20) ||
-		*f.TotalAmount != 840.1 || *f.MinimumPaymentAmount != 84.01 || len(f.Payments) != 2 || *f.Payments[1].Amount != 40.1 {
+		*f.TotalAmount != "840.1" || *f.MinimumPaymentAmount != "84.01" || len(f.Payments) != 2 || *f.Payments[1].Amount != "40.1" {
 		t.Errorf("fatura = %+v", f)
 	}
 }
@@ -271,8 +314,8 @@ func TestLerInvestimentos(t *testing.T) {
 	}
 	i := lidos[0]
 	if i.Id != "inv-1" || *i.Name != "FII FICTICIO" || *i.Type != "EQUITY" || *i.Subtype != "REAL_ESTATE_FUND" || *i.Code != "FICT11" ||
-		*i.Issuer != "FICTICIO FDO INV IMOB - FII" || *i.CurrencyCode != "BRL" || *i.Balance != 1050.75 || *i.AmountOriginal != 1000 ||
-		*i.AmountProfit != 50.75 || *i.Quantity != 10.5 || i.AnnualRate != nil || *i.FixedAnnualRate != 12.5 ||
+		*i.Issuer != "FICTICIO FDO INV IMOB - FII" || *i.CurrencyCode != "BRL" || *i.Balance != "1050.75" || *i.AmountOriginal != "1000" ||
+		*i.AmountProfit != "50.75" || *i.Quantity != "10.5" || i.AnnualRate != nil || *i.FixedAnnualRate != "12.5" ||
 		i.DueDate.Data() != tipos.NovaData(2030, 1, 15) || i.PurchaseDate != nil || i.IssueDate.Data() != tipos.NovaData(2025, 3, 10) ||
 		*i.Status != "ACTIVE" {
 		t.Errorf("investimento = %+v", i)
@@ -287,11 +330,11 @@ func TestLerMovimentos(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := lidos[0]
-	if m.Id != "mov-1" || *m.Type != "BUY" || *m.Quantity != 3 || *m.Value != 100.25 || *m.Amount != 300.75 ||
+	if m.Id != "mov-1" || *m.Type != "BUY" || *m.Quantity != "3" || *m.Value != "100.25" || *m.Amount != "300.75" ||
 		m.Date.Data() != tipos.NovaData(2026, 2, 2) || m.TradeDate.Data() != tipos.NovaData(2026, 1, 30) {
 		t.Errorf("movimento = %+v", m)
 	}
-	if *m.Expenses["serviceTax"] != 1.5 || *m.Expenses["brokerageFee"] != 0.25 || m.Expenses["incomeTax"] != nil {
+	if *m.Expenses["serviceTax"] != "1.5" || *m.Expenses["brokerageFee"] != "0.25" || m.Expenses["incomeTax"] != nil {
 		t.Errorf("despesas = %+v", m.Expenses)
 	}
 }
@@ -306,24 +349,24 @@ func TestLerEmprestimos(t *testing.T) {
 	e := lidos[0]
 	if e.Id != "emprestimo-1" || *e.Kind != "FINANCING" || *e.ContractNumber != "CONTRATO-FICTICIO" ||
 		*e.ProductName != "Financiamento Fictício" || *e.Type != "FINANCIAMENTO_HABITACIONAL_SFH" ||
-		e.ContractDate.Data() != tipos.NovaData(2024, 5, 10) || *e.ContractAmount != 200000 || *e.CurrencyCode != "BRL" ||
+		e.ContractDate.Data() != tipos.NovaData(2024, 5, 10) || *e.ContractAmount != "200000" || *e.CurrencyCode != "BRL" ||
 		e.DueDate.Data() != tipos.NovaData(2044, 5, 10) || *e.InstallmentPeriodicity != "MENSAL" ||
-		e.FirstInstallmentDueDate.Data() != tipos.NovaData(2024, 6, 10) || *e.Cet != 0.0975 || *e.AmortizationScheduled != "SAC" {
+		e.FirstInstallmentDueDate.Data() != tipos.NovaData(2024, 6, 10) || *e.Cet != "0.0975" || *e.AmortizationScheduled != "SAC" {
 		t.Errorf("empréstimo = %+v", e)
 	}
 	taxa := e.InterestRates[0]
 	if *taxa.TaxPeriodicity != "AA" || *taxa.ReferentialRateIndexerType != "POS_FIXADO" ||
-		*taxa.ReferentialRateIndexerSubType != "TR_TBF" || *taxa.PreFixedRate != 0.0875 {
+		*taxa.ReferentialRateIndexerSubType != "TR_TBF" || *taxa.PreFixedRate != "0.0875" {
 		t.Errorf("taxa = %+v", taxa)
 	}
 	if p := e.Installments; *p.TotalNumberOfInstallments != 240 || *p.PaidInstallments != 29 || *p.DueInstallments != 211 || *p.PastDueInstallments != 0 {
 		t.Errorf("parcelas = %+v", p)
 	}
-	if *e.Payments.ContractOutstandingBalance != 185000.5 {
+	if *e.Payments.ContractOutstandingBalance != "185000.5" {
 		t.Errorf("saldo = %v", *e.Payments.ContractOutstandingBalance)
 	}
 	r := e.Payments.Releases[0]
-	if *r.IsOverParcelPayment || r.PaidDate.Data() != tipos.NovaData(2026, 10, 10) || *r.PaidAmount != 1890.12 {
+	if *r.IsOverParcelPayment || r.PaidDate.Data() != tipos.NovaData(2026, 10, 10) || *r.PaidAmount != "1890.12" {
 		t.Errorf("pagamento = %+v", r)
 	}
 }

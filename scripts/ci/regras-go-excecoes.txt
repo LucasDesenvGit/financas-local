@@ -8,9 +8,13 @@
 # com nenhuma linha também falha. Só entra aqui o que foi conferido à mão; na dúvida, troque o código.
 #
 # float64 é só para o que o C# também calcula em double e que não é dinheiro, quantidade nem taxa: dinheiro é
-# tipos.Decimal. time.Now só para hora de sistema (processo, certificado, duração), nunca data de negócio.
+# tipos.Decimal. A única exceção é a leitura da Pluggy (#83): o C# lê esses valores em double, e só passando por ele
+# sai o mesmo centavo; o float64 fica preso no Numero.Decimal. time.Now só para hora de sistema (processo, certificado,
+# duração), nunca data de negócio.
 
 float64 | internal/banco/copia_real_test.go | if _, real := v.(float64); real { | o teste só olha o tipo do valor lido para recusar dinheiro gravado como REAL (float); não calcula com float64
+float64 | internal/pluggy/modelos.go | v, err := strconv.ParseFloat(string(n), 64) | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
+float64 | internal/pluggy/modelos.go | return tipos.DecimalDeFloat64(v) | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
 float64 | internal/cotacoes/cliente.go | f, err := strconv.ParseFloat(texto, 64) | o ParseFloat só confere se o número cabe (e se é zero); o valor que sai vem do NovoDecimal(texto), com os dígitos exatos, sem passar por float64
 float64 | internal/erros/handler.go | case slog.KindFloat64: | formata no log o atributo do tipo float (slog.KindFloat64) que alguém passou ao slog; é texto de diagnóstico, não dado de negócio
 float64 | internal/erros/handler.go | return strconv.FormatFloat(v.Float64(), 'g', -1, 64) | formata no log o atributo do tipo float (slog.KindFloat64) que alguém passou ao slog; é texto de diagnóstico, não dado de negócio
@@ -40,11 +44,11 @@ float64 | internal/sugestoes/sugestoes.go | if conflitos < conflitosParaAviso ||
 float64 | internal/sugestoes/texto.go | minimo := max(1, int(math.Ceil(float64(len(textos))*0.8))) | fração de textos parecidos e o "P0" do C# (porcentagem de um double); não é dinheiro
 float64 | internal/sugestoes/texto.go | func percentual(razao float64) string { | fração de textos parecidos e o "P0" do C# (porcentagem de um double); não é dinheiro
 float64 | internal/sugestoes/texto.go | f := new(big.Float).SetPrec(256).SetFloat64(razao) | fração de textos parecidos e o "P0" do C# (porcentagem de um double); não é dinheiro
-float64 | internal/tipos/conversoes.go | func (d Decimal) ParaFloat64() float64 { | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic usa; existe para repetir o C# bit a bit e nunca recebe dinheiro
-float64 | internal/tipos/conversoes.go | f := (float64(baixo) + float64(float64(alto)*dois64)) / math.Pow10(int(d.Escala())) | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic usa; existe para repetir o C# bit a bit e nunca recebe dinheiro
-float64 | internal/tipos/conversoes.go | func DecimalDeFloat64(x float64) (Decimal, error) { | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic usa; existe para repetir o C# bit a bit e nunca recebe dinheiro
-float64 | internal/tipos/conversoes.go | expoente := int(math.Float64bits(x)>>52&0x7FF) - 1022 | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic usa; existe para repetir o C# bit a bit e nunca recebe dinheiro
-float64 | internal/tipos/conversoes.go | func decimalDoSinal(m *big.Int, x float64, casas int) Decimal { | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic usa; existe para repetir o C# bit a bit e nunca recebe dinheiro
+float64 | internal/tipos/conversoes.go | func (d Decimal) ParaFloat64() float64 { | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic e os valores da Pluggy (#83) usam; existe para repetir o C# bit a bit
+float64 | internal/tipos/conversoes.go | f := (float64(baixo) + float64(float64(alto)*dois64)) / math.Pow10(int(d.Escala())) | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic e os valores da Pluggy (#83) usam; existe para repetir o C# bit a bit
+float64 | internal/tipos/conversoes.go | func DecimalDeFloat64(x float64) (Decimal, error) { | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic e os valores da Pluggy (#83) usam; existe para repetir o C# bit a bit
+float64 | internal/tipos/conversoes.go | expoente := int(math.Float64bits(x)>>52&0x7FF) - 1022 | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic e os valores da Pluggy (#83) usam; existe para repetir o C# bit a bit
+float64 | internal/tipos/conversoes.go | func decimalDoSinal(m *big.Int, x float64, casas int) Decimal { | é o (double)decimal e o (decimal)double do .NET, que o fator da Selic e os valores da Pluggy (#83) usam; existe para repetir o C# bit a bit
 float64 | internal/tipos/conversoes_test.go | func TestDecimalDeFloat64IgualAoCSharp(t *testing.T) { | confere a conversão com o double do C#, bit a bit, contra o gabarito
 float64 | internal/tipos/conversoes_test.go | x := math.Float64frombits(uint64(bits)) | confere a conversão com o double do C#, bit a bit, contra o gabarito
 float64 | internal/tipos/conversoes_test.go | d, err := DecimalDeFloat64(x) | confere a conversão com o double do C#, bit a bit, contra o gabarito
