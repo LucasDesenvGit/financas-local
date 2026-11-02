@@ -24,10 +24,23 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 )
+
+var componentePermitido = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+func componenteSeguro(s string) (string, bool) {
+	if s == "" || strings.Contains(s, "/") || strings.Contains(s, "\\") || strings.Contains(s, "..") {
+		return "", false
+	}
+	if !componentePermitido.MatchString(s) {
+		return "", false
+	}
+	return s, true
+}
 
 // arquivoDoPedido devolve o nome do arquivo (sem a extensão) de um pedido.
 func arquivoDoPedido(r *http.Request) string {
@@ -38,24 +51,56 @@ func arquivoDoPedido(r *http.Request) string {
 	case caminho == "auth":
 		return "auth"
 	case partes[0] == "items" && len(partes) == 2:
-		return "item-" + partes[1]
+		id, ok := componenteSeguro(partes[1])
+		if !ok {
+			return ""
+		}
+		return "item-" + id
 	case caminho == "accounts":
-		return "contas-" + q.Get("itemId")
+		itemID, ok := componenteSeguro(q.Get("itemId"))
+		if !ok {
+			return ""
+		}
+		return "contas-" + itemID
 	case caminho == "categories":
 		return "categorias"
 	case caminho == "bills":
-		return "faturas-" + q.Get("accountId")
-	case caminho == "v2/transactions":
-		if depois := q.Get("after"); depois != "" {
-			return "transacoes-" + q.Get("accountId") + "-" + depois
+		accountID, ok := componenteSeguro(q.Get("accountId"))
+		if !ok {
+			return ""
 		}
-		return "transacoes-" + q.Get("accountId")
+		return "faturas-" + accountID
+	case caminho == "v2/transactions":
+		accountID, ok := componenteSeguro(q.Get("accountId"))
+		if !ok {
+			return ""
+		}
+		if depois := q.Get("after"); depois != "" {
+			after, ok := componenteSeguro(depois)
+			if !ok {
+				return ""
+			}
+			return "transacoes-" + accountID + "-" + after
+		}
+		return "transacoes-" + accountID
 	case caminho == "investments":
-		return "investimentos-" + q.Get("itemId")
+		itemID, ok := componenteSeguro(q.Get("itemId"))
+		if !ok {
+			return ""
+		}
+		return "investimentos-" + itemID
 	case partes[0] == "investments" && len(partes) == 3 && partes[2] == "transactions":
-		return "movimentos-" + partes[1]
+		id, ok := componenteSeguro(partes[1])
+		if !ok {
+			return ""
+		}
+		return "movimentos-" + id
 	case caminho == "loans":
-		return "emprestimos-" + q.Get("itemId")
+		itemID, ok := componenteSeguro(q.Get("itemId"))
+		if !ok {
+			return ""
+		}
+		return "emprestimos-" + itemID
 	}
 	return ""
 }
