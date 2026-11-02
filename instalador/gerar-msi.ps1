@@ -11,6 +11,8 @@
     .\instalador\gerar-msi.ps1 -SoPacote            # reaproveita a pasta publicada e so gera o .msi
     .\instalador\gerar-msi.ps1 -Revisao 57          # versao de desenvolvimento: X.Y.Z-dev.57 no site e no
                                                     # gerenciador, X.Y.Z.57 no .msi (a CI usa no develop)
+    .\instalador\gerar-msi.ps1 -SoGo                # #277: sem a API em .NET; o servico e o financas-go.exe
+                                                    # sozinho (preparado para a inversao, #85)
 
     Saida: saida-instalador\FinancasLocal-<versao>.msi (ou -<versao>-dev.<revisao>.msi) e saida-instalador\SHA256SUMS.txt.
     O .msi troca qualquer instalacao da mesma versao X.Y.Z (AllowSameVersionUpgrades): a de desenvolvimento e a do
@@ -21,12 +23,16 @@ param(
     [switch]$PularFront,
     [switch]$SoPacote,
     [string]$Saida = "",
-    [int]$Revisao = 0
+    [int]$Revisao = 0,
+    [switch]$SoGo
 )
 
 $ErrorActionPreference = "Stop"
 $Raiz = Split-Path -Parent $PSScriptRoot
 if (-not $Saida) { $Saida = Join-Path $Raiz "saida-instalador" }
+# Caminho absoluto: o WiX resolve o -bindpath relativo a partir da pasta do .wxs, e nao da pasta atual.
+if (-not [IO.Path]::IsPathRooted($Saida)) { $Saida = Join-Path (Get-Location).Path $Saida }
+$Saida = [IO.Path]::GetFullPath($Saida)
 $Publicado = Join-Path $Saida "app"
 
 function Etapa([string]$texto) { Write-Host "==> $texto" -ForegroundColor Cyan }
@@ -62,11 +68,17 @@ if (-not $SoPacote) {
     $dist = Join-Path $front "dist\financas-web\browser"
     if (-not (Test-Path -LiteralPath (Join-Path $dist "index.html"))) { throw "Front-end compilado nao encontrado em $dist." }
 
-    # A API, self-contained: o computador nao precisa do .NET instalado. Ela fica na frente ate a inversao (#85).
-    $projeto = "src\backend\Financas.Api\Financas.Api.csproj"
-    Etapa "Publicando $projeto"
-    Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-        "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
+    if ($SoGo) {
+        # #277, parte 4: sem a API em .NET. O Go le os mesmos appsettings (o geral, da API, e o Production, abaixo) e o
+        # configuracao.json da pasta de dados; muda so quem e o servico (FinancasLocal.wxs, SoGo).
+        Copy-Item -LiteralPath (Join-Path $Raiz "src\backend\Financas.Api\appsettings.json") -Destination $Publicado -Force
+    } else {
+        # A API, self-contained: o computador nao precisa do .NET instalado. Ela fica na frente ate a inversao (#85).
+        $projeto = "src\backend\Financas.Api\Financas.Api.csproj"
+        Etapa "Publicando $projeto"
+        Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
+            "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
+    }
 
     # #277 (ADR 0052): o gerenciador e o em Go (src\gerenciador-go), um .exe so, no lugar do C# self-contained. Mantem o
     # nome Financas.Gerenciador.exe: os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuam valendo.
@@ -122,7 +134,7 @@ Etapa "Gerando o .msi (WiX)"
 $msi = Join-Path $Saida "FinancasLocal-$Rotulo.msi"
 Executar "wix" @("build", (Join-Path $PSScriptRoot "FinancasLocal.wxs"), "-arch", "x64", "-culture", "pt-BR",
     "-ext", "WixToolset.UI.wixext", "-ext", "WixToolset.Util.wixext",
-    "-d", "Versao=$VersaoMsi", "-bindpath", "app=$Publicado", "-o", $msi)
+    "-d", "Versao=$VersaoMsi", "-d", "SoGo=$(if ($SoGo) { 1 } else { 0 })", "-bindpath", "app=$Publicado", "-o", $msi)
 
 $hash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
 $somas = Join-Path $Saida "SHA256SUMS.txt"

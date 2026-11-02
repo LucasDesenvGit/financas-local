@@ -270,6 +270,35 @@ jobs:
           if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
           if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
 
+      # #277, parte 4: o .msi "só Go", preparado para a inversão (#85) e ainda não publicado. Instala sobre os dados que
+      # a desinstalação manteve (o usuário verificador, com a senha da cópia restaurada) e confere que o serviço é o
+      # financas-go.exe sozinho: sem o .NET, o Go aplica o esquema, faz o login e responde.
+      - name: O .msi só com o Go (preparado para a #85)
+        shell: pwsh
+        run: |
+          ./instalador/gerar-msi.ps1 -SoGo -PularFront -Saida saida-so-go -Versao ${{ steps.versao.outputs.seguinte }}
+          $msi = "saida-so-go\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v so-go.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja so-go.log)" }
+          $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
+          if ($servico.State -ne "Running" -or $servico.PathName -notlike "*FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço: $($servico.State) $($servico.PathName)" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o .msi só com o Go levou a API em .NET" }
+          if (Get-Process Financas.Api -ErrorAction SilentlyContinue) { throw "a API em .NET está rodando" }
+          $estado = $null
+          for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
+          if (-not $estado.configurado) { throw "o Go sozinho não viu o usuário: $($estado | ConvertTo-Json -Compress)" }
+          # O login é o do Go (#75): mesmos cookies e o mesmo hash da senha.
+          curl.exe --ssl-no-revoke -fsS -c g.txt -b g.txt "$env:SITE/api/auth/estado" | Out-Null
+          $xsrf = (Get-Content g.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
+          '{"login":"verificador","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
+          $codigo = curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" -c g.txt -b g.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/entrar"
+          if ($codigo -ne "200") { throw "login no Go sozinho: $codigo" }
+          $saude = curl.exe --ssl-no-revoke -fsS -b g.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
+          if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador") { throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)" }
+          $p = Start-Process msiexec.exe -ArgumentList "/x `"$msi`" /qn /l*v so-go-desinstalar.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec /x terminou com $($p.ExitCode) (veja so-go-desinstalar.log)" }
+          if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
+
       - name: Logs do msiexec
         if: failure()
         uses: actions/upload-artifact@v7
