@@ -76,9 +76,10 @@ func (c *CampoInteiro) validar(erros map[string][]string) {
 	}
 }
 
-// CampoInteiroOpcional é um parâmetro int? de um record: null ou ausente fica nil.
+// CampoInteiroOpcional é um parâmetro int? de um record: null ou ausente fica nil, e o [Range] da Faixa só olha o número.
 type CampoInteiroOpcional struct {
 	Propriedade string
+	Faixa       *Faixa
 	Valor       *int64
 }
 
@@ -94,7 +95,11 @@ func (c *CampoInteiroOpcional) ler(t json.Token) bool {
 	return ok
 }
 
-func (c *CampoInteiroOpcional) validar(map[string][]string) {}
+func (c *CampoInteiroOpcional) validar(erros map[string][]string) {
+	if c.Valor != nil && c.Faixa != nil && (float64(*c.Valor) < c.Faixa.Minimo || float64(*c.Valor) > c.Faixa.Maximo) {
+		erros[c.Propriedade] = append(erros[c.Propriedade], c.Faixa.mensagem(c.Propriedade))
+	}
+}
 
 // CampoEnum é um parâmetro enum de um record, com o byte por baixo (os enums do projeto são ": byte"). O
 // System.Text.Json sem o JsonStringEnumConverter lê só número inteiro de 0 a 255, nunca texto ("1" é recusado:

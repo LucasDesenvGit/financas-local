@@ -451,7 +451,14 @@ jobs:
         run: dotnet build src/backend/Financas.Api/Financas.Api.csproj -c Release
 
       - name: Contrato contra o .NET (com o Go atrás dele)
-        run: bash src/backend-go/testes/contrato/rodar-dotnet.sh
+        run: bash src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar
+
+      - name: TEMPORÁRIO guardar os esperados gravados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: esperados-open-finance
+          path: src/backend-go/testes/contrato/esperado
 
       # Os mesmos esperados, com os assuntos de assuntos-no-go.txt atendidos pelo Go. Sem assunto ligado, não faz nada.
       - name: Contrato contra o Go atrás do .NET (assuntos-no-go.txt)

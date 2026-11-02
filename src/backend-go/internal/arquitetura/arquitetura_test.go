@@ -134,6 +134,8 @@ var dependencias = []struct {
 		"internal/emprestimos", "internal/extrato", "internal/faturas", "internal/poucoinformativa", "internal/relatorios",
 		"internal/reservas", "internal/transacoes"},
 		"as rotas da entrada painel (#80): o painel junta o resumo e os avisos de cada assunto (contas, carteira, contas a pagar, faturas, reservas)"},
+	{"internal/openfinance", []string{"internal/categorizacao", "internal/contas", "internal/transacoes", "internal/transferencias"},
+		"as conexões usam o nome e as faturas das contas; mapear uma categoria reaplica as regras e acerta as transferências (#83)"},
 	{"internal/parcelas", nil, "parcelas de compras no cartão"},
 	{"internal/pluggy", nil, "cliente HTTP da Pluggy (ADR 0006); não grava no banco"},
 	{"internal/poucoinformativa", nil, "descrição que não diz nada"},

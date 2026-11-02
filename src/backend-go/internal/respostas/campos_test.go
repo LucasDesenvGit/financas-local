@@ -55,6 +55,27 @@ func TestCampoInteiro(t *testing.T) {
 	}
 }
 
+// Regra: o [Range] do int? só olha o número: nil passa, e os limites valem.
+func TestCampoInteiroOpcionalComFaixa(t *testing.T) {
+	casos := []struct {
+		corpo string
+		erros map[string][]string
+	}{
+		{`{"p":null}`, map[string][]string{}},
+		{`{}`, map[string][]string{}},
+		{`{"p":1}`, map[string][]string{}},
+		{`{"p":48}`, map[string][]string{}},
+		{`{"p":0}`, map[string][]string{"P": {"The field P must be between 1 and 48."}}},
+		{`{"p":49}`, map[string][]string{"P": {"The field P must be between 1 and 48."}}},
+	}
+	for _, c := range casos {
+		campo := &CampoInteiroOpcional{Propriedade: "P", Faixa: &Faixa{1, 48}}
+		if _, erros := lerCampos(t, c.corpo, campo); !reflect.DeepEqual(erros, c.erros) {
+			t.Errorf("%s: erros %v, esperado %v", c.corpo, erros, c.erros)
+		}
+	}
+}
+
 // Regra: int? aceita null e ausente (nil), e o número em texto.
 func TestCampoInteiroOpcional(t *testing.T) {
 	for corpo, esperado := range map[string]*int64{`{"p":null}`: nil, `{}`: nil, `{"p":"28"}`: p(int64(28)), `{"p":28}`: p(int64(28))} {

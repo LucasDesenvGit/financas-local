@@ -26,6 +26,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/investimentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/metas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/openfinance"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/orcamentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/painel"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
@@ -83,5 +84,6 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
 	painel.Registrar(mux, painel.NovoServico(d.DB, daCarteira, reservasDaCarteira, cambioDaCarteira, par, contasAPagar, d.Relogio, d.Log))  // #80: empréstimos e relatórios
 	investimentos.Registrar(mux, investimentos.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log))                                       // #80: os do Open Finance
+	openfinance.Registrar(mux, openfinance.NovoServico(d.DB, cofre, par, d.Relogio, d.Log))                                                 // #83: as rotas que não sincronizam
 	return mux
 }

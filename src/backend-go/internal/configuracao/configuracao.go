@@ -262,6 +262,16 @@ func (i Instante) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + texto + `"`), nil
 }
 
+// ParaUtc é o ToUniversalTime do C# com o Kind em Utc: o instante sem fuso conta como hora local, a de Brasília.
+func (i Instante) ParaUtc() Instante {
+	if i.tipo != semFuso {
+		return InstanteUTC(i.t)
+	}
+	ano, mes, dia := i.t.Date()
+	hora, minuto, segundo := i.t.Clock()
+	return InstanteUTC(time.Date(ano, mes, dia, hora, minuto, segundo, i.t.Nanosecond(), relogio.Brasilia))
+}
+
 // Tempo devolve o instante (sem fuso: a hora de parede, num time.Time em UTC). #81: o câmbio compara com o relógio.
 func (i Instante) Tempo() time.Time { return i.t }
 
