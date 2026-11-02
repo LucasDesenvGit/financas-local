@@ -124,6 +124,40 @@ jobs:
           ls backups/FinancasLocal-antes-instalacao-*.db || { echo "::error::backup do banco antes da atualizacao nao foi feito"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
+      # #84 (ADR 0049): o Go sozinho como servico, sem o .NET, e a unidade volta como estava. Na inversao (#85), quem
+      # escreve a unidade e o 3-publicar-atualizar.sh, no ponto unico do executavel.
+      - name: Go sozinho como servico (systemd)
+        run: |
+          site=https://127.0.0.1:5443/api/auth/estado
+          unidade="$HOME/.config/systemd/user/financaslocal.service"
+          diario() { sudo journalctl _SYSTEMD_USER_UNIT=financaslocal.service --no-pager; }
+          cp "$unidade" "$RUNNER_TEMP/unidade-do-dotnet"
+          systemctl --user stop financaslocal.service
+          sed -i "s|^ExecStart=.*|ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida|" "$unidade"
+          systemctl --user daemon-reload
+          systemctl --user start financaslocal.service
+
+          resposta=""
+          for _ in $(seq 1 30); do resposta="$(curl -k -fsS "$site" || true)"; [[ -n "$resposta" ]] && break; sleep 1; done
+          [[ -n "$resposta" ]] || { echo "::error::o Go sozinho nao respondeu"; diario | tail -30; exit 1; }
+          echo "$resposta"
+          pid="$(systemctl --user show -p MainPID --value financaslocal.service)"
+          [[ "$(cat "/proc/$pid/comm")" == financas-go ]] || { echo "::error::o servico nao e o Go: $(cat "/proc/$pid/comm")"; exit 1; }
+          if pgrep -f Financas.Api.dll; then echo "::error::o .NET continua rodando"; exit 1; fi
+          for _ in $(seq 1 10); do diario | grep -q 'iniciando sozinho' && break; sleep 1; done
+          diario | grep -q 'iniciando sozinho' || { echo "::error::o log do Go nao chegou ao journald"; diario | tail -30; exit 1; }
+
+          systemctl --user stop financaslocal.service
+          if pgrep -af publicado/api/financas-go; then echo "::error::sobrou processo do Go com o servico parado"; exit 1; fi
+          resultado="$(systemctl --user show -p Result --value financaslocal.service)"
+          [[ "$resultado" == success ]] || { echo "::error::o Go parou com $resultado"; diario | tail -30; exit 1; }
+
+          cp "$RUNNER_TEMP/unidade-do-dotnet" "$unidade"
+          systemctl --user daemon-reload
+          systemctl --user start financaslocal.service
+          for _ in $(seq 1 30); do curl -k -fsS "$site" && break; sleep 1; done
+          curl -k -fsS "$site"
+
       - name: Backup (4-backup.sh)
         run: |
           env PATH="$PATH_LIMPO" bash scripts/geral/4-backup.sh

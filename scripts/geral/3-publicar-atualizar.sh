@@ -44,6 +44,7 @@ if [[ "$SO" == windows ]] && ! net session >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------------ Build
+nome_go=financas-go; [[ "$SO" == windows ]] && nome_go=financas-go.exe
 if [[ "$pular_build" -eq 0 ]]; then
     etapa 'Compilando o front-end (Angular)'
     # O Windows nao apaga um .exe em execucao: com um "npm start" aberto (ng serve + esbuild.exe de
@@ -76,7 +77,6 @@ if [[ "$pular_build" -eq 0 ]]; then
     etapa 'Compilando o back-end em Go'
     command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     versao_sistema="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
-    nome_go=financas-go; [[ "$SO" == windows ]] && nome_go=financas-go.exe
     (cd "$Raiz/src/backend-go" && go build -trimpath \
         -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao_sistema" \
         -o "$(caminho_nativo "$preparo/$nome_go")" ./cmd/financas)
@@ -114,32 +114,12 @@ try {
 ' "$(caminho_nativo "$config_atual")" 2>/dev/null
 }
 
-# pfx_valido_por_mais_de_30_dias senha
-pfx_valido_por_mais_de_30_dias() {
-    [[ -f "$pfx" ]] || return 1
-    command -v openssl >/dev/null 2>&1 || return 1
-    local venc_str venc_epoch limite_epoch
-    venc_str="$(openssl pkcs12 -in "$pfx" -passin pass:"$1" -nokeys -clcerts 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)"
-    [[ -n "$venc_str" ]] || return 1
-    venc_epoch="$(date -d "$venc_str" +%s 2>/dev/null || date -j -f '%b %d %T %Y %Z' "$venc_str" +%s 2>/dev/null || echo '')"
-    [[ -n "$venc_epoch" ]] || return 1
-    limite_epoch=$(( $(date +%s) + 30*24*60*60 ))
-    [[ "$venc_epoch" -gt "$limite_epoch" ]]
-}
-
-# passo_a_passo_certificado: salva a parte publica do certificado (sem a chave) num .pem e mostra os
-# comandos para confiar nele na distribuicao detectada e no Chrome/Chromium e no Firefox (#300).
+# passo_a_passo_certificado: mostra os comandos para confiar na parte publica do certificado (sem a
+# chave, no .pem) na distribuicao detectada e no Chrome/Chromium e no Firefox (#300).
 # So mostra: mexer no repositorio de certificados do sistema pede sudo e e decisao de quem instala.
 passo_a_passo_certificado() {
-    local pem="${pfx%.pfx}.pem" id=""
-    if command -v openssl >/dev/null 2>&1 \
-        && openssl pkcs12 -in "$pfx" -passin pass:"$senha_pfx" -nokeys -clcerts 2>/dev/null \
-            | openssl x509 -out "$pem" 2>/dev/null; then
-        ok "parte publica do certificado (sem a chave) em $pem"
-    else
-        aviso "Sem o openssl para separar a parte publica do certificado; instale o openssl e rode de novo."
-        return 0
-    fi
+    local id=""
+    ok "parte publica do certificado (sem a chave) em $pem"
     [[ "$SO" == linux && -r /etc/os-release ]] && id="$(. /etc/os-release; echo "${ID:-} ${ID_LIKE:-}")"
     echo '    Para o navegador confiar no site (uma vez):'
     case "$id" in
@@ -162,25 +142,29 @@ senha_pfx=""
 if [[ -f "$pfx" ]]; then
     senha_pfx="$(obter_senha_atual || true)"
 fi
-
-if [[ -n "$senha_pfx" ]] && pfx_valido_por_mais_de_30_dias "$senha_pfx"; then
-    ok 'certificado existente reaproveitado'
-else
-    etapa 'Gerando certificado HTTPS de desenvolvimento'
+if [[ -z "$senha_pfx" ]]; then
     if command -v openssl >/dev/null 2>&1; then
         senha_pfx="$(openssl rand -base64 24)"
     else
         senha_pfx="$(head -c32 /dev/urandom | base64)"
     fi
-    rm -f "$pfx"
-    dotnet dev-certs https -ep "$(caminho_nativo "$pfx")" -p "$senha_pfx" >/dev/null
+fi
+
+# #84: quem cuida do certificado e o executavel do Go, sem o .NET: reaproveita o PFX que abre com a senha e
+# vale por mais de 30 dias, e gera outro no caso contrario. A senha vai pela entrada padrao, nao na linha de comando.
+pem="${pfx%.pfx}.pem"
+resultado_certificado="$(printf '%s\n' "$senha_pfx" | "$preparo/$nome_go" gerar-certificado -pfx "$(caminho_nativo "$pfx")")" \
+    || erro_sai 'Nao foi possivel gerar o certificado HTTPS.'
+if [[ "$resultado_certificado" == reaproveitado ]]; then
+    ok 'certificado existente reaproveitado'
+else
     ok "certificado gerado em $pfx"
 fi
 
-if dotnet dev-certs https --trust >/dev/null 2>&1; then
+if [[ "$SO" == windows ]] && certutil.exe -addstore -f Root "$(caminho_nativo "$pem")" >/dev/null 2>&1; then
     ok 'certificado marcado como confiavel neste computador'
 else
-    aviso 'Nao foi possivel confiar automaticamente no certificado (normal em varias distribuicoes Linux).'
+    aviso 'A instalacao nao mexe nos certificados confiaveis do sistema: isso pede sudo e e decisao de quem instala.'
     aviso 'Sem isso, o navegador mostra um aviso de seguranca ao abrir o site.'
     passo_a_passo_certificado
 fi
@@ -261,6 +245,10 @@ else
 fi
 dll_destino="$destino/Financas.Api.dll"
 
+# #84: o ponto unico que diz o que o servico executa, nos tres casos abaixo. Na inversao (#85, ADR 0049), muda so aqui.
+exe_servico="$dotnet_exec"
+args_servico="$dll_destino"
+
 case "$SO" in
     linux)
         unidade_dir="$HOME/.config/systemd/user"
@@ -272,7 +260,7 @@ Description=FinancasLocal
 After=network.target
 
 [Service]
-ExecStart=$dotnet_exec $dll_destino
+ExecStart=$exe_servico $args_servico
 WorkingDirectory=$destino
 Restart=on-failure
 Environment=ASPNETCORE_ENVIRONMENT=Production
@@ -295,15 +283,15 @@ EOF
         ;;
     osx)
         aviso 'Registro automatico de servico (launchd) nao implementado para macOS.'
-        aviso "Para rodar manualmente: $dotnet_exec $dll_destino"
+        aviso "Para rodar manualmente: $exe_servico $args_servico"
         ;;
     windows)
         # sc.exe e bem especifico sobre espacos: "chave= valor", com um unico
         # espaco apos o "=" e nenhum antes. Por isso binPath= e o valor vao
         # como argumentos separados do bash.
-        dotnet_exec_win="$(cygpath -w "$dotnet_exec" 2>/dev/null || echo "$dotnet_exec")"
-        dll_destino_win="$(cygpath -w "$dll_destino" 2>/dev/null || echo "$dll_destino")"
-        bin_path="\"$dotnet_exec_win\" \"$dll_destino_win\""
+        exe_servico_win="$(cygpath -w "$exe_servico" 2>/dev/null || echo "$exe_servico")"
+        args_servico_win="$(cygpath -w "$args_servico" 2>/dev/null || echo "$args_servico")"
+        bin_path="\"$exe_servico_win\" \"$args_servico_win\""
         comando_create="sc.exe create $nome_servico binPath= \"$bin_path\" start= auto"
         comando_start="sc.exe start $nome_servico"
         if sc.exe query "$nome_servico" >/dev/null 2>&1; then

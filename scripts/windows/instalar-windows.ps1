@@ -516,30 +516,22 @@ function Publicar {
         } catch { $senhaPfx = $null }
     }
 
-    $reaproveitar = $false
-    if ($senhaPfx) {
-        try {
-            $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($pfx, $senhaPfx)
-            $reaproveitar = $cert.NotAfter -gt (Get-Date).AddDays(30)
-        } catch { $reaproveitar = $false }
-    }
-
-    if ($reaproveitar) {
-        Ok "certificado existente reaproveitado"
-    } else {
-        Etapa "Gerando certificado HTTPS de desenvolvimento"
+    if (-not $senhaPfx) {
         $bytes = New-Object byte[] 24
         [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
         $senhaPfx = [Convert]::ToBase64String($bytes)
-        if (Test-Path -LiteralPath $pfx) { Remove-Item -LiteralPath $pfx -Force }
-        & dotnet dev-certs https -ep $pfx -p $senhaPfx | Out-Null
-        if ($LASTEXITCODE -ne 0) { ErroSai "dotnet dev-certs falhou ao gerar o certificado." }
-        Ok "certificado gerado em $pfx"
     }
 
-    # Confia na loja da MAQUINA (Autoridades Raiz Confiaveis), sem janela: o "dotnet dev-certs
-    # https --trust" pede um clique e, se quem elevou no UAC foi outra conta, poria o certificado so
-    # na conta do administrador. Vai so a parte publica; o FriendlyName identifica o certificado
+    # #84: quem cuida do certificado e o executavel do Go, sem o .NET: reaproveita o PFX que abre com a senha e
+    # vale por mais de 30 dias, e gera outro no caso contrario. A senha vai pela entrada padrao, nao na linha de comando.
+    $resultadoCertificado = $senhaPfx | & (Join-Path $preparo "financas-go.exe") gerar-certificado -pfx $pfx
+    if ($LASTEXITCODE -ne 0) { ErroSai "Nao foi possivel gerar o certificado HTTPS." }
+    if ($resultadoCertificado -eq "reaproveitado") { Ok "certificado existente reaproveitado" }
+    else { Ok "certificado gerado em $pfx" }
+
+    # Confia na loja da MAQUINA (Autoridades Raiz Confiaveis), sem janela: a loja do usuario pede um
+    # clique e, se quem elevou no UAC foi outra conta, poria o certificado so na conta do
+    # administrador. Vai so a parte publica; o FriendlyName identifica o certificado
     # antigo para troca-lo quando houver renovacao.
     if ($NaoConfiarCertificado) {
         Aviso "Certificado nao marcado como confiavel (-NaoConfiarCertificado). O navegador vai mostrar um aviso de seguranca."
@@ -612,6 +604,7 @@ function Publicar {
 
     # ------------------------------------------------------------ Servico do Windows
     Etapa "[3/3] Registrando o servico $NomeServico"
+    # #84: o ponto unico que diz o que o servico executa. Na inversao (#85, ADR 0049), muda so aqui.
     $dotnetPortatil = Join-Path $Ferramentas "dotnet\dotnet.exe"
     if (Test-Path -LiteralPath $dotnetPortatil) { $dotnetExec = $dotnetPortatil } else { $dotnetExec = (Get-Command dotnet).Source }
     $dll = Join-Path $destino "Financas.Api.dll"

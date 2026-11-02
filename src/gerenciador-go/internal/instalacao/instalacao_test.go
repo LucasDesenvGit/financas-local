@@ -86,6 +86,7 @@ func TestPastaDaLinhaDoServico(t *testing.T) {
 	casos := map[string]string{
 		`"C:\Program Files\FinancasLocal\Financas.Api.exe"`:                                           `C:\Program Files\FinancasLocal`,
 		`"C:\Program Files\dotnet\dotnet.exe" "C:\Users\Ana\financas\publicado\api\financas.api.DLL"`: `C:\Users\Ana\financas\publicado\api`,
+		`"C:\Program Files\FinancasLocal\financas-go.exe" -aplicar-esquema`:                           `C:\Program Files\FinancasLocal`,
 		`"%PF_TESTE%\FinancasLocal\Financas.Api.exe" --urls x`:                                        `C:\Arquivos de Programas\FinancasLocal`,
 		`"C:\outro\programa.exe"`:                                                                     "",
 	}
@@ -164,6 +165,9 @@ func TestPastaDaUnidade(t *testing.T) {
 		{"sem WorkingDirectory", map[string]string{"LoadState": "loaded", "ExecStart": execStart}, "/home/ana/financas/publicado/api"},
 		{"WorkingDirectory ~", map[string]string{"LoadState": "loaded", "WorkingDirectory": "~", "ExecStart": execStart}, "/home/ana/financas/publicado/api"},
 		{"sem a API", map[string]string{"LoadState": "loaded", "ExecStart": "{ path=/usr/bin/outro ; argv[]=/usr/bin/outro }"}, ""},
+		{"o Go sozinho (#84)", map[string]string{"LoadState": "loaded", "ExecStart": "{ path=/home/ana/financas/publicado/api/financas-go ; " +
+			"argv[]=/home/ana/financas/publicado/api/financas-go -aplicar-esquema ; ignore_errors=no }"}, "/home/ana/financas/publicado/api"},
+		{"pasta com o nome do Go", map[string]string{"LoadState": "loaded", "ExecStart": "{ path=/opt/financas-go/outro ; argv[]=/opt/financas-go/outro ; ignore_errors=no }"}, ""},
 		{"não carregou", map[string]string{"LoadState": "not-found", "WorkingDirectory": "/srv/api"}, ""},
 	}
 	for _, c := range casos {

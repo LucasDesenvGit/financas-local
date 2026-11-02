@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.63.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Certificado HTTPS feito pelo executável do Go, sem o .NET** (#84, parte final; épico #70). Numa instalação nova ou quando o certificado está para vencer, ele sai do `gerar-certificado`, e o certificado que ainda vale continua. No Linux, a instalação não tenta mais confiar nele sozinha: ela mostra os comandos com o caminho do arquivo, como já fazia nas distribuições em que a tentativa falhava. O site segue rodando no .NET; a CI agora confere o Go sozinho como serviço nos dois sistemas, e o gerenciador, o `parar` e o `.msi` reconhecem o processo dele.
+
 ## [2.62.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
