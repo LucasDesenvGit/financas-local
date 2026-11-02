@@ -4,37 +4,51 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
+
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
 // ValorDaCarteira é a parte "Carteira" do ComposicaoAsync: as posições abertas pela última cotação, em reais. Sem cotação (do
-// ativo ou da moeda), vale o custo. O valor sai a 2 casas. O resto da composição é do painel (#80).
+// ativo ou da moeda), vale o custo. O valor sai a 2 casas.
 func (s *Servico) ValorDaCarteira(ctx context.Context) (tipos.Decimal, error) {
-	ativos, err := s.ativosPeloId(ctx)
+	soma, _, _, err := s.posicoesEmReais(ctx)
 	if err != nil {
 		return tipos.Zero, err
+	}
+	return tipos.Arredondar(soma, 2), nil
+}
+
+// posicoesEmReais soma as posições abertas da carteira em reais (sem arredondar) e devolve os tickers delas (em
+// maiúsculas, para comparar sem diferença) e o conversor usado.
+func (s *Servico) posicoesEmReais(ctx context.Context) (tipos.Decimal, map[string]bool, *cambio.Conversor, error) {
+	ativos, err := s.ativosPeloId(ctx)
+	if err != nil {
+		return tipos.Zero, nil, nil, err
 	}
 	conversor, err := s.cambio.ObterConversor(ctx, nil)
 	if err != nil {
-		return tipos.Zero, err
+		return tipos.Zero, nil, nil, err
 	}
 	soma := tipos.Zero
+	tickers := map[string]bool{}
 	for i := range ativos {
 		p, err := Calcular(ativos[i].Operacoes, nil)
 		if err != nil {
-			return tipos.Zero, err
+			return tipos.Zero, nil, nil, err
 		}
 		if !positivo(p.Quantidade) {
 			continue
 		}
+		tickers[texto.MaiusculasInvariantes(ativos[i].Ticker)] = true
 		if preco := precoEmReais(&ativos[i], conversor); preco != nil {
 			soma = tipos.Somar(soma, tipos.Multiplicar(p.Quantidade, *preco))
 		} else {
 			soma = tipos.Somar(soma, p.Custo)
 		}
 	}
-	return tipos.Arredondar(soma, 2), nil
+	return soma, tickers, conversor, nil
 }
 
 // Composicao são os valores de investimento do patrimônio, em reais (o ComposicaoInvestimentos do C#).
@@ -57,30 +71,9 @@ func (c Composicao) Total() tipos.Decimal {
 // Finance das conexões ativas em reais, sem repetir os que já estão na carteira pelo código (a moeda sem cotação fica
 // de fora e é anotada), e as reservas estimadas pelo extrato.
 func (s *Servico) Composicao(ctx context.Context) (Composicao, error) {
-	ativos, err := s.ativosPeloId(ctx)
+	carteira, tickers, conversor, err := s.posicoesEmReais(ctx)
 	if err != nil {
 		return Composicao{}, err
-	}
-	conversor, err := s.cambio.ObterConversor(ctx, nil)
-	if err != nil {
-		return Composicao{}, err
-	}
-	carteira := tipos.Zero
-	tickers := map[string]bool{}
-	for i := range ativos {
-		p, err := Calcular(ativos[i].Operacoes, nil)
-		if err != nil {
-			return Composicao{}, err
-		}
-		if !positivo(p.Quantidade) {
-			continue
-		}
-		tickers[texto.MaiusculasInvariantes(ativos[i].Ticker)] = true
-		if preco := precoEmReais(&ativos[i], conversor); preco != nil {
-			carteira = tipos.Somar(carteira, tipos.Multiplicar(p.Quantidade, *preco))
-		} else {
-			carteira = tipos.Somar(carteira, p.Custo)
-		}
 	}
 	linhas, err := s.db.QueryContext(ctx, `SELECT i."Saldo", i."Moeda", i."Codigo", i."Tipo" FROM "Investimento" i
 		JOIN "ConexaoBancaria" c ON c."Id" = i."ConexaoBancariaId" WHERE c."Ativa" ORDER BY i."Id"`)

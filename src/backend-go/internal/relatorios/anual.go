@@ -145,18 +145,9 @@ func (s *Servico) PainelAnual(ctx context.Context, ano, anoComparacao int, p Pat
 	if err != nil {
 		return PainelAnualDto{}, err
 	}
-	resumo, err := resumir(fluxoAno, mesLimite)
-	if err != nil {
-		return PainelAnualDto{}, err
-	}
-	resumoAnterior, err := resumir(fluxoAnterior, max(mesLimite, 1))
-	if err != nil {
-		return PainelAnualDto{}, err
-	}
-	resumoCompleto, err := resumir(fluxoAnterior, 12)
-	if err != nil {
-		return PainelAnualDto{}, err
-	}
+	resumo := resumir(fluxoAno, mesLimite)
+	resumoAnterior := resumir(fluxoAnterior, max(mesLimite, 1))
+	resumoCompleto := resumir(fluxoAnterior, 12)
 
 	ateHoje, err := s.FluxoMensal(ctx, tipos.NovaData(ano, 1, 1), hoje)
 	if err != nil {
@@ -300,8 +291,19 @@ func (s *Servico) PainelAnual(ctx context.Context, ano, anoComparacao int, p Pat
 
 func monthOf(mes int) time.Month { return time.Month(mes) }
 
+// dividirPorPositivo é o tipos.Dividir com o divisor já conferido positivo (ou uma contagem de meses maior que zero):
+// o único erro dele, a divisão por zero, aqui seria bug, e o estouro (mais de 96 bits) não cabe em dinheiro de uma
+// pessoa.
+func dividirPorPositivo(a, b tipos.Decimal) tipos.Decimal {
+	v, err := tipos.Dividir(a, b)
+	if err != nil {
+		panic(fmt.Sprintf("dividir %s por %s: %v", a, b, err))
+	}
+	return v
+}
+
 // resumir soma os meses até o mês limite (o Sum do LINQ, a partir de 0).
-func resumir(meses []MesValoresDto, ateMes int) (ResumoAnoDto, error) {
+func resumir(meses []MesValoresDto, ateMes int) ResumoAnoDto {
 	r, d := tipos.Zero, tipos.Zero
 	for _, m := range meses {
 		if m.Mes <= ateMes {
@@ -311,13 +313,9 @@ func resumir(meses []MesValoresDto, ateMes int) (ResumoAnoDto, error) {
 	resultado := tipos.Subtrair(r, d)
 	taxa := tipos.Zero
 	if r.Decimal().IsPositive() {
-		razao, err := tipos.Dividir(resultado, r)
-		if err != nil {
-			return ResumoAnoDto{}, err
-		}
-		taxa = tipos.Arredondar(tipos.Multiplicar(razao, tipos.DecimalDeInteiro(100)), 1)
+		taxa = tipos.Arredondar(tipos.Multiplicar(dividirPorPositivo(resultado, r), tipos.DecimalDeInteiro(100)), 1)
 	}
-	return ResumoAnoDto{Receitas: r, Despesas: d, Resultado: resultado, TaxaPoupanca: taxa}, nil
+	return ResumoAnoDto{Receitas: r, Despesas: d, Resultado: resultado, TaxaPoupanca: taxa}
 }
 
 // anosDisponiveis são os anos com alguma transação (de qualquer tipo), do mais novo para o mais velho, com o ano atual
@@ -446,17 +444,13 @@ func (s *Servico) saudeFinanceira(ctx context.Context, p Patrimonio, essenciais 
 			return SaudeFinanceiraDto{}, err
 		}
 		divisor := tipos.DecimalDeInteiro(int64(meses))
-		media := func(passa func(Lancamento) bool) (tipos.Decimal, error) {
-			return tipos.Dividir(maiorDeDois(tipos.Zero, negar(somaOuZero(valoresDe(lancamentos, passa)))), divisor)
+		media := func(passa func(Lancamento) bool) tipos.Decimal {
+			return dividirPorPositivo(maiorDeDois(tipos.Zero, negar(somaOuZero(valoresDe(lancamentos, passa)))), divisor)
 		}
-		if gasto, err = media(func(l Lancamento) bool { return l.Tipo == transacoes.Despesa }); err != nil {
-			return SaudeFinanceiraDto{}, err
-		}
-		if gastoEssencial, err = media(func(l Lancamento) bool {
+		gasto = media(func(l Lancamento) bool { return l.Tipo == transacoes.Despesa })
+		gastoEssencial = media(func(l Lancamento) bool {
 			return l.Tipo == transacoes.Despesa && l.CategoriaId != nil && slices.Contains(essenciais, *l.CategoriaId)
-		}); err != nil {
-			return SaudeFinanceiraDto{}, err
-		}
+		})
 	}
 	c := p.Credito
 	total := tipos.Somar(tipos.Somar(parcelas, c.ParcelaMensalFinanciamentos), c.ParcelaMensalEmprestimos)
@@ -467,28 +461,20 @@ func (s *Servico) saudeFinanceira(ctx context.Context, p Patrimonio, essenciais 
 		ParcelasFinanciamentos: c.ParcelaMensalFinanciamentos, ParcelasEmprestimos: c.ParcelaMensalEmprestimos,
 		DividaFinanciamentos: c.SaldoFinanciamentos, DividaEmprestimos: c.SaldoEmprestimos,
 	}
-	razao := func(a, b tipos.Decimal, vezes int64, casas int32) (*tipos.Decimal, error) {
+	// a ÷ b (vezes 100 no comprometimento) em uma casa; null quando b não passa de zero.
+	razao := func(a, b tipos.Decimal, vezes int64) *tipos.Decimal {
 		if !b.Decimal().IsPositive() {
-			return nil, nil
+			return nil
 		}
-		v, err := tipos.Dividir(a, b)
-		if err != nil {
-			return nil, err
-		}
+		v := dividirPorPositivo(a, b)
 		if vezes != 1 {
 			v = tipos.Multiplicar(v, tipos.DecimalDeInteiro(vezes))
 		}
-		v = tipos.Arredondar(v, casas)
-		return &v, nil
+		v = tipos.Arredondar(v, 1)
+		return &v
 	}
-	if saude.MesesDeReserva, err = razao(p.Reserva, gasto, 1, 1); err != nil {
-		return SaudeFinanceiraDto{}, err
-	}
-	if saude.MesesDeReservaEssencial, err = razao(p.Reserva, gastoEssencial, 1, 1); err != nil {
-		return SaudeFinanceiraDto{}, err
-	}
-	if saude.ComprometimentoParcelas, err = razao(total, renda, 100, 1); err != nil {
-		return SaudeFinanceiraDto{}, err
-	}
+	saude.MesesDeReserva = razao(p.Reserva, gasto, 1)
+	saude.MesesDeReservaEssencial = razao(p.Reserva, gastoEssencial, 1)
+	saude.ComprometimentoParcelas = razao(total, renda, 100)
 	return saude, nil
 }

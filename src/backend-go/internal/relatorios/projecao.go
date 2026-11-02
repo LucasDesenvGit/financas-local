@@ -155,10 +155,7 @@ func (s *Servico) Projecao(ctx context.Context, mesesFuturos int, saldos map[int
 		return ProjecaoDto{}, err
 	}
 	diasMes := inicioMesAtual.SomarMeses(1).SomarDias(-1).Dia()
-	fracao, err := tipos.Dividir(tipos.DecimalDeInteiro(int64(diasMes-hoje.Dia())), tipos.DecimalDeInteiro(int64(diasMes)))
-	if err != nil {
-		return ProjecaoDto{}, err
-	}
+	fracao := dividirPorPositivo(tipos.DecimalDeInteiro(int64(diasMes-hoje.Dia())), tipos.DecimalDeInteiro(int64(diasMes)))
 	receitasMes := maiorDeDois(receitasAtual, p.MediaReceitas)
 	despesasMes := tipos.Arredondar(tipos.Somar(despesasAtual, tipos.Multiplicar(p.MediaDespesas, fracao)), 2)
 	saldo := tipos.Subtrair(tipos.Somar(saldoDisponivel, tipos.Subtrair(receitasMes, receitasAtual)),
@@ -201,15 +198,8 @@ func (s *Servico) medias(ctx context.Context, p *ProjecaoDto, lancamentos []Lanc
 	meses := tipos.DecimalDeInteiro(int64(p.MesesConsiderados))
 	somaReceitas := somaOuZero(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Receita }))
 	somaDespesas := somaOuZero(valoresDe(lancamentos, aVista))
-	mediaReceitas, err := tipos.Dividir(somaReceitas, meses)
-	if err != nil {
-		return err
-	}
-	mediaDespesas, err := tipos.Dividir(maiorDeDois(tipos.Zero, negar(somaDespesas)), meses)
-	if err != nil {
-		return err
-	}
-	p.MediaReceitas, p.MediaDespesas = tipos.Arredondar(mediaReceitas, 2), tipos.Arredondar(mediaDespesas, 2)
+	p.MediaReceitas = tipos.Arredondar(dividirPorPositivo(somaReceitas, meses), 2)
+	p.MediaDespesas = tipos.Arredondar(dividirPorPositivo(maiorDeDois(tipos.Zero, negar(somaDespesas)), meses), 2)
 
 	categorias, err := s.lerCategorias(ctx)
 	if err != nil {
@@ -221,10 +211,7 @@ func (s *Servico) medias(ctx context.Context, p *ProjecaoDto, lancamentos []Lanc
 		return aVista(l) && l.Data.NumeroDoDia() >= inicioUltimoMes.NumeroDoDia()
 	}), categorias)
 	for _, c := range media {
-		mediaMensal, err := tipos.Dividir(c.Valor, meses)
-		if err != nil {
-			return err
-		}
+		mediaMensal := dividirPorPositivo(c.Valor, meses)
 		valorUltimo := tipos.Zero
 		for _, u := range ultimo {
 			if mesmoId(u.CategoriaId, c.CategoriaId) && u.Nome == c.Nome {
