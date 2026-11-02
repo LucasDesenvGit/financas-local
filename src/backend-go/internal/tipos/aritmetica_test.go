@@ -165,3 +165,32 @@ func TestMaiorComoOMathMax(t *testing.T) {
 		}
 	}
 }
+
+// Regra: o Math.Round com AwayFromZero: no empate, sai do zero, e não mexe em quem já tem poucas casas.
+func TestArredondarLongeDoZero(t *testing.T) {
+	casos := []struct {
+		valor    string
+		casas    int32
+		esperado string
+	}{
+		{"2.565", 2, "2.57"},
+		{"2.555", 2, "2.56"},
+		{"-0.125", 2, "-0.13"},
+		{"1.005", 2, "1.01"},
+		{"2.5", 0, "3"},
+		{"3.5", 0, "4"},
+		{"2.564", 2, "2.56"},
+		{"25.5", 2, "25.5"},
+		{"250.0", 2, "250.0"},
+		{"100", 2, "100"},
+	}
+	for _, c := range casos {
+		d, err := NovoDecimal(c.valor)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if obtido := ArredondarLongeDoZero(d, c.casas).String(); obtido != c.esperado {
+			t.Errorf("ArredondarLongeDoZero(%s, %d) = %s, esperado %s", c.valor, c.casas, obtido, c.esperado)
+		}
+	}
+}

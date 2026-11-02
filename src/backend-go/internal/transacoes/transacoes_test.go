@@ -181,3 +181,182 @@ func TestTextosIguais(t *testing.T) {
 		}
 	}
 }
+
+// Regra: os campos que só a sincronização muda também vão no UPDATE, um a um (#83).
+func TestGravarOsCamposDaSincronizacao(t *testing.T) {
+	casos := []struct {
+		nome, coluna string
+		mudar        func(*Transacao)
+		esperado     string
+	}{
+		{"estabelecimento", "Estabelecimento", func(t *Transacao) { t.Estabelecimento = p("Loja") }, "Loja"},
+		{"categoria da Pluggy", "PluggyCategoriaId", func(t *Transacao) { t.PluggyCategoriaId = p("05000000") }, "05000000"},
+		{"parcela", "ParcelaNumero", func(t *Transacao) { t.ParcelaNumero = p(int64(2)) }, "2"},
+		{"total de parcelas", "ParcelaTotal", func(t *Transacao) { t.ParcelaTotal = p(int64(6)) }, "6"},
+		{"meio de pagamento", "MeioPagamento", func(t *Transacao) { t.MeioPagamento = p("PIX") }, "PIX"},
+		{"mesmo titular", "MesmaTitularidade", func(t *Transacao) { t.MesmaTitularidade = p(true) }, "1"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			db := testeapoio.NovoBancoVazio(t)
+			fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+			gravada := fab.Transacao(fab.Conta())
+			lista, err := Listar(t.Context(), db, `WHERE "Id" = ?`, gravada.Id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tr := lista[0]
+			c.mudar(tr)
+			if !tr.Mudou() {
+				t.Fatal("Mudou = false")
+			}
+			if err := Gravar(t.Context(), db, tr); err != nil {
+				t.Fatal(err)
+			}
+			var obtido string
+			if err := db.QueryRow(`SELECT "`+c.coluna+`" FROM "Transacao" WHERE "Id" = ?`, gravada.Id).Scan(&obtido); err != nil {
+				t.Fatal(err)
+			}
+			if obtido != c.esperado {
+				t.Errorf("%s = %q, esperado %q", c.coluna, obtido, c.esperado)
+			}
+			if tr.Mudou() {
+				t.Error("depois de gravar, ainda mudou")
+			}
+		})
+	}
+	t.Run("fatura", func(t *testing.T) {
+		db := testeapoio.NovoBancoVazio(t)
+		fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+		conta := fab.Conta()
+		fatura := fab.Fatura(conta, tipos.NovaData(2026, 10, 20), testeapoio.Valor("10.0"))
+		gravada := fab.Transacao(conta)
+		lista, err := Listar(t.Context(), db, `WHERE "Id" = ?`, gravada.Id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		lista[0].FaturaCartaoId = &fatura.Id
+		if err := Gravar(t.Context(), db, lista[0]); err != nil {
+			t.Fatal(err)
+		}
+		de, err := Listar(t.Context(), db, `WHERE "Id" = ?`, gravada.Id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if id := de[0].FaturaCartaoId; id == nil || *id != fatura.Id {
+			t.Errorf("fatura = %v", id)
+		}
+	})
+}
+
+func TestBoolIguais(t *testing.T) {
+	casos := []struct {
+		a, b     *bool
+		esperado bool
+	}{
+		{nil, nil, true},
+		{p(true), nil, false},
+		{nil, p(true), false},
+		{p(true), p(true), true},
+		{p(true), p(false), false},
+	}
+	for _, c := range casos {
+		if obtido := boolIguais(c.a, c.b); obtido != c.esperado {
+			t.Errorf("boolIguais(%v, %v) = %v", c.a, c.b, obtido)
+		}
+	}
+}
+
+// Regra: Inserir grava todas as colunas e devolve o Id; DescricaoRevisada nasce falsa.
+func TestInserir(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	conta := fab.Conta()
+	fatura := fab.Fatura(conta, tipos.NovaData(2026, 10, 20), testeapoio.Valor("10.0"))
+	categoria := fab.Categoria()
+	grupo := tipos.NovoGuid()
+	criado := tipos.NovaDataHora(time.Date(2026, 10, 15, 18, 0, 0, 0, time.UTC))
+	atualizado := tipos.NovaDataHora(time.Date(2026, 10, 15, 19, 0, 0, 0, time.UTC))
+	tr := &Transacao{
+		ContaId: conta.Id, PluggyTransactionId: p("px-1"), Data: tipos.NovaData(2026, 10, 5), Descricao: "Loja", DescricaoOriginal: p("LOJA"),
+		Estabelecimento: p("Loja LTDA"), Valor: testeapoio.Valor("-25.5"), Tipo: Despesa, Status: 2, CategoriaId: &categoria.Id, CategoriaManual: true,
+		PluggyCategoriaId: p("05000000"), FaturaCartaoId: &fatura.Id, ParcelaNumero: p(int64(2)), ParcelaTotal: p(int64(6)), IgnorarRelatorios: true,
+		Emergencia: true, MeioPagamento: p("PIX"), MesmaTitularidade: p(false), DescricaoManual: true, TransferenciaGrupo: &grupo, Observacao: p("nota"), AtualizadoEm: atualizado,
+	}
+	if err := Inserir(t.Context(), db, tr, criado); err != nil {
+		t.Fatal(err)
+	}
+	if tr.Id == 0 {
+		t.Fatal("Inserir sem o Id")
+	}
+	lista, err := Listar(t.Context(), db, `WHERE "Id" = ?`, tr.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	l := lista[0]
+	if l.ContaId != conta.Id || *l.PluggyTransactionId != "px-1" || l.Data.String() != "2026-10-05" || l.Descricao != "Loja" || *l.DescricaoOriginal != "LOJA" ||
+		*l.Estabelecimento != "Loja LTDA" || l.Valor.String() != "-25.5" || l.Tipo != Despesa || l.Status != 2 || *l.CategoriaId != categoria.Id || !l.CategoriaManual ||
+		*l.PluggyCategoriaId != "05000000" || *l.FaturaCartaoId != fatura.Id || *l.ParcelaNumero != 2 || *l.ParcelaTotal != 6 || !l.IgnorarRelatorios || !l.Emergencia ||
+		*l.MeioPagamento != "PIX" || *l.MesmaTitularidade || !l.DescricaoManual || *l.TransferenciaGrupo != grupo || *l.Observacao != "nota" {
+		t.Errorf("lida = %+v", l)
+	}
+	if l.AtualizadoEm.String() != atualizado.String() {
+		t.Errorf("AtualizadoEm = %s", l.AtualizadoEm)
+	}
+	var gravado string
+	var revisada bool
+	if err := db.QueryRow(`SELECT "CriadoEm", "DescricaoRevisada" FROM "Transacao" WHERE "Id" = ?`, tr.Id).Scan(&gravado, &revisada); err != nil {
+		t.Fatal(err)
+	}
+	if gravado != criado.String() || revisada {
+		t.Errorf("CriadoEm = %s, revisada = %v", gravado, revisada)
+	}
+
+	semGrupo := &Transacao{ContaId: conta.Id, Data: tipos.NovaData(2026, 10, 6), Valor: testeapoio.Valor("1.0"), Tipo: Receita, Status: 1, AtualizadoEm: atualizado}
+	if err := Inserir(t.Context(), db, semGrupo, criado); err != nil {
+		t.Fatal(err)
+	}
+	if semGrupo.Id == tr.Id {
+		t.Error("Id repetido")
+	}
+	vazia, err := Listar(t.Context(), db, `WHERE "Id" = ?`, semGrupo.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if vazia[0].TransferenciaGrupo != nil {
+		t.Errorf("grupo = %v", vazia[0].TransferenciaGrupo)
+	}
+}
+
+func TestInserirComErro(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	if err := Inserir(t.Context(), db, &Transacao{ContaId: 999, Data: tipos.NovaData(2026, 10, 6), Valor: testeapoio.Valor("1.0"), Tipo: Receita, Status: 1}, tipos.DataHora{}); err == nil {
+		t.Fatal("Inserir numa conta que não existe sem erro")
+	}
+}
+
+func TestExcluir(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	conta := fab.Conta()
+	a, b, c := fab.Transacao(conta), fab.Transacao(conta), fab.Transacao(conta)
+	if err := Excluir(t.Context(), db, a.Id, c.Id); err != nil {
+		t.Fatal(err)
+	}
+	lista, err := Listar(t.Context(), db, `ORDER BY "Id"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lista) != 1 || lista[0].Id != b.Id {
+		t.Errorf("sobraram %d", len(lista))
+	}
+	if err := Excluir(t.Context(), db); err != nil {
+		t.Errorf("sem ids = %v", err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := Excluir(t.Context(), db, b.Id); err == nil {
+		t.Error("banco fechado sem erro")
+	}
+}

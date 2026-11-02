@@ -22,7 +22,7 @@ internal/conferenciabanco 100
 internal/cotacoes       100
 internal/pluggy         100
 internal/openfinance    100
-internal/sincronizacao  0
+internal/sincronizacao  86
 internal/texto           100
 internal/tipolancamento  100
 internal/transacoes      100

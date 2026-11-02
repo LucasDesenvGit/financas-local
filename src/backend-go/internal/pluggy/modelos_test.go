@@ -385,3 +385,35 @@ func TestLerCategorias(t *testing.T) {
 		t.Errorf("categoria = %+v", k)
 	}
 }
+
+// Regra: o Sum do C# é em double, e só o total vira decimal: 0.1 + 0.2 sai 0.3 pelos 15 dígitos.
+func TestSomaDosPagamentos(t *testing.T) {
+	numero := func(s string) *Numero {
+		n := Numero(s)
+		return &n
+	}
+	casos := []struct {
+		nome     string
+		lista    []PagamentoFatura
+		esperado string
+	}{
+		{"nenhum", nil, "0"},
+		{"um", []PagamentoFatura{{numero("10.5")}}, "10.5"},
+		{"o ruído da soma some", []PagamentoFatura{{numero("0.1")}, {numero("0.2")}}, "0.3"},
+		{"sem valor conta zero", []PagamentoFatura{{numero("1")}, {nil}, {numero("2")}}, "3"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			d, err := SomaDosPagamentos(c.lista)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if d.String() != c.esperado {
+				t.Errorf("SomaDosPagamentos = %s, esperado %s", d, c.esperado)
+			}
+		})
+	}
+	if _, err := SomaDosPagamentos([]PagamentoFatura{{numero("1e400")}}); err == nil {
+		t.Error("número fora do limite sem erro")
+	}
+}

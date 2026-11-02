@@ -163,3 +163,15 @@ func TestConferirSoLocal(t *testing.T) {
 		}
 	}
 }
+
+// Regra: Pluggy__UrlBase muda o Pluggy:UrlBase, como no ASP.NET: o .NET e o Go falam com a mesma Pluggy.
+func TestPluggyURLBase(t *testing.T) {
+	arvore := map[string]any{"Pluggy": map[string]any{"UrlBase": "https://do-arquivo/"}}
+	if obtido := pluggyURLBase(arvore); obtido != "https://do-arquivo/" {
+		t.Errorf("sem a variável = %q", obtido)
+	}
+	t.Setenv("Pluggy__UrlBase", "https://da-variavel/")
+	if obtido := pluggyURLBase(arvore); obtido != "https://da-variavel/" {
+		t.Errorf("com a variável = %q", obtido)
+	}
+}
