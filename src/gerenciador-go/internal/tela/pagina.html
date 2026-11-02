@@ -36,7 +36,8 @@
         {{- if not .Linux}}
         <button id="baixar-msi" class="botao discreto" type="button" data-acao="baixar-msi" accesskey="b" aria-description="Abre a página da versão mais recente no GitHub"{{if .Develop.Disponivel}} hidden{{end}}>{{.Icone "baixar"}}Baixar o instalador .msi</button>{{end}}{{end}}
       </div>
-      {{if not .PeloMsi}}<textarea id="saida" class="saida" readonly aria-label="Saída da atualização"{{if not .Develop.Saida}} hidden{{end}}>{{.Develop.Saida}}</textarea>{{end}}
+      {{if not .PeloMsi}}<textarea id="saida" class="saida" readonly aria-label="Saída da atualização"{{if not .Develop.Saida}} hidden{{end}}>{{.Develop.Saida}}</textarea>
+      <div class="linha"><button id="atualizar-gerenciador" class="botao discreto" type="button" data-acao="atualizar-gerenciador" accesskey="u" aria-description="Fecha o gerenciador, instala o desta versão e abre de novo"{{if not .Develop.ReabrirGerenciador}} hidden{{end}}>{{.Icone "reiniciar"}}Atualizar o gerenciador e reabrir</button></div>{{end}}
       {{if .PeloMsi}}<div class="linha baixando" id="baixando"{{if not .Procura.Baixando}} hidden{{end}}>
         <progress id="barra" max="100" value="{{.Procura.Progresso}}" aria-label="Baixando a versão nova"></progress>
         <button class="botao discreto" type="button" data-acao="cancelar-download">{{.Icone "cancelar"}}Cancelar download</button>
@@ -243,6 +244,7 @@
       if ($('baixar-msi')) $('baixar-msi').hidden = e.develop;
       if ($('comando')) $('comando').hidden = e.develop;
       $('notas-develop').hidden = !e.notasDevelop;
+      if ($('atualizar-gerenciador')) $('atualizar-gerenciador').hidden = !e.reabrirGerenciador;
       var saida = $('saida'), noFim = saida.scrollTop + saida.clientHeight >= saida.scrollHeight - 4;
       if (saida.value !== e.saida) {
         saida.value = e.saida;

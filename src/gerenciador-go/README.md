@@ -1,13 +1,13 @@
 # Gerenciador em Go
 
-O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wailsapp/wails/v3) ([ADR 0052](../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), épico #70). Vai substituir o de C# (`src/gerenciador/`) quando estiver completo. **O `.msi` instala este desde a #277**, com o nome `Financas.Gerenciador.exe`; os scripts ainda instalam o de C#.
+O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wailsapp/wails/v3) ([ADR 0052](../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), épico #70). Vai substituir o de C# (`src/gerenciador/`) quando estiver completo. **O `.msi` (#277) e os scripts (#430 no Windows, #277 no Linux) instalam este**; no Windows, com o nome `Financas.Gerenciador.exe`. No Linux sem o GTK 4 ou o WebKitGTK 6.0, os scripts ainda instalam o de C#.
 
 | Pronto | Falta |
 |---|---|
-| Janela igual à do `FormPrincipal.cs`, ícone na bandeja, uma cópia só, `--bandeja`, fechar destrói a janela (#418) | Atualizar o gerenciador e reabrir (#430, depois da #277) |
+| Janela igual à do `FormPrincipal.cs`, ícone na bandeja, uma cópia só, `--bandeja`, fechar destrói a janela (#418) | |
 | Situação do site (de 5 em 5 s, na janela e no ícone da bandeja), ligar, desligar e reiniciar pelo UAC, cópia do banco, preferências (#419) | |
 | Versão nova pelo GitHub Releases: procurar, "O que mudou", baixar conferindo o SHA-256 e abrir o instalador; "Receber versões de desenvolvimento" (#420, ADR 0053) |
-| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432) | |
+| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432); "Atualizar o gerenciador e reabrir" quando a reinstalação dá certo (#430) | |
 | Linux (#417): instalado pelo `scripts/linux/instalar-gerenciador.sh` com o atalho `br.financaslocal.Gerenciador.desktop` (#277); `systemctl --user` sem senha, tema pelo portal, "Iniciar com o sistema" (`~/.config/autostart`), registro do serviço, comando para atualizar, "sem login" (linger), ícones em SVG | |
 | Aviso na bandeja com a janela fechada: o site caiu, versão nova (#448) | |
 

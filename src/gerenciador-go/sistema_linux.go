@@ -95,6 +95,17 @@ func reinstalar(raiz string, escrever func(string)) elevacao.Resultado {
 	return elevacao.Feito
 }
 
+// reabrirDepoisDeInstalar deixa, num processo à parte (setsid, que segue depois de o gerenciador fechar), o comando
+// que espera, roda o instalar-gerenciador.sh do clone e abre o gerenciador de novo (#430), como o C# do Linux.
+func reabrirDepoisDeInstalar(raiz, executavel string) error {
+	cmd := exec.Command("setsid", "bash", "-c", desenvolvimento.ComandoReabrirLinux(raiz, executavel))
+	cmd.Dir = raiz
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	return cmd.Process.Release()
+}
+
 // textoDaReinstalacao: os textos do AtualizarPeloGitAsync do C# no Linux.
 func textoDaReinstalacao(r elevacao.Resultado) string {
 	if r == elevacao.Feito {

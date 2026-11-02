@@ -519,6 +519,29 @@ func TestCartaoDoDevelop(t *testing.T) {
 	}
 }
 
+// Regra: "Atualizar o gerenciador e reabrir" só aparece depois de a reinstalação pelo develop dar certo, com o texto
+// do C#; pelo .msi, nem existe (#430).
+func TestAtualizarOGerenciador(t *testing.T) {
+	t.Parallel()
+	botao := `id="atualizar-gerenciador" class="botao discreto" type="button" data-acao="atualizar-gerenciador" accesskey="u"`
+	if p := escrever(t, Tela{Develop: Develop{Disponivel: true}}); !strings.Contains(p, botao) ||
+		!strings.Contains(p, `aria-description="Fecha o gerenciador, instala o desta versão e abre de novo" hidden>`) {
+		t.Error("antes de reinstalar, o botão tem de existir escondido")
+	}
+	feito := escrever(t, Tela{Develop: Develop{Disponivel: true, ReabrirGerenciador: true}})
+	if !strings.Contains(feito, `aria-description="Fecha o gerenciador, instala o desta versão e abre de novo">`) ||
+		!strings.Contains(feito, `Atualizar o gerenciador e reabrir</button>`) {
+		t.Error("depois de reinstalar, o botão tem de aparecer")
+	}
+	if strings.Contains(escrever(t, Tela{PeloMsi: true}), `id="atualizar-gerenciador"`) {
+		t.Error("pelo .msi, com o botão")
+	}
+	if !(Tela{Develop: Develop{ReabrirGerenciador: true}}).Atualizacao().ReabrirGerenciador ||
+		(Tela{}).Atualizacao().ReabrirGerenciador {
+		t.Error("a atualização da página não leva o ReabrirGerenciador")
+	}
+}
+
 // Regra: o texto do cartão e a pergunta antes, com os textos do C#.
 func TestTextosDoDevelop(t *testing.T) {
 	t.Parallel()

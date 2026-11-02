@@ -385,6 +385,8 @@ func (g *gerenciador) rotas() http.Handler {
 			go g.atualizar()
 		case "atualizar-develop":
 			go g.atualizarDevelop()
+		case "atualizar-gerenciador":
+			go g.atualizarGerenciador()
 		case "cancelar-download":
 			g.cancelarDownload()
 		default:

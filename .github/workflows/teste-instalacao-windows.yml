@@ -19,6 +19,7 @@ on:
       - scripts/geral/2-criar-banco.sh
       - banco/**
       - src/backend-go/go.mod
+      - src/gerenciador-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   pull_request:
     branches: [main, develop]
@@ -29,6 +30,7 @@ on:
       - scripts/geral/2-criar-banco.sh
       - banco/**
       - src/backend-go/go.mod
+      - src/gerenciador-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:
 
@@ -102,6 +104,27 @@ jobs:
           if ($pai.Name -ne "dotnet.exe") { throw "o pai do Go e $($pai.Name), e nao o dotnet.exe do servico" }
           "Go atras do .NET: $texto"
           $global:LASTEXITCODE = 0
+
+      # #430 (ADR 0052): o gerenciador em Go pelos scripts, com o Go que a instalacao baixou. Um resto da publicacao
+      # em C# na pasta padrao tem de sair; os atalhos apontam para o .exe novo, com o mesmo nome.
+      - name: Gerenciador em Go (instalar-gerenciador.ps1)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force publicado\gerenciador | Out-Null
+          Set-Content publicado\gerenciador\Financas.Gerenciador.dll "resto do gerenciador em C#"
+          $env:PATH = $env:PATH_WINDOWS_PURO
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1
+          if ($LASTEXITCODE -ne 0) { throw "instalar-gerenciador.ps1 terminou com $LASTEXITCODE" }
+          $exe = Join-Path $PWD "publicado\gerenciador\Financas.Gerenciador.exe"
+          if (-not (Test-Path $exe)) { throw "nao encontrado: $exe" }
+          if (Test-Path publicado\gerenciador\Financas.Gerenciador.dll) { throw "sobrou o gerenciador em C#" }
+          $arquivos = @(Get-ChildItem publicado\gerenciador -Recurse -File)
+          if ($arquivos.Count -ne 1) { throw "a pasta do gerenciador tem $($arquivos.Count) arquivos: $($arquivos.Name -join ', ')" }
+          $shell = New-Object -ComObject WScript.Shell
+          $atalho = Join-Path ([Environment]::GetFolderPath("Programs")) "Finanças Local\Gerenciador do Finanças Local.lnk"
+          if (-not (Test-Path $atalho)) { throw "sem o atalho do Menu Iniciar" }
+          if ($shell.CreateShortcut($atalho).TargetPath -ne $exe) { throw "o atalho aponta para $($shell.CreateShortcut($atalho).TargetPath)" }
+          "Gerenciador em Go: $([math]::Round((Get-Item $exe).Length / 1MB, 1)) MB"
 
       # Segunda execucao pelo .cmd: testa a atualizacao (backup do banco, copia da versao
       # anterior, servico parado antes da copia, certificado reaproveitado) e o proprio .cmd.
