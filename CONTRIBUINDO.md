@@ -55,7 +55,7 @@ As issues e o andamento ficam no Project **"ClaudioFinancas"** ([users/LucasDese
 | `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` | o último | 2.2.0 → 2.2.1 |
 | Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) | o primeiro | 2.2.0 → 3.0.0 |
 
-Outro PR subiu a versão antes do seu entrar? `git merge origin/develop`, pegue a versão maior e suba de novo pelo tipo do seu PR. O Dependabot não precisa subir.
+Outro PR subiu a versão antes do seu entrar e o seu ficou em conflito no `Directory.Build.props` e no `CHANGELOG.md`? Rode `scripts/geral/atualizar-pr.sh <número do PR>` (#587). Ele traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no mesmo nível que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo do CHANGELOG com o número novo e a data de hoje, confere e envia. Com `--sem-enviar`, só mostra. Conflito em outro arquivo, ele desfaz e lista: aí é `git merge origin/develop` e resolver à mão. O Dependabot não precisa subir: comente `@dependabot rebase` no PR.
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
 1. No `develop`, no `CHANGELOG.md`, tire o ` · desenvolvimento` do título da versão do topo (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`, com a data de hoje) (#294). O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo: as notas do Release juntam todas, até a última publicada. **Depois do merge na `main`, traga a `main` de volta para o `develop`**, para o `CHANGELOG` do `develop` ficar igual ao publicado (na 2.17.0 isso não foi feito, e o `develop` ficou sem a seção dela).
