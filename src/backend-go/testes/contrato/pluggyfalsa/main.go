@@ -106,26 +106,9 @@ func arquivoDoPedido(r *http.Request) string {
 }
 
 type pluggyFalsa struct {
-	respostas map[string][]byte
-	mu        sync.Mutex
-	vistos    map[string]int
-}
-
-// lerRespostas guarda em memória os arquivos da pasta. Assim, o pedido só escolhe uma resposta: nunca vira caminho no disco.
-func lerRespostas(pasta string) (map[string][]byte, error) {
-	arquivos, err := os.ReadDir(pasta)
-	if err != nil {
-		return nil, err
-	}
-	respostas := make(map[string][]byte, len(arquivos))
-	for _, a := range arquivos {
-		corpo, err := os.ReadFile(filepath.Join(pasta, a.Name()))
-		if err != nil {
-			return nil, err
-		}
-		respostas[a.Name()] = corpo
-	}
-	return respostas, nil
+	dados  string
+	mu     sync.Mutex
+	vistos map[string]int
 }
 
 func (p *pluggyFalsa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +127,8 @@ func (p *pluggyFalsa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		candidatos = []string{fmt.Sprintf("%s.%d.json", nome, vez), nome + ".json"}
 	}
 	for _, c := range candidatos {
-		if corpo, ok := p.respostas[c]; ok {
+		corpo, err := os.ReadFile(filepath.Join(p.dados, c))
+		if err == nil {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(corpo)
 			return
@@ -188,17 +172,13 @@ func main() {
 	raiz := flag.String("certificado", "", "onde gravar a raiz, para SSL_CERT_FILE")
 	flag.Parse()
 
-	respostas, err := lerRespostas(*dados)
-	if err != nil {
-		log.Fatal(err)
-	}
 	cert, err := certificado(*raiz)
 	if err != nil {
 		log.Fatal(err)
 	}
 	servidor := &http.Server{
 		Addr:              *endereco,
-		Handler:           &pluggyFalsa{respostas: respostas, vistos: map[string]int{}},
+		Handler:           &pluggyFalsa{dados: *dados, vistos: map[string]int{}},
 		TLSConfig:         &tls.Config{Certificates: []tls.Certificate{cert}},
 		ReadHeaderTimeout: 10 * time.Second,
 	}
