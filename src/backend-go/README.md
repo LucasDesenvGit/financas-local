@@ -85,6 +85,14 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 
 Voltar o assunto para o .NET é esvaziar a entrada dele (e tirar a tarefa) e reiniciar o serviço; não precisa reinstalar. Num `appsettings` de cima, `"Go": {"Prefixos": {"cambio": ""}}` desliga só aquele assunto, e `"Prefixos": ""` (texto) desliga todos.
 
+## Rodar como serviço
+
+O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de opção: no Windows, ele percebe que quem o iniciou foi o gerenciador de serviços, responde a `Stop` e `Shutdown` e escreve avisos e erros no Log de Eventos (origem `FinancasLocal`); no Linux, para com o SIGTERM do systemd, e o log vai para o journald. Até a inversão (#85), o serviço é o .NET, e os workflows "Teste de instalação" conferem o Go sozinho trocando a linha do serviço. Nos scripts, o que o serviço executa está num ponto só: `exe_servico` no `3-publicar-atualizar.sh` e `$binPath` no `instalar-windows.ps1`.
+
+## Certificado
+
+`financas-go gerar-certificado -pfx <caminho>`, com a senha na entrada padrão, é o passo do certificado da instalação: reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias, gera outro no caso contrário (1 ano, para `127.0.0.1`, `::1` e `localhost`) e grava a parte pública no `.pem` ao lado. Escreve `gerado` ou `reaproveitado`.
+
 ## Rodar
 
 Precisa do Go 1.27.3 ou mais novo (as anteriores têm falhas de segurança na biblioteca padrão).

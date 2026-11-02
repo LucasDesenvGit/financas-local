@@ -144,6 +144,55 @@ jobs:
 
       # parar-windows.cmd (sem o UAC: o runner ja e Administrador): para, tira do inicio automatico e confere que
       # nada ficou de pe; depois o instalador sobe de novo e devolve o inicio automatico.
+      # #84 (ADR 0049): o Go sozinho como Servico do Windows, sem o .NET, e o servico volta como estava. Na inversao
+      # (#85), quem o registra e o instalar-windows.ps1. O -inicio-do-relogio deixa um aviso no log ao subir: e ele que
+      # tem de chegar ao Log de Eventos.
+      - name: Go sozinho como servico (Windows)
+        shell: powershell
+        run: |
+          $nome = "FinancasLocal"
+          $filtro = "Name='$nome'"
+          $site = "https://127.0.0.1:5443/api/auth/estado"
+          function Trocar-Linha($linha) {
+            $r = Get-CimInstance Win32_Service -Filter $filtro | Invoke-CimMethod -MethodName Change -Arguments @{ PathName = $linha }
+            if ($r.ReturnValue -ne 0) { throw "nao deu para trocar a linha do servico: $($r.ReturnValue)" }
+          }
+          function Esperar-Site {
+            for ($i = 0; $i -lt 30; $i++) {
+              $texto = curl.exe -k -fsS $site
+              if ($LASTEXITCODE -eq 0 -and $texto) { return $texto }
+              Start-Sleep 1
+            }
+            throw "o site nao respondeu"
+          }
+
+          $antes = (Get-CimInstance Win32_Service -Filter $filtro).PathName
+          Stop-Service $nome
+          $exe = Join-Path $PWD "publicado\api\financas-go.exe"
+          Trocar-Linha "`"$exe`" -aplicar-esquema -rotinas-de-partida -inicio-do-relogio 2026-10-15T01:00:00Z"
+          $inicio = Get-Date
+          Start-Service $nome
+          Esperar-Site
+
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          if ($go.Count -ne 1) { throw "processos do Go: $($go.Count) (esperado 1)" }
+          $pai = Get-CimInstance Win32_Process -Filter "ProcessId=$($go[0].ParentProcessId)"
+          if ($pai.Name -ne "services.exe") { throw "o pai do Go e $($pai.Name), e nao o gerenciador de servicos" }
+          $eventos = @(Get-WinEvent -FilterHashtable @{ LogName = "Application"; ProviderName = $nome; Level = 3; StartTime = $inicio } -ErrorAction SilentlyContinue)
+          if ($eventos.Count -eq 0) { throw "o aviso do Go nao chegou ao Log de Eventos" }
+          $eventos[0].Message
+
+          Stop-Service $nome
+          (Get-Service $nome).WaitForStatus("Stopped", "00:00:45")
+          if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go com o servico parado" }
+          $saida = (Get-CimInstance Win32_Service -Filter $filtro).ExitCode
+          if ($saida -ne 0) { throw "o servico parou com o codigo $saida" }
+
+          Trocar-Linha $antes
+          Start-Service $nome
+          Esperar-Site
+          $global:LASTEXITCODE = 0
+
       - name: Parar (parar-windows.cmd -Desativar)
         shell: cmd
         env:

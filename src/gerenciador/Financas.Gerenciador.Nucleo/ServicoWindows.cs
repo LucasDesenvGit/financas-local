@@ -57,7 +57,7 @@ public sealed partial class ServicoWindows : ServicoDoSite
         }
     }
 
-    [GeneratedRegex(@"([A-Za-z]:\\[^""]*?Financas\.Api\.(?:dll|exe))", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"([A-Za-z]:\\[^""]*?(?:Financas\.Api\.(?:dll|exe)|financas-go\.exe))", RegexOptions.IgnoreCase)]
     private static partial Regex ExecutavelDaApi();
 
     /// <summary>Modo administrador: <c>ligar|desligar|reiniciar</c>. 0 = feito.</summary>

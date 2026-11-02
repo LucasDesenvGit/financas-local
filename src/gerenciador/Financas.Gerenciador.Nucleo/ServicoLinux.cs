@@ -45,7 +45,7 @@ public sealed partial class ServicoLinux : ServicoDoSite
         return achado.Success ? Path.GetDirectoryName(achado.Groups[1].Value) : null;
     }
 
-    [GeneratedRegex(@"(/\S*?Financas\.Api\.dll)")]
+    [GeneratedRegex(@"(/\S*?(?:Financas\.Api\.dll|/financas-go))(?:\s|$)")]
     private static partial Regex DllDaApi();
 
     /// <summary><c>ligar|desligar|reiniciar</c> pelo <c>systemctl --user</c>, que espera o serviço mudar.</summary>

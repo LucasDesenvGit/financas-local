@@ -169,7 +169,7 @@ financas-local/
 
 ### O navegador alerta sobre o certificado
 
-O site usa um certificado HTTPS feito na instalação, só para este computador. A instalação tenta deixá-lo confiável sozinha (`dotnet dev-certs https --trust`); quando não consegue, ela diz isso e mostra os comandos abaixo, já com o caminho do arquivo.
+O site usa um certificado HTTPS feito na instalação, só para este computador. No Windows, a instalação o deixa confiável sozinha. No Linux, ela não mexe nos certificados do sistema, porque isso pede `sudo` e é decisão de quem instala: ela mostra os comandos abaixo, já com o caminho do arquivo.
 
 - **Windows:** rode o `3-publicar-atualizar.sh` (ou o `instalar-windows.cmd`) de novo, que recoloca o certificado nos confiáveis.
 - **Firefox (em qualquer sistema):** por padrão, ele não usa os certificados do sistema. Em `about:config`, deixe `security.enterprise_roots.enabled` como `true`; ou importe o `.pem` (abaixo) em **Configurações › Privacidade e segurança › Certificados › Ver certificados › Servidores › Importar**. A instalação não muda o Firefox sozinha: ligar essa opção faz ele confiar em todos os certificados do sistema, inclusive os de empresa, e essa escolha é sua.

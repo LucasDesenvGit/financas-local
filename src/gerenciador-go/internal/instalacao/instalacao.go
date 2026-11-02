@@ -70,9 +70,9 @@ func Ler(pastaPrograma string) Instalacao {
 	return i
 }
 
-// executavelDaApi acha a API na linha do serviço: "...\Financas.Api.exe" (.msi) ou "...\dotnet.exe"
-// "...\Financas.Api.dll" (scripts).
-var executavelDaApi = regexp.MustCompile(`(?i)([A-Za-z]:\\[^"]*?Financas\.Api\.(?:dll|exe))`)
+// executavelDaApi acha a API na linha do serviço: "...\Financas.Api.exe" (.msi), "...\dotnet.exe"
+// "...\Financas.Api.dll" (scripts) ou "...\financas-go.exe" (o Go sozinho, #84).
+var executavelDaApi = regexp.MustCompile(`(?i)([A-Za-z]:\\[^"]*?(?:Financas\.Api\.(?:dll|exe)|financas-go\.exe))`)
 
 // PastaDaLinhaDoServico é a pasta da API na linha de comando do serviço (ImagePath), ou "".
 func PastaDaLinhaDoServico(linha string) string {
@@ -84,8 +84,9 @@ func PastaDaLinhaDoServico(linha string) string {
 	return achado[1][:strings.LastIndex(achado[1], `\`)]
 }
 
-// dllDaApi acha a API no ExecStart da unidade do systemd (scripts no Linux): ".../dotnet .../Financas.Api.dll".
-var dllDaApi = regexp.MustCompile(`(/\S*?Financas\.Api\.dll)`)
+// dllDaApi acha a API no ExecStart da unidade do systemd (scripts no Linux): ".../dotnet .../Financas.Api.dll" ou
+// ".../financas-go" (o Go sozinho, #84).
+var dllDaApi = regexp.MustCompile(`(/\S*?(?:Financas\.Api\.dll|/financas-go))(?:\s|$)`)
 
 // PastaDaUnidade é a pasta da API pelas propriedades da unidade do systemd --user, como o PastaDaApi do
 // ServicoLinux.cs: a WorkingDirectory; sem ela, a pasta do Financas.Api.dll do ExecStart; "" sem a unidade.

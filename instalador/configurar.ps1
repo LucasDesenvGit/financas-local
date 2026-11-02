@@ -210,7 +210,7 @@ function Conferir-Porta {
     if (-not $conexao) { Log "porta 5443 livre"; return }
     $processo = Get-Process -Id $conexao.OwningProcess -ErrorAction SilentlyContinue
     $nome = if ($processo) { $processo.ProcessName } else { "programa desconhecido" }
-    if ($nome -eq "Financas.Api") { Log "porta 5443 com o proprio Financas Local (PID $($conexao.OwningProcess))"; return }
+    if ($nome -eq "Financas.Api" -or $nome -eq "financas-go") { Log "porta 5443 com o proprio Financas Local (PID $($conexao.OwningProcess))"; return }
     throw ("A porta 5443 esta em uso por $nome (PID $($conexao.OwningProcess)). O site do Financas Local nao sobe " +
            "enquanto ela estiver ocupada. Feche esse programa (ou pare o servico dele) e rode o instalador de novo.")
 }
