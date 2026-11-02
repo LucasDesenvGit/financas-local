@@ -13,7 +13,7 @@ São *characterization tests*: não dizem o que o sistema deveria fazer, congela
 | `assuntos-no-go.txt` | os assuntos com código Go que a rodada contra o Go confere (`--go`, e a CI), um por linha |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (134), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (40, sem as rotas que falam com a Pluggy, #83), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (134), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
 
 ## Rodar contra o .NET
 
@@ -187,7 +187,7 @@ Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são s
 
 ## O que ficou de fora
 
-- **Integrações externas** (Pluggy, Yahoo/brapi, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go nas Etapas 11 a 13, com respostas gravadas.
+- **Integrações externas** (Yahoo/brapi, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. A **Pluggy** entra por uma Pluggy falsa (`pluggyfalsa`, com as respostas fictícias de `dados/pluggy`): o .NET e o Go sincronizam o mesmo cenário. São testadas em Go nas Etapas 11 a 13, com respostas gravadas.
 - **Cabeçalhos de segurança, cache e arquivos do front-end:** conferidos contra o .NET rodando por `internal/servidor/igual_dotnet_test.go`.
 - **O que só existe no Windows** (DPAPI, serviço, instalador): continua com o teste do `.msi`.
 - **Relação entre GUIDs:** todo GUID vira o mesmo marcador, então o contrato não confere que duas transações têm o mesmo `TransferenciaGrupo` pelo valor (confere pela contagem e pelos outros campos).

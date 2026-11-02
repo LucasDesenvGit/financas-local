@@ -129,7 +129,7 @@ func (s *Servico) removerConexao(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if s.emExecucao.Load() {
+	if s.sincronia.EmExecucao() {
 		respostas.Mensagem(w, http.StatusConflict, "Aguarde a sincronização em andamento terminar.")
 		return
 	}
@@ -195,7 +195,7 @@ func idsDasContas(ctx context.Context, tx *sql.Tx, conexao int64) ([]int64, erro
 func (s *Servico) estado(w http.ResponseWriter, _ *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, struct {
 		EmExecucao bool `json:"emExecucao"`
-	}{s.emExecucao.Load()})
+	}{s.sincronia.EmExecucao()})
 }
 
 // statusDto é o StatusSincronizacaoDto.
@@ -218,7 +218,7 @@ func (s *Servico) status(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Servico) lerStatus(ctx context.Context) (statusDto, error) {
-	d := statusDto{EmExecucao: s.emExecucao.Load()}
+	d := statusDto{EmExecucao: s.sincronia.EmExecucao()}
 	ultima, err := s.config.ObterData(ctx, configuracao.UltimaSincronizacaoGeral)
 	if err != nil {
 		return d, err

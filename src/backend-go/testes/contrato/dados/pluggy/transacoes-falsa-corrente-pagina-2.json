@@ -1,0 +1,13 @@
+{
+  "next": null,
+  "results": [
+    {
+      "id": "tc-7",
+      "date": "2026-10-08T12:00:00.000Z",
+      "description": "SEGUNDA PAGINA",
+      "amount": 7.5,
+      "type": "DEBIT",
+      "status": "POSTED"
+    }
+  ]
+}

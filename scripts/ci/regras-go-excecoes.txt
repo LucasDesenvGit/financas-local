@@ -13,8 +13,10 @@
 # duração), nunca data de negócio.
 
 float64 | internal/banco/copia_real_test.go | if _, real := v.(float64); real { | o teste só olha o tipo do valor lido para recusar dinheiro gravado como REAL (float); não calcula com float64
-float64 | internal/pluggy/modelos.go | v, err := strconv.ParseFloat(string(n), 64) | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
 float64 | internal/pluggy/modelos.go | return tipos.DecimalDeFloat64(v) | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
+float64 | internal/pluggy/modelos.go | func (n Numero) double() (float64, error) { | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
+float64 | internal/pluggy/modelos.go | v, err := strconv.ParseFloat(string(n), 64) | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
+float64 | internal/pluggy/modelos.go | return tipos.DecimalDeFloat64(soma) | é o (decimal)double que o SincronizacaoService faz em todo valor da Pluggy: passar pelo double dá o mesmo centavo do .NET (19.884999999999998 vira 19,89, e o decimal direto daria 19,88); o float64 não sai desta função
 float64 | internal/cotacoes/cliente.go | f, err := strconv.ParseFloat(texto, 64) | o ParseFloat só confere se o número cabe (e se é zero); o valor que sai vem do NovoDecimal(texto), com os dígitos exatos, sem passar por float64
 float64 | internal/erros/handler.go | case slog.KindFloat64: | formata no log o atributo do tipo float (slog.KindFloat64) que alguém passou ao slog; é texto de diagnóstico, não dado de negócio
 float64 | internal/erros/handler.go | return strconv.FormatFloat(v.Float64(), 'g', -1, 64) | formata no log o atributo do tipo float (slog.KindFloat64) que alguém passou ao slog; é texto de diagnóstico, não dado de negócio

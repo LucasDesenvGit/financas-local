@@ -67,7 +67,7 @@ func Carregar(pastaBase, ambiente string) (Config, error) {
 		MinutosSessao:         120,
 		MaximoTentativasLogin: 5,
 		MinutosBloqueio:       15,
-		PluggyURLBase:         texto(arvore, "Pluggy:UrlBase"),
+		PluggyURLBase:         pluggyURLBase(arvore),
 		Endereco:              "127.0.0.1:5443",
 		CertificadoCaminho:    texto(arvore, "Kestrel:Endpoints:Https:Certificate:Path"),
 		CertificadoSenha:      texto(arvore, "Kestrel:Endpoints:Https:Certificate:Password"),
@@ -212,6 +212,15 @@ func caminho(pastaBase, valor, padrao string) string {
 		return filepath.Clean(valor)
 	}
 	return filepath.Join(pastaBase, valor)
+}
+
+// pluggyURLBase é o Pluggy:UrlBase, que a variável Pluggy__UrlBase muda como no ASP.NET: o .NET e o Go, que recebe o ambiente
+// dele, falam com a mesma Pluggy (a falsa, no contrato).
+func pluggyURLBase(arvore map[string]any) string {
+	if v, ok := os.LookupEnv("Pluggy__UrlBase"); ok {
+		return v
+	}
+	return texto(arvore, "Pluggy:UrlBase")
 }
 
 var variavelWindows = regexp.MustCompile(`%([^%]+)%`)

@@ -31,12 +31,14 @@ type Transacao struct {
 	Data                tipos.Data
 	Descricao           string
 	DescricaoOriginal   *string
+	Estabelecimento     *string
 	Valor               tipos.Decimal
 	Tipo                int64
 	Status              int64
 	CategoriaId         *int64
 	CategoriaManual     bool
 	PluggyCategoriaId   *string
+	FaturaCartaoId      *int64
 	IgnorarRelatorios   bool
 	Emergencia          bool
 	MeioPagamento       *string
@@ -55,7 +57,7 @@ type Transacao struct {
 const colunas = `"Id", "ContaId", "PluggyTransactionId", "Data", "Descricao", "DescricaoOriginal", "Valor", "Tipo",
 	"Status", "CategoriaId", "CategoriaManual", "PluggyCategoriaId", "IgnorarRelatorios", "Emergencia", "MeioPagamento",
 	"MesmaTitularidade", "RegraDescricaoId", "DescricaoManual", "TransferenciaGrupo", "ParcelaNumero", "ParcelaTotal",
-	"Observacao", "AtualizadoEm"`
+	"Observacao", "AtualizadoEm", "Estabelecimento", "FaturaCartaoId"`
 
 // Listar lê as transações de uma consulta. onde é um trecho de SQL escrito no código (nunca texto de quem usa), com os
 // valores em argumentos "?": "WHERE "CategoriaId" = ?".
@@ -72,7 +74,7 @@ func Listar(ctx context.Context, q consultas.DBTX, onde string, argumentos ...an
 		if err := linhas.Scan(&t.Id, &t.ContaId, &t.PluggyTransactionId, &t.Data, &t.Descricao, &t.DescricaoOriginal,
 			&t.Valor, &t.Tipo, &t.Status, &t.CategoriaId, &t.CategoriaManual, &t.PluggyCategoriaId, &t.IgnorarRelatorios,
 			&t.Emergencia, &t.MeioPagamento, &t.MesmaTitularidade, &t.RegraDescricaoId, &t.DescricaoManual, &guid,
-			&t.ParcelaNumero, &t.ParcelaTotal, &t.Observacao, &t.AtualizadoEm); err != nil {
+			&t.ParcelaNumero, &t.ParcelaTotal, &t.Observacao, &t.AtualizadoEm, &t.Estabelecimento, &t.FaturaCartaoId); err != nil {
 			return nil, fmt.Errorf("ler transação: %w", err)
 		}
 		if guid.Valid {
@@ -141,6 +143,28 @@ func (t *Transacao) mudancas() []mudanca {
 	if !textosIguais(t.Observacao, a.Observacao) {
 		lista = append(lista, mudanca{"Observacao", t.Observacao})
 	}
+	// Os campos abaixo só a sincronização muda (#83).
+	if !textosIguais(t.Estabelecimento, a.Estabelecimento) {
+		lista = append(lista, mudanca{"Estabelecimento", t.Estabelecimento})
+	}
+	if !textosIguais(t.PluggyCategoriaId, a.PluggyCategoriaId) {
+		lista = append(lista, mudanca{"PluggyCategoriaId", t.PluggyCategoriaId})
+	}
+	if !iguais(t.FaturaCartaoId, a.FaturaCartaoId) {
+		lista = append(lista, mudanca{"FaturaCartaoId", t.FaturaCartaoId})
+	}
+	if !iguais(t.ParcelaNumero, a.ParcelaNumero) {
+		lista = append(lista, mudanca{"ParcelaNumero", t.ParcelaNumero})
+	}
+	if !iguais(t.ParcelaTotal, a.ParcelaTotal) {
+		lista = append(lista, mudanca{"ParcelaTotal", t.ParcelaTotal})
+	}
+	if !textosIguais(t.MeioPagamento, a.MeioPagamento) {
+		lista = append(lista, mudanca{"MeioPagamento", t.MeioPagamento})
+	}
+	if !boolIguais(t.MesmaTitularidade, a.MesmaTitularidade) {
+		lista = append(lista, mudanca{"MesmaTitularidade", t.MesmaTitularidade})
+	}
 	if t.AtualizadoEm.String() != a.AtualizadoEm.String() {
 		lista = append(lista, mudanca{"AtualizadoEm", t.AtualizadoEm})
 	}
@@ -158,6 +182,45 @@ func iguais(a, b *int64) bool {
 
 func textosIguais(a, b *string) bool {
 	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
+}
+
+func boolIguais(a, b *bool) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
+}
+
+// Inserir grava uma transação nova e guarda o Id nela. É o Add com o SaveChanges do EF Core: as colunas que o modelo
+// não tem (DescricaoRevisada) ficam com o valor padrão da entidade.
+func Inserir(ctx context.Context, q consultas.DBTX, t *Transacao, criadoEm tipos.DataHora) error {
+	var guid any
+	if t.TransferenciaGrupo != nil {
+		guid = *t.TransferenciaGrupo
+	}
+	res, err := q.ExecContext(ctx, `INSERT INTO "Transacao" ("ContaId", "PluggyTransactionId", "Data", "Descricao",
+		"DescricaoOriginal", "Estabelecimento", "Valor", "Tipo", "Status", "CategoriaId", "CategoriaManual", "PluggyCategoriaId",
+		"FaturaCartaoId", "ParcelaNumero", "ParcelaTotal", "IgnorarRelatorios", "Emergencia", "DescricaoRevisada", "MeioPagamento",
+		"MesmaTitularidade", "RegraDescricaoId", "DescricaoManual", "TransferenciaGrupo", "Observacao", "CriadoEm", "AtualizadoEm")
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		t.ContaId, t.PluggyTransactionId, t.Data, t.Descricao, t.DescricaoOriginal, t.Estabelecimento, t.Valor, t.Tipo, t.Status,
+		t.CategoriaId, t.CategoriaManual, t.PluggyCategoriaId, t.FaturaCartaoId, t.ParcelaNumero, t.ParcelaTotal, t.IgnorarRelatorios,
+		t.Emergencia, t.MeioPagamento, t.MesmaTitularidade, t.RegraDescricaoId, t.DescricaoManual, guid, t.Observacao, criadoEm, t.AtualizadoEm)
+	if err != nil {
+		return fmt.Errorf("gravar a transação nova: %w", err)
+	}
+	t.Id, err = res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("ler o id da transação nova: %w", err)
+	}
+	return nil
+}
+
+// Excluir apaga as transações dos ids.
+func Excluir(ctx context.Context, q consultas.DBTX, ids ...int64) error {
+	for _, id := range ids {
+		if _, err := q.ExecContext(ctx, `DELETE FROM "Transacao" WHERE "Id" = ?`, id); err != nil {
+			return fmt.Errorf("apagar a transação %d: %w", id, err)
+		}
+	}
+	return nil
 }
 
 // Gravar manda ao banco só as colunas que mudaram (o SaveChanges do EF Core) e deixa a transação como gravada.

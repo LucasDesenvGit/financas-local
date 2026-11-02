@@ -1,0 +1,14 @@
+{
+  "total": 1,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "mov-fii-1",
+      "type": "BUY",
+      "quantity": 10.5,
+      "value": 90.123456789,
+      "tradeDate": "2026-01-10T03:00:00.000Z"
+    }
+  ]
+}

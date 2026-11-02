@@ -1,0 +1,42 @@
+{
+  "results": [
+    {
+      "id": "tk-1",
+      "date": "2026-10-05T12:00:00.000Z",
+      "description": "LOJA FALSA 02/06",
+      "amount": 25.5,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "categoryId": "07000000",
+      "creditCardMetadata": {
+        "installmentNumber": 2,
+        "totalInstallments": "6",
+        "billId": "fatura-1"
+      },
+      "merchant": {
+        "name": "Loja Falsa"
+      },
+      "operationType": "CARTAO"
+    },
+    {
+      "id": "tk-2",
+      "date": "2026-10-06T12:00:00.000Z",
+      "description": "ESTORNO LOJA FALSA",
+      "amount": -25.5,
+      "type": "CREDIT",
+      "status": "POSTED",
+      "creditCardMetadata": {
+        "billId": "fatura-que-nao-existe"
+      }
+    },
+    {
+      "id": "tk-3",
+      "date": "2026-10-07T12:00:00.000Z",
+      "description": "PAGAMENTO DE FATURA",
+      "amount": -840.1,
+      "type": "CREDIT",
+      "status": "POSTED",
+      "operationType": "PAGAMENTO_FATURA"
+    }
+  ]
+}

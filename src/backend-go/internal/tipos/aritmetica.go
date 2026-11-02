@@ -118,6 +118,15 @@ func Arredondar(d Decimal, casas int32) Decimal {
 	return Decimal{v: d.v.RoundBank(casas)}
 }
 
+// ArredondarLongeDoZero é o Math.Round(x, casas, MidpointRounding.AwayFromZero) do C#: no empate, sai do zero (2.565 →
+// 2.57; -0.125 → -0.13), e só mexe quando o valor tem mais casas que o pedido.
+func ArredondarLongeDoZero(d Decimal, casas int32) Decimal {
+	if d.Escala() <= casas {
+		return d
+	}
+	return Decimal{v: d.v.Round(casas)}
+}
+
 // dividirArredondandoAoPar divide n por d e arredonda o quociente pelo método bancário (o empate vai para o par).
 func dividirArredondandoAoPar(n, d *big.Int) *big.Int {
 	q, r := new(big.Int).QuoRem(n, d, new(big.Int))

@@ -1,6 +1,7 @@
 package openfinance
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -15,6 +16,9 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/pluggy"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/transacoes"
@@ -39,11 +43,50 @@ type cofreFalso struct{}
 func (cofreFalso) Cifrar(_, segredo string) (string, error)   { return "v2:" + segredo + ":cifrado", nil }
 func (cofreFalso) Decifrar(_, gravado string) (string, error) { return gravado, nil }
 
+// sincronizadorFalso faz o papel da sincronização: as rotas não falam com a Pluggy aqui.
+type sincronizadorFalso struct {
+	emExecucao   bool
+	testar       func() (bool, string, error)
+	item         func() (*pluggy.Item, error)
+	resultado    sincronizacao.Resultado
+	erro         error
+	carteira     sincronizacao.ResultadoCarteira
+	erroCarteira error
+	conexoes     []*int64
+	origens      []string
+}
+
+func (f *sincronizadorFalso) EmExecucao() bool { return f.emExecucao }
+func (f *sincronizadorFalso) TestarCredenciais(context.Context) (bool, string, error) {
+	return f.testar()
+}
+func (f *sincronizadorFalso) ConsultarItem(context.Context, string) (*pluggy.Item, error) {
+	return f.item()
+}
+func (f *sincronizadorFalso) Sincronizar(_ context.Context, conexao *int64, origem string) (sincronizacao.Resultado, error) {
+	f.conexoes, f.origens = append(f.conexoes, conexao), append(f.origens, origem)
+	return f.resultado, f.erro
+}
+func (f *sincronizadorFalso) ImportarCarteira(context.Context) (sincronizacao.ResultadoCarteira, error) {
+	return f.carteira, f.erroCarteira
+}
+
+type cotacoesFalsas struct {
+	chamadas int
+	erro     error
+}
+
+func (c *cotacoesFalsas) Atualizar(context.Context, []int64) (cotacoes.Resultado, error) {
+	c.chamadas++
+	return cotacoes.Resultado{}, c.erro
+}
+
 type cenario struct {
-	mux *http.ServeMux
-	s   *Servico
-	db  *sql.DB
-	fab *testeapoio.Fabrica
+	mux   *http.ServeMux
+	s     *Servico
+	db    *sql.DB
+	fab   *testeapoio.Fabrica
+	falso *sincronizadorFalso
 }
 
 // novoCenario: 15/10/2026, meio-dia em Brasília (15h em UTC), com aviso de consentimento a 30 dias.
@@ -52,9 +95,17 @@ func novoCenario(t *testing.T) cenario {
 	db := testeapoio.NovoBancoVazio(t)
 	r := testeapoio.HojeEmBrasilia(2026, 10, 15)
 	mux := http.NewServeMux()
-	s := NovoServico(db, cofreFalso{}, parametrosFixos(30), r, slog.New(slog.DiscardHandler))
+	falso := &sincronizadorFalso{}
+	s := NovoServico(db, cofreFalso{}, parametrosFixos(30), falso, &cotacoesFalsas{}, r, slog.New(slog.DiscardHandler))
 	Registrar(mux, s)
-	return cenario{mux, s, db, testeapoio.NovaFabrica(t, db, r)}
+	return cenario{mux, s, db, testeapoio.NovaFabrica(t, db, r), falso}
+}
+
+// guardarLog troca o log do serviço por um que dá para ler no teste.
+func (c cenario) guardarLog() *bytes.Buffer {
+	var log bytes.Buffer
+	c.s.log = slog.New(slog.NewTextHandler(&log, nil))
+	return &log
 }
 
 func (c cenario) chamar(t *testing.T, metodo, caminho, corpo string) testeapoio.Resposta {
@@ -431,7 +482,7 @@ func TestRemoverConexaoRecusa(t *testing.T) {
 	t.Run("sincronização em andamento", func(t *testing.T) {
 		c := novoCenario(t)
 		k := c.fab.ConexaoBancaria()
-		c.s.emExecucao.Store(true)
+		c.falso.emExecucao = true
 		r := c.chamar(t, "DELETE", fmt.Sprintf("/api/open-finance/conexoes/%d", k.Id), "")
 		conferirStatus(t, r, 409)
 		if !strings.Contains(string(r.Corpo), "Aguarde a sincronização em andamento terminar.") {
@@ -446,7 +497,7 @@ func TestRemoverConexaoRecusa(t *testing.T) {
 func TestEstado(t *testing.T) {
 	c := novoCenario(t)
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/sincronizacao/estado", "").Corpo, `{"emExecucao":false}`)
-	c.s.emExecucao.Store(true)
+	c.falso.emExecucao = true
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/sincronizacao/estado", "").Corpo, `{"emExecucao":true}`)
 }
 
@@ -475,7 +526,7 @@ func TestStatus(t *testing.T) {
 		c.fab.ConexaoBancaria(ajustar)
 	}
 	c.definir(t, configuracao.UltimaSincronizacaoGeral, "2026-10-14T09:00:00.0000000Z")
-	c.s.emExecucao.Store(true)
+	c.falso.emExecucao = true
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/status", "").Corpo,
 		`{"ultimaSincronizacao":"2026-10-14T09:00:00Z","emExecucao":true,"conexoesAtivas":8,"conexoesComErro":3,"consentimentosVencendo":2}`)
 }
@@ -831,4 +882,234 @@ func TestMesmoId(t *testing.T) {
 			t.Errorf("%s: mesmoId = %v", caso.nome, obtido)
 		}
 	}
+}
+
+func TestTestar(t *testing.T) {
+	casos := []struct {
+		nome   string
+		testar func() (bool, string, error)
+		status int
+		corpo  string
+	}{
+		{"deu certo", func() (bool, string, error) { return true, "Conexão ok.", nil }, 200, `{"mensagem":"Conexão ok."}`},
+		{"recusada", func() (bool, string, error) { return false, "Sem credenciais.", nil }, 400, `{"mensagem":"Sem credenciais."}`},
+		{"sem rede", func() (bool, string, error) { return false, "", errors.New("sem rede") }, 500, ""},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			c.falso.testar = caso.testar
+			r := c.chamar(t, "POST", "/api/open-finance/testar", "")
+			conferirStatus(t, r, caso.status)
+			if caso.corpo != "" {
+				testeapoio.ConferirJSON(t, r.Corpo, caso.corpo)
+			}
+		})
+	}
+}
+
+const itemValido = "a1b2c3d4-0000-4000-8000-000000000001"
+
+func TestAdicionarConexaoRecusa(t *testing.T) {
+	casos := []struct {
+		nome, corpo string
+		status      int
+		mensagem    string
+	}{
+		{"sem o item", `{}`, 400, "The ItemId field is required."},
+		{"item curto", `{"itemId":"abc"}`, 400, "Item ID inválido."},
+		{"item com letra fora do hexadecimal", `{"itemId":"z1b2c3d4-0000-4000-8000-000000000001"}`, 400, "Item ID inválido."},
+		{"item com espaço", `{"itemId":" ` + itemValido + `"}`, 400, "Item ID inválido."},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			r := c.chamar(t, "POST", "/api/open-finance/conexoes", caso.corpo)
+			conferirStatus(t, r, caso.status)
+			if !strings.Contains(string(r.Corpo), caso.mensagem) {
+				t.Errorf("corpo = %s, esperado %q", r.Corpo, caso.mensagem)
+			}
+		})
+	}
+	t.Run("já cadastrada, com o id em maiúsculas", func(t *testing.T) {
+		c := novoCenario(t)
+		c.fab.ConexaoBancaria(func(k *testeapoio.ConexaoBancaria) { k.PluggyItemId = itemValido })
+		r := c.chamar(t, "POST", "/api/open-finance/conexoes", `{"itemId":"`+strings.ToUpper(itemValido)+`"}`)
+		conferirStatus(t, r, 409)
+		testeapoio.ConferirJSON(t, r.Corpo, `{"mensagem":"Esta conexão já está cadastrada."}`)
+	})
+	t.Run("a Pluggy recusa", func(t *testing.T) {
+		c := novoCenario(t)
+		c.falso.item = func() (*pluggy.Item, error) { return nil, &pluggy.Erro{Mensagem: "Sem acesso."} }
+		r := c.chamar(t, "POST", "/api/open-finance/conexoes", `{"itemId":"`+itemValido+`"}`)
+		conferirStatus(t, r, 400)
+		testeapoio.ConferirJSON(t, r.Corpo, `{"mensagem":"Sem acesso."}`)
+		if n := c.contar(t, `SELECT COUNT(*) FROM "ConexaoBancaria"`); n != 0 {
+			t.Error("gravou a conexão recusada")
+		}
+	})
+	t.Run("sem rede", func(t *testing.T) {
+		c := novoCenario(t)
+		c.falso.item = func() (*pluggy.Item, error) { return nil, errors.New("sem rede") }
+		conferirStatus(t, c.chamar(t, "POST", "/api/open-finance/conexoes", `{"itemId":"`+itemValido+`"}`), 500)
+	})
+	t.Run("banco fechado", func(t *testing.T) {
+		c := novoCenario(t)
+		if err := c.db.Close(); err != nil {
+			t.Fatal(err)
+		}
+		conferirStatus(t, c.chamar(t, "POST", "/api/open-finance/conexoes", `{"itemId":"`+itemValido+`"}`), 500)
+	})
+}
+
+func TestAdicionarConexao(t *testing.T) {
+	nome, situacao := "Banco Falso", "UPDATED"
+	longo := strings.Repeat("n", 151)
+	casos := []struct {
+		nome   string
+		item   pluggy.Item
+		chave  string
+		titulo *string
+		status *string
+	}{
+		{"com o id da Pluggy em minúsculas", pluggy.Item{Id: "ABC-DEF", Connector: &pluggy.Conector{Name: &nome}, Status: &situacao}, "abc-def", &nome, &situacao},
+		{"sem o id, vale o pedido", pluggy.Item{}, itemValido, nil, nil},
+		{"id longo demais, vale o pedido", pluggy.Item{Id: strings.Repeat("a", 65)}, itemValido, nil, nil},
+		{"id no limite", pluggy.Item{Id: strings.Repeat("a", 64)}, strings.Repeat("a", 64), nil, nil},
+		{"conector sem nome", pluggy.Item{Connector: &pluggy.Conector{}}, itemValido, nil, nil},
+		{"nome cortado em 150", pluggy.Item{Connector: &pluggy.Conector{Name: &longo}}, itemValido, p(strings.Repeat("n", 150)), nil},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			item := caso.item
+			c.falso.item = func() (*pluggy.Item, error) { return &item, nil }
+			mensagem := "Sincronização concluída."
+			c.falso.resultado = sincronizacao.Resultado{Sucesso: true, TransacoesNovas: 3, Mensagem: &mensagem}
+			r := c.chamar(t, "POST", "/api/open-finance/conexoes", `{"itemId":"`+strings.ToUpper(itemValido)+`"}`)
+			conferirStatus(t, r, 200)
+			testeapoio.ConferirJSON(t, r.Corpo, `{"sucesso":true,"transacoesNovas":3,"transacoesAtualizadas":0,"mensagem":"Sincronização concluída."}`)
+			var chave string
+			var titulo, status *string
+			var ativa bool
+			var id int64
+			if err := c.db.QueryRow(`SELECT "Id", "PluggyItemId", "NomeInstituicao", "Status", "Ativa" FROM "ConexaoBancaria"`).Scan(&id, &chave, &titulo, &status, &ativa); err != nil {
+				t.Fatal(err)
+			}
+			if chave != caso.chave || !ativa {
+				t.Errorf("chave = %q, ativa = %v", chave, ativa)
+			}
+			if (titulo == nil) != (caso.titulo == nil) || (titulo != nil && *titulo != *caso.titulo) {
+				t.Errorf("nome = %v", titulo)
+			}
+			if (status == nil) != (caso.status == nil) || (status != nil && *status != *caso.status) {
+				t.Errorf("status = %v", status)
+			}
+			if n := c.auditoria(t, "ConexaoAdicionada"); n != 1 {
+				t.Errorf("%d auditorias", n)
+			}
+			if len(c.falso.conexoes) != 1 || *c.falso.conexoes[0] != id || c.falso.origens[0] != sincronizacao.OrigemManual {
+				t.Errorf("sincronizou %v, %v", c.falso.conexoes, c.falso.origens)
+			}
+		})
+	}
+}
+
+func TestSincronizar(t *testing.T) {
+	casos := []struct {
+		nome, caminho string
+		status        int
+		conexao       *int64
+		rodou         bool
+	}{
+		{"todas", "/api/open-finance/sincronizar", 200, nil, true},
+		{"uma", "/api/open-finance/sincronizar?conexaoId=7", 200, p(int64(7)), true},
+		{"vazio vale todas", "/api/open-finance/sincronizar?conexaoId=", 200, nil, true},
+		{"que não é número", "/api/open-finance/sincronizar?conexaoId=abc", 400, nil, false},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			conferirStatus(t, c.chamar(t, "POST", caso.caminho, ""), caso.status)
+			if !caso.rodou {
+				if len(c.falso.conexoes) != 0 {
+					t.Error("sincronizou mesmo assim")
+				}
+				return
+			}
+			got := c.falso.conexoes[0]
+			if (got == nil) != (caso.conexao == nil) || (got != nil && *got != *caso.conexao) {
+				t.Errorf("conexão = %v, esperado %v", got, caso.conexao)
+			}
+		})
+	}
+	t.Run("erro", func(t *testing.T) {
+		c := novoCenario(t)
+		c.falso.erro = errors.New("banco")
+		conferirStatus(t, c.chamar(t, "POST", "/api/open-finance/sincronizar", ""), 500)
+	})
+}
+
+func TestImportarCarteira(t *testing.T) {
+	const rota = "/api/carteira/importar-open-finance"
+	casos := []struct {
+		nome      string
+		resultado sincronizacao.ResultadoCarteira
+		cotacoes  int
+	}{
+		{"nada novo não busca cotações", sincronizacao.ResultadoCarteira{}, 0},
+		{"ativo criado busca", sincronizacao.ResultadoCarteira{AtivosCriados: 1}, 1},
+		{"operação importada busca", sincronizacao.ResultadoCarteira{OperacoesImportadas: 1}, 1},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			avisos := c.guardarLog()
+			c.falso.carteira = caso.resultado
+			conferirStatus(t, c.chamar(t, "POST", rota, ""), 200)
+			if n := c.s.cotacoes.(*cotacoesFalsas).chamadas; n != caso.cotacoes {
+				t.Errorf("%d buscas de cotações, esperado %d", n, caso.cotacoes)
+			}
+			if avisos.Len() != 0 {
+				t.Errorf("deu certo e avisou: %s", avisos)
+			}
+		})
+	}
+	t.Run("a falha nas cotações não falha a rota", func(t *testing.T) {
+		c := novoCenario(t)
+		avisos := c.guardarLog()
+		c.falso.carteira = sincronizacao.ResultadoCarteira{AtivosCriados: 1, Erros: []string{}}
+		c.s.cotacoes.(*cotacoesFalsas).erro = errors.New("sem cotação")
+		r := c.chamar(t, "POST", rota, "")
+		conferirStatus(t, r, 200)
+		testeapoio.ConferirJSON(t, r.Corpo, `{"ativosCriados":1,"operacoesImportadas":0,"semHistorico":null,"comLancamentoManual":null,"erros":[],"mensagem":null}`)
+		if !strings.Contains(avisos.String(), "sem cotação") {
+			t.Errorf("log = %s", avisos)
+		}
+	})
+	t.Run("quem desistiu não recebe resposta nem aviso", func(t *testing.T) {
+		c := novoCenario(t)
+		avisos := c.guardarLog()
+		c.falso.carteira = sincronizacao.ResultadoCarteira{AtivosCriados: 1}
+		c.s.cotacoes.(*cotacoesFalsas).erro = context.Canceled
+		ctx, cancelar := context.WithCancel(t.Context())
+		cancelar()
+		w := httptest.NewRecorder()
+		c.s.importarCarteira(w, httptest.NewRequestWithContext(ctx, "POST", rota, nil))
+		if w.Body.Len() != 0 || avisos.Len() != 0 {
+			t.Errorf("corpo = %q, log = %s", w.Body, avisos)
+		}
+	})
+	t.Run("erro da Pluggy", func(t *testing.T) {
+		c := novoCenario(t)
+		c.falso.erroCarteira = &pluggy.Erro{Mensagem: "Recusada."}
+		r := c.chamar(t, "POST", rota, "")
+		conferirStatus(t, r, 400)
+		testeapoio.ConferirJSON(t, r.Corpo, `{"mensagem":"Recusada."}`)
+	})
+	t.Run("outro erro", func(t *testing.T) {
+		c := novoCenario(t)
+		c.falso.erroCarteira = errors.New("banco")
+		conferirStatus(t, c.chamar(t, "POST", rota, ""), 500)
+	})
 }

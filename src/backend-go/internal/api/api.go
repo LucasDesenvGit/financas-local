@@ -30,11 +30,13 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/orcamentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/painel"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/pluggy"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/saude"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/segredos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/selic"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
 
@@ -77,13 +79,18 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	metas.Registrar(mux, metas.NovoServico(d.DB, reservasDaCarteira, par, d.Relogio, d.Log)) // #79: metas e o plano do caixa
 	// O token da brapi só vale depois da troca dos segredos (#85, ADR 0049): o cofre abre a chave no primeiro uso.
 	cofre := segredos.NovoTardio(d.Config.PastaChaves)
+	cotacoesDaCarteira := cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log)
 	daCarteira := carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,
-		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log),
-		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log), cofre, d.Relogio, d.Log)
+		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log), cotacoesDaCarteira, cofre, d.Relogio, d.Log)
 	carteira.Registrar(mux, daCarteira)                                                                                                     // #82: a carteira
 	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
 	painel.Registrar(mux, painel.NovoServico(d.DB, daCarteira, reservasDaCarteira, cambioDaCarteira, par, contasAPagar, d.Relogio, d.Log))  // #80: empréstimos e relatórios
 	investimentos.Registrar(mux, investimentos.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log))                                       // #80: os do Open Finance
-	openfinance.Registrar(mux, openfinance.NovoServico(d.DB, cofre, par, d.Relogio, d.Log))                                                 // #83: as rotas que não sincronizam
+	clientePluggy, err := pluggy.NovoCliente(d.Config.PluggyURLBase, nil, d.Log)
+	if err != nil {
+		panic(err) // como o Program.cs, que recusa subir com a URL da Pluggy sem HTTPS
+	}
+	sincronia := sincronizacao.NovoServico(d.DB, cofre, clientePluggy, daCarteira, d.Relogio, d.Log)
+	openfinance.Registrar(mux, openfinance.NovoServico(d.DB, cofre, par, sincronia, cotacoesDaCarteira, d.Relogio, d.Log)) // #83: as rotas do Open Finance
 	return mux
 }
