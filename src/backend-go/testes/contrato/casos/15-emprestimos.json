@@ -1,0 +1,17 @@
+{
+  "descricao": "Empréstimos e financiamentos (#80, EmprestimosController): os contratos do Open Finance com os totais separados por natureza (ADR 0014) e os pagamentos dos últimos 12 meses. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. A base tem o financiamento de veículo (id 1, em aberto, com os pagamentos) e o crédito pessoal (id 2, quitado), os dois na conexão ativa. Só lê: não muda o banco.",
+  "casos": [
+    {
+      "nome": "painel dos empréstimos",
+      "comentario": "Em aberto antes dos quitados, pelo saldo devedor; a modalidade fora da lista sai em título (ToTitleCase pt-BR); a periodicidade 'MENSAL' não é a 'MONTHLY' do Open Finance, então não há próximo vencimento.",
+      "metodo": "GET",
+      "caminho": "/api/emprestimos"
+    },
+    {
+      "nome": "painel dos empréstimos sem login",
+      "metodo": "GET",
+      "caminho": "/api/emprestimos",
+      "sessao": "visitante"
+    }
+  ]
+}

@@ -20,6 +20,7 @@ internal/selic          100
 internal/carteira       100
 internal/conferenciabanco 100
 internal/cotacoes       100
+internal/pluggy         100
 internal/texto           100
 internal/tipolancamento  100
 internal/transacoes      100
@@ -51,3 +52,5 @@ internal/servidor        100
 internal/tarefas         100
 # #444: as rotinas de partida, medidas em 01/11/2026.
 internal/partida         100
+internal/investimentos   100
+internal/painel          100
