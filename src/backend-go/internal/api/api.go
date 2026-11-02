@@ -24,8 +24,10 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/investimentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/metas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/orcamentos"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/painel"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
@@ -59,14 +61,15 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 		DB: d.DB, Relogio: d.Relogio, Log: d.Log, Versao: versao.Atual,
 		CaminhoBanco: d.Config.BancoCaminho, PastaChaves: d.Config.PastaChaves, Padroes: parametros.PadroesDoAppsettings(d.Config),
 	})
-	parametros.Registrar(mux, par)                                                      // #76
-	cambio.Registrar(mux, d.DB, d.Log, d.Relogio)                                       // #81: câmbio pela PTAX (ADR 0007)
-	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                                       // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
-	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log))           // #77: categorias, regras e regras de descrição
-	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))                   // #77: contas e faturas do cartão
-	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))            // #78: transações (as 18 rotas)
-	contasagendadas.Registrar(mux, contasagendadas.NovoServico(d.DB, d.Relogio, d.Log)) // #79: contas a pagar
-	orcamentos.Registrar(mux, orcamentos.NovoServico(d.DB, par, d.Relogio, d.Log))      // #79: orçamentos e a sugestão (#39)
+	parametros.Registrar(mux, par)                                            // #76
+	cambio.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: câmbio pela PTAX (ADR 0007)
+	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
+	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log)) // #77: categorias, regras e regras de descrição
+	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))         // #77: contas e faturas do cartão
+	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (as 18 rotas)
+	contasAPagar := contasagendadas.NovoServico(d.DB, d.Relogio, d.Log)
+	contasagendadas.Registrar(mux, contasAPagar)                                   // #79: contas a pagar
+	orcamentos.Registrar(mux, orcamentos.NovoServico(d.DB, par, d.Relogio, d.Log)) // #79: orçamentos e a sugestão (#39)
 	cambioDaCarteira := cambio.NovoServico(d.DB, cambio.ClientePadrao(), d.Relogio, d.Log)
 	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
 	reservas.Registrar(mux, reservasDaCarteira)                                              // #82: as reservas (ADRs 0010, 0037 e 0038)
@@ -78,5 +81,7 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log), cofre, d.Relogio, d.Log)
 	carteira.Registrar(mux, daCarteira)                                                                                                     // #82: a carteira
 	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
+	painel.Registrar(mux, painel.NovoServico(d.DB, daCarteira, reservasDaCarteira, cambioDaCarteira, par, contasAPagar, d.Relogio, d.Log))  // #80: empréstimos e relatórios
+	investimentos.Registrar(mux, investimentos.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log))                                       // #80: os do Open Finance
 	return mux
 }

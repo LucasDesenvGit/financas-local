@@ -1,0 +1,173 @@
+[
+  {
+    "nome": "painel dos empréstimos",
+    "requisicao": "GET /api/emprestimos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "contratos": [
+        {
+          "atualizadoEm": "2026-10-14T09:00:00",
+          "cet": 0.0175,
+          "dataContratacao": "2025-04-10",
+          "dataVencimentoFinal": "2029-04-10",
+          "id": 1,
+          "indexador": "PRE_FIXADO",
+          "modalidade": "FINANCIAMENTO_AQUISICAO_BENS_VEICULOS_AUTOMOTORES",
+          "modalidadeDescricao": "Financiamento Aquisicao Bens Veiculos Automotores",
+          "moeda": "BRL",
+          "natureza": 2,
+          "nomeInstituicao": "Banco Fictício",
+          "numeroContrato": "CTR-0001",
+          "parcelaMensal": 1250.0,
+          "parcelasAVencer": 30,
+          "parcelasEmAtraso": 0,
+          "parcelasPagas": 18,
+          "parcelasTotal": 48,
+          "periodicidade": "MENSAL",
+          "periodicidadeTaxa": "MENSAL",
+          "produto": "Financiamento de veículo",
+          "proximoVencimento": null,
+          "quitado": false,
+          "saldoDevedor": 28750.33,
+          "sistemaAmortizacao": "PRICE",
+          "taxaJuros": 0.0149,
+          "totalPago": 17000.0,
+          "ultimoPagamento": "2026-10-10",
+          "valorContratado": 45000.0,
+          "valorParcela": 1250.0
+        },
+        {
+          "atualizadoEm": "2026-10-14T09:00:00",
+          "cet": null,
+          "dataContratacao": "2025-09-15",
+          "dataVencimentoFinal": "2026-09-15",
+          "id": 2,
+          "indexador": null,
+          "modalidade": "CREDITO_PESSOAL_SEM_CONSIGNACAO",
+          "modalidadeDescricao": "Crédito pessoal",
+          "moeda": "BRL",
+          "natureza": 1,
+          "nomeInstituicao": "Banco Fictício",
+          "numeroContrato": null,
+          "parcelaMensal": 480.25,
+          "parcelasAVencer": 0,
+          "parcelasEmAtraso": 0,
+          "parcelasPagas": 12,
+          "parcelasTotal": 12,
+          "periodicidade": "MENSAL",
+          "periodicidadeTaxa": "MENSAL",
+          "produto": "Crédito pessoal",
+          "proximoVencimento": null,
+          "quitado": true,
+          "saldoDevedor": 0.0,
+          "sistemaAmortizacao": null,
+          "taxaJuros": 0.0399,
+          "totalPago": 0.0,
+          "ultimoPagamento": null,
+          "valorContratado": 5000.0,
+          "valorParcela": 480.25
+        }
+      ],
+      "emprestimos": {
+        "contratosAbertos": 0,
+        "contratosQuitados": 1,
+        "natureza": 1,
+        "parcelaMensal": 0,
+        "parcelasEmAtraso": 0,
+        "saldoDevedor": 0,
+        "totalPago": 0.0,
+        "valorContratado": 0
+      },
+      "financiamentos": {
+        "contratosAbertos": 1,
+        "contratosQuitados": 0,
+        "natureza": 2,
+        "parcelaMensal": 1250.0,
+        "parcelasEmAtraso": 0,
+        "saldoDevedor": 28750.33,
+        "totalPago": 17000.0,
+        "valorContratado": 45000.0
+      },
+      "pagamentosPorMes": [
+        {
+          "ano": 2025,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 11
+        },
+        {
+          "ano": 2025,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 12
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 1
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 2
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 3
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 4
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 5
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 3250.0,
+          "mes": 6
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 7
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 8
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 9
+        },
+        {
+          "ano": 2026,
+          "emprestimos": 0,
+          "financiamentos": 1250.0,
+          "mes": 10
+        }
+      ]
+    }
+  },
+  {
+    "nome": "painel dos empréstimos sem login",
+    "requisicao": "GET /api/emprestimos",
+    "status": 401
+  }
+]

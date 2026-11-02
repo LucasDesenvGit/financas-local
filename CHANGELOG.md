@@ -2,10 +2,25 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.54.9] — 2026-11-01 · desenvolvimento
+## [2.57.1] — 2026-11-02 · desenvolvimento
 
 ### Correções
 - **Remover a conexão apaga mesmo tudo o que veio dela** (#575). Ao remover uma conexão em Configurações, o banco já apagava em cascata as contas, transações, faturas, investimentos e empréstimos dela, mas duas tabelas ficavam: o histórico dos investimentos (`HistoricoInvestimento`, sem chave estrangeira de propósito, para guardar o investimento resgatado) e o registro das sincronizações (`SincronizacaoLog`, que só perdia o vínculo). Agora a API apaga as duas junto, numa transação só, e o texto de privacidade (`docs/DADOS-PESSOAIS.md`) diz exatamente o que sai. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma, continua. Quem já removeu uma conexão antes continua com o que sobrou dela: a correção não limpa o que ficou de remoções antigas. O contrato ganha o `16-open-finance`, com a remoção. Manual: não se aplica (o Manual não detalha o que a remoção apaga, e a confirmação da tela continua certa).
+
+## [2.57.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Painel em Go** (#80, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/painel` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, `GET /api/painel` (saldos, dívidas dos cartões e dos financiamentos, investido, patrimônio com e sem renda variável, receitas e despesas de emergência do mês, orçamentos e os estourados, faturas do mês, últimas e próximas transações, evolução de 12 meses) e `GET /api/painel/avisos` (os alertas na mesma ordem do C#: contas vencidas, moedas sem cotação, contas em outra moeda, cobranças, reservas a conferir, conexões do Open Finance, erros do sistema e contratos em atraso, além das descrições pouco informativas). Os 10 casos do contrato `13-painel`, gravados do .NET, passam com o Go atendendo. Com as partes 1 e 2, todas as rotas da #80 estão em Go. Manual: não se aplica.
+
+## [2.56.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Relatórios do painel em Go** (#80, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/relatorios` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, as rotas de Relatórios que faltavam: despesas por categoria, fluxo mensal (com as despesas de emergência), a visão anual (resumo do ano, comparação com outro ano, anos disponíveis, despesas por natureza e a saúde financeira com o patrimônio da carteira, das reservas e do Open Finance), a projeção dos próximos meses (médias, parcelas futuras e faturas dos cartões do Open Finance) e as maiores despesas do período. Os 29 casos do contrato `14-relatorios`, gravados do .NET, passam com o Go atendendo. Manual: não se aplica.
+
+## [2.55.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Empréstimos e investimentos do Open Finance em Go** (#80, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar os prefixos `painel` e `investimentos`. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET: `GET /api/emprestimos` (os contratos com os totais de financiamentos e de empréstimos separados e os pagamentos dos últimos 12 meses, ADR 0014) e as 3 rotas de `/api/investimentos` (a lista com o saldo em reais, o histórico de rendimento mês a mês, ADR 0045, e o renomear). Os casos do contrato `15-emprestimos` e os novos de `11-investimentos`, gravados do .NET, passam com o Go atendendo. A gravação do histórico fica pronta para a sincronização do Open Finance (#83).
 
 ## [2.54.8] — 2026-11-01 · desenvolvimento
 
