@@ -179,18 +179,34 @@ func TestLigadas(t *testing.T) {
 	}
 }
 
-// Regra: a origem na tela de erros é a do .NET (RegistroErrosLoggerProvider.Origem): o câmbio em "Câmbio" e, desde a
-// #298, a cripto em "Cripto"; o resto em "Sistema".
+// Regra: a origem na tela de erros é a do .NET (RegistroErrosLoggerProvider.Origem): o câmbio em "Câmbio", a sincronização
+// (Servicos.Pluggy) em "Open Finance" e, desde a #298, a cripto em "Cripto"; o resto em "Sistema".
 func TestOrigemComoNoDotnet(t *testing.T) {
 	casos := []struct{ nome, origem string }{
 		{"o câmbio", "Câmbio"},
 		{"a cotação de criptomoedas", "Cripto"},
-		{"a sincronização", "Sistema"},
+		{"a sincronização", "Open Finance"},
+		{"outra tarefa", "Sistema"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			if got := origem(c.nome); got != c.origem {
 				t.Errorf("origem(%q) = %q, esperado %q", c.nome, got, c.origem)
+			}
+		})
+	}
+}
+
+// Regra: a mensagem da falha é a do .NET, e a da sincronização fala da verificação, que é o que a tarefa faz.
+func TestMensagemDeFalhaComoNoDotnet(t *testing.T) {
+	casos := []struct{ nome, mensagem string }{
+		{"o câmbio", "Falha na atualização automática do câmbio."},
+		{"a sincronização", "Falha na verificação da sincronização automática."},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			if got := mensagemDeFalha(c.nome); got != c.mensagem {
+				t.Errorf("mensagemDeFalha(%q) = %q, esperado %q", c.nome, got, c.mensagem)
 			}
 		})
 	}

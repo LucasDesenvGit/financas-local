@@ -35,6 +35,8 @@ const (
 	chaveClientSecret      = "Pluggy.ClientSecret"
 	chaveDiasRetroativos   = "Sincronizacao.DiasRetroativos"
 	chaveDiasPrimeiraCarga = "Sincronizacao.DiasPrimeiraCarga"
+	chaveHabilitada        = "Sincronizacao.Habilitada"
+	chaveIntervaloHoras    = "Sincronizacao.IntervaloHoras"
 	semCredenciais         = "Configure o Client ID e o Client Secret da Pluggy."
 )
 

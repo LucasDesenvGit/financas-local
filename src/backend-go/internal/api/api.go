@@ -49,9 +49,17 @@ type Dependencias struct {
 	Config  config.Config   // os appsettings (caminhos, padrões dos parâmetros)
 }
 
-// NovasRotas devolve o ServeMux com as rotas de todos os assuntos. Caminho sem rota recebe 404 sem corpo, como o
-// MapFallback("/api/{**caminho}") do .NET.
-func NovasRotas(d Dependencias) *http.ServeMux {
+// NovasRotas devolve o ServeMux com as rotas de todos os assuntos.
+func NovasRotas(d Dependencias) *http.ServeMux { return Montar(d).Rotas }
+
+// Montado é a API pronta: as rotas e o que uma tarefa em segundo plano divide com elas.
+type Montado struct {
+	Rotas         *http.ServeMux
+	Sincronizacao *sincronizacao.Servico // a mesma instância nas rotas e na tarefa, por causa da trava de uma rodada por vez
+}
+
+// Montar monta os assuntos. Caminho sem rota recebe 404 sem corpo, como o MapFallback("/api/{**caminho}") do .NET.
+func Montar(d Dependencias) Montado {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "0")
@@ -92,5 +100,5 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 	}
 	sincronia := sincronizacao.NovoServico(d.DB, cofre, clientePluggy, daCarteira, d.Relogio, d.Log)
 	openfinance.Registrar(mux, openfinance.NovoServico(d.DB, cofre, par, sincronia, cotacoesDaCarteira, d.Relogio, d.Log)) // #83: as rotas do Open Finance
-	return mux
+	return Montado{Rotas: mux, Sincronizacao: sincronia}
 }

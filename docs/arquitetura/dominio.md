@@ -8,7 +8,7 @@ Os estados pelos quais as coisas passam, as classes do centro do domínio e os t
 
 ### Conexão com a Pluggy
 
-**Onde está hoje:** .NET, em `Servicos/Pluggy/SincronizacaoService.cs` e `Controllers/OpenFinanceController.cs`.
+**Onde está hoje:** .NET, em `Servicos/Pluggy/SincronizacaoService.cs` e `Controllers/OpenFinanceController.cs`, até a troca dos segredos (#85). O Go já tem a mesma regra, desligada, em `internal/sincronizacao` e `internal/openfinance`.
 
 ```mermaid
 stateDiagram-v2
@@ -46,7 +46,7 @@ O sistema não decide o status: a cada sincronização, ele grava o que a Pluggy
 
 ### Transação
 
-**Onde está hoje:** a sincronização, em .NET (`Servicos/Pluggy/SincronizacaoService.cs`). A leitura e a edição, em Go (`internal/extrato`). Os acertos que a API faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em Go (`internal/categorizacao`, `internal/parcelas`, `internal/transferencias`, chamados por `internal/partida`, #444), ligados só com o Go na frente.
+**Onde está hoje:** a sincronização, em .NET (`Servicos/Pluggy/SincronizacaoService.cs`), até a troca dos segredos (#85), com a mesma regra pronta e desligada em `internal/sincronizacao`. A leitura e a edição, em Go (`internal/extrato`). Os acertos que a API faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em Go (`internal/categorizacao`, `internal/parcelas`, `internal/transferencias`, chamados por `internal/partida`, #444), ligados só com o Go na frente.
 
 ```mermaid
 stateDiagram-v2
