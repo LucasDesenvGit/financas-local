@@ -1,0 +1,26 @@
+{
+  "total": 1,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "inv-1",
+      "name": "FII FICTICIO",
+      "type": "EQUITY",
+      "subtype": "REAL_ESTATE_FUND",
+      "code": "FICT11",
+      "issuer": "FICTICIO FDO INV IMOB - FII",
+      "currencyCode": "BRL",
+      "balance": 1050.75,
+      "amountOriginal": 1000,
+      "amountProfit": 50.75,
+      "quantity": "10.5",
+      "annualRate": null,
+      "fixedAnnualRate": 12.5,
+      "dueDate": "2030-01-15T03:00:00.000Z",
+      "purchaseDate": null,
+      "issueDate": "2025-03-10T03:00:00.000Z",
+      "status": "ACTIVE"
+    }
+  ]
+}

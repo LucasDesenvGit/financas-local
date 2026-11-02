@@ -94,6 +94,13 @@ func somaDoEFCore(valores []tipos.Decimal) (soma tipos.Decimal, temLinhas bool) 
 	return total.NaEscalaDoBanco(), true
 }
 
+// SomaDoSumAsync é o SumAsync(t => (decimal?)t.Valor) ?? 0m do EF Core sobre uma consulta (sem GroupBy): o ef_sum do
+// SQLite devolve a soma no formato do banco, e o conjunto vazio também volta como "0.0" (contrato 13-painel: o mês
+// futuro e o mês sem emergência; e o total pago do contrato sem pagamento, 15-emprestimos).
+func SomaDoSumAsync(valores []tipos.Decimal) tipos.Decimal {
+	return somaOuZero(valores).NaEscalaDoBanco()
+}
+
 // somaOuZero é o "?? 0m" depois do SumAsync: sem linhas, o decimal 0 sem casas.
 func somaOuZero(valores []tipos.Decimal) tipos.Decimal {
 	soma, _ := somaDoEFCore(valores)

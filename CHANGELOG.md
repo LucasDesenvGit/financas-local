@@ -2,10 +2,40 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.54.9] — 2026-11-01 · desenvolvimento
+## [2.58.3] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação
 - **Privacidade e Manual de acordo com o que o sistema faz** (#575, seção 1 da varredura de 01/11/2026). O Manual passa a listar tudo o que sai do computador: o Mercado Bitcoin (cotação das criptomoedas, só os pares fixos), o token da brapi (quando você informou um) e o GitHub, que o gerenciador consulta para achar versão nova. Ele deixa de dizer "nunca nome ou CPF de terceiros": o nome não fica em campo próprio, mas a descrição vem do banco como está e costuma trazer o nome de quem pagou ou recebeu. Os avisos que foram para o sino (#327) deixam de aparecer como "o Painel avisa": consentimento vencendo, descrições pouco informativas, cobranças que não vieram, cartão arquivado e reservas para conferir; "Conhecendo a tela" ganha o sino. Cópia do banco, restauração, atualização e problemas comuns passam a ter os passos pelo gerenciador, para quem instalou pelo `.msi`, além dos scripts. Seção nova "Fonte das cotações e token da brapi", em Investimentos. A Segurança do Manual lista tudo o que a auditoria registra. Em `docs/`: o `DADOS-PESSOAIS.md` ganha "Seu nome nos Pix" e diz onde se informa o token da brapi; o `SEGURANCA.md` diz que o token vai no cabeçalho `Authorization`, que o bloqueio do login se ajusta em Parametrização e onde fica a pasta `dados` em cada jeito de instalar; o `MODELO-DE-AMEACAS.md` acompanha a auditoria, o bloqueio e a pasta `dados`.
+
+## [2.58.2] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Documentação do Go e das skills de acordo com o código** (#575, seção 4 da varredura de 01/11/2026). A skill `migrar-para-go` manda arredondar com `tipos.Arredondar`, e não com o `RoundBank` do `shopspring/decimal`, que mexe na escala e muda o JSON, e passa a citar o `tipos.Dividir` para a divisão; a cascata ao apagar se confere no `01-estrutura.sql` e no `FinancasDbContext.cs`, e não numa tabela da #74 que não está no repositório. A revisão da `go-no-projeto` põe o `float64`, o `time.Now()` e o `time.Sleep` entre o que a CI já pega (#457), e pacote novo passa a pedir 80% de cobertura e um lugar numa das listas de mutação (#456). O README do Go ganha os pacotes que faltavam na tabela (contas a pagar, orçamentos, metas, conferência com o banco, cobranças, partida, erros e o teste de arquitetura), as 18 rotas da carteira, o Go sozinho como ele é hoje (com login e todas as rotas) e o job "Go (Windows)". O README do contrato lista os arquivos 08, 09 e 10; o exemplo do `testeapoio` usa um `Registrar` que existe; o do gerenciador cita os `foco_*.go`; o `CLAUDE.md` diz o que o agente `dev-go` carrega. Manual: não se aplica.
+
+## [2.58.1] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Remover a conexão apaga mesmo tudo o que veio dela** (#575). Ao remover uma conexão em Configurações, o banco já apagava em cascata as contas, transações, faturas, investimentos e empréstimos dela, mas duas tabelas ficavam: o histórico dos investimentos (`HistoricoInvestimento`, sem chave estrangeira de propósito, para guardar o investimento resgatado) e o registro das sincronizações (`SincronizacaoLog`, que só perdia o vínculo). Agora a API apaga as duas junto, numa transação só, e o texto de privacidade (`docs/DADOS-PESSOAIS.md`) diz exatamente o que sai. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma, continua. Quem já removeu uma conexão antes continua com o que sobrou dela: a correção não limpa o que ficou de remoções antigas. O contrato ganha o `16-open-finance`, com a remoção. Manual: não se aplica (o Manual não detalha o que a remoção apaga, e a confirmação da tela continua certa).
+
+## [2.58.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Cliente da Pluggy em Go** (#83, parte 1 de 5; épico #70). Nada muda para quem usa: o pacote `internal/pluggy` ainda não tem rota nem é chamado por ninguém. É a base da sincronização em Go, com as mesmas tentativas e mensagens do .NET, e não segue redirecionamento para fora do host configurado, para a API key não sair dele.
+
+## [2.57.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Painel em Go** (#80, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/painel` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, `GET /api/painel` (saldos, dívidas dos cartões e dos financiamentos, investido, patrimônio com e sem renda variável, receitas e despesas de emergência do mês, orçamentos e os estourados, faturas do mês, últimas e próximas transações, evolução de 12 meses) e `GET /api/painel/avisos` (os alertas na mesma ordem do C#: contas vencidas, moedas sem cotação, contas em outra moeda, cobranças, reservas a conferir, conexões do Open Finance, erros do sistema e contratos em atraso, além das descrições pouco informativas). Os 10 casos do contrato `13-painel`, gravados do .NET, passam com o Go atendendo. Com as partes 1 e 2, todas as rotas da #80 estão em Go. Manual: não se aplica.
+
+## [2.56.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Relatórios do painel em Go** (#80, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/relatorios` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, as rotas de Relatórios que faltavam: despesas por categoria, fluxo mensal (com as despesas de emergência), a visão anual (resumo do ano, comparação com outro ano, anos disponíveis, despesas por natureza e a saúde financeira com o patrimônio da carteira, das reservas e do Open Finance), a projeção dos próximos meses (médias, parcelas futuras e faturas dos cartões do Open Finance) e as maiores despesas do período. Os 29 casos do contrato `14-relatorios`, gravados do .NET, passam com o Go atendendo. Manual: não se aplica.
+
+## [2.55.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Empréstimos e investimentos do Open Finance em Go** (#80, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar os prefixos `painel` e `investimentos`. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET: `GET /api/emprestimos` (os contratos com os totais de financiamentos e de empréstimos separados e os pagamentos dos últimos 12 meses, ADR 0014) e as 3 rotas de `/api/investimentos` (a lista com o saldo em reais, o histórico de rendimento mês a mês, ADR 0045, e o renomear). Os casos do contrato `15-emprestimos` e os novos de `11-investimentos`, gravados do .NET, passam com o Go atendendo. A gravação do histórico fica pronta para a sincronização do Open Finance (#83).
 
 ## [2.54.8] — 2026-11-01 · desenvolvimento
 
