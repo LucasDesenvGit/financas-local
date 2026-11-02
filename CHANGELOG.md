@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.67.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **O instalador `.msi` é gerado sem o SDK do .NET para o WiX** (#446; épico #70; ADR 0029). A CI instala o WiX 5.0.2 pelo `.msi` do próprio WiX, conferido pelo SHA-256, e não mais pelo `dotnet tool`. O SDK do .NET só continua na CI enquanto o pacote levar a API em .NET, até a inversão (#85).
+
 ## [2.67.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades

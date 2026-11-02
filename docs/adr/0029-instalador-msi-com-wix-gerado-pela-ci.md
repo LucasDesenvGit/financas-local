@@ -166,3 +166,15 @@ A #277 pedia para decidir três pontos. *Julgamento de quem fez a #277, não con
 
 **Medidas** (o runner do Windows, não um computador de uso; para comparar versões): o `.msi` caiu de 57 MB para 53 MB com o gerenciador em Go (parte 2). O workflow "Versão (instalador .msi)" escreve no log, a cada execução, o tamanho do `.msi` e da pasta instalada e a memória da API e do Go nos dois pacotes, o de hoje e o "só Go" (linhas `TAMANHO` e `MEMORIA`). Os números de cada versão vão no épico #70.
 
+## Atualização de 2026-11-02: o WiX sem o SDK do .NET (issue #446)
+
+**Decisão (do usuário, 02/11):** o WiX 5.0.2 passa a vir do `.msi` do próprio CLI (`wix-cli-x64.msi`, no GitHub Releases do WiX), e não do `dotnet tool install`. Esse `.msi` instala a compilação **net472** do `wix.exe`, que roda no **.NET Framework 4.7.2** do próprio Windows (Windows 10 1803 em diante), sem o SDK nem o runtime do .NET moderno, e já traz as extensões `UI` e `Util`. Isso foi conferido no código-fonte do WiX: [`src/setup/wix-cli/wix-cli.wixproj`](https://github.com/wixtoolset/wix/blob/v5.0.2/src/setup/wix-cli/wix-cli.wixproj) e [`Package.wxs`](https://github.com/wixtoolset/wix/blob/v5.0.2/src/setup/wix-cli/Package.wxs).
+
+- **No `versao.yml`:** o passo "WiX" baixa o arquivo da versão fixada (`WIX_VERSAO`) e confere o SHA-256 (`WIX_SHA256`, o mesmo do `wix-cli-x64.metadata.json` que o WiX publica junto). Depois instala com `msiexec /qn` e põe a pasta do `wix.exe` (a variável `WIX5` que o `.msi` grava) no PATH dos passos seguintes.
+- **Alternativas descartadas:**
+  - manter o `dotnet tool` (o SDK do .NET ficaria na CI só por causa do WiX);
+  - outra ferramenta de `.msi` (reescrever o `.wxs`, com dependência nova e sem ganho).
+- **Ficamos no WiX 5.0.2.** O 6 e o 7 também publicam o `wix-cli-x64.msi`, mas subir de versão é outra decisão. *Inferido, não conferido:* desde o WiX 6, o projeto pede uma taxa de manutenção (OSMF) a quem ganha dinheiro com ele.
+- **O que ainda fica de `dotnet` no workflow "Versão"** (a resposta que a #86 pede): o `setup-dotnet` continua enquanto o pacote publicado levar a API em .NET. O `gerar-msi.ps1` sem `-SoGo` ainda roda o `dotnet publish`. Ele sai na inversão (#85), quando o pacote publicado passar a ser o "só Go", e o resto do C# sai na #86. O WiX não precisa mais dele.
+- **Consequência negativa:** trocar a versão do WiX pede atualizar o `WIX_SHA256` à mão, com o valor do `wix-cli-x64.metadata.json` da versão nova.
+
