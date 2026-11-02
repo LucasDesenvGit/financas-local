@@ -23,6 +23,7 @@ concurrency:
 
 env:
   WIX_VERSAO: "5.0.2"
+  WIX_SHA256: "097383B2773BDD3D76A6A2CD3F4DE6357BAE59172E1B6FA5AD87CE062074E8D0"
   SITE: https://127.0.0.1:5443
 
 jobs:
@@ -93,11 +94,23 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\instalador\configurar.ps1", [ref]$null, [ref]$erros) | Out-Null
           if (@($erros).Count) { $erros | ForEach-Object { "linha $($_.Extent.StartLineNumber): $($_.Message)" }; exit 1 }
 
+      # #446 (ADR 0029): o WiX pelo .msi do próprio CLI (a compilação net472, que roda no .NET Framework do Windows, com
+      # as extensões UI e Util dentro), e não pelo dotnet tool: gerar o .msi não precisa do SDK do .NET. O arquivo é o
+      # do GitHub Releases do WiX, conferido pelo SHA-256 fixado (o mesmo do wix-cli-x64.metadata.json da versão).
       - name: WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix --version $env:WIX_VERSAO
-          wix extension add -g "WixToolset.UI.wixext/$env:WIX_VERSAO" "WixToolset.Util.wixext/$env:WIX_VERSAO"
+          $msi = Join-Path $env:RUNNER_TEMP "wix-cli-x64.msi"
+          Invoke-WebRequest "https://github.com/wixtoolset/wix/releases/download/v$env:WIX_VERSAO/wix-cli-x64.msi" -OutFile $msi
+          $hash = (Get-FileHash $msi -Algorithm SHA256).Hash
+          if ($hash -ne $env:WIX_SHA256) { throw "o wix-cli-x64.msi baixado ($hash) não confere com o SHA-256 fixado" }
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v wix-cli.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja wix-cli.log)" }
+          # O .msi grava a pasta do wix.exe no PATH da máquina e em WIX5; o passo seguinte só vê pelo GITHUB_PATH.
+          $pasta = [Environment]::GetEnvironmentVariable("WIX5", "Machine")
+          if (-not $pasta -or -not (Test-Path (Join-Path $pasta "wix.exe"))) { throw "wix.exe não encontrado (WIX5=$pasta)" }
+          $pasta >> $env:GITHUB_PATH
+          & (Join-Path $pasta "wix.exe") --version
 
       - name: Gerar o .msi
         shell: pwsh
