@@ -135,6 +135,7 @@ var dependencias = []struct {
 		"internal/reservas", "internal/transacoes"},
 		"as rotas da entrada painel (#80): o painel junta o resumo e os avisos de cada assunto (contas, carteira, contas a pagar, faturas, reservas)"},
 	{"internal/parcelas", nil, "parcelas de compras no cartão"},
+	{"internal/pluggy", nil, "cliente HTTP da Pluggy (ADR 0006); não grava no banco"},
 	{"internal/poucoinformativa", nil, "descrição que não diz nada"},
 	{"internal/regrasdescricao", []string{"internal/categorizacao", "internal/transacoes"},
 		"a regra de descrição renomeia a transação e recategoriza"},

@@ -1,0 +1,9 @@
+{
+  "id": "item-ficticio-1",
+  "connector": { "id": 612, "name": "Banco Fictício", "primaryColor": "EF3E42", "isOpenFinance": true },
+  "status": "UPDATED",
+  "executionStatus": "SUCCESS",
+  "lastUpdatedAt": "2026-10-14T10:30:00.000Z",
+  "consentExpiresAt": "2027-04-14T10:30:00.000Z",
+  "error": { "code": "000", "message": "Instabilidade na instituição" }
+}

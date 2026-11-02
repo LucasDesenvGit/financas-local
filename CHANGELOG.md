@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.58.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Cliente da Pluggy em Go** (#83, parte 1 de 5; épico #70). Nada muda para quem usa: o pacote `internal/pluggy` ainda não tem rota nem é chamado por ninguém. É a base da sincronização em Go, com as mesmas tentativas e mensagens do .NET, e não segue redirecionamento para fora do host configurado, para a API key não sair dele.
+
 ## [2.57.0] — 2026-11-01 · desenvolvimento
 
 ### Funcionalidades
