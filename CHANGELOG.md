@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.62.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O Go pronto para rodar como serviço e gerar o próprio certificado** (#84, parte 1; épico #70). Nada muda para quem usa: o serviço continua sendo o .NET, e os scripts ainda não usam isso. No Windows, o executável agora conversa com o gerenciador de serviços e escreve avisos e erros no Log de Eventos. O subcomando `gerar-certificado` reaproveita o `.pfx` que ainda vale e gera outro quando faltam 30 dias, com a parte pública num `.pem` ao lado.
+
 ## [2.61.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
