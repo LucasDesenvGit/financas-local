@@ -41,7 +41,7 @@ O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CON
 Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS, cookies `__Host-`. O .NET (`src/backend/Financas.Api`) fica na frente e repassa ao Go (`src/backend-go`) os prefixos migrados; controllers, serviços e pastas estão em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
 - **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
-- **Gerenciador** (`src/gerenciador/`, janela do Windows e do Linux): texto ou ação nova vai nas duas janelas.
+- **Gerenciador** (`src/gerenciador/`, janela do Windows e do Linux, em C#; e `src/gerenciador-go/`, o que vai substituir os dois, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): texto ou ação nova vai nas duas janelas e no gerenciador em Go.
 
 ## Banco (sem migrations, SQLite)
 
@@ -49,7 +49,7 @@ Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS
 - **Coluna nova numa tabela existente:** `adicionar_coluna_se_ausente` em `scripts/geral/2-criar-banco.sh`, não no SQL. Uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
 - **Mudou a estrutura:** `Entidades/` + `FinancasDbContext.cs` (em sincronia manual com o SQL), `2-criar-banco.sh`, `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 - **Dado pessoal novo:** tabela ou coluna com dado pessoal, ou dado novo que sai do computador, entra em [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md) no mesmo PR.
-- **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação", que seguem o guia (#468).
+- **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação" (#468) e "Versão (instalador .msi)" (#527), que seguem o guia.
 - **Scripts (#154):** `scripts/geral/` é o bash dos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/ci/`, o que só a CI usa; os `.cmd` na raiz. Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa); serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
 
 ## Decisões de arquitetura (ADRs) — obrigatório
