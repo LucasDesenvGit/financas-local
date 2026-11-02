@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -475,6 +476,37 @@ func TestStatus(t *testing.T) {
 		`{"ultimaSincronizacao":"2026-10-14T09:00:00Z","emExecucao":true,"conexoesAtivas":8,"conexoesComErro":3,"consentimentosVencendo":2}`)
 }
 
+// Regra: a mesma do Painel. Uma conexão por caso: na soma, uma condição invertida compensa a outra.
+func TestStatusConexaoComErro(t *testing.T) {
+	casos := []struct {
+		nome   string
+		erro   *string
+		status *string
+		conta  int
+	}{
+		{"sem nada", nil, nil, 0},
+		{"tudo certo", nil, p("UPDATED"), 0},
+		{"erro gravado", p("falhou"), nil, 1},
+		{"erro vazio", p(""), nil, 0},
+		{"LOGIN_ERROR", nil, p("LOGIN_ERROR"), 1},
+		{"WAITING_USER_ACTION", nil, p("WAITING_USER_ACTION"), 1},
+		{"WAITING_USER_INPUT não conta, como no .NET (#532)", nil, p("WAITING_USER_INPUT"), 0},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			c.fab.ConexaoBancaria(func(k *testeapoio.ConexaoBancaria) { k.UltimoErro, k.Status = caso.erro, caso.status })
+			var d statusDto
+			if err := json.Unmarshal(c.chamar(t, "GET", "/api/open-finance/status", "").Corpo, &d); err != nil {
+				t.Fatal(err)
+			}
+			if d.ConexoesComErro != caso.conta || d.ConexoesAtivas != 1 {
+				t.Errorf("com erro %d de %d, esperado %d de 1", d.ConexoesComErro, d.ConexoesAtivas, caso.conta)
+			}
+		})
+	}
+}
+
 func TestStatusDataSemFusoViraUTC(t *testing.T) {
 	c := novoCenario(t)
 	c.definir(t, configuracao.UltimaSincronizacaoGeral, "2026-10-14 06:00:00")
@@ -486,7 +518,8 @@ func TestLogs(t *testing.T) {
 	c := novoCenario(t)
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/logs", "").Corpo, `[]`)
 
-	k := c.fab.ConexaoBancaria(func(k *testeapoio.ConexaoBancaria) { k.NomeInstituicao = p("Instituição") })
+	k := c.fab.ConexaoBancaria(func(k *testeapoio.ConexaoBancaria) { k.NomeInstituicao = p("MeuPluggy") })
+	c.fab.Conta(func(ct *testeapoio.Conta) { ct.ConexaoBancariaId, ct.Banco = &k.Id, p("nubank") })
 	inserir := func(conexao *int64, mensagem *string, sucesso bool) {
 		if _, err := c.db.Exec(`INSERT INTO "SincronizacaoLog" ("ConexaoBancariaId", "Origem", "IniciadoEm", "FinalizadoEm", "Sucesso",
 			"TransacoesNovas", "TransacoesAtualizadas", "Mensagem") VALUES (?, 'Manual', '2026-10-14 09:00:00', '2026-10-14 09:00:37.5', ?, 4, 2, ?)`,
@@ -515,7 +548,7 @@ func TestLogs(t *testing.T) {
 		t.Errorf("log sem conexão = %+v", primeiro)
 	}
 	segundo := lista[1]
-	if *segundo.ConexaoBancariaId != k.Id || segundo.NomeInstituicao == nil || !segundo.Sucesso || segundo.Origem != "Manual" ||
+	if *segundo.ConexaoBancariaId != k.Id || *segundo.NomeInstituicao != "Nubank" || !segundo.Sucesso || segundo.Origem != "Manual" ||
 		segundo.TransacoesNovas != 4 || segundo.TransacoesAtualizadas != 2 || segundo.Mensagem != nil {
 		t.Errorf("log = %+v", segundo)
 	}
@@ -674,6 +707,19 @@ func TestMapearCategoria(t *testing.T) {
 		m.c.chamar(t, "PUT", "/api/open-finance/categorias/pai", corpo)
 		testeapoio.ConferirJSON(t, m.c.chamar(t, "PUT", "/api/open-finance/categorias/pai", corpo).Corpo, `{"transacoesAtualizadas":0}`)
 	})
+	t.Run("a que já está certa não interrompe as seguintes", func(t *testing.T) {
+		c := novoCenario(t)
+		minha := c.fab.Categoria(func(k *testeapoio.Categoria) { k.Nome = "Mercado" })
+		c.categoriaPluggy(t, "pai", "Pai", nil, nil, nil)
+		conta := c.fab.Conta()
+		c.fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.PluggyCategoriaId, tr.CategoriaId = p("pai"), &minha.Id })
+		depois := c.fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.PluggyCategoriaId = p("pai") }).Id
+		r := c.chamar(t, "PUT", "/api/open-finance/categorias/pai", fmt.Sprintf(`{"categoriaId":%d,"aplicarExistentes":true}`, minha.Id))
+		testeapoio.ConferirJSON(t, r.Corpo, `{"transacoesAtualizadas":1}`)
+		if k := categoriaDe(t, c, depois); k == nil || *k != minha.Id {
+			t.Errorf("a transação seguinte ficou com a categoria %v", k)
+		}
+	})
 	t.Run("aplicando acerta as transferências", func(t *testing.T) {
 		c := novoCenario(t)
 		generica := c.fab.Categoria(func(k *testeapoio.Categoria) { k.Nome, k.Tipo = "Transferências", transacoes.Transferencia })
@@ -717,16 +763,29 @@ func TestBancoForaDoAr(t *testing.T) {
 	}
 }
 
-// Regra: requisição cancelada não responde nem registra.
-func TestErroInternoCancelado(t *testing.T) {
-	c := novoCenario(t)
-	ctx, cancelar := context.WithCancel(t.Context())
+// Regra: requisição cancelada não responde nem registra, venha o cancelamento pelo erro ou pelo contexto.
+func TestErroInterno(t *testing.T) {
+	cancelado, cancelar := context.WithCancel(t.Context())
 	cancelar()
-	w := httptest.NewRecorder()
-	r := httptest.NewRequestWithContext(ctx, "GET", "/", nil)
-	c.s.erroInterno(w, r, "teste", context.Canceled)
-	if w.Body.Len() != 0 || w.Code != 200 {
-		t.Errorf("respondeu %d: %s", w.Code, w.Body)
+	casos := []struct {
+		nome   string
+		ctx    context.Context
+		err    error
+		status int
+	}{
+		{"erro de cancelamento", t.Context(), context.Canceled, 200},
+		{"contexto cancelado", cancelado, errors.New("outro"), 200},
+		{"erro de verdade", t.Context(), errors.New("outro"), 500},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			w := httptest.NewRecorder()
+			c.s.erroInterno(w, httptest.NewRequestWithContext(caso.ctx, "GET", "/", nil), "teste", caso.err)
+			if w.Code != caso.status {
+				t.Errorf("status = %d, esperado %d", w.Code, caso.status)
+			}
+		})
 	}
 }
 

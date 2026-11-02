@@ -116,11 +116,23 @@
       "corpo": { "categoriaId": null }
     },
     {
-      "nome": "aplicar nas transações existentes",
-      "comentario": "Reaplica as regras nas automáticas da categoria e das subcategorias.",
+      "nome": "aplicar sem transação na categoria",
       "metodo": "PUT",
       "caminho": "/api/open-finance/categorias/05000000",
       "corpo": { "categoriaId": null, "aplicarExistentes": true }
+    },
+    {
+      "nome": "aplicar nas transações existentes",
+      "comentario": "A transação da categoria 19050000 sai de Restaurantes para Mercado: entram a categoria, o tipo e o AtualizadoEm.",
+      "metodo": "PUT",
+      "caminho": "/api/open-finance/categorias/19050000",
+      "corpo": { "categoriaId": 2, "aplicarExistentes": true }
+    },
+    {
+      "nome": "aplicar de novo não muda nada",
+      "metodo": "PUT",
+      "caminho": "/api/open-finance/categorias/19050000",
+      "corpo": { "categoriaId": 2, "aplicarExistentes": true }
     },
     { "nome": "categorias depois de mapear", "metodo": "GET", "caminho": "/api/open-finance/categorias" }
   ]
