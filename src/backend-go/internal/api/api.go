@@ -24,8 +24,10 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cripto"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/extrato"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/investimentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/metas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/orcamentos"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/painel"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
@@ -78,5 +80,7 @@ func NovasRotas(d Dependencias) *http.ServeMux {
 		cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log), cofre, d.Relogio, d.Log)
 	carteira.Registrar(mux, daCarteira)                                                                                                     // #82: a carteira
 	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
+	investimentos.Registrar(mux, investimentos.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log))                                       // #80: os do Open Finance
+	painel.Registrar(mux, painel.NovoServico(d.DB, d.Relogio, d.Log))                                                                       // #80: empréstimos
 	return mux
 }

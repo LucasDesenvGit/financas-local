@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.55.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Empréstimos e investimentos do Open Finance em Go** (#80, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar os prefixos `painel` e `investimentos`. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET: `GET /api/emprestimos` (os contratos com os totais de financiamentos e de empréstimos separados e os pagamentos dos últimos 12 meses, ADR 0014) e as 3 rotas de `/api/investimentos` (a lista com o saldo em reais, o histórico de rendimento mês a mês, ADR 0045, e o renomear). Os casos do contrato `15-emprestimos` e os novos de `11-investimentos`, gravados do .NET, passam com o Go atendendo. A gravação do histórico fica pronta para a sincronização do Open Finance (#83).
+
 ## [2.54.8] — 2026-11-01 · desenvolvimento
 
 ### Correções

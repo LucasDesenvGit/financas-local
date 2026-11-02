@@ -3541,5 +3541,258 @@
     "nome": "painel dos FIIs sem login",
     "requisicao": "GET /api/carteira/fiis",
     "status": 401
+  },
+  {
+    "nome": "investimentos do Open Finance",
+    "requisicao": "GET /api/investimentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "atualizadoEm": "2026-10-14T09:00:00",
+        "codigo": null,
+        "dataVencimento": "2028-11-07",
+        "emissor": "Banco Fictício",
+        "id": 1,
+        "moeda": "BRL",
+        "nome": "CDB Banco Fictício 110% CDI",
+        "nomeExibicao": "CDB Banco Fictício 110% CDI",
+        "nomeInstituicao": "Banco Fictício",
+        "nomePersonalizado": null,
+        "rendimento": 873.42,
+        "saldo": 12873.42,
+        "saldoEmReais": 12873.42,
+        "status": "ACTIVE",
+        "subtipo": "CDB",
+        "taxaAnual": 110.0,
+        "tipo": "FIXED_INCOME",
+        "valorAplicado": 12000.0
+      },
+      {
+        "atualizadoEm": "2026-10-14T09:00:00",
+        "codigo": null,
+        "dataVencimento": null,
+        "emissor": null,
+        "id": 2,
+        "moeda": "BRL",
+        "nome": "Fundo DI Fictício",
+        "nomeExibicao": "Fundo DI Fictício",
+        "nomeInstituicao": "Banco Fictício",
+        "nomePersonalizado": null,
+        "rendimento": 30.07,
+        "saldo": 2530.07,
+        "saldoEmReais": 2530.07,
+        "status": "ACTIVE",
+        "subtipo": "INVESTMENT_FUND",
+        "taxaAnual": null,
+        "tipo": "MUTUAL_FUND",
+        "valorAplicado": 2500.0
+      }
+    ]
+  },
+  {
+    "nome": "histórico dos investimentos",
+    "requisicao": "GET /api/investimentos/historico",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "desde": "2026-05-31",
+      "meses": [
+        {
+          "ano": 2026,
+          "desde": "2026-05-31",
+          "mes": 5,
+          "porInvestimento": [
+            {
+              "nome": "LCI Fictícia (resgatada)",
+              "rendimento": 0.0,
+              "saldo": 3050.0
+            }
+          ],
+          "rendimento": 0.0,
+          "saldo": 3050.0
+        },
+        {
+          "ano": 2026,
+          "desde": null,
+          "mes": 8,
+          "porInvestimento": [
+            {
+              "nome": "CDB Banco Fictício 110% CDI",
+              "rendimento": 0.0,
+              "saldo": 12510.2
+            }
+          ],
+          "rendimento": 0.0,
+          "saldo": 12510.2
+        },
+        {
+          "ano": 2026,
+          "desde": null,
+          "mes": 9,
+          "porInvestimento": [
+            {
+              "nome": "CDB Banco Fictício 110% CDI",
+              "rendimento": 178.53,
+              "saldo": 12688.73
+            }
+          ],
+          "rendimento": 178.53,
+          "saldo": 12688.73
+        },
+        {
+          "ano": 2026,
+          "desde": null,
+          "mes": 10,
+          "porInvestimento": [
+            {
+              "nome": "CDB Banco Fictício 110% CDI",
+              "rendimento": -815.31,
+              "saldo": 12873.42
+            }
+          ],
+          "rendimento": -815.31,
+          "saldo": 12873.42
+        }
+      ]
+    }
+  },
+  {
+    "nome": "renomear um investimento",
+    "requisicao": "PUT /api/investimentos/1/nome",
+    "status": 204,
+    "banco": {
+      "Investimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "NomePersonalizado": {
+                "antes": null,
+                "depois": "Caixinha do CDB"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "investimentos com o nome novo",
+    "requisicao": "GET /api/investimentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "atualizadoEm": "2026-10-14T09:00:00",
+        "codigo": null,
+        "dataVencimento": "2028-11-07",
+        "emissor": "Banco Fictício",
+        "id": 1,
+        "moeda": "BRL",
+        "nome": "CDB Banco Fictício 110% CDI",
+        "nomeExibicao": "Caixinha do CDB",
+        "nomeInstituicao": "Banco Fictício",
+        "nomePersonalizado": "Caixinha do CDB",
+        "rendimento": 873.42,
+        "saldo": 12873.42,
+        "saldoEmReais": 12873.42,
+        "status": "ACTIVE",
+        "subtipo": "CDB",
+        "taxaAnual": 110.0,
+        "tipo": "FIXED_INCOME",
+        "valorAplicado": 12000.0
+      },
+      {
+        "atualizadoEm": "2026-10-14T09:00:00",
+        "codigo": null,
+        "dataVencimento": null,
+        "emissor": null,
+        "id": 2,
+        "moeda": "BRL",
+        "nome": "Fundo DI Fictício",
+        "nomeExibicao": "Fundo DI Fictício",
+        "nomeInstituicao": "Banco Fictício",
+        "nomePersonalizado": null,
+        "rendimento": 30.07,
+        "saldo": 2530.07,
+        "saldoEmReais": 2530.07,
+        "status": "ACTIVE",
+        "subtipo": "INVESTMENT_FUND",
+        "taxaAnual": null,
+        "tipo": "MUTUAL_FUND",
+        "valorAplicado": 2500.0
+      }
+    ]
+  },
+  {
+    "nome": "renomear com nome longo demais",
+    "requisicao": "PUT /api/investimentos/1/nome",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "O nome pode ter até 120 caracteres."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "renomear o que não existe",
+    "requisicao": "PUT /api/investimentos/9999/nome",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Investimento não encontrado."
+    }
+  },
+  {
+    "nome": "renomear com id que não é número",
+    "requisicao": "PUT /api/investimentos/abc/nome",
+    "status": 404
+  },
+  {
+    "nome": "renomear sem login",
+    "requisicao": "PUT /api/investimentos/1/nome",
+    "status": 401
+  },
+  {
+    "nome": "voltar ao nome automático",
+    "requisicao": "PUT /api/investimentos/1/nome",
+    "status": 204,
+    "banco": {
+      "Investimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "NomePersonalizado": {
+                "antes": "Caixinha do CDB",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "investimentos sem login",
+    "requisicao": "GET /api/investimentos",
+    "status": 401
+  },
+  {
+    "nome": "histórico sem login",
+    "requisicao": "GET /api/investimentos/historico",
+    "status": 401
   }
 ]
