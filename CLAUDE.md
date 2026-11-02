@@ -95,7 +95,7 @@ Conventional Commits em português (fluxo de branches, comandos e Project em [CO
 - `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) → o número do meio (2.2.0 → 2.3.0);
 - `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` → o último (2.2.0 → 2.2.1);
 - quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
-- Outro PR subiu antes? `git merge origin/develop`, pegue a maior e suba de novo. Diga ao usuário, no fim, de qual para qual versão foi.
+- Outro PR subiu antes? `scripts/geral/atualizar-pr.sh <PR>` traz o `develop` e resolve a versão e o CHANGELOG (#587); conflito em outro arquivo, `git merge origin/develop` à mão. Diga ao usuário, no fim, de qual para qual versão foi.
 
 **`CHANGELOG.md`: uma seção por versão** (#294). A entrada de um PR vai na seção da versão dele: `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se não existir, **dentro** do `### Funcionalidades`/`### Correções`/`### Publicação e documentação` que já existe nela (nunca outro título de mesmo tipo). Ao trazer o `develop` e subir a versão de novo, **mova a entrada para a seção da versão nova**. Antes do push, rode `python3 scripts/ci/verificar-changelog.py` (`--corrigir` junta tipos repetidos). As notas das versões e a janela "O que mudou" do gerenciador saem dele: seção errada vira nota errada para quem atualiza.
 
