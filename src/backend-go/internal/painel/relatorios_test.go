@@ -19,7 +19,6 @@ import (
 
 func dec(s string) tipos.Decimal { return testeapoio.Valor(s) }
 
-
 type composicaoFalsa struct {
 	c   carteira.Composicao
 	err error
@@ -123,6 +122,7 @@ func TestValidacoesDaQuery(t *testing.T) {
 		"/api/relatorios/categorias", "/api/relatorios/fluxo?inicio=2026-01-01&fim=2026-03-31",
 		"/api/relatorios/projecao?meses=1", "/api/relatorios/projecao?meses=24", "/api/relatorios/projecao",
 		"/api/relatorios/anual?ano=2025&comparar=2000", "/api/relatorios/anual?ano=&comparar=",
+		"/api/relatorios/anual?ano=2000&comparar=2100", "/api/relatorios/anual?ano=2100&comparar=2000",
 		"/api/relatorios/maiores-despesas?inicio=2026-01-01&fim=2026-01-01",
 	} {
 		if r := testeapoio.Chamar(t, c.mux, "GET", caminho, ""); r.Status != 200 {
@@ -141,18 +141,20 @@ func TestPatrimonio(t *testing.T) {
 	saldo := func(v string) func(*testeapoio.Conta) {
 		return func(conta *testeapoio.Conta) { conta.SaldoInicial = dec(v) }
 	}
+	// O cartão gravado antes das contas: a conta depois dele também entra.
+	c.fab.Conta(func(conta *testeapoio.Conta) { conta.Tipo, conta.SaldoInicial = tipoContaCartao, dec("-300.0") })
 	c.fab.Conta(saldo("1000.0"))
 	c.fab.Conta(saldo("-200.0"))
-	c.fab.Conta(func(conta *testeapoio.Conta) { conta.Tipo, conta.SaldoInicial = tipoContaCartao, dec("-300.0") })
 	c.fab.Conta(func(conta *testeapoio.Conta) { conta.Tipo, conta.SaldoInicial = tipoContaCartao, dec("50.0") })
 	c.fab.Conta(func(conta *testeapoio.Conta) { conta.SaldoInicial, conta.Arquivada = dec("999.0"), true })
 	c.fab.Conta(func(conta *testeapoio.Conta) { conta.SaldoInicial, conta.IncluirNoSaldo = dec("888.0"), false })
 	ativa := c.fab.ConexaoBancaria()
 	inativa := c.fab.ConexaoBancaria(func(x *testeapoio.ConexaoBancaria) { x.Ativa = false })
+	// A ação gravada antes: a renda fixa depois dela também entra na reserva.
+	c.fab.Investimento(ativa, func(i *testeapoio.Investimento) { i.Tipo, i.Saldo = "equity", dec("70.0") })
 	c.fab.Investimento(ativa, func(i *testeapoio.Investimento) { i.Tipo, i.Saldo = "FIXED_INCOME", dec("40.0") })
 	c.fab.Investimento(ativa, func(i *testeapoio.Investimento) { i.Tipo, i.Moeda, i.Saldo = "FIXED_INCOME", "USD", dec("2.0") })
 	c.fab.Investimento(ativa, func(i *testeapoio.Investimento) { i.Tipo, i.Moeda, i.Saldo = "FIXED_INCOME", "GBP", dec("7.0") })
-	c.fab.Investimento(ativa, func(i *testeapoio.Investimento) { i.Tipo, i.Saldo = "equity", dec("70.0") })
 	c.fab.Investimento(inativa, func(i *testeapoio.Investimento) { i.Tipo, i.Saldo = "FIXED_INCOME", dec("60.0") })
 	c.fab.Emprestimo(ativa, func(e *testeapoio.Emprestimo) { e.Natureza, e.SaldoDevedor = 2, dec("15.0") })
 	c.fab.Emprestimo(ativa, func(e *testeapoio.Emprestimo) { e.SaldoDevedor = dec("5.0") })
@@ -222,4 +224,3 @@ func TestErrosDosRelatorios(t *testing.T) {
 		}
 	}
 }
-

@@ -243,7 +243,8 @@ func TestPainelAnual(t *testing.T) {
 		t.Errorf("distribuição: %+v", d)
 	}
 	// Saúde: meses completos de dezembro/2025 a setembro/2026 (10); gasto 680 ÷ 10 = 68.0; essencial 500 ÷ 10 = 50.0
-	// (o aluguel, filho da Casa); reserva 3000 ÷ 68 = 44.1 meses e 3000 ÷ 50 = 60.
+	// (o aluguel, filho da Casa); reserva 3000 ÷ 68 = 44.1 meses e 3000 ÷ 50 = 60; renda 2000 ÷ 10 = 200.0, e o
+	// comprometimento (0 do cartão + 3 + 4) ÷ 200 × 100 = 3.5.
 	h := a.Saude
 	texto := func(v *tipos.Decimal) string {
 		if v == nil {
@@ -254,7 +255,7 @@ func TestPainelAnual(t *testing.T) {
 	if h.MesesAnalisados != 10 || h.GastoMensalMedio.String() != "68.0" || h.GastoEssencialMensalMedio.String() != "50.0" ||
 		texto(h.MesesDeReserva) != "44.1" || texto(h.MesesDeReservaEssencial) != "60" || h.PatrimonioAtual.String() != "10000.0" ||
 		h.ReservaLiquida.String() != "3000.0" || h.ParcelasFinanciamentos.String() != "3.0" || h.DividaEmprestimos.String() != "2.0" ||
-		h.ComprometimentoParcelas == nil {
+		texto(h.ComprometimentoParcelas) != "3.5" || h.RendaMensalMedia.String() != "200.0" || len(a.Meses) != 12 {
 		t.Errorf("saúde: %+v %s %s", h, texto(h.MesesDeReserva), texto(h.MesesDeReservaEssencial))
 	}
 

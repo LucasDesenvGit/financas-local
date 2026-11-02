@@ -204,3 +204,41 @@ func TestPainelErrosEOrdem(t *testing.T) {
 		}
 	}
 }
+
+// Regra: a ordem dos contratos em aberto é pelo maior saldo (mesmo gravados do menor para o maior); os quitados de
+// uma natureza são todos contados; os atrasos se somam; e "hoje" no dia 1 ainda tem o mês atual na lista dos 12.
+func TestPainelSomasEBordas(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 1))
+	conexao := fab.ConexaoBancaria()
+	var abertos []testeapoio.Emprestimo
+	// Gravados fora de ordem (200, 100, 300): a ordem certa é 300, 200, 100.
+	for k, saldo := range []string{"200.0", "100.0", "300.0"} {
+		abertos = append(abertos, fab.Emprestimo(conexao, func(e *testeapoio.Emprestimo) {
+			e.SaldoDevedor, e.ParcelasEmAtraso = dec(saldo), ptr(int64(k))
+		}))
+	}
+	for range 2 {
+		fab.Emprestimo(conexao, func(e *testeapoio.Emprestimo) { e.SaldoDevedor = dec("0.0") })
+	}
+	if _, err := db.Exec(`INSERT INTO "PagamentoEmprestimo" ("EmprestimoId", "Data", "Valor", "Extraordinario")
+		VALUES (?, '2026-10-01', '7.5', 0)`, abertos[0].Id); err != nil {
+		t.Fatal(err)
+	}
+	p, err := NovoServico(db).Painel(t.Context(), testeapoio.Dia(2026, 10, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Contratos[0].Id != abertos[2].Id || p.Contratos[1].Id != abertos[0].Id || p.Contratos[2].Id != abertos[1].Id {
+		t.Errorf("ordem dos abertos: %d %d %d", p.Contratos[0].Id, p.Contratos[1].Id, p.Contratos[2].Id)
+	}
+	e := p.Emprestimos
+	if e.ContratosAbertos != 3 || e.ContratosQuitados != 2 || e.ParcelasEmAtraso != 3 || e.SaldoDevedor.String() != "600.0" {
+		t.Errorf("resumo: %+v", e)
+	}
+	ultimo := p.PagamentosPorMes[len(p.PagamentosPorMes)-1]
+	if len(p.PagamentosPorMes) != 12 || ultimo.Mes != 10 || ultimo.Emprestimos.String() != "7.5" {
+		t.Errorf("meses: %d, último %+v", len(p.PagamentosPorMes), ultimo)
+	}
+}

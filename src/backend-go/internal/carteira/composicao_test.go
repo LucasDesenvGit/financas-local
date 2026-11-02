@@ -19,6 +19,10 @@ func TestComposicao(t *testing.T) {
 	conversor := cambio.NovoConversor([]cambio.Guardada{{Moeda: "USD", Compra: testeapoio.Valor("5.00"), Venda: testeapoio.Valor("5.10")}}, nil)
 	c := novaCena(t, cambioFalso{conversor: conversor}, reservasFalsas{total: testeapoio.Valor("3.0")}, selicFalsa{})
 	preco := testeapoio.Valor("150.0")
+	// O vendido gravado primeiro: os ativos depois dele também contam.
+	vendido := c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker, a.PrecoAtual = "VEND3", &preco })
+	c.fab.OperacaoAtivo(vendido, func(o *testeapoio.OperacaoAtivo) { o.Quantidade = testeapoio.Valor("1") })
+	c.fab.OperacaoAtivo(vendido, func(o *testeapoio.OperacaoAtivo) { o.Tipo, o.Quantidade = 2, testeapoio.Valor("1") })
 	comPreco := c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker, a.PrecoAtual = "HGLG11", &preco })
 	c.fab.OperacaoAtivo(comPreco, func(o *testeapoio.OperacaoAtivo) {
 		o.Quantidade, o.PrecoUnitario = testeapoio.Valor("2"), testeapoio.Valor("140.0")
@@ -27,9 +31,6 @@ func TestComposicao(t *testing.T) {
 	c.fab.OperacaoAtivo(semPreco, func(o *testeapoio.OperacaoAtivo) {
 		o.Quantidade, o.PrecoUnitario = testeapoio.Valor("1"), testeapoio.Valor("10.0")
 	})
-	vendido := c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker, a.PrecoAtual = "VEND3", &preco })
-	c.fab.OperacaoAtivo(vendido, func(o *testeapoio.OperacaoAtivo) { o.Quantidade = testeapoio.Valor("1") })
-	c.fab.OperacaoAtivo(vendido, func(o *testeapoio.OperacaoAtivo) { o.Tipo, o.Quantidade = 2, testeapoio.Valor("1") })
 
 	ativa := c.fab.ConexaoBancaria()
 	inativa := c.fab.ConexaoBancaria(func(x *testeapoio.ConexaoBancaria) { x.Ativa = false })
@@ -39,12 +40,12 @@ func TestComposicao(t *testing.T) {
 		})
 	}
 	codigo := func(s string) *string { return &s }
+	investimento(ativa, "FIXED_INCOME", "GBP", "7.0", nil)          // sem cotação: fica de fora, e os depois dele contam
 	investimento(ativa, "EQUITY", "BRL", "999.0", codigo("hglg11")) // já está na carteira
 	investimento(ativa, "EQUITY", "BRL", "5.0", codigo("VEND3"))    // vendido na carteira: entra
 	investimento(ativa, "etf", "BRL", "70.0", nil)
 	investimento(ativa, "FIXED_INCOME", "BRL", "40.0", nil)
 	investimento(ativa, "FIXED_INCOME", "USD", "2.0", nil)
-	investimento(ativa, "FIXED_INCOME", "GBP", "7.0", nil)
 	investimento(inativa, "FIXED_INCOME", "BRL", "60.0", nil)
 
 	comp, err := c.s.Composicao(t.Context())

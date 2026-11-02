@@ -1,6 +1,7 @@
 package relatorios
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -385,18 +386,15 @@ func (s *Servico) despesasDoAno(ctx context.Context, ano, mesLimite int) ([]gast
 		}
 		grupos[k] = append(grupos[k], l.Valor)
 	}
-	slices.SortFunc(chaves, func(a, b chave) int {
-		if a.semId != b.semId {
-			if a.semId {
-				return -1
-			}
-			return 1
+	// A ordem dos grupos só importa pela categoria (decide o empate das categorias depois): sem categoria primeiro,
+	// depois pelo Id. Os meses de uma mesma categoria vão para a mesma linha, e a ordem entre eles não muda nada.
+	ordem := func(k chave) int64 {
+		if k.semId {
+			return 0 // os Ids começam em 1
 		}
-		if a.id != b.id {
-			return int(a.id - b.id)
-		}
-		return a.mes - b.mes
-	})
+		return k.id
+	}
+	slices.SortStableFunc(chaves, func(a, b chave) int { return cmp.Compare(ordem(a), ordem(b)) })
 	lista := make([]gastoDoMes, 0, len(chaves))
 	for _, k := range chaves {
 		d := gastoDoMes{mes: k.mes, soma: negar(somaOuZero(grupos[k]))}
@@ -461,16 +459,13 @@ func (s *Servico) saudeFinanceira(ctx context.Context, p Patrimonio, essenciais 
 		ParcelasFinanciamentos: c.ParcelaMensalFinanciamentos, ParcelasEmprestimos: c.ParcelaMensalEmprestimos,
 		DividaFinanciamentos: c.SaldoFinanciamentos, DividaEmprestimos: c.SaldoEmprestimos,
 	}
-	// a ÷ b (vezes 100 no comprometimento) em uma casa; null quando b não passa de zero.
+	// a ÷ b (vezes 100 no comprometimento) em uma casa; null quando b não passa de zero. Vezes 1 não muda o valor
+	// nem a escala (1 não tem casas).
 	razao := func(a, b tipos.Decimal, vezes int64) *tipos.Decimal {
 		if !b.Decimal().IsPositive() {
 			return nil
 		}
-		v := dividirPorPositivo(a, b)
-		if vezes != 1 {
-			v = tipos.Multiplicar(v, tipos.DecimalDeInteiro(vezes))
-		}
-		v = tipos.Arredondar(v, 1)
+		v := tipos.Arredondar(tipos.Multiplicar(dividirPorPositivo(a, b), tipos.DecimalDeInteiro(vezes)), 1)
 		return &v
 	}
 	saude.MesesDeReserva = razao(p.Reserva, gasto, 1)
