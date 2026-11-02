@@ -1,6 +1,6 @@
 # Gerenciador em Go
 
-O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wailsapp/wails/v3) ([ADR 0052](../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), épico #70). Vai substituir o de C# (`src/gerenciador/`) quando estiver completo. **Ainda não é instalado** pelo `.msi` nem pelos scripts.
+O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wailsapp/wails/v3) ([ADR 0052](../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), épico #70). Vai substituir o de C# (`src/gerenciador/`) quando estiver completo. **O `.msi` instala este desde a #277**, com o nome `Financas.Gerenciador.exe`; os scripts ainda instalam o de C#.
 
 | Pronto | Falta |
 |---|---|
