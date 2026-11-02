@@ -49,6 +49,7 @@ type conversao interface {
 // listaDeReservas é o que a carteira usa das reservas.
 type listaDeReservas interface {
 	Listar(ctx context.Context) ([]reservas.ReservaDto, error)
+	Total(ctx context.Context) (tipos.Decimal, error)
 }
 
 // taxaSelic é o que a carteira usa da Selic.
