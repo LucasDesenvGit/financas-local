@@ -178,3 +178,11 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
   - a #84 e a #277 passam a gerar o gerenciador em Go no `.msi` e nos scripts;
   - o Wails e o go-winres entram na lista de bibliotecas da [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), só para o gerenciador;
   - a 0028 e a 0033 ficam "Substituída por 0052" quando o gerenciador em Go for publicado.
+
+## Atualização de 2026-11-02: o gerenciador em Go no Linux, pelos scripts (issue #277, parte 3)
+
+- O `scripts/linux/instalar-gerenciador.sh` compila o gerenciador em Go no computador (com cgo) em `publicado/gerenciador-go`, põe o `icone.png` ao lado e cria o atalho `br.financaslocal.Gerenciador.desktop`, o nome do id do aplicativo, de onde o GTK 4 tira o ícone da janela. O atalho do em C# sai do menu, o da área de trabalho é trocado (mesmo nome) e o "Iniciar com o sistema" ligado passa a abrir o em Go.
+- **Sem o compilador de C, o `pkg-config`, o GTK 4 ou o WebKitGTK 6.0**, o script diz o que falta e o comando da distribuição (Debian/Ubuntu, Fedora, Arch; nas outras, o que procurar) e instala **o em C# (Avalonia), como antes**. *Julgamento:* não falhar a instalação por causa da janela; o site segue igual. Na saída do .NET (#86), esse caminho vira "sem gerenciador, com o aviso".
+- **`--situacao`** no gerenciador em Go, como o do C# do Linux: escreve a situação e sai com 0 só com o site no ar. A CI do Linux o usa nos dois caminhos (sem as bibliotecas, o em C#; com elas, o em Go), porque o runner não tem tela.
+- A instalação avisa, no fim, quando o *linger* está desligado (o site só sobe com a sessão aberta), além do aviso que o gerenciador já dava.
+

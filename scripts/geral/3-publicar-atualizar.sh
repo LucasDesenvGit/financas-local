@@ -277,6 +277,13 @@ EOF
                 systemctl --user enable --now financaslocal.service
                 ok 'servico systemd (usuario) registrado e iniciado'
             fi
+            # #277: o systemd do usuario so sobe o site com a sessao aberta; sem login (o computador ligado sem
+            # ninguem entrar), so com o linger. O gerenciador tambem avisa.
+            if command -v loginctl >/dev/null 2>&1 && \
+               [[ "$(loginctl show-user "$(id -un)" -p Linger --value 2>/dev/null || true)" == no ]]; then
+                aviso 'O site sobe quando voce entra na sessao. Para subir com o computador, mesmo sem login:'
+                aviso "  sudo loginctl enable-linger $(id -un)"
+            fi
         else
             aviso "systemctl nao encontrado; unidade escrita em $unidade mas nao habilitada automaticamente."
         fi

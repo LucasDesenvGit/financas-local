@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.64.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go no Linux** (#277, parte 3; épico #70; ADR 0052). O `instalar.sh` e o `scripts/linux/instalar-gerenciador.sh` compilam o gerenciador novo, com o atalho e o ícone no menu de aplicativos, e o "Iniciar com o sistema" passa a abri-lo. Se faltar o GTK 4 ou o WebKitGTK 6.0, o script mostra o comando que instala esses pacotes na sua distribuição e, por enquanto, instala o gerenciador em C#, como antes. A instalação também avisa quando o site só vai subir com a sessão aberta (*linger* desligado). No terminal, `--situacao` mostra a situação do site sem abrir a janela, como no gerenciador em C#.
+
 ## [2.63.1] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação

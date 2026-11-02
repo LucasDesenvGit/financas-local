@@ -13,6 +13,7 @@ on:
       - scripts/linux/**
       - banco/**
       - src/gerenciador/**
+      - src/gerenciador-go/**
       - src/backend-go/go.mod
       - .github/workflows/teste-instalacao-linux.yml
   pull_request:
@@ -22,6 +23,7 @@ on:
       - scripts/linux/**
       - banco/**
       - src/gerenciador/**
+      - src/gerenciador-go/**
       - src/backend-go/go.mod
       - .github/workflows/teste-instalacao-linux.yml
   workflow_dispatch:
@@ -102,11 +104,14 @@ jobs:
           pid_api="$(systemctl --user show -p MainPID --value financaslocal.service)"
           pgrep -P "$pid_api" -f publicado/api/financas-go >/dev/null || { echo "::error::o Go nao e processo filho do servico"; pgrep -af financas; exit 1; }
 
-      # Gerenciador do Linux (ADR 0033): publica, cria o atalho e pergunta a situacao pelo --situacao, que usa o
-      # systemd do usuario e /api/auth/estado sem abrir janela (o runner nao tem tela).
-      - name: Gerenciador (instalar-gerenciador.sh)
+      # Gerenciador do Linux (#277, ADR 0052): sem o GTK 4 e o WebKitGTK 6.0, o script avisa o que falta e instala o
+      # em C# (ADR 0033), como antes; com eles, compila o em Go. Os dois respondem ao --situacao, que usa o systemd do
+      # usuario e /api/auth/estado sem abrir janela (o runner nao tem tela).
+      - name: Gerenciador sem as bibliotecas do em Go (instalar-gerenciador.sh)
         run: |
+          if pkg-config --exists webkitgtk-6.0 2>/dev/null; then echo "::error::o runner ja tem o WebKitGTK 6.0: o caso sem ele nao e testado"; exit 1; fi
           env PATH="$PATH_LIMPO" bash scripts/linux/instalar-gerenciador.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-gerenciador.log"
+          grep -q 'sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev' "$RUNNER_TEMP/instalacao-gerenciador.log" || { echo "::error::o script nao disse o que instalar"; exit 1; }
           exe="$PWD/publicado/gerenciador/Financas.Gerenciador.Linux"
           atalho="$HOME/.local/share/applications/financaslocal-gerenciador.desktop"
           for p in "$exe" publicado/gerenciador/icone.png "$atalho"; do
@@ -115,6 +120,27 @@ jobs:
           grep -qF "Exec=\"$exe\"" "$atalho" || { echo "::error::o atalho nao aponta para o gerenciador"; cat "$atalho"; exit 1; }
           "$exe" --situacao | tee "$RUNNER_TEMP/situacao.txt"
           grep -q 'O site está no ar' "$RUNNER_TEMP/situacao.txt" || { echo "::error::o gerenciador nao viu o site no ar"; exit 1; }
+          # "Iniciar com o sistema" ligado no em C#: a troca para o em Go tem de levar junto.
+          mkdir -p "$HOME/.config/autostart"
+          { echo '[Desktop Entry]'; echo 'Type=Application'; echo "Exec=\"$exe\" --bandeja"; } > "$HOME/.config/autostart/financaslocal-gerenciador.desktop"
+
+      - name: Gerenciador em Go (instalar-gerenciador.sh)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+          env PATH="$PATH_LIMPO" bash scripts/linux/instalar-gerenciador.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-gerenciador-go.log"
+          exe="$PWD/publicado/gerenciador-go/financas-gerenciador"
+          atalho="$HOME/.local/share/applications/br.financaslocal.Gerenciador.desktop"
+          for p in "$exe" publicado/gerenciador-go/icone.png "$atalho"; do
+            [[ -e "$p" ]] || { echo "::error::nao encontrado: $p"; exit 1; }
+          done
+          grep -qF "Exec=\"$exe\"" "$atalho" || { echo "::error::o atalho nao aponta para o gerenciador em Go"; cat "$atalho"; exit 1; }
+          grep -qF "Icon=$PWD/publicado/gerenciador-go/icone.png" "$atalho" || { echo "::error::o atalho sem o icone"; cat "$atalho"; exit 1; }
+          [[ ! -e "$HOME/.local/share/applications/financaslocal-gerenciador.desktop" ]] || { echo "::error::sobrou o atalho do em C# no menu"; exit 1; }
+          grep -qF "Exec=\"$exe\" --bandeja" "$HOME/.config/autostart/financaslocal-gerenciador.desktop" || { echo "::error::o iniciar com o sistema nao passou para o em Go"; cat "$HOME/.config/autostart/financaslocal-gerenciador.desktop"; exit 1; }
+          "$exe" --situacao | tee "$RUNNER_TEMP/situacao-go.txt"
+          grep -q 'O site está no ar' "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::o gerenciador em Go nao viu o site no ar"; exit 1; }
+          grep -q "Gerenciador: $(grep -o '<Version>[^<]*' Directory.Build.props | head -n1 | cut -d'>' -f2)" "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::versao do gerenciador"; exit 1; }
 
       - name: Atualizacao (instalar.sh --pular-build)
         run: |
@@ -192,7 +218,7 @@ jobs:
           estado="$(systemctl --user is-enabled financaslocal.service || true)"
           [[ "$estado" == disabled ]] || { echo "::error::servico continua habilitado ($estado)"; exit 1; }
           if curl -k -fsS https://127.0.0.1:5443/api/auth/estado; then echo "::error::API continua respondendo"; exit 1; fi
-          if publicado/gerenciador/Financas.Gerenciador.Linux --situacao; then echo "::error::o gerenciador diz que o site esta no ar"; exit 1; fi
+          if publicado/gerenciador-go/financas-gerenciador --situacao; then echo "::error::o gerenciador diz que o site esta no ar"; exit 1; fi
           if pgrep -af publicado/api/financas-go; then echo "::error::sobrou processo do Go com o servico parado"; exit 1; fi
 
       - name: Subir de novo (3-publicar-atualizar.sh --pular-build)
