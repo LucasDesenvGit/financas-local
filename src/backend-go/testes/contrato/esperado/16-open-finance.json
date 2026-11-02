@@ -1,0 +1,92 @@
+[
+  {
+    "nome": "remover conexão sem login",
+    "requisicao": "DELETE /api/open-finance/conexoes/2",
+    "status": 401
+  },
+  {
+    "nome": "remover conexão que não existe",
+    "requisicao": "DELETE /api/open-finance/conexoes/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "remover conexão",
+    "requisicao": "DELETE /api/open-finance/conexoes/2",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ConexaoRemovida",
+            "Id": 42,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "ConexaoBancaria": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "ConsentimentoExpiraEm": "2026-03-01 00:00:00",
+            "CorPrimaria": null,
+            "CriadoEm": "2025-10-20 18:05:00",
+            "Id": 2,
+            "NomeInstituicao": "Banco Desconectado",
+            "PluggyItemId": "item-ficticio-0002",
+            "Status": "LOGIN_ERROR",
+            "StatusExecucao": "ERROR",
+            "UltimaAtualizacaoInstituicao": "2026-03-01 08:00:00",
+            "UltimaSincronizacaoEm": "2026-03-01 09:00:00",
+            "UltimoErro": "Consentimento expirado."
+          }
+        ]
+      },
+      "HistoricoInvestimento": {
+        "removidas": [
+          {
+            "AtualizadoEm": "2026-02-28 09:00:00",
+            "ConexaoBancariaId": 2,
+            "Data": "2026-02-28",
+            "Id": 5,
+            "Nome": "CDB Banco Desconectado",
+            "PluggyInvestmentId": "inv-desconectado-0001",
+            "Saldo": "1015.0",
+            "Tipo": "FIXED_INCOME",
+            "ValorAplicado": "1000.0"
+          }
+        ]
+      },
+      "SincronizacaoLog": {
+        "removidas": [
+          {
+            "ConexaoBancariaId": 2,
+            "FinalizadoEm": "2026-03-01 09:00:05",
+            "Id": 3,
+            "IniciadoEm": "2026-03-01 09:00:00",
+            "Mensagem": "Consentimento expirado.",
+            "Origem": "Automatica",
+            "Sucesso": 0,
+            "TransacoesAtualizadas": 0,
+            "TransacoesNovas": 0
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "remover conexão já removida",
+    "requisicao": "DELETE /api/open-finance/conexoes/2",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "descricao": "Open Finance (#83, OpenFinanceController). Por enquanto só a remoção da conexão (#575): ela apaga tudo o que a conexão trouxe, inclusive o histórico dos investimentos (sem chave estrangeira) e o registro das sincronizações (ON DELETE SET NULL), que o banco não apaga sozinho. Roda com a sessão 'principal', logada pelo 00-auth. Remove a conexão 2 da base ('Banco Desconectado'), que não tem contas: os arquivos seguintes não dependem dela.",
+  "casos": [
+    {
+      "nome": "remover conexão sem login",
+      "metodo": "DELETE",
+      "caminho": "/api/open-finance/conexoes/2",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "remover conexão que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/open-finance/conexoes/999"
+    },
+    {
+      "nome": "remover conexão",
+      "comentario": "Somem a conexão, a linha de HistoricoInvestimento e a de SincronizacaoLog dela; entra o registro na auditoria.",
+      "metodo": "DELETE",
+      "caminho": "/api/open-finance/conexoes/2"
+    },
+    {
+      "nome": "remover conexão já removida",
+      "metodo": "DELETE",
+      "caminho": "/api/open-finance/conexoes/2"
+    }
+  ]
+}

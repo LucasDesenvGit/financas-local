@@ -1,0 +1,2397 @@
+[
+  {
+    "nome": "despesas por categoria em setembro",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2026-09-01&fim=2026-09-30",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": null,
+        "cor": "#94a3b8",
+        "nome": "Sem categoria",
+        "valor": 2513.2
+      },
+      {
+        "categoriaId": 3,
+        "cor": "#d4a5e8",
+        "nome": "Moradia",
+        "valor": 50.0
+      },
+      {
+        "categoriaId": 9,
+        "cor": "#a7a3f5",
+        "nome": "Serviços e assinaturas",
+        "valor": 39.9
+      },
+      {
+        "categoriaId": 4,
+        "cor": "#92c8f0",
+        "nome": "Transporte",
+        "valor": 27.45
+      }
+    ]
+  },
+  {
+    "nome": "receitas por categoria no ano, sem agrupar",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2026-01-01&fim=2026-10-14&tipo=2&agrupar=false",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": null,
+        "cor": "#94a3b8",
+        "nome": "Sem categoria",
+        "valor": 65000.01
+      },
+      {
+        "categoriaId": 21,
+        "cor": "#64748b",
+        "nome": "Outras receitas",
+        "valor": 120.35
+      }
+    ]
+  },
+  {
+    "nome": "categorias com o tipo pelo nome",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2026-01-01&fim=2026-10-14&tipo=Receita",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": null,
+        "cor": "#94a3b8",
+        "nome": "Sem categoria",
+        "valor": 65000.01
+      },
+      {
+        "categoriaId": 21,
+        "cor": "#64748b",
+        "nome": "Outras receitas",
+        "valor": 120.35
+      }
+    ]
+  },
+  {
+    "nome": "categorias de transferência",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2026-01-01&fim=2026-10-14&tipo=3",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Tipo inválido."
+    }
+  },
+  {
+    "nome": "categorias com o fim antes do início",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2026-10-01&fim=2026-09-30",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "categorias com mais de 3660 dias",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2016-01-01&fim=2026-10-14",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "categorias sem as datas",
+    "requisicao": "GET /api/relatorios/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "categorias com data que não é data",
+    "requisicao": "GET /api/relatorios/categorias?inicio=ontem&fim=2026-10-14",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "inicio": [
+          "The value 'ontem' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "categorias sem login",
+    "requisicao": "GET /api/relatorios/categorias?inicio=2026-09-01&fim=2026-09-30",
+    "status": 401
+  },
+  {
+    "nome": "fluxo dos últimos 12 meses",
+    "requisicao": "GET /api/relatorios/fluxo?inicio=2025-11-01&fim=2026-10-31",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ano": 2025,
+        "despesas": 2616.65,
+        "despesasEmergencia": 0.0,
+        "mes": 11,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2025,
+        "despesas": 2629.37,
+        "despesasEmergencia": 0.0,
+        "mes": 12,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 2951.99,
+        "despesasEmergencia": 0.0,
+        "mes": 1,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 2974.71,
+        "despesasEmergencia": 0.0,
+        "mes": 2,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 2997.43,
+        "despesasEmergencia": 0.0,
+        "mes": 3,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 3020.15,
+        "despesasEmergencia": 0.0,
+        "mes": 4,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 3042.87,
+        "despesasEmergencia": 0.0,
+        "mes": 5,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 3065.59,
+        "despesasEmergencia": 0.0,
+        "mes": 6,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 3088.31,
+        "despesasEmergencia": 0.0,
+        "mes": 7,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 3431.5,
+        "despesasEmergencia": 320.47,
+        "mes": 8,
+        "receitas": 6500.0
+      },
+      {
+        "ano": 2026,
+        "despesas": 2630.55,
+        "despesasEmergencia": 50.0,
+        "mes": 9,
+        "receitas": 6500.01
+      },
+      {
+        "ano": 2026,
+        "despesas": 2465.15,
+        "despesasEmergencia": 65.5,
+        "mes": 10,
+        "receitas": 6620.35
+      }
+    ]
+  },
+  {
+    "nome": "fluxo desde antes da primeira transação",
+    "requisicao": "GET /api/relatorios/fluxo?inicio=2025-01-15&fim=2025-06-10",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ano": 2025,
+        "despesas": 0,
+        "despesasEmergencia": 0,
+        "mes": 1,
+        "receitas": 0
+      },
+      {
+        "ano": 2025,
+        "despesas": 0,
+        "despesasEmergencia": 0,
+        "mes": 2,
+        "receitas": 0
+      },
+      {
+        "ano": 2025,
+        "despesas": 0,
+        "despesasEmergencia": 0,
+        "mes": 3,
+        "receitas": 0
+      },
+      {
+        "ano": 2025,
+        "despesas": 0,
+        "despesasEmergencia": 0,
+        "mes": 4,
+        "receitas": 0
+      },
+      {
+        "ano": 2025,
+        "despesas": 0,
+        "despesasEmergencia": 0,
+        "mes": 5,
+        "receitas": 0
+      },
+      {
+        "ano": 2025,
+        "despesas": 0,
+        "despesasEmergencia": 0,
+        "mes": 6,
+        "receitas": 0
+      }
+    ]
+  },
+  {
+    "nome": "fluxo com o fim antes do início",
+    "requisicao": "GET /api/relatorios/fluxo?inicio=2026-10-01&fim=2026-09-30",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "fluxo sem login",
+    "requisicao": "GET /api/relatorios/fluxo?inicio=2025-11-01&fim=2026-10-31",
+    "status": 401
+  },
+  {
+    "nome": "visão anual do ano atual",
+    "requisicao": "GET /api/relatorios/anual",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2026,
+      "anoComparacao": 2025,
+      "anosDisponiveis": [
+        2026,
+        2025
+      ],
+      "categorias": [
+        {
+          "categoriaId": null,
+          "cor": "#a9b4c6",
+          "meses": [
+            2437.6,
+            2447.05,
+            2456.5,
+            2465.95,
+            2475.4,
+            2484.85,
+            2244.4,
+            2824.22,
+            2513.2,
+            2465.15,
+            0,
+            0
+          ],
+          "natureza": null,
+          "nome": "Sem categoria",
+          "valor": 24814.32,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "meses": [
+            447.04,
+            460.31,
+            473.58,
+            486.85,
+            500.12,
+            513.39,
+            526.66,
+            539.93,
+            0,
+            0,
+            0,
+            0
+          ],
+          "natureza": 1,
+          "nome": "Mercado",
+          "valor": 3947.88,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "meses": [
+            39.9,
+            39.9,
+            39.9,
+            39.9,
+            39.9,
+            39.9,
+            39.9,
+            39.9,
+            39.9,
+            0,
+            0,
+            0
+          ],
+          "natureza": 2,
+          "nome": "Serviços e assinaturas",
+          "valor": 359.1,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 16,
+          "cor": "#e7b3ea",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            249.9,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "natureza": 2,
+          "nome": "Cuidados pessoais",
+          "valor": 249.9,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "meses": [
+            27.45,
+            27.45,
+            27.45,
+            27.45,
+            27.45,
+            27.45,
+            27.45,
+            27.45,
+            27.45,
+            0,
+            0,
+            0
+          ],
+          "natureza": 1,
+          "nome": "Transporte",
+          "valor": 247.05,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 3,
+          "cor": "#d4a5e8",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            50.0,
+            0,
+            0,
+            0
+          ],
+          "natureza": 1,
+          "nome": "Moradia",
+          "valor": 50.0,
+          "valorAnterior": 0
+        }
+      ],
+      "distribuicao": {
+        "essenciais": 4244.93,
+        "estiloDeVida": 609.0,
+        "naoClassificado": 24814.32,
+        "poupanca": 35452.11,
+        "receitas": 65120.36
+      },
+      "mesLimite": 10,
+      "meses": [
+        {
+          "despesas": 2951.99,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 1,
+          "patrimonioEstimado": 17421.58,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 2974.71,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 2,
+          "patrimonioEstimado": 20946.87,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 2997.43,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 3,
+          "patrimonioEstimado": 24449.44,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 3020.15,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 4,
+          "patrimonioEstimado": 27929.29,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 3042.87,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 5,
+          "patrimonioEstimado": 31386.42,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 3065.59,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 6,
+          "patrimonioEstimado": 34820.83,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 3088.31,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 7,
+          "patrimonioEstimado": 38232.52,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 3431.5,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 8,
+          "patrimonioEstimado": 41301.02,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 2630.55,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 9,
+          "patrimonioEstimado": 45170.48,
+          "receitas": 6500.01,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 2465.15,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 10,
+          "patrimonioEstimado": 49325.68,
+          "receitas": 6620.35,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 2616.65,
+          "futuro": true,
+          "mes": 11,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 2629.37,
+          "futuro": true,
+          "mes": 12,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        }
+      ],
+      "resumo": {
+        "despesas": 29668.25,
+        "receitas": 65120.36,
+        "resultado": 35452.11,
+        "taxaPoupanca": 54.4
+      },
+      "resumoAnteriorCompleto": {
+        "despesas": 5246.02,
+        "receitas": 13000.0,
+        "resultado": 7753.98,
+        "taxaPoupanca": 59.6
+      },
+      "resumoAnteriorMesmoPeriodo": {
+        "despesas": 0,
+        "receitas": 0,
+        "resultado": 0,
+        "taxaPoupanca": 0
+      },
+      "saude": {
+        "comprometimentoParcelas": 23.8,
+        "dividaEmprestimos": 0,
+        "dividaFinanciamentos": 28750.33,
+        "gastoEssencialMensalMedio": 470.62,
+        "gastoMensalMedio": 2983.25,
+        "mesesAnalisados": 10,
+        "mesesDeReserva": 18.8,
+        "mesesDeReservaEssencial": 119.1,
+        "parcelasEmprestimos": 0,
+        "parcelasFinanciamentos": 1250.0,
+        "parcelasMensais": 299.9,
+        "patrimonioAtual": 49325.68,
+        "rendaMensalMedia": 6500.00,
+        "reservaLiquida": 56066.28
+      }
+    }
+  },
+  {
+    "nome": "visão anual de um ano passado",
+    "requisicao": "GET /api/relatorios/anual?ano=2025&comparar=2024",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2025,
+      "anoComparacao": 2024,
+      "anosDisponiveis": [
+        2026,
+        2025
+      ],
+      "categorias": [
+        {
+          "categoriaId": null,
+          "cor": "#a9b4c6",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2128.8,
+            2128.25
+          ],
+          "natureza": null,
+          "nome": "Sem categoria",
+          "valor": 4257.05,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            420.5,
+            433.77
+          ],
+          "natureza": 1,
+          "nome": "Mercado",
+          "valor": 854.27,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            39.9,
+            39.9
+          ],
+          "natureza": 2,
+          "nome": "Serviços e assinaturas",
+          "valor": 79.8,
+          "valorAnterior": 0
+        },
+        {
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            27.45,
+            27.45
+          ],
+          "natureza": 1,
+          "nome": "Transporte",
+          "valor": 54.90,
+          "valorAnterior": 0
+        }
+      ],
+      "distribuicao": {
+        "essenciais": 909.17,
+        "estiloDeVida": 79.8,
+        "naoClassificado": 4257.05,
+        "poupanca": 7753.98,
+        "receitas": 13000.0
+      },
+      "mesLimite": 12,
+      "meses": [
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 1,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 2,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 3,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 4,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 5,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 6,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 7,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 8,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 9,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 10,
+          "patrimonioEstimado": 6119.59,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 2616.65,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 11,
+          "patrimonioEstimado": 10002.94,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 2629.37,
+          "despesasAnterior": 0,
+          "futuro": false,
+          "mes": 12,
+          "patrimonioEstimado": 13873.57,
+          "receitas": 6500.0,
+          "receitasAnterior": 0
+        }
+      ],
+      "resumo": {
+        "despesas": 5246.02,
+        "receitas": 13000.0,
+        "resultado": 7753.98,
+        "taxaPoupanca": 59.6
+      },
+      "resumoAnteriorCompleto": {
+        "despesas": 0,
+        "receitas": 0,
+        "resultado": 0,
+        "taxaPoupanca": 0
+      },
+      "resumoAnteriorMesmoPeriodo": {
+        "despesas": 0,
+        "receitas": 0,
+        "resultado": 0,
+        "taxaPoupanca": 0
+      },
+      "saude": {
+        "comprometimentoParcelas": 23.8,
+        "dividaEmprestimos": 0,
+        "dividaFinanciamentos": 28750.33,
+        "gastoEssencialMensalMedio": 470.62,
+        "gastoMensalMedio": 2983.25,
+        "mesesAnalisados": 10,
+        "mesesDeReserva": 18.8,
+        "mesesDeReservaEssencial": 119.1,
+        "parcelasEmprestimos": 0,
+        "parcelasFinanciamentos": 1250.0,
+        "parcelasMensais": 299.9,
+        "patrimonioAtual": 49325.68,
+        "rendaMensalMedia": 6500.00,
+        "reservaLiquida": 56066.28
+      }
+    }
+  },
+  {
+    "nome": "visão anual de um ano futuro",
+    "requisicao": "GET /api/relatorios/anual?ano=2027",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2027,
+      "anoComparacao": 2026,
+      "anosDisponiveis": [
+        2026,
+        2025
+      ],
+      "categorias": [
+        {
+          "categoriaId": null,
+          "cor": "#a9b4c6",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "natureza": null,
+          "nome": "Sem categoria",
+          "valor": 0,
+          "valorAnterior": 2437.6
+        },
+        {
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "natureza": 1,
+          "nome": "Mercado",
+          "valor": 0,
+          "valorAnterior": 447.04
+        },
+        {
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "natureza": 2,
+          "nome": "Serviços e assinaturas",
+          "valor": 0,
+          "valorAnterior": 39.9
+        },
+        {
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "meses": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "natureza": 1,
+          "nome": "Transporte",
+          "valor": 0,
+          "valorAnterior": 27.45
+        }
+      ],
+      "distribuicao": {
+        "essenciais": 0,
+        "estiloDeVida": 0,
+        "naoClassificado": 0,
+        "poupanca": 0,
+        "receitas": 0
+      },
+      "mesLimite": 0,
+      "meses": [
+        {
+          "despesas": 0,
+          "despesasAnterior": 2951.99,
+          "futuro": true,
+          "mes": 1,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 2974.71,
+          "futuro": true,
+          "mes": 2,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 2997.43,
+          "futuro": true,
+          "mes": 3,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 3020.15,
+          "futuro": true,
+          "mes": 4,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 3042.87,
+          "futuro": true,
+          "mes": 5,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 3065.59,
+          "futuro": true,
+          "mes": 6,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 3088.31,
+          "futuro": true,
+          "mes": 7,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 3431.5,
+          "futuro": true,
+          "mes": 8,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 2630.55,
+          "futuro": true,
+          "mes": 9,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6500.01
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 2465.15,
+          "futuro": true,
+          "mes": 10,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 6620.35
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": true,
+          "mes": 11,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 0
+        },
+        {
+          "despesas": 0,
+          "despesasAnterior": 0,
+          "futuro": true,
+          "mes": 12,
+          "patrimonioEstimado": null,
+          "receitas": 0,
+          "receitasAnterior": 0
+        }
+      ],
+      "resumo": {
+        "despesas": 0,
+        "receitas": 0,
+        "resultado": 0,
+        "taxaPoupanca": 0
+      },
+      "resumoAnteriorCompleto": {
+        "despesas": 29668.25,
+        "receitas": 65120.36,
+        "resultado": 35452.11,
+        "taxaPoupanca": 54.4
+      },
+      "resumoAnteriorMesmoPeriodo": {
+        "despesas": 2951.99,
+        "receitas": 6500.0,
+        "resultado": 3548.01,
+        "taxaPoupanca": 54.6
+      },
+      "saude": {
+        "comprometimentoParcelas": 23.8,
+        "dividaEmprestimos": 0,
+        "dividaFinanciamentos": 28750.33,
+        "gastoEssencialMensalMedio": 470.62,
+        "gastoMensalMedio": 2983.25,
+        "mesesAnalisados": 10,
+        "mesesDeReserva": 18.8,
+        "mesesDeReservaEssencial": 119.1,
+        "parcelasEmprestimos": 0,
+        "parcelasFinanciamentos": 1250.0,
+        "parcelasMensais": 299.9,
+        "patrimonioAtual": 49325.68,
+        "rendaMensalMedia": 6500.00,
+        "reservaLiquida": 56066.28
+      }
+    }
+  },
+  {
+    "nome": "visão anual com o ano fora",
+    "requisicao": "GET /api/relatorios/anual?ano=1999",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Ano inválido."
+    }
+  },
+  {
+    "nome": "visão anual com a comparação fora",
+    "requisicao": "GET /api/relatorios/anual?ano=2026&comparar=2101",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Ano inválido."
+    }
+  },
+  {
+    "nome": "visão anual sem login",
+    "requisicao": "GET /api/relatorios/anual",
+    "status": 401
+  },
+  {
+    "nome": "projeção dos próximos 6 meses",
+    "requisicao": "GET /api/relatorios/projecao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categorias": [
+        {
+          "categoriaId": null,
+          "cor": "#a9b4c6",
+          "mediaMensal": 2201.44,
+          "nome": "Sem categoria",
+          "ultimoMes": 2213.3
+        },
+        {
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "mediaMensal": 427.82,
+          "nome": "Mercado",
+          "ultimoMes": 0
+        },
+        {
+          "categoriaId": 16,
+          "cor": "#e7b3ea",
+          "mediaMensal": 41.65,
+          "nome": "Cuidados pessoais",
+          "ultimoMes": 0
+        },
+        {
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "mediaMensal": 39.9,
+          "nome": "Serviços e assinaturas",
+          "ultimoMes": 39.9
+        },
+        {
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "mediaMensal": 27.45,
+          "nome": "Transporte",
+          "ultimoMes": 27.45
+        },
+        {
+          "categoriaId": 3,
+          "cor": "#d4a5e8",
+          "mediaMensal": 8.33,
+          "nome": "Moradia",
+          "ultimoMes": 50.0
+        }
+      ],
+      "mediaDespesas": 2746.60,
+      "mediaReceitas": 6500.00,
+      "meses": [
+        {
+          "ano": 2026,
+          "despesas": 3020.15,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3479.85,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3042.87,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3457.13,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3065.59,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3434.41,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3088.31,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3411.69,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3431.5,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3068.5,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2630.55,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.01,
+          "resultado": 3869.46,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3971.35,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6620.35,
+          "resultado": 2649.00,
+          "saldoProjetado": 38056.69,
+          "situacao": "em andamento"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2746.60,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 41810.09,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2746.60,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 45563.49,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 49316.89,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 53070.29,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 56823.69,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 60577.09,
+          "situacao": "projetado"
+        }
+      ],
+      "mesesConsiderados": 6,
+      "saldoDisponivelAtual": 39562.89
+    }
+  },
+  {
+    "nome": "projeção de 1 mês",
+    "requisicao": "GET /api/relatorios/projecao?meses=1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categorias": [
+        {
+          "categoriaId": null,
+          "cor": "#a9b4c6",
+          "mediaMensal": 2201.44,
+          "nome": "Sem categoria",
+          "ultimoMes": 2213.3
+        },
+        {
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "mediaMensal": 427.82,
+          "nome": "Mercado",
+          "ultimoMes": 0
+        },
+        {
+          "categoriaId": 16,
+          "cor": "#e7b3ea",
+          "mediaMensal": 41.65,
+          "nome": "Cuidados pessoais",
+          "ultimoMes": 0
+        },
+        {
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "mediaMensal": 39.9,
+          "nome": "Serviços e assinaturas",
+          "ultimoMes": 39.9
+        },
+        {
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "mediaMensal": 27.45,
+          "nome": "Transporte",
+          "ultimoMes": 27.45
+        },
+        {
+          "categoriaId": 3,
+          "cor": "#d4a5e8",
+          "mediaMensal": 8.33,
+          "nome": "Moradia",
+          "ultimoMes": 50.0
+        }
+      ],
+      "mediaDespesas": 2746.60,
+      "mediaReceitas": 6500.00,
+      "meses": [
+        {
+          "ano": 2026,
+          "despesas": 3020.15,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3479.85,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3042.87,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3457.13,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3065.59,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3434.41,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3088.31,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3411.69,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3431.5,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3068.5,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2630.55,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.01,
+          "resultado": 3869.46,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3971.35,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6620.35,
+          "resultado": 2649.00,
+          "saldoProjetado": 38056.69,
+          "situacao": "em andamento"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2746.60,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 41810.09,
+          "situacao": "projetado"
+        }
+      ],
+      "mesesConsiderados": 6,
+      "saldoDisponivelAtual": 39562.89
+    }
+  },
+  {
+    "nome": "projeção de 24 meses",
+    "requisicao": "GET /api/relatorios/projecao?meses=24",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "categorias": [
+        {
+          "categoriaId": null,
+          "cor": "#a9b4c6",
+          "mediaMensal": 2201.44,
+          "nome": "Sem categoria",
+          "ultimoMes": 2213.3
+        },
+        {
+          "categoriaId": 2,
+          "cor": "#f2d98b",
+          "mediaMensal": 427.82,
+          "nome": "Mercado",
+          "ultimoMes": 0
+        },
+        {
+          "categoriaId": 16,
+          "cor": "#e7b3ea",
+          "mediaMensal": 41.65,
+          "nome": "Cuidados pessoais",
+          "ultimoMes": 0
+        },
+        {
+          "categoriaId": 9,
+          "cor": "#a7a3f5",
+          "mediaMensal": 39.9,
+          "nome": "Serviços e assinaturas",
+          "ultimoMes": 39.9
+        },
+        {
+          "categoriaId": 4,
+          "cor": "#92c8f0",
+          "mediaMensal": 27.45,
+          "nome": "Transporte",
+          "ultimoMes": 27.45
+        },
+        {
+          "categoriaId": 3,
+          "cor": "#d4a5e8",
+          "mediaMensal": 8.33,
+          "nome": "Moradia",
+          "ultimoMes": 50.0
+        }
+      ],
+      "mediaDespesas": 2746.60,
+      "mediaReceitas": 6500.00,
+      "meses": [
+        {
+          "ano": 2026,
+          "despesas": 3020.15,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3479.85,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3042.87,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3457.13,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3065.59,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3434.41,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3088.31,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3411.69,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3431.5,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.0,
+          "resultado": 3068.5,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2630.55,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.01,
+          "resultado": 3869.46,
+          "saldoProjetado": null,
+          "situacao": "realizado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 3971.35,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6620.35,
+          "resultado": 2649.00,
+          "saldoProjetado": 38056.69,
+          "situacao": "em andamento"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2746.60,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 41810.09,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2026,
+          "despesas": 2746.60,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 45563.49,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 49316.89,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 53070.29,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 56823.69,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 60577.09,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 64330.49,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 68083.89,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 71837.29,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 75590.69,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 79344.09,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 83097.49,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 11,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 86850.89,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2027,
+          "despesas": 2746.60,
+          "mes": 12,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 90604.29,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 1,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 94357.69,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 2,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 98111.09,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 3,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 101864.49,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 4,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 105617.89,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 5,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 109371.29,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 6,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 113124.69,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 7,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 116878.09,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 8,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 120631.49,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 9,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 124384.89,
+          "situacao": "projetado"
+        },
+        {
+          "ano": 2028,
+          "despesas": 2746.60,
+          "mes": 10,
+          "parcelas": 0,
+          "receitas": 6500.00,
+          "resultado": 3753.40,
+          "saldoProjetado": 128138.29,
+          "situacao": "projetado"
+        }
+      ],
+      "mesesConsiderados": 6,
+      "saldoDisponivelAtual": 39562.89
+    }
+  },
+  {
+    "nome": "projeção de 0 meses",
+    "requisicao": "GET /api/relatorios/projecao?meses=0",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe entre 1 e 24 meses."
+    }
+  },
+  {
+    "nome": "projeção de 25 meses",
+    "requisicao": "GET /api/relatorios/projecao?meses=25",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe entre 1 e 24 meses."
+    }
+  },
+  {
+    "nome": "projeção sem login",
+    "requisicao": "GET /api/relatorios/projecao",
+    "status": 401
+  },
+  {
+    "nome": "maiores despesas de 2026",
+    "requisicao": "GET /api/relatorios/maiores-despesas?inicio=2026-01-01&fim=2026-10-14",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-08-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 136,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -539.93
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-07-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 120,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -526.66
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-06-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 105,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -513.39
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-05-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 91,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -500.12
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-04-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 77,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -486.85
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-03-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 63,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -473.58
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-02-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 49,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -460.31
+      },
+      {
+        "categoriaCor": "#f2d98b",
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-01-15",
+        "descricao": "Supermercado da vila",
+        "descricaoOriginal": "SUPERMERCADO EXEMPLO",
+        "emergencia": false,
+        "estabelecimento": "Supermercado Exemplo",
+        "id": 35,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 3,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -447.04
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-08-03",
+        "descricao": "FARMACIA FICTICIA",
+        "descricaoOriginal": "FARMACIA FICTICIA",
+        "emergencia": true,
+        "estabelecimento": null,
+        "id": 126,
+        "ignorarRelatorios": false,
+        "observacao": "Remédio de urgência",
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 0,
+        "valor": -320.47
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-10-12",
+        "descricao": "Conta de luz",
+        "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 167,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 2,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 9,
+        "valor": -230.85
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-08-12",
+        "descricao": "Conta de luz",
+        "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 135,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 2,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 9,
+        "valor": -216.15
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-06-12",
+        "descricao": "Conta de luz",
+        "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 104,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 2,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 9,
+        "valor": -201.45
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-04-12",
+        "descricao": "Conta de luz",
+        "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 76,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 2,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 9,
+        "valor": -186.75
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-10-08",
+        "descricao": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "descricaoOriginal": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 163,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 4,
+        "valor": -1850.0
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-09-08",
+        "descricao": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "descricaoOriginal": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 146,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 4,
+        "valor": -1850.0
+      }
+    ]
+  },
+  {
+    "nome": "maiores despesas de setembro",
+    "requisicao": "GET /api/relatorios/maiores-despesas?inicio=2026-09-01&fim=2026-09-30",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-09-08",
+        "descricao": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "descricaoOriginal": "PIX ENVIADO IMOBILIARIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 146,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 4,
+        "valor": -1850.0
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "data": "2026-09-04",
+        "descricao": "LOJA DE MOVEIS FICTICIA 9/10",
+        "descricaoOriginal": "LOJA DE MOVEIS FICTICIA 9/10",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 141,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": 9,
+        "parcelaTotal": 10,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 1,
+        "valor": -299.9
+      },
+      {
+        "categoriaCor": "#92c8f0",
+        "categoriaId": 4,
+        "categoriaNome": "Transporte",
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "data": "2026-09-22",
+        "descricao": "APP TRANSPORTE FICTICIO *VIAGEM",
+        "descricaoOriginal": "APP TRANSPORTE FICTICIO *VIAGEM",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 155,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 1,
+        "valor": -27.45
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-09-12",
+        "descricao": "Conta de luz",
+        "descricaoOriginal": "DEBITO AUTOMATICO ENERGIA FICTICIA",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 149,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": 2,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 9,
+        "valor": -223.5
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "data": "2026-09-18",
+        "descricao": "RESTAURANTE SABOR FICTICIO",
+        "descricaoOriginal": "RESTAURANTE SABOR FICTICIO",
+        "emergencia": false,
+        "estabelecimento": "Restaurante Sabor",
+        "id": 152,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 1,
+        "valor": -106.9
+      },
+      {
+        "categoriaCor": "#d4a5e8",
+        "categoriaId": 3,
+        "categoriaNome": "Moradia",
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-09-14",
+        "descricao": "Pix para o síndico",
+        "descricaoOriginal": "PIX ENVIADO",
+        "emergencia": true,
+        "estabelecimento": null,
+        "id": 150,
+        "ignorarRelatorios": false,
+        "observacao": "condomínio",
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 4,
+        "valor": -50.0
+      },
+      {
+        "categoriaCor": "#a7a3f5",
+        "categoriaId": 9,
+        "categoriaNome": "Serviços e assinaturas",
+        "contaId": 2,
+        "contaNome": "Cartão Fictício Platinum",
+        "data": "2026-09-20",
+        "descricao": "ASSINATURA STREAMFLIX",
+        "descricaoOriginal": "ASSINATURA STREAMFLIX",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 153,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 1,
+        "valor": -39.9
+      },
+      {
+        "categoriaCor": null,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "data": "2026-09-25",
+        "descricao": "TARIFA PACOTE DE SERVICOS",
+        "descricaoOriginal": "TARIFA PACOTE DE SERVICOS",
+        "emergencia": false,
+        "estabelecimento": null,
+        "id": 156,
+        "ignorarRelatorios": false,
+        "observacao": null,
+        "openFinance": true,
+        "parcelaNumero": null,
+        "parcelaTotal": null,
+        "regraDescricaoId": null,
+        "status": 1,
+        "tipo": 1,
+        "tipoLancamento": 13,
+        "valor": -32.9
+      }
+    ]
+  },
+  {
+    "nome": "maiores despesas com o fim antes do início",
+    "requisicao": "GET /api/relatorios/maiores-despesas?inicio=2026-10-01&fim=2026-09-30",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Período inválido."
+    }
+  },
+  {
+    "nome": "maiores despesas sem login",
+    "requisicao": "GET /api/relatorios/maiores-despesas?inicio=2026-09-01&fim=2026-09-30",
+    "status": 401
+  }
+]

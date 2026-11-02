@@ -319,7 +319,8 @@ INSERT INTO HistoricoInvestimento (PluggyInvestmentId, ConexaoBancariaId, Nome, 
     ('inv-cdb-0001', 1, 'CDB Banco Fictício 110% CDI', 'FIXED_INCOME', '2026-08-31', '12510.2', '11000.0', '2026-08-31 09:00:00'),
     ('inv-cdb-0001', 1, 'CDB Banco Fictício 110% CDI', 'FIXED_INCOME', '2026-09-30', '12688.73', '11000.0', '2026-09-30 09:00:00'),
     ('inv-cdb-0001', 1, 'CDB Banco Fictício 110% CDI', 'FIXED_INCOME', '2026-10-14', '12873.42', '12000.0', '2026-10-14 09:00:00'),
-    ('inv-resgatado-0001', 1, 'LCI Fictícia (resgatada)', 'FIXED_INCOME', '2026-05-31', '3050.0', '3000.0', '2026-05-31 09:00:00');
+    ('inv-resgatado-0001', 1, 'LCI Fictícia (resgatada)', 'FIXED_INCOME', '2026-05-31', '3050.0', '3000.0', '2026-05-31 09:00:00'),
+    ('inv-desconectado-0001', 2, 'CDB Banco Desconectado', 'FIXED_INCOME', '2026-02-28', '1015.0', '1000.0', '2026-02-28 09:00:00');
 
 INSERT INTO Emprestimo (Id, ConexaoBancariaId, PluggyLoanId, Natureza, Modalidade, Produto, NumeroContrato, Moeda, ValorContratado,
     SaldoDevedor, ValorParcela, ParcelasTotal, ParcelasPagas, ParcelasAVencer, ParcelasEmAtraso, Periodicidade, SistemaAmortizacao,

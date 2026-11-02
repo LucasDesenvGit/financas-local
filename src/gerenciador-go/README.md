@@ -16,6 +16,7 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 - `main.go`: a entrada, e as ações que o próprio gerenciador roda como administrador (`--servico ligar|desligar|reiniciar`, `--backup "destino"`, `--instalar-pelos-scripts`), como o `Program.cs`.
 - `gerenciador.go`: o Wails (janela, bandeja, instância única), a consulta da situação e as rotas da página, servidas por dentro do programa, **sem porta aberta** (`AssetOptions.Handler`).
 - `sistema_windows.go`, `sistema_linux.go`: o que muda entre os dois. No Windows, ligar, desligar, copiar o banco e reinstalar pedem o UAC; no Linux, rodam no próprio gerenciador, e fechar a janela só a esconde (ADR 0052, #417).
+- `foco_windows.go`, `foco_linux.go`: abrir o gerenciador de novo traz a janela que já está aberta para a frente. No Windows, a segunda cópia passa à primeira o direito de vir para a frente (`AllowSetForegroundWindow`) antes de avisá-la e fechar; no Linux, não precisa.
 - `internal/tela`: a página (`pagina.html`, `estilo.css`) e o que ela mostra em cada situação. Não depende do Wails: os testes rodam sem janela.
 - `internal/instalacao`: onde estão a API, o banco, os dados e o endereço (o `Instalacao.cs`), pelos mesmos `appsettings`.
 - `internal/situacao`: o serviço e o `GET /api/auth/estado` (o `VerificadorSituacao`).
