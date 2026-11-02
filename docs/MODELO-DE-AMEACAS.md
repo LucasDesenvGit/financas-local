@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 31/10/2026, na fase "Go atrás do .NET" (#231). Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados`, o login e a remoção do .NET (#86).
+> **Data:** 02/11/2026, na fase "Go atrás do .NET" (#231). Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados`, o login e a remoção do .NET (#86).
 
 ## De quem o sistema se protege
 
@@ -35,7 +35,7 @@ flowchart TB
         subgraph disco["Pasta dados, no disco"]
             banco[("Banco")]
             chaves[("Chaves")]
-            copias[("Cópias")]
+            copias[("Cópias<br/>dados/backups e as que você salva")]
         end
     end
 
@@ -54,7 +54,10 @@ flowchart TB
     api -- "5. arquivo" --> banco
     go -- "5. arquivo" --> banco
     api -- "5. arquivo" --> chaves
+    api -- "5. cópia antes de mudar o esquema" --> copias
     gerenciador -- "5. arquivo" --> copias
+    gerenciador -- "6. HTTPS local, aceita o certificado sem conferir" --> api
+    gerenciador -- "6. VACUUM INTO, como administrador no Windows" --> banco
 ```
 
 ## Ameaças por fronteira
@@ -114,9 +117,22 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 | **Falsificação** | Outro usuário usa os arquivos | Sem senha de banco: vale a permissão do sistema. No `.msi`, só o sistema e os administradores; pelos scripts no Linux, só a sua conta (`chmod 700`); pelos scripts no Windows, a permissão que a pasta do projeto já tinha | — |
 | **Adulteração** | Um usuário sem privilégio troca os arquivos do serviço | No `.msi`, as pastas são protegidas | O serviço como SYSTEM a partir de pastas alteráveis, na instalação pelos scripts (#68, item 1) |
 | **Repúdio** | Apagar o rastro no banco | — | A auditoria não tem cópia fora do banco |
-| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com Data Protection, com chaves protegidas por DPAPI no Windows. Cópia só onde você escolhe | Banco e cópias sem criptografia (#68, item 2) |
+| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com Data Protection, com chaves protegidas por DPAPI no Windows. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `EsquemaBanco`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2) |
 | **Negação de serviço** | O banco corrompe ou some | Cópia antes de mudar a estrutura, e o [guia de restaurar](OPERACAO.md#restaurar-uma-cópia) | — |
 | **Aumento de privilégio** | O serviço é usado para rodar outra coisa | No Linux, roda na conta do usuário | O serviço do Linux sem isolamento (#68, item 6) |
+
+### 6. Gerenciador ↔ API e banco
+
+O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site responde (`GET /api/auth/estado`) e copia o banco com `VACUUM INTO`. No Windows, copiar, ligar e desligar rodam numa instância dele elevada pelo UAC (`--backup`, `--servico`), porque a pasta de dados só abre para o sistema e os administradores.
+
+| | Ameaça | Proteção que existe | O que falta |
+|---|---|---|---|
+| **Falsificação** | Outro processo ocupa a porta do site e se passa pela API para o gerenciador | A consulta não manda nada seu e só muda a situação mostrada ("no ar", "não responde") | O gerenciador aceita qualquer certificado quando o endereço é de loopback (`Situacao.cs`; `situacao.go`, `InsecureSkipVerify`), para funcionar antes de o sistema confiar no certificado. Conferir o certificado da instalação, pela impressão digital, fecharia isso (*julgamento*) |
+| **Adulteração** | Um destino escolhido sobrescreve um arquivo importante | O destino vem da janela de salvar, escolhido por você | No Windows, a gravação roda como administrador: o destino pode ser uma pasta que a sua conta não escreveria |
+| **Repúdio** | Não saber quem copiou o banco | — | A cópia pelo gerenciador não entra na auditoria do site |
+| **Vazamento** | A cópia vai para um lugar inseguro | O gerenciador avisa que a cópia tem todos os seus dados | A cópia sai sem criptografia (#68, item 2) |
+| **Negação de serviço** | A cópia trava o site | `VACUUM INTO` lê numa transação, com o banco em WAL, e o site continua no ar | — |
+| **Aumento de privilégio** | Outro programa usa a instância elevada do gerenciador | A instância elevada só aceita as ações fixas (`--backup <destino>`, `--servico ligar\|desligar\|reiniciar` e, só na instalação de desenvolvimento, `--instalar-pelos-scripts`) e pede o UAC a cada vez | — |
 
 ## Ligação com a #68
 
