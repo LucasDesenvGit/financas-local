@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.65.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O instalador `.msi` traz o gerenciador em Go** (#277, parte 2; épico #70; ADR 0052). Ele substitui o de C#, tem o mesmo nome e os mesmos atalhos, e "Iniciar com o Windows" continua ligado para quem já usava. É um arquivo só, de ~16 MB, no lugar de ~240 arquivos e 121 MB. A janela usa o WebView2 da Microsoft: se ele faltar, a tela final do instalador avisa e diz onde baixar, e o site funciona do mesmo jeito.
+
 ## [2.64.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades

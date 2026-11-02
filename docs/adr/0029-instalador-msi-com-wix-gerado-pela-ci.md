@@ -40,7 +40,7 @@ A issue #119 pediu um `.msi` de "Avançar, Avançar, Concluir" e um gerenciador.
 O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/FinancasLocal.wxs` (WiX 5.0.2).
 
 **Como ele é montado:**
-- API e gerenciador vão **self-contained `win-x64` na mesma pasta**: o computador não precisa de .NET, Node, Git, bash nem `sqlite3`.
+- API e gerenciador vão **self-contained `win-x64` na mesma pasta**: o computador não precisa de .NET, Node, Git, bash nem `sqlite3`. Desde a #277, o gerenciador é o em Go, um `.exe` só (ADR 0052).
 - A API cria e atualiza o banco ao iniciar (ADR 0003).
 - O workflow `.github/workflows/versao.yml` gera e testa o pacote a cada pull request que mexe no instalador. Na tag `vX.Y.Z`, publica o `.msi` e o `SHA256SUMS.txt` no Release. A cada push no `develop`, publica a versão de desenvolvimento (ver a atualização no fim).
 - A versão vem do `Directory.Build.props`, e a tag tem de ser igual.
