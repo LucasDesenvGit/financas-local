@@ -19,6 +19,8 @@ set -euo pipefail
 
 : "${ROTULO:?informe ROTULO}" "${GITHUB_SHA:?informe GITHUB_SHA}" "${GITHUB_REPOSITORY:?informe GITHUB_REPOSITORY}"
 MAXIMO_BLOCOS=20
+# O GitHub aceita até 125000 caracteres nas notas (#600); a folga cobre a diferença de contagem do lado de lá.
+LIMITE_NOTAS="${LIMITE_NOTAS:-120000}"
 
 if [[ -n "${NOTAS_ANTERIORES:-}" ]]; then
     anteriores="$(cat "$NOTAS_ANTERIORES")"
@@ -55,7 +57,7 @@ blocos="$(printf '%s\n%s\n' "$bloco_novo" "$blocos_anteriores" \
         /^### / { n++; pular = (n > 1 && index($0, rotulo) == 1) }
         n <= max && !pular && NF')"
 
-cat <<EOF
+cabecalho="$(cat <<EOF
 **Versão de desenvolvimento $ROTULO**, gerada do develop no commit $GITHUB_SHA.
 
 Tem o que já foi aprovado nos PRs e ainda não saiu numa versão. Pode ter coisa ainda não testada no uso real.
@@ -74,11 +76,29 @@ $blocos
 <!-- por-versao:fim -->
 
 ## Tudo desde a última versão publicada
-
 EOF
+)"
+printf '%s\n\n' "$cabecalho"
+
+# #600: o GitHub recusa notas com mais de 125 mil caracteres, e esta seção cresce a cada PR até sair uma versão
+# publicada. Ela entra até onde couber (contando bytes, que nunca são menos que os caracteres), cortada no fim de uma
+# versão, com um link para o resto. O cabeçalho e os blocos por versão, que os gerenciadores leem, entram inteiros.
+resto=$(( LIMITE_NOTAS - $(printf '%s\n\n' "$cabecalho" | LC_ALL=C wc -c) ))
+link="_As versões mais antigas não cabem aqui: veja o [CHANGELOG.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/CHANGELOG.md)._"
+
 # As seções do CHANGELOG do topo até a última versão publicada (a primeira sem "· desenvolvimento"), um nível
 # abaixo: "## [2.26.1] — data · desenvolvimento" vira "### 2.26.1 — data · desenvolvimento", e "### Correções", "#### Correções".
-awk '
-    /^## \[/ { if ($0 !~ /desenvolvimento/) exit; f = 1; sub(/^## \[/, "### "); sub(/\]/, ""); print; next }
+LC_ALL=C awk -v resto="$resto" -v link="$link" '
+    function fechar() {
+        if (secao == "") return
+        if (usado + length(secao) + length(link) + 2 > resto) { print "\n" link; cortou = 1; exit }
+        printf "%s", secao; usado += length(secao); secao = ""
+    }
+    /^## \[/ {
+        fechar()
+        if ($0 !~ /desenvolvimento/) { f = 0; exit }
+        f = 1; sub(/^## \[/, "### "); sub(/\]/, ""); secao = $0 "\n"; next
+    }
     f && /^### / { sub(/^### /, "#### ") }
-    f' CHANGELOG.md
+    f { secao = secao $0 "\n" }
+    END { if (!cortou) fechar() }' CHANGELOG.md

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.63.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **A versão de desenvolvimento volta a ser publicada** (#600). As notas dela copiavam o CHANGELOG inteiro desde a última versão publicada e passaram do limite de 125 mil caracteres do GitHub, e o workflow "Versão (instalador .msi)" falhava no develop, sem pré-lançamento "desenvolvimento" para os gerenciadores. Agora essa parte entra até onde couber, cortada no fim de uma versão, com um link para o resto no `CHANGELOG.md`; os blocos por versão, que os gerenciadores leem, entram inteiros.
+
 ## [2.63.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
