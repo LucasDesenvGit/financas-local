@@ -187,7 +187,7 @@ flowchart TB
             subgraph publicado["publicado"]
                 api["api: API .NET, com o site no wwwroot"]
                 go["api/financas-go"]
-                gerenciador["gerenciador: janela Avalonia"]
+                gerenciador["gerenciador em Go (Wails, GTK 4 e WebKitGTK 6.0)<br/>sem as bibliotecas, o em C# (Avalonia)"]
             end
             subgraph dados["dados"]
                 banco[("sql/FinancasLocal.db")]
@@ -379,7 +379,7 @@ Separados pelo sistema em que rodam (#154): `geral/` é o bash que roda nos dois
 | `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, caminho nativo no Windows, extração de `.zip`, conferência de hash, helpers de coluna do banco). |
 | `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash; chamado por `instalar-windows.cmd` (na raiz), que pede elevação. Lê a lista de colunas novas do `geral/2-criar-banco.sh`. Mudanças nas etapas 1 e 3 do bash precisam ser refletidas aqui. |
 | `windows/parar-windows.ps1` | O `parar.sh` em PowerShell; chamado por `parar-windows.cmd` (na raiz). |
-| `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: publicam o gerenciador em `publicado/gerenciador` e criam os atalhos (Menu Iniciar no Windows, menu de aplicativos no Linux, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
+| `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: publicam o gerenciador em `publicado/gerenciador` (no Linux, o em Go em `publicado/gerenciador-go`, #277) e criam os atalhos (Menu Iniciar no Windows, menu de aplicativos no Linux, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
 | `windows/configurar-github.ps1` | Cria o repositório no GitHub, envia as branches e aplica as proteções. |
 | `ci/verificar-sql.py`, `ci/verificar-manual.py`, `ci/verificar-versao.py`, `ci/verificar-tempo-testes.py` | Usados na CI: banco idempotente e sem T-SQL, aviso de Manual desatualizado, versão subiu (ADR 0039) e tempo dos testes do Jest (#204). |
 | `3-publicar-atualizar.sh`, `4-backup.sh`, `instalar-gerenciador.sh` (na raiz de `scripts/`) | **Repasses temporários** para os caminhos novos: o backup agendado antes da mudança e o comando que o gerenciador do Linux antigo mostra continuam funcionando. Podem ser apagados numa versão futura. |

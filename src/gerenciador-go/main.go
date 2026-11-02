@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"log"
@@ -16,6 +17,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/servico"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
 
@@ -50,6 +52,11 @@ func main() {
 	}
 	if len(os.Args) == 3 && os.Args[1] == "--backup" {
 		os.Exit(backup(os.Args[2]))
+	}
+	// --situacao: como o do Program.cs do Linux, escreve a situação e sai (0 = no ar), sem janela; a CI usa (#277).
+	if len(os.Args) == 2 && os.Args[1] == "--situacao" {
+		i := instalacao.Atual()
+		os.Exit(situacao.Resumo(os.Stdout, situacao.Nova(i).Consultar(context.Background()), i, versao))
 	}
 
 	// --bandeja: começando com o Windows, só o ícone na área de notificação.

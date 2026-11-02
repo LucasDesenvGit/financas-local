@@ -40,12 +40,14 @@ Ele publica o gerenciador em `publicado\gerenciador` e cria os atalhos no Menu I
 scripts/linux/instalar-gerenciador.sh
 ```
 
-- **Onde fica:** publicado em `publicado/gerenciador`, com o atalho **Gerenciador do Finanças Local** no menu de aplicativos e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
+- **Qual gerenciador** (#277, ADR 0052): o em Go, compilado no seu computador em `publicado/gerenciador-go`. Ele precisa de um compilador de C e dos pacotes de desenvolvimento do GTK 4 e do WebKitGTK 6.0 (no Debian e no Ubuntu: `sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`; no Fedora: `sudo dnf install gcc pkgconf-pkg-config gtk4-devel webkitgtk6.0-devel`; no Arch: `sudo pacman -S --needed gcc pkgconf gtk4 webkitgtk-6.0`). Sem eles, o script diz o comando da sua distribuição e instala, por enquanto, o gerenciador em C# em `publicado/gerenciador`, que faz o mesmo. Depois de instalar os pacotes, rode o script de novo: o em Go entra no lugar, inclusive no **Iniciar com o sistema**. `--em-csharp` instala o em C# mesmo assim.
+- **Onde fica:** o atalho **Gerenciador do Finanças Local** no menu de aplicativos (`br.financaslocal.Gerenciador.desktop`; o do em C# é `financaslocal-gerenciador.desktop`) e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
 - **O que faz:** mostra se o site está no ar, liga, desliga e reinicia o serviço (sem senha: ele é do seu usuário), copia o banco e mostra o registro do serviço (**Ver o registro do serviço**, quando o site não sobe).
 - **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet, a não ser na instalação de desenvolvimento (clone na branch `develop`), em que o botão **Atualizar para a última do develop** traz o código do GitHub ([abaixo](#atualizar)).
 - **Ao sair da conta:** o serviço do usuário para, e o site junto. Em **Mais opções**, **Manter o site no ar sem login** liga o *linger* do systemd (`loginctl enable-linger`).
 - **Iniciar com o sistema:** deixa o ícone na bandeja e avisa se o site cair. No GNOME, a bandeja precisa da extensão AppIndicator; sem ela, a janela abre minimizada.
-- **No terminal:** `publicado/gerenciador/Financas.Gerenciador.Linux --situacao` mostra a situação sem abrir a janela.
+- **No terminal:** `publicado/gerenciador-go/financas-gerenciador --situacao` (o em C#: `publicado/gerenciador/Financas.Gerenciador.Linux --situacao`) mostra a situação sem abrir a janela.
+- **Sem login:** a instalação também avisa, no fim, quando o *linger* está desligado.
 
 ### De onde vem cada coisa
 
@@ -85,7 +87,7 @@ Os dois param o serviço, a API rodando fora dele (`dotnet run`, Visual Studio) 
 **Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/geral/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela.
 
 - **Windows:** remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. O certificado do site fica nos confiáveis: pelo `instalar-windows.cmd`, nos do computador (`Cert:\LocalMachine\Root`, com o nome amigável `FinancasLocal`), que se apagam em `certlm.msc` › **Autoridades de Certificação Raiz Confiáveis**; pelo Git Bash, nos da sua conta, pelo `dotnet dev-certs https --trust`, que se apagam com `dotnet dev-certs https --clean`.
-- **Linux:** apague a unidade do serviço, `~/.config/systemd/user/financaslocal.service`, e rode `systemctl --user daemon-reload`. Se ligou **Manter o site no ar sem login**, desligue com `loginctl disable-linger`. Com o gerenciador, apague também `~/.local/share/applications/financaslocal-gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. O certificado que você pôs nos confiáveis (tabela em [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado)) sai com o comando de remoção da sua distribuição.
+- **Linux:** apague a unidade do serviço, `~/.config/systemd/user/financaslocal.service`, e rode `systemctl --user daemon-reload`. Se ligou **Manter o site no ar sem login**, desligue com `loginctl disable-linger`. Com o gerenciador, apague também `~/.local/share/applications/br.financaslocal.Gerenciador.desktop` (o em C#: `financaslocal-gerenciador.desktop`), `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. O certificado que você pôs nos confiáveis (tabela em [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado)) sai com o comando de remoção da sua distribuição.
 
 ## Migrar de uma instalação com SQL Server
 

@@ -6,14 +6,14 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 |---|---|
 | Janela igual à do `FormPrincipal.cs`, ícone na bandeja, uma cópia só, `--bandeja`, fechar destrói a janela (#418) | Atualizar o gerenciador e reabrir (#430, depois da #277) |
 | Situação do site (de 5 em 5 s, na janela e no ícone da bandeja), ligar, desligar e reiniciar pelo UAC, cópia do banco, preferências (#419) | |
-| Versão nova pelo GitHub Releases: procurar, "O que mudou", baixar conferindo o SHA-256 e abrir o instalador; "Receber versões de desenvolvimento" (#420, ADR 0053) | Instalar no Linux pelos scripts: o WebKitGTK 6.0 e o atalho `br.financaslocal.Gerenciador.desktop` (#277) |
+| Versão nova pelo GitHub Releases: procurar, "O que mudou", baixar conferindo o SHA-256 e abrir o instalador; "Receber versões de desenvolvimento" (#420, ADR 0053) |
 | "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432) | |
-| Linux (#417): `systemctl --user` sem senha, tema pelo portal, "Iniciar com o sistema" (`~/.config/autostart`), registro do serviço, comando para atualizar, "sem login" (linger), ícones em SVG | |
+| Linux (#417): instalado pelo `scripts/linux/instalar-gerenciador.sh` com o atalho `br.financaslocal.Gerenciador.desktop` (#277); `systemctl --user` sem senha, tema pelo portal, "Iniciar com o sistema" (`~/.config/autostart`), registro do serviço, comando para atualizar, "sem login" (linger), ícones em SVG | |
 | Aviso na bandeja com a janela fechada: o site caiu, versão nova (#448) | |
 
 ## Organização
 
-- `main.go`: a entrada, e as ações que o próprio gerenciador roda como administrador (`--servico ligar|desligar|reiniciar`, `--backup "destino"`, `--instalar-pelos-scripts`), como o `Program.cs`.
+- `main.go`: a entrada, e as ações que o próprio gerenciador roda como administrador (`--servico ligar|desligar|reiniciar`, `--backup "destino"`, `--instalar-pelos-scripts`), como o `Program.cs`. `--situacao` escreve a situação e sai (0 = no ar), sem janela, como o do Linux em C# (#277).
 - `gerenciador.go`: o Wails (janela, bandeja, instância única), a consulta da situação e as rotas da página, servidas por dentro do programa, **sem porta aberta** (`AssetOptions.Handler`).
 - `sistema_windows.go`, `sistema_linux.go`: o que muda entre os dois. No Windows, ligar, desligar, copiar o banco e reinstalar pedem o UAC; no Linux, rodam no próprio gerenciador, e fechar a janela só a esconde (ADR 0052, #417).
 - `foco_windows.go`, `foco_linux.go`: abrir o gerenciador de novo traz a janela que já está aberta para a frente. No Windows, a segunda cópia passa à primeira o direito de vir para a frente (`AllowSetForegroundWindow`) antes de avisá-la e fechar; no Linux, não precisa.
