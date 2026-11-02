@@ -251,3 +251,62 @@ func TestEscolherRelogio(t *testing.T) {
 		})
 	}
 }
+
+// Regra (#84): gerar-certificado lê a senha da entrada padrão, e não da linha de comando, e diz o que fez. O PowerShell manda
+// \r\n no fim, e o printf do bash não manda nada. O pipe do PowerShell 5.1 também pode começar pela marca do UTF-8: lida como
+// parte da senha, ela trocaria o certificado a cada atualização.
+func TestGerarCertificado(t *testing.T) {
+	pfx := filepath.Join(t.TempDir(), "financaslocal.pfx")
+	casos := []struct{ nome, entrada, saida string }{
+		{"gera", "senha\n", "gerado\n"},
+		{"reaproveita, com o fim de linha do PowerShell", "senha\r\n", "reaproveitado\n"},
+		{"reaproveita, sem fim de linha", "senha", "reaproveitado\n"},
+		{"reaproveita, com a marca do UTF-8", "\ufeffsenha\r\n", "reaproveitado\n"},
+		{"só a primeira linha é a senha", "senha\noutra\n", "reaproveitado\n"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			var saida strings.Builder
+			if err := gerarCertificado([]string{"-pfx", pfx}, strings.NewReader(c.entrada), &saida, relogio.Fixo{Instante: inicioDoContrato}); err != nil {
+				t.Fatal(err)
+			}
+			if saida.String() != c.saida {
+				t.Errorf("saída = %q, esperada %q", saida.String(), c.saida)
+			}
+		})
+	}
+	if _, err := servidor.CarregarPFX(pfx, "senha"); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestGerarCertificadoRecusa(t *testing.T) {
+	pfx := filepath.Join(t.TempDir(), "a.pfx")
+	casos := []struct {
+		nome         string
+		argumentos   []string
+		entrada      string
+		trechoDoErro string
+	}{
+		{"sem -pfx", nil, "senha\n", "informe -pfx"},
+		{"sem senha", []string{"-pfx", pfx}, "", "entrada padrão"},
+		{"linha em branco", []string{"-pfx", pfx}, "\r\n", "entrada padrão"},
+		{"só a marca do UTF-8", []string{"-pfx", pfx}, "\ufeff\r\n", "entrada padrão"},
+		{"opção desconhecida", []string{"-senha", "x"}, "", "senha"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			var saida strings.Builder
+			err := gerarCertificado(c.argumentos, strings.NewReader(c.entrada), &saida, relogio.Fixo{Instante: inicioDoContrato})
+			if err == nil || !strings.Contains(err.Error(), c.trechoDoErro) {
+				t.Errorf("erro = %v", err)
+			}
+			if saida.Len() != 0 {
+				t.Errorf("saída = %q", saida.String())
+			}
+		})
+	}
+	if _, err := os.Stat(pfx); err == nil {
+		t.Error("gravou o .pfx mesmo recusando")
+	}
+}

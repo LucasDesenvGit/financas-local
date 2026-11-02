@@ -12,6 +12,10 @@
 //
 //     go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
 //
+// Sozinho, ele também roda como serviço do sistema (#84): Serviço do Windows, ou systemd no Linux.
+//
+// O subcomando gerar-certificado (#84) cuida do .pfx da instalação: reaproveita o que ainda vale e gera outro quando precisa.
+//
 // Só para teste, nos dois jeitos: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e
 // andar dali (#363), como a libfaketime faz com o .NET no contrato. Atrás do .NET, quem passa a opção é ele, quando
 // Go:InicioDoRelogio está configurado. Sem a opção, o relógio do sistema.
@@ -29,11 +33,9 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/api"
@@ -46,6 +48,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/partida"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servicosistema"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tarefas"
@@ -53,13 +56,52 @@ import (
 )
 
 func main() {
-	if err := rodar(); err != nil {
+	var err error
+	if len(os.Args) > 1 && os.Args[1] == "gerar-certificado" {
+		err = gerarCertificado(os.Args[2:], os.Stdin, os.Stdout, relogio.Sistema{})
+	} else {
+		err = servicosistema.Rodar(rodar)
+	}
+	if err != nil {
 		slog.Error("o Go parou com erro", "erro", err)
 		os.Exit(1)
 	}
 }
 
-func rodar() error {
+// gerarCertificado é o subcomando que os scripts chamam. A senha vem pela entrada padrão, e não na linha de comando, onde
+// qualquer programa do computador a veria. Escreve "gerado" ou "reaproveitado" na saída.
+func gerarCertificado(argumentos []string, entrada io.Reader, saida io.Writer, r relogio.Relogio) error {
+	opcoes := flag.NewFlagSet("gerar-certificado", flag.ContinueOnError)
+	pfx := opcoes.String("pfx", "", "caminho do .pfx; a parte pública vai para o .pem ao lado")
+	if err := opcoes.Parse(argumentos); err != nil {
+		return err
+	}
+	if *pfx == "" {
+		return errors.New("gerar-certificado: informe -pfx")
+	}
+	linha, err := bufio.NewReader(entrada).ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return fmt.Errorf("gerar-certificado: ler a senha: %w", err)
+	}
+	// O pipe do PowerShell 5.1 pode começar pela marca do UTF-8 e termina em \r\n: nada disso é da senha.
+	senha := strings.TrimRight(strings.TrimPrefix(linha, "\ufeff"), "\r\n")
+	if senha == "" {
+		return errors.New("gerar-certificado: a senha vem pela entrada padrão")
+	}
+	gerou, err := servidor.GarantirCertificado(*pfx, senha, r.Agora())
+	if err != nil {
+		return err
+	}
+	resultado := "reaproveitado"
+	if gerou {
+		resultado = "gerado"
+	}
+	_, err = fmt.Fprintln(saida, resultado)
+	return err
+}
+
+// rodar é o programa: acaba quando o ctx acaba (Ctrl+C, systemd ou o gerenciador de serviços do Windows).
+func rodar(ctx context.Context) error {
 	executavel, err := os.Executable()
 	if err != nil {
 		return err
@@ -95,7 +137,7 @@ func rodar() error {
 		log = slog.New(slog.NewJSONHandler(os.Stderr, nil))
 		logSemTabela = log
 	} else {
-		texto := slog.NewTextHandler(os.Stderr, nil)
+		texto := servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil))
 		filaDeErros = erros.NovaFila()
 		log, logSemTabela = slog.New(erros.NovoHandler(texto, filaDeErros, rel)), slog.New(texto)
 	}
@@ -109,10 +151,6 @@ func rodar() error {
 	if *caminhoDB != "" {
 		cfg.BancoCaminho = *caminhoDB
 	}
-
-	// SIGINT (Ctrl+C) e SIGTERM (systemd) param com elegância. O serviço do Windows entra na #84.
-	ctx, parar := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer parar()
 
 	if *atras {
 		return rodarAtrasDoDotnet(ctx, cfg, rel, log, os.Stdin, os.Stdout)

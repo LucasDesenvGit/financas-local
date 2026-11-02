@@ -40,6 +40,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/openfinance` | as rotas do Open Finance (#83): credenciais, conexões, status, histórico e o mapa de categorias; quem traz os dados é o `internal/sincronizacao` |
 | `internal/sincronizacao` | o `SincronizacaoService` e a tarefa periódica (#83): contas, faturas, transações, investimentos, empréstimos e carteira, uma rodada por vez; sem rota |
 | `internal/erros` | os erros do sistema (#298, ADR 0022): o handler do `slog` que manda avisos e erros para a fila, o gravador em `ErroSistema` e as rotas de `/api/erros`; só com o Go sozinho, até a inversão (#85) |
+| `internal/servicosistema` | o que faz o executável rodar como serviço (#84): o gerenciador de serviços e o Log de Eventos no Windows; o SIGTERM do systemd no Linux |
 | `internal/tarefas` | tarefas em segundo plano (o `BackgroundService` do .NET): só as de `Go:Tarefas`, com `context`, espera ao parar e `recover` por ciclo |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
 | `internal/sessao` | quem está logado, no contexto da requisição |

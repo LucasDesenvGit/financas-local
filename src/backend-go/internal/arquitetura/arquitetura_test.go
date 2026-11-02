@@ -71,7 +71,7 @@ var (
 	// base: o que qualquer pacote pode importar (banco, tipos, relógio, HTTP comum, texto, sessão).
 	base = []string{
 		"internal/banco", "internal/banco/consultas", "internal/banco/esquema", "internal/banco/esquema/embutido",
-		"internal/banco/esquema/gerar", "internal/config", "internal/relogio", "internal/respostas",
+		"internal/banco/esquema/gerar", "internal/config", "internal/relogio", "internal/respostas", "internal/servicosistema",
 		"internal/servidor", "internal/sessao", "internal/testeapoio", "internal/texto", "internal/tipos",
 	}
 	// transversais: serviços que qualquer assunto usa (auditoria, parâmetros do banco, erros do sistema, tarefas em
