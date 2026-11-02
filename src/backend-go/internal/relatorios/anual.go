@@ -273,7 +273,8 @@ func (s *Servico) PainelAnual(ctx context.Context, ano, anoComparacao int, p Pat
 	for id, c := range categorias {
 		eh := c.natureza != nil && *c.natureza == NaturezaEssencial
 		if !eh && c.natureza == nil && c.paiId != nil {
-			if pai, ok := categorias[*c.paiId]; ok && pai.natureza != nil && *pai.natureza == NaturezaEssencial {
+			// O pai que não está no mapa volta vazio, sem natureza: não é essencial.
+			if pai := categorias[*c.paiId]; pai.natureza != nil && *pai.natureza == NaturezaEssencial {
 				eh = true
 			}
 		}

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.56.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Relatórios do painel em Go** (#80, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/relatorios` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, as rotas de Relatórios que faltavam: despesas por categoria, fluxo mensal (com as despesas de emergência), a visão anual (resumo do ano, comparação com outro ano, anos disponíveis, despesas por natureza e a saúde financeira com o patrimônio da carteira, das reservas e do Open Finance), a projeção dos próximos meses (médias, parcelas futuras e faturas dos cartões do Open Finance) e as maiores despesas do período. Os 29 casos do contrato `14-relatorios`, gravados do .NET, passam com o Go atendendo. Manual: não se aplica.
+
 ## [2.55.0] — 2026-11-01 · desenvolvimento
 
 ### Funcionalidades

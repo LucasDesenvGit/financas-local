@@ -105,6 +105,15 @@ func TestPainelAnualNaturezaEEmpate(t *testing.T) {
 	a := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome, c.Natureza = "A", &essencial })
 	b := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "B" })
 	luxo := fab.Subcategoria(a, func(c *testeapoio.Categoria) { c.Nome, c.Natureza = "Luxo", &estilo })
+	// Sem natureza, a subcategoria é essencial só debaixo de um pai essencial.
+	feira := fab.Subcategoria(a, func(c *testeapoio.Categoria) { c.Nome = "Feira" })
+	lazer := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome, c.Natureza = "C", &estilo })
+	passeio := fab.Subcategoria(lazer, func(c *testeapoio.Categoria) { c.Nome = "Passeio" })
+	d := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "D" })
+	solta := fab.Subcategoria(d, func(c *testeapoio.Categoria) { c.Nome = "Solta" })
+	despesaDoMes(fab, conta, feira, testeapoio.Dia(2026, 2, 5), "-8.0")
+	despesaDoMes(fab, conta, passeio, testeapoio.Dia(2026, 2, 6), "-80.0")
+	despesaDoMes(fab, conta, solta, testeapoio.Dia(2026, 2, 7), "-5.0")
 	// Gravadas na ordem B, sem categoria, A: a ordem final é sem categoria, A, B.
 	despesaDoMes(fab, conta, b, testeapoio.Dia(2026, 2, 1), "-10.0")
 	fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.Data, tr.Valor = testeapoio.Dia(2026, 2, 2), dec("-10.0") })
@@ -118,10 +127,10 @@ func TestPainelAnualNaturezaEEmpate(t *testing.T) {
 	for _, c := range anual.Categorias {
 		nomes = append(nomes, c.Nome+":"+c.Valor.String())
 	}
-	// O luxo (estilo de vida) conta no pai A (a raiz), mas com a natureza dele; o gasto essencial é só o de A (10 em
-	// 8 meses completos: de fevereiro a setembro).
-	if strings.Join(nomes, " ") != "A:100.0 Sem categoria:10.0 B:10.0" || anual.Distribuicao.Essenciais.String() != "10.0" ||
-		anual.Distribuicao.EstiloDeVida.String() != "90.0" || anual.Saude.GastoEssencialMensalMedio.String() != "1.25" {
+	// O luxo (estilo de vida) conta no pai A (a raiz), mas com a natureza dele; o gasto essencial é o de A e o da feira
+	// (18 em 8 meses completos: de fevereiro a setembro); o passeio e a solta não são essenciais.
+	if strings.Join(nomes, " ") != "A:108.0 C:80.0 Sem categoria:10.0 B:10.0 D:5.0" ||
+		anual.Saude.GastoEssencialMensalMedio.String() != "2.25" {
 		t.Errorf("categorias %v, distribuição %+v, essencial %s", nomes, anual.Distribuicao, anual.Saude.GastoEssencialMensalMedio)
 	}
 }
