@@ -39,7 +39,8 @@ jobs:
   # ADR 0039: todo PR para o develop sobe a versão no Directory.Build.props, pelo tipo do título.
   versao:
     name: versão subiu
-    if: github.event_name == 'pull_request' && github.base_ref == 'develop' && github.actor != 'dependabot[bot]'
+    # Pelo autor do PR, e não por quem disparou: o "@dependabot rebase" pedido por uma pessoa dispara em nome dela (#587).
+    if: github.event_name == 'pull_request' && github.base_ref == 'develop' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -54,6 +55,9 @@ jobs:
       # #294: uma seção de cada tipo por versão no CHANGELOG (entrada nova vai dentro da seção que já existe).
       - name: CHANGELOG sem seção repetida
         run: python3 scripts/ci/verificar-changelog.py
+      # #587: o scripts/geral/atualizar-pr.sh resolve o conflito de versão e de CHANGELOG pela mesma regra.
+      - name: Teste do atualizar-pr
+        run: python3 -B scripts/geral/test_atualizar_versao_do_pr.py
 
   # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
   mudancas:
