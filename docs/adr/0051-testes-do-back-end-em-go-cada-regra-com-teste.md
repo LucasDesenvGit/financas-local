@@ -107,7 +107,7 @@ O detalhe de cada etapa está num comentário do épico #70.
 
 ### Teste de mutação automático (#373)
 
-A mutação à mão continua no PR. A ferramenta mede, toda semana, se os testes de cada pacote continuam pegando erro.
+A mutação à mão continua no PR. A ferramenta mede se os testes de cada pacote continuam pegando erro: no PR, os pacotes que ele mudou (#456), e toda semana, todos.
 
 - **Ferramenta: [gremlins](https://github.com/go-gremlins/gremlins) v0.6.0** (Apache-2.0), rodada com `go run …@v0.6.0`, como o `govulncheck`. Não entra no `go.mod`.
   - Trabalha numa cópia do módulo: o código dele diz que a cópia "allows Gremlins not to work in the actual source directory messing up with the source code files" ([`workdir.go`](https://github.com/go-gremlins/gremlins/blob/main/internal/engine/workdir/workdir.go)).

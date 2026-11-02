@@ -35,11 +35,11 @@ sequenceDiagram
     end
 
     Note over Nav,API: Daí em diante
-    Nav->>API: POST, PUT, PATCH ou DELETE, com cookie e X-XSRF-TOKEN
-    API->>BD: o carimbo de segurança da sessão ainda vale?
+    Nav->>API: qualquer pedido, com o cookie<br/>(e o X-XSRF-TOKEN, se for POST, PUT, PATCH ou DELETE)
+    API->>BD: em todo pedido: o carimbo de segurança da sessão ainda vale?
     alt carimbo mudou (a senha foi trocada)
         API-->>Nav: 401: entre de novo
-    else CSRF errado
+    else grava e o CSRF está errado
         API-->>Nav: 400
     else tudo certo
         API-->>Nav: resposta
@@ -51,7 +51,7 @@ sequenceDiagram
 
 ## Pedido repassado ao Go
 
-**Quem atende:** a API recebe, e o Go responde o que está em `Go:Prefixos`: câmbio, cripto, cadastros, contas, conferir com o banco e transações ([ADR 0049](../adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)).
+**Quem atende:** a API recebe, e o Go responde o que está em `Go:Prefixos`: câmbio, cripto, cadastros, contas, conferir com o banco, transações e o planejamento: contas a pagar, orçamentos e metas ([ADR 0049](../adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)).
 
 ```mermaid
 sequenceDiagram
@@ -88,7 +88,7 @@ sequenceDiagram
 
     Svc->>API: inicia
     API->>BD: EsquemaBanco: se os scripts mudaram, cópia em dados/backups,<br/>depois os scripts embutidos, em modo WAL
-    API->>BD: rotinas de partida: regras padrão, entradas nos cartões,<br/>transferências, cobranças e trocos sem dúvida
+    API->>BD: rotinas de partida: regras padrão, entradas nos cartões,<br/>compras parceladas estornadas, transferências,<br/>cobranças e trocos sem dúvida
     Note over API: Uma falha nas rotinas vira aviso, e a API sobe
     API->>Go: sobe como processo filho, com o segredo pela entrada padrão
     loop enquanto a API estiver no ar

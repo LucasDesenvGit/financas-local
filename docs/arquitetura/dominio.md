@@ -68,7 +68,7 @@ stateDiagram-v2
 
 ### Conta a pagar
 
-**Onde está hoje:** .NET, em `Controllers/PlanejamentoControllers.cs` (`Pagar`), `Servicos/ContaAgendadaService.cs` (`ConciliarAsync`) e `Controllers/PainelController.cs` (`AlertasAsync`). A conciliação também existe em Go (`internal/cobrancas`), e a partida em Go (`internal/partida`, #444) a chama.
+**Onde está hoje:** Go, atendendo o site (#79, #555): `internal/contasagendadas` (o `pagar`) e `internal/cobrancas` (a conciliação, que a partida, #444, e a sincronização, #83, também chamam). Os avisos que vão para o sino saem do `PainelController.cs` (.NET), com o painel em Go (`internal/painel`, #80) pronto e desligado no site.
 
 ```mermaid
 stateDiagram-v2
@@ -147,8 +147,8 @@ Só o centro do domínio: quem pertence a quem e a regra principal de cada um.
 | Parte | Onde está hoje |
 |---|---|
 | Conta, fatura, transação, categoria e regras | Go, atendendo o site |
-| Ativo, operação e provento | Go pronto, desligado no site até a troca dos segredos; .NET atende |
-| Orçamento e meta | .NET (#79) |
+| Ativo, operação e provento | Go pronto (#82, #299), desligado no site; .NET atende. No Go, o token da brapi só se lê depois da troca dos segredos (#85) |
+| Orçamento, meta e conta a pagar | Go, atendendo o site (#79, #555) |
 
 ```mermaid
 classDiagram
