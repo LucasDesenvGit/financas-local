@@ -1,5 +1,802 @@
 [
   {
+    "nome": "configuração sem login",
+    "requisicao": "GET /api/open-finance/configuracao",
+    "status": 401
+  },
+  {
+    "nome": "configuração",
+    "requisicao": "GET /api/open-finance/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "clientId": "cliente-ficticio-0001",
+      "diasRetroativos": 30,
+      "habilitada": false,
+      "intervaloHoras": 12,
+      "meuNome": null,
+      "secretConfigurado": false
+    }
+  },
+  {
+    "nome": "salvar sem o Client ID",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ClientId": [
+          "The ClientId field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com intervalo abaixo",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "IntervaloHoras": [
+          "The field IntervaloHoras must be between 1 and 48."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com intervalo acima",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "IntervaloHoras": [
+          "The field IntervaloHoras must be between 1 and 48."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com dias acima",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "DiasRetroativos": [
+          "The field DiasRetroativos must be between 1 and 365."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com número em texto errado",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.intervaloHoras": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SalvarConfiguracaoPluggyDto. Path: $.intervaloHoras | LineNumber: 0 | BytePositionInLine: 53."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar só o Client ID",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-10-01 12:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "cliente-ficticio-0001",
+                "depois": "cliente-novo"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "salvar tudo",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyAlterada",
+            "Id": 42,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Pluggy.ClientSecret",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "cliente-novo",
+                "depois": "cliente-ficticio-0001"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.DiasRetroativos"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-10-01 12:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "30",
+                "depois": "60"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "configuração depois de salvar",
+    "requisicao": "GET /api/open-finance/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "clientId": "cliente-ficticio-0001",
+      "diasRetroativos": 60,
+      "habilitada": false,
+      "intervaloHoras": 12,
+      "meuNome": null,
+      "secretConfigurado": true
+    }
+  },
+  {
+    "nome": "remover o Client Secret",
+    "requisicao": "DELETE /api/open-finance/configuracao/secret",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyRemovida",
+            "Id": 43,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Pluggy.ClientSecret",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "remover o Client Secret de novo",
+    "requisicao": "DELETE /api/open-finance/configuracao/secret",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyRemovida",
+            "Id": 44,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "voltar à configuração da base",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.DiasRetroativos"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "60",
+                "depois": "30"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "false",
+                "depois": "true"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "12",
+                "depois": "6"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "meu nome: um nome só",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe pelo menos o primeiro e o último nome, como aparecem nos Pix."
+    }
+  },
+  {
+    "nome": "meu nome: longo demais",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "O nome pode ter até 120 caracteres."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "meu nome: salvar",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Transferencias.MeuNome",
+            "Protegido": 0,
+            "Valor": "Ana Teste"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "meu nome: apagar",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Transferencias.MeuNome"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "Ana Teste",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conexões",
+    "requisicao": "GET /api/open-finance/conexoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "consentimentoExpiraEm": "2026-03-01T00:00:00",
+        "corPrimaria": null,
+        "id": 2,
+        "nomeExibicao": "Banco Desconectado",
+        "nomeInstituicao": "Banco Desconectado",
+        "pluggyItemId": "item-ficticio-0002",
+        "quantidadeContas": 0,
+        "status": "LOGIN_ERROR",
+        "statusExecucao": "ERROR",
+        "ultimaAtualizacaoInstituicao": "2026-03-01T08:00:00",
+        "ultimaSincronizacaoEm": "2026-03-01T09:00:00",
+        "ultimoErro": "Consentimento expirado."
+      },
+      {
+        "ativa": true,
+        "consentimentoExpiraEm": "2026-11-05T00:00:00",
+        "corPrimaria": "#820ad1",
+        "id": 1,
+        "nomeExibicao": "Banco Fictício",
+        "nomeInstituicao": "Banco Fictício",
+        "pluggyItemId": "item-ficticio-0001",
+        "quantidadeContas": 2,
+        "status": "UPDATED",
+        "statusExecucao": "SUCCESS",
+        "ultimaAtualizacaoInstituicao": "2026-10-14T08:55:00",
+        "ultimaSincronizacaoEm": "2026-10-14T09:00:00",
+        "ultimoErro": null
+      }
+    ]
+  },
+  {
+    "nome": "ligar a conexão 2",
+    "requisicao": "PUT /api/open-finance/conexoes/2/ativa?ativa=true",
+    "status": 204,
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "status com as duas conexões ligadas",
+    "requisicao": "GET /api/open-finance/status",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "conexoesAtivas": 2,
+      "conexoesComErro": 1,
+      "consentimentosVencendo": 2,
+      "emExecucao": false,
+      "ultimaSincronizacao": "2026-10-14T09:00:00Z"
+    }
+  },
+  {
+    "nome": "ativa com valor errado",
+    "requisicao": "PUT /api/open-finance/conexoes/2/ativa?ativa=talvez",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ativa": [
+          "The value 'talvez' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "ativa em conexão que não existe",
+    "requisicao": "PUT /api/open-finance/conexoes/999/ativa?ativa=true",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "ativa com id que não é número",
+    "requisicao": "PUT /api/open-finance/conexoes/abc/ativa?ativa=true",
+    "status": 404
+  },
+  {
+    "nome": "desligar sem o parâmetro",
+    "requisicao": "PUT /api/open-finance/conexoes/2/ativa",
+    "status": 204,
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "estado da sincronização",
+    "requisicao": "GET /api/open-finance/sincronizacao/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "emExecucao": false
+    }
+  },
+  {
+    "nome": "status",
+    "requisicao": "GET /api/open-finance/status",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "conexoesAtivas": 1,
+      "conexoesComErro": 0,
+      "consentimentosVencendo": 1,
+      "emExecucao": false,
+      "ultimaSincronizacao": "2026-10-14T09:00:00Z"
+    }
+  },
+  {
+    "nome": "logs",
+    "requisicao": "GET /api/open-finance/logs",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conexaoBancariaId": 2,
+        "finalizadoEm": "2026-03-01T09:00:05",
+        "id": 3,
+        "iniciadoEm": "2026-03-01T09:00:00",
+        "mensagem": "Consentimento expirado.",
+        "nomeInstituicao": "Banco Desconectado",
+        "origem": "Automatica",
+        "sucesso": false,
+        "transacoesAtualizadas": 0,
+        "transacoesNovas": 0
+      },
+      {
+        "conexaoBancariaId": 1,
+        "finalizadoEm": "2026-10-14T09:00:37.5",
+        "id": 2,
+        "iniciadoEm": "2026-10-14T09:00:00",
+        "mensagem": null,
+        "nomeInstituicao": "Banco Fictício",
+        "origem": "Manual",
+        "sucesso": true,
+        "transacoesAtualizadas": 0,
+        "transacoesNovas": 4
+      },
+      {
+        "conexaoBancariaId": 1,
+        "finalizadoEm": "2026-10-13T09:00:41.25",
+        "id": 1,
+        "iniciadoEm": "2026-10-13T09:00:00",
+        "mensagem": null,
+        "nomeInstituicao": "Banco Fictício",
+        "origem": "Automatica",
+        "sucesso": true,
+        "transacoesAtualizadas": 3,
+        "transacoesNovas": 12
+      }
+    ]
+  },
+  {
+    "nome": "categorias da Pluggy",
+    "requisicao": "GET /api/open-finance/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "descricao": "Unknown",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "99999999",
+        "quantidadeTransacoes": 1
+      },
+      {
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "descricao": "Groceries",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "05000000",
+        "quantidadeTransacoes": 0
+      },
+      {
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "descricao": "Restaurants",
+        "paiDescricao": "Food and drinks",
+        "pluggyCategoriaId": "19050000",
+        "quantidadeTransacoes": 0
+      }
+    ]
+  },
+  {
+    "nome": "mapear categoria que não existe",
+    "requisicao": "PUT /api/open-finance/categorias/00000000",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "mapear para categoria inválida",
+    "requisicao": "PUT /api/open-finance/categorias/05000000",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "mapear com tipo errado",
+    "requisicao": "PUT /api/open-finance/categorias/05000000",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.categoriaId": [
+          "The JSON value could not be converted to Financas.Api.Dtos.MapearCategoriaPluggyDto. Path: $.categoriaId | LineNumber: 0 | BytePositionInLine: 19."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tirar o mapa sem aplicar",
+    "requisicao": "PUT /api/open-finance/categorias/99999999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "aplicar sem transação na categoria",
+    "requisicao": "PUT /api/open-finance/categorias/05000000",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    },
+    "banco": {
+      "CategoriaPluggy": {
+        "alteradas": [
+          {
+            "chave": {
+              "PluggyCategoriaId": "05000000"
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": 2,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "aplicar nas transações existentes",
+    "requisicao": "PUT /api/open-finance/categorias/99999999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "CategoriaPluggy": {
+        "alteradas": [
+          {
+            "chave": {
+              "PluggyCategoriaId": "99999999"
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": null,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 9
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "aplicar de novo não muda nada",
+    "requisicao": "PUT /api/open-finance/categorias/99999999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "categorias depois de mapear",
+    "requisicao": "GET /api/open-finance/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "descricao": "Unknown",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "99999999",
+        "quantidadeTransacoes": 1
+      },
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "descricao": "Groceries",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "05000000",
+        "quantidadeTransacoes": 0
+      },
+      {
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "descricao": "Restaurants",
+        "paiDescricao": "Food and drinks",
+        "pluggyCategoriaId": "19050000",
+        "quantidadeTransacoes": 0
+      }
+    ]
+  },
+  {
     "nome": "remover conexão sem login",
     "requisicao": "DELETE /api/open-finance/conexoes/2",
     "status": 401
@@ -23,7 +820,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConexaoRemovida",
-            "Id": 42,
+            "Id": 45,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

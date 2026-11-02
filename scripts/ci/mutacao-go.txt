@@ -21,7 +21,7 @@ internal/carteira       100
 internal/conferenciabanco 100
 internal/cotacoes       100
 internal/pluggy         100
-internal/openfinance    0
+internal/openfinance    100
 internal/texto           100
 internal/tipolancamento  100
 internal/transacoes      100

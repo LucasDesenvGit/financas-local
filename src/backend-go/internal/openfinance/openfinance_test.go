@@ -401,6 +401,10 @@ func TestRemoverConexao(t *testing.T) {
 	if n := c.contar(t, `SELECT COUNT(*) FROM "ConexaoBancaria"`); n != 1 {
 		t.Errorf("%d conexões, esperado 1", n)
 	}
+	// Sem o DELETE, o ON DELETE SET NULL deixa a linha com a coluna nula, e a contagem por conexão não a vê.
+	if n := c.contar(t, `SELECT COUNT(*) FROM "SincronizacaoLog"`); n != 1 {
+		t.Errorf("%d logs, esperado 1: o da conexão removida ficou", n)
+	}
 	if n := c.contar(t, `SELECT COUNT(*) FROM "Transacao"`); n != 1 {
 		t.Errorf("%d transações, esperado 1", n)
 	}
@@ -609,9 +613,8 @@ func TestMapearCategoriaRecusa(t *testing.T) {
 		status          int
 		mensagem        string
 	}{
-		{"categoria da Pluggy que não existe", "nao-existe", `{"categoriaId":null}`, 404, mensagemNaoEncontrado},
-		{"categoria sua que não existe", "pluggy", `{"categoriaId":999}`, 400, "Categoria inválida."},
-		{"campo fora do tipo", "pluggy", `{"categoriaId":"x"}`, 400, "could not be converted"},
+		{"categoria da Pluggy que não existe", "nao-existe", `{"categoriaId":null}`, 404, `{"mensagem":"Registro não encontrado."}`},
+		{"categoria sua que não existe", "pluggy", `{"categoriaId":999}`, 400, `{"mensagem":"Categoria inválida."}`},
 	}
 	for _, caso := range casos {
 		t.Run(caso.nome, func(t *testing.T) {
@@ -619,14 +622,22 @@ func TestMapearCategoriaRecusa(t *testing.T) {
 			c.categoriaPluggy(t, "pluggy", "Pluggy", nil, nil, nil)
 			r := c.chamar(t, "PUT", "/api/open-finance/categorias/"+caso.id, caso.corpo)
 			conferirStatus(t, r, caso.status)
-			if !strings.Contains(string(r.Corpo), caso.mensagem) {
-				t.Errorf("corpo = %s, esperado %q", r.Corpo, caso.mensagem)
-			}
+			testeapoio.ConferirJSON(t, r.Corpo, caso.mensagem)
 		})
 	}
+	t.Run("campo fora do tipo", func(t *testing.T) {
+		c := novoCenario(t)
+		c.categoriaPluggy(t, "pluggy", "Pluggy", nil, nil, nil)
+		r := c.chamar(t, "PUT", "/api/open-finance/categorias/pluggy", `{"categoriaId":"x"}`)
+		conferirStatus(t, r, 400)
+		if !strings.Contains(string(r.Corpo), "could not be converted") {
+			t.Errorf("corpo = %s", r.Corpo)
+		}
+	})
 }
 
 func TestMapearCategoria(t *testing.T) {
+	antigo := tipos.NovaDataHora(time.Date(2026, 1, 1, 9, 0, 0, 0, time.UTC))
 	type montagem struct {
 		c          cenario
 		minha      testeapoio.Categoria
@@ -646,7 +657,7 @@ func TestMapearCategoria(t *testing.T) {
 		conta := c.fab.Conta()
 		lancar := func(pluggy string, manual bool) int64 {
 			return c.fab.Transacao(conta, func(tr *testeapoio.Transacao) {
-				tr.PluggyCategoriaId, tr.CategoriaId, tr.CategoriaManual = &pluggy, &antiga.Id, manual
+				tr.PluggyCategoriaId, tr.CategoriaId, tr.CategoriaManual, tr.AtualizadoEm = &pluggy, &antiga.Id, manual, antigo
 			}).Id
 		}
 		return montagem{c, minha, lancar("pai", false), lancar("filha", false), lancar("pai", true), lancar("fora", false)}
@@ -699,6 +710,20 @@ func TestMapearCategoria(t *testing.T) {
 		}
 		if n := m.c.contar(t, `SELECT COUNT(*) FROM "Transacao" WHERE "Id" = ? AND "AtualizadoEm" = ?`, m.automatica, m.c.s.agora()); n != 1 {
 			t.Error("AtualizadoEm não mudou")
+		}
+		if n := m.c.contar(t, `SELECT COUNT(*) FROM "Transacao" WHERE "Id" = ? AND "AtualizadoEm" = ?`, m.manual, antigo); n != 1 {
+			t.Error("a transação manual teve o AtualizadoEm mexido")
+		}
+	})
+	t.Run("aplicando acerta o tipo pela categoria nova", func(t *testing.T) {
+		c := novoCenario(t)
+		aplicacoes := c.fab.Categoria(func(k *testeapoio.Categoria) { k.Nome, k.Tipo = "Aplicações", transacoes.Transferencia })
+		c.categoriaPluggy(t, "pluggy", "Pluggy", nil, nil, nil)
+		id := c.fab.Transacao(c.fab.Conta(), func(tr *testeapoio.Transacao) { tr.PluggyCategoriaId = p("pluggy") }).Id
+		r := c.chamar(t, "PUT", "/api/open-finance/categorias/pluggy", fmt.Sprintf(`{"categoriaId":%d,"aplicarExistentes":true}`, aplicacoes.Id))
+		testeapoio.ConferirJSON(t, r.Corpo, `{"transacoesAtualizadas":1}`)
+		if n := c.contar(t, `SELECT COUNT(*) FROM "Transacao" WHERE "Id" = ? AND "Tipo" = ? AND "IgnorarRelatorios"`, id, transacoes.Transferencia); n != 1 {
+			t.Error("a despesa não virou transferência com a categoria nova")
 		}
 	})
 	t.Run("aplicando duas vezes: a segunda não muda nada", func(t *testing.T) {
