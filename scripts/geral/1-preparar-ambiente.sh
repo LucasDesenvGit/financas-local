@@ -48,7 +48,7 @@ fi
 if [[ ${#faltando[@]} -gt 0 ]]; then
     case "$SO" in
         windows) dica='Use o Git Bash do Git for Windows (winget install Git.Git), que ja traz todas elas.' ;;
-        linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl tar unzip coreutils).' ;;
+        linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl ca-certificates tar unzip coreutils).' ;;
         osx)     dica='Instale com o Homebrew (ex.: brew install coreutils).' ;;
     esac
     erro_sai "Ferramentas ausentes: ${faltando[*]}. $dica"

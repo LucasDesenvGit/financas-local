@@ -253,3 +253,59 @@ jobs:
           name: instalacao-linux-log
           path: ${{ runner.temp }}/instalacao-*.log
           if-no-files-found: ignore
+
+  # #277: num Linux minimo de verdade (debian:stable-slim, sem nada alem do sistema base). O job acima reduz o PATH,
+  # mas o runner continua trazendo bibliotecas (ICU, certificados, fontes) que um computador recem-instalado pode nao
+  # ter. Aqui elas faltam de verdade: primeiro o script tem de dizer o que instalar; depois, so com o que ele disse,
+  # tudo e baixado e compilado, e a API (com o Go atras) e o Go sozinho sobem. Sem systemd no conteiner, sobem a mao.
+  minimo:
+    name: instalar num Linux minimo (debian:stable-slim)
+    runs-on: ubuntu-latest
+    container: debian:stable-slim
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sem as ferramentas basicas, o script diz o que instalar
+        run: |
+          if bash scripts/geral/1-preparar-ambiente.sh > "$RUNNER_TEMP/instalacao-minimo-0.log" 2>&1; then
+            echo "::error::o 1-preparar-ambiente.sh passou sem curl nem unzip"; exit 1
+          fi
+          cat "$RUNNER_TEMP/instalacao-minimo-0.log"
+          dica="$(grep -o 'apt install [a-z0-9 .-]*' "$RUNNER_TEMP/instalacao-minimo-0.log" | head -n1)"
+          [[ -n "$dica" ]] || { echo "::error::o script nao disse o comando de instalar"; exit 1; }
+          echo "DICA=$dica" >> "$GITHUB_ENV"
+
+      - name: Instalar so o que o script disse
+        run: |
+          apt-get update -qq
+          apt-get ${DICA#apt } -y --no-install-recommends
+
+      - name: Instalacao do zero (instalar.sh, sem gerenciador)
+        run: bash scripts/geral/instalar.sh --sem-gerenciador 2>&1 | tee "$RUNNER_TEMP/instalacao-minimo-1.log"
+
+      - name: A API (com o Go atras) sobe sem o systemd
+        run: |
+          cd publicado/api
+          ASPNETCORE_ENVIRONMENT=Production ../../ferramentas/dotnet/dotnet Financas.Api.dll > "$RUNNER_TEMP/instalacao-minimo-api.log" 2>&1 &
+          for _ in $(seq 1 60); do curl -k -fsS https://127.0.0.1:5443/api/auth/estado && break; sleep 1; done
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado || { echo "::error::a API nao subiu"; cat "$RUNNER_TEMP/instalacao-minimo-api.log"; exit 1; }
+          for _ in $(seq 1 30); do grep -q 'Go no ar em' "$RUNNER_TEMP/instalacao-minimo-api.log" && break; sleep 1; done
+          grep -q 'Go no ar em' "$RUNNER_TEMP/instalacao-minimo-api.log" || { echo "::error::o Go nao subiu atras da API"; cat "$RUNNER_TEMP/instalacao-minimo-api.log"; exit 1; }
+          kill %1; wait || true
+
+      - name: O Go sozinho sobe sem o systemd
+        run: |
+          cd publicado/api
+          ./financas-go -aplicar-esquema -rotinas-de-partida > "$RUNNER_TEMP/instalacao-minimo-go.log" 2>&1 &
+          for _ in $(seq 1 30); do curl -k -fsS https://127.0.0.1:5443/api/auth/estado && break; sleep 1; done
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado || { echo "::error::o Go sozinho nao subiu"; cat "$RUNNER_TEMP/instalacao-minimo-go.log"; exit 1; }
+          kill %1; wait || true
+
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: instalacao-linux-minimo-log
+          path: ${{ runner.temp }}/instalacao-minimo-*.log
+          if-no-files-found: ignore
