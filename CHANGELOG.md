@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.58.1] — 2026-11-02 · desenvolvimento
+## [2.58.2] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação
 - **Um comando resolve o conflito de versão e de CHANGELOG dos PRs** (#587). Nada muda para quem usa. Todo PR sobe a versão e escreve no topo do CHANGELOG (ADR 0039), então cada merge deixava os outros PRs abertos em conflito nesses dois arquivos. Agora `scripts/geral/atualizar-pr.sh <número do PR>` traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no nível em que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo com o número novo e a data de hoje, confere e envia; conflito em outro arquivo, ele desfaz e lista. O check "versão subiu" passa a pular o Dependabot pelo autor do PR: um `@dependabot rebase` pedido por uma pessoa disparava em nome dela e o check cobrava a versão. ADR 0039 atualizada. Manual: não se aplica.
+
+## [2.58.1] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Remover a conexão apaga mesmo tudo o que veio dela** (#575). Ao remover uma conexão em Configurações, o banco já apagava em cascata as contas, transações, faturas, investimentos e empréstimos dela, mas duas tabelas ficavam: o histórico dos investimentos (`HistoricoInvestimento`, sem chave estrangeira de propósito, para guardar o investimento resgatado) e o registro das sincronizações (`SincronizacaoLog`, que só perdia o vínculo). Agora a API apaga as duas junto, numa transação só, e o texto de privacidade (`docs/DADOS-PESSOAIS.md`) diz exatamente o que sai. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma, continua. Quem já removeu uma conexão antes continua com o que sobrou dela: a correção não limpa o que ficou de remoções antigas. O contrato ganha o `16-open-finance`, com a remoção. Manual: não se aplica (o Manual não detalha o que a remoção apaga, e a confirmação da tela continua certa).
 
 ## [2.58.0] — 2026-11-02 · desenvolvimento
 
