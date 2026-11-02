@@ -17,6 +17,6 @@ planejamento /api/contas-agendadas;/api/orcamentos;/api/metas
 investimentos /api/reservas;/api/carteira;/api/investimentos
 
 # A #80 liga aos poucos: os empréstimos (parte 1), depois os relatórios e o painel.
-painel /api/emprestimos;/api/relatorios
+painel /api/emprestimos;/api/relatorios;/api/painel
 
 # open-finance /api/open-finance

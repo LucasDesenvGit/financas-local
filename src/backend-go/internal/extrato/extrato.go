@@ -558,3 +558,19 @@ func compararComSinalComoOEFDecimal(a, b tipos.Decimal) int {
 	}
 	return chave(a).Cmp(chave(b))
 }
+
+// TransacoesDoPainel são as transações do painel (#334): as últimas até hoje (as parcelas que o banco manda com data
+// futura escondiam o que de fato aconteceu) e, à parte, as próximas depois de hoje, das mais próximas, com quantas são.
+func TransacoesDoPainel(ctx context.Context, q consultas.DBTX, hoje tipos.Data, quantas int) (ultimas, futuras []TransacaoDto,
+	quantidadeFuturas int, err error) {
+	if ultimas, err = lerDtos(ctx, q, `WHERE t."Data" <= ? ORDER BY t."Data" DESC, t."Id" DESC LIMIT ?`, hoje, quantas); err != nil {
+		return nil, nil, 0, err
+	}
+	if futuras, err = lerDtos(ctx, q, `WHERE t."Data" > ? ORDER BY t."Data", t."Id" LIMIT ?`, hoje, quantas); err != nil {
+		return nil, nil, 0, err
+	}
+	if err := q.QueryRowContext(ctx, `SELECT COUNT(*) FROM "Transacao" WHERE "Data" > ?`, hoje).Scan(&quantidadeFuturas); err != nil {
+		return nil, nil, 0, fmt.Errorf("contar as transações futuras: %w", err)
+	}
+	return ultimas, futuras, quantidadeFuturas, nil
+}

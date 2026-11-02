@@ -16,7 +16,7 @@ func TestEmprestimos(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
 	mux := http.NewServeMux()
-	Registrar(mux, NovoServico(db, nil, nil, nil, testeapoio.HojeEmBrasilia(2026, 10, 14), slog.New(slog.DiscardHandler)))
+	Registrar(mux, NovoServico(db, nil, nil, nil, nil, nil, testeapoio.HojeEmBrasilia(2026, 10, 14), slog.New(slog.DiscardHandler)))
 	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 14))
 	fab.Emprestimo(fab.ConexaoBancaria())
 	r := testeapoio.Chamar(t, mux, "GET", "/api/emprestimos", "")
