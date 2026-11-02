@@ -143,3 +143,16 @@ A decisão continua; o `.msi` passa a fazer, na instalação, o que os scripts j
 
 **Consequência negativa:** quem está num Windows 10 anterior ao 1809 (todos sem suporte da Microsoft desde 2020) não consegue mais instalar nem atualizar; a versão já instalada continua funcionando enquanto o certificado atual valer.
 
+## Atualização de 2026-11-02: o `.msi` "só Go", pronto e desligado (issue #277, parte 4)
+
+- `gerar-msi.ps1 -SoGo` monta o pacote **sem a API em .NET**. O serviço `FinancasLocal` passa a ser o `financas-go.exe -aplicar-esquema -rotinas-de-partida`, como no teste do Go sozinho da #84, que faz o que o .NET faz ao subir. O `.wxs` escolhe o executável do serviço pela variável `SoGo` do WiX (padrão 0). O pacote leva o `appsettings.json` da API, que o Go lê junto do `appsettings.Production.json` e do `configuracao.json` (ADR 0049).
+- **Pronto, mas desligado:** os pacotes publicados (Release e "desenvolvimento") continuam com .NET + Go. Quem liga o "só Go" é a inversão (#85), depois do ensaio, com a volta automática e o aviso dos segredos e do login.
+- A CI ("Versão (instalador .msi)") gera o "só Go" depois de desinstalar o pacote normal e o instala sobre os dados mantidos. Confere que:
+  - o serviço é o Go, sem a API em .NET;
+  - o usuário continua lá;
+  - o login do Go entra com a mesma senha;
+  - o `/api/go/saude` responde.
+
+  Depois, desinstala.
+- **O que ainda falta para ligar** (fica na #85): o Go sozinho roda só as tarefas de `Go:Tarefas` (hoje câmbio e cripto, não a sincronização); os segredos gravados pelo .NET precisam ser informados de novo; todos são deslogados uma vez.
+
