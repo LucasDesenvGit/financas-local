@@ -147,8 +147,20 @@ function Quem-UsaPorta([int]$porta) {
     return "$nome (PID $($conexao.OwningProcess))"
 }
 
+# #277: o certificado do Go (#84) e um .pfx com AES e SHA-256, que o Windows le a partir do Server 2019 (compilacao
+# 17763, a do Windows 10 versao 1809); o proprio Go pede o Windows 10. A mesma conta do instalador .msi.
+$CompilacaoMinima = 17763
+function Conferir-Windows {
+    $compilacao = [int](Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuildNumber
+    if ($compilacao -lt $CompilacaoMinima) {
+        ErroSai ("Este Windows (compilacao $compilacao) e antigo demais: o Financas Local precisa do Windows 10 versao 1809 " +
+                 "ou mais novo, ou do Windows Server 2019 ou mais novo.")
+    }
+}
+
 # ================================================================= 1) Ambiente
 function Preparar-Ambiente {
+    Conferir-Windows
     Garantir-Pasta $Ferramentas
     Garantir-Pasta $Instaladores
 
