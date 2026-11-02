@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.59.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Rotas do Open Finance em Go** (#83, parte 2 de 5; épico #70). Nada muda para quem usa: o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Passam para o Go as 12 rotas que não sincronizam: credenciais, seu nome nos Pix, conexões, status, logs e o mapa de categorias da Pluggy.
+
 ## [2.58.6] — 2026-11-02 · desenvolvimento
 
 ### Correções

@@ -272,6 +272,10 @@ INSERT INTO Transacao (ContaId, PluggyTransactionId, Data, Descricao, DescricaoO
     (1, 'tx-pix-rec', '2026-10-13', 'PIX RECEBIDO JOAO FICTICIO', 'PIX RECEBIDO JOAO FICTICIO', NULL, '120.35', 2, 1, (SELECT Id FROM Categoria WHERE Nome = 'Outras receitas'), 0, NULL, NULL, NULL, 0, 0, 0, 'PIX', 0, NULL, 0, NULL, NULL, '2026-10-13 09:00:00', '2026-10-13 09:00:00'),
     (1, 'tx-pend', '2026-10-14', 'COMPRA PENDENTE MERCADINHO', 'COMPRA PENDENTE MERCADINHO', NULL, '-18.9', 1, 2, (SELECT Id FROM Categoria WHERE Nome = 'Mercado'), 0, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, NULL, 0, NULL, NULL, '2026-10-14 09:00:00', '2026-10-14 09:00:00');
 
+/* #83: só a sincronização grava a categoria da Pluggy, e sem ela "aplicar nas existentes" (16-open-finance) não
+   muda nada. É a categoria sem mapa: para as regras, vale o mesmo que nenhuma, e os outros assuntos não mudam. */
+UPDATE Transacao SET PluggyCategoriaId = '99999999' WHERE PluggyTransactionId = 'tx-202511-c18';
+
 /* ------------------------------------------------------------------ Planejamento */
 INSERT INTO Orcamento (CategoriaId, Ano, Mes, Valor) VALUES
     ((SELECT Id FROM Categoria WHERE Nome = 'Mercado'),      2026, 9,  '600.0'),

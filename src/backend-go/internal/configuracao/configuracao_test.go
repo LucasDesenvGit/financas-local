@@ -50,6 +50,30 @@ func TestLerBool(t *testing.T) {
 	}
 }
 
+// Regra: o ToUniversalTime do C#: UTC fica, o deslocamento converte, e sem fuso conta como hora de Brasília.
+func TestInstanteParaUtc(t *testing.T) {
+	casos := []struct{ texto, json string }{
+		{"2026-10-14T09:00:00.0000000Z", `"2026-10-14T09:00:00Z"`},
+		{"2026-10-14T06:00:00-03:00", `"2026-10-14T09:00:00Z"`},
+		{"2026-10-14 06:00:00", `"2026-10-14T09:00:00Z"`},
+		{"2026-10-14T23:30:00.5", `"2026-10-15T02:30:00.5Z"`},
+		{"2017-12-15T06:00:00", `"2017-12-15T08:00:00Z"`}, // horário de verão antigo: UTC-2
+	}
+	for _, c := range casos {
+		i, ok := LerInstante(c.texto)
+		if !ok {
+			t.Fatalf("LerInstante(%q) falhou", c.texto)
+		}
+		obtido, err := json.Marshal(i.ParaUtc())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(obtido) != c.json {
+			t.Errorf("ParaUtc(%q) = %s, esperado %s", c.texto, obtido, c.json)
+		}
+	}
+}
+
 // Regra: LerInstante guarda o Kind do texto (RoundtripKind), e o JSON sai como o System.Text.Json escreve.
 func TestLerInstante(t *testing.T) {
 	brasilia := time.FixedZone("", -3*3600)

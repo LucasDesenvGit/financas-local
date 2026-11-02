@@ -56,7 +56,7 @@ Peça só a análise? Entregue o levantamento e o **mapa C# → Go** (pacotes, t
 
 Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
 
-1. `gh issue edit <N> --add-assignee @me --add-label "em progresso"`; branch com `gh issue develop <N> --base develop --name feature/go-<assunto> --checkout`.
+1. `gh issue edit <N> --add-assignee @me --add-label "em progresso"`; branch com `gh issue develop <N> --base develop --name feature/go-<assunto> --checkout`. **Issue feita em partes:** branch com `git switch -c`, sem `gh issue develop`: a branch criada pela issue fica ligada a ela, e o merge da parte 1 a fecha, mesmo sem `Closes` no texto (aconteceu no #583). Só a última parte fecha a issue.
 2. **Casos de contrato primeiro**: se a etapa tem endpoints, os casos (`casos/NN-assunto.json`, no número reservado do assunto na tabela do `testes/contrato/README.md`) e os esperados gravados do .NET entram antes do código Go, inclusive os de erro (400, 401, 404, 409).
 3. Porte **cálculo por cálculo**, mantendo a mesma ordem de operações do C# onde houver arredondamento. Não "melhore" uma regra durante a migração: diferença de comportamento vira issue à parte, decidida com o usuário.
 4. Teste: o que vale sempre está na skill `go-no-projeto` ("Antes de dizer que terminou") e na ADR 0051. O que é só da migração:
