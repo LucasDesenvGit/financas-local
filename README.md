@@ -34,11 +34,14 @@ Tudo o que sai vai por HTTPS; valores, quantidades e dados pessoais não saem. D
 
 ## Instalar no Windows
 
+Precisa do **Windows 10 versão 1809 ou mais novo** (ou do Windows Server 2019 ou mais novo), em 64 bits. Num Windows mais antigo, o instalador avisa e não instala.
+
 1. **Baixe** o `FinancasLocal-<versão>.msi` da [versão mais recente](https://github.com/LucasDesenvGit/financas-local/releases/latest).
 2. **Abra o `.msi`.** Ele ainda não é assinado: se aparecer **"O Windows protegeu o computador"**, clique em **Mais informações › Executar assim mesmo**.
 3. **Instale:** **Avançar**, **Instalar** e **Sim** quando o Windows pedir permissão de administrador.
 4. **Termine** com **"Abrir o Gerenciador do Finanças Local"** marcado. Quando ele mostrar **"O site está no ar"**, clique em **Abrir o site** (ou abra **https://127.0.0.1:5443**).
-5. **Primeiro acesso:** crie o seu usuário e senha (mínimo de 8 caracteres) e [conecte seus bancos](#conectar-seus-bancos-open-finance).
+5. **Usa o Firefox?** Por padrão ele não usa os certificados do Windows e mostra um aviso no site; a tela final do instalador lembra disso. Para aceitar, abra `about:config` e deixe `security.enterprise_roots.enabled` como `true` (ou use o Edge ou o Chrome).
+6. **Primeiro acesso:** crie o seu usuário e senha (mínimo de 8 caracteres) e [conecte seus bancos](#conectar-seus-bancos-open-finance).
 
 O **Gerenciador do Finanças Local** mostra se o site está no ar, liga, desliga, salva uma cópia do banco e avisa da versão nova. Conferir o arquivo baixado, versão de desenvolvimento e tudo o que o gerenciador faz: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md).
 

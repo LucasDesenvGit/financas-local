@@ -177,6 +177,8 @@ jobs:
           if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
+          # #277: o financas-go.exe gerar-certificado reaproveitou o certificado que ainda vale (não trocou o confiável).
+          if (-not (Select-String -Path atualizar.log -SimpleMatch "certificado atual reaproveitado" -Quiet)) { throw "a atualização não reaproveitou o certificado (veja atualizar.log)" }
           # #231: a troca de versão parou o Go antigo junto (o arquivo foi trocado) e subiu o novo.
           $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
           if ($go.Count -ne 1) { throw "processos do Go depois da atualização: $($go.Count) (esperado 1)" }
@@ -346,6 +348,9 @@ jobs:
           curl.exe -k -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+          # #277: a chave dos segredos do Go (o Go só a cria no primeiro segredo; aqui, uma de mentira, que ninguém lê
+          # antes da conferência). A migração tem de levá-la igual, junto das chaves do .NET.
+          if (-not (Test-Path dados\chaves\segredos.chave)) { [IO.File]::WriteAllBytes("$PWD\dados\chaves\segredos.chave", [byte[]](1..64)) }
 
       - uses: actions/download-artifact@v8
         with:
@@ -368,6 +373,9 @@ jobs:
           if (-not $estado.configurado) { throw "o banco da instalação antiga não veio" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt")) { throw "sem a nota da migração" }
           if (-not (Test-Path "dados\sql\FinancasLocal.db")) { throw "a migração apagou o banco antigo" }
+          $novo = "$env:ProgramData\FinancasLocal\dados\chaves\segredos.chave"
+          if (-not (Test-Path $novo)) { throw "a migração não levou o segredos.chave" }
+          if ((Get-FileHash $novo).Hash -ne (Get-FileHash dados\chaves\segredos.chave).Hash) { throw "o segredos.chave chegou diferente" }
           Get-Content "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt"
 
       - name: Logs

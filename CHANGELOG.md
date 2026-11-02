@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.64.0] — 2026-11-02 · desenvolvimento
+## [2.65.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
 - **Gerenciador em Go no Linux** (#277, parte 3; épico #70; ADR 0052). O `instalar.sh` e o `scripts/linux/instalar-gerenciador.sh` compilam o gerenciador novo, com o atalho e o ícone no menu de aplicativos, e o "Iniciar com o sistema" passa a abri-lo. Se faltar o GTK 4 ou o WebKitGTK 6.0, o script mostra o comando que instala esses pacotes na sua distribuição e, por enquanto, instala o gerenciador em C#, como antes. A instalação também avisa quando o site só vai subir com a sessão aberta (*linger* desligado). No terminal, `--situacao` mostra a situação do site sem abrir a janela, como no gerenciador em C#.
+
+## [2.64.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Instalador `.msi` preparado para o Go** (#277, parte 1; épico #70). O certificado HTTPS passa a ser feito pelo executável do Go, como nos scripts, e o que ainda vale é reaproveitado. Quem passa dos scripts para o `.msi` leva também a chave dos segredos do Go. O instalador e o `instalar-windows.ps1` recusam, com uma mensagem clara, um Windows anterior ao Windows 10 versão 1809 (ou ao Windows Server 2019), em vez de instalar um site que não abre. Com o Firefox instalado, a tela final avisa que ele não usa os certificados do Windows por padrão e diz como aceitar.
 
 ## [2.63.1] — 2026-11-02 · desenvolvimento
 
