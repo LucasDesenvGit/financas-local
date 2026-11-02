@@ -17,8 +17,8 @@ type MesValoresDto struct {
 }
 
 // Totais são as receitas e as despesas dos relevantes entre inicio e fim, pelo tipo, e não pelo sinal (ADR 0036): o
-// estorno no cartão é despesa positiva e abate as despesas. Cada soma é um SumAsync do EF Core (no formato do banco, ou
-// 0 sem linhas); as despesas saem positivas.
+// estorno no cartão é despesa positiva e abate as despesas. Cada soma é um SumAsync do EF Core (no formato do banco,
+// "0.0" sem linhas); as despesas saem positivas.
 func (s *Servico) Totais(ctx context.Context, inicio, fim tipos.Data) (receitas, despesas tipos.Decimal, err error) {
 	lancamentos, err := s.Relevantes(ctx, inicio, fim)
 	if err != nil {
@@ -29,8 +29,8 @@ func (s *Servico) Totais(ctx context.Context, inicio, fim tipos.Data) (receitas,
 }
 
 func totais(lancamentos []Lancamento) (receitas, despesas tipos.Decimal) {
-	receitas = somaOuZero(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Receita }))
-	despesas = negar(somaOuZero(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Despesa })))
+	receitas = SomaDoSumAsync(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Receita }))
+	despesas = negar(SomaDoSumAsync(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Despesa })))
 	return receitas, despesas
 }
 

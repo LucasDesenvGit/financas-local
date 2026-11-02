@@ -196,8 +196,8 @@ func aVista(l Lancamento) bool {
 // medias preenche a média das receitas, a das despesas à vista e as categorias da projeção.
 func (s *Servico) medias(ctx context.Context, p *ProjecaoDto, lancamentos []Lancamento, inicioMesAtual tipos.Data) error {
 	meses := tipos.DecimalDeInteiro(int64(p.MesesConsiderados))
-	somaReceitas := somaOuZero(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Receita }))
-	somaDespesas := somaOuZero(valoresDe(lancamentos, aVista))
+	somaReceitas := SomaDoSumAsync(valoresDe(lancamentos, func(l Lancamento) bool { return l.Tipo == transacoes.Receita }))
+	somaDespesas := SomaDoSumAsync(valoresDe(lancamentos, aVista))
 	p.MediaReceitas = tipos.Arredondar(dividirPorPositivo(somaReceitas, meses), 2)
 	p.MediaDespesas = tipos.Arredondar(dividirPorPositivo(maiorDeDois(tipos.Zero, negar(somaDespesas)), meses), 2)
 
