@@ -1,0 +1,24 @@
+{
+  "next": null,
+  "results": [
+    {
+      "id": "t-2",
+      "accountId": "conta-corrente-1",
+      "date": "2026-10-16T12:00:00.000Z",
+      "description": "PIX RECEBIDO",
+      "amount": 100,
+      "amountInAccountCurrency": "98.76",
+      "type": "CREDIT",
+      "status": "PENDING",
+      "categoryId": null,
+      "creditCardMetadata": null,
+      "merchant": null,
+      "operationType": null,
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "payer": { "documentNumber": { "type": "CPF", "value": "00000000191" } },
+        "receiver": { "documentNumber": "***.000.001-**" }
+      }
+    }
+  ]
+}

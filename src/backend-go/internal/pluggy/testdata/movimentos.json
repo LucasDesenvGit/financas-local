@@ -1,0 +1,21 @@
+{
+  "total": 1,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "mov-1",
+      "type": "BUY",
+      "movementType": "CREDIT",
+      "quantity": 3,
+      "value": 100.25,
+      "amount": 300.75,
+      "netAmount": 300.75,
+      "date": "2026-02-02T03:00:00.000Z",
+      "tradeDate": "2026-01-30T03:00:00.000Z",
+      "description": "COMPRA",
+      "brokerageNumber": "1",
+      "expenses": { "serviceTax": 1.5, "incomeTax": null, "brokerageFee": "0.25" }
+    }
+  ]
+}
