@@ -47,7 +47,7 @@ O **Gerenciador do Finanças Local** mostra se o site está no ar, liga, desliga
 
 ## Instalar no Linux
 
-Precisa de `git`, `curl`, `tar` e `unzip`. O resto (.NET, Go, Node.js, sqlite3) a instalação baixa e confere sozinha, sem `sudo`.
+Precisa de `git`, `curl`, `tar`, `unzip`, dos certificados do sistema e da ICU (no Debian e no Ubuntu: `sudo apt install git curl ca-certificates tar unzip libicu-dev`; num Linux de desktop, quase sempre já estão lá). O resto (.NET, Go, Node.js, sqlite3) a instalação baixa e confere sozinha, sem `sudo`; se faltar algo do sistema, ela diz o quê antes de baixar.
 
 ```bash
 git clone https://github.com/LucasDesenvGit/financas-local.git
