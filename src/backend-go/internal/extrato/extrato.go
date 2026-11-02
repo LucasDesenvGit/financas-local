@@ -501,13 +501,15 @@ func (s *Servico) obter(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista[0])
 }
 
-// MaioresDespesas são as maiores despesas do período (o GET /api/relatorios/maiores-despesas do C#, #80): as mais
-// negativas primeiro, sem as ignoradas nos relatórios, no máximo quantas. O C# ordena pelo valor no SQLite, com a
-// collation EF_DECIMAL; aqui a ordem é em Go (dinheiro é texto no banco), pela mesma comparação, e o empate fica na
-// ordem da tabela (o Id), a do ORDER BY sem desempate do SQLite.
+// MaioresDespesas são as maiores despesas do período (o GET /api/relatorios/maiores-despesas do C#, #80), sem as
+// ignoradas nos relatórios, no máximo quantas. O C# ordena pelo valor gravado no SQLite, com a collation EF_DECIMAL,
+// que lê o texto em pt-BR (o ponto é separador de milhar): "-1850.0" vale −18500, "-299.9" vale −2999 e "-27.45" vale
+// −2745, que vem antes de "-223.5" (−2235). Aqui a ordem é em Go (dinheiro é texto no banco), com a mesma leitura
+// (contrato 14-relatorios). O empate fica na ordem em que o SQLite percorre o período: o índice IX_Transacao_Data, da
+// data mais nova para a mais velha.
 func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Data, quantas int) ([]TransacaoDto, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ?
-		AND "Tipo" = ? AND "IgnorarRelatorios" = 0 ORDER BY "Id"`, inicio, fim, transacoes.Despesa)
+		AND "Tipo" = ? AND "IgnorarRelatorios" = 0 ORDER BY "Data" DESC, "Id"`, inicio, fim, transacoes.Despesa)
 	if err != nil {
 		return nil, fmt.Errorf("ler as despesas do período: %w", err)
 	}
@@ -528,7 +530,7 @@ func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Da
 	if err := linhas.Err(); err != nil {
 		return nil, fmt.Errorf("ler as despesas do período: %w", err)
 	}
-	slices.SortStableFunc(todas, func(a, b chave) int { return compararComoOEFDecimal(a.valor, b.valor) })
+	slices.SortStableFunc(todas, func(a, b chave) int { return compararComSinalComoOEFDecimal(a.valor, b.valor) })
 	todas = todas[:min(len(todas), quantas)]
 	if len(todas) == 0 {
 		return []TransacaoDto{}, nil
@@ -545,4 +547,14 @@ func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Da
 	}
 	slices.SortFunc(dtos, func(a, b TransacaoDto) int { return posicao[a.Id] - posicao[b.Id] })
 	return dtos, nil
+}
+
+// compararComSinalComoOEFDecimal é a ordem que a collation EF_DECIMAL dá ao valor gravado, com o sinal: o texto lido
+// em pt-BR, com o ponto de separador de milhar ("12.75" vale 1275; "-1850.0", −18500).
+func compararComSinalComoOEFDecimal(a, b tipos.Decimal) int {
+	chave := func(v tipos.Decimal) *big.Int {
+		n, _ := new(big.Int).SetString(strings.ReplaceAll(v.String(), ".", ""), 10)
+		return n
+	}
+	return chave(a).Cmp(chave(b))
 }
