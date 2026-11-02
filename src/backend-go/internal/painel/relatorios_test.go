@@ -12,7 +12,9 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/carteira"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/contasagendadas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relatorios"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
@@ -20,18 +22,58 @@ import (
 func dec(s string) tipos.Decimal { return testeapoio.Valor(s) }
 
 type composicaoFalsa struct {
-	c   carteira.Composicao
-	err error
+	c                      carteira.Composicao
+	err                    error
+	creditos               int
+	totalCreditos          tipos.Decimal
+	errCreditos, errTrocos error
+	trocos                 *carteira.TrocosAutomaticosDto
 }
 
 func (f composicaoFalsa) Composicao(context.Context) (carteira.Composicao, error) { return f.c, f.err }
 
+func (f composicaoFalsa) CreditosComoReceita(context.Context) (int, tipos.Decimal, error) {
+	return f.creditos, f.totalCreditos, f.errCreditos
+}
+
+func (f composicaoFalsa) ResumoTrocosAutomaticos(context.Context) (*carteira.TrocosAutomaticosDto, error) {
+	return f.trocos, f.errTrocos
+}
+
 type reservasFalsas struct {
-	total tipos.Decimal
-	err   error
+	total    tipos.Decimal
+	err      error
+	lista    []reservas.ReservaDto
+	errLista error
 }
 
 func (f reservasFalsas) Total(context.Context) (tipos.Decimal, error) { return f.total, f.err }
+
+func (f reservasFalsas) Listar(context.Context) ([]reservas.ReservaDto, error) {
+	return f.lista, f.errLista
+}
+
+// parametrosFalsos devolvem o valor de cada chave (sem a chave, 15).
+type parametrosFalsos struct {
+	valores map[string]int
+	err     error
+}
+
+func (f parametrosFalsos) ObterInteiro(_ context.Context, chave string) (int, error) {
+	if v, ok := f.valores[chave]; ok {
+		return v, f.err
+	}
+	return 15, f.err
+}
+
+type cobrancasFalsas struct {
+	avisos []contasagendadas.AvisoDto
+	err    error
+}
+
+func (f cobrancasFalsas) Avisos(context.Context, tipos.Data) ([]contasagendadas.AvisoDto, error) {
+	return f.avisos, f.err
+}
 
 // cambioFalso tem o dólar a 5,00; sem outra moeda.
 type cambioFalso struct{ err error }
@@ -54,7 +96,7 @@ func novaCena(t *testing.T, c composicao, r totalDasReservas, cb conversao) cena
 	t.Helper()
 	db := testeapoio.NovoBancoVazio(t)
 	rel := testeapoio.HojeEmBrasilia(2026, 10, 14)
-	s := NovoServico(db, c, r, cb, rel, slog.New(slog.DiscardHandler))
+	s := NovoServico(db, c, r, cb, parametrosFalsos{}, cobrancasFalsas{}, rel, slog.New(slog.DiscardHandler))
 	mux := http.NewServeMux()
 	Registrar(mux, s)
 	return cena{db, testeapoio.NovaFabrica(t, db, rel), mux, s}

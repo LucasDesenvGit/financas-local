@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.57.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Painel em Go** (#80, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/painel` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, `GET /api/painel` (saldos, dívidas dos cartões e dos financiamentos, investido, patrimônio com e sem renda variável, receitas e despesas de emergência do mês, orçamentos e os estourados, faturas do mês, últimas e próximas transações, evolução de 12 meses) e `GET /api/painel/avisos` (os alertas na mesma ordem do C#: contas vencidas, moedas sem cotação, contas em outra moeda, cobranças, reservas a conferir, conexões do Open Finance, erros do sistema e contratos em atraso, além das descrições pouco informativas). Os 10 casos do contrato `13-painel`, gravados do .NET, passam com o Go atendendo. Com as partes 1 e 2, todas as rotas da #80 estão em Go. Manual: não se aplica.
+
 ## [2.56.0] — 2026-11-01 · desenvolvimento
 
 ### Funcionalidades

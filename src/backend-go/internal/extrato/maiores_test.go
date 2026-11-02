@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
@@ -79,4 +80,54 @@ func (f falhaNa) QueryContext(ctx context.Context, consulta string, argumentos .
 		return nil, errors.New("falha de teste")
 	}
 	return f.DBTX.QueryContext(ctx, consulta, argumentos...)
+}
+
+// QueryRowContext da consulta com o trecho também falha (a linha volta com o erro de uma consulta inválida).
+func (f falhaNa) QueryRowContext(ctx context.Context, consulta string, argumentos ...any) *sql.Row {
+	if strings.Contains(consulta, f.trecho) {
+		return f.DBTX.QueryRowContext(ctx, `SELECT "falha de teste" FROM "TabelaQueNaoExiste"`)
+	}
+	return f.DBTX.QueryRowContext(ctx, consulta, argumentos...)
+}
+
+// Regra (#80, contrato 13-painel): o painel mostra as últimas transações até hoje (da mais nova; no mesmo dia, do Id
+// maior), as próximas depois de hoje (da mais perto; no mesmo dia, do Id menor), no máximo quantas de cada, e quantas
+// futuras existem ao todo.
+func TestTransacoesDoPainel(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	conta := fab.Conta()
+	gravar := func(mes time.Month, dia int) int64 {
+		return fab.Transacao(conta, func(x *testeapoio.Transacao) { x.Data = testeapoio.Dia(2026, mes, dia) }).Id
+	}
+	gravar(10, 1)
+	hojeA := gravar(10, 14)
+	hojeB := gravar(10, 14)
+	amanhaA := gravar(10, 15)
+	amanhaB := gravar(10, 15)
+	gravar(11, 1)
+	gravar(12, 1)
+
+	ids := func(l []TransacaoDto) string {
+		var p []string
+		for _, d := range l {
+			p = append(p, fmt.Sprint(d.Id))
+		}
+		return strings.Join(p, ",")
+	}
+	hoje := testeapoio.Dia(2026, 10, 14)
+	ultimas, futuras, quantas, err := TransacoesDoPainel(t.Context(), db, hoje, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ids(ultimas) != fmt.Sprintf("%d,%d", hojeB, hojeA) || ids(futuras) != fmt.Sprintf("%d,%d", amanhaA, amanhaB) ||
+		quantas != 4 {
+		t.Errorf("últimas %s, futuras %s, quantas %d", ids(ultimas), ids(futuras), quantas)
+	}
+	for _, trecho := range []string{`t."Data" <= ?`, `t."Data" > ?`, `COUNT(*)`} {
+		if _, _, _, err := TransacoesDoPainel(t.Context(), falhaNa{db, trecho}, hoje, 2); err == nil {
+			t.Errorf("%s: o erro sumiu", trecho)
+		}
+	}
 }
