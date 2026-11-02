@@ -1,6 +1,7 @@
 package openfinance
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -98,6 +99,13 @@ func novoCenario(t *testing.T) cenario {
 	s := NovoServico(db, cofreFalso{}, parametrosFixos(30), falso, &cotacoesFalsas{}, r, slog.New(slog.DiscardHandler))
 	Registrar(mux, s)
 	return cenario{mux, s, db, testeapoio.NovaFabrica(t, db, r), falso}
+}
+
+// guardarLog troca o log do serviço por um que dá para ler no teste.
+func (c cenario) guardarLog() *bytes.Buffer {
+	var log bytes.Buffer
+	c.s.log = slog.New(slog.NewTextHandler(&log, nil))
+	return &log
 }
 
 func (c cenario) chamar(t *testing.T, metodo, caminho, corpo string) testeapoio.Resposta {
@@ -1056,18 +1064,41 @@ func TestImportarCarteira(t *testing.T) {
 	for _, caso := range casos {
 		t.Run(caso.nome, func(t *testing.T) {
 			c := novoCenario(t)
+			avisos := c.guardarLog()
 			c.falso.carteira = caso.resultado
 			conferirStatus(t, c.chamar(t, "POST", rota, ""), 200)
 			if n := c.s.cotacoes.(*cotacoesFalsas).chamadas; n != caso.cotacoes {
 				t.Errorf("%d buscas de cotações, esperado %d", n, caso.cotacoes)
 			}
+			if avisos.Len() != 0 {
+				t.Errorf("deu certo e avisou: %s", avisos)
+			}
 		})
 	}
 	t.Run("a falha nas cotações não falha a rota", func(t *testing.T) {
 		c := novoCenario(t)
-		c.falso.carteira = sincronizacao.ResultadoCarteira{AtivosCriados: 1}
+		avisos := c.guardarLog()
+		c.falso.carteira = sincronizacao.ResultadoCarteira{AtivosCriados: 1, Erros: []string{}}
 		c.s.cotacoes.(*cotacoesFalsas).erro = errors.New("sem cotação")
-		conferirStatus(t, c.chamar(t, "POST", rota, ""), 200)
+		r := c.chamar(t, "POST", rota, "")
+		conferirStatus(t, r, 200)
+		testeapoio.ConferirJSON(t, r.Corpo, `{"ativosCriados":1,"operacoesImportadas":0,"semHistorico":null,"comLancamentoManual":null,"erros":[],"mensagem":null}`)
+		if !strings.Contains(avisos.String(), "sem cotação") {
+			t.Errorf("log = %s", avisos)
+		}
+	})
+	t.Run("quem desistiu não recebe resposta nem aviso", func(t *testing.T) {
+		c := novoCenario(t)
+		avisos := c.guardarLog()
+		c.falso.carteira = sincronizacao.ResultadoCarteira{AtivosCriados: 1}
+		c.s.cotacoes.(*cotacoesFalsas).erro = context.Canceled
+		ctx, cancelar := context.WithCancel(t.Context())
+		cancelar()
+		w := httptest.NewRecorder()
+		c.s.importarCarteira(w, httptest.NewRequestWithContext(ctx, "POST", rota, nil))
+		if w.Body.Len() != 0 || avisos.Len() != 0 {
+			t.Errorf("corpo = %q, log = %s", w.Body, avisos)
+		}
 	})
 	t.Run("erro da Pluggy", func(t *testing.T) {
 		c := novoCenario(t)

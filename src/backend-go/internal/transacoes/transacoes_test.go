@@ -1,6 +1,7 @@
 package transacoes
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -113,6 +114,56 @@ func TestListarComErroDoBanco(t *testing.T) {
 	// Sem aspas: com aspas, o SQLite trata o nome que não é coluna como texto, e não dá erro.
 	if _, err := Listar(t.Context(), db, `WHERE ColunaQueNaoExiste = 1`); err == nil {
 		t.Error("consulta errada não deu erro")
+	}
+}
+
+// Regra: linha que não dá para ler volta como erro, sem lista pela metade.
+func TestListarComLinhaInvalida(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	gravada := fab.Transacao(fab.Conta())
+	if _, err := db.Exec(`UPDATE Transacao SET Valor = 'sem número' WHERE Id = ?`, gravada.Id); err != nil {
+		t.Fatal(err)
+	}
+	lista, err := Listar(t.Context(), db, ``)
+	if err == nil || !strings.Contains(err.Error(), "ler transação") || lista != nil {
+		t.Errorf("Listar = %v, %v", lista, err)
+	}
+}
+
+// Regra: a regra de descrição aplicada vai no UPDATE, e o que falhou ao gravar continua pendente: a mudança não se perde.
+func TestGravarRegraDeDescricaoEErroDoBanco(t *testing.T) {
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 15))
+	gravada := fab.Transacao(fab.Conta())
+	lista, err := Listar(t.Context(), db, `WHERE "Id" = ?`, gravada.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tr := lista[0]
+	tr.RegraDescricaoId = p(int64(7))
+	if err := Gravar(t.Context(), db, tr); err != nil {
+		t.Fatal(err)
+	}
+	var regra int64
+	if err := db.QueryRow(`SELECT RegraDescricaoId FROM Transacao WHERE Id = ?`, tr.Id).Scan(&regra); err != nil || regra != 7 {
+		t.Fatalf("RegraDescricaoId = %d, %v", regra, err)
+	}
+
+	tr.Descricao = "Mudou"
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for nome, gravar := range map[string]func() error{
+		"Gravar":      func() error { return Gravar(t.Context(), db, tr) },
+		"GravarTodas": func() error { return GravarTodas(t.Context(), db, lista) },
+	} {
+		if err := gravar(); err == nil || !strings.Contains(err.Error(), "gravar a transação") {
+			t.Errorf("%s = %v", nome, err)
+		}
+		if !tr.Mudou() {
+			t.Errorf("%s falhou e a mudança se perdeu", nome)
+		}
 	}
 }
 
