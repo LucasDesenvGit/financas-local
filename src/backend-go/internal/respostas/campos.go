@@ -96,8 +96,8 @@ func (c *CampoInteiroOpcional) ler(t json.Token) bool {
 }
 
 func (c *CampoInteiroOpcional) validar(erros map[string][]string) {
-	if c.Valor != nil && c.Faixa != nil && (float64(*c.Valor) < c.Faixa.Minimo || float64(*c.Valor) > c.Faixa.Maximo) {
-		erros[c.Propriedade] = append(erros[c.Propriedade], c.Faixa.mensagem(c.Propriedade))
+	if c.Valor != nil {
+		(&CampoInteiro{Propriedade: c.Propriedade, Faixa: c.Faixa, Valor: *c.Valor}).validar(erros)
 	}
 }
 
