@@ -123,6 +123,16 @@ jobs:
                          "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") {
             if (-not (Test-Path $p)) { throw "não encontrado: $p" }
           }
+          # #277 (ADR 0052): o gerenciador é o em Go, um .exe só: nada do C# nem do runtime de janelas do .NET ao lado.
+          foreach ($p in "Financas.Gerenciador.dll", "System.Windows.Forms.dll") {
+            if (Test-Path "$env:ProgramFiles\FinancasLocal\$p") { throw "sobrou do gerenciador em C#: $p" }
+          }
+          # #277: o tamanho do .msi e da pasta instalada, para comparar com a linha de base do épico #70 (157 MB).
+          $msiMb = [math]::Round((Get-Item "saida-instalador\FinancasLocal-${{ steps.versao.outputs.rotulo }}.msi").Length / 1MB, 1)
+          $pasta = Get-ChildItem "$env:ProgramFiles\FinancasLocal" -Recurse -File
+          $pastaMb = [math]::Round(($pasta | Measure-Object Length -Sum).Sum / 1MB, 1)
+          $gerMb = [math]::Round((Get-Item "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe").Length / 1MB, 1)
+          "### Tamanhos`n`n| O quê | Tamanho |`n|---|---|`n| .msi | $msiMb MB |`n| Pasta instalada | $pastaMb MB ($($pasta.Count) arquivos) |`n| Gerenciador | $gerMb MB |" >> $env:GITHUB_STEP_SUMMARY
           # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
           if ($estado.versao -ne "${{ steps.versao.outputs.rotulo }}") { throw "versão do site: $($estado.versao)" }

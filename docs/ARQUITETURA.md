@@ -37,7 +37,7 @@ flowchart TB
     subgraph computador["Seu computador: nada escuta fora de 127.0.0.1"]
         navegador["Navegador<br/>[Contêiner: Angular]<br/>O site, servido pela própria API"]
         servico["Serviço do sistema<br/>[Serviço do Windows ou systemd]<br/>Sobe a API e a mantém no ar"]
-        gerenciador["Gerenciador<br/>[Contêiner: C#; em migração para Go, ADR 0052]<br/>Liga, desliga, copia o banco e atualiza"]
+        gerenciador["Gerenciador<br/>[Contêiner: Go (Wails) no .msi; C# pelos scripts até a #277 terminar, ADR 0052]<br/>Liga, desliga, copia o banco e atualiza"]
         api["API<br/>[Contêiner: .NET no Kestrel, 127.0.0.1:5443]<br/>Login, CSRF, segredos, esquema do banco<br/>e o que ainda não foi para o Go"]
         go["Back-end Go<br/>[Contêiner: Go, processo filho da API]<br/>Porta escolhida na partida, com segredo interno<br/>Atende os prefixos já migrados"]
         banco[("Banco<br/>[SQLite em WAL]<br/>dados/sql/FinancasLocal.db")]
@@ -155,7 +155,7 @@ flowchart TB
         subgraph programas["%ProgramFiles%\FinancasLocal"]
             api["API .NET, sem precisar do .NET instalado<br/>com o site no wwwroot"]
             go["financas-go.exe"]
-            gerenciador["Gerenciador<br/>pede administrador (UAC) para agir"]
+            gerenciador["Gerenciador em Go (Financas.Gerenciador.exe)<br/>janela pelo WebView2; pede administrador (UAC) para agir"]
         end
 
         subgraph dados["%ProgramData%\FinancasLocal\dados<br/>só SYSTEM e Administradores"]
@@ -343,13 +343,13 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 ## Instalador do Windows — `instalador/`
 
 `.msi` gerado com o WiX 5 pela CI (`.github/workflows/versao.yml`; [ADR 0029](adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-- **Conteúdo:** API e gerenciador já compilados (self-contained `win-x64`) e o back-end em Go (`financas-go.exe`, sem cgo) em `%ProgramFiles%\FinancasLocal`.
+- **Conteúdo:** a API já compilada (self-contained `win-x64`), o back-end em Go (`financas-go.exe`, sem cgo) e o gerenciador em Go (`Financas.Gerenciador.exe`, sem cgo, #277) em `%ProgramFiles%\FinancasLocal`.
 - **Dados:** em `%ProgramData%\FinancasLocal\dados`, que é o `Dados:Pasta` do `appsettings.Production.json` do pacote.
 - **Serviço:** `FinancasLocal` (LocalSystem).
 - **Ação personalizada (`configurar.ps1`):** pasta de dados protegida, migração da instalação pelos scripts, certificado HTTPS e `configuracao.json`.
 - **Gerar o pacote:** `gerar-msi.ps1` (`-Revisao N` para a versão de desenvolvimento `X.Y.Z-dev.N`).
 - **Onde baixar:** a versão publicada fica no Release `vX.Y.Z`. A do `develop` fica no pré-lançamento `desenvolvimento`, recriado a cada push depois dos testes. A mesma `X.Y.Z` substitui a instalada (`AllowSameVersionUpgrades`).
-- **Gerenciador:** `src/gerenciador/Financas.Gerenciador` ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)).
+- **Gerenciador:** o em Go, `src/gerenciador-go` ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)), desde a #277. A janela precisa do WebView2: sem ele, o instalador avisa na tela final.
 
 ## Gerenciador — `src/gerenciador/`
 
@@ -358,10 +358,10 @@ App pequeno que mostra se o site está no ar, liga, desliga e reinicia o serviç
 | Projeto | O que tem |
 |---|---|
 | `Financas.Gerenciador.Nucleo` (`net10.0`) | O que vale nos dois sistemas: `Instalacao` (pasta da API pelo serviço, banco e endereço pelo `appsettings`), `VerificadorSituacao` (serviço + `GET /api/auth/estado`), `CopiaDoBanco` (`VACUUM INTO`) e o serviço do sistema (`ServicoWindows`, `ServicoLinux`). |
-| `Financas.Gerenciador` (WinForms) | Janela do Windows. Pede administrador (UAC) para ligar, desligar e copiar o banco, e atualiza pelo `.msi` do GitHub Releases. Vai no `.msi` ou pelo `scripts\windows\instalar-gerenciador.ps1`. |
+| `Financas.Gerenciador` (WinForms) | Janela do Windows. Pede administrador (UAC) para ligar, desligar e copiar o banco, e atualiza pelo `.msi` do GitHub Releases. Vai pelo `scripts\windows\instalar-gerenciador.ps1` (no `.msi`, desde a #277, vai o em Go). |
 | `Financas.Gerenciador.Linux` (Avalonia) | Janela do Linux. Usa o `systemctl --user` sem senha, mostra o registro do serviço (journald) e o comando para atualizar pelos scripts. Vai pelo `scripts/linux/instalar-gerenciador.sh`. |
 
-**Em migração para Go** ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), #418 a #420): `src/gerenciador-go/`, um módulo Go à parte com o Wails v3 (janela em HTML pelo WebView2, ícone na bandeja). Funciona no Windows e no Linux (no Linux, com o `systemctl --user`, GTK 4 e WebKitGTK 6.0; #417); ainda não é instalado. Veja o [README](../src/gerenciador-go/README.md).
+**Em migração para Go** ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), #418 a #420): `src/gerenciador-go/`, um módulo Go à parte com o Wails v3 (janela em HTML pelo WebView2, ícone na bandeja). Funciona no Windows e no Linux (no Linux, com o `systemctl --user`, GTK 4 e WebKitGTK 6.0; #417). É o que o `.msi` instala desde a #277; pelos scripts, ainda vai o de C#. Veja o [README](../src/gerenciador-go/README.md).
 
 ## Scripts — `scripts/`
 

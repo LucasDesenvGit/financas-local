@@ -179,6 +179,12 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
   - o Wails e o go-winres entram na lista de bibliotecas da [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), só para o gerenciador;
   - a 0028 e a 0033 ficam "Substituída por 0052" quando o gerenciador em Go for publicado.
 
+## Atualização de 2026-11-02: o gerenciador em Go no `.msi` (issue #277, parte 2)
+
+- **O `.msi` instala o gerenciador em Go** no lugar do de C#: o `gerar-msi.ps1` compila o `src/gerenciador-go` sem cgo (`-tags production`, `-H=windowsgui`, a versão pelo `-ldflags`) e não publica mais o C# self-contained. O arquivo mantém o nome `Financas.Gerenciador.exe`, para os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuarem valendo. A CI confere que nada do C# sobrou na pasta e mede o `.msi` e a pasta instalada.
+- **WebView2:** o `.msi` procura o WebView2 nas duas chaves da documentação da Microsoft ([Detect if a WebView2 Runtime is already installed](https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution#detect-if-a-webview2-runtime-is-already-installed): o valor `pv`, para a máquina ou para quem usa, diferente de `0.0.0.0`). Sem ele, a instalação **não para** (o site funciona sem o gerenciador) e a tela final manda para a [página da Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/consumer/), um dos dois caminhos que a Microsoft recomenda para os poucos Windows 10 sem ele. *Alternativa descartada:* levar o instalador do WebView2 dentro do `.msi`, que baixa da Microsoft (mais uma saída de rede e um instalador de terceiros dentro do nosso) para um caso raro.
+- **Ainda em C#:** a instalação pelos scripts no Windows (`instalar-gerenciador.ps1`, na #430) e no Linux (parte 3 da #277). A [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e a [0033](0033-gerenciador-no-linux-com-avalonia.md) ficam "Substituída por 0052" quando os dois caminhos trocarem.
+
 ## Atualização de 2026-11-02: o gerenciador em Go no Linux, pelos scripts (issue #277, parte 3)
 
 - O `scripts/linux/instalar-gerenciador.sh` compila o gerenciador em Go no computador (com cgo) em `publicado/gerenciador-go`, põe o `icone.png` ao lado e cria o atalho `br.financaslocal.Gerenciador.desktop`, o nome do id do aplicativo, de onde o GTK 4 tira o ícone da janela. O atalho do em C# sai do menu, o da área de trabalho é trocado (mesmo nome) e o "Iniciar com o sistema" ligado passa a abrir o em Go.

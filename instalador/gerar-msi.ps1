@@ -1,6 +1,7 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador (precisa do .NET 10 SDK, do Go da versao do src\backend-go\go.mod, do Node.js e do WiX 5:
+    no seu computador (precisa do .NET 10 SDK, do Go da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod,
+    do Node.js e do WiX 5:
     dotnet tool install --global wix --version 5.0.2;
     wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2).
 
@@ -61,12 +62,25 @@ if (-not $SoPacote) {
     $dist = Join-Path $front "dist\financas-web\browser"
     if (-not (Test-Path -LiteralPath (Join-Path $dist "index.html"))) { throw "Front-end compilado nao encontrado em $dist." }
 
-    # API e gerenciador na mesma pasta, self-contained: o computador nao precisa do .NET instalado.
-    # Os dois usam o mesmo .NET 10, entao os arquivos do runtime em comum sao os mesmos.
-    foreach ($projeto in "src\backend\Financas.Api\Financas.Api.csproj", "src\gerenciador\Financas.Gerenciador\Financas.Gerenciador.csproj") {
-        Etapa "Publicando $projeto"
-        Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-            "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
+    # A API, self-contained: o computador nao precisa do .NET instalado. Ela fica na frente ate a inversao (#85).
+    $projeto = "src\backend\Financas.Api\Financas.Api.csproj"
+    Etapa "Publicando $projeto"
+    Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
+        "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
+
+    # #277 (ADR 0052): o gerenciador e o em Go (src\gerenciador-go), um .exe so, no lugar do C# self-contained. Mantem o
+    # nome Financas.Gerenciador.exe: os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuam valendo.
+    # Como o README do modulo: sem cgo, sem F12 nem menu do botao direito (-tags production), sem console (windowsgui).
+    Etapa "Compilando o gerenciador em Go"
+    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\gerenciador-go\go.mod para a versao)." }
+    $env:CGO_ENABLED = "0"; $env:GOOS = "windows"; $env:GOARCH = "amd64"
+    Push-Location (Join-Path $Raiz "src\gerenciador-go")
+    try {
+        Executar "go" @("build", "-tags", "production", "-trimpath", "-ldflags", "-s -w -H=windowsgui -X main.versao=$Rotulo",
+            "-o", (Join-Path $Publicado "Financas.Gerenciador.exe"), ".")
+    } finally {
+        Pop-Location
+        Remove-Item Env:GOOS, Env:GOARCH -ErrorAction SilentlyContinue
     }
 
     # #231 (ADR 0049): o back-end em Go roda atras da API, como processo filho dela, e fica ao lado dela. Sem cgo
@@ -98,7 +112,7 @@ if (-not $SoPacote) {
     $pastaInstalador = Join-Path $Publicado "instalador"
     New-Item -ItemType Directory -Path $pastaInstalador -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "configurar.ps1") -Destination $pastaInstalador -Force
-    Copy-Item -LiteralPath (Join-Path $Raiz "src\gerenciador\Financas.Gerenciador\icone.ico") -Destination $pastaInstalador -Force
+    Copy-Item -LiteralPath (Join-Path $Raiz "src\gerenciador-go\icone.ico") -Destination $pastaInstalador -Force
 
     # Nao vao para o computador: simbolos de depuracao e o web.config do IIS (o site roda direto pelo Kestrel).
     Get-ChildItem -LiteralPath $Publicado -Recurse -Include *.pdb, web.config | Remove-Item -Force
