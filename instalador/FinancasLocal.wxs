@@ -23,6 +23,34 @@
                   DowngradeErrorMessage="Uma versão mais nova do Finanças Local já está instalada. Para voltar a uma anterior, desinstale-a antes (seus dados ficam)." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
+    <!--
+      Versão mínima do Windows (#277): o certificado do Go é um .pfx com AES e SHA-256, que o Windows lê a partir do
+      Server 2019 (compilação 17763, a do Windows 10 versão 1809); o próprio Go pede o Windows 10. O VersionNT não serve:
+      o Windows 10 e o 11 respondem 603, como o 8.1. A compilação vem do registro, e a comparação com um número é
+      numérica. "Installed" deixa desinstalar e reparar em qualquer caso.
+    -->
+    <Property Id="COMPILACAOWINDOWS">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber"
+                      Type="raw" Bitness="always64" />
+    </Property>
+    <Launch Condition="Installed OR COMPILACAOWINDOWS &gt;= 17763"
+            Message="O Finanças Local precisa do Windows 10 versão 1809 ou mais novo (ou do Windows Server 2019 ou mais novo). Atualize o Windows e rode o instalador de novo." />
+
+    <!--
+      Firefox (#277, como nos scripts desde a #300): por padrão ele não usa os certificados do Windows e mostra um aviso
+      no site. O instalador não muda o Firefox sozinho (ligar a opção faz ele confiar em todos os certificados do
+      sistema, e essa escolha é de quem usa); só avisa na tela final. O 64 bits grava em uma visão do registro, o 32 bits
+      na outra.
+    -->
+    <Property Id="FIREFOX64">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Mozilla\Mozilla Firefox" Name="CurrentVersion" Type="raw" Bitness="always64" />
+    </Property>
+    <Property Id="FIREFOX32">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Mozilla\Mozilla Firefox" Name="CurrentVersion" Type="raw" Bitness="always32" />
+    </Property>
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALTEXT" Sequence="ui" After="AppSearch" Condition="FIREFOX64 OR FIREFOX32"
+                 Value="Usa o Firefox? Por padrão ele não usa os certificados do Windows e mostra um aviso no site. Para aceitar, abra about:config e deixe security.enterprise_roots.enabled como true (ou use o Edge ou o Chrome)." />
+
     <Icon Id="icone.ico" SourceFile="!(bindpath.app)\instalador\icone.ico" />
     <Property Id="ARPPRODUCTICON" Value="icone.ico" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/LucasDesenvGit/financas-local" />

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.64.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Instalador `.msi` preparado para o Go** (#277, parte 1; épico #70). O certificado HTTPS passa a ser feito pelo executável do Go, como nos scripts, e o que ainda vale é reaproveitado. Quem passa dos scripts para o `.msi` leva também a chave dos segredos do Go. O instalador e o `instalar-windows.ps1` recusam, com uma mensagem clara, um Windows anterior ao Windows 10 versão 1809 (ou ao Windows Server 2019), em vez de instalar um site que não abre. Com o Firefox instalado, a tela final avisa que ele não usa os certificados do Windows por padrão e diz como aceitar.
+
 ## [2.63.1] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação

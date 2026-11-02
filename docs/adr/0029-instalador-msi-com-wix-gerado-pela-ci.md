@@ -57,7 +57,7 @@ O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/Financ
 - **Na instalação, no reparo e na atualização**, antes de registrar o serviço:
   1. cria e protege a pasta de dados;
   2. **migra a instalação pelos scripts**, quando existe o serviço `FinancasLocal` apontando para outra pasta: para o serviço, copia banco e chaves (sem apagar a pasta antiga), deixa uma nota e remove o serviço antigo, que tem o mesmo nome;
-  3. gera ou reaproveita o certificado (5 anos, SAN `localhost`/`127.0.0.1`/`::1`) e o põe nas Autoridades Raiz da máquina, como na 0012.
+  3. gera ou reaproveita o certificado (SAN `localhost`/`127.0.0.1`/`::1`) e o põe nas Autoridades Raiz da máquina, como na 0012. Desde a #277, quem gera é o `financas-go.exe gerar-certificado` (#84), como nos scripts (ver a atualização no fim).
 - **Só na desinstalação de verdade** (não na troca de versão): tira o certificado. Com `APAGARDADOS=1`, apaga também os dados.
 
 **Interface:** boas-vindas, pasta de instalação e progresso, sem tela de licença (o projeto não tem uma). No fim, uma caixa marcada para abrir o gerenciador.
@@ -131,3 +131,15 @@ Avaliado sem mudança, com o motivo registrado:
   Juntar exigiria levar a instalação de um runner para outro. Os triggers também são diferentes, e os dois rodam em paralelo, sem somar no tempo do PR.
 - **O "Versão" não reaproveita o build da CI:** o `.msi` precisa da API e do gerenciador publicados **self-contained para win-x64**, e a CI compila em Linux, sem isso. Não é o mesmo artefato.
 - **O "Versão" continua em todo push do `develop`:** é ele que publica o pré-lançamento "desenvolvimento", de onde a instalação de desenvolvimento se atualiza pelo gerenciador (ADR 0040).
+
+## Atualização de 2026-11-02: o .msi preparado para o Go (issue #277, parte 1)
+
+A decisão continua; o `.msi` passa a fazer, na instalação, o que os scripts já faziam com o Go (#84), e fecha três lacunas.
+
+- **Certificado pelo Go:** o `configurar.ps1` chama o `financas-go.exe gerar-certificado`, com a senha pela entrada padrão, no lugar do `New-SelfSignedCertificate`. A regra é a mesma: reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias. A CI confere, na atualização, que o certificado foi reaproveitado.
+- **A chave dos segredos do Go na migração dos scripts:** além dos `key-*.xml` do .NET, a migração copia o `segredos.chave` (segredos `v2:`, #76), pela mesma regra (só se a pasta nova ainda não tem a dela). Vale porque o serviço antigo e o novo rodam na mesma conta (LocalSystem), dona do DPAPI que protege o arquivo. O `sessao-go.chave` não vai: a inversão (#85) desloga todos de qualquer jeito.
+- **Versão mínima do Windows:** o `.msi` (`Launch`) e o `instalar-windows.ps1` recusam um Windows abaixo da compilação **17763** (Windows 10 versão 1809 / Windows Server 2019), com uma mensagem clara, em vez de um site que não abre. O motivo é o certificado: o Go grava o `.pfx` com AES e SHA-256 (`pkcs12.Modern2023`), que o Windows lê [a partir do Server 2019](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12#pkg-variables); o próprio Go pede só o [Windows 10 ou o Server 2016](https://go.dev/wiki/MinimumRequirements). A compilação vem do registro (`CurrentBuildNumber`), porque o `VersionNT` do Windows Installer responde 603 no Windows 8.1, no 10 e no 11 ([valores](https://learn.microsoft.com/windows/win32/msi/operating-system-property-values)); a comparação com um número é numérica ([sintaxe das condições](https://learn.microsoft.com/windows/win32/msi/conditional-statement-syntax)).
+- **Firefox:** com o Firefox instalado, a tela final do instalador avisa que ele não usa os certificados do Windows por padrão ([Mozilla](https://wiki.mozilla.org/CA/AddRootToFirefox)) e diz como aceitar, como os scripts desde a #300. O instalador **não muda o Firefox sozinho**: ligar `security.enterprise_roots.enabled` (ou a política `ImportEnterpriseRoots`) faz ele confiar em todos os certificados do sistema, inclusive os de empresa, e essa escolha é de quem usa. O aviso só aparece com interface (não no `/qn`).
+
+**Consequência negativa:** quem está num Windows 10 anterior ao 1809 (todos sem suporte da Microsoft desde 2020) não consegue mais instalar nem atualizar; a versão já instalada continua funcionando enquanto o certificado atual valer.
+
