@@ -45,10 +45,19 @@ if ! command -v unzip >/dev/null 2>&1; then
         faltando+=("unzip")
     fi
 fi
+# #277: o .NET nao roda no Linux sem a ICU (libicu), e um Linux minimo (ex.: debian:stable-slim) nao a traz. Sem o
+# ldconfig (no Debian, em /sbin, fora do PATH de quem nao e root), nao da para saber: segue, e o .NET diz o mesmo
+# mais adiante.
+if [[ "$SO" == linux ]]; then
+    ldconfig_bin="$(command -v ldconfig || echo /sbin/ldconfig)"
+    if [[ -x "$ldconfig_bin" ]] && ! "$ldconfig_bin" -p 2>/dev/null | grep -q 'libicuuc\.so'; then
+        faltando+=("libicu")
+    fi
+fi
 if [[ ${#faltando[@]} -gt 0 ]]; then
     case "$SO" in
         windows) dica='Use o Git Bash do Git for Windows (winget install Git.Git), que ja traz todas elas.' ;;
-        linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl ca-certificates tar unzip coreutils).' ;;
+        linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl ca-certificates tar unzip coreutils libicu-dev; no Fedora, libicu; no Arch, icu).' ;;
         osx)     dica='Instale com o Homebrew (ex.: brew install coreutils).' ;;
     esac
     erro_sai "Ferramentas ausentes: ${faltando[*]}. $dica"
@@ -330,7 +339,10 @@ fi
 # ------------------------------------------------------------------ Resumo
 etapa 'Conferindo o ambiente'
 configurar_ambiente_build
-ok "dotnet  $(dotnet --version)"
+# A substituicao $(...) dentro do ok nao para o script quando o comando falha: confere antes.
+versao_dotnet="$(dotnet --version 2>&1)" || erro_sai "O .NET nao roda neste computador:
+$versao_dotnet"
+ok "dotnet  $versao_dotnet"
 ok "go      $(go env GOVERSION)"
 ok "node    $(node --version)"
 ok "npm     $(npm --version)"
