@@ -74,7 +74,7 @@ func TestGeraOCertificado(t *testing.T) {
 }
 
 // Regra: o .pem é só a parte pública: é o que quem instala importa no navegador, e nele não há chave.
-func TestPemSoComAParteDublica(t *testing.T) {
+func TestPemSoComAPartePublica(t *testing.T) {
 	caminho := pfxDoTeste(t)
 	garantir(t, caminho, senhaDoCertificado, agoraDoCertificado)
 	texto := ler(t, strings.TrimSuffix(caminho, ".pfx")+".pem")
