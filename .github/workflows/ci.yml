@@ -58,6 +58,9 @@ jobs:
       # #587: o scripts/geral/atualizar-pr.sh resolve o conflito de versão e de CHANGELOG pela mesma regra.
       - name: Teste do atualizar-pr
         run: python3 -B scripts/geral/test_atualizar_versao_do_pr.py
+      # #600: as notas da versão de desenvolvimento cabem no limite do GitHub (125 mil caracteres).
+      - name: Teste das notas de desenvolvimento
+        run: python3 -B scripts/ci/test_notas_desenvolvimento.py
 
   # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
   mudancas:
