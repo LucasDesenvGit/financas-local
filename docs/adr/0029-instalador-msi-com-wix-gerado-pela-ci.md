@@ -156,3 +156,13 @@ A decisão continua; o `.msi` passa a fazer, na instalação, o que os scripts j
   Depois, desinstala.
 - **O que ainda falta para ligar** (fica na #85): o Go sozinho roda só as tarefas de `Go:Tarefas` (hoje câmbio e cripto, não a sincronização); os segredos gravados pelo .NET precisam ser informados de novo; todos são deslogados uma vez.
 
+## Avaliação de 2026-11-02: o que a #277 deixou de fora, e por quê (issue #277, parte 6)
+
+A #277 pedia para decidir três pontos. *Julgamento de quem fez a #277, não confirmado com o time:* nenhum entra agora; cada um vira issue quando alguém precisar.
+
+- **Assinatura do `.msi`:** continua sem. O Windows mostra "O Windows protegeu o computador" e o README ensina a passar (**Mais informações › Executar assim mesmo**). Assinar exige um certificado de código pago; a decisão não muda.
+- **Windows ARM (`arm64`):** fica de fora. A API e o gerenciador em Go compilam para `windows/arm64` sem cgo, então o custo de compilar é baixo. Mas o `.msi` (`-arch x64`), a API em .NET até a #86 e o WebView2 nesse sistema nunca foram testados, e a CI não tem um runner ARM com Windows. Quem precisar abre a issue; depois da #86 (sem o .NET), o caminho fica mais curto.
+- **Pacote pronto no Linux** (AppImage, `.deb` ou `.tar.gz` já compilado, a ideia da #50): fica de fora. Depois da #86, o site é um executável Go sem cgo e caberia num `.tar.gz` com o `wwwroot`. Mas o gerenciador em Go precisa de cgo, do GTK 4 e do WebKitGTK 6.0 da própria distribuição, o que pede um pacote por distribuição ou um AppImage com as bibliotecas dentro. Hoje a instalação pelos scripts compila no computador e diz o que falta (partes 3 e 5).
+
+**Medidas** (o runner do Windows, não um computador de uso; para comparar versões): o `.msi` caiu de 57 MB para 53 MB com o gerenciador em Go (parte 2). O workflow "Versão (instalador .msi)" escreve no log, a cada execução, o tamanho do `.msi` e da pasta instalada e a memória da API e do Go nos dois pacotes, o de hoje e o "só Go" (linhas `TAMANHO` e `MEMORIA`). Os números de cada versão vão no épico #70.
+

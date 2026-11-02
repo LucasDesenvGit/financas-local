@@ -113,6 +113,8 @@ A tabela completa do que sai e os detalhes técnicos (login, sessão, CSRF, cabe
 |---|---|
 | O gerenciador diz "ligado, mas não responde" | Espere alguns segundos e clique em **Reiniciar** |
 | O navegador alerta sobre o certificado | Abra o mesmo `.msi` e escolha **Reparar** |
+| O instalador diz que o Windows é antigo demais | Precisa do Windows 10 versão 1809 ou mais novo: atualize o Windows e rode o `.msi` de novo |
+| A janela do gerenciador não abre (o site funciona) | Falta o WebView2 da Microsoft: baixe em [developer.microsoft.com/microsoft-edge/webview2/consumer](https://developer.microsoft.com/microsoft-edge/webview2/consumer/) |
 | A sincronização falha com 401/403 | Confira o Client ID, o Secret e se o MeuPluggy foi autorizado para aquele banco |
 | Perdi dados ou quero voltar a uma cópia do banco | Siga [Restaurar uma cópia](docs/OPERACAO.md#restaurar-uma-cópia) |
 | Uma atualização não funcionou | Siga [Atualização que falhou](docs/OPERACAO.md#atualização-que-falhou) |
