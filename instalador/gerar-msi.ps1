@@ -30,6 +30,9 @@ param(
 $ErrorActionPreference = "Stop"
 $Raiz = Split-Path -Parent $PSScriptRoot
 if (-not $Saida) { $Saida = Join-Path $Raiz "saida-instalador" }
+# Caminho absoluto: o WiX resolve o -bindpath relativo a partir da pasta do .wxs, e nao da pasta atual.
+if (-not [IO.Path]::IsPathRooted($Saida)) { $Saida = Join-Path (Get-Location).Path $Saida }
+$Saida = [IO.Path]::GetFullPath($Saida)
 $Publicado = Join-Path $Saida "app"
 
 function Etapa([string]$texto) { Write-Host "==> $texto" -ForegroundColor Cyan }
