@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.58.6] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Dependências do front-end: Angular 22.2.4, Lucide 1.64.0 e `@types/node` 26.6.6** (#590, Dependabot #584, #585 e #586, juntos num PR só porque mexem no mesmo `package-lock.json`). O Angular (`common`, `compiler`, `core`, `forms`, `platform-browser`, `router` e `compiler-cli`) sobe uma correção, 22.2.3 → 22.2.4; os ícones do `@lucide/angular` vão de 1.61.0 a 1.64.0; o `@types/node`, só de desenvolvimento, de 26.6.5 a 26.6.6. O `package-lock.json` tem os mesmos pacotes que o Dependabot gerou em cada um. Manual: não se aplica.
+
 ## [2.58.5] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação
