@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.65.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instalador `.msi` só com o Go, pronto e desligado** (#277, parte 4; épico #70). O `gerar-msi.ps1 -SoGo` monta o pacote sem a API em .NET, com o executável do Go como serviço, e a CI o instala e confere o login e o site. Os pacotes publicados continuam iguais; a troca é da inversão (#85).
+
 ## [2.65.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
