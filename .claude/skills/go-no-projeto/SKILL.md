@@ -39,7 +39,7 @@ Tabela e rota próprias, fora do núcleo: é feita em Go, atrás do .NET (`CLAUD
 3. **Banco:** tabela nova em `banco/01-estrutura.sql` (o Go não cria tabela), entidade e `FinancasDbContext.cs` em sincronia enquanto o .NET existir, e `docs/BANCO-DE-DADOS.md`. Consulta pelo `sqlc` (`internal/banco/consultas/sql`, depois `go generate ./...`) ou com `?`.
 4. **Pacote `internal/<assunto>`** com HTTP → regra → banco dentro (ADR 0056), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, e o termo novo em `docs/arquitetura/dominio.md`.
 5. **Rotas** pelo `Registrar(mux, ...)` do pacote e uma linha em `internal/api/api.go`; o prefixo em `Go:Prefixos` (README do Go, "Rota nova").
-6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote com regra de negócio ou dinheiro entra em `scripts/ci/mutacao-go.txt`.
+6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/mutacao-go-fora.txt`, com o motivo: a CI falha com pacote que não está em nenhum dos dois (#456).
 7. **Front-end, Manual, diagramas** (ADR 0055) e `docs/DADOS-PESSOAIS.md` se houver dado pessoal novo: no mesmo PR, como manda o `CLAUDE.md`.
 
 ## Mudança em Go que já existe
