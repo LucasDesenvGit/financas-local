@@ -10,12 +10,14 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/pluggy"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
@@ -36,20 +38,35 @@ type fonteDeParametros interface {
 	ObterInteiro(ctx context.Context, chave string) (int, error)
 }
 
-// Servico atende as rotas. emExecucao é o SincronizacaoService.EmExecucao do .NET: a sincronização entra na parte 3.
+// sincronizador é o que as rotas usam da sincronização: uma interface para o teste das rotas não falar com a Pluggy.
+type sincronizador interface {
+	EmExecucao() bool
+	TestarCredenciais(ctx context.Context) (bool, string, error)
+	ConsultarItem(ctx context.Context, itemId string) (*pluggy.Item, error)
+	Sincronizar(ctx context.Context, conexaoId *int64, origem string) (sincronizacao.Resultado, error)
+	ImportarCarteira(ctx context.Context) (sincronizacao.ResultadoCarteira, error)
+}
+
+// atualizadorDeCotacoes busca as cotações depois de importar a carteira.
+type atualizadorDeCotacoes interface {
+	Atualizar(ctx context.Context, somente []int64) (cotacoes.Resultado, error)
+}
+
+// Servico atende as rotas.
 type Servico struct {
 	db         *sql.DB
 	config     *configuracao.Servico
 	cofre      configuracao.Cofre
 	parametros fonteDeParametros
+	sincronia  sincronizador
+	cotacoes   atualizadorDeCotacoes
 	relogio    relogio.Relogio
 	log        *slog.Logger
-	emExecucao atomic.Bool
 }
 
 // NovoServico monta o serviço. O cofre guarda o Client Secret no esquema do Go (#85, ADR 0049).
-func NovoServico(db *sql.DB, cofre configuracao.Cofre, parametros fonteDeParametros, r relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, config: configuracao.Novo(db, r), cofre: cofre, parametros: parametros, relogio: r, log: log}
+func NovoServico(db *sql.DB, cofre configuracao.Cofre, parametros fonteDeParametros, sincronia sincronizador, cotacoes atualizadorDeCotacoes, r relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, config: configuracao.Novo(db, r), cofre: cofre, parametros: parametros, sincronia: sincronia, cotacoes: cotacoes, relogio: r, log: log}
 }
 
 // Registrar põe as rotas no mux.
@@ -66,6 +83,10 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("GET /api/open-finance/logs", s.logs)
 	mux.HandleFunc("GET /api/open-finance/categorias", s.categorias)
 	mux.HandleFunc("PUT /api/open-finance/categorias/{pluggyCategoriaId}", s.mapearCategoria)
+	mux.HandleFunc("POST /api/open-finance/testar", s.testar)
+	mux.HandleFunc("POST /api/open-finance/conexoes", s.adicionarConexao)
+	mux.HandleFunc("POST /api/open-finance/sincronizar", s.sincronizar)
+	mux.HandleFunc("POST /api/carteira/importar-open-finance", s.importarCarteira)
 }
 
 func (s *Servico) agora() tipos.DataHora { return tipos.NovaDataHora(s.relogio.Agora()) }

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.60.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Sincronização do Open Finance em Go** (#83, partes 3 e 4 de 5; épico #70). Nada muda para quem usa: o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Passam para o Go a sincronização completa (contas, faturas, transações, investimentos, empréstimos e a carteira de renda variável) e as rotas `testar`, `conexoes`, `sincronizar` e `importar-open-finance`. O contrato ganha uma Pluggy falsa, para o .NET e o Go sincronizarem o mesmo cenário.
+
 ## [2.59.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades

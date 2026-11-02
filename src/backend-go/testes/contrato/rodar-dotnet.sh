@@ -179,13 +179,19 @@ versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.p
 (cd "$pasta_go" &&
     go test -c -o "$pasta/contrato.test" ./testes/contrato &&
     CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao" \
-        -o "$pasta/financas-go" ./cmd/financas)
+        -o "$pasta/financas-go" ./cmd/financas &&
+    go build -o "$pasta/pluggy-falsa" ./testes/contrato/pluggyfalsa)
 
 # 2 e 3, dentro de um namespace de rede só com o loopback.
 cat >"$pasta/dentro.sh" <<'DENTRO'
 set -euo pipefail
 ip link set lo up
 url="https://127.0.0.1:$PORTA"
+# #83: a Pluggy falsa, para o .NET e o Go sincronizarem o mesmo cenário. A raiz dela vale só para os dois processos.
+"$PASTA/pluggy-falsa" -endereco 127.0.0.1:5452 -dados "$PASTA_CONTRATO/dados/pluggy" -certificado "$PASTA/pluggy-raiz.pem" >"$PASTA/pluggy.log" 2>&1 &
+pid_pluggy=$!
+for _ in $(seq 1 40); do [[ -s "$PASTA/pluggy-raiz.pem" ]] && break; sleep 0.25; done
+[[ -s "$PASTA/pluggy-raiz.pem" ]] || { echo "A Pluggy falsa não subiu. Log:"; cat "$PASTA/pluggy.log"; exit 1; }
 # Na pasta da API, como o serviço instalado: o appsettings.json (AllowedHosts, logs) é lido da pasta atual.
 cd "$(dirname "$DLL")"
 LD_PRELOAD="$FAKETIME_LIB" FAKETIME="@$INICIO_EPOCH" FAKETIME_FMT=%s FAKETIME_DONT_FAKE_MONOTONIC=1 \
@@ -196,11 +202,16 @@ Kestrel__Endpoints__Https__Certificate__Password="$SENHA" \
 Banco__Caminho="$PASTA/dados/sql/FinancasLocal.db" \
 Seguranca__PastaChaves="$PASTA/dados/chaves" \
 Go__Executavel="$PASTA/financas-go" Go__Prefixos="$PREFIXOS" Go__InicioDoRelogio="$INICIO" \
+Pluggy__UrlBase="https://127.0.0.1:5452/" SSL_CERT_FILE="$PASTA/pluggy-raiz.pem" \
 LANG="$CULTURA" LC_ALL="$CULTURA" TZ=America/Sao_Paulo \
 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
     "$DOTNET" "$DLL" >"$PASTA/api.log" 2>&1 &
 pid=$!
-parar() { kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }
+parar() {
+    kill "$pid" "$pid_pluggy" 2>/dev/null || true
+    wait "$pid" "$pid_pluggy" 2>/dev/null || true
+    if [[ -s "$PASTA/pluggy.log" ]]; then echo "--- Pedidos sem resposta na Pluggy falsa ---"; cat "$PASTA/pluggy.log"; fi
+}
 trap parar EXIT
 
 pronta=""

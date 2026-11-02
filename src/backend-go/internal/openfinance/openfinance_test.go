@@ -15,6 +15,9 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/configuracao"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/cotacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/pluggy"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/transacoes"
@@ -39,11 +42,50 @@ type cofreFalso struct{}
 func (cofreFalso) Cifrar(_, segredo string) (string, error)   { return "v2:" + segredo + ":cifrado", nil }
 func (cofreFalso) Decifrar(_, gravado string) (string, error) { return gravado, nil }
 
+// sincronizadorFalso faz o papel da sincronização: as rotas não falam com a Pluggy aqui.
+type sincronizadorFalso struct {
+	emExecucao   bool
+	testar       func() (bool, string, error)
+	item         func() (*pluggy.Item, error)
+	resultado    sincronizacao.Resultado
+	erro         error
+	carteira     sincronizacao.ResultadoCarteira
+	erroCarteira error
+	conexoes     []*int64
+	origens      []string
+}
+
+func (f *sincronizadorFalso) EmExecucao() bool { return f.emExecucao }
+func (f *sincronizadorFalso) TestarCredenciais(context.Context) (bool, string, error) {
+	return f.testar()
+}
+func (f *sincronizadorFalso) ConsultarItem(context.Context, string) (*pluggy.Item, error) {
+	return f.item()
+}
+func (f *sincronizadorFalso) Sincronizar(_ context.Context, conexao *int64, origem string) (sincronizacao.Resultado, error) {
+	f.conexoes, f.origens = append(f.conexoes, conexao), append(f.origens, origem)
+	return f.resultado, f.erro
+}
+func (f *sincronizadorFalso) ImportarCarteira(context.Context) (sincronizacao.ResultadoCarteira, error) {
+	return f.carteira, f.erroCarteira
+}
+
+type cotacoesFalsas struct {
+	chamadas int
+	erro     error
+}
+
+func (c *cotacoesFalsas) Atualizar(context.Context, []int64) (cotacoes.Resultado, error) {
+	c.chamadas++
+	return cotacoes.Resultado{}, c.erro
+}
+
 type cenario struct {
-	mux *http.ServeMux
-	s   *Servico
-	db  *sql.DB
-	fab *testeapoio.Fabrica
+	mux   *http.ServeMux
+	s     *Servico
+	db    *sql.DB
+	fab   *testeapoio.Fabrica
+	falso *sincronizadorFalso
 }
 
 // novoCenario: 15/10/2026, meio-dia em Brasília (15h em UTC), com aviso de consentimento a 30 dias.
@@ -52,9 +94,10 @@ func novoCenario(t *testing.T) cenario {
 	db := testeapoio.NovoBancoVazio(t)
 	r := testeapoio.HojeEmBrasilia(2026, 10, 15)
 	mux := http.NewServeMux()
-	s := NovoServico(db, cofreFalso{}, parametrosFixos(30), r, slog.New(slog.DiscardHandler))
+	falso := &sincronizadorFalso{}
+	s := NovoServico(db, cofreFalso{}, parametrosFixos(30), falso, &cotacoesFalsas{}, r, slog.New(slog.DiscardHandler))
 	Registrar(mux, s)
-	return cenario{mux, s, db, testeapoio.NovaFabrica(t, db, r)}
+	return cenario{mux, s, db, testeapoio.NovaFabrica(t, db, r), falso}
 }
 
 func (c cenario) chamar(t *testing.T, metodo, caminho, corpo string) testeapoio.Resposta {
@@ -431,7 +474,7 @@ func TestRemoverConexaoRecusa(t *testing.T) {
 	t.Run("sincronização em andamento", func(t *testing.T) {
 		c := novoCenario(t)
 		k := c.fab.ConexaoBancaria()
-		c.s.emExecucao.Store(true)
+		c.falso.emExecucao = true
 		r := c.chamar(t, "DELETE", fmt.Sprintf("/api/open-finance/conexoes/%d", k.Id), "")
 		conferirStatus(t, r, 409)
 		if !strings.Contains(string(r.Corpo), "Aguarde a sincronização em andamento terminar.") {
@@ -446,7 +489,7 @@ func TestRemoverConexaoRecusa(t *testing.T) {
 func TestEstado(t *testing.T) {
 	c := novoCenario(t)
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/sincronizacao/estado", "").Corpo, `{"emExecucao":false}`)
-	c.s.emExecucao.Store(true)
+	c.falso.emExecucao = true
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/sincronizacao/estado", "").Corpo, `{"emExecucao":true}`)
 }
 
@@ -475,7 +518,7 @@ func TestStatus(t *testing.T) {
 		c.fab.ConexaoBancaria(ajustar)
 	}
 	c.definir(t, configuracao.UltimaSincronizacaoGeral, "2026-10-14T09:00:00.0000000Z")
-	c.s.emExecucao.Store(true)
+	c.falso.emExecucao = true
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/status", "").Corpo,
 		`{"ultimaSincronizacao":"2026-10-14T09:00:00Z","emExecucao":true,"conexoesAtivas":8,"conexoesComErro":3,"consentimentosVencendo":2}`)
 }

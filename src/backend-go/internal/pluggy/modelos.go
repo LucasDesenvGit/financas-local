@@ -52,13 +52,37 @@ func (n *Numero) UnmarshalJSON(b []byte) error {
 
 // Decimal é o (decimal)double do .NET: o C# lê todo valor da Pluggy em double e o converte, guardando 15 dígitos.
 // Passar pelo double é o que dá o mesmo centavo: 19.884999999999998 vira 19.885 e arredonda para 19,89, e o decimal
-// direto do texto daria 19,88. É o único lugar do pacote com float64.
+// direto do texto daria 19,88. O float64 não sai deste arquivo.
 func (n Numero) Decimal() (tipos.Decimal, error) {
-	v, err := strconv.ParseFloat(string(n), 64)
+	v, err := n.double()
 	if err != nil {
-		return tipos.Decimal{}, errors.New("número da Pluggy fora do limite")
+		return tipos.Decimal{}, err
 	}
 	return tipos.DecimalDeFloat64(v)
+}
+
+func (n Numero) double() (float64, error) {
+	v, err := strconv.ParseFloat(string(n), 64)
+	if err != nil {
+		return 0, errors.New("número da Pluggy fora do limite")
+	}
+	return v, nil
+}
+
+// SomaDosPagamentos é o pagamentos.Sum(p => p.Amount ?? 0) do C#: a soma é em double, e só o total vira decimal.
+func SomaDosPagamentos(lista []PagamentoFatura) (tipos.Decimal, error) {
+	soma := 0.0
+	for _, p := range lista {
+		if p.Amount == nil {
+			continue
+		}
+		v, err := p.Amount.double()
+		if err != nil {
+			return tipos.Decimal{}, err
+		}
+		soma += v
+	}
+	return tipos.DecimalDeFloat64(soma)
 }
 
 // Inteiro é o int do .NET com AllowReadingFromString.

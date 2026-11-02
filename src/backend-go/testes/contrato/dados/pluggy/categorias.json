@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "id": "01000000",
+      "description": "Income",
+      "descriptionTranslated": "Renda"
+    },
+    {
+      "id": "01010000",
+      "description": "Salary",
+      "descriptionTranslated": "Salário",
+      "parentId": "01000000",
+      "parentDescription": "Income"
+    },
+    {
+      "id": "05000000",
+      "description": "Groceries",
+      "descriptionTranslated": "Mercado"
+    },
+    {
+      "id": "07000000",
+      "description": "Streaming",
+      "descriptionTranslated": null,
+      "parentId": "99",
+      "parentDescription": "Digital services"
+    },
+    {
+      "id": "09000000",
+      "description": "Sem tradução e sem mapa"
+    },
+    {
+      "id": "123456789012345678901",
+      "description": "Id longo demais"
+    },
+    {
+      "id": "   ",
+      "description": "Id em branco"
+    }
+  ]
+}

@@ -81,7 +81,7 @@ var (
 		"internal/versao",
 	}
 	// montadores: juntam tudo (rotas e programa) e podem importar qualquer assunto.
-	montadores = []string{"internal/api", "cmd/financas", "testes/contrato", "internal/arquitetura"}
+	montadores = []string{"internal/api", "cmd/financas", "testes/contrato", "testes/contrato/pluggyfalsa", "internal/arquitetura"}
 	// modulos (#190, #191, ADR 0056): visualizações que se ligam e desligam. Um módulo usa o núcleo (assuntos, base e
 	// transversais), mas o núcleo não importa módulo, e um módulo não importa outro. O primeiro módulo entra aqui.
 	modulos = []string{}
@@ -134,8 +134,8 @@ var dependencias = []struct {
 		"internal/emprestimos", "internal/extrato", "internal/faturas", "internal/poucoinformativa", "internal/relatorios",
 		"internal/reservas", "internal/transacoes"},
 		"as rotas da entrada painel (#80): o painel junta o resumo e os avisos de cada assunto (contas, carteira, contas a pagar, faturas, reservas)"},
-	{"internal/openfinance", []string{"internal/categorizacao", "internal/contas", "internal/transacoes", "internal/transferencias"},
-		"as conexões usam o nome e as faturas das contas; mapear uma categoria reaplica as regras e acerta as transferências (#83)"},
+	{"internal/openfinance", []string{"internal/categorizacao", "internal/contas", "internal/cotacoes", "internal/pluggy", "internal/sincronizacao", "internal/transacoes",
+		"internal/transferencias"}, "as conexões usam o nome e as faturas das contas; mapear uma categoria reaplica as regras; as rotas chamam a sincronização (#83)"},
 	{"internal/parcelas", nil, "parcelas de compras no cartão"},
 	{"internal/pluggy", nil, "cliente HTTP da Pluggy (ADR 0006); não grava no banco"},
 	{"internal/poucoinformativa", nil, "descrição que não diz nada"},
@@ -146,6 +146,9 @@ var dependencias = []struct {
 	{"internal/reservas", []string{"internal/cambio"}, "reserva em dólar convertida pela PTAX"},
 	{"internal/saude", nil, "GET de saúde da API"},
 	{"internal/selic", nil, "Selic do BCB"},
+	{"internal/sincronizacao", []string{"internal/carteira", "internal/categorizacao", "internal/cobrancas", "internal/contas", "internal/cotacoes",
+		"internal/emprestimos", "internal/investimentos", "internal/pluggy", "internal/regrasdescricao", "internal/transacoes", "internal/transferencias"},
+		"a sincronização grava em cada assunto e chama, no fim, as mesmas rotinas da partida (#83)"},
 	{"internal/sugestoes", nil, "sugestões de categoria pelo histórico"},
 	{"internal/tipolancamento", nil, "tipo de cada lançamento (ADR 0025)"},
 	{"internal/transacoes", nil, "o modelo da transação"},
