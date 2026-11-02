@@ -38,7 +38,8 @@ func TestFluxoMensal(t *testing.T) {
 	if r.String() != "1000.5" || d.String() != "160.25" {
 		t.Errorf("totais: %s %s", r, d)
 	}
-	if r, d := totais(nil); r.String() != "0" || d.String() != "0" {
+	// O SumAsync do EF Core sobre nenhuma linha volta "0.0" (contrato 13-painel, o mês futuro).
+	if r, d := totais(nil); r.String() != "0.0" || d.String() != "0.0" {
 		t.Errorf("totais vazios: %s %s", r, d)
 	}
 }
@@ -117,9 +118,11 @@ func TestProjecao(t *testing.T) {
 	mercado := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Mercado" })
 
 	p, err := s.Projecao(t.Context(), 2, nil)
-	// Sem transação nenhuma, a janela é a de 6 meses (JanelaHistorico, #447), com tudo zerado.
+	// Sem transação nenhuma, a janela é a de 6 meses (JanelaHistorico, #447), com tudo zerado: a soma vazia é "0.0", e a
+	// média das despesas sai 0 porque o Math.Max(0m, −0.0) fica com o primeiro no empate.
 	if err != nil || p.MesesConsiderados != 6 || len(p.Meses) != 9 || p.Meses[6].Situacao != EmAndamento ||
-		p.MediaReceitas.String() != "0" || p.Meses[8].SaldoProjetado == nil || p.Meses[8].SaldoProjetado.String() != "0" {
+		p.MediaReceitas.String() != "0.0" || p.MediaDespesas.String() != "0" || p.Meses[8].SaldoProjetado == nil ||
+		p.Meses[8].SaldoProjetado.String() != "0.0" {
 		t.Fatalf("sem histórico: %+v %v", p, err)
 	}
 

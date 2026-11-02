@@ -443,7 +443,7 @@ func (s *Servico) saudeFinanceira(ctx context.Context, p Patrimonio, essenciais 
 		}
 		divisor := tipos.DecimalDeInteiro(int64(meses))
 		media := func(passa func(Lancamento) bool) tipos.Decimal {
-			return dividirPorPositivo(maiorDeDois(tipos.Zero, negar(somaOuZero(valoresDe(lancamentos, passa)))), divisor)
+			return dividirPorPositivo(maiorDeDois(tipos.Zero, negar(SomaDoSumAsync(valoresDe(lancamentos, passa)))), divisor)
 		}
 		gasto = media(func(l Lancamento) bool { return l.Tipo == transacoes.Despesa })
 		gastoEssencial = media(func(l Lancamento) bool {

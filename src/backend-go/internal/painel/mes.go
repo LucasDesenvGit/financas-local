@@ -281,7 +281,7 @@ func (s *Servico) Avisos(ctx context.Context) (AvisosDto, error) {
 }
 
 // emergencias é o valor absoluto das saídas do mês marcadas como emergência (sem as ignoradas e as transferências),
-// somadas como o SumAsync do EF Core: no formato do banco, ou 0 sem nenhuma.
+// somadas como o SumAsync do EF Core: no formato do banco ("0.0" sem nenhuma).
 func (s *Servico) emergencias(ctx context.Context, inicio, fim tipos.Data) (tipos.Decimal, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ?
 		AND "Emergencia" AND NOT "IgnorarRelatorios" AND "Tipo" <> ? ORDER BY "Id"`, inicio, fim, transacoes.Transferencia)
@@ -302,14 +302,7 @@ func (s *Servico) emergencias(ctx context.Context, inicio, fim tipos.Data) (tipo
 	if err := linhas.Err(); err != nil {
 		return tipos.Zero, fmt.Errorf("ler as emergências do mês: %w", err)
 	}
-	if len(valores) == 0 {
-		return tipos.Zero, nil
-	}
-	soma := valores[0]
-	for _, v := range valores[1:] {
-		soma = tipos.Somar(soma, v)
-	}
-	return tipos.DeDecimal(soma.NaEscalaDoBanco().Decimal().Abs()), nil
+	return tipos.DeDecimal(relatorios.SomaDoSumAsync(valores).Decimal().Abs()), nil
 }
 
 // poucoInformativas é o PoucoInformativasAsync (#9): as transações dos últimos 90 dias com descrição pouco informativa
