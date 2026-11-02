@@ -365,7 +365,7 @@ func TestAlterarAtiva(t *testing.T) {
 	}
 }
 
-// Regra (#575, PR #578): tudo o que veio da conexão sai, numa transação; a outra conexão não muda.
+// Regra (#575): tudo o que veio da conexão sai, numa transação; a outra conexão não muda.
 func TestRemoverConexao(t *testing.T) {
 	c := novoCenario(t)
 	sai := c.fab.ConexaoBancaria()

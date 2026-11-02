@@ -20,16 +20,23 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/categorizacao` | o `CategorizacaoService` (#77): a categoria pelas regras e pelo mapa da Pluggy, e o tipo pela categoria e pelo valor (ADR 0036); a sincronização (#83) usa o mesmo |
 | `internal/regrasdescricao` | o `RegraDescricaoService` (#77, ADR 0030): nome pela descrição do banco, em cadeia (#250) e com faixa de valor (#241), e o texto sugerido para a regra (#123) |
 | `internal/desfazer` | o estado de antes de uma alteração em lote, na memória e por 10 minutos, para o "Desfazer" (#78, o `IMemoryCache` do C#) |
-| `internal/reservas` | o `ReservaService` (#82, ADRs 0010, 0037 e 0038): as reservas pelo extrato, pela conferência e pelo que o banco informa, e o Méli Dólar pela PTAX; as metas (#79), o painel (#80) e a carteira usam |
-| `internal/carteira` | o `CarteiraService` (#82): preço médio, posições, proventos, comparação com a Selic e os investimentos do Open Finance; `GET /api/carteira` e as operações de um ativo |
+| `internal/reservas` | o `ReservaService` (#82, ADRs 0010, 0037 e 0038), com as 3 rotas de `/api/reservas`: as reservas pelo extrato, pela conferência e pelo que o banco informa, e o Méli Dólar pela PTAX; as metas (#79), o painel (#80) e a carteira usam |
+| `internal/carteira` | o `CarteiraService` (#82): preço médio, posições, proventos, comparação com a Selic e os investimentos do Open Finance; as 18 rotas de `/api/carteira` (a carteira, os ativos e as operações, a configuração, os FIIs, a importação do extrato, a atualização das cotações e a conferência, #299) |
 | `internal/cotacoes` | o `CotacaoService` (#82): cotações, proventos e históricos mensais pelo Yahoo Finance e pela brapi, e o IFIX; o token da brapi só vale depois da troca dos segredos (#85) |
 | `internal/selic` | o `SelicService` (#82): a Selic diária e a meta pelo Banco Central, guardadas no banco, e o fator para comparar rentabilidades (em `float64`, como no C#); a carteira usa |
 | `internal/transferencias` | o `TransferenciasService` (#77, ADR 0031): transferência entre contas suas fica fora dos relatórios; pagamento de fatura pareado no cartão |
 | `internal/tipolancamento` | o `TipoLancamentoService` (#77, ADR 0025): como o dinheiro entrou ou saiu (Pix, fatura, estorno…) |
 | `internal/transacoes` | a `Transacao` como as regras a leem e mudam; `Gravar` manda só as colunas que mudaram, como o `SaveChanges` do EF Core |
+| `internal/conferenciabanco` | o "Conferir com o banco" (#172, #445, o `ConferenciaBancoService`): por conta, fatura e investimento, o valor do site e as pistas de por que o app do banco mostra outro; `/api/conferencia-banco` |
+| `internal/contasagendadas` | as contas a pagar (#79): as 9 rotas de `/api/contas-agendadas`, os avisos das recorrentes (#158, ADR 0043) e as sugestões do extrato (#62, #205, #241) |
+| `internal/cobrancas` | a conciliação da conta a pagar com as cobranças do extrato (#158, ADR 0043, o `ConciliarAsync`); sem rota: as contas a pagar, a partida e a sincronização (#83) usam |
+| `internal/orcamentos` | os orçamentos do mês (#79): as 6 rotas de `/api/orcamentos` e a sugestão por categoria (#39, o `SugestaoOrcamentoService`) |
+| `internal/metas` | as metas de economia (#79): as 8 rotas de `/api/metas`, o progresso pelo saldo da conta ou do cofrinho (#89), a prioridade, os aportes (#318) e o caixa do plano (#90, #149) |
 | `internal/relatorios` | a base do `RelatorioService` (#447, ADRs 0031 e 0036): as transações que entram nos relatórios, o total por categoria, o orçamento do mês contra o gasto, as contas a pagar e o próximo vencimento, a janela dos últimos meses completos e a renda; sem rota, a #79 e a #80 usam |
 | `internal/emprestimos` | os totais do `EmprestimoService` (#447, ADR 0014): saldo devedor e parcela mensal de financiamentos e de empréstimos; sem rota |
 | `internal/texto` | as normalizações de texto das regras do C# (sem acento, maiúsculas, palavras inteiras) e a ordem de texto da cultura pt-BR, conferidas contra o C# por gabaritos |
+| `internal/partida` | as seis rotinas que acertam dados ao subir (#444): só a ordem, a transação de cada uma e o que fazer quando falha; a regra de cada uma fica no pacote do assunto. Só com o Go sozinho (`-rotinas-de-partida`) |
+| `internal/erros` | os erros do sistema (#298, ADR 0022): o handler do `slog` que manda avisos e erros para a fila, o gravador em `ErroSistema` e as rotas de `/api/erros`; só com o Go sozinho, até a inversão (#85) |
 | `internal/tarefas` | tarefas em segundo plano (o `BackgroundService` do .NET): só as de `Go:Tarefas`, com `context`, espera ao parar e `recover` por ciclo |
 | `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
 | `internal/sessao` | quem está logado, no contexto da requisição |
@@ -44,6 +51,7 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato do EF Core |
 | `internal/relogio` | fuso de Brasília, injetável; o relógio de teste do contrato (`APartirDe`, #363) |
 | `internal/versao` | a versão, gravada na compilação pelo `-ldflags` |
+| `internal/arquitetura` | o teste de arquitetura (ADR 0056, #476): regra sem HTTP, mapa de contextos e módulos. **Só local** (`go test -tags arquitetura ./internal/arquitetura/`), a CI não roda |
 | `internal/testeapoio` | só para testes (`_test.go`): banco temporário com o esquema real, fábrica de dados inventados, relógio parado em Brasília e handler chamado com o usuário logado ([README](internal/testeapoio/README.md), #369) |
 | `testes/contrato` | testes de contrato: o que o .NET responde e grava, caso a caso, para o Go responder igual ([README](testes/contrato/README.md)) |
 
@@ -85,7 +93,7 @@ go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go ./cmd/financas
 go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go.exe ./cmd/financas    # Windows
 ```
 
-**Sozinho** (o esqueleto da #73: front-end e cabeçalhos, sem rota de `/api`, porque o Go ainda não tem login), ao lado do .NET, que fica na 5443:
+**Sozinho**, sem o .NET na frente, como o site vai rodar depois da inversão (#85): com o login do Go (#75), os erros do sistema (#298) e todas as rotas que o Go já tem. Ao lado do .NET, que fica na 5443:
 
 ```bash
 cd src/backend-go
@@ -121,7 +129,7 @@ Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação
 python3 ../../scripts/ci/mutacao-go.py internal/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
-A CI roda os seis primeiros no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco". No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
+A CI roda todos menos o de ponta a ponta no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
 
 **Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe atrás do .NET, como no site. Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go, e confere o Go com `PREFIXOS_GO="<prefixos do assunto>" testes/contrato/rodar-dotnet.sh` (os mesmos esperados). A CI roda o contrato no job "contrato (.NET)".
 

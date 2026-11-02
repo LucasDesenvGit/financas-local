@@ -19,7 +19,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 
 | | |
 |---|---|
-| **O que é** | `Usuario`: login, hash da senha (PBKDF2), tentativas e último login. `AuditoriaAcesso`: evento, login, IP e navegador de cada ação registrada |
+| **O que é** | `Usuario`: login, hash da senha (PBKDF2), tentativas e último login. `AuditoriaAcesso`: evento, login, IP e navegador de cada ação registrada (login, senha, parâmetros, credenciais, conexões, alterações em lote e conferências) |
 | **De onde vem** | De você, e do próprio sistema |
 | **Sai do computador?** | Não |
 | **Por quanto tempo** | Sem prazo: a auditoria não é apagada sozinha |
@@ -30,10 +30,20 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `Configuracao`: o Client ID da Pluggy, em texto, e o Client Secret da Pluggy e o token da brapi, criptografados com as chaves de `dados/chaves` |
-| **De onde vem** | De você, em **Configurações** |
-| **Sai do computador?** | Sim: as credenciais da Pluggy vão para `api.pluggy.ai`, e o token, para `brapi.dev`, por HTTPS |
+| **De onde vem** | De você: as da Pluggy em **Configurações › Open Finance**; o token da brapi em **Investimentos › Renda variável › fonte das cotações** |
+| **Sai do computador?** | Sim: as credenciais da Pluggy vão para `api.pluggy.ai`, e o token, para `brapi.dev` (no cabeçalho `Authorization`), por HTTPS |
 | **Por quanto tempo** | Até você trocar ou remover |
-| **Como apagar** | Remova em **Configurações**. A API nunca devolve o segredo |
+| **Como apagar** | Remova no mesmo lugar em que informou. A API nunca devolve o segredo |
+
+### Seu nome nos Pix
+
+| | |
+|---|---|
+| **O que é** | `Configuracao` (`Transferencias.MeuNome`): "Seu nome como aparece nos Pix", em texto. Serve para reconhecer, nos bancos que não informam o titular, o Pix ou a TED para outra conta sua ([ADR 0031](adr/0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md)) |
+| **De onde vem** | De você, em **Configurações › Open Finance**, se quiser |
+| **Sai do computador?** | Não |
+| **Por quanto tempo** | Até você trocar ou apagar |
+| **Como apagar** | Esvazie o campo e clique em **Salvar nome** |
 
 ### Dados bancários da Pluggy
 
@@ -43,7 +53,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **De onde vem** | Do Open Finance, pela Pluggy, dos bancos que você autorizou |
 | **Sai do computador?** | Não. Esses dados só entram |
 | **Por quanto tempo** | Sem prazo, enquanto a conexão existir |
-| **Como apagar** | **Remover a conexão** em Configurações apaga, em cascata, as contas, transações, investimentos e empréstimos dela. Uma transação do Open Finance sozinha não pode ser excluída; dá para marcá-la para ignorar nos relatórios |
+| **Como apagar** | **Remover a conexão** em Configurações apaga tudo o que veio dela: as contas, transações, faturas, investimentos e empréstimos, o histórico dos investimentos e o registro das sincronizações. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma delas, fica. Uma transação do Open Finance sozinha não pode ser excluída; dá para marcá-la para ignorar nos relatórios |
 
 **Dados de terceiros:** o nome e o CPF/CNPJ do outro lado de um Pix ou TED não são gravados em campo próprio. Do documento, fica só o sim ou não de "mesmo titular" (`MesmaTitularidade`, [ADR 0025](adr/0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md)). **Mas a descrição vem do banco como está**, e ela costuma trazer o nome de quem recebeu ou pagou, como em "PIX ENVIADO FULANO". Esse texto fica em `Descricao` e `DescricaoOriginal`.
 
@@ -62,10 +72,20 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `Ativo`, `OperacaoAtivo`, `ProventoAtivo` e `PrecoMensalAtivo`: o que você tem, as quantidades e os preços |
-| **De onde vem** | De você, do extrato e do Open Finance. As cotações vêm de Yahoo Finance, brapi e Mercado Bitcoin |
+| **De onde vem** | De você, do extrato e do Open Finance. As cotações e os proventos vêm do Yahoo Finance e da brapi |
 | **Sai do computador?** | Só o código do ativo, para buscar a cotação. Quantidades e valores não saem |
 | **Por quanto tempo** | Até você apagar |
 | **Como apagar** | Em **Investimentos**: excluir a operação ou o ativo |
+
+### Cotações, índices e categorias públicas
+
+| | |
+|---|---|
+| **O que é** | `CotacaoMoeda` (PTAX), `CotacaoCripto`, `TaxaSelicDiaria`, `IndiceMensal` (como o IFIX) e `CategoriaPluggy` (as categorias que a Pluggy usa e a sua categoria para cada uma). Não são dados seus, a não ser a escolha da categoria |
+| **De onde vem** | Do Banco Central, do Mercado Bitcoin, do Yahoo Finance e da brapi, e da Pluggy |
+| **Sai do computador?** | Não: só entram. O que sai para buscá-los está na [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) |
+| **Por quanto tempo** | Sem prazo |
+| **Como apagar** | Só apagando tudo |
 
 ### Erros do sistema
 
@@ -74,7 +94,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **O que é** | `ErroSistema`: mensagem, detalhe técnico, rota e usuário de cada erro ou aviso |
 | **De onde vem** | Do próprio sistema |
 | **Sai do computador?** | Não |
-| **Por quanto tempo** | 90 dias pela última ocorrência, por padrão (de 7 a 365, em Parâmetros) |
+| **Por quanto tempo** | 90 dias pela última ocorrência, por padrão (de 7 a 365, em **Configurações › Parametrização**) |
 | **Como apagar** | Sozinho, pelo prazo |
 
 Antes de gravar, o `Sanitizador` tira o que está no padrão de segredo, CPF e valor em reais ([ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md)). É uma limpeza por padrão de texto, e não uma garantia.

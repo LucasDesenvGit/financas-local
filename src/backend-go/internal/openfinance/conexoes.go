@@ -123,8 +123,7 @@ func (s *Servico) alterarAtiva(w http.ResponseWriter, r *http.Request) {
 }
 
 // removerConexao apaga a conexão e tudo o que veio dela: o banco apaga em cascata o que tem chave estrangeira, e o
-// histórico dos investimentos (sem chave, de propósito) e o log (ON DELETE SET NULL) saem aqui (#575). A regra é a do
-// PR #578, que muda o .NET: as duas apagam o mesmo quando ele entrar.
+// histórico dos investimentos (sem chave, de propósito) e o log (ON DELETE SET NULL) saem aqui (#575).
 func (s *Servico) removerConexao(w http.ResponseWriter, r *http.Request) {
 	id, ok := idDaRota(w, r)
 	if !ok {

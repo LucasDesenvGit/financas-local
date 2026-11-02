@@ -272,7 +272,7 @@ INSERT INTO Transacao (ContaId, PluggyTransactionId, Data, Descricao, DescricaoO
     (1, 'tx-pix-rec', '2026-10-13', 'PIX RECEBIDO JOAO FICTICIO', 'PIX RECEBIDO JOAO FICTICIO', NULL, '120.35', 2, 1, (SELECT Id FROM Categoria WHERE Nome = 'Outras receitas'), 0, NULL, NULL, NULL, 0, 0, 0, 'PIX', 0, NULL, 0, NULL, NULL, '2026-10-13 09:00:00', '2026-10-13 09:00:00'),
     (1, 'tx-pend', '2026-10-14', 'COMPRA PENDENTE MERCADINHO', 'COMPRA PENDENTE MERCADINHO', NULL, '-18.9', 1, 2, (SELECT Id FROM Categoria WHERE Nome = 'Mercado'), 0, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, NULL, 0, NULL, NULL, '2026-10-14 09:00:00', '2026-10-14 09:00:00');
 
-/* #83: só a sincronização grava a categoria da Pluggy, e sem ela "aplicar nas existentes" (16-open-finance-rotas) não
+/* #83: só a sincronização grava a categoria da Pluggy, e sem ela "aplicar nas existentes" (16-open-finance) não
    muda nada. É a mesma que esta transação já tem. */
 UPDATE Transacao SET PluggyCategoriaId = '19050000' WHERE PluggyTransactionId = 'tx-202511-c18';
 
@@ -323,7 +323,8 @@ INSERT INTO HistoricoInvestimento (PluggyInvestmentId, ConexaoBancariaId, Nome, 
     ('inv-cdb-0001', 1, 'CDB Banco Fictício 110% CDI', 'FIXED_INCOME', '2026-08-31', '12510.2', '11000.0', '2026-08-31 09:00:00'),
     ('inv-cdb-0001', 1, 'CDB Banco Fictício 110% CDI', 'FIXED_INCOME', '2026-09-30', '12688.73', '11000.0', '2026-09-30 09:00:00'),
     ('inv-cdb-0001', 1, 'CDB Banco Fictício 110% CDI', 'FIXED_INCOME', '2026-10-14', '12873.42', '12000.0', '2026-10-14 09:00:00'),
-    ('inv-resgatado-0001', 1, 'LCI Fictícia (resgatada)', 'FIXED_INCOME', '2026-05-31', '3050.0', '3000.0', '2026-05-31 09:00:00');
+    ('inv-resgatado-0001', 1, 'LCI Fictícia (resgatada)', 'FIXED_INCOME', '2026-05-31', '3050.0', '3000.0', '2026-05-31 09:00:00'),
+    ('inv-desconectado-0001', 2, 'CDB Banco Desconectado', 'FIXED_INCOME', '2026-02-28', '1015.0', '1000.0', '2026-02-28 09:00:00');
 
 INSERT INTO Emprestimo (Id, ConexaoBancariaId, PluggyLoanId, Natureza, Modalidade, Produto, NumeroContrato, Moeda, ValorContratado,
     SaldoDevedor, ValorParcela, ParcelasTotal, ParcelasPagas, ParcelasAVencer, ParcelasEmAtraso, Periodicidade, SistemaAmortizacao,
