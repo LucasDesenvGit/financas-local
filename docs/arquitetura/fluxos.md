@@ -101,7 +101,7 @@ sequenceDiagram
 
 ## Sincronização com a Pluggy
 
-**Quem atende:** a API .NET, até a #83.
+**Quem atende:** a API .NET, até a troca dos segredos (#85). O Go já tem a mesma sincronização e a mesma tarefa, em `internal/sincronizacao`, desligadas até lá (ADR 0049).
 
 ```mermaid
 sequenceDiagram

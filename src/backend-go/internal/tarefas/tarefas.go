@@ -49,23 +49,32 @@ func Periodica(ctx context.Context, log *slog.Logger, nome string, atraso, inter
 func rodarCiclo(ctx context.Context, log *slog.Logger, nome string, ciclo func(context.Context) error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Falha na atualização automática d"+nome+".", "origem", origem(nome),
-				"erro", fmt.Sprint(r), "pilha", string(debug.Stack()))
+			log.Error(mensagemDeFalha(nome), "origem", origem(nome), "erro", fmt.Sprint(r), "pilha", string(debug.Stack()))
 		}
 	}()
 	if err := ciclo(ctx); err != nil && ctx.Err() == nil {
-		log.Error("Falha na atualização automática d"+nome+".", "origem", origem(nome), "erro", err)
+		log.Error(mensagemDeFalha(nome), "origem", origem(nome), "erro", err)
 	}
 }
 
+// mensagemDeFalha é a do .NET: a tarefa da sincronização só verifica se é hora, e a falha fala disso.
+func mensagemDeFalha(nome string) string {
+	if strings.Contains(nome, "sincronização") {
+		return "Falha na verificação da sincronização automática."
+	}
+	return "Falha na atualização automática d" + nome + "."
+}
+
 // origem é a origem do erro em Configurações › Erros, a mesma do .NET (RegistroErrosLoggerProvider.Origem): o câmbio
-// em "Câmbio" e, desde a #298, a cripto em "Cripto".
+// em "Câmbio", a sincronização em "Open Finance" e, desde a #298, a cripto em "Cripto".
 func origem(nome string) string {
 	switch {
 	case strings.Contains(nome, "cripto"):
 		return erros.OrigemCripto
 	case strings.Contains(nome, "câmbio"):
 		return "Câmbio"
+	case strings.Contains(nome, "sincronização"):
+		return "Open Finance"
 	}
 	return erros.OrigemSistema
 }

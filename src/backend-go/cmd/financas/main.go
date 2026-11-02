@@ -47,6 +47,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/partida"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/servidor"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tarefas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao"
 )
@@ -248,15 +249,16 @@ func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relo
 		t := cripto.NovaTarefa(cripto.NovoServico(db, cripto.ClientePadrao(), rel, log), log)
 		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
 	}
+	montado := api.Montar(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
 	if ligadas["Sincronizacao"] {
-		// A sincronização com a Pluggy ainda não está em Go (#83): ligada aqui, ninguém a rodaria.
-		return errors.New("Go:Tarefas tem Sincronizacao, que ainda não está em Go (#83)")
+		t := sincronizacao.NovaTarefa(montado.Sincronizacao, log)
+		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
 	}
 
 	log.Info("iniciando atrás do .NET", "versao", versao.Atual, "tarefas", cfg.GoTarefas)
 	return servidor.RodarAtrasDoDotnet(ctx, servidor.OpcoesAtras{
 		Segredo: segredo,
-		Rotas:   api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg}),
+		Rotas:   montado.Rotas,
 		Log:     log,
 		AvisarPorta: func(porta int) error {
 			return json.NewEncoder(saida).Encode(map[string]int{"porta": porta})

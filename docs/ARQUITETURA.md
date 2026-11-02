@@ -81,7 +81,7 @@ O que sai para a internet e como o site se protege (login, sessão, CSRF, cabeç
 
 ## Mapa de contextos
 
-Os assuntos do back-end e quem usa quem. A seta vai de quem usa para quem é usado, e a seta para uma moldura quer dizer que ele usa vários assuntos de dentro. Borda tracejada: o assunto ainda está só no .NET.
+Os assuntos do back-end e quem usa quem. A seta vai de quem usa para quem é usado, e a seta para uma moldura quer dizer que ele usa vários assuntos de dentro. Borda tracejada: o assunto ainda está só no .NET. O Open Finance já tem o código em Go, desligado até a troca dos segredos (#85).
 
 ```mermaid
 flowchart TB
@@ -111,6 +111,7 @@ flowchart TB
 
     openfinance --> nucleo
     openfinance --> investimentos
+    openfinance --> painel
     painel --> nucleo
     painel --> cotacoes
     conferencia --> contas
@@ -127,11 +128,11 @@ flowchart TB
     investimentos --> cambio
 
     classDef soNoDotNet stroke-dasharray: 6 4
-    class openfinance,painel,planejamento,nenhum soNoDotNet
+    class painel,planejamento,nenhum soNoDotNet
 ```
 
 - **A fonte do mapa** ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)): a tabela `dependencias` do teste de arquitetura (`src/backend-go/internal/arquitetura/arquitetura_test.go`), par a par, com o motivo. Este diagrama agrupa os mesmos pares para quem lê, e muda quando muda uma seta entre os grupos.
-- **Quando as setas foram conferidas:** nos pacotes em Go, pelos imports (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`). No que está só no .NET, pelos serviços que cada classe recebe no construtor (`SincronizacaoService`, `PainelController`, `RelatorioService` e `PlanejamentoControllers`).
+- **Quando as setas foram conferidas:** nos pacotes em Go, pelos imports (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`). No que está só no .NET, pelos serviços que cada classe recebe no construtor (`PainelController`, `RelatorioService` e `PlanejamentoControllers`).
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos. O Painel já tem partes em Go (`internal/relatorios`, `internal/emprestimos`), mas as rotas dele ainda são do .NET.
 - **Partida:** as seis rotinas que acertam dados ao subir a API (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem do .NET. Estão em Go, mas só rodam com o Go na frente (depois da #85); até lá o .NET as roda.

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.61.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Tarefa periódica da sincronização em Go** (#83, parte 5 de 5; épico #70). Nada muda para quem usa: `Go:Tarefas` continua sem `Sincronizacao`, e o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Com a mesma agenda do .NET, a tarefa divide com as rotas a trava de uma rodada por vez, e todo o código do Open Finance fica pronto no Go.
+
 ## [2.60.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
