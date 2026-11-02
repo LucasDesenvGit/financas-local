@@ -60,6 +60,7 @@ func cenaDoMes(t *testing.T, c composicaoFalsa, r reservasFalsas, cob cobrancasF
 	fab.ContaAgendada(func(x *testeapoio.ContaAgendada) {
 		x.Descricao, x.ProximoVencimento = "Luz", testeapoio.Dia(2026, 10, 10)
 	})
+	fab.ContaAgendada(func(x *testeapoio.ContaAgendada) { x.Descricao = "Água vence hoje: não é vencida" })
 
 	expira := func(dias int) *tipos.DataHora { d := tipos.NovaDataHora(agora.AddDate(0, 0, dias)); return &d }
 	a := fab.ConexaoBancaria(func(x *testeapoio.ConexaoBancaria) {
@@ -222,6 +223,10 @@ func TestPainelSingularECorte(t *testing.T) {
 	if s := cortarUtf16("curto", 60); s != "curto" {
 		t.Errorf("curto: %q", s)
 	}
+	// Com exatamente 60 unidades, o texto volta como está (inclusive um byte inválido, que o corte trocaria por U+FFFD).
+	if exato := string([]byte{0xff}) + strings.Repeat("a", 59); cortarUtf16(exato, 60) != exato {
+		t.Errorf("exato: %q", cortarUtf16(exato, 60))
+	}
 	db := testeapoio.NovoBancoVazio(t)
 	rel := testeapoio.HojeEmBrasilia(2026, 10, 14)
 	s := NovoServico(db, composicaoFalsa{}, reservasFalsas{}, cambioFalso{}, parametrosFalsos{valores: map[string]int{
@@ -237,6 +242,13 @@ func TestPainelSingularECorte(t *testing.T) {
 		t.Errorf("avisos: %+v %v", a, err)
 	}
 	fab := testeapoio.NovaFabrica(t, db, rel)
+	// No empate de contagem, o exemplo é o que apareceu primeiro (a data mais nova).
+	conta := fab.Conta()
+	fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.Data, tr.Descricao = testeapoio.Dia(2026, 10, 1), "TED 222" })
+	fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.Data, tr.Descricao = testeapoio.Dia(2026, 10, 2), "TED 111" })
+	if a, err := s.Avisos(t.Context()); err != nil || a.ExemploPoucoInformativa == nil || *a.ExemploPoucoInformativa != "TED 111" {
+		t.Errorf("empate: %v %v", a.ExemploPoucoInformativa, err)
+	}
 	fab.Transacao(fab.Conta(), func(tr *testeapoio.Transacao) { tr.Descricao = "PIX " + strings.Repeat("ENVIADO ", 10) })
 	if a, err := s.Avisos(t.Context()); err != nil || a.ExemploPoucoInformativa == nil || len(*a.ExemploPoucoInformativa) != 60 {
 		t.Errorf("exemplo longo: %+v %v", a.ExemploPoucoInformativa, err)
