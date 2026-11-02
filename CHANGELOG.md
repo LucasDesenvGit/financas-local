@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.66.1] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Instalação no Linux sem a ICU** (#277, parte 5). Num Linux mínimo, sem a `libicu`, o .NET não rodava, e a instalação só parava no meio da compilação, com uma mensagem técnica. Agora ela confere a ICU antes de baixar qualquer coisa e diz o pacote junto com o resto (no Debian e no Ubuntu, `libicu-dev`, e também `ca-certificates`). Um teste novo instala tudo do zero num `debian:stable-slim`, só com o que o script pede, e sobe o site com o .NET e com o Go sozinho.
+
 ## [2.66.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
