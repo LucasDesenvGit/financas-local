@@ -114,7 +114,7 @@ func comandoParaAtualizar(inst instalacao.Instalacao) string {
 		return ""
 	}
 	raiz := filepath.Clean(filepath.Join(inst.PastaPrograma, "..", ".."))
-	if _, err := os.Stat(filepath.Join(raiz, "scripts", "geral", "3-publicar-atualizar.sh")); err != nil {
+	if _, err := os.Stat(filepath.Join(raiz, "scripts", "geral", "instalar.sh")); err != nil {
 		return ""
 	}
 	return tela.ComandoParaAtualizar(raiz)

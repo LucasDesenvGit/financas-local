@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.61.1] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Gerenciador manda atualizar a instalação pelos scripts com o `instalar.sh`** (#598). Na instalação pelos scripts, o gerenciador do Linux mostrava o comando `git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh`, e o do Windows citava o `3-publicar-atualizar.sh`. Quando o código novo pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha. Agora o comando é `git pull && scripts/geral/instalar.sh`, que traz o .NET e o Go das versões novas e, no Linux, já atualiza o gerenciador no fim; o texto do Windows pede o `git pull` e o `instalar-windows.cmd` (ou o `instalar.sh`). Vale nas duas janelas em C# e no gerenciador em Go. Manual: não se aplica (o Manual já manda usar o `instalar.sh`).
+
 ## [2.61.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
