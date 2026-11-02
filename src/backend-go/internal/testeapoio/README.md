@@ -44,23 +44,20 @@ Campos da fábrica que o banco aceita `NULL` são ponteiros; preencha com o `new
 ## Exemplo
 
 ```go
-func TestTotalPorCategoria(t *testing.T) {
+func TestExcluirCategoriaComSubcategoria(t *testing.T) {
 	t.Parallel() // cada teste tem o próprio banco
 	db := testeapoio.NovoBancoVazio(t)
-	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 22))
+	r := testeapoio.HojeEmBrasilia(2026, 10, 22)
+	fab := testeapoio.NovaFabrica(t, db, r)
 
-	mercado := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Mercado" })
-	conta := fab.Conta()
-	fab.Transacao(conta, func(tr *testeapoio.Transacao) {
-		tr.Valor = testeapoio.Valor("-12.50")
-		tr.CategoriaId = &mercado.Id
-	})
+	casa := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Casa" })
+	fab.Subcategoria(casa, func(c *testeapoio.Categoria) { c.Nome = "Aluguel" })
 
 	mux := http.NewServeMux()
-	relatorios.Registrar(mux, db, testeapoio.RelogioDosTestes()) // o Registrar do assunto
-	resposta := testeapoio.Chamar(t, mux, "GET", "/api/relatorios/categorias?mes=2026-10", "")
-	resposta.ConferirStatus(t, http.StatusOK)
-	resposta.ConferirJSON(t, `[{"categoriaId":1,"nome":"Mercado","total":-12.50}]`)
+	Registrar(mux, NovoServico(db, r, slog.New(slog.DiscardHandler))) // o Registrar do assunto (aqui, categorias)
+	resposta := testeapoio.Chamar(t, mux, "DELETE", fmt.Sprintf("/api/categorias/%d", casa.Id), "")
+	resposta.ConferirStatus(t, http.StatusBadRequest)
+	resposta.ConferirJSON(t, `{"mensagem":"Exclua ou mova as subcategorias antes."}`)
 }
 ```
 
