@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.6] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI exige também o Go no Windows e o gerenciador em Go** (#86). O check `build`, que barra o merge, passa a juntar os jobs "Go (Windows)", "gerenciador em Go" e "gerenciador em Go (Linux)". Eles ficavam de fora enquanto o código só de Windows do Go não rodava no site e o `.msi` levava o gerenciador em C#.
+
 ## [3.2.5] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação
