@@ -97,8 +97,8 @@ func RodarAtrasDoDotnet(ctx context.Context, o OpcoesAtras) error {
 	}
 	servidor := &http.Server{
 		Handler:           handler,
-		ReadHeaderTimeout: 30 * time.Second,
-		IdleTimeout:       130 * time.Second,
+		ReadHeaderTimeout: prazoDosCabecalhos,
+		IdleTimeout:       prazoParado,
 		ErrorLog:          slog.NewLogLogger(o.Log.Handler(), slog.LevelWarn),
 	}
 
