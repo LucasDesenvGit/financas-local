@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.3] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Os arquivos do site voltam a ficar guardados no navegador** (#618). Desde a 3.0.0, o site em Go só dava o cache de um ano a uns 3 dos 35 arquivos do build: a regra que a #305 tinha corrigido no .NET não tinha vindo para o Go. Os outros iam sem cache, e o navegador perguntava ao site por eles a cada tela.
+
 ## [3.0.2] — 2026-11-03 · desenvolvimento
 
 ### Correções
