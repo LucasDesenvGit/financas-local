@@ -1,9 +1,9 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador (precisa do .NET 10 SDK, do Go da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod,
-    do Node.js e do WiX 5:
-    dotnet tool install --global wix --version 5.0.2;
-    wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2).
+    no seu computador (precisa do .NET 10 SDK, so para a API ate a inversao, #85; com -SoGo, nao. Precisa tambem do Go
+    da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod, do Node.js e do WiX 5.0.2, pelo
+    wix-cli-x64.msi do GitHub Releases do WiX, que ja traz as extensoes UI e Util e nao pede o .NET, #446:
+    https://github.com/wixtoolset/wix/releases/tag/v5.0.2; confira o SHA-256 do WIX_SHA256 do versao.yml).
 
     .\instalador\gerar-msi.ps1                      # versao do Directory.Build.props
     .\instalador\gerar-msi.ps1 -Versao 2.1.1        # outra versao (ex.: testar a atualizacao)
