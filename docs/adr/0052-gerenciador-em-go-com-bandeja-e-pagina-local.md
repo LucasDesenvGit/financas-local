@@ -197,3 +197,14 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
 - O `scripts/windows/instalar-gerenciador.ps1` compila o gerenciador em Go (sem cgo, com o Go que a instalação baixou em `ferramentas\go` e o mesmo ambiente do `instalar-windows.ps1`) em `publicado\gerenciador`, com o nome `Financas.Gerenciador.exe`: os atalhos e o "Iniciar com o Windows" continuam valendo. A publicação em C# sai da pasta padrão; numa pasta escolhida com `-Destino`, nada é apagado, só o aviso. Com isso, **no Windows, o `.msi` e os scripts instalam o em Go**, e a [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) fica "Substituída por 0052" na próxima versão publicada.
 - **"Atualizar o gerenciador e reabrir"**, como o `AtualizarGerenciadorEReabrir` do C# (Windows e Linux): aparece depois de a reinstalação pelo develop dar certo; o gerenciador deixa um comando rodando à parte (no Windows, o PowerShell numa janela própria, que mostra o andamento e, se falhar, fica aberta com o aviso; no Linux, `setsid bash -c`), fecha, e o comando roda o instalador do gerenciador do clone e o abre de novo. Os comandos ficam em `internal/desenvolvimento/reabrir.go`, puros e testados.
 
+## Atualização de 2026-11-03: o gerenciador em C# sai (issue #86, parte 1)
+
+- O `src/gerenciador/` (WinForms, Avalonia e o núcleo comum) sai do repositório e da `FinancasLocal.sln`. A [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e a [0033](0033-gerenciador-no-linux-com-avalonia.md) ficam "Substituída por 0052". Quem precisar do gerenciador em C# usa a tag `v-ultimo-dotnet`.
+- **No Linux, sem o compilador de C, o GTK 4 ou o WebKitGTK 6.0**, o `instalar-gerenciador.sh` diz o comando da distribuição e para, sem instalar gerenciador nenhum. O site segue funcionando, e o `instalar.sh` mostra o aviso. Antes, ele instalava o em C#.
+- Quem tinha o gerenciador em C# tem tudo trocado pelo em Go na próxima atualização:
+  - o atalho do menu sai;
+  - o da área de trabalho e o "Iniciar com o sistema" passam a abrir o em Go;
+  - a pasta `publicado/gerenciador` sai.
+
+  A CI do Linux confere isso com um gerenciador antigo de mentira.
+

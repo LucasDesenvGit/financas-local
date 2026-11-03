@@ -23,7 +23,7 @@ Closes #<!-- número da issue -->
 - [ ] Mexeu em import, pacote ou pasta nova (Go ou front-end)? Teste de arquitetura, que só roda local: `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura`
 - [ ] Mudou o banco? Tabela ou índice novo idempotente em `banco/01-estrutura.sql`; coluna nova com `adicionar_coluna_se_ausente` no `scripts/geral/2-criar-banco.sh`; entidade e `FinancasDbContext` em sincronia; `feat(banco)!` no título (sem migrations)
 - [ ] Decisão de arquitetura (dependência, integração, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada no mesmo PR, ou o motivo de não precisar
-- [ ] Mexeu em `instalador/`, `src/gerenciador/`, `Program.cs` ou `EsquemaBanco.cs`? Rodei o workflow "Versão (instalador .msi)" à mão nesta branch (ADR 0050)
+- [ ] Mexeu em `instalador/`, `src/gerenciador-go/`, `Program.cs` ou `EsquemaBanco.cs`? Rodei o workflow "Versão (instalador .msi)" à mão nesta branch (ADR 0050)
 - [ ] Mexeu em teste ou em CI? O tempo antes e depois, por job, está aqui
 - [ ] Consultas só com LINQ/lambda
 - [ ] Nenhum dado pessoal, senha, chave ou `appsettings.Production.json`

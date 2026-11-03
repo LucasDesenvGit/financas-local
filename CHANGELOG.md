@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.1.0] — 2026-11-03 · desenvolvimento
+
+### Funcionalidades
+- **O gerenciador em C# sai; fica só o em Go** (#86, parte 1; épico #70; ADR 0052). No Linux, sem o GTK 4 e o WebKitGTK 6.0, a instalação diz o comando que instala esses pacotes e não instala gerenciador nenhum (o site funciona do mesmo jeito). Quem ainda tinha o gerenciador em C# tem os atalhos e o "Iniciar com o sistema" trocados pelo em Go na próxima atualização.
+
 ## [3.0.2] — 2026-11-03 · desenvolvimento
 
 ### Correções
