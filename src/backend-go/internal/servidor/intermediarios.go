@@ -11,8 +11,9 @@ import (
 	"unicode/utf8"
 )
 
-// Cabeçalhos de segurança iguais aos do CabecalhosSegurancaMiddleware (src/backend/Financas.Api/Seguranca/
-// Seguranca.cs). Um teste lê o Seguranca.cs e confere que são os mesmos: ele continua sendo a fonte até a #86.
+// Cabeçalhos de segurança, os mesmos do CabecalhosSegurancaMiddleware do .NET. Desde a #86, esta é a fonte: o
+// TestCabecalhosDeSeguranca fixa os valores, e os testes no navegador (testes-navegador/servidor.mjs) leem a csp
+// daqui. Mudar um deles é decisão de segurança (ADR).
 const csp = "default-src 'self'; " +
 	"script-src 'self'; " +
 	"style-src 'self' 'unsafe-inline'; " +
@@ -23,6 +24,13 @@ const csp = "default-src 'self'; " +
 	"base-uri 'self'; " +
 	"form-action 'self'; " +
 	"frame-ancestors 'none'"
+
+// Os prazos padrão do Kestrel, nos dois modos do servidor: 30 s para chegarem os cabeçalhos (contra conexões que
+// nunca terminam de mandá-los) e 130 s de conexão parada.
+const (
+	prazoDosCabecalhos = 30 * time.Second
+	prazoParado        = 130 * time.Second
+)
 
 var cabecalhosDeSeguranca = [][2]string{
 	{"Content-Security-Policy", csp},

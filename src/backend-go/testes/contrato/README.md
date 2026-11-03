@@ -1,117 +1,84 @@
 # Testes de contrato
 
-A rede de segurança da migração para Go ([#72](https://github.com/LucasDesenvGit/financas-local/issues/72), [ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O que o back-end .NET responde hoje fica gravado em `esperado/` e vira a régua do Go: **mesmo status, mesmo JSON e o banco no mesmo estado**, caso a caso.
+A rede de segurança do back-end ([#72](https://github.com/LucasDesenvGit/financas-local/issues/72), [ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), [ADR 0051](../../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Cada caso confere **o status, o JSON e o banco no estado esperado**.
 
-São *characterization tests*: não dizem o que o sistema deveria fazer, congelam o que ele faz. Se o .NET tem um comportamento estranho, o esperado também tem, de propósito. Diferença de comportamento vira issue, não correção no contrato.
+**Da migração à regressão (#86):** os esperados (`esperado/`) foram gravados do back-end .NET, caso a caso, e foram a régua do Go durante a migração. Com o .NET fora, eles são a **regressão do Go**: congelam o que o site faz hoje. São *characterization tests*: não dizem o que o sistema deveria fazer, congelam o que ele faz. Um esperado só muda com o motivo escrito no PR (veja [Mudar um esperado](#mudar-um-esperado)).
 
 | Pasta ou arquivo | O que tem |
 |---|---|
 | `casos/NN-assunto.json` | o roteiro: requisições em ordem, um arquivo por assunto |
-| `esperado/NN-assunto.json` | o que o .NET respondeu e gravou em cada caso (*golden files*), já normalizado |
+| `esperado/NN-assunto.json` | o que o site respondeu e gravou em cada caso (*golden files*), já normalizado |
 | `dados/base.sql` | o banco fictício: dados **inventados**, nunca de uma pessoa de verdade |
-| `rodar-dotnet.sh` | monta o banco, sobe o .NET (com o Go atrás dele) sem rede e com o relógio controlado, e roda o comparador |
-| `assuntos-no-go.txt` | os assuntos com código Go que a rodada contra o Go confere (`--go`, e a CI), um por linha |
+| `dados/pluggy/` | as respostas fictícias da Pluggy falsa (`pluggyfalsa`) |
+| `rodar.sh` | monta o banco, sobe o Go como o serviço instalado, sem rede e com o relógio controlado, e roda o comparador |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (134), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, rotas que só existem no Go). **Cada etapa do épico grava os casos do próprio assunto, no próprio PR, antes do código Go** (ADR 0049), no número reservado para ele ([tabela](#numeração-dos-arquivos-de-casos)).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (134), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, o diagnóstico `/api/go/saude`).
 
-## Rodar contra o .NET
+## Rodar
 
-Precisa de Linux, do SDK do .NET 10, do Go, do `sqlite3`, do `unshare` (util-linux) e da libfaketime.
-
-```bash
-dotnet build src/backend/Financas.Api/Financas.Api.csproj -c Release
-src/backend-go/testes/contrato/rodar-dotnet.sh               # compara com esperado/
-src/backend-go/testes/contrato/rodar-dotnet.sh --atualizar   # grava esperado/
-```
-
-- **libfaketime:** `apt-get install faketime` (Debian e Ubuntu). Sem o pacote, compile a [fonte](https://github.com/wolfcw/libfaketime) (`make -C src`) e aponte `FAKETIME_LIB=/caminho/libfaketime.so.1`.
-- **Ubuntu 24.04:** o `unshare -rn` precisa de `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` (a CI faz isso).
-- `DOTNET=~/.dotnet/dotnet` se o `dotnet` não estiver no PATH. `MANTER_PASTA=1` guarda a pasta temporária, com o banco e o log da API (`api.log`).
-- A API sobe na porta `5451` (`PORTA=...` para trocar). A execução inteira leva uns 6 s fora o build.
-- O roteiro compila o Go (`cmd/financas`, sem cgo e com a versão do `Directory.Build.props`, como na publicação) e o põe onde o .NET procura (`Go:Executavel`). O .NET o sobe como processo filho (#231) e só começa a comparar depois de o Go avisar a porta.
-
-Cada execução começa do zero: banco novo, processo novo. O roteiro depende da ordem (o `00-auth` cria o usuário e deixa a sessão `principal` logada para os seguintes), então ele sempre roda inteiro.
-
-## Rodar contra o Go atrás do .NET
-
-É o jeito de cada assunto conferir o código Go dele (#363): o mesmo roteiro, os **mesmos esperados**, e o .NET repassando ao Go os prefixos de `PREFIXOS_GO`, separados por `;`:
+Precisa do Go e do `sqlite3`. No Linux, de preferência também do `unshare` (util-linux).
 
 ```bash
-PREFIXOS_GO="/api/cambio;/api/cripto" src/backend-go/testes/contrato/rodar-dotnet.sh
-src/backend-go/testes/contrato/rodar-dotnet.sh --go   # os assuntos ligados em assuntos-no-go.txt (o que a CI roda)
+src/backend-go/testes/contrato/rodar.sh                                   # compara com esperado/
+src/backend-go/testes/contrato/rodar.sh --atualizar                       # grava esperado/ (confira a diferença)
+CONTRATO_SOMENTE="00-auth,01-parametros" src/backend-go/testes/contrato/rodar.sh
 ```
 
-- O resto continua no .NET, e as rotas que só existem no Go (`/api/go`) vão sempre para o Go. O roteiro mostra o que o Go atendeu: `Go atrás do .NET, atendendo: /api/go;/api/cambio;/api/cripto`.
-- **O relógio do Go é o mesmo do .NET.** A libfaketime não age sobre o Go, que lê o relógio direto do kernel (vDSO), sem passar pela libc. Por isso o roteiro passa ao .NET `Go:InicioDoRelogio=2026-10-15T01:00:00Z`, e o .NET sobe o Go com `-inicio-do-relogio`: esse instante, mais o tempo desde a partida do .NET. O Go começa ali e anda dali, como o `FAKETIME="@..."` (`relogio.APartirDe`). Se o Go reiniciar no meio, o relógio dele continua, sem voltar ao início.
-- **Nunca grave os esperados a partir do Go.** O `--atualizar` com `PREFIXOS_GO` ou `--go` é recusado: o .NET é a referência. A exceção são as rotas que só existem no Go (abaixo).
-- Diferença que só aparece com o Go é bug do Go (ou diferença de comportamento a discutir numa issue), nunca motivo para mexer no esperado.
+- O roteiro compila o Go (`cmd/financas`, sem cgo e com a versão do `Directory.Build.props`, como na publicação), o comparador e a Pluggy falsa, e sobe o Go com a linha do serviço instalado (`-aplicar-esquema -rotinas-de-partida`), na porta `5451` (`PORTA=...` para trocar).
+- `MANTER_PASTA=1` guarda a pasta temporária, com o banco e o log do Go (`go.log`).
+- **Roda também no Git Bash do Windows** (conferido em 03/11/2026, com todos os arquivos).
+- **Ubuntu 24.04:** o `unshare -rn` precisa de `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` (a CI faz isso). Sem ele, o roteiro usa o proxy fechado (abaixo).
 
-### Como cada assunto liga o contrato contra o Go
+Cada execução começa do zero: banco novo, processo novo. O roteiro depende da ordem (o `00-auth` cria o usuário e deixa a sessão `principal` logada para os seguintes), então o padrão é rodar inteiro. Com `CONTRATO_SOMENTE`, mantenha a ordem e os arquivos de que o seu depende.
 
-1. **Casos primeiro** (passo 1 da ADR 0049): o arquivo do assunto, no número reservado dele (tabela abaixo), gravado com `--atualizar` contra o .NET, sem `PREFIXOS_GO`.
-2. **Código Go:** o pacote `internal/<assunto>` exporta `Registrar(mux, ...)` e ganha **uma linha** no `internal/api/api.go`.
-3. **Contrato contra o Go:** `PREFIXOS_GO="<prefixos do assunto>" rodar-dotnet.sh` tem de passar com os mesmos esperados, duas vezes.
-4. **Na CI:** o PR tira o `#` da linha do assunto em `assuntos-no-go.txt`. O job "contrato (.NET)" roda o contrato duas vezes: com o .NET respondendo (a referência) e com `--go`, que passa pelo Go todos os assuntos ligados ali. Sem mexer no `ci.yml`, que faria a CI rodar todos os testes do front-end. As linhas já estão reservadas, com uma linha em branco entre elas: dois PRs em paralelo mexem cada um na sua linha, sem conflito no merge.
-5. **Ligar no site** (passo 2, PR à parte): os prefixos na entrada do assunto em `Go:Prefixos`, no `appsettings.json` (uma entrada por assunto, já reservada, vazia). O contrato não depende disso: ele escolhe os prefixos pelo `PREFIXOS_GO` (ou `--go`) e ignora o `appsettings.json`.
-6. **C# apagado** (passo 3): sem o .NET para responder, os prefixos do assunto saem do `assuntos-no-go.txt` e vão para `prefixos_so_no_go` no `rodar-dotnet.sh`, que vão sempre para o Go.
-
-### Rotas que só existem no Go
-
-O diagnóstico `/api/go/saude` (#231) e a funcionalidade nova feita só em Go (`CLAUDE.md`) não têm .NET a imitar. Os prefixos delas ficam em `prefixos_so_no_go` no `rodar-dotnet.sh`, vão sempre para o Go, e o esperado é o que o Go respondeu: o caso confere que nada muda sem querer. O `90-go` confere também que o relógio de teste chega até a rota: com o relógio do computador, `agora` cai fora da janela e `hoje` não é 14/10.
-
-### O Go sozinho, sem o .NET na frente
-
-O login (#75) não passa pelo repasse: `/api/auth` fica no .NET até a inversão (#85). O Go sozinho tem o login dele (`internal/autenticacao`), e o roteiro o compara com os mesmos esperados do .NET:
-
-```bash
-src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho                       # os arquivos de CONTRATO_SOMENTE (00-auth,01-parametros,02-cambio,03-cripto,17-erros)
-CONTRATO_SOMENTE="00-auth" src/backend-go/testes/contrato/rodar-dotnet.sh --go-sozinho
-```
-
-- Monta o mesmo banco fictício, compila o Go com a versão do `Directory.Build.props`, sobe-o sozinho com o relógio de teste (`-inicio-do-relogio`) e um certificado em memória, e roda o comparador só nos arquivos de `CONTRATO_SOMENTE` (opção `-somente` do `go test`).
-- Não precisa do .NET, da libfaketime nem do `unshare`: o Go tem o próprio relógio de teste, e o login não sai para a rede. Roda também no Git Bash do Windows, com o `sqlite3` no PATH.
-- **Só os assuntos que não dependem das rotinas de partida do `Program.cs`**: sem o .NET, elas não rodam. O Go tem as dele (`-rotinas-de-partida`, #444), mas o roteiro não as liga. O login, os parâmetros e os erros não dependem de nenhuma (o Go sozinho tem o próprio gravador de erros, que limpa os antigos já na partida, como o .NET). Assunto novo entra em `CONTRATO_SOMENTE` quando o Go o atende sozinho, **na mesma ordem da rodada completa**: os casos de um arquivo deixam rastro no banco que os seguintes veem (o câmbio, sem internet, deixa 4 avisos abertos que o `17-erros` conta; #416).
-- **Sem rede, sem `unshare`:** o roteiro sobe o Go com `HTTPS_PROXY=http://127.0.0.1:9`, uma porta fechada. O `http.Client` do Go segue o proxy ([`ProxyFromEnvironment`](https://pkg.go.dev/net/http#ProxyFromEnvironment)), e o endereço de loopback, que é o do teste, nunca passa por ele: toda chamada para a internet falha como no .NET dentro do `unshare -rn`.
-- Sem o roteiro, à mão: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z -somente=00-auth,01-parametros,02-cambio,03-cripto,17-erros`, com `HTTPS_PROXY=http://127.0.0.1:9` no Go. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
+À mão, sem o roteiro: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z -aplicar-esquema -rotinas-de-partida`, com `HTTPS_PROXY=http://127.0.0.1:9`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z`. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
 
 ## Adicionar um caso
 
 1. Escreva o caso no `casos/NN-assunto.json` do assunto (ou crie o arquivo, com o número da [tabela](#numeração-dos-arquivos-de-casos); o número dá a ordem).
-2. Grave os esperados: `rodar-dotnet.sh --atualizar`.
-3. Leia a diferença de `esperado/` no `git diff`: é a descrição exata do que o .NET faz. Confira que nenhum esperado de outro assunto mudou sem motivo.
+2. Grave os esperados: `rodar.sh --atualizar`.
+3. Leia a diferença de `esperado/` no `git diff`: é a descrição exata do que o site faz. Confira que **só** o caso novo apareceu, e que nenhum esperado de outro assunto mudou.
 4. Rode de novo **sem** `--atualizar`, duas vezes: tem de passar as duas.
 
 Cubra os erros também (400, 401, 404, 409, 429), não só o caminho feliz. Teste novo que passa uma vez e falha na outra é instável: descubra o que muda e normalize (ou mude o caso), nunca afrouxe a comparação.
 
+## Mudar um esperado
+
+Um esperado que já existe muda só de propósito (ADR 0051):
+- **Correção de bug** ou **mudança pedida**: o PR diz, para cada esperado que mudou, o porquê, e o `git diff` de `esperado/` mostra só isso.
+- **Diferença que apareceu sem querer** é regressão: o código volta, e o esperado fica.
+
+Exemplo: na #86, o `90-go` "POST sem token CSRF" passou de 400 para 404. O 400 vinha do .NET na frente, que conferia o CSRF antes do repasse; o Go confere o CSRF só nas rotas que existem, e esta só tem GET. O CSRF do Go continua conferido pelos casos de `00-auth`, `01-parametros` e `17-erros`.
+
 ### Numeração dos arquivos de casos
 
-Cada assunto do épico #70 já tem o número dele, para os assuntos feitos em paralelo (#75, #77, #81) não disputarem o mesmo arquivo nem renumerarem os dos outros. O número segue a ordem de trabalho do épico, que é também a ordem dos dados: o painel (#80) lê o que as transações (#78) gravam, e não o contrário. Use o seu número mesmo que os anteriores ainda não existam.
+O número dá a ordem dos dados: o painel lê o que as transações gravam, e não o contrário. Funcionalidade nova entra num número livre entre `20` e `89`, por ordem de chegada.
 
-| Arquivo | Assunto | Issue | Prefixos | Entrada em `Go:Prefixos` |
-|---|---|---|---|---|
-| `00-auth` | login, sessão, CSRF, limites | #75 | `/api/auth` | nenhuma: fica no .NET até a inversão (#85) |
-| `01-parametros` | parâmetros e configurações | #76 | `/api/parametros` | nenhuma: entra na inversão (#85) |
-| `02-cambio` | câmbio (PTAX) | #81 | `/api/cambio` | `cambio` |
-| `03-cripto` | cripto | #81 | `/api/cripto` | `cambio` |
-| `04-contas` | contas e conferência do banco | #77 (contas), #445 (conferência) | `/api/contas`, `/api/conferencia-banco` | `cadastros` |
-| `05-categorias` | categorias | #77 | `/api/categorias` | `cadastros` |
-| `06-regras` | regras e regras de descrição | #77 | `/api/regras`, `/api/regras-descricao` | `cadastros` |
-| `07-transacoes` | transações | #78 | `/api/transacoes` | `transacoes` |
-| `08-orcamentos` | orçamentos | #79 | `/api/orcamentos` | `planejamento` |
-| `09-metas` | metas | #79 | `/api/metas` | `planejamento` |
-| `10-contas-agendadas` | contas a pagar | #79 | `/api/contas-agendadas` | `planejamento` |
-| `11-investimentos` | carteira, reservas, investimentos | #82, #80 | `/api/carteira`, `/api/reservas`, `/api/investimentos` (os casos deste, da #80, estão no fim do arquivo) | `investimentos` |
-| `12-conferencia-investimentos` | conferir investimentos | #299 | `/api/carteira/conferencia` (dentro de `/api/carteira`: no site, a entrada `investimentos` só liga com a #299 pronta; no contrato, a #82 passa os caminhos dela, mais compridos) | `investimentos` |
-| `13-painel` | painel | #80 | `/api/painel` | `painel` |
-| `14-relatorios` | relatórios | #80 | `/api/relatorios` | `painel` |
-| `15-emprestimos` | empréstimos | #80 | `/api/emprestimos` | `painel` |
-| `16-open-finance` | Open Finance (Pluggy) | #83 | `/api/open-finance` | `open-finance` |
-| `17-erros` | erros do sistema | #298 | `/api/erros` | nenhuma: fica no .NET até a inversão (#85); o Go sozinho atende (`--go-sozinho`) |
-| `20` a `89` | funcionalidade nova feita só em Go (`CLAUDE.md`), por ordem de chegada | — | os dela | uma nova, logo depois da `go` |
-| `90-go` | diagnóstico da convivência (`/api/go/saude`) | #231, #363 | `/api/go` | `go` |
+| Arquivo | Assunto | Issue | Prefixos |
+|---|---|---|---|
+| `00-auth` | login, sessão, CSRF, limites | #75 | `/api/auth` |
+| `01-parametros` | parâmetros e configurações | #76 | `/api/parametros` |
+| `02-cambio` | câmbio (PTAX) | #81 | `/api/cambio` |
+| `03-cripto` | cripto | #81 | `/api/cripto` |
+| `04-contas` | contas e conferência do banco | #77 (contas), #445 (conferência) | `/api/contas`, `/api/conferencia-banco` |
+| `05-categorias` | categorias | #77 | `/api/categorias` |
+| `06-regras` | regras e regras de descrição | #77 | `/api/regras`, `/api/regras-descricao` |
+| `07-transacoes` | transações | #78 | `/api/transacoes` |
+| `08-orcamentos` | orçamentos | #79 | `/api/orcamentos` |
+| `09-metas` | metas | #79 | `/api/metas` |
+| `10-contas-agendadas` | contas a pagar | #79 | `/api/contas-agendadas` |
+| `11-investimentos` | carteira, reservas, investimentos | #82, #80 | `/api/carteira`, `/api/reservas`, `/api/investimentos` |
+| `12-conferencia-investimentos` | conferir investimentos | #299 | `/api/carteira/conferencia` |
+| `13-painel` | painel | #80 | `/api/painel` |
+| `14-relatorios` | relatórios | #80 | `/api/relatorios` |
+| `15-emprestimos` | empréstimos | #80 | `/api/emprestimos` |
+| `16-open-finance` | Open Finance (Pluggy) | #83 | `/api/open-finance` |
+| `17-erros` | erros do sistema | #298 | `/api/erros` |
+| `20` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
+| `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |
 
-- **Assuntos feitos ao mesmo tempo não dependem uns dos outros.** Um arquivo pode usar o `base.sql`, a sessão `principal` do `00-auth` e o que um arquivo de número menor **já mesclado** deixou no banco; nunca o de um assunto ainda em andamento.
+- Um arquivo pode usar o `base.sql`, a sessão `principal` do `00-auth` e o que um arquivo de número menor **já mesclado** deixou no banco; nunca o de um assunto ainda em andamento.
 - **Depois de trazer o `develop`**, rode o contrato inteiro de novo. Se um esperado seu mudou porque um arquivo de número menor entrou, regrave com `--atualizar` e confira no `git diff` que a diferença é só essa.
 - Cada arquivo deixa a sessão `principal` logada, para os seguintes.
 
@@ -140,7 +107,7 @@ Cada assunto do épico #70 já tem o número dele, para os assuntos feitos em pa
 | `capturar` | `{"chave": "/resultado/chave"}`: guarda um valor da resposta (JSON Pointer) para os casos seguintes, como a chave do desfazer |
 | `normalizar` | `{"/campo": "texto" \| "numero" \| "datahora"}`: troca um campo do ambiente por um marcador, conferindo só o tipo |
 
-No topo do arquivo, `sessoes` dá a uma sessão um IP de origem (`{"segundo-ip": {"origem": "127.0.0.2"}}`). O limite de login é de 5 tentativas por minuto **por IP** (`Program.cs`): para testar login sem cair no 429 sem querer, use outro IP. O `00-auth` testa o 429 de propósito, na 6ª tentativa de `127.0.0.1`.
+No topo do arquivo, `sessoes` dá a uma sessão um IP de origem (`{"segundo-ip": {"origem": "127.0.0.2"}}`). O limite de login é de 5 tentativas por minuto **por IP**: para testar login sem cair no 429 sem querer, use outro IP. O `00-auth` testa o 429 de propósito, na 6ª tentativa de `127.0.0.1`.
 
 ## O que é comparado
 
@@ -148,10 +115,10 @@ Para cada caso, `esperado/` guarda:
 - **status** e **Content-Type** (`application/json` e `application/problem+json` são diferentes);
 - **cookies** criados ou apagados (nome e atributos; o valor vira `<valor>`, porque é cifrado);
 - **corpo**: JSON comparado por valor, ou o texto, se não for JSON;
-- **banco**: as linhas inseridas, alteradas (só as colunas que mudaram, com antes e depois) e removidas em **todas as tabelas**, com o tipo e o texto cru de cada coluna, como o SQLite guarda. É o que garante que o Go grava decimal, data e GUID no formato do EF Core.
+- **banco**: as linhas inseridas, alteradas (só as colunas que mudaram, com antes e depois) e removidas em **todas as tabelas**, com o tipo e o texto cru de cada coluna, como o SQLite guarda. É o que garante que decimal, data e GUID continuam no formato do EF Core (ADR 0049), o de todos os bancos que já existem.
 
 Regras da comparação do JSON (`json.go`):
-- número compara pelo texto, sem passar por `float64`: `10.50` ≠ `10.5`, `100` ≠ `100.0`. O `System.Text.Json` escreve o decimal com a escala que ele tem, e o Go tem de escrever igual;
+- número compara pelo texto, sem passar por `float64`: `10.50` ≠ `10.5`, `100` ≠ `100.0`;
 - `null` ≠ ausente, `[]` ≠ `null`, número ≠ texto (`5` ≠ `"5"`);
 - a ordem dos itens de uma lista importa; a ordem das chaves de um objeto, não (não muda nada para quem lê o JSON).
 
@@ -164,30 +131,29 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 | O quê | Vira | Por quê |
 |---|---|---|
 | Data e hora entre o início do relógio e 1 dia depois, no formato do EF Core ou ISO | `<relógio +N min, formato>` | o relógio anda, e cada execução cai noutra fração de segundo. `N` são os minutos desde o início: o bloqueio de login aparece como `+15 min`. O formato fica no marcador (com espaço ou `T`, com ou sem `Z`). Um horário em outro fuso cai fora da janela e aparece cru na diferença |
-| GUID | `<GUID>` (maiúsculas, o EF Core) ou `<guid>` (minúsculas, o JSON) | o carimbo de segurança é `Guid.NewGuid()` |
+| GUID | `<GUID>` (maiúsculas, o EF Core) ou `<guid>` (minúsculas, o JSON) | o carimbo de segurança é aleatório |
 | `traceId` do `ValidationProblemDetails` | `<traceId>` | muda a cada requisição |
 | `versao` igual à do `Directory.Build.props` | `<versao>` | sobe a cada PR (ADR 0039) |
 | Caminhos dentro da pasta temporária | `<dados>/...` | a pasta muda a cada execução |
-| `Usuario.SenhaHash` | `<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>` | o sal é aleatório; o resto tem de ser igual para o .NET ler a senha que o Go gravar |
-| Valor dos cookies | `<valor>` | cifrado pelo Data Protection |
-| `Configuracao.Valor` cifrado | `<segredo cifrado>` | cada gravação cifra diferente, e o Go e o .NET usam esquemas diferentes até a troca dos segredos (#85) |
+| `Usuario.SenhaHash` | `<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>` | o sal é aleatório; o resto tem de ser igual, para a senha de quem já tem conta continuar valendo |
+| Valor dos cookies | `<valor>` | cifrado |
+| `Configuracao.Valor` cifrado | `<segredo cifrado>` | cada gravação cifra diferente |
 
-**Exceção documentada:** em `GET /api/parametros/sistema`, a versão do runtime (`dotNet`) e do sistema operacional, a hora em que o processo subiu (`iniciadoEm`, que é a do processo e não passa pela libfaketime) e o tamanho do arquivo do banco são do ambiente: o caso confere só o tipo (`normalizar`). O Go vai devolver outro texto em `dotNet`, e isso é esperado.
+**Exceção documentada:** em `GET /api/parametros/sistema`, a versão do runtime (`dotNet`) e do sistema operacional, a hora em que o processo subiu (`iniciadoEm`) e o tamanho do arquivo do banco são do ambiente: o caso confere só o tipo (`normalizar`).
 
-Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são sempre os mesmos, e o Go tem de gerar os mesmos.
+Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são sempre os mesmos.
 
-## O ambiente do .NET no contrato
+## O ambiente no contrato
 
-- **Relógio:** a libfaketime faz o processo começar em **2026-10-15 01:00:00 UTC** e andar a partir dali ("começa em", `FAKETIME="@..."`). Congelar o relógio travaria os temporizadores. O relógio monotônico não é mexido (`FAKETIME_DONT_FAKE_MONOTONIC=1`), então `Task.Delay`, `PeriodicTimer` e o limite de login seguem o tempo real. Em Brasília ainda é **14/10/2026, 22h**: "hoje" é 14/10, e a data UTC é 15/10. Quem usar a data UTC como "hoje" erra, e o contrato pega. O Go, atrás do .NET, recebe o mesmo relógio por `Go:InicioDoRelogio` (#363), porque a libfaketime não age sobre ele.
-- **Sem rede:** a API roda num namespace de rede só com o loopback (`unshare -rn`), sem mudar o código. As tarefas do câmbio e da cripto (no Go desde a #81, por `Go:Tarefas`; antes, o `CambioHostedService` e o `CriptoHostedService`) tentam a internet 1 minuto depois de subir; o `base.sql` já marca o câmbio como atualizado hoje, e a cripto falha sem gravar nada além do aviso no log. A sincronização (`SincronizacaoHostedService`, 2 minutos depois) é desligada pelo próprio roteiro em `01-parametros`.
-- **Estado inicial:** o de **depois** de subir. A API aplica o esquema e roda as rotinas de partida (`Program.cs`), que acertam dados; o contrato só compara o que cada caso muda.
+- **Relógio:** o Go começa em **2026-10-15 01:00:00 UTC** (`-inicio-do-relogio`) e anda a partir dali (`relogio.APartirDe`). Em Brasília ainda é **14/10/2026, 22h**: "hoje" é 14/10, e a data UTC é 15/10. Quem usar a data UTC como "hoje" erra, e o contrato pega. (Até a #86, o .NET usava a libfaketime e passava o mesmo instante ao Go por `Go:InicioDoRelogio`, #363.)
+- **Sem rede:** no Linux, o Go roda num namespace de rede só com o loopback (`unshare -rn`). Sem o namespace, o roteiro sobe o Go com `HTTPS_PROXY=http://127.0.0.1:9`, uma porta fechada: o `http.Client` do Go segue o proxy ([`ProxyFromEnvironment`](https://pkg.go.dev/net/http#ProxyFromEnvironment)), e o loopback (o teste e a Pluggy falsa) nunca passa por ele. As tarefas do câmbio e da cripto tentam a internet 1 minuto depois de subir; o `base.sql` já marca o câmbio como atualizado hoje, e a cripto falha sem gravar nada além do aviso no log (#416). A sincronização automática é desligada pelo próprio roteiro em `01-parametros`.
+- **Pluggy falsa:** `pluggyfalsa`, em `127.0.0.1:5452`, com um certificado próprio. O Go a usa por `Pluggy__UrlBase` e confia nela por `SSL_CERT_FILE`.
+- **Estado inicial:** o de **depois** de subir. O Go aplica o esquema e roda as rotinas de partida (#444), que acertam dados; o contrato só compara o que cada caso muda.
 - **Tabela ignorada:** `ErroSistema`, que recebe os avisos do log em momentos que não dependem dos casos (`TabelasIgnoradas`, em `banco.go`). O aviso do Go de que o relógio de teste está ligado também cai nela.
-- **Cultura e fuso:** `pt_BR.UTF-8` e `America/Sao_Paulo`, como no computador de quem usa. As mensagens de validação padrão do ASP.NET (`The Senha field is required.`) saem em inglês nos dois casos: o .NET não traz essas mensagens traduzidas. Conferido rodando com `CULTURA=C.UTF-8`: mesmo resultado.
-- **Pasta atual:** a da API compilada, como no serviço instalado, para o `appsettings.json` valer (`AllowedHosts`, logs).
 
 ## O que ficou de fora
 
-- **Integrações externas** (Yahoo/brapi, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. A **Pluggy** entra por uma Pluggy falsa (`pluggyfalsa`, com as respostas fictícias de `dados/pluggy`): o .NET e o Go sincronizam o mesmo cenário. São testadas em Go nas Etapas 11 a 13, com respostas gravadas.
-- **Cabeçalhos de segurança, cache e arquivos do front-end:** conferidos contra o .NET rodando por `internal/servidor/igual_dotnet_test.go`.
-- **O que só existe no Windows** (DPAPI, serviço, instalador): continua com o teste do `.msi`.
+- **Integrações externas** (Yahoo/brapi, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
+- **Cabeçalhos de segurança, cache e arquivos do front-end:** testes do pacote `internal/servidor` (`TestCabecalhosDeSeguranca`, `TestRespostasComoODotnet`).
+- **O que só existe no Windows** (serviço, instalador): continua com o teste do `.msi`.
 - **Relação entre GUIDs:** todo GUID vira o mesmo marcador, então o contrato não confere que duas transações têm o mesmo `TransferenciaGrupo` pelo valor (confere pela contagem e pelos outros campos).

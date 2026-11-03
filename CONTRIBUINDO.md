@@ -101,12 +101,12 @@ python3 scripts/ci/verificar-changelog.py                     # CHANGELOG: uma s
 | Workflow ou job | Quando | O que faz |
 |---|---|---|
 | **CI › o que mudou** | todo PR e push | decide o que roda: no PR, só o afetado (ADR 0047); no push do `develop`/`main`, tudo |
-| **CI › API e banco** | todo PR e push | build do .NET, a API ligando de verdade, o Go atrás do .NET de ponta a ponta, `verificar-sql.py`, os diagramas do banco e o cache dos arquivos do build |
+| **CI › API e banco** | todo PR e push | o site (Go) ligando de verdade, como o serviço (`scripts/ci/ligar-api.sh`), `verificar-sql.py`, os diagramas do banco e o cache dos arquivos do build |
 | **CI › front-end: Jest** e **navegador** (2 partes) | PR que mexe no front-end; todo push | Jest e Playwright, só os testes afetados no PR ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
 | **CI › Go** (#231) | PR que mexe no que o Go lê (o Go, o `banco/`, o `2-criar-banco.sh`, a CSP); todo push | `gofmt`, `go vet`, regras de ouro (#457: `float64`, `time.Now` e `time.Sleep` de teste fora de `scripts/ci/regras-go-excecoes.txt`), `go test -race` com cobertura por pacote que só sobe (#370) e trava de tempo (#371), `go generate` em dia, build do Windows, govulncheck ([README do Go](src/backend-go/README.md)) |
 | **CI › Go (Windows)** (#459) | como o job Go | `go vet` e `go test` no `windows-latest`, para os `_windows.go` (DPAPI, serviço) |
 | **CI › gerenciador em Go** e **(Linux)** (#418, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)) | PR que mexe em `src/gerenciador-go/`; todo push | `go vet`, `go test`, a compilação e o govulncheck, no Windows (com `gofmt` e o ícone do `.exe`) e no Linux (com GTK e WebKitGTK) |
-| **CI › contrato (.NET)** (#72) | PR que mexe no back-end (.NET ou Go) ou no esquema; todo push | o contrato contra o .NET e contra o Go atrás dele (`assuntos-no-go.txt`) |
+| **CI › contrato** (#72) | PR que mexe no back-end ou no esquema; todo push | o contrato contra o Go sozinho, sem rede e com a Pluggy falsa (`testes/contrato/rodar.sh`); os esperados são a regressão do Go (ADR 0051) |
 | **CI › manual do site** (#177) | todo PR | avisa quando o PR muda telas ou endpoints sem mexer no Manual; não bloqueia |
 | **CI › versão subiu** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)) | PR para o `develop` | a versão do `Directory.Build.props` subiu pelo tipo do título, e o CHANGELOG está em ordem (#294) |
 | **CI › build** | sempre | junta os resultados (abaixo, em "Testes rápidos") |

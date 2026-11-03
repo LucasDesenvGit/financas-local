@@ -24,7 +24,7 @@ var (
 	alvo      = flag.String("alvo", "", "endereço do servidor sob teste (ex.: https://127.0.0.1:5451); vazio pula o contrato")
 	banco     = flag.String("banco", "", "arquivo SQLite que o servidor sob teste usa (para comparar o banco)")
 	inicio    = flag.String("inicio", InicioPadrao, "instante em que o relógio do servidor começou (RFC 3339)")
-	atualizar = flag.Bool("atualizar", false, "grava os esperados a partir do servidor (só contra o .NET: ele é a referência)")
+	atualizar = flag.Bool("atualizar", false, "grava os esperados a partir do servidor (confira a diferença e diga o motivo no PR, ADR 0051)")
 	// #75: o Go sozinho (com o login dele) atende só os assuntos já portados; os outros arquivos ficam de fora.
 	somente = flag.String("somente", "", "arquivos de casos a rodar, separados por vírgula (ex.: 00-auth); vazio roda todos")
 )
@@ -42,7 +42,7 @@ type Resultado struct {
 }
 
 // TestContrato roda casos/*.json em ordem contra -alvo e compara cada resposta e cada mudança no banco com
-// esperado/*.json. Com -atualizar, grava os esperados. Uso: README.md (ou rodar-dotnet.sh, que monta tudo).
+// esperado/*.json. Com -atualizar, grava os esperados. Uso: README.md (ou rodar.sh, que monta tudo).
 func TestContrato(t *testing.T) {
 	if *alvo == "" {
 		t.Skip("sem -alvo: o contrato roda contra um servidor de pé (veja testes/contrato/README.md)")
@@ -108,7 +108,7 @@ func (ex *execucao) rodarArquivo(t *testing.T, nome string, arquivo ArquivoCasos
 	if !*atualizar {
 		dados, err := os.ReadFile(caminhoEsperado)
 		if err != nil {
-			t.Fatalf("sem %s: grave os esperados contra o .NET (rodar-dotnet.sh --atualizar)", caminhoEsperado)
+			t.Fatalf("sem %s: grave os esperados (rodar.sh --atualizar) e confira a diferença", caminhoEsperado)
 		}
 		lista, err := decodificar(dados)
 		if err != nil {
@@ -142,7 +142,7 @@ func (ex *execucao) rodarArquivo(t *testing.T, nome string, arquivo ArquivoCasos
 			}
 			esperado, ok := esperados[caso.Nome]
 			if !ok {
-				t.Fatalf("o caso não tem esperado em %s: grave contra o .NET (rodar-dotnet.sh --atualizar)", caminhoEsperado)
+				t.Fatalf("o caso não tem esperado em %s: grave com rodar.sh --atualizar e confira a diferença", caminhoEsperado)
 			}
 			obtido, err := paraAny(r)
 			if err != nil {

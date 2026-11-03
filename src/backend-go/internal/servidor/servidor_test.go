@@ -13,7 +13,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -47,51 +46,34 @@ func pedir(t *testing.T, h http.Handler, metodo, caminho, host string) *httptest
 	return w
 }
 
-// O Seguranca.cs continua sendo a fonte dos cabeçalhos até o .NET sair (#86): este teste lê o C# e compara.
-func TestCabecalhosIguaisAoSegurancaCs(t *testing.T) {
-	fonte, err := os.ReadFile("../../../backend/Financas.Api/Seguranca/Seguranca.cs")
-	if err != nil {
-		t.Fatal(err)
+// #86: o Go é a fonte dos cabeçalhos de segurança desde que o .NET saiu. Os valores abaixo são os que o
+// Seguranca.cs mandava (conferidos contra ele até a #86): mudar um deles é decisão de segurança, com ADR, e não
+// passa sem mudar este teste também.
+func TestCabecalhosDeSeguranca(t *testing.T) {
+	esperados := map[string]string{
+		"Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+			"img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; " +
+			"form-action 'self'; frame-ancestors 'none'",
+		"X-Content-Type-Options":       "nosniff",
+		"X-Frame-Options":              "DENY",
+		"Referrer-Policy":              "no-referrer",
+		"Permissions-Policy":           "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+		"Cross-Origin-Opener-Policy":   "same-origin",
+		"Cross-Origin-Resource-Policy": "same-origin",
 	}
-	texto := string(fonte)
-	inicio := strings.Index(texto, "private const string Csp =")
-	fim := strings.Index(texto[inicio:], ";\n")
-	var cspDoCSharp strings.Builder
-	for _, m := range regexp.MustCompile(`"([^"]*)"`).FindAllStringSubmatch(texto[inicio:inicio+fim], -1) {
-		cspDoCSharp.WriteString(m[1])
-	}
-	if cspDoCSharp.String() != csp {
-		t.Errorf("CSP diferente do Seguranca.cs:\n C#: %s\n Go: %s", cspDoCSharp.String(), csp)
-	}
-
-	doCSharp := map[string]string{"Content-Security-Policy": csp}
-	for _, m := range regexp.MustCompile(`h\["([A-Za-z-]+)"\] = "([^"]*)";`).FindAllStringSubmatch(texto, -1) {
-		if m[1] != "Cache-Control" && m[1] != "Pragma" { // esses dois só em /api, conferidos abaixo
-			doCSharp[m[1]] = m[2]
-		}
-	}
-	doGo := map[string]string{}
-	for _, c := range cabecalhosDeSeguranca {
-		doGo[c[0]] = c[1]
-	}
-	if len(doCSharp) != len(doGo) {
-		t.Errorf("o C# tem %d cabeçalhos e o Go %d:\n C#: %v\n Go: %v", len(doCSharp), len(doGo), doCSharp, doGo)
-	}
-	for nome, valor := range doCSharp {
-		if doGo[nome] != valor {
-			t.Errorf("%s: C# %q, Go %q", nome, valor, doGo[nome])
-		}
+	if len(cabecalhosDeSeguranca) != len(esperados) {
+		t.Errorf("o Go manda %d cabeçalhos de segurança, e o esperado são %d", len(cabecalhosDeSeguranca), len(esperados))
 	}
 
 	resposta := pedir(t, handlerDeTeste(t), "GET", "/", "127.0.0.1:5443")
-	for nome, valor := range doGo {
+	for nome, valor := range esperados {
 		if resposta.Header().Get(nome) != valor {
-			t.Errorf("a resposta não tem %s: %q", nome, valor)
+			t.Errorf("%s: esperado %q, veio %q", nome, valor, resposta.Header().Get(nome))
 		}
 	}
 	for _, proibido := range []string{"Server", "X-Powered-By", "Strict-Transport-Security"} {
 		if resposta.Header().Get(proibido) != "" {
-			t.Errorf("a resposta não deveria ter %s (o .NET não manda)", proibido)
+			t.Errorf("a resposta não deveria ter %s (o .NET não mandava)", proibido)
 		}
 	}
 }

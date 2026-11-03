@@ -61,8 +61,8 @@ func gravarConfiguracoes(ctx context.Context, db *sql.DB, quem string, r ritmo) 
 }
 
 // TestGravarJuntoComOutroProcesso é o ajudante: só roda com FINANCAS_GRAVAR_JUNTO apontando para um banco. O teste
-// de WAL abaixo o chama num processo separado, e o scripts/ci/testar-go-atras-do-dotnet.sh o roda contra o banco do
-// .NET enquanto o .NET também grava (#231).
+// de WAL abaixo o chama num processo separado (até a #86, o teste de ponta a ponta do .NET com o Go atrás também o
+// rodava, enquanto o .NET gravava no mesmo banco: #231).
 func TestGravarJuntoComOutroProcesso(t *testing.T) {
 	caminho := os.Getenv(varBancoCompartilhado)
 	if caminho == "" {

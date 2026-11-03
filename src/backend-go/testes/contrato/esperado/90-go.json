@@ -21,7 +21,7 @@
   {
     "nome": "POST sem token CSRF",
     "requisicao": "POST /api/go/saude",
-    "status": 400
+    "status": 404
   },
   {
     "nome": "POST com token CSRF chega ao Go",

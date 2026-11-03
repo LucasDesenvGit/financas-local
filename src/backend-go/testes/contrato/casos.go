@@ -1,6 +1,6 @@
-// Pacote contrato tem os testes de contrato da migração (#72, ADR 0049): o que o back-end .NET responde hoje fica
-// gravado em esperado/*.json (golden files), e o mesmo roteiro de casos/*.json roda contra o Go para conferir que
-// ele responde igual e deixa o banco igual. Como usar: README.md desta pasta.
+// Pacote contrato tem os testes de contrato (#72, ADR 0049 e 0051): o roteiro de casos/*.json roda contra o Go e
+// confere que ele responde e deixa o banco como em esperado/*.json (golden files). Os esperados foram gravados do
+// back-end .NET até a #86; desde então, são a regressão do Go. Como usar: README.md desta pasta.
 package contrato
 
 import (

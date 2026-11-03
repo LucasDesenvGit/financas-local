@@ -78,7 +78,7 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 
 1. O handler no pacote do assunto (`internal/<assunto>`), com as dependências pelo construtor. O pacote exporta `Registrar(mux, <só o que ele usa>)`, que põe as rotas dele no mux (`mux.Handle("GET /api/<assunto>/{id}", ...)`); o exemplo é o `internal/saude`.
 2. **Uma linha** em `internal/api/api.go`: `<assunto>.Registrar(mux, d.DB, d.Log, d.Relogio)`. É só isso que os assuntos feitos em paralelo dividem; no merge, conflito ali é sempre "fique com as duas linhas". Hora vem do `d.Relogio`, nunca do `time.Now()`.
-3. Os casos de contrato (no número reservado do assunto) e a rodada contra o Go: `PREFIXOS_GO` para rodar aqui e a linha do assunto em `testes/contrato/assuntos-no-go.txt` para a CI, como no [README do contrato](testes/contrato/README.md#como-cada-assunto-liga-o-contrato-contra-o-go).
+3. Os casos de contrato, num número livre de `20` a `89`, gravados com `testes/contrato/rodar.sh --atualizar` e conferidos no `git diff`, como no [README do contrato](testes/contrato/README.md#adicionar-um-caso).
 4. Os testes do assunto (ADR 0051), com o apoio comum de `internal/testeapoio` ([README](internal/testeapoio/README.md)): banco temporário, fábrica de dados e handler chamado com o usuário logado.
 5. Para ligar no site (passo 2 da ADR 0049, PR à parte): os prefixos na entrada do assunto em `Go:Prefixos`, no `src/backend/Financas.Api/appsettings.json`. É uma entrada por assunto, já reservada e vazia, com os prefixos separados por `;` (`"cambio": "/api/cambio;/api/cripto"`), e uma linha em branco entre as entradas, para dois PRs não mexerem em linhas vizinhas. Enquanto a entrada estiver vazia, a rota não recebe nada e o .NET continua atendendo.
 6. Tarefa em segundo plano que passou para o Go: o nome dela em `Go:Tarefas` (`Sincronizacao`, `Cambio` ou `Cripto`), para o .NET não rodar a dele.
@@ -131,8 +131,9 @@ go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 # e com GOOS=windows (os _windows.go, #449): instale antes, porque "GOOS=windows go run" compila o govulncheck para Windows
 go install golang.org/x/vuln/cmd/govulncheck@v1.9.0 && GOOS=windows "$(go env GOPATH)/bin/govulncheck" ./...
 GOOS=windows go build ./...   # o executável do Windows compila sem cgo
-# De ponta a ponta, com o .NET compilado (dotnet build FinancasLocal.sln -c Release, na raiz):
-bash ../../scripts/ci/testar-go-atras-do-dotnet.sh Release
+# De ponta a ponta: o contrato inteiro contra o Go (#72) e o site ligando como o serviço (#309)
+bash testes/contrato/rodar.sh
+bash ../../scripts/ci/ligar-api.sh
 ```
 
 Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação (Go)" mede só os pacotes que o PR mudou; toda segunda, todos. À mão, antes de subir um pacote com regra:
@@ -141,9 +142,9 @@ Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação
 python3 ../../scripts/ci/mutacao-go.py internal/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
-A CI roda todos menos o de ponta a ponta no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`) e o de ponta a ponta no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
+A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`); o contrato, no job "contrato", e o site ligando, no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
 
-**Testes de contrato (#72):** mudou o back-end (.NET ou Go)? Rode `testes/contrato/rodar-dotnet.sh` (Linux, com a libfaketime; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe atrás do .NET, como no site. Assunto novo grava os casos dele com `--atualizar`, contra o .NET, antes do código Go, e confere o Go com `PREFIXOS_GO="<prefixos do assunto>" testes/contrato/rodar-dotnet.sh` (os mesmos esperados). A CI roda o contrato no job "contrato (.NET)".
+**Testes de contrato (#72):** mudou o back-end? Rode `testes/contrato/rodar.sh` (Linux ou Git Bash do Windows; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe como o serviço instalado. Os esperados foram gravados do .NET até a #86 e são a regressão do Go: um esperado só muda com o motivo no PR (ADR 0051). A CI roda o contrato no job "contrato".
 
 Dois testes manuais, que só rodam com as variáveis definidas:
 

@@ -105,10 +105,8 @@ func Rodar(ctx context.Context, o Opcoes) error {
 			MinVersion:   tls.VersionTLS12,
 			Certificates: []tls.Certificate{o.Certificado},
 		},
-		// Os prazos padrão do Kestrel: 30 s para chegarem os cabeçalhos (contra conexões que nunca terminam de
-		// mandá-los) e 130 s de conexão parada.
-		ReadHeaderTimeout: 30 * time.Second,
-		IdleTimeout:       130 * time.Second,
+		ReadHeaderTimeout: prazoDosCabecalhos,
+		IdleTimeout:       prazoParado,
 		ErrorLog:          slog.NewLogLogger(o.Log.Handler(), slog.LevelWarn),
 	}
 

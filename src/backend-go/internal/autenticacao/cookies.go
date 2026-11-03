@@ -15,7 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/tipos"
 )
 
-// Os nomes dos cookies são os do .NET (ConstantesSeguranca, Seguranca/Seguranca.cs): o Angular lê o do CSRF pelo
+// Os nomes dos cookies são os do .NET (ConstantesSeguranca, no Seguranca.cs até a #86): o Angular lê o do CSRF pelo
 // nome, e o prefixo __Host- obriga Secure, Path=/ e nenhum Domain.
 const (
 	CookieSessao           = "__Host-Financas"

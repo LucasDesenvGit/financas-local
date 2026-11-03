@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.2] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI não usa mais o .NET** (#86, parte 3; ADR 0051). O contrato roda contra o Go sozinho, como o serviço instalado, e os esperados gravados do .NET viram a regressão do Go: um esperado só muda com o motivo no PR. O teste de inicialização sobe o Go, a CSP dos testes no navegador vem do Go, e saem o teste do .NET com o Go atrás dele e o NuGet do Dependabot. O `medir-desempenho.py` mede o Go.
+
 ## [3.2.1] — 2026-11-03 · desenvolvimento
 
 ### Correções
