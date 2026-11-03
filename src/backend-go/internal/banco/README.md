@@ -13,7 +13,7 @@ O Go e o .NET usam **o mesmo arquivo** de banco durante a migração ([ADR 0049]
 
 ## Formatos (confirmados pela sonda do EF Core)
 
-A sonda em [`internal/tipos/testdata/sonda-efcore`](../tipos/testdata/sonda-efcore) grava valores pelo mesmo EF Core da API e guarda o resultado em `efcore.json`, que é o gabarito dos testes. Rode de novo quando o EF Core mudar de versão.
+A sonda `internal/tipos/testdata/sonda-efcore` gravou valores pelo mesmo EF Core da API e guardou o resultado em `efcore.json`, que é o gabarito dos testes. Ela saiu com o C# na #86 (está em a tag `v-ultimo-dotnet`); o gabarito fica, porque é o formato de todos os bancos que já existem.
 
 | C# | No banco (`TEXT`, salvo indicação) | No JSON da API |
 |---|---|---|
@@ -57,16 +57,12 @@ Os scripts vão dentro do executável. Como o `//go:embed` não sai do módulo (
 
 ### O gabarito do .NET
 
-A sonda em [`testdata/sonda-esquema`](testdata/sonda-esquema) compila o **mesmo** `EsquemaBanco.cs` da API, com os mesmos scripts embutidos, roda os cenários (banco novo, sem mudança, arquivo vazio, banco antigo sem duas colunas, rodízio das cópias, pasta da cópia) e grava:
+A sonda `testdata/sonda-esquema` (que saiu com o C# na #86 e está em a tag `v-ultimo-dotnet`) compilava o **mesmo** `EsquemaBanco.cs` da API, com os mesmos scripts embutidos, rodava os cenários (banco novo, sem mudança, arquivo vazio, banco antigo sem duas colunas, rodízio das cópias, pasta da cópia) e gravou:
 
 - `testdata/esquema-dotnet.json`: as assinaturas, as linhas lidas do `.sh` e a estrutura e os dados de cada banco (tabela por tabela, coluna por coluna, índices e chaves estrangeiras);
 - `testdata/entradas-esquema/*.gz`: os scripts com que o gabarito foi feito. O teste do Go aplica **esses**, e não os de agora, para não ficar velho a cada mudança no `banco/`.
 
-Rode de novo quando o `EsquemaBanco.cs` mudar, ou para conferir o Go com os scripts de agora:
-
-```bash
-~/.dotnet/dotnet run --project src/backend-go/internal/banco/testdata/sonda-esquema   # ou dotnet, se estiver no PATH
-```
+Sem o .NET, o gabarito não é mais regravado: ele é a regressão do `AplicarEsquema`. Uma mudança de propósito no jeito de criar ou atualizar o banco muda o teste, com o motivo no PR (ADR 0051).
 
 ## `sqlc`: como gerar e o que ele não entende
 

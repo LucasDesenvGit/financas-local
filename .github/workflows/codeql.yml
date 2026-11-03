@@ -38,8 +38,6 @@ jobs:
           # Os workflows: título ou branch de PR dentro de um run:, permissões largas demais.
           - linguagem: actions
             modo: none
-          - linguagem: csharp
-            modo: none
           # O Go é compilado à mão: são dois módulos, e o gerenciador pede GTK 4, WebKitGTK e cgo no Linux (o
           # autobuild não instala nada disso e analisaria só parte do código).
           - linguagem: go

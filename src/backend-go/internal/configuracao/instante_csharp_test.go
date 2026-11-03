@@ -28,7 +28,7 @@ func TestInstanteIgualAoCSharp(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(g.Instantes) == 0 {
-		t.Fatal("gabarito sem instantes: rode a sonda de novo")
+		t.Fatal("gabarito sem instantes: ele é o que a sonda em C# gravou (na tag v-ultimo-dotnet, #86)")
 	}
 	for _, c := range g.Instantes {
 		t.Run(c.Texto, func(t *testing.T) {
