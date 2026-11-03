@@ -2,11 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.1.0] — 2026-11-03 · desenvolvimento
+## [3.2.0] — 2026-11-03 · desenvolvimento
 
 ### Funcionalidades
 - **A instalação pelos scripts e o instalador `.msi` não usam mais o .NET** (#86, parte 2; épico #70; ADR 0049). A preparação do ambiente não baixa mais o SDK do .NET e a publicação compila só o Go e o front-end, o que deixa a instalação e a atualização mais rápidas. Depois de o site responder, a atualização apaga o que só o .NET usava. Quem já está na 3.0 não precisa fazer nada.
   - **Saíram:** a opção `--backend` (no Windows, `-Backend`), o `voltar-para-dotnet`, o `-ComDotnet` do `gerar-msi.ps1` e o `--compiladores` do `parar`. Para voltar à última versão com o .NET: `git checkout v-ultimo-dotnet` e o `instalar.sh` de novo; a mensagem de falha da atualização diz isso.
+
+## [3.1.0] — 2026-11-03 · desenvolvimento
+
+### Funcionalidades
+- **O gerenciador em C# sai; fica só o em Go** (#86, parte 1; épico #70; ADR 0052). No Linux, sem o GTK 4 e o WebKitGTK 6.0, a instalação diz o comando que instala esses pacotes e não instala gerenciador nenhum (o site funciona do mesmo jeito). Quem ainda tinha o gerenciador em C# tem os atalhos e o "Iniciar com o sistema" trocados pelo em Go na próxima atualização.
 
 ## [3.0.2] — 2026-11-03 · desenvolvimento
 
