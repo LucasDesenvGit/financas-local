@@ -47,7 +47,7 @@ O **Gerenciador do Finanças Local** mostra se o site está no ar, liga, desliga
 
 ## Instalar no Linux
 
-Precisa de `git`, `curl`, `tar`, `unzip`, dos certificados do sistema e da ICU (no Debian e no Ubuntu: `sudo apt install git curl ca-certificates tar unzip libicu-dev`; num Linux de desktop, quase sempre já estão lá). O resto (.NET, Go, Node.js, sqlite3) a instalação baixa e confere sozinha, sem `sudo`; se faltar algo do sistema, ela diz o quê antes de baixar.
+Precisa de `git`, `curl`, `tar`, `unzip` e dos certificados do sistema (no Debian e no Ubuntu: `sudo apt install git curl ca-certificates tar unzip`; num Linux de desktop, quase sempre já estão lá). O resto (Go, Node.js, sqlite3) a instalação baixa e confere sozinha, sem `sudo`; se faltar algo do sistema, ela diz o quê antes de baixar.
 
 ```bash
 git clone https://github.com/LucasDesenvGit/financas-local.git
@@ -92,7 +92,7 @@ flowchart LR
     a["Gerenciador:<br/>Tem versão nova"] --> b["O que mudou"] --> c["Atualizar:<br/>baixa e confere"] --> d["Instalador:<br/>Avançar, Instalar, Sim"] --> e["Site no ar na versão nova<br/>cópia do banco em dados\backups"]
 ```
 
-Nenhuma atualização apaga dados, e o site fica fora do ar só por alguns segundos. Sem o gerenciador, baixe o `.msi` novo e abra. No Linux: `git pull` e `scripts/geral/instalar.sh`, que também traz o .NET e o Go das versões novas. Voltar de versão e passar dos scripts para o `.msi`: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md#atualizar).
+Nenhuma atualização apaga dados, e o site fica fora do ar só por alguns segundos. Sem o gerenciador, baixe o `.msi` novo e abra. No Linux: `git pull` e `scripts/geral/instalar.sh`, que também traz o Go e o Node.js das versões novas. Voltar de versão e passar dos scripts para o `.msi`: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md#atualizar).
 
 ## Desinstalar
 
@@ -124,10 +124,10 @@ Os outros, com mais detalhe: [Problemas comuns](docs/PROBLEMAS-COMUNS.md).
 
 ## Para quem desenvolve
 
-- [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md): scripts, Visual Studio, testes e pastas.
+- [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md): scripts, desenvolvimento, testes e pastas.
 - [CONTRIBUINDO.md](CONTRIBUINDO.md): branches, commits, versão e pull requests.
 - [Arquitetura](docs/ARQUITETURA.md), [Banco de dados](docs/BANCO-DE-DADOS.md) e as [decisões (ADRs)](docs/adr/README.md).
 - [UI/UX](docs/UI-UX.md): as referências (Nielsen, WCAG 2.2, Shneiderman) e os padrões de tela que o site segue.
 - [CHANGELOG.md](CHANGELOG.md): o que mudou em cada versão.
 
-Front-end em Angular e banco SQLite. A API em .NET 10 fica na frente e o back-end está passando para Go, um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Tudo publicado junto, como serviço do sistema.
+Front-end em Angular, back-end em Go e banco SQLite. O back-end era em .NET e passou para Go um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)); o .NET saiu na versão 3.2 (#86). Tudo publicado junto, um executável só, como serviço do sistema.
