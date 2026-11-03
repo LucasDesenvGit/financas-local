@@ -125,7 +125,7 @@ func lerGabaritoEsquema(t *testing.T) (gabaritoEsquema, esquema.Scripts) {
 			t.Fatal(err)
 		}
 		if got := hashTexto(conteudo); got != g.Entradas[nome] {
-			t.Fatalf("entradas-esquema/%s.gz não é o arquivo do gabarito (sha256 %s, esperado %s): rode a sonda de novo", nome, got, g.Entradas[nome])
+			t.Fatalf("entradas-esquema/%s.gz não é o arquivo do gabarito (sha256 %s, esperado %s): o gabarito é o que a sonda em C# gravou (na tag v-ultimo-dotnet, #86)", nome, got, g.Entradas[nome])
 		}
 		return esquema.Texto(conteudo)
 	}

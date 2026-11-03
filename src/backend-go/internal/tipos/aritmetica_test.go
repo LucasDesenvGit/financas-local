@@ -34,7 +34,7 @@ func lerGabaritoAritmetica(t *testing.T) gabaritoAritmetica {
 		t.Fatal(err)
 	}
 	if len(g.Divisoes) == 0 || len(g.Produtos) == 0 || len(g.Arredondamentos) == 0 {
-		t.Fatal("gabarito vazio: rode a sonda de novo")
+		t.Fatal("gabarito vazio: ele é o que a sonda em C# gravou (na tag v-ultimo-dotnet, #86)")
 	}
 	return g
 }

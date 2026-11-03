@@ -7,7 +7,8 @@ import (
 )
 
 // Regra: a mensagem, o caminho e a posição do JSON que não abre são os do System.Text.Json. O gabarito foi gravado
-// pelo próprio .NET (testdata/sonda-json, #402): rode a sonda de novo para acrescentar casos. A leitura é a do
+// pelo próprio .NET (a sonda-json, #402, que saiu na #86 e está na tag v-ultimo-dotnet). Caso novo, sem o .NET para
+// gravar, segue o que o Go já faz e diz o motivo no PR. A leitura é a do
 // LerObjeto, com os campos do record da sonda (Credenciais: Login e Senha).
 func TestErroDeSintaxeIgualAoDotnet(t *testing.T) {
 	dados, err := os.ReadFile("testdata/erros-json-dotnet.json")
