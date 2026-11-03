@@ -284,7 +284,7 @@ if [[ "$backend" == go && "$backend_anterior" != go && -f "$PastaSql/FinancasLoc
     etapa 'Copia do banco antes de por o Go na frente'
     garantir_pasta "$Dados/backups"
     copia_antes="$Dados/backups/FinancasLocal-antes-do-go-$(date +%Y%m%d-%H%M%S).db"
-    sqlite3 "${SQLITE_ESPERA[@]}" "$PastaSql/FinancasLocal.db" ".backup '$copia_antes'"
+    sqlite3 "${SQLITE_ESPERA[@]}" "$PastaSql/FinancasLocal.db" ".backup \"$(caminho_sqlite "$copia_antes")\""
     [[ "$(sqlite3 "$copia_antes" 'PRAGMA integrity_check;')" == ok ]] || erro_sai "A copia $copia_antes nao abre direito: nada foi trocado."
     ok "copia conferida: $copia_antes"
 fi

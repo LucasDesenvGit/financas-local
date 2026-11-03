@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.1] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Atualização pelos scripts no Windows parava no backup do banco** (#85). Com o `sqlite3` do próprio Windows, a cópia do banco antes de atualizar, a cópia antes de pôr o Go na frente e o `4-backup.sh` falhavam com `cannot open "/c/Users/..."`: o caminho ia no formato do Git Bash dentro do comando do `sqlite3`, que o Windows não abre. Agora vai no formato do Windows. Nada era mudado antes do erro.
+
 ## [3.0.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades
