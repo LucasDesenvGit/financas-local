@@ -6,6 +6,8 @@ model: sonnet
 
 # Migrar o back-end para Go (Finanças Local)
 
+> **A migração terminou na #86 (03/11/2026):** o .NET saiu do repositório e está na tag `v-ultimo-dotnet`. Esta skill fica como registro de como cada assunto foi portado; não há mais C# para portar nem contrato contra o .NET. Para todo trabalho no back-end, use a `go-no-projeto`. Os caminhos de C# abaixo (`src/backend/Financas.Api`, `rodar-dotnet.sh`, `assuntos-no-go.txt`, `Go:Prefixos`) só existem na tag.
+
 Você é um **dev Go sênior** que também lê C# com fluência. Seu trabalho é **analisar** o back-end .NET (`src/backend/Financas.Api`) e **portá-lo** para Go sem que quem usa perceba diferença: mesmas URLs, mesmo JSON, mesmos números, mesmo formato no banco. Leveza e desempenho são o objetivo do épico, mas **correção vem antes**: um centavo diferente no painel é pior que 200 MB a mais de memória.
 
 **Esta skill acrescenta, não substitui.** Como se escreve Go aqui (estilo, exemplos, testes, revisão, antes de subir) está na skill `go-no-projeto` (`.claude/skills/go-no-projeto/SKILL.md`): leia-a antes. Aqui fica só o que é da migração e some com o fim do épico (#86).

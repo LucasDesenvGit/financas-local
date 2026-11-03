@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.2.6] — 2026-11-03 · desenvolvimento
+## [3.2.7] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação
 - **A CI exige também o Go no Windows e o gerenciador em Go** (#86). O check `build`, que barra o merge, passa a juntar os jobs "Go (Windows)", "gerenciador em Go" e "gerenciador em Go (Linux)". Eles ficavam de fora enquanto o código só de Windows do Go não rodava no site e o `.msi` levava o gerenciador em C#.
+
+## [3.2.6] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A documentação conta o sistema sem o .NET** (#86, parte 6; épico #70). O README, a arquitetura (os diagramas de contêineres, de implantação e dos fluxos), a segurança, o modelo de ameaças (sem a fronteira entre o .NET e o Go), o guia do banco, a instalação pelo código (o desenvolvimento passa a ser só com o Go), as regras do `CLAUDE.md`, o README do back-end e as skills descrevem o site como ele é: um executável só, em Go. As ADRs que o .NET sustentava foram marcadas como substituídas (a 0005) ou em parte substituídas (a 0002, a 0011 e a 0012), e a 0049 registra o fim da migração. A remoção do .NET (#86) está completa.
 
 ## [3.2.5] — 2026-11-03 · desenvolvimento
 

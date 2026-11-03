@@ -1,6 +1,6 @@
 # Pacote `banco`: o SQLite do jeito que o .NET usa
 
-O Go e o .NET usam **o mesmo arquivo** de banco durante a migração ([ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Tudo o que o Go grava tem de estar no formato do EF Core, para o .NET ler (e vice-versa).
+O banco de quem já usa o site foi criado e gravado pelo .NET, com o EF Core ([ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O Go lê e grava **no mesmo formato**, para os bancos que já existem continuarem os mesmos (e para a tag `v-ultimo-dotnet` ainda abrir um banco gravado pelo Go).
 
 | O quê | Onde |
 |---|---|
@@ -13,7 +13,7 @@ O Go e o .NET usam **o mesmo arquivo** de banco durante a migração ([ADR 0049]
 
 ## Formatos (confirmados pela sonda do EF Core)
 
-A sonda `internal/tipos/testdata/sonda-efcore` gravou valores pelo mesmo EF Core da API e guardou o resultado em `efcore.json`, que é o gabarito dos testes. Ela saiu com o C# na #86 (está em a tag `v-ultimo-dotnet`); o gabarito fica, porque é o formato de todos os bancos que já existem.
+A sonda `internal/tipos/testdata/sonda-efcore` gravou valores pelo mesmo EF Core da API e guardou o resultado em `efcore.json`, que é o gabarito dos testes. Ela saiu com o C# na #86 (está na tag `v-ultimo-dotnet`); o gabarito fica, porque é o formato de todos os bancos que já existem.
 
 | C# | No banco (`TEXT`, salvo indicação) | No JSON da API |
 |---|---|---|
@@ -24,8 +24,8 @@ A sonda `internal/tipos/testdata/sonda-efcore` gravou valores pelo mesmo EF Core
 | `bool`, `enum` | `INTEGER` (0/1, número) | `true`/`false`, número |
 
 - `HasPrecision(18, 2)` **não arredonda** no SQLite: `0.125` fica `0.125`.
-- Conexão: o EF Core liga `foreign_keys`; o `Abrir` também. O `journal_mode` é do arquivo, e o `Abrir` não o muda: o `EsquemaBanco` do .NET passa o banco para **WAL** ao iniciar, antes de subir o Go (#231), e o `AplicarEsquema` faz o mesmo (`passarParaWal`, teste `TestAplicarEsquemaPassaParaWal`). `ModoDoDiario` diz o modo.
-- Banco ocupado: o `Abrir` espera até 30 s (`busy_timeout`), o mesmo tempo padrão do Microsoft.Data.Sqlite, e começa as transações com `BEGIN IMMEDIATE` (`_txlock=immediate`). Com o .NET e o Go no mesmo arquivo, transação curta: nada de chamada de rede nem espera dentro dela.
+- Conexão: o EF Core liga `foreign_keys`; o `Abrir` também. O `journal_mode` é do arquivo, e o `Abrir` não o muda: o `AplicarEsquema` passa o banco para **WAL** ao iniciar (`passarParaWal`, teste `TestAplicarEsquemaPassaParaWal`), como o `EsquemaBanco` do .NET fazia. `ModoDoDiario` diz o modo.
+- Banco ocupado: o `Abrir` espera até 30 s (`busy_timeout`), o mesmo tempo padrão do Microsoft.Data.Sqlite, e começa as transações com `BEGIN IMMEDIATE` (`_txlock=immediate`). Transação curta: nada de chamada de rede nem espera dentro dela (as tarefas em segundo plano e as rotas gravam no mesmo arquivo).
 - Dois processos gravando ao mesmo tempo: `TestDoisProcessosGravandoEmWAL` (o próprio teste chamado num segundo processo). Com `BEGIN` comum no lugar do `IMMEDIATE`, ele falha (conferido).
 
 ## ⚠️ Armadilhas
@@ -51,13 +51,13 @@ O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../docs/adr/0003-esquema-
    - **Cópia antiga que não dá para apagar** (outro dono, só leitura) fica para a próxima, com um aviso no log que diz o arquivo, e a API sobe (#365).
 4. Numa transação: o `01-estrutura.sql`, as colunas que faltam e, **só no banco novo**, o `02-dados-iniciais.sql`. Depois grava a assinatura.
 
-**Até a inversão (#85, [ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), quem aplica o esquema ao iniciar é o .NET.** O executável Go só aplica com `-aplicar-esquema`. Com a mesma assinatura, um lado não refaz o trabalho do outro.
+**Quem aplica o esquema ao iniciar é o site**, com `-aplicar-esquema` (a linha do serviço instalado sempre liga). A assinatura é a mesma que o .NET calculava: quem atualiza vindo da versão em .NET não ganha uma cópia nem uma atualização à toa.
 
 Os scripts vão dentro do executável. Como o `//go:embed` não sai do módulo (`src/backend`), o `go generate ./...` copia os três arquivos para `esquema/embutido/`. **Não edite a cópia:** mude o original e rode o `go generate`. O `TestCopiasEmDia` falha se a cópia ficar velha.
 
 ### O gabarito do .NET
 
-A sonda `testdata/sonda-esquema` (que saiu com o C# na #86 e está em a tag `v-ultimo-dotnet`) compilava o **mesmo** `EsquemaBanco.cs` da API, com os mesmos scripts embutidos, rodava os cenários (banco novo, sem mudança, arquivo vazio, banco antigo sem duas colunas, rodízio das cópias, pasta da cópia) e gravou:
+A sonda `testdata/sonda-esquema` (que saiu com o C# na #86 e está na tag `v-ultimo-dotnet`) compilava o **mesmo** `EsquemaBanco.cs` da API, com os mesmos scripts embutidos, rodava os cenários (banco novo, sem mudança, arquivo vazio, banco antigo sem duas colunas, rodízio das cópias, pasta da cópia) e gravou:
 
 - `testdata/esquema-dotnet.json`: as assinaturas, as linhas lidas do `.sh` e a estrutura e os dados de cada banco (tabela por tabela, coluna por coluna, índices e chaves estrangeiras);
 - `testdata/entradas-esquema/*.gz`: os scripts com que o gabarito foi feito. O teste do Go aplica **esses**, e não os de agora, para não ficar velho a cada mudança no `banco/`.
