@@ -192,10 +192,14 @@ jobs:
           site=https://127.0.0.1:5443/api/auth/estado
           sqlite="$PWD/ferramentas/sqlite/sqlite3"; [[ -x "$sqlite" ]] || sqlite="$(command -v sqlite3)"
 
-          # O Go nao sobe (executavel sem permissao): volta sozinho para o .NET, e dados/backend fica dotnet.
-          chmod -x publicado/preparo/financas-go
-          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-1.log"
+          # O Go sozinho nao sobe: no lugar dele, um script que falha so com -aplicar-esquema (o Go na frente) e passa o
+          # resto ao Go de verdade (o gerar-certificado e o Go atras do .NET). Volta sozinho para o .NET, e
+          # dados/backend fica dotnet.
+          mv publicado/preparo/financas-go publicado/preparo/financas-go.real
+          { echo '#!/bin/sh'; echo 'case "$*" in *-aplicar-esquema*) exit 1 ;; esac'; echo 'exec "$(dirname "$0")/financas-go.real" "$@"'; } > publicado/preparo/financas-go
           chmod +x publicado/preparo/financas-go
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-1.log"
+          mv -f publicado/preparo/financas-go.real publicado/preparo/financas-go
           grep -q 'voltando o servico para o .NET' "$RUNNER_TEMP/instalacao-troca-1.log" || { echo "::error::nao voltou sozinho"; exit 1; }
           grep -q 'Financas.Api.dll' "$unidade" || { echo "::error::a unidade nao voltou ao .NET"; cat "$unidade"; exit 1; }
           [[ "$(cat dados/backend)" == dotnet ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }

@@ -235,17 +235,10 @@ jobs:
           }
           function Linha { (Get-CimInstance Win32_Service -Filter $filtro).PathName }
 
-          # O Go nao sobe (o executavel some da publicacao): volta sozinho para o .NET, e dados\backend fica dotnet.
-          Move-Item publicado\preparo\financas-go.exe "$env:RUNNER_TEMP\financas-go.exe"
-          $codigo = Instalar @("-Backend", "go")
-          Move-Item "$env:RUNNER_TEMP\financas-go.exe" publicado\preparo\financas-go.exe
-          if ($codigo -ne 0) { throw "a volta automatica falhou ($codigo)" }
-          if ((Linha) -notlike "*Financas.Api.dll*") { throw "o servico nao voltou ao .NET: $(Linha)" }
-          if ((Get-Content dados\backend -Raw).Trim() -ne "dotnet") { throw "dados\backend: $(Get-Content dados\backend -Raw)" }
-          if (-not (Get-ChildItem dados\backups -Filter "FinancasLocal-antes-do-go-*.db")) { throw "sem a copia do banco antes do Go" }
-
-          # A troca de verdade, e uma atualizacao sem -Backend mantem o Go.
+          # A volta automatica (o Go na frente que nao sobe) e testada no Linux: aqui, o mesmo executavel gera o
+          # certificado, e um falso que falhe so como servico pediria outro .exe. A troca, com a copia do banco antes:
           if ((Instalar @("-Backend", "go")) -ne 0) { throw "a troca para o Go falhou" }
+          if (-not (Get-ChildItem dados\backups -Filter "FinancasLocal-antes-do-go-*.db")) { throw "sem a copia do banco antes do Go" }
           if ((Linha) -notlike "*financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "o servico nao e o Go: $(Linha)" }
           if ((Get-Content dados\backend -Raw).Trim() -ne "go") { throw "dados\backend: $(Get-Content dados\backend -Raw)" }
           if ((Instalar @()) -ne 0) { throw "a atualizacao com o Go na frente falhou" }
