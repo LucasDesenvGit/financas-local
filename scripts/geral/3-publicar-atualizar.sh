@@ -17,16 +17,33 @@
 # Uso:
 #   scripts/geral/3-publicar-atualizar.sh
 #   scripts/geral/3-publicar-atualizar.sh --pular-build
+#   scripts/geral/3-publicar-atualizar.sh --backend go       # #85: o Go sozinho como servico (volta sozinho se
+#                                                            # o site nao subir); --backend dotnet volta ao .NET
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
 pular_build=0
-for arg in "$@"; do
-    case "$arg" in
+backend_pedido=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --pular-build) pular_build=1 ;;
-        *) erro_sai "Argumento desconhecido: $arg (use --pular-build)" ;;
+        --backend)
+            [[ $# -ge 2 && ( "$2" == go || "$2" == dotnet ) ]] || erro_sai '--backend precisa de go ou dotnet'
+            backend_pedido="$2"; shift ;;
+        *) erro_sai "Argumento desconhecido: $1 (use --pular-build ou --backend go|dotnet)" ;;
     esac
+    shift
 done
+
+# #85 (ADR 0049): quem fica na frente como servico. "dotnet" (o padrao ate a troca): a API .NET, com o Go atras dela.
+# "go": o Go sozinho, que aplica o esquema e roda as rotinas de partida. A escolha fica em dados/backend, para uma
+# atualizacao sem --backend manter a de antes. O .NET continua publicado ao lado ate a #86: voltar e so trocar o
+# executavel do servico (scripts/geral/voltar-para-dotnet.sh).
+arquivo_backend="$Dados/backend"
+backend_anterior="dotnet"
+[[ -f "$arquivo_backend" ]] && backend_anterior="$(tr -d '[:space:]' < "$arquivo_backend")"
+[[ "$backend_anterior" == go || "$backend_anterior" == dotnet ]] || backend_anterior="dotnet"
+backend="${backend_pedido:-$backend_anterior}"
 
 pasta_front="$Raiz/src/frontend"
 projeto_api="$Raiz/src/backend/Financas.Api/Financas.Api.csproj"
@@ -246,9 +263,29 @@ fi
 dll_destino="$destino/Financas.Api.dll"
 
 # #84: o ponto unico que diz o que o servico executa, nos tres casos abaixo. Na inversao (#85, ADR 0049), muda so aqui.
-exe_servico="$dotnet_exec"
-args_servico="$dll_destino"
+servico_com() {
+    if [[ "$1" == go ]]; then
+        exe_servico="$destino/financas-go"
+        [[ "$SO" == windows ]] && exe_servico="$destino/financas-go.exe"
+        args_servico="-aplicar-esquema -rotinas-de-partida"
+    else
+        exe_servico="$dotnet_exec"
+        args_servico="$dll_destino"
+    fi
+}
+servico_com "$backend"
 
+# #85: antes de o Go passar a ficar na frente, uma copia do banco que se confere ao abrir, em dados/backups.
+if [[ "$backend" == go && "$backend_anterior" != go && -f "$PastaSql/FinancasLocal.db" ]]; then
+    etapa 'Copia do banco antes de por o Go na frente'
+    garantir_pasta "$Dados/backups"
+    copia_antes="$Dados/backups/FinancasLocal-antes-do-go-$(date +%Y%m%d-%H%M%S).db"
+    sqlite3 "${SQLITE_ESPERA[@]}" "$PastaSql/FinancasLocal.db" ".backup '$copia_antes'"
+    [[ "$(sqlite3 "$copia_antes" 'PRAGMA integrity_check;')" == ok ]] || erro_sai "A copia $copia_antes nao abre direito: nada foi trocado."
+    ok "copia conferida: $copia_antes"
+fi
+
+registrar_servico() {
 case "$SO" in
     linux)
         unidade_dir="$HOME/.config/systemd/user"
@@ -297,8 +334,12 @@ EOF
         # espaco apos o "=" e nenhum antes. Por isso binPath= e o valor vao
         # como argumentos separados do bash.
         exe_servico_win="$(cygpath -w "$exe_servico" 2>/dev/null || echo "$exe_servico")"
-        args_servico_win="$(cygpath -w "$args_servico" 2>/dev/null || echo "$args_servico")"
-        bin_path="\"$exe_servico_win\" \"$args_servico_win\""
+        if [[ "$exe_servico" == *financas-go* ]]; then
+            bin_path="\"$exe_servico_win\" $args_servico"   # as opcoes do Go, sem aspas
+        else
+            args_servico_win="$(cygpath -w "$args_servico" 2>/dev/null || echo "$args_servico")"
+            bin_path="\"$exe_servico_win\" \"$args_servico_win\""
+        fi
         comando_create="sc.exe create $nome_servico binPath= \"$bin_path\" start= auto"
         comando_start="sc.exe start $nome_servico"
         if sc.exe query "$nome_servico" >/dev/null 2>&1; then
@@ -320,19 +361,44 @@ EOF
         fi
         ;;
 esac
+}
+
+registrar_servico
 
 # ------------------------------------------------------------------ Teste
 etapa 'Testando'
 url_teste='https://127.0.0.1:5443/api/auth/estado'
-sucesso=0
-resposta=""
-for _ in 1 2 3 4 5; do
-    if resposta="$(curl -k -fsS "$url_teste" 2>/dev/null)"; then
-        sucesso=1
-        break
+# testar_site <tentativas>: o site responde em ate 2 s x tentativas (o Go sozinho tem 30 s, como pede a #85).
+testar_site() {
+    local tentativas="$1"
+    sucesso=0
+    resposta=""
+    for _ in $(seq 1 "$tentativas"); do
+        if resposta="$(curl -k -fsS "$url_teste" 2>/dev/null)"; then
+            sucesso=1
+            return 0
+        fi
+        sleep 2
+    done
+    return 1
+}
+if [[ "$backend" == go ]]; then
+    if ! testar_site 15; then
+        # #85: o Go na frente nao subiu: volta sozinho para o .NET, que continua publicado ao lado, e avisa.
+        aviso 'O Go na frente nao respondeu em 30 s: voltando o servico para o .NET.'
+        [[ "$SO" == linux ]] && command -v journalctl >/dev/null 2>&1 && \
+            journalctl --user -u financaslocal.service -n 20 --no-pager 2>/dev/null | sed 's/^/   /' || true
+        backend="dotnet"
+        servico_com dotnet
+        registrar_servico
+        testar_site 5 || true
+        aviso 'O site esta de novo no .NET. Veja o registro do servico acima e rode com --backend go quando corrigir.'
     fi
-    sleep 2
-done
+else
+    testar_site 5 || true
+fi
+garantir_pasta "$Dados"
+printf '%s\n' "$backend" > "$arquivo_backend"
 if [[ "$sucesso" -eq 1 ]]; then
     ok "API respondeu: $resposta"
 else

@@ -184,6 +184,48 @@ jobs:
           for _ in $(seq 1 30); do curl -k -fsS "$site" && break; sleep 1; done
           curl -k -fsS "$site"
 
+      # #85 (ADR 0049): a troca pelos scripts. --backend go poe o Go sozinho na frente, com a copia do banco antes;
+      # se ele nao sobe, o script volta sozinho para o .NET; o voltar-para-dotnet.sh volta e apaga os segredos v2:.
+      - name: Troca para o Go e volta (3-publicar-atualizar.sh --backend, voltar-para-dotnet.sh)
+        run: |
+          unidade="$HOME/.config/systemd/user/financaslocal.service"
+          site=https://127.0.0.1:5443/api/auth/estado
+          sqlite="$PWD/ferramentas/sqlite/sqlite3"; [[ -x "$sqlite" ]] || sqlite="$(command -v sqlite3)"
+
+          # O Go sozinho nao sobe: no lugar dele, um script que falha so com -aplicar-esquema (o Go na frente) e passa o
+          # resto ao Go de verdade (o gerar-certificado e o Go atras do .NET). Volta sozinho para o .NET, e
+          # dados/backend fica dotnet.
+          mv publicado/preparo/financas-go publicado/preparo/financas-go.real
+          { echo '#!/bin/sh'; echo 'case "$*" in *-aplicar-esquema*) exit 1 ;; esac'; echo 'exec "$(dirname "$0")/financas-go.real" "$@"'; } > publicado/preparo/financas-go
+          chmod +x publicado/preparo/financas-go
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-1.log"
+          mv -f publicado/preparo/financas-go.real publicado/preparo/financas-go
+          grep -q 'voltando o servico para o .NET' "$RUNNER_TEMP/instalacao-troca-1.log" || { echo "::error::nao voltou sozinho"; exit 1; }
+          grep -q 'Financas.Api.dll' "$unidade" || { echo "::error::a unidade nao voltou ao .NET"; cat "$unidade"; exit 1; }
+          [[ "$(cat dados/backend)" == dotnet ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
+          curl -k -fsS "$site"
+          ls dados/backups/FinancasLocal-antes-do-go-*.db || { echo "::error::sem a copia do banco antes do Go"; exit 1; }
+
+          # A troca de verdade: o Go sozinho na frente, e uma atualizacao sem --backend mantem o Go.
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-2.log"
+          grep -q "ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida" "$unidade" || { echo "::error::a unidade nao e o Go"; cat "$unidade"; exit 1; }
+          [[ "$(cat dados/backend)" == go ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
+          pid="$(systemctl --user show -p MainPID --value financaslocal.service)"
+          [[ "$(cat "/proc/$pid/comm")" == financas-go ]] || { echo "::error::o servico nao e o Go"; exit 1; }
+          curl -k -fsS "$site"
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-3.log"
+          grep -q 'financas-go' "$unidade" || { echo "::error::a atualizacao sem --backend voltou ao .NET"; exit 1; }
+
+          # A volta: o segredo gravado pelo Go (v2:) sai; o do .NET fica.
+          "$sqlite" dados/sql/FinancasLocal.db "INSERT OR REPLACE INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES ('Pluggy.ClientSecret', 'v2:teste', 1, '2026-11-02 00:00:00'), ('Cotacao.BrapiToken', 'CfDJ8teste', 1, '2026-11-02 00:00:00');"
+          env PATH="$PATH_LIMPO" bash scripts/geral/voltar-para-dotnet.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-4.log"
+          grep -q 'Financas.Api.dll' "$unidade" || { echo "::error::o voltar-para-dotnet.sh nao voltou a unidade"; exit 1; }
+          [[ "$(cat dados/backend)" == dotnet ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
+          [[ "$("$sqlite" dados/sql/FinancasLocal.db "SELECT ifnull(Valor, 'NULL') FROM Configuracao WHERE Chave = 'Pluggy.ClientSecret'")" == NULL ]] || { echo "::error::o segredo v2: ficou"; exit 1; }
+          [[ "$("$sqlite" dados/sql/FinancasLocal.db "SELECT Valor FROM Configuracao WHERE Chave = 'Cotacao.BrapiToken'")" == CfDJ8teste ]] || { echo "::error::o segredo do .NET foi apagado"; exit 1; }
+          "$sqlite" dados/sql/FinancasLocal.db "DELETE FROM Configuracao WHERE Chave IN ('Pluggy.ClientSecret', 'Cotacao.BrapiToken');"
+          curl -k -fsS "$site"
+
       - name: Backup (4-backup.sh)
         run: |
           env PATH="$PATH_LIMPO" bash scripts/geral/4-backup.sh

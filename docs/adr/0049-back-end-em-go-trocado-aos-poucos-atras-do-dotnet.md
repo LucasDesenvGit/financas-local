@@ -210,3 +210,22 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - O "tipo da exceção" da assinatura, em Go, é o tipo do erro mais de dentro da cadeia do `%w` que não seja genérico (`errors.New`, `fmt.Errorf`, `errors.Join`): o atributo `error` do log vai para o detalhe, e não para a mensagem.
   - **Gerenciador:** a [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md), a [0033](0033-gerenciador-no-linux-com-avalonia.md) e a [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) mudam quando a #276 decidir como ele vai para o Go.
   - **Todo PR do épico** traz a seção "🎓 Aula rápida". A skill `migrar-para-go` e o agente `dev-go` do Claude Code seguem esta ADR.
+
+## Atualização de 2026-11-02: a troca pelos scripts, desligada por padrão (issue #85, parte 1)
+
+- `3-publicar-atualizar.sh --backend go|dotnet` e `instalar-windows.ps1 -Backend go|dotnet` escolhem quem é o serviço. Com `go`, é o `financas-go -aplicar-esquema -rotinas-de-partida`, sozinho; com `dotnet`, a API .NET com o Go atrás, que continua sendo o padrão. A escolha fica em `dados/backend`, para uma atualização sem a opção manter a de antes.
+- **Antes da troca:** uma cópia do banco em `dados/backups/FinancasLocal-antes-do-go-*.db`, feita pelo `.backup` do `sqlite3` e conferida com `PRAGMA integrity_check`. Se ela não abre, nada é trocado. *Julgamento:* `dados/backups`, onde a API e o Go já guardam as cópias do esquema, e não o `backups/` da raiz dos scripts.
+- **Volta automática:** se o Go não responde ao `GET /api/auth/estado` em 30 s, o script volta o serviço para o .NET, mostra o registro do serviço e grava `dotnet`. Não há uma pasta "anterior": o .NET continua publicado ao lado do Go até a #86, e voltar é só trocar o executável do serviço.
+- **Volta à mão:** `scripts/geral/voltar-para-dotnet.sh` e `scripts/windows/voltar-para-dotnet.ps1`. Eles apagam os segredos gravados pelo Go (`v2:`) do Client Secret da Pluggy e do token da brapi, porque o .NET não os lê e a sincronização falharia a cada ciclo dizendo "configurado". Depois, avisam para informá-los de novo, como o `MigrarSqlite` faz. O banco não é restaurado.
+- A CI dos dois sistemas testa:
+  - a volta automática, com o Go fora do ar;
+  - a troca;
+  - uma atualização mantendo o Go;
+  - o `voltar-para-dotnet` apagando só o segredo `v2:`.
+- **Ainda falta para a troca valer para todos** (partes seguintes da #85):
+  - o Go sozinho rodar todas as tarefas, inclusive a sincronização;
+  - o aviso dos segredos na tela;
+  - as notas da versão;
+  - o ensaio com o banco real;
+  - o "só Go" como padrão.
+
