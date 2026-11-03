@@ -40,13 +40,13 @@ Ele compila o gerenciador em Go (#430) em `publicado\gerenciador`, um `.exe` só
 scripts/linux/instalar-gerenciador.sh
 ```
 
-- **Qual gerenciador** (#277, ADR 0052): o em Go, compilado no seu computador em `publicado/gerenciador-go`. Ele precisa de um compilador de C e dos pacotes de desenvolvimento do GTK 4 e do WebKitGTK 6.0 (no Debian e no Ubuntu: `sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`; no Fedora: `sudo dnf install gcc pkgconf-pkg-config gtk4-devel webkitgtk6.0-devel`; no Arch: `sudo pacman -S --needed gcc pkgconf gtk4 webkitgtk-6.0`). Sem eles, o script diz o comando da sua distribuição e instala, por enquanto, o gerenciador em C# em `publicado/gerenciador`, que faz o mesmo. Depois de instalar os pacotes, rode o script de novo: o em Go entra no lugar, inclusive no **Iniciar com o sistema**. `--em-csharp` instala o em C# mesmo assim.
+- **Qual gerenciador** (#277, ADR 0052): o em Go, compilado no seu computador em `publicado/gerenciador-go`. Ele precisa de um compilador de C e dos pacotes de desenvolvimento do GTK 4 e do WebKitGTK 6.0 (no Debian e no Ubuntu: `sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`; no Fedora: `sudo dnf install gcc pkgconf-pkg-config gtk4-devel webkitgtk6.0-devel`; no Arch: `sudo pacman -S --needed gcc pkgconf gtk4 webkitgtk-6.0`). Sem eles, o script diz o comando da sua distribuição e para; o site segue funcionando sem o gerenciador. Quem tinha o gerenciador em C# (até a 3.0) tem o atalho e o **Iniciar com o sistema** trocados para o em Go.
 - **Onde fica:** o atalho **Gerenciador do Finanças Local** no menu de aplicativos (`br.financaslocal.Gerenciador.desktop`; o do em C# é `financaslocal-gerenciador.desktop`) e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
 - **O que faz:** mostra se o site está no ar, liga, desliga e reinicia o serviço (sem senha: ele é do seu usuário), copia o banco e mostra o registro do serviço (**Ver o registro do serviço**, quando o site não sobe).
 - **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet, a não ser na instalação de desenvolvimento (clone na branch `develop`), em que o botão **Atualizar para a última do develop** traz o código do GitHub ([abaixo](#atualizar)).
 - **Ao sair da conta:** o serviço do usuário para, e o site junto. Em **Mais opções**, **Manter o site no ar sem login** liga o *linger* do systemd (`loginctl enable-linger`).
 - **Iniciar com o sistema:** deixa o ícone na bandeja e avisa se o site cair. No GNOME, a bandeja precisa da extensão AppIndicator; sem ela, a janela abre minimizada.
-- **No terminal:** `publicado/gerenciador-go/financas-gerenciador --situacao` (o em C#: `publicado/gerenciador/Financas.Gerenciador.Linux --situacao`) mostra a situação sem abrir a janela.
+- **No terminal:** `publicado/gerenciador-go/financas-gerenciador --situacao` mostra a situação sem abrir a janela.
 - **Sem login:** a instalação também avisa, no fim, quando o *linger* está desligado.
 
 ### De onde vem cada coisa
@@ -159,7 +159,7 @@ financas-local/
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
 ├── src/backend-go/        o back-end em Go, atrás da API (ADR 0049)
 ├── src/frontend/          financas-web (Angular)
-├── src/gerenciador/       Gerenciador: núcleo comum, app do Windows (WinForms, .msi) e do Linux (Avalonia)
+├── src/gerenciador-go/    Gerenciador em Go (Wails): Windows e Linux
 ├── src/gerenciador-go/    o gerenciador em Go, que vai substituir os dois (ADR 0052)
 ├── dados/                 [gerado] banco (SQLite), chaves, logs — acesso restrito
 ├── backups/               [gerado] backups do banco

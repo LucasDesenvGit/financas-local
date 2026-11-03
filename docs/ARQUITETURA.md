@@ -351,17 +351,9 @@ dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQ
 - **Onde baixar:** a versão publicada fica no Release `vX.Y.Z`. A do `develop` fica no pré-lançamento `desenvolvimento`, recriado a cada push depois dos testes. A mesma `X.Y.Z` substitui a instalada (`AllowSameVersionUpgrades`).
 - **Gerenciador:** o em Go, `src/gerenciador-go` ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)), desde a #277. A janela precisa do WebView2: sem ele, o instalador avisa na tela final.
 
-## Gerenciador — `src/gerenciador/`
+## Gerenciador — `src/gerenciador-go/`
 
-App pequeno que mostra se o site está no ar, liga, desliga e reinicia o serviço e copia o banco. Roda como o usuário, fora da API ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md), [ADR 0033](adr/0033-gerenciador-no-linux-com-avalonia.md)).
-
-| Projeto | O que tem |
-|---|---|
-| `Financas.Gerenciador.Nucleo` (`net10.0`) | O que vale nos dois sistemas: `Instalacao` (pasta da API pelo serviço, banco e endereço pelo `appsettings`), `VerificadorSituacao` (serviço + `GET /api/auth/estado`), `CopiaDoBanco` (`VACUUM INTO`) e o serviço do sistema (`ServicoWindows`, `ServicoLinux`). |
-| `Financas.Gerenciador` (WinForms) | Janela do Windows. Pede administrador (UAC) para ligar, desligar e copiar o banco, e atualiza pelo `.msi` do GitHub Releases. Não é mais instalado: o `.msi` (#277) e o `scripts\windows\instalar-gerenciador.ps1` (#430) levam o em Go. |
-| `Financas.Gerenciador.Linux` (Avalonia) | Janela do Linux. Usa o `systemctl --user` sem senha, mostra o registro do serviço (journald) e o comando para atualizar pelos scripts. Vai pelo `scripts/linux/instalar-gerenciador.sh`. |
-
-**Em migração para Go** ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md), #418 a #420): `src/gerenciador-go/`, um módulo Go à parte com o Wails v3 (janela em HTML pelo WebView2, ícone na bandeja). Funciona no Windows e no Linux (no Linux, com o `systemctl --user`, GTK 4 e WebKitGTK 6.0; #417). É o que o `.msi` e os scripts instalam (#277, #430); no Linux sem o GTK 4 e o WebKitGTK 6.0, os scripts ainda instalam o de C#. Veja o [README](../src/gerenciador-go/README.md).
+App pequeno que mostra se o site está no ar, liga, desliga e reinicia o serviço e copia o banco. Roda como o usuário, fora da API ([ADR 0052](adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)). É um módulo Go à parte com o Wails v3: janela em HTML (pelo WebView2 no Windows, pelo GTK 4 e o WebKitGTK 6.0 no Linux) e ícone na bandeja. O `.msi` e os scripts o instalam (#277, #430); o de C# (WinForms e Avalonia, ADRs 0028 e 0033) saiu na #86 e fica na tag `v-ultimo-dotnet`. Veja o [README](../src/gerenciador-go/README.md).
 
 ## Scripts — `scripts/`
 

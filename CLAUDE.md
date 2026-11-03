@@ -28,7 +28,7 @@ scripts/geral/instalar.sh                                     # etapas 1-3 (no W
 
 O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Visual Studio, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
 
-**O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador/`, `Program.cs` ou `EsquemaBanco.cs`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0039), sem produto junto.
+**O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `Program.cs` ou `EsquemaBanco.cs`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0039), sem produto junto.
 
 ## Testes
 
@@ -41,7 +41,7 @@ O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CON
 Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS, cookies `__Host-`. O .NET (`src/backend/Financas.Api`) fica na frente e repassa ao Go (`src/backend-go`) os prefixos migrados; controllers, serviços e pastas estão em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
 - **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
-- **Gerenciador** (`src/gerenciador/`, janela do Windows e do Linux, em C#; e `src/gerenciador-go/`, o que vai substituir os dois, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): texto ou ação nova vai nas duas janelas e no gerenciador em Go.
+- **Gerenciador** (`src/gerenciador-go/`, a janela do Windows e do Linux em Go com o Wails, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): o de C# saiu na #86.
 
 ## Banco (sem migrations, SQLite)
 
