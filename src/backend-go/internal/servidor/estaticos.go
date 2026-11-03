@@ -13,12 +13,10 @@ import (
 	"time"
 )
 
-// arquivoComHash é a mesma expressão do Program.cs: só esses arquivos do build do Angular ganham cache de um ano.
-//
-// Defeito conhecido, mantido de propósito (a migração não muda comportamento): o Angular de hoje gera nomes com
-// minúsculas e "_" (chunk-1dMxoNi3.js), que a expressão não reconhece. Em 21/10/2026, só 3 dos 35 .js/.css
-// ganhavam o cache longo. A correção vai nos dois lados, numa issue à parte.
-var arquivoComHash = regexp.MustCompile(`-[A-Z0-9]{8}\.(js|css)$`)
+// arquivoComHash diz quais arquivos do build do Angular ganham cache de um ano: os que têm o hash no nome. O
+// esbuild do Angular gera o hash com maiúsculas, minúsculas, "_" e "-" (chunk-BZ-xW7Tm.js). É a regra da #305,
+// que só o .NET tinha: o Go ficou com a antiga, -[A-Z0-9]{8}, e só 3 de 35 arquivos ganhavam o cache (#618).
+var arquivoComHash = regexp.MustCompile(`-[A-Za-z0-9_-]{8}\.(js|css)$`)
 
 // tiposDeConteudo são os tipos que o .NET (FileExtensionContentTypeProvider) manda para as extensões que existem
 // no wwwroot, conferidos no site rodando em 21/10/2026. O Go mandaria "; charset=utf-8" em alguns. Extensão nova
