@@ -10,7 +10,6 @@ rem    confere se o banco ficou livre. A janela fica aberta no final.
 rem
 rem Repassa os argumentos ao script, ex.:
 rem   parar-windows.cmd -Desativar      (nao sobe sozinho no proximo boot)
-rem   parar-windows.cmd -Compiladores   (tambem encerra os servidores de build)
 rem Para subir de novo: instalar-windows.cmd
 rem =====================================================================
 setlocal
