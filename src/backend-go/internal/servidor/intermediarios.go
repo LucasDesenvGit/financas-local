@@ -25,7 +25,7 @@ const csp = "default-src 'self'; " +
 	"form-action 'self'; " +
 	"frame-ancestors 'none'"
 
-// Os prazos padrão do Kestrel, nos dois modos do servidor: 30 s para chegarem os cabeçalhos (contra conexões que
+// Os prazos padrão do Kestrel: 30 s para chegarem os cabeçalhos (contra conexões que
 // nunca terminam de mandá-los) e 130 s de conexão parada.
 const (
 	prazoDosCabecalhos = 30 * time.Second
