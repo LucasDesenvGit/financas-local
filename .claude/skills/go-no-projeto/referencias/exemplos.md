@@ -15,6 +15,6 @@ Antes de criar algo, abra o exemplo e siga a forma dele. Estes são **ponteiros*
 | Testes que faltavam, achados pela mutação | `internal/cambio/mutacoes_test.go`, `internal/reservas/mutacoes_test.go` | um teste por mutação viva, com o comentário `// Regra: ...` dizendo o que ele garante |
 | Tarefa em segundo plano com temporizador, sem `time.Sleep` | `internal/tarefas/tarefas_test.go` | `testing/synctest` |
 | Fuzz de um tipo | `internal/tipos/fuzz_test.go`, `internal/relogio/fuzz_test.go` | sementes do gabarito; achado em `testdata/fuzz/<alvo>/` |
-| Dados de teste | `internal/testeapoio` ([README](../../../../src/backend-go/internal/testeapoio/README.md)) | `NovoBanco`, `NovaFabrica`, `HojeEmBrasilia`, `Chamar` + `ConferirJSON`, `NovoServicoDeFora`. Tabela nova = método novo da `Fabrica` |
+| Dados de teste | `internal/testeapoio` ([README](../../../../src/backend/internal/testeapoio/README.md)) | `NovoBanco`, `NovaFabrica`, `HojeEmBrasilia`, `Chamar` + `ConferirJSON`, `NovoServicoDeFora`. Tabela nova = método novo da `Fabrica` |
 
 **Não copie de** pacote listado em `regraComHTTPPorEnquanto` no teste de arquitetura: é regra que ainda chega ao HTTP por outro pacote, uma exceção com prazo.

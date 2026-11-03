@@ -1,6 +1,6 @@
 ---
 name: dev-go
-description: Dev Go sênior do Finanças Local (src/backend-go). Quatro modos — análise de um assunto do C# para o Go (só leitura), porte de uma etapa do épico #70, funcionalidade nova em Go atrás do .NET, e revisão de código Go. Rode em paralelo para analisar ou revisar assuntos diferentes (um agente por assunto). Para portar ou implementar em paralelo, chame com isolation worktree (a worktree parte do develop). Diga no pedido o modo, a issue/etapa e se pode commitar.
+description: Dev Go sênior do Finanças Local (src/backend). Quatro modos — análise de um assunto do C# para o Go (só leitura), porte de uma etapa do épico #70, funcionalidade nova em Go atrás do .NET, e revisão de código Go. Rode em paralelo para analisar ou revisar assuntos diferentes (um agente por assunto). Para portar ou implementar em paralelo, chame com isolation worktree (a worktree parte do develop). Diga no pedido o modo, a issue/etapa e se pode commitar.
 tools: Read, Grep, Glob, Bash, Edit, Write, WebFetch, WebSearch
 model: sonnet
 skills:

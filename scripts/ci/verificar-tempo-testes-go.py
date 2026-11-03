@@ -11,7 +11,7 @@ Referência (24/10/2026, CI do develop, com -race e sem cobertura): a etapa de t
 banco (20 s), autenticacao (17 s) e parametros (10 s). Os limites são *julgamento*: ~3 vezes o que se tem hoje.
 Teste lento quase sempre é time.Sleep, banco recriado em cada subteste ou rede (CONTRIBUINDO.md, "Testes rápidos").
 
-Uso (na CI, em src/backend-go):
+Uso (na CI, em src/backend):
   go test -race -json ./... > testes.json
   python3 ../../scripts/ci/verificar-tempo-testes-go.py testes.json
 """
@@ -27,7 +27,7 @@ LIMITE_POR_TESTE = 20.0
 LIMITE_POR_PACOTE = 60.0
 LIMITE_TOTAL = 120.0
 
-MODULO = 'github.com/LucasDesenvGit/financas-local/src/backend-go/'
+MODULO = 'github.com/LucasDesenvGit/financas-local/src/backend/'
 
 
 def instante(texto):

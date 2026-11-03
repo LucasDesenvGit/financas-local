@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Catraca da cobertura do Go (#370, ADR 0051). Lê o perfil do go test -coverpkg=./internal/... e o arquivo de pisos
-(src/backend-go/cobertura-minima.txt) e:
+(src/backend/cobertura-minima.txt) e:
 - falha quando um pacote fica abaixo do piso dele, mostrando as funções que nenhum teste roda;
 - falha quando um pacote novo (sem linha no arquivo) fica abaixo de PISO_PACOTE_NOVO;
 - falha quando o PR desce um piso ou troca um piso por "fora" (--base: o arquivo do develop). O piso só sobe;
@@ -11,7 +11,7 @@ Catraca da cobertura do Go (#370, ADR 0051). Lê o perfil do go test -coverpkg=.
 A cobertura é de linha executada, não de regra conferida: por isso existem a mutação à mão e a regra "teste novo
 prova que falha" da ADR 0051.
 
-Uso (na CI, em src/backend-go):
+Uso (na CI, em src/backend):
   go test -race -coverpkg=./internal/... -coverprofile=cobertura.out ./...
   python3 ../../scripts/ci/verificar-cobertura-go.py cobertura.out cobertura-minima.txt [--base pisos-do-develop.txt]
 """
@@ -22,7 +22,7 @@ import subprocess
 import sys
 from collections import defaultdict
 
-MODULO = 'github.com/LucasDesenvGit/financas-local/src/backend-go/'
+MODULO = 'github.com/LucasDesenvGit/financas-local/src/backend/'
 PISO_PACOTE_NOVO = 80.0  # julgamento (#370): o pacote novo nasce com teste; a ADR 0051 registra
 AVISO_PARA_SUBIR = 1.0
 
@@ -145,7 +145,7 @@ def main():
     cobertas = sum(c for p, (_, c) in cobertura.items() if not isinstance(pisos.get(p), tuple))
     geral = f'{100 * cobertas / total:.1f}%' if total else '–'
     resumo = ['### Cobertura do Go (#370)', '',
-              f'Total, sem os pacotes "fora": **{geral}**. Piso por pacote em `src/backend-go/cobertura-minima.txt`; '
+              f'Total, sem os pacotes "fora": **{geral}**. Piso por pacote em `src/backend/cobertura-minima.txt`; '
               f'pacote novo nasce com {PISO_PACOTE_NOVO:.0f}%.', '',
               '| Pacote | Cobertura | Piso | Situação |', '|---|---|---|---|', *linhas, '']
     print('\n'.join(resumo))

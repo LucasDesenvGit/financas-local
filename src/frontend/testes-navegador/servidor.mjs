@@ -21,7 +21,7 @@ if (!existsSync(join(pasta, 'index.html'))) {
 
 /** A CSP do site: as partes de "const csp = \"...\" + \"...\"" do intermediarios.go do Go, juntas. */
 function cspDaApi() {
-  const arquivo = resolve(aqui, '..', '..', 'backend-go', 'internal', 'servidor', 'intermediarios.go');
+  const arquivo = resolve(aqui, '..', '..', 'backend', 'internal', 'servidor', 'intermediarios.go');
   const fonte = readFileSync(arquivo, 'utf8');
   // As partes entre aspas, ligadas por "+" (com quebra de linha no meio). A CSP tem ";" DENTRO das aspas
   // ('self';), e o Go não fecha a instrução com ";": o bloco acaba na primeira parte que não é seguida de "+".

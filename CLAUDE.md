@@ -15,7 +15,7 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Wind
 ## Comandos
 
 ```bash
-cd src/backend-go && go test -race ./...                      # back-end Go ("Antes de subir" do src/backend-go/README.md)
+cd src/backend && go test -race ./...                      # back-end Go ("Antes de subir" do src/backend/README.md)
 cd src/frontend && npm run build                              # front-end (produção)
 cd src/frontend && npm run test:tipos && npm test             # Jest
 cd src/frontend && NAVEGADOR=chromium npm run test:afetados   # antes do push: Jest + navegador só no que mudou (#286)
@@ -37,7 +37,7 @@ O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CON
 
 ## Arquitetura (detalhes em docs/ARQUITETURA.md)
 
-Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS, cookies `__Host-`. O .NET (`src/backend/Financas.Api`) fica na frente e repassa ao Go (`src/backend-go`) os prefixos migrados; controllers, serviços e pastas estão em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS, cookies `__Host-`. O .NET (`src/backend/Financas.Api`) fica na frente e repassa ao Go (`src/backend`) os prefixos migrados; controllers, serviços e pastas estão em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
 - **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
 - **Gerenciador** (`src/gerenciador-go/`, a janela do Windows e do Linux em Go com o Wails, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): o de C# saiu na #86.
@@ -72,7 +72,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 - **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco no .NET **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
-- **Código Go:** funcionalidade nova fora do núcleo (tabelas e rotas próprias) **é feita em Go, atrás do .NET**: prefixo em `Go:Prefixos`, pacote em `src/backend-go/internal/<assunto>`, rotas em `internal/api`. Ajuste em tela ou endpoint que já existe fica onde está (#231). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas, troca aos poucos) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
+- **Código Go:** funcionalidade nova fora do núcleo (tabelas e rotas próprias) **é feita em Go, atrás do .NET**: prefixo em `Go:Prefixos`, pacote em `src/backend/internal/<assunto>`, rotas em `internal/api`. Ajuste em tela ou endpoint que já existe fica onde está (#231). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas, troca aos poucos) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
 - Formatação: `.editorconfig`.
 

@@ -1,6 +1,6 @@
 ---
 name: go-no-projeto
-description: Como se escreve Go no Finanças Local (src/backend-go) — funcionalidade nova atrás do .NET, mudança em código Go que já existe e revisão de PR com Go, com as regras do projeto e a fonte de cada uma. Usar ao pedirem "faz isso em Go", "rota nova no Go", "pacote novo", "revisa o Go", ao pegar issue que mexe em src/backend-go, e como base do porte do C# (a skill migrar-para-go acrescenta o que é só da migração).
+description: Como se escreve Go no Finanças Local (src/backend) — funcionalidade nova atrás do .NET, mudança em código Go que já existe e revisão de PR com Go, com as regras do projeto e a fonte de cada uma. Usar ao pedirem "faz isso em Go", "rota nova no Go", "pacote novo", "revisa o Go", ao pegar issue que mexe em src/backend, e como base do porte do C# (a skill migrar-para-go acrescenta o que é só da migração).
 model: sonnet
 ---
 
@@ -16,9 +16,9 @@ Você escreve e revisa o Go do projeto. O que vale **sempre** está aqui; o que 
 | Troca aos poucos, .NET na frente, "Aula rápida" | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | Camadas por assunto, regra sem HTTP, mapa de contextos, interfaces | [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Testes (onde mora cada um, pronto quando, proibido, mutação, fuzz, cobertura) | [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md) e `CONTRIBUINDO.md`, "Testes do back-end (Go)" |
-| Apoio dos testes (banco temporário, fábrica, relógio, `Chamar`, serviço de fora) | [`internal/testeapoio/README.md`](../../../src/backend-go/internal/testeapoio/README.md) |
-| Rota nova, ligar no site, rodar, antes de subir | [`src/backend-go/README.md`](../../../src/backend-go/README.md) |
-| Banco no formato do EF Core, `sqlc`, esquema | [`internal/banco/README.md`](../../../src/backend-go/internal/banco/README.md) e `docs/BANCO-DE-DADOS.md` |
+| Apoio dos testes (banco temporário, fábrica, relógio, `Chamar`, serviço de fora) | [`internal/testeapoio/README.md`](../../../src/backend/internal/testeapoio/README.md) |
+| Rota nova, ligar no site, rodar, antes de subir | [`src/backend/README.md`](../../../src/backend/README.md) |
+| Banco no formato do EF Core, `sqlc`, esquema | [`internal/banco/README.md`](../../../src/backend/internal/banco/README.md) e `docs/BANCO-DE-DADOS.md` |
 | Gerenciador em Go (`src/gerenciador-go`) | [ADR 0052](../../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md): outro módulo, com bibliotecas próprias; o estilo daqui vale |
 
 ## Referências (leia quando o passo pedir)
@@ -50,7 +50,7 @@ Tabela e rota próprias, fora do núcleo: é feita em Go, atrás do .NET (`CLAUD
 
 ## Antes de dizer que terminou
 
-Em `src/backend-go`, os comandos de "Antes de subir" do README do Go, mais:
+Em `src/backend`, os comandos de "Antes de subir" do README do Go, mais:
 
 ```bash
 go test -tags arquitetura ./internal/arquitetura/      # só local (#476)

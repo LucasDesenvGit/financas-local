@@ -74,7 +74,7 @@ flowchart TB
 Cada caixa, em uma frase:
 - **Navegador:** o Angular é publicado dentro da própria API (`wwwroot`), então site e API têm a mesma origem: sem CORS, cookies `__Host-` e proteção CSRF simples.
 - **API:** sobe direto pelo Kestrel, sem IIS nem proxy, como serviço do sistema (`UseSystemd` no Linux e `UseWindowsService` no Windows). Os scripts bash são os mesmos nos dois (`scripts/geral/`, no Windows pelo Git Bash); o `instalar-windows.cmd` faz o mesmo sem bash, e o `.msi` instala sem precisar do código. Ao iniciar, ela aplica o esquema do banco, com uma cópia antes de mudar um banco existente.
-- **Back-end Go:** a API o sobe como processo filho e repassa só os prefixos de `Go:Prefixos`, com o segredo interno e o Id de quem está logado. As setas são as do site hoje: o Go já tem os clientes da Pluggy, da Selic e das cotações, mas quem os usa ainda é a API, até os assuntos deles serem ligados. Login, CSRF e segredos continuam na API até a inversão (#85), e cada assunto volta para o .NET tirando o prefixo da lista. Detalhes em [Back-end em Go](#back-end-em-go--srcbackend-go).
+- **Back-end Go:** a API o sobe como processo filho e repassa só os prefixos de `Go:Prefixos`, com o segredo interno e o Id de quem está logado. As setas são as do site hoje: o Go já tem os clientes da Pluggy, da Selic e das cotações, mas quem os usa ainda é a API, até os assuntos deles serem ligados. Login, CSRF e segredos continuam na API até a inversão (#85), e cada assunto volta para o .NET tirando o prefixo da lista. Detalhes em [Back-end em Go](#back-end-em-go--srcbackend).
 - **Banco:** o mesmo arquivo para os dois back-ends. O acesso é a permissão do sistema operacional sobre a pasta `dados`.
 - **Gerenciador:** roda como o usuário, fora da API.
 
@@ -133,7 +133,7 @@ flowchart TB
     class openfinance,painel,investimentos,partida desligadoNoSite
 ```
 
-- **A fonte do mapa** ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)): a tabela `dependencias` do teste de arquitetura (`src/backend-go/internal/arquitetura/arquitetura_test.go`), par a par, com o motivo. Este diagrama agrupa os mesmos pares para quem lê, e muda quando muda uma seta entre os grupos.
+- **A fonte do mapa** ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)): a tabela `dependencias` do teste de arquitetura (`src/backend/internal/arquitetura/arquitetura_test.go`), par a par, com o motivo. Este diagrama agrupa os mesmos pares para quem lê, e muda quando muda uma seta entre os grupos.
 - **Quando as setas foram conferidas:** pelos imports dos pacotes em Go (`go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...`), que hoje cobrem todos os assuntos.
 - **Planejamento × Painel:** os orçamentos e as contas a pagar leem a base dos relatórios (`internal/relatorios`), e os orçamentos, os totais de empréstimos (`internal/emprestimos`).
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
@@ -273,9 +273,9 @@ Decisões (o porquê de cada uma, com alternativas e custos, está nas [ADRs](ad
 - **Datas** sempre no fuso de Brasília (`Relogio`).
 - **Acesso ao banco** é só permissão de arquivo do sistema sobre `dados/`: o SQLite não tem login nem usuário; quem lê e grava é o processo da API, rodando com a conta do serviço. Não há senha de banco em lugar nenhum.
 
-## Back-end em Go — `src/backend-go`
+## Back-end em Go — `src/backend`
 
-A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md); detalhes no [README](../src/backend-go/README.md)). O mesmo executável (`cmd/financas`) roda no site atrás do .NET e, depois da inversão (#85), na frente.
+A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md); detalhes no [README](../src/backend/README.md)). O mesmo executável (`cmd/financas`) roda no site atrás do .NET e, depois da inversão (#85), na frente.
 
 - **Quem sobe o Go:** o .NET, como processo filho (`ProcessoGo`), depois do `EsquemaBanco` e das rotinas de partida. Continua um serviço só (systemd, Serviço do Windows, `.msi`). O executável `financas-go` fica ao lado da API.
 - **Repasse:** os prefixos de `Go:Prefixos` (no `appsettings.json`, uma entrada por assunto, com os prefixos separados por `;`) vão ao Go com o método, o caminho, a query, o corpo e os cabeçalhos, menos o cookie e o token CSRF. Prefixo fora da lista continua no .NET; esvaziar a entrada de um assunto e reiniciar o serviço o devolve ao .NET.
@@ -289,7 +289,7 @@ A API em Go que substitui o .NET aos poucos (épico #70, [ADR 0049](adr/0049-bac
 - **Erros:** o Go escreve o log em JSON na saída de erro, e o .NET registra cada linha na categoria `Financas.Go` (avisos e erros vão para Configurações › Erros, ADR 0022).
 - **Testes** ([ADR 0051](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): cada regra tem teste unitário em tabela no pacote do assunto, além do caso de contrato do endpoint (`testes/contrato`, #72). Consultas se testam num SQLite de verdade num arquivo temporário, com o esquema real; handlers, com `httptest`. Só a biblioteca padrão, sem asserção nem mock de terceiros. O C# continua sem teste automatizado.
 
-O código fica num pacote por assunto em `internal/` (são mais de 50), com HTTP, regra e banco dentro ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)). A lista dos pacotes, um por linha, está no [README do Go](../src/backend-go/README.md), e o padrão de um assunto, no [`internal/README.md`](../src/backend-go/internal/README.md). Os de infraestrutura:
+O código fica num pacote por assunto em `internal/` (são mais de 50), com HTTP, regra e banco dentro ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)). A lista dos pacotes, um por linha, está no [README do Go](../src/backend/README.md), e o padrão de um assunto, no [`internal/README.md`](../src/backend/internal/README.md). Os de infraestrutura:
 
 | Pasta | O que tem |
 |---|---|
@@ -362,7 +362,7 @@ Separados pelo sistema em que rodam (#154): `geral/` é o bash que roda nos dois
 | Script | Função |
 |---|---|
 | `geral/instalar.sh` | Roda as etapas 1, 2 e 3 em sequência e para no primeiro erro. |
-| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, .NET 10 SDK, Go (a linha do `src/backend-go/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x, um `go` da mesma linha e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
+| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, .NET 10 SDK, Go (a linha do `src/backend/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `dotnet` 10.x, um `go` da mesma linha e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
 | `geral/2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. Também é lido pela API (embutido no build, `EsquemaBanco`) e pelo `instalar-windows.ps1`, que tiram dele a lista de colunas novas. |
 | `geral/3-publicar-atualizar.sh` | Compila front, API e o back-end em Go (`financas-go`, ao lado da API), publica em `publicado/api`, gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
 | `geral/4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |

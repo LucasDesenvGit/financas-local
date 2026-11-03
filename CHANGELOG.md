@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.5] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go muda para `src/backend`** (#86, parte 5; épico #70). Era `src/backend-go`, de quando o .NET ocupava `src/backend`. O módulo passa a ser `github.com/LucasDesenvGit/financas-local/src/backend`, e os scripts, a CI, o instalador e a documentação seguem o caminho novo. Nada muda para quem usa. Quem tem um clone antigo pode apagar as pastas que sobraram do .NET em `src/backend/Financas.Api` e `src/backend/Financas.MigrarSqlite` (o git as ignora).
+
 ## [3.2.4] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação

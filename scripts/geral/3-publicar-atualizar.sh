@@ -75,13 +75,13 @@ if [[ "$pular_build" -eq 0 ]]; then
     # #86: sem a API em .NET. A publicacao e o executavel do Go, o appsettings.json dele e o front-end.
     rm -rf "$preparo"
     garantir_pasta "$preparo"
-    cp "$Raiz/src/backend-go/appsettings.json" "$preparo/appsettings.json"
+    cp "$Raiz/src/backend/appsettings.json" "$preparo/appsettings.json"
 
     etapa 'Compilando o back-end em Go'
     command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     versao_sistema="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
-    (cd "$Raiz/src/backend-go" && go build -trimpath \
-        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versao_sistema" \
+    (cd "$Raiz/src/backend" && go build -trimpath \
+        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$versao_sistema" \
         -o "$(caminho_nativo "$preparo/$nome_go")" ./cmd/financas)
     ok "back-end em Go compilado ($(go env GOVERSION))"
 

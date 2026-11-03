@@ -103,7 +103,7 @@ python3 scripts/ci/verificar-changelog.py                     # CHANGELOG: uma s
 | **CI › o que mudou** | todo PR e push | decide o que roda: no PR, só o afetado (ADR 0047); no push do `develop`/`main`, tudo |
 | **CI › API e banco** | todo PR e push | o site (Go) ligando de verdade, como o serviço (`scripts/ci/ligar-api.sh`), `verificar-sql.py`, os diagramas do banco e o cache dos arquivos do build |
 | **CI › front-end: Jest** e **navegador** (2 partes) | PR que mexe no front-end; todo push | Jest e Playwright, só os testes afetados no PR ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
-| **CI › Go** (#231) | PR que mexe no que o Go lê (o Go, o `banco/`, o `2-criar-banco.sh`, a CSP); todo push | `gofmt`, `go vet`, regras de ouro (#457: `float64`, `time.Now` e `time.Sleep` de teste fora de `scripts/ci/regras-go-excecoes.txt`), `go test -race` com cobertura por pacote que só sobe (#370) e trava de tempo (#371), `go generate` em dia, build do Windows, govulncheck ([README do Go](src/backend-go/README.md)) |
+| **CI › Go** (#231) | PR que mexe no que o Go lê (o Go, o `banco/`, o `2-criar-banco.sh`, a CSP); todo push | `gofmt`, `go vet`, regras de ouro (#457: `float64`, `time.Now` e `time.Sleep` de teste fora de `scripts/ci/regras-go-excecoes.txt`), `go test -race` com cobertura por pacote que só sobe (#370) e trava de tempo (#371), `go generate` em dia, build do Windows, govulncheck ([README do Go](src/backend/README.md)) |
 | **CI › Go (Windows)** (#459) | como o job Go | `go vet` e `go test` no `windows-latest`, para os `_windows.go` (DPAPI, serviço) |
 | **CI › gerenciador em Go** e **(Linux)** (#418, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)) | PR que mexe em `src/gerenciador-go/`; todo push | `go vet`, `go test`, a compilação e o govulncheck, no Windows (com `gofmt` e o ícone do `.exe`) e no Linux (com GTK e WebKitGTK) |
 | **CI › contrato** (#72) | PR que mexe no back-end ou no esquema; todo push | o contrato contra o Go sozinho, sem rede e com a Pluggy falsa (`testes/contrato/rodar.sh`); os esperados são a regressão do Go (ADR 0051) |
@@ -198,7 +198,7 @@ O C# chegou a 128 rotas sem nenhum teste automatizado e continua assim: para ele
 | O mesmo JSON e o mesmo banco do .NET | `testes/contrato` (#72) | casos gravados do .NET, antes do código Go |
 | Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
 
-O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/testeapoio` ([README](src/backend-go/internal/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
+O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/testeapoio` ([README](src/backend/internal/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
 
 **Uma etapa do #70 está pronta quando:**
 - cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
@@ -226,7 +226,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
 - biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
 
-**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/verificar-regras-go.py`, rodado em `src/backend-go` (o mesmo do job "Go"), falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
+**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/verificar-regras-go.py`, rodado em `src/backend` (o mesmo do job "Go"), falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
 - **Exceção:** uma linha em `scripts/ci/regras-go-excecoes.txt`, com o motivo, pelo texto da linha do código (como o `mutacao-go-equivalentes.txt`). Exceção que não casa mais com nenhuma linha também falha.
 - **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro; `time.Now` só para hora de sistema (duração, validade de certificado); `time.Sleep` só quando o tempo é o que se testa.
 
@@ -255,16 +255,16 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 
 **Gabarito** (*golden file*) fica em `testdata/`, vem da referência (o .NET ou o EF Core) e é regravado só por opção explícita (`-atualizar`), olhando a diferença no PR.
 
-**Antes de subir:** em `src/backend-go`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend-go/README.md#antes-de-subir-push)). A CI confere também a trava de tempo (acima, em "Testes rápidos") e a cobertura com piso por pacote (abaixo). A mutação automática roda no PR, nos pacotes que ele mudou (#373, #456; tabela em "O que a CI roda").
+**Antes de subir:** em `src/backend`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend/README.md#antes-de-subir-push)). A CI confere também a trava de tempo (acima, em "Testes rápidos") e a cobertura com piso por pacote (abaixo). A mutação automática roda no PR, nos pacotes que ele mudou (#373, #456; tabela em "O que a CI roda").
 
-**Cobertura** (#370): o piso de cada pacote fica em `src/backend-go/cobertura-minima.txt` e **só sobe**.
+**Cobertura** (#370): o piso de cada pacote fica em `src/backend/cobertura-minima.txt` e **só sobe**.
 - **O que a CI confere** (`scripts/ci/verificar-cobertura-go.py`):
   - pacote abaixo do piso falha, mostrando as funções que nenhum teste roda;
   - pacote novo precisa de 80%;
   - descer um piso falha, comparando com o arquivo do `develop`;
   - subiu a cobertura 1 ponto ou mais: a CI avisa para subir o piso no mesmo PR.
 - **"fora"**, com o motivo na linha, é só para código gerado.
-- **Ver localmente:** em `src/backend-go`,
+- **Ver localmente:** em `src/backend`,
 
   ```bash
   go test -coverpkg=./internal/... -coverprofile=c.out ./...
@@ -277,7 +277,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 ## Checklist do pull request
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
-- [ ] Compila: `go build ./...` em `src/backend-go` e `npm run build` em `src/frontend`.
+- [ ] Compila: `go build ./...` em `src/backend` e `npm run build` em `src/frontend`.
 - [ ] Testes no navegador passam: `NAVEGADOR=chromium npm run test:afetados` em `src/frontend`, que roda o Jest e o navegador só no que mudou (#286; a suíte inteira roda na CI, no merge; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes-navegador/base.ts`); endpoint novo, em `testes-navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
 - [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/regressao/`; padrão novo de UI/UX, em `testes/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
 - [ ] Back-end em Go: regra nova com teste unitário, consulta nova com teste no SQLite real, endpoint novo com caso de contrato, e as mutações listadas no PR ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md), "Testes do back-end (Go)" acima).
@@ -303,7 +303,7 @@ Quem usa o Claude Code no projeto recebe, pelo repositório:
 
 - Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
 - Back-end em C#: um serviço por assunto em `Servicos/`, controllers finos, DTOs em `Dtos/Dtos.cs`.
-- Back-end em Go: funcionalidade nova é feita em Go, atrás do .NET (`CLAUDE.md`, #231), num pacote por assunto em `src/backend-go/internal/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend-go/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
+- Back-end em Go: funcionalidade nova é feita em Go, atrás do .NET (`CLAUDE.md`, #231), num pacote por assunto em `src/backend/internal/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
 - Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
 - Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").
 - Formatação definida no `.editorconfig`.

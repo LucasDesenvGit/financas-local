@@ -205,11 +205,11 @@ function Preparar-Ambiente {
     Adicionar-Path $destinoNode
 
     # ------------------------------------------------------------ Go (#231, ADR 0049 e 0011)
-    # Mesmo criterio do 1-preparar-ambiente.sh: a linha do src\backend-go\go.mod ("go 1.27.3"), a versao mais nova
+    # Mesmo criterio do 1-preparar-ambiente.sh: a linha do src\backend\go.mod ("go 1.27.3"), a versao mais nova
     # dela em go.dev/dl, conferida pelo SHA-256 do proprio indice. Reaproveita um go do PATH da mesma linha.
     Etapa "[1/3] Verificando o Go"
-    $linhaGoMod = Get-Content -LiteralPath (Join-Path $Raiz "src\backend-go\go.mod") | Where-Object { $_ -match '^go\s+(\d+\.\d+\.\d+)\s*$' } | Select-Object -First 1
-    if (-not $linhaGoMod) { ErroSai "Versao do Go nao encontrada em src\backend-go\go.mod." }
+    $linhaGoMod = Get-Content -LiteralPath (Join-Path $Raiz "src\backend\go.mod") | Where-Object { $_ -match '^go\s+(\d+\.\d+\.\d+)\s*$' } | Select-Object -First 1
+    if (-not $linhaGoMod) { ErroSai "Versao do Go nao encontrada em src\backend\go.mod." }
     $goMinimo = [version](($linhaGoMod -split '\s+')[1])
     $goLinha = "$($goMinimo.Major).$($goMinimo.Minor)"
     $destinoGo = Join-Path $Ferramentas "go"
@@ -433,15 +433,15 @@ function Publicar {
         # #86: sem a API em .NET. A publicacao e o executavel do Go, o appsettings.json dele e o front-end.
         if (Test-Path -LiteralPath $preparo) { Remove-Item -LiteralPath $preparo -Recurse -Force }
         Garantir-Pasta $preparo
-        Copy-Item -LiteralPath (Join-Path $Raiz "src\backend-go\appsettings.json") -Destination (Join-Path $preparo "appsettings.json")
+        Copy-Item -LiteralPath (Join-Path $Raiz "src\backend\appsettings.json") -Destination (Join-Path $preparo "appsettings.json")
 
         Etapa "[3/3] Compilando o back-end em Go"
         if (-not (Comando-Existe "go")) { ErroSai "Go nao encontrado (a etapa 1 devia ter instalado em ferramentas\go)." }
         $versaoSistema = ([xml](Get-Content -LiteralPath (Join-Path $Raiz "Directory.Build.props") -Raw)).Project.PropertyGroup.Version | Select-Object -First 1
-        Push-Location (Join-Path $Raiz "src\backend-go")
+        Push-Location (Join-Path $Raiz "src\backend")
         try {
             Executar "go" @("build", "-trimpath",
-                "-ldflags", "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$versaoSistema",
+                "-ldflags", "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$versaoSistema",
                 "-o", (Join-Path $preparo "financas-go.exe"), "./cmd/financas")
         } finally { Pop-Location }
         Ok "back-end em Go compilado ($(& go env GOVERSION))"

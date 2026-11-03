@@ -57,5 +57,5 @@ src/frontend/testes-navegador/fotos/
 src/frontend/jest-resultado.json
 
 # Teste de mutação do Go (#373): saída do scripts/ci/mutacao-go.py
-src/backend-go/mutacao/
+src/backend/mutacao/
 src/gerenciador-go/mutacao/

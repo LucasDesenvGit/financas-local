@@ -1,6 +1,6 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador. Precisa do Go da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod, do
+    no seu computador. Precisa do Go da versao do src\backend\go.mod e do src\gerenciador-go\go.mod, do
     Node.js e do WiX 5.0.2, pelo
     wix-cli-x64.msi do GitHub Releases do WiX, que ja traz as extensoes UI e Util e nao pede o .NET, #446:
     https://github.com/wixtoolset/wix/releases/tag/v5.0.2; confira o SHA-256 do WIX_SHA256 do versao.yml).
@@ -67,7 +67,7 @@ if (-not $SoPacote) {
 
     # #86: sem a API em .NET. O Go le o appsettings.json dele, o Production (abaixo) e o configuracao.json da
     # pasta de dados.
-    Copy-Item -LiteralPath (Join-Path $Raiz "src\backend-go\appsettings.json") -Destination $Publicado -Force
+    Copy-Item -LiteralPath (Join-Path $Raiz "src\backend\appsettings.json") -Destination $Publicado -Force
 
     # #277 (ADR 0052): o gerenciador e o em Go (src\gerenciador-go), um .exe so, no lugar do C# self-contained. Mantem o
     # nome Financas.Gerenciador.exe: os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuam valendo.
@@ -87,12 +87,12 @@ if (-not $SoPacote) {
     # O back-end em Go e o site e o servico (desde a #85; sem o .NET desde a #86). Sem cgo
     # (o SQLite e o modernc.org/sqlite, em Go puro), para Windows x64. A versao entra no executavel pelo -ldflags.
     Etapa "Compilando o back-end em Go"
-    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\backend-go\go.mod para a versao)." }
+    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\backend\go.mod para a versao)." }
     $env:CGO_ENABLED = "0"; $env:GOOS = "windows"; $env:GOARCH = "amd64"
-    Push-Location (Join-Path $Raiz "src\backend-go")
+    Push-Location (Join-Path $Raiz "src\backend")
     try {
         Executar "go" @("build", "-trimpath", "-ldflags",
-            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$Rotulo",
+            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$Rotulo",
             "-o", (Join-Path $Publicado "financas-go.exe"), "./cmd/financas")
     } finally {
         Pop-Location

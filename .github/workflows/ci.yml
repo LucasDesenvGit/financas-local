@@ -97,7 +97,7 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend-go/|banco/|scripts/geral/2-criar-banco\.sh$|scripts/ci/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend/|banco/|scripts/geral/2-criar-banco\.sh$|scripts/ci/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
@@ -125,7 +125,7 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "contrato=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend-go/|banco/|scripts/geral/(2-criar-banco|comum)\.sh$|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend/|banco/|scripts/geral/(2-criar-banco|comum)\.sh$|\.github/workflows/ci\.yml$)'; then
             echo "contrato=true" >> "$GITHUB_OUTPUT"
           else
             echo "contrato=false" >> "$GITHUB_OUTPUT"
@@ -142,8 +142,8 @@ jobs:
       - name: Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       # #309: liga o site de verdade (banco temporário, HTTPS com certificado descartável) e espera /api/auth/estado:
       # pega o que só aparece ao iniciar. #86: é o Go, montado como a publicação o monta, com a linha do serviço. O que
@@ -168,7 +168,7 @@ jobs:
           sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
           sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
 
-  # #231 (ADR 0049): o back-end em Go. Os mesmos comandos do "Antes de subir" do src/backend-go/README.md.
+  # #231 (ADR 0049): o back-end em Go. Os mesmos comandos do "Antes de subir" do src/backend/README.md.
   go:
     name: Go
     needs: mudancas
@@ -177,7 +177,7 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: src/backend-go
+        working-directory: src/backend
     steps:
       - uses: actions/checkout@v4
 
@@ -185,8 +185,8 @@ jobs:
       - name: Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       - name: Formatação (gofmt)
         run: |
@@ -221,7 +221,7 @@ jobs:
         run: |
           base=()
           if [ -n "$BASE" ] && git fetch -q --depth=1 origin "$BASE" &&
-             git show FETCH_HEAD:src/backend-go/cobertura-minima.txt > "$RUNNER_TEMP/pisos-base.txt" 2>/dev/null; then
+             git show FETCH_HEAD:src/backend/cobertura-minima.txt > "$RUNNER_TEMP/pisos-base.txt" 2>/dev/null; then
             base=(--base "$RUNNER_TEMP/pisos-base.txt")
           fi
           python3 ../../scripts/ci/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
@@ -230,7 +230,7 @@ jobs:
       - name: Código gerado em dia (go generate)
         run: |
           go generate ./...
-          git diff --exit-code -- . || { echo "Rode 'go generate ./...' em src/backend-go e suba o código gerado."; exit 1; }
+          git diff --exit-code -- . || { echo "Rode 'go generate ./...' em src/backend e suba o código gerado."; exit 1; }
 
       - name: Compila para Windows
         run: GOOS=windows GOARCH=amd64 go build ./...
@@ -257,15 +257,15 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: src/backend-go
+        working-directory: src/backend
     steps:
       - uses: actions/checkout@v4
 
       - name: Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       - name: go vet
         run: go vet ./...
@@ -394,7 +394,7 @@ jobs:
 
   # #72 (ADR 0049 e 0051): testes de contrato. Sobe o Go como o serviço instalado, sobre o banco fictício, sem rede,
   # com o relógio começando em 2026-10-15 01:00 UTC e a Pluggy falsa, e confere que ele responde e grava igual a
-  # src/backend-go/testes/contrato/esperado. Os esperados foram gravados do .NET até a #86; desde então, são a
+  # src/backend/testes/contrato/esperado. Os esperados foram gravados do .NET até a #86; desde então, são a
   # regressão do Go.
   contrato:
     name: contrato
@@ -408,15 +408,15 @@ jobs:
       - name: Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       # O Ubuntu 24.04 só deixa criar namespace de usuário (unshare -rn, a rede sem saída) com esta chave desligada.
       - name: Rede isolada
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: Contrato contra o Go
-        run: bash src/backend-go/testes/contrato/rodar.sh
+        run: bash src/backend/testes/contrato/rodar.sh
 
   jest:
     name: "front-end: Jest"

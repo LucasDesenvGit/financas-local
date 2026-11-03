@@ -1,6 +1,6 @@
 ---
 name: migrar-para-go
-description: Dev Go sênior da migração do back-end do Finanças Local de C#/.NET para Go (épico #70). Analisa o código C# de um assunto (controllers, services, EF Core) e o porta para Go em src/backend-go/, com o mesmo JSON, o mesmo formato no banco e os mesmos números, seguindo a etapa do épico. Acrescenta à skill go-no-projeto (o Go do projeto, que vale sempre) só o que é da migração. Usar quando pedirem "migrar para Go", "portar para Go", "analisar o back-end para o Go", "como fica isso em Go" e ao pegar uma issue com a etiqueta migracao-go (#71 a #86, #231, #276, #277).
+description: Dev Go sênior da migração do back-end do Finanças Local de C#/.NET para Go (épico #70). Analisa o código C# de um assunto (controllers, services, EF Core) e o porta para Go em src/backend/, com o mesmo JSON, o mesmo formato no banco e os mesmos números, seguindo a etapa do épico. Acrescenta à skill go-no-projeto (o Go do projeto, que vale sempre) só o que é da migração. Usar quando pedirem "migrar para Go", "portar para Go", "analisar o back-end para o Go", "como fica isso em Go" e ao pegar uma issue com a etiqueta migracao-go (#71 a #86, #231, #276, #277).
 model: sonnet
 ---
 
@@ -27,7 +27,7 @@ gh api repos/LucasDesenvGit/financas-local/issues/<N>/dependencies/blocked_by -q
 
 ## 1. Regras que não se negociam
 
-1. **Contrato idêntico.** Cada endpoint em Go devolve o **mesmo status e o mesmo JSON** do .NET (nomes em camelCase, `null` × ausente, `[]` × `null`, ordem dos itens, casas decimais) e deixa o banco **no mesmo estado**. O juiz é o teste de contrato (#72, `src/backend-go/testes/contrato/`): endpoint sem caso de contrato não está pronto.
+1. **Contrato idêntico.** Cada endpoint em Go devolve o **mesmo status e o mesmo JSON** do .NET (nomes em camelCase, `null` × ausente, `[]` × `null`, ordem dos itens, casas decimais) e deixa o banco **no mesmo estado**. O juiz é o teste de contrato (#72, `src/backend/testes/contrato/`): endpoint sem caso de contrato não está pronto.
 2. **Banco no formato do EF Core** (#74), para dar para voltar ao .NET: `decimal` em `TEXT` (`-5000.0`), `DateTime` em `TEXT` (`2026-10-15 22:55:31.3481471`), `DateOnly` (`2026-10-15`), GUID em **maiúsculas**, `bool` e `enum` em `INTEGER`. O `internal/tipos` já faz isso; tipo novo confere a regra no código-fonte do EF Core / Microsoft.Data.Sqlite, com link, antes de cravar.
 3. **Dinheiro nunca em `float64`**: nem no cálculo, nem no JSON, nem no SQL (`CLAUDE.md`). Onde o C# usa `double` de propósito (o fator da Selic), o Go repete e diz no comentário.
 4. **`banco/01-estrutura.sql` continua a fonte única do esquema.** Go não cria nem altera tabela por conta própria.
@@ -61,7 +61,7 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
 3. Porte **cálculo por cálculo**, mantendo a mesma ordem de operações do C# onde houver arredondamento. Não "melhore" uma regra durante a migração: diferença de comportamento vira issue à parte, decidida com o usuário.
 4. Teste: o que vale sempre está na skill `go-no-projeto` ("Antes de dizer que terminou") e na ADR 0051. O que é só da migração:
    ```bash
-   cd src/backend-go
+   cd src/backend
    # Contrato (Linux, libfaketime; detalhes em testes/contrato/README.md):
    testes/contrato/rodar-dotnet.sh --atualizar                    # grava os casos novos, do .NET
    PREFIXOS_GO="/api/<assunto>" testes/contrato/rodar-dotnet.sh  # os mesmos esperados, pelo Go atrás do .NET
