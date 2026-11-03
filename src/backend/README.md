@@ -1,12 +1,12 @@
 # Back-end em Go
 
-A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](https://github.com/LucasDesenvGit/financas-local/issues/70), [ADR 0049](../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Desde a #231, ele **roda no site atrás do .NET**: o .NET cuida do login, do CSRF, dos segredos e do esquema do banco, sobe o Go como processo filho e repassa a ele só os prefixos de rota de `Go:Prefixos`.
+O site do Finanças Local: serve o Angular e a `/api`, num executável só (`financas-go`), como serviço do sistema. Ele substituiu a API em .NET um assunto por vez ([épico #70](https://github.com/LucasDesenvGit/financas-local/issues/70), [ADR 0049](../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): atrás dela desde a #231, na frente desde a #85 (3.0.0), e o .NET saiu na #86 (a última versão com ele está na tag `v-ultimo-dotnet`).
 
 | Pasta | O que tem |
 |---|---|
-| `cmd/financas` | o ponto de entrada (o `Program.cs` do Go): `-atras-do-dotnet` no site, ou sozinho, com o login do Go (#75) |
+| `cmd/financas` | o ponto de entrada: as opções, a ligação das peças e o subcomando `gerar-certificado` |
 | `internal/api` | o `ServeMux` com as rotas de todos os assuntos (o `MapControllers` do Go): uma linha por assunto |
-| `internal/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (front-end → .NET → Go → banco) |
+| `internal/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (login → rota → banco), com a versão e o relógio |
 | `internal/cambio` | câmbio pela PTAX (#81, ADR 0007): cliente do Banco Central, conversor para reais, `/api/cambio` e a tarefa de 15 em 15 minutos |
 | `internal/cripto` | criptomoedas pelo Mercado Bitcoin (#81, ADR 0048): cliente, `/api/cripto` e a tarefa de 30 em 30 minutos |
 | `internal/categorias` | categorias, regras de categorização e regras de descrição (#77): as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` |
@@ -35,16 +35,16 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/relatorios` | a base do `RelatorioService` (#447, ADRs 0031 e 0036): as transações que entram nos relatórios, o total por categoria, o orçamento do mês contra o gasto, as contas a pagar e o próximo vencimento, a janela dos últimos meses completos e a renda; sem rota, a #79 e a #80 usam |
 | `internal/emprestimos` | os totais do `EmprestimoService` (#447, ADR 0014): saldo devedor e parcela mensal de financiamentos e de empréstimos; sem rota |
 | `internal/texto` | as normalizações de texto das regras do C# (sem acento, maiúsculas, palavras inteiras) e a ordem de texto da cultura pt-BR, conferidas contra o C# por gabaritos |
-| `internal/partida` | as seis rotinas que acertam dados ao subir (#444): só a ordem, a transação de cada uma e o que fazer quando falha; a regra de cada uma fica no pacote do assunto. Só com o Go sozinho (`-rotinas-de-partida`) |
+| `internal/partida` | as seis rotinas que acertam dados ao subir (#444): só a ordem, a transação de cada uma e o que fazer quando falha; a regra de cada uma fica no pacote do assunto. Ligadas por `-rotinas-de-partida`, na linha do serviço |
 | `internal/pluggy` | o cliente HTTP da Pluggy, sem SDK (#83, ADR 0006): sessão, paginação, novas tentativas e os modelos das respostas |
 | `internal/openfinance` | as rotas do Open Finance (#83): credenciais, conexões, status, histórico e o mapa de categorias; quem traz os dados é o `internal/sincronizacao` |
 | `internal/sincronizacao` | o `SincronizacaoService` e a tarefa periódica (#83): contas, faturas, transações, investimentos, empréstimos e carteira, uma rodada por vez; sem rota |
-| `internal/erros` | os erros do sistema (#298, ADR 0022): o handler do `slog` que manda avisos e erros para a fila, o gravador em `ErroSistema` e as rotas de `/api/erros`; só com o Go sozinho, até a inversão (#85) |
+| `internal/erros` | os erros do sistema (#298, ADR 0022): o handler do `slog` que manda avisos e erros para a fila, o gravador em `ErroSistema` e as rotas de `/api/erros` |
 | `internal/servicosistema` | o que faz o executável rodar como serviço (#84): o gerenciador de serviços e o Log de Eventos no Windows; o SIGTERM do systemd no Linux |
-| `internal/tarefas` | tarefas em segundo plano (o `BackgroundService` do .NET): só as de `Go:Tarefas`, com `context`, espera ao parar e `recover` por ciclo |
-| `internal/servidor` | HTTPS local, cabeçalhos de segurança, erros, front-end e o modo atrás do .NET (segredo interno, usuário) |
+| `internal/tarefas` | tarefas em segundo plano (câmbio, cripto e a sincronização), com `context`, espera ao parar e `recover` por ciclo |
+| `internal/servidor` | HTTPS local, cabeçalhos de segurança (a CSP), erros, os arquivos do front-end e o certificado |
 | `internal/sessao` | quem está logado, no contexto da requisição |
-| `internal/autenticacao` | o `AuthController` em Go (#75): login, sessão em cookie assinado, CSRF, limite por IP, bloqueio e auditoria; só com o Go sozinho, até a inversão (#85) |
+| `internal/autenticacao` | login, sessão em cookie assinado, CSRF, limite por IP, bloqueio e auditoria (#75; era o `AuthController` do .NET) |
 | `internal/respostas` | as respostas que o ASP.NET monta sozinho (`ProblemDetails`, `ValidationProblemDetails` com as mensagens do `System.Text.Json`, 415, `{"mensagem"}` do `BaseController`), para todos os assuntos |
 | `internal/auditoria` | o `AuditoriaService`: grava em `AuditoriaAcesso` o evento, o login, o IP e o navegador |
 | `internal/configuracao` | o `ConfiguracaoService` (#76): ler e gravar a `Configuracao` com as regras do `int.TryParse`, `bool.TryParse` e `DateTime.TryParse` do C# |
@@ -57,22 +57,22 @@ A API do Finanças Local em Go, que substitui o .NET aos poucos ([épico #70](ht
 | `internal/versao` | a versão, gravada na compilação pelo `-ldflags` |
 | `internal/arquitetura` | o teste de arquitetura (ADR 0056, #476): regra sem HTTP, mapa de contextos e módulos. **Só local** (`go test -tags arquitetura ./internal/arquitetura/`), a CI não roda |
 | `internal/testeapoio` | só para testes (`_test.go`): banco temporário com o esquema real, fábrica de dados inventados, relógio parado em Brasília e handler chamado com o usuário logado ([README](internal/testeapoio/README.md), #369) |
-| `testes/contrato` | testes de contrato: o que o .NET responde e grava, caso a caso, para o Go responder igual ([README](testes/contrato/README.md)) |
+| `testes/contrato` | testes de contrato: o que o site responde e grava, caso a caso (gravado do .NET até a #86; hoje, a regressão do Go) ([README](testes/contrato/README.md)) |
 
-## Como roda no site (atrás do .NET)
+## Como roda no site
 
 ```
-navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>──► Go ──► mesmo SQLite (WAL)
-                       │  X-Financas-Segredo: segredo desta partida
-                       │  X-Financas-Usuario: Id de quem está logado
+navegador ──HTTPS 127.0.0.1:5443──► financas-go (Angular do wwwroot e /api) ──► SQLite (WAL)
 ```
 
-- **Quem sobe:** o .NET (`Servicos/Go/ProcessoGo.cs`) executa `financas-go -atras-do-dotnet -banco <caminho> -pasta <pasta da API>` depois do `EsquemaBanco`. O executável fica ao lado da API (`Go:Executavel` muda o caminho).
-- **Partida:** o Go lê o segredo interno da primeira linha da entrada padrão, escuta em `127.0.0.1` numa porta livre e escreve `{"porta":N}` na saída padrão.
-- **Confiança:** sem o segredo, 401 (e um aviso no log). O Id do usuário vem em `X-Financas-Usuario`, que o .NET apaga quando vem de fora; a rota o lê com `sessao.Usuario(ctx)`.
-- **Parada:** quando a entrada padrão fecha (o .NET parou, ou caiu), o Go para com elegância. SIGINT e SIGTERM também. No Windows, o .NET o põe num Job Object que o encerra junto.
-- **Log:** JSON na saída de erro. O .NET registra cada linha na categoria `Financas.Go`; avisos e erros vão para Configurações › Erros. Para cair na origem certa da tela, ponha o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"`, `"Cripto"` ou `"Sistema"`). Com o Go sozinho (#298), quem grava é o próprio Go (`internal/erros`), com as mesmas origens.
-- **Banco:** o mesmo arquivo do .NET, em WAL (quem passa para WAL é o `EsquemaBanco`). O Go não cria nem muda tabela.
+- **Quem sobe:** o serviço do sistema executa `financas-go -aplicar-esquema -rotinas-de-partida`. O executável fica em `publicado/api` (scripts) ou em `%ProgramFiles%\FinancasLocal` (`.msi`), com o `appsettings.json` deste módulo e o `appsettings.Production.json` gerado pela instalação.
+- **Partida:** aplica o esquema do banco (cópia antes de mudar), roda as rotinas de partida, carrega o certificado e liga as tarefas em segundo plano (câmbio, cripto e a sincronização).
+- **Login:** o do Go (`internal/autenticacao`, #75), na frente de todas as rotas; a rota lê o usuário com `sessao.Usuario(ctx)`.
+- **Parada:** SIGINT, SIGTERM ou o `Stop` do gerenciador de serviços do Windows: espera os pedidos em andamento, para as tarefas e fecha o banco.
+- **Log:** texto na saída de erro (journald no Linux, Log de Eventos no Windows); avisos e erros vão também para Configurações › Erros (`internal/erros`, #298). Para cair na origem certa da tela, ponha o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"`, `"Cripto"` ou `"Sistema"`).
+- **Banco:** em WAL, no formato que o EF Core gravava. O Go só cria ou muda tabela pelos scripts de `banco/` (`-aplicar-esquema`).
+
+Até a #86, havia um modo "atrás do .NET" (#231): o .NET ficava na frente, subia o Go como processo filho e repassava a ele os prefixos de `Go:Prefixos`. Ele saiu com o .NET; a ADR 0049 conta como foi.
 
 ### Rota nova
 
@@ -80,14 +80,11 @@ navegador ──HTTPS──► .NET (login, CSRF) ──HTTP 127.0.0.1:<porta>�
 2. **Uma linha** em `internal/api/api.go`: `<assunto>.Registrar(mux, d.DB, d.Log, d.Relogio)`. É só isso que os assuntos feitos em paralelo dividem; no merge, conflito ali é sempre "fique com as duas linhas". Hora vem do `d.Relogio`, nunca do `time.Now()`.
 3. Os casos de contrato, num número livre de `20` a `89`, gravados com `testes/contrato/rodar.sh --atualizar` e conferidos no `git diff`, como no [README do contrato](testes/contrato/README.md#adicionar-um-caso).
 4. Os testes do assunto (ADR 0051), com o apoio comum de `internal/testeapoio` ([README](internal/testeapoio/README.md)): banco temporário, fábrica de dados e handler chamado com o usuário logado.
-5. Para ligar no site (passo 2 da ADR 0049, PR à parte): os prefixos na entrada do assunto em `Go:Prefixos`, no `src/backend/Financas.Api/appsettings.json`. É uma entrada por assunto, já reservada e vazia, com os prefixos separados por `;` (`"cambio": "/api/cambio;/api/cripto"`), e uma linha em branco entre as entradas, para dois PRs não mexerem em linhas vizinhas. Enquanto a entrada estiver vazia, a rota não recebe nada e o .NET continua atendendo.
-6. Tarefa em segundo plano que passou para o Go: o nome dela em `Go:Tarefas` (`Sincronizacao`, `Cambio` ou `Cripto`), para o .NET não rodar a dele.
-
-Voltar o assunto para o .NET é esvaziar a entrada dele (e tirar a tarefa) e reiniciar o serviço; não precisa reinstalar. Num `appsettings` de cima, `"Go": {"Prefixos": {"cambio": ""}}` desliga só aquele assunto, e `"Prefixos": ""` (texto) desliga todos.
+5. Tarefa em segundo plano nova: entra em `tarefas.Conhecidas` e no `iniciarTarefas` do `cmd/financas`.
 
 ## Rodar como serviço
 
-O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de opção: no Windows, ele percebe que quem o iniciou foi o gerenciador de serviços, responde a `Stop` e `Shutdown` e escreve avisos e erros no Log de Eventos (origem `FinancasLocal`); no Linux, para com o SIGTERM do systemd, e o log vai para o journald. Até a inversão (#85), o serviço é o .NET, e os workflows "Teste de instalação" conferem o Go sozinho trocando a linha do serviço. Nos scripts, o que o serviço executa está num ponto só: `exe_servico` no `3-publicar-atualizar.sh` e `$binPath` no `instalar-windows.ps1`.
+O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de opção: no Windows, ele percebe que quem o iniciou foi o gerenciador de serviços, responde a `Stop` e `Shutdown` e escreve avisos e erros no Log de Eventos (origem `FinancasLocal`); no Linux, para com o SIGTERM do systemd, e o log vai para o journald. Nos scripts, o que o serviço executa está num ponto só: `exe_servico` no `3-publicar-atualizar.sh` e `$binPath` no `instalar-windows.ps1`.
 
 ## Certificado
 
@@ -97,27 +94,20 @@ O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de op�
 
 Precisa do Go 1.27.3 ou mais novo (as anteriores têm falhas de segurança na biblioteca padrão).
 
-**Atrás do .NET, em desenvolvimento:** compile o Go para a pasta de saída da API e suba a API como sempre (Visual Studio ou `dotnet run`). Sem o executável, as rotas de `Go:Prefixos` respondem 503 e o .NET registra o erro.
+**Em desenvolvimento**, com uma **cópia** do banco, ao lado do site instalado (que fica na 5443):
 
 ```bash
 cd src/backend
-go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go ./cmd/financas        # Linux
-go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go.exe ./cmd/financas    # Windows
+go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario \
+  -banco <cópia>/FinancasLocal.db -aplicar-esquema
 ```
 
-**Sozinho**, sem o .NET na frente, como o site vai rodar depois da inversão (#85): com o login do Go (#75), os erros do sistema (#298) e todas as rotas que o Go já tem. Ao lado do .NET, que fica na 5443:
-
-```bash
-cd src/backend
-go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
-```
-
-- O `-wwwroot` aponta para o build do Angular (`npm run build` em `src/frontend`).
+- O `-wwwroot` aponta para o build do Angular (`npm run build` em `src/frontend`). Com o `npm start` (o Angular em `http://localhost:4200`), use `-endereco localhost:7443`, a porta do `proxy.conf.json`, e qualquer pasta no `-wwwroot` (`internal/servidor/testdata/wwwroot`).
 - O `-certificado-temporario` cria um certificado só em memória, e o navegador vai avisar que não confia nele.
 - Para usar o `.pfx` e os caminhos de uma instalação, aponte `-pasta` para a pasta da publicação (onde está o `appsettings.Production.json`).
-- O `-aplicar-esquema` cria e atualiza o banco antes de atender, como o .NET faz ao iniciar (#297). Fica desligado por padrão: até a inversão (#85), quem faz isso é o .NET. Use só com uma cópia do banco.
-- O `-rotinas-de-partida` roda as seis rotinas que acertam dados ao subir (`internal/partida`, #444): regras padrão novas, entradas nos cartões, compras parceladas estornadas, transferências, contas a pagar cobradas sozinhas e trocos sem dúvida, nesta ordem, uma transação por rotina. Também desligado por padrão, e só vale sozinho (não atrás do .NET, que as roda por conta própria: rodar nos dois acertaria duas vezes). Use junto de `-aplicar-esquema` e só com uma cópia do banco. Erro numa rotina vira aviso (Configurações › Erros), a partida segue para as seguintes e o Go sobe do mesmo jeito (o `try/catch` do `Program.cs` parava na primeira; ADR 0049).
-- O `-inicio-do-relogio 2026-10-15T01:00:00Z` é **só para teste** (#363): o relógio começa nesse instante e anda dali, como a libfaketime faz com o .NET no contrato. Sem ele, o relógio do sistema. Atrás do .NET, quem passa a opção é o .NET, quando `Go:InicioDoRelogio` (vazio por padrão) tem um instante com fuso; ele passa o instante já validado, mais o tempo desde a partida dele. Ligado, o Go deixa um aviso no log (Configurações › Erros).
+- O `-aplicar-esquema` cria e atualiza o banco antes de atender (#297). A linha do serviço instalado sempre liga; em desenvolvimento, só com uma cópia do banco.
+- O `-rotinas-de-partida` roda as seis rotinas que acertam dados ao subir (`internal/partida`, #444): regras padrão novas, entradas nos cartões, compras parceladas estornadas, transferências, contas a pagar cobradas sozinhas e trocos sem dúvida, nesta ordem, uma transação por rotina. Use junto de `-aplicar-esquema` e só com uma cópia do banco. Erro numa rotina vira aviso (Configurações › Erros), a partida segue para as seguintes e o site sobe do mesmo jeito.
+- O `-inicio-do-relogio 2026-10-15T01:00:00Z` é **só para teste** (#363): o relógio começa nesse instante e anda dali; o contrato usa. Sem ele, o relógio do sistema. Ligado, o Go deixa um aviso no log (Configurações › Erros).
 
 ## Antes de subir (push)
 
@@ -146,14 +136,11 @@ A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `ba
 
 **Testes de contrato (#72):** mudou o back-end? Rode `testes/contrato/rodar.sh` (Linux ou Git Bash do Windows; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe como o serviço instalado. Os esperados foram gravados do .NET até a #86 e são a regressão do Go: um esperado só muda com o motivo no PR (ADR 0051). A CI roda o contrato no job "contrato".
 
-Dois testes manuais, que só rodam com as variáveis definidas:
+Um teste manual, que só roda com a variável definida:
 
 ```bash
 # Ler uma CÓPIA do banco real inteira, sem mostrar valores (#74)
 FINANCAS_COPIA_BANCO=/tmp/copia.db go test ./internal/banco -run CopiaDoBancoReal -v
-# Comparar o Go com o .NET rodando, rota por rota: status, cabeçalhos e corpo (#73)
-FINANCAS_DOTNET_URL=https://127.0.0.1:5443 FINANCAS_WWWROOT=$PWD/../../publicado/api/wwwroot \
-  go test ./internal/servidor -run IgualAoDotnet -v
 ```
 
-Todo PR do épico traz a seção "🎓 Aula rápida" na descrição.
+Todo PR com Go traz a seção "🎓 Aula rápida" na descrição.
