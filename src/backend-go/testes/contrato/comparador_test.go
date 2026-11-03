@@ -150,7 +150,7 @@ func TestPonteiroESubstituir(t *testing.T) {
 }
 
 // TestCadaCasoTemEsperado confere, sem servidor, que os casos são válidos e que esperado/ tem exatamente os mesmos
-// casos, na mesma ordem: caso novo sem esperado gravado do .NET não passa.
+// casos, na mesma ordem: caso novo sem esperado gravado não passa.
 func TestCadaCasoTemEsperado(t *testing.T) {
 	nomes, arquivos, err := lerCasos("casos")
 	if err != nil {
@@ -162,7 +162,7 @@ func TestCadaCasoTemEsperado(t *testing.T) {
 	for _, nome := range nomes {
 		dados, err := os.ReadFile(filepath.Join("esperado", nome+".json"))
 		if err != nil {
-			t.Errorf("%s: sem esperado gravado (rodar-dotnet.sh --atualizar)", nome)
+			t.Errorf("%s: sem esperado gravado (rodar.sh --atualizar)", nome)
 			continue
 		}
 		lista, err := decodificar(dados)
@@ -177,7 +177,7 @@ func TestCadaCasoTemEsperado(t *testing.T) {
 			roteiro = append(roteiro, c.Nome)
 		}
 		if !slices.Equal(gravados, roteiro) {
-			t.Errorf("%s: os casos de esperado/ não são os de casos/ (regrave com rodar-dotnet.sh --atualizar):\n  casos:    %q\n  esperado: %q",
+			t.Errorf("%s: os casos de esperado/ não são os de casos/ (regrave com rodar.sh --atualizar):\n  casos:    %q\n  esperado: %q",
 				nome, roteiro, gravados)
 		}
 	}

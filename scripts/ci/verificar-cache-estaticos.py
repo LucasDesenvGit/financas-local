@@ -2,7 +2,8 @@
 """
 #305: confere a regra que dá cache de um ano ("immutable") aos arquivos do build do Angular com hash no nome.
 
-A regra fica em src/backend/Financas.Api/Program.cs (arquivoComHash) e é lida de lá, sem cópia que possa ficar
+A regra fica em src/backend-go/internal/servidor/estaticos.go (arquivoComHash; até a #86, no Program.cs do .NET)
+e é lida de lá, sem cópia que possa ficar
 desatualizada. A regra antiga, -[A-Z0-9]{8}, só aceitava maiúsculas e números; o esbuild do Angular gera o hash com
 minúsculas, "_" e "-" (chunk-BZ-xW7Tm.js), e só 3 dos 35 arquivos recebiam o cache longo.
 
@@ -18,7 +19,7 @@ import re
 import sys
 
 RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-PROGRAM = os.path.join(RAIZ, 'src', 'backend', 'Financas.Api', 'Program.cs')
+ESTATICOS = os.path.join(RAIZ, 'src', 'backend-go', 'internal', 'servidor', 'estaticos.go')
 BUILD = os.path.join(RAIZ, 'src', 'frontend', 'dist', 'financas-web', 'browser')
 
 COM_HASH = [
@@ -33,10 +34,10 @@ SEM_HASH = [
 
 
 def regra():
-    texto = open(PROGRAM, encoding='utf-8').read()
-    m = re.search(r'var arquivoComHash = new [\w.]*Regex\(@"([^"]+)"', texto)
+    texto = open(ESTATICOS, encoding='utf-8').read()
+    m = re.search(r'var arquivoComHash = regexp\.MustCompile\(`([^`]+)`\)', texto)
     if not m:
-        sys.exit('Não achei a regra arquivoComHash no Program.cs (mudou de nome? atualize este script).')
+        sys.exit('Não achei a regra arquivoComHash no estaticos.go (mudou de nome? atualize este script).')
     return re.compile(m.group(1))
 
 

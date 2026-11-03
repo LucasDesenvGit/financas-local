@@ -11,8 +11,9 @@ import (
 	"unicode/utf8"
 )
 
-// Cabeçalhos de segurança iguais aos do CabecalhosSegurancaMiddleware (src/backend/Financas.Api/Seguranca/
-// Seguranca.cs). Um teste lê o Seguranca.cs e confere que são os mesmos: ele continua sendo a fonte até a #86.
+// Cabeçalhos de segurança, os mesmos do CabecalhosSegurancaMiddleware do .NET. Desde a #86, esta é a fonte: o
+// TestCabecalhosDeSeguranca fixa os valores, e os testes no navegador (testes-navegador/servidor.mjs) leem a csp
+// daqui. Mudar um deles é decisão de segurança (ADR).
 const csp = "default-src 'self'; " +
 	"script-src 'self'; " +
 	"style-src 'self' 'unsafe-inline'; " +

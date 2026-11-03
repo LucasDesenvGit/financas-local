@@ -2,7 +2,7 @@
    Banco fictício dos testes de contrato (#72, ADR 0049).
 
    DADOS INVENTADOS: nada aqui é de uma pessoa de verdade (o repositório é
-   compartilhado). Montado por rodar-dotnet.sh depois de banco/01-estrutura.sql,
+   compartilhado). Montado por rodar.sh depois de banco/01-estrutura.sql,
    das colunas do 2-criar-banco.sh e de banco/02-dados-iniciais.sql.
 
    Datas: o contrato roda com o relógio em 2026-10-15 01:00 UTC, que em
@@ -16,7 +16,7 @@
    GUID em maiúsculas, booleano e enum em INTEGER.
 
    Mudou este arquivo? Regrave os esperados de todos os assuntos
-   (rodar-dotnet.sh --atualizar) e confira a diferença no PR.
+   (rodar.sh --atualizar) e confira a diferença no PR.
    ===================================================================== */
 
 /* As datas que o 02-dados-iniciais.sql grava com a hora da montagem ('now') ficam fixas: senão, mudam a cada execução. */

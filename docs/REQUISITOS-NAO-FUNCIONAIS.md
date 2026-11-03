@@ -45,7 +45,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 | Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `EsquemaBanco` | Medida no código |
 | Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts e no `.msi` |
 | Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar. Investimentos abre, mas cada abertura espera a falha do Banco Central (#534) | À mão | Sem medida. Investimentos: ~4,1 s por abertura com a saída numa porta fechada, no Windows |
-| Go fora do ar | Rotas do Go | 503 com mensagem, e reinício sozinho | Passo 9 do `scripts/ci/testar-go-atras-do-dotnet.sh` | Conferida na CI |
+| Site fora do ar | O serviço | Reinício sozinho | A recuperação do serviço: `Restart=` da unidade do systemd e o `ServiceConfig` do `.msi` | Sem teste desde a #86 (o teste era do Go atrás do .NET, que voltava sozinho) |
 
 ## Portabilidade
 

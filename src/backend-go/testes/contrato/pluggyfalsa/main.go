@@ -5,7 +5,7 @@
 // "<nome>.2.json", se existir: é a transação que mudou entre uma sincronização e a outra.
 //
 // O certificado é gerado aqui, com validade larga, porque o .NET roda com o relógio do contrato; a raiz vai para o arquivo
-// de -certificado, que o rodar-dotnet.sh passa em SSL_CERT_FILE.
+// de -certificado, que o rodar.sh passa em SSL_CERT_FILE.
 package main
 
 import (

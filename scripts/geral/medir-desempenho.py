@@ -3,22 +3,25 @@
 
 As metas e o que fazer com os números estão em docs/REQUISITOS-NAO-FUNCIONAIS.md.
 
-Roda sobre uma API já publicada, numa pasta temporária e numa porta própria, com o banco fictício do
+Roda sobre o site já publicado (o financas-go, #86), numa pasta temporária e numa porta própria, com o banco fictício do
 contrato (src/backend-go/testes/contrato/dados/base.sql) e as transações dele repetidas pelos últimos
 anos. Não toca na pasta dados/ nem no site instalado, e a saída para a internet vai para uma porta
 que recusa na hora: nada de dado real entra, nada sai.
 
-Uso (a pasta tem de ter o financas-go ao lado da API, como na publicação):
-    dotnet publish src/backend/Financas.Api -c Release -o <pasta>
+Uso (a pasta publicada, ou uma com o financas-go e o appsettings.json):
     (cd src/backend-go && CGO_ENABLED=0 go build -trimpath -o <pasta>/financas-go ./cmd/financas)
+    cp src/backend-go/appsettings.json <pasta>/
+    cp -r src/frontend/dist/financas-web/browser <pasta>/wwwroot   # depois do npm run build
     python3 scripts/geral/medir-desempenho.py --api <pasta>
+
+Com a pasta do site instalado (publicado/api), o banco, as chaves e o certificado dela não são usados: o Go
+recebe outros pelas opções.
 """
 import argparse
 import datetime
 import http.client
 import json
 import os
-import secrets
 import shutil
 import socket
 import sqlite3
@@ -35,7 +38,7 @@ RAIZ = Path(__file__).resolve().parents[2]
 BASE_SQL = RAIZ / "src/backend-go/testes/contrato/dados/base.sql"
 LOGIN = "ana.teste"
 SENHA = "Senha-Forte-123"
-SEM_VERIFICAR = ssl._create_unverified_context()  # só 127.0.0.1, com o certificado descartável desta rodada
+SEM_VERIFICAR = ssl._create_unverified_context()  # só 127.0.0.1, com o certificado em memória desta rodada
 
 
 def telas(hoje):
@@ -99,15 +102,18 @@ def internet_recusada():
     return f"http://127.0.0.1:{servidor.getsockname()[1]}"
 
 
-def subir(api, ambiente):
-    nome = "Financas.Api.exe" if os.name == "nt" else "Financas.Api"
-    return subprocess.Popen([str(api / nome)], cwd=api, env=ambiente,
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def subir(api, pasta, porta, ambiente):
+    """O Go com a linha do serviço, mas com o banco, as chaves e um certificado em memória desta rodada."""
+    nome = "financas-go.exe" if os.name == "nt" else "financas-go"
+    return subprocess.Popen([str(api / nome), "-pasta", str(api), "-endereco", f"127.0.0.1:{porta}",
+                             "-certificado-temporario", "-banco", str(pasta / "dados/sql/FinancasLocal.db"),
+                             "-chaves", str(pasta / "dados/chaves"), "-aplicar-esquema", "-rotinas-de-partida"],
+                            cwd=api, env=ambiente, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def parar(processo):
     if os.name == "nt":
-        # Pelo PID deste processo, com o Go que é filho dele. Nunca pelo nome: o site instalado tem o mesmo nome.
+        # Pelo PID deste processo. Nunca pelo nome: o site instalado tem o mesmo nome.
         subprocess.run(["taskkill", "/PID", str(processo.pid), "/T", "/F"], capture_output=True)
     else:
         processo.terminate()
@@ -119,11 +125,11 @@ def esperar_site(sessao, processo):
     inicio = time.perf_counter()
     while time.perf_counter() - inicio < 120:
         if processo.poll() is not None:
-            sys.exit(f"A API parou ao iniciar (código {processo.returncode}).")
+            sys.exit(f"O site parou ao iniciar (código {processo.returncode}).")
         if sessao.responde():
             return time.perf_counter() - inicio
         time.sleep(0.05)
-    sys.exit("A API não respondeu em 120 s.")
+    sys.exit("O site não respondeu em 120 s.")
 
 
 def criar_volume(banco, anos, por_mes, hoje):
@@ -157,25 +163,12 @@ def medir(args, pasta):
     (pasta / "dados/sql").mkdir(parents=True)
     (pasta / "dados/chaves").mkdir(parents=True)
     banco = pasta / "dados/sql/FinancasLocal.db"
-    senha_pfx = secrets.token_urlsafe(18)
-    subprocess.run([args.dotnet, "dev-certs", "https", "-ep", str(pasta / "teste.pfx"), "-p", senha_pfx],
-                   check=True, capture_output=True)
-    url = f"https://127.0.0.1:{args.porta}"
     proxy = internet_recusada()
-    ambiente = dict(
-        os.environ,
-        ASPNETCORE_ENVIRONMENT="Production",
-        Kestrel__Endpoints__Https__Url=url,
-        Kestrel__Endpoints__Https__Certificate__Path=str(pasta / "teste.pfx"),
-        Kestrel__Endpoints__Https__Certificate__Password=senha_pfx,
-        Banco__Caminho=str(banco),
-        Seguranca__PastaChaves=str(pasta / "dados/chaves"),
-        HTTPS_PROXY=proxy, HTTP_PROXY=proxy, NO_PROXY="127.0.0.1",
-    )
+    ambiente = dict(os.environ, HTTPS_PROXY=proxy, HTTP_PROXY=proxy, NO_PROXY="127.0.0.1")
 
     # A primeira partida cria o banco, como numa instalação nova.
     sessao = Sessao(args.porta)
-    processo = subir(api, ambiente)
+    processo = subir(api, pasta, args.porta, ambiente)
     try:
         esperar_site(sessao, processo)
         if sessao.enviar("/api/auth/configurar", {"login": LOGIN, "senha": SENHA}) not in (200, 204):
@@ -190,7 +183,7 @@ def medir(args, pasta):
     partidas = []
     for _ in range(args.vezes):
         sessao = Sessao(args.porta)
-        processo = subir(api, ambiente)
+        processo = subir(api, pasta, args.porta, ambiente)
         try:
             partidas.append(esperar_site(sessao, processo))
         finally:
@@ -198,17 +191,11 @@ def medir(args, pasta):
     print("Partida: " + ", ".join(f"{p:.2f} s" for p in partidas) + f" (mediana {statistics.median(partidas):.2f} s)")
 
     sessao = Sessao(args.porta)
-    processo = subir(api, ambiente)
+    processo = subir(api, pasta, args.porta, ambiente)
     try:
         esperar_site(sessao, processo)
         if sessao.enviar("/api/auth/entrar", {"login": LOGIN, "senha": SENHA}) != 200:
             sys.exit("Não deu para entrar com o usuário de teste.")
-        for _ in range(60):  # o Go sobe depois do .NET
-            if sessao.pedir("GET", "/api/go/saude") == 200:
-                break
-            time.sleep(0.5)
-        else:
-            sys.exit("O Go não subiu atrás do .NET em 30 s.")
         for tela, chamadas in telas(hoje).items():
             tempos = {}
             for caminho in chamadas:
@@ -229,8 +216,7 @@ def medir(args, pasta):
 
 def main():
     entrada = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    entrada.add_argument("--api", required=True, help="pasta publicada, com o financas-go ao lado")
-    entrada.add_argument("--dotnet", default="dotnet", help="usado só para gerar o certificado descartável")
+    entrada.add_argument("--api", required=True, help="pasta publicada, com o financas-go e o appsettings.json")
     entrada.add_argument("--porta", type=int, default=5461)
     entrada.add_argument("--anos", type=int, default=5)
     entrada.add_argument("--por-mes", type=int, default=150)
