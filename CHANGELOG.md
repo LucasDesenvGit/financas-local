@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.68.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O Go sozinho na frente roda tudo o que o .NET roda** (#85, parte 2; épico #70; ADR 0049). Ele passa a rodar, sem precisar de configuração, as tarefas em segundo plano: câmbio, cripto e a sincronização do Open Finance. Um Client Secret que ele não consegue ler, por ter sido gravado pela versão em .NET, aparece como não configurado na tela do Open Finance, para ser informado de novo, em vez de "configurado" com a sincronização falhando.
+
 ## [2.67.1] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação

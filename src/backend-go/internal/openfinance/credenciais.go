@@ -11,6 +11,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/respostas"
+	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/segredos"
 	"github.com/LucasDesenvGit/financas-local/src/backend-go/internal/transferencias"
 )
 
@@ -28,9 +29,14 @@ func (s *Servico) lerConfiguracao(ctx context.Context) (d configuracaoDto, err e
 	if d.ClientId, err = s.config.Obter(ctx, chaveClientId); err != nil {
 		return d, err
 	}
-	if d.SecretConfigurado, err = s.config.Existe(ctx, chaveClientSecret); err != nil {
+	// #85: o Client Secret só conta como configurado se o Go o lê: texto puro (sem a marca) ou do esquema do Go. O
+	// gravado pelo .NET (Data Protection) aparece como não configurado, e a tela pede para informá-lo de novo. Olha só
+	// o valor gravado: não abre (nem cria) a chave.
+	gravado, protegido, err := s.config.SegredoGravado(ctx, chaveClientSecret)
+	if err != nil {
 		return d, err
 	}
+	d.SecretConfigurado = gravado != nil && (!protegido || segredos.GravadoPeloGo(*gravado))
 	if d.IntervaloHoras, err = s.config.ObterInteiro(ctx, chaveIntervaloHoras, 6); err != nil {
 		return d, err
 	}

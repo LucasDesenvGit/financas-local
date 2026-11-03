@@ -247,3 +247,32 @@ func TestObterData(t *testing.T) {
 		}
 	}
 }
+
+// Regra (#85): SegredoGravado devolve a linha como está, protegida ou não, sem decifrar; sem linha ou sem valor, nil.
+func TestSegredoGravado(t *testing.T) {
+	db := testeapoio.NovoBanco(t)
+	ctx := t.Context()
+	if _, err := db.ExecContext(ctx, `INSERT INTO "Configuracao" VALUES ('Protegido', 'CfDJ8...', 1, '2026-10-01 00:00:00'),
+		('Puro', 'texto', 0, '2026-10-01 00:00:00'), ('Vazio', NULL, 1, '2026-10-01 00:00:00')`); err != nil {
+		t.Fatal(err)
+	}
+	s := Novo(db, testeapoio.RelogioDosTestes())
+	casos := []struct {
+		chave     string
+		valor     string
+		protegido bool
+	}{{"Protegido", "CfDJ8...", true}, {"Puro", "texto", false}, {"Vazio", "", true}, {"Nao.Existe", "", false}}
+	for _, c := range casos {
+		v, protegido, err := s.SegredoGravado(ctx, c.chave)
+		if err != nil {
+			t.Fatalf("%s: %v", c.chave, err)
+		}
+		got := ""
+		if v != nil {
+			got = *v
+		}
+		if got != c.valor || protegido != c.protegido {
+			t.Errorf("SegredoGravado(%s) = %q, %v; quero %q, %v", c.chave, got, protegido, c.valor, c.protegido)
+		}
+	}
+}

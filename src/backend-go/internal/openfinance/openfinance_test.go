@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -172,6 +173,25 @@ func TestObterConfiguracao(t *testing.T) {
 			t.Errorf("o segredo saiu na resposta: %s", r.Corpo)
 		}
 	})
+	// Regra (#85): o Client Secret protegido só conta como configurado se é do esquema do Go ("v2:"); o do .NET (Data
+	// Protection) aparece como não configurado, para a tela pedir de novo.
+	for _, caso := range []struct {
+		nome, valor string
+		quero       bool
+	}{{"protegido pelo .NET", "CfDJ8AAAgravadoPeloDotnet", false}, {"protegido pelo Go", "v2:AAAA", true}} {
+		t.Run(caso.nome, func(t *testing.T) {
+			c := novoCenario(t)
+			if _, err := c.db.Exec(`INSERT INTO "Configuracao" ("Chave", "Valor", "Protegido", "AtualizadoEm") VALUES (?, ?, 1, '2026-01-01 00:00:00')`,
+				chaveClientSecret, caso.valor); err != nil {
+				t.Fatal(err)
+			}
+			r := c.chamar(t, "GET", "/api/open-finance/configuracao", "")
+			conferirStatus(t, r, 200)
+			if quero := `"secretConfigurado":` + strconv.FormatBool(caso.quero); !strings.Contains(string(r.Corpo), quero) {
+				t.Errorf("quero %s: %s", quero, r.Corpo)
+			}
+		})
+	}
 	t.Run("número que não se lê vale o padrão", func(t *testing.T) {
 		c := novoCenario(t)
 		c.definir(t, chaveIntervaloHoras, "seis")

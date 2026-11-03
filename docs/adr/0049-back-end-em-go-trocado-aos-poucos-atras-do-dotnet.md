@@ -210,3 +210,9 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - O "tipo da exceção" da assinatura, em Go, é o tipo do erro mais de dentro da cadeia do `%w` que não seja genérico (`errors.New`, `fmt.Errorf`, `errors.Join`): o atributo `error` do log vai para o detalhe, e não para a mensagem.
   - **Gerenciador:** a [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md), a [0033](0033-gerenciador-no-linux-com-avalonia.md) e a [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) mudam quando a #276 decidir como ele vai para o Go.
   - **Todo PR do épico** traz a seção "🎓 Aula rápida". A skill `migrar-para-go` e o agente `dev-go` do Claude Code seguem esta ADR.
+
+## Atualização de 2026-11-02: o Go sozinho completo (issue #85, parte 2)
+
+- **Todas as tarefas em segundo plano:** câmbio, cripto e a sincronização do Open Finance, como o .NET. O `Go:Tarefas` continua valendo só atrás do .NET, onde diz quais tarefas o .NET deixou para o Go. Sozinho na frente, não há mais ninguém para rodá-las (`tarefas.Todas`). A partida das tarefas virou uma função só (`iniciarTarefas`), usada pelos dois caminhos, e a sincronização divide a trava com as rotas pela mesma instância (`api.Montar`).
+- **O segredo que o Go não lê aparece como não configurado:** o `GET /api/open-finance/configuracao` só diz `secretConfigurado: true` quando o Client Secret é texto puro ou do esquema do Go (`v2:`). O gravado pelo .NET (Data Protection) aparece como não configurado, e a tela pede para informá-lo de novo, em vez de dizer "configurado" enquanto a sincronização não consegue usá-lo. Para isso, o Go olha só o valor gravado (`configuracao.SegredoGravado` e `segredos.GravadoPeloGo`), sem abrir nem criar a chave. *Diferença consciente do .NET,* que diz `true` sempre que há valor: o contrato não a vê, porque o banco dele não tem segredo gravado pelo .NET.
+

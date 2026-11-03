@@ -212,3 +212,14 @@ func TestTardio(t *testing.T) {
 		t.Error("decifrou sem a chave")
 	}
 }
+
+// Regra (#85): só o valor com "v2:" no começo é do esquema do Go; o do .NET (Data Protection), vazio ou com "v2:" no
+// meio não é.
+func TestGravadoPeloGo(t *testing.T) {
+	t.Parallel()
+	for gravado, quero := range map[string]bool{"v2:AAAA": true, "v2:": true, "CfDJ8AAAA": false, "": false, "xv2:AAAA": false, "V2:AAAA": false} {
+		if GravadoPeloGo(gravado) != quero {
+			t.Errorf("GravadoPeloGo(%q) = %v, quero %v", gravado, !quero, quero)
+		}
+	}
+}
