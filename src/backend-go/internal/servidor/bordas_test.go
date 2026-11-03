@@ -109,6 +109,12 @@ func TestPastaDoSite(t *testing.T) {
 	if semBarra.Code == http.StatusOK && !strings.Contains(semBarra.Body.String(), "<title>Finanças</title>") {
 		t.Errorf("/pasta sem barra: 200 sem ser o index.html do site: %q", semBarra.Body.String())
 	}
+	// Uma pasta com nome de arquivo de tipo conhecido (testdata/wwwroot/diretorio.js/) chega a ser aberta: tem de ser
+	// recusada por ser pasta, e, com "." no nome, não cai no index.html do site: 401 sem corpo.
+	pasta := pedir(t, h, "GET", "/diretorio.js", "127.0.0.1:5443")
+	if pasta.Code != http.StatusUnauthorized || pasta.Body.Len() != 0 {
+		t.Errorf("/diretorio.js: %d %q; esperado 401 sem corpo", pasta.Code, pasta.Body.String())
+	}
 }
 
 func TestSegredoDoModoAtras(t *testing.T) {
