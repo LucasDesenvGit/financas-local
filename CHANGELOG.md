@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O site passa a rodar no back-end em Go, sem o .NET** (#85; épico #70; ADR 0049). É mais leve: o instalador `.msi` cai de 53 MB para 13 MB, a pasta instalada de 150 MB para 35 MB, e a memória do site de cerca de 150 MB para cerca de 18 MB. As telas e os números são os mesmos: o ensaio comparou 92 de 93 telas iguais, e a sincronização com a Pluggy grava o mesmo que antes.
+  - **O que você precisa fazer, uma vez:** depois de atualizar, entre de novo com o seu usuário e a sua senha (a senha não muda) e informe outra vez o **Client Secret da Pluggy**, em Open Finance, e o **token da brapi**, em Investimentos, se usar. A versão nova não lê os segredos gravados pela anterior; até você informar, o Client Secret aparece como não configurado e a sincronização não roda.
+  - **Se algo der errado:** a atualização pelos scripts guarda uma cópia do banco antes e volta sozinha para a versão em .NET se o site não subir. Para voltar à mão: `scripts/geral/voltar-para-dotnet.sh` (no Windows, `scripts\windowsoltar-para-dotnet.ps1`); pelo `.msi`, desinstale (os dados ficam) e instale o da versão 2.x. Na volta, os dois segredos precisam ser informados de novo.
+
 ## [2.69.0] — 2026-11-02 · desenvolvimento
 
 ### Funcionalidades

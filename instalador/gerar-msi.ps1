@@ -1,6 +1,6 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador (precisa do .NET 10 SDK, so para a API ate a inversao, #85; com -SoGo, nao. Precisa tambem do Go
+    no seu computador (o .NET 10 SDK so com -ComDotnet, o pacote com a API em .NET da versao 2. Precisa do Go
     da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod, do Node.js e do WiX 5.0.2, pelo
     wix-cli-x64.msi do GitHub Releases do WiX, que ja traz as extensoes UI e Util e nao pede o .NET, #446:
     https://github.com/wixtoolset/wix/releases/tag/v5.0.2; confira o SHA-256 do WIX_SHA256 do versao.yml).
@@ -11,8 +11,8 @@
     .\instalador\gerar-msi.ps1 -SoPacote            # reaproveita a pasta publicada e so gera o .msi
     .\instalador\gerar-msi.ps1 -Revisao 57          # versao de desenvolvimento: X.Y.Z-dev.57 no site e no
                                                     # gerenciador, X.Y.Z.57 no .msi (a CI usa no develop)
-    .\instalador\gerar-msi.ps1 -SoGo                # #277: sem a API em .NET; o servico e o financas-go.exe
-                                                    # sozinho (preparado para a inversao, #85)
+    .\instalador\gerar-msi.ps1 -ComDotnet           # o pacote da versao 2: a API em .NET na frente e o Go atras
+                                                    # dela; desde a inversao (#85), o padrao e o Go sozinho
 
     Saida: saida-instalador\FinancasLocal-<versao>.msi (ou -<versao>-dev.<revisao>.msi) e saida-instalador\SHA256SUMS.txt.
     O .msi troca qualquer instalacao da mesma versao X.Y.Z (AllowSameVersionUpgrades): a de desenvolvimento e a do
@@ -24,8 +24,10 @@ param(
     [switch]$SoPacote,
     [string]$Saida = "",
     [int]$Revisao = 0,
-    [switch]$SoGo
+    [switch]$ComDotnet
 )
+# #85 (ADR 0049): desde a inversao, o pacote e o Go sozinho; -ComDotnet gera o da versao 2 (voltar, testar a troca).
+$SoGo = -not $ComDotnet
 
 $ErrorActionPreference = "Stop"
 $Raiz = Split-Path -Parent $PSScriptRoot
@@ -69,11 +71,11 @@ if (-not $SoPacote) {
     if (-not (Test-Path -LiteralPath (Join-Path $dist "index.html"))) { throw "Front-end compilado nao encontrado em $dist." }
 
     if ($SoGo) {
-        # #277, parte 4: sem a API em .NET. O Go le os mesmos appsettings (o geral, da API, e o Production, abaixo) e o
+        # #85: sem a API em .NET. O Go le os mesmos appsettings (o geral, da API, e o Production, abaixo) e o
         # configuracao.json da pasta de dados; muda so quem e o servico (FinancasLocal.wxs, SoGo).
         Copy-Item -LiteralPath (Join-Path $Raiz "src\backend\Financas.Api\appsettings.json") -Destination $Publicado -Force
     } else {
-        # A API, self-contained: o computador nao precisa do .NET instalado. Ela fica na frente ate a inversao (#85).
+        # -ComDotnet: a API, self-contained (o computador nao precisa do .NET instalado), na frente, como na versao 2.
         $projeto = "src\backend\Financas.Api\Financas.Api.csproj"
         Etapa "Publicando $projeto"
         Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",

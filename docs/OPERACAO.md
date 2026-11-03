@@ -116,7 +116,7 @@ Os erros mais comuns do instalador estão em [Problemas comuns](PROBLEMAS-COMUNS
 
 ### Pelos scripts
 
-**O Go na frente não subiu?** Com `--backend go` (#85), o script volta sozinho para o .NET. Para voltar depois, à mão, rode `scripts/geral/voltar-para-dotnet.sh` (no Windows, `scripts\windowsoltar-para-dotnet.ps1`). Antes da troca, o script guarda uma cópia do banco em `dados/backups/FinancasLocal-antes-do-go-*.db`.
+**O Go na frente não subiu?** Desde a 3.0.0 (#85), o serviço é o Go, e o script volta sozinho para o .NET se ele não responder. Para voltar depois, à mão, rode `scripts/geral/voltar-para-dotnet.sh` (no Windows, `scripts\windowsoltar-para-dotnet.ps1`). Antes da troca, o script guarda uma cópia do banco em `dados/backups/FinancasLocal-antes-do-go-*.db`.
 
 
 - **Windows:** o `instalar-windows.cmd` volta sozinho para a versão anterior se a nova não subir. O log fica em `instaladores\instalacao-windows.log`.

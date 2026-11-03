@@ -234,3 +234,14 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
 - **Todas as tarefas em segundo plano:** câmbio, cripto e a sincronização do Open Finance, como o .NET. O `Go:Tarefas` continua valendo só atrás do .NET, onde diz quais tarefas o .NET deixou para o Go. Sozinho na frente, não há mais ninguém para rodá-las (`tarefas.Todas`). A partida das tarefas virou uma função só (`iniciarTarefas`), usada pelos dois caminhos, e a sincronização divide a trava com as rotas pela mesma instância (`api.Montar`).
 - **O segredo que o Go não lê aparece como não configurado:** o `GET /api/open-finance/configuracao` só diz `secretConfigurado: true` quando o Client Secret é texto puro ou do esquema do Go (`v2:`). O gravado pelo .NET (Data Protection) aparece como não configurado, e a tela pede para informá-lo de novo, em vez de dizer "configurado" enquanto a sincronização não consegue usá-lo. Para isso, o Go olha só o valor gravado (`configuracao.SegredoGravado` e `segredos.GravadoPeloGo`), sem abrir nem criar a chave. *Diferença consciente do .NET,* que diz `true` sempre que há valor: o contrato não a vê, porque o banco dele não tem segredo gravado pelo .NET.
 
+## Atualização de 2026-11-02: a inversão, o Go na frente como padrão (issue #85, parte 4)
+
+**Decisão do usuário (02/11):** depois do ensaio, o Go na frente vira o padrão para todos, já, sem a semana de observação que a #85 previa, e na versão **3.0.0**. Quem atualiza precisa fazer algo à mão, uma vez: entrar de novo e informar os segredos.
+
+- **O ensaio:** numa cópia do banco real, 92 de 93 telas deram respostas iguais. Foram 24 meses de painel, categorias e maiores despesas, o fluxo, o anual de 3 anos, a projeção, os investimentos, a carteira, as reservas, os empréstimos e o Open Finance. A única diferença é o `secretConfigurado` da parte 2, que é de propósito. A sincronização real também foi comparada na #593, sem nenhuma diferença de valor.
+- **Scripts:** sem `dados/backend`, o padrão é `go`. Isso vale para instalação nova e para quem vem da 2.x, que passa para o Go na primeira atualização, com a cópia do banco antes e a volta automática. Quem escolheu `dotnet` (o arquivo) continua no .NET.
+- **`.msi`:** o pacote publicado é o "só Go" (`gerar-msi.ps1` sem opção). O da 2.x sai com `-ComDotnet`, e a CI o usa para testar a atualização do `.msi` com o .NET para o "só Go". O `configurar.ps1` reconhece a instalação pelos scripts também com o Go na frente (`financas-go.exe` na linha do serviço).
+- **Fica para depois:**
+  - o `Go:Prefixos`/`Go:Tarefas` e o repasse continuam no `appsettings.json`, porque a volta ao .NET (`voltar-para-dotnet`) os usa. Saem com o C#, na #86;
+  - a semana de observação, que vira o uso real a partir desta versão.
+

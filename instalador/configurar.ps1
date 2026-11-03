@@ -74,8 +74,9 @@ function Migrar-Instalacao-Antiga {
     if ($linha -like ("*" + $PastaPrograma.TrimEnd('\') + "*")) { return }   # ja e o servico do .msi
 
     Log "servico $NomeServico da instalacao pelos scripts encontrado: $linha"
-    # Ex.: "D:\...\dotnet.exe" "D:\FinancasLocal\publicado\api\Financas.Api.dll"  ou  ...\Financas.Api.exe
-    $m = [regex]::Match($linha, '([A-Za-z]:\\[^"]*?Financas\.Api\.(dll|exe))')
+    # Ex.: "D:\...\dotnet.exe" "D:\FinancasLocal\publicado\api\Financas.Api.dll"  ou  ...\Financas.Api.exe, ou (#85, o
+    # Go na frente) "D:\FinancasLocal\publicado\api\financas-go.exe" -aplicar-esquema ...: a pasta e a mesma.
+    $m = [regex]::Match($linha, '([A-Za-z]:\\[^"]*?(Financas\.Api\.(dll|exe)|financas-go\.exe))')
     $bancoAntigo = $null; $chavesAntigas = $null
     if ($m.Success) {
         $pastaAntiga = Split-Path -Parent $m.Groups[1].Value

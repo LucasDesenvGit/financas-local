@@ -33,8 +33,8 @@ param(
     [switch]$PularBuild,
     # Nao poe o certificado nas Autoridades Raiz Confiaveis da maquina (o navegador vai avisar).
     [switch]$NaoConfiarCertificado,
-    # #85 (ADR 0049): quem fica na frente como servico. "go": o Go sozinho (volta sozinho para o .NET se nao subir);
-    # "dotnet": a API .NET com o Go atras. Sem o parametro, fica a escolha de antes (dados\backend; padrao dotnet).
+    # #85 (ADR 0049): quem fica na frente como servico. "go" (padrao desde a 3.0.0): o Go sozinho (volta para o .NET se nao subir);
+    # "dotnet": a API .NET com o Go atras (a 2.x). Sem o parametro, fica a escolha de antes (dados\backend; padrao go).
     [ValidateSet("", "go", "dotnet")][string]$Backend = ""
 )
 
@@ -628,11 +628,16 @@ function Publicar {
     $binGo = "`"$(Join-Path $destino "financas-go.exe")`" -aplicar-esquema -rotinas-de-partida"
 
     # #85: a escolha fica em dados\backend, para uma atualizacao sem -Backend manter a de antes.
+    # Sem o arquivo (instalacao nova ou vinda da 2.x), vale o Go, o padrao desde a 3.0.0; o servico de antes era o .NET.
     $arquivoBackend = Join-Path $Dados "backend"
     $backendAnterior = "dotnet"
-    if (Test-Path -LiteralPath $arquivoBackend) { $backendAnterior = (Get-Content -LiteralPath $arquivoBackend -Raw).Trim() }
-    if ($backendAnterior -ne "go") { $backendAnterior = "dotnet" }
-    $usarBackend = if ($Backend) { $Backend } else { $backendAnterior }
+    $padrao = "go"
+    if (Test-Path -LiteralPath $arquivoBackend) {
+        $backendAnterior = (Get-Content -LiteralPath $arquivoBackend -Raw).Trim()
+        if ($backendAnterior -ne "go") { $backendAnterior = "dotnet" }
+        $padrao = $backendAnterior
+    }
+    $usarBackend = if ($Backend) { $Backend } else { $padrao }
     $banco = Join-Path $PastaSql "FinancasLocal.db"
     if ($usarBackend -eq "go" -and $backendAnterior -ne "go" -and (Test-Path -LiteralPath $banco)) {
         # Antes de o Go passar a ficar na frente, uma copia do banco que se confere ao abrir, em dados\backups.
