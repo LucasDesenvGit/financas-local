@@ -130,7 +130,9 @@ jobs:
         run: |
           $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
           if (-not $servico -or $servico.State -ne "Running") { throw "serviço FinancasLocal não está rodando" }
-          if ($servico.PathName -notlike "*Program Files\FinancasLocal\Financas.Api.exe*") { throw "serviço aponta para $($servico.PathName)" }
+          # #85: o serviço é o Go sozinho; a API em .NET não vai no pacote (só no -ComDotnet, testado mais abaixo).
+          if ($servico.PathName -notlike "*Program Files\FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço aponta para $($servico.PathName)" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o pacote levou a API em .NET" }
           foreach ($p in "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db", "$env:ProgramData\FinancasLocal\dados\configuracao.json",
                          "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe", "$env:ProgramFiles\FinancasLocal\wwwroot\index.html",
                          "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") {
@@ -146,7 +148,7 @@ jobs:
           $pastaMb = [math]::Round(($pasta | Measure-Object Length -Sum).Sum / 1MB, 1)
           $gerMb = [math]::Round((Get-Item "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe").Length / 1MB, 1)
           "### Tamanhos`n`n| O quê | Tamanho |`n|---|---|`n| .msi | $msiMb MB |`n| Pasta instalada | $pastaMb MB ($($pasta.Count) arquivos) |`n| Gerenciador | $gerMb MB |" >> $env:GITHUB_STEP_SUMMARY
-          Write-Host "TAMANHO .NET+Go: .msi $msiMb MB, pasta instalada $pastaMb MB ($($pasta.Count) arquivos), gerenciador $gerMb MB"
+          Write-Host "TAMANHO so Go: .msi $msiMb MB, pasta instalada $pastaMb MB ($($pasta.Count) arquivos), gerenciador $gerMb MB"
           # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
           if ($estado.versao -ne "${{ steps.versao.outputs.rotulo }}") { throw "versão do site: $($estado.versao)" }
@@ -156,8 +158,7 @@ jobs:
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
-          # #231: o Go roda atrás do .NET (processo filho) e responde pelo repasse, com o login do .NET.
-          if (-not (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe")) { throw "financas-go.exe não foi instalado" }
+          # #85: o Go sozinho responde, com o login dele.
           $saude = $null
           for ($i = 0; $i -lt 15; $i++) {
             $saude = curl.exe --ssl-no-revoke -fsS -b c.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
@@ -170,15 +171,13 @@ jobs:
           $semLogin = curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" "$env:SITE/api/go/saude"
           if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }
           $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
-          $api = Get-CimInstance Win32_Process -Filter "Name='Financas.Api.exe'"
-          if ($go.Count -ne 1 -or $go[0].ParentProcessId -ne $api.ProcessId) { throw "o Go não é processo filho da API: $($go | Select-Object ProcessId, ParentProcessId | ConvertTo-Json -Compress)" }
-          "Go atrás do .NET: $($saude | ConvertTo-Json -Compress)"
+          if ($go.Count -ne 1) { throw "processos do Go: $($go.Count) (esperado 1)" }
+          if (Get-Process Financas.Api -ErrorAction SilentlyContinue) { throw "a API em .NET está rodando" }
+          "Go sozinho: $($saude | ConvertTo-Json -Compress)"
           # #277: memória com o site no ar e um usuário logado (conjunto de trabalho e bytes privados, o método da #86).
           # Num runner, não num computador de uso: serve para comparar uma versão com a outra, não como número absoluto.
-          foreach ($nome in "Financas.Api", "financas-go") {
-            $proc = Get-Process $nome
-            Write-Host ("MEMORIA .NET+Go {0}: conjunto de trabalho {1} MB, privados {2} MB" -f $nome, [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
-          }
+          $proc = Get-Process financas-go
+          Write-Host ("MEMORIA so Go financas-go: conjunto de trabalho {0} MB, privados {1} MB" -f [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
 
       - name: Trocar pela mesma versão do Release (a de desenvolvimento não fica instalada junto)
         if: github.ref_type != 'tag'
@@ -286,23 +285,30 @@ jobs:
           if (Get-Service FinancasLocal -ErrorAction SilentlyContinue) { throw "o serviço continua registrado" }
           if (Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.FriendlyName -eq "FinancasLocal" }) { throw "o certificado continua confiável" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
-          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o programa continua instalado" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe") { throw "o programa continua instalado" }
           if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
           if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
 
-      # #277, parte 4: o .msi "só Go", preparado para a inversão (#85) e ainda não publicado. Instala sobre os dados que
-      # a desinstalação manteve (o usuário verificador, com a senha da cópia restaurada) e confere que o serviço é o
-      # financas-go.exe sozinho: sem o .NET, o Go aplica o esquema, faz o login e responde.
-      - name: O .msi só com o Go (preparado para a #85)
+      # #85: quem tem o .msi com o .NET (até a 2.x) atualiza para o "só Go". Instala o pacote com o .NET (-ComDotnet)
+      # sobre os dados que a desinstalação manteve (o usuário verificador, com a senha da cópia restaurada) e, por
+      # cima, o pacote de hoje: o serviço passa a ser o financas-go.exe sozinho, e o login do Go entra com a mesma senha.
+      - name: Atualizar do .msi com o .NET para o só Go
         shell: pwsh
         run: |
-          ./instalador/gerar-msi.ps1 -SoGo -PularFront -Saida saida-so-go -Versao ${{ steps.versao.outputs.seguinte }}
-          $msi = "saida-so-go\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
+          ./instalador/gerar-msi.ps1 -ComDotnet -PularFront -Saida saida-com-dotnet -Versao ${{ steps.versao.outputs.seguinte }}
+          $comDotnet = "saida-com-dotnet\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$comDotnet`" /qn /l*v com-dotnet.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja com-dotnet.log)" }
+          if ((Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'").PathName -notlike "*Financas.Api.exe*") { throw "o pacote -ComDotnet não pôs o .NET na frente" }
+          for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
+          if (-not $estado.configurado) { throw "o .NET não viu o usuário" }
+
+          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
           $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v so-go.log" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja so-go.log)" }
           $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
           if ($servico.State -ne "Running" -or $servico.PathName -notlike "*FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço: $($servico.State) $($servico.PathName)" }
-          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o .msi só com o Go levou a API em .NET" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "a atualização deixou a API em .NET" }
           if (Get-Process Financas.Api -ErrorAction SilentlyContinue) { throw "a API em .NET está rodando" }
           $estado = $null
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
@@ -315,11 +321,7 @@ jobs:
           if ($codigo -ne "200") { throw "login no Go sozinho: $codigo" }
           $saude = curl.exe --ssl-no-revoke -fsS -b g.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
           if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador") { throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)" }
-          # #277: as mesmas medidas do pacote de hoje, agora só com o Go.
-          $proc = Get-Process financas-go
-          Write-Host ("MEMORIA so Go financas-go: conjunto de trabalho {0} MB, privados {1} MB" -f [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
-          $arquivos = Get-ChildItem "$env:ProgramFiles\FinancasLocal" -Recurse -File
-          Write-Host ("TAMANHO so Go: .msi {0} MB, pasta instalada {1} MB ({2} arquivos)" -f [math]::Round((Get-Item $msi).Length / 1MB, 1), [math]::Round(($arquivos | Measure-Object Length -Sum).Sum / 1MB, 1), $arquivos.Count)
+          Write-Host ("TAMANHO com .NET: .msi {0} MB" -f [math]::Round((Get-Item $comDotnet).Length / 1MB, 1))
           $p = Start-Process msiexec.exe -ArgumentList "/x `"$msi`" /qn /l*v so-go-desinstalar.log" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "msiexec /x terminou com $($p.ExitCode) (veja so-go-desinstalar.log)" }
           if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }

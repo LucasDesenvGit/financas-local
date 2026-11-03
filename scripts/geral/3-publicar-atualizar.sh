@@ -35,15 +35,19 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-# #85 (ADR 0049): quem fica na frente como servico. "dotnet" (o padrao ate a troca): a API .NET, com o Go atras dela.
-# "go": o Go sozinho, que aplica o esquema e roda as rotinas de partida. A escolha fica em dados/backend, para uma
-# atualizacao sem --backend manter a de antes. O .NET continua publicado ao lado ate a #86: voltar e so trocar o
-# executavel do servico (scripts/geral/voltar-para-dotnet.sh).
+# #85 (ADR 0049): quem fica na frente como servico. "go" (o padrao desde a 3.0.0): o Go sozinho, que aplica o esquema e
+# roda as rotinas de partida. "dotnet": a API .NET, com o Go atras dela (a 2.x). A escolha fica em dados/backend, para
+# uma atualizacao sem --backend manter a de antes; sem o arquivo (instalacao nova ou vinda da 2.x), vale o Go. O .NET
+# continua publicado ao lado ate a #86: voltar e so trocar o executavel do servico (scripts/geral/voltar-para-dotnet.sh).
 arquivo_backend="$Dados/backend"
-backend_anterior="dotnet"
-[[ -f "$arquivo_backend" ]] && backend_anterior="$(tr -d '[:space:]' < "$arquivo_backend")"
-[[ "$backend_anterior" == go || "$backend_anterior" == dotnet ]] || backend_anterior="dotnet"
-backend="${backend_pedido:-$backend_anterior}"
+backend_anterior="dotnet"   # sem o arquivo, o servico era o .NET (a 2.x): a copia do banco antes da troca vale
+padrao="go"
+if [[ -f "$arquivo_backend" ]]; then
+    backend_anterior="$(tr -d '[:space:]' < "$arquivo_backend")"
+    [[ "$backend_anterior" == go || "$backend_anterior" == dotnet ]] || backend_anterior="dotnet"
+    padrao="$backend_anterior"
+fi
+backend="${backend_pedido:-$padrao}"
 
 pasta_front="$Raiz/src/frontend"
 projeto_api="$Raiz/src/backend/Financas.Api/Financas.Api.csproj"
@@ -285,6 +289,7 @@ if [[ "$backend" == go && "$backend_anterior" != go && -f "$PastaSql/FinancasLoc
     ok "copia conferida: $copia_antes"
 fi
 
+servico_registrado=0   # 1 quando o servico foi registrado e iniciado; sem isso (ex.: conteiner sem systemd), nada a testar
 registrar_servico() {
 case "$SO" in
     linux)
@@ -307,6 +312,9 @@ WantedBy=default.target
 EOF
         if command -v systemctl >/dev/null 2>&1; then
             systemctl --user daemon-reload
+            # #85: a volta automatica reinicia o servico logo depois de uma tentativa; sem zerar a contagem, o systemd
+            # recusa com start-limit-hit (por padrao, 5 inicios em 10 s).
+            systemctl --user reset-failed financaslocal.service 2>/dev/null || true
             if systemctl --user is-active --quiet financaslocal.service; then
                 systemctl --user restart financaslocal.service
                 ok 'servico systemd (usuario) atualizado e reiniciado'
@@ -314,6 +322,7 @@ EOF
                 systemctl --user enable --now financaslocal.service
                 ok 'servico systemd (usuario) registrado e iniciado'
             fi
+            servico_registrado=1
             # #277: o systemd do usuario so sobe o site com a sessao aberta; sem login (o computador ligado sem
             # ninguem entrar), so com o linger. O gerenciador tambem avisa.
             if command -v loginctl >/dev/null 2>&1 && \
@@ -356,6 +365,7 @@ EOF
         fi
         if sc.exe start "$nome_servico" >/dev/null 2>&1; then
             ok 'servico do Windows registrado e iniciado'
+            servico_registrado=1
         else
             aviso "Nao foi possivel iniciar o servico automaticamente. Rode manualmente: $comando_start"
         fi
@@ -382,7 +392,7 @@ testar_site() {
     done
     return 1
 }
-if [[ "$backend" == go ]]; then
+if [[ "$backend" == go && "$servico_registrado" -eq 1 ]]; then
     if ! testar_site 15; then
         # #85: o Go na frente nao subiu: volta sozinho para o .NET, que continua publicado ao lado, e avisa.
         aviso 'O Go na frente nao respondeu em 30 s: voltando o servico para o .NET.'

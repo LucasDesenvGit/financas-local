@@ -71,20 +71,17 @@ Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backe
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
 
-### O Go na frente, antes da troca para todos (#85)
+### O Go na frente (#85, desde a 3.0.0)
 
-Até a inversão (#85), o serviço é a API .NET, com o Go atrás dela. Para pôr o Go sozinho na frente e testar:
+Desde a 3.0.0, o serviço é o Go sozinho, sem o .NET. Quem vem da 2.x passa para ele na primeira atualização: antes, o script guarda uma cópia do banco em `dados/backups` e confere se ela abre. Se o Go não responder em 30 s, o script volta sozinho para o .NET e mostra o registro do serviço.
 
 ```bash
-scripts/geral/3-publicar-atualizar.sh --pular-build --backend go     # no Windows: instalar-windows.ps1 -PularBuild -Backend go
 scripts/geral/voltar-para-dotnet.sh                                  # no Windows: scripts\windowsoltar-para-dotnet.ps1
+scripts/geral/3-publicar-atualizar.sh --pular-build --backend go     # no Windows: instalar-windows.ps1 -PularBuild -Backend go
 ```
 
-- Antes da troca, o script guarda uma cópia do banco em `dados/backups` e confere se ela abre.
-- Se o Go não responder em 30 s, o script volta sozinho para o .NET e mostra o registro do serviço.
-- A escolha fica em `dados/backend`, e uma atualização sem `--backend` mantém a de antes.
-- **Ao trocar:** todos são deslogados uma vez, e o Client Secret da Pluggy e o token da brapi precisam ser informados de novo. Cada lado lê só os segredos que ele mesmo gravou.
-- **Ao voltar:** o `voltar-para-dotnet` apaga os segredos gravados pelo Go, porque o .NET não os lê, e avisa para informá-los de novo. O banco não é restaurado: os dois gravam o mesmo formato.
+- **Na troca, uma vez:** todos são deslogados, e o Client Secret da Pluggy (Open Finance) e o token da brapi (Investimentos) precisam ser informados de novo. O Go não lê os segredos gravados pelo .NET, e a tela do Open Finance mostra o Client Secret como não configurado até ele ser informado.
+- **Para voltar ao .NET:** rode o `voltar-para-dotnet`. Ele apaga os segredos gravados pelo Go, que o .NET não lê, e avisa para informá-los de novo. O banco não é restaurado, porque os dois gravam o mesmo formato. A escolha fica em `dados/backend`, e uma atualização sem `--backend` mantém a de antes.
 
 ### Instalado pelos scripts e quer passar para o instalador
 

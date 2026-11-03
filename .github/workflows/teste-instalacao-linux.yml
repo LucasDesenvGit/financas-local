@@ -74,7 +74,9 @@ jobs:
           echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" >> "$GITHUB_ENV"
 
       - name: Instalacao do zero (instalar.sh)
-        run: env PATH="$PATH_LIMPO" bash scripts/geral/instalar.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-1.log"
+        # #85: o padrao e o Go na frente (testado no passo da troca); aqui, o .NET com o Go atras, o modo da 2.x, que os
+        # passos seguintes conferem.
+        run: env PATH="$PATH_LIMPO" bash scripts/geral/instalar.sh --backend dotnet 2>&1 | tee "$RUNNER_TEMP/instalacao-1.log"
 
       - name: Conferir instalacao
         run: |
@@ -225,6 +227,16 @@ jobs:
           [[ "$("$sqlite" dados/sql/FinancasLocal.db "SELECT Valor FROM Configuracao WHERE Chave = 'Cotacao.BrapiToken'")" == CfDJ8teste ]] || { echo "::error::o segredo do .NET foi apagado"; exit 1; }
           "$sqlite" dados/sql/FinancasLocal.db "DELETE FROM Configuracao WHERE Chave IN ('Pluggy.ClientSecret', 'Cotacao.BrapiToken');"
           curl -k -fsS "$site"
+
+          # O padrao (3.0.0): sem dados/backend (instalacao vinda da 2.x), a atualizacao poe o Go na frente, com a copia
+          # do banco antes. Depois, de volta ao .NET para os passos seguintes.
+          rm -f dados/backend dados/backups/FinancasLocal-antes-do-go-*.db
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-5.log"
+          grep -q "ExecStart=$PWD/publicado/api/financas-go" "$unidade" || { echo "::error::o padrao nao pos o Go na frente"; cat "$unidade"; exit 1; }
+          [[ "$(cat dados/backend)" == go ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
+          ls dados/backups/FinancasLocal-antes-do-go-*.db || { echo "::error::sem a copia do banco antes do Go"; exit 1; }
+          curl -k -fsS "$site"
+          env PATH="$PATH_LIMPO" bash scripts/geral/voltar-para-dotnet.sh
 
       - name: Backup (4-backup.sh)
         run: |
