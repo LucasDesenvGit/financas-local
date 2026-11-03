@@ -266,6 +266,22 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "voltar-para-dotnet.ps1 terminou com $LASTEXITCODE" }
           $global:LASTEXITCODE = 0
 
+      # #614: o mesmo pelo Git Bash (scripts/geral/3-publicar-atualizar.sh, o caminho do instalar.sh), que registra o
+      # servico com o sc.exe: a troca para o Go tem de trocar e subir o servico de verdade, e a volta tambem.
+      - name: Troca pelo Git Bash (3-publicar-atualizar.sh, sc.exe)
+        shell: bash
+        run: |
+          linha() { powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Service -Filter \"Name='FinancasLocal'\").PathName"; }
+          site=https://127.0.0.1:5443/api/auth/estado
+          bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/git-bash-go.log"
+          linha | grep -q 'financas-go.exe" -aplicar-esquema -rotinas-de-partida' || { echo "::error::o servico nao e o Go: $(linha)"; exit 1; }
+          [[ "$(tr -d '[:space:]' < dados/backend)" == go ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
+          curl -k -fsS "$site"
+          bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend dotnet 2>&1 | tee "$RUNNER_TEMP/git-bash-dotnet.log"
+          linha | grep -q 'Financas.Api.dll' || { echo "::error::o servico nao voltou ao .NET: $(linha)"; exit 1; }
+          [[ "$(tr -d '[:space:]' < dados/backend)" == dotnet ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
+          curl -k -fsS "$site"
+
       - name: Parar (parar-windows.cmd -Desativar)
         shell: cmd
         env:
