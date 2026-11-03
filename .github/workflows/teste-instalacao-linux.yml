@@ -13,7 +13,7 @@ on:
       - scripts/linux/**
       - banco/**
       - src/gerenciador-go/**
-      - src/backend-go/go.mod
+      - src/backend/go.mod
       - .github/workflows/teste-instalacao-linux.yml
   pull_request:
     branches: [main, develop]
@@ -22,7 +22,7 @@ on:
       - scripts/linux/**
       - banco/**
       - src/gerenciador-go/**
-      - src/backend-go/go.mod
+      - src/backend/go.mod
       - .github/workflows/teste-instalacao-linux.yml
   workflow_dispatch:
 
@@ -159,8 +159,8 @@ jobs:
           unidade="$HOME/.config/systemd/user/financaslocal.service"
           diario() { sudo journalctl _SYSTEMD_USER_UNIT=financaslocal.service --no-pager; }
           grep -q "ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida" "$unidade" || { echo "::error::a unidade nao e o Go"; cat "$unidade"; exit 1; }
-          for _ in $(seq 1 10); do diario | grep -q 'iniciando sozinho' && break; sleep 1; done
-          diario | grep -q 'iniciando sozinho' || { echo "::error::o log do Go nao chegou ao journald"; diario | tail -30; exit 1; }
+          for _ in $(seq 1 10); do diario | grep -q 'msg=iniciando ' && break; sleep 1; done
+          diario | grep -q 'msg=iniciando ' || { echo "::error::o log do Go nao chegou ao journald"; diario | tail -30; exit 1; }
 
           systemctl --user stop financaslocal.service
           if pgrep -af publicado/api/financas-go; then echo "::error::sobrou processo do Go com o servico parado"; exit 1; fi

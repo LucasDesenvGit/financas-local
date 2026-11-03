@@ -23,15 +23,15 @@ jobs:
     timeout-minutes: 60
     defaults:
       run:
-        working-directory: src/backend-go
+        working-directory: src/backend
     steps:
       - uses: actions/checkout@v4
 
       - name: Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       # Os alvos são descobertos pelo nome (FuzzXxx): alvo novo entra sem mexer aqui.
       - name: Fuzz, um alvo por vez
@@ -56,4 +56,4 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: achados-do-fuzz
-          path: src/backend-go/internal/**/testdata/fuzz/
+          path: src/backend/internal/**/testdata/fuzz/

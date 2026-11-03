@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 As regras de ouro do back-end em Go, conferidas pela CI e não só pela revisão (#457, ADR 0049 e ADR 0051). Lê os .go de
-src/backend-go e falha em:
+src/backend e falha em:
 - float64 (e float32, Float64(), ParseFloat...): dinheiro, quantidade e taxa são tipos.Decimal;
 - time.Now: a hora vem do relogio.Relogio (só o internal/relogio chama time.Now), e o teste usa o relogio.Fixo;
 - time.Sleep em _test.go: espere por um sinal (canal, WaitGroup) ou rode dentro do synctest.Test.
@@ -10,7 +10,7 @@ Comentário e texto entre aspas não contam: só o código. Dentro de um synctes
 relógio de mentira e passam sozinhos. O resto só passa com uma exceção escrita, com o motivo, em
 scripts/ci/regras-go-excecoes.txt, no mesmo formato do mutacao-go-equivalentes.txt:
 
-    regra | arquivo (a partir de src/backend-go) | a linha do código, sem os espaços das pontas e sem o comentário | motivo
+    regra | arquivo (a partir de src/backend) | a linha do código, sem os espaços das pontas e sem o comentário | motivo
 
 É pelo texto da linha, e não pelo número: mexeu na linha, a exceção deixa de valer e a regra volta a falhar para
 alguém olhar de novo. Exceção que não casa com nenhuma linha também falha (a lista não acumula lixo). A exceção vale
@@ -19,7 +19,7 @@ para toda linha igual no mesmo arquivo; na dúvida, escreva a exceção para a l
 Limites conhecidos (*julgamento*): conferência por linha, sem os tipos do Go (go/types); um apelido de import
 (`import t "time"`) escapa; time.Since e time.Until, que leem o relógio por dentro, não são conferidos (fora da #457).
 
-Uso (na CI, em src/backend-go):
+Uso (na CI, em src/backend):
   python3 ../../scripts/ci/verificar-regras-go.py
 """
 import argparse
@@ -196,7 +196,7 @@ def main():
         local = f'{arquivo}:{numero}' if numero else (arquivo or os.path.basename(args.excecoes))
         print(f'{local}: {mensagem}')
         if no_github and arquivo and numero:
-            print(f'::error file=src/backend-go/{arquivo},line={numero}::{mensagem}')
+            print(f'::error file=src/backend/{arquivo},line={numero}::{mensagem}')
     if problemas:
         print(f'\n{len(problemas)} problema(s) nas regras de ouro do Go.')
         return 1

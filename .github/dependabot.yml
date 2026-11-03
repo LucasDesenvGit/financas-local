@@ -2,7 +2,7 @@ version: 2
 updates:
   # #231: os módulos do back-end em Go (ADR 0049). O NuGet saiu com o .NET (#86).
   - package-ecosystem: gomod
-    directory: /src/backend-go
+    directory: /src/backend
     schedule: { interval: weekly, day: monday }
     target-branch: develop
     labels: [dependencias, api]

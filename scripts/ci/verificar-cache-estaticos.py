@@ -2,7 +2,7 @@
 """
 #305: confere a regra que dá cache de um ano ("immutable") aos arquivos do build do Angular com hash no nome.
 
-A regra fica em src/backend-go/internal/servidor/estaticos.go (arquivoComHash; até a #86, no Program.cs do .NET)
+A regra fica em src/backend/internal/servidor/estaticos.go (arquivoComHash; até a #86, no Program.cs do .NET)
 e é lida de lá, sem cópia que possa ficar
 desatualizada. A regra antiga, -[A-Z0-9]{8}, só aceitava maiúsculas e números; o esbuild do Angular gera o hash com
 minúsculas, "_" e "-" (chunk-BZ-xW7Tm.js), e só 3 dos 35 arquivos recebiam o cache longo.
@@ -19,7 +19,7 @@ import re
 import sys
 
 RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-ESTATICOS = os.path.join(RAIZ, 'src', 'backend-go', 'internal', 'servidor', 'estaticos.go')
+ESTATICOS = os.path.join(RAIZ, 'src', 'backend', 'internal', 'servidor', 'estaticos.go')
 BUILD = os.path.join(RAIZ, 'src', 'frontend', 'dist', 'financas-web', 'browser')
 
 COM_HASH = [

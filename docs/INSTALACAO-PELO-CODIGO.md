@@ -67,7 +67,7 @@ git pull
 scripts/geral/instalar.sh     # no Windows, num Git Bash aberto como Administrador; no Linux, atualiza também o gerenciador
 ```
 
-Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend-go/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows sem bash, rode o `instalar-windows.cmd` de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
+Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows sem bash, rode o `instalar-windows.cmd` de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
 
@@ -121,11 +121,11 @@ A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de lin
 - Abra `FinancasLocal.sln`. O perfil *Desenvolvimento (Kestrel)* sobe a API em `https://localhost:7443`. Em desenvolvimento, as chaves ficam em `dados\chaves-dev`, então o Client Secret precisa ser informado de novo.
 - **Back-end em Go:** a API sobe o Go como processo filho e repassa a ele as rotas de `Go:Prefixos` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Compile-o para a pasta de saída da API antes de subi-la, e de novo a cada mudança no Go; **sem o `financas-go` em `bin/Debug/net10.0/`, essas rotas respondem 503**:
   ```bash
-  cd src/backend-go
+  cd src/backend
   go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go ./cmd/financas        # Linux
   go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go.exe ./cmd/financas    # Windows
   ```
-  O resto (rodar sozinho, testes, contrato) está no [README do Go](../src/backend-go/README.md).
+  O resto (rodar sozinho, testes, contrato) está no [README do Go](../src/backend/README.md).
 - No front-end, rode `npm start` em `src\frontend`. O Angular abre em `http://localhost:4200` e redireciona `/api` para a API.
 - Sem o .NET 10, o Go e o Node instalados, use as ferramentas portáteis do `1-preparar-ambiente.sh`, pondo-as na frente do PATH (troque o caminho pelo da sua pasta do projeto):
   `$env:PATH = "C:\caminho\financas-local\ferramentas\dotnet;C:\caminho\financas-local\ferramentas\go\bin;C:\caminho\financas-local\ferramentas\node;$env:PATH"`
@@ -152,7 +152,7 @@ financas-local/
 │   ├── linux/            o que só roda no Linux (gerenciador)
 │   └── ci/               o que só a CI usa (verificadores, mutação, cobertura)
 ├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
-├── src/backend-go/        o back-end em Go, atrás da API (ADR 0049)
+├── src/backend/        o back-end em Go, atrás da API (ADR 0049)
 ├── src/frontend/          financas-web (Angular)
 ├── src/gerenciador-go/    Gerenciador em Go (Wails): Windows e Linux
 ├── src/gerenciador-go/    o gerenciador em Go, que vai substituir os dois (ADR 0052)

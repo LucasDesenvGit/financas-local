@@ -5,6 +5,6 @@
 # Mudanças sensíveis: banco, segurança e scripts de instalação.
 /banco/                                  lukunsan2@gmail.com
 /scripts/                                lukunsan2@gmail.com
-/src/backend-go/internal/servidor/       lukunsan2@gmail.com
-/src/backend-go/internal/autenticacao/   lukunsan2@gmail.com
-/src/backend-go/internal/segredos/       lukunsan2@gmail.com
+/src/backend/internal/servidor/       lukunsan2@gmail.com
+/src/backend/internal/autenticacao/   lukunsan2@gmail.com
+/src/backend/internal/segredos/       lukunsan2@gmail.com
