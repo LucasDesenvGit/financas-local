@@ -1,5 +1,5 @@
-// Pacote embutido põe dentro do executável os scripts do esquema do banco, como os EmbeddedResource do
-// Financas.Api.csproj. Os arquivos desta pasta são CÓPIAS geradas pelo go generate ./... a partir do banco/ e do
+// Pacote embutido põe dentro do executável os scripts do esquema do banco (como os EmbeddedResource do
+// Financas.Api.csproj faziam até a #86). Os arquivos desta pasta são CÓPIAS geradas pelo go generate ./... a partir do banco/ e do
 // scripts/geral/2-criar-banco.sh: não edite aqui (veja esquema.Copias).
 //
 // Fica num pacote à parte para o gerador (esquema/gerar) não depender dele: o gerador é quem cria estes arquivos.

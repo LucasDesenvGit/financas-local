@@ -15,7 +15,6 @@ Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Wind
 ## Comandos
 
 ```bash
-dotnet build FinancasLocal.sln -c Release                     # back-end .NET
 cd src/backend-go && go test -race ./...                      # back-end Go ("Antes de subir" do src/backend-go/README.md)
 cd src/frontend && npm run build                              # front-end (produção)
 cd src/frontend && npm run test:tipos && npm test             # Jest

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.3] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O código C# sai do repositório** (#86, parte 4; épico #70). A API em .NET, o `Financas.MigrarSqlite` (a migração do SQL Server), o `FinancasLocal.sln` e as sondas em C# dos testes do Go ficam só na tag `v-ultimo-dotnet`. Os gabaritos que as sondas gravaram continuam valendo, como regressão do Go. Nada muda para quem usa: o site é o Go desde a 3.0.0.
+
 ## [3.2.2] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação
