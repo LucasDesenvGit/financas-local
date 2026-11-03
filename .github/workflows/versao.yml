@@ -39,20 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      # #255: o publish self-contained baixa os pacotes do runtime do win-x64 a cada execução sem isto. #526: a chave
-      # leva a versão do SDK (que decide os pacotes do runtime) e não o Directory.Build.props, que muda em todo PR.
-      - name: Cache dos pacotes NuGet
-        uses: actions/cache@v6
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-msi-${{ steps.dotnet.outputs.dotnet-version }}-${{ hashFiles('**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-msi-
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -130,7 +116,7 @@ jobs:
         run: |
           $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
           if (-not $servico -or $servico.State -ne "Running") { throw "serviço FinancasLocal não está rodando" }
-          # #85: o serviço é o Go sozinho; a API em .NET não vai no pacote (só no -ComDotnet, testado mais abaixo).
+          # #85: o serviço é o Go sozinho; a API em .NET não vai no pacote (#86: nem existe mais).
           if ($servico.PathName -notlike "*Program Files\FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço aponta para $($servico.PathName)" }
           if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o pacote levou a API em .NET" }
           foreach ($p in "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db", "$env:ProgramData\FinancasLocal\dados\configuracao.json",
@@ -287,43 +273,6 @@ jobs:
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
           if (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe") { throw "o programa continua instalado" }
           if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
-          if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
-
-      # #85: quem tem o .msi com o .NET (até a 2.x) atualiza para o "só Go". Instala o pacote com o .NET (-ComDotnet)
-      # sobre os dados que a desinstalação manteve (o usuário verificador, com a senha da cópia restaurada) e, por
-      # cima, o pacote de hoje: o serviço passa a ser o financas-go.exe sozinho, e o login do Go entra com a mesma senha.
-      - name: Atualizar do .msi com o .NET para o só Go
-        shell: pwsh
-        run: |
-          ./instalador/gerar-msi.ps1 -ComDotnet -PularFront -Saida saida-com-dotnet -Versao ${{ steps.versao.outputs.seguinte }}
-          $comDotnet = "saida-com-dotnet\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
-          $p = Start-Process msiexec.exe -ArgumentList "/i `"$comDotnet`" /qn /l*v com-dotnet.log" -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja com-dotnet.log)" }
-          if ((Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'").PathName -notlike "*Financas.Api.exe*") { throw "o pacote -ComDotnet não pôs o .NET na frente" }
-          for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
-          if (-not $estado.configurado) { throw "o .NET não viu o usuário" }
-
-          $msi = "saida-instalador\FinancasLocal-${{ steps.versao.outputs.seguinte }}.msi"
-          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v so-go.log" -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja so-go.log)" }
-          $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
-          if ($servico.State -ne "Running" -or $servico.PathName -notlike "*FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço: $($servico.State) $($servico.PathName)" }
-          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "a atualização deixou a API em .NET" }
-          if (Get-Process Financas.Api -ErrorAction SilentlyContinue) { throw "a API em .NET está rodando" }
-          $estado = $null
-          for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
-          if (-not $estado.configurado) { throw "o Go sozinho não viu o usuário: $($estado | ConvertTo-Json -Compress)" }
-          # O login é o do Go (#75): mesmos cookies e o mesmo hash da senha.
-          curl.exe --ssl-no-revoke -fsS -c g.txt -b g.txt "$env:SITE/api/auth/estado" | Out-Null
-          $xsrf = (Get-Content g.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
-          '{"login":"verificador","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
-          $codigo = curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" -c g.txt -b g.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/entrar"
-          if ($codigo -ne "200") { throw "login no Go sozinho: $codigo" }
-          $saude = curl.exe --ssl-no-revoke -fsS -b g.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
-          if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador") { throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)" }
-          Write-Host ("TAMANHO com .NET: .msi {0} MB" -f [math]::Round((Get-Item $comDotnet).Length / 1MB, 1))
-          $p = Start-Process msiexec.exe -ArgumentList "/x `"$msi`" /qn /l*v so-go-desinstalar.log" -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "msiexec /x terminou com $($p.ExitCode) (veja so-go-desinstalar.log)" }
           if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
 
       - name: Logs do msiexec

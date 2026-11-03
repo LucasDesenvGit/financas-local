@@ -1,0 +1,1 @@
+Pasta com nome de arquivo .js, para o teste da pasta do site (bordas_test.go): ela não pode ser servida como arquivo.

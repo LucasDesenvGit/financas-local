@@ -245,3 +245,11 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
   - o `Go:Prefixos`/`Go:Tarefas` e o repasse continuam no `appsettings.json`, porque a volta ao .NET (`voltar-para-dotnet`) os usa. Saem com o C#, na #86;
   - a semana de observação, que vira o uso real a partir desta versão.
 
+## Atualização de 2026-11-03: a instalação sem o .NET (issue #86, parte 2)
+
+- **Scripts e instalador:** o `1-preparar-ambiente.sh` e o `instalar-windows.ps1` não baixam mais o SDK do .NET, nem conferem a ICU no Linux, que só o .NET pedia. O `3-publicar-atualizar.sh`, o `instalar-windows.ps1` e o `gerar-msi.ps1` publicam só o Go, o front-end e o `appsettings.json`, que passa a morar em `src/backend-go/`.
+- **Sem a escolha:** o `--backend`/`-Backend`, o `dados/backend` (apagado na atualização), o `-ComDotnet` e o `voltar-para-dotnet` saíram, e o `.wxs` não tem mais o `SoGo`. O `parar` perdeu o `--compiladores`, que só encerrava os servidores de build do .NET.
+- **Volta:** não há mais volta automática nem à mão para o .NET pelos scripts. *Julgamento:* com o .NET apagado no fim da #86, o que fica é a tag `v-ultimo-dotnet` (o último `develop` com o .NET), que a mensagem de falha do script indica.
+- **Limpeza:** depois de o site responder, a atualização apaga `ferramentas/dotnet`, `ferramentas/dotnet-home` e `ferramentas/nuget-pacotes`. Se o site não sobe, nada disso é apagado.
+- **Consequência negativa:** quem estava num `.msi` ou instalação da 2.x passa direto para o Go sem a cópia "antes do Go" de `dados/backups`. Continua valendo a cópia de antes de toda atualização: `backups/FinancasLocal-antes-instalacao-*.db` nos scripts e `dados\backups\FinancasLocal-antes-atualizacao-*.db` no `.msi`.
+- **CI:** os testes de instalação conferem que nada do .NET fica, e simulam quem vem da 3.0 (o .NET portátil, a API publicada e o `dados/backend`), com o Go que não sobe (nada é apagado, e a mensagem indica a tag) e com o Go que sobe (tudo sai). O teste do `.msi` com o .NET para o "só Go" saiu com o `-ComDotnet`.

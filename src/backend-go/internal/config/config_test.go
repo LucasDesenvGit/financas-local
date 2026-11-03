@@ -175,3 +175,26 @@ func TestPluggyURLBase(t *testing.T) {
 		t.Errorf("com a variável = %q", obtido)
 	}
 }
+
+// #86: o appsettings.json que os scripts e o .msi publicam mora em src/backend-go. Sozinho, sem o Production, ele
+// tem de dar o site em 127.0.0.1:5443, os parâmetros de login e a Pluggy de hoje.
+func TestAppsettingsDoRepositorio(t *testing.T) {
+	conteudo, err := os.ReadFile(filepath.Join("..", "..", "appsettings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pasta := t.TempDir()
+	escrever(t, pasta, "appsettings.json", string(conteudo))
+	c, err := Carregar(pasta, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Endereco != "127.0.0.1:5443" || c.MinutosSessao != 120 || c.MaximoTentativasLogin != 5 || c.MinutosBloqueio != 15 ||
+		c.PluggyURLBase != "https://api.pluggy.ai/" || c.BancoCaminho != filepath.Join(pasta, "dados", "sql", "FinancasLocal.db") ||
+		c.PastaChaves != filepath.Join(pasta, "dados", "chaves") || c.GoTarefas != "" {
+		t.Errorf("leu %+v", c)
+	}
+	if len(c.HostsPermitidos) != 2 || c.HostsPermitidos[0] != "localhost" || c.HostsPermitidos[1] != "127.0.0.1" {
+		t.Errorf("AllowedHosts = %v", c.HostsPermitidos)
+	}
+}

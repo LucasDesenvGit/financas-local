@@ -80,7 +80,7 @@ baixar_arquivo() {
 }
 
 # Caminho no formato que programas nativos entendem. No Git Bash, $Raiz fica no
-# formato POSIX (ex.: /c/FinancasLocal), que node.exe/dotnet.exe nao entendem
+# formato POSIX (ex.: /c/FinancasLocal), que node.exe/go.exe nao entendem
 # quando o caminho vai dentro de variavel de ambiente ou de um arquivo; la ele
 # vira o formato misto (C:/FinancasLocal).
 caminho_nativo() {
@@ -188,17 +188,10 @@ quem_usa_a_porta() {
     fi
 }
 
-# ---------------------------------------------------------------- Ambiente de build (dotnet/node portateis ou do PATH)
+# ---------------------------------------------------------------- Ambiente de build (node/go portateis ou do PATH)
 configurar_ambiente_build() {
-    local dotnet_bin=dotnet node_bin=node
-    if [[ "$SO" == windows ]]; then dotnet_bin=dotnet.exe; node_bin=node.exe; fi
-
-    if [[ -x "$Ferramentas/dotnet/$dotnet_bin" ]]; then
-        export PATH="$Ferramentas/dotnet:$PATH"
-        export DOTNET_ROOT="$Ferramentas/dotnet"
-    elif ! command -v dotnet >/dev/null 2>&1; then
-        erro_sai 'SDK do .NET nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
-    fi
+    local node_bin=node
+    [[ "$SO" == windows ]] && node_bin=node.exe
 
     if [[ -x "$Ferramentas/node/bin/$node_bin" ]]; then
         export PATH="$Ferramentas/node/bin:$PATH"
@@ -215,7 +208,7 @@ configurar_ambiente_build() {
     if [[ -x "$Ferramentas/go/bin/$go_bin" ]]; then
         export PATH="$Ferramentas/go/bin:$PATH"
     fi
-    # Modulos e cache de compilacao dentro de ferramentas/ (como o NuGet e o npm). GOTOOLCHAIN=local: nunca baixar
+    # Modulos e cache de compilacao dentro de ferramentas/ (como o npm). GOTOOLCHAIN=local: nunca baixar
     # outra versao do Go por conta propria. -modcacherw: o cache de modulos fica apagavel com rm -rf.
     # CGO_ENABLED=0: o executavel nao depende de compilador C (o SQLite e o modernc.org/sqlite, em Go puro).
     # (caminho_nativo: o go.exe nao entende /c/... dentro de variavel de ambiente.)
@@ -226,11 +219,6 @@ configurar_ambiente_build() {
     export GOFLAGS=-modcacherw
     export CGO_ENABLED=0
 
-    export DOTNET_CLI_HOME="$Ferramentas/dotnet-home"
-    export NUGET_PACKAGES="$Ferramentas/nuget-pacotes"
-    export DOTNET_CLI_TELEMETRY_OPTOUT=1
-    export DOTNET_NOLOGO=1
-    export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
     export npm_config_cache="$Ferramentas/npm-cache"
     export npm_config_update_notifier=false
     export NG_CLI_ANALYTICS=false

@@ -1,7 +1,7 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador (o .NET 10 SDK so com -ComDotnet, o pacote com a API em .NET da versao 2. Precisa do Go
-    da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod, do Node.js e do WiX 5.0.2, pelo
+    no seu computador. Precisa do Go da versao do src\backend-go\go.mod e do src\gerenciador-go\go.mod, do
+    Node.js e do WiX 5.0.2, pelo
     wix-cli-x64.msi do GitHub Releases do WiX, que ja traz as extensoes UI e Util e nao pede o .NET, #446:
     https://github.com/wixtoolset/wix/releases/tag/v5.0.2; confira o SHA-256 do WIX_SHA256 do versao.yml).
 
@@ -11,8 +11,6 @@
     .\instalador\gerar-msi.ps1 -SoPacote            # reaproveita a pasta publicada e so gera o .msi
     .\instalador\gerar-msi.ps1 -Revisao 57          # versao de desenvolvimento: X.Y.Z-dev.57 no site e no
                                                     # gerenciador, X.Y.Z.57 no .msi (a CI usa no develop)
-    .\instalador\gerar-msi.ps1 -ComDotnet           # o pacote da versao 2: a API em .NET na frente e o Go atras
-                                                    # dela; desde a inversao (#85), o padrao e o Go sozinho
 
     Saida: saida-instalador\FinancasLocal-<versao>.msi (ou -<versao>-dev.<revisao>.msi) e saida-instalador\SHA256SUMS.txt.
     O .msi troca qualquer instalacao da mesma versao X.Y.Z (AllowSameVersionUpgrades): a de desenvolvimento e a do
@@ -23,11 +21,8 @@ param(
     [switch]$PularFront,
     [switch]$SoPacote,
     [string]$Saida = "",
-    [int]$Revisao = 0,
-    [switch]$ComDotnet
+    [int]$Revisao = 0
 )
-# #85 (ADR 0049): desde a inversao, o pacote e o Go sozinho; -ComDotnet gera o da versao 2 (voltar, testar a troca).
-$SoGo = -not $ComDotnet
 
 $ErrorActionPreference = "Stop"
 $Raiz = Split-Path -Parent $PSScriptRoot
@@ -70,17 +65,9 @@ if (-not $SoPacote) {
     $dist = Join-Path $front "dist\financas-web\browser"
     if (-not (Test-Path -LiteralPath (Join-Path $dist "index.html"))) { throw "Front-end compilado nao encontrado em $dist." }
 
-    if ($SoGo) {
-        # #85: sem a API em .NET. O Go le os mesmos appsettings (o geral, da API, e o Production, abaixo) e o
-        # configuracao.json da pasta de dados; muda so quem e o servico (FinancasLocal.wxs, SoGo).
-        Copy-Item -LiteralPath (Join-Path $Raiz "src\backend\Financas.Api\appsettings.json") -Destination $Publicado -Force
-    } else {
-        # -ComDotnet: a API, self-contained (o computador nao precisa do .NET instalado), na frente, como na versao 2.
-        $projeto = "src\backend\Financas.Api\Financas.Api.csproj"
-        Etapa "Publicando $projeto"
-        Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-            "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
-    }
+    # #86: sem a API em .NET. O Go le o appsettings.json dele, o Production (abaixo) e o configuracao.json da
+    # pasta de dados.
+    Copy-Item -LiteralPath (Join-Path $Raiz "src\backend-go\appsettings.json") -Destination $Publicado -Force
 
     # #277 (ADR 0052): o gerenciador e o em Go (src\gerenciador-go), um .exe so, no lugar do C# self-contained. Mantem o
     # nome Financas.Gerenciador.exe: os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuam valendo.
@@ -97,7 +84,7 @@ if (-not $SoPacote) {
         Remove-Item Env:GOOS, Env:GOARCH -ErrorAction SilentlyContinue
     }
 
-    # #231 (ADR 0049): o back-end em Go roda atras da API, como processo filho dela, e fica ao lado dela. Sem cgo
+    # O back-end em Go e o site e o servico (desde a #85; sem o .NET desde a #86). Sem cgo
     # (o SQLite e o modernc.org/sqlite, em Go puro), para Windows x64. A versao entra no executavel pelo -ldflags.
     Etapa "Compilando o back-end em Go"
     if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\backend-go\go.mod para a versao)." }
@@ -128,15 +115,13 @@ if (-not $SoPacote) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "configurar.ps1") -Destination $pastaInstalador -Force
     Copy-Item -LiteralPath (Join-Path $Raiz "src\gerenciador-go\icone.ico") -Destination $pastaInstalador -Force
 
-    # Nao vao para o computador: simbolos de depuracao e o web.config do IIS (o site roda direto pelo Kestrel).
-    Get-ChildItem -LiteralPath $Publicado -Recurse -Include *.pdb, web.config | Remove-Item -Force
 }
 
 Etapa "Gerando o .msi (WiX)"
 $msi = Join-Path $Saida "FinancasLocal-$Rotulo.msi"
 Executar "wix" @("build", (Join-Path $PSScriptRoot "FinancasLocal.wxs"), "-arch", "x64", "-culture", "pt-BR",
     "-ext", "WixToolset.UI.wixext", "-ext", "WixToolset.Util.wixext",
-    "-d", "Versao=$VersaoMsi", "-d", "SoGo=$(if ($SoGo) { 1 } else { 0 })", "-bindpath", "app=$Publicado", "-o", $msi)
+    "-d", "Versao=$VersaoMsi", "-bindpath", "app=$Publicado", "-o", $msi)
 
 $hash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
 $somas = Join-Path $Saida "SHA256SUMS.txt"
