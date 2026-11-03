@@ -65,12 +65,12 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md) | Tipo de lançamento: dado do Open Finance, com a descrição como reserva | Aceita |
 | [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
 | [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita (em parte substituída pela 0044) |
-| [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Aceita (em parte substituída pela 0040; a 0052 a substitui quando o gerenciador em Go for publicado) |
+| [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Substituída por 0052 (#86) |
 | [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita (em parte substituída pela 0039) |
 | [0030](0030-regras-de-descricao-em-tabela-propria.md) | Regras de descrição em tabela própria, com o nome do banco sempre guardado | Aceita |
 | [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md) | Transferência só fica fora dos relatórios quando é entre contas suas | Aceita |
 | [0032](0032-controles-padrao-interruptor-e-campo-de-valor.md) | Controles padrão: interruptor, caixa de marcar, campo de valor, campo de data e lista suspensa | Aceita |
-| [0033](0033-gerenciador-no-linux-com-avalonia.md) | Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows | Aceita (em parte substituída pela 0040; a 0052 a substitui quando o gerenciador em Go for publicado) |
+| [0033](0033-gerenciador-no-linux-com-avalonia.md) | Gerenciador no Linux, com Avalonia e núcleo comum ao do Windows | Substituída por 0052 (#86) |
 | [0034](0034-sem-sri-no-build-do-front-end.md) | Build do front-end sem SRI, para manter a CSP sem script inline | Aceita |
 | [0035](0035-plano-das-metas-pelo-caixa-calculado-na-tela.md) | Plano das metas pelo caixa do mês (fatura que vence entra), com a divisão calculada na tela | Aceita |
 | [0036](0036-receita-e-despesa-pelo-tipo-estorno-abate-gasto.md) | Receita e despesa pelo tipo, não pelo sinal; estorno no cartão abate o gasto | Aceita |

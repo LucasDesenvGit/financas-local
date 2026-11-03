@@ -5,11 +5,10 @@
 .DESCRIPTION
     Equivalente, no Windows, a scripts/geral/instalar.sh (etapas 1, 2 e 3). Usa so o que vem com o
     Windows (Windows PowerShell 5.1) e baixa o resto para ferramentas\:
-      1) Node.js LTS, .NET 10 SDK, Go e sqlite3 portateis (reaproveita dotnet 10.x, go da linha do
-         go.mod e sqlite3 do PATH), todos por HTTPS e conferidos pelo hash publicado pela origem
+      1) Node.js LTS, Go e sqlite3 portateis (reaproveita go da linha do go.mod e sqlite3 do PATH), todos por HTTPS e conferidos pelo hash publicado pela origem
       2) Banco SQLite: banco\01-estrutura.sql, colunas novas e banco\02-dados-iniciais.sql
          (a lista de colunas novas e lida do 2-criar-banco.sh, para existir num lugar so)
-      3) Compila front-end, API e o back-end em Go (financas-go.exe, ao lado da API: #231), publica em
+      3) Compila o front-end e o back-end em Go (financas-go.exe, o site desde a #86), publica em
          publicado\api, gera/reaproveita o certificado HTTPS
          e registra o servico do Windows "FinancasLocal"
 
@@ -25,17 +24,13 @@
     .\instalar-windows.ps1
     .\instalar-windows.ps1 -PularBuild
     .\instalar-windows.ps1 -NaoConfiarCertificado   # sem ninguem na frente da tela (ex.: CI)
-    .\instalar-windows.ps1 -Backend go               # #85: o Go sozinho como servico (-Backend dotnet volta)
 #>
 [CmdletBinding()]
 param(
     # Reaproveita o build anterior (publicado\preparo) e so republica.
     [switch]$PularBuild,
     # Nao poe o certificado nas Autoridades Raiz Confiaveis da maquina (o navegador vai avisar).
-    [switch]$NaoConfiarCertificado,
-    # #85 (ADR 0049): quem fica na frente como servico. "go" (padrao desde a 3.0.0): o Go sozinho (volta para o .NET se nao subir);
-    # "dotnet": a API .NET com o Go atras (a 2.x). Sem o parametro, fica a escolha de antes (dados\backend; padrao go).
-    [ValidateSet("", "go", "dotnet")][string]$Backend = ""
+    [switch]$NaoConfiarCertificado
 )
 
 $ErrorActionPreference = "Stop"
@@ -110,7 +105,7 @@ function Verificar-Hash([string]$arquivo, [string]$esperado, [string]$algoritmo)
     Ok "hash $algoritmo conferido: $(Split-Path -Leaf $arquivo)"
 }
 
-# ZipFile e bem mais rapido que o Expand-Archive do 5.1 (o SDK do .NET tem milhares de arquivos).
+# ZipFile e bem mais rapido que o Expand-Archive do 5.1 (o Go e o Node tem milhares de arquivos).
 function Extrair-Zip([string]$arquivo, [string]$destino) {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     Garantir-Pasta $destino
@@ -209,48 +204,6 @@ function Preparar-Ambiente {
     }
     Adicionar-Path $destinoNode
 
-    # ------------------------------------------------------------ .NET 10 SDK
-    Etapa "[1/3] Verificando o SDK do .NET"
-    $temDotnet10 = $false
-    if (Comando-Existe "dotnet") {
-        $sdks = & dotnet --list-sdks
-        if ($LASTEXITCODE -eq 0 -and ($sdks | Where-Object { $_ -match '^10\.' })) { $temDotnet10 = $true }
-    }
-    if ($temDotnet10) {
-        Ok "SDK do .NET 10 ja disponivel no PATH ($((Get-Command dotnet).Source))"
-    } else {
-        $destinoDotnet = Join-Path $Ferramentas "dotnet"
-        $nomePacote = "dotnet-sdk-win-$Arch.zip"
-        Etapa "Obtendo a versao mais recente do .NET 10 (metadados oficiais da Microsoft)"
-        $metadados = $null
-        foreach ($url in @("https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json",
-                           "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json")) {
-            try { $metadados = Invoke-RestMethod -Uri $url -UseBasicParsing; break } catch { Aviso "falha em $url" }
-        }
-        if (-not $metadados) { ErroSai "Nao foi possivel obter os metadados de versoes do .NET." }
-        $versaoRelease = $metadados.'latest-release'
-        $release = $metadados.releases | Where-Object { $_.'release-version' -eq $versaoRelease } | Select-Object -First 1
-        $arquivo = $release.sdk.files | Where-Object { $_.name -eq $nomePacote } | Select-Object -First 1
-        if (-not $arquivo) { ErroSai "Pacote $nomePacote nao encontrado nos metadados do .NET $versaoRelease." }
-        $sdkVersao = $release.sdk.version
-        Ok ".NET SDK $sdkVersao"
-
-        $hostSdk = ([Uri]$arquivo.url).Host
-        if ($hostSdk -notmatch '\.(microsoft\.com|windows\.net|azureedge\.net)$') { ErroSai "Host inesperado para download do .NET: $hostSdk" }
-
-        if (Test-Path -LiteralPath (Join-Path $destinoDotnet "sdk\$sdkVersao")) {
-            Ok "SDK $sdkVersao ja presente em $destinoDotnet"
-        } else {
-            $arqSdk = Join-Path $Instaladores "dotnet-sdk-$sdkVersao-windows-$Arch.zip"
-            if (-not (Test-Path -LiteralPath $arqSdk)) { Baixar-Arquivo $arquivo.url $arqSdk }
-            Verificar-Hash $arqSdk $arquivo.hash "SHA512"
-            Etapa "Extraindo o SDK do .NET"
-            if (Test-Path -LiteralPath $destinoDotnet) { Remove-Item -LiteralPath $destinoDotnet -Recurse -Force }
-            Extrair-Zip $arqSdk $destinoDotnet
-            Ok "SDK $sdkVersao extraido em $destinoDotnet"
-        }
-    }
-
     # ------------------------------------------------------------ Go (#231, ADR 0049 e 0011)
     # Mesmo criterio do 1-preparar-ambiente.sh: a linha do src\backend-go\go.mod ("go 1.27.3"), a versao mais nova
     # dela em go.dev/dl, conferida pelo SHA-256 do proprio indice. Reaproveita um go do PATH da mesma linha.
@@ -340,7 +293,6 @@ function Preparar-Ambiente {
 
     Etapa "[1/3] Conferindo o ambiente"
     Configurar-AmbienteBuild
-    Ok "dotnet  $(& dotnet --version)"
     Ok "go      $(& go env GOVERSION)"
     Ok "node    $(& node --version)"
     Ok "npm     $(& npm.cmd --version)"
@@ -349,13 +301,6 @@ function Preparar-Ambiente {
 
 # Mesmo que configurar_ambiente_build do comum.sh.
 function Configurar-AmbienteBuild {
-    $dotnetPortatil = Join-Path $Ferramentas "dotnet"
-    if (Test-Path -LiteralPath (Join-Path $dotnetPortatil "dotnet.exe")) {
-        Adicionar-Path $dotnetPortatil
-        $env:DOTNET_ROOT = $dotnetPortatil
-    } elseif (-not (Comando-Existe "dotnet")) {
-        ErroSai "SDK do .NET nao encontrado."
-    }
     $nodePortatil = Join-Path $Ferramentas "node"
     if (Test-Path -LiteralPath (Join-Path $nodePortatil "node.exe")) { Adicionar-Path $nodePortatil }
     elseif (-not (Comando-Existe "node")) { ErroSai "Node.js nao encontrado." }
@@ -370,11 +315,6 @@ function Configurar-AmbienteBuild {
     $env:GOFLAGS = "-modcacherw"
     $env:CGO_ENABLED = "0"
 
-    $env:DOTNET_CLI_HOME = Join-Path $Ferramentas "dotnet-home"
-    $env:NUGET_PACKAGES = Join-Path $Ferramentas "nuget-pacotes"
-    $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
-    $env:DOTNET_NOLOGO = "1"
-    $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
     $env:npm_config_cache = Join-Path $Ferramentas "npm-cache"
     $env:npm_config_update_notifier = "false"
     $env:NG_CLI_ANALYTICS = "false"
@@ -475,7 +415,6 @@ function Encerrar-UsoDoFrontEnd([string]$pastaFront) {
 
 function Publicar {
     $pastaFront = Join-Path $Raiz "src\frontend"
-    $projetoApi = Join-Path $Raiz "src\backend\Financas.Api\Financas.Api.csproj"
     $preparo = Join-Path $PastaPublicado "preparo"
     $destino = Join-Path $PastaPublicado "api"
 
@@ -491,12 +430,11 @@ function Publicar {
         } finally { Pop-Location }
         Ok "front-end compilado"
 
-        Etapa "[3/3] Compilando a API (.NET)"
+        # #86: sem a API em .NET. A publicacao e o executavel do Go, o appsettings.json dele e o front-end.
         if (Test-Path -LiteralPath $preparo) { Remove-Item -LiteralPath $preparo -Recurse -Force }
-        Executar "dotnet" @("publish", $projetoApi, "-c", "Release", "-o", $preparo, "--nologo")
-        Ok "API compilada"
+        Garantir-Pasta $preparo
+        Copy-Item -LiteralPath (Join-Path $Raiz "src\backend-go\appsettings.json") -Destination (Join-Path $preparo "appsettings.json")
 
-        # #231 (ADR 0049): o Go roda atras do .NET, como processo filho; o executavel fica ao lado da API.
         Etapa "[3/3] Compilando o back-end em Go"
         if (-not (Comando-Existe "go")) { ErroSai "Go nao encontrado (a etapa 1 devia ter instalado em ferramentas\go)." }
         $versaoSistema = ([xml](Get-Content -LiteralPath (Join-Path $Raiz "Directory.Build.props") -Raw)).Project.PropertyGroup.Version | Select-Object -First 1
@@ -584,7 +522,7 @@ function Publicar {
     Ok "configuracao gerada"
 
     # ------------------------------------------------------------ Copia (com o servico parado)
-    # O Windows trava as DLLs em uso: o servico tem de parar antes da copia.
+    # O Windows trava o executavel em uso: o servico tem de parar antes da copia.
     $servico = Get-Service -Name $NomeServico -ErrorAction SilentlyContinue
     if ($servico -and $servico.Status -ne "Stopped") {
         Etapa "Parando o servico $NomeServico"
@@ -603,7 +541,7 @@ function Publicar {
 
     # Guarda a versao publicada atual para voltar a ela se a nova nao subir.
     $anterior = Join-Path $PastaPublicado "api-anterior"
-    $temAnterior = Test-Path -LiteralPath (Join-Path $destino "Financas.Api.dll")
+    $temAnterior = Test-Path -LiteralPath (Join-Path $destino "financas-go.exe")
     if ($temAnterior) {
         & robocopy.exe $destino $anterior /MIR /NFL /NDL /NJH /NJS /NP /R:3 /W:2 | Out-Null
         if ($LASTEXITCODE -ge 8) { ErroSai "robocopy falhou ($LASTEXITCODE) ao guardar a versao anterior em $anterior." }
@@ -620,35 +558,10 @@ function Publicar {
 
     # ------------------------------------------------------------ Servico do Windows
     Etapa "[3/3] Registrando o servico $NomeServico"
-    # #84: o ponto unico que diz o que o servico executa. Na inversao (#85, ADR 0049), muda so aqui.
-    $dotnetPortatil = Join-Path $Ferramentas "dotnet\dotnet.exe"
-    if (Test-Path -LiteralPath $dotnetPortatil) { $dotnetExec = $dotnetPortatil } else { $dotnetExec = (Get-Command dotnet).Source }
-    $dll = Join-Path $destino "Financas.Api.dll"
-    $binDotnet = "`"$dotnetExec`" `"$dll`""
-    $binGo = "`"$(Join-Path $destino "financas-go.exe")`" -aplicar-esquema -rotinas-de-partida"
-
-    # #85: a escolha fica em dados\backend, para uma atualizacao sem -Backend manter a de antes.
-    # Sem o arquivo (instalacao nova ou vinda da 2.x), vale o Go, o padrao desde a 3.0.0; o servico de antes era o .NET.
-    $arquivoBackend = Join-Path $Dados "backend"
-    $backendAnterior = "dotnet"
-    $padrao = "go"
-    if (Test-Path -LiteralPath $arquivoBackend) {
-        $backendAnterior = (Get-Content -LiteralPath $arquivoBackend -Raw).Trim()
-        if ($backendAnterior -ne "go") { $backendAnterior = "dotnet" }
-        $padrao = $backendAnterior
-    }
-    $usarBackend = if ($Backend) { $Backend } else { $padrao }
-    $banco = Join-Path $PastaSql "FinancasLocal.db"
-    if ($usarBackend -eq "go" -and $backendAnterior -ne "go" -and (Test-Path -LiteralPath $banco)) {
-        # Antes de o Go passar a ficar na frente, uma copia do banco que se confere ao abrir, em dados\backups.
-        $pastaCopias = Join-Path $Dados "backups"
-        Garantir-Pasta $pastaCopias
-        $copiaAntes = Join-Path $pastaCopias ("FinancasLocal-antes-do-go-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".db")
-        Sqlite $banco (".backup '" + ($copiaAntes -replace '\\', '/') + "'") | Out-Null
-        if ((Sqlite $copiaAntes "PRAGMA integrity_check;") -ne "ok") { ErroSai "A copia $copiaAntes nao abre direito: nada foi trocado." }
-        Ok "copia do banco conferida: $copiaAntes"
-    }
-    $binPath = if ($usarBackend -eq "go") { $binGo } else { $binDotnet }
+    # #84: o ponto unico que diz o que o servico executa: o Go sozinho, que aplica o esquema e roda as rotinas de
+    # partida (desde a #86, sem o .NET). A escolha da #85 (dados\backend) nao vale mais.
+    $binPath = "`"$(Join-Path $destino "financas-go.exe")`" -aplicar-esquema -rotinas-de-partida"
+    Remove-Item -LiteralPath (Join-Path $Dados "backend") -Force -ErrorAction SilentlyContinue
 
     # New-Service e Win32_Service.Change recebem o binPath como esta (o sc.exe chamado pelo
     # PowerShell 5.1 perde as aspas internas).
@@ -663,21 +576,19 @@ function Publicar {
     Etapa "[3/3] Iniciando e testando"
     $inicio = Get-Date
     $falha = Iniciar-E-Testar
-    if ($falha -and $usarBackend -eq "go") {
-        # #85: o Go na frente nao subiu: volta sozinho para o .NET, que continua publicado ao lado, e avisa.
-        Mostrar-EventosServico $inicio
-        Aviso "O Go na frente nao respondeu: voltando o servico para o .NET. $falha"
-        Stop-Service -Name $NomeServico -Force -ErrorAction SilentlyContinue
-        Trocar-Executavel $binDotnet
-        $usarBackend = "dotnet"
-        $inicio = Get-Date
-        $falha = Iniciar-E-Testar
-        if (-not $falha) { Aviso "O site esta de novo no .NET. Corrija e rode com -Backend go." }
+    if (-not $falha) {
+        # #86: o que so o .NET usava sai depois de o site responder.
+        foreach ($velho in @("dotnet", "dotnet-home", "nuget-pacotes")) {
+            $pastaVelha = Join-Path $Ferramentas $velho
+            if (Test-Path -LiteralPath $pastaVelha) {
+                Remove-Item -LiteralPath $pastaVelha -Recurse -Force -ErrorAction SilentlyContinue
+                Ok "o que so o .NET usava saiu: $pastaVelha"
+            }
+        }
+        return
     }
-    [IO.File]::WriteAllText($arquivoBackend, "$usarBackend`n", (New-Object Text.UTF8Encoding $false))
-    if (-not $falha) { return }
 
-    # A nova versao nao subiu: mostra os eventos do Windows (a excecao real da API fica la) e, numa
+    # A nova versao nao subiu: mostra os eventos do Windows (o erro do servico fica la) e, numa
     # atualizacao, volta a versao anterior para o site nao ficar fora do ar. O
     # appsettings.Production.json novo e mantido (o certificado pode ter sido renovado agora).
     Mostrar-EventosServico $inicio
@@ -689,18 +600,17 @@ function Publicar {
         if (-not (Iniciar-E-Testar)) { ErroSai "$falha A versao anterior foi restaurada e esta no ar; veja os eventos acima." }
         ErroSai "$falha A versao anterior tambem nao subiu; veja os eventos acima."
     }
-    ErroSai "$falha Veja os eventos acima."
+    ErroSai "$falha Veja os eventos acima. Para voltar a versao com o .NET: git checkout v-ultimo-dotnet e instalar-windows.cmd."
 }
 
-# Troca o que o servico executa (#84: um ponto so; #85: .NET ou Go na frente).
+# Troca o que o servico executa (#84: um ponto so).
 function Trocar-Executavel([string]$caminho) {
     $resultado = Get-CimInstance -ClassName Win32_Service -Filter "Name='$NomeServico'" |
         Invoke-CimMethod -MethodName Change -Arguments @{ PathName = $caminho; StartMode = "Automatic" }
     if ($resultado.ReturnValue -ne 0) { ErroSai "Nao foi possivel reconfigurar o servico (codigo $($resultado.ReturnValue))." }
 }
 
-# Inicia o servico e espera a API responder (ate 30 s: a primeira subida gera as chaves do Data
-# Protection). Devolve $null se deu certo, ou a descricao da falha.
+# Inicia o servico e espera o site responder (ate 30 s: a primeira subida gera as chaves). Devolve $null se deu certo, ou a descricao da falha.
 function Iniciar-E-Testar {
     try {
         Start-Service -Name $NomeServico
@@ -725,12 +635,11 @@ function Iniciar-E-Testar {
     return "A API nao respondeu em $urlTeste depois de 30 s."
 }
 
-# Copia para a tela (e o log) os eventos do Windows desde $desde: excecao da API (.NET Runtime,
-# Application Error) e erros do Gerenciador de Servicos.
+# Copia para a tela (e o log) os eventos do Windows desde $desde: erro do site (Application Error) e erros do Gerenciador de Servicos.
 function Mostrar-EventosServico([datetime]$desde) {
     $eventos = @()
     $eventos += Get-WinEvent -FilterHashtable @{ LogName = "Application"; StartTime = $desde } -ErrorAction SilentlyContinue |
-        Where-Object { $_.ProviderName -match "\.NET Runtime|Application Error|Financas" }
+        Where-Object { $_.ProviderName -match "Application Error|Financas" }
     $eventos += Get-WinEvent -FilterHashtable @{ LogName = "System"; StartTime = $desde; ProviderName = "Service Control Manager" } -ErrorAction SilentlyContinue
     $eventos = @($eventos | Where-Object { $_ })   # sem eventos, o Get-WinEvent devolve $null
     if ($eventos.Count -eq 0) { Aviso "Nenhum evento do Windows registrado para o servico."; return }
@@ -779,9 +688,8 @@ try {
 
     Write-Host "FinancasLocal - instalacao no Windows em $Raiz ($Arch)"
 
-    # Como no comum.sh, o sqlite3 portatil vale desde o inicio. O .NET e o Node portateis entram no
-    # PATH depois da verificacao (Configurar-AmbienteBuild), para o .NET portatil ser atualizado
-    # quando sair versao nova.
+    # Como no comum.sh, o sqlite3 portatil vale desde o inicio. O Go e o Node portateis entram no
+    # PATH depois da verificacao (Configurar-AmbienteBuild), para serem atualizados quando sair versao nova.
     $pastaSqlite = Join-Path $Ferramentas "sqlite"
     if (Test-Path -LiteralPath $pastaSqlite) { Adicionar-Path $pastaSqlite }
 

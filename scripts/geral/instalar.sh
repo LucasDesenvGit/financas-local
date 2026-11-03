@@ -3,7 +3,7 @@
 # FinancasLocal - instalacao/atualizacao completa em um comando
 #
 # Roda em sequencia, parando no primeiro erro:
-#   1-preparar-ambiente.sh   (.NET, Node.js e sqlite3)
+#   1-preparar-ambiente.sh   (Node.js, Go e sqlite3)
 #   2-criar-banco.sh         (cria ou atualiza o banco; nao apaga dados)
 #   3-publicar-atualizar.sh  (compila, publica e registra o servico)
 #   No Linux, no fim, o gerenciador (scripts/linux/instalar-gerenciador.sh),

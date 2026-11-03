@@ -2,10 +2,10 @@
 # =====================================================================
 # FinancasLocal - 3) Compilacao e publicacao (Kestrel, sem IIS)
 #
-#  - Compila o front-end Angular, a API .NET e o back-end em Go (que roda
-#    atras do .NET, como processo filho dele: #231)
-#  - Publica em publicado/api, com o front-end incorporado ao wwwroot da API
-#    e o executavel financas-go ao lado da API
+#  - Compila o front-end Angular e o back-end em Go (o site, sem o .NET
+#    desde a #86)
+#  - Publica em publicado/api: o executavel financas-go, o appsettings.json
+#    e o front-end no wwwroot
 #  - Gera/reaproveita um certificado HTTPS local (PFX) e escreve o
 #    appsettings.Production.json (com caminhos absolutos, ja que o processo
 #    pode rodar como servico a partir de outro diretorio de trabalho)
@@ -17,46 +17,28 @@
 # Uso:
 #   scripts/geral/3-publicar-atualizar.sh
 #   scripts/geral/3-publicar-atualizar.sh --pular-build
-#   scripts/geral/3-publicar-atualizar.sh --backend go       # #85: o Go sozinho como servico (volta sozinho se
-#                                                            # o site nao subir); --backend dotnet volta ao .NET
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
 pular_build=0
-backend_pedido=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --pular-build) pular_build=1 ;;
-        --backend)
-            [[ $# -ge 2 && ( "$2" == go || "$2" == dotnet ) ]] || erro_sai '--backend precisa de go ou dotnet'
-            backend_pedido="$2"; shift ;;
-        *) erro_sai "Argumento desconhecido: $1 (use --pular-build ou --backend go|dotnet)" ;;
+        *) erro_sai "Argumento desconhecido: $1 (use --pular-build)" ;;
     esac
     shift
 done
 
-# #85 (ADR 0049): quem fica na frente como servico. "go" (o padrao desde a 3.0.0): o Go sozinho, que aplica o esquema e
-# roda as rotinas de partida. "dotnet": a API .NET, com o Go atras dela (a 2.x). A escolha fica em dados/backend, para
-# uma atualizacao sem --backend manter a de antes; sem o arquivo (instalacao nova ou vinda da 2.x), vale o Go. O .NET
-# continua publicado ao lado ate a #86: voltar e so trocar o executavel do servico (scripts/geral/voltar-para-dotnet.sh).
-arquivo_backend="$Dados/backend"
-backend_anterior="dotnet"   # sem o arquivo, o servico era o .NET (a 2.x): a copia do banco antes da troca vale
-padrao="go"
-if [[ -f "$arquivo_backend" ]]; then
-    backend_anterior="$(tr -d '[:space:]' < "$arquivo_backend")"
-    [[ "$backend_anterior" == go || "$backend_anterior" == dotnet ]] || backend_anterior="dotnet"
-    padrao="$backend_anterior"
-fi
-backend="${backend_pedido:-$padrao}"
+# #86: o .NET saiu; o servico e sempre o Go. A escolha da #85 (dados/backend) nao vale mais.
+rm -f "$Dados/backend"
 
 pasta_front="$Raiz/src/frontend"
-projeto_api="$Raiz/src/backend/Financas.Api/Financas.Api.csproj"
 preparo="$PastaPublicado/preparo"
 destino="$PastaPublicado/api"
 nome_servico='FinancasLocal'
 
-# dotnet e node (portateis ou do PATH) valem tambem com --pular-build: o
-# certificado usa o dotnet e o appsettings.Production.json e gerado pelo node.
+# node e go (portateis ou do PATH) valem tambem com --pular-build: o appsettings.Production.json e gerado pelo
+# node, e o certificado, pelo executavel do Go.
 configurar_ambiente_build
 
 # #614: sem administrador, o servico do Windows nao para, nao troca e nao sobe, e o site fica fora do ar com a
@@ -90,13 +72,11 @@ if [[ "$pular_build" -eq 0 ]]; then
     (cd "$pasta_front" && npm ci --no-audit --no-fund && npm run build)
     ok 'front-end compilado'
 
-    etapa 'Compilando a API (.NET)'
+    # #86: sem a API em .NET. A publicacao e o executavel do Go, o appsettings.json dele e o front-end.
     rm -rf "$preparo"
-    dotnet publish "$projeto_api" -c Release -o "$preparo" --nologo
-    ok 'API compilada'
+    garantir_pasta "$preparo"
+    cp "$Raiz/src/backend-go/appsettings.json" "$preparo/appsettings.json"
 
-    # #231 (ADR 0049): o Go roda atras do .NET, como processo filho; o executavel fica ao lado da API, onde o
-    # .NET o procura (Go:Executavel). A versao e a do Directory.Build.props, como a da API.
     etapa 'Compilando o back-end em Go'
     command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     versao_sistema="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
@@ -219,7 +199,7 @@ require("fs").writeFileSync(e.DESTINO_CONFIG, JSON.stringify(config, null, 2) + 
 ok 'configuracao gerada'
 
 # ------------------------------------------------------------------ Copia dos arquivos
-# O Windows trava as DLLs em uso: o servico tem de parar antes da copia.
+# O Windows trava o executavel em uso: o servico tem de parar antes da copia.
 if [[ "$SO" == windows ]] && sc.exe query "$nome_servico" >/dev/null 2>&1; then
     sc.exe stop "$nome_servico" >/dev/null 2>&1 || true
     for _ in $(seq 1 15); do
@@ -259,37 +239,11 @@ fi
 
 # ------------------------------------------------------------------ Servico nativo do SO
 etapa "Registrando o servico $nome_servico"
-if [[ -x "$Ferramentas/dotnet/dotnet" ]]; then
-    dotnet_exec="$Ferramentas/dotnet/dotnet"
-elif [[ -x "$Ferramentas/dotnet/dotnet.exe" ]]; then
-    dotnet_exec="$Ferramentas/dotnet/dotnet.exe"
-else
-    dotnet_exec="$(command -v dotnet)"
-fi
-dll_destino="$destino/Financas.Api.dll"
-
-# #84: o ponto unico que diz o que o servico executa, nos tres casos abaixo. Na inversao (#85, ADR 0049), muda so aqui.
-servico_com() {
-    if [[ "$1" == go ]]; then
-        exe_servico="$destino/financas-go"
-        [[ "$SO" == windows ]] && exe_servico="$destino/financas-go.exe"
-        args_servico="-aplicar-esquema -rotinas-de-partida"
-    else
-        exe_servico="$dotnet_exec"
-        args_servico="$dll_destino"
-    fi
-}
-servico_com "$backend"
-
-# #85: antes de o Go passar a ficar na frente, uma copia do banco que se confere ao abrir, em dados/backups.
-if [[ "$backend" == go && "$backend_anterior" != go && -f "$PastaSql/FinancasLocal.db" ]]; then
-    etapa 'Copia do banco antes de por o Go na frente'
-    garantir_pasta "$Dados/backups"
-    copia_antes="$Dados/backups/FinancasLocal-antes-do-go-$(date +%Y%m%d-%H%M%S).db"
-    sqlite3 "${SQLITE_ESPERA[@]}" "$PastaSql/FinancasLocal.db" ".backup \"$(caminho_sqlite "$copia_antes")\""
-    [[ "$(sqlite3 "$copia_antes" 'PRAGMA integrity_check;')" == ok ]] || erro_sai "A copia $copia_antes nao abre direito: nada foi trocado."
-    ok "copia conferida: $copia_antes"
-fi
+# #84: o ponto unico que diz o que o servico executa: o Go sozinho, que aplica o esquema e roda as rotinas de
+# partida (desde a #86, sem o .NET).
+exe_servico="$destino/financas-go"
+[[ "$SO" == windows ]] && exe_servico="$destino/financas-go.exe"
+args_servico="-aplicar-esquema -rotinas-de-partida"
 
 servico_registrado=0   # 1 quando o servico foi registrado e iniciado; sem isso (ex.: conteiner sem systemd), nada a testar
 registrar_servico() {
@@ -345,15 +299,10 @@ EOF
         # espaco apos o "=" e nenhum antes. Por isso binPath= e o valor vao
         # como argumentos separados do bash.
         exe_servico_win="$(cygpath -w "$exe_servico" 2>/dev/null || echo "$exe_servico")"
-        if [[ "$exe_servico" == *financas-go* ]]; then
-            bin_path="\"$exe_servico_win\" $args_servico"   # as opcoes do Go, sem aspas
-        else
-            args_servico_win="$(cygpath -w "$args_servico" 2>/dev/null || echo "$args_servico")"
-            bin_path="\"$exe_servico_win\" \"$args_servico_win\""
-        fi
+        bin_path="\"$exe_servico_win\" $args_servico"   # as opcoes do Go, sem aspas
         comando_create="sc.exe create $nome_servico binPath= \"$bin_path\" start= auto"
         comando_start="sc.exe start $nome_servico"
-        # #614: falhar aqui e erro, e nao aviso: o site estaria fora do ar e dados/backend nao pode mudar. A saida do
+        # #614: falhar aqui e erro, e nao aviso: o site estaria fora do ar. A saida do
         # sc.exe vai junto, para dizer o motivo.
         if sc.exe query "$nome_servico" >/dev/null 2>&1; then
             sc.exe stop "$nome_servico" >/dev/null 2>&1 || true
@@ -400,29 +349,26 @@ testar_site() {
     done
     return 1
 }
-if [[ "$backend" == go && "$servico_registrado" -eq 1 ]]; then
-    if ! testar_site 15; then
-        # #85: o Go na frente nao subiu: volta sozinho para o .NET, que continua publicado ao lado, e avisa.
-        aviso 'O Go na frente nao respondeu em 30 s: voltando o servico para o .NET.'
-        [[ "$SO" == linux ]] && command -v journalctl >/dev/null 2>&1 && \
-            journalctl --user -u financaslocal.service -n 20 --no-pager 2>/dev/null | sed 's/^/   /' || true
-        backend="dotnet"
-        servico_com dotnet
-        registrar_servico
-        testar_site 5 || true
-        aviso 'O site esta de novo no .NET. Veja o registro do servico acima e rode com --backend go quando corrigir.'
-    fi
+if [[ "$servico_registrado" -eq 1 ]]; then
+    testar_site 15 || true
 else
     testar_site 5 || true
 fi
-garantir_pasta "$Dados"
-printf '%s\n' "$backend" > "$arquivo_backend"
 if [[ "$sucesso" -eq 1 ]]; then
     ok "API respondeu: $resposta"
 else
-    aviso "A API nao respondeu em $url_teste. Verifique os logs do servico."
+    aviso "O site nao respondeu em $url_teste. Veja o registro do servico (Linux: journalctl --user -u financaslocal.service;"
+    aviso 'Windows: Visualizador de Eventos). As copias do banco ficam em backups/. Para voltar a versao com o .NET:'
+    aviso '  git checkout v-ultimo-dotnet && scripts/geral/instalar.sh'
     ocupante="$(quem_usa_a_porta 5443)"
     [[ -n "$ocupante" ]] && aviso "Quem esta na porta 5443 agora: $ocupante. Se nao for o Financas Local, feche esse programa."
+fi
+
+if [[ "$sucesso" -eq 1 ]]; then
+    for velho in "$Ferramentas/dotnet" "$Ferramentas/dotnet-home" "$Ferramentas/nuget-pacotes" "$PastaPublicado/api-anterior"; do
+        [[ -e "$velho" ]] || continue
+        rm -rf "$velho" && ok "o que so o .NET usava saiu: $velho"
+    done
 fi
 
 if [[ "$SO" == windows ]] && reg.exe query 'HKLM\SOFTWARE\Mozilla\Mozilla Firefox' >/dev/null 2>&1; then
