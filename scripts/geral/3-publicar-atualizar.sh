@@ -312,6 +312,9 @@ WantedBy=default.target
 EOF
         if command -v systemctl >/dev/null 2>&1; then
             systemctl --user daemon-reload
+            # #85: a volta automatica reinicia o servico logo depois de uma tentativa; sem zerar a contagem, o systemd
+            # recusa com start-limit-hit (por padrao, 5 inicios em 10 s).
+            systemctl --user reset-failed financaslocal.service 2>/dev/null || true
             if systemctl --user is-active --quiet financaslocal.service; then
                 systemctl --user restart financaslocal.service
                 ok 'servico systemd (usuario) atualizado e reiniciado'
