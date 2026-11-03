@@ -59,9 +59,11 @@ nome_servico='FinancasLocal'
 # certificado usa o dotnet e o appsettings.Production.json e gerado pelo node.
 configurar_ambiente_build
 
+# #614: sem administrador, o servico do Windows nao para, nao troca e nao sobe, e o site fica fora do ar com a
+# publicacao nova pela metade. Para antes de mexer em qualquer coisa.
 if [[ "$SO" == windows ]] && ! net session >/dev/null 2>&1; then
-    aviso 'Este Git Bash nao esta como Administrador: a publicacao segue, mas o servico do Windows'
-    aviso 'provavelmente nao sera registrado/reiniciado. Para evitar, feche e abra o Git Bash como Administrador.'
+    erro_sai 'Este Git Bash nao esta como Administrador, e o servico do Windows precisa disso. Nada foi mudado.
+       Feche e abra o Git Bash com o botao direito > "Executar como administrador" (ou use o instalar-windows.cmd).'
 fi
 
 # ------------------------------------------------------------------ Build
@@ -351,23 +353,29 @@ EOF
         fi
         comando_create="sc.exe create $nome_servico binPath= \"$bin_path\" start= auto"
         comando_start="sc.exe start $nome_servico"
+        # #614: falhar aqui e erro, e nao aviso: o site estaria fora do ar e dados/backend nao pode mudar. A saida do
+        # sc.exe vai junto, para dizer o motivo.
         if sc.exe query "$nome_servico" >/dev/null 2>&1; then
             sc.exe stop "$nome_servico" >/dev/null 2>&1 || true
-            if ! sc.exe config "$nome_servico" binPath= "$bin_path" start= auto >/dev/null 2>&1; then
-                aviso 'Nao foi possivel reconfigurar o servico automaticamente (normalmente requer um prompt elevado). Rode manualmente em um prompt como Administrador:'
-                echo "   sc.exe config $nome_servico binPath= \"$bin_path\" start= auto"
-                echo "   $comando_start"
+            if ! saida_sc="$(sc.exe config "$nome_servico" binPath= "$bin_path" start= auto 2>&1)"; then
+                erro_sai "Nao foi possivel reconfigurar o servico: $saida_sc
+       Num prompt como Administrador: sc.exe config $nome_servico binPath= \"$bin_path\" start= auto && $comando_start"
             fi
-        elif ! sc.exe create "$nome_servico" binPath= "$bin_path" start= auto >/dev/null 2>&1; then
-            aviso 'Nao foi possivel criar o servico automaticamente (normalmente requer um prompt elevado). Rode manualmente em um prompt como Administrador:'
-            echo "   $comando_create"
-            echo "   $comando_start"
+        elif ! saida_sc="$(sc.exe create "$nome_servico" binPath= "$bin_path" start= auto 2>&1)"; then
+            erro_sai "Nao foi possivel criar o servico: $saida_sc
+       Num prompt como Administrador: $comando_create && $comando_start"
         fi
-        if sc.exe start "$nome_servico" >/dev/null 2>&1; then
+        # O sc.exe stop e assincrono: espera o servico parar de verdade (ate 30 s) antes de iniciar de novo.
+        for _ in $(seq 1 30); do
+            sc.exe query "$nome_servico" 2>/dev/null | grep -q STOPPED && break
+            sleep 1
+        done
+        if saida_sc="$(sc.exe start "$nome_servico" 2>&1)"; then
             ok 'servico do Windows registrado e iniciado'
             servico_registrado=1
         else
-            aviso "Nao foi possivel iniciar o servico automaticamente. Rode manualmente: $comando_start"
+            erro_sai "Nao foi possivel iniciar o servico: $saida_sc
+       Rode manualmente, como Administrador: $comando_start"
         fi
         ;;
 esac

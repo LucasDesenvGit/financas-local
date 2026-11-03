@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.2] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Atualização pelo Git Bash no Windows não deixa mais o site fora do ar em silêncio** (#614). Sem administrador, o `instalar.sh` publicava os arquivos novos, não conseguia trocar nem iniciar o serviço e terminava em "Pronto!", com o site parado. Agora ele para logo no começo, antes de mexer em qualquer coisa, e diz para abrir o Git Bash como administrador. Uma falha ao registrar ou iniciar o serviço também passa a ser erro, com o motivo, e a escolha entre Go e .NET só é gravada quando é aplicada.
+
 ## [3.0.1] — 2026-11-03 · desenvolvimento
 
 ### Correções
