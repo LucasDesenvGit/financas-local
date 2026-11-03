@@ -255,14 +255,14 @@ jobs:
           if ((& $sqlite dados\sql\FinancasLocal.db "SELECT Valor FROM Configuracao WHERE Chave = 'Cotacao.BrapiToken'") -ne "CfDJ8teste") { throw "o segredo do .NET foi apagado" }
           & $sqlite dados\sql\FinancasLocal.db "DELETE FROM Configuracao WHERE Chave IN ('Pluggy.ClientSecret', 'Cotacao.BrapiToken');"
 
-          # O padrao (3.0.0): sem dadosackend (instalacao vinda da 2.x), a atualizacao poe o Go na frente, com a copia do
+          # O padrao (3.0.0): sem dados\backend (instalacao vinda da 2.x), a atualizacao poe o Go na frente, com a copia do
           # banco antes. Depois, de volta ao .NET para os passos seguintes.
-          Remove-Item dadosackend, dadosackups\FinancasLocal-antes-do-go-*.db -ErrorAction SilentlyContinue
+          Remove-Item dados\backend, dados\backups\FinancasLocal-antes-do-go-*.db -ErrorAction SilentlyContinue
           if ((Instalar @()) -ne 0) { throw "a atualizacao pelo padrao falhou" }
           if ((Linha) -notlike "*financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "o padrao nao pos o Go na frente: $(Linha)" }
-          if ((Get-Content dadosackend -Raw).Trim() -ne "go") { throw "dadosackend: $(Get-Content dadosackend -Raw)" }
-          if (-not (Get-ChildItem dadosackups -Filter "FinancasLocal-antes-do-go-*.db")) { throw "sem a copia do banco antes do Go" }
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windowsoltar-para-dotnet.ps1 | Out-Host
+          if ((Get-Content dados\backend -Raw).Trim() -ne "go") { throw "dados\backend: $(Get-Content dados\backend -Raw)" }
+          if (-not (Get-ChildItem dados\backups -Filter "FinancasLocal-antes-do-go-*.db")) { throw "sem a copia do banco antes do Go" }
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\voltar-para-dotnet.ps1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "voltar-para-dotnet.ps1 terminou com $LASTEXITCODE" }
           $global:LASTEXITCODE = 0
 
