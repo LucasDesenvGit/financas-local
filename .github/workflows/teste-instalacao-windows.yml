@@ -221,6 +221,39 @@ jobs:
           Esperar-Site
           $global:LASTEXITCODE = 0
 
+      # #85 (ADR 0049): a troca pelos scripts. -Backend go poe o Go sozinho na frente, com a copia do banco antes; se
+      # ele nao sobe, o script volta sozinho para o .NET; o voltar-para-dotnet.ps1 volta e apaga os segredos v2:.
+      - name: Troca para o Go e volta (instalar-windows.ps1 -Backend, voltar-para-dotnet.ps1)
+        shell: powershell
+        run: |
+          $env:PATH = $env:PATH_WINDOWS_PURO
+          $filtro = "Name='FinancasLocal'"
+          $sqlite = "ferramentas\sqlite\sqlite3.exe"
+          function Instalar([string[]]$argumentos) {
+            powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1 -PularBuild @argumentos | Out-Host
+            return $LASTEXITCODE
+          }
+          function Linha { (Get-CimInstance Win32_Service -Filter $filtro).PathName }
+
+          # A volta automatica (o Go na frente que nao sobe) e testada no Linux: aqui, o mesmo executavel gera o
+          # certificado, e um falso que falhe so como servico pediria outro .exe. A troca, com a copia do banco antes:
+          if ((Instalar @("-Backend", "go")) -ne 0) { throw "a troca para o Go falhou" }
+          if (-not (Get-ChildItem dados\backups -Filter "FinancasLocal-antes-do-go-*.db")) { throw "sem a copia do banco antes do Go" }
+          if ((Linha) -notlike "*financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "o servico nao e o Go: $(Linha)" }
+          if ((Get-Content dados\backend -Raw).Trim() -ne "go") { throw "dados\backend: $(Get-Content dados\backend -Raw)" }
+          if ((Instalar @()) -ne 0) { throw "a atualizacao com o Go na frente falhou" }
+          if ((Linha) -notlike "*financas-go.exe*") { throw "a atualizacao sem -Backend voltou ao .NET: $(Linha)" }
+
+          # A volta: o segredo gravado pelo Go (v2:) sai; o do .NET fica.
+          & $sqlite dados\sql\FinancasLocal.db "INSERT OR REPLACE INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES ('Pluggy.ClientSecret', 'v2:teste', 1, '2026-11-02 00:00:00'), ('Cotacao.BrapiToken', 'CfDJ8teste', 1, '2026-11-02 00:00:00');"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\voltar-para-dotnet.ps1 | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "voltar-para-dotnet.ps1 terminou com $LASTEXITCODE" }
+          if ((Linha) -notlike "*Financas.Api.dll*") { throw "o voltar-para-dotnet.ps1 nao voltou o servico: $(Linha)" }
+          if ((& $sqlite dados\sql\FinancasLocal.db "SELECT ifnull(Valor, 'NULL') FROM Configuracao WHERE Chave = 'Pluggy.ClientSecret'") -ne "NULL") { throw "o segredo v2: ficou" }
+          if ((& $sqlite dados\sql\FinancasLocal.db "SELECT Valor FROM Configuracao WHERE Chave = 'Cotacao.BrapiToken'") -ne "CfDJ8teste") { throw "o segredo do .NET foi apagado" }
+          & $sqlite dados\sql\FinancasLocal.db "DELETE FROM Configuracao WHERE Chave IN ('Pluggy.ClientSecret', 'Cotacao.BrapiToken');"
+          $global:LASTEXITCODE = 0
+
       - name: Parar (parar-windows.cmd -Desativar)
         shell: cmd
         env:
