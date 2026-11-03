@@ -5,16 +5,14 @@
 #  - Confere as ferramentas basicas do terminal (curl, tar, sha256sum...)
 #  - Node.js LTS portatil em ferramentas/node (compila o Angular e tambem
 #    interpreta JSON nos scripts, no lugar do python3/jq)
-#  - .NET 10 SDK portatil em ferramentas/dotnet (reaproveita um dotnet 10.x
-#    que ja esteja no PATH, se houver)
 #  - Go portatil em ferramentas/go, na linha do src/backend-go/go.mod
 #    (reaproveita um go do PATH da mesma linha e nao mais velho; #231)
 #  - sqlite3: usa o do sistema se houver; senao baixa o portatil oficial
 #    (sqlite.org) em ferramentas/sqlite
 #
 # Tudo e baixado so por HTTPS e conferido pelo hash publicado pela origem.
-# Sem IIS e sem SQL Server Express: o Kestrel hospeda a API diretamente e o
-# banco e SQLite. Funciona em Linux, macOS e Windows (Git Bash ou WSL).
+# Sem IIS e sem SQL Server Express: o executavel do Go hospeda o site e o
+# banco e SQLite (desde a #86, sem o .NET). Funciona em Linux, macOS e Windows (Git Bash ou WSL).
 # Pode ser executado de novo: so baixa o que estiver faltando ou desatualizado.
 #
 # Uso:
@@ -45,19 +43,10 @@ if ! command -v unzip >/dev/null 2>&1; then
         faltando+=("unzip")
     fi
 fi
-# #277: o .NET nao roda no Linux sem a ICU (libicu), e um Linux minimo (ex.: debian:stable-slim) nao a traz. Sem o
-# ldconfig (no Debian, em /sbin, fora do PATH de quem nao e root), nao da para saber: segue, e o .NET diz o mesmo
-# mais adiante.
-if [[ "$SO" == linux ]]; then
-    ldconfig_bin="$(command -v ldconfig || echo /sbin/ldconfig)"
-    if [[ -x "$ldconfig_bin" ]] && ! "$ldconfig_bin" -p 2>/dev/null | grep -q 'libicuuc\.so'; then
-        faltando+=("libicu")
-    fi
-fi
 if [[ ${#faltando[@]} -gt 0 ]]; then
     case "$SO" in
         windows) dica='Use o Git Bash do Git for Windows (winget install Git.Git), que ja traz todas elas.' ;;
-        linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl ca-certificates tar unzip coreutils libicu-dev; no Fedora, libicu; no Arch, icu).' ;;
+        linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl ca-certificates tar unzip coreutils).' ;;
         osx)     dica='Instale com o Homebrew (ex.: brew install coreutils).' ;;
     esac
     erro_sai "Ferramentas ausentes: ${faltando[*]}. $dica"
@@ -137,81 +126,8 @@ else
 fi
 node --version >/dev/null 2>&1 || erro_sai "O Node.js em $destino_node nao executa. Apague a pasta e rode de novo."
 
-# ------------------------------------------------------------------ .NET 10 SDK
-etapa 'Verificando o SDK do .NET'
-usar_dotnet_do_path=0
-if command -v dotnet >/dev/null 2>&1 && dotnet --list-sdks 2>/dev/null | grep -qE '^10\.'; then
-    ok "SDK do .NET 10 ja disponivel no PATH ($(command -v dotnet))"
-    usar_dotnet_do_path=1
-fi
-
-if [[ "$usar_dotnet_do_path" -eq 0 ]]; then
-    destino_dotnet="$Ferramentas/dotnet"
-
-    case "$SO" in
-        linux)   nome_pacote_dotnet="dotnet-sdk-linux-$ARCH.tar.gz" ;;
-        osx)     nome_pacote_dotnet="dotnet-sdk-osx-$ARCH.tar.gz" ;;
-        windows) nome_pacote_dotnet="dotnet-sdk-win-$ARCH.zip" ;;
-    esac
-
-    etapa 'Obtendo a versao mais recente do .NET 10 (metadados oficiais da Microsoft)'
-    arq_metadados="$Instaladores/dotnet-10.0-releases.json"
-    rm -f "$arq_metadados"
-    for url in \
-        'https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json' \
-        'https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json'; do
-        if curl -fsSL "$url" -o "$arq_metadados" 2>/dev/null && [[ -s "$arq_metadados" ]]; then
-            break
-        fi
-        aviso "falha em $url"
-        rm -f "$arq_metadados"
-    done
-    [[ -s "$arq_metadados" ]] || erro_sai 'Nao foi possivel obter os metadados de versoes do .NET.'
-
-    leitura="$(NOME_PACOTE_DOTNET="$nome_pacote_dotnet" node -e '
-const dados = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-const versao = dados["latest-release"];
-const alvo = dados.releases.find(r => r["release-version"] === versao);
-const arq = alvo && alvo.sdk.files.find(f => f.name === process.env.NOME_PACOTE_DOTNET);
-if (!arq) process.exit(1);
-console.log([versao, alvo.sdk.version, arq.url, arq.hash].join("\n"));
-' "$(caminho_nativo "$arq_metadados")")" || erro_sai "Pacote $nome_pacote_dotnet nao encontrado nos metadados do .NET."
-    versao_release="$(sed -n '1p' <<<"$leitura" | tr -d '\r')"
-    sdk_versao="$(sed -n '2p' <<<"$leitura" | tr -d '\r')"
-    sdk_url="$(sed -n '3p' <<<"$leitura" | tr -d '\r')"
-    sdk_hash="$(sed -n '4p' <<<"$leitura" | tr -d '\r')"
-    [[ -n "$sdk_url" ]] || erro_sai "Pacote $nome_pacote_dotnet nao encontrado nos metadados do .NET $versao_release."
-    ok ".NET SDK $sdk_versao"
-
-    host_sdk="${sdk_url#*://}"
-    host_sdk="${host_sdk%%/*}"
-    case "$host_sdk" in
-        *.microsoft.com|*.windows.net|*.azureedge.net) ;;
-        *) erro_sai "Host inesperado para download do .NET: $host_sdk" ;;
-    esac
-
-    if [[ -d "$destino_dotnet/sdk/$sdk_versao" ]]; then
-        ok "SDK $sdk_versao ja presente em $destino_dotnet"
-    else
-        extensao="tar.gz"; [[ "$SO" == windows ]] && extensao="zip"
-        arq_sdk="$Instaladores/dotnet-sdk-$sdk_versao-$SO-$ARCH.$extensao"
-        [[ -f "$arq_sdk" ]] || baixar_arquivo "$sdk_url" "$arq_sdk"
-        verificar_hash "$arq_sdk" "$sdk_hash" sha512
-
-        etapa 'Extraindo o SDK do .NET'
-        rm -rf "$destino_dotnet"
-        garantir_pasta "$destino_dotnet"
-        if [[ "$SO" == windows ]]; then
-            extrair_zip "$arq_sdk" "$destino_dotnet"
-        else
-            tar -xzf "$arq_sdk" -C "$destino_dotnet"
-        fi
-        ok "SDK $sdk_versao extraido em $destino_dotnet"
-    fi
-fi
-
 # ------------------------------------------------------------------ Go (#231, ADR 0049 e 0011)
-# O back-end em Go roda atras do .NET (processo filho) e e compilado na etapa 3. A versao minima vem do go.mod
+# O back-end em Go e o site (desde a #86) e e compilado na etapa 3. A versao minima vem do go.mod
 # (linha "go 1.27.3"); baixa a mais nova da mesma linha (1.27.x) publicada em go.dev/dl, conferida pelo SHA-256
 # que o proprio indice traz. Reaproveita um go do PATH que ja seja dessa versao ou mais novo.
 etapa 'Verificando o Go'
@@ -339,10 +255,6 @@ fi
 # ------------------------------------------------------------------ Resumo
 etapa 'Conferindo o ambiente'
 configurar_ambiente_build
-# A substituicao $(...) dentro do ok nao para o script quando o comando falha: confere antes.
-versao_dotnet="$(dotnet --version 2>&1)" || erro_sai "O .NET nao roda neste computador:
-$versao_dotnet"
-ok "dotnet  $versao_dotnet"
 ok "go      $(go env GOVERSION)"
 ok "node    $(node --version)"
 ok "npm     $(npm --version)"

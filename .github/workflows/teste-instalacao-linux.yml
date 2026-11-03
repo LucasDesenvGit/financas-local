@@ -74,23 +74,25 @@ jobs:
           echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" >> "$GITHUB_ENV"
 
       - name: Instalacao do zero (instalar.sh)
-        # #85: o padrao e o Go na frente (testado no passo da troca); aqui, o .NET com o Go atras, o modo da 2.x, que os
-        # passos seguintes conferem.
-        run: env PATH="$PATH_LIMPO" bash scripts/geral/instalar.sh --backend dotnet 2>&1 | tee "$RUNNER_TEMP/instalacao-1.log"
+        run: env PATH="$PATH_LIMPO" bash scripts/geral/instalar.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-1.log"
 
       - name: Conferir instalacao
         run: |
-          for p in ferramentas/node/bin/node ferramentas/dotnet/dotnet ferramentas/go/bin/go ferramentas/sqlite/sqlite3 \
+          for p in ferramentas/node/bin/node ferramentas/go/bin/go ferramentas/sqlite/sqlite3 \
                    dados/sql/FinancasLocal.db dados/chaves/financaslocal.pfx \
-                   publicado/api/Financas.Api.dll publicado/api/financas-go publicado/api/wwwroot/index.html \
-                   publicado/api/appsettings.Production.json; do
+                   publicado/api/financas-go publicado/api/wwwroot/index.html \
+                   publicado/api/appsettings.json publicado/api/appsettings.Production.json; do
             [[ -e "$p" ]] || { echo "::error::nao encontrado: $p"; exit 1; }
+          done
+          # #86: sem o .NET em lugar nenhum.
+          for p in ferramentas/dotnet publicado/api/Financas.Api.dll dados/backend; do
+            [[ ! -e "$p" ]] || { echo "::error::sobrou do .NET: $p"; exit 1; }
           done
           systemctl --user is-active --quiet financaslocal.service || { echo "::error::servico nao esta ativo"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
-      # #231 (ADR 0049): o Go roda atras do .NET, como processo filho do servico, e responde pelo repasse.
-      - name: Go atras do .NET (/api/go/saude)
+      # O site e o Go sozinho (#85; sem o .NET desde a #86): o login e a rota do Go respondem.
+      - name: Login e /api/go/saude
         run: |
           site=https://127.0.0.1:5443
           c="$RUNNER_TEMP/cookies.txt"
@@ -99,12 +101,11 @@ jobs:
           curl -k -fsS -c "$c" -b "$c" -H "X-XSRF-TOKEN: $(token)" -H 'Content-Type: application/json' \
             -d '{"login":"verificador","senha":"Teste#Linux2026"}' "$site/api/auth/configurar" >/dev/null
           [[ "$(curl -k -s -o /dev/null -w '%{http_code}' "$site/api/go/saude")" == 401 ]] || { echo "::error::sem login devia ser 401"; exit 1; }
-          saude=""
-          for _ in $(seq 1 15); do saude="$(curl -k -fsS -b "$c" "$site/api/go/saude" || true)"; [[ -n "$saude" ]] && break; sleep 2; done
+          saude="$(curl -k -fsS -b "$c" "$site/api/go/saude")"
           echo "$saude"
           [[ "$saude" == *'"usuario":"verificador"'* && "$saude" == *'"diarioDoBanco":"wal"'* ]] || { echo "::error::GET /api/go/saude: $saude"; exit 1; }
-          pid_api="$(systemctl --user show -p MainPID --value financaslocal.service)"
-          pgrep -P "$pid_api" -f publicado/api/financas-go >/dev/null || { echo "::error::o Go nao e processo filho do servico"; pgrep -af financas; exit 1; }
+          pid="$(systemctl --user show -p MainPID --value financaslocal.service)"
+          [[ "$(cat "/proc/$pid/comm")" == financas-go ]] || { echo "::error::o servico nao e o Go: $(cat "/proc/$pid/comm")"; exit 1; }
 
       # Gerenciador do Linux (#277, ADR 0052): sem o GTK 4 e o WebKitGTK 6.0, o script avisa o que falta e instala o
       # em C# (ADR 0033), como antes; com eles, compila o em Go. Os dois respondem ao --situacao, que usa o systemd do
@@ -152,26 +153,13 @@ jobs:
           ls backups/FinancasLocal-antes-instalacao-*.db || { echo "::error::backup do banco antes da atualizacao nao foi feito"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
-      # #84 (ADR 0049): o Go sozinho como servico, sem o .NET, e a unidade volta como estava. Na inversao (#85), quem
-      # escreve a unidade e o 3-publicar-atualizar.sh, no ponto unico do executavel.
-      - name: Go sozinho como servico (systemd)
+      # #84: a unidade do systemd e o Go sozinho; o log chega ao journald e o servico para limpo.
+      - name: Go como servico (systemd)
         run: |
           site=https://127.0.0.1:5443/api/auth/estado
           unidade="$HOME/.config/systemd/user/financaslocal.service"
           diario() { sudo journalctl _SYSTEMD_USER_UNIT=financaslocal.service --no-pager; }
-          cp "$unidade" "$RUNNER_TEMP/unidade-do-dotnet"
-          systemctl --user stop financaslocal.service
-          sed -i "s|^ExecStart=.*|ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida|" "$unidade"
-          systemctl --user daemon-reload
-          systemctl --user start financaslocal.service
-
-          resposta=""
-          for _ in $(seq 1 30); do resposta="$(curl -k -fsS "$site" || true)"; [[ -n "$resposta" ]] && break; sleep 1; done
-          [[ -n "$resposta" ]] || { echo "::error::o Go sozinho nao respondeu"; diario | tail -30; exit 1; }
-          echo "$resposta"
-          pid="$(systemctl --user show -p MainPID --value financaslocal.service)"
-          [[ "$(cat "/proc/$pid/comm")" == financas-go ]] || { echo "::error::o servico nao e o Go: $(cat "/proc/$pid/comm")"; exit 1; }
-          if pgrep -f Financas.Api.dll; then echo "::error::o .NET continua rodando"; exit 1; fi
+          grep -q "ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida" "$unidade" || { echo "::error::a unidade nao e o Go"; cat "$unidade"; exit 1; }
           for _ in $(seq 1 10); do diario | grep -q 'iniciando sozinho' && break; sleep 1; done
           diario | grep -q 'iniciando sozinho' || { echo "::error::o log do Go nao chegou ao journald"; diario | tail -30; exit 1; }
 
@@ -179,64 +167,40 @@ jobs:
           if pgrep -af publicado/api/financas-go; then echo "::error::sobrou processo do Go com o servico parado"; exit 1; fi
           resultado="$(systemctl --user show -p Result --value financaslocal.service)"
           [[ "$resultado" == success ]] || { echo "::error::o Go parou com $resultado"; diario | tail -30; exit 1; }
-
-          cp "$RUNNER_TEMP/unidade-do-dotnet" "$unidade"
-          systemctl --user daemon-reload
           systemctl --user start financaslocal.service
           for _ in $(seq 1 30); do curl -k -fsS "$site" && break; sleep 1; done
           curl -k -fsS "$site"
 
-      # #85 (ADR 0049): a troca pelos scripts. --backend go poe o Go sozinho na frente, com a copia do banco antes;
-      # se ele nao sobe, o script volta sozinho para o .NET; o voltar-para-dotnet.sh volta e apaga os segredos v2:.
-      - name: Troca para o Go e volta (3-publicar-atualizar.sh --backend, voltar-para-dotnet.sh)
+      # #86: quem atualiza vindo da 3.0 tem o .NET portatil, a API .NET publicada e dados/backend. Se o Go nao sobe,
+      # o script diz como voltar (a tag v-ultimo-dotnet) e nao apaga nada; quando sobe, o que so o .NET usava sai.
+      - name: Atualizacao vinda da 3.0 (com o .NET ao lado)
         run: |
           unidade="$HOME/.config/systemd/user/financaslocal.service"
           site=https://127.0.0.1:5443/api/auth/estado
-          sqlite="$PWD/ferramentas/sqlite/sqlite3"; [[ -x "$sqlite" ]] || sqlite="$(command -v sqlite3)"
+          plantar() {
+            mkdir -p ferramentas/dotnet ferramentas/dotnet-home ferramentas/nuget-pacotes
+            touch ferramentas/dotnet/dotnet publicado/api/Financas.Api.dll
+            echo dotnet > dados/backend
+          }
 
-          # O Go sozinho nao sobe: no lugar dele, um script que falha so com -aplicar-esquema (o Go na frente) e passa o
-          # resto ao Go de verdade (o gerar-certificado e o Go atras do .NET). Volta sozinho para o .NET, e
-          # dados/backend fica dotnet.
+          # O Go nao sobe: no lugar dele, um script que falha so com -aplicar-esquema (o servico) e passa o resto ao Go
+          # de verdade (o gerar-certificado).
+          plantar
           mv publicado/preparo/financas-go publicado/preparo/financas-go.real
           { echo '#!/bin/sh'; echo 'case "$*" in *-aplicar-esquema*) exit 1 ;; esac'; echo 'exec "$(dirname "$0")/financas-go.real" "$@"'; } > publicado/preparo/financas-go
           chmod +x publicado/preparo/financas-go
-          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-1.log"
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-falha.log"
           mv -f publicado/preparo/financas-go.real publicado/preparo/financas-go
-          grep -q 'voltando o servico para o .NET' "$RUNNER_TEMP/instalacao-troca-1.log" || { echo "::error::nao voltou sozinho"; exit 1; }
-          grep -q 'Financas.Api.dll' "$unidade" || { echo "::error::a unidade nao voltou ao .NET"; cat "$unidade"; exit 1; }
-          [[ "$(cat dados/backend)" == dotnet ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
-          curl -k -fsS "$site"
-          ls dados/backups/FinancasLocal-antes-do-go-*.db || { echo "::error::sem a copia do banco antes do Go"; exit 1; }
+          grep -q 'git checkout v-ultimo-dotnet' "$RUNNER_TEMP/instalacao-falha.log" || { echo "::error::o script nao disse como voltar"; exit 1; }
+          [[ -d ferramentas/dotnet-home ]] || { echo "::error::apagou o .NET com o site fora do ar"; exit 1; }
 
-          # A troca de verdade: o Go sozinho na frente, e uma atualizacao sem --backend mantem o Go.
-          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build --backend go 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-2.log"
+          # O Go sobe: a unidade e o Go, e o que so o .NET usava sai.
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-sem-dotnet.log"
           grep -q "ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida" "$unidade" || { echo "::error::a unidade nao e o Go"; cat "$unidade"; exit 1; }
-          [[ "$(cat dados/backend)" == go ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
-          pid="$(systemctl --user show -p MainPID --value financaslocal.service)"
-          [[ "$(cat "/proc/$pid/comm")" == financas-go ]] || { echo "::error::o servico nao e o Go"; exit 1; }
+          for p in ferramentas/dotnet ferramentas/dotnet-home ferramentas/nuget-pacotes publicado/api/Financas.Api.dll publicado/api/financas-go.real dados/backend; do
+            [[ ! -e "$p" ]] || { echo "::error::sobrou: $p"; exit 1; }
+          done
           curl -k -fsS "$site"
-          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-3.log"
-          grep -q 'financas-go' "$unidade" || { echo "::error::a atualizacao sem --backend voltou ao .NET"; exit 1; }
-
-          # A volta: o segredo gravado pelo Go (v2:) sai; o do .NET fica.
-          "$sqlite" dados/sql/FinancasLocal.db "INSERT OR REPLACE INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES ('Pluggy.ClientSecret', 'v2:teste', 1, '2026-11-02 00:00:00'), ('Cotacao.BrapiToken', 'CfDJ8teste', 1, '2026-11-02 00:00:00');"
-          env PATH="$PATH_LIMPO" bash scripts/geral/voltar-para-dotnet.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-4.log"
-          grep -q 'Financas.Api.dll' "$unidade" || { echo "::error::o voltar-para-dotnet.sh nao voltou a unidade"; exit 1; }
-          [[ "$(cat dados/backend)" == dotnet ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
-          [[ "$("$sqlite" dados/sql/FinancasLocal.db "SELECT ifnull(Valor, 'NULL') FROM Configuracao WHERE Chave = 'Pluggy.ClientSecret'")" == NULL ]] || { echo "::error::o segredo v2: ficou"; exit 1; }
-          [[ "$("$sqlite" dados/sql/FinancasLocal.db "SELECT Valor FROM Configuracao WHERE Chave = 'Cotacao.BrapiToken'")" == CfDJ8teste ]] || { echo "::error::o segredo do .NET foi apagado"; exit 1; }
-          "$sqlite" dados/sql/FinancasLocal.db "DELETE FROM Configuracao WHERE Chave IN ('Pluggy.ClientSecret', 'Cotacao.BrapiToken');"
-          curl -k -fsS "$site"
-
-          # O padrao (3.0.0): sem dados/backend (instalacao vinda da 2.x), a atualizacao poe o Go na frente, com a copia
-          # do banco antes. Depois, de volta ao .NET para os passos seguintes.
-          rm -f dados/backend dados/backups/FinancasLocal-antes-do-go-*.db
-          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-troca-5.log"
-          grep -q "ExecStart=$PWD/publicado/api/financas-go" "$unidade" || { echo "::error::o padrao nao pos o Go na frente"; cat "$unidade"; exit 1; }
-          [[ "$(cat dados/backend)" == go ]] || { echo "::error::dados/backend: $(cat dados/backend)"; exit 1; }
-          ls dados/backups/FinancasLocal-antes-do-go-*.db || { echo "::error::sem a copia do banco antes do Go"; exit 1; }
-          curl -k -fsS "$site"
-          env PATH="$PATH_LIMPO" bash scripts/geral/voltar-para-dotnet.sh
 
       - name: Backup (4-backup.sh)
         run: |
@@ -309,9 +273,9 @@ jobs:
           if-no-files-found: ignore
 
   # #277: num Linux minimo de verdade (debian:stable-slim, sem nada alem do sistema base). O job acima reduz o PATH,
-  # mas o runner continua trazendo bibliotecas (ICU, certificados, fontes) que um computador recem-instalado pode nao
+  # mas o runner continua trazendo bibliotecas (certificados, fontes) que um computador recem-instalado pode nao
   # ter. Aqui elas faltam de verdade: primeiro o script tem de dizer o que instalar; depois, so com o que ele disse,
-  # tudo e baixado e compilado, e a API (com o Go atras) e o Go sozinho sobem. Sem systemd no conteiner, sobem a mao.
+  # tudo e baixado e compilado, e o Go sobe. Sem systemd no conteiner, sobe a mao.
   minimo:
     name: instalar num Linux minimo (debian:stable-slim)
     runs-on: ubuntu-latest
@@ -337,16 +301,6 @@ jobs:
 
       - name: Instalacao do zero (instalar.sh, sem gerenciador)
         run: bash scripts/geral/instalar.sh --sem-gerenciador 2>&1 | tee "$RUNNER_TEMP/instalacao-minimo-1.log"
-
-      - name: A API (com o Go atras) sobe sem o systemd
-        run: |
-          cd publicado/api
-          ASPNETCORE_ENVIRONMENT=Production ../../ferramentas/dotnet/dotnet Financas.Api.dll > "$RUNNER_TEMP/instalacao-minimo-api.log" 2>&1 &
-          for _ in $(seq 1 60); do curl -k -fsS https://127.0.0.1:5443/api/auth/estado && break; sleep 1; done
-          curl -k -fsS https://127.0.0.1:5443/api/auth/estado || { echo "::error::a API nao subiu"; cat "$RUNNER_TEMP/instalacao-minimo-api.log"; exit 1; }
-          for _ in $(seq 1 30); do grep -q 'Go no ar em' "$RUNNER_TEMP/instalacao-minimo-api.log" && break; sleep 1; done
-          grep -q 'Go no ar em' "$RUNNER_TEMP/instalacao-minimo-api.log" || { echo "::error::o Go nao subiu atras da API"; cat "$RUNNER_TEMP/instalacao-minimo-api.log"; exit 1; }
-          kill %1; wait || true
 
       - name: O Go sozinho sobe sem o systemd
         run: |
