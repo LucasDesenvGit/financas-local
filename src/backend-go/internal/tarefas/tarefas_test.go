@@ -140,45 +140,6 @@ func TestCanceladoNoMeioDoCicloNaoEhErro(t *testing.T) {
 	})
 }
 
-func TestLigadas(t *testing.T) {
-	t.Parallel()
-	casos := []struct {
-		texto    string
-		esperado []string
-		erro     bool
-	}{
-		{"", nil, false},
-		{"Cambio", []string{"Cambio"}, false},
-		{" cambio ; CRIPTO ;", []string{"Cambio", "Cripto"}, false},
-		{"Cambio; ;Cripto", []string{"Cambio", "Cripto"}, false}, // a parte vazia no meio não para a leitura (#456)
-		{"Cambio;Cambio", []string{"Cambio"}, false},
-		{"Sincronizacao", []string{"Sincronizacao"}, false},
-		{"Cambio;Cotacoes", nil, true},
-	}
-	for _, c := range casos {
-		t.Run(c.texto, func(t *testing.T) {
-			ligadas, err := Ligadas(c.texto)
-			if c.erro {
-				if err == nil {
-					t.Fatalf("nome desconhecido aceito: %v", ligadas)
-				}
-				return
-			}
-			if err != nil {
-				t.Fatal(err)
-			}
-			if len(ligadas) != len(c.esperado) {
-				t.Fatalf("ligadas %v, esperado %v", ligadas, c.esperado)
-			}
-			for _, nome := range c.esperado {
-				if !ligadas[nome] {
-					t.Errorf("%s não ligada", nome)
-				}
-			}
-		})
-	}
-}
-
 // Regra: o Go sozinho na frente roda todas as tarefas conhecidas, inclusive a sincronização (#85).
 func TestTodas(t *testing.T) {
 	t.Parallel()

@@ -117,16 +117,6 @@ func TestPastaDoSite(t *testing.T) {
 	}
 }
 
-func TestSegredoDoModoAtras(t *testing.T) {
-	rotas := http.NewServeMux()
-	if _, err := NovoHandlerAtras(strings.Repeat("s", TamanhoMinimoDoSegredo), rotas, logDescartado); err != nil {
-		t.Errorf("segredo com o tamanho mínimo exato foi recusado: %v", err)
-	}
-	if _, err := NovoHandlerAtras(strings.Repeat("s", TamanhoMinimoDoSegredo-1), rotas, logDescartado); err == nil {
-		t.Error("segredo menor que o mínimo foi aceito")
-	}
-}
-
 // O certificado temporário vale um dia, a partir de uma hora antes de agora (para um relógio um pouco atrasado).
 func TestCertificadoTemporarioValeUmDia(t *testing.T) {
 	c, err := CertificadoTemporario()

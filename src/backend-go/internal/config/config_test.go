@@ -191,7 +191,7 @@ func TestAppsettingsDoRepositorio(t *testing.T) {
 	}
 	if c.Endereco != "127.0.0.1:5443" || c.MinutosSessao != 120 || c.MaximoTentativasLogin != 5 || c.MinutosBloqueio != 15 ||
 		c.PluggyURLBase != "https://api.pluggy.ai/" || c.BancoCaminho != filepath.Join(pasta, "dados", "sql", "FinancasLocal.db") ||
-		c.PastaChaves != filepath.Join(pasta, "dados", "chaves") || c.GoTarefas != "" {
+		c.PastaChaves != filepath.Join(pasta, "dados", "chaves") {
 		t.Errorf("leu %+v", c)
 	}
 	if len(c.HostsPermitidos) != 2 || c.HostsPermitidos[0] != "localhost" || c.HostsPermitidos[1] != "127.0.0.1" {

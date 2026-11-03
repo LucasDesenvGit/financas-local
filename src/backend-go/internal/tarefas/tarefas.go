@@ -79,38 +79,15 @@ func origem(nome string) string {
 	return erros.OrigemSistema
 }
 
-// Conhecidas são as tarefas que um assunto em Go pode assumir, os nomes de Go:Tarefas (OpcoesGo.TarefasConhecidas).
+// Conhecidas são as tarefas em segundo plano do site.
 var Conhecidas = []string{"Sincronizacao", "Cambio", "Cripto"}
 
-// Todas são as tarefas do Go sozinho na frente (#85): sem o .NET, ninguém mais as roda, então o Go:Tarefas (que diz
-// quais o .NET deixou para o Go) não vale.
+// Todas são as tarefas que o site roda (#85: o Go roda todas; até a #86, o Go:Tarefas dizia quais o .NET deixava
+// para o Go).
 func Todas() map[string]bool {
 	todas := map[string]bool{}
 	for _, c := range Conhecidas {
 		todas[c] = true
 	}
 	return todas
-}
-
-// Ligadas lê Go:Tarefas ("Cambio;Cripto", sem diferenciar maiúsculas) e devolve as que o Go deve rodar. Nome
-// desconhecido é erro, como no .NET (OpcoesGo.Ler): um nome errado deixaria a tarefa sem ninguém para rodar.
-func Ligadas(texto string) (map[string]bool, error) {
-	ligadas := map[string]bool{}
-	for _, parte := range strings.Split(texto, ";") {
-		parte = strings.TrimSpace(parte)
-		if parte == "" {
-			continue
-		}
-		nome := ""
-		for _, c := range Conhecidas {
-			if strings.EqualFold(c, parte) {
-				nome = c
-			}
-		}
-		if nome == "" {
-			return nil, fmt.Errorf("Go:Tarefas tem %q: as conhecidas são %s", parte, strings.Join(Conhecidas, ", "))
-		}
-		ligadas[nome] = true
-	}
-	return ligadas, nil
 }

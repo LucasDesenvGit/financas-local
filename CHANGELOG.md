@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.4] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go perde o modo de rodar atrás do .NET** (#86; épico #70). Sem o .NET, a opção `-atras-do-dotnet`, o segredo interno entre os dois e a configuração `Go:Tarefas` viraram código sem uso e saíram. O site continua igual, com as mesmas opções e as mesmas tarefas em segundo plano.
+
 ## [3.2.3] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação

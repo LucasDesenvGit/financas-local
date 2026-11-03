@@ -1,24 +1,15 @@
-// Comando financas é a API do Finanças Local em Go (épico #70, ADR 0049). Roda de dois jeitos:
+// Comando financas é o site do Finanças Local (épico #70, ADR 0049): serve o Angular com os mesmos cabeçalhos,
+// cache e erros do .NET de antes (#73) e atende /api com o login do Go (#75): sessão, CSRF e limite de tentativas
+// na frente de todas as rotas. Desde a #85 é o site, e desde a #86 o .NET saiu. Instalado, roda como serviço do
+// sistema (#84: Serviço do Windows, ou systemd no Linux), com -aplicar-esquema -rotinas-de-partida. Em
+// desenvolvimento:
 //
-//   - Atrás do .NET (-atras-do-dotnet, #231): é assim que roda no site. O .NET o inicia como processo filho,
-//     manda o segredo interno pela entrada padrão e repassa a ele os prefixos de Go:Prefixos. Escuta em
-//     127.0.0.1, numa porta livre, e escreve {"porta":N} na saída padrão quando já aceita conexões. Para quando a
-//     entrada padrão fecha (o .NET saiu, mesmo à força) ou com SIGINT/SIGTERM.
-//
-//   - Sozinho: serve o Angular com os mesmos cabeçalhos, cache e erros do .NET (#73) e atende /api com o login do
-//     próprio Go (#75): sessão, CSRF e limite de tentativas na frente de todas as rotas. É assim que o site vai rodar
-//     depois da inversão (#85); até lá, serve para desenvolver e para o contrato. Em desenvolvimento, ao lado do
-//     .NET (5443):
-//
-//     go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
-//
-// Sozinho, ele também roda como serviço do sistema (#84): Serviço do Windows, ou systemd no Linux.
+//	go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
 //
 // O subcomando gerar-certificado (#84) cuida do .pfx da instalação: reaproveita o que ainda vale e gera outro quando precisa.
 //
-// Só para teste, nos dois jeitos: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e
-// andar dali (#363), como a libfaketime faz com o .NET no contrato. Atrás do .NET, quem passa a opção é ele, quando
-// Go:InicioDoRelogio está configurado. Sem a opção, o relógio do sistema.
+// Só para teste: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e andar dali (#363);
+// o contrato usa. Sem a opção, o relógio do sistema.
 package main
 
 import (
@@ -26,7 +17,6 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -111,11 +101,10 @@ func rodar(ctx context.Context) error {
 		endereco    = flag.String("endereco", "", "host:porta, no lugar do Kestrel:Endpoints:Https:Url (ex.: 127.0.0.1:5444)")
 		wwwroot     = flag.String("wwwroot", "", "pasta do build do Angular (padrão: <pasta>/wwwroot)")
 		temporario  = flag.Bool("certificado-temporario", false, "usar um certificado só em memória, sem o .pfx (desenvolvimento)")
-		atras       = flag.Bool("atras-do-dotnet", false, "rodar como processo filho do .NET (#231): segredo pela entrada padrão, porta pela saída padrão")
-		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho (o .NET passa o dele)")
-		aplicar     = flag.Bool("aplicar-esquema", false, "sozinho: criar e atualizar o banco antes de atender, como o .NET faz (até a #85 quem faz isso é o .NET)")
-		partidaSo   = flag.Bool("rotinas-de-partida", false, "sozinho: rodar as seis rotinas que acertam dados ao subir (#444), como o .NET faz depois do esquema; use junto de -aplicar-esquema (até a #85 quem faz isso é o .NET)")
-		pastaChaves = flag.String("chaves", "", "sozinho: pasta da chave da sessão, no lugar do Seguranca:PastaChaves (padrão: dados/chaves, ao lado do banco)")
+		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho")
+		aplicar     = flag.Bool("aplicar-esquema", false, "criar e atualizar o banco antes de atender (a linha do serviço instalado sempre liga)")
+		partidaSo   = flag.Bool("rotinas-de-partida", false, "rodar as seis rotinas que acertam dados ao subir (#444), depois do esquema; use junto de -aplicar-esquema")
+		pastaChaves = flag.String("chaves", "", "pasta da chave da sessão, no lugar do Seguranca:PastaChaves (padrão: dados/chaves, ao lado do banco)")
 		inicioRel   = flag.String("inicio-do-relogio", "", "só para teste (#363): o relógio começa neste instante e anda dali (RFC 3339 com fuso, ex.: 2026-10-15T01:00:00Z); vazio é o relógio do sistema")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")
 	)
@@ -128,19 +117,11 @@ func rodar(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// Atrás do .NET, o log sai em JSON na saída de erro: o .NET lê cada linha e a registra com a categoria
-	// Financas.Go (os avisos e erros vão para Configurações › Erros, ADR 0022). Sozinho (#298), quem põe os avisos
-	// e erros na tabela é o próprio Go: o handler do pacote erros os põe na fila, e o gravador os grava.
-	var log, logSemTabela *slog.Logger
-	var filaDeErros *erros.Fila
-	if *atras {
-		log = slog.New(slog.NewJSONHandler(os.Stderr, nil))
-		logSemTabela = log
-	} else {
-		texto := servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil))
-		filaDeErros = erros.NovaFila()
-		log, logSemTabela = slog.New(erros.NovoHandler(texto, filaDeErros, rel)), slog.New(texto)
-	}
+	// #298: quem põe os avisos e erros na tabela (Configurações › Erros) é o próprio Go: o handler do pacote erros os
+	// põe na fila, e o gravador os grava.
+	texto := servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil))
+	filaDeErros := erros.NovaFila()
+	log, logSemTabela := slog.New(erros.NovoHandler(texto, filaDeErros, rel)), slog.New(texto)
 	slog.SetDefault(log)
 	avisarRelogioDeTeste(log, inicioDeTeste)
 
@@ -150,10 +131,6 @@ func rodar(ctx context.Context) error {
 	}
 	if *caminhoDB != "" {
 		cfg.BancoCaminho = *caminhoDB
-	}
-
-	if *atras {
-		return rodarAtrasDoDotnet(ctx, cfg, rel, log, os.Stdin, os.Stdout)
 	}
 
 	if *endereco != "" {
@@ -168,27 +145,24 @@ func rodar(ctx context.Context) error {
 		return err
 	}
 
-	// Desligado por padrão: até a inversão (#85, ADR 0049), o .NET aplica o esquema ao iniciar. Os dois usam a mesma
-	// assinatura (PRAGMA user_version), então ligar aqui também não repete a cópia nem a atualização. Atrás do .NET
-	// (acima) a opção não vale: quem aplica é sempre o .NET, antes de iniciar o Go.
+	// Desligado por padrão (o contrato e o desenvolvimento usam um banco pronto); a linha do serviço instalado liga.
+	// A assinatura (PRAGMA user_version) é a mesma do EsquemaBanco do .NET de antes: não repete a cópia nem a atualização.
 	if *aplicar {
 		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, rel, log); err != nil {
 			return err
 		}
 	}
-	// #75: o Go sozinho faz o próprio login. O banco tem de existir (quem o cria, até a #85, é o .NET, ou o
-	// -aplicar-esquema acima).
+	// #75: o login é do Go. O banco tem de existir (o -aplicar-esquema acima o cria).
 	if _, err := os.Stat(cfg.BancoCaminho); err != nil {
-		return fmt.Errorf("o banco %s não existe (crie-o com -aplicar-esquema ou pelo .NET): %w", cfg.BancoCaminho, err)
+		return fmt.Errorf("o banco %s não existe (crie-o com -aplicar-esquema): %w", cfg.BancoCaminho, err)
 	}
 	db, err := banco.Abrir(ctx, cfg.BancoCaminho)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	// #444: as rotinas de partida (regras padrão novas, entradas nos cartões, transferências...). Desligadas por padrão e
-	// fora do atrás-do-.NET (acima, que já voltou): quem as roda até a inversão é o .NET, e rodar nos dois acertaria duas
-	// vezes. Erro numa rotina só é registrado, como no .NET.
+	// #444: as rotinas de partida (regras padrão novas, entradas nos cartões, transferências...). Desligadas por padrão;
+	// a linha do serviço instalado liga. Erro numa rotina só é registrado, como no .NET de antes.
 	if *partidaSo {
 		partida.Executar(ctx, partida.Opcoes{DB: db, Relogio: rel, Log: log})
 	}
@@ -209,8 +183,8 @@ func rodar(ctx context.Context) error {
 	montado := api.Montar(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
 	rotas := montado.Rotas
 	auth.Registrar(rotas)
-	// #85: sozinho na frente, o Go roda todas as tarefas em segundo plano (câmbio, cripto e a sincronização), como o
-	// .NET; o Go:Tarefas só vale atrás do .NET. Param antes de o banco fechar (o defer do db.Close vem antes).
+	// #85: o Go roda todas as tarefas em segundo plano (câmbio, cripto e a sincronização). Param antes de o banco
+	// fechar (o defer do db.Close vem antes).
 	defer iniciarTarefas(ctx, tarefas.Todas(), db, montado, rel, log)()
 	// #298: os erros do sistema. O gravador para depois do servidor e grava o que sobrou na fila antes de o banco
 	// fechar (o defer acima).
@@ -226,85 +200,15 @@ func rodar(ctx context.Context) error {
 		pararGravador()
 		<-gravadorParou
 	}()
-	log.Info("iniciando sozinho, com o login do Go", "versao", versao.Atual)
+	log.Info("iniciando", "versao", versao.Atual)
 	return servidor.Rodar(ctx, servidor.Opcoes{
 		Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas),
 	})
 }
 
-// rodarAtrasDoDotnet lê o segredo da primeira linha da entrada, abre o banco (que o .NET já criou e passou para
-// WAL) e atende até a entrada fechar ou o contexto acabar.
-func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relogio, log *slog.Logger, entrada io.Reader, saida io.Writer) error {
-	leitor := bufio.NewReader(entrada)
-	linha, err := leitor.ReadString('\n')
-	if err != nil && !errors.Is(err, io.EOF) {
-		return fmt.Errorf("ler o segredo interno da entrada padrão: %w", err)
-	}
-	segredo := strings.TrimSpace(linha)
-	if len(segredo) < servidor.TamanhoMinimoDoSegredo {
-		return errors.New("a entrada padrão não trouxe o segredo interno: o Go atrás do .NET só roda iniciado por ele")
-	}
-
-	// A entrada fica aberta enquanto o .NET estiver vivo. Quando ela fecha (o .NET parou, ou caiu e o sistema
-	// fechou o lado dele), o Go para junto: não sobra processo órfão, nem se o .NET for morto à força.
-	ctx, pararPorFimDaEntrada := context.WithCancel(ctx)
-	defer pararPorFimDaEntrada()
-	go func() {
-		_, _ = io.Copy(io.Discard, leitor)
-		log.Info("a entrada padrão fechou (o .NET saiu): parando")
-		pararPorFimDaEntrada()
-	}()
-
-	// O Go não cria nem muda o esquema (ADR 0049): o banco tem de existir, criado pelo EsquemaBanco do .NET.
-	if _, err := os.Stat(cfg.BancoCaminho); err != nil {
-		return fmt.Errorf("o banco %s não existe (o .NET cria o banco antes de iniciar o Go): %w", cfg.BancoCaminho, err)
-	}
-	db, err := banco.Abrir(ctx, cfg.BancoCaminho)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	if diario, err := banco.ModoDoDiario(ctx, db); err != nil {
-		return err
-	} else if diario != "wal" {
-		log.Warn("o banco não está em WAL: com o .NET e o Go no mesmo arquivo, quem lê pode esperar quem grava", "journal_mode", diario)
-	}
-
-	// Tarefas em segundo plano (#81): só as de Go:Tarefas, que o .NET deixa de rodar (ADR 0049). Vazio, nenhuma: o Go
-	// em desenvolvimento nunca vai à internet sozinho. Quem para é o ctx; o defer espera cada uma terminar antes de
-	// o banco fechar.
-	ligadas, err := tarefas.Ligadas(cfg.GoTarefas)
-	if err != nil {
-		return err
-	}
-	montado := api.Montar(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
-	defer iniciarTarefas(ctx, ligadas, db, montado, rel, log)()
-
-	log.Info("iniciando atrás do .NET", "versao", versao.Atual, "tarefas", cfg.GoTarefas)
-	return servidor.RodarAtrasDoDotnet(ctx, servidor.OpcoesAtras{
-		Segredo: segredo,
-		Rotas:   montado.Rotas,
-		Log:     log,
-		AvisarPorta: func(porta int) error {
-			return json.NewEncoder(saida).Encode(map[string]int{"porta": porta})
-		},
-	})
-}
-
-// escolherRelogio devolve o relógio do sistema, ou, com -inicio-do-relogio, um que começa no instante dado e anda
-// dali (relogio.APartirDe). É só para teste: o contrato (#72) faz o mesmo com o .NET pela libfaketime, que não age
-// sobre o Go. Ligado, fica um aviso no log (vai para Configurações › Erros).
-func escolherRelogio(inicio string, log *slog.Logger) (relogio.Relogio, error) {
-	r, instante, err := novoRelogio(inicio)
-	if err != nil {
-		return nil, err
-	}
-	avisarRelogioDeTeste(log, instante)
-	return r, nil
-}
-
-// novoRelogio é o escolherRelogio sem o aviso: o Go sozinho cria o relógio antes do log, porque o handler que põe o
-// aviso na tabela de erros usa o relógio (a hora do aviso é a do relógio de teste, como no .NET).
+// novoRelogio devolve o relógio do sistema, ou, com -inicio-do-relogio, um que começa no instante dado e anda dali
+// (relogio.APartirDe). É só para teste. O relógio vem antes do log, porque o handler que põe o aviso na tabela de
+// erros usa o relógio (a hora do aviso é a do relógio de teste).
 func novoRelogio(inicio string) (relogio.Relogio, *time.Time, error) {
 	if inicio == "" {
 		return relogio.Sistema{}, nil, nil
@@ -341,9 +245,9 @@ func carregarCertificado(cfg config.Config, temporario bool) (tls.Certificate, e
 	return servidor.CarregarPFX(cfg.CertificadoCaminho, cfg.CertificadoSenha)
 }
 
-// iniciarTarefas põe para rodar as tarefas em segundo plano ligadas: atrás do .NET, as de Go:Tarefas (#81); sozinho
-// na frente, todas (#85). A sincronização usa a instância das rotas (montado), para as duas dividirem a trava de uma
-// rodada por vez. Devolve quem para: cancela e espera cada uma terminar, antes de o banco fechar.
+// iniciarTarefas põe para rodar as tarefas em segundo plano ligadas (no site, todas: tarefas.Todas, #85). A
+// sincronização usa a instância das rotas (montado), para as duas dividirem a trava de uma rodada por vez. Devolve
+// quem para: cancela e espera cada uma terminar, antes de o banco fechar.
 func iniciarTarefas(ctx context.Context, ligadas map[string]bool, db *sql.DB, montado api.Montado, rel relogio.Relogio, log *slog.Logger) func() {
 	ctxTarefas, pararTarefas := context.WithCancel(ctx)
 	var emAndamento sync.WaitGroup
