@@ -1,6 +1,6 @@
 # 0028. Gerenciador do Windows, com atualização pelo GitHub Releases
 
-- **Status:** Aceita (em parte substituída pela [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md): atualizar pelo develop na instalação de desenvolvimento). A [0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md) (o gerenciador em Go) a substitui quando ele for publicado
+- **Status:** Substituída por [0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md): o gerenciador em C# saiu na #86 (fica na tag `v-ultimo-dotnet`). Antes, em parte substituída pela [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) (atualizar pelo develop na instalação de desenvolvimento)
 - **Data:** 2026-10-17 (issue #119)
 - **Relacionadas:** [0033](0033-gerenciador-no-linux-com-avalonia.md) (gerenciador no Linux), [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (instalador .msi), [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell), [0005](0005-segredos-criptografados-com-data-protection.md) (segredos)
 

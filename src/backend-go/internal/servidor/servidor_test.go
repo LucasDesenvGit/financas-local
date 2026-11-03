@@ -91,7 +91,7 @@ func TestRespostasComoODotnet(t *testing.T) {
 		{"index.html", "GET", "/index.html", 200, "no-cache", "", "text/html", false},
 		{"arquivo com hash em maiúsculas: cache de um ano", "GET", "/main-ABCD1234.js", 200, "public, max-age=31536000, immutable", "", "text/javascript", false},
 		{"css com hash", "GET", "/styles-ABCD1234.css", 200, "public, max-age=31536000, immutable", "", "text/css", false},
-		{"hash com minúsculas: no-cache (defeito do .NET mantido)", "GET", "/chunk-1dMxoNi3.js", 200, "no-cache", "", "text/javascript", false},
+		{"hash com minúsculas: cache de um ano (#305)", "GET", "/chunk-1dMxoNi3.js", 200, "public, max-age=31536000, immutable", "", "text/javascript", false},
 		{"manifesto", "GET", "/manifest.webmanifest", 200, "no-cache", "", "application/manifest+json", false},
 		{"rota do Angular: index.html sem Cache-Control", "GET", "/transacoes", 200, "", "", "text/html", false},
 		{"rota do Angular com barra no fim", "GET", "/media/", 200, "", "", "text/html", false},

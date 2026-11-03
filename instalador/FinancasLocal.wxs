@@ -136,33 +136,20 @@
     </InstallExecuteSequence>
   </Package>
 
-  <!--
-    Quem é o serviço (#277, parte 4): a API .NET, que sobe o Go como processo filho (ADR 0049), ou, com -d SoGo=1
-    (gerar-msi.ps1 -SoGo), o financas-go.exe sozinho, que aplica o esquema e roda as rotinas de partida como o .NET
-    faz hoje. O "só Go" fica pronto para a inversão (#85), que decide quando os pacotes publicados passam a usá-lo.
-  -->
-  <?ifndef SoGo?>
-    <?define SoGo = 0 ?>
-  <?endif?>
-  <?if $(SoGo) = 1 ?>
-    <?define ServicoExe = financas-go.exe ?>
-  <?else?>
-    <?define ServicoExe = Financas.Api.exe ?>
-  <?endif?>
-
+  <!-- Quem é o serviço: o financas-go.exe sozinho, que aplica o esquema e roda as rotinas de partida (#85; sem
+       o .NET desde a #86). -->
   <Fragment>
     <!-- Tudo da pasta publicada, menos os dois executáveis, que têm componente próprio (serviço e atalho). -->
     <ComponentGroup Id="Arquivos" Directory="INSTALLFOLDER">
       <Files Include="!(bindpath.app)\**">
-        <Exclude Files="!(bindpath.app)\$(ServicoExe)" />
+        <Exclude Files="!(bindpath.app)\financas-go.exe" />
         <Exclude Files="!(bindpath.app)\Financas.Gerenciador.exe" />
       </Files>
     </ComponentGroup>
 
     <!-- Serviço do Windows: mesma conta (LocalSystem) e mesmo nome da instalação pelos scripts (ADR 0029). -->
     <Component Id="Servico" Directory="INSTALLFOLDER">
-      <File Id="ApiExe" Source="!(bindpath.app)\$(ServicoExe)" KeyPath="yes" />
-      <?if $(SoGo) = 1 ?>
+      <File Id="ApiExe" Source="!(bindpath.app)\financas-go.exe" KeyPath="yes" />
       <ServiceInstall Id="InstalarServico" Name="FinancasLocal" DisplayName="Finanças Local"
                       Description="Site do Finanças Local em https://127.0.0.1:5443 (só neste computador)."
                       Arguments="-aplicar-esquema -rotinas-de-partida"
@@ -170,14 +157,6 @@
         <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
                             ThirdFailureActionType="none" RestartServiceDelayInSeconds="30" ResetPeriodInDays="1" />
       </ServiceInstall>
-      <?else?>
-      <ServiceInstall Id="InstalarServico" Name="FinancasLocal" DisplayName="Finanças Local"
-                      Description="Site do Finanças Local em https://127.0.0.1:5443 (só neste computador)."
-                      Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" Vital="yes">
-        <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
-                            ThirdFailureActionType="none" RestartServiceDelayInSeconds="30" ResetPeriodInDays="1" />
-      </ServiceInstall>
-      <?endif?>
       <ServiceControl Id="ControlarServico" Name="FinancasLocal" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
     </Component>
 
