@@ -247,6 +247,18 @@ configurar_ambiente_build() {
 # em vez de falhar com "database is locked". Uso: sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ...
 SQLITE_ESPERA=(-cmd '.timeout 15000')
 
+# caminho_sqlite <caminho>: o caminho para DENTRO de um comando do sqlite3 (.backup "..."), entre as aspas duplas. No
+# Windows, o Git Bash so converte /c/... em C:/... quando o caminho e um argumento de um programa do Windows, e nao
+# dentro de um texto: o sqlite3 do Windows nao abre /c/Users/... ("cannot open"). O escape e o do shell do sqlite3, que
+# so tem \ e \" dentro de "...".
+caminho_sqlite() {
+    local c="$1"
+    if [[ "$SO" == windows ]] && command -v cygpath >/dev/null 2>&1; then c="$(cygpath -m "$c")"; fi
+    c=${c//\\/\\\\}
+    c=${c//\"/\\\"}
+    printf '%s' "$c"
+}
+
 coluna_existe() {
     local tabela="$1" coluna="$2" colunas
     # Le a lista inteira antes de comparar (em vez de canalizar direto para um
