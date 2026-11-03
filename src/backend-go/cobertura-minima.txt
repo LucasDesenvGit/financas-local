@@ -6,7 +6,7 @@
 # - "fora" tira o pacote da conta, com o motivo na mesma linha. Só para código que não é escrito à mão.
 #
 # pacote                piso
-api                     84.6
+api                     96.9
 auditoria               100.0
 autenticacao            76.0
 banco                   80.5
@@ -43,7 +43,7 @@ relatorios              96.9
 relogio                 95.4
 reservas                93.2
 respostas               98.5
-saude                   54.5
+saude                   86.3
 segredos                77.7
 selic                   93.8
 servidor                88.8
