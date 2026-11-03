@@ -112,6 +112,10 @@ func (c *Cofre) Cifrar(chave, segredo string) (string, error) {
 	return prefixo + base64.StdEncoding.EncodeToString(cifrado), nil
 }
 
+// GravadoPeloGo diz se o valor gravado é do esquema do Go ("v2:"), sem abrir a chave. O que não é (o do Data
+// Protection do .NET) o Go não lê: a tela tem de pedir de novo, e não dizer "configurado" (#85).
+func GravadoPeloGo(gravado string) bool { return strings.HasPrefix(gravado, prefixo) }
+
 // Decifrar devolve o segredo gravado na chave dada. Valor sem "v2:" é ErrInformarDeNovo; "v2:" que não confere é
 // ErrAdulterado. Nenhum dos erros traz o valor.
 func (c *Cofre) Decifrar(chave, gravado string) (string, error) {

@@ -142,6 +142,19 @@ func (s *Servico) ObterSegredo(ctx context.Context, cofre Cofre, chave string) (
 	return &segredo, nil
 }
 
+// SegredoGravado é o valor como está na linha, sem decifrar e sem abrir a chave, e se ele tem a marca de protegido:
+// para quem precisa saber se o segredo é legível sem tocar no cofre (#85). nil se não há valor.
+func (s *Servico) SegredoGravado(ctx context.Context, chave string) (valor *string, protegido bool, err error) {
+	c, err := s.q.ObterConfiguracao(ctx, chave)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, false, nil
+	case err != nil:
+		return nil, false, fmt.Errorf("ler a configuração %s: %w", chave, err)
+	}
+	return c.Valor, c.Protegido, nil
+}
+
 // DefinirSegredo é o DefinirAsync(chave, valor, protegido: true): grava o valor cifrado pelo cofre, com
 // Protegido = 1. nil apaga o valor (fica a linha, sem valor), como no .NET.
 func (s *Servico) DefinirSegredo(ctx context.Context, cofre Cofre, chave string, segredo *string) error {

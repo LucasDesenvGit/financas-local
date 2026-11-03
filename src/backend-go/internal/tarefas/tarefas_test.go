@@ -179,6 +179,19 @@ func TestLigadas(t *testing.T) {
 	}
 }
 
+// Regra: o Go sozinho na frente roda todas as tarefas conhecidas, inclusive a sincronização (#85).
+func TestTodas(t *testing.T) {
+	t.Parallel()
+	todas := Todas()
+	if len(todas) != 3 || !todas["Sincronizacao"] || !todas["Cambio"] || !todas["Cripto"] {
+		t.Fatalf("Todas() = %v", todas)
+	}
+	todas["Cambio"] = false // o mapa é novo a cada chamada: mudar um não muda o outro
+	if !Todas()["Cambio"] {
+		t.Fatal("Todas() devolveu o mesmo mapa")
+	}
+}
+
 // Regra: a origem na tela de erros é a do .NET (RegistroErrosLoggerProvider.Origem): o câmbio em "Câmbio", a sincronização
 // (Servicos.Pluggy) em "Open Finance" e, desde a #298, a cripto em "Cripto"; o resto em "Sistema".
 func TestOrigemComoNoDotnet(t *testing.T) {

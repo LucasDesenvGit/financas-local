@@ -206,8 +206,12 @@ func rodar(ctx context.Context) error {
 		DB: db, Relogio: rel, Log: log, Chave: chave, Versao: versao.Atual, MinutosSessao: cfg.MinutosSessao,
 		MaximoTentativasLogin: cfg.MaximoTentativasLogin, MinutosBloqueio: cfg.MinutosBloqueio,
 	})
-	rotas := api.NovasRotas(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
+	montado := api.Montar(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
+	rotas := montado.Rotas
 	auth.Registrar(rotas)
+	// #85: sozinho na frente, o Go roda todas as tarefas em segundo plano (câmbio, cripto e a sincronização), como o
+	// .NET; o Go:Tarefas só vale atrás do .NET. Param antes de o banco fechar (o defer do db.Close vem antes).
+	defer iniciarTarefas(ctx, tarefas.Todas(), db, montado, rel, log)()
 	// #298: os erros do sistema. O gravador para depois do servidor e grava o que sobrou na fila antes de o banco
 	// fechar (o defer acima).
 	erros.Registrar(rotas, erros.NovoServico(db, filaDeErros, rel, log))
@@ -273,25 +277,8 @@ func rodarAtrasDoDotnet(ctx context.Context, cfg config.Config, rel relogio.Relo
 	if err != nil {
 		return err
 	}
-	ctxTarefas, pararTarefas := context.WithCancel(ctx)
-	var emAndamento sync.WaitGroup
-	defer func() {
-		pararTarefas()
-		emAndamento.Wait()
-	}()
-	if ligadas["Cambio"] {
-		t := cambio.NovaTarefa(cambio.NovoServico(db, cambio.ClientePadrao(), rel, log), rel, log)
-		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
-	}
-	if ligadas["Cripto"] {
-		t := cripto.NovaTarefa(cripto.NovoServico(db, cripto.ClientePadrao(), rel, log), log)
-		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
-	}
 	montado := api.Montar(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
-	if ligadas["Sincronizacao"] {
-		t := sincronizacao.NovaTarefa(montado.Sincronizacao, log)
-		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
-	}
+	defer iniciarTarefas(ctx, ligadas, db, montado, rel, log)()
 
 	log.Info("iniciando atrás do .NET", "versao", versao.Atual, "tarefas", cfg.GoTarefas)
 	return servidor.RodarAtrasDoDotnet(ctx, servidor.OpcoesAtras{
@@ -352,4 +339,28 @@ func carregarCertificado(cfg config.Config, temporario bool) (tls.Certificate, e
 		return tls.Certificate{}, fmt.Errorf("sem certificado: configure Kestrel:Endpoints:Https:Certificate no appsettings ou use -certificado-temporario")
 	}
 	return servidor.CarregarPFX(cfg.CertificadoCaminho, cfg.CertificadoSenha)
+}
+
+// iniciarTarefas põe para rodar as tarefas em segundo plano ligadas: atrás do .NET, as de Go:Tarefas (#81); sozinho
+// na frente, todas (#85). A sincronização usa a instância das rotas (montado), para as duas dividirem a trava de uma
+// rodada por vez. Devolve quem para: cancela e espera cada uma terminar, antes de o banco fechar.
+func iniciarTarefas(ctx context.Context, ligadas map[string]bool, db *sql.DB, montado api.Montado, rel relogio.Relogio, log *slog.Logger) func() {
+	ctxTarefas, pararTarefas := context.WithCancel(ctx)
+	var emAndamento sync.WaitGroup
+	if ligadas["Cambio"] {
+		t := cambio.NovaTarefa(cambio.NovoServico(db, cambio.ClientePadrao(), rel, log), rel, log)
+		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
+	}
+	if ligadas["Cripto"] {
+		t := cripto.NovaTarefa(cripto.NovoServico(db, cripto.ClientePadrao(), rel, log), log)
+		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
+	}
+	if ligadas["Sincronizacao"] {
+		t := sincronizacao.NovaTarefa(montado.Sincronizacao, log)
+		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
+	}
+	return func() {
+		pararTarefas()
+		emAndamento.Wait()
+	}
 }
