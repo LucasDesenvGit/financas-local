@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [2.68.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Opção para pôr o Go na frente, com volta automática** (#85, parte 1; épico #70; ADR 0049). Na instalação pelos scripts, `--backend go` (no Windows, `-Backend go`) faz o site rodar só no Go. Antes da troca, o banco é copiado e conferido; se o Go não subir em 30 s, o site volta sozinho para o .NET. O `voltar-para-dotnet` volta à mão e avisa para informar de novo o Client Secret da Pluggy e o token da brapi. O padrão continua sendo o .NET.
+
 ## [2.67.1] — 2026-11-02 · desenvolvimento
 
 ### Publicação e documentação

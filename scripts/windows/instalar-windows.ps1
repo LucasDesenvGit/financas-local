@@ -25,13 +25,17 @@
     .\instalar-windows.ps1
     .\instalar-windows.ps1 -PularBuild
     .\instalar-windows.ps1 -NaoConfiarCertificado   # sem ninguem na frente da tela (ex.: CI)
+    .\instalar-windows.ps1 -Backend go               # #85: o Go sozinho como servico (-Backend dotnet volta)
 #>
 [CmdletBinding()]
 param(
     # Reaproveita o build anterior (publicado\preparo) e so republica.
     [switch]$PularBuild,
     # Nao poe o certificado nas Autoridades Raiz Confiaveis da maquina (o navegador vai avisar).
-    [switch]$NaoConfiarCertificado
+    [switch]$NaoConfiarCertificado,
+    # #85 (ADR 0049): quem fica na frente como servico. "go": o Go sozinho (volta sozinho para o .NET se nao subir);
+    # "dotnet": a API .NET com o Go atras. Sem o parametro, fica a escolha de antes (dados\backend; padrao dotnet).
+    [ValidateSet("", "go", "dotnet")][string]$Backend = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -620,14 +624,31 @@ function Publicar {
     $dotnetPortatil = Join-Path $Ferramentas "dotnet\dotnet.exe"
     if (Test-Path -LiteralPath $dotnetPortatil) { $dotnetExec = $dotnetPortatil } else { $dotnetExec = (Get-Command dotnet).Source }
     $dll = Join-Path $destino "Financas.Api.dll"
-    $binPath = "`"$dotnetExec`" `"$dll`""
+    $binDotnet = "`"$dotnetExec`" `"$dll`""
+    $binGo = "`"$(Join-Path $destino "financas-go.exe")`" -aplicar-esquema -rotinas-de-partida"
+
+    # #85: a escolha fica em dados\backend, para uma atualizacao sem -Backend manter a de antes.
+    $arquivoBackend = Join-Path $Dados "backend"
+    $backendAnterior = "dotnet"
+    if (Test-Path -LiteralPath $arquivoBackend) { $backendAnterior = (Get-Content -LiteralPath $arquivoBackend -Raw).Trim() }
+    if ($backendAnterior -ne "go") { $backendAnterior = "dotnet" }
+    $usarBackend = if ($Backend) { $Backend } else { $backendAnterior }
+    $banco = Join-Path $PastaSql "FinancasLocal.db"
+    if ($usarBackend -eq "go" -and $backendAnterior -ne "go" -and (Test-Path -LiteralPath $banco)) {
+        # Antes de o Go passar a ficar na frente, uma copia do banco que se confere ao abrir, em dados\backups.
+        $pastaCopias = Join-Path $Dados "backups"
+        Garantir-Pasta $pastaCopias
+        $copiaAntes = Join-Path $pastaCopias ("FinancasLocal-antes-do-go-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".db")
+        Sqlite $banco (".backup '" + ($copiaAntes -replace '\\', '/') + "'") | Out-Null
+        if ((Sqlite $copiaAntes "PRAGMA integrity_check;") -ne "ok") { ErroSai "A copia $copiaAntes nao abre direito: nada foi trocado." }
+        Ok "copia do banco conferida: $copiaAntes"
+    }
+    $binPath = if ($usarBackend -eq "go") { $binGo } else { $binDotnet }
 
     # New-Service e Win32_Service.Change recebem o binPath como esta (o sc.exe chamado pelo
     # PowerShell 5.1 perde as aspas internas).
     if ($servico) {
-        $resultado = Get-CimInstance -ClassName Win32_Service -Filter "Name='$NomeServico'" |
-            Invoke-CimMethod -MethodName Change -Arguments @{ PathName = $binPath; StartMode = "Automatic" }
-        if ($resultado.ReturnValue -ne 0) { ErroSai "Nao foi possivel reconfigurar o servico (codigo $($resultado.ReturnValue))." }
+        Trocar-Executavel $binPath
         Ok "servico atualizado"
     } else {
         New-Service -Name $NomeServico -BinaryPathName $binPath -DisplayName $NomeServico -StartupType Automatic | Out-Null
@@ -637,6 +658,18 @@ function Publicar {
     Etapa "[3/3] Iniciando e testando"
     $inicio = Get-Date
     $falha = Iniciar-E-Testar
+    if ($falha -and $usarBackend -eq "go") {
+        # #85: o Go na frente nao subiu: volta sozinho para o .NET, que continua publicado ao lado, e avisa.
+        Mostrar-EventosServico $inicio
+        Aviso "O Go na frente nao respondeu: voltando o servico para o .NET. $falha"
+        Stop-Service -Name $NomeServico -Force -ErrorAction SilentlyContinue
+        Trocar-Executavel $binDotnet
+        $usarBackend = "dotnet"
+        $inicio = Get-Date
+        $falha = Iniciar-E-Testar
+        if (-not $falha) { Aviso "O site esta de novo no .NET. Corrija e rode com -Backend go." }
+    }
+    [IO.File]::WriteAllText($arquivoBackend, "$usarBackend`n", (New-Object Text.UTF8Encoding $false))
     if (-not $falha) { return }
 
     # A nova versao nao subiu: mostra os eventos do Windows (a excecao real da API fica la) e, numa
@@ -652,6 +685,13 @@ function Publicar {
         ErroSai "$falha A versao anterior tambem nao subiu; veja os eventos acima."
     }
     ErroSai "$falha Veja os eventos acima."
+}
+
+# Troca o que o servico executa (#84: um ponto so; #85: .NET ou Go na frente).
+function Trocar-Executavel([string]$caminho) {
+    $resultado = Get-CimInstance -ClassName Win32_Service -Filter "Name='$NomeServico'" |
+        Invoke-CimMethod -MethodName Change -Arguments @{ PathName = $caminho; StartMode = "Automatic" }
+    if ($resultado.ReturnValue -ne 0) { ErroSai "Nao foi possivel reconfigurar o servico (codigo $($resultado.ReturnValue))." }
 }
 
 # Inicia o servico e espera a API responder (ate 30 s: a primeira subida gera as chaves do Data
@@ -674,7 +714,7 @@ function Iniciar-E-Testar {
     }
     $global:LASTEXITCODE = 0
     $ocupante = Quem-UsaPorta 5443
-    if ($ocupante -and $ocupante -notmatch '^(dotnet|Financas\.Api) ') {
+    if ($ocupante -and $ocupante -notmatch '^(dotnet|Financas\.Api|financas-go) ') {
         return "A API nao respondeu em $urlTeste depois de 30 s. A porta 5443 esta em uso por ${ocupante}: feche esse programa."
     }
     return "A API nao respondeu em $urlTeste depois de 30 s."
