@@ -34,5 +34,6 @@ Use ao revisar um PR com Go e no fim do seu próprio trabalho. Cada achado sai c
 
 **Documentação junto, no mesmo PR** (`CLAUDE.md`)
 - [ ] Assunto passou para o Go ou mudou de fronteira: `docs/ARQUITETURA.md` (mapa de contextos, diagramas), `docs/arquitetura/fluxos.md` e `docs/arquitetura/dominio.md` (ADR 0055).
+- [ ] Pacote novo, removido ou que mudou de papel em `internal/`: a tabela e o desenho de `docs/arquitetura/componentes.md` (#464; o teste de arquitetura confere a tabela).
 - [ ] Dado pessoal novo: `docs/DADOS-PESSOAIS.md`. Cópia, WAL, `dados/` ou chaves: `docs/OPERACAO.md`.
 - [ ] PR do épico #70: a "🎓 Aula rápida", com link nas afirmações técnicas principais ([`links.md`](links.md)).

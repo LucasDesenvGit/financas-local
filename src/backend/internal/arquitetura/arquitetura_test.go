@@ -18,8 +18,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -362,6 +364,91 @@ func lerPacotes(t *testing.T) []pacote {
 func TestArquitetura(t *testing.T) {
 	for _, v := range violacoes(lerPacotes(t)) {
 		t.Error(v)
+	}
+}
+
+// paginaDosComponentes é o diagrama de Componentes (C4 nível 3, #464), a partir desta pasta.
+var paginaDosComponentes = filepath.Join("..", "..", "..", "..", "docs", "arquitetura", "componentes.md")
+
+// pacoteCitado acha os pacotes citados entre crases na página ("`internal/banco`"). A crase de fechar logo depois do
+// nome separa o internal/banco do internal/banco/consultas e deixa de fora os arquivos ("`internal/x/y.go`").
+var pacoteCitado = regexp.MustCompile("`((?:cmd|internal|testes)/[a-z0-9/]+)`")
+
+// pacotesForaDaPagina devolve uma mensagem por pacote que existe e não está na página, e por pacote citado que não
+// existe mais.
+func pacotesForaDaPagina(pacotes []string, pagina string) []string {
+	citados := map[string]bool{}
+	for _, m := range pacoteCitado.FindAllStringSubmatch(pagina, -1) {
+		citados[m[1]] = true
+	}
+	existe := map[string]bool{}
+	var v []string
+	for _, p := range pacotes {
+		existe[p] = true
+		if !citados[p] {
+			v = append(v, fmt.Sprintf("diagrama de Componentes: %s não está em docs/arquitetura/componentes.md. O que "+
+				"fazer: ponha o pacote na linha do componente dele na tabela \"Cada pacote num componente\" (e no "+
+				"desenho, se for um componente novo), no mesmo PR.", p))
+		}
+	}
+	for c := range citados {
+		if !existe[c] {
+			v = append(v, fmt.Sprintf("diagrama de Componentes: docs/arquitetura/componentes.md cita %s, que não "+
+				"existe mais. O que fazer: tire da página.", c))
+		}
+	}
+	sort.Strings(v)
+	return v
+}
+
+// Regra: todo pacote aparece na página do diagrama de Componentes (#464), e a página não cita pacote que saiu.
+func TestDiagramaDeComponentes(t *testing.T) {
+	pagina, err := os.ReadFile(paginaDosComponentes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Este pacote só tem _test.go, então o lerPacotes o deixa de fora; a página o cita, como os outros.
+	caminhos := []string{"internal/arquitetura"}
+	for _, p := range lerPacotes(t) {
+		caminhos = append(caminhos, p.Caminho)
+	}
+	for _, v := range pacotesForaDaPagina(caminhos, string(pagina)) {
+		t.Error(v)
+	}
+}
+
+// Regra: a conferência da página acusa o pacote que falta e o que saiu, sem confundir um pacote com o de dentro dele.
+func TestPacotesForaDaPagina(t *testing.T) {
+	casos := []struct {
+		nome     string
+		pacotes  []string
+		pagina   string
+		mensagem []string
+	}{
+		{"todos citados", []string{"internal/banco", "internal/banco/consultas"},
+			"| Base | `internal/banco`, `internal/banco/consultas` |", nil},
+		{"falta um", []string{"internal/banco", "internal/novo"}, "`internal/banco`",
+			[]string{"diagrama de Componentes: internal/novo não está"}},
+		{"o de dentro não conta pelo de fora", []string{"internal/banco"}, "`internal/banco/consultas`", []string{
+			"diagrama de Componentes: docs/arquitetura/componentes.md cita internal/banco/consultas",
+			"diagrama de Componentes: internal/banco não está",
+		}},
+		{"arquivo não é pacote", []string{"internal/x"}, "`internal/x` e `internal/x/y_test.go`", nil},
+		{"saiu do código", []string{"cmd/financas"}, "`cmd/financas` e `internal/velho`",
+			[]string{"diagrama de Componentes: docs/arquitetura/componentes.md cita internal/velho"}},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			v := pacotesForaDaPagina(c.pacotes, c.pagina)
+			if len(v) != len(c.mensagem) {
+				t.Fatalf("violações: %q\nquer %d", v, len(c.mensagem))
+			}
+			for i, m := range c.mensagem {
+				if !strings.HasPrefix(v[i], m) || !strings.Contains(v[i], "O que fazer:") {
+					t.Errorf("violação %d: %q\nquer começando com %q e com o que fazer", i, v[i], m)
+				}
+			}
+		})
 	}
 }
 

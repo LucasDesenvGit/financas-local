@@ -2,7 +2,7 @@
 
 Como as partes conversam nos caminhos que cruzam o sistema. Os nomes dos participantes são os do [diagrama de Contêineres](../ARQUITETURA.md#contêineres). O padrão está na [ADR 0055](../adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
 
-> **Data dos diagramas:** 03/11/2026, com o .NET já fora (#86): quem atende tudo é o site em Go. Quando um fluxo muda, o diagrama dele muda no mesmo PR.
+> **Data dos diagramas:** 04/11/2026, com o .NET já fora (#86): quem atende tudo é o site em Go. Quando um fluxo muda, o diagrama dele muda no mesmo PR.
 
 ## Login e sessão
 
@@ -48,6 +48,43 @@ sequenceDiagram
 
 - A senha fica com hash PBKDF2, no formato do ASP.NET Identity que o .NET usava, para as senhas de antes continuarem valendo. Os limites são parâmetros em **Configurações**.
 - A sessão expira sem uso, e cada pedido renova o prazo.
+
+## Um pedido à API
+
+**Quem atende:** o site, passando pelos [componentes](componentes.md) do Go, na ordem em que o `servidor.NovoHandler` e o `autenticacao.Proteger` os montam.
+
+```mermaid
+sequenceDiagram
+    participant Nav as Navegador
+    participant Srv as servidor
+    participant Auth as autenticacao
+    participant Mux as api (ServeMux)
+    participant Ass as Assunto (ex.: extrato)
+    participant Reg as Regra (ex.: categorizacao)
+    participant BD as Banco
+
+    Nav->>Srv: HTTPS em 127.0.0.1:5443
+    Note over Srv: Registra o pedido no log, recusa host fora da lista (400),<br/>põe os cabeçalhos de segurança e a CSP, segura o pânico (500)<br/>e limita o corpo a 1 MB
+    alt caminho fora de /api
+        Srv-->>Nav: arquivo do wwwroot (o Angular)
+    else /api
+        Srv->>Auth: o pedido, com o caminho limpo
+        Note over Auth: Limite por IP no entrar e no configurar (429),<br/>cookie da sessão e o carimbo no banco,<br/>login (401) e CSRF se o método grava (400)
+        Auth->>Mux: o pedido, com o usuário e a rota no contexto
+        alt rota não existe
+            Mux-->>Nav: 404 sem corpo
+        else rota do assunto
+            Mux->>Ass: a função da rota
+            Ass->>Ass: lê a entrada (respostas.LerObjeto: 400 com as mensagens)
+            Ass->>Reg: chama a regra
+            Reg->>BD: SQL com ? ou sqlc, numa transação (banco.EmTransacao)
+            Ass-->>Nav: o JSON da resposta, ou o {"mensagem"} do erro
+        end
+    end
+```
+
+- Um erro inesperado vai para o log com a rota e o login, e daí para a tabela `ErroSistema` (Configurações › Erros, ADR 0022). Quem pediu recebe só o 500 genérico.
+- As rotas de login, sessão e senha são da própria `autenticacao`, que as registra no mesmo `ServeMux`.
 
 ## Partida do site
 

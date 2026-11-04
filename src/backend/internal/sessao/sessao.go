@@ -1,5 +1,5 @@
-// Pacote sessao diz quem está logado na requisição. Quem confere o login é o .NET, que fica na frente (ADR 0049):
-// ele manda o Id do usuário num cabeçalho interno, e o servidor do Go o põe no contexto da requisição.
+// Pacote sessao diz quem está logado na requisição. Quem confere o login é o internal/autenticacao (#75), que põe o
+// Id do usuário no contexto antes de chamar a rota.
 package sessao
 
 import "context"
@@ -11,7 +11,7 @@ func ComUsuario(ctx context.Context, id int64) context.Context {
 	return context.WithValue(ctx, chaveUsuario{}, id)
 }
 
-// Usuario é o Id do usuário logado, e false se a requisição não tem um (não passou pelo .NET).
+// Usuario é o Id do usuário logado, e false se a requisição não tem um (rota anônima, ou não passou pela autenticação).
 func Usuario(ctx context.Context) (int64, bool) {
 	id, ok := ctx.Value(chaveUsuario{}).(int64)
 	return id, ok && id > 0

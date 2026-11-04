@@ -25,22 +25,24 @@ Usamos **diagramas Mermaid em `flowchart`, com a notação do C4 escrita nas cai
 |---|---|---|
 | **Pergunta** | Quais são as partes, onde rodam e com quem falam? | Como uma parte funciona por dentro? |
 | **O que tem** | C4 nível 1 (Contexto) e 2 (Contêineres), mapa de contextos, implantação e decisões em resumo | C4 nível 3 (Componentes, só do Go, #464), modelo de dados e fluxos em sequência (#463) |
-| **Onde mora** | `docs/ARQUITETURA.md` | `docs/BANCO-DE-DADOS.md`, `docs/ARQUITETURA.md` ou `docs/arquitetura/` |
+| **Onde mora** | `docs/ARQUITETURA.md` | `docs/BANCO-DE-DADOS.md`, `docs/ARQUITETURA.md` ou `docs/arquitetura/` (os Componentes em `docs/arquitetura/componentes.md`) |
 
 - O nível 4 do C4 (Código) fica de fora.
 - Cada página de diagramas diz a data e a fase da migração, para quem lê saber de quando é o desenho.
-- **Quem atualiza:** quem muda. Mudou um contêiner, uma saída de rede ou uma fronteira? Os diagramas de Contexto, de Contêineres e de implantação mudam no mesmo PR, como o Manual (#177). Passou um assunto para o Go? O mapa de contextos e a data também.
+- **Quem atualiza:** quem muda. Mudou um contêiner, uma saída de rede ou uma fronteira? Os diagramas de Contexto, de Contêineres e de implantação mudam no mesmo PR, como o Manual (#177). Passou um assunto para o Go? O mapa de contextos e a data também. Pacote novo em `internal/`? Ele entra na tabela dos Componentes.
+- **Componentes (nível 3, #464):** são mais de 50 pacotes, então o desenho agrupa os pacotes em componentes pelo papel (assuntos com rotas, regras sem HTTP, clientes de fora, transversais, base). Uma tabela logo abaixo põe cada pacote em um grupo. Uma caixa por pacote deixaria o Mermaid ilegível. *Inferido* (julgamento de quem fez a #464, não confirmado com o usuário).
 
 ## Consequências
 
 - **Positivas:** o desenho está no diff do PR e é revisado com o código. Quem chega vê o todo antes de abrir o código.
 - **Negativas:**
   - a disposição é do Mermaid: em diagrama com muitas setas, é preciso agrupar. O mapa de contextos usa setas para a moldura, que dizem menos que uma seta por assunto;
-  - o desenho só fica em dia se a regra for seguida: não há teste que compare o diagrama com o código;
+  - o desenho só fica em dia se a regra for seguida. O único teste é o de arquitetura, que é local (#476): ele confere se todo pacote está na tabela dos Componentes e se a tabela não cita pacote que saiu (#464). As setas e os outros diagramas não são conferidos;
   - os diagramas de Contêineres e de implantação mudam quando o .NET sair (#86).
 - **Na prática:**
   - use `flowchart`, sem cor fixa nas caixas, para acompanhar o tema (o tracejado por `classDef` vale nos dois);
   - confira o desenho nos temas claro e escuro antes do PR;
   - as setas do mapa de contextos vêm do código: `go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...` no Go e os construtores no C#;
   - o [modelo de ameaças](../MODELO-DE-AMEACAS.md) é revisado quando muda uma fronteira: saída de rede nova, processo, porta, pasta `dados`, login e a remoção do .NET (#86);
-  - a regra está no `CLAUDE.md` e nas skills `migrar-para-go` e `go-no-projeto` (que o agente `dev-go` usa).
+  - a regra está no `CLAUDE.md` e nas skills `migrar-para-go` e `go-no-projeto` (que o agente `dev-go` usa);
+  - nos Componentes, as setas que todo pacote tem (para a base e os transversais) ficam fora do desenho e são ditas em texto, e o "quem pode importar quem" vem do teste de arquitetura (`internal/arquitetura`), não do olho.

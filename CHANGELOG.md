@@ -8,6 +8,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **As confirmações usam uma janela do próprio site, e não a do navegador** (#631; ADR 0057). Antes de excluir, descartar ou trocar algo em lote, o site perguntava pela janela do navegador ("localhost:5443 diz", com "OK" e "Cancelar"). Agora a pergunta aparece numa janela no tema do site, com o nome do que vai mudar e o botão com o verbo da ação ("Excluir", "Descartar", "Salvar assim mesmo"), em vermelho quando apaga. "Cancelar" e Esc não fazem nada. Vale nas oito telas que perguntavam: Metas, Transações, Contas, Categorias, Investimentos, Contas a pagar, Configurações e Erros.
 - **Excluir uma meta direto do card** (#631). Cada meta ganhou "Excluir" ao lado de "Editar", com a mesma confirmação, sem precisar abrir a edição.
 
+## [3.2.9] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **Licença MIT** (#473; épico #465). Nada muda para quem usa. O repositório passa a dizer o que se pode fazer com o código.
+
+## [3.2.8] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **O diagrama de Componentes do back-end em Go** (#464, épico #465). A página nova `docs/arquitetura/componentes.md` traz o nível 3 do C4: os 61 pacotes do site agrupados por papel (entrada, servidor, autenticação, rotas, assuntos, regras sem HTTP, sincronização, partida, tarefas, clientes de fora, transversais e base), quem chama quem, onde fica a regra de cada assunto e as cinco regras de dependência que o teste de arquitetura confere. O teste de arquitetura local passa a acusar pacote que falta na página ou que ela cita sem existir mais. Os fluxos ganham "Um pedido à API", pelos componentes, e a ADR 0055, o `CLAUDE.md`, o padrão de um assunto e a skill `go-no-projeto` pedem a linha do pacote novo na página. Os comentários dos pacotes `api`, `tarefas` e `sessao` deixam de falar do .NET na frente.
+
 ## [3.2.7] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação
