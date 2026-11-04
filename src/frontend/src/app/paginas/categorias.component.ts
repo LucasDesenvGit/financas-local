@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
@@ -293,6 +294,7 @@ type Aba = 'categorias' | 'regras' | 'openfinance';
 })
 export class CategoriasComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
 
   readonly TipoCategoria = TipoCategoria;
@@ -392,8 +394,8 @@ export class CategoriasComponent implements OnInit {
     });
   }
 
-  excluirCategoria(): void {
-    if (!this.categoriaId || !confirm('Excluir a categoria? As transações dela ficarão sem categoria e os orçamentos/regras dela serão removidos.')) return;
+  async excluirCategoria(): Promise<void> {
+    if (!this.categoriaId || !(await this.confirmacao.confirmar({ titulo: 'Excluir categoria', mensagem: 'Excluir a categoria? As transações dela ficarão sem categoria e os orçamentos/regras dela serão removidos.', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirCategoria(this.categoriaId).subscribe({
       next: () => {
         this.formCategoria = null;
@@ -434,8 +436,8 @@ export class CategoriasComponent implements OnInit {
     });
   }
 
-  excluirRegra(): void {
-    if (!this.regraId || !confirm('Excluir esta regra?')) return;
+  async excluirRegra(): Promise<void> {
+    if (!this.regraId || !(await this.confirmacao.confirmar({ titulo: 'Excluir regra', mensagem: 'Excluir esta regra?', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirRegra(this.regraId).subscribe({
       next: () => {
         this.formRegra = null;
@@ -531,9 +533,9 @@ export class CategoriasComponent implements OnInit {
     });
   }
 
-  excluirRegraDescricao(): void {
+  async excluirRegraDescricao(): Promise<void> {
     const id = this.regraDescricaoId;
-    if (!id || !confirm('Excluir esta regra? As transações com o nome dado por ela voltam à descrição do banco.')) return;
+    if (!id || !(await this.confirmacao.confirmar({ titulo: 'Excluir regra', mensagem: 'Excluir esta regra? As transações com o nome dado por ela voltam à descrição do banco.', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirRegraDescricao(id).subscribe({
       next: () => {
         this.formRegraDescricao = null;

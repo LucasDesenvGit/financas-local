@@ -806,7 +806,8 @@ export const MANUAL: CapituloManual[] = [
           'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta e, translúcido, no centro do anel do percentual; o anel e o miolo dele enchem na cor escolhida, conforme o dinheiro guardado.',
           'Cada meta é uma barra que abre e fecha: clique no nome. Fechada, ela mostra o percentual, quanto já foi guardado e quanto guardar no mês. Aberta, o anel, os valores e a prioridade ficam à esquerda, e o plano do mês à direita (no celular, um embaixo do outro). Todas começam abertas; as que você fechar ficam fechadas neste navegador. “Fechar todas” e “Abrir todas” ficam no topo da lista.',
           'Meta sem data alvo mostra “sem data definida”.',
-          'Quando a meta chega ao valor alvo, ela fica “Concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “Concluída por você”; para ela voltar, desmarque “Concluída” em “Editar”. Aberta, a meta concluída mostra uma caixa verde “Meta alcançada!” com o quanto foi guardado.'
+          'Quando a meta chega ao valor alvo, ela fica “Concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “Concluída por você”; para ela voltar, desmarque “Concluída” em “Editar”. Aberta, a meta concluída mostra uma caixa verde “Meta alcançada!” com o quanto foi guardado.',
+          'Para mudar ou apagar uma meta, use “Editar” ou “Excluir”, no rodapé dela. “Excluir” pergunta antes, com o nome da meta; “Cancelar” (ou Esc) não apaga nada.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
       },

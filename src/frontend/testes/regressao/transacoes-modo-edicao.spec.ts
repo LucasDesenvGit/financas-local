@@ -1,6 +1,7 @@
 import { AvisosService } from '../../src/app/compartilhado/avisos.component';
 import { TipoCorrespondencia } from '../../src/app/core/modelos';
 import { TestBed } from '@angular/core/testing';
+import { ConfirmacaoService } from '../../src/app/compartilhado/confirmacao.service';
 import { abrirEdicao, transacao } from '../apoio/transacoes-edicao';
 
 /** Regressão do modo edição de categorias (#87): o que vai para a API, pendências, desfazer e regra. */
@@ -37,20 +38,21 @@ describe('Regressão: modo edição de categorias', () => {
   it('trocar de página com pendência pergunta; "cancelar" mantém a troca e a página', async () => {
     const t = await abrirEdicao();
     await t.escolher(1, '20');
-    const confirmar = jest.spyOn(window, 'confirm').mockReturnValue(false);
+    const confirmar = jest.spyOn(TestBed.inject(ConfirmacaoService), 'confirmar').mockResolvedValueOnce(false);
     const buscasAntes = t.buscas.length;
     t.tela.buscar(2);
-    expect(confirmar).toHaveBeenCalledWith('Descartar 1 alteração(ões) de categoria não salva(s)?');
+    await t.assentar();
+    expect(confirmar).toHaveBeenCalledWith(expect.objectContaining({ mensagem: 'Descartar 1 alteração(ões) de categoria não salva(s)?' }));
     expect(t.buscas.length).toBe(buscasAntes);
     expect(t.tela.pendentes().get(1)).toBe('20');
   });
 
   it('"todas do filtro" manda o filtro da lista na tela (não o que está sendo digitado)', async () => {
     const t = await abrirEdicao('/transacoes?editar=1&categoria=sem&inicio=2026-09-01&fim=2026-09-30', undefined, 240);
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
+    jest.spyOn(TestBed.inject(ConfirmacaoService), 'confirmar').mockResolvedValueOnce(true);
     t.tela.filtro.busca = 'digitando';
     t.tela.categoriaTodas = 'auto';
-    t.tela.aplicarATodasDoFiltro();
+    await t.tela.aplicarATodasDoFiltro();
     expect(t.lotes).toHaveLength(1);
     expect(t.lotes[0]).toMatchObject({ categoriaId: null, automatica: true,
       filtro: { semCategoria: true, inicio: '2026-09-01', fim: '2026-09-30', pagina: 1 } });
@@ -106,8 +108,8 @@ describe('Regressão: modo edição de categorias', () => {
   it('sair do modo edição com pendência pergunta; confirmando, descarta e tira ?editar da URL', async () => {
     const t = await abrirEdicao('/transacoes?editar=1', [transacao({ id: 1 })]);
     await t.escolher(1, '20');
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
-    t.tela.alternarModoEdicao();
+    jest.spyOn(TestBed.inject(ConfirmacaoService), 'confirmar').mockResolvedValueOnce(true);
+    await t.tela.alternarModoEdicao();
     await t.assentar();
     expect(t.tela.modoEdicao()).toBe(false);
     expect(t.tela.pendentes().size).toBe(0);

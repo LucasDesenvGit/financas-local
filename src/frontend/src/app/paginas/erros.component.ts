@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
@@ -152,6 +153,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 })
 export class ErrosComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -256,9 +258,9 @@ export class ErrosComponent implements OnInit {
     });
   }
 
-  resolverTodos(): void {
+  async resolverTodos(): Promise<void> {
     const total = this.pagina()?.total ?? 0;
-    if (!confirm(`Marcar os ${total} erro(s) deste filtro como resolvidos?`)) return;
+    if (!(await this.confirmacao.confirmar({ titulo: 'Resolver erros', mensagem: `Marcar os ${total} erro(s) deste filtro como resolvidos?`, confirmar: 'Marcar como resolvidos' }))) return;
     this.api.resolverErros(this.filtro()).subscribe({
       next: (r) => {
         this.avisos.sucesso(`${r.quantidade} erro(s) marcado(s) como resolvido(s).`);

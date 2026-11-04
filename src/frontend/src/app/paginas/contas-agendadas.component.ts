@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
@@ -319,6 +320,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 })
 export class ContasAgendadasComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -570,8 +572,8 @@ export class ContasAgendadasComponent implements OnInit {
     });
   }
 
-  excluir(): void {
-    if (!this.editandoId || !confirm('Excluir esta conta a pagar?')) return;
+  async excluir(): Promise<void> {
+    if (!this.editandoId || !(await this.confirmacao.confirmar({ titulo: 'Excluir conta a pagar', mensagem: 'Excluir esta conta a pagar?', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirContaAgendada(this.editandoId).subscribe({
       next: () => {
         this.form = null;

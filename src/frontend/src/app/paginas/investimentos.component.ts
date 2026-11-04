@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent, SIMBOLOS_MOEDA } from '../compartilhado/campo-valor.component';
 import { CampoDataComponent } from '../compartilhado/campo-data.component';
@@ -773,6 +774,7 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 })
 export class InvestimentosComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
   private readonly privacidade = inject(PrivacidadeService);
 
@@ -1093,9 +1095,9 @@ export class InvestimentosComponent implements OnInit {
     else this.api.criarOperacao(dto).subscribe(concluir);
   }
 
-  excluirOperacao(): void {
+  async excluirOperacao(): Promise<void> {
     const id = this.editandoOpId;
-    if (!id || !confirm('Excluir esta operação?')) return;
+    if (!id || !(await this.confirmacao.confirmar({ titulo: 'Excluir operação', mensagem: 'Excluir esta operação?', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirOperacao(id).subscribe({
       next: () => {
         this.formOp = null;
@@ -1178,9 +1180,9 @@ export class InvestimentosComponent implements OnInit {
     });
   }
 
-  excluirAtivo(): void {
+  async excluirAtivo(): Promise<void> {
     const p = this.ativoEditado;
-    if (!p || !confirm(`Excluir ${p.ticker} com todas as operações?`)) return;
+    if (!p || !(await this.confirmacao.confirmar({ titulo: 'Excluir ativo', mensagem: `Excluir ${p.ticker} com todas as operações?`, confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirAtivo(p.id).subscribe({
       next: () => {
         this.formAtivo = null;
@@ -1230,13 +1232,13 @@ export class InvestimentosComponent implements OnInit {
       : { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje, moeda: 'BRL' };
   }
 
-  salvarConferencia(): void {
+  async salvarConferencia(): Promise<void> {
     const f = this.formConferencia;
     if (!f || f.saldo === null) return;
     const emDolar = f.reserva.moeda === 'USD';
     // A comparação com o esperado é em reais; em dólar sem cotação conhecida, não dá para comparar.
     const emReais = emDolar && f.moeda === 'USD' ? (f.reserva.cotacao ? f.saldo * f.reserva.cotacao : null) : f.saldo;
-    if (emReais !== null && !this.conferenciaPlausivel(f.reserva, emReais)) return;
+    if (emReais !== null && !(await this.conferenciaPlausivel(f.reserva, emReais))) return;
     this.salvando.set(true);
     this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data, emDolar ? f.moeda : undefined).subscribe({
       next: () => {
@@ -1253,16 +1255,20 @@ export class InvestimentosComponent implements OnInit {
   }
 
   /** #168: valor muito diferente do esperado pede confirmação antes de salvar (reserva-conferencia.ts). */
-  conferenciaPlausivel(r: Reserva, saldo: number): boolean {
+  async conferenciaPlausivel(r: Reserva, saldo: number): Promise<boolean> {
     if (!conferenciaForaDoEsperado(r, saldo)) return true;
     const moeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    return confirm(`Você informou ${moeda(saldo)}, mas o esperado para "${r.nome}" é perto de ${moeda(valorEsperadoDaReserva(r))}. `
-      + 'Confere com o app da instituição? (OK salva assim mesmo.)');
+    return this.confirmacao.confirmar({
+      titulo: 'Conferir o saldo',
+      mensagem: `Você informou ${moeda(saldo)}, mas o esperado para "${r.nome}" é perto de ${moeda(valorEsperadoDaReserva(r))}. `
+        + 'Confere com o app da instituição?',
+      confirmar: 'Salvar assim mesmo'
+    });
   }
 
-  removerConferencia(): void {
+  async removerConferencia(): Promise<void> {
     const f = this.formConferencia;
-    if (!f || !confirm(`Apagar a conferência de ${f.reserva.nome}? O saldo volta a ser estimado só pelos lançamentos.`)) return;
+    if (!f || !(await this.confirmacao.confirmar({ titulo: 'Apagar conferência', mensagem: `Apagar a conferência de ${f.reserva.nome}? O saldo volta a ser estimado só pelos lançamentos.`, confirmar: 'Apagar', perigo: true }))) return;
     this.api.removerConferenciaReserva(f.reserva.contaId, f.reserva.nome).subscribe({
       next: () => {
         this.formConferencia = null;
