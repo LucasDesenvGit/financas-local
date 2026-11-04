@@ -193,6 +193,7 @@ flowchart TB
 ## Por dentro
 
 O detalhe do que é estável hoje (o LLD), em diagramas:
+- **[Componentes do site](arquitetura/componentes.md):** o nível 3 do C4, só do Go. Mostra os pacotes de `internal/` agrupados por papel, quem chama quem, onde fica a regra de cada assunto e as regras de dependência que o teste de arquitetura confere.
 - **[Modelo de dados](BANCO-DE-DADOS.md#o-modelo-em-diagramas):** as tabelas por assunto, geradas do `01-estrutura.sql`.
 - **[Fluxos principais](arquitetura/fluxos.md):** login e sessão, um pedido à API, partida do site, sincronização com a Pluggy e atualização pelo gerenciador.
 - **[Domínio](arquitetura/dominio.md):** os estados da conexão, da transação, da conta a pagar e do gerenciador, as classes do centro do domínio e os termos usados no código.
@@ -207,7 +208,7 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 | 2. Restrições | [`CLAUDE.md`](../CLAUDE.md) e as [ADRs](adr/README.md) |
 | 3. Contexto | [Contexto](#contexto), nesta página |
 | 4. Estratégia | [Decisões em resumo](#decisões-em-resumo), nesta página |
-| 5. Blocos | [Contêineres](#contêineres) e [Mapa de contextos](#mapa-de-contextos), nesta página. **Falta** o nível 3 do Go (#464, depois da #86) |
+| 5. Blocos | [Contêineres](#contêineres) e [Mapa de contextos](#mapa-de-contextos), nesta página, e os [Componentes do site](arquitetura/componentes.md) (nível 3 do C4) |
 | 6. Execução | [Fluxos principais](arquitetura/fluxos.md) |
 | 7. Implantação | [Onde roda o quê](#onde-roda-o-quê), nesta página |
 | 8. Conceitos transversais | [Segurança](SEGURANCA.md), [modelo de ameaças](MODELO-DE-AMEACAS.md), [dados pessoais](DADOS-PESSOAIS.md), [erros](adr/0022-erros-do-sistema-gravados-no-banco.md), [domínio](arquitetura/dominio.md) e [testes](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md). **Falta** o contrato da API (#472, depois da #86) |
@@ -244,7 +245,7 @@ O site em Go ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dot
 - **Datas** sempre no fuso de Brasília (`internal/relogio`).
 - **Testes** ([ADR 0051](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): cada regra tem teste unitário em tabela no pacote do assunto, além do caso de contrato do endpoint (`testes/contrato`, #72), cujos esperados vieram do .NET e são a regressão do Go. Consultas se testam num SQLite de verdade num arquivo temporário, com o esquema real; handlers, com `httptest`. Só a biblioteca padrão, sem asserção nem mock de terceiros.
 
-O código fica num pacote por assunto em `internal/` (são mais de 50), com HTTP, regra e banco dentro ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)). A lista dos pacotes, um por linha, está no [README do Go](../src/backend/README.md), e o padrão de um assunto, no [`internal/README.md`](../src/backend/internal/README.md). Os de infraestrutura:
+O código fica num pacote por assunto em `internal/` (são mais de 50), com HTTP, regra e banco dentro ([ADR 0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)). A lista dos pacotes, um por linha, está no [README do Go](../src/backend/README.md). Os pacotes agrupados em componentes, com quem chama quem, estão nos [Componentes do site](arquitetura/componentes.md). O padrão de um assunto está no [`internal/README.md`](../src/backend/internal/README.md). Os de infraestrutura:
 
 | Pasta | O que tem |
 |---|---|

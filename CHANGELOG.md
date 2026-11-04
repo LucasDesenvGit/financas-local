@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.8] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **O diagrama de Componentes do back-end em Go** (#464, épico #465). A página nova `docs/arquitetura/componentes.md` traz o nível 3 do C4: os 61 pacotes do site agrupados por papel (entrada, servidor, autenticação, rotas, assuntos, regras sem HTTP, sincronização, partida, tarefas, clientes de fora, transversais e base), quem chama quem, onde fica a regra de cada assunto e as cinco regras de dependência que o teste de arquitetura confere. O teste de arquitetura local passa a acusar pacote que falta na página ou que ela cita sem existir mais. Os fluxos ganham "Um pedido à API", pelos componentes, e a ADR 0055, o `CLAUDE.md`, o padrão de um assunto e a skill `go-no-projeto` pedem a linha do pacote novo na página. Os comentários dos pacotes `api`, `tarefas` e `sessao` deixam de falar do .NET na frente.
+
 ## [3.2.7] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação

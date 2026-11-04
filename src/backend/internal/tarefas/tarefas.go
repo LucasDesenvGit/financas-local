@@ -1,8 +1,7 @@
 // Pacote tarefas roda as tarefas em segundo plano (#81): o BackgroundService do .NET com PeriodicTimer.
 //
-// Quem chama inicia a goroutine, quem cancela é o context (o serviço parou, ou o .NET fechou a entrada padrão) e
-// quem espera é o sync.WaitGroup de quem iniciou. Uma tarefa só roda no Go quando o nome dela está em Go:Tarefas
-// (ADR 0049): aí o .NET não roda a dele, e nunca as duas ao mesmo tempo.
+// Quem chama inicia a goroutine, quem cancela é o context (o serviço parou) e quem espera é o sync.WaitGroup de quem
+// iniciou. Desde a #85 o site roda todas as tarefas (tarefas.Todas): câmbio, cripto e a sincronização.
 package tarefas
 
 import (
