@@ -1,6 +1,6 @@
 # Pacotes do back-end em Go fora do teste de mutação de propósito (#456, ADR 0051), com o motivo.
 #
-# Todo pacote de src/backend-go/internal com código fora de teste está em mutacao-go.txt (com o piso) ou aqui: o
+# Todo pacote de src/backend/internal com código fora de teste está em mutacao-go.txt (com o piso) ou aqui: o
 # scripts/ci/mutacao-go.py confere, e a CI falha com pacote novo que não está em nenhum dos dois. Só entra aqui o que
 # não tem regra de negócio a proteger; na dúvida, meça e ponha na lista.
 #

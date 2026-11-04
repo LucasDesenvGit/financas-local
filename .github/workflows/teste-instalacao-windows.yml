@@ -18,7 +18,7 @@ on:
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
       - banco/**
-      - src/backend-go/go.mod
+      - src/backend/go.mod
       - src/gerenciador-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   pull_request:
@@ -29,7 +29,7 @@ on:
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
       - banco/**
-      - src/backend-go/go.mod
+      - src/backend/go.mod
       - src/gerenciador-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:

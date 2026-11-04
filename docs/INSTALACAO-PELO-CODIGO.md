@@ -17,7 +17,7 @@ cd financas-local/scripts/geral
 
 ```bash
 cd financas-local/scripts/geral
-./1-preparar-ambiente.sh     # .NET 10 SDK, Go, Node.js e sqlite3 (poucos minutos)
+./1-preparar-ambiente.sh     # Go, Node.js e sqlite3 (poucos minutos)
 ./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
 ./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
@@ -41,7 +41,7 @@ scripts/linux/instalar-gerenciador.sh
 ```
 
 - **Qual gerenciador** (#277, ADR 0052): o em Go, compilado no seu computador em `publicado/gerenciador-go`. Ele precisa de um compilador de C e dos pacotes de desenvolvimento do GTK 4 e do WebKitGTK 6.0 (no Debian e no Ubuntu: `sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`; no Fedora: `sudo dnf install gcc pkgconf-pkg-config gtk4-devel webkitgtk6.0-devel`; no Arch: `sudo pacman -S --needed gcc pkgconf gtk4 webkitgtk-6.0`). Sem eles, o script diz o comando da sua distribuição e para; o site segue funcionando sem o gerenciador. Quem tinha o gerenciador em C# (até a 3.0) tem o atalho e o **Iniciar com o sistema** trocados para o em Go.
-- **Onde fica:** o atalho **Gerenciador do Finanças Local** no menu de aplicativos (`br.financaslocal.Gerenciador.desktop`; o do em C# é `financaslocal-gerenciador.desktop`) e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
+- **Onde fica:** o atalho **Gerenciador do Finanças Local** no menu de aplicativos (`br.financaslocal.Gerenciador.desktop`) e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
 - **O que faz:** mostra se o site está no ar, liga, desliga e reinicia o serviço (sem senha: ele é do seu usuário), copia o banco e mostra o registro do serviço (**Ver o registro do serviço**, quando o site não sobe).
 - **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet, a não ser na instalação de desenvolvimento (clone na branch `develop`), em que o botão **Atualizar para a última do develop** traz o código do GitHub ([abaixo](#atualizar)).
 - **Ao sair da conta:** o serviço do usuário para, e o site junto. Em **Mais opções**, **Manter o site no ar sem login** liga o *linger* do systemd (`loginctl enable-linger`).
@@ -53,8 +53,7 @@ scripts/linux/instalar-gerenciador.sh
 
 | Componente | Origem | Verificação |
 |---|---|---|
-| .NET 10 SDK (portátil em `ferramentas/dotnet`) | metadados oficiais `builds.dotnet.microsoft.com` | SHA-512 publicado nos metadados oficiais (não há verificação de assinatura) |
-| Go (portátil em `ferramentas/go`, compila o back-end em Go que roda atrás da API: [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)) | índice oficial `go.dev/dl`, arquivo de `dl.google.com`; os módulos do `go.sum` vêm de `proxy.golang.org` | SHA-256 do índice oficial; os módulos, pelo `go.sum` do repositório |
+| Go (portátil em `ferramentas/go`, compila o back-end: [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)) | índice oficial `go.dev/dl`, arquivo de `dl.google.com`; os módulos do `go.sum` vêm de `proxy.golang.org` | SHA-256 do índice oficial; os módulos, pelo `go.sum` do repositório |
 | Node.js LTS (portátil em `ferramentas/node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
 | `sqlite3` (CLI) | o do sistema, se houver; senão portátil em `ferramentas/sqlite`, baixado de `www.sqlite.org` (Linux arm64: gerenciador de pacotes) | SHA3-256 publicado na página oficial de download |
 
@@ -67,7 +66,7 @@ git pull
 scripts/geral/instalar.sh     # no Windows, num Git Bash aberto como Administrador; no Linux, atualiza também o gerenciador
 ```
 
-Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend-go/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows sem bash, rode o `instalar-windows.cmd` de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
+Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows sem bash, rode o `instalar-windows.cmd` de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
 
@@ -98,41 +97,24 @@ Os dois param o serviço, o site rodando fora dele (`financas-go`) e o front de 
 
 ## Migrar de uma instalação com SQL Server
 
-Se você já usava o Finanças Local no Windows com IIS e SQL Server Express, use a ferramenta de migração para trazer os dados para o novo banco SQLite. **Não rode o `2-criar-banco.sh` antes**: os dados iniciais dele (categorias e configurações padrão) conflitam com os dados migrados. O destino precisa ser um banco vazio, só com a estrutura:
+A ferramenta que trazia os dados de uma instalação antiga com IIS e SQL Server Express para o SQLite (`Financas.MigrarSqlite`) era em .NET e saiu na #86. Ela continua na tag `v-ultimo-dotnet`: quem ainda tem uma instalação dessas pode migrar com ela (`git checkout v-ultimo-dotnet` e o passo a passo deste guia naquela versão) e depois voltar ao `develop` e rodar o `instalar.sh`.
 
-```bash
-# 1. Pare o site antigo no IIS, para nada mudar no SQL Server durante a cópia.
-# 2. Crie o banco vazio, só com a estrutura:
-sqlite3 dados/sql/FinancasLocal.db < banco/01-estrutura.sql
-# 3. Migre (a connection string antiga está no appsettings.Production.json da publicação do IIS):
-dotnet run --project src/backend/Financas.MigrarSqlite -- \
-  'Server=.\FINANCAS;Database=FinancasLocal;Integrated Security=True;Encrypt=True;TrustServerCertificate=True' \
-  dados/sql/FinancasLocal.db
-# 4. Publique normalmente:
-scripts/geral/3-publicar-atualizar.sh
-```
+## Desenvolvimento
 
-A ferramenta não altera o SQL Server (só lê dele) e confere a contagem de linhas de cada tabela no final. A pasta `dados\sql` da instalação antiga só é acessível por Administradores, então no Windows rode esses comandos num Git Bash aberto como Administrador.
-
-É seguro rodar mesmo sem um SQL Server disponível: a ferramenta detecta que não há nada para migrar e termina sem erro. Como o Client Secret da Pluggy e o token da brapi foram criptografados com chaves da instalação antiga (que não podem ser lidas em outra máquina ou sistema operacional), a migração limpa esses dois campos — informe-os de novo em **Configurações** depois de migrar.
-
-## Desenvolvimento (Visual Studio ou VS Code)
-
-- Abra `FinancasLocal.sln`. O perfil *Desenvolvimento (Kestrel)* sobe a API em `https://localhost:7443`. Em desenvolvimento, as chaves ficam em `dados\chaves-dev`, então o Client Secret precisa ser informado de novo.
-- **Back-end em Go:** a API sobe o Go como processo filho e repassa a ele as rotas de `Go:Prefixos` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Compile-o para a pasta de saída da API antes de subi-la, e de novo a cada mudança no Go; **sem o `financas-go` em `bin/Debug/net10.0/`, essas rotas respondem 503**:
+- **Back-end:** o Go, em `src/backend`. Para o front-end em desenvolvimento, suba-o na porta que o `proxy.conf.json` do Angular usa (`https://localhost:7443`), com uma **cópia** do banco, nunca o `dados/sql` em uso:
   ```bash
-  cd src/backend-go
-  go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go ./cmd/financas        # Linux
-  go build -o ../backend/Financas.Api/bin/Debug/net10.0/financas-go.exe ./cmd/financas    # Windows
+  cd src/backend
+  go run ./cmd/financas -endereco localhost:7443 -certificado-temporario \
+    -wwwroot internal/servidor/testdata/wwwroot -banco <cópia>/FinancasLocal.db -aplicar-esquema
   ```
-  O resto (rodar sozinho, testes, contrato) está no [README do Go](../src/backend-go/README.md).
-- No front-end, rode `npm start` em `src\frontend`. O Angular abre em `http://localhost:4200` e redireciona `/api` para a API.
-- Sem o .NET 10, o Go e o Node instalados, use as ferramentas portáteis do `1-preparar-ambiente.sh`, pondo-as na frente do PATH (troque o caminho pelo da sua pasta do projeto):
-  `$env:PATH = "C:\caminho\financas-local\ferramentas\dotnet;C:\caminho\financas-local\ferramentas\go\bin;C:\caminho\financas-local\ferramentas\node;$env:PATH"`
+  São as mesmas opções que o contrato usa (`testes/contrato/rodar.sh`). As chaves ficam em `chaves`, ao lado da pasta `sql` da cópia; um segredo gravado com outra chave precisa ser informado de novo. O resto (testes, contrato, rodar como serviço) está no [README do Go](../src/backend/README.md).
+- No front-end, rode `npm start` em `src\frontend`. O Angular abre em `http://localhost:4200` e redireciona `/api` para o back-end.
+- Sem o Go e o Node instalados, use as ferramentas portáteis do `1-preparar-ambiente.sh`, pondo-as na frente do PATH (troque o caminho pelo da sua pasta do projeto):
+  `$env:PATH = "C:\caminho\financas-local\ferramentas\go\bin;C:\caminho\financas-local\ferramentas\node;$env:PATH"`
 - **Banco:** não há migrations. Toda a estrutura está em `banco/01-estrutura.sql`, que é idempotente. Para mudar o banco, veja [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
 - **Testes do front-end**, em `src/frontend`:
   - `npm test` e `npm run test:tipos`: Jest, sem navegador ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md));
-  - `npm run test:navegador`: compila o build de produção e abre cada tela num navegador de verdade (o Edge instalado), com a CSP da API e uma API falsa, sem back-end nem dado real. Falha com erro de console, exceção ou bloqueio de CSP ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md));
+  - `npm run test:navegador`: compila o build de produção e abre cada tela num navegador de verdade (o Edge instalado), com a CSP do back-end e uma API falsa, sem back-end nem dado real. Falha com erro de console, exceção ou bloqueio de CSP ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md));
   - `FOTOS=painel,metas FOTOS_PASTA=<pasta> npx playwright test fotos`: prints das telas, em claro e escuro, no computador e no celular;
   - `npx playwright test --ui`: para ver passo a passo.
 - Branches, commits, versão e checklist do PR: [CONTRIBUINDO.md](../CONTRIBUINDO.md). Arquitetura: [ARQUITETURA.md](ARQUITETURA.md). Decisões: [ADRs](adr/README.md).
@@ -151,15 +133,13 @@ financas-local/
 │   ├── windows/          o que só roda no Windows (instalar, parar e atualizar, o gerenciador e o configurar-github.ps1)
 │   ├── linux/            o que só roda no Linux (gerenciador)
 │   └── ci/               o que só a CI usa (verificadores, mutação, cobertura)
-├── src/backend/           Financas.Api (C# / .NET 10 / EF Core) e Financas.MigrarSqlite (migração do SQL Server)
-├── src/backend-go/        o back-end em Go, atrás da API (ADR 0049)
+├── src/backend/           o back-end em Go (ADR 0049): o site e a API
 ├── src/frontend/          financas-web (Angular)
-├── src/gerenciador-go/    Gerenciador em Go (Wails): Windows e Linux
-├── src/gerenciador-go/    o gerenciador em Go, que vai substituir os dois (ADR 0052)
+├── src/gerenciador-go/    o gerenciador em Go (Wails): Windows e Linux (ADR 0052)
 ├── dados/                 [gerado] banco (SQLite), chaves, logs — acesso restrito
 ├── backups/               [gerado] backups do banco
 ├── publicado/             [gerado] aplicação publicada
-├── ferramentas/           [gerado] .NET SDK, Go, Node.js, sqlite3 (se preciso), caches NuGet/npm
+├── ferramentas/           [gerado] Go, Node.js, sqlite3 (se preciso), caches do Go e do npm
 └── instaladores/          [gerado] instaladores baixados (podem ser apagados)
 ```
 

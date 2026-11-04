@@ -39,7 +39,7 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 
 1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits").
 2. **ADR antes do código** quando a tela trouxer dependência nova, padrão de UI novo ou desvio de um padrão adotado (`CLAUDE.md`, "Decisões de arquitetura").
-3. **Endpoint:** funcionalidade nova fora do núcleo é feita em Go, atrás do .NET (`CLAUDE.md`; skill `go-no-projeto`). No front-end: o modelo em `core/modelos.ts` e o método no `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
+3. **Endpoint:** o back-end é em Go (skill `go-no-projeto`). No front-end: o modelo em `core/modelos.ts` e o método no `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
 4. **Lógica fora do componente:** cálculo, texto e decisão vão para funções puras num `.ts` ao lado da tela (`paginas/<tela>.ts`) ou em `compartilhado/` se mais de uma tela usa, testadas no Jest sem `TestBed` (`referencias/testes.md`). A divisão das páginas grandes ainda está em discussão na #475: siga o que ela decidir quando a ADR for aceita.
 5. **Componente** em `paginas/<tela>.component.ts`, na forma de `referencias/estilo.md` (standalone, `Eager`, template inline, `inject()`, signals, `@if`/`@for`), com os componentes de `compartilhado/` (`referencias/componentes.md`).
 6. **Rota e menu:** `loadComponent` e `title: '<Tela> · Finanças Local'` em `app.routes.ts`; a tela no grupo do assunto em `MENU` (`layout/shell.component.ts`, ADR 0046).

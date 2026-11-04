@@ -4,13 +4,13 @@
 As metas e o que fazer com os números estão em docs/REQUISITOS-NAO-FUNCIONAIS.md.
 
 Roda sobre o site já publicado (o financas-go, #86), numa pasta temporária e numa porta própria, com o banco fictício do
-contrato (src/backend-go/testes/contrato/dados/base.sql) e as transações dele repetidas pelos últimos
+contrato (src/backend/testes/contrato/dados/base.sql) e as transações dele repetidas pelos últimos
 anos. Não toca na pasta dados/ nem no site instalado, e a saída para a internet vai para uma porta
 que recusa na hora: nada de dado real entra, nada sai.
 
 Uso (a pasta publicada, ou uma com o financas-go e o appsettings.json):
-    (cd src/backend-go && CGO_ENABLED=0 go build -trimpath -o <pasta>/financas-go ./cmd/financas)
-    cp src/backend-go/appsettings.json <pasta>/
+    (cd src/backend && CGO_ENABLED=0 go build -trimpath -o <pasta>/financas-go ./cmd/financas)
+    cp src/backend/appsettings.json <pasta>/
     cp -r src/frontend/dist/financas-web/browser <pasta>/wwwroot   # depois do npm run build
     python3 scripts/geral/medir-desempenho.py --api <pasta>
 
@@ -35,7 +35,7 @@ import time
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[2]
-BASE_SQL = RAIZ / "src/backend-go/testes/contrato/dados/base.sql"
+BASE_SQL = RAIZ / "src/backend/testes/contrato/dados/base.sql"
 LOGIN = "ana.teste"
 SENHA = "Senha-Forte-123"
 SEM_VERIFICAR = ssl._create_unverified_context()  # só 127.0.0.1, com o certificado em memória desta rodada

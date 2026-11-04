@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 02/11/2026, na fase "Go atrás do .NET" (#231). Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados`, o login e a remoção do .NET (#86).
+> **Data:** 03/11/2026, revisado na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
@@ -27,8 +27,7 @@ flowchart TB
         navegador["Navegador<br/>o site, e as outras abas"]
 
         subgraph processos["Processos do sistema"]
-            api["API .NET<br/>127.0.0.1:5443"]
-            go["Back-end Go<br/>porta da partida"]
+            api["Site, em Go<br/>127.0.0.1:5443"]
             gerenciador["Gerenciador"]
         end
 
@@ -46,13 +45,10 @@ flowchart TB
     end
 
     navegador -- "1. HTTPS, cookie e CSRF" --> api
-    api -- "2. HTTP local, segredo interno" --> go
     api -- "3. HTTPS" --> pluggy
     api -- "3. HTTPS" --> cotacoes
-    go -- "3. HTTPS" --> cotacoes
     gerenciador -- "4. HTTPS" --> github
     api -- "5. arquivo" --> banco
-    go -- "5. arquivo" --> banco
     api -- "5. arquivo" --> chaves
     api -- "5. cópia antes de mudar o esquema" --> copias
     gerenciador -- "5. arquivo" --> copias
@@ -68,25 +64,18 @@ flowchart TB
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização) e limite por minuto (`AuthController`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). Política de senha (#68, item 8) |
+| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização) e limite por minuto (`internal/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). Política de senha (#68, item 8) |
 | **Adulteração** | Um site aberto no navegador manda um pedido em seu nome (CSRF), ou aponta um domínio para `127.0.0.1` (DNS rebinding) | Token antifalsificação em todo pedido que grava e `AllowedHosts` restrito | — |
 | **Repúdio** | Negar uma ação feita no site | `AuditoriaAcesso`: login, falhas, bloqueios, senha, parâmetros, credenciais, conexões, alterações em lote nas transações e conferências de investimentos, cada um com o desfazer | A auditoria fica no banco: quem tem o arquivo pode mudá-la |
 | **Vazamento** | Script de terceiros, cache ou erro detalhado expõem dados | CSP sem script de terceiros, `no-store` na `/api` e erro genérico ([ADR 0034](adr/0034-sem-sri-no-build-do-front-end.md)) | Certificado confiável para a máquina inteira, com a senha em texto puro (#68, item 5) |
-| **Negação de serviço** | Pedidos em excesso derrubam o site | Limite no login e corpo de até 1 MB (`Program.cs`) | — |
-| **Aumento de privilégio** | Alguém usa uma rota sem login | Tudo exige login por padrão (`FallbackPolicy`) | A configuração inicial fica aberta até alguém usá-la (#68, item 4) |
+| **Negação de serviço** | Pedidos em excesso derrubam o site | Limite no login e corpo de até 1 MB (`servidor.LimiteDoCorpo`) | — |
+| **Aumento de privilégio** | Alguém usa uma rota sem login | Tudo exige login, menos as rotas anônimas do login (`Autenticacao.Proteger`, na frente de toda a `/api`) | A configuração inicial fica aberta até alguém usá-la (#68, item 4) |
 
-### 2. API ↔ Go
+### 2. API ↔ Go (saiu na #86)
 
-| | Ameaça | Proteção que existe | O que falta |
-|---|---|---|---|
-| **Falsificação** | Outro processo fala direto com o Go | Segredo interno novo a cada partida, passado pela entrada padrão, e comparado em tempo constante (`atras_do_dotnet.go`). Sem ele: 401 | Revisar na inversão (#85) |
-| **Adulteração** | Pedido de fora traz `X-Financas-Usuario` | O repasse apaga todo `X-Financas-*` que vem de fora (`RepasseGo.cs`) | — |
-| **Repúdio** | Não saber quem fez uma ação no Go | O Go grava a auditoria com o usuário que a API informa | — |
-| **Vazamento** | Sessão ou token chegam ao Go, em HTTP local | O repasse tira o cookie e o token CSRF. A conversa não sai de `127.0.0.1` | Revisar na inversão (#85) |
-| **Negação de serviço** | O Go cai | As rotas dele respondem 503, e a API o reinicia, esperando mais a cada vez (`ProcessoGo.cs`) | — |
-| **Aumento de privilégio** | O Go aceita um usuário sem login | A API só repassa com sessão válida e CSRF conferido, e o Go só aceita com o segredo | — |
+Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho, as rotas já migradas, em HTTP local, com um segredo interno novo a cada partida e o usuário num cabeçalho. Com o .NET fora, o site é um processo só: não há porta interna, segredo interno nem repasse, e as ameaças desta fronteira deixaram de existir. O número fica, para as setas do diagrama não mudarem de nome.
 
-### 3. API e Go ↔ serviços de fora
+### 3. Site ↔ serviços de fora
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
@@ -117,7 +106,7 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 | **Falsificação** | Outro usuário usa os arquivos | Sem senha de banco: vale a permissão do sistema. No `.msi`, só o sistema e os administradores; pelos scripts no Linux, só a sua conta (`chmod 700`); pelos scripts no Windows, a permissão que a pasta do projeto já tinha | — |
 | **Adulteração** | Um usuário sem privilégio troca os arquivos do serviço | No `.msi`, as pastas são protegidas | O serviço como SYSTEM a partir de pastas alteráveis, na instalação pelos scripts (#68, item 1) |
 | **Repúdio** | Apagar o rastro no banco | — | A auditoria não tem cópia fora do banco |
-| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com Data Protection, com chaves protegidas por DPAPI no Windows. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `EsquemaBanco`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2) |
+| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com AES-256-GCM (`internal/segredos`), com a chave em `dados/chaves/segredos.chave`, protegida pelo DPAPI no Windows e pela permissão do arquivo no Linux. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `AplicarEsquema`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2) |
 | **Negação de serviço** | O banco corrompe ou some | Cópia antes de mudar a estrutura, e o [guia de restaurar](OPERACAO.md#restaurar-uma-cópia) | — |
 | **Aumento de privilégio** | O serviço é usado para rodar outra coisa | No Linux, roda na conta do usuário | O serviço do Linux sem isolamento (#68, item 6) |
 
@@ -127,7 +116,7 @@ O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site resp
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Outro processo ocupa a porta do site e se passa pela API para o gerenciador | A consulta não manda nada seu e só muda a situação mostrada ("no ar", "não responde") | O gerenciador aceita qualquer certificado quando o endereço é de loopback (`Situacao.cs`; `situacao.go`, `InsecureSkipVerify`), para funcionar antes de o sistema confiar no certificado. Conferir o certificado da instalação, pela impressão digital, fecharia isso (*julgamento*) |
+| **Falsificação** | Outro processo ocupa a porta do site e se passa pela API para o gerenciador | A consulta não manda nada seu e só muda a situação mostrada ("no ar", "não responde") | O gerenciador aceita qualquer certificado quando o endereço é de loopback (`situacao.go`, `InsecureSkipVerify`), para funcionar antes de o sistema confiar no certificado. Conferir o certificado da instalação, pela impressão digital, fecharia isso (*julgamento*) |
 | **Adulteração** | Um destino escolhido sobrescreve um arquivo importante | O destino vem da janela de salvar, escolhido por você | No Windows, a gravação roda como administrador: o destino pode ser uma pasta que a sua conta não escreveria |
 | **Repúdio** | Não saber quem copiou o banco | — | A cópia pelo gerenciador não entra na auditoria do site |
 | **Vazamento** | A cópia vai para um lugar inseguro | O gerenciador avisa que a cópia tem todos os seus dados | A cópia sai sem criptografia (#68, item 2) |
