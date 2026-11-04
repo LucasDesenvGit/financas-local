@@ -131,3 +131,7 @@ Os outros, com mais detalhe: [Problemas comuns](docs/PROBLEMAS-COMUNS.md).
 - [CHANGELOG.md](CHANGELOG.md): o que mudou em cada versão.
 
 Front-end em Angular, back-end em Go e banco SQLite. O back-end era em .NET e passou para Go um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)); o .NET saiu na versão 3.2 (#86). Tudo publicado junto, um executável só, como serviço do sistema.
+
+## Licença
+
+[MIT](LICENSE). Os ícones de terceiros têm licença própria: [bandeiras](src/frontend/public/bandeiras/LICENSE.txt) e [criptomoedas](src/frontend/public/cripto/LICENSE.txt).
