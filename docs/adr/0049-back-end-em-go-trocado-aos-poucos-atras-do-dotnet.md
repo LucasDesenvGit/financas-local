@@ -1,6 +1,6 @@
 # 0049. Back-end em Go, trocado aos poucos atrás do .NET
 
-- **Status:** Aceita
+- **Status:** Aceita (concluída na #86, em 2026-11-03: o .NET saiu, e o site é o Go sozinho)
 - **Data:** 2026-10-21 (atualizada em 2026-10-23 com a convivência da #231 e o relógio de teste da #363)
 - **Relacionadas:** substitui em parte, ao fim da migração, a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (Kestrel), a [0005](0005-segredos-criptografados-com-data-protection.md) (Data Protection), a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) e a [0012](0012-instalador-do-windows-em-powershell.md) (SDK do .NET); afeta a [0003](0003-esquema-por-scripts-sql-idempotentes.md), a [0022](0022-erros-do-sistema-gravados-no-banco.md), a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md), a [0041](0041-testes-no-navegador-com-playwright.md) e a [0047](0047-ci-paralela-so-testes-afetados-no-pr.md); épico #70, issues #71 e #231
 
@@ -253,3 +253,29 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
 - **Limpeza:** depois de o site responder, a atualização apaga `ferramentas/dotnet`, `ferramentas/dotnet-home` e `ferramentas/nuget-pacotes`. Se o site não sobe, nada disso é apagado.
 - **Consequência negativa:** quem estava num `.msi` ou instalação da 2.x passa direto para o Go sem a cópia "antes do Go" de `dados/backups`. Continua valendo a cópia de antes de toda atualização: `backups/FinancasLocal-antes-instalacao-*.db` nos scripts e `dados\backups\FinancasLocal-antes-atualizacao-*.db` no `.msi`.
 - **CI:** os testes de instalação conferem que nada do .NET fica, e simulam quem vem da 3.0 (o .NET portátil, a API publicada e o `dados/backend`), com o Go que não sobe (nada é apagado, e a mensagem indica a tag) e com o Go que sobe (tudo sai). O teste do `.msi` com o .NET para o "só Go" saiu com o `-ComDotnet`.
+
+## Atualização de 2026-11-03: o .NET saiu (issue #86, partes 3 a 6) — a migração terminou
+
+- **O que saiu, PR por PR:**
+  - **#616:** o gerenciador em C# (ADRs 0028 e 0033 substituídas pela 0052);
+  - **#617:** o .NET dos scripts e do `.msi` (seção acima);
+  - **#620:** a CI sem o .NET. O contrato roda contra o Go sozinho, e os esperados viram a regressão do Go (ADR 0051);
+  - **#625:** o código C#: a API, o `Financas.MigrarSqlite` (aposentado, decisão do usuário) e as sondas dos testes do Go, cujos gabaritos ficam;
+  - **#626:** o modo "atrás do .NET" do Go: o `-atras-do-dotnet`, o segredo interno, os cabeçalhos `X-Financas-*`, o `Go:Prefixos` e o `Go:Tarefas`;
+  - **#627:** a pasta do Go, que passou de `src/backend-go` para `src/backend`;
+  - **a documentação**, no PR que fecha a #86.
+- **Onde ficou o .NET:** a tag `v-ultimo-dotnet`, o último `develop` com ele (3.0.2), marcada antes da primeira parte. Voltar para ela é `git checkout v-ultimo-dotnet` e o `instalar.sh`. Nessa volta, os segredos gravados pelo Go (`v2:`) não são lidos pelo .NET e precisam ser informados de novo; o banco é o mesmo, no formato do EF Core.
+- **O que continua desta decisão:**
+  - o formato do banco do EF Core (decimal, data, GUID como texto), para os bancos que já existem;
+  - as mensagens e o JSON de antes, que o contrato confere;
+  - as bibliotecas (`sqlc`, `modernc.org/sqlite`, `shopspring/decimal`) e as regras de dinheiro, de SQL e de relógio.
+- **As ADRs que esta substituiu:**
+  - a [0005](0005-segredos-criptografados-com-data-protection.md), por inteiro (os segredos do Go);
+  - a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md), [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) e [0012](0012-instalador-do-windows-em-powershell.md), em parte (o Kestrel e o SDK do .NET).
+- **Medição** (a #86 pedia o antes e o depois):
+  - o `.msi` caiu de 53 MB para 13 MB;
+  - a pasta instalada, de 150 MB para 35 MB;
+  - a memória do site, de cerca de 150 MB (.NET e Go juntos) para cerca de 18 MB;
+  - na CI, o contrato caiu de 156 s para 40 s, e o "API e banco", de 88 s para 42 s;
+  - os três primeiros números são os medidos no ensaio da #85, com o Go sozinho, e a medição final, no computador de quem usa, fica registrada na #86.
+- **Consequência negativa:** sem o .NET, não há mais uma referência para conferir um comportamento "como era". O contrato e os gabaritos guardam o que havia em 03/11/2026, e o que eles não cobrem só pode ser comparado rodando a tag.

@@ -49,5 +49,5 @@ Cada assunto do épico #70 é um pacote em `internal/<assunto>`, com a mesma for
 
 - **Regra:** tabela com `t.Run`, num SQLite de verdade (`testeapoio.NovoBancoVazio`).
 - **HTTP:** com `httptest`, para o que o contrato não cobre.
-- **Contrato:** `testes/contrato/casos/NN-assunto.json`, gravado do .NET.
-- **Comportamento do C# que é difícil de reproduzir** (normalização de texto, decimal): um gabarito gravado por uma sonda que chama o próprio C# (`internal/texto/testdata`, `internal/tipos/testdata`).
+- **Contrato:** `testes/contrato/casos/NN-assunto.json` (gravado do .NET até a #86; hoje, com `rodar.sh --atualizar` e o `git diff` conferido).
+- **Comportamento do C# que é difícil de reproduzir** (normalização de texto, decimal): um gabarito gravado por uma sonda que chamava o próprio C# (`internal/texto/testdata`, `internal/tipos/testdata`). As sondas saíram na #86 (estão na tag `v-ultimo-dotnet`); os gabaritos ficam, como regressão.

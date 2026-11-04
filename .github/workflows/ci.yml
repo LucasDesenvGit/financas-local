@@ -536,13 +536,14 @@ jobs:
             src/frontend/testes-navegador/resultados
           if-no-files-found: ignore
 
-  # O check exigido pela proteção do develop/main se chama "build" (o nome do job antigo). Este job junta os quatro:
+  # O check exigido pela proteção do develop/main se chama "build" (o nome do job antigo). Este job junta todos os outros
+  # (#86: também o Go no Windows e o gerenciador em Go, desde que o Go é o site e o gerenciador em Go vai no .msi):
   # passa só se todos passaram ou foram pulados de propósito (PR sem front-end); se um falhou ou foi cancelado, falha
   # e o merge fica bloqueado, como antes.
   build:
     name: build
     if: always()
-    needs: [mudancas, api, go, contrato, jest, navegador]
+    needs: [mudancas, api, go, go-windows, gerenciador-go, gerenciador-go-linux, contrato, jest, navegador]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -551,12 +552,15 @@ jobs:
           O_QUE_MUDOU: ${{ needs.mudancas.result }}
           API: ${{ needs.api.result }}
           GO: ${{ needs.go.result }}
+          GO_WINDOWS: ${{ needs.go-windows.result }}
+          GERENCIADOR: ${{ needs.gerenciador-go.result }}
+          GERENCIADOR_LINUX: ${{ needs.gerenciador-go-linux.result }}
           CONTRATO: ${{ needs.contrato.result }}
           JEST: ${{ needs.jest.result }}
           NAVEGADOR: ${{ needs.navegador.result }}
         run: |
           falhou=0
-          for nome in O_QUE_MUDOU API GO CONTRATO JEST NAVEGADOR; do
+          for nome in O_QUE_MUDOU API GO GO_WINDOWS GERENCIADOR GERENCIADOR_LINUX CONTRATO JEST NAVEGADOR; do
             resultado="${!nome}"
             echo "$nome: $resultado"
             case "$resultado" in success|skipped) ;; *) falhou=1 ;; esac

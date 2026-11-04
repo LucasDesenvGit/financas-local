@@ -112,7 +112,7 @@ python3 scripts/ci/verificar-changelog.py                     # CHANGELOG: uma s
 | **CI › build** | sempre | junta os resultados (abaixo, em "Testes rápidos") |
 | **Teste de mutação (Go)** (#373, #456) | PR que mexe no Go ou no gerenciador em Go, toda segunda e à mão | no PR, os pacotes de `scripts/ci/mutacao-go.txt` (e os do gerenciador, em `mutacao-gerenciador-go.txt`) que ele mudou, com piso; no agendamento, as listas inteiras |
 | **Fuzz do Go** (#372) | toda segunda e à mão | o `-fuzz` dos alvos `FuzzXxx`; não roda no PR |
-| **CodeQL** (#451, [ADR 0054](docs/adr/0054-analise-de-seguranca-do-codigo-com-o-codeql.md)) | todo PR e push, toda quinta e à mão | segurança do código (C#, Go, TS, Python, workflows); achados em Security › Code scanning, sem bloquear. Na quinta, porque as consultas ganham regras novas mesmo sem o código mudar |
+| **CodeQL** (#451, [ADR 0054](docs/adr/0054-analise-de-seguranca-do-codigo-com-o-codeql.md)) | todo PR e push, toda quinta e à mão | segurança do código (Go, TS, Python, workflows); achados em Security › Code scanning, sem bloquear. Na quinta, porque as consultas ganham regras novas mesmo sem o código mudar |
 | **Teste de instalação no Linux** | PR e push que mexem em `scripts/geral/`, `scripts/linux/`, `banco/`, `src/gerenciador-go/` ou no `go.mod` do Go | instala do zero num runner limpo e restaura uma cópia, seguindo o [guia de operação](docs/OPERACAO.md) |
 | **Teste de instalação no Windows** | PR e push que mexem em `scripts/windows/`, nos `.cmd` da raiz, no `2-criar-banco.sh`, em `banco/` ou no `go.mod` do Go | o mesmo, pelo `instalar-windows.ps1` |
 | **Versão (instalador .msi)** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)) | push do `develop`, tag `vX.Y.Z` e à mão | gera e testa o `.msi` (`instalador/gerar-msi.ps1`, WiX 5, ADR 0029), restaurando uma cópia pelo guia de operação (#527); na tag, publica o Release |
@@ -180,7 +180,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - **teste no navegador novo abre a tela pela rota escrita** (`page.goto('/transacoes')`), senão a seleção não o acha (ele ainda roda no merge);
 - **arquivo novo que vale para todas as telas** fora das pastas já marcadas como globais: acrescente-o em `GLOBAIS` no `testes-afetados.py`;
 - **o .msi não roda no PR, só no merge para o develop, na tag e à mão** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)): PR que mexe no instalador, no gerenciador ou na inicialização da API roda o workflow "Versão (instalador .msi)" à mão na branch antes do merge;
-- jobs em paralelo (API, Jest, navegador em 2 partes): o tempo do PR é o do mais lento, não a soma. **O job final `build` junta os resultados e é o check exigido pela proteção do `develop`/`main`:** não troque o nome dele; job novo no `ci.yml` entra no `needs` dele. **Exceção, por enquanto:** `Go (Windows)`, `gerenciador em Go` e `gerenciador em Go (Linux)` ficam fora do `needs` (falham com o X no PR, mas não barram o merge). O código do Go só para Windows ainda não roda no site, e o `.msi` ainda leva o gerenciador em C#. Eles entram no `needs` quando a #84/#85 puser o Go na frente ou o gerenciador em Go entrar no `.msi` (ADR 0052);
+- jobs em paralelo (API, Jest, navegador em 2 partes): o tempo do PR é o do mais lento, não a soma. **O job final `build` junta os resultados e é o check exigido pela proteção do `develop`/`main`:** não troque o nome dele; job novo no `ci.yml` entra no `needs` dele. Desde a #86, todos entram, inclusive o `Go (Windows)` e o `gerenciador em Go` (Windows e Linux), que até ali ficavam de fora porque o Go só de Windows não rodava no site e o `.msi` levava o gerenciador em C# (ADR 0052);
 - todo workflow de PR tem `concurrency` com `cancel-in-progress`;
 - filtros `paths:` por pasta (`scripts/geral/**`), não por nome de arquivo, para um arquivo novo também disparar;
 - cache do que é baixado sempre igual (npm, NuGet, navegador do Playwright), menos quando baixar do zero é justamente o que se testa (os testes de instalação);
@@ -188,14 +188,14 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 
 ## Testes do back-end (Go)
 
-O C# chegou a 128 rotas sem nenhum teste automatizado e continua assim: para ele, vale o checklist do PR. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
+O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração começou pelo contrato. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
 
 | O que testar | Onde | Como |
 |---|---|---|
 | Regra de negócio, cálculo, conversão, validação | `*_test.go` no pacote do assunto (`internal/<assunto>`) | tabela de casos com `t.Run` |
 | Consulta SQL, transação, cascata | o mesmo pacote | SQLite **de verdade** num arquivo do `t.TempDir()`, com o esquema real; sem mock de banco e sem `:memory:` |
 | Handler: status, validação, erro | o mesmo pacote | `httptest.NewRequestWithContext` + `httptest.NewRecorder`, com o usuário por `sessao.ComUsuario` |
-| O mesmo JSON e o mesmo banco do .NET | `testes/contrato` (#72) | casos gravados do .NET, antes do código Go |
+| O mesmo JSON e o mesmo banco de antes | `testes/contrato` (#72) | casos gravados do .NET até a #86; hoje, a regressão do Go (`rodar.sh --atualizar`, com o `git diff` conferido) |
 | Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
 
 O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/testeapoio` ([README](src/backend/internal/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
@@ -253,7 +253,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
   Um alvo por vez: o `-fuzz` não aceita mais de um.
 - **Tipo novo** em `internal/tipos` ganha um alvo `FuzzXxx`, com as sementes do gabarito.
 
-**Gabarito** (*golden file*) fica em `testdata/`, vem da referência (o .NET ou o EF Core) e é regravado só por opção explícita (`-atualizar`), olhando a diferença no PR.
+**Gabarito** (*golden file*) fica em `testdata/`. Os que vieram do .NET ou do EF Core (pelas sondas, que saíram na #86) não são mais regravados: são a regressão. Os outros são regravados só por opção explícita (`-atualizar`), olhando a diferença no PR.
 
 **Antes de subir:** em `src/backend`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend/README.md#antes-de-subir-push)). A CI confere também a trava de tempo (acima, em "Testes rápidos") e a cobertura com piso por pacote (abaixo). A mutação automática roda no PR, nos pacotes que ele mudou (#373, #456; tabela em "O que a CI roda").
 
@@ -283,7 +283,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - [ ] Back-end em Go: regra nova com teste unitário, consulta nova com teste no SQLite real, endpoint novo com caso de contrato, e as mutações listadas no PR ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md), "Testes do back-end (Go)" acima).
 - [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`) chamado em `scripts/geral/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)). Sem migrations.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.
-- [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).
+- [ ] Consultas ao banco só parametrizadas (`sqlc` ou `?`), sem SQL montado com texto do usuário.
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
 - [ ] README/CHANGELOG atualizados quando a mudança afeta o uso. No `CHANGELOG.md` (#294), a entrada vai na seção da **versão do seu PR** (a do `Directory.Build.props`): `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se ainda não existe, e **dentro** do título do tipo que já existe nela (`### Funcionalidades`, `### Correções`, `### Publicação e documentação`…). Outro PR subiu a versão antes? Depois do `git merge origin/develop`, a sua entrada muda para a seção da versão nova. A CI confere (`scripts/ci/verificar-changelog.py`: tipo repetido, versão repetida ou fora de ordem, versão acima da do `Directory.Build.props`; `--corrigir` junta tipos repetidos), porque as notas das versões e a janela "O que mudou" do gerenciador saem dele.
 - [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
@@ -302,8 +302,7 @@ Quem usa o Claude Code no projeto recebe, pelo repositório:
 ## Convenções de código
 
 - Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
-- Back-end em C#: um serviço por assunto em `Servicos/`, controllers finos, DTOs em `Dtos/Dtos.cs`.
-- Back-end em Go: funcionalidade nova é feita em Go, atrás do .NET (`CLAUDE.md`, #231), num pacote por assunto em `src/backend/internal/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
+- Back-end em Go: um pacote por assunto em `src/backend/internal/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
 - Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
 - Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").
 - Formatação definida no `.editorconfig`.

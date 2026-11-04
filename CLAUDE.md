@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: API em C#/.NET 10 hospedada via Kestrel (sem IIS — `UseWindowsService`/`UseSystemd` em `Program.cs`), back-end passando para Go atrás dela, front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
 
 ## Comandos
 
@@ -25,28 +25,28 @@ scripts/geral/3-publicar-atualizar.sh                         # compila, publica
 scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows sem bash: instalar-windows.cmd, ADR 0012)
 ```
 
-O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Visual Studio, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
+O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
 
-**O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `Program.cs` ou `EsquemaBanco.cs`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0039), sem produto junto.
+**O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `src/backend/cmd/financas/` ou `src/backend/internal/banco/esquema_banco.go`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0039), sem produto junto.
 
 ## Testes
 
 - **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou. Mexeu em teste ou em CI: tempo antes e depois no PR.
-- **Go: toda regra nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): unitário em tabela, SQLite real, `httptest`, só a biblioteca padrão; bug corrigido ganha teste que falha antes. Detalhes em [CONTRIBUINDO.md, "Testes do back-end (Go)"](CONTRIBUINDO.md#testes-do-back-end-go). O C# continua sem testes: vale o checklist manual do PR.
+- **Go: toda regra nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): unitário em tabela, SQLite real, `httptest`, só a biblioteca padrão; bug corrigido ganha teste que falha antes. Detalhes em [CONTRIBUINDO.md, "Testes do back-end (Go)"](CONTRIBUINDO.md#testes-do-back-end-go).
 - **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura` (#476). Ele é só local, por decisão de 29/10/2026, e a CI não o roda. Dependência nova de propósito entra na tabela do teste, com o motivo, no mesmo PR.
 
 ## Arquitetura (detalhes em docs/ARQUITETURA.md)
 
-Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS, cookies `__Host-`. O .NET (`src/backend/Financas.Api`) fica na frente e repassa ao Go (`src/backend`) os prefixos migrados; controllers, serviços e pastas estão em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+Angular é publicado no `wwwroot`, ao lado do executável do Go (`financas-go`): mesma origem, sem CORS, cookies `__Host-`. Um pacote por assunto em `src/backend/internal/<assunto>`, rotas juntadas em `internal/api` ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)); pastas em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
 - **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
 - **Gerenciador** (`src/gerenciador-go/`, a janela do Windows e do Linux em Go com o Wails, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): o de C# saiu na #86.
 
 ## Banco (sem migrations, SQLite)
 
-- `banco/01-estrutura.sql` é idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`, tabela nova no fim, conferido pelo `scripts/ci/verificar-sql.py`); `02-dados-iniciais.sql` traz o padrão. A API aplica os dois ao iniciar (`Data/EsquemaBanco.cs`). Nunca apagar/renomear coluna em uso sem bloco de transição.
-- **Coluna nova numa tabela existente:** `adicionar_coluna_se_ausente` em `scripts/geral/2-criar-banco.sh`, não no SQL. Uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
-- **Mudou a estrutura:** `Entidades/` + `FinancasDbContext.cs` (em sincronia manual com o SQL), `2-criar-banco.sh`, `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+- `banco/01-estrutura.sql` é idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`, tabela nova no fim, conferido pelo `scripts/ci/verificar-sql.py`); `02-dados-iniciais.sql` traz o padrão. O site aplica os dois ao iniciar (`-aplicar-esquema`, `internal/banco/esquema_banco.go`, com uma cópia embutida dos scripts que o `go generate` mantém em dia). Nunca apagar/renomear coluna em uso sem bloco de transição.
+- **Coluna nova numa tabela existente:** `adicionar_coluna_se_ausente` em `scripts/geral/2-criar-banco.sh`, não no SQL. Uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e o Go (`internal/banco/esquema`) leem essas linhas.
+- **Mudou a estrutura:** o SQL, o `2-criar-banco.sh`, `go generate ./...` em `src/backend` (a cópia embutida e as consultas do `sqlc`), `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 - **Dado pessoal novo:** tabela ou coluna com dado pessoal, ou dado novo que sai do computador, entra em [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md) no mesmo PR.
 - **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação" (#468) e "Versão (instalador .msi)" (#527), que seguem o guia.
 - **Scripts (#154):** `scripts/geral/` é o bash dos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/ci/`, o que só a CI usa; os `.cmd` na raiz. Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa); serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
@@ -71,9 +71,9 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 - **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
-- Consultas ao banco no .NET **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
-- **Código Go:** funcionalidade nova fora do núcleo (tabelas e rotas próprias) **é feita em Go, atrás do .NET**: prefixo em `Go:Prefixos`, pacote em `src/backend/internal/<assunto>`, rotas em `internal/api`. Ajuste em tela ou endpoint que já existe fica onde está (#231). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas, troca aos poucos) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
-- Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
+- Consultas ao banco **só parametrizadas** (`?` ou o código gerado pelo `sqlc`), nunca SQL montado a partir de texto do usuário.
+- **Código Go:** assunto novo ganha pacote em `src/backend/internal/<assunto>` e uma linha em `internal/api`, com casos de contrato (`testes/contrato`). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
+- Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** (`internal/segredos`: AES-256-GCM, prefixo `v2:`) — nunca em arquivo de config nem devolvidos pela API.
 - Formatação: `.editorconfig`.
 
 ## UI/UX
@@ -82,7 +82,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Skills e agentes do projeto (`.claude/`)
 
-- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão); na migração do épico #70, a `migrar-para-go` acrescenta o que é só dela. O agente `dev-go` carrega a `go-no-projeto` e lê a `migrar-para-go` quando analisa ou porta; serve para analisar, portar, criar ou revisar assuntos em paralelo (#560).
+- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). A `migrar-para-go` era a da migração do épico #70, que terminou na #86: serve só para consultar como um assunto foi portado do C# (que está na tag `v-ultimo-dotnet`). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
 - **Angular:** a skill `angular-no-projeto` é o roteiro de todo trabalho no front-end (tela nova, mudança, avaliação de UI/UX, revisão); a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` carrega as duas, para avaliar telas em paralelo (um agente por tela), implementar ou revisar (#559).
 - **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` em uma frase quando o pedido cita mais de uma issue ou PR, ou um épico; quando é a 2ª issue ou PR na mesma conversa, ou a conversa já foi resumida; ou quando a pessoa fala em "deixar rodando" ou "continuar depois". Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou. O hook `lembrar-trabalho-longo.sh` lembra sozinho em parte desses casos (#280).
 
@@ -109,9 +109,9 @@ Conventional Commits em português (fluxo de branches, comandos e Project em [CO
 
 ## Segurança (específico deste projeto — não genérico)
 
-Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo Kestrel — sem IIS/proxy). Pontos que afetam como escrever código aqui:
-- Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo da API, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
-- Segredos (Client Secret da Pluggy, token da brapi) via ASP.NET Data Protection, chaves em `dados/chaves`: DPAPI no Windows (`OperatingSystem.IsWindows()` em `Program.cs`), permissão de arquivo no Linux.
+Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo executável do Go — sem IIS/proxy). Pontos que afetam como escrever código aqui:
+- Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo do site, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
+- Segredos (Client Secret da Pluggy, token da brapi) com a chave em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows (`internal/segredos/protecao_windows.go`), permissão de arquivo (0600) no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
 - **Modelo de ameaças em dia:** uma saída de rede nova, uma fronteira nova (processo, porta, pasta) ou uma mudança no login revisa o [modelo de ameaças](docs/MODELO-DE-AMEACAS.md) no mesmo PR.
-- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `olinda.bcb.gov.br` (câmbio PTAX), `query1.finance.yahoo.com`/`brapi.dev`, `api.mercadobitcoin.net` (cripto, ADR 0048) (API) e `api.github.com`/`github.com` (só o gerenciador: o do Windows para versão nova, ADR 0028; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop" nas duas janelas, ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver a tabela em [docs/SEGURANCA.md](docs/SEGURANCA.md#o-que-sai-para-a-internet) e o diagrama "Como funciona" do [README.md](README.md#como-funciona), que mudam junto).
+- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `olinda.bcb.gov.br` (câmbio PTAX), `query1.finance.yahoo.com`/`brapi.dev`, `api.mercadobitcoin.net` (cripto, ADR 0048) (o site) e `api.github.com`/`github.com` (só o gerenciador: versão nova, ADR 0052; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop", ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver a tabela em [docs/SEGURANCA.md](docs/SEGURANCA.md#o-que-sai-para-a-internet) e o diagrama "Como funciona" do [README.md](README.md#como-funciona), que mudam junto).
