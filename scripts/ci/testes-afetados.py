@@ -38,11 +38,11 @@ GLOBAIS = [
     r'^src/frontend/testes/(apoio|configurar-jest)', r'^src/frontend/testes-navegador/(base\.ts|api-falsa\.ts|servidor\.mjs)$',
     r'^src/frontend/public/', r'^src/frontend/src/assets/',
     # A CSP que os testes no navegador aplicam vem daqui (ADR 0041; do Go desde a #86).
-    r'^src/backend-go/internal/servidor/intermediarios\.go$',
+    r'^src/backend/internal/servidor/intermediarios\.go$',
     r'^\.github/workflows/ci\.yml$', r'^scripts/ci/testes-afetados\.py$',
 ]
 # O que conta como "front-end" (fora disso, os jobs do front-end não rodam).
-DO_FRONT = [r'^src/frontend/', r'^src/backend-go/internal/servidor/intermediarios\.go$', r'^\.github/workflows/ci\.yml$',
+DO_FRONT = [r'^src/frontend/', r'^src/backend/internal/servidor/intermediarios\.go$', r'^\.github/workflows/ci\.yml$',
             r'^scripts/ci/testes-afetados\.py$']
 
 

@@ -5,7 +5,7 @@
 # rota repetida, erro no esquema aplicado ou nas rotinas de partida.
 #
 # #86: o site é o executável do Go, montado como a publicação o monta:
-# - numa pasta temporária, o appsettings.json do src/backend-go e um
+# - numa pasta temporária, o appsettings.json do src/backend e um
 #   appsettings.Production.json com o banco, as chaves e o certificado ali
 #   dentro (o banco é criado pelo -aplicar-esquema);
 # - o certificado feito pelo próprio executável (gerar-certificado), como
@@ -29,8 +29,8 @@ porta=5080
 url="https://127.0.0.1:$porta"
 trap 'rm -rf "$pasta"' EXIT
 
-(cd "$raiz/src/backend-go" && CGO_ENABLED=0 go build -o "$pasta/financas-go" ./cmd/financas)
-cp "$raiz/src/backend-go/appsettings.json" "$pasta/appsettings.json"
+(cd "$raiz/src/backend" && CGO_ENABLED=0 go build -o "$pasta/financas-go" ./cmd/financas)
+cp "$raiz/src/backend/appsettings.json" "$pasta/appsettings.json"
 mkdir -p "$pasta/dados/sql" "$pasta/dados/chaves" "$pasta/wwwroot"
 echo '<!doctype html><title>teste</title>' >"$pasta/wwwroot/index.html"
 

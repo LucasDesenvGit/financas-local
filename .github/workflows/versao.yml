@@ -48,8 +48,8 @@ jobs:
       # #231 (ADR 0049): o back-end em Go vai no .msi, ao lado da API (o gerar-msi.ps1 compila).
       - uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
       - name: Cache do build do Angular

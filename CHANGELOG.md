@@ -2,6 +2,31 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.2.7] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI exige também o Go no Windows e o gerenciador em Go** (#86). O check `build`, que barra o merge, passa a juntar os jobs "Go (Windows)", "gerenciador em Go" e "gerenciador em Go (Linux)". Eles ficavam de fora enquanto o código só de Windows do Go não rodava no site e o `.msi` levava o gerenciador em C#.
+
+## [3.2.6] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A documentação conta o sistema sem o .NET** (#86, parte 6; épico #70). O README, a arquitetura (os diagramas de contêineres, de implantação e dos fluxos), a segurança, o modelo de ameaças (sem a fronteira entre o .NET e o Go), o guia do banco, a instalação pelo código (o desenvolvimento passa a ser só com o Go), as regras do `CLAUDE.md`, o README do back-end e as skills descrevem o site como ele é: um executável só, em Go. As ADRs que o .NET sustentava foram marcadas como substituídas (a 0005) ou em parte substituídas (a 0002, a 0011 e a 0012), e a 0049 registra o fim da migração. A remoção do .NET (#86) está completa.
+
+## [3.2.5] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go muda para `src/backend`** (#86, parte 5; épico #70). Era `src/backend-go`, de quando o .NET ocupava `src/backend`. O módulo passa a ser `github.com/LucasDesenvGit/financas-local/src/backend`, e os scripts, a CI, o instalador e a documentação seguem o caminho novo. Nada muda para quem usa. Quem tem um clone antigo pode apagar as pastas que sobraram do .NET em `src/backend/Financas.Api` e `src/backend/Financas.MigrarSqlite` (o git as ignora).
+
+## [3.2.4] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go perde o modo de rodar atrás do .NET** (#86; épico #70). Sem o .NET, a opção `-atras-do-dotnet`, o segredo interno entre os dois e a configuração `Go:Tarefas` viraram código sem uso e saíram. O site continua igual, com as mesmas opções e as mesmas tarefas em segundo plano.
+
+## [3.2.3] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O código C# sai do repositório** (#86, parte 4; épico #70). A API em .NET, o `Financas.MigrarSqlite` (a migração do SQL Server), o `FinancasLocal.sln` e as sondas em C# dos testes do Go ficam só na tag `v-ultimo-dotnet`. Os gabaritos que as sondas gravaram continuam valendo, como regressão do Go. Nada muda para quem usa: o site é o Go desde a 3.0.0.
+
 ## [3.2.2] — 2026-11-03 · desenvolvimento
 
 ### Publicação e documentação

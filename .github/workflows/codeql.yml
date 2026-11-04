@@ -38,8 +38,6 @@ jobs:
           # Os workflows: título ou branch de PR dentro de um run:, permissões largas demais.
           - linguagem: actions
             modo: none
-          - linguagem: csharp
-            modo: none
           # O Go é compilado à mão: são dois módulos, e o gerenciador pede GTK 4, WebKitGTK e cgo no Linux (o
           # autobuild não instala nada disso e analisaria só parte do código).
           - linguagem: go
@@ -56,9 +54,9 @@ jobs:
         if: matrix.linguagem == 'go'
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
+          go-version-file: src/backend/go.mod
           cache-dependency-path: |
-            src/backend-go/go.sum
+            src/backend/go.sum
             src/gerenciador-go/go.sum
 
       - name: GTK 4 e WebKitGTK 6.0 (gerenciador em Go)
@@ -78,7 +76,7 @@ jobs:
       - name: Compilar o Go (API e gerenciador)
         if: matrix.modo == 'manual'
         run: |
-          (cd src/backend-go && go build ./...)
+          (cd src/backend && go build ./...)
           (cd src/gerenciador-go && CGO_ENABLED=1 go build ./...)
 
       - name: Analisar
