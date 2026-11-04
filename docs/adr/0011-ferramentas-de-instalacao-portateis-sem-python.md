@@ -1,6 +1,6 @@
 # 0011. Ferramentas de instalação portáteis, sem depender de Python
 
-- **Status:** Aceita (vai ser substituída em parte pela [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): o Go portátil entrou nos scripts na #231, ao lado do SDK do .NET, que sai na #86)
+- **Status:** Aceita (em parte substituída pela [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): o Go portátil entrou nos scripts na #231, e o SDK do .NET saiu na #86; ficam o Node.js, o Go e o sqlite3 portáteis)
 - **Data:** 2026-10-16 (atualizada em 2026-10-23: Go portátil, #231)
 - **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (scripts bash nos dois sistemas); [0012](0012-instalador-do-windows-em-powershell.md) (instalador do Windows sem bash)
 

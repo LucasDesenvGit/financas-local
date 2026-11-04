@@ -5,7 +5,7 @@
 #  - Confere as ferramentas basicas do terminal (curl, tar, sha256sum...)
 #  - Node.js LTS portatil em ferramentas/node (compila o Angular e tambem
 #    interpreta JSON nos scripts, no lugar do python3/jq)
-#  - Go portatil em ferramentas/go, na linha do src/backend-go/go.mod
+#  - Go portatil em ferramentas/go, na linha do src/backend/go.mod
 #    (reaproveita um go do PATH da mesma linha e nao mais velho; #231)
 #  - sqlite3: usa o do sistema se houver; senao baixa o portatil oficial
 #    (sqlite.org) em ferramentas/sqlite
@@ -131,8 +131,8 @@ node --version >/dev/null 2>&1 || erro_sai "O Node.js em $destino_node nao execu
 # (linha "go 1.27.3"); baixa a mais nova da mesma linha (1.27.x) publicada em go.dev/dl, conferida pelo SHA-256
 # que o proprio indice traz. Reaproveita um go do PATH que ja seja dessa versao ou mais novo.
 etapa 'Verificando o Go'
-go_minimo="$(awk '$1 == "go" { print $2; exit }' "$Raiz/src/backend-go/go.mod")"
-[[ -n "$go_minimo" ]] || erro_sai 'Versao do Go nao encontrada em src/backend-go/go.mod.'
+go_minimo="$(awk '$1 == "go" { print $2; exit }' "$Raiz/src/backend/go.mod")"
+[[ -n "$go_minimo" ]] || erro_sai 'Versao do Go nao encontrada em src/backend/go.mod.'
 go_linha="$(cut -d. -f1-2 <<<"$go_minimo")"
 # versao_ao_menos ATUAL MINIMA: verdadeiro se ATUAL >= MINIMA (1.27.10 > 1.27.9).
 versao_ao_menos() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }

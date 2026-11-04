@@ -44,7 +44,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(os.path.dirname(AQUI))
 # O módulo medido: o back-end (padrão) ou, com --gerenciador, o gerenciador; cada um com a sua lista.
 GERENCIADOR = '--gerenciador' in sys.argv[1:]
-MODULO = 'src/gerenciador-go' if GERENCIADOR else 'src/backend-go'
+MODULO = 'src/gerenciador-go' if GERENCIADOR else 'src/backend'
 GO = os.path.join(RAIZ, *MODULO.split('/'))
 SAIDA = os.path.join(GO, 'mutacao')
 LISTA = 'mutacao-gerenciador-go.txt' if GERENCIADOR else 'mutacao-go.txt'
