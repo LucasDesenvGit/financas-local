@@ -5,8 +5,8 @@
 // assim, assuntos feitos em paralelo (#75, #77, #81) não mexem nas mesmas linhas. No merge, conflito neste arquivo é
 // sempre "fique com as duas linhas" (e o gofmt põe os imports em ordem).
 //
-// Uma rota só recebe requisição quando o prefixo dela está em Go:Prefixos do .NET (ADR 0049): enquanto não estiver,
-// o .NET continua atendendo. O contrato liga o prefixo só na rodada contra o Go (PREFIXOS_GO, testes/contrato).
+// Desde a #86 o Go atende todas as rotas, sem o .NET na frente. Quem põe a autenticação na frente deste mux é o
+// cmd/financas (autenticacao.Proteger). O desenho das peças está em docs/arquitetura/componentes.md (#464).
 package api
 
 import (
