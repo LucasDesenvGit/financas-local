@@ -1,0 +1,68 @@
+{
+  "total": 3,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "falsa-corrente",
+      "type": "BANK",
+      "subtype": "CHECKING_ACCOUNT",
+      "number": "0001/12345-0",
+      "name": "Conta Corrente",
+      "marketingName": "Conta Falsa",
+      "balance": 1520.355,
+      "currencyCode": "BRL",
+      "bankData": {
+        "closingBalance": 1520.35,
+        "automaticallyInvestedBalance": 300.5,
+        "hasReservedBalance": true,
+        "reservedBalances": [
+          {
+            "name": "Viagem à praia & \"férias\"",
+            "amount": 250.505
+          },
+          {
+            "description": "Reserva",
+            "balance": {
+              "value": 100,
+              "currency": "BRL"
+            }
+          },
+          {
+            "nome": "sem campo conhecido"
+          },
+          "texto solto"
+        ]
+      }
+    },
+    {
+      "id": "falsa-poupanca",
+      "type": "BANK",
+      "subtype": "SAVINGS_ACCOUNT",
+      "number": "0001/99-1",
+      "name": "Poupança",
+      "balance": "2000.10",
+      "currencyCode": "brl",
+      "bankData": {
+        "automaticallyInvestedBalance": "75.125",
+        "hasReservedBalance": false
+      }
+    },
+    {
+      "id": "falsa-cartao",
+      "type": "CREDIT",
+      "subtype": "CREDIT_CARD",
+      "number": "1234",
+      "name": "Cartão Falso",
+      "marketingName": null,
+      "balance": 840.1,
+      "currencyCode": "USD ",
+      "creditData": {
+        "creditLimit": 5000,
+        "availableCreditLimit": "4159.9",
+        "balanceCloseDate": "2026-10-20T02:59:59.000Z",
+        "balanceDueDate": "2026-10-28T03:00:00.000Z"
+      }
+    }
+  ]
+}

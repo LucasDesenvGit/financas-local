@@ -107,7 +107,7 @@ O detalhe de cada etapa está num comentário do épico #70.
 
 ### Teste de mutação automático (#373)
 
-A mutação à mão continua no PR. A ferramenta mede, toda semana, se os testes de cada pacote continuam pegando erro.
+A mutação à mão continua no PR. A ferramenta mede se os testes de cada pacote continuam pegando erro: no PR, os pacotes que ele mudou (#456), e toda semana, todos.
 
 - **Ferramenta: [gremlins](https://github.com/go-gremlins/gremlins) v0.6.0** (Apache-2.0), rodada com `go run …@v0.6.0`, como o `govulncheck`. Não entra no `go.mod`.
   - Trabalha numa cópia do módulo: o código dele diz que a cópia "allows Gremlins not to work in the actual source directory messing up with the source code files" ([`workdir.go`](https://github.com/go-gremlins/gremlins/blob/main/internal/engine/workdir/workdir.go)).
@@ -242,7 +242,19 @@ Benchmark só para código quente, antes de otimizar (skill `go-no-projeto`, "De
   - as dívidas de espera por `time.Sleep` foram todas pagas na #458; sobram só as exceções escritas, com o motivo, em `scripts/ci/regras-go-excecoes.txt`.
 - **Na prática:**
   - antes de subir: `gofmt -l .`, `go vet ./...` e `go test -race ./...` em `src/backend-go` (o job "Go" da CI roda os mesmos);
-  - **regra nova:** linha na tabela do teste unitário do pacote; **consulta nova:** teste com o SQLite real; **endpoint novo:** caso de contrato gravado do .NET, mais o teste HTTP dos ramos de validação;
+  - **regra nova:** linha na tabela do teste unitário do pacote; **consulta nova:** teste com o SQLite real; **endpoint novo:** caso de contrato (gravado do .NET até a #86; desde então, do Go, com o `git diff` conferido), mais o teste HTTP dos ramos de validação;
   - **no PR:** a tabela regra → teste, os casos-limite que não se aplicam e a lista de mutações;
   - o C# continua sem teste automatizado, só com o checklist do PR: ele sai aos poucos, e cada assunto ganha teste ao vir para o Go;
   - a regra está também no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), nas skills `go-no-projeto` e `migrar-para-go`, no agente `dev-go` e no modelo de PR.
+
+## Atualização de 2026-11-03: o contrato vira a regressão do Go (issue #86, parte 3)
+
+Sem o .NET, não há mais referência para gravar os esperados. **Decisão:** os esperados de `testes/contrato/esperado/`, gravados do .NET até aqui, passam a ser a **regressão do Go**.
+
+- **Como roda:** `testes/contrato/rodar.sh` sobe o Go sozinho, com a linha do serviço instalado (`-aplicar-esquema -rotinas-de-partida`), o relógio de teste, a Pluggy falsa e sem rede (`unshare -rn` no Linux; senão, o proxy numa porta fechada). Não precisa mais da libfaketime nem do .NET, e roda também no Git Bash do Windows. O job da CI passa a se chamar "contrato".
+- **Antes da troca:** os 883 casos passaram contra o Go sozinho (03/11/2026, no Windows), menos um, que é diferença conhecida: o `90-go` "POST sem token CSRF" dava 400 porque o .NET na frente conferia o CSRF antes do repasse; o Go confere o CSRF só nas rotas que existem, e esta só tem GET, então dá 404. O esperado mudou, com o motivo no caso.
+- **Regra nova:** um esperado que já existe muda só de propósito, com o motivo de cada um escrito no PR (bug corrigido ou mudança pedida). Uma diferença que aparece sem querer é regressão: o código volta, e o esperado fica. Caso novo é gravado com `rodar.sh --atualizar`, e o `git diff` de `esperado/` tem de mostrar só ele.
+- **Endpoint novo:** caso de contrato gravado do Go (antes, "gravado do .NET"), mais o teste HTTP dos ramos de validação.
+- **Os outros gabaritos que vieram do C#** (as sondas do EF Core e do esquema) continuam valendo como estão: o que eles fixam (o formato no banco) não muda. O código C# das sondas sai na parte 4 da #86, e os gabaritos ficam.
+- **Também sai da CI:** o teste de ponta a ponta do .NET com o Go atrás dele (`scripts/ci/testar-go-atras-do-dotnet.sh`). O teste de inicialização (`scripts/ci/ligar-api.sh`) passa a subir o Go como a publicação o monta. A CSP que os testes no navegador aplicam passa a ser lida do Go (`internal/servidor/intermediarios.go`), e o `TestCabecalhosDeSeguranca` fixa os valores, que antes eram conferidos contra o `Seguranca.cs`.
+- **Consequência negativa:** o contrato deixa de provar "igual ao .NET" e passa a provar "igual a antes". Um defeito que já estava no Go e no esperado continua lá até alguém o ver. *Julgamento:* aceitável, porque o ensaio da #85 e os 883 casos mostraram o Go igual ao .NET no que o contrato cobre.

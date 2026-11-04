@@ -116,5 +116,7 @@ Os erros mais comuns do instalador estão em [Problemas comuns](PROBLEMAS-COMUNS
 
 ### Pelos scripts
 
+**O site não subiu depois de atualizar?** Desde a #86, os scripts não usam mais o .NET, e não há volta automática para ele. Para voltar à última versão com o .NET: `git checkout v-ultimo-dotnet` e rode o `instalar.sh` de novo (no Windows sem bash, o `instalar-windows.cmd`). O que só o .NET usava só é apagado depois de o site novo responder.
+
 - **Windows:** o `instalar-windows.cmd` volta sozinho para a versão anterior se a nova não subir. O log fica em `instaladores\instalacao-windows.log`.
 - **Linux:** veja o que o script mostrou e o log do serviço, com `journalctl --user -u financaslocal.service`.

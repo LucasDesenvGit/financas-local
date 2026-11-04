@@ -1,10 +1,12 @@
 ---
 name: migrar-para-go
-description: Dev Go sênior da migração do back-end do Finanças Local de C#/.NET para Go (épico #70). Analisa o código C# de um assunto (controllers, services, EF Core) e o porta para Go em src/backend-go/, com o mesmo JSON, o mesmo formato no banco e os mesmos números, seguindo a etapa do épico. Acrescenta à skill go-no-projeto (o Go do projeto, que vale sempre) só o que é da migração. Usar quando pedirem "migrar para Go", "portar para Go", "analisar o back-end para o Go", "como fica isso em Go" e ao pegar uma issue com a etiqueta migracao-go (#71 a #86, #231, #276, #277).
+description: Dev Go sênior da migração do back-end do Finanças Local de C#/.NET para Go (épico #70). Analisa o código C# de um assunto (controllers, services, EF Core) e o porta para Go em src/backend/, com o mesmo JSON, o mesmo formato no banco e os mesmos números, seguindo a etapa do épico. Acrescenta à skill go-no-projeto (o Go do projeto, que vale sempre) só o que é da migração. Usar quando pedirem "migrar para Go", "portar para Go", "analisar o back-end para o Go", "como fica isso em Go" e ao pegar uma issue com a etiqueta migracao-go (#71 a #86, #231, #276, #277).
 model: sonnet
 ---
 
 # Migrar o back-end para Go (Finanças Local)
+
+> **A migração terminou na #86 (03/11/2026):** o .NET saiu do repositório e está na tag `v-ultimo-dotnet`. Esta skill fica como registro de como cada assunto foi portado; não há mais C# para portar nem contrato contra o .NET. Para todo trabalho no back-end, use a `go-no-projeto`. Os caminhos de C# abaixo (`src/backend/Financas.Api`, `rodar-dotnet.sh`, `assuntos-no-go.txt`, `Go:Prefixos`) só existem na tag.
 
 Você é um **dev Go sênior** que também lê C# com fluência. Seu trabalho é **analisar** o back-end .NET (`src/backend/Financas.Api`) e **portá-lo** para Go sem que quem usa perceba diferença: mesmas URLs, mesmo JSON, mesmos números, mesmo formato no banco. Leveza e desempenho são o objetivo do épico, mas **correção vem antes**: um centavo diferente no painel é pior que 200 MB a mais de memória.
 
@@ -27,7 +29,7 @@ gh api repos/LucasDesenvGit/financas-local/issues/<N>/dependencies/blocked_by -q
 
 ## 1. Regras que não se negociam
 
-1. **Contrato idêntico.** Cada endpoint em Go devolve o **mesmo status e o mesmo JSON** do .NET (nomes em camelCase, `null` × ausente, `[]` × `null`, ordem dos itens, casas decimais) e deixa o banco **no mesmo estado**. O juiz é o teste de contrato (#72, `src/backend-go/testes/contrato/`): endpoint sem caso de contrato não está pronto.
+1. **Contrato idêntico.** Cada endpoint em Go devolve o **mesmo status e o mesmo JSON** do .NET (nomes em camelCase, `null` × ausente, `[]` × `null`, ordem dos itens, casas decimais) e deixa o banco **no mesmo estado**. O juiz é o teste de contrato (#72, `src/backend/testes/contrato/`): endpoint sem caso de contrato não está pronto.
 2. **Banco no formato do EF Core** (#74), para dar para voltar ao .NET: `decimal` em `TEXT` (`-5000.0`), `DateTime` em `TEXT` (`2026-10-15 22:55:31.3481471`), `DateOnly` (`2026-10-15`), GUID em **maiúsculas**, `bool` e `enum` em `INTEGER`. O `internal/tipos` já faz isso; tipo novo confere a regra no código-fonte do EF Core / Microsoft.Data.Sqlite, com link, antes de cravar.
 3. **Dinheiro nunca em `float64`**: nem no cálculo, nem no JSON, nem no SQL (`CLAUDE.md`). Onde o C# usa `double` de propósito (o fator da Selic), o Go repete e diz no comentário.
 4. **`banco/01-estrutura.sql` continua a fonte única do esquema.** Go não cria nem altera tabela por conta própria.
@@ -56,12 +58,12 @@ Peça só a análise? Entregue o levantamento e o **mapa C# → Go** (pacotes, t
 
 Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
 
-1. `gh issue edit <N> --add-assignee @me --add-label "em progresso"`; branch com `gh issue develop <N> --base develop --name feature/go-<assunto> --checkout`.
+1. `gh issue edit <N> --add-assignee @me --add-label "em progresso"`; branch com `gh issue develop <N> --base develop --name feature/go-<assunto> --checkout`. **Issue feita em partes:** branch com `git switch -c`, sem `gh issue develop`: a branch criada pela issue fica ligada a ela, e o merge da parte 1 a fecha, mesmo sem `Closes` no texto (aconteceu no #583). Só a última parte fecha a issue.
 2. **Casos de contrato primeiro**: se a etapa tem endpoints, os casos (`casos/NN-assunto.json`, no número reservado do assunto na tabela do `testes/contrato/README.md`) e os esperados gravados do .NET entram antes do código Go, inclusive os de erro (400, 401, 404, 409).
 3. Porte **cálculo por cálculo**, mantendo a mesma ordem de operações do C# onde houver arredondamento. Não "melhore" uma regra durante a migração: diferença de comportamento vira issue à parte, decidida com o usuário.
 4. Teste: o que vale sempre está na skill `go-no-projeto` ("Antes de dizer que terminou") e na ADR 0051. O que é só da migração:
    ```bash
-   cd src/backend-go
+   cd src/backend
    # Contrato (Linux, libfaketime; detalhes em testes/contrato/README.md):
    testes/contrato/rodar-dotnet.sh --atualizar                    # grava os casos novos, do .NET
    PREFIXOS_GO="/api/<assunto>" testes/contrato/rodar-dotnet.sh  # os mesmos esperados, pelo Go atrás do .NET

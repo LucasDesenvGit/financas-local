@@ -24,16 +24,16 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 
 ## Detalhes técnicos
 
-- **Sem exposição na rede.** O Kestrel (servidor web embutido na própria API, sem IIS nem proxy reverso) responde somente em `127.0.0.1`, via HTTPS. O SQLite é só um arquivo local: não tem porta nem listener de rede.
-- **Back-end em Go atrás da API** ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): a API inicia o Go como processo filho e repassa a ele só as rotas já migradas, depois de conferir o login e o CSRF. O Go escuta só em `127.0.0.1`, numa porta escolhida na partida, e recusa (401) qualquer pedido sem o segredo interno, gerado a cada partida e conhecido só pela API. Ele para junto com a API.
+- **Sem exposição na rede.** O próprio executável do site (em Go, sem IIS nem proxy reverso) responde somente em `127.0.0.1`, via HTTPS: um endereço que não seja de loopback é recusado ao iniciar (`config.ConferirSoLocal`). O SQLite é só um arquivo local: não tem porta nem listener de rede.
+- **Um processo só** ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): até a #86, o Go rodava atrás de uma API em .NET, numa porta interna protegida por um segredo; hoje o site é um executável só, sem porta interna.
 - **Sem senhas em arquivos.** O SQLite não tem login de banco: o acesso é a permissão do sistema operacional sobre a pasta `dados`, que só a conta do serviço (Serviço do Windows ou systemd) e os administradores leem.
-- **Client Secret da Pluggy e token da brapi criptografados** no banco com ASP.NET Data Protection. As chaves ficam em `dados\chaves`: no Windows, protegidas por DPAPI; no Linux, pelas permissões da pasta. A API nunca devolve o secret.
-- **Login:** senha com hash PBKDF2-SHA512 (ASP.NET Identity), bloqueio depois de errar a senha (padrão: 15 min após 5 erros, ajustável em **Configurações › Parametrização**, de 3 a 20 tentativas e de 1 a 1.440 minutos), limite de 5 tentativas por minuto e tempo de resposta igual para usuário inexistente.
+- **Client Secret da Pluggy e token da brapi criptografados** no banco com AES-256-GCM (`internal/segredos`, prefixo `v2:`). A chave fica em `dados\chaves\segredos.chave`: no Windows, protegida pelo DPAPI; no Linux, pela permissão do arquivo (0600). A API nunca devolve o secret.
+- **Login:** senha com hash PBKDF2-SHA512 (no formato do ASP.NET Identity, para as senhas de antes continuarem valendo), bloqueio depois de errar a senha (padrão: 15 min após 5 erros, ajustável em **Configurações › Parametrização**, de 3 a 20 tentativas e de 1 a 1.440 minutos), limite de 5 tentativas por minuto e tempo de resposta igual para usuário inexistente.
 - **Sessão:** cookie `__Host-` HttpOnly + Secure + SameSite=Strict, que expira em 2 h sem uso. Trocar a senha derruba as outras sessões.
 - **CSRF:** token antifalsificação validado em todo POST, PUT, PATCH e DELETE.
 - **Cabeçalhos:** CSP restritiva (sem scripts de terceiros nem script inline; nada é carregado da internet), X-Frame-Options, nosniff, Referrer-Policy e `no-store` nas respostas da API.
 - **Validação de host:** só `localhost`/`127.0.0.1`, contra DNS rebinding.
 - **Auditoria** em Configurações › Segurança: logins, falhas, bloqueios e saídas, trocas de senha, parâmetros, credenciais da Pluggy, conexões adicionadas e removidas, alterações em lote nas transações (categoria, renomear, regras de descrição), conferências de investimentos e trocos automáticos, e o desfazer de cada um.
 - **Erros do sistema** gravados sem dados sensíveis: query strings, tokens, senhas, CPF e valores em R$ viram `[removido]` antes de gravar ([ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md)).
-- Consultas ao banco somente via LINQ/EF Core, sem SQL montado a partir de texto do usuário.
+- Consultas ao banco somente parametrizadas (`sqlc` ou `?`), sem SQL montado a partir de texto do usuário.
 - **Dados de pagamento do Open Finance:** do Pix ou da TED, o nome e o CPF/CNPJ do outro lado não são gravados em campo próprio: fica o meio e se quem pagou e quem recebeu são a mesma pessoa ([ADR 0025](adr/0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md)). A descrição, porém, é guardada como o banco manda e costuma trazer o nome ("PIX ENVIADO FULANO"); veja [Dados pessoais](DADOS-PESSOAIS.md#dados-bancários-da-pluggy).

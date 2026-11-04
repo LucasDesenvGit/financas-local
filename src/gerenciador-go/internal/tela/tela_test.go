@@ -84,8 +84,8 @@ func TestTextoDaVersao(t *testing.T) {
 		{"site no ar: a versão vai na situação", "2.42.21", true, true, "", ""},
 		{"site no ar, depois de procurar: só o resultado", "2.42.21", true, true, "Tem versão nova: 2.43.0.",
 			"Tem versão nova: 2.43.0."},
-		{"pelos scripts", "2.42.21", false, true, "x", "Instalado pelos scripts: para atualizar o site, rode de novo o " +
-			"instalar-windows.cmd (ou o scripts/geral/3-publicar-atualizar.sh) na pasta do projeto. Ou passe para o " +
+		{"pelos scripts", "2.42.21", false, true, "x", "Instalado pelos scripts: para atualizar o site, rode git pull e, de novo, o " +
+			"instalar-windows.cmd (ou o scripts/geral/instalar.sh) na pasta do projeto. Ou passe para o " +
 			"instalador: o .msi traz o banco e as chaves, e daí em diante a versão nova chega por aqui."},
 	}
 	for _, c := range casos {
@@ -519,6 +519,29 @@ func TestCartaoDoDevelop(t *testing.T) {
 	}
 }
 
+// Regra: "Atualizar o gerenciador e reabrir" só aparece depois de a reinstalação pelo develop dar certo, com o texto
+// do C#; pelo .msi, nem existe (#430).
+func TestAtualizarOGerenciador(t *testing.T) {
+	t.Parallel()
+	botao := `id="atualizar-gerenciador" class="botao discreto" type="button" data-acao="atualizar-gerenciador" accesskey="u"`
+	if p := escrever(t, Tela{Develop: Develop{Disponivel: true}}); !strings.Contains(p, botao) ||
+		!strings.Contains(p, `aria-description="Fecha o gerenciador, instala o desta versão e abre de novo" hidden>`) {
+		t.Error("antes de reinstalar, o botão tem de existir escondido")
+	}
+	feito := escrever(t, Tela{Develop: Develop{Disponivel: true, ReabrirGerenciador: true}})
+	if !strings.Contains(feito, `aria-description="Fecha o gerenciador, instala o desta versão e abre de novo">`) ||
+		!strings.Contains(feito, `Atualizar o gerenciador e reabrir</button>`) {
+		t.Error("depois de reinstalar, o botão tem de aparecer")
+	}
+	if strings.Contains(escrever(t, Tela{PeloMsi: true}), `id="atualizar-gerenciador"`) {
+		t.Error("pelo .msi, com o botão")
+	}
+	if !(Tela{Develop: Develop{ReabrirGerenciador: true}}).Atualizacao().ReabrirGerenciador ||
+		(Tela{}).Atualizacao().ReabrirGerenciador {
+		t.Error("a atualização da página não leva o ReabrirGerenciador")
+	}
+}
+
 // Regra: o texto do cartão e a pergunta antes, com os textos do C#.
 func TestTextosDoDevelop(t *testing.T) {
 	t.Parallel()
@@ -553,15 +576,15 @@ func TestNaoDeuCerto(t *testing.T) {
 }
 
 // Regra: no Linux, pelos scripts, o cartão "Versão" diz como atualizar; com a pasta do projeto, o comando vem pronto,
-// com a pasta entre aspas simples para o bash (inclusive com aspa e espaço no nome).
+// com a pasta entre aspas simples para o bash (inclusive com aspa e espaço no nome). O comando é o instalar.sh, e não
+// só a publicação, que falha quando o go.mod pede um Go mais novo (#598).
 func TestComoAtualizarNoLinux(t *testing.T) {
 	t.Parallel()
 	if !strings.HasSuffix(TextoPelosScriptsNoLinux(true), "rode no terminal (o site fica fora do ar por alguns segundos e o banco ganha uma cópia antes):") ||
-		TextoPelosScriptsNoLinux(false) != "Instalado pelos scripts: para atualizar, rode git pull, scripts/geral/3-publicar-atualizar.sh e "+
-			"scripts/linux/instalar-gerenciador.sh na pasta do projeto." {
+		TextoPelosScriptsNoLinux(false) != "Instalado pelos scripts: para atualizar, rode git pull e scripts/geral/instalar.sh na pasta do projeto." {
 		t.Error("textos")
 	}
-	esperado := `cd '/home/ana/D'\''Ávila finanças' && git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh`
+	esperado := `cd '/home/ana/D'\''Ávila finanças' && git pull && scripts/geral/instalar.sh`
 	if obtido := ComandoParaAtualizar("/home/ana/D'Ávila finanças"); obtido != esperado {
 		t.Errorf("%s", obtido)
 	}

@@ -1,5 +1,6 @@
 // Servidor dos testes no navegador (#185, ADR 0041): serve o build de produção (dist/) como a API serve o wwwroot,
-// com a MESMA Content-Security-Policy, lida do Seguranca.cs da API (não há cópia para ficar velha). Assim um script
+// com a MESMA Content-Security-Policy, lida do back-end em Go (internal/servidor/intermediarios.go; não há cópia
+// para ficar velha). Assim um script
 // inline bloqueado, como o do #157, aparece no teste. As chamadas /api/** nunca chegam aqui: o Playwright as responde
 // com a API falsa (api-falsa.ts).
 //
@@ -18,21 +19,21 @@ if (!existsSync(join(pasta, 'index.html'))) {
   process.exit(1);
 }
 
-/** A CSP da API: as partes de "private const string Csp = \"...\" + \"...\";" do Seguranca.cs, juntas. */
+/** A CSP do site: as partes de "const csp = \"...\" + \"...\"" do intermediarios.go do Go, juntas. */
 function cspDaApi() {
-  const arquivo = resolve(aqui, '..', '..', 'backend', 'Financas.Api', 'Seguranca', 'Seguranca.cs');
+  const arquivo = resolve(aqui, '..', '..', 'backend', 'internal', 'servidor', 'intermediarios.go');
   const fonte = readFileSync(arquivo, 'utf8');
-  // As partes entre aspas, ligadas por "+", até o ";" que fecha a instrução. A CSP tem ";" DENTRO das aspas
-  // ('self';), então não dá para parar no primeiro ";".
-  const bloco = fonte.match(/const string Csp\s*=\s*("([^"\\]|\\.)*"(?:\s*\+\s*"([^"\\]|\\.)*")*)\s*;/);
-  if (!bloco) throw new Error(`Não achei a constante Csp em ${arquivo}`);
+  // As partes entre aspas, ligadas por "+" (com quebra de linha no meio). A CSP tem ";" DENTRO das aspas
+  // ('self';), e o Go não fecha a instrução com ";": o bloco acaba na primeira parte que não é seguida de "+".
+  const bloco = fonte.match(/const csp\s*=\s*("([^"\\]|\\.)*"(?:\s*\+\s*"([^"\\]|\\.)*")*)/);
+  if (!bloco) throw new Error(`Não achei a constante csp em ${arquivo}`);
   return [...bloco[1].matchAll(/"([^"]*)"/g)].map((m) => m[1]).join('').trim();
 }
 
 const csp = cspDaApi();
 // Sem CSP, os testes passariam sem testar nada (aconteceu enquanto este servidor era escrito): melhor não subir.
 if (!/script-src\s+'self'/.test(csp) || !/default-src/.test(csp)) {
-  console.error(`A CSP lida do Seguranca.cs parece errada: "${csp}"`);
+  console.error(`A CSP lida do back-end em Go parece errada: "${csp}"`);
   process.exit(1);
 }
 const tipos = {

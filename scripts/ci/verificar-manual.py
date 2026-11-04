@@ -14,7 +14,9 @@ import subprocess
 import sys
 
 MANUAL = 'src/frontend/src/app/paginas/manual-conteudo.ts'
-VISIVEIS = ('src/frontend/src/app/paginas/', 'src/frontend/src/app/compartilhado/', 'src/backend/Financas.Api/Controllers/')
+VISIVEIS = ('src/frontend/src/app/paginas/', 'src/frontend/src/app/compartilhado/')
+# #86: os endpoints são as rotas do Go, um rotas*.go em cada assunto (src/backend/internal/<assunto>/).
+ROTAS_GO = re.compile(r'^src/backend/internal/[^/]+/rotas[^/]*\.go$')
 IGNORAR = (MANUAL, 'src/frontend/src/app/paginas/manual.component.ts')
 
 base = os.environ.get('BASE', 'develop')
@@ -30,7 +32,8 @@ if MANUAL in alterados:
     print('Manual atualizado neste PR.')
     sys.exit(0)
 
-visiveis = [a for a in alterados if a.startswith(VISIVEIS) and a not in IGNORAR and not a.endswith('.spec.ts')]
+visiveis = [a for a in alterados if (a.startswith(VISIVEIS) or ROTAS_GO.match(a)) and a not in IGNORAR
+            and not a.endswith(('.spec.ts', '_test.go'))]
 if not visiveis:
     print('Nenhuma tela ou endpoint mudou: o Manual não precisa mudar.')
     sys.exit(0)

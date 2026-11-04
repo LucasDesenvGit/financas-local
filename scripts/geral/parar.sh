@@ -4,7 +4,7 @@
 #
 #  1. Servico do sistema (systemd --user no Linux, sc.exe no Windows), que
 #     hospeda a API e o front publicado.
-#  2. API rodando fora do servico (dotnet run, Visual Studio, publicado/ na mao).
+#  2. Site rodando fora do servico (financas-go, ou uma API .NET antiga que sobrou).
 #  3. Front em desenvolvimento (npm start / ng serve e seus processos filhos).
 #  4. Banco: SQLite nao e servico, e so o arquivo dados/sql/FinancasLocal.db.
 #     O script apenas confere se algum processo ainda esta com ele aberto.
@@ -12,7 +12,6 @@
 # Uso (Linux/macOS):
 #   scripts/geral/parar.sh                 # para agora (o servico volta no proximo login/boot)
 #   scripts/geral/parar.sh --desativar     # para e tira o servico da inicializacao automatica
-#   scripts/geral/parar.sh --compiladores  # tambem encerra os servidores de build do .NET
 #
 # Para subir de novo: scripts/geral/3-publicar-atualizar.sh, ou
 #   systemctl --user enable --now financaslocal.service
@@ -27,12 +26,10 @@ unidade_systemd='financaslocal.service'
 problemas=0
 problema() { problemas=$((problemas + 1)); aviso "$1"; }
 desativar=0
-compiladores=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --desativar)    desativar=1 ;;
-        --compiladores) compiladores=1 ;;
         -h|--help)      sed -n '2,22p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *)              erro_sai "Opcao desconhecida: $1 (use --help)" ;;
     esac
@@ -43,7 +40,6 @@ done
 if [[ "$SO" == windows ]]; then
     argumentos_ps=()
     [[ $desativar -eq 1 ]] && argumentos_ps+=(-Desativar)
-    [[ $compiladores -eq 1 ]] && argumentos_ps+=(-Compiladores)
     exec powershell.exe -NoProfile -ExecutionPolicy Bypass \
         -File "$(caminho_nativo "$Raiz/scripts/windows/parar-windows.ps1")" "${argumentos_ps[@]}"
 fi
@@ -76,8 +72,8 @@ esac
 
 # ------------------------------------------------------------------ 2 e 3. Processos fora do servico
 # So processos DESTE projeto (a linha de comando tem a pasta do projeto seguida de /), para nao derrubar
-# outros apps .NET/Node, nem um "dotnet build" com caminho relativo:
-#  - API: executavel/DLL Financas.Api (dotnet run, Visual Studio, publicado/ na mao);
+# outros apps, nem um build com caminho relativo:
+#  - API .NET antiga (antes da #86): executavel/DLL Financas.Api, se alguma sobrou;
 #  - front: qualquer processo rodando de src/frontend/node_modules (ng serve, esbuild...).
 etapa 'Processos da API e do front fora do servico'
 
@@ -114,22 +110,8 @@ parar_processos_unix() {
 
 parar_processos_unix 'API' 'Financas\.Api(\.dll)?( |$)' ''
 parar_processos_unix 'Front (ng serve)' 'node_modules' 'src/frontend/node_modules/'
-# #231: o Go roda como processo filho da API e para junto com ela; este so pega um que tenha sobrado.
-parar_processos_unix 'Go (atras da API)' 'financas-go( |$)' ''
-
-# ------------------------------------------------------------------ Servidores de build (opcional)
-if [[ $compiladores -eq 1 ]]; then
-    etapa 'Servidores de build do .NET'
-    if [[ -x "$Ferramentas/dotnet/dotnet" ]]; then
-        export PATH="$Ferramentas/dotnet:$PATH" DOTNET_ROOT="$Ferramentas/dotnet"
-    fi
-    if command -v dotnet >/dev/null 2>&1; then
-        dotnet build-server shutdown >/dev/null 2>&1 || true
-        ok 'servidores de build encerrados (MSBuild, VBCSCompiler, Razor)'
-    else
-        aviso 'dotnet nao encontrado; pulando.'
-    fi
-fi
+# #231: o Go roda como processo filho da API e para junto com ela; este pega um que tenha sobrado ou que rode sozinho (#84).
+parar_processos_unix 'Go' 'financas-go( |$)' ''
 
 # ------------------------------------------------------------------ 4. Banco (SQLite)
 etapa 'Banco (SQLite)'

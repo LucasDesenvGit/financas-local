@@ -23,6 +23,7 @@ concurrency:
 
 env:
   WIX_VERSAO: "5.0.2"
+  WIX_SHA256: "097383B2773BDD3D76A6A2CD3F4DE6357BAE59172E1B6FA5AD87CE062074E8D0"
   SITE: https://127.0.0.1:5443
 
 jobs:
@@ -38,20 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      # #255: o publish self-contained baixa os pacotes do runtime do win-x64 a cada execução sem isto. #526: a chave
-      # leva a versão do SDK (que decide os pacotes do runtime) e não o Directory.Build.props, que muda em todo PR.
-      - name: Cache dos pacotes NuGet
-        uses: actions/cache@v6
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-msi-${{ steps.dotnet.outputs.dotnet-version }}-${{ hashFiles('**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-msi-
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -61,8 +48,8 @@ jobs:
       # #231 (ADR 0049): o back-end em Go vai no .msi, ao lado da API (o gerar-msi.ps1 compila).
       - uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
       - name: Cache do build do Angular
@@ -93,11 +80,23 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\instalador\configurar.ps1", [ref]$null, [ref]$erros) | Out-Null
           if (@($erros).Count) { $erros | ForEach-Object { "linha $($_.Extent.StartLineNumber): $($_.Message)" }; exit 1 }
 
+      # #446 (ADR 0029): o WiX pelo .msi do próprio CLI (a compilação net472, que roda no .NET Framework do Windows, com
+      # as extensões UI e Util dentro), e não pelo dotnet tool: gerar o .msi não precisa do SDK do .NET. O arquivo é o
+      # do GitHub Releases do WiX, conferido pelo SHA-256 fixado (o mesmo do wix-cli-x64.metadata.json da versão).
       - name: WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix --version $env:WIX_VERSAO
-          wix extension add -g "WixToolset.UI.wixext/$env:WIX_VERSAO" "WixToolset.Util.wixext/$env:WIX_VERSAO"
+          $msi = Join-Path $env:RUNNER_TEMP "wix-cli-x64.msi"
+          Invoke-WebRequest "https://github.com/wixtoolset/wix/releases/download/v$env:WIX_VERSAO/wix-cli-x64.msi" -OutFile $msi
+          $hash = (Get-FileHash $msi -Algorithm SHA256).Hash
+          if ($hash -ne $env:WIX_SHA256) { throw "o wix-cli-x64.msi baixado ($hash) não confere com o SHA-256 fixado" }
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v wix-cli.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja wix-cli.log)" }
+          # O .msi grava a pasta do wix.exe no PATH da máquina e em WIX5; o passo seguinte só vê pelo GITHUB_PATH.
+          $pasta = [Environment]::GetEnvironmentVariable("WIX5", "Machine")
+          if (-not $pasta -or -not (Test-Path (Join-Path $pasta "wix.exe"))) { throw "wix.exe não encontrado (WIX5=$pasta)" }
+          $pasta >> $env:GITHUB_PATH
+          & (Join-Path $pasta "wix.exe") --version
 
       - name: Gerar o .msi
         shell: pwsh
@@ -117,12 +116,25 @@ jobs:
         run: |
           $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
           if (-not $servico -or $servico.State -ne "Running") { throw "serviço FinancasLocal não está rodando" }
-          if ($servico.PathName -notlike "*Program Files\FinancasLocal\Financas.Api.exe*") { throw "serviço aponta para $($servico.PathName)" }
+          # #85: o serviço é o Go sozinho; a API em .NET não vai no pacote (#86: nem existe mais).
+          if ($servico.PathName -notlike "*Program Files\FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço aponta para $($servico.PathName)" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o pacote levou a API em .NET" }
           foreach ($p in "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db", "$env:ProgramData\FinancasLocal\dados\configuracao.json",
                          "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe", "$env:ProgramFiles\FinancasLocal\wwwroot\index.html",
                          "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") {
             if (-not (Test-Path $p)) { throw "não encontrado: $p" }
           }
+          # #277 (ADR 0052): o gerenciador é o em Go, um .exe só: nada do C# nem do runtime de janelas do .NET ao lado.
+          foreach ($p in "Financas.Gerenciador.dll", "System.Windows.Forms.dll") {
+            if (Test-Path "$env:ProgramFiles\FinancasLocal\$p") { throw "sobrou do gerenciador em C#: $p" }
+          }
+          # #277: o tamanho do .msi e da pasta instalada, para comparar com a linha de base do épico #70 (157 MB).
+          $msiMb = [math]::Round((Get-Item "saida-instalador\FinancasLocal-${{ steps.versao.outputs.rotulo }}.msi").Length / 1MB, 1)
+          $pasta = Get-ChildItem "$env:ProgramFiles\FinancasLocal" -Recurse -File
+          $pastaMb = [math]::Round(($pasta | Measure-Object Length -Sum).Sum / 1MB, 1)
+          $gerMb = [math]::Round((Get-Item "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe").Length / 1MB, 1)
+          "### Tamanhos`n`n| O quê | Tamanho |`n|---|---|`n| .msi | $msiMb MB |`n| Pasta instalada | $pastaMb MB ($($pasta.Count) arquivos) |`n| Gerenciador | $gerMb MB |" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "TAMANHO so Go: .msi $msiMb MB, pasta instalada $pastaMb MB ($($pasta.Count) arquivos), gerenciador $gerMb MB"
           # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
           if ($estado.versao -ne "${{ steps.versao.outputs.rotulo }}") { throw "versão do site: $($estado.versao)" }
@@ -132,8 +144,7 @@ jobs:
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
-          # #231: o Go roda atrás do .NET (processo filho) e responde pelo repasse, com o login do .NET.
-          if (-not (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe")) { throw "financas-go.exe não foi instalado" }
+          # #85: o Go sozinho responde, com o login dele.
           $saude = $null
           for ($i = 0; $i -lt 15; $i++) {
             $saude = curl.exe --ssl-no-revoke -fsS -b c.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
@@ -146,9 +157,13 @@ jobs:
           $semLogin = curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" "$env:SITE/api/go/saude"
           if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }
           $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
-          $api = Get-CimInstance Win32_Process -Filter "Name='Financas.Api.exe'"
-          if ($go.Count -ne 1 -or $go[0].ParentProcessId -ne $api.ProcessId) { throw "o Go não é processo filho da API: $($go | Select-Object ProcessId, ParentProcessId | ConvertTo-Json -Compress)" }
-          "Go atrás do .NET: $($saude | ConvertTo-Json -Compress)"
+          if ($go.Count -ne 1) { throw "processos do Go: $($go.Count) (esperado 1)" }
+          if (Get-Process Financas.Api -ErrorAction SilentlyContinue) { throw "a API em .NET está rodando" }
+          "Go sozinho: $($saude | ConvertTo-Json -Compress)"
+          # #277: memória com o site no ar e um usuário logado (conjunto de trabalho e bytes privados, o método da #86).
+          # Num runner, não num computador de uso: serve para comparar uma versão com a outra, não como número absoluto.
+          $proc = Get-Process financas-go
+          Write-Host ("MEMORIA so Go financas-go: conjunto de trabalho {0} MB, privados {1} MB" -f [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
 
       - name: Trocar pela mesma versão do Release (a de desenvolvimento não fica instalada junto)
         if: github.ref_type != 'tag'
@@ -177,6 +192,8 @@ jobs:
           if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
+          # #277: o financas-go.exe gerar-certificado reaproveitou o certificado que ainda vale (não trocou o confiável).
+          if (-not (Select-String -Path atualizar.log -SimpleMatch "certificado atual reaproveitado" -Quiet)) { throw "a atualização não reaproveitou o certificado (veja atualizar.log)" }
           # #231: a troca de versão parou o Go antigo junto (o arquivo foi trocado) e subiu o novo.
           $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
           if ($go.Count -ne 1) { throw "processos do Go depois da atualização: $($go.Count) (esperado 1)" }
@@ -254,7 +271,7 @@ jobs:
           if (Get-Service FinancasLocal -ErrorAction SilentlyContinue) { throw "o serviço continua registrado" }
           if (Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.FriendlyName -eq "FinancasLocal" }) { throw "o certificado continua confiável" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
-          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o programa continua instalado" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe") { throw "o programa continua instalado" }
           if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
           if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
 
@@ -346,6 +363,9 @@ jobs:
           curl.exe -k -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+          # #277: a chave dos segredos do Go (o Go só a cria no primeiro segredo; aqui, uma de mentira, que ninguém lê
+          # antes da conferência). A migração tem de levá-la igual, junto das chaves do .NET.
+          if (-not (Test-Path dados\chaves\segredos.chave)) { [IO.File]::WriteAllBytes("$PWD\dados\chaves\segredos.chave", [byte[]](1..64)) }
 
       - uses: actions/download-artifact@v8
         with:
@@ -368,6 +388,9 @@ jobs:
           if (-not $estado.configurado) { throw "o banco da instalação antiga não veio" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt")) { throw "sem a nota da migração" }
           if (-not (Test-Path "dados\sql\FinancasLocal.db")) { throw "a migração apagou o banco antigo" }
+          $novo = "$env:ProgramData\FinancasLocal\dados\chaves\segredos.chave"
+          if (-not (Test-Path $novo)) { throw "a migração não levou o segredos.chave" }
+          if ((Get-FileHash $novo).Hash -ne (Get-FileHash dados\chaves\segredos.chave).Hash) { throw "o segredos.chave chegou diferente" }
           Get-Content "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt"
 
       - name: Logs

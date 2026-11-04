@@ -12,6 +12,8 @@ O site liga sozinho com o computador e só responde nele mesmo. No Menu Iniciar 
 
 ## O gerenciador
 
+A janela é desenhada pelo **WebView2** da Microsoft, que já vem no Windows 11 e na maioria dos Windows 10. Se faltar, a tela final do instalador avisa: o site funciona do mesmo jeito, e o WebView2 se baixa em [developer.microsoft.com/microsoft-edge/webview2/consumer](https://developer.microsoft.com/microsoft-edge/webview2/consumer/).
+
 - Mostra se o site está **no ar** (com a versão), **desligado** ou **ligado, mas sem responder**.
 - **Abrir o site**, **Ligar/Desligar** e **Reiniciar** (as duas últimas pedem permissão de administrador).
 - **Versão nova:** avisa, mostra **O que mudou** e atualiza com um clique.

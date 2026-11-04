@@ -10,7 +10,7 @@ Quanto o sistema pode gastar e o que ele garante, com número e meta. Mudou algo
 
 ## Eficiência
 
-As metas de memória e de disco valem **para o Go no fim** (#86): antes disso, o .NET continua junto, e os números só pioram ou ficam iguais.
+As metas de memória e de disco são as do site em Go, sozinho desde a 3.0.0 (#85), sem o .NET desde a #86.
 
 | Atributo | Medida | Hoje | Meta | Como medir | Situação |
 |---|---|---|---|---|---|
@@ -31,7 +31,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
-| Exposição na rede | Endereço em que o sistema escuta | Só `127.0.0.1` | `Kestrel` no `appsettings.json` e, no Go, `atras_do_dotnet_test.go` | Conferida no Go; no .NET, medida na configuração |
+| Exposição na rede | Endereço em que o sistema escuta | Só `127.0.0.1` | `Kestrel:Endpoints:Https:Url` no `appsettings.json`, recusado ao iniciar se não for de loopback (`config.ConferirSoLocal`, `TestConferirSoLocal`) | Conferida no teste |
 | Saídas de rede | Domínios acessados | Só os da [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) | Cada domínio novo pede uma ADR | Conferida na revisão do PR |
 | Dado mínimo enviado | O que vai em cada saída | Quantidades, valores e dados pessoais não saem | [Dados pessoais](DADOS-PESSOAIS.md) e [modelo de ameaças](MODELO-DE-AMEACAS.md) | Conferida na revisão do PR |
 | Scripts de terceiros no site | Domínios na CSP | Nenhum | CSP da API nos testes do navegador | Conferida: testes no navegador ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)) |
@@ -42,23 +42,23 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
 | Nenhuma atualização apaga dados | Dados depois de atualizar | Todos ficam | Os workflows "Teste de instalação" atualizam em cima de uma instalação, mas não comparam os dados | Medida: nada compara os dados antes e depois |
-| Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `EsquemaBanco` | Medida no código |
+| Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `AplicarEsquema` (`internal/banco`) | Medida no código e nos testes do pacote |
 | Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts e no `.msi` |
 | Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar. Investimentos abre, mas cada abertura espera a falha do Banco Central (#534) | À mão | Sem medida. Investimentos: ~4,1 s por abertura com a saída numa porta fechada, no Windows |
-| Go fora do ar | Rotas do Go | 503 com mensagem, e reinício sozinho | Passo 9 do `scripts/ci/testar-go-atras-do-dotnet.sh` | Conferida na CI |
+| Site fora do ar | O serviço | Reinício sozinho | A recuperação do serviço: `Restart=` da unidade do systemd e o `ServiceConfig` do `.msi` | Sem teste desde a #86 (o teste era do Go atrás do .NET, que voltava sozinho) |
 
 ## Portabilidade
 
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
 | Sistemas | Onde instala | Windows e Linux, com os mesmos scripts | Workflows "Teste de instalação", do zero em máquina limpa | Conferida na CI |
-| Versões mínimas | .NET 10, Go 1.27, Angular 22 | As que o projeto compila | `Financas.Api.csproj`, `go.mod` e `package.json` | Conferida na CI |
+| Versões mínimas | Go 1.27, Angular 22 | As que o projeto compila | `go.mod` e `package.json` | Conferida na CI |
 
 ## Manutenibilidade
 
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
 | Tempo dos testes do Jest | Segundos | Até 20 s por arquivo e 150 s por suíte | `scripts/ci/verificar-tempo-testes.py` | Conferida na CI |
-| Tempo dos testes do Go | Segundos | Até 20 s por teste e 120 s por suíte | `scripts/ci/verificar-tempo-testes-go.py` | Conferida na CI |
+| Tempo dos testes do Go | Segundos | Até 20 s por teste, 60 s por pacote e 120 s por suíte | `scripts/ci/verificar-tempo-testes-go.py` | Conferida na CI |
 | Cobertura do Go | % por pacote | Só sobe (#370); pacote novo nasce com 80% | `cobertura-minima.txt` e `verificar-cobertura-go.py` | Conferida na CI |
 | Mutação do Go | % por pacote | O piso de `mutacao-go.txt` só sobe (#373) | `scripts/ci/mutacao-go.py` | Conferida na CI, toda segunda e quando muda |

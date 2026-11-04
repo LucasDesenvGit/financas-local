@@ -1,8 +1,9 @@
 <#
     Gera o FinancasLocal-<versao>.msi (#119, ADR 0029). Usado pelo workflow .github/workflows/versao.yml e, se quiser,
-    no seu computador (precisa do .NET 10 SDK, do Go da versao do src\backend-go\go.mod, do Node.js e do WiX 5:
-    dotnet tool install --global wix --version 5.0.2;
-    wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2).
+    no seu computador. Precisa do Go da versao do src\backend\go.mod e do src\gerenciador-go\go.mod, do
+    Node.js e do WiX 5.0.2, pelo
+    wix-cli-x64.msi do GitHub Releases do WiX, que ja traz as extensoes UI e Util e nao pede o .NET, #446:
+    https://github.com/wixtoolset/wix/releases/tag/v5.0.2; confira o SHA-256 do WIX_SHA256 do versao.yml).
 
     .\instalador\gerar-msi.ps1                      # versao do Directory.Build.props
     .\instalador\gerar-msi.ps1 -Versao 2.1.1        # outra versao (ex.: testar a atualizacao)
@@ -26,6 +27,9 @@ param(
 $ErrorActionPreference = "Stop"
 $Raiz = Split-Path -Parent $PSScriptRoot
 if (-not $Saida) { $Saida = Join-Path $Raiz "saida-instalador" }
+# Caminho absoluto: o WiX resolve o -bindpath relativo a partir da pasta do .wxs, e nao da pasta atual.
+if (-not [IO.Path]::IsPathRooted($Saida)) { $Saida = Join-Path (Get-Location).Path $Saida }
+$Saida = [IO.Path]::GetFullPath($Saida)
 $Publicado = Join-Path $Saida "app"
 
 function Etapa([string]$texto) { Write-Host "==> $texto" -ForegroundColor Cyan }
@@ -61,23 +65,34 @@ if (-not $SoPacote) {
     $dist = Join-Path $front "dist\financas-web\browser"
     if (-not (Test-Path -LiteralPath (Join-Path $dist "index.html"))) { throw "Front-end compilado nao encontrado em $dist." }
 
-    # API e gerenciador na mesma pasta, self-contained: o computador nao precisa do .NET instalado.
-    # Os dois usam o mesmo .NET 10, entao os arquivos do runtime em comum sao os mesmos.
-    foreach ($projeto in "src\backend\Financas.Api\Financas.Api.csproj", "src\gerenciador\Financas.Gerenciador\Financas.Gerenciador.csproj") {
-        Etapa "Publicando $projeto"
-        Executar "dotnet" @("publish", (Join-Path $Raiz $projeto), "-c", "Release", "-r", "win-x64", "--self-contained", "true",
-            "-p:Version=$Rotulo", "-o", $Publicado, "--nologo")
+    # #86: sem a API em .NET. O Go le o appsettings.json dele, o Production (abaixo) e o configuracao.json da
+    # pasta de dados.
+    Copy-Item -LiteralPath (Join-Path $Raiz "src\backend\appsettings.json") -Destination $Publicado -Force
+
+    # #277 (ADR 0052): o gerenciador e o em Go (src\gerenciador-go), um .exe so, no lugar do C# self-contained. Mantem o
+    # nome Financas.Gerenciador.exe: os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuam valendo.
+    # Como o README do modulo: sem cgo, sem F12 nem menu do botao direito (-tags production), sem console (windowsgui).
+    Etapa "Compilando o gerenciador em Go"
+    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\gerenciador-go\go.mod para a versao)." }
+    $env:CGO_ENABLED = "0"; $env:GOOS = "windows"; $env:GOARCH = "amd64"
+    Push-Location (Join-Path $Raiz "src\gerenciador-go")
+    try {
+        Executar "go" @("build", "-tags", "production", "-trimpath", "-ldflags", "-s -w -H=windowsgui -X main.versao=$Rotulo",
+            "-o", (Join-Path $Publicado "Financas.Gerenciador.exe"), ".")
+    } finally {
+        Pop-Location
+        Remove-Item Env:GOOS, Env:GOARCH -ErrorAction SilentlyContinue
     }
 
-    # #231 (ADR 0049): o back-end em Go roda atras da API, como processo filho dela, e fica ao lado dela. Sem cgo
+    # O back-end em Go e o site e o servico (desde a #85; sem o .NET desde a #86). Sem cgo
     # (o SQLite e o modernc.org/sqlite, em Go puro), para Windows x64. A versao entra no executavel pelo -ldflags.
     Etapa "Compilando o back-end em Go"
-    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\backend-go\go.mod para a versao)." }
+    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw "Go nao encontrado no PATH (veja src\backend\go.mod para a versao)." }
     $env:CGO_ENABLED = "0"; $env:GOOS = "windows"; $env:GOARCH = "amd64"
-    Push-Location (Join-Path $Raiz "src\backend-go")
+    Push-Location (Join-Path $Raiz "src\backend")
     try {
         Executar "go" @("build", "-trimpath", "-ldflags",
-            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend-go/internal/versao.Atual=$Rotulo",
+            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$Rotulo",
             "-o", (Join-Path $Publicado "financas-go.exe"), "./cmd/financas")
     } finally {
         Pop-Location
@@ -98,10 +113,8 @@ if (-not $SoPacote) {
     $pastaInstalador = Join-Path $Publicado "instalador"
     New-Item -ItemType Directory -Path $pastaInstalador -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "configurar.ps1") -Destination $pastaInstalador -Force
-    Copy-Item -LiteralPath (Join-Path $Raiz "src\gerenciador\Financas.Gerenciador\icone.ico") -Destination $pastaInstalador -Force
+    Copy-Item -LiteralPath (Join-Path $Raiz "src\gerenciador-go\icone.ico") -Destination $pastaInstalador -Force
 
-    # Nao vao para o computador: simbolos de depuracao e o web.config do IIS (o site roda direto pelo Kestrel).
-    Get-ChildItem -LiteralPath $Publicado -Recurse -Include *.pdb, web.config | Remove-Item -Force
 }
 
 Etapa "Gerando o .msi (WiX)"

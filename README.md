@@ -34,17 +34,20 @@ Tudo o que sai vai por HTTPS; valores, quantidades e dados pessoais não saem. D
 
 ## Instalar no Windows
 
+Precisa do **Windows 10 versão 1809 ou mais novo** (ou do Windows Server 2019 ou mais novo), em 64 bits. Num Windows mais antigo, o instalador avisa e não instala.
+
 1. **Baixe** o `FinancasLocal-<versão>.msi` da [versão mais recente](https://github.com/LucasDesenvGit/financas-local/releases/latest).
 2. **Abra o `.msi`.** Ele ainda não é assinado: se aparecer **"O Windows protegeu o computador"**, clique em **Mais informações › Executar assim mesmo**.
 3. **Instale:** **Avançar**, **Instalar** e **Sim** quando o Windows pedir permissão de administrador.
 4. **Termine** com **"Abrir o Gerenciador do Finanças Local"** marcado. Quando ele mostrar **"O site está no ar"**, clique em **Abrir o site** (ou abra **https://127.0.0.1:5443**).
-5. **Primeiro acesso:** crie o seu usuário e senha (mínimo de 8 caracteres) e [conecte seus bancos](#conectar-seus-bancos-open-finance).
+5. **Usa o Firefox?** Por padrão ele não usa os certificados do Windows e mostra um aviso no site; a tela final do instalador lembra disso. Para aceitar, abra `about:config` e deixe `security.enterprise_roots.enabled` como `true` (ou use o Edge ou o Chrome).
+6. **Primeiro acesso:** crie o seu usuário e senha (mínimo de 8 caracteres) e [conecte seus bancos](#conectar-seus-bancos-open-finance).
 
 O **Gerenciador do Finanças Local** mostra se o site está no ar, liga, desliga, salva uma cópia do banco e avisa da versão nova. Conferir o arquivo baixado, versão de desenvolvimento e tudo o que o gerenciador faz: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md).
 
 ## Instalar no Linux
 
-Precisa de `git`, `curl`, `tar` e `unzip`. O resto (.NET, Go, Node.js, sqlite3) a instalação baixa e confere sozinha, sem `sudo`.
+Precisa de `git`, `curl`, `tar`, `unzip` e dos certificados do sistema (no Debian e no Ubuntu: `sudo apt install git curl ca-certificates tar unzip`; num Linux de desktop, quase sempre já estão lá). O resto (Go, Node.js, sqlite3) a instalação baixa e confere sozinha, sem `sudo`; se faltar algo do sistema, ela diz o quê antes de baixar.
 
 ```bash
 git clone https://github.com/LucasDesenvGit/financas-local.git
@@ -89,7 +92,7 @@ flowchart LR
     a["Gerenciador:<br/>Tem versão nova"] --> b["O que mudou"] --> c["Atualizar:<br/>baixa e confere"] --> d["Instalador:<br/>Avançar, Instalar, Sim"] --> e["Site no ar na versão nova<br/>cópia do banco em dados\backups"]
 ```
 
-Nenhuma atualização apaga dados, e o site fica fora do ar só por alguns segundos. Sem o gerenciador, baixe o `.msi` novo e abra. No Linux: `git pull` e `scripts/geral/instalar.sh`, que também traz o .NET e o Go das versões novas. Voltar de versão e passar dos scripts para o `.msi`: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md#atualizar).
+Nenhuma atualização apaga dados, e o site fica fora do ar só por alguns segundos. Sem o gerenciador, baixe o `.msi` novo e abra. No Linux: `git pull` e `scripts/geral/instalar.sh`, que também traz o Go e o Node.js das versões novas. Voltar de versão e passar dos scripts para o `.msi`: [Instalador e gerenciador](docs/INSTALADOR-E-GERENCIADOR.md#atualizar).
 
 ## Desinstalar
 
@@ -110,6 +113,8 @@ A tabela completa do que sai e os detalhes técnicos (login, sessão, CSRF, cabe
 |---|---|
 | O gerenciador diz "ligado, mas não responde" | Espere alguns segundos e clique em **Reiniciar** |
 | O navegador alerta sobre o certificado | Abra o mesmo `.msi` e escolha **Reparar** |
+| O instalador diz que o Windows é antigo demais | Precisa do Windows 10 versão 1809 ou mais novo: atualize o Windows e rode o `.msi` de novo |
+| A janela do gerenciador não abre (o site funciona) | Falta o WebView2 da Microsoft: baixe em [developer.microsoft.com/microsoft-edge/webview2/consumer](https://developer.microsoft.com/microsoft-edge/webview2/consumer/) |
 | A sincronização falha com 401/403 | Confira o Client ID, o Secret e se o MeuPluggy foi autorizado para aquele banco |
 | Perdi dados ou quero voltar a uma cópia do banco | Siga [Restaurar uma cópia](docs/OPERACAO.md#restaurar-uma-cópia) |
 | Uma atualização não funcionou | Siga [Atualização que falhou](docs/OPERACAO.md#atualização-que-falhou) |
@@ -119,13 +124,13 @@ Os outros, com mais detalhe: [Problemas comuns](docs/PROBLEMAS-COMUNS.md).
 
 ## Para quem desenvolve
 
-- [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md): scripts, Visual Studio, testes e pastas.
+- [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md): scripts, desenvolvimento, testes e pastas.
 - [CONTRIBUINDO.md](CONTRIBUINDO.md): branches, commits, versão e pull requests.
 - [Arquitetura](docs/ARQUITETURA.md), [Banco de dados](docs/BANCO-DE-DADOS.md) e as [decisões (ADRs)](docs/adr/README.md).
 - [UI/UX](docs/UI-UX.md): as referências (Nielsen, WCAG 2.2, Shneiderman) e os padrões de tela que o site segue.
 - [CHANGELOG.md](CHANGELOG.md): o que mudou em cada versão.
 
-Front-end em Angular e banco SQLite. A API em .NET 10 fica na frente e o back-end está passando para Go, um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). Tudo publicado junto, como serviço do sistema.
+Front-end em Angular, back-end em Go e banco SQLite. O back-end era em .NET e passou para Go um assunto de cada vez ([ADR 0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)); o .NET saiu na versão 3.2 (#86). Tudo publicado junto, um executável só, como serviço do sistema.
 
 ## Licença
 

@@ -1,0 +1,41 @@
+{
+  "total": 4,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "mov-1",
+      "type": "BUY",
+      "quantity": 2,
+      "value": 100.25,
+      "amount": 200.5,
+      "tradeDate": "2026-02-01T03:00:00.000Z",
+      "date": "2026-02-03T03:00:00.000Z",
+      "expenses": {
+        "serviceTax": 1.5,
+        "incomeTax": 9.9,
+        "brokerageFee": "0.255",
+        "negativa": -1
+      }
+    },
+    {
+      "id": "mov-2",
+      "type": "SELL",
+      "quantity": -1,
+      "amount": -120.5,
+      "date": "2026-03-01T03:00:00.000Z"
+    },
+    {
+      "id": "mov-3",
+      "type": "TAX",
+      "quantity": 1,
+      "amount": 1
+    },
+    {
+      "id": "mov-4",
+      "type": "BUY",
+      "quantity": 0,
+      "amount": 1
+    }
+  ]
+}

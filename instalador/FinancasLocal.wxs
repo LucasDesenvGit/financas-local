@@ -3,8 +3,8 @@
   Instalador do Finanças Local para Windows (#119, ADR 0029). Gerado pelo instalador/gerar-msi.ps1 com o WiX 5:
     wix build FinancasLocal.wxs -arch x64 -culture pt-BR -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
               -d Versao=2.1.0 -bindpath app=<pasta publicada> -o FinancasLocal-2.1.0.msi
-  A pasta publicada tem a API e o gerenciador já compilados (self-contained, sem .NET instalado no computador),
-  o front-end no wwwroot, o appsettings.Production.json com a pasta de dados e o instalador\configurar.ps1.
+  A pasta publicada tem a API já compilada (self-contained, sem .NET instalado no computador), o back-end em Go
+  (financas-go.exe), o gerenciador em Go (Financas.Gerenciador.exe, #277), o front-end no wwwroot, o appsettings.Production.json com a pasta de dados e o instalador\configurar.ps1.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
@@ -22,6 +22,59 @@
     <MajorUpgrade AllowSameVersionUpgrades="yes"
                   DowngradeErrorMessage="Uma versão mais nova do Finanças Local já está instalada. Para voltar a uma anterior, desinstale-a antes (seus dados ficam)." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!--
+      Versão mínima do Windows (#277): o certificado do Go é um .pfx com AES e SHA-256, que o Windows lê a partir do
+      Server 2019 (compilação 17763, a do Windows 10 versão 1809); o próprio Go pede o Windows 10. O VersionNT não serve:
+      o Windows 10 e o 11 respondem 603, como o 8.1. A compilação vem do registro, e a comparação com um número é
+      numérica. "Installed" deixa desinstalar e reparar em qualquer caso.
+    -->
+    <Property Id="COMPILACAOWINDOWS">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber"
+                      Type="raw" Bitness="always64" />
+    </Property>
+    <Launch Condition="Installed OR COMPILACAOWINDOWS &gt;= 17763"
+            Message="O Finanças Local precisa do Windows 10 versão 1809 ou mais novo (ou do Windows Server 2019 ou mais novo). Atualize o Windows e rode o instalador de novo." />
+
+    <!--
+      Firefox (#277, como nos scripts desde a #300): por padrão ele não usa os certificados do Windows e mostra um aviso
+      no site. O instalador não muda o Firefox sozinho (ligar a opção faz ele confiar em todos os certificados do
+      sistema, e essa escolha é de quem usa); só avisa na tela final. O 64 bits grava em uma visão do registro, o 32 bits
+      na outra.
+    -->
+    <Property Id="FIREFOX64">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Mozilla\Mozilla Firefox" Name="CurrentVersion" Type="raw" Bitness="always64" />
+    </Property>
+    <Property Id="FIREFOX32">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Mozilla\Mozilla Firefox" Name="CurrentVersion" Type="raw" Bitness="always32" />
+    </Property>
+    <!--
+      WebView2 (#277, ADR 0052): a janela do gerenciador em Go é desenhada por ele. Vem no Windows 11 e na grande maioria
+      dos Windows 10, mas pode faltar. O site funciona sem ele, então o instalador não para: avisa na tela final e manda
+      para a página da Microsoft. As chaves e o valor "pv" são os da documentação da Microsoft ("Detect if a WebView2
+      Runtime is already installed"): instalado para a máquina ou só para quem usa, com versão diferente de 0.0.0.0.
+    -->
+    <Property Id="WEBVIEW2MAQUINA">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+                      Name="pv" Type="raw" Bitness="always32" />
+    </Property>
+    <Property Id="WEBVIEW2USUARIO">
+      <RegistrySearch Root="HKCU" Key="Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+                      Name="pv" Type="raw" />
+    </Property>
+    <SetProperty Id="SEMWEBVIEW2" Value="1" Sequence="ui" After="AppSearch"
+                 Condition="(NOT WEBVIEW2MAQUINA OR WEBVIEW2MAQUINA = &quot;0.0.0.0&quot;) AND (NOT WEBVIEW2USUARIO OR WEBVIEW2USUARIO = &quot;0.0.0.0&quot;)" />
+
+    <!-- A tela final junta os dois avisos, quando cabem. -->
+    <SetProperty Action="TextoFinalFirefox" Id="WIXUI_EXITDIALOGOPTIONALTEXT" Sequence="ui" After="SetSEMWEBVIEW2"
+                 Condition="(FIREFOX64 OR FIREFOX32) AND NOT SEMWEBVIEW2"
+                 Value="Usa o Firefox? Por padrão ele não usa os certificados do Windows e mostra um aviso no site. Para aceitar, abra about:config e deixe security.enterprise_roots.enabled como true (ou use o Edge ou o Chrome)." />
+    <SetProperty Action="TextoFinalWebView2" Id="WIXUI_EXITDIALOGOPTIONALTEXT" Sequence="ui" After="TextoFinalFirefox"
+                 Condition="SEMWEBVIEW2 AND NOT (FIREFOX64 OR FIREFOX32)"
+                 Value="Falta o WebView2 da Microsoft, que desenha a janela do gerenciador. O site já funciona em https://127.0.0.1:5443; para o gerenciador, baixe o WebView2 em developer.microsoft.com/microsoft-edge/webview2/consumer." />
+    <SetProperty Action="TextoFinalOsDois" Id="WIXUI_EXITDIALOGOPTIONALTEXT" Sequence="ui" After="TextoFinalWebView2"
+                 Condition="SEMWEBVIEW2 AND (FIREFOX64 OR FIREFOX32)"
+                 Value="Falta o WebView2 da Microsoft, que desenha a janela do gerenciador: baixe-o em developer.microsoft.com/microsoft-edge/webview2/consumer. Usa o Firefox? Em about:config, deixe security.enterprise_roots.enabled como true, ou ele mostra um aviso no site." />
 
     <Icon Id="icone.ico" SourceFile="!(bindpath.app)\instalador\icone.ico" />
     <Property Id="ARPPRODUCTICON" Value="icone.ico" />
@@ -83,20 +136,23 @@
     </InstallExecuteSequence>
   </Package>
 
+  <!-- Quem é o serviço: o financas-go.exe sozinho, que aplica o esquema e roda as rotinas de partida (#85; sem
+       o .NET desde a #86). -->
   <Fragment>
     <!-- Tudo da pasta publicada, menos os dois executáveis, que têm componente próprio (serviço e atalho). -->
     <ComponentGroup Id="Arquivos" Directory="INSTALLFOLDER">
       <Files Include="!(bindpath.app)\**">
-        <Exclude Files="!(bindpath.app)\Financas.Api.exe" />
+        <Exclude Files="!(bindpath.app)\financas-go.exe" />
         <Exclude Files="!(bindpath.app)\Financas.Gerenciador.exe" />
       </Files>
     </ComponentGroup>
 
     <!-- Serviço do Windows: mesma conta (LocalSystem) e mesmo nome da instalação pelos scripts (ADR 0029). -->
     <Component Id="Servico" Directory="INSTALLFOLDER">
-      <File Id="ApiExe" Source="!(bindpath.app)\Financas.Api.exe" KeyPath="yes" />
+      <File Id="ApiExe" Source="!(bindpath.app)\financas-go.exe" KeyPath="yes" />
       <ServiceInstall Id="InstalarServico" Name="FinancasLocal" DisplayName="Finanças Local"
                       Description="Site do Finanças Local em https://127.0.0.1:5443 (só neste computador)."
+                      Arguments="-aplicar-esquema -rotinas-de-partida"
                       Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem" Vital="yes">
         <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
                             ThirdFailureActionType="none" RestartServiceDelayInSeconds="30" ResetPeriodInDays="1" />

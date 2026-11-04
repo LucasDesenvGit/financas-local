@@ -2,17 +2,17 @@
 
 Como as partes conversam nos caminhos que cruzam o sistema. Os nomes dos participantes são os do [diagrama de Contêineres](../ARQUITETURA.md#contêineres). O padrão está na [ADR 0055](../adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md).
 
-> **Data dos diagramas:** 01/11/2026, na fase "Go atrás do .NET" (#231). Cada fluxo diz quem atende hoje. Quando um assunto passa para o Go, o fluxo dele muda no mesmo PR.
+> **Data dos diagramas:** 04/11/2026, com o .NET já fora (#86): quem atende tudo é o site em Go. Quando um fluxo muda, o diagrama dele muda no mesmo PR.
 
 ## Login e sessão
 
-**Quem atende:** a API .NET, até a inversão (#85).
+**Quem atende:** o site (`internal/autenticacao`, #75).
 
 ```mermaid
 sequenceDiagram
     actor Pessoa as Você
     participant Nav as Navegador
-    participant API as API (.NET)
+    participant API as Site (Go)
     participant BD as Banco
 
     Nav->>API: GET /api/auth/estado
@@ -35,78 +35,84 @@ sequenceDiagram
     end
 
     Note over Nav,API: Daí em diante
-    Nav->>API: POST, PUT, PATCH ou DELETE, com cookie e X-XSRF-TOKEN
-    API->>BD: o carimbo de segurança da sessão ainda vale?
+    Nav->>API: qualquer pedido, com o cookie<br/>(e o X-XSRF-TOKEN, se for POST, PUT, PATCH ou DELETE)
+    API->>BD: em todo pedido: o carimbo de segurança da sessão ainda vale?
     alt carimbo mudou (a senha foi trocada)
         API-->>Nav: 401: entre de novo
-    else CSRF errado
+    else grava e o CSRF está errado
         API-->>Nav: 400
     else tudo certo
         API-->>Nav: resposta
     end
 ```
 
-- A senha fica com hash PBKDF2 (ASP.NET Identity), e os limites são parâmetros em **Configurações**.
+- A senha fica com hash PBKDF2, no formato do ASP.NET Identity que o .NET usava, para as senhas de antes continuarem valendo. Os limites são parâmetros em **Configurações**.
 - A sessão expira sem uso, e cada pedido renova o prazo.
 
-## Pedido repassado ao Go
+## Um pedido à API
 
-**Quem atende:** a API recebe, e o Go responde o que está em `Go:Prefixos`: câmbio, cripto, cadastros, contas, conferir com o banco e transações ([ADR 0049](../adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)).
+**Quem atende:** o site, passando pelos [componentes](componentes.md) do Go, na ordem em que o `servidor.NovoHandler` e o `autenticacao.Proteger` os montam.
 
 ```mermaid
 sequenceDiagram
     participant Nav as Navegador
-    participant API as API (.NET)
-    participant Go as Back-end Go
+    participant Srv as servidor
+    participant Auth as autenticacao
+    participant Mux as api (ServeMux)
+    participant Ass as Assunto (ex.: extrato)
+    participant Reg as Regra (ex.: categorizacao)
     participant BD as Banco
 
-    Nav->>API: pedido para um prefixo de Go:Prefixos
-    Note over API: Exige login e, se grava, valida o CSRF
-    alt Go fora do ar
-        API-->>Nav: 503, com mensagem
-    else Go no ar
-        Note over API: Tira o cookie, o token CSRF e todo X-Financas-* de fora
-        API->>Go: mesmo método, caminho, query e corpo,<br/>com X-Financas-Segredo e X-Financas-Usuario
-        Note over Go: Sem o segredo interno: 401
-        Go->>BD: lê e grava
-        Go-->>API: resposta
-        Note over API: Tira Server e Set-Cookie
-        API-->>Nav: resposta
+    Nav->>Srv: HTTPS em 127.0.0.1:5443
+    Note over Srv: Registra o pedido no log, recusa host fora da lista (400),<br/>põe os cabeçalhos de segurança e a CSP, segura o pânico (500)<br/>e limita o corpo a 1 MB
+    alt caminho fora de /api
+        Srv-->>Nav: arquivo do wwwroot (o Angular)
+    else /api
+        Srv->>Auth: o pedido, com o caminho limpo
+        Note over Auth: Limite por IP no entrar e no configurar (429),<br/>cookie da sessão e o carimbo no banco,<br/>login (401) e CSRF se o método grava (400)
+        Auth->>Mux: o pedido, com o usuário e a rota no contexto
+        alt rota não existe
+            Mux-->>Nav: 404 sem corpo
+        else rota do assunto
+            Mux->>Ass: a função da rota
+            Ass->>Ass: lê a entrada (respostas.LerObjeto: 400 com as mensagens)
+            Ass->>Reg: chama a regra
+            Reg->>BD: SQL com ? ou sqlc, numa transação (banco.EmTransacao)
+            Ass-->>Nav: o JSON da resposta, ou o {"mensagem"} do erro
+        end
     end
 ```
 
-## Partida da API
+- Um erro inesperado vai para o log com a rota e o login, e daí para a tabela `ErroSistema` (Configurações › Erros, ADR 0022). Quem pediu recebe só o 500 genérico.
+- As rotas de login, sessão e senha são da própria `autenticacao`, que as registra no mesmo `ServeMux`.
 
-**Quem atende:** a API .NET. As seis rotinas de partida já existem em Go (`internal/partida`, #444), cada uma com a regra no pacote do assunto dela, mas só rodam com o Go na frente (opção `-rotinas-de-partida`, depois da inversão, #85). Atrás do .NET, quem as roda é o .NET: rodar nos dois seria acertar duas vezes.
+## Partida do site
+
+**Quem atende:** o site, com a linha do serviço instalado (`financas-go -aplicar-esquema -rotinas-de-partida`).
 
 ```mermaid
 sequenceDiagram
     participant Svc as Serviço do sistema
-    participant API as API (.NET)
+    participant API as Site (Go)
     participant BD as Banco
-    participant Go as Back-end Go
 
     Svc->>API: inicia
-    API->>BD: EsquemaBanco: se os scripts mudaram, cópia em dados/backups,<br/>depois os scripts embutidos, em modo WAL
-    API->>BD: rotinas de partida: regras padrão, entradas nos cartões,<br/>transferências, cobranças e trocos sem dúvida
-    Note over API: Uma falha nas rotinas vira aviso, e a API sobe
-    API->>Go: sobe como processo filho, com o segredo pela entrada padrão
-    loop enquanto a API estiver no ar
-        Go-->>API: fora do ar?
-        Note over API: As rotas dele respondem 503.<br/>Nova tentativa em 1 s, 2 s, 4 s...
-    end
+    API->>BD: -aplicar-esquema: se os scripts mudaram, cópia em dados/backups,<br/>depois os scripts embutidos, em modo WAL
+    API->>BD: -rotinas-de-partida: regras padrão, entradas nos cartões,<br/>compras parceladas estornadas, transferências,<br/>cobranças e trocos sem dúvida
+    Note over API: Uma falha nas rotinas vira aviso, e o site sobe
+    Note over API: Começa a atender em 127.0.0.1:5443<br/>e liga as tarefas: câmbio, cripto e sincronização
     Svc->>API: para
-    API->>Go: fecha a entrada padrão, e o Go para junto
+    Note over API: Espera os pedidos em andamento,<br/>para as tarefas e fecha o banco
 ```
 
 ## Sincronização com a Pluggy
 
-**Quem atende:** a API .NET, até a #83.
+**Quem atende:** o site (`internal/sincronizacao`, #83).
 
 ```mermaid
 sequenceDiagram
-    participant Tarefa as Tarefa agendada (API)
-    participant Sinc as Sincronização (API)
+    participant Tarefa as Tarefa agendada (site)
+    participant Sinc as Sincronização (site)
     participant Pluggy as Meu Pluggy / Pluggy
     participant BD as Banco
 
@@ -132,10 +138,11 @@ sequenceDiagram
 
 - O intervalo vem de **Configurações**, entre 1 e 48 horas, e o padrão é 6.
 - Um erro ao classificar os trocos não desfaz a sincronização: o troco continua na conferência.
+- A sincronização da tela e a da tarefa são a mesma instância, com uma trava de uma rodada por vez.
 
 ## Atualização pelo gerenciador
 
-**Quem atende:** o gerenciador do Windows, em C# ([ADR 0028](../adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)). A cópia do banco é feita pela própria API, ao iniciar a versão nova.
+**Quem atende:** o gerenciador em Go ([ADR 0052](../adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)). A cópia do banco é feita pelo próprio site, ao iniciar a versão nova.
 
 ```mermaid
 sequenceDiagram
@@ -143,7 +150,7 @@ sequenceDiagram
     participant Ger as Gerenciador
     participant GH as GitHub
     participant MSI as Instalador
-    participant API as API (.NET)
+    participant API as Site (Go)
     participant BD as Banco
 
     Ger->>GH: última versão publicada (só leitura, sem enviar nada seu)

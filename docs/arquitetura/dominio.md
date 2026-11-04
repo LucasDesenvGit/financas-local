@@ -8,7 +8,7 @@ Os estados pelos quais as coisas passam, as classes do centro do domínio e os t
 
 ### Conexão com a Pluggy
 
-**Onde está hoje:** .NET, em `Servicos/Pluggy/SincronizacaoService.cs` e `Controllers/OpenFinanceController.cs`.
+**Onde está hoje:** Go, em `internal/sincronizacao` e `internal/openfinance` (#83).
 
 ```mermaid
 stateDiagram-v2
@@ -46,7 +46,7 @@ O sistema não decide o status: a cada sincronização, ele grava o que a Pluggy
 
 ### Transação
 
-**Onde está hoje:** a sincronização, em .NET (`Servicos/Pluggy/SincronizacaoService.cs`). A leitura e a edição, em Go (`internal/extrato`). Os acertos que a API faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em Go (`internal/categorizacao`, `internal/parcelas`, `internal/transferencias`, chamados por `internal/partida`, #444), ligados só com o Go na frente.
+**Onde está hoje:** Go. A sincronização, em `internal/sincronizacao`; a leitura e a edição, em `internal/extrato`; os acertos que o site faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em `internal/categorizacao`, `internal/parcelas` e `internal/transferencias`, chamados por `internal/partida` (#444).
 
 ```mermaid
 stateDiagram-v2
@@ -68,7 +68,7 @@ stateDiagram-v2
 
 ### Conta a pagar
 
-**Onde está hoje:** .NET, em `Controllers/PlanejamentoControllers.cs` (`Pagar`), `Servicos/ContaAgendadaService.cs` (`ConciliarAsync`) e `Controllers/PainelController.cs` (`AlertasAsync`). A conciliação também existe em Go (`internal/cobrancas`), e a partida em Go (`internal/partida`, #444) a chama.
+**Onde está hoje:** Go, atendendo o site (#79, #555): `internal/contasagendadas` (o `pagar`) e `internal/cobrancas` (a conciliação, que a partida, #444, e a sincronização, #83, também chamam). Os avisos que vão para o sino saem do `PainelController.cs` (.NET), com o painel em Go (`internal/painel`, #80) pronto e desligado no site.
 
 ```mermaid
 stateDiagram-v2
@@ -147,8 +147,8 @@ Só o centro do domínio: quem pertence a quem e a regra principal de cada um.
 | Parte | Onde está hoje |
 |---|---|
 | Conta, fatura, transação, categoria e regras | Go, atendendo o site |
-| Ativo, operação e provento | Go pronto, desligado no site até a troca dos segredos; .NET atende |
-| Orçamento e meta | .NET (#79) |
+| Ativo, operação e provento | Go, atendendo o site (#82, #299) |
+| Orçamento, meta e conta a pagar | Go, atendendo o site (#79, #555) |
 
 ```mermaid
 classDiagram
@@ -195,8 +195,8 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario.ts) ex
 
 | Termo | No código | Regra principal | No glossário |
 |---|---|---|---|
-| Fatura do mês | `FaturaMesDto` (C#), `faturas.DoMes` (Go) | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
-| Dívida total | `CartaoConferenciaDto.DividaTotal`, `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |
+| Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
+| Dívida total | `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |
 | Natureza do gasto | `NaturezaGasto`, `Categoria.Natureza` | Essencial ou estilo de vida, para a regra 50/30/20 | — |
 | Preço médio | `Posicao.PrecoMedio`, `carteira.Calcular` | Custo ÷ quantidade. A venda não muda o preço médio | `precoMedio` |
 | Provento | `ProventoAtivo`, `ProventoRecebido` | O previsto vem da data-com; o recebido, do extrato | `dy` |

@@ -1,0 +1,3420 @@
+[
+  {
+    "nome": "configuração sem login",
+    "requisicao": "GET /api/open-finance/configuracao",
+    "status": 401
+  },
+  {
+    "nome": "configuração",
+    "requisicao": "GET /api/open-finance/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "clientId": "cliente-ficticio-0001",
+      "diasRetroativos": 30,
+      "habilitada": false,
+      "intervaloHoras": 12,
+      "meuNome": null,
+      "secretConfigurado": false
+    }
+  },
+  {
+    "nome": "salvar sem o Client ID",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ClientId": [
+          "The ClientId field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com intervalo abaixo",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "IntervaloHoras": [
+          "The field IntervaloHoras must be between 1 and 48."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com intervalo acima",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "IntervaloHoras": [
+          "The field IntervaloHoras must be between 1 and 48."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com dias acima",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "DiasRetroativos": [
+          "The field DiasRetroativos must be between 1 and 365."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar com número em texto errado",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.intervaloHoras": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SalvarConfiguracaoPluggyDto. Path: $.intervaloHoras | LineNumber: 0 | BytePositionInLine: 53."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "salvar só o Client ID",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-10-01 12:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "cliente-ficticio-0001",
+                "depois": "cliente-novo"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "salvar tudo",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyAlterada",
+            "Id": 42,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Pluggy.ClientSecret",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "cliente-novo",
+                "depois": "cliente-ficticio-0001"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.DiasRetroativos"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2025-10-01 12:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "30",
+                "depois": "60"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "configuração depois de salvar",
+    "requisicao": "GET /api/open-finance/configuracao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "clientId": "cliente-ficticio-0001",
+      "diasRetroativos": 60,
+      "habilitada": false,
+      "intervaloHoras": 12,
+      "meuNome": null,
+      "secretConfigurado": true
+    }
+  },
+  {
+    "nome": "remover o Client Secret",
+    "requisicao": "DELETE /api/open-finance/configuracao/secret",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyRemovida",
+            "Id": 43,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Pluggy.ClientSecret",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "remover o Client Secret de novo",
+    "requisicao": "DELETE /api/open-finance/configuracao/secret",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyRemovida",
+            "Id": 44,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "voltar à configuração da base",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.DiasRetroativos"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "60",
+                "depois": "30"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "false",
+                "depois": "true"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.IntervaloHoras"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "12",
+                "depois": "6"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "meu nome: um nome só",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe pelo menos o primeiro e o último nome, como aparecem nos Pix."
+    }
+  },
+  {
+    "nome": "meu nome: longo demais",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Nome": [
+          "O nome pode ter até 120 caracteres."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "meu nome: salvar",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Transferencias.MeuNome",
+            "Protegido": 0,
+            "Valor": "Ana Teste"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "meu nome: apagar",
+    "requisicao": "PUT /api/open-finance/meu-nome",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Transferencias.MeuNome"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "Ana Teste",
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conexões",
+    "requisicao": "GET /api/open-finance/conexoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "consentimentoExpiraEm": "2026-03-01T00:00:00",
+        "corPrimaria": null,
+        "id": 2,
+        "nomeExibicao": "Banco Desconectado",
+        "nomeInstituicao": "Banco Desconectado",
+        "pluggyItemId": "item-ficticio-0002",
+        "quantidadeContas": 0,
+        "status": "LOGIN_ERROR",
+        "statusExecucao": "ERROR",
+        "ultimaAtualizacaoInstituicao": "2026-03-01T08:00:00",
+        "ultimaSincronizacaoEm": "2026-03-01T09:00:00",
+        "ultimoErro": "Consentimento expirado."
+      },
+      {
+        "ativa": true,
+        "consentimentoExpiraEm": "2026-11-05T00:00:00",
+        "corPrimaria": "#820ad1",
+        "id": 1,
+        "nomeExibicao": "Banco Fictício",
+        "nomeInstituicao": "Banco Fictício",
+        "pluggyItemId": "item-ficticio-0001",
+        "quantidadeContas": 2,
+        "status": "UPDATED",
+        "statusExecucao": "SUCCESS",
+        "ultimaAtualizacaoInstituicao": "2026-10-14T08:55:00",
+        "ultimaSincronizacaoEm": "2026-10-14T09:00:00",
+        "ultimoErro": null
+      }
+    ]
+  },
+  {
+    "nome": "ligar a conexão 2",
+    "requisicao": "PUT /api/open-finance/conexoes/2/ativa?ativa=true",
+    "status": 204,
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "status com as duas conexões ligadas",
+    "requisicao": "GET /api/open-finance/status",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "conexoesAtivas": 2,
+      "conexoesComErro": 1,
+      "consentimentosVencendo": 2,
+      "emExecucao": false,
+      "ultimaSincronizacao": "2026-10-14T09:00:00Z"
+    }
+  },
+  {
+    "nome": "ativa com valor errado",
+    "requisicao": "PUT /api/open-finance/conexoes/2/ativa?ativa=talvez",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ativa": [
+          "The value 'talvez' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "ativa em conexão que não existe",
+    "requisicao": "PUT /api/open-finance/conexoes/999/ativa?ativa=true",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "ativa com id que não é número",
+    "requisicao": "PUT /api/open-finance/conexoes/abc/ativa?ativa=true",
+    "status": 404
+  },
+  {
+    "nome": "desligar sem o parâmetro",
+    "requisicao": "PUT /api/open-finance/conexoes/2/ativa",
+    "status": 204,
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 2
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "estado da sincronização",
+    "requisicao": "GET /api/open-finance/sincronizacao/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "emExecucao": false
+    }
+  },
+  {
+    "nome": "status",
+    "requisicao": "GET /api/open-finance/status",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "conexoesAtivas": 1,
+      "conexoesComErro": 0,
+      "consentimentosVencendo": 1,
+      "emExecucao": false,
+      "ultimaSincronizacao": "2026-10-14T09:00:00Z"
+    }
+  },
+  {
+    "nome": "logs",
+    "requisicao": "GET /api/open-finance/logs",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conexaoBancariaId": 2,
+        "finalizadoEm": "2026-03-01T09:00:05",
+        "id": 3,
+        "iniciadoEm": "2026-03-01T09:00:00",
+        "mensagem": "Consentimento expirado.",
+        "nomeInstituicao": "Banco Desconectado",
+        "origem": "Automatica",
+        "sucesso": false,
+        "transacoesAtualizadas": 0,
+        "transacoesNovas": 0
+      },
+      {
+        "conexaoBancariaId": 1,
+        "finalizadoEm": "2026-10-14T09:00:37.5",
+        "id": 2,
+        "iniciadoEm": "2026-10-14T09:00:00",
+        "mensagem": null,
+        "nomeInstituicao": "Banco Fictício",
+        "origem": "Manual",
+        "sucesso": true,
+        "transacoesAtualizadas": 0,
+        "transacoesNovas": 4
+      },
+      {
+        "conexaoBancariaId": 1,
+        "finalizadoEm": "2026-10-13T09:00:41.25",
+        "id": 1,
+        "iniciadoEm": "2026-10-13T09:00:00",
+        "mensagem": null,
+        "nomeInstituicao": "Banco Fictício",
+        "origem": "Automatica",
+        "sucesso": true,
+        "transacoesAtualizadas": 3,
+        "transacoesNovas": 12
+      }
+    ]
+  },
+  {
+    "nome": "categorias da Pluggy",
+    "requisicao": "GET /api/open-finance/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "descricao": "Unknown",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "99999999",
+        "quantidadeTransacoes": 1
+      },
+      {
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "descricao": "Groceries",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "05000000",
+        "quantidadeTransacoes": 0
+      },
+      {
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "descricao": "Restaurants",
+        "paiDescricao": "Food and drinks",
+        "pluggyCategoriaId": "19050000",
+        "quantidadeTransacoes": 0
+      }
+    ]
+  },
+  {
+    "nome": "mapear categoria que não existe",
+    "requisicao": "PUT /api/open-finance/categorias/00000000",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "mapear para categoria inválida",
+    "requisicao": "PUT /api/open-finance/categorias/05000000",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria inválida."
+    }
+  },
+  {
+    "nome": "mapear com tipo errado",
+    "requisicao": "PUT /api/open-finance/categorias/05000000",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.categoriaId": [
+          "The JSON value could not be converted to Financas.Api.Dtos.MapearCategoriaPluggyDto. Path: $.categoriaId | LineNumber: 0 | BytePositionInLine: 19."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tirar o mapa sem aplicar",
+    "requisicao": "PUT /api/open-finance/categorias/99999999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "aplicar sem transação na categoria",
+    "requisicao": "PUT /api/open-finance/categorias/05000000",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    },
+    "banco": {
+      "CategoriaPluggy": {
+        "alteradas": [
+          {
+            "chave": {
+              "PluggyCategoriaId": "05000000"
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": 2,
+                "depois": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "aplicar nas transações existentes",
+    "requisicao": "PUT /api/open-finance/categorias/99999999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 1
+    },
+    "banco": {
+      "CategoriaPluggy": {
+        "alteradas": [
+          {
+            "chave": {
+              "PluggyCategoriaId": "99999999"
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": null,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 9
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "CategoriaId": {
+                "antes": null,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "aplicar de novo não muda nada",
+    "requisicao": "PUT /api/open-finance/categorias/99999999",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "transacoesAtualizadas": 0
+    }
+  },
+  {
+    "nome": "categorias depois de mapear",
+    "requisicao": "GET /api/open-finance/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "categoriaId": 2,
+        "categoriaNome": "Mercado",
+        "descricao": "Unknown",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "99999999",
+        "quantidadeTransacoes": 1
+      },
+      {
+        "categoriaId": null,
+        "categoriaNome": null,
+        "descricao": "Groceries",
+        "paiDescricao": null,
+        "pluggyCategoriaId": "05000000",
+        "quantidadeTransacoes": 0
+      },
+      {
+        "categoriaId": 25,
+        "categoriaNome": "Restaurantes",
+        "descricao": "Restaurants",
+        "paiDescricao": "Food and drinks",
+        "pluggyCategoriaId": "19050000",
+        "quantidadeTransacoes": 0
+      }
+    ]
+  },
+  {
+    "nome": "testar sem o Client Secret",
+    "requisicao": "POST /api/open-finance/testar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Client ID e Client Secret ainda não configurados."
+    }
+  },
+  {
+    "nome": "sincronizar sem o Client Secret",
+    "requisicao": "POST /api/open-finance/sincronizar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Configure o Client ID e o Client Secret da Pluggy.",
+      "sucesso": false,
+      "transacoesAtualizadas": 0,
+      "transacoesNovas": 0
+    }
+  },
+  {
+    "nome": "importar a carteira sem o Client Secret",
+    "requisicao": "POST /api/carteira/importar-open-finance",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativosCriados": 0,
+      "comLancamentoManual": [],
+      "erros": [],
+      "mensagem": "Configure o Client ID e o Client Secret da Pluggy.",
+      "operacoesImportadas": 0,
+      "semHistorico": []
+    }
+  },
+  {
+    "nome": "conexão com item inválido",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ItemId": [
+          "Item ID inválido."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conexão sem o item",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ItemId": [
+          "The ItemId field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conexão sem o Client Secret",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Configure o Client ID e o Client Secret da Pluggy antes de adicionar conexões."
+    }
+  },
+  {
+    "nome": "sincronizar com conexaoId errado",
+    "requisicao": "POST /api/open-finance/sincronizar?conexaoId=abc",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "conexaoId": [
+          "The value 'abc' is not valid."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "tirar a categoria repetida",
+    "requisicao": "DELETE /api/categorias/30",
+    "status": 204,
+    "banco": {
+      "Categoria": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CategoriaPaiId": null,
+            "Cor": "#64748b",
+            "Icone": null,
+            "Id": 30,
+            "Natureza": null,
+            "Nome": "mercado",
+            "Tipo": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "credenciais da Pluggy falsa, com a tarefa desligada",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyAlterada",
+            "Id": 45,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Pluggy.ClientSecret",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "cliente-ficticio-0001",
+                "depois": "cliente-falso"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "true",
+                "depois": "false"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "testar as credenciais",
+    "requisicao": "POST /api/open-finance/testar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Conexão com a Pluggy realizada com sucesso."
+    }
+  },
+  {
+    "nome": "conexão com item fora do padrão",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ItemId": [
+          "Item ID inválido."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conexão com espaços em volta é recusada",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ItemId": [
+          "Item ID inválido."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "conexão nova: valida e já sincroniza",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Sincronização concluída.",
+      "sucesso": true,
+      "transacoesAtualizadas": 0,
+      "transacoesNovas": 10
+    },
+    "banco": {
+      "Ativo": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "FonteCotacao": "Open Finance",
+            "Id": 8,
+            "Moeda": "BRL",
+            "Nome": null,
+            "PrecoAnterior": null,
+            "PrecoAtual": "95.2381",
+            "PrecoAtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "PrecoManual": 0,
+            "Segmento": null,
+            "Ticker": "FALS11",
+            "Tipo": 1
+          },
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "FonteCotacao": "Open Finance",
+            "Id": 9,
+            "Moeda": "BRL",
+            "Nome": null,
+            "PrecoAnterior": null,
+            "PrecoAtual": "100.0",
+            "PrecoAtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "PrecoManual": 0,
+            "Segmento": null,
+            "Ticker": "FALS3",
+            "Tipo": 2
+          },
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "FonteCotacao": "Open Finance",
+            "Id": 10,
+            "Moeda": "BRL",
+            "Nome": null,
+            "PrecoAnterior": null,
+            "PrecoAtual": "71.4286",
+            "PrecoAtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "PrecoManual": 0,
+            "Segmento": null,
+            "Ticker": "FALS1",
+            "Tipo": 3
+          }
+        ]
+      },
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ConexaoAdicionada",
+            "Id": 46,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "CategoriaPluggy": {
+        "inseridas": [
+          {
+            "CategoriaId": 21,
+            "Descricao": "Renda",
+            "PaiDescricao": null,
+            "PaiPluggyId": null,
+            "PluggyCategoriaId": "01000000"
+          },
+          {
+            "CategoriaId": 19,
+            "Descricao": "Salário",
+            "PaiDescricao": "Renda",
+            "PaiPluggyId": "01000000",
+            "PluggyCategoriaId": "01010000"
+          },
+          {
+            "CategoriaId": 9,
+            "Descricao": "Streaming",
+            "PaiDescricao": "Digital services",
+            "PaiPluggyId": "99",
+            "PluggyCategoriaId": "07000000"
+          },
+          {
+            "CategoriaId": null,
+            "Descricao": "Sem tradução e sem mapa",
+            "PaiDescricao": null,
+            "PaiPluggyId": null,
+            "PluggyCategoriaId": "09000000"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "PluggyCategoriaId": "05000000"
+            },
+            "colunas": {
+              "Descricao": {
+                "antes": "Groceries",
+                "depois": "Mercado"
+              }
+            }
+          }
+        ]
+      },
+      "ConexaoBancaria": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "ConsentimentoExpiraEm": "2027-04-14 10:30:00",
+            "CorPrimaria": "#ef3e42",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 3,
+            "NomeInstituicao": "Banco Falso",
+            "PluggyItemId": "<guid>",
+            "Status": "UPDATED",
+            "StatusExecucao": "SUCCESS",
+            "UltimaAtualizacaoInstituicao": "2026-10-14 10:30:00",
+            "UltimaSincronizacaoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "UltimoErro": null
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.UltimaExecucao"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "2026-10-14 09:00:00",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "2026-10-14T09:00:00.0000000Z",
+                "depois": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>"
+              }
+            }
+          }
+        ]
+      },
+      "Conta": {
+        "inseridas": [
+          {
+            "Arquivada": 0,
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Banco": null,
+            "ConexaoBancariaId": 3,
+            "ContaVinculadaId": null,
+            "Cor": "#ef3e42",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiaFechamento": null,
+            "DiaVencimento": null,
+            "Id": 12,
+            "IncluirNoSaldo": 1,
+            "LimiteAjustadoNoApp": null,
+            "LimiteCredito": null,
+            "LimiteDiferencaAvaliada": null,
+            "LimiteDisponivel": null,
+            "Moeda": "BRL",
+            "Nome": "Conta Falsa",
+            "Numero": "0001/12345-0",
+            "Origem": 2,
+            "PluggyAccountId": "falsa-corrente",
+            "ReservasInformadas": "[{\"nome\":\"Viagem \\u00E0 praia \\u0026 \\u0022f\\u00E9rias\\u0022\",\"valor\":250.50},{\"nome\":\"Reserva\",\"valor\":100}]",
+            "Saldo": "1520.36",
+            "SaldoInicial": "0.0",
+            "SaldoReservado": "350.5",
+            "Tipo": 1
+          },
+          {
+            "Arquivada": 0,
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Banco": null,
+            "ConexaoBancariaId": 3,
+            "ContaVinculadaId": null,
+            "Cor": "#ef3e42",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiaFechamento": null,
+            "DiaVencimento": null,
+            "Id": 13,
+            "IncluirNoSaldo": 1,
+            "LimiteAjustadoNoApp": null,
+            "LimiteCredito": null,
+            "LimiteDiferencaAvaliada": null,
+            "LimiteDisponivel": null,
+            "Moeda": "BRL",
+            "Nome": "Poupança",
+            "Numero": "0001/99-1",
+            "Origem": 2,
+            "PluggyAccountId": "falsa-poupanca",
+            "ReservasInformadas": null,
+            "Saldo": "2000.1",
+            "SaldoInicial": "0.0",
+            "SaldoReservado": "75.12",
+            "Tipo": 2
+          },
+          {
+            "Arquivada": 0,
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Banco": null,
+            "ConexaoBancariaId": 3,
+            "ContaVinculadaId": null,
+            "Cor": "#ef3e42",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiaFechamento": 19,
+            "DiaVencimento": 28,
+            "Id": 14,
+            "IncluirNoSaldo": 1,
+            "LimiteAjustadoNoApp": null,
+            "LimiteCredito": "5000.0",
+            "LimiteDiferencaAvaliada": null,
+            "LimiteDisponivel": "4159.9",
+            "Moeda": "BRL",
+            "Nome": "Cartão Falso",
+            "Numero": "1234",
+            "Origem": 2,
+            "PluggyAccountId": "falsa-cartao",
+            "ReservasInformadas": null,
+            "Saldo": "-840.1",
+            "SaldoInicial": "0.0",
+            "SaldoReservado": null,
+            "Tipo": 3
+          }
+        ]
+      },
+      "Emprestimo": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Cet": "0.0975",
+            "ConexaoBancariaId": 3,
+            "DataContratacao": "2024-05-10",
+            "DataPrimeiraParcela": "2024-06-10",
+            "DataVencimentoFinal": "2044-05-10",
+            "Id": 3,
+            "Indexador": "TR_TBF",
+            "Modalidade": "FINANCIAMENTO_HABITACIONAL_SFH",
+            "Moeda": "BRL",
+            "Natureza": 2,
+            "NumeroContrato": "CONTRATO-FALSO",
+            "ParcelasAVencer": 211,
+            "ParcelasEmAtraso": 0,
+            "ParcelasPagas": 29,
+            "ParcelasTotal": 240,
+            "Periodicidade": "MENSAL",
+            "PeriodicidadeTaxa": "AA",
+            "PluggyLoanId": "emp-1",
+            "Produto": "Financiamento Falso",
+            "SaldoDevedor": "185000.51",
+            "SistemaAmortizacao": "SAC",
+            "TaxaJuros": "0.08755556",
+            "ValorContratado": "200000.0",
+            "ValorParcela": "1890.13"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Cet": null,
+            "ConexaoBancariaId": 3,
+            "DataContratacao": null,
+            "DataPrimeiraParcela": null,
+            "DataVencimentoFinal": null,
+            "Id": 4,
+            "Indexador": null,
+            "Modalidade": "CREDITO_PESSOAL_SEM_CONSIGNACAO",
+            "Moeda": "BRL",
+            "Natureza": 1,
+            "NumeroContrato": null,
+            "ParcelasAVencer": 3,
+            "ParcelasEmAtraso": null,
+            "ParcelasPagas": null,
+            "ParcelasTotal": null,
+            "Periodicidade": null,
+            "PeriodicidadeTaxa": null,
+            "PluggyLoanId": "emp-2",
+            "Produto": "Crédito pessoal",
+            "SaldoDevedor": "100.0",
+            "SistemaAmortizacao": null,
+            "TaxaJuros": null,
+            "ValorContratado": "1000.0",
+            "ValorParcela": "33.33"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Cet": null,
+            "ConexaoBancariaId": 3,
+            "DataContratacao": null,
+            "DataPrimeiraParcela": null,
+            "DataVencimentoFinal": null,
+            "Id": 5,
+            "Indexador": null,
+            "Modalidade": null,
+            "Moeda": "BRL",
+            "Natureza": 2,
+            "NumeroContrato": null,
+            "ParcelasAVencer": null,
+            "ParcelasEmAtraso": null,
+            "ParcelasPagas": null,
+            "ParcelasTotal": null,
+            "Periodicidade": null,
+            "PeriodicidadeTaxa": null,
+            "PluggyLoanId": "emp-3",
+            "Produto": "Crédito Financiado",
+            "SaldoDevedor": "0.0",
+            "SistemaAmortizacao": null,
+            "TaxaJuros": null,
+            "ValorContratado": "0.0",
+            "ValorParcela": null
+          }
+        ]
+      },
+      "FaturaCartao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 14,
+            "DataFechamento": "2026-10-20",
+            "DataVencimento": "2026-10-28",
+            "Id": 13,
+            "PluggyBillId": "fatura-1",
+            "ValorMinimo": "84.01",
+            "ValorPago": "0.3",
+            "ValorTotal": "840.1"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 14,
+            "DataFechamento": null,
+            "DataVencimento": "2026-09-28",
+            "Id": 14,
+            "PluggyBillId": "fatura-2",
+            "ValorMinimo": null,
+            "ValorPago": null,
+            "ValorTotal": "123.46"
+          }
+        ]
+      },
+      "HistoricoInvestimento": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ConexaoBancariaId": 3,
+            "Data": "2026-10-14",
+            "Id": 6,
+            "Nome": "CDB Banco Falso",
+            "PluggyInvestmentId": "fi-cdb",
+            "Saldo": "1050.76",
+            "Tipo": "FIXED_INCOME",
+            "ValorAplicado": "1000.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ConexaoBancariaId": 3,
+            "Data": "2026-10-14",
+            "Id": 7,
+            "Nome": "Taxa fora do limite",
+            "PluggyInvestmentId": "fi-taxa-absurda",
+            "Saldo": "10.0",
+            "Tipo": "FIXED_INCOME",
+            "ValorAplicado": null
+          }
+        ]
+      },
+      "Investimento": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Codigo": null,
+            "ConexaoBancariaId": 3,
+            "DataAplicacao": "2025-03-10",
+            "DataVencimento": "2030-01-15",
+            "Emissor": null,
+            "Id": 3,
+            "Moeda": "BRL",
+            "Nome": "CDB Banco Falso",
+            "NomePersonalizado": null,
+            "PluggyInvestmentId": "fi-cdb",
+            "Quantidade": null,
+            "Rendimento": "50.76",
+            "Saldo": "1050.76",
+            "Status": "ACTIVE",
+            "Subtipo": "CDB",
+            "TaxaAnual": "12.3456",
+            "Tipo": "FIXED_INCOME",
+            "ValorAplicado": "1000.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Codigo": null,
+            "ConexaoBancariaId": 3,
+            "DataAplicacao": "2025-05-01",
+            "DataVencimento": null,
+            "Emissor": null,
+            "Id": 4,
+            "Moeda": "BRL",
+            "Nome": "Taxa fora do limite",
+            "NomePersonalizado": null,
+            "PluggyInvestmentId": "fi-taxa-absurda",
+            "Quantidade": null,
+            "Rendimento": null,
+            "Saldo": "10.0",
+            "Status": null,
+            "Subtipo": null,
+            "TaxaAnual": null,
+            "Tipo": "FIXED_INCOME",
+            "ValorAplicado": null
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Codigo": "FALS11",
+            "ConexaoBancariaId": 3,
+            "DataAplicacao": "2026-01-10",
+            "DataVencimento": null,
+            "Emissor": "FALSO FDO INV IMOB - FII",
+            "Id": 5,
+            "Moeda": "BRL",
+            "Nome": "FALS11",
+            "NomePersonalizado": null,
+            "PluggyInvestmentId": "eq-fii",
+            "Quantidade": "10.5",
+            "Rendimento": null,
+            "Saldo": "1000.0",
+            "Status": null,
+            "Subtipo": "STOCK",
+            "TaxaAnual": null,
+            "Tipo": "EQUITY",
+            "ValorAplicado": "950.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Codigo": "FALS3",
+            "ConexaoBancariaId": 3,
+            "DataAplicacao": null,
+            "DataVencimento": null,
+            "Emissor": null,
+            "Id": 6,
+            "Moeda": "BRL",
+            "Nome": "ACAO FALSA",
+            "NomePersonalizado": null,
+            "PluggyInvestmentId": "eq-acao",
+            "Quantidade": "3.0",
+            "Rendimento": null,
+            "Saldo": "300.0",
+            "Status": null,
+            "Subtipo": "STOCK",
+            "TaxaAnual": null,
+            "Tipo": "EQUITY",
+            "ValorAplicado": null
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Codigo": "FALS1",
+            "ConexaoBancariaId": 3,
+            "DataAplicacao": null,
+            "DataVencimento": null,
+            "Emissor": null,
+            "Id": 7,
+            "Moeda": "BRL",
+            "Nome": "ETF FALSO",
+            "NomePersonalizado": null,
+            "PluggyInvestmentId": "et-sem-historico",
+            "Quantidade": "7.0",
+            "Rendimento": null,
+            "Saldo": "500.0",
+            "Status": null,
+            "Subtipo": null,
+            "TaxaAnual": null,
+            "Tipo": "ETF",
+            "ValorAplicado": null
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Codigo": "???",
+            "ConexaoBancariaId": 3,
+            "DataAplicacao": null,
+            "DataVencimento": null,
+            "Emissor": null,
+            "Id": 8,
+            "Moeda": "BRL",
+            "Nome": "SEM TICKER",
+            "NomePersonalizado": null,
+            "PluggyInvestmentId": "eq-invalido",
+            "Quantidade": null,
+            "Rendimento": null,
+            "Saldo": "1.0",
+            "Status": null,
+            "Subtipo": null,
+            "TaxaAnual": null,
+            "Tipo": "EQUITY",
+            "ValorAplicado": null
+          }
+        ]
+      },
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 8,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-01-10",
+            "Id": 14,
+            "Observacao": "Posição do Open Finance sem histórico de compras: confira a data e o preço pago.",
+            "Origem": 2,
+            "PluggyTransacaoId": "posicao:eq-fii",
+            "PrecoUnitario": "90.47619",
+            "Quantidade": "10.5",
+            "Taxas": "0.0",
+            "Tipo": 1,
+            "TransacaoId": null
+          },
+          {
+            "AtivoId": 9,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-02-01",
+            "Id": 15,
+            "Observacao": "Importada do Open Finance",
+            "Origem": 2,
+            "PluggyTransacaoId": "mov-1",
+            "PrecoUnitario": "100.25",
+            "Quantidade": "2.0",
+            "Taxas": "1.76",
+            "Tipo": 1,
+            "TransacaoId": null
+          },
+          {
+            "AtivoId": 9,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-03-01",
+            "Id": 16,
+            "Observacao": "Importada do Open Finance",
+            "Origem": 2,
+            "PluggyTransacaoId": "mov-2",
+            "PrecoUnitario": "120.5",
+            "Quantidade": "1.0",
+            "Taxas": "0.0",
+            "Tipo": 2,
+            "TransacaoId": null
+          },
+          {
+            "AtivoId": 10,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Id": 17,
+            "Observacao": "Posição do Open Finance sem histórico de compras: confira a data e o preço pago.",
+            "Origem": 2,
+            "PluggyTransacaoId": "posicao:et-sem-historico",
+            "PrecoUnitario": "71.428571",
+            "Quantidade": "7.0",
+            "Taxas": "0.0",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ]
+      },
+      "PagamentoEmprestimo": {
+        "inseridas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 14,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 15,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 16,
+            "Valor": "5000.0"
+          }
+        ]
+      },
+      "SincronizacaoLog": {
+        "inseridas": [
+          {
+            "ConexaoBancariaId": 3,
+            "FinalizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 4,
+            "IniciadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Mensagem": "3 conta(s) processada(s).",
+            "Origem": "Manual",
+            "Sucesso": 1,
+            "TransacoesAtualizadas": 0,
+            "TransacoesNovas": 10
+          }
+        ]
+      },
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 19,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-02",
+            "Descricao": "SALARIO EMPRESA FALSA",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "SALARIO EMPRESA FALSA",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 178,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": "TED",
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": "01010000",
+            "PluggyTransactionId": "tc-1",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 2,
+            "TransferenciaGrupo": null,
+            "Valor": "5000.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 2,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-02",
+            "Descricao": "SUPERMERCADO EXEMPLO FALSO",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "SUPERMERCADO EXEMPLO FALSO",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": "Mercado Falso LTDA",
+            "FaturaCartaoId": null,
+            "Id": 179,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": "PIX",
+            "MesmaTitularidade": 0,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": "05000000",
+            "PluggyTransactionId": "tc-2",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-19.89"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-04",
+            "Descricao": "PIX ENTRE MINHAS CONTAS",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "PIX ENTRE MINHAS CONTAS",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 180,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": "PIX",
+            "MesmaTitularidade": 1,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-3",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-98.76"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-05",
+            "Descricao": "PENDENTE QUE VAI SUMIR",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "PENDENTE QUE VAI SUMIR",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 181,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-4",
+            "RegraDescricaoId": null,
+            "Status": 2,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-33.33"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-06",
+            "Descricao": "(sem descrição)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "(sem descrição)",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 182,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-5",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 2,
+            "TransferenciaGrupo": null,
+            "Valor": "10.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-07",
+            "Descricao": "DOCUMENTO MASCARADO",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "DOCUMENTO MASCARADO",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 183,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-6",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-11.0"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-08",
+            "Descricao": "SEGUNDA PAGINA",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "SEGUNDA PAGINA",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 184,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-7",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-7.5"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": 9,
+            "CategoriaManual": 0,
+            "ContaId": 14,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-05",
+            "Descricao": "LOJA FALSA 02/06",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "LOJA FALSA 02/06",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": "Loja Falsa",
+            "FaturaCartaoId": 13,
+            "Id": 185,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": "CARTAO",
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": 2,
+            "ParcelaTotal": 6,
+            "PluggyCategoriaId": "07000000",
+            "PluggyTransactionId": "tk-1",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-25.5"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 14,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-06",
+            "Descricao": "ESTORNO LOJA FALSA",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "ESTORNO LOJA FALSA",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 186,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tk-2",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 2,
+            "TransferenciaGrupo": null,
+            "Valor": "25.5"
+          },
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 14,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-07",
+            "Descricao": "PAGAMENTO DE FATURA",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "PAGAMENTO DE FATURA",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 187,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": "PAGAMENTO_FATURA",
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tk-3",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 2,
+            "TransferenciaGrupo": null,
+            "Valor": "840.1"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conexão já cadastrada",
+    "requisicao": "POST /api/open-finance/conexoes",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Esta conexão já está cadastrada."
+    }
+  },
+  {
+    "nome": "conexões depois da primeira sincronização",
+    "requisicao": "GET /api/open-finance/conexoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "consentimentoExpiraEm": "2026-03-01T00:00:00",
+        "corPrimaria": null,
+        "id": 2,
+        "nomeExibicao": "Banco Desconectado",
+        "nomeInstituicao": "Banco Desconectado",
+        "pluggyItemId": "item-ficticio-0002",
+        "quantidadeContas": 0,
+        "status": "LOGIN_ERROR",
+        "statusExecucao": "ERROR",
+        "ultimaAtualizacaoInstituicao": "2026-03-01T08:00:00",
+        "ultimaSincronizacaoEm": "2026-03-01T09:00:00",
+        "ultimoErro": "Consentimento expirado."
+      },
+      {
+        "ativa": true,
+        "consentimentoExpiraEm": "2027-04-14T10:30:00",
+        "corPrimaria": "#ef3e42",
+        "id": 3,
+        "nomeExibicao": "Banco Falso",
+        "nomeInstituicao": "Banco Falso",
+        "pluggyItemId": "<guid>",
+        "quantidadeContas": 3,
+        "status": "UPDATED",
+        "statusExecucao": "SUCCESS",
+        "ultimaAtualizacaoInstituicao": "2026-10-14T10:30:00",
+        "ultimaSincronizacaoEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "ultimoErro": null
+      },
+      {
+        "ativa": true,
+        "consentimentoExpiraEm": "2026-11-05T00:00:00",
+        "corPrimaria": "#820ad1",
+        "id": 1,
+        "nomeExibicao": "Banco Fictício",
+        "nomeInstituicao": "Banco Fictício",
+        "pluggyItemId": "item-ficticio-0001",
+        "quantidadeContas": 2,
+        "status": "UPDATED",
+        "statusExecucao": "SUCCESS",
+        "ultimaAtualizacaoInstituicao": "2026-10-14T08:55:00",
+        "ultimaSincronizacaoEm": "2026-10-14T09:00:00",
+        "ultimoErro": null
+      }
+    ]
+  },
+  {
+    "nome": "segunda sincronização: transações mudam, pendente some",
+    "requisicao": "POST /api/open-finance/sincronizar?conexaoId=3",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Sincronização concluída.",
+      "sucesso": true,
+      "transacoesAtualizadas": 4,
+      "transacoesNovas": 1
+    },
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "ConsentimentoExpiraEm": {
+                "antes": "2027-04-14 10:30:00",
+                "depois": null
+              },
+              "Status": {
+                "antes": "UPDATED",
+                "depois": "WAITING_USER_ACTION"
+              },
+              "StatusExecucao": {
+                "antes": "SUCCESS",
+                "depois": "USER_INPUT_TIMEOUT"
+              },
+              "UltimaAtualizacaoInstituicao": {
+                "antes": "2026-10-14 10:30:00",
+                "depois": "<relógio +90 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "UltimaSincronizacaoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "UltimoErro": {
+                "antes": null,
+                "depois": "Instituição: A instituição pediu uma confirmação"
+              }
+            }
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.UltimaExecucao"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+                "depois": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>"
+              }
+            }
+          }
+        ]
+      },
+      "Conta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 12
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Emprestimo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "FaturaCartao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "HistoricoInvestimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Investimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "OperacaoAtivo": {
+        "inseridas": [
+          {
+            "AtivoId": 8,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-01-10",
+            "Id": 18,
+            "Observacao": "Importada do Open Finance",
+            "Origem": 2,
+            "PluggyTransacaoId": "mov-fii-1",
+            "PrecoUnitario": "90.123457",
+            "Quantidade": "10.5",
+            "Taxas": "0.0",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ],
+        "removidas": [
+          {
+            "AtivoId": 8,
+            "Cambio": "1.0",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-01-10",
+            "Id": 14,
+            "Observacao": "Posição do Open Finance sem histórico de compras: confira a data e o preço pago.",
+            "Origem": 2,
+            "PluggyTransacaoId": "posicao:eq-fii",
+            "PrecoUnitario": "90.47619",
+            "Quantidade": "10.5",
+            "Taxas": "0.0",
+            "Tipo": 1,
+            "TransacaoId": null
+          }
+        ]
+      },
+      "PagamentoEmprestimo": {
+        "inseridas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 17,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 18,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 19,
+            "Valor": "5000.0"
+          }
+        ],
+        "removidas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 14,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 15,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 16,
+            "Valor": "5000.0"
+          }
+        ]
+      },
+      "SincronizacaoLog": {
+        "inseridas": [
+          {
+            "ConexaoBancariaId": 3,
+            "FinalizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 5,
+            "IniciadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Mensagem": "3 conta(s) processada(s).",
+            "Origem": "Manual",
+            "Sucesso": 1,
+            "TransacoesAtualizadas": 4,
+            "TransacoesNovas": 1
+          }
+        ]
+      },
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-10",
+            "Descricao": "NOVA NA SEGUNDA RODADA",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "NOVA NA SEGUNDA RODADA",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 188,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-8",
+            "RegraDescricaoId": null,
+            "Status": 1,
+            "Tipo": 2,
+            "TransferenciaGrupo": null,
+            "Valor": "1.01"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 182
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "(sem descrição)",
+                "depois": "AGORA COM NOME"
+              },
+              "DescricaoOriginal": {
+                "antes": "(sem descrição)",
+                "depois": "AGORA COM NOME"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 183
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Data": {
+                "antes": "2026-10-07",
+                "depois": "2026-10-09"
+              },
+              "Status": {
+                "antes": 1,
+                "depois": 2
+              },
+              "Valor": {
+                "antes": "-11.0",
+                "depois": "-12.5"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 186
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Tipo": {
+                "antes": 2,
+                "depois": 1
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 187
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Tipo": {
+                "antes": 2,
+                "depois": 1
+              }
+            }
+          }
+        ],
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-05",
+            "Descricao": "PENDENTE QUE VAI SUMIR",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "PENDENTE QUE VAI SUMIR",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 181,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-4",
+            "RegraDescricaoId": null,
+            "Status": 2,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-33.33"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "terceira sincronização: a instituição pede ação",
+    "requisicao": "POST /api/open-finance/sincronizar?conexaoId=3",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Sincronização concluída.",
+      "sucesso": true,
+      "transacoesAtualizadas": 2,
+      "transacoesNovas": 1
+    },
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "ConsentimentoExpiraEm": {
+                "antes": null,
+                "depois": "2027-04-14 10:30:00"
+              },
+              "Status": {
+                "antes": "WAITING_USER_ACTION",
+                "depois": "UPDATED"
+              },
+              "StatusExecucao": {
+                "antes": "USER_INPUT_TIMEOUT",
+                "depois": "SUCCESS"
+              },
+              "UltimaAtualizacaoInstituicao": {
+                "antes": "<relógio +90 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "2026-10-14 10:30:00"
+              },
+              "UltimaSincronizacaoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "UltimoErro": {
+                "antes": "Instituição: A instituição pediu uma confirmação",
+                "depois": null
+              }
+            }
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.UltimaExecucao"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+                "depois": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>"
+              }
+            }
+          }
+        ]
+      },
+      "Conta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 12
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Emprestimo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "FaturaCartao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "HistoricoInvestimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Investimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "PagamentoEmprestimo": {
+        "inseridas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 20,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 21,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 22,
+            "Valor": "5000.0"
+          }
+        ],
+        "removidas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 17,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 18,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 19,
+            "Valor": "5000.0"
+          }
+        ]
+      },
+      "SincronizacaoLog": {
+        "inseridas": [
+          {
+            "ConexaoBancariaId": 3,
+            "FinalizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 6,
+            "IniciadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Mensagem": "3 conta(s) processada(s).",
+            "Origem": "Manual",
+            "Sucesso": 1,
+            "TransacoesAtualizadas": 2,
+            "TransacoesNovas": 1
+          }
+        ]
+      },
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-05",
+            "Descricao": "PENDENTE QUE VAI SUMIR",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": "PENDENTE QUE VAI SUMIR",
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 189,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": "tc-4",
+            "RegraDescricaoId": null,
+            "Status": 2,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-33.33"
+          }
+        ],
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 182
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Descricao": {
+                "antes": "AGORA COM NOME",
+                "depois": "(sem descrição)"
+              },
+              "DescricaoOriginal": {
+                "antes": "AGORA COM NOME",
+                "depois": "(sem descrição)"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 183
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Data": {
+                "antes": "2026-10-09",
+                "depois": "2026-10-07"
+              },
+              "Status": {
+                "antes": 2,
+                "depois": 1
+              },
+              "Valor": {
+                "antes": "-12.5",
+                "depois": "-11.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "quarta sincronização: nada muda",
+    "requisicao": "POST /api/open-finance/sincronizar?conexaoId=3",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Sincronização concluída.",
+      "sucesso": true,
+      "transacoesAtualizadas": 0,
+      "transacoesNovas": 0
+    },
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "UltimaSincronizacaoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Sincronizacao.UltimaExecucao"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>",
+                "depois": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>"
+              }
+            }
+          }
+        ]
+      },
+      "Conta": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 12
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Emprestimo": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "FaturaCartao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 13
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 14
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "HistoricoInvestimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "Investimento": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 5
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 6
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 7
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              }
+            }
+          }
+        ]
+      },
+      "PagamentoEmprestimo": {
+        "inseridas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 23,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 24,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 25,
+            "Valor": "5000.0"
+          }
+        ],
+        "removidas": [
+          {
+            "Data": "2026-10-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 20,
+            "Valor": "1890.13"
+          },
+          {
+            "Data": "2026-09-10",
+            "EmprestimoId": 3,
+            "Extraordinario": 0,
+            "Id": 21,
+            "Valor": "1880.0"
+          },
+          {
+            "Data": "2026-10-11",
+            "EmprestimoId": 3,
+            "Extraordinario": 1,
+            "Id": 22,
+            "Valor": "5000.0"
+          }
+        ]
+      },
+      "SincronizacaoLog": {
+        "inseridas": [
+          {
+            "ConexaoBancariaId": 3,
+            "FinalizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 7,
+            "IniciadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Mensagem": "3 conta(s) processada(s).",
+            "Origem": "Manual",
+            "Sucesso": 1,
+            "TransacoesAtualizadas": 0,
+            "TransacoesNovas": 0
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "importar a carteira de novo",
+    "requisicao": "POST /api/carteira/importar-open-finance",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativosCriados": 0,
+      "comLancamentoManual": [],
+      "erros": [],
+      "mensagem": null,
+      "operacoesImportadas": 0,
+      "semHistorico": [
+        "FALS1"
+      ]
+    }
+  },
+  {
+    "nome": "status depois de sincronizar",
+    "requisicao": "GET /api/open-finance/status",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "conexoesAtivas": 2,
+      "conexoesComErro": 0,
+      "consentimentosVencendo": 1,
+      "emExecucao": false,
+      "ultimaSincronizacao": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.fZ>"
+    }
+  },
+  {
+    "nome": "conexão 3 desligada: nenhuma ativa para sincronizar",
+    "requisicao": "PUT /api/open-finance/conexoes/3/ativa?ativa=false",
+    "status": 204,
+    "banco": {
+      "ConexaoBancaria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 3
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "sincronizar conexão desligada",
+    "requisicao": "POST /api/open-finance/sincronizar?conexaoId=3",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Nenhuma conexão ativa para sincronizar.",
+      "sucesso": false,
+      "transacoesAtualizadas": 0,
+      "transacoesNovas": 0
+    }
+  },
+  {
+    "nome": "voltar à configuração da base, de novo",
+    "requisicao": "PUT /api/open-finance/configuracao",
+    "status": 204,
+    "banco": {
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Pluggy.ClientId"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "cliente-falso",
+                "depois": "cliente-ficticio-0001"
+              }
+            }
+          },
+          {
+            "chave": {
+              "Chave": "Sincronizacao.Habilitada"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "false",
+                "depois": "true"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "tirar o Client Secret da Pluggy falsa",
+    "requisicao": "DELETE /api/open-finance/configuracao/secret",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "CredencialPluggyRemovida",
+            "Id": 47,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Pluggy.ClientSecret",
+            "Protegido": 1,
+            "Valor": "<segredo cifrado>"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "remover conexão sem login",
+    "requisicao": "DELETE /api/open-finance/conexoes/2",
+    "status": 401
+  },
+  {
+    "nome": "remover conexão que não existe",
+    "requisicao": "DELETE /api/open-finance/conexoes/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "remover conexão",
+    "requisicao": "DELETE /api/open-finance/conexoes/2",
+    "status": 204,
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ConexaoRemovida",
+            "Id": 48,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "ConexaoBancaria": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "ConsentimentoExpiraEm": "2026-03-01 00:00:00",
+            "CorPrimaria": null,
+            "CriadoEm": "2025-10-20 18:05:00",
+            "Id": 2,
+            "NomeInstituicao": "Banco Desconectado",
+            "PluggyItemId": "item-ficticio-0002",
+            "Status": "LOGIN_ERROR",
+            "StatusExecucao": "ERROR",
+            "UltimaAtualizacaoInstituicao": "2026-03-01 08:00:00",
+            "UltimaSincronizacaoEm": "2026-03-01 09:00:00",
+            "UltimoErro": "Consentimento expirado."
+          }
+        ]
+      },
+      "HistoricoInvestimento": {
+        "removidas": [
+          {
+            "AtualizadoEm": "2026-02-28 09:00:00",
+            "ConexaoBancariaId": 2,
+            "Data": "2026-02-28",
+            "Id": 5,
+            "Nome": "CDB Banco Desconectado",
+            "PluggyInvestmentId": "inv-desconectado-0001",
+            "Saldo": "1015.0",
+            "Tipo": "FIXED_INCOME",
+            "ValorAplicado": "1000.0"
+          }
+        ]
+      },
+      "SincronizacaoLog": {
+        "removidas": [
+          {
+            "ConexaoBancariaId": 2,
+            "FinalizadoEm": "2026-03-01 09:00:05",
+            "Id": 3,
+            "IniciadoEm": "2026-03-01 09:00:00",
+            "Mensagem": "Consentimento expirado.",
+            "Origem": "Automatica",
+            "Sucesso": 0,
+            "TransacoesAtualizadas": 0,
+            "TransacoesNovas": 0
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "remover conexão já removida",
+    "requisicao": "DELETE /api/open-finance/conexoes/2",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  }
+]

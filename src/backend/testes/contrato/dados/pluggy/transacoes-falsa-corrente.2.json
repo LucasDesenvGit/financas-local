@@ -1,0 +1,100 @@
+{
+  "next": null,
+  "results": [
+    {
+      "id": "tc-1",
+      "date": "2026-10-02T03:00:00.000Z",
+      "description": "SALARIO EMPRESA FALSA",
+      "amount": 5000,
+      "type": "CREDIT",
+      "status": "POSTED",
+      "categoryId": "01010000",
+      "operationType": "ted"
+    },
+    {
+      "id": "tc-2",
+      "date": "2026-10-03T02:59:59.000Z",
+      "description": "SUPERMERCADO EXEMPLO FALSO",
+      "amount": -19.884999999999998,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "categoryId": "05000000",
+      "merchant": {
+        "name": "Mercado",
+        "businessName": "Mercado Falso LTDA"
+      },
+      "paymentData": {
+        "paymentMethod": "pix",
+        "payer": {
+          "documentNumber": {
+            "type": "CPF",
+            "value": "000.000.001-91"
+          }
+        },
+        "receiver": {
+          "documentNumber": "11222333000181"
+        }
+      }
+    },
+    {
+      "id": "tc-3",
+      "date": "2026-10-04T12:00:00.000Z",
+      "description": "PIX ENTRE MINHAS CONTAS",
+      "amount": 100,
+      "amountInAccountCurrency": "98.755",
+      "type": "DEBIT",
+      "status": "POSTED",
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "payer": {
+          "documentNumber": {
+            "value": "00000000191"
+          }
+        },
+        "receiver": {
+          "documentNumber": "000.000.001-91"
+        }
+      }
+    },
+    {
+      "id": "tc-5",
+      "date": "2026-10-06T12:00:00.000Z",
+      "description": "AGORA COM NOME",
+      "amount": 10,
+      "type": "OUTRO",
+      "status": "POSTED"
+    },
+    {
+      "id": "tc-6",
+      "date": "2026-10-09T12:00:00.000Z",
+      "description": "DOCUMENTO MASCARADO",
+      "amount": 12.5,
+      "type": "DEBIT",
+      "status": "PENDING",
+      "paymentData": {
+        "payer": {
+          "documentNumber": "***.000.001-**"
+        },
+        "receiver": {
+          "documentNumber": "00000000191"
+        }
+      }
+    },
+    {
+      "id": "tc-7",
+      "date": "2026-10-08T12:00:00.000Z",
+      "description": "SEGUNDA PAGINA",
+      "amount": 7.5,
+      "type": "DEBIT",
+      "status": "POSTED"
+    },
+    {
+      "id": "tc-8",
+      "date": "2026-10-10T12:00:00.000Z",
+      "description": "NOVA NA SEGUNDA RODADA",
+      "amount": 1.005,
+      "type": "CREDIT",
+      "status": "POSTED"
+    }
+  ]
+}

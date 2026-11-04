@@ -178,3 +178,33 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
   - a #84 e a #277 passam a gerar o gerenciador em Go no `.msi` e nos scripts;
   - o Wails e o go-winres entram na lista de bibliotecas da [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), só para o gerenciador;
   - a 0028 e a 0033 ficam "Substituída por 0052" quando o gerenciador em Go for publicado.
+
+## Atualização de 2026-11-02: o gerenciador em Go no `.msi` (issue #277, parte 2)
+
+- **O `.msi` instala o gerenciador em Go** no lugar do de C#: o `gerar-msi.ps1` compila o `src/gerenciador-go` sem cgo (`-tags production`, `-H=windowsgui`, a versão pelo `-ldflags`) e não publica mais o C# self-contained. O arquivo mantém o nome `Financas.Gerenciador.exe`, para os atalhos e a entrada "Iniciar com o Windows" de quem atualiza continuarem valendo. A CI confere que nada do C# sobrou na pasta e mede o `.msi` e a pasta instalada.
+- **WebView2:** o `.msi` procura o WebView2 nas duas chaves da documentação da Microsoft ([Detect if a WebView2 Runtime is already installed](https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution#detect-if-a-webview2-runtime-is-already-installed): o valor `pv`, para a máquina ou para quem usa, diferente de `0.0.0.0`). Sem ele, a instalação **não para** (o site funciona sem o gerenciador) e a tela final manda para a [página da Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/consumer/), um dos dois caminhos que a Microsoft recomenda para os poucos Windows 10 sem ele. *Alternativa descartada:* levar o instalador do WebView2 dentro do `.msi`, que baixa da Microsoft (mais uma saída de rede e um instalador de terceiros dentro do nosso) para um caso raro.
+- **Ainda em C#:** a instalação pelos scripts no Windows (`instalar-gerenciador.ps1`, na #430) e no Linux (parte 3 da #277). A [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e a [0033](0033-gerenciador-no-linux-com-avalonia.md) ficam "Substituída por 0052" quando os dois caminhos trocarem.
+
+## Atualização de 2026-11-02: o gerenciador em Go no Linux, pelos scripts (issue #277, parte 3)
+
+- O `scripts/linux/instalar-gerenciador.sh` compila o gerenciador em Go no computador (com cgo) em `publicado/gerenciador-go`, põe o `icone.png` ao lado e cria o atalho `br.financaslocal.Gerenciador.desktop`, o nome do id do aplicativo, de onde o GTK 4 tira o ícone da janela. O atalho do em C# sai do menu, o da área de trabalho é trocado (mesmo nome) e o "Iniciar com o sistema" ligado passa a abrir o em Go.
+- **Sem o compilador de C, o `pkg-config`, o GTK 4 ou o WebKitGTK 6.0**, o script diz o que falta e o comando da distribuição (Debian/Ubuntu, Fedora, Arch; nas outras, o que procurar) e instala **o em C# (Avalonia), como antes**. *Julgamento:* não falhar a instalação por causa da janela; o site segue igual. Na saída do .NET (#86), esse caminho vira "sem gerenciador, com o aviso".
+- **`--situacao`** no gerenciador em Go, como o do C# do Linux: escreve a situação e sai com 0 só com o site no ar. A CI do Linux o usa nos dois caminhos (sem as bibliotecas, o em C#; com elas, o em Go), porque o runner não tem tela.
+- A instalação avisa, no fim, quando o *linger* está desligado (o site só sobe com a sessão aberta), além do aviso que o gerenciador já dava.
+
+## Atualização de 2026-11-02: os scripts do Windows e o "Atualizar o gerenciador e reabrir" (issue #430)
+
+- O `scripts/windows/instalar-gerenciador.ps1` compila o gerenciador em Go (sem cgo, com o Go que a instalação baixou em `ferramentas\go` e o mesmo ambiente do `instalar-windows.ps1`) em `publicado\gerenciador`, com o nome `Financas.Gerenciador.exe`: os atalhos e o "Iniciar com o Windows" continuam valendo. A publicação em C# sai da pasta padrão; numa pasta escolhida com `-Destino`, nada é apagado, só o aviso. Com isso, **no Windows, o `.msi` e os scripts instalam o em Go**, e a [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) fica "Substituída por 0052" na próxima versão publicada.
+- **"Atualizar o gerenciador e reabrir"**, como o `AtualizarGerenciadorEReabrir` do C# (Windows e Linux): aparece depois de a reinstalação pelo develop dar certo; o gerenciador deixa um comando rodando à parte (no Windows, o PowerShell numa janela própria, que mostra o andamento e, se falhar, fica aberta com o aviso; no Linux, `setsid bash -c`), fecha, e o comando roda o instalador do gerenciador do clone e o abre de novo. Os comandos ficam em `internal/desenvolvimento/reabrir.go`, puros e testados.
+
+## Atualização de 2026-11-03: o gerenciador em C# sai (issue #86, parte 1)
+
+- O `src/gerenciador/` (WinForms, Avalonia e o núcleo comum) sai do repositório e da `FinancasLocal.sln`. A [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e a [0033](0033-gerenciador-no-linux-com-avalonia.md) ficam "Substituída por 0052". Quem precisar do gerenciador em C# usa a tag `v-ultimo-dotnet`.
+- **No Linux, sem o compilador de C, o GTK 4 ou o WebKitGTK 6.0**, o `instalar-gerenciador.sh` diz o comando da distribuição e para, sem instalar gerenciador nenhum. O site segue funcionando, e o `instalar.sh` mostra o aviso. Antes, ele instalava o em C#.
+- Quem tinha o gerenciador em C# tem tudo trocado pelo em Go na próxima atualização:
+  - o atalho do menu sai;
+  - o da área de trabalho e o "Iniciar com o sistema" passam a abrir o em Go;
+  - a pasta `publicado/gerenciador` sai.
+
+  A CI do Linux confere isso com um gerenciador antigo de mentira.
+

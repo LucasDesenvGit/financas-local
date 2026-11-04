@@ -1,6 +1,6 @@
 # 0049. Back-end em Go, trocado aos poucos atrás do .NET
 
-- **Status:** Aceita
+- **Status:** Aceita (concluída na #86, em 2026-11-03: o .NET saiu, e o site é o Go sozinho)
 - **Data:** 2026-10-21 (atualizada em 2026-10-23 com a convivência da #231 e o relógio de teste da #363)
 - **Relacionadas:** substitui em parte, ao fim da migração, a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) (Kestrel), a [0005](0005-segredos-criptografados-com-data-protection.md) (Data Protection), a [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) e a [0012](0012-instalador-do-windows-em-powershell.md) (SDK do .NET); afeta a [0003](0003-esquema-por-scripts-sql-idempotentes.md), a [0022](0022-erros-do-sistema-gravados-no-banco.md), a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md), a [0041](0041-testes-no-navegador-com-playwright.md) e a [0047](0047-ci-paralela-so-testes-afetados-no-pr.md); épico #70, issues #71 e #231
 
@@ -74,7 +74,7 @@ Como o .NET repassa ao Go, conferido de ponta a ponta pelo `scripts/ci/testar-go
   - `Go:Tarefas`: tarefas em segundo plano que passaram para o Go e não rodam no .NET (`Sincronizacao`, `Cambio`, `Cripto`). O gravador de erros fica no .NET até a inversão (#85): o Go tem o dele desde a #298, mas só o liga quando roda sozinho. Atrás do .NET, o `ProcessoGo` grava cada linha de aviso ou erro do log do Go. O atributo `erro` vai para o detalhe, como a exceção no .NET (`ErroDoGo`), e não para a mensagem: o texto do erro muda a cada vez (a porta de um erro de rede) e, na mensagem, impediria o agrupamento das ocorrências iguais (#81).
     - **O Go lê a mesma chave** (#81) e roda só as tarefas listadas nela: o .NET deixa de rodar a dele e o Go passa a rodar a sua no mesmo passo, sem uma segunda chave que pudesse deixar a tarefa sem ninguém (a `Tarefas:Habilitadas` da issue #81 ficou de fora por isso). Vazia, o Go não vai à internet sozinho.
     - **Desligar uma tarefa é no arquivo** (`appsettings.json` ou o `appsettings` de cima), nunca por variável de ambiente (`Go__Tarefas`). O .NET lê a variável, mas o Go lê o `Go:Tarefas` só dos arquivos: com a variável, os dois discordariam, e a tarefa rodaria duas vezes ou nenhuma (#81).
-    - O Go recusa `Sincronizacao` até a #83 (ainda não há sincronização em Go: ligada, ninguém a rodaria). Nome desconhecido é erro nos dois lados.
+    - O Go recusava `Sincronizacao` até a #83. Agora roda a tarefa, com a mesma instância das rotas (`api.Montar`), para as duas dividirem a trava de uma rodada por vez. O nome só entra em `Go:Tarefas` na troca dos segredos (#85): antes dela, o Go não lê o Client Secret gravado pelo .NET. Nome desconhecido é erro nos dois lados.
     - A tarefa roda numa goroutine com o `context` do serviço e é esperada (`sync.WaitGroup`) antes de o banco fechar; erro e pânico de um ciclo viram log (`internal/tarefas`).
   - `Go:Executavel`: o executável (padrão: `financas-go`, ao lado da API).
   - `Go:InicioDoRelogio`: **só para teste**, vazio por padrão (#363). Com um instante RFC 3339 com fuso, o .NET sobe o Go com `-inicio-do-relogio` e o relógio do Go começa ali (abaixo, em "Testes de contrato"). O .NET valida o instante e passa o valor que ele mesmo formata, nunca o texto da configuração; valor inválido não deixa o serviço subir.
@@ -125,11 +125,11 @@ Como o .NET repassa ao Go, conferido de ponta a ponta pelo `scripts/ci/testar-go
 | SQLite | `modernc.org/sqlite` | Porte do SQLite para Go sem cgo ([pkg.go.dev](https://pkg.go.dev/modernc.org/sqlite)): compila para Windows sem compilador C. |
 | Consultas | [`sqlc`](https://docs.sqlc.dev/en/latest/tutorials/getting-started-sqlite.html) + `database/sql`, com `?` nos filtros dinâmicos | Gera código Go tipado a partir do SQL, com motor `sqlite`. O esquema vira a fonte única, e acaba a sincronia manual com o `FinancasDbContext`. |
 | Dinheiro | [`github.com/shopspring/decimal`](https://pkg.go.dev/github.com/shopspring/decimal) | Go não tem decimal nativo, e `float64` erra centavos. Tem `RoundBank`, o arredondamento padrão do `Math.Round` do C#. **Exceção (#82):** o fator da Selic, que não é dinheiro e que o C# acumula em `double`: o `internal/selic` usa `float64` só dentro da série, para dar o mesmo número, e devolve `tipos.Decimal`. |
-| Serviço do Windows | [`golang.org/x/sys/windows/svc`](https://pkg.go.dev/golang.org/x/sys/windows/svc) | Mantido pelo time do Go. |
+| Serviço do Windows | [`golang.org/x/sys/windows/svc`](https://pkg.go.dev/golang.org/x/sys/windows/svc) e [`svc/eventlog`](https://pkg.go.dev/golang.org/x/sys/windows/svc/eventlog) | Mantidos pelo time do Go, no mesmo módulo. |
 | Texto sem acento (Unicode) | [`golang.org/x/text/unicode/norm`](https://pkg.go.dev/golang.org/x/text/unicode/norm) (#77) | As regras de categoria e de descrição comparam o texto sem acento, como o `Normalize(NormalizationForm.FormD)` do C#, e a biblioteca padrão do Go não tem normalização Unicode. Mantido pelo time do Go, como o `x/sys`. Conferido contra o próprio C#: o gabarito de 79 casos de `internal/texto` (acentos, maiúsculas, emoji, hangul) é gravado por uma sonda que chama o código da API. |
 | Ordem de texto da cultura (pt-BR) | [`golang.org/x/text/collate`](https://pkg.go.dev/golang.org/x/text/collate) (#77) | O C# ordena texto em memória (`OrderBy`/`ThenBy`) pela cultura do processo, com o ICU: acento e caixa só desempatam ("árvore" antes de "Bolsa"). A fatura do mês desempata os cartões assim, e o empate é comum (cartões com fatura zero). Mesmo módulo do `unicode/norm`. As tabelas do pacote são do CLDR 23 (Unicode 6.2), mais velhas que as do ICU: letra criada depois pode sair noutra posição. Conferido contra o próprio C#: o gabarito de 60 nomes de `internal/texto/testdata/ordem.json`. |
 | Logs | `log/slog` da biblioteca padrão | Log estruturado sem dependência ([blog do Go](https://go.dev/blog/slog)). |
-| Certificado `.pfx` | [`software.sslmate.com/src/go-pkcs12`](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12) (#73) | A biblioteca padrão não lê PKCS#12. Os geradores de hoje (`dotnet dev-certs` e `Export-PfxCertificate`) usam o formato antigo (3DES), que o `golang.org/x/crypto/pkcs12` também lê. Mas ele [está congelado](https://pkg.go.dev/golang.org/x/crypto/pkcs12) e não lê o `.pfx` cifrado com AES (testado: falha no SHA-256), que o OpenSSL 3 gera por padrão. O `go-pkcs12`, um fork mantido, lê os dois. Conferido: o Go leu o `.pfx` do `dotnet dev-certs` e serviu o mesmo certificado do .NET. *Julgamento a revisar:* trocar pelo `x/crypto/pkcs12` tira uma dependência de terceiro, ao custo de quebrar com um `.pfx` AES. |
+| Certificado `.pfx` | [`software.sslmate.com/src/go-pkcs12`](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12) (#73) | A biblioteca padrão não lê PKCS#12. Os geradores de hoje (`dotnet dev-certs` e `Export-PfxCertificate`) usam o formato antigo (3DES), que o `golang.org/x/crypto/pkcs12` também lê. Mas ele [está congelado](https://pkg.go.dev/golang.org/x/crypto/pkcs12) e não lê o `.pfx` cifrado com AES (testado: falha no SHA-256), que o OpenSSL 3 gera por padrão. O `go-pkcs12`, um fork mantido, lê os dois. Conferido: o Go leu o `.pfx` do `dotnet dev-certs` e serviu o mesmo certificado do .NET. *Julgamento a revisar:* trocar pelo `x/crypto/pkcs12` tira uma dependência de terceiro, ao custo de quebrar com um `.pfx` AES. Desde a #84, também grava o `.pfx` (`gerar-certificado`). |
 | Janela e bandeja do gerenciador | [`github.com/wailsapp/wails/v3`](https://pkg.go.dev/github.com/wailsapp/wails/v3) ([0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)) | Só no gerenciador, não na API. Janela própria em HTML pelo navegador do sistema, acessível (a UI Automation vê os botões), sem porta aberta. Versão prévia: fixa no `go.mod`. |
 | Ícone do `.exe` do gerenciador | [`github.com/tc-hib/go-winres`](https://github.com/tc-hib/go-winres) ([0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)) | Ferramenta de build, não vai no executável: gera o recurso `.syso` com o ícone e a versão do Windows. |
 
@@ -210,3 +210,72 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
     - O "tipo da exceção" da assinatura, em Go, é o tipo do erro mais de dentro da cadeia do `%w` que não seja genérico (`errors.New`, `fmt.Errorf`, `errors.Join`): o atributo `error` do log vai para o detalhe, e não para a mensagem.
   - **Gerenciador:** a [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md), a [0033](0033-gerenciador-no-linux-com-avalonia.md) e a [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) mudam quando a #276 decidir como ele vai para o Go.
   - **Todo PR do épico** traz a seção "🎓 Aula rápida". A skill `migrar-para-go` e o agente `dev-go` do Claude Code seguem esta ADR.
+
+## Atualização de 2026-11-02: a troca pelos scripts, desligada por padrão (issue #85, parte 1)
+
+- `3-publicar-atualizar.sh --backend go|dotnet` e `instalar-windows.ps1 -Backend go|dotnet` escolhem quem é o serviço. Com `go`, é o `financas-go -aplicar-esquema -rotinas-de-partida`, sozinho; com `dotnet`, a API .NET com o Go atrás, que continua sendo o padrão. A escolha fica em `dados/backend`, para uma atualização sem a opção manter a de antes.
+- **Antes da troca:** uma cópia do banco em `dados/backups/FinancasLocal-antes-do-go-*.db`, feita pelo `.backup` do `sqlite3` e conferida com `PRAGMA integrity_check`. Se ela não abre, nada é trocado. *Julgamento:* `dados/backups`, onde a API e o Go já guardam as cópias do esquema, e não o `backups/` da raiz dos scripts.
+- **Volta automática:** se o Go não responde ao `GET /api/auth/estado` em 30 s, o script volta o serviço para o .NET, mostra o registro do serviço e grava `dotnet`. Não há uma pasta "anterior": o .NET continua publicado ao lado do Go até a #86, e voltar é só trocar o executável do serviço.
+- **Volta à mão:** `scripts/geral/voltar-para-dotnet.sh` e `scripts/windows/voltar-para-dotnet.ps1`. Eles apagam os segredos gravados pelo Go (`v2:`) do Client Secret da Pluggy e do token da brapi, porque o .NET não os lê e a sincronização falharia a cada ciclo dizendo "configurado". Depois, avisam para informá-los de novo, como o `MigrarSqlite` faz. O banco não é restaurado.
+- A CI dos dois sistemas testa:
+  - a volta automática, com o Go fora do ar;
+  - a troca;
+  - uma atualização mantendo o Go;
+  - o `voltar-para-dotnet` apagando só o segredo `v2:`.
+- **Ainda falta para a troca valer para todos** (partes seguintes da #85):
+  - o Go sozinho rodar todas as tarefas, inclusive a sincronização;
+  - o aviso dos segredos na tela;
+  - as notas da versão;
+  - o ensaio com o banco real;
+  - o "só Go" como padrão.
+
+## Atualização de 2026-11-02: o Go sozinho completo (issue #85, parte 2)
+
+- **Todas as tarefas em segundo plano:** câmbio, cripto e a sincronização do Open Finance, como o .NET. O `Go:Tarefas` continua valendo só atrás do .NET, onde diz quais tarefas o .NET deixou para o Go. Sozinho na frente, não há mais ninguém para rodá-las (`tarefas.Todas`). A partida das tarefas virou uma função só (`iniciarTarefas`), usada pelos dois caminhos, e a sincronização divide a trava com as rotas pela mesma instância (`api.Montar`).
+- **O segredo que o Go não lê aparece como não configurado:** o `GET /api/open-finance/configuracao` só diz `secretConfigurado: true` quando o Client Secret é texto puro ou do esquema do Go (`v2:`). O gravado pelo .NET (Data Protection) aparece como não configurado, e a tela pede para informá-lo de novo, em vez de dizer "configurado" enquanto a sincronização não consegue usá-lo. Para isso, o Go olha só o valor gravado (`configuracao.SegredoGravado` e `segredos.GravadoPeloGo`), sem abrir nem criar a chave. *Diferença consciente do .NET,* que diz `true` sempre que há valor: o contrato não a vê, porque o banco dele não tem segredo gravado pelo .NET.
+
+## Atualização de 2026-11-02: a inversão, o Go na frente como padrão (issue #85, parte 4)
+
+**Decisão do usuário (02/11):** depois do ensaio, o Go na frente vira o padrão para todos, já, sem a semana de observação que a #85 previa, e na versão **3.0.0**. Quem atualiza precisa fazer algo à mão, uma vez: entrar de novo e informar os segredos.
+
+- **O ensaio:** numa cópia do banco real, 92 de 93 telas deram respostas iguais. Foram 24 meses de painel, categorias e maiores despesas, o fluxo, o anual de 3 anos, a projeção, os investimentos, a carteira, as reservas, os empréstimos e o Open Finance. A única diferença é o `secretConfigurado` da parte 2, que é de propósito. A sincronização real também foi comparada na #593, sem nenhuma diferença de valor.
+- **Scripts:** sem `dados/backend`, o padrão é `go`. Isso vale para instalação nova e para quem vem da 2.x, que passa para o Go na primeira atualização, com a cópia do banco antes e a volta automática. Quem escolheu `dotnet` (o arquivo) continua no .NET.
+- **`.msi`:** o pacote publicado é o "só Go" (`gerar-msi.ps1` sem opção). O da 2.x sai com `-ComDotnet`, e a CI o usa para testar a atualização do `.msi` com o .NET para o "só Go". O `configurar.ps1` reconhece a instalação pelos scripts também com o Go na frente (`financas-go.exe` na linha do serviço).
+- **Fica para depois:**
+  - o `Go:Prefixos`/`Go:Tarefas` e o repasse continuam no `appsettings.json`, porque a volta ao .NET (`voltar-para-dotnet`) os usa. Saem com o C#, na #86;
+  - a semana de observação, que vira o uso real a partir desta versão.
+
+## Atualização de 2026-11-03: a instalação sem o .NET (issue #86, parte 2)
+
+- **Scripts e instalador:** o `1-preparar-ambiente.sh` e o `instalar-windows.ps1` não baixam mais o SDK do .NET, nem conferem a ICU no Linux, que só o .NET pedia. O `3-publicar-atualizar.sh`, o `instalar-windows.ps1` e o `gerar-msi.ps1` publicam só o Go, o front-end e o `appsettings.json`, que passa a morar em `src/backend-go/`.
+- **Sem a escolha:** o `--backend`/`-Backend`, o `dados/backend` (apagado na atualização), o `-ComDotnet` e o `voltar-para-dotnet` saíram, e o `.wxs` não tem mais o `SoGo`. O `parar` perdeu o `--compiladores`, que só encerrava os servidores de build do .NET.
+- **Volta:** não há mais volta automática nem à mão para o .NET pelos scripts. *Julgamento:* com o .NET apagado no fim da #86, o que fica é a tag `v-ultimo-dotnet` (o último `develop` com o .NET), que a mensagem de falha do script indica.
+- **Limpeza:** depois de o site responder, a atualização apaga `ferramentas/dotnet`, `ferramentas/dotnet-home` e `ferramentas/nuget-pacotes`. Se o site não sobe, nada disso é apagado.
+- **Consequência negativa:** quem estava num `.msi` ou instalação da 2.x passa direto para o Go sem a cópia "antes do Go" de `dados/backups`. Continua valendo a cópia de antes de toda atualização: `backups/FinancasLocal-antes-instalacao-*.db` nos scripts e `dados\backups\FinancasLocal-antes-atualizacao-*.db` no `.msi`.
+- **CI:** os testes de instalação conferem que nada do .NET fica, e simulam quem vem da 3.0 (o .NET portátil, a API publicada e o `dados/backend`), com o Go que não sobe (nada é apagado, e a mensagem indica a tag) e com o Go que sobe (tudo sai). O teste do `.msi` com o .NET para o "só Go" saiu com o `-ComDotnet`.
+
+## Atualização de 2026-11-03: o .NET saiu (issue #86, partes 3 a 6) — a migração terminou
+
+- **O que saiu, PR por PR:**
+  - **#616:** o gerenciador em C# (ADRs 0028 e 0033 substituídas pela 0052);
+  - **#617:** o .NET dos scripts e do `.msi` (seção acima);
+  - **#620:** a CI sem o .NET. O contrato roda contra o Go sozinho, e os esperados viram a regressão do Go (ADR 0051);
+  - **#625:** o código C#: a API, o `Financas.MigrarSqlite` (aposentado, decisão do usuário) e as sondas dos testes do Go, cujos gabaritos ficam;
+  - **#626:** o modo "atrás do .NET" do Go: o `-atras-do-dotnet`, o segredo interno, os cabeçalhos `X-Financas-*`, o `Go:Prefixos` e o `Go:Tarefas`;
+  - **#627:** a pasta do Go, que passou de `src/backend-go` para `src/backend`;
+  - **a documentação**, no PR que fecha a #86.
+- **Onde ficou o .NET:** a tag `v-ultimo-dotnet`, o último `develop` com ele (3.0.2), marcada antes da primeira parte. Voltar para ela é `git checkout v-ultimo-dotnet` e o `instalar.sh`. Nessa volta, os segredos gravados pelo Go (`v2:`) não são lidos pelo .NET e precisam ser informados de novo; o banco é o mesmo, no formato do EF Core.
+- **O que continua desta decisão:**
+  - o formato do banco do EF Core (decimal, data, GUID como texto), para os bancos que já existem;
+  - as mensagens e o JSON de antes, que o contrato confere;
+  - as bibliotecas (`sqlc`, `modernc.org/sqlite`, `shopspring/decimal`) e as regras de dinheiro, de SQL e de relógio.
+- **As ADRs que esta substituiu:**
+  - a [0005](0005-segredos-criptografados-com-data-protection.md), por inteiro (os segredos do Go);
+  - a [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md), [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) e [0012](0012-instalador-do-windows-em-powershell.md), em parte (o Kestrel e o SDK do .NET).
+- **Medição** (a #86 pedia o antes e o depois):
+  - o `.msi` caiu de 53 MB para 13 MB;
+  - a pasta instalada, de 150 MB para 35 MB;
+  - a memória do site, de cerca de 150 MB (.NET e Go juntos) para cerca de 18 MB;
+  - na CI, o contrato caiu de 156 s para 40 s, e o "API e banco", de 88 s para 42 s;
+  - os três primeiros números são os medidos no ensaio da #85, com o Go sozinho, e a medição final, no computador de quem usa, fica registrada na #86.
+- **Consequência negativa:** sem o .NET, não há mais uma referência para conferir um comportamento "como era". O contrato e os gabaritos guardam o que havia em 03/11/2026, e o que eles não cobrem só pode ser comparado rodando a tag.

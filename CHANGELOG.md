@@ -2,10 +2,173 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [2.58.6] — 2026-11-02 · desenvolvimento
+## [3.2.9] — 2026-11-04 · desenvolvimento
 
 ### Publicação e documentação
 - **Licença MIT** (#473; épico #465). Nada muda para quem usa. O repositório passa a dizer o que se pode fazer com o código.
+
+## [3.2.8] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **O diagrama de Componentes do back-end em Go** (#464, épico #465). A página nova `docs/arquitetura/componentes.md` traz o nível 3 do C4: os 61 pacotes do site agrupados por papel (entrada, servidor, autenticação, rotas, assuntos, regras sem HTTP, sincronização, partida, tarefas, clientes de fora, transversais e base), quem chama quem, onde fica a regra de cada assunto e as cinco regras de dependência que o teste de arquitetura confere. O teste de arquitetura local passa a acusar pacote que falta na página ou que ela cita sem existir mais. Os fluxos ganham "Um pedido à API", pelos componentes, e a ADR 0055, o `CLAUDE.md`, o padrão de um assunto e a skill `go-no-projeto` pedem a linha do pacote novo na página. Os comentários dos pacotes `api`, `tarefas` e `sessao` deixam de falar do .NET na frente.
+
+## [3.2.7] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI exige também o Go no Windows e o gerenciador em Go** (#86). O check `build`, que barra o merge, passa a juntar os jobs "Go (Windows)", "gerenciador em Go" e "gerenciador em Go (Linux)". Eles ficavam de fora enquanto o código só de Windows do Go não rodava no site e o `.msi` levava o gerenciador em C#.
+
+## [3.2.6] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A documentação conta o sistema sem o .NET** (#86, parte 6; épico #70). O README, a arquitetura (os diagramas de contêineres, de implantação e dos fluxos), a segurança, o modelo de ameaças (sem a fronteira entre o .NET e o Go), o guia do banco, a instalação pelo código (o desenvolvimento passa a ser só com o Go), as regras do `CLAUDE.md`, o README do back-end e as skills descrevem o site como ele é: um executável só, em Go. As ADRs que o .NET sustentava foram marcadas como substituídas (a 0005) ou em parte substituídas (a 0002, a 0011 e a 0012), e a 0049 registra o fim da migração. A remoção do .NET (#86) está completa.
+
+## [3.2.5] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go muda para `src/backend`** (#86, parte 5; épico #70). Era `src/backend-go`, de quando o .NET ocupava `src/backend`. O módulo passa a ser `github.com/LucasDesenvGit/financas-local/src/backend`, e os scripts, a CI, o instalador e a documentação seguem o caminho novo. Nada muda para quem usa. Quem tem um clone antigo pode apagar as pastas que sobraram do .NET em `src/backend/Financas.Api` e `src/backend/Financas.MigrarSqlite` (o git as ignora).
+
+## [3.2.4] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go perde o modo de rodar atrás do .NET** (#86; épico #70). Sem o .NET, a opção `-atras-do-dotnet`, o segredo interno entre os dois e a configuração `Go:Tarefas` viraram código sem uso e saíram. O site continua igual, com as mesmas opções e as mesmas tarefas em segundo plano.
+
+## [3.2.3] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O código C# sai do repositório** (#86, parte 4; épico #70). A API em .NET, o `Financas.MigrarSqlite` (a migração do SQL Server), o `FinancasLocal.sln` e as sondas em C# dos testes do Go ficam só na tag `v-ultimo-dotnet`. Os gabaritos que as sondas gravaram continuam valendo, como regressão do Go. Nada muda para quem usa: o site é o Go desde a 3.0.0.
+
+## [3.2.2] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI não usa mais o .NET** (#86, parte 3; ADR 0051). O contrato roda contra o Go sozinho, como o serviço instalado, e os esperados gravados do .NET viram a regressão do Go: um esperado só muda com o motivo no PR. O teste de inicialização sobe o Go, a CSP dos testes no navegador vem do Go, e saem o teste do .NET com o Go atrás dele e o NuGet do Dependabot. O `medir-desempenho.py` mede o Go.
+
+## [3.2.1] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Os arquivos do site voltam a ficar guardados no navegador** (#618). Desde a 3.0.0, o site em Go só dava o cache de um ano a uns 3 dos 35 arquivos do build: a regra que a #305 tinha corrigido no .NET não tinha vindo para o Go. Os outros iam sem cache, e o navegador perguntava ao site por eles a cada tela.
+
+## [3.2.0] — 2026-11-03 · desenvolvimento
+
+### Funcionalidades
+- **A instalação pelos scripts e o instalador `.msi` não usam mais o .NET** (#86, parte 2; épico #70; ADR 0049). A preparação do ambiente não baixa mais o SDK do .NET e a publicação compila só o Go e o front-end, o que deixa a instalação e a atualização mais rápidas. Depois de o site responder, a atualização apaga o que só o .NET usava. Quem já está na 3.0 não precisa fazer nada.
+  - **Saíram:** a opção `--backend` (no Windows, `-Backend`), o `voltar-para-dotnet`, o `-ComDotnet` do `gerar-msi.ps1` e o `--compiladores` do `parar`. Para voltar à última versão com o .NET: `git checkout v-ultimo-dotnet` e o `instalar.sh` de novo; a mensagem de falha da atualização diz isso.
+
+## [3.1.0] — 2026-11-03 · desenvolvimento
+
+### Funcionalidades
+- **O gerenciador em C# sai; fica só o em Go** (#86, parte 1; épico #70; ADR 0052). No Linux, sem o GTK 4 e o WebKitGTK 6.0, a instalação diz o comando que instala esses pacotes e não instala gerenciador nenhum (o site funciona do mesmo jeito). Quem ainda tinha o gerenciador em C# tem os atalhos e o "Iniciar com o sistema" trocados pelo em Go na próxima atualização.
+
+## [3.0.2] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Atualização pelo Git Bash no Windows não deixa mais o site fora do ar em silêncio** (#614). Sem administrador, o `instalar.sh` publicava os arquivos novos, não conseguia trocar nem iniciar o serviço e terminava em "Pronto!", com o site parado. Agora ele para logo no começo, antes de mexer em qualquer coisa, e diz para abrir o Git Bash como administrador. Uma falha ao registrar ou iniciar o serviço também passa a ser erro, com o motivo, e a escolha entre Go e .NET só é gravada quando é aplicada.
+
+## [3.0.1] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Atualização pelos scripts no Windows parava no backup do banco** (#85). Com o `sqlite3` do próprio Windows, a cópia do banco antes de atualizar, a cópia antes de pôr o Go na frente e o `4-backup.sh` falhavam com `cannot open "/c/Users/..."`: o caminho ia no formato do Git Bash dentro do comando do `sqlite3`, que o Windows não abre. Agora vai no formato do Windows. Nada era mudado antes do erro.
+
+## [3.0.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O site passa a rodar no back-end em Go, sem o .NET** (#85; épico #70; ADR 0049). É mais leve: o instalador `.msi` cai de 53 MB para 13 MB, a pasta instalada de 150 MB para 35 MB, e a memória do site de cerca de 150 MB para cerca de 18 MB. As telas e os números são os mesmos: o ensaio comparou 92 de 93 telas iguais, e a sincronização com a Pluggy grava o mesmo que antes.
+  - **O que você precisa fazer, uma vez:** depois de atualizar, entre de novo com o seu usuário e a sua senha (a senha não muda) e informe outra vez o **Client Secret da Pluggy**, em Open Finance, e o **token da brapi**, em Investimentos, se usar. A versão nova não lê os segredos gravados pela anterior; até você informar, o Client Secret aparece como não configurado e a sincronização não roda.
+  - **Se algo der errado:** a atualização pelos scripts guarda uma cópia do banco antes e volta sozinha para a versão em .NET se o site não subir. Para voltar à mão: `scripts/geral/voltar-para-dotnet.sh` (no Windows, `scripts\windows\voltar-para-dotnet.ps1`); pelo `.msi`, desinstale (os dados ficam) e instale o da versão 2.x. Na volta, os dois segredos precisam ser informados de novo.
+
+## [2.69.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O Go sozinho na frente roda tudo o que o .NET roda** (#85, parte 2; épico #70; ADR 0049). Ele passa a rodar, sem precisar de configuração, as tarefas em segundo plano: câmbio, cripto e a sincronização do Open Finance. Um Client Secret que ele não consegue ler, por ter sido gravado pela versão em .NET, aparece como não configurado na tela do Open Finance, para ser informado de novo, em vez de "configurado" com a sincronização falhando.
+
+## [2.68.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Opção para pôr o Go na frente, com volta automática** (#85, parte 1; épico #70; ADR 0049). Na instalação pelos scripts, `--backend go` (no Windows, `-Backend go`) faz o site rodar só no Go. Antes da troca, o banco é copiado e conferido; se o Go não subir em 30 s, o site volta sozinho para o .NET. O `voltar-para-dotnet` volta à mão e avisa para informar de novo o Client Secret da Pluggy e o token da brapi. O padrão continua sendo o .NET.
+
+## [2.67.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **O instalador `.msi` é gerado sem o SDK do .NET para o WiX** (#446; épico #70; ADR 0029). A CI instala o WiX 5.0.2 pelo `.msi` do próprio WiX, conferido pelo SHA-256, e não mais pelo `dotnet tool`. O SDK do .NET só continua na CI enquanto o pacote levar a API em .NET, até a inversão (#85).
+
+## [2.67.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go também pelos scripts do Windows, e o "Atualizar o gerenciador e reabrir"** (#430; épico #70; ADR 0052). O `instalar-gerenciador.ps1` passa a compilar o gerenciador novo, um `.exe` só, no lugar do de C#. Os atalhos e o "Iniciar com o Windows" continuam valendo. Na instalação de desenvolvimento, depois de "Atualizar para a última do develop" dar certo, aparece o botão **Atualizar o gerenciador e reabrir**, como no gerenciador em C#. Ele fecha, instala o gerenciador da versão nova numa janela que mostra o andamento e abre de novo.
+
+## [2.66.3] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instaladores com o Go: fechamento** (#277, parte 6; épico #70). O README ganha dois problemas comuns: o instalador que recusa um Windows antigo e o gerenciador que não abre sem o WebView2. A ADR 0029 registra por que a assinatura do `.msi`, o Windows ARM e um pacote pronto no Linux ficam de fora. A CI do instalador passa a anotar o tamanho e a memória do pacote de hoje e do "só Go".
+
+## [2.66.2] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Instalação no Linux sem a ICU** (#277, parte 5). Num Linux mínimo, sem a `libicu`, o .NET não rodava, e a instalação só parava no meio da compilação, com uma mensagem técnica. Agora ela confere a ICU antes de baixar qualquer coisa e diz o pacote junto com o resto (no Debian e no Ubuntu, `libicu-dev`, e também `ca-certificates`). Um teste novo instala tudo do zero num `debian:stable-slim`, só com o que o script pede, e sobe o site com o .NET e com o Go sozinho.
+
+## [2.66.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instalador `.msi` só com o Go, pronto e desligado** (#277, parte 4; épico #70). O `gerar-msi.ps1 -SoGo` monta o pacote sem a API em .NET, com o executável do Go como serviço, e a CI o instala e confere o login e o site. Os pacotes publicados continuam iguais; a troca é da inversão (#85).
+
+## [2.66.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go no Linux** (#277, parte 3; épico #70; ADR 0052). O `instalar.sh` e o `scripts/linux/instalar-gerenciador.sh` compilam o gerenciador novo, com o atalho e o ícone no menu de aplicativos, e o "Iniciar com o sistema" passa a abri-lo. Se faltar o GTK 4 ou o WebKitGTK 6.0, o script mostra o comando que instala esses pacotes na sua distribuição e, por enquanto, instala o gerenciador em C#, como antes. A instalação também avisa quando o site só vai subir com a sessão aberta (*linger* desligado). No terminal, `--situacao` mostra a situação do site sem abrir a janela, como no gerenciador em C#.
+
+## [2.65.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O instalador `.msi` traz o gerenciador em Go** (#277, parte 2; épico #70; ADR 0052). Ele substitui o de C#, tem o mesmo nome e os mesmos atalhos, e "Iniciar com o Windows" continua ligado para quem já usava. É um arquivo só, de ~16 MB, no lugar de ~240 arquivos e 121 MB. A janela usa o WebView2 da Microsoft: se ele faltar, a tela final do instalador avisa e diz onde baixar, e o site funciona do mesmo jeito.
+
+## [2.64.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Instalador `.msi` preparado para o Go** (#277, parte 1; épico #70). O certificado HTTPS passa a ser feito pelo executável do Go, como nos scripts, e o que ainda vale é reaproveitado. Quem passa dos scripts para o `.msi` leva também a chave dos segredos do Go. O instalador e o `instalar-windows.ps1` recusam, com uma mensagem clara, um Windows anterior ao Windows 10 versão 1809 (ou ao Windows Server 2019), em vez de instalar um site que não abre. Com o Firefox instalado, a tela final avisa que ele não usa os certificados do Windows por padrão e diz como aceitar.
+
+## [2.63.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **A versão de desenvolvimento volta a ser publicada** (#600). As notas dela copiavam o CHANGELOG inteiro desde a última versão publicada e passaram do limite de 125 mil caracteres do GitHub, e o workflow "Versão (instalador .msi)" falhava no develop, sem pré-lançamento "desenvolvimento" para os gerenciadores. Agora essa parte entra até onde couber, cortada no fim de uma versão, com um link para o resto no `CHANGELOG.md`; os blocos por versão, que os gerenciadores leem, entram inteiros.
+
+## [2.63.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Certificado HTTPS feito pelo executável do Go, sem o .NET** (#84, parte final; épico #70). Numa instalação nova ou quando o certificado está para vencer, ele sai do `gerar-certificado`, e o certificado que ainda vale continua. No Linux, a instalação não tenta mais confiar nele sozinha: ela mostra os comandos com o caminho do arquivo, como já fazia nas distribuições em que a tentativa falhava. O site segue rodando no .NET; a CI agora confere o Go sozinho como serviço nos dois sistemas, e o gerenciador, o `parar` e o `.msi` reconhecem o processo dele.
+
+## [2.62.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O Go pronto para rodar como serviço e gerar o próprio certificado** (#84, parte 1; épico #70). Nada muda para quem usa: o serviço continua sendo o .NET, e os scripts ainda não usam isso. No Windows, o executável agora conversa com o gerenciador de serviços e escreve avisos e erros no Log de Eventos. O subcomando `gerar-certificado` reaproveita o `.pfx` que ainda vale e gera outro quando faltam 30 dias, com a parte pública num `.pem` ao lado.
+
+## [2.61.2] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Gerenciador manda atualizar a instalação pelos scripts com o `instalar.sh`** (#598). Na instalação pelos scripts, o gerenciador do Linux mostrava o comando `git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh`, e o do Windows citava o `3-publicar-atualizar.sh`. Quando o código novo pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha. Agora o comando é `git pull && scripts/geral/instalar.sh`, que traz o .NET e o Go das versões novas e, no Linux, já atualiza o gerenciador no fim; o texto do Windows pede o `git pull` e o `instalar-windows.cmd` (ou o `instalar.sh`). Vale nas duas janelas em C# e no gerenciador em Go. Manual: não se aplica (o Manual já manda usar o `instalar.sh`).
+
+## [2.61.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Arquitetura de acordo com o que o Go já atende** (#575, seção 2 da varredura de 01/11/2026, revista com o `develop` de 02/11). O `ARQUITETURA.md` passa a dizer que todos os assuntos já têm código Go: o planejamento atende o site, e os investimentos, o painel e o Open Finance estão portados e passam no contrato, mas desligados em `Go:Prefixos` (o Open Finance, até a troca dos segredos, #85). O mapa de contextos ganha a seta do planejamento para o painel e marca os assuntos desligados no site; o diagrama de contêineres, a PTAX que o .NET ainda consulta; o Go sozinho deixa de ser "o esqueleto da #73"; a lista dos serviços do .NET fica completa, com o câmbio e a cripto rodando pelo `Go:Tarefas`; e a tabela de pastas do Go remete ao README dele. Nos fluxos: o planejamento entre o que o Go atende, as seis rotinas da partida e o carimbo da sessão conferido em todo pedido (só o CSRF é dos que gravam). No domínio, conta a pagar, orçamento e meta em Go. O modelo de ameaças ganha a fronteira do gerenciador com a API e o banco (o certificado aceito sem conferir no loopback e a cópia como administrador) e as cópias automáticas em `dados/backups`. O índice das ADRs diz que a 0047 está em parte substituída pela 0050, que a 0052 substitui a 0028 e a 0033 quando o gerenciador em Go for publicado, e que a mutação da 0051 roda também no PR (#456). Os requisitos não funcionais ganham o limite de 60 s por pacote do Go. Manual: não se aplica.
+
+## [2.61.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Tarefa periódica da sincronização em Go** (#83, parte 5 de 5; épico #70). Nada muda para quem usa: `Go:Tarefas` continua sem `Sincronizacao`, e o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Com a mesma agenda do .NET, a tarefa divide com as rotas a trava de uma rodada por vez, e todo o código do Open Finance fica pronto no Go.
+
+## [2.60.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Sincronização do Open Finance em Go** (#83, partes 3 e 4 de 5; épico #70). Nada muda para quem usa: o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Passam para o Go a sincronização completa (contas, faturas, transações, investimentos, empréstimos e a carteira de renda variável) e as rotas `testar`, `conexoes`, `sincronizar` e `importar-open-finance`. O contrato ganha uma Pluggy falsa, para o .NET e o Go sincronizarem o mesmo cenário.
+
+## [2.59.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Rotas do Open Finance em Go** (#83, parte 2 de 5; épico #70). Nada muda para quem usa: o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Passam para o Go as 12 rotas que não sincronizam: credenciais, seu nome nos Pix, conexões, status, logs e o mapa de categorias da Pluggy.
+
+## [2.58.6] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Dependências do front-end: Angular 22.2.4, Lucide 1.64.0 e `@types/node` 26.6.6** (#590, Dependabot #584, #585 e #586, juntos num PR só porque mexem no mesmo `package-lock.json`). O Angular (`common`, `compiler`, `core`, `forms`, `platform-browser`, `router` e `compiler-cli`) sobe uma correção, 22.2.3 → 22.2.4; os ícones do `@lucide/angular` vão de 1.61.0 a 1.64.0; o `@types/node`, só de desenvolvimento, de 26.6.5 a 26.6.6. O `package-lock.json` tem os mesmos pacotes que o Dependabot gerou em cada um. Manual: não se aplica.
 
 ## [2.58.5] — 2026-11-02 · desenvolvimento
 

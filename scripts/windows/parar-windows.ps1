@@ -5,7 +5,7 @@
 .DESCRIPTION
     Equivalente, no Windows, a scripts/geral/parar.sh (que repassa para este script quando roda no Git Bash):
       1) Servico do Windows "FinancasLocal", que hospeda a API e o front publicado
-      2) API rodando fora do servico (dotnet run, Visual Studio, publicado\api na mao)
+      2) Site rodando fora do servico (financas-go, ou uma API .NET antiga que sobrou)
       3) Front em desenvolvimento (npm start / ng serve e seus processos filhos)
       4) Banco: SQLite nao e servico, e so o arquivo dados\sql\FinancasLocal.db. O script apenas
          confere se algum processo ainda esta com ele aberto.
@@ -18,20 +18,16 @@
 .EXAMPLE
     .\parar-windows.ps1
     .\parar-windows.ps1 -Desativar      # tambem tira o servico da inicializacao automatica
-    .\parar-windows.ps1 -Compiladores   # tambem encerra os servidores de build do .NET
 #>
 [CmdletBinding()]
 param(
     # Muda o servico para inicio manual: nao sobe sozinho no proximo boot.
-    [switch]$Desativar,
-    # Encerra os servidores de build do .NET (MSBuild, VBCSCompiler, Razor).
-    [switch]$Compiladores
+    [switch]$Desativar
 )
 
 $ErrorActionPreference = "Stop"
 
 $Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$Ferramentas = Join-Path $Raiz "ferramentas"
 $PastaSql = Join-Path (Join-Path $Raiz "dados") "sql"
 $NomeServico = "FinancasLocal"
 $script:Problemas = 0
@@ -73,7 +69,7 @@ if (-not $servico) {
 # ---------------------------------------------------------------- 2 e 3. Processos fora do servico
 # So processos DESTE projeto: a linha de comando ou o executavel tem de estar dentro da pasta do projeto,
 # com barra invertida (D:\FinancasLocal), normal (D:/FinancasLocal) ou no formato do Git Bash (/d/FinancasLocal).
-# Assim um "Financas.Api" de outra pasta, ou um "dotnet build" com caminho relativo, nao e derrubado.
+# Assim um processo de mesmo nome em outra pasta nao e derrubado.
 Etapa "Processos da API e do front fora do servico"
 $raizMsys = "\" + $Raiz.Substring(0, 1).ToLowerInvariant() + $Raiz.Substring(2)   # D:\FinancasLocal -> \d\FinancasLocal
 
@@ -103,24 +99,8 @@ function Parar-Processos([string]$descricao, [scriptblock]$filtro) {
 
 Parar-Processos "API" { param($t) ($t -match 'Financas\.Api(\.dll|\.exe)?("|\s|$)') -and (No-Projeto $t "") }
 Parar-Processos "Front (ng serve)" { param($t) No-Projeto $t "src\frontend\node_modules" }
-# #231: o Go roda como processo filho da API e para junto com ela; este so pega um que tenha sobrado.
-Parar-Processos "Go (atras da API)" { param($t) ($t -match 'financas-go(\.exe)?("|\s|$)') -and (No-Projeto $t "") }
-
-# ---------------------------------------------------------------- Servidores de build (opcional)
-if ($Compiladores) {
-    Etapa "Servidores de build do .NET"
-    $dotnet = Join-Path $Ferramentas "dotnet\dotnet.exe"
-    if (-not (Test-Path $dotnet)) {
-        $comando = Get-Command dotnet -ErrorAction SilentlyContinue
-        $dotnet = if ($comando) { $comando.Source } else { $null }
-    }
-    if ($dotnet) {
-        & $dotnet build-server shutdown *> $null
-        Ok "servidores de build encerrados (MSBuild, VBCSCompiler, Razor)"
-    } else {
-        Aviso "dotnet nao encontrado; pulando."
-    }
-}
+# #231: o Go roda como processo filho da API e para junto com ela; este pega um que tenha sobrado ou que rode sozinho (#84).
+Parar-Processos "Go" { param($t) ($t -match 'financas-go(\.exe)?("|\s|$)') -and (No-Projeto $t "") }
 
 # ---------------------------------------------------------------- 4. Banco (SQLite)
 Etapa "Banco (SQLite)"

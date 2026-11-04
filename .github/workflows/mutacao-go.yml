@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: [develop, main]
     paths:
-      - 'src/backend-go/**'
+      - 'src/backend/**'
       - 'src/gerenciador-go/**'
       - 'scripts/ci/mutacao-go.py'
       - 'scripts/ci/mutacao-go*.txt'
@@ -47,8 +47,8 @@ jobs:
       - name: Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: src/backend-go/go.mod
-          cache-dependency-path: src/backend-go/go.sum
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
       - name: Teste de mutação
         env:
@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: mutacao-go
-          path: src/backend-go/mutacao/
+          path: src/backend/mutacao/
           if-no-files-found: ignore
           retention-days: 30
 
