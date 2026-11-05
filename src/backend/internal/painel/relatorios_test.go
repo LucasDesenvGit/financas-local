@@ -236,7 +236,7 @@ func TestMaioresDespesas(t *testing.T) {
 	for _, l := range lista {
 		valores = append(valores, l.Valor.String())
 	}
-	if strings.Join(valores, " ") != "-1850.0 -27.45 -223.5" {
+	if strings.Join(valores, " ") != "-1850.0 -223.5 -27.45" { // #499: pelo número
 		t.Errorf("maiores despesas: %s", r.Corpo)
 	}
 }
