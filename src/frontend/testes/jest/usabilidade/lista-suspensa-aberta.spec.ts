@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { codigosDoApp } from '../apoio/codigo';
 import { ListaSuspensaDirective } from '../../../src/app/compartilhado/ui/lista-suspensa.directive';
 
 /**
@@ -121,15 +120,14 @@ describe('Usabilidade: lista suspensa aberta', () => {
   });
 
   it('toda tela com <select> importa a diretiva (senão a lista aberta volta a ser a do sistema)', () => {
-    const app = join(__dirname, '../../../src/app');
-    const pastas = ['paginas', 'compartilhado', 'layout'].map((p) => join(app, p));
-    const sem = pastas
-      .flatMap((p) => readdirSync(p, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts')).map((f) => join(p, f)))
-      .filter((f) => !f.endsWith('lista-suspensa.directive.ts'))
-      .filter((f) => {
-        const fonte = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    // O template em arquivo próprio vem junto com o .ts, que é onde fica o imports (#475).
+    const sem = codigosDoApp('paginas', 'compartilhado', 'layout')
+      .filter((c) => !c.arquivo.endsWith('lista-suspensa.directive.ts'))
+      .filter((c) => {
+        const fonte = c.texto.replace(/\/\*[\s\S]*?\*\//g, '');
         return fonte.includes('<select') && !fonte.includes('ListaSuspensaDirective');
-      });
+      })
+      .map((c) => c.arquivo);
     expect(sem).toEqual([]);
   });
 });

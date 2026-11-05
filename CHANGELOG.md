@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.10] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Os testes que leem o código enxergam o template em arquivo próprio** (parte de #475; ADR 0059). Sete testes do front-end procuram coisas no template das telas como texto, por exemplo campo de data sem o `app-campo-data`, clique sem caminho pelo teclado ou `<select>` sem a lista suspensa do site. Eles liam só o `.ts`: com o template num `.html`, passariam sem olhar nada. Agora leem pelo `testes/jest/apoio/codigo.ts`, que junta ao `.ts` o template e o CSS que o componente aponta. Um teste novo falha se um `.html` ou `.css` não é apontado por nenhum componente. O `testes-afetados.py` conta o `.html` e o `.css` como o componente deles, em vez de rodar todos os testes. Nada muda para quem usa.
+
 ## [3.3.9] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

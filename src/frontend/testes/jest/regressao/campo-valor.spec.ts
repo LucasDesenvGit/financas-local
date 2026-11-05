@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { readFileSync } from 'fs';
+import { APP, codigo } from '../apoio/codigo';
 import { join } from 'path';
 import { CampoValorComponent, formatarDigitando, formatarValor, interpretarValor } from '../../../src/app/compartilhado/ui/campo-valor.component';
 
@@ -196,7 +196,7 @@ describe('Regressão: campo de valor em reais (#132)', () => {
       'planejamento/orcamentos', 'patrimonio/investimentos', 'patrimonio/conferir-investimentos'];
     const dinheiro = /type="number"[^>]*\[\(ngModel\)\]="[^"]*\b(valor|valorAlvo|valorAtual|valorAporte|valorEditado|saldo|saldoInicial|limiteCredito|precoUnitario|precoAtual|preco|taxas)"/;
     for (const tela of telas) {
-      const fonte = readFileSync(join(__dirname, `../../../src/app/paginas/${tela}.component.ts`), 'utf8');
+      const fonte = codigo(join(APP, `paginas/${tela}.component.ts`));
       expect({ tela, achou: dinheiro.test(fonte) }).toEqual({ tela, achou: false });
     }
   });
