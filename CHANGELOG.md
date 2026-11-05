@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.2] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Transferência, lançamento e conta a pagar sem data são recusados** (#503). Uma chamada direta à API sem a data gravava a transferência, o lançamento ou o vencimento da conta a pagar em 01/01/0001, e o acerto das transferências passava a falhar. Agora é um erro de campo obrigatório, e nada é gravado. Pelo site nada muda: o formulário sempre manda a data.
+
 ## [3.3.0] — 2026-11-04 · desenvolvimento
 
 ### Funcionalidades
