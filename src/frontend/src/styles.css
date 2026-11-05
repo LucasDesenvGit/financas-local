@@ -14,7 +14,7 @@
   --texto: #2b2939;
   --texto-forte: #1d1b2b;
   /* WCAG 1.4.3: texto suave, positivo, negativo, alerta e emergência com >= 4,5:1 sobre todos os fundos claros
-     (fundo, superfícies e tons "-suave", em todas as paletas); conferido em testes/regressao/contraste-tema.spec.ts. */
+     (fundo, superfícies e tons "-suave", em todas as paletas); conferido em testes/jest/regressao/contraste-tema.spec.ts. */
   --texto-suave: #67647f;
 
   --primaria: #6267da;

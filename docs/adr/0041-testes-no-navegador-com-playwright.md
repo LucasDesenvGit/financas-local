@@ -23,9 +23,9 @@ A issue #185 pediu um jeito de o Claude Code (e qualquer pessoa) conferir sozinh
 
 ## Decisão
 
-Testes no navegador com **`@playwright/test`** (dependência só de desenvolvimento, em `src/frontend`), na pasta `src/frontend/testes-navegador/`:
+Testes no navegador com **`@playwright/test`** (dependência só de desenvolvimento, em `src/frontend`), na pasta `src/frontend/testes/navegador/`:
 
-- **O que é testado:** o **build de produção** (`dist/`), servido por `testes-navegador/servidor.mjs` com a **mesma CSP da API**, lida do `Seguranca.cs` (sem cópia para ficar velha). O servidor se recusa a subir se a CSP lida parecer vazia.
+- **O que é testado:** o **build de produção** (`dist/`), servido por `testes/navegador/servidor.mjs` com a **mesma CSP da API**, lida do `Seguranca.cs` (sem cópia para ficar velha). O servidor se recusa a subir se a CSP lida parecer vazia.
 - **Sem back-end:** as chamadas `/api/**` são respondidas pela **API falsa** (`api-falsa.ts`), com dados de exemplo; nenhum dado real é usado. Chamada que a API falsa não conhece **faz o teste falhar**, com o caminho.
 - **O que conta como "quebrou"**, em todo teste (fixtures automáticas em `base.ts`): erro no console, exceção, **violação de CSP** (pelo evento `securitypolicyviolation` do navegador) e erro que o site manda para `/api/erros/front-end`.
 - **Testes:** cada tela do menu abre (computador e celular), entrada no site, gaveta do menu no celular, nada passando da largura do celular, navegação e voltar do navegador. Mais **prints sob demanda** (`fotos.spec.ts`), em claro e escuro.
@@ -52,7 +52,7 @@ A eficácia foi provada recolocando de propósito o bug da #157 (SRI ligado): o 
 
 ## Atualização de 2026-10-20: estilos conferidos no navegador (issue #204)
 
-- **O que mudou:** os testes do Jest que adivinhavam o estilo lendo o `styles.css` (`cssRules`, ordem das regras) foram para o navegador, em `testes-navegador/estilos.spec.ts`, medindo o efeito na tela:
+- **O que mudou:** os testes do Jest que adivinhavam o estilo lendo o `styles.css` (`cssRules`, ordem das regras) foram para o navegador, em `testes/navegador/estilos.spec.ts`, medindo o efeito na tela:
   - cards do mês em três colunas iguais;
   - "Faturas do mês" na linha toda e dividindo a largura;
   - contas e cartões com a mesma altura e o rodapé alinhado (subgrid);
@@ -75,3 +75,7 @@ A eficácia foi provada recolocando de propósito o bug da #157 (SRI ligado): o 
 - **O que aconteceu:** o teste novo do calendário passou aqui (Edge) e falhou na CI (Chromium do Playwright, Linux), só no celular. Com outras fontes, a altura muda; e o toque na tela de celular rolava a página, o que fechava o calendário antes de ele aparecer. O defeito era do site (no celular de verdade, o toque também rola), e o Edge daqui não mostrava.
 - **Decisão:** antes de subir mudança no front-end, os testes no navegador rodam também com `NAVEGADOR=chromium` (o mesmo Chromium da CI, instalado uma vez com `npx playwright install chromium`); teste novo, com `--repeat-each=5`. Falha só na CI se investiga pelo artefato `testes-navegador` (print e `error-context.md`), sem subir tentativas.
 - **Custo:** ~150 MB do Chromium baixados uma vez neste computador; a suíte roda duas vezes antes de subir (Edge no dia a dia, Chromium antes do push). Fontes do Linux da CI continuam diferentes das daqui: o artefato da CI segue sendo a fonte de verdade quando só lá falha.
+
+## Atualização de 2026-11-05: a pasta passou para dentro de `testes/` (issue #634)
+
+O que era `src/frontend/testes-navegador/` agora é `src/frontend/testes/navegador/`, ao lado de `testes/jest/` e `testes/arquitetura/` (ADR 0013, mesma data). Os resultados e o relatório também mudaram de lugar (`testes/navegador/resultados/` e `testes/navegador/relatorio/`); o nome do artefato da CI continua `testes-navegador-<parte>`.

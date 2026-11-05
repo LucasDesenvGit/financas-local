@@ -126,8 +126,8 @@ Em outubro de 2026 o Jest chegou a levar ~6 min na CI (#204): um pacote pesado i
 
 | O que testar | Onde | Por quê |
 |---|---|---|
-| Lógica, cálculo, componente isolado, texto, atributo de acessibilidade | **Jest** (`testes/regressao`, `testes/usabilidade`) | rápido, sem navegador ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)) |
-| Desenho, CSS calculado (`var()`, grid, tamanho de alvo), rota de verdade, CSP, console, celular | **Navegador** (`testes-navegador/`) | o jsdom não calcula estilo nem aplica a CSP ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
+| Lógica, cálculo, componente isolado, texto, atributo de acessibilidade | **Jest** (`testes/jest/regressao`, `testes/jest/usabilidade`) | rápido, sem navegador ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)) |
+| Desenho, CSS calculado (`var()`, grid, tamanho de alvo), rota de verdade, CSP, console, celular | **Navegador** (`testes/navegador/`) | o jsdom não calcula estilo nem aplica a CSP ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
 
 Não repita no Jest o que o navegador já confere, e vice-versa.
 
@@ -141,7 +141,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 - **Tempo (medido em 21/10/2026):** numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge.
 - **O Python 3 é achado sozinho:** `python` no Windows, `python3` no Linux.
 
-- **Estilo calculado se testa no navegador**, em `testes-navegador/estilos.spec.ts`: layout (alturas, colunas, largura), borda, grid/subgrid, `var()`, quem vence na cascata, animação, "reduzir movimento", tamanho de alvo. **Não escreva teste do Jest que procura a regra no `styles.css`** (`cssRules`, ordem das regras no arquivo): ele quebra quando a regra é reescrita com o mesmo efeito e passa quando outra regra a anula. Propriedade simples que o jsdom calcula (`width`, `min-height`, `visibility`) pode ficar no Jest.
+- **Estilo calculado se testa no navegador**, em `testes/navegador/estilos.spec.ts`: layout (alturas, colunas, largura), borda, grid/subgrid, `var()`, quem vence na cascata, animação, "reduzir movimento", tamanho de alvo. **Não escreva teste do Jest que procura a regra no `styles.css`** (`cssRules`, ordem das regras no arquivo): ele quebra quando a regra é reescrita com o mesmo efeito e passa quando outra regra a anula. Propriedade simples que o jsdom calcula (`width`, `min-height`, `visibility`) pode ficar no Jest.
 - **Meça o efeito, não a regra:** "os três cards têm a mesma altura" (`boundingBox`), não "existe `align-items: stretch`".
 - **Teste novo de estilo prova que falha:** estrague a regra no CSS do build (`dist/…/styles-*.css`), rode o teste, veja falhar e restaure. Se não falhar, os dados da API falsa provavelmente não exercitam o caso (ex.: dois cards com o mesmo conteúdo ficam iguais mesmo sem a regra): use conteúdos de tamanhos diferentes.
 
@@ -168,8 +168,8 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
   - **No resumo do job:** os 10 testes mais lentos.
 
 **Importação pesada é a causa nº 1 de teste lento.** Um arquivo de teste importa a tela, que importa os componentes dela, que importam bibliotecas. Biblioteca grande (ícones, gráficos, editores…) carregada no Jest custa em todo arquivo que encosta nela:
-- **antes de pôr uma dependência nova no front-end**, rode um teste que a use e veja o tempo (`npx jest testes/<arquivo>.spec.ts`);
-- **se pesar**, troque-a nos testes do Jest por um substituto leve em `testes/apoio/`, ligado no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js` (ícones). O build e os testes no navegador continuam com a de verdade.
+- **antes de pôr uma dependência nova no front-end**, rode um teste que a use e veja o tempo (`npx jest testes/jest/<pasta>/<arquivo>.spec.ts`);
+- **se pesar**, troque-a nos testes do Jest por um substituto leve em `testes/jest/apoio/`, ligado no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js` (ícones). O build e os testes no navegador continuam com a de verdade.
 
 **Como medir quando algo ficou lento:**
 1. `npx jest --ci --json --outputFile=jest-resultado.json` e `python3 ../../scripts/ci/verificar-tempo-testes.py jest-resultado.json`: os arquivos mais lentos;
@@ -279,8 +279,8 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
 - [ ] Compila: `go build ./...` em `src/backend` e `npm run build` em `src/frontend`.
-- [ ] Testes no navegador passam: `NAVEGADOR=chromium npm run test:afetados` em `src/frontend`, que roda o Jest e o navegador só no que mudou (#286; a suíte inteira roda na CI, no merge; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes-navegador/base.ts`); endpoint novo, em `testes-navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
-- [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/regressao/`; padrão novo de UI/UX, em `testes/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
+- [ ] Testes no navegador passam: `NAVEGADOR=chromium npm run test:afetados` em `src/frontend`, que roda o Jest e o navegador só no que mudou (#286; a suíte inteira roda na CI, no merge; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes/navegador/base.ts`); endpoint novo, em `testes/navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
+- [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/jest/regressao/`; padrão novo de UI/UX, em `testes/jest/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
 - [ ] Back-end em Go: regra nova com teste unitário, consulta nova com teste no SQLite real, endpoint novo com caso de contrato, e as mutações listadas no PR ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md), "Testes do back-end (Go)" acima).
 - [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`) chamado em `scripts/geral/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)). Sem migrations.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.

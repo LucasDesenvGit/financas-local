@@ -24,4 +24,4 @@ Preferência de **exibição** fica no `localStorage`, com chaves `financas.*` (
   - a escolha não acompanha a pessoa entre navegadores/aparelhos (configura de novo em cada um);
   - limpar os dados do navegador apaga as preferências;
   - "ocultar valores" é por navegador: quem ligou no computador e abre no celular vê os valores — é privacidade de tela, não controle de acesso.
-- **Na prática:** preferência visual nova usa uma chave `financas.<nome>` com `try/catch` e padrão seguro; nada de dado financeiro ou segredo no `localStorage`. Os testes limpam o `localStorage` entre um caso e outro (`testes/configurar-jest.ts`).
+- **Na prática:** preferência visual nova usa uma chave `financas.<nome>` com `try/catch` e padrão seguro; nada de dado financeiro ou segredo no `localStorage`. Os testes limpam o `localStorage` entre um caso e outro (`testes/jest/configurar-jest.ts`).

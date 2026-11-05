@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.6] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Os testes do front-end numa pasta só** (parte de #634). As três pastas de teste que ficavam soltas em `src/frontend` agora ficam dentro de `testes/`, uma por ferramenta: `testes/jest/` (o que era `testes/`), `testes/navegador/` (o que era `testes-navegador/`) e `testes/arquitetura/` (o que era `testes-arquitetura/`). Os comandos são os mesmos (`npm test`, `npm run test:navegador`, `npm run test:afetados`, `npm run test:arquitetura`) e rodam os mesmos testes, no mesmo tempo. Nada muda para quem usa. Branch aberta antes desta mudança que cria teste novo: mova-o para a pasta nova antes do merge.
+
 ## [3.3.5] — 2026-11-04 · desenvolvimento
 
 ### Publicação e documentação

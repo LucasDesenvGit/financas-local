@@ -48,4 +48,4 @@ Todos em `src/app/compartilhado/`, salvo indicação.
 
 ## Componente novo em `compartilhado/`
 
-Só quando uma segunda tela precisar (antes disso, fica na tela). Ele não importa `paginas/` nem `layout/` (teste de arquitetura), traz o comentário no topo com o princípio de UI/UX e um exemplo de uso, e ganha teste em `testes/usabilidade/` com o critério que ele garante. Padrão novo de UI entra na lista "padrões já adotados" de `docs/UI-UX.md`, com ADR se mudar o que já foi decidido.
+Só quando uma segunda tela precisar (antes disso, fica na tela). Ele não importa `paginas/` nem `layout/` (teste de arquitetura), traz o comentário no topo com o princípio de UI/UX e um exemplo de uso, e ganha teste em `testes/jest/usabilidade/` com o critério que ele garante. Padrão novo de UI entra na lista "padrões já adotados" de `docs/UI-UX.md`, com ADR se mudar o que já foi decidido.

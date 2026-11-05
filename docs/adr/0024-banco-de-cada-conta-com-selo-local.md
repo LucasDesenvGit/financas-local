@@ -98,7 +98,7 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
   próprio); o efeito é só o selo errado, e o nome continua escrito ao lado.
 - **Na prática:** tela nova com lançamentos ou cobranças usa `<app-selo-servico>` com os textos que tiver (exemplos no
   comentário do componente). Serviço novo entra em `servicos.ts` (o `path` do SVG do Simple Icons, quando houver, ou cor e sigla),
-  com o termo do extrato; o teste `testes/regressao/selo-cobranca.spec.ts` confere que todo serviço tem desenho ou sigla.
+  com o termo do extrato; o teste `testes/jest/regressao/selo-cobranca.spec.ts` confere que todo serviço tem desenho ou sigla.
 
 ## Atualização de 2026-10-21: bandeiras do Câmbio (issue #278)
 

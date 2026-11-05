@@ -293,8 +293,10 @@ O caminho de uma tela até a API: a página chama um método do `ApiService`, qu
 | `src/app/layout/` | Estrutura da tela: barra superior e menu lateral, em grupos que abrem e fecham (`MENU` em `shell.component.ts`, [ADR 0046](adr/0046-menu-lateral-em-grupos-que-abrem-e-fecham.md)). |
 | `src/app/paginas/` | Uma página por rota. |
 | `src/styles.css` | Tema (tokens de cor claros/escuros) e componentes visuais globais. |
-| `testes-navegador/` | Testes no navegador com Playwright ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)): o build de produção servido com a CSP da API (`servidor.mjs`), a API falsa (`api-falsa.ts`), as fixtures que tratam erro de console, exceção e bloqueio de CSP como falha (`base.ts`) e os prints sob demanda (`fotos.spec.ts`). |
-| `testes/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). Fora do build do Angular. |
+| `testes/` | Todos os testes do front-end, fora do build do Angular, com uma subpasta por ferramenta (#634). Na raiz, só o `rodar-afetados.mjs` (`npm run test:afetados`), que serve ao Jest e ao navegador. |
+| `testes/jest/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). É a única pasta do `npm test` (`roots` do `jest.config.js`). |
+| `testes/navegador/` | Testes no navegador com Playwright ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)): o build de produção servido com a CSP da API (`servidor.mjs`), a API falsa (`api-falsa.ts`), as fixtures que tratam erro de console, exceção e bloqueio de CSP como falha (`base.ts`) e os prints sob demanda (`fotos.spec.ts`). |
+| `testes/arquitetura/` | Teste de arquitetura (quem pode importar quem em `src/app`, #476). Só local: roda com `npm run test:arquitetura`, e nem o `npm test` nem a CI o rodam. |
 
 Angular 22 com zone.js (`provideZoneChangeDetection`) e componentes standalone. Todo componente declara `changeDetection: ChangeDetectionStrategy.Eager` — o comportamento padrão até o Angular 21 —, porque várias telas guardam estado em campos comuns e não em signals; o padrão OnPush do Angular 22 deixaria essas telas sem atualizar.
 

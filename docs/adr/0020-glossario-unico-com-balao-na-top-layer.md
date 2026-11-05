@@ -25,5 +25,5 @@ As definições ficam num **glossário único** (`compartilhado/glossario.ts`, 1
 - **Negativas:**
   - exige navegador com Popover API (Chrome/Edge 114+, Firefox 125+, Safari 17+, de 2023–2024); em navegador mais antigo o ⓘ não abre o balão;
   - o balão fecha ao rolar a página (posição fixa não acompanha a rolagem) — *julgamento próprio*, para não ficar solto na tela;
-  - o jsdom dos testes não tem Popover API: os testes usam um substituto mínimo (`testes/apoio/popover.ts`) e simulam o layout.
-- **Na prática:** termo técnico novo entra em `glossario.ts` e é marcado com `<app-termo>`; nunca explicar só com `title=`. Testes em `testes/usabilidade/glossario-termo.spec.ts` e `testes/regressao/termo-balao.spec.ts`.
+  - o jsdom dos testes não tem Popover API: os testes usam um substituto mínimo (`testes/jest/apoio/popover.ts`) e simulam o layout.
+- **Na prática:** termo técnico novo entra em `glossario.ts` e é marcado com `<app-termo>`; nunca explicar só com `title=`. Testes em `testes/jest/usabilidade/glossario-termo.spec.ts` e `testes/jest/regressao/termo-balao.spec.ts`.

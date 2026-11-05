@@ -32,7 +32,7 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
 - **Negativas:**
   - `appearance: none` desenha o controle à mão: o visual depende do CSS do site e precisa ser conferido nos dois temas a cada mudança de tokens de cor;
   - fica a cargo de quem cria uma tela escolher certo entre interruptor e caixa de marcar: um interruptor num formulário com "Salvar" engana.
-- **Na prática:** efeito imediato → `<label class="interruptor"><input type="checkbox" role="switch" …> Rótulo</label>`; formulário com "Salvar" → `label.checkbox`. Teste em `testes/usabilidade/interruptor.spec.ts`.
+- **Na prática:** efeito imediato → `<label class="interruptor"><input type="checkbox" role="switch" …> Rótulo</label>`; formulário com "Salvar" → `label.checkbox`. Teste em `testes/jest/usabilidade/interruptor.spec.ts`.
 
 ## Caixa de marcar e seleção em tabelas (#133)
 
@@ -54,7 +54,7 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
   - **Calendário próprio:** segue o padrão *Date Picker Dialog* do WAI-ARIA APG (setas, Home/End, PageUp/PageDown, Shift para o ano, Esc), com « ‹ › », "Hoje" e "Limpar".
   - **Meses e anos pelo título (#264):** o título do mês ("outubro de 2026") é um botão que troca a grade de dias pela de meses do ano; o título do ano ("2026") leva a uma página de 12 anos ("2020–2031", páginas a partir de 1900). Escolher desce um nível (ano → meses → dias), ‹ › trocam o ano ou a página, e Esc sobe um nível antes de fechar. Meses e anos fora dos limites ficam desabilitados; o escolhido e o de hoje, destacados, como os dias. Teclado nas grades: ← → um, ↑ ↓ uma linha, Home/End, PageUp/PageDown. Alvos de 44 px de altura (WCAG 2.5.8).
     - **Por que:** ir a uma data distante (nascimento, compra antiga, o fim de um financiamento) pedia dezenas de cliques nas setas (Nielsen 7). As setas continuam para quem anda mês a mês.
-    - *Julgamento próprio:* o modelo dias → meses → anos ao clicar no título é o mais comum em seletores de data; ainda não validado com uso real aqui. Testes em `testes/regressao/calendario-meses-anos.spec.ts` e `testes-navegador/calendario.spec.ts`.
+    - *Julgamento próprio:* o modelo dias → meses → anos ao clicar no título é o mais comum em seletores de data; ainda não validado com uso real aqui. Testes em `testes/jest/regressao/calendario-meses-anos.spec.ts` e `testes/navegador/calendario.spec.ts`.
   - **Limites:** 1900–2099 por padrão, ou os da tela (`[maximo]="hoje"`).
   - **Valor:** entrega o mesmo `'AAAA-MM-DD'` ao `ngModel` (`''` quando vazio). `(alterado)` faz o papel do `(change)` nativo.
   - **Alternativas descartadas:** só limitar o campo nativo com `max` (resolvia o ano, mas não o visual) e uma biblioteca de calendário (dependência externa).
@@ -62,7 +62,7 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
   - **Descartado:** `appearance: base-select`, porque no Edge 155 o texto escolhido passava por baixo da seta.
 - **Seletor de mês:** o nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez.
 - **Negativas:**
-  - mais código próprio de controle (teclado, posição, foco) para manter, coberto por testes em `testes/usabilidade/calendario.spec.ts`, `lista-suspensa-aberta.spec.ts` e `seletor-mes.spec.ts`;
+  - mais código próprio de controle (teclado, posição, foco) para manter, coberto por testes em `testes/jest/usabilidade/calendario.spec.ts`, `lista-suspensa-aberta.spec.ts` e `seletor-mes.spec.ts`;
   - o calendário e a lista têm de ser conferidos nos dois temas a cada mudança de cor;
   - no celular, a lista suspensa continua a do sistema (escolha, *julgamento próprio*).
 - **Na prática:**
@@ -98,4 +98,4 @@ Todo campo de **dinheiro** usa o **`app-campo-valor`** (`compartilhado/campo-val
   - a conta dentro do campo ("120+35,50"), opcional na issue, ficou de fora;
   - o componente desenha a "caixa" do campo (fundo, borda, foco) por fora do `<input>`: mudança no visual dos campos precisa olhar os dois;
   - formatar ao digitar exige controlar o cursor à mão (`formatarDigitando`): um caso de edição não previsto pode deixar o cursor num lugar estranho; os testes cobrem digitar no fim e no meio, apagar o ponto de milhar e colar.
-- **Na prática:** campo de dinheiro novo → `<label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>`. Testes em `testes/regressao/campo-valor.spec.ts` (inclui uma trava que falha se um campo de dinheiro voltar a ser `type="number"`) e `testes/usabilidade/campo-valor.spec.ts`.
+- **Na prática:** campo de dinheiro novo → `<label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>`. Testes em `testes/jest/regressao/campo-valor.spec.ts` (inclui uma trava que falha se um campo de dinheiro voltar a ser `type="number"`) e `testes/jest/usabilidade/campo-valor.spec.ts`.
