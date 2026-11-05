@@ -55,6 +55,8 @@
     {"nome": "segunda sincronização: transações mudam, pendente some", "metodo": "POST", "caminho": "/api/open-finance/sincronizar?conexaoId=3"},
     {"nome": "terceira sincronização: a instituição pede ação", "metodo": "POST", "caminho": "/api/open-finance/sincronizar?conexaoId=3"},
     {"nome": "quarta sincronização: nada muda", "metodo": "POST", "caminho": "/api/open-finance/sincronizar?conexaoId=3"},
+    {"nome": "quinta sincronização: a instituição espera um dado", "comentario": "#532: o item volta em WAITING_USER_INPUT (dados/pluggy, .6.json: o sexto pedido do item).", "metodo": "POST", "caminho": "/api/open-finance/sincronizar?conexaoId=3"},
+    {"nome": "painel com a conexão esperando um dado", "comentario": "#532: o aviso de ação no Meu Pluggy vale também para WAITING_USER_INPUT.", "metodo": "GET", "caminho": "/api/painel"},
     {"nome": "importar a carteira de novo", "metodo": "POST", "caminho": "/api/carteira/importar-open-finance"},
     {"nome": "status depois de sincronizar", "metodo": "GET", "caminho": "/api/open-finance/status"},
     {"nome": "conexão 3 desligada: nenhuma ativa para sincronizar", "metodo": "PUT", "caminho": "/api/open-finance/conexoes/3/ativa?ativa=false"},

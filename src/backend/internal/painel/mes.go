@@ -503,7 +503,8 @@ func (s *Servico) avisosDasConexoes(ctx context.Context) ([]string, error) {
 		switch {
 		case ultimoErro != nil && *ultimoErro != "":
 			lista = append(lista, "Falha na última sincronização de "+nome+". Veja em Configurações › Open Finance.")
-		case status != nil && (*status == "LOGIN_ERROR" || *status == "WAITING_USER_ACTION"):
+		// Os estados que Configurações chama de "Precisa de ação sua" (#532: o WAITING_USER_INPUT ficava de fora).
+		case status != nil && (*status == "LOGIN_ERROR" || *status == "WAITING_USER_ACTION" || *status == "WAITING_USER_INPUT"):
 			lista = append(lista, nome+" precisa de uma ação sua no Meu Pluggy para voltar a sincronizar.")
 		}
 	}
