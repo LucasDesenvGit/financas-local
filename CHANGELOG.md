@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.12] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **As janelas de lançamento e de transferência de Transações viram componentes de apresentação** (parte de #475; ADR 0059). "Novo lançamento" / "Editar transação" e "Transferência entre contas" saíram da tela para `transacoes-lancamento.component.ts` e `transacoes-transferencia.component.ts`. Elas recebem o formulário, editam uma cópia e avisam a tela, que é quem grava; fechar sem salvar não muda nada. O teste de arquitetura ganha a regra 8: componente de apresentação, listado na tabela `APRESENTACAO`, não chama a API nem lê a rota. As duas janelas, que não tinham teste, ganharam testes no Jest e no navegador, do botão até o pedido que chega na API. Os prints das janelas saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
+
 ## [3.3.11] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

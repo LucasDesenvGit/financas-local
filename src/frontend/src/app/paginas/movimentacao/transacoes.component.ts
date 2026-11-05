@@ -2,9 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
 import { FormsModule } from '@angular/forms';
-import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { PrivacidadeService } from '../../core/privacidade.service';
-import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
@@ -26,10 +24,13 @@ import { GRUPOS_LANCAMENTO, TIPOS_LANCAMENTO } from '../../compartilhado/lancame
 import { RenomearTransacaoComponent } from './renomear-transacao.component';
 import { RenomearEmLoteComponent } from './renomear-em-lote.component';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
+import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component';
 import { SeloServicoComponent } from '../../compartilhado/bancos/selo-servico.component';
+import { TransacoesLancamentoComponent } from './transacoes-lancamento.component';
+import { TransacoesTransferenciaComponent } from './transacoes-transferencia.component';
 import {
   COLUNAS_ORDENAVEIS, ChipFiltro, ParametrosUrl, EscolhaCategoria, FormTransacao, FormTransferencia, LinhaSugestao, SugestaoRegra,
-  ajusteDoForm, alternarPagina, ariaSortDe, camposDeCategorias, categoriasDoFiltro, chipsDoFiltro, comEscolha, direcaoAoClicar,
+  ajusteDoForm, alternarPagina, ariaSortDe, camposDeCategorias, categoriasRotuladas, categoriasDoFiltro, chipsDoFiltro, comEscolha, direcaoAoClicar,
   direcaoDe, filtroInicial, foraDosGastos, formDaTransacao, formNovo, itensDoLote, lerFiltroDaUrl, linhasDeSugestao,
   marcarIntervalo, nomeConfianca, nomeSelecao, opcoesCategoria, ordemDe, paginaDaUrl, parametrosDoFiltro, regrasSugeridas,
   rotuloCategoria, rotuloCategoriaPorId, rotuloPeriodo, semOChip, setaDe, somandoNosTotais, tamanhoPaginaValido, textoSelecao,
@@ -43,8 +44,8 @@ import {
 @Component({
   selector: 'app-transacoes',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
-    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, CampoValorComponent,
-    CampoDataComponent, SeloServicoComponent],
+    IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, SeloServicoComponent,
+    CampoDataComponent, TransacoesLancamentoComponent, TransacoesTransferenciaComponent],
   templateUrl: './transacoes.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './transacoes.component.css'
@@ -82,6 +83,8 @@ export class TransacoesComponent implements OnInit {
   private readonly categoriasFiltradas = signal<string[]>([]);
   /** Opções do filtro de categorias: "Sem categoria" e cada categoria seguida das subcategorias (recuadas). */
   readonly opcoesCategoria = computed<OpcaoMultipla[]>(() => opcoesCategoria(this.categorias(), this.todasCategorias()));
+  /** As categorias oferecidas com o rótulo pronto ("Lazer › Cinema"), para os componentes de apresentação. */
+  readonly categoriasRotuladas = computed(() => categoriasRotuladas(this.categorias(), this.todasCategorias()));
   readonly pagina = signal<PaginaTransacoes | null>(null);
   readonly selecionadas = signal<Set<number>>(new Set());
   readonly salvando = signal(false);
@@ -695,9 +698,8 @@ export class TransacoesComponent implements OnInit {
     this.api.sugestoesDaTransacao(t.id).subscribe({ next: (s) => this.sugestoesForm.set(s), error: () => { /* opcional */ } });
   }
 
-  salvar(): void {
-    const f = this.form;
-    if (!f) return;
+  /** "Salvar" da janela do lançamento, com o que foi editado nela. */
+  salvar(f: FormTransacao): void {
     this.salvando.set(true);
 
     const requisicao = f.openFinance && f.id
@@ -735,9 +737,9 @@ export class TransacoesComponent implements OnInit {
     this.transferencia = { contaOrigemId: null, contaDestinoId: null, valor: null, data: dataIso(), descricao: '' };
   }
 
-  salvarTransferencia(): void {
-    const t = this.transferencia;
-    if (!t?.contaOrigemId || !t.contaDestinoId || !t.valor) return;
+  /** "Transferir" da janela da transferência, com o que foi editado nela. */
+  salvarTransferencia(t: FormTransferencia): void {
+    if (!t.contaOrigemId || !t.contaDestinoId || !t.valor) return;
     this.salvando.set(true);
     this.api.transferir({
       contaOrigemId: t.contaOrigemId, contaDestinoId: t.contaDestinoId, valor: Number(t.valor), data: t.data,

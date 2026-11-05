@@ -56,8 +56,8 @@ Quem pode importar quem em `src/app` fica em `testes/arquitetura/arquitetura.spe
   2. a 4. o `core/` não importa `compartilhado/`, `layout/` nem `paginas/`; o `compartilhado/` não importa `paginas/` nem `layout/`; o `layout/` não importa `paginas/`. Havia três exceções registradas, que pareciam estar no lugar errado; duas saíram na #634, e sobra a do `shell` com o `manual-conteudo`;
   5. uma página com rota (as do `app.routes.ts`) não importa outra página com rota. Aba e janela de uma página podem;
   6. o `compartilhado/ui/` não importa `compartilhado/bancos/`, `lancamentos/` nem `glossario/` (#634, ADR 0058);
-  7. a lógica de uma tela (`paginas/<grupo>/<tela>.ts`, o que não é componente, diretiva, pipe nem serviço) não importa `@angular/*`, `rxjs` nem o `ApiService` (#475, ADR 0059).
-- A regra do componente de apresentação, que não importa o `ApiService`, entra com o primeiro deles (#475, ADR 0059): hoje não há como diferenciá-lo, pelo nome, das abas e janelas que chamam a API.
+  7. a lógica de uma tela (`paginas/<grupo>/<tela>.ts`, o que não é componente, diretiva, pipe nem serviço) não importa `@angular/*`, `rxjs` nem o `ApiService` (#475, ADR 0059);
+  8. o componente de apresentação (a tabela `APRESENTACAO`) não importa o `ApiService` nem o `@angular/router` (#475, ADR 0059); a tabela é explícita, porque pelo nome não dá para diferenciá-lo das abas e janelas que chamam a API.
 
 
 ## Atualização de 2026-11-05: os testes numa pasta só (issue #634)
