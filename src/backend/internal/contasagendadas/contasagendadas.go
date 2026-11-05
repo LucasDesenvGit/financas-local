@@ -133,7 +133,7 @@ type salvarDto struct {
 func lerSalvar(w http.ResponseWriter, r *http.Request) (salvarDto, bool) {
 	descricao := respostas.CampoTexto{Propriedade: "Descricao", Maximo: 150}
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}
-	vencimento := respostas.CampoData{Propriedade: "ProximoVencimento"}
+	vencimento := respostas.CampoData{Propriedade: "ProximoVencimento", Obrigatoria: true} // #503
 	recorrencia := respostas.CampoEnum{Propriedade: "Recorrencia"}
 	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
 	conta := respostas.CampoInteiroOpcional{Propriedade: "ContaId"}

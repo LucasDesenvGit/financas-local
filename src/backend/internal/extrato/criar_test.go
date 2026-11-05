@@ -128,4 +128,11 @@ func TestCriarComErro(t *testing.T) {
 			manual.Id, data))
 		r.ConferirStatus(t, http.StatusBadRequest)
 	}
+	// #503: sem a data, é o 400 de campo obrigatório (o C# lançava em 01/01/0001).
+	semData := testeapoio.Chamar(t, mux, "POST", "/api/transacoes", fmt.Sprintf(`{"contaId":%d,"descricao":"x","valor":1,"tipo":1}`, manual.Id))
+	semData.ConferirStatus(t, http.StatusBadRequest)
+	if err := json.Unmarshal(semData.Corpo, &problema); err != nil {
+		t.Fatal(err)
+	}
+	testeapoio.ConferirJSON(t, problema.Errors, `{"Data":["The Data field is required."]}`)
 }
