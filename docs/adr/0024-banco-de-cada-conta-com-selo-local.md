@@ -45,7 +45,7 @@ Cada conta tem um **banco**, que vale nesta ordem:
 
 O catálogo e a detecção ficam no `BancoService`, no back-end. A API devolve o código que vale (`ContaDto.Banco`) e se ele foi escolhido.
 
-O **selo** é desenhado no front-end (`compartilhado/bancos.ts` e `app-logo-banco`), sem baixar nada:
+O **selo** é desenhado no front-end (`compartilhado/bancos/bancos.ts` e `app-logo-banco`), sem baixar nada:
 - **Com desenho:** o da marca, do Simple Icons (CC0), copiado para o código (sem dependência npm nova) para Nubank, Mercado Pago, PicPay, PagBank, Nomad, Wise, Revolut e PayPal.
 - **Selo próprio:** cor da marca + sigla para os demais.
 - **Banco não identificado:** ícone neutro.
@@ -63,7 +63,7 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
   - fatura do mês e dívida total com o mesmo significado no Painel e em Contas (Nielsen 4).
 - **Negativas:**
   - para os bancos sem desenho no Simple Icons (Itaú, Bradesco, Santander, BB, Caixa, Inter, C6…), o selo é uma aproximação (cor + sigla), não o logotipo oficial;
-  - **banco novo entra em dois lugares:** `BancoService.Catalogo` (código, nome, termos) e `compartilhado/bancos.ts` (selo). Sem os dois, o banco aparece sem selo (ícone neutro);
+  - **banco novo entra em dois lugares:** `BancoService.Catalogo` (código, nome, termos) e `compartilhado/bancos/bancos.ts` (selo). Sem os dois, o banco aparece sem selo (ícone neutro);
   - a detecção por palavras pode errar (ex.: conta chamada "Next" sem ser do banco Next). Por isso o banco é sempre editável, e "Outro" desliga;
   - `ContaVinculadaId` não tem FK no banco (coluna nova num SQLite já existente): a API limpa a referência ao excluir a conta;
   - as marcas continuam sendo dos donos; aqui servem só para identificar a conta na tela do próprio usuário.
@@ -76,7 +76,7 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
 
 - **O que mudou:** o mesmo selo local identifica também o **serviço de cada cobrança** em Contas a pagar (aba Contas a
   pagar, Assinaturas e recorrentes e Sugestões do extrato): YouTube, Netflix, Spotify, iFood, TIM, Claro, Esfera…
-  - Lista em `compartilhado/servicos.ts`, gerada a partir do pacote `simple-icons` 16.35.0 (CC0): o desenho quando o
+  - Lista em `compartilhado/bancos/servicos.ts`, gerada a partir do pacote `simple-icons` 16.35.0 (CC0): o desenho quando o
     Simple Icons tem a marca (46 dos 123), senão um selo próprio com a cor da marca e uma sigla, como os bancos sem desenho.
     A maioria das marcas brasileiras (TIM, Claro, Oi, 99, Rappi, Magalu, Sem Parar, Sabesp, Enel, Unimed…) não está no
     Simple Icons e fica com a sigla; as cores são aproximadas, e o selo não é o logotipo oficial. O Petlove (uma pata) e o

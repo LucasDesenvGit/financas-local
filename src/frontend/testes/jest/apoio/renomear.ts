@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { PreviaRenomear, RenomearTransacao, TipoCorrespondencia, Transacao } from '../../../src/app/core/modelos';
-import { RenomearTransacaoComponent } from '../../../src/app/paginas/renomear-transacao.component';
+import { RenomearTransacaoComponent } from '../../../src/app/paginas/movimentacao/renomear-transacao.component';
 import { transacao } from './transacoes-edicao';
 
 /** "PIX ENVIADO 12345" do banco, ainda com o nome do banco. */

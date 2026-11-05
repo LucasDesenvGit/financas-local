@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { NotificacoesComponent } from '../../../src/app/compartilhado/notificacoes.component';
+import { NotificacoesComponent } from '../../../src/app/layout/notificacoes.component';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Avisos } from '../../../src/app/core/modelos';
 

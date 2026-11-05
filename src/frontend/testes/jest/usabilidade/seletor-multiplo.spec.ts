@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { OpcaoMultipla, SeletorMultiploComponent } from '../../../src/app/compartilhado/seletor-multiplo.component';
+import { OpcaoMultipla, SeletorMultiploComponent } from '../../../src/app/compartilhado/ui/seletor-multiplo.component';
 import { abrirTransacoes, parametrosDaUrl } from '../apoio/transacoes';
 
 @Component({

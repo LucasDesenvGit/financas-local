@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { HistoricoInvestimentos } from '../../../src/app/core/modelos';
 import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
-import { RendimentoInvestimentosOfComponent } from '../../../src/app/paginas/rendimento-investimentos-of.component';
+import { RendimentoInvestimentosOfComponent } from '../../../src/app/paginas/patrimonio/rendimento-investimentos-of.component';
 
 /**
  * #173 e) (ADR 0045): rendimento por mês dos investimentos do Open Finance (valores fictícios). Shneiderman (a frase do

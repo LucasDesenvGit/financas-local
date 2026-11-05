@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { StatusSincronizacao } from '../../../src/app/core/modelos';
 import { StatusSincronizacaoService } from '../../../src/app/core/status-sincronizacao.service';
-import { StatusSincronizacaoComponent } from '../../../src/app/compartilhado/status-sincronizacao.component';
+import { StatusSincronizacaoComponent } from '../../../src/app/layout/status-sincronizacao.component';
 
 /** Serviço falso: os testes mudam os sinais e conferem o que a barra mostra e anuncia. */
 function servicoFalso() {

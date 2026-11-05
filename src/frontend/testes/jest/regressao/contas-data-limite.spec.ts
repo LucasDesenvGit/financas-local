@@ -1,5 +1,5 @@
 import { Recorrencia } from '../../../src/app/core/modelos';
-import { avancarVencimento } from '../../../src/app/paginas/contas-agendadas.component';
+import { avancarVencimento } from '../../../src/app/paginas/movimentacao/contas-agendadas.component';
 import { abrirContasAPagar, contaAgendada } from '../apoio/contas-agendadas';
 
 /** Regressão da data limite de Contas a pagar (#69): lista, último pagamento, encerrada e o que vai para a API. */

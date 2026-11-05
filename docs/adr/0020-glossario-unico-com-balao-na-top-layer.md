@@ -17,7 +17,7 @@ Telas de investimentos, empréstimos e da Visão anual usam termos técnicos (DY
 
 ## Decisão
 
-As definições ficam num **glossário único** (`compartilhado/glossario.ts`, 1 a 2 frases e exemplo quando ajuda), usado pelo componente `<app-termo chave="...">`: o texto do termo continua normal e um ⓘ (botão de 24×24 px) abre a definição por clique, toque ou teclado; Esc e clique fora fecham sem mover o foco. O balão usa a **Popover API** do navegador (top layer) e é reposicionado para encostar na margem quando não cabe ao lado do ⓘ.
+As definições ficam num **glossário único** (`compartilhado/glossario/glossario.ts`, 1 a 2 frases e exemplo quando ajuda), usado pelo componente `<app-termo chave="...">`: o texto do termo continua normal e um ⓘ (botão de 24×24 px) abre a definição por clique, toque ou teclado; Esc e clique fora fecham sem mover o foco. O balão usa a **Popover API** do navegador (top layer) e é reposicionado para encostar na margem quando não cabe ao lado do ⓘ.
 
 ## Consequências
 

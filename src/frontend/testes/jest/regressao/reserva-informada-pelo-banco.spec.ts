@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Reserva } from '../../../src/app/core/modelos';
-import { InvestimentosComponent } from '../../../src/app/paginas/investimentos.component';
-import { podeConferirReserva } from '../../../src/app/paginas/reserva-conferencia';
+import { InvestimentosComponent } from '../../../src/app/paginas/patrimonio/investimentos.component';
+import { podeConferirReserva } from '../../../src/app/paginas/patrimonio/reserva-conferencia';
 
 /**
  * Regressão do #237: desde o #168, quando a conta tinha o reservado informado pelo Open Finance, todas as reservas dela
@@ -33,7 +33,7 @@ describe('Regressão: "conferir saldo" nas reservas que o banco não detalha (#2
   });
 
   it('a tela decide o botão pela mesma regra, não mais só por "informado pelo banco"', () => {
-    const fonte = readFileSync(join(__dirname, '../../../src/app/paginas/investimentos.component.ts'), 'utf-8');
+    const fonte = readFileSync(join(__dirname, '../../../src/app/paginas/patrimonio/investimentos.component.ts'), 'utf-8');
     expect(fonte).toContain('@if (podeConferir(r))');
     expect(fonte).not.toContain('@if (!r.informadoPeloBanco)');
     const tela = {} as InvestimentosComponent;

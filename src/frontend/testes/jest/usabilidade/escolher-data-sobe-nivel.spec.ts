@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { CampoDataComponent, inicioDaPaginaDeAnos } from '../../../src/app/compartilhado/campo-data.component';
-import { MesAno, SeletorMesComponent } from '../../../src/app/compartilhado/seletor-mes.component';
+import { CampoDataComponent, inicioDaPaginaDeAnos } from '../../../src/app/compartilhado/ui/campo-data.component';
+import { MesAno, SeletorMesComponent } from '../../../src/app/compartilhado/ui/seletor-mes.component';
 
 /**
  * #342 — regra do projeto (docs/UI-UX.md, padrões adotados): todo quadro de escolher data ou mês tem o título como botão que

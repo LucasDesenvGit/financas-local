@@ -6,7 +6,7 @@ import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
 import { paramsTransacoes } from '../../../src/app/compartilhado/utilidades';
 import { ApiService } from '../../../src/app/core/api.service';
 import { TipoTransacao, Transacao } from '../../../src/app/core/modelos';
-import { RelatoriosComponent } from '../../../src/app/paginas/relatorios.component';
+import { RelatoriosComponent } from '../../../src/app/paginas/analises/relatorios.component';
 import { abrirTransacoes, paginaVazia, parametrosDaUrl } from '../apoio/transacoes';
 import { transacao } from '../apoio/transacoes-edicao';
 

@@ -36,11 +36,11 @@ const PASTAS_PROIBIDAS: Record<string, { proibidas: string[]; motivo: string }> 
 const EXCECOES_DE_PASTA: Record<string, string> = {
   'core/status-sincronizacao.service.ts -> compartilhado/avisos.component':
     'o serviço abre o aviso padrão; o AvisosService poderia morar no core',
-  'compartilhado/notificacoes.component.ts -> paginas/painel-avisos':
+  'layout/notificacoes.component.ts -> paginas/painel/painel-avisos':
     'o sino das notificações mostra os avisos do Painel (#327); o cálculo dos avisos poderia morar no core',
-  'compartilhado/notificacoes.component.ts -> paginas/painel-avisos.component':
+  'layout/notificacoes.component.ts -> paginas/painel/painel-avisos.component':
     'o sino das notificações usa o componente dos avisos do Painel (#327)',
-  'layout/shell.component.ts -> paginas/manual-conteudo':
+  'layout/shell.component.ts -> paginas/manual/manual-conteudo':
     'o botão de ajuda leva à seção do Manual da tela (ajudaDaUrl); a função poderia morar no core'
 };
 
@@ -69,9 +69,9 @@ function lerGrafo(): Grafo {
   return grafo;
 }
 
-/** As páginas com rota: os `paginas/x.component` do app.routes.ts. */
+/** As páginas com rota: os `paginas/<grupo>/x.component` (ou `paginas/x.component`, como o entrar) do app.routes.ts. */
 function paginasComRota(grafo: Grafo): Set<string> {
-  return new Set((grafo['app.routes.ts']?.imports ?? []).filter((i) => /^paginas\/[^/]+\.component$/.test(i)));
+  return new Set((grafo['app.routes.ts']?.imports ?? []).filter((i) => /^paginas\/(?:[^/]+\/)?[^/]+\.component$/.test(i)));
 }
 
 /* ------------------------------------------------------------ as regras */
@@ -123,33 +123,33 @@ describe('arquitetura do front-end (#476)', () => {
 
   describe('cada regra falha com um import proibido de mentira, e diz o que fazer', () => {
     const limpo = (): Grafo => ({
-      'app.routes.ts': { imports: ['paginas/painel.component', 'paginas/metas.component'], texto: '' },
+      'app.routes.ts': { imports: ['paginas/painel/painel.component', 'paginas/planejamento/metas.component'], texto: '' },
       'core/api.service.ts': { imports: ['@angular/common/http'], texto: 'inject(HttpClient)' },
       'core/status-sincronizacao.service.ts': { imports: ['compartilhado/avisos.component'], texto: '' },
-      'compartilhado/notificacoes.component.ts': { imports: ['paginas/painel-avisos', 'paginas/painel-avisos.component'], texto: '' },
-      'layout/shell.component.ts': { imports: ['paginas/manual-conteudo'], texto: '' },
-      'paginas/painel.component.ts': { imports: ['core/api.service'], texto: '' },
-      'paginas/metas.component.ts': { imports: ['paginas/metas-plano'], texto: '' }
+      'layout/notificacoes.component.ts': { imports: ['paginas/painel/painel-avisos', 'paginas/painel/painel-avisos.component'], texto: '' },
+      'layout/shell.component.ts': { imports: ['paginas/manual/manual-conteudo'], texto: '' },
+      'paginas/painel/painel.component.ts': { imports: ['core/api.service'], texto: '' },
+      'paginas/planejamento/metas.component.ts': { imports: ['paginas/planejamento/metas-plano'], texto: '' }
     });
     const com = (arquivo: string, imports: string[], texto = ''): Grafo => ({ ...limpo(), [arquivo]: { imports, texto } });
 
     it('o grafo limpo passa', () => expect(violacoes(limpo())).toEqual([]));
 
     const casos: [string, Grafo, string][] = [
-      ['HTTP fora do core', com('paginas/painel.component.ts', ['@angular/common/http']),
-        'regra 1 (HTTP só pelo ApiService): paginas/painel.component.ts importa @angular/common/http'],
+      ['HTTP fora do core', com('paginas/painel/painel.component.ts', ['@angular/common/http']),
+        'regra 1 (HTTP só pelo ApiService): paginas/painel/painel.component.ts importa @angular/common/http'],
       ['HttpClient injetado fora do ApiService', com('core/novo.service.ts', ['@angular/common/http'], 'inject(HttpClient)'),
         'regra 1 (HTTP só pelo ApiService): core/novo.service.ts injeta o HttpClient'],
-      ['core importa página', com('core/api.service.ts', ['@angular/common/http', 'paginas/painel.component'], 'inject(HttpClient)'),
-        'regra 2-4 (o core é a base: serviços e modelos): core/api.service.ts importa paginas/painel.component'],
-      ['compartilhado importa layout', com('compartilhado/grafico.component.ts', ['layout/shell.component']),
-        'regra 2-4 (o componente reutilizável não sabe de uma tela): compartilhado/grafico.component.ts importa layout/shell.component'],
-      ['layout importa página', com('layout/menu.ts', ['paginas/metas.component']),
-        'regra 2-4 (a casca da tela não depende de uma página): layout/menu.ts importa paginas/metas.component'],
-      ['página importa página', com('paginas/painel.component.ts', ['paginas/metas.component']),
-        'regra 5 (página não depende de outra página): paginas/painel.component.ts importa paginas/metas.component'],
+      ['core importa página', com('core/api.service.ts', ['@angular/common/http', 'paginas/painel/painel.component'], 'inject(HttpClient)'),
+        'regra 2-4 (o core é a base: serviços e modelos): core/api.service.ts importa paginas/painel/painel.component'],
+      ['compartilhado importa layout', com('compartilhado/graficos/grafico.component.ts', ['layout/shell.component']),
+        'regra 2-4 (o componente reutilizável não sabe de uma tela): compartilhado/graficos/grafico.component.ts importa layout/shell.component'],
+      ['layout importa página', com('layout/menu.ts', ['paginas/planejamento/metas.component']),
+        'regra 2-4 (a casca da tela não depende de uma página): layout/menu.ts importa paginas/planejamento/metas.component'],
+      ['página importa página', com('paginas/painel/painel.component.ts', ['paginas/planejamento/metas.component']),
+        'regra 5 (página não depende de outra página): paginas/painel/painel.component.ts importa paginas/planejamento/metas.component'],
       ['exceção que sarou', com('layout/shell.component.ts', []),
-        'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual-conteudo" não acontece mais']
+        'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual/manual-conteudo" não acontece mais']
     ];
     it.each(casos)('%s', (_nome, grafo, mensagem) => {
       const v = violacoes(grafo);

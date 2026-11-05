@@ -1,5 +1,5 @@
 import { ChartConfiguration } from 'chart.js';
-import { linhasNoPadrao } from '../../../src/app/compartilhado/grafico-linhas';
+import { linhasNoPadrao } from '../../../src/app/compartilhado/graficos/grafico-linhas';
 
 /**
  * #292: todo gráfico de linha se lê do mesmo jeito (Nielsen 4). A linha principal (contínua) é preenchida da linha até

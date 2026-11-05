@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { CotacaoMoeda } from '../../../src/app/core/modelos';
 import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
-import { CHAVE_MAIS_MOEDAS, InvestimentosCambioComponent, MOEDAS_CAMBIO } from '../../../src/app/paginas/investimentos-cambio.component';
+import { CHAVE_MAIS_MOEDAS, InvestimentosCambioComponent, MOEDAS_CAMBIO } from '../../../src/app/paginas/patrimonio/investimentos-cambio.component';
 
 /**
  * #247: o câmbio em Investimentos. Dólar, euro e iene (por 100) em reais, pela PTAX de compra guardada; a data de cada

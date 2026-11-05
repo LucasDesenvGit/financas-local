@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MaisAnalisesComponent } from '../../../src/app/compartilhado/mais-analises.component';
+import { MaisAnalisesComponent } from '../../../src/app/compartilhado/graficos/mais-analises.component';
 
 /** Conta quantas vezes o conteúdo recolhido foi criado/destruído (fica no lugar de um gráfico pesado). */
 const contagem = { criados: 0, destruidos: 0 };

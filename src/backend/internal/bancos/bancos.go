@@ -15,7 +15,7 @@ import (
 // Outro é o "Outro (sem banco)": escolhido para não identificar banco nenhum (sem selo de marca).
 const Outro = "outro"
 
-// Definicao é um banco do catálogo. Os códigos são os de compartilhado/bancos.ts no front-end, que desenha o selo de
+// Definicao é um banco do catálogo. Os códigos são os de compartilhado/bancos/bancos.ts no front-end, que desenha o selo de
 // cada um: banco novo entra nos dois lugares (e no C#, enquanto ele existir).
 type Definicao struct {
 	Codigo, Nome string

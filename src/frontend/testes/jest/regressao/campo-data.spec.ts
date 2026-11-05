@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import {
   CampoDataComponent, DATA_MAXIMA, dataInicialDoCalendario, formatarDataDigitando, isoParaTexto, textoParaIso
-} from '../../../src/app/compartilhado/campo-data.component';
+} from '../../../src/app/compartilhado/ui/campo-data.component';
 
 /**
  * Regressão do campo de data (app-campo-data): o <input type="date"> aceitava ano com 6 dígitos ("13/02/275760") e
@@ -101,7 +101,7 @@ describe('Regressão: campo de data', () => {
 
   it('nenhuma tela usa mais <input type="date"> (todas usam app-campo-data)', () => {
     const pasta = join(__dirname, '../../../src/app/paginas');
-    const comDate = readdirSync(pasta).filter((f) => f.endsWith('.ts'))
+    const comDate = readdirSync(pasta, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts'))
       .filter((f) => readFileSync(join(pasta, f), 'utf8').includes('type="date"'));
     expect(comDate).toEqual([]);
   });

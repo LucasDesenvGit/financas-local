@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { CampoValorComponent, formatarDigitando, formatarValor, interpretarValor } from '../../../src/app/compartilhado/campo-valor.component';
+import { CampoValorComponent, formatarDigitando, formatarValor, interpretarValor } from '../../../src/app/compartilhado/ui/campo-valor.component';
 
 /**
  * Regressão #132: os campos de dinheiro eram <input type="number">. "1.500" virava 1,5; colar "R$ 1.234,56" do app
@@ -192,7 +192,8 @@ describe('Regressão: campo de valor em reais (#132)', () => {
   });
 
   it('nenhum campo de dinheiro das telas voltou a ser <input type="number">', () => {
-    const telas = ['transacoes', 'contas', 'contas-agendadas', 'metas', 'orcamentos', 'investimentos', 'conferir-investimentos'];
+    const telas = ['movimentacao/transacoes', 'movimentacao/contas', 'movimentacao/contas-agendadas', 'planejamento/metas',
+      'planejamento/orcamentos', 'patrimonio/investimentos', 'patrimonio/conferir-investimentos'];
     const dinheiro = /type="number"[^>]*\[\(ngModel\)\]="[^"]*\b(valor|valorAlvo|valorAtual|valorAporte|valorEditado|saldo|saldoInicial|limiteCredito|precoUnitario|precoAtual|preco|taxas)"/;
     for (const tela of telas) {
       const fonte = readFileSync(join(__dirname, `../../../src/app/paginas/${tela}.component.ts`), 'utf8');

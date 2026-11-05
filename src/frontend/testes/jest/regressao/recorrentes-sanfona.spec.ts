@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Conta, ContaAgendada, FormaCobranca, OrigemConta, Recorrencia, TipoConta } from '../../../src/app/core/modelos';
-import { AssinaturasRecorrentesComponent } from '../../../src/app/paginas/assinaturas-recorrentes.component';
-import { CHAVE_GRUPOS_FECHADOS } from '../../../src/app/paginas/recorrentes';
+import { AssinaturasRecorrentesComponent } from '../../../src/app/paginas/movimentacao/assinaturas-recorrentes.component';
+import { CHAVE_GRUPOS_FECHADOS } from '../../../src/app/paginas/movimentacao/recorrentes';
 import { contaAgendada } from '../apoio/contas-agendadas';
 
 /**

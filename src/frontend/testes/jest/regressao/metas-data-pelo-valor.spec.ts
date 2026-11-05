@@ -1,4 +1,4 @@
-import { dataPeloValorMensal, planejarMetas } from '../../../src/app/paginas/metas-plano';
+import { dataPeloValorMensal, planejarMetas } from '../../../src/app/paginas/planejamento/metas-plano';
 import { abrirMetas, meta } from '../apoio/metas';
 import { plano } from '../apoio/plano-metas';
 

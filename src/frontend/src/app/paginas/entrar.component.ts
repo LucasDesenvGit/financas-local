@@ -3,9 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { mensagemDeErro } from '../core/erro.interceptor';
-import { SeletorTemaComponent } from '../compartilhado/seletor-tema.component';
-import { IconeComponent } from '../compartilhado/icone.component';
-import { Icones } from '../compartilhado/icones';
+import { SeletorTemaComponent } from '../compartilhado/ui/seletor-tema.component';
+import { IconeComponent } from '../compartilhado/ui/icone.component';
+import { Icones } from '../compartilhado/ui/icones';
 
 @Component({
   selector: 'app-entrar',

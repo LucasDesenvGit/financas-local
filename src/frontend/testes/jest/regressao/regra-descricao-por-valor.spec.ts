@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia } from '../../../src/app/core/modelos';
-import { CategoriasComponent } from '../../../src/app/paginas/categorias.component';
+import { CategoriasComponent } from '../../../src/app/paginas/ajustes/categorias.component';
 
 /** As duas contas do condomínio: a mesma descrição do banco, uma regra por faixa de valor. */
 const regras: RegraDescricao[] = [

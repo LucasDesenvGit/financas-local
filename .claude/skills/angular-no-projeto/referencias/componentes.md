@@ -2,7 +2,7 @@
 
 Antes de fazer um gráfico, um campo, um filtro, um balão ou um modal, procure aqui: o padrão já tem componente, com a acessibilidade e os testes feitos. Refazer um deles numa tela quebra a consistência (Nielsen 4) e perde o que o componente já resolve. O código é a fonte: o comentário no topo de cada arquivo diz como usar, e esta tabela só diz **qual** usar.
 
-Todos em `src/app/compartilhado/`, salvo indicação.
+Todos em `src/app/compartilhado/`, numa subpasta (`ui/`, `graficos/`, `bancos/`, `lancamentos/`, `glossario/`; ADR 0058), salvo indicação.
 
 ## Gráficos e telas densas (ADR 0021)
 
@@ -48,4 +48,4 @@ Todos em `src/app/compartilhado/`, salvo indicação.
 
 ## Componente novo em `compartilhado/`
 
-Só quando uma segunda tela precisar (antes disso, fica na tela). Ele não importa `paginas/` nem `layout/` (teste de arquitetura), traz o comentário no topo com o princípio de UI/UX e um exemplo de uso, e ganha teste em `testes/jest/usabilidade/` com o critério que ele garante. Padrão novo de UI entra na lista "padrões já adotados" de `docs/UI-UX.md`, com ADR se mudar o que já foi decidido.
+Só quando uma segunda tela precisar (antes disso, fica na pasta da tela; se só o `shell` usa, em `layout/`). Vai para `ui/` se não sabe nada do domínio, senão para a pasta do assunto (ADR 0058). Ele não importa `paginas/` nem `layout/` (teste de arquitetura), traz o comentário no topo com o princípio de UI/UX e um exemplo de uso, e ganha teste em `testes/jest/usabilidade/` com o critério que ele garante. Padrão novo de UI entra na lista "padrões já adotados" de `docs/UI-UX.md`, com ADR se mudar o que já foi decidido.

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { DicaDirective } from '../../../src/app/compartilhado/dica.directive';
-import { PaginacaoComponent } from '../../../src/app/compartilhado/paginacao.component';
+import { DicaDirective } from '../../../src/app/compartilhado/ui/dica.directive';
+import { PaginacaoComponent } from '../../../src/app/compartilhado/ui/paginacao.component';
 import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
 
 @Component({

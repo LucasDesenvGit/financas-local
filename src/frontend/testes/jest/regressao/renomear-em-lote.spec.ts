@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
 import { ApiService } from '../../../src/app/core/api.service';
 import { RenomearEmLote, Transacao } from '../../../src/app/core/modelos';
-import { RenomearEmLoteComponent } from '../../../src/app/paginas/renomear-em-lote.component';
+import { RenomearEmLoteComponent } from '../../../src/app/paginas/movimentacao/renomear-em-lote.component';
 import { transacao } from '../apoio/transacoes-edicao';
 
 /** Abre "Renomear N transações" com a API falsa; guarda cada pedido. */

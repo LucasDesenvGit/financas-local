@@ -1,4 +1,4 @@
-import { comoLerEvolucao, escalaDosAportes, evolucaoDaMeta, resumoEvolucao } from '../../../src/app/paginas/metas-evolucao';
+import { comoLerEvolucao, escalaDosAportes, evolucaoDaMeta, resumoEvolucao } from '../../../src/app/paginas/planejamento/metas-evolucao';
 import { abrirMetas, meta } from '../apoio/metas';
 
 /**

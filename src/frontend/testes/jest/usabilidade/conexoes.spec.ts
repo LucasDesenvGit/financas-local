@@ -1,4 +1,4 @@
-import { ConfiguracoesComponent } from '../../../src/app/paginas/configuracoes.component';
+import { ConfiguracoesComponent } from '../../../src/app/paginas/ajustes/configuracoes.component';
 import { Conexao } from '../../../src/app/core/modelos';
 
 /**

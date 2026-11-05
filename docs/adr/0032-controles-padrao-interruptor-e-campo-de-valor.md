@@ -48,7 +48,7 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
 
 ## Campo de data, lista suspensa e seletor de mês (pedido do usuário durante a revisão do PR)
 
-- **Campo de data:** `app-campo-data` (`compartilhado/campo-data.component.ts`) no lugar de todo `<input type="date">`.
+- **Campo de data:** `app-campo-data` (`compartilhado/ui/campo-data.component.ts`) no lugar de todo `<input type="date">`.
   - **Por que:** o campo nativo aceitava ano de 6 dígitos ("13/02/275760"), e o calendário era o do navegador, fora do visual do site.
   - **Como funciona:** digita-se dd/mm/aaaa, com as barras entrando sozinhas e o ano sempre com 4 dígitos. Colar `AAAA-MM-DD` também funciona.
   - **Calendário próprio:** segue o padrão *Date Picker Dialog* do WAI-ARIA APG (setas, Home/End, PageUp/PageDown, Shift para o ano, Esc), com « ‹ › », "Hoje" e "Limpar".
@@ -58,7 +58,7 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
   - **Limites:** 1900–2099 por padrão, ou os da tela (`[maximo]="hoje"`).
   - **Valor:** entrega o mesmo `'AAAA-MM-DD'` ao `ngModel` (`''` quando vazio). `(alterado)` faz o papel do `(change)` nativo.
   - **Alternativas descartadas:** só limitar o campo nativo com `max` (resolvia o ano, mas não o visual) e uma biblioteca de calendário (dependência externa).
-- **Lista suspensa:** a `ListaSuspensaDirective` (`compartilhado/lista-suspensa.directive.ts`) mostra, no computador, a lista aberta do site por cima do `<select>` nativo, que continua dono do valor (`ngModel`, `[ngValue]`, `(change)`). No toque fica a lista do sistema. O campo fechado tem a seta desenhada no CSS.
+- **Lista suspensa:** a `ListaSuspensaDirective` (`compartilhado/ui/lista-suspensa.directive.ts`) mostra, no computador, a lista aberta do site por cima do `<select>` nativo, que continua dono do valor (`ngModel`, `[ngValue]`, `(change)`). No toque fica a lista do sistema. O campo fechado tem a seta desenhada no CSS.
   - **Descartado:** `appearance: base-select`, porque no Edge 155 o texto escolhido passava por baixo da seta.
 - **Seletor de mês:** o nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez.
 - **Negativas:**
@@ -82,7 +82,7 @@ Os campos de dinheiro eram `<input type="number">` puros, cada tela com seu `min
 
 ## Decisão (campo de valor)
 
-Todo campo de **dinheiro** usa o **`app-campo-valor`** (`compartilhado/campo-valor.component.ts`), um `ControlValueAccessor` + `Validator` que entrega ao `ngModel` um `number` (ou `null`), como antes — **a API não muda**.
+Todo campo de **dinheiro** usa o **`app-campo-valor`** (`compartilhado/ui/campo-valor.component.ts`), um `ControlValueAccessor` + `Validator` que entrega ao `ngModel` um `number` (ou `null`), como antes — **a API não muda**.
 
 - Lê "1234,56", "1.234,56", "R$ 1.234,56" e "1234.56". Regra do ponto sozinho (*julgamento próprio*): um ponto seguido de exatamente 3 dígitos é milhar ("1.500" = 1500); com outra quantidade é decimal.
 - **Formata enquanto se digita:** os pontos de milhar entram a cada tecla ("124214" vira "124.214"), sem tirar o cursor do lugar (a posição é contada pelos dígitos). Um ponto digitado vira a vírgula decimal, e letras são ignoradas. Backspace/Delete sobre um ponto de milhar apaga o dígito ao lado. **Colar** (ou trocar o texto todo de uma vez) usa a leitura completa. Ao **sair**, completa as casas ("124.214,00").

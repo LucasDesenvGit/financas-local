@@ -102,7 +102,7 @@ def executar(d):
 
 
 def rotas_por_componente():
-    """'src/frontend/src/app/paginas/x.component.ts' → ['rota', …] (a rota "manual/:capitulo" conta como "manual")."""
+    """'src/frontend/src/app/paginas/<grupo>/x.component.ts' → ['rota', …] (a rota "manual/:capitulo" conta como "manual")."""
     texto = open(os.path.join(RAIZ, APP, 'app.routes.ts'), encoding='utf-8').read()
     mapa = {}
     for m in re.finditer(r"path:\s*'([^']*)'[^{}]*?import\('\./([^']+)'\)", texto, flags=re.S):

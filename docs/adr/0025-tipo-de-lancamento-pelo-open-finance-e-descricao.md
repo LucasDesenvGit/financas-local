@@ -75,6 +75,6 @@ A tela mostra:
   - **Novo valor de `operationType`:** entra no `switch` do `TipoLancamentoService`.
   - **Novo tipo:**
     1. enum `TipoLancamento` (API e `core/modelos.ts`);
-    2. rótulo e ícone em `compartilhado/tipos-lancamento.ts`;
+    2. rótulo e ícone em `compartilhado/lancamentos/tipos-lancamento.ts`;
     3. grupo do filtro nos dois lados.
   - A regra é testada de ponta a ponta na API de teste; o back-end não tem testes automatizados.

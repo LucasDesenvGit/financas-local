@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ConfirmacaoService } from '../../../src/app/compartilhado/confirmacao.service';
+import { ConfirmacaoService } from '../../../src/app/compartilhado/ui/confirmacao.service';
 import { abrirMetas, meta } from '../apoio/metas';
 
 /**

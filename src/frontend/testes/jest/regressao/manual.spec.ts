@@ -1,8 +1,8 @@
 import { Route } from '@angular/router';
 import { rotas } from '../../../src/app/app.routes';
-import { GLOSSARIO } from '../../../src/app/compartilhado/glossario';
+import { GLOSSARIO } from '../../../src/app/compartilhado/glossario/glossario';
 import { telasDoMenu } from '../../../src/app/layout/shell.component';
-import { AJUDA_POR_ROTA, MANUAL, ajudaDaUrl } from '../../../src/app/paginas/manual-conteudo';
+import { AJUDA_POR_ROTA, MANUAL, ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
 import { abrirManual } from '../apoio/manual';
 
 /**

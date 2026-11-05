@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { linhaPorCimaDasBarras } from '../../../src/app/compartilhado/grafico-misto';
+import { linhaPorCimaDasBarras } from '../../../src/app/compartilhado/graficos/grafico-misto';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Projecao } from '../../../src/app/core/modelos';
-import { ProjecaoComponent } from '../../../src/app/paginas/projecao.component';
+import { ProjecaoComponent } from '../../../src/app/paginas/analises/projecao.component';
 
 /**
  * Regressão (mesmo defeito da #282, na Projeção): a linha do "Saldo previsto" ficava atrás das barras. Com o padrão do

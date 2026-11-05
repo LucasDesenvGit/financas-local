@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { CampoValorComponent } from '../../../src/app/compartilhado/campo-valor.component';
+import { CampoValorComponent } from '../../../src/app/compartilhado/ui/campo-valor.component';
 
 /**
  * Usabilidade do campo de valor (#132, ADR 0032).

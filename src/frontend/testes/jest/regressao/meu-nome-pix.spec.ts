@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
-import { GLOSSARIO } from '../../../src/app/compartilhado/glossario';
-import { ConfiguracoesComponent } from '../../../src/app/paginas/configuracoes.component';
+import { GLOSSARIO } from '../../../src/app/compartilhado/glossario/glossario';
+import { ConfiguracoesComponent } from '../../../src/app/paginas/ajustes/configuracoes.component';
 
 /**
  * #172: sem titular informado pelo banco, um Pix para outra conta sua contava como despesa. O nome do usuário (como

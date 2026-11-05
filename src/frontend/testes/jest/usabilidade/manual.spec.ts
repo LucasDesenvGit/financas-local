@@ -1,4 +1,4 @@
-import { MANUAL } from '../../../src/app/paginas/manual-conteudo';
+import { MANUAL } from '../../../src/app/paginas/manual/manual-conteudo';
 import { abrirManual } from '../apoio/manual';
 
 /**

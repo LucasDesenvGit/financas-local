@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { ErroSistema, FiltroErros, NivelErro, PaginaErros } from '../../../src/app/core/modelos';
-import { ErrosComponent } from '../../../src/app/paginas/erros.component';
+import { ErrosComponent } from '../../../src/app/paginas/ajustes/erros.component';
 
 /** Erro de exemplo: falha da API repetida 3 vezes, em aberto. */
 export function erro(campos: Partial<ErroSistema> = {}): ErroSistema {

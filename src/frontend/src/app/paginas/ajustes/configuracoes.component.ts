@@ -1,0 +1,444 @@
+import { DatePipe } from '@angular/common';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ApiService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
+import { StatusSincronizacaoService } from '../../core/status-sincronizacao.service';
+import { mensagemDeErro } from '../../core/erro.interceptor';
+import { Auditoria, Conexao, SincronizacaoLog } from '../../core/modelos';
+import { AvisosService } from '../../compartilhado/avisos.component';
+import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
+import { bancoNoTexto } from '../../compartilhado/bancos/bancos';
+import { descreverEvento, origemDoAcesso } from './auditoria';
+import { ParametrizacaoComponent } from './parametrizacao.component';
+import { AparenciaComponent } from './aparencia.component';
+import { ErrosComponent } from './erros.component';
+
+type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erros';
+
+@Component({
+  selector: 'app-configuracoes',
+  imports: [FormsModule, DatePipe, LogoBancoComponent, ParametrizacaoComponent, AparenciaComponent, ErrosComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <header class="cabecalho-pagina">
+      <h1>Configurações</h1>
+      <nav class="segmentado" aria-label="Seções de configurações">
+        @for (a of abas; track a.id) {
+          <button type="button" [class.ativo]="aba() === a.id" (click)="mudarAba(a.id)">{{ a.rotulo }}</button>
+        }
+      </nav>
+    </header>
+
+    @switch (aba()) {
+    @case ('parametrizacao') {
+      <app-parametrizacao />
+    }
+    @case ('aparencia') {
+      <app-aparencia />
+    }
+    @case ('erros') {
+      <app-erros />
+    }
+    @case ('seguranca') {
+    <div class="grade-2">
+      <section class="painel-bloco">
+        <h2>Alterar senha</h2>
+        <form (ngSubmit)="alterarSenha()" #fs="ngForm" class="formulario">
+          <label>Senha atual <input type="password" name="atual" [(ngModel)]="senhaAtual" required autocomplete="current-password"></label>
+          <label>Nova senha (mín. 8 caracteres) <input type="password" name="nova" [(ngModel)]="novaSenha" required minlength="8" autocomplete="new-password"></label>
+          <label>Confirmar nova senha <input type="password" name="conf" [(ngModel)]="confirmacao" required autocomplete="new-password"></label>
+          <p class="texto-suave">Ao trocar a senha, todas as outras sessões abertas são encerradas.</p>
+          <div class="rodape-form"><span class="cresce"></span>
+            <button class="botao botao-primario" [disabled]="fs.invalid">Alterar senha</button></div>
+        </form>
+      </section>
+
+      <section class="painel-bloco">
+        <h2>Acessos recentes</h2>
+        <ul class="lista-simples lista-acessos">
+          @for (a of auditoria(); track a.id) {
+            <li>
+              <span class="data-curta">{{ a.dataHora + 'Z' | date: 'dd/MM HH:mm' }}</span>
+              <span class="cresce" [class.negativo]="a.evento.includes('Falha') || a.evento.includes('Bloqueado')">{{ descreverEvento(a.evento) }}</span>
+              <span class="texto-suave nowrap">{{ origemDoAcesso(a.ip) }}</span>
+            </li>
+          } @empty { <li class="vazio">Sem registros.</li> }
+        </ul>
+      </section>
+    </div>
+    <p class="texto-suave">Limite de tentativas de login e tempo de bloqueio ficam em
+      <button type="button" class="link" (click)="mudarAba('parametrizacao')">Parametrização</button>.</p>
+    }
+    @default {
+    <section class="painel-bloco">
+      <h2>Open Finance (via Meu Pluggy)</h2>
+      <details class="guia">
+        <summary>Como conectar seus bancos</summary>
+        <ol>
+          <li>Em <strong>meu.pluggy.ai</strong>, crie sua conta e conecte seus bancos pelo fluxo oficial do Open Finance
+            (o consentimento é dado no app do seu banco).</li>
+          <li>Em <strong>dashboard.pluggy.ai</strong>, crie uma conta de desenvolvedor, adicione o conector <em>MeuPluggy</em>
+            e crie uma aplicação de desenvolvimento. Copie o <strong>Client ID</strong> e o <strong>Client Secret</strong>.</li>
+          <li>Na aplicação de demonstração do dashboard, conecte o <em>MeuPluggy</em> e autorize — uma vez para cada banco.
+            Cada autorização gera um <strong>Item ID</strong> (exibido no dashboard).</li>
+          <li>Preencha as credenciais abaixo, clique em <em>Testar</em> e adicione cada Item ID em <em>Conexões</em>.</li>
+        </ol>
+        <p class="texto-suave">O Meu Pluggy atualiza os dados diariamente. O consentimento do Open Finance vale até 12 meses;
+          o painel avisa quando estiver perto de expirar.</p>
+      </details>
+
+      <form (ngSubmit)="salvarCredenciais()" class="formulario">
+        <div class="grade-campos">
+          <label>Client ID <input name="clientId" [(ngModel)]="clientId" required maxlength="100" autocomplete="off"></label>
+          <label>Client Secret
+            <input name="clientSecret" type="password" [(ngModel)]="clientSecret" maxlength="200" autocomplete="new-password"
+              [placeholder]="secretConfigurado ? '•••••••• (guardado criptografado — deixe vazio para manter)' : ''">
+          </label>
+        </div>
+        <p class="texto-suave">Sincronização automática, intervalo e dias relidos ficam em
+          <button type="button" class="link" (click)="mudarAba('parametrizacao')">Parametrização</button>.</p>
+        <div class="rodape-form">
+          @if (secretConfigurado) { <button type="button" class="botao botao-perigo" (click)="removerSecret()">Apagar secret</button> }
+          <span class="cresce"></span>
+          <button type="button" class="botao" (click)="testar()">Testar conexão</button>
+          <button class="botao botao-primario">Salvar</button>
+        </div>
+      </form>
+
+      <!-- #172 (ADR 0031): para os bancos que não dizem se o Pix foi para outra conta sua (Nielsen 2). -->
+      <form (ngSubmit)="salvarMeuNome()" class="formulario meu-nome">
+        <label>Seu nome como aparece nos Pix
+          <input name="meuNome" [(ngModel)]="meuNome" maxlength="120" autocomplete="name" aria-describedby="ajuda-meu-nome">
+        </label>
+        <small id="ajuda-meu-nome" class="texto-suave">Quando o banco não informa se um Pix ou TED foi para outra conta sua, o que
+          cita este nome (o primeiro e o último) conta como transferência entre contas suas, fora dos gastos. Vazio: não usa o nome.</small>
+        <div class="rodape-form">
+          <span class="cresce"></span>
+          <button class="botao" [disabled]="ocupado()">Salvar nome</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="painel-bloco">
+      <div class="bloco-titulo">
+        <h2>Conexões</h2>
+        <button type="button" class="botao" (click)="sincronizarTudo()" [disabled]="ocupado()">⟳ Sincronizar agora</button>
+      </div>
+      <!-- Rótulo visível e dica (WCAG 3.3.2), não só o placeholder. -->
+      <form (ngSubmit)="adicionar()" class="nova-conexao">
+        <label class="cresce">Adicionar conexão
+          <input name="itemId" [(ngModel)]="novoItemId" placeholder="Item ID (ex.: 3f6c1a2b-…)" maxlength="64" required
+            aria-describedby="ajuda-item-id">
+        </label>
+        <button class="botao botao-primario" [disabled]="ocupado() || !novoItemId.trim()">Adicionar</button>
+        <small id="ajuda-item-id" class="texto-suave">O Item ID aparece no dashboard da Pluggy depois que você conecta o banco no Meu Pluggy.</small>
+      </form>
+
+      <div class="tabela-rolagem">
+        <table class="tabela">
+          <thead><tr><th>Instituição</th><th>Status</th><th>Atualizado no banco</th><th>Última sincronização</th><th>Consentimento até</th><th></th></tr></thead>
+          <tbody>
+            @for (c of conexoes(); track c.id) {
+              <tr [class.ignorada]="!c.ativa">
+                <td>
+                  <!-- #376: o selo do banco (o mesmo de Contas e cartões, ADR 0024) no lugar da bolinha; decorativo, porque o
+                       nome está escrito ao lado. Banco sem selo: o ícone neutro de banco. -->
+                  <div class="instituicao">
+                    <app-logo-banco [codigo]="bancoDaConexao(c)" [tamanho]="28" />
+                    <div>
+                      <!-- #170: o banco, e não o conector ("MeuPluggy"); o conector fica ao lado (Nielsen 2). -->
+                      {{ nomeConexao(c) }} <small class="texto-suave contas-conexao">{{ c.quantidadeContas }} conta(s)
+                        @if (c.nomeInstituicao && c.nomeInstituicao !== nomeConexao(c)) { · via {{ c.nomeInstituicao }} }</small>
+                      @if (c.ultimoErro) { <div class="erro pequeno">{{ c.ultimoErro }}</div> }
+                    </div>
+                  </div>
+                </td>
+                <!-- Situação em português (Nielsen 2), com a cor: verde em dia, amarelo atenção, vermelho ação sua. -->
+                <td><span class="etiqueta" [class.etiqueta-sucesso]="situacao(c).tom === 'ok'"
+                  [class.etiqueta-alerta]="situacao(c).tom === 'atencao'" [class.etiqueta-erro]="situacao(c).tom === 'erro'"
+                  [class.etiqueta-suave]="situacao(c).tom === 'neutro'">{{ situacao(c).texto }}</span></td>
+                <td class="nowrap">{{ c.ultimaAtualizacaoInstituicao ? (c.ultimaAtualizacaoInstituicao + 'Z' | date: 'dd/MM/yy HH:mm') : '—' }}</td>
+                <td class="nowrap">{{ c.ultimaSincronizacaoEm ? (c.ultimaSincronizacaoEm + 'Z' | date: 'dd/MM/yy HH:mm') : '—' }}</td>
+                <td class="nowrap">{{ c.consentimentoExpiraEm ? (c.consentimentoExpiraEm + 'Z' | date: 'dd/MM/yyyy') : '—' }}</td>
+                <td class="direita nowrap">
+                  <div class="acoes-conexao">
+                    <button type="button" class="botao botao-pequeno" (click)="sincronizar(c)" [disabled]="ocupado()"
+                      [attr.aria-label]="'Sincronizar ' + nomeConexao(c)">⟳ Sincronizar</button>
+                    <button type="button" class="botao botao-pequeno" (click)="alternar(c)"
+                      [attr.aria-label]="(c.ativa ? 'Pausar ' : 'Reativar ') + nomeConexao(c)">
+                      {{ c.ativa ? '⏸ Pausar' : '▶ Reativar' }}</button>
+                    <button type="button" class="botao botao-pequeno botao-perigo" (click)="remover(c)"
+                      [attr.aria-label]="'Remover ' + nomeConexao(c)">Remover</button>
+                  </div>
+                </td>
+              </tr>
+            } @empty { <tr><td colspan="6" class="vazio">Nenhuma conexão. Adicione o Item ID gerado no dashboard da Pluggy.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+
+      <details class="detalhes">
+        <summary>Histórico de sincronizações <small>últimas execuções, com o que entrou e as falhas</small></summary>
+        <div class="tabela-rolagem">
+          <table class="tabela">
+            <thead><tr><th>Início</th><th>Instituição</th><th>Origem</th><th>Resultado</th><th class="direita">Novas</th><th class="direita">Atualizadas</th><th>Mensagem</th></tr></thead>
+            <tbody>
+              @for (l of logs(); track l.id) {
+                <tr>
+                  <td class="nowrap">{{ l.iniciadoEm + 'Z' | date: 'dd/MM/yy HH:mm' }}</td>
+                  <td>{{ l.nomeInstituicao ?? '—' }}</td>
+                  <td>{{ l.origem }}</td>
+                  <td [class.positivo]="l.sucesso" [class.negativo]="!l.sucesso">{{ l.sucesso ? 'ok' : 'falha' }}</td>
+                  <td class="direita">{{ l.transacoesNovas }}</td>
+                  <td class="direita">{{ l.transacoesAtualizadas }}</td>
+                  <td class="texto-suave">{{ l.mensagem }}</td>
+                </tr>
+              } @empty { <tr><td colspan="7" class="vazio">Sem histórico.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+    }
+    }
+  `,
+  styles: `
+    /* #376: o selo do banco à esquerda; o nome, as contas e o erro empilhados ao lado. */
+    .instituicao { display: flex; align-items: center; gap: 10px; }
+    .contas-conexao { display: block; }
+  `
+})
+export class ConfiguracoesComponent implements OnInit {
+  private readonly api = inject(ApiService);
+  private readonly pedirConfirmacao = inject(ConfirmacaoService);
+  private readonly auth = inject(AuthService);
+  private readonly avisos = inject(AvisosService);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly statusSincronizacao = inject(StatusSincronizacaoService);
+
+  /** #170: o banco da conexão (pelas contas); "MeuPluggy" é o nome do conector, igual em todas. */
+  nomeConexao(c: Conexao): string {
+    return c.nomeExibicao ?? c.nomeInstituicao ?? 'Instituição';
+  }
+
+  /** #376: o código do banco da conexão, pelo nome (o mesmo dos selos de Contas e cartões); null se não é conhecido. */
+  bancoDaConexao(c: Conexao): string | null {
+    return bancoNoTexto(c.nomeExibicao, c.nomeInstituicao);
+  }
+
+  /**
+   * Situação da conexão em português (o código da Pluggy, ex.: UPDATED, LOGIN_ERROR, não diz nada a quem usa;
+   * Nielsen 2). Tom: ok (em dia), atenção (desatualizada, atualizando) ou erro (precisa de ação sua).
+   */
+  situacao(c: Conexao): { texto: string; tom: 'ok' | 'atencao' | 'erro' | 'neutro' } {
+    if (!c.ativa) return { texto: 'Pausada', tom: 'neutro' };
+    switch (c.status) {
+      case 'UPDATED': return { texto: 'Atualizada', tom: 'ok' };
+      case 'UPDATING': return { texto: 'Atualizando…', tom: 'atencao' };
+      case 'OUTDATED': return { texto: 'Desatualizada', tom: 'atencao' };
+      case 'LOGIN_ERROR': return { texto: 'Erro de login no banco', tom: 'erro' };
+      case 'WAITING_USER_INPUT':
+      case 'WAITING_USER_ACTION': return { texto: 'Precisa de ação sua', tom: 'erro' };
+      case null: case undefined: return { texto: '—', tom: 'neutro' };
+      default: return { texto: c.status, tom: 'atencao' };
+    }
+  }
+
+  readonly abas: { id: Aba; rotulo: string }[] = [
+    { id: 'open-finance', rotulo: 'Open Finance' },
+    { id: 'parametrizacao', rotulo: 'Parametrização' },
+    { id: 'aparencia', rotulo: 'Aparência' },
+    { id: 'seguranca', rotulo: 'Segurança' },
+    { id: 'erros', rotulo: 'Erros' }
+  ];
+  /** Aba atual; vem de ?aba= para dar para abrir direto (ex.: /configuracoes?aba=parametrizacao). */
+  readonly aba = signal<Aba>(this.abaDaUrl(this.rota.snapshot.queryParamMap));
+
+  constructor() {
+    // Acompanha a URL também com a tela já aberta (ex.: "Cores e aparência…" no menu do usuário, alerta de conexão
+    // na barra superior): o Angular reaproveita o componente e só os query params mudam.
+    this.rota.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => this.aba.set(this.abaDaUrl(p)));
+  }
+
+  readonly conexoes = signal<Conexao[]>([]);
+  readonly logs = signal<SincronizacaoLog[]>([]);
+  readonly auditoria = signal<Auditoria[]>([]);
+  /** #284: evento em português e "Acesso local" no lugar de 127.0.0.1. */
+  readonly descreverEvento = descreverEvento;
+  readonly origemDoAcesso = origemDoAcesso;
+  readonly ocupado = signal(false);
+
+  clientId = '';
+  clientSecret = '';
+  secretConfigurado = false;
+  /** #172: o seu nome como aparece nos Pix. */
+  meuNome = '';
+  novoItemId = '';
+  senhaAtual = '';
+  novaSenha = '';
+  confirmacao = '';
+
+  ngOnInit(): void {
+    this.api.configuracaoPluggy().subscribe({
+      next: (c) => {
+        this.clientId = c.clientId ?? '';
+        this.secretConfigurado = c.secretConfigurado;
+        this.meuNome = c.meuNome ?? '';
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+    this.carregarConexoes();
+    this.api.auditoria().subscribe((a) => this.auditoria.set(a.slice(0, 15)));
+  }
+
+  mudarAba(aba: Aba): void {
+    this.aba.set(aba);
+    void this.router.navigate([], {
+      relativeTo: this.rota, queryParams: { aba: aba === 'open-finance' ? null : aba }, replaceUrl: true
+    });
+  }
+
+  private abaDaUrl(params: ParamMap): Aba {
+    const aba = params.get('aba');
+    return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca', 'erros'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
+  }
+
+  /** #172: grava o nome (vazio apaga); a API já reclassifica as transferências. */
+  salvarMeuNome(): void {
+    const nome = this.meuNome.trim() || null;
+    this.ocupado.set(true);
+    this.api.salvarMeuNome(nome).subscribe({
+      next: () => {
+        this.ocupado.set(false);
+        this.meuNome = nome ?? '';
+        this.avisos.sucesso(nome ? 'Nome salvo. As transferências foram revistas.' : 'Nome apagado.');
+      },
+      error: (e) => {
+        this.ocupado.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
+  carregarConexoes(): void {
+    this.api.conexoes().subscribe((c) => this.conexoes.set(c));
+    this.api.logsSincronizacao().subscribe((l) => this.logs.set(l));
+    // UX-8: depois de sincronizar, adicionar, pausar ou remover conexão, a barra superior reflete na hora.
+    this.statusSincronizacao.atualizar();
+  }
+
+  salvarCredenciais(): void {
+    this.api.salvarConfiguracaoPluggy({
+      clientId: this.clientId.trim(),
+      clientSecret: this.clientSecret.trim() || null
+    }).subscribe({
+      next: () => {
+        if (this.clientSecret.trim()) this.secretConfigurado = true;
+        this.clientSecret = '';
+        this.avisos.sucesso('Configuração salva.');
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  async removerSecret(): Promise<void> {
+    if (!(await this.pedirConfirmacao.confirmar({ titulo: 'Apagar o Client Secret', mensagem: 'Apagar o Client Secret? A sincronização vai parar até você informar um novo.', confirmar: 'Apagar', perigo: true }))) return;
+    this.api.removerSecretPluggy().subscribe({
+      next: () => {
+        this.secretConfigurado = false;
+        this.avisos.sucesso('Client Secret apagado.');
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  testar(): void {
+    this.api.testarPluggy().subscribe({
+      next: (r) => this.avisos.sucesso(r.mensagem),
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  adicionar(): void {
+    const id = this.novoItemId.trim();
+    if (!id) return;
+    this.ocupado.set(true);
+    this.avisos.info('Validando e fazendo a primeira carga (pode levar alguns minutos)…');
+    this.api.adicionarConexao(id).subscribe({
+      next: (r) => {
+        this.ocupado.set(false);
+        this.novoItemId = '';
+        if (r.sucesso) this.avisos.sucesso(`Conexão adicionada: ${r.transacoesNovas} transação(ões) importada(s).`);
+        else this.avisos.erro(r.mensagem ?? 'Conexão adicionada, mas a sincronização falhou.');
+        this.carregarConexoes();
+      },
+      error: (e) => {
+        this.ocupado.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+
+  sincronizar(c: Conexao): void {
+    this.executarSincronizacao(c.id);
+  }
+
+  sincronizarTudo(): void {
+    this.executarSincronizacao(undefined);
+  }
+
+  alternar(c: Conexao): void {
+    this.api.alterarConexaoAtiva(c.id, !c.ativa).subscribe({
+      next: () => this.carregarConexoes(),
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  async remover(c: Conexao): Promise<void> {
+    const nome = this.nomeConexao(c);
+    if (!(await this.pedirConfirmacao.confirmar({ titulo: 'Remover conexão', mensagem: `Remover ${nome} e APAGAR todas as contas, transações e investimentos importados dela?`, confirmar: 'Remover e apagar', perigo: true }))) return;
+    this.api.removerConexao(c.id).subscribe({
+      next: () => {
+        this.avisos.sucesso('Conexão removida.');
+        this.carregarConexoes();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  alterarSenha(): void {
+    if (this.novaSenha !== this.confirmacao) {
+      this.avisos.erro('As senhas não conferem.');
+      return;
+    }
+    this.api.alterarSenha(this.senhaAtual, this.novaSenha).subscribe({
+      next: () => {
+        this.senhaAtual = this.novaSenha = this.confirmacao = '';
+        this.avisos.sucesso('Senha alterada.');
+        void this.auth.carregarEstado();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  private executarSincronizacao(conexaoId: number | undefined): void {
+    this.ocupado.set(true);
+    this.api.sincronizar(conexaoId).subscribe({
+      next: (r) => {
+        this.ocupado.set(false);
+        if (r.sucesso) this.avisos.sucesso(`Sincronizado: ${r.transacoesNovas} nova(s), ${r.transacoesAtualizadas} atualizada(s).`);
+        else this.avisos.erro(r.mensagem ?? 'Falha na sincronização.');
+        this.carregarConexoes();
+      },
+      error: (e) => {
+        this.ocupado.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
+  }
+}

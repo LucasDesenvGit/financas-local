@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
-import { linhaPorCimaDasBarras } from '../../../src/app/compartilhado/grafico-misto';
+import { linhaPorCimaDasBarras } from '../../../src/app/compartilhado/graficos/grafico-misto';
 import { ApiService } from '../../../src/app/core/api.service';
 import { MesValores } from '../../../src/app/core/modelos';
-import { RelatoriosComponent } from '../../../src/app/paginas/relatorios.component';
+import { RelatoriosComponent } from '../../../src/app/paginas/analises/relatorios.component';
 
 /**
  * Regressão da #282: no Fluxo de caixa mensal, a linha do saldo acumulado ficava atrás das barras (no Chart.js, o

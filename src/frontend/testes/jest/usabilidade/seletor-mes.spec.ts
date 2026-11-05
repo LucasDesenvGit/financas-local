@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MesAno, SeletorMesComponent } from '../../../src/app/compartilhado/seletor-mes.component';
+import { MesAno, SeletorMesComponent } from '../../../src/app/compartilhado/ui/seletor-mes.component';
 
 /**
  * Usabilidade do seletor de mês (Painel, Orçamentos). ‹ › andam um mês; o nome do mês abre um quadro com o ano e os

@@ -44,7 +44,7 @@ A API também devolve:
 - o **saldo previsto nas contas no fim do mês**, já pagas as faturas que vencem nele;
 - a **maior sobra de verdade** entre os meses completos considerados.
 
-**Divisão entre as metas na tela** (`paginas/metas-plano.ts`, função pura):
+**Divisão entre as metas na tela** (`paginas/planejamento/metas-plano.ts`, função pura):
 1. capacidade = sobra × percentual (C), igual a 100 − margem de segurança: o mesmo parâmetro de antes, agora ajustável na própria tela;
 2. no mês atual, a capacidade não passa do saldo previsto no fim do mês nem da melhor sobra recente. Havendo sobra e saldo, recomenda pelo menos R$ 50;
 3. cada meta com prazo pede pela folga de cada mês, como no #90, **até 2× a divisão igual** por mês;

@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { AvisoContaAgendada, ContaAgendada, FormaCobranca, SalvarContaAgendada, TipoConta } from '../../../src/app/core/modelos';
-import { ContasAgendadasComponent } from '../../../src/app/paginas/contas-agendadas.component';
+import { ContasAgendadasComponent } from '../../../src/app/paginas/movimentacao/contas-agendadas.component';
 import { contaAgendada } from '../apoio/contas-agendadas';
 import { abrirContas, conta, CONTAS } from '../apoio/contas';
 

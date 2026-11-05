@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { CampoDataComponent } from '../../../src/app/compartilhado/campo-data.component';
+import { CampoDataComponent } from '../../../src/app/compartilhado/ui/campo-data.component';
 
 /**
  * Usabilidade do calendário do campo de data (padrão Date Picker Dialog do WAI-ARIA APG).

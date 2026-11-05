@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TermoComponent } from '../../../src/app/compartilhado/termo.component';
+import { TermoComponent } from '../../../src/app/compartilhado/glossario/termo.component';
 
 @Component({
   imports: [TermoComponent],

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { CampoDataComponent, inicioDaPaginaDeAnos } from '../../../src/app/compartilhado/campo-data.component';
+import { CampoDataComponent, inicioDaPaginaDeAnos } from '../../../src/app/compartilhado/ui/campo-data.component';
 
 /**
  * #264: no calendário do campo de data, o título leva à grade de meses e daí à de anos, para ir longe sem dezenas de

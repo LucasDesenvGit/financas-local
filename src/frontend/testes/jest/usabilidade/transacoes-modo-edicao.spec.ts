@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ConfirmacaoService } from '../../../src/app/compartilhado/confirmacao.service';
+import { ConfirmacaoService } from '../../../src/app/compartilhado/ui/confirmacao.service';
 import { AvisosComponent, AvisosService } from '../../../src/app/compartilhado/avisos.component';
 import { abrirTransacoes, parametrosDaUrl } from '../apoio/transacoes';
 import { abrirEdicao } from '../apoio/transacoes-edicao';

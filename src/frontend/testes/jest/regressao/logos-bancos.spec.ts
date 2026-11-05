@@ -1,4 +1,4 @@
-import { BANCOS } from '../../../src/app/compartilhado/bancos';
+import { BANCOS } from '../../../src/app/compartilhado/bancos/bancos';
 
 /** Quantos números cada comando de path do SVG pede (Z não pede nenhum). */
 const ARIDADE: Record<string, number> = { m: 2, l: 2, t: 2, h: 1, v: 1, c: 6, s: 4, q: 4, a: 7, z: 0 };

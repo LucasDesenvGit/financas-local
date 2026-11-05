@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { PainelAnual } from '../../../src/app/core/modelos';
-import { AnualComponent } from '../../../src/app/paginas/anual.component';
+import { AnualComponent } from '../../../src/app/paginas/analises/anual.component';
 
 /**
  * Regressão: no "Resultado acumulado" da Visão anual, o preenchimento ia da linha até o zero (`fill: true`). Nos meses

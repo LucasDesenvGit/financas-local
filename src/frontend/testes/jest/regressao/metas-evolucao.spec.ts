@@ -1,6 +1,6 @@
-import { evolucaoDaMeta, resumoEvolucao } from '../../../src/app/paginas/metas-evolucao';
-import { PlanoDaMeta } from '../../../src/app/paginas/metas-plano';
-import { planejarMetas } from '../../../src/app/paginas/metas-plano';
+import { evolucaoDaMeta, resumoEvolucao } from '../../../src/app/paginas/planejamento/metas-evolucao';
+import { PlanoDaMeta } from '../../../src/app/paginas/planejamento/metas-plano';
+import { planejarMetas } from '../../../src/app/paginas/planejamento/metas-plano';
 import { abrirMetas, meta } from '../apoio/metas';
 import { plano as caixa } from '../apoio/plano-metas';
 

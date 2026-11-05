@@ -26,7 +26,7 @@ Closes #<!-- número da issue -->
 - [ ] Mexeu em teste ou em CI? O tempo antes e depois, por job, está aqui
 - [ ] Consultas só com LINQ/lambda
 - [ ] Nenhum dado pessoal, senha, chave ou `appsettings.Production.json`
-- [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado se mudou algo que o usuário vê; se não precisa, escreva aqui "Manual: não se aplica" (a CI avisa quando falta)
+- [ ] **Manual do site** (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) atualizado se mudou algo que o usuário vê; se não precisa, escreva aqui "Manual: não se aplica" (a CI avisa quando falta)
 
 ## Depois do merge
 

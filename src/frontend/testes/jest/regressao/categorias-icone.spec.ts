@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { IconeCategoriaComponent, iconeDaCategoria } from '../../../src/app/compartilhado/icone-categoria.component';
-import { IconesCategoria } from '../../../src/app/compartilhado/icones';
-import { COR_OUTRAS, fatiasRosca } from '../../../src/app/compartilhado/rosca-categorias';
+import { IconeCategoriaComponent, iconeDaCategoria } from '../../../src/app/compartilhado/lancamentos/icone-categoria.component';
+import { IconesCategoria } from '../../../src/app/compartilhado/ui/icones';
+import { COR_OUTRAS, fatiasRosca } from '../../../src/app/paginas/painel/rosca-categorias';
 import { abrirPainel, painel } from '../apoio/painel';
 
 /**

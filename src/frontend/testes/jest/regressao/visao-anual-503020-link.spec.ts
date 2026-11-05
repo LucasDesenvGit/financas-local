@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { paramsTransacoes } from '../../../src/app/compartilhado/utilidades';
 import { ApiService } from '../../../src/app/core/api.service';
 import { DistribuicaoRenda, NaturezaGasto, PainelAnual, TipoTransacao } from '../../../src/app/core/modelos';
-import { AnualComponent } from '../../../src/app/paginas/anual.component';
+import { AnualComponent } from '../../../src/app/paginas/analises/anual.component';
 import { abrirTransacoes, parametrosDaUrl } from '../apoio/transacoes';
 
 /**

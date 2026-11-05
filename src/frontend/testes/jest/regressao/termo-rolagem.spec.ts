@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TermoComponent } from '../../../src/app/compartilhado/termo.component';
+import { TermoComponent } from '../../../src/app/compartilhado/glossario/termo.component';
 
 /**
  * #247 (CI, celular): o balão do ⓘ fechava a qualquer rolagem da página, e no celular a rolagem que vem com o toque o

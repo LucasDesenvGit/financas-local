@@ -1,5 +1,5 @@
 import { Reserva } from '../../../src/app/core/modelos';
-import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from '../../../src/app/paginas/reserva-conferencia';
+import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from '../../../src/app/paginas/patrimonio/reserva-conferencia';
 
 /**
  * Regressão do #168: a conferência "10.123,42" foi gravada como 10,12 (campo numérico do navegador lendo o ponto de

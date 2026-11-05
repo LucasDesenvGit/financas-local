@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { BotaoPrivacidadeComponent } from '../../../src/app/compartilhado/botao-privacidade.component';
-import { IconeComponent } from '../../../src/app/compartilhado/icone.component';
-import { Icones } from '../../../src/app/compartilhado/icones';
+import { BotaoPrivacidadeComponent } from '../../../src/app/layout/botao-privacidade.component';
+import { IconeComponent } from '../../../src/app/compartilhado/ui/icone.component';
+import { Icones } from '../../../src/app/compartilhado/ui/icones';
 
 /**
  * Regressão: o ícone de "ocultar valores" parecia invertido. Com os valores ocultos, o botão ficava destacado

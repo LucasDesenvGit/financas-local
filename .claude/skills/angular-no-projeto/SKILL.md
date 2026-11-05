@@ -40,11 +40,11 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits").
 2. **ADR antes do código** quando a tela trouxer dependência nova, padrão de UI novo ou desvio de um padrão adotado (`CLAUDE.md`, "Decisões de arquitetura").
 3. **Endpoint:** o back-end é em Go (skill `go-no-projeto`). No front-end: o modelo em `core/modelos.ts` e o método no `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
-4. **Lógica fora do componente:** cálculo, texto e decisão vão para funções puras num `.ts` ao lado da tela (`paginas/<tela>.ts`) ou em `compartilhado/` se mais de uma tela usa, testadas no Jest sem `TestBed` (`referencias/testes.md`). A divisão das páginas grandes ainda está em discussão na #475: siga o que ela decidir quando a ADR for aceita.
-5. **Componente** em `paginas/<tela>.component.ts`, na forma de `referencias/estilo.md` (standalone, `Eager`, template inline, `inject()`, signals, `@if`/`@for`), com os componentes de `compartilhado/` (`referencias/componentes.md`).
+4. **Lógica fora do componente:** cálculo, texto e decisão vão para funções puras num `.ts` ao lado da tela (`paginas/<grupo>/<tela>.ts`) ou em `compartilhado/` se mais de uma tela usa, testadas no Jest sem `TestBed` (`referencias/testes.md`). A divisão das páginas grandes ainda está em discussão na #475: siga o que ela decidir quando a ADR for aceita.
+5. **Componente** em `paginas/<grupo>/<tela>.component.ts` (o grupo do menu em que a tela aparece; ADR 0058), na forma de `referencias/estilo.md` (standalone, `Eager`, template inline, `inject()`, signals, `@if`/`@for`), com os componentes de `compartilhado/` (`referencias/componentes.md`).
 6. **Rota e menu:** `loadComponent` e `title: '<Tela> · Finanças Local'` em `app.routes.ts`; a tela no grupo do assunto em `MENU` (`layout/shell.component.ts`, ADR 0046).
 7. **UI/UX:** cada decisão de desenho cita o princípio de `docs/UI-UX.md` que a sustenta, separando o que vem da fonte do que é julgamento seu.
-8. **Manual:** seção da tela em `paginas/manual-conteudo.ts` e a rota em `AJUDA_POR_ROTA` (ADR 0026); termo técnico novo no glossário (`compartilhado/glossario.ts`) e, se for do domínio, em `docs/arquitetura/dominio.md`.
+8. **Manual:** seção da tela em `paginas/manual/manual-conteudo.ts` e a rota em `AJUDA_POR_ROTA` (ADR 0026); termo técnico novo no glossário (`compartilhado/glossario/glossario.ts`) e, se for do domínio, em `docs/arquitetura/dominio.md`.
 9. **Testes:** a tela em `TELAS` (`testes/navegador/base.ts`) e os endpoints dela em `testes/navegador/api-falsa.ts`; a lógica no Jest (`referencias/testes.md`).
 
 ## Mudança em tela que já existe

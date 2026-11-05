@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { CotacaoCripto } from '../../../src/app/core/modelos';
 import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
-import { InvestimentosCriptoComponent, MOEDAS_CRIPTO } from '../../../src/app/paginas/investimentos-cripto.component';
+import { InvestimentosCriptoComponent, MOEDAS_CRIPTO } from '../../../src/app/paginas/patrimonio/investimentos-cripto.component';
 
 /**
  * #279 (ADR 0048): criptomoedas em reais em Investimentos, pelo último negócio no Mercado Bitcoin guardado pela API.

@@ -1,6 +1,6 @@
 import { Meta } from '../../../src/app/core/modelos';
-import { planejarMetas } from '../../../src/app/paginas/metas-plano';
-import { lerAjustes } from '../../../src/app/paginas/metas.component';
+import { planejarMetas } from '../../../src/app/paginas/planejamento/metas-plano';
+import { lerAjustes } from '../../../src/app/paginas/planejamento/metas.component';
 import { abrirMetas, abrirMetasPelaUrl, meta } from '../apoio/metas';
 import { METAS, plano } from '../apoio/plano-metas';
 

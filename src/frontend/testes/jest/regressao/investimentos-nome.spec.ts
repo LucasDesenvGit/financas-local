@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { Conexao, InvestimentoComparado } from '../../../src/app/core/modelos';
-import { ConfiguracoesComponent } from '../../../src/app/paginas/configuracoes.component';
-import { InvestimentosComponent } from '../../../src/app/paginas/investimentos.component';
+import { ConfiguracoesComponent } from '../../../src/app/paginas/ajustes/configuracoes.component';
+import { InvestimentosComponent } from '../../../src/app/paginas/patrimonio/investimentos.component';
 import { abrirPainel, painel } from '../apoio/painel';
 
 /**

@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Fii, MesAMesFii, PainelFiis } from '../../../src/app/core/modelos';
 import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
-import { InvestimentosFiisComponent } from '../../../src/app/paginas/investimentos-fiis.component';
+import { InvestimentosFiisComponent } from '../../../src/app/paginas/patrimonio/investimentos-fiis.component';
 
 /**
  * #173: "Mês a mês" dos FIIs, como no app da corretora.

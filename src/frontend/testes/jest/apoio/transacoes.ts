@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Categoria, Conta, FiltroTransacoes, PaginaTransacoes } from '../../../src/app/core/modelos';
-import { TransacoesComponent } from '../../../src/app/paginas/transacoes.component';
+import { TransacoesComponent } from '../../../src/app/paginas/movimentacao/transacoes.component';
 
 export const CONTAS = [
   { id: 3, nome: 'Nubank', arquivada: false },

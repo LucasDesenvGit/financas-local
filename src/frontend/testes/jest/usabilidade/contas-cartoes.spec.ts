@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { LogoBancoComponent } from '../../../src/app/compartilhado/logo-banco.component';
+import { LogoBancoComponent } from '../../../src/app/compartilhado/bancos/logo-banco.component';
 import { abrirContas, fatura } from '../apoio/contas';
 
 /**

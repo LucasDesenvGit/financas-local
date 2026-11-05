@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Conta, Meta, PlanoMetas, Reserva, SalvarMeta, TipoConta } from '../../../src/app/core/modelos';
-import { MetasComponent } from '../../../src/app/paginas/metas.component';
+import { MetasComponent } from '../../../src/app/paginas/planejamento/metas.component';
 
 export const CONTAS = [
   { id: 1, nome: 'Mercado Pago', tipo: TipoConta.ContaCorrente },

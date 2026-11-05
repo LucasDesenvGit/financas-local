@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { ContaAgendada, FormaCobranca, Recorrencia, SalvarContaAgendada, SugestaoContaAgendada } from '../../../src/app/core/modelos';
-import { ContasAgendadasComponent } from '../../../src/app/paginas/contas-agendadas.component';
+import { ContasAgendadasComponent } from '../../../src/app/paginas/movimentacao/contas-agendadas.component';
 
 /** Sugestão de exemplo: escola paga todo dia 10, valor fixo. Os testes mudam só o que importa para cada caso. */
 export function sugestao(campos: Partial<SugestaoContaAgendada> = {}): SugestaoContaAgendada {

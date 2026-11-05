@@ -5,7 +5,7 @@ import {
   CompraSemOperacao, ConferenciaInvestimentos, CorrigirInvestimentos, CreditoDaCorretora, RendimentoComoInvestimento,
   TaxaB3, TipoAtivo
 } from '../../../src/app/core/modelos';
-import { ConferirInvestimentosComponent } from '../../../src/app/paginas/conferir-investimentos.component';
+import { ConferirInvestimentosComponent } from '../../../src/app/paginas/patrimonio/conferir-investimentos.component';
 
 /** Débito de compra sem operação (o de R$ 592,75 de 15/06, com R$ 3,60 de troco). */
 export function debito(campos: Partial<CompraSemOperacao> = {}): CompraSemOperacao {

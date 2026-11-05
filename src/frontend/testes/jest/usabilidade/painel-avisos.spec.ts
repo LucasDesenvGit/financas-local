@@ -3,7 +3,7 @@ import { Orcamento } from '../../../src/app/core/modelos';
 import {
   CHAVE_AVISOS_MINIMIZADOS, CHAVE_AVISOS_OCULTOS, CHAVE_ORCAMENTOS_MINIMIZADOS, CHAVE_ORCAMENTOS_OCULTOS, avisosContinuamOcultos, impressaoAviso, lerOrcamentosOcultos, nivelOrcamento,
   ocultarOrcamentos, orcamentosContinuamOcultos
-} from '../../../src/app/paginas/painel-avisos';
+} from '../../../src/app/paginas/painel/painel-avisos';
 import { abrirNotificacoes } from '../apoio/notificacoes';
 
 /**

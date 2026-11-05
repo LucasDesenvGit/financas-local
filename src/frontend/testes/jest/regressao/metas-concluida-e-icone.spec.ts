@@ -1,4 +1,4 @@
-import { IconesMeta, iconeDaMeta } from '../../../src/app/compartilhado/icones';
+import { IconesMeta, iconeDaMeta } from '../../../src/app/compartilhado/ui/icones';
 import { abrirMetas, meta } from '../apoio/metas';
 import { plano } from '../apoio/plano-metas';
 

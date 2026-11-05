@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
 import { TestBed } from '@angular/core/testing';
-import { Icones } from '../../../src/app/compartilhado/icones';
+import { Icones } from '../../../src/app/compartilhado/ui/icones';
 import { MENU, ShellComponent, ehGrupo, filtrarMenu, grupoDaUrl, telasDoMenu } from '../../../src/app/layout/shell.component';
 import { abrirShell } from '../apoio/shell';
 

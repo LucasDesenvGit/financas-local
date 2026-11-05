@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Banco, Conta, Fatura, OrigemConta, SalvarConta, TipoConta } from '../../../src/app/core/modelos';
-import { ContasComponent } from '../../../src/app/paginas/contas.component';
+import { ContasComponent } from '../../../src/app/paginas/movimentacao/contas.component';
 
 export const BANCOS: Banco[] = [
   { codigo: 'nubank', nome: 'Nubank' }, { codigo: 'itau', nome: 'Itaú' }, { codigo: 'mercadopago', nome: 'Mercado Pago' },

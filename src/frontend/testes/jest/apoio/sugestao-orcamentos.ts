@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { ItemSugestaoOrcamento, NaturezaGasto, SugestaoOrcamento } from '../../../src/app/core/modelos';
-import { SugestaoOrcamentosComponent } from '../../../src/app/paginas/sugestao-orcamentos.component';
+import { SugestaoOrcamentosComponent } from '../../../src/app/paginas/planejamento/sugestao-orcamentos.component';
 
 export function item(campos: Partial<ItemSugestaoOrcamento>): ItemSugestaoOrcamento {
   return {

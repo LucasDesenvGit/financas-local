@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { Reserva } from '../../../src/app/core/modelos';
-import { InvestimentosComponent } from '../../../src/app/paginas/investimentos.component';
-import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from '../../../src/app/paginas/reserva-conferencia';
+import { InvestimentosComponent } from '../../../src/app/paginas/patrimonio/investimentos.component';
+import { conferenciaForaDoEsperado, valorEsperadoDaReserva } from '../../../src/app/paginas/patrimonio/reserva-conferencia';
 
 /**
  * #169: o Méli Dólar não aparecia em lugar nenhum. Agora é uma reserva em dólar: a quantidade (e a conferência) em US$,

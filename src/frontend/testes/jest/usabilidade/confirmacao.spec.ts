@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { ConfirmacaoComponent } from '../../../src/app/compartilhado/confirmacao.component';
-import { ConfirmacaoService } from '../../../src/app/compartilhado/confirmacao.service';
+import { ConfirmacaoComponent } from '../../../src/app/compartilhado/ui/confirmacao.component';
+import { ConfirmacaoService } from '../../../src/app/compartilhado/ui/confirmacao.service';
 
 /**
  * #631 (ADR 0057): a confirmação do site, no lugar do `confirm()` do navegador.

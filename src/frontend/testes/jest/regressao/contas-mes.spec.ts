@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { CHAVE_FATURAS_NO_PAINEL } from '../../../src/app/compartilhado/faturas-no-painel';
+import { CHAVE_FATURAS_NO_PAINEL } from '../../../src/app/compartilhado/lancamentos/faturas-no-painel';
 import { FaturaMes, TipoConta } from '../../../src/app/core/modelos';
 import { NOMES_MESES } from '../../../src/app/compartilhado/utilidades';
 import { abrirContas, conta } from '../apoio/contas';

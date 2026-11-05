@@ -1,7 +1,7 @@
 import { Component, NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, provideRouter } from '@angular/router';
-import { IconeComponent } from '../../../src/app/compartilhado/icone.component';
+import { IconeComponent } from '../../../src/app/compartilhado/ui/icone.component';
 import { ShellComponent } from '../../../src/app/layout/shell.component';
 
 @Component({ template: '<p>tela</p>' })

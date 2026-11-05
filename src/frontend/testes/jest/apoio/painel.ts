@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Painel } from '../../../src/app/core/modelos';
-import { PainelComponent } from '../../../src/app/paginas/painel.component';
+import { PainelComponent } from '../../../src/app/paginas/painel/painel.component';
 
 /** Painel mínimo: tudo zerado; os testes mudam só o que importa. */
 export function painel(campos: Partial<Painel> = {}): Painel {

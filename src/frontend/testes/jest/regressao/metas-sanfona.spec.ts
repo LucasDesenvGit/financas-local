@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MetasComponent } from '../../../src/app/paginas/metas.component';
+import { MetasComponent } from '../../../src/app/paginas/planejamento/metas.component';
 import { abrirMetas, meta } from '../apoio/metas';
 
 /**

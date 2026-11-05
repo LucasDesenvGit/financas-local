@@ -8,7 +8,7 @@ Um comportamento testado num lugar só (#204). Não repita no Jest o que o naveg
 
 | O que testar | Onde | Forma |
 |---|---|---|
-| Cálculo, texto, decisão da tela | Jest, `testes/jest/regressao/` (bug corrigido ou comportamento garantido por um PR) | a função pura importada direto, sem `TestBed`: `paginas/limite-cartao.ts` → `testes/jest/regressao/limite-cartao.spec.ts` |
+| Cálculo, texto, decisão da tela | Jest, `testes/jest/regressao/` (bug corrigido ou comportamento garantido por um PR) | a função pura importada direto, sem `TestBed`: `paginas/movimentacao/limite-cartao.ts` → `testes/jest/regressao/limite-cartao.spec.ts` |
 | Critério de UI/UX que dá para conferir sem desenhar (atributo ARIA, teclado, texto, foco, ordem) | Jest, `testes/jest/usabilidade/` | `TestBed` com um componente hospedeiro, como `testes/jest/usabilidade/mais-analises.spec.ts` |
 | Desenho, CSS calculado, tamanho de alvo, rota de verdade, CSP, console, celular | navegador, `testes/navegador/` | pelos papéis e nomes acessíveis (`getByRole`, `getByLabel`); estilo em `estilos.spec.ts` |
 

@@ -1,5 +1,5 @@
 import { OrigemConta, TipoConta } from '../../../src/app/core/modelos';
-import { diferencaDoLimite, estadoDoLimite } from '../../../src/app/paginas/limite-cartao';
+import { diferencaDoLimite, estadoDoLimite } from '../../../src/app/paginas/movimentacao/limite-cartao';
 import { conta } from '../apoio/contas';
 
 /**

@@ -8,7 +8,7 @@ import { join } from 'path';
  */
 describe('Usabilidade: animação das regiões que abrem e fecham', () => {
   it('a barra do modo edição de Transações usa expandir/recolher (não fecha de uma vez)', () => {
-    const fonte = readFileSync(join(__dirname, '../../../src/app/paginas/transacoes.component.ts'), 'utf8');
+    const fonte = readFileSync(join(__dirname, '../../../src/app/paginas/movimentacao/transacoes.component.ts'), 'utf8');
     expect(fonte).toMatch(/class="painel-bloco barra-edicao expandir"[^>]*animate\.leave="recolher"/);
   });
 });

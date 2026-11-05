@@ -1,7 +1,7 @@
 import { FormaCobranca, Recorrencia } from '../../../src/app/core/modelos';
 import {
   FILTRO_RECORRENTES_PADRAO, agruparRecorrentes, filtrarRecorrentes, resumoPorConta, rotuloQuantidade, valorPorMes
-} from '../../../src/app/paginas/recorrentes';
+} from '../../../src/app/paginas/movimentacao/recorrentes';
 import { contaAgendada } from '../apoio/contas-agendadas';
 
 /**

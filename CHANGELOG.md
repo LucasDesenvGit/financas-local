@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.7] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Páginas e componentes do front-end organizados por assunto** (parte de #634; ADR 0058). As 37 páginas, que ficavam numa pasta só, agora ficam numa subpasta por grupo do menu (`paginas/painel/`, `movimentacao/`, `planejamento/`, `patrimonio/`, `analises/`, `ajustes/`, `manual/`). Os componentes compartilhados se dividem em `ui/` e por assunto (`graficos/`, `bancos/`, `lancamentos/`, `glossario/`), e o que só a barra de cima e o menu usam foi para `layout/`. Só mudaram os lugares e os imports. Nada muda para quem usa. Branch aberta antes desta mudança que cria arquivo em `paginas/` ou `compartilhado/`: mova-o para a pasta nova antes do merge.
+
 ## [3.3.6] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

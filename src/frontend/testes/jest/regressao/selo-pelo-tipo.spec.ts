@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { bancoNoTexto, visualBanco } from '../../../src/app/compartilhado/bancos';
-import { IconeCobrancaPadrao, IconesCategoria } from '../../../src/app/compartilhado/icones';
-import { SeloServicoComponent } from '../../../src/app/compartilhado/selo-servico.component';
-import { SERVICOS, servicoDe } from '../../../src/app/compartilhado/servicos';
-import { TIPOS_LANCAMENTO } from '../../../src/app/compartilhado/tipos-lancamento';
+import { bancoNoTexto, visualBanco } from '../../../src/app/compartilhado/bancos/bancos';
+import { IconeCobrancaPadrao, IconesCategoria } from '../../../src/app/compartilhado/ui/icones';
+import { SeloServicoComponent } from '../../../src/app/compartilhado/bancos/selo-servico.component';
+import { SERVICOS, servicoDe } from '../../../src/app/compartilhado/bancos/servicos';
+import { TIPOS_LANCAMENTO } from '../../../src/app/compartilhado/lancamentos/tipos-lancamento';
 import { TipoLancamento } from '../../../src/app/core/modelos';
 
 /**

@@ -3,8 +3,8 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { ConferenciaBanco } from '../../../src/app/core/modelos';
-import { ConferirBancoComponent } from '../../../src/app/paginas/conferir-banco.component';
-import { comparar } from '../../../src/app/paginas/conferir-banco';
+import { ConferirBancoComponent } from '../../../src/app/paginas/movimentacao/conferir-banco.component';
+import { comparar } from '../../../src/app/paginas/movimentacao/conferir-banco';
 
 /**
  * #172: a verificação feita à mão (19/10/2026), comparando o site com os apps dos bancos, agora é a tela "Conferir com o

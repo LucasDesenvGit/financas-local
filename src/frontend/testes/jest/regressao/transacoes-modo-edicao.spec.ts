@@ -1,7 +1,7 @@
 import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
 import { TipoCorrespondencia } from '../../../src/app/core/modelos';
 import { TestBed } from '@angular/core/testing';
-import { ConfirmacaoService } from '../../../src/app/compartilhado/confirmacao.service';
+import { ConfirmacaoService } from '../../../src/app/compartilhado/ui/confirmacao.service';
 import { abrirEdicao, transacao } from '../apoio/transacoes-edicao';
 
 /** Regressão do modo edição de categorias (#87): o que vai para a API, pendências, desfazer e regra. */

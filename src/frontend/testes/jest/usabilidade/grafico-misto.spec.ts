@@ -1,5 +1,5 @@
 import { ChartConfiguration } from 'chart.js';
-import { linhaPorCimaDasBarras } from '../../../src/app/compartilhado/grafico-misto';
+import { linhaPorCimaDasBarras } from '../../../src/app/compartilhado/graficos/grafico-misto';
 
 /**
  * Padrão do site para gráfico de barras com linha (#282): a linha por cima das barras (no Chart.js, `order` menor é

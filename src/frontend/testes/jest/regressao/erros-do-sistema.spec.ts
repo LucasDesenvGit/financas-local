@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { ConfirmacaoService } from '../../../src/app/compartilhado/confirmacao.service';
+import { ConfirmacaoService } from '../../../src/app/compartilhado/ui/confirmacao.service';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';

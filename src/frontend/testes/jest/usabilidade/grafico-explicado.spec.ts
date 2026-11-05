@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { GraficoExplicadoComponent } from '../../../src/app/compartilhado/grafico-explicado.component';
+import { GraficoExplicadoComponent } from '../../../src/app/compartilhado/graficos/grafico-explicado.component';
 
 @Component({
   imports: [GraficoExplicadoComponent],

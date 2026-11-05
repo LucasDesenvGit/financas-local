@@ -1,4 +1,4 @@
-import { descreverEvento, origemDoAcesso } from '../../../src/app/compartilhado/auditoria';
+import { descreverEvento, origemDoAcesso } from '../../../src/app/paginas/ajustes/auditoria';
 
 /**
  * Regressão da #284: em Configurações › Segurança › Acessos recentes, o evento aparecia como está no código

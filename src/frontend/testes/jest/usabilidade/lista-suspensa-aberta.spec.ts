@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { ListaSuspensaDirective } from '../../../src/app/compartilhado/lista-suspensa.directive';
+import { ListaSuspensaDirective } from '../../../src/app/compartilhado/ui/lista-suspensa.directive';
 
 /**
  * Usabilidade da lista suspensa aberta no visual do site (ListaSuspensaDirective). O <select> nativo continua dono do
@@ -122,8 +122,9 @@ describe('Usabilidade: lista suspensa aberta', () => {
 
   it('toda tela com <select> importa a diretiva (senão a lista aberta volta a ser a do sistema)', () => {
     const app = join(__dirname, '../../../src/app');
-    const pastas = ['paginas', 'compartilhado'].map((p) => join(app, p));
-    const sem = pastas.flatMap((p) => readdirSync(p).filter((f) => f.endsWith('.ts')).map((f) => join(p, f)))
+    const pastas = ['paginas', 'compartilhado', 'layout'].map((p) => join(app, p));
+    const sem = pastas
+      .flatMap((p) => readdirSync(p, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts')).map((f) => join(p, f)))
       .filter((f) => !f.endsWith('lista-suspensa.directive.ts'))
       .filter((f) => {
         const fonte = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');

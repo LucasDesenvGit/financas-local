@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { SeloServicoComponent } from '../../../src/app/compartilhado/selo-servico.component';
-import { IconeCobrancaPadrao, IconesCategoria } from '../../../src/app/compartilhado/icones';
-import { SERVICOS, servicoDe } from '../../../src/app/compartilhado/servicos';
+import { SeloServicoComponent } from '../../../src/app/compartilhado/bancos/selo-servico.component';
+import { IconeCobrancaPadrao, IconesCategoria } from '../../../src/app/compartilhado/ui/icones';
+import { SERVICOS, servicoDe } from '../../../src/app/compartilhado/bancos/servicos';
 
 /**
  * #265: o ícone de cada cobrança em Contas a pagar. Serviço conhecido pelo texto → selo da marca (como os bancos,

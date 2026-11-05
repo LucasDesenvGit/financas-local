@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
 import { Projecao, ProjecaoMes } from '../../../src/app/core/modelos';
-import { ProjecaoComponent } from '../../../src/app/paginas/projecao.component';
+import { ProjecaoComponent } from '../../../src/app/paginas/analises/projecao.component';
 
 /**
  * #314: Projeção.

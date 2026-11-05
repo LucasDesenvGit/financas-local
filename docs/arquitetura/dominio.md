@@ -191,7 +191,7 @@ classDiagram
 
 ## Termos para quem desenvolve
 
-O [glossário do site](../../src/frontend/src/app/compartilhado/glossario.ts) explica o termo para quem usa ([ADR 0020](../adr/0020-glossario-unico-com-balao-na-top-layer.md)). Esta lista diz onde ele está no código, sem repetir a definição. Termo novo do domínio entra aqui.
+O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossario.ts) explica o termo para quem usa ([ADR 0020](../adr/0020-glossario-unico-com-balao-na-top-layer.md)). Esta lista diz onde ele está no código, sem repetir a definição. Termo novo do domínio entra aqui.
 
 | Termo | No código | Regra principal | No glossário |
 |---|---|---|---|
