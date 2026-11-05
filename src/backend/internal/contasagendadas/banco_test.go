@@ -53,6 +53,8 @@ func TestSalvar(t *testing.T) {
 			`{"descricao":"Igual","valor":10,"proximoVencimento":"2026-11-01","recorrencia":1,"categoriaId":null,"contaId":null,"dataLimite":"2026-11-01"}`, 204, ""},
 		{"única com limite antes vale", "POST", "/api/contas-agendadas",
 			`{"descricao":"Única","valor":10,"proximoVencimento":"2026-11-01","recorrencia":0,"categoriaId":null,"contaId":null,"dataLimite":"2026-10-31"}`, 204, ""},
+		{"sem o próximo vencimento (#503)", "POST", "/api/contas-agendadas",
+			`{"descricao":"Sem vencimento","valor":10,"recorrencia":1,"categoriaId":null,"contaId":null}`, 400, ""},
 		{"editar a que não existe", "PUT", "/api/contas-agendadas/99",
 			`{"descricao":"x","valor":10,"proximoVencimento":"2026-11-01","recorrencia":1,"categoriaId":999,"contaId":null}`, 404, "Registro não encontrado."},
 		{"id que não é número", "PUT", "/api/contas-agendadas/abc", `{}`, 404, ""},
@@ -69,6 +71,10 @@ func TestSalvar(t *testing.T) {
 				t.Errorf("%s: %q", c.nome, m)
 			}
 		}
+	}
+	var semVencimento int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM "ContaAgendada" WHERE "Descricao" = 'Sem vencimento'`).Scan(&semVencimento); err != nil || semVencimento != 0 {
+		t.Errorf("gravou a conta sem vencimento: %d, %v", semVencimento, err)
 	}
 	var limite, unicaLimite *string
 	_ = db.QueryRow(`SELECT "DataLimite" FROM "ContaAgendada" WHERE "Descricao" = 'Igual'`).Scan(&limite)

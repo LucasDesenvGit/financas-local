@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"slices"
 	"strconv"
@@ -435,7 +434,7 @@ func (s *Servico) itensPeloValor(ctx context.Context, o onde, crescente bool, pu
 		return nil, fmt.Errorf("ler as transações para ordenar pelo valor: %w", err)
 	}
 	slices.SortFunc(todas, func(a, b chave) int {
-		c := compararComoOEFDecimal(a.valor, b.valor)
+		c := compararSemSinal(a.valor, b.valor)
 		if !crescente {
 			c = -c
 		}
@@ -465,21 +464,11 @@ func (s *Servico) itensPeloValor(ctx context.Context, o onde, crescente bool, pu
 	return dtos, nil
 }
 
-// compararComoOEFDecimal é a ordem que o C# dá ao valor sem o sinal, com o defeito dela (#499). O EF Core ordena o
-// decimal no SQLite com a collation EF_DECIMAL, que lê o texto com a cultura do processo: em pt-BR o ponto é separador
-// de milhar, e "12.75" vale 1275, depois de "18.9" (189) e de "100.0" (1000). Conferido com o próprio EF Core (sonda
-// da #78) e no contrato 07-transacoes ("ordem por valor crescente"). O texto é o que a consulta do C# compara: o valor
-// gravado, para o positivo, e o ef_negate dele (o decimal no formato do banco), para o negativo.
-func compararComoOEFDecimal(a, b tipos.Decimal) int {
-	chave := func(v tipos.Decimal) *big.Int {
-		texto := v.String()
-		if v.Decimal().IsNegative() {
-			texto = tipos.DeDecimal(v.Decimal().Neg()).TextoNoBanco()
-		}
-		n, _ := new(big.Int).SetString(strings.ReplaceAll(texto, ".", ""), 10)
-		return n
-	}
-	return chave(a).Cmp(chave(b))
+// compararSemSinal é a ordem pelo valor sem o sinal, como número (#499). O C# ordenava no SQLite com a collation
+// EF_DECIMAL, que lia o texto em pt-BR, com o ponto de separador de milhar: "12.75" valia 1275 e ficava depois de "18.9"
+// e de "100.0". O Go copiou isso durante a migração; com o .NET fora (#86), a ordem é a do número.
+func compararSemSinal(a, b tipos.Decimal) int {
+	return a.Decimal().Abs().Cmp(b.Decimal().Abs())
 }
 
 // obter é o Obter do C#: {id:long}; o que não é número de 64 bits não casa com a rota (404 sem corpo).
@@ -501,12 +490,11 @@ func (s *Servico) obter(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista[0])
 }
 
-// MaioresDespesas são as maiores despesas do período (o GET /api/relatorios/maiores-despesas do C#, #80), sem as
-// ignoradas nos relatórios, no máximo quantas. O C# ordena pelo valor gravado no SQLite, com a collation EF_DECIMAL,
-// que lê o texto em pt-BR (o ponto é separador de milhar): "-1850.0" vale −18500, "-299.9" vale −2999 e "-27.45" vale
-// −2745, que vem antes de "-223.5" (−2235). Aqui a ordem é em Go (dinheiro é texto no banco), com a mesma leitura
-// (contrato 14-relatorios). O empate fica na ordem em que o SQLite percorre o período: o índice IX_Transacao_Data, da
-// data mais nova para a mais velha.
+// MaioresDespesas são as maiores despesas do período (o GET /api/relatorios/maiores-despesas, #80), sem as ignoradas
+// nos relatórios, no máximo quantas: da mais negativa para a menos. A ordem é em Go, porque dinheiro é texto no banco.
+// O C# ordenava com a collation EF_DECIMAL, que lia o texto em pt-BR e punha -27,45 antes de -223,50 (#499); o Go copiou
+// isso na migração, e agora a ordem é a do número. O empate fica na ordem em que o SQLite percorre o período: o índice
+// IX_Transacao_Data, da data mais nova para a mais velha.
 func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Data, quantas int) ([]TransacaoDto, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ?
 		AND "Tipo" = ? AND "IgnorarRelatorios" = 0 ORDER BY "Data" DESC, "Id"`, inicio, fim, transacoes.Despesa)
@@ -530,7 +518,7 @@ func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Da
 	if err := linhas.Err(); err != nil {
 		return nil, fmt.Errorf("ler as despesas do período: %w", err)
 	}
-	slices.SortStableFunc(todas, func(a, b chave) int { return compararComSinalComoOEFDecimal(a.valor, b.valor) })
+	slices.SortStableFunc(todas, func(a, b chave) int { return a.valor.Decimal().Cmp(b.valor.Decimal()) })
 	todas = todas[:min(len(todas), quantas)]
 	if len(todas) == 0 {
 		return []TransacaoDto{}, nil
@@ -547,16 +535,6 @@ func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Da
 	}
 	slices.SortFunc(dtos, func(a, b TransacaoDto) int { return posicao[a.Id] - posicao[b.Id] })
 	return dtos, nil
-}
-
-// compararComSinalComoOEFDecimal é a ordem que a collation EF_DECIMAL dá ao valor gravado, com o sinal: o texto lido
-// em pt-BR, com o ponto de separador de milhar ("12.75" vale 1275; "-1850.0", −18500).
-func compararComSinalComoOEFDecimal(a, b tipos.Decimal) int {
-	chave := func(v tipos.Decimal) *big.Int {
-		n, _ := new(big.Int).SetString(strings.ReplaceAll(v.String(), ".", ""), 10)
-		return n
-	}
-	return chave(a).Cmp(chave(b))
 }
 
 // TransacoesDoPainel são as transações do painel (#334): as últimas até hoje (as parcelas que o banco manda com data

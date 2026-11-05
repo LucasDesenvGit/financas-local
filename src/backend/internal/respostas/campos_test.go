@@ -20,6 +20,38 @@ func lerCampos(t *testing.T, corpo string, campos ...Campo) (string, map[string]
 	return "", erros
 }
 
+// Regra (#503): a data obrigatória que não veio é o 400 de campo obrigatório; sem Obrigatoria, fica a data zero, como no
+// C#. null e outro formato continuam erro de conversão.
+func TestCampoData(t *testing.T) {
+	obrigatoria := map[string][]string{"D": {"The D field is required."}}
+	casos := []struct {
+		corpo       string
+		obrigatoria bool
+		caminho     string
+		erros       map[string][]string
+		valor       string
+	}{
+		{`{"d":"2026-10-13"}`, true, "", map[string][]string{}, "2026-10-13"},
+		{`{}`, true, "", obrigatoria, "0001-01-01"},
+		{`{"outra":"2026-10-13"}`, true, "", obrigatoria, "0001-01-01"},
+		{`{}`, false, "", map[string][]string{}, "0001-01-01"},
+		{`{"d":null}`, true, "$.d", nil, "0001-01-01"},
+		{`{"d":"13/10/2026"}`, false, "$.d", nil, "0001-01-01"},
+	}
+	for _, c := range casos {
+		campo := &CampoData{Propriedade: "D", Obrigatoria: c.obrigatoria}
+		caminho, erros := lerCampos(t, c.corpo, campo)
+		if caminho != c.caminho || !reflect.DeepEqual(erros, c.erros) || campo.Valor.String() != c.valor {
+			t.Errorf("%s: caminho %q, erros %v, valor %s", c.corpo, caminho, erros, campo.Valor)
+		}
+	}
+	// A opcional continua aceitando a falta, sem erro.
+	opcional := &CampoDataOpcional{Propriedade: "D"}
+	if _, erros := lerCampos(t, `{}`, opcional); len(erros) != 0 || opcional.Valor != nil {
+		t.Errorf("a opcional sem a data: %v, %v", erros, opcional.Valor)
+	}
+}
+
 // Regra: int do C# pelo System.Text.Json com as opções web: número inteiro ou o mesmo número em texto; casa decimal,
 // expoente, espaço, "+" e null são erro de conversão; fora de 32 bits também. [Range] com a mensagem do .NET.
 func TestCampoInteiro(t *testing.T) {

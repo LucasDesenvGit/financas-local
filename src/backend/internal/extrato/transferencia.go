@@ -44,7 +44,7 @@ func (s *Servico) transferir(w http.ResponseWriter, r *http.Request) {
 	origemId := respostas.CampoInteiro{Propriedade: "ContaOrigemId"}
 	destinoId := respostas.CampoInteiro{Propriedade: "ContaDestinoId"}
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}
-	data := respostas.CampoData{Propriedade: "Data"}
+	data := respostas.CampoData{Propriedade: "Data", Obrigatoria: true} // #503
 	descricao := respostas.CampoTexto{Propriedade: "Descricao", Maximo: 300, Opcional: true}
 	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.TransferenciaDto", &origemId, &destinoId, &valor, &data,
 		&descricao) {
