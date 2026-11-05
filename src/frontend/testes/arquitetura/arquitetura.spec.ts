@@ -38,6 +38,13 @@ const SUBPASTAS_PROIBIDAS: Record<string, { proibidas: string[]; motivo: string 
 };
 
 /**
+ * Regra 7 (#475, ADR 0059): a lógica de uma tela (`paginas/<grupo>/<tela>.ts`, o que não é componente, diretiva, pipe nem
+ * serviço) é função pura: sem Angular, sem rxjs e sem a API, para o Jest testá-la sem montar a tela.
+ */
+const LOGICA_DA_TELA = /^paginas\/(?:[^/]+\/)?[^/]+(?<!\.(?:component|directive|pipe|service))\.ts$/;
+const PROIBIDOS_NA_LOGICA = [/^@angular\//, /^rxjs/, /^core\/api\.service$/];
+
+/**
  * Exceções das regras 2 a 4, com o motivo. *Julgamento (#476):* parece estar no lugar errado, e não ser exceção de
  * verdade; fica aqui até alguém mover. As do AvisosService e dos avisos do sino saíram na #634 (core/ e layout/).
  */
@@ -102,6 +109,10 @@ function violacoes(grafo: Grafo): string[] {
       if (sub?.proibidas.some((p) => alvo.startsWith(`${p}/`))) {
         v.push(`regra 6 (${sub.motivo}): ${arquivo} importa ${alvo}. O que fazer: receba o dado pronto por input() (o ui/ só desenha), ou mova o componente para a pasta do assunto.`);
       }
+      // Regra 7: a lógica da tela é função pura.
+      if (LOGICA_DA_TELA.test(arquivo) && PROIBIDOS_NA_LOGICA.some((r) => r.test(alvo))) {
+        v.push(`regra 7 (a lógica da tela é função pura, ADR 0059): ${arquivo} importa ${alvo}. O que fazer: deixe a chamada da API, a rota e o estado no componente da tela, e receba o dado pronto por parâmetro (a URL como { get(nome) }).`);
+      }
       // Regra 5: uma página com rota não importa outra página com rota.
       const origem = arquivo.replace(/\.ts$/, '');
       if (rotas.has(origem) && rotas.has(alvo) && alvo !== origem) {
@@ -156,6 +167,10 @@ describe('arquitetura do front-end (#476)', () => {
         'regra 5 (página não depende de outra página): paginas/painel/painel.component.ts importa paginas/planejamento/metas.component'],
       ['ui importa assunto', com('compartilhado/ui/modal.component.ts', ['compartilhado/glossario/termo.component']),
         'regra 6 (o componente de ui/ não sabe do domínio): compartilhado/ui/modal.component.ts importa compartilhado/glossario/termo.component'],
+      ['lógica da tela chama a API', com('paginas/planejamento/metas-plano.ts', ['core/api.service']),
+        'regra 7 (a lógica da tela é função pura, ADR 0059): paginas/planejamento/metas-plano.ts importa core/api.service'],
+      ['lógica da tela usa Angular', com('paginas/planejamento/metas-plano.ts', ['@angular/router']),
+        'regra 7 (a lógica da tela é função pura, ADR 0059): paginas/planejamento/metas-plano.ts importa @angular/router'],
       ['exceção que sarou', com('layout/shell.component.ts', []),
         'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual/manual-conteudo" não acontece mais']
     ];

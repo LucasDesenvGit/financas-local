@@ -5,105 +5,41 @@ import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { PrivacidadeService } from '../../core/privacidade.service';
 import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import {
   Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
-  NaturezaGasto, SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao, OrdemTransacoes
+  TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao, OrdemTransacoes
 } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { PaginacaoComponent } from '../../compartilhado/ui/paginacao.component';
 import { OpcaoMultipla, SeletorMultiploComponent } from '../../compartilhado/ui/seletor-multiplo.component';
-import {
-  ContextoTransacoes, NOMES_MESES, NaturezaUrl, ORIGENS_IDS, OrigemIdsUrl, dataIso, dataIsoValida, idsDaUrl, paraData,
-  paramsTransacoes, primeiroDiaMes, ultimoDiaMes
-} from '../../compartilhado/utilidades';
+import { OrigemIdsUrl, dataIso } from '../../compartilhado/utilidades';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';
 import { TermoComponent } from '../../compartilhado/glossario/termo.component';
 import { IconeComponent } from '../../compartilhado/ui/icone.component';
 import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
-import { GRUPOS_LANCAMENTO, NAO_E_GASTO, TIPOS_LANCAMENTO } from '../../compartilhado/lancamentos/tipos-lancamento';
+import { GRUPOS_LANCAMENTO, TIPOS_LANCAMENTO } from '../../compartilhado/lancamentos/tipos-lancamento';
 import { RenomearTransacaoComponent } from './renomear-transacao.component';
 import { RenomearEmLoteComponent } from './renomear-em-lote.component';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
 import { SeloServicoComponent } from '../../compartilhado/bancos/selo-servico.component';
+import {
+  COLUNAS_ORDENAVEIS, ChipFiltro, ParametrosUrl, EscolhaCategoria, FormTransacao, FormTransferencia, LinhaSugestao, SugestaoRegra,
+  ajusteDoForm, alternarPagina, ariaSortDe, camposDeCategorias, categoriasDoFiltro, chipsDoFiltro, comEscolha, direcaoAoClicar,
+  direcaoDe, filtroInicial, foraDosGastos, formDaTransacao, formNovo, itensDoLote, lerFiltroDaUrl, linhasDeSugestao,
+  marcarIntervalo, nomeConfianca, nomeSelecao, opcoesCategoria, ordemDe, paginaDaUrl, parametrosDoFiltro, regrasSugeridas,
+  rotuloCategoria, rotuloCategoriaPorId, rotuloPeriodo, semOChip, setaDe, somandoNosTotais, tamanhoPaginaValido, textoSelecao,
+  conflitoRegra, transacaoDoForm, trocouFiltro, ultimaPagina, valorCategoria
+} from './transacoes';
 
-interface FormTransacao {
-  id: number | null;
-  openFinance: boolean;
-  contaId: number | null;
-  data: string;
-  descricao: string;
-  valor: number | null;
-  tipo: TipoTransacao;
-  categoriaId: number | null;
-  observacao: string;
-  ignorarRelatorios: boolean;
-  pendente: boolean;
-  descricaoOriginal: string | null;
-  emergencia: boolean;
-}
-
-/** Linha editável do assistente de sugestões. */
-/** #244: a direção mais útil de cada coluna ao clicar nela pela primeira vez. */
-const DIRECAO_PADRAO: Record<OrdemTransacoes, 'asc' | 'desc'> = { data: 'desc', valor: 'desc', categoria: 'asc', conta: 'asc' };
-
-interface LinhaSugestao extends SugestaoCategoria { escolhida: number | null; criarRegra: boolean; aplicada: boolean }
-
-interface FormTransferencia {
-  contaOrigemId: number | null;
-  contaDestinoId: number | null;
-  valor: number | null;
-  data: string;
-  descricao: string;
-}
-
-/** ?natureza= da URL (Visão anual, regra 50/30/20) e o rótulo do chip: as mesmas palavras do gráfico de lá. */
-const NATUREZAS_URL: Record<NaturezaUrl, { natureza: NaturezaGasto | null; rotulo: string }> = {
-  'essencial': { natureza: NaturezaGasto.Essencial, rotulo: 'Essenciais' },
-  'estilo-de-vida': { natureza: NaturezaGasto.EstiloDeVida, rotulo: 'Estilo de vida' },
-  'sem': { natureza: null, rotulo: 'Sem classificação (essencial/estilo de vida)' }
-};
-
-/** Naturezas do filtro como estão na URL, na ordem fixa de NATUREZAS_URL. */
-function naturezasNaUrl(f: FiltroTransacoes): NaturezaUrl[] {
-  return (Object.keys(NATUREZAS_URL) as NaturezaUrl[]).filter((chave) => {
-    const n = NATUREZAS_URL[chave].natureza;
-    return n === null ? !!f.semNatureza : (f.naturezas ?? []).includes(n);
-  });
-}
-
-interface ChipFiltro {
-  /** Categoria e natureza têm um chip por valor marcado: `categoria:12`, `categoria:sem`, `natureza:essencial`. */
-  id: 'periodo' | `categoria:${string}` | `natureza:${NaturezaUrl}` | 'conta' | 'tipo' | 'lancamento' | 'emergencias' | 'generica' | 'busca'
-    | 'ids';
-  rotulo: string;
-  cor?: string;
-}
-
-/** #87: categoria escolhida no modo edição: 'auto' (voltar para as regras) ou o id da categoria. */
-type EscolhaCategoria = 'auto' | `${number}`;
-
-/** "Criar regra para as próximas": várias transações iguais foram para a mesma categoria. */
-interface SugestaoRegra { texto: string; categoriaId: number; categoriaNome: string; quantidade: number; }
-
-/** "outubro/2026" quando é o mês cheio; senão "01/09 – 15/10" (com ano se o período cruza anos). */
-function rotuloPeriodo(inicio?: string | null, fim?: string | null): string {
-  if (!inicio || !fim) return inicio ? `a partir de ${dataCurta(inicio, true)}` : fim ? `até ${dataCurta(fim, true)}` : 'Todo o período';
-  const [ai, mi] = inicio.split('-').map(Number);
-  if (inicio === primeiroDiaMes(ai, mi) && fim === ultimoDiaMes(ai, mi)) return `${NOMES_MESES[mi - 1]}/${ai}`;
-  const cruzaAno = inicio.substring(0, 4) !== fim.substring(0, 4);
-  return `${dataCurta(inicio, cruzaAno)} – ${dataCurta(fim, cruzaAno)}`;
-}
-
-function dataCurta(iso: string, comAno: boolean): string {
-  const [a, m, d] = iso.split('-');
-  return comAno ? `${d}/${m}/${a}` : `${d}/${m}`;
-}
-
+/**
+ * Tela de Transações. A lógica (filtro ↔ URL, chips, ordenação, seleção, modo edição, sugestões, formulário) está em
+ * funções puras em `./transacoes.ts` (#475, ADR 0059); aqui ficam os dados, o estado e as chamadas da API.
+ */
 @Component({
   selector: 'app-transacoes',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
@@ -666,20 +602,7 @@ export class TransacoesComponent implements OnInit {
     this.todasCategorias().filter((c) => c.ativa || this.categoriasFiltradas().includes(String(c.id))));
   private readonly categoriasFiltradas = signal<string[]>([]);
   /** Opções do filtro de categorias: "Sem categoria" e cada categoria seguida das subcategorias (recuadas). */
-  readonly opcoesCategoria = computed<OpcaoMultipla[]>(() => {
-    const lista = this.categorias();
-    const porNome = (a: Categoria, b: Categoria) => a.nome.localeCompare(b.nome, 'pt-BR');
-    const ids = new Set(lista.map((c) => c.id));
-    const raizes = lista.filter((c) => !c.categoriaPaiId || !ids.has(c.categoriaPaiId)).sort(porNome);
-    const opcoes: OpcaoMultipla[] = [{ valor: 'sem', rotulo: 'Sem categoria' }];
-    for (const r of raizes) {
-      opcoes.push({ valor: String(r.id), rotulo: this.rotuloCategoria(r), cor: r.cor });
-      for (const f of lista.filter((c) => c.categoriaPaiId === r.id).sort(porNome)) {
-        opcoes.push({ valor: String(f.id), rotulo: f.nome, cor: f.cor, nivel: 1 });
-      }
-    }
-    return opcoes;
-  });
+  readonly opcoesCategoria = computed<OpcaoMultipla[]>(() => opcoesCategoria(this.categorias(), this.todasCategorias()));
   readonly pagina = signal<PaginaTransacoes | null>(null);
   readonly selecionadas = signal<Set<number>>(new Set());
   readonly salvando = signal(false);
@@ -695,7 +618,7 @@ export class TransacoesComponent implements OnInit {
   readonly contasManuais = computed(() => this.contas().filter((c) => c.origem === OrigemConta.Manual));
   readonly totalPaginas = computed(() => {
     const p = this.pagina();
-    return p ? Math.max(1, Math.ceil(p.total / p.tamanhoPagina)) : 1;
+    return p ? ultimaPagina(p.total, p.tamanhoPagina) : 1;
   });
   readonly todasSelecionadas = computed(() => {
     const itens = this.pagina()?.itens ?? [];
@@ -705,14 +628,7 @@ export class TransacoesComponent implements OnInit {
   private readonly selecionadasNaPagina = computed(() =>
     (this.pagina()?.itens ?? []).filter((t) => this.selecionadas().has(t.id)).length);
   readonly algumaSelecionadaNaPagina = computed(() => this.selecionadasNaPagina() > 0);
-  /** "5 selecionadas (2 em outras páginas)": deixa claro que a ação em lote vale também para as que não aparecem. */
-  readonly textoSelecao = computed(() => {
-    const total = this.selecionadas().size;
-    if (!total) return '';
-    const fora = total - this.selecionadasNaPagina();
-    return `${total} ${total === 1 ? 'selecionada' : 'selecionadas'}`
-      + (fora ? ` (${fora} em ${fora === 1 ? 'outra página' : 'outras páginas'})` : '');
-  });
+  readonly textoSelecao = computed(() => textoSelecao(this.selecionadas().size, this.selecionadasNaPagina()));
   /** Shift+clique: a última caixa marcada/desmarcada (índice na página) e se o clique veio com Shift. */
   private ultimoMarcado: number | null = null;
   shiftNoClique = false;
@@ -738,63 +654,18 @@ export class TransacoesComponent implements OnInit {
   /** Filtro da última busca (o que está na tela), base dos chips de "Filtrando:". */
   readonly filtroAplicado = signal<FiltroTransacoes>(this.filtroInicial());
 
-  /**
-   * UX-2: um chip para cada filtro diferente do padrão (mês atual, sem filtros), para quem chega por um link
-   * saber que a lista está filtrada. Nielsen 1 (visibilidade do estado) e 3 (controle: ✕ e "Limpar filtros").
-   */
-  readonly chipsFiltro = computed<ChipFiltro[]>(() => {
-    const f = this.filtroAplicado();
-    const padrao = this.filtroInicial();
-    const chips: ChipFiltro[] = [];
-    if (f.inicio !== padrao.inicio || f.fim !== padrao.fim) chips.push({ id: 'periodo', rotulo: rotuloPeriodo(f.inicio, f.fim) });
-    if (f.semCategoria) chips.push({ id: 'categoria:sem', rotulo: 'Sem categoria' });
-    for (const id of f.categoriaIds ?? []) {
-      const c = this.todasCategorias().find((x) => x.id === id);
-      chips.push({ id: `categoria:${id}`, rotulo: c ? this.rotuloCategoria(c) : 'Categoria', cor: c?.cor });
-    }
-    for (const n of naturezasNaUrl(f)) chips.push({ id: `natureza:${n}`, rotulo: NATUREZAS_URL[n].rotulo });
-    if (f.contaId) chips.push({ id: 'conta', rotulo: this.contas().find((c) => c.id === f.contaId)?.nome ?? 'Conta' });
-    if (f.tipo) {
-      const nomes: Record<number, string> = {
-        [TipoTransacao.Despesa]: 'Despesas', [TipoTransacao.Receita]: 'Receitas', [TipoTransacao.Transferencia]: 'Transferências'
-      };
-      chips.push({ id: 'tipo', rotulo: nomes[f.tipo] });
-    }
-    if (f.lancamento) chips.push({ id: 'lancamento', rotulo: GRUPOS_LANCAMENTO.find((g) => g.valor === f.lancamento)?.rotulo ?? 'Lançamento' });
-    if (f.somenteEmergencias) chips.push({ id: 'emergencias', rotulo: 'Só emergências' });
-    if (f.poucoInformativa) chips.push({ id: 'generica', rotulo: 'Descrição pouco informativa' });
-    if (f.busca?.trim()) chips.push({ id: 'busca', rotulo: `“${f.busca.trim()}”` });
-    if (f.ids?.length) {
-      const n = f.ids.length;
-      const quantos = `${n} ${n === 1 ? 'lançamento' : 'lançamentos'}`;
-      const origem = this.origemIds();
-      const escolhidos = n === 1 ? 'Só 1 lançamento escolhido' : `Só ${n} lançamentos escolhidos`;
-      chips.push({ id: 'ids', rotulo: origem ? `${ORIGENS_IDS[origem]}: ${quantos}` : escolhidos });
-    }
-    return chips;
-  });
+  /** UX-2: um chip para cada filtro diferente do padrão (`chipsDoFiltro`). */
+  readonly chipsFiltro = computed<ChipFiltro[]>(() =>
+    chipsDoFiltro(this.filtroAplicado(), this.filtroInicial(), this.todasCategorias(), this.contas(), this.origemIds()));
 
   removerFiltro(id: ChipFiltro['id']): void {
-    const padrao = this.filtroInicial();
-    if (id.startsWith('natureza:')) {
-      const natureza = NATUREZAS_URL[id.substring('natureza:'.length) as NaturezaUrl].natureza;
-      if (natureza === null) this.filtro.semNatureza = false;
-      else this.filtro.naturezas = (this.filtro.naturezas ?? []).filter((n) => n !== natureza);
-    } else if (id.startsWith('categoria:')) {
-      const valor = id.substring('categoria:'.length);
-      this.filtroCategorias = this.filtroCategorias.filter((v) => v !== valor);
+    const r = semOChip(this.filtro, this.filtroCategorias, id, this.filtroInicial());
+    this.filtro = r.filtro;
+    if (r.categorias !== this.filtroCategorias) {
+      this.filtroCategorias = r.categorias;
       this.sincronizarFiltroCategoria();
     }
-    switch (id) {
-      case 'periodo': this.filtro.inicio = padrao.inicio; this.filtro.fim = padrao.fim; break;
-      case 'conta': this.filtro.contaId = null; break;
-      case 'tipo': this.filtro.tipo = null; break;
-      case 'emergencias': this.filtro.somenteEmergencias = false; break;
-      case 'generica': this.filtro.poucoInformativa = false; break;
-      case 'lancamento': this.filtro.lancamento = null; break;
-      case 'busca': this.filtro.busca = ''; break;
-      case 'ids': this.filtro.ids = []; this.origemIds.set(null); break;
-    }
+    if (id === 'ids') this.origemIds.set(null);
     this.buscar(1);
   }
 
@@ -834,73 +705,19 @@ export class TransacoesComponent implements OnInit {
     }
   }
 
-  /**
-   * UX-1: filtro vindo de outra tela (?categoria=12|sem&inicio=yyyy-MM-dd&fim=yyyy-MM-dd&tipo=despesa|receita&conta=3).
-   * Várias categorias vêm separadas por vírgula (?categoria=12,20,sem).
-   * UX-5: e o que a própria tela grava na URL (&emergencias=1&busca=texto&pagina=2), para o F5 e o link salvo.
-   * Cada parâmetro é validado sozinho: um inválido é ignorado e os outros continuam valendo.
-   */
-  private aplicarParametrosDaUrl(params: ParamMap): void {
-    const inicio = params.get('inicio');
-    const fim = params.get('fim');
-    const inicioOk = dataIsoValida(inicio);
-    const fimOk = dataIsoValida(fim);
-    if (inicioOk) this.filtro.inicio = inicio;
-    if (fimOk) this.filtro.fim = fim;
-    // Só uma das datas veio válida: a outra acompanha o mês dela, para não sobrar um período invertido (lista vazia).
-    if (inicioOk !== fimOk && this.filtro.inicio! > this.filtro.fim!) {
-      const base = paraData(inicioOk ? this.filtro.inicio! : this.filtro.fim!);
-      if (inicioOk) this.filtro.fim = ultimoDiaMes(base.getFullYear(), base.getMonth() + 1);
-      else this.filtro.inicio = primeiroDiaMes(base.getFullYear(), base.getMonth() + 1);
-    }
-
-    const tipos: Record<string, TipoTransacao> = {
-      despesa: TipoTransacao.Despesa, receita: TipoTransacao.Receita, transferencia: TipoTransacao.Transferencia
-    };
-    const tipo = params.get('tipo');
-    if (tipo && tipos[tipo]) this.filtro.tipo = tipos[tipo];
-
-    const validas = new Set(['sem', ...this.todasCategorias().map((c) => String(c.id))]);
-    const categorias = (params.get('categoria') ?? '').split(',').map((v) => v.trim()).filter((v) => validas.has(v));
-    this.filtroCategorias = [...new Set(categorias)];
+  /** UX-1 e UX-5: o filtro, o modo edição, a origem dos ids e o destaque que vêm na URL (`lerFiltroDaUrl`). */
+  private aplicarParametrosDaUrl(params: ParametrosUrl): void {
+    const lido = lerFiltroDaUrl(params, this.filtro, this.todasCategorias(), this.contas());
+    this.filtro = lido.filtro;
+    this.filtroCategorias = lido.categorias;
     this.sincronizarFiltroCategoria();
-
-    const conta = Number(params.get('conta'));
-    if (conta && this.contas().some((c) => c.id === conta)) this.filtro.contaId = conta;
-
-    const naturezas = (params.get('natureza') ?? '').split(',').map((v) => v.trim())
-      .filter((v): v is NaturezaUrl => Object.hasOwn(NATUREZAS_URL, v));
-    this.filtro.semNatureza = naturezas.includes('sem');
-    this.filtro.naturezas = [...new Set(naturezas.map((v) => NATUREZAS_URL[v].natureza).filter((n) => n !== null))];
-
-    if (params.get('emergencias') === '1') this.filtro.somenteEmergencias = true;
-    if (params.get('generica') === '1') this.filtro.poucoInformativa = true;
-    const lancamento = params.get('lancamento');
-    if (lancamento && GRUPOS_LANCAMENTO.some((g) => g.valor === lancamento)) this.filtro.lancamento = lancamento;
-    if (params.get('editar') === '1') this.modoEdicao.set(true);
-    const busca = params.get('busca')?.trim();
-    if (busca) this.filtro.busca = busca.slice(0, 100);
-    // #244: ordenação da URL, só das colunas da lista fixa; sem ela (ou inválida), o padrão (data, mais recente primeiro).
-    const ordem = params.get('ordem');
-    if (ordem && this.colunasOrdenaveis.some((c) => c.chave === ordem)) {
-      this.filtro.ordem = ordem as OrdemTransacoes;
-      const direcao = params.get('direcao');
-      this.filtro.direcao = direcao === 'asc' || direcao === 'desc' ? direcao : DIRECAO_PADRAO[this.filtro.ordem];
-    }
-    const ids = idsDaUrl(params.get('ids'));
-    if (ids.length) {
-      this.filtro.ids = ids;
-      const de = params.get('de');
-      this.origemIds.set(de && Object.hasOwn(ORIGENS_IDS, de) ? de as OrigemIdsUrl : null);
-    }
-    const transacao = Number(params.get('transacao'));
-    if (Number.isInteger(transacao) && transacao > 0) this.transacaoDestacada.set(transacao);
+    if (lido.modoEdicao) this.modoEdicao.set(true);
+    if (lido.origemIds) this.origemIds.set(lido.origemIds);
+    if (lido.transacaoDestacada !== null) this.transacaoDestacada.set(lido.transacaoDestacada);
   }
 
   rotuloCategoria(c: Categoria): string {
-    if (!c.categoriaPaiId) return c.nome;
-    const pai = this.todasCategorias().find((x) => x.id === c.categoriaPaiId);
-    return pai ? `${pai.nome} › ${c.nome}` : c.nome;
+    return rotuloCategoria(c, this.todasCategorias());
   }
 
   aplicarFiltroCategorias(valores: string[]): void {
@@ -911,9 +728,7 @@ export class TransacoesComponent implements OnInit {
 
   /** Leva as categorias marcadas ('sem' | id) para o filtro da API. */
   private sincronizarFiltroCategoria(): void {
-    this.filtro.semCategoria = this.filtroCategorias.includes('sem');
-    this.filtro.categoriaIds = this.filtroCategorias.filter((v) => v !== 'sem').map(Number);
-    this.filtro.categoriaId = null;
+    Object.assign(this.filtro, camposDeCategorias(this.filtroCategorias));
     this.categoriasFiltradas.set(this.filtroCategorias);
   }
 
@@ -942,12 +757,8 @@ export class TransacoesComponent implements OnInit {
       this.filtroDoDestaque ??= chave;
       if (chave !== this.filtroDoDestaque) this.transacaoDestacada.set(null);
     }
-    // #133: trocar só de página mantém a seleção (dá para juntar transações de várias páginas); trocar o filtro limpa,
-    // para nenhuma ação em lote pegar uma transação que não aparece no filtro atual (Nielsen 5).
-    const semPagina = (f: FiltroTransacoes) =>
-      JSON.stringify({ ...f, pagina: undefined, tamanhoPagina: undefined, ordem: undefined, direcao: undefined });
-    const trocouFiltro = semPagina(this.filtroAplicado()) !== semPagina(this.filtro);
-    if (trocouFiltro && this.selecionadas().size) {
+    // #133: trocar só de página mantém a seleção; trocar o filtro limpa (`trocouFiltro`).
+    if (trocouFiltro(this.filtroAplicado(), this.filtro) && this.selecionadas().size) {
       this.limparSelecao();
       this.avisos.info('Seleção limpa ao trocar o filtro.');
     }
@@ -956,7 +767,7 @@ export class TransacoesComponent implements OnInit {
     this.api.transacoes(this.filtro).subscribe({
       next: (p) => {
         // Página da URL que não existe mais (link antigo, menos transações agora): vai para a última que existe.
-        const ultima = Math.max(1, Math.ceil(p.total / p.tamanhoPagina));
+        const ultima = ultimaPagina(p.total, p.tamanhoPagina);
         if (!p.itens.length && p.pagina > ultima) {
           this.buscar(ultima);
           return;
@@ -976,71 +787,37 @@ export class TransacoesComponent implements OnInit {
    * replaceUrl: o voltar do navegador leva à tela anterior, não ao filtro anterior (julgamento próprio; Nielsen 4).
    */
   private gravarFiltroNaUrl(): void {
-    const f = this.filtro;
-    const padrao = this.filtroInicial();
-    const tipos: Record<number, ContextoTransacoes['tipo']> = {
-      [TipoTransacao.Despesa]: 'despesa', [TipoTransacao.Receita]: 'receita', [TipoTransacao.Transferencia]: 'transferencia'
-    };
-    const mudouPeriodo = f.inicio !== padrao.inicio || f.fim !== padrao.fim;
-    const params: Record<string, string> = paramsTransacoes({
-      inicio: mudouPeriodo ? f.inicio ?? undefined : undefined,
-      fim: mudouPeriodo ? f.fim ?? undefined : undefined,
-      tipo: f.tipo ? tipos[f.tipo] : undefined,
-      contaId: f.contaId ?? undefined,
-      transacaoId: this.transacaoDestacada() ?? undefined,
-      naturezas: naturezasNaUrl(f),
-      ids: f.ids ?? undefined,
-      origemIds: this.origemIds() ?? undefined
+    const params = parametrosDoFiltro(this.filtro, this.filtroInicial(), {
+      categorias: this.filtroCategorias, transacaoDestacada: this.transacaoDestacada(), origemIds: this.origemIds(),
+      modoEdicao: this.modoEdicao()
     });
-    if (this.filtroCategorias.length) params['categoria'] = this.filtroCategorias.join(',');
-    if (f.somenteEmergencias) params['emergencias'] = '1';
-    if (f.poucoInformativa) params['generica'] = '1';
-    if (f.lancamento) params['lancamento'] = f.lancamento;
-    if (f.busca?.trim()) params['busca'] = f.busca.trim();
-    if ((f.pagina ?? 1) > 1) params['pagina'] = String(f.pagina);
-    if (f.ordem && !(f.ordem === 'data' && (f.direcao ?? 'desc') === 'desc')) {
-      params['ordem'] = f.ordem;
-      params['direcao'] = f.direcao ?? DIRECAO_PADRAO[f.ordem];
-    }
-    if (this.modoEdicao()) params['editar'] = '1';
     this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
   }
 
   /* ------------------------------ #244: ordenar pelo cabeçalho ------------------------------ */
 
-  readonly colunasOrdenaveis: { chave: OrdemTransacoes; rotulo: string }[] = [
-    { chave: 'data', rotulo: 'Data' }, { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'conta', rotulo: 'Conta' },
-    { chave: 'valor', rotulo: 'Valor' }
-  ];
+  readonly colunasOrdenaveis = COLUNAS_ORDENAVEIS;
 
   ordemAtual(): OrdemTransacoes {
-    return this.filtroAplicado().ordem ?? 'data';
+    return ordemDe(this.filtroAplicado());
   }
 
   direcaoAtual(): 'asc' | 'desc' {
-    const f = this.filtroAplicado();
-    return f.direcao ?? DIRECAO_PADRAO[f.ordem ?? 'data'];
+    return direcaoDe(this.filtroAplicado());
   }
 
-  /** Só a coluna que vale tem aria-sort (WAI-ARIA APG, Sortable Table). */
   ariaSort(coluna: OrdemTransacoes): 'ascending' | 'descending' | null {
-    if (this.ordemAtual() !== coluna) return null;
-    return this.direcaoAtual() === 'asc' ? 'ascending' : 'descending';
+    return ariaSortDe(this.filtroAplicado(), coluna);
   }
 
-  /** ▲ crescente, ▼ decrescente; ↕ apagado nas outras, para mostrar que dá para ordenar (Nielsen 1). */
   seta(coluna: OrdemTransacoes): string {
-    if (this.ordemAtual() !== coluna) return '↕';
-    return this.direcaoAtual() === 'asc' ? '▲' : '▼';
+    return setaDe(this.filtroAplicado(), coluna);
   }
 
-  /** Clicar na coluna ordena por ela (na direção mais útil dela); clicar de novo inverte. Volta para a página 1. */
+  /** Clicar na coluna ordena por ela; clicar de novo inverte (`direcaoAoClicar`). Volta para a página 1. */
   ordenar(coluna: OrdemTransacoes): void {
-    const direcao = this.ordemAtual() === coluna
-      ? (this.direcaoAtual() === 'asc' ? 'desc' : 'asc')
-      : DIRECAO_PADRAO[coluna];
+    this.filtro.direcao = direcaoAoClicar(this.filtroAplicado(), coluna);
     this.filtro.ordem = coluna;
-    this.filtro.direcao = direcao;
     this.buscar(1);
   }
 
@@ -1086,36 +863,18 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  /**
-   * #133: marca/desmarca a caixa da linha `indice`. Com Shift (clique ou Shift+Espaço), aplica o mesmo estado ao
-   * intervalo entre a última caixa usada e esta, como no Gmail e no Explorador de Arquivos.
-   */
+  /** #133: marca/desmarca a caixa da linha `indice`; com Shift (clique ou Shift+Espaço), o intervalo (`marcarIntervalo`). */
   marcar(indice: number, e: MouseEvent): void {
-    const itens = this.pagina()?.itens ?? [];
-    const marcar = (e.target as HTMLInputElement).checked;
     const comShift = e.shiftKey || this.shiftNoClique;
     this.shiftNoClique = false;
-    const de = comShift && this.ultimoMarcado !== null ? Math.min(this.ultimoMarcado, indice) : indice;
-    const ate = comShift && this.ultimoMarcado !== null ? Math.max(this.ultimoMarcado, indice) : indice;
-    this.selecionadas.update((s) => {
-      const novo = new Set(s);
-      for (const t of itens.slice(de, ate + 1)) {
-        if (marcar) novo.add(t.id); else novo.delete(t.id);
-      }
-      return novo;
-    });
+    const marcar = (e.target as HTMLInputElement).checked;
+    this.selecionadas.update((s) => marcarIntervalo(s, this.pagina()?.itens ?? [], indice, this.ultimoMarcado, comShift, marcar));
     this.ultimoMarcado = indice;
   }
 
-  /** "Selecionar todas desta página": parcial ou nenhuma → marca todas as da página; todas → desmarca as da página. */
+  /** "Selecionar todas desta página" (`alternarPagina`). */
   alternarTodas(): void {
-    const itens = this.pagina()?.itens ?? [];
-    const todas = this.todasSelecionadas();
-    this.selecionadas.update((s) => {
-      const novo = new Set(s);
-      for (const t of itens) { if (todas) novo.delete(t.id); else novo.add(t.id); }
-      return novo;
-    });
+    this.selecionadas.update((s) => alternarPagina(s, this.pagina()?.itens ?? []));
     this.ultimoMarcado = null;
   }
 
@@ -1124,13 +883,8 @@ export class TransacoesComponent implements OnInit {
     this.ultimoMarcado = null;
   }
 
-  /** Nome acessível da caixa de cada linha: "Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00" (respeita "ocultar valores"). */
   nomeSelecao(t: Transacao): string {
-    const data = t.data ? paraData(t.data.slice(0, 10)).toLocaleDateString('pt-BR') : '';
-    const valor = this.privacidade.oculto()
-      ? 'valor oculto'
-      : Math.abs(t.valor ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    return 'Selecionar: ' + [t.descricao, data, valor].filter(Boolean).join(', ');
+    return nomeSelecao(t, this.privacidade.oculto());
   }
 
   categorizarLote(): void {
@@ -1181,7 +935,6 @@ export class TransacoesComponent implements OnInit {
     return (TIPOS_LANCAMENTO[t.tipoLancamento] ?? TIPOS_LANCAMENTO[TipoLancamento.Outro]).icone;
   }
 
-  /** Não entra nas despesas nem nas receitas (transferência ou "ignorar nos relatórios"). */
   /** #123: transação na janela "Renomear" (null = fechada). */
   readonly renomeando = signal<Transacao | null>(null);
 
@@ -1204,18 +957,8 @@ export class TransacoesComponent implements OnInit {
     this.buscar(this.filtro.pagina ?? 1);
   }
 
-  foraDosGastos(t: Transacao): boolean {
-    return t.tipo === TipoTransacao.Transferencia || t.ignorarRelatorios;
-  }
-
-  /**
-   * Pagamento de fatura ou transferência entre contas suas que está entrando nos totais: na saída, conta o gasto em
-   * dobro (as compras já estão no cartão); na entrada (o crédito do pagamento no cartão), infla as receitas.
-   */
-  somandoNosTotais(t: Transacao): 'gastos' | 'receitas' | null {
-    if (!NAO_E_GASTO.has(t.tipoLancamento) || t.tipo === TipoTransacao.Transferencia || t.ignorarRelatorios) return null;
-    return t.valor < 0 ? 'gastos' : 'receitas';
-  }
+  readonly foraDosGastos = foraDosGastos;
+  readonly somandoNosTotais = somandoNosTotais;
 
   contaDe(t: Transacao): Conta | undefined {
     return this.contas().find((c) => c.id === t.contaId);
@@ -1256,20 +999,12 @@ export class TransacoesComponent implements OnInit {
     this.gravarFiltroNaUrl();
   }
 
-  /** Valor do select da linha: a troca pendente ou a categoria atual ('' = sem categoria). */
   valorCategoria(t: Transacao): string {
-    return this.pendentes().get(t.id) ?? (t.categoriaId === null ? '' : String(t.categoriaId));
+    return valorCategoria(t, this.pendentes());
   }
 
   mudarCategoria(t: Transacao, valor: string): void {
-    const atual = t.categoriaId === null ? '' : String(t.categoriaId);
-    this.pendentes.update((m) => {
-      const novo = new Map(m);
-      // Voltou para o que já estava gravado: não há o que salvar nessa linha.
-      if (valor === atual || valor === '') novo.delete(t.id);
-      else novo.set(t.id, valor as EscolhaCategoria);
-      return novo;
-    });
+    this.pendentes.update((m) => comEscolha(m, t, valor));
   }
 
   desfazerLinha(t: Transacao): void {
@@ -1299,11 +1034,9 @@ export class TransacoesComponent implements OnInit {
   salvarPendentes(): void {
     const pendentes = this.pendentes();
     if (!pendentes.size) return;
-    const itens = [...pendentes].map(([id, v]) =>
-      ({ id, categoriaId: v === 'auto' ? null : Number(v), automatica: v === 'auto' }));
-    const sugestoes = this.regrasSugeridas(pendentes);
+    const sugestoes = regrasSugeridas(this.pagina()?.itens ?? [], pendentes, this.todasCategorias());
     this.salvando.set(true);
-    this.api.alterarCategoriasEmLote({ itens }).subscribe({
+    this.api.alterarCategoriasEmLote({ itens: itensDoLote(pendentes) }).subscribe({
       next: (r) => {
         this.salvando.set(false);
         this.pendentes.set(new Map());
@@ -1325,7 +1058,7 @@ export class TransacoesComponent implements OnInit {
     if (!escolha || !total) return;
     const f = this.filtroAplicado();
     const nome = escolha === 'auto' ? 'a categorização automática'
-      : `“${this.rotuloCategoriaPorId(Number(escolha))}”`;
+      : `“${rotuloCategoriaPorId(Number(escolha), this.todasCategorias())}”`;
     if (!(await this.confirmacao.confirmar({ titulo: 'Trocar a categoria', mensagem: `Trocar a categoria das ${total} transações do filtro (${rotuloPeriodo(f.inicio, f.fim)}) para ${nome}?`, confirmar: 'Trocar a categoria' }))) return;
     this.salvando.set(true);
     this.api.alterarCategoriasEmLote({
@@ -1365,22 +1098,6 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  /** Várias transações com a mesma descrição foram para a mesma categoria: sugere regra (como nas Sugestões). */
-  private regrasSugeridas(pendentes: Map<number, EscolhaCategoria>): SugestaoRegra[] {
-    const grupos = new Map<string, SugestaoRegra>();
-    for (const t of this.pagina()?.itens ?? []) {
-      const escolha = pendentes.get(t.id);
-      if (!escolha || escolha === 'auto') continue;
-      const texto = (t.descricaoOriginal ?? t.descricao).trim().replace(/\s+/g, ' ').slice(0, 100);
-      if (texto.length < 4) continue;
-      const chave = `${texto.toLocaleUpperCase('pt-BR')}|${escolha}`;
-      const g = grupos.get(chave);
-      if (g) g.quantidade++;
-      else grupos.set(chave, { texto, categoriaId: Number(escolha), categoriaNome: this.rotuloCategoriaPorId(Number(escolha)), quantidade: 1 });
-    }
-    return [...grupos.values()].filter((g) => g.quantidade >= 2).slice(0, 3);
-  }
-
   criarRegraSugerida(r: SugestaoRegra): void {
     this.api.criarRegra({
       texto: r.texto, tipoCorrespondencia: TipoCorrespondencia.Contem, categoriaId: r.categoriaId, prioridade: 100, ativa: true
@@ -1397,16 +1114,11 @@ export class TransacoesComponent implements OnInit {
     this.sugestoesRegra.update((lista) => lista.filter((x) => x !== r));
   }
 
-  private rotuloCategoriaPorId(id: number): string {
-    const c = this.todasCategorias().find((x) => x.id === id);
-    return c ? this.rotuloCategoria(c) : 'categoria';
-  }
-
   /** Cancelou o descarte: os campos de filtro voltam ao que está na tela. */
   private voltarAoFiltroAplicado(): void {
     const f = this.filtroAplicado();
     this.filtro = { ...f };
-    this.filtroCategorias = [...(f.semCategoria ? ['sem'] : []), ...(f.categoriaIds ?? []).map(String)];
+    this.filtroCategorias = categoriasDoFiltro(f);
     this.categoriasFiltradas.set(this.filtroCategorias);
   }
 
@@ -1431,19 +1143,8 @@ export class TransacoesComponent implements OnInit {
     this.api.sugestoesCategoria(this.somenteSemCategoria(), 365).subscribe({
       next: (s) => {
         this.carregandoSugestoes.set(false);
-        // #254: mesmo texto de regra com categorias diferentes em linhas diferentes: nenhuma vem marcada.
-        const categoriasPorTexto = new Map<string, Set<number | null>>();
-        for (const x of s) {
-          if (!x.textoRegra) continue;
-          const chave = x.textoRegra.toUpperCase();
-          categoriasPorTexto.set(chave, (categoriasPorTexto.get(chave) ?? new Set()).add(x.categoriaId));
-        }
         this.regrasCriadas.clear();
-        this.linhasSugestao.set(s.map((x) => ({
-          ...x, escolhida: x.categoriaId, aplicada: false,
-          criarRegra: x.confianca === 'alta' && x.quantidade >= 3 && x.textoRegra.length >= 4 && !x.avisoRegra
-            && (categoriasPorTexto.get(x.textoRegra.toUpperCase())?.size ?? 0) <= 1
-        })));
+        this.linhasSugestao.set(linhasDeSugestao(s));
       },
       error: (e) => {
         this.carregandoSugestoes.set(false);
@@ -1452,12 +1153,7 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  nomeConfianca(c: string): string {
-    const nomes: Record<string, string> = {
-      alta: 'confiança alta', media: 'confiança média', baixa: 'palavra-chave', nenhuma: 'sem sugestão'
-    };
-    return nomes[c] ?? c;
-  }
+  readonly nomeConfianca = nomeConfianca;
 
   aplicarSugestao(l: LinhaSugestao, silencioso = false): void {
     if (!l.escolhida) return;
@@ -1499,22 +1195,9 @@ export class TransacoesComponent implements OnInit {
     this.avisos.sucesso(`${linhas.length} grupo(s) categorizado(s)` + (semRegra.length ? `; ${semRegra.length} sem regra, por conflito.` : '.'));
   }
 
-  /**
-   * #254: o nome da outra categoria quando a regra desta linha ("contém X") também é pedida, com categoria diferente,
-   * por outra linha marcada ou já foi criada nesta janela. Duas regras iguais com categorias diferentes: só uma vale.
-   */
+  /** #254: a outra categoria que usa a mesma regra desta linha (`conflitoRegra`), ou null. */
   conflitoRegra(l: LinhaSugestao): string | null {
-    if (!l.criarRegra || !l.textoRegra) return null;
-    const texto = l.textoRegra.trim().toUpperCase();
-    const criada = this.regrasCriadas.get(texto);
-    if (criada !== undefined && criada !== l.escolhida) return this.nomeCategoria(criada);
-    const outra = this.linhasSugestao().find((x) => x.chave !== l.chave && !x.aplicada && x.criarRegra
-      && x.textoRegra.trim().toUpperCase() === texto && x.escolhida !== l.escolhida);
-    return outra ? this.nomeCategoria(outra.escolhida) : null;
-  }
-
-  private nomeCategoria(id: number | null): string {
-    return this.categorias().find((c) => c.id === id)?.nome ?? 'outra categoria';
+    return conflitoRegra(l, this.linhasSugestao(), this.regrasCriadas, this.categorias());
   }
 
   fecharSugestoes(): void {
@@ -1523,21 +1206,12 @@ export class TransacoesComponent implements OnInit {
   }
 
   novo(): void {
-    this.form = {
-      id: null, openFinance: false, contaId: this.contasManuais()[0]?.id ?? null, data: dataIso(), descricao: '',
-      valor: null, tipo: TipoTransacao.Despesa, categoriaId: null, observacao: '', ignorarRelatorios: false,
-      pendente: false, descricaoOriginal: null, emergencia: false
-    };
+    this.form = formNovo(this.contasManuais()[0]?.id ?? null, dataIso());
     this.sugestoesForm.set([]);
   }
 
   editar(t: Transacao): void {
-    this.form = {
-      id: t.id, openFinance: t.openFinance, contaId: t.contaId, data: t.data, descricao: t.descricao,
-      valor: Math.abs(t.valor), tipo: t.valor > 0 ? TipoTransacao.Receita : TipoTransacao.Despesa,
-      categoriaId: t.categoriaId, observacao: t.observacao ?? '', ignorarRelatorios: t.ignorarRelatorios,
-      pendente: t.status === StatusTransacao.Pendente, descricaoOriginal: t.descricaoOriginal, emergencia: t.emergencia
-    };
+    this.form = formDaTransacao(t);
     this.sugestoesForm.set([]);
     this.api.sugestoesDaTransacao(t.id).subscribe({ next: (s) => this.sugestoesForm.set(s), error: () => { /* opcional */ } });
   }
@@ -1548,19 +1222,8 @@ export class TransacoesComponent implements OnInit {
     this.salvando.set(true);
 
     const requisicao = f.openFinance && f.id
-      ? this.api.ajustarTransacao(f.id, {
-          descricao: f.descricao, categoriaId: f.categoriaId, observacao: f.observacao || null,
-          ignorarRelatorios: f.ignorarRelatorios, emergencia: f.emergencia && f.tipo === TipoTransacao.Despesa
-        })
-      : (() => {
-          const dto = {
-            contaId: f.contaId ?? 0, data: f.data, descricao: f.descricao, valor: Number(f.valor), tipo: f.tipo,
-            categoriaId: f.categoriaId, observacao: f.observacao || null, ignorarRelatorios: f.ignorarRelatorios,
-            status: f.pendente ? StatusTransacao.Pendente : StatusTransacao.Efetivada,
-            emergencia: f.emergencia && f.tipo === TipoTransacao.Despesa
-          };
-          return f.id ? this.api.atualizarTransacao(f.id, dto) : this.api.criarTransacao(dto);
-        })();
+      ? this.api.ajustarTransacao(f.id, ajusteDoForm(f))
+      : f.id ? this.api.atualizarTransacao(f.id, transacaoDoForm(f)) : this.api.criarTransacao(transacaoDoForm(f));
 
     requisicao.subscribe({
       next: () => {
@@ -1614,29 +1277,10 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  private tamanhoSalvo(): number {
-    try {
-      const n = Number(localStorage.getItem('financas.tamanhoPagina'));
-      return [25, 50, 100, 200].includes(n) ? n : 50;
-    } catch {
-      return 50;
-    }
-  }
-
+  /** O filtro padrão: o mês atual, com o tamanho de página guardado no navegador (ADR 0017). */
   private filtroInicial(): FiltroTransacoes {
-    const hoje = new Date();
-    return {
-      inicio: primeiroDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
-      fim: ultimoDiaMes(hoje.getFullYear(), hoje.getMonth() + 1),
-      contaId: null, categoriaId: null, categoriaIds: [], semCategoria: false, somenteEmergencias: false, poucoInformativa: false,
-      lancamento: null, naturezas: [], semNatureza: false, tipo: null, busca: '', ids: [], pagina: 1,
-      tamanhoPagina: this.tamanhoSalvo()
-    };
+    let guardado: string | null = null;
+    try { guardado = localStorage.getItem('financas.tamanhoPagina'); } catch { /* sem armazenamento: o padrão */ }
+    return filtroInicial(new Date(), tamanhoPaginaValido(guardado));
   }
-}
-
-/** Página da lista vinda da URL (UX-5); inválida ou ausente = 1. */
-function paginaDaUrl(params: ParamMap): number {
-  const n = Number(params.get('pagina'));
-  return Number.isInteger(n) && n >= 1 && n <= 100000 ? n : 1;
 }
