@@ -551,6 +551,21 @@ export function conflitoRegra(
   return outra ? nome(outra.escolhida) : null;
 }
 
+/** O conflito de regra de cada linha (`conflitoRegra`), pela chave: o que a janela mostra embaixo de "criar regra". */
+export function conflitosPorLinha(
+  linhas: readonly LinhaSugestao[], regrasCriadas: ReadonlyMap<string, number>, categorias: Categoria[]
+): Map<string, string | null> {
+  return new Map(linhas.map((l) => [l.chave, conflitoRegra(l, linhas, regrasCriadas, categorias)]));
+}
+
+/** O que a pessoa muda numa linha do assistente: a categoria escolhida e "criar regra". */
+export type MudancaSugestao = Partial<Pick<LinhaSugestao, 'escolhida' | 'criarRegra'>>;
+
+/** As linhas com a mudança na linha `chave` (uma lista nova; as outras linhas ficam as mesmas). */
+export function comMudanca(linhas: readonly LinhaSugestao[], chave: string, mudanca: MudancaSugestao): LinhaSugestao[] {
+  return linhas.map((l) => (l.chave === chave ? { ...l, ...mudanca } : l));
+}
+
 /* ------------------------------ formulário ------------------------------ */
 
 /** Transação nova: despesa de hoje (`hoje` em yyyy-MM-dd) na primeira conta manual. */

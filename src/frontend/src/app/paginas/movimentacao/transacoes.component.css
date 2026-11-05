@@ -26,14 +26,6 @@
   border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; font-size: 0.8rem; line-height: 1;
 }
 .chip-remover:hover, .chip-remover:focus-visible { background: var(--superficie); }
-.linha-sugestoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.tabela-sugestoes td { vertical-align: top; }
-.tabela-sugestoes td:first-child { max-width: 280px; }
-.tabela-sugestoes select { min-width: 180px; }
-/* #254: o margin-top negativo dos chips (feito para o formulário) puxava os chips para cima do motivo. */
-.tabela-sugestoes .sugestoes-chips { margin-top: 6px; }
-.tabela-sugestoes .aviso-regra { display: block; max-width: 240px; margin-top: 4px; font-size: 0.78rem; }
-tr.encerrada td { opacity: 0.55; }
 .barra-edicao { margin-bottom: 14px; }
 .celula-edicao { display: flex; gap: 6px; align-items: center; }
 .select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
@@ -72,4 +64,3 @@ tr.destacada td:first-child { box-shadow: inset 4px 0 0 var(--primaria); }
   .tabela-edicao .celula-edicao { width: 100%; }
   .tabela-edicao .select-categoria { flex: 1; min-width: 0; }
 }
-:host ::ng-deep .modal:has(.tabela-sugestoes) { width: min(1150px, 96vw); }

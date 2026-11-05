@@ -12,7 +12,6 @@ import {
   TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao, OrdemTransacoes
 } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
-import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { PaginacaoComponent } from '../../compartilhado/ui/paginacao.component';
 import { OpcaoMultipla, SeletorMultiploComponent } from '../../compartilhado/ui/seletor-multiplo.component';
 import { OrigemIdsUrl, dataIso } from '../../compartilhado/utilidades';
@@ -30,13 +29,14 @@ import { TransacoesLancamentoComponent } from './transacoes-lancamento.component
 import { TransacoesTransferenciaComponent } from './transacoes-transferencia.component';
 import { TransacoesBarraEdicaoComponent } from './transacoes-barra-edicao.component';
 import { TransacoesBarraLoteComponent } from './transacoes-barra-lote.component';
+import { TransacoesSugestoesComponent } from './transacoes-sugestoes.component';
 import {
   COLUNAS_ORDENAVEIS, ChipFiltro, ParametrosUrl, EscolhaCategoria, FormTransacao, FormTransferencia, LinhaSugestao, SugestaoRegra,
   ajusteDoForm, alternarPagina, ariaSortDe, camposDeCategorias, categoriasRotuladas, categoriasDoFiltro, chipsDoFiltro, comEscolha, direcaoAoClicar,
   direcaoDe, filtroInicial, foraDosGastos, formDaTransacao, formNovo, itensDoLote, lerFiltroDaUrl, linhasDeSugestao,
-  marcarIntervalo, nomeConfianca, nomeSelecao, opcoesCategoria, ordemDe, paginaDaUrl, parametrosDoFiltro, regrasSugeridas,
+  marcarIntervalo, nomeSelecao, opcoesCategoria, ordemDe, paginaDaUrl, parametrosDoFiltro, regrasSugeridas,
   rotuloCategoria, rotuloCategoriaPorId, rotuloPeriodo, semOChip, setaDe, somandoNosTotais, tamanhoPaginaValido, textoSelecao,
-  conflitoRegra, transacaoDoForm, trocouFiltro, ultimaPagina, valorCategoria
+  comMudanca, conflitoRegra, conflitosPorLinha, MudancaSugestao, transacaoDoForm, trocouFiltro, ultimaPagina, valorCategoria
 } from './transacoes';
 
 /**
@@ -45,10 +45,10 @@ import {
  */
 @Component({
   selector: 'app-transacoes',
-  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
+  imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
     IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, SeloServicoComponent,
     CampoDataComponent, TransacoesLancamentoComponent, TransacoesTransferenciaComponent,
-    TransacoesBarraEdicaoComponent, TransacoesBarraLoteComponent],
+    TransacoesBarraEdicaoComponent, TransacoesBarraLoteComponent, TransacoesSugestoesComponent],
   templateUrl: './transacoes.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './transacoes.component.css'
@@ -97,7 +97,7 @@ export class TransacoesComponent implements OnInit {
   readonly somenteSemCategoria = signal(true);
   readonly linhasSugestao = signal<LinhaSugestao[]>([]);
   /** #254: regras criadas nesta janela de sugestões (texto em maiúsculas → categoria), para não criar outra igual. */
-  private readonly regrasCriadas = new Map<string, number>();
+  private readonly regrasCriadas = signal<ReadonlyMap<string, number>>(new Map());
   private sugestoesAlteraram = false;
 
   readonly contasManuais = computed(() => this.contas().filter((c) => c.origem === OrigemConta.Manual));
@@ -628,7 +628,7 @@ export class TransacoesComponent implements OnInit {
     this.api.sugestoesCategoria(this.somenteSemCategoria(), 365).subscribe({
       next: (s) => {
         this.carregandoSugestoes.set(false);
-        this.regrasCriadas.clear();
+        this.regrasCriadas.set(new Map());
         this.linhasSugestao.set(linhasDeSugestao(s));
       },
       error: (e) => {
@@ -638,7 +638,13 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  readonly nomeConfianca = nomeConfianca;
+  /** #254: o conflito de regra de cada linha, pronto para a janela (recalcula quando as linhas ou as regras mudam). */
+  readonly conflitos = computed(() => conflitosPorLinha(this.linhasSugestao(), this.regrasCriadas(), this.categorias()));
+
+  /** A janela avisou uma mudança numa linha (categoria escolhida, "criar regra"): a lista é refeita aqui. */
+  mudarLinha(chave: string, mudanca: MudancaSugestao): void {
+    this.linhasSugestao.update((linhas) => comMudanca(linhas, chave, mudanca));
+  }
 
   aplicarSugestao(l: LinhaSugestao, silencioso = false): void {
     if (!l.escolhida) return;
@@ -653,7 +659,7 @@ export class TransacoesComponent implements OnInit {
         if (l.criarRegra && l.textoRegra.trim() && conflito) {
           this.avisos.erro(`A regra "${l.textoRegra}" não foi criada: outra linha a usa para ${conflito}. Categorize sem regra, ou crie a regra certa em Categorias e regras.`);
         } else if (l.criarRegra && l.textoRegra.trim()) {
-          this.regrasCriadas.set(l.textoRegra.trim().toUpperCase(), categoriaId);
+          this.regrasCriadas.update((m) => new Map(m).set(l.textoRegra.trim().toUpperCase(), categoriaId));
           this.api.criarRegra({
             texto: l.textoRegra.trim(), tipoCorrespondencia: TipoCorrespondencia.Contem, categoriaId, prioridade: 100, ativa: true
           }).subscribe({ error: (e) => this.avisos.erro(`Regra "${l.textoRegra}": ${mensagemDeErro(e)}`) });
@@ -682,7 +688,7 @@ export class TransacoesComponent implements OnInit {
 
   /** #254: a outra categoria que usa a mesma regra desta linha (`conflitoRegra`), ou null. */
   conflitoRegra(l: LinhaSugestao): string | null {
-    return conflitoRegra(l, this.linhasSugestao(), this.regrasCriadas, this.categorias());
+    return conflitoRegra(l, this.linhasSugestao(), this.regrasCriadas(), this.categorias());
   }
 
   fecharSugestoes(): void {

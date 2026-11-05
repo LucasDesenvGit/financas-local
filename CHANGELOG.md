@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.14] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **A janela de sugestões de categoria de Transações vira componente de apresentação** (parte de #475; ADR 0059). "Sugestões de categoria" saiu da tela para `transacoes-sugestoes.component.ts`. Antes, a janela mudava as linhas direto na lista da tela; agora ela avisa cada mudança (a categoria escolhida, "criar regra") e a tela refaz a lista. Os conflitos de regra (#254) passaram a ser recalculados pela tela sempre que as linhas ou as regras criadas mudam. Testes novos conferem as duas funções puras e a janela, que não mexe no que recebe; o teste no navegador do conflito falha se a tela não refizer a lista. Os prints da janela saíram iguais aos de antes. Nada muda para quem usa.
+
 ## [3.3.13] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação
