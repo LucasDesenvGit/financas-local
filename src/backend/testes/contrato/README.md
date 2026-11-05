@@ -32,7 +32,12 @@ CONTRATO_SOMENTE="00-auth,01-parametros" src/backend/testes/contrato/rodar.sh
 
 Cada execução começa do zero: banco novo, processo novo. O roteiro depende da ordem (o `00-auth` cria o usuário e deixa a sessão `principal` logada para os seguintes), então o padrão é rodar inteiro. Com `CONTRATO_SOMENTE`, mantenha a ordem e os arquivos de que o seu depende.
 
-À mão, sem o roteiro: suba o Go (`go run ./cmd/financas -endereco 127.0.0.1:5453 -certificado-temporario -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z -aplicar-esquema -rotinas-de-partida`, com `HTTPS_PROXY=http://127.0.0.1:9`) e rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -banco=<db> -inicio=2026-10-15T01:00:00Z`. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
+À mão, sem o roteiro:
+- gere o certificado: `echo contrato | go run ./cmd/financas gerar-certificado -pfx <pasta>/financaslocal.pfx`, que grava também o `<pasta>/financaslocal.pem`, e ponha o caminho e a senha no `appsettings.Production.json` da pasta do `-pasta`, como o `rodar.sh` faz;
+- suba o Go: `go run ./cmd/financas -pasta <pasta> -endereco 127.0.0.1:5453 -wwwroot internal/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z -aplicar-esquema -rotinas-de-partida`, com `HTTPS_PROXY=http://127.0.0.1:9`;
+- rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -raiz=<pasta>/financaslocal.pem -banco=<db> -inicio=2026-10-15T01:00:00Z`.
+
+O cliente confere o certificado do Go e confia só no `.pem` do `-raiz` (#638): sem `InsecureSkipVerify`, o que o CodeQL aponta. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
 
 ## Adicionar um caso
 

@@ -2,6 +2,7 @@ package contrato
 
 import (
 	"context"
+	"crypto/x509"
 	"database/sql"
 	"errors"
 	"flag"
@@ -27,6 +28,7 @@ var (
 	atualizar = flag.Bool("atualizar", false, "grava os esperados a partir do servidor (confira a diferença e diga o motivo no PR, ADR 0051)")
 	// #75: o Go sozinho (com o login dele) atende só os assuntos já portados; os outros arquivos ficam de fora.
 	somente = flag.String("somente", "", "arquivos de casos a rodar, separados por vírgula (ex.: 00-auth); vazio roda todos")
+	raiz    = flag.String("raiz", "", "a parte pública (.pem) do certificado do servidor sob teste: o cliente confia só nela")
 )
 
 // Resultado é o que um caso produziu, já normalizado: é o que fica em esperado/*.json.
@@ -49,6 +51,10 @@ func TestContrato(t *testing.T) {
 	}
 	if *banco == "" {
 		t.Fatal("-banco é obrigatório com -alvo: o contrato também compara o banco")
+	}
+	raizes, err := lerRaiz(*raiz)
+	if err != nil {
+		t.Fatal(err)
 	}
 	enderecoAlvo, err := url.Parse(*alvo)
 	if err != nil || enderecoAlvo.Scheme != "https" || enderecoAlvo.Host == "" {
@@ -78,7 +84,7 @@ func TestContrato(t *testing.T) {
 	}
 	defer db.Close()
 
-	ex := &execucao{alvo: enderecoAlvo, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
+	ex := &execucao{alvo: enderecoAlvo, raizes: raizes, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
 	escolhidos := map[string]bool{}
 	for _, nome := range strings.Split(*somente, ",") {
 		if nome = strings.TrimSpace(nome); nome != "" {
@@ -96,6 +102,7 @@ func TestContrato(t *testing.T) {
 
 type execucao struct {
 	alvo      *url.URL
+	raizes    *x509.CertPool
 	n         Normalizador
 	db        *sql.DB
 	sessoes   map[string]*Sessao
@@ -188,7 +195,7 @@ func (ex *execucao) sessao(arquivo ArquivoCasos, nome string) (*Sessao, error) {
 	if s, ok := ex.sessoes[nome]; ok {
 		return s, nil
 	}
-	s, err := novaSessao(ex.alvo, arquivo.Sessoes[nome].Origem)
+	s, err := novaSessao(ex.alvo, arquivo.Sessoes[nome].Origem, ex.raizes)
 	if err != nil {
 		return nil, err
 	}
