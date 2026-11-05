@@ -35,7 +35,7 @@ type salvarTransacaoDto struct {
 // não vierem (os padrões do record).
 func lerSalvarTransacao(w http.ResponseWriter, r *http.Request) (salvarTransacaoDto, bool) {
 	conta := respostas.CampoInteiro{Propriedade: "ContaId"}
-	data := respostas.CampoData{Propriedade: "Data"}
+	data := respostas.CampoData{Propriedade: "Data", Obrigatoria: true} // #503
 	descricao := respostas.CampoTexto{Propriedade: "Descricao", Maximo: 300}
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}
 	tipo := respostas.CampoEnum{Propriedade: "Tipo"}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -364,6 +365,39 @@ func TestPainelSemTabela(t *testing.T) {
 				t.Errorf("painel: %d", r.Status)
 			}
 			testeapoio.Chamar(t, c.mux, "GET", "/api/painel/avisos", "")
+		})
+	}
+}
+
+// Regra (#532): a conexão que espera uma ação ou um dado no Meu Pluggy gera o aviso, nos mesmos estados que
+// Configurações chama de "Precisa de ação sua"; com o estado em dia, não.
+func TestAvisoDaConexaoQuePedeAcao(t *testing.T) {
+	t.Parallel()
+	const aviso = "Banco X precisa de uma ação sua no Meu Pluggy para voltar a sincronizar."
+	casos := []struct {
+		status string
+		avisa  bool
+	}{
+		{"LOGIN_ERROR", true},
+		{"WAITING_USER_ACTION", true},
+		{"WAITING_USER_INPUT", true},
+		{"UPDATED", false},
+		{"OUTDATED", false},
+		{"UPDATING", false},
+	}
+	for _, caso := range casos {
+		t.Run(caso.status, func(t *testing.T) {
+			c := cenaPadrao(t)
+			c.fab.ConexaoBancaria(func(x *testeapoio.ConexaoBancaria) {
+				x.NomeInstituicao, x.Status = pTexto("Banco X"), pTexto(caso.status)
+			})
+			lista, err := c.s.avisosDasConexoes(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if slices.Contains(lista, aviso) != caso.avisa {
+				t.Errorf("avisos: %q", lista)
+			}
 		})
 	}
 }

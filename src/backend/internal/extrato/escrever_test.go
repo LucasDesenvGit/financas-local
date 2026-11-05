@@ -337,6 +337,18 @@ func TestTransferir(t *testing.T) {
 	banco := fab.Conta(func(x *testeapoio.Conta) { x.Nome, x.Origem, x.ConexaoBancariaId = "Banco", 2, &conexao.Id })
 	banco2 := fab.Conta(func(x *testeapoio.Conta) { x.Nome, x.Origem, x.ConexaoBancariaId = "Banco 2", 2, &conexao.Id })
 
+	// #503: sem a data, é 400 e nada é gravado (o C# gravava os dois lados em 01/01/0001).
+	semData := testeapoio.Chamar(t, mux, "POST", "/api/transacoes/transferencia", fmt.Sprintf(`{"contaOrigemId":%d,
+		"contaDestinoId":%d,"valor":10}`, poupanca.Id, carteira.Id))
+	semData.ConferirStatus(t, http.StatusBadRequest)
+	if !strings.Contains(string(semData.Corpo), `"Data":["The Data field is required."]`) {
+		t.Errorf("transferir sem data: %s", semData.Corpo)
+	}
+	var gravadas int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM "Transacao"`).Scan(&gravadas); err != nil || gravadas != 0 {
+		t.Fatalf("transferir sem data gravou %d (%v)", gravadas, err)
+	}
+
 	resp := testeapoio.Chamar(t, mux, "POST", "/api/transacoes/transferencia", fmt.Sprintf(`{"contaOrigemId":%d,
 		"contaDestinoId":%d,"valor":200.5,"data":"2026-10-13","descricao":"  Saque "}`, poupanca.Id, carteira.Id))
 	resp.ConferirStatus(t, http.StatusNoContent)

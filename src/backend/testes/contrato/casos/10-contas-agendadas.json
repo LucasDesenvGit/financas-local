@@ -34,6 +34,13 @@
         "categoriaId": null, "contaId": 3, "ativa": true, "formaCobranca": 1, "textoCobranca": "   ", "observacao": "  Pago no dia 5  " }
     },
     {
+      "nome": "criar sem o próximo vencimento",
+      "comentario": "#503: 400. O .NET gravava o vencimento em 01/01/0001.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Sem vencimento", "valor": 10, "recorrencia": 1, "contaId": 3, "formaCobranca": 1 }
+    },
+    {
       "nome": "criar no cartão com a cobrança já no extrato (id 8)",
       "comentario": "Texto em minúsculas e com acento vira maiúsculas sem acento. A conciliação ao salvar acha a ASSINATURA STREAMFLIX de setembro no cartão, dá baixa, avança o vencimento e grava a chave do extrato (#205).",
       "metodo": "POST",

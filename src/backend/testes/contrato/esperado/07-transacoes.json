@@ -9977,6 +9977,40 @@
     }
   },
   {
+    "nome": "transferir sem data",
+    "requisicao": "POST /api/transacoes/transferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Data": [
+          "The Data field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "lançar sem data",
+    "requisicao": "POST /api/transacoes",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Data": [
+          "The Data field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
     "nome": "transferir com conta inexistente",
     "requisicao": "POST /api/transacoes/transferencia",
     "status": 400,

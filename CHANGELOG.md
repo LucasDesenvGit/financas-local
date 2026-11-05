@@ -2,10 +2,25 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.3.2] — 2026-11-04 · desenvolvimento
+## [3.3.5] — 2026-11-04 · desenvolvimento
 
 ### Publicação e documentação
 - **As notas da versão publicada cabem no limite do GitHub** (#641). O Release de uma versão junta, nas notas, ela e as de desenvolvimento desde a última publicada, a 2.17.0: quase 200 versões, que passam dos 125 mil caracteres que o GitHub aceita. Sem o corte, o workflow "Versão (instalador .msi)" falharia na tag e não publicaria o `.msi`. Agora as versões entram até onde couber, cortadas no fim de uma, com um link para o `CHANGELOG.md` da tag, como no pré-lançamento de desenvolvimento (#600). O PR que traz a `main` de volta ao `develop` depois de publicar não precisa subir a versão.
+
+## [3.3.4] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **O teste de contrato confere o certificado do site** (#638). O cliente do contrato não pula mais a verificação do HTTPS (`InsecureSkipVerify`, o alerta #14 do code scanning): o Go sobe com o certificado do `gerar-certificado`, como numa instalação, e o cliente confia só nele. Nada muda para quem usa.
+
+## [3.3.3] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Aviso no Painel também quando o banco espera um dado seu no Meu Pluggy** (#532). A conexão no estado `WAITING_USER_INPUT` aparecia como "Precisa de ação sua" em Configurações, mas o Painel e o sino não avisavam nada, e ela também não contava entre as conexões com problema. Agora os dois estados da Pluggy que pedem ação geram o aviso.
+
+## [3.3.2] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Transferência, lançamento e conta a pagar sem data são recusados** (#503). Uma chamada direta à API sem a data gravava a transferência, o lançamento ou o vencimento da conta a pagar em 01/01/0001, e o acerto das transferências passava a falhar. Agora é um erro de campo obrigatório, e nada é gravado. Pelo site nada muda: o formulário sempre manda a data.
 
 ## [3.3.1] — 2026-11-04 · desenvolvimento
 
