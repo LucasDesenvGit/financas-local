@@ -7,7 +7,9 @@
   telas (goto('/rota') / abrir(page, '/rota')), as linhas de telas.spec.ts dessas rotas, o celular.spec.ts e os
   arquivos de teste que mudaram.
 - Jest: os testes ligados aos arquivos que mudaram (jest --findRelatedTests segue os imports) + os que leem o código
-  como texto (readFileSync/readdirSync: o grafo do Jest não os enxerga) + os de teste que mudaram.
+  como texto (readFileSync/readdirSync ou o apoio/codigo.ts: o grafo do Jest não os enxerga) + os de teste que mudaram.
+- Template e CSS em arquivo próprio (templateUrl/styleUrl, #475, ADR 0059): contam como o .ts do componente que os
+  aponta.
 - Tudo: arquivo global (estilos, core/, layout/, rotas, index.html, configuração, apoio dos testes, a própria CI),
   arquivo do front-end que não dá para ligar a uma tela, ou sem base (push no develop/main). Na dúvida, tudo: errar
   para mais é seguro; para menos, não.
@@ -155,9 +157,22 @@ def jest_que_leem_codigo():
         for nome in arquivos:
             if nome.endswith('.spec.ts'):
                 caminho = os.path.join(pasta, nome)
-                if re.search(r'readFileSync|readdirSync', open(caminho, encoding='utf-8').read()):
+                if re.search(r'readFileSync|readdirSync|apoio/codigo\b', open(caminho, encoding='utf-8').read()):
                     saida.append(os.path.relpath(caminho, os.path.join(RAIZ, FRONT)).replace(os.sep, '/'))
     return sorted(saida)
+
+
+def dono(arquivo):
+    """#475: o .ts do componente que aponta o .html/.css em templateUrl/styleUrl(s), na mesma pasta; None se nenhum."""
+    pasta, nome = os.path.split(arquivo)
+    absoluta = os.path.join(RAIZ, pasta)
+    if not os.path.isdir(absoluta):
+        return None
+    aponta = re.compile(r"""\b(?:templateUrl|styleUrls?)\s*:\s*\[?[^\]]*?['"]\./""" + re.escape(nome) + r"""['"]""")
+    for ts in sorted(os.listdir(absoluta)):
+        if ts.endswith('.ts') and aponta.search(open(os.path.join(absoluta, ts), encoding='utf-8').read()):
+            return f'{pasta}/{ts}'
+    return None
 
 
 def decidir(lista):
@@ -173,6 +188,12 @@ def decidir(lista):
     for a in lista:
         if not a.startswith(f'{FRONT}/'):
             continue
+        if a.startswith(f'{APP}/') and a.endswith(('.html', '.css')):
+            ts = dono(a)
+            if ts is None:
+                return {'frontend': True, 'tudo': True, 'motivo': [f'nenhum componente aponta para {a} (na dúvida, tudo)']}
+            motivo.append(f'{a[len(APP) + 1:]} é o template ou o CSS de {ts[len(APP) + 1:]}')
+            a = ts
         if a.startswith(f'{FRONT}/testes/navegador/') and a.endswith('.spec.ts'):
             specs_mudados.add(os.path.basename(a))
             motivo.append(f'teste no navegador mudou: {os.path.basename(a)}')

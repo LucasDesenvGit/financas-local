@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { codigosDoApp } from '../apoio/codigo';
 import {
   CampoDataComponent, DATA_MAXIMA, dataInicialDoCalendario, formatarDataDigitando, isoParaTexto, textoParaIso
 } from '../../../src/app/compartilhado/ui/campo-data.component';
@@ -100,9 +99,7 @@ describe('Regressão: campo de data', () => {
   });
 
   it('nenhuma tela usa mais <input type="date"> (todas usam app-campo-data)', () => {
-    const pasta = join(__dirname, '../../../src/app/paginas');
-    const comDate = readdirSync(pasta, { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.ts'))
-      .filter((f) => readFileSync(join(pasta, f), 'utf8').includes('type="date"'));
+    const comDate = codigosDoApp('paginas').filter((c) => c.texto.includes('type="date"')).map((c) => c.arquivo);
     expect(comDate).toEqual([]);
   });
 

@@ -26,7 +26,7 @@ Página grande se divide em três partes.
 - **Componente da tela** (a página, `paginas/<grupo>/<tela>.component.ts`): busca os dados pelo `ApiService`, guarda o estado e reage aos filtros e à URL (`replaceUrl`, ADR 0018). Os métodos que o template e os testes chamam continuam nele, mas, quando há regra, só chamam a função pura.
 - **Componentes de apresentação** (`paginas/<grupo>/<tela>-<parte>.component.ts`, como `renomear-transacao.component.ts`): recebem por `input()` e avisam por `output()`; não chamam a API nem leem a rota; `ChangeDetectionStrategy.Eager`, como o resto do app. Passam a `compartilhado/` só quando outra tela também usa (ADR 0058).
 - **Funções puras** (`paginas/<grupo>/<tela>.ts`, ao lado da página): cálculo, decisão, texto, agrupamento, filtro ↔ URL e montagem do que vai para a API. Sem Angular: a URL entra como `{ get(nome) }`, como o `ParamMap`, e um tipo de um componente só entra com `import type`. Os testes ficam em `testes/jest/regressao/`, sem `TestBed`.
-- **Template e CSS em arquivo próprio** (`templateUrl`/`styleUrl`, o mesmo nome do `.ts`) quando o template passa de **150 linhas** (*julgamento próprio*: abaixo disso, ler tudo num arquivo só é mais fácil). Isso vale só depois do pré-requisito de "Na prática". Até lá, todo template continua inline.
+- **Template e CSS em arquivo próprio** (`templateUrl`/`styleUrl`, o mesmo nome do `.ts`) quando o template passa de **150 linhas** (*julgamento próprio*: abaixo disso, ler tudo num arquivo só é mais fácil). O pré-requisito de "Na prática" entrou na 3.3.10.
 - **Aos poucos:** `transacoes` primeiro, em PRs pequenos, uma parte da tela por PR. As outras páginas grandes seguem o padrão quando alguém mexe nelas, sem um PR gigante. Os testes do navegador da tela não mudam, porque o comportamento não muda.
 
 ## Consequências
@@ -38,11 +38,12 @@ Página grande se divide em três partes.
   - uma regra passa a morar em dois arquivos (o método do componente que chama e a função), e quem lê o componente precisa abrir a função para ver a regra;
   - os testes que já montam a tela continuam lá. Mover para a função pura um teste que já existe é trabalho à parte, e até lá alguns comportamentos podem ser testados nos dois lugares;
   - componente de apresentação com `input()`/`output()` pede passar o estado e os eventos de um lado para o outro. Numa tela com muito estado ligado (seleção, trocas pendentes, aviso ao sair), separar demais complica mais do que ajuda. Separe a parte que tem fronteira clara (um modal, uma barra), não a tabela inteira;
-  - template em `.html` some de quem lê só o `.ts`: os testes que procuram nos templates como texto e o `testes-afetados.py` precisam passar a ler o `.html` antes da primeira tela com `templateUrl`, senão a verificação passa sem verificar nada.
+  - template em `.html` some de quem lê só o `.ts`. Teste que lê o código das telas como texto com `readFileSync` direto, sem o `apoio/codigo.ts`, passa sem olhar o template.
 - **Na prática:**
   - tela nova ou página grande que for mexida: regra nova vai para `<tela>.ts`, com teste no Jest sem `TestBed`; o método do componente só chama a função;
   - o teste de arquitetura (regra 7, `npm run test:arquitetura`, só local) confere que `paginas/<grupo>/<tela>.ts` não importa `@angular/*`, `rxjs` nem o `ApiService`. A regra do componente de apresentação (não importa o `ApiService`) entra com o primeiro deles, junto com um jeito de diferenciá-lo pelo nome;
-  - **pré-requisito do `templateUrl`**, num PR antes da primeira tela que o usar:
-    - os testes que leem o código das telas como texto, por exemplo `campo-valor.spec.ts`, `campo-data.spec.ts`, `clique-com-teclado.spec.ts`, `lista-suspensa-aberta.spec.ts` e `animacoes.spec.ts`, passam a ler também o `.html` (hoje só leem `.ts`, e o template fora dele passaria sem ser conferido);
-    - o `scripts/ci/testes-afetados.py` liga `<tela>.component.html`/`.css` ao `.ts` da tela (hoje um `.html` em `src/app` roda todos os testes);
+  - **pré-requisito do `templateUrl`** (3.3.10):
+    - teste que lê o código de um componente como texto usa o `testes/jest/apoio/codigo.ts` (`codigo(caminho)` ou `codigosDoApp(...pastas)`), que junta ao `.ts` o template e o CSS apontados. Já usam: `campo-valor`, `campo-data`, `clique-com-teclado`, `lista-suspensa-aberta`, `animacoes`, `reserva-informada-pelo-banco` e `contraste-tema`;
+    - o `codigo-dos-componentes.spec.ts` falha se um `.html` ou `.css` de `src/app` não é apontado por nenhum componente (ficaria invisível para esses testes);
+    - o `scripts/ci/testes-afetados.py` conta o `.html`/`.css` como o `.ts` do componente que o aponta, e reconhece pelo `apoio/codigo` os testes que leem o código;
   - acompanhamento das telas: [#475](https://github.com/LucasDesenvGit/financas-local/issues/475).

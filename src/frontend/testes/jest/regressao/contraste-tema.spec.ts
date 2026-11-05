@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { APP, codigo } from '../apoio/codigo';
 
 /**
  * Regressão da varredura de ponta a ponta (20/10/2026): no tema claro, o texto suave, o positivo, o negativo, o alerta e a
@@ -91,7 +92,7 @@ describe('Regressão: contraste da seta e do foco do menu em grupos (WCAG 1.4.11
 describe('Regressão: ícone da categoria sobre o fundo suave dela (#336, WCAG 1.4.11)', () => {
   // As mesmas misturas do <app-icone-categoria>: o desenho é a cor meio a meio com o texto forte no tema claro e a cor
   // pura no escuro, e o fundo é 22% da cor sobre a superfície. Cores: as sugeridas e as das categorias padrão (as que a pessoa mais vê).
-  const componente = readFileSync(join(__dirname, '../../../src/app/compartilhado/lancamentos/icone-categoria.component.ts'), 'utf8');
+  const componente = codigo(join(APP, 'compartilhado/lancamentos/icone-categoria.component.ts'));
   const sql = readFileSync(join(__dirname, '../../../../../banco/02-dados-iniciais.sql'), 'utf8');
   const utilidades = readFileSync(join(__dirname, '../../../src/app/compartilhado/utilidades.ts'), 'utf8');
   const categorias = sql.slice(sql.indexOf('INSERT OR IGNORE INTO Categoria'), sql.indexOf(';', sql.indexOf('INSERT OR IGNORE INTO Categoria')));

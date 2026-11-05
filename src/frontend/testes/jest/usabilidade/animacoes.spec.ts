@@ -1,5 +1,5 @@
-import { readFileSync } from 'fs';
 import { join } from 'path';
+import { APP, codigo } from '../apoio/codigo';
 
 /**
  * Usabilidade: regiões que abrem e fecham no meio da página animam a altura em vez de aparecer de uma vez.
@@ -8,7 +8,7 @@ import { join } from 'path';
  */
 describe('Usabilidade: animação das regiões que abrem e fecham', () => {
   it('a barra do modo edição de Transações usa expandir/recolher (não fecha de uma vez)', () => {
-    const fonte = readFileSync(join(__dirname, '../../../src/app/paginas/movimentacao/transacoes.component.ts'), 'utf8');
+    const fonte = codigo(join(APP, 'paginas/movimentacao/transacoes.component.ts'));
     expect(fonte).toMatch(/class="painel-bloco barra-edicao expandir"[^>]*animate\.leave="recolher"/);
   });
 });

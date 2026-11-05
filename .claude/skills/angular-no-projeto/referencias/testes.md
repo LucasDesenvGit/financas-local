@@ -20,6 +20,7 @@ Um comportamento testado num lugar só (#204). Não repita no Jest o que o naveg
 ## Pegadinhas que custam um ciclo da CI
 
 - **Dependência nova no front-end:** meça um teste que a use antes (`npx jest testes/jest/<pasta>/<arquivo>.spec.ts`). Pesou? Substituto leve em `testes/jest/apoio/` e no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js`. A trava é de 20 s por arquivo e 150 s a suíte.
+- **Teste que lê o código como texto** (procura no template ou no CSS de um componente): pelo `testes/jest/apoio/codigo.ts` (`codigo`, `codigosDoApp`), nunca `readFileSync` direto no `.ts`: o template em `.html` ficaria de fora, e o teste passaria sem olhar (ADR 0059).
 - **Tela nova:** linha em `TELAS` (`testes/navegador/base.ts`) e os endpoints em `api-falsa.ts`, senão o teste falha com "chamada da API sem simulação".
 - **Teste novo no navegador** abre a tela pela rota escrita (`page.goto('/transacoes')`), senão a escolha dos testes afetados não o acha, e roda `--repeat-each=5` nos dois projetos antes do push.
 - **Medida em px:** folga de 0,5 (`toBeGreaterThanOrEqual(23.5)` para 24 px).

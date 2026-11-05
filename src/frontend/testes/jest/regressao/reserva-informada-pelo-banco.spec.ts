@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { APP, codigo } from '../apoio/codigo';
 import { join } from 'path';
 import { Reserva } from '../../../src/app/core/modelos';
 import { InvestimentosComponent } from '../../../src/app/paginas/patrimonio/investimentos.component';
@@ -33,7 +33,7 @@ describe('Regressão: "conferir saldo" nas reservas que o banco não detalha (#2
   });
 
   it('a tela decide o botão pela mesma regra, não mais só por "informado pelo banco"', () => {
-    const fonte = readFileSync(join(__dirname, '../../../src/app/paginas/patrimonio/investimentos.component.ts'), 'utf-8');
+    const fonte = codigo(join(APP, 'paginas/patrimonio/investimentos.component.ts'));
     expect(fonte).toContain('@if (podeConferir(r))');
     expect(fonte).not.toContain('@if (!r.informadoPeloBanco)');
     const tela = {} as InvestimentosComponent;
