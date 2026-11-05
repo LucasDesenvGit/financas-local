@@ -59,12 +59,12 @@ A partir desta ADR, o `develop` foi para **2.2.0**, contando o que entrou desde 
   - publicar é tirar o "· desenvolvimento" do título.
 - **Reorganização do que já existia:** os itens do antigo "Não publicado" foram para a versão em que entraram, achada pelo histórico do git (o merge no `develop` que acrescentou cada texto e a versão do `Directory.Build.props` nele). A 2.17.0 voltou com o texto publicado.
 - **Notas:**
-  - **do Release X.Y.Z:** a seção X e as de desenvolvimento abaixo dela, até a última publicada;
+  - **do Release X.Y.Z:** a seção X e as de desenvolvimento abaixo dela, até a última publicada (`scripts/ci/notas-da-versao.sh`). Entre duas publicadas cabem centenas de versões de desenvolvimento, então elas entram até o limite de 125 mil caracteres do GitHub, cortadas no fim de uma versão e com um link para o CHANGELOG da tag (#641), como as de desenvolvimento (#600);
   - **da versão de desenvolvimento:** todas as seções "· desenvolvimento" e, por versão, os PRs que entraram nela (`scripts/ci/notas-desenvolvimento.sh`).
 - **No gerenciador:** "O que mudou" mostra primeiro só as seções mais novas que a versão instalada (`NotasDaVersao`).
 - **Na prática:**
   - `scripts/ci/verificar-changelog.py`, no check "versão subiu", falha com: tipo repetido na mesma versão; versão repetida ou fora de ordem; versão acima da do `Directory.Build.props`;
-  - depois de publicar, a `main` volta para o `develop`.
+  - depois de publicar, a `main` volta para o `develop` por um PR de `main` para `develop`, em que o check "versão subiu" não roda: a versão é a mesma (#641).
 
 ## Atualização de 2026-11-02: o conflito da versão resolvido por um comando (issue #587)
 

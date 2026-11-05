@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.5] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **As notas da versão publicada cabem no limite do GitHub** (#641). O Release de uma versão junta, nas notas, ela e as de desenvolvimento desde a última publicada, a 2.17.0: quase 200 versões, que passam dos 125 mil caracteres que o GitHub aceita. Sem o corte, o workflow "Versão (instalador .msi)" falharia na tag e não publicaria o `.msi`. Agora as versões entram até onde couber, cortadas no fim de uma, com um link para o `CHANGELOG.md` da tag, como no pré-lançamento de desenvolvimento (#600). O PR que traz a `main` de volta ao `develop` depois de publicar não precisa subir a versão.
+
 ## [3.3.4] — 2026-11-04 · desenvolvimento
 
 ### Correções
