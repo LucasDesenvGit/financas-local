@@ -33,7 +33,7 @@ Página grande se divide em três partes.
 
 - **Positivas:**
   - a regra se testa em milissegundos, sem montar a tela. Os 20 casos da `transacoes-logica.spec.ts` rodam em 0,5 s, contra 1,4 s dos 5 casos da `transacoes-ordenar.spec.ts`, que abre a tela pelo `TestBed` (medido em 05/11/2026, cada arquivo sozinho);
-  - o componente da tela fica com o que só ele faz (estado, API, rota). O de Transações caiu de 1.642 para 1.286 linhas só com as funções puras.
+  - o componente da tela fica com o que só ele faz (estado, API, rota). O de Transações caiu de 1.642 para 1.286 linhas com as funções puras, e para 765 com o template e o CSS em arquivo próprio (3.3.11); o JavaScript compilado da tela saiu idêntico, byte a byte.
 - **Negativas:**
   - uma regra passa a morar em dois arquivos (o método do componente que chama e a função), e quem lê o componente precisa abrir a função para ver a regra;
   - os testes que já montam a tela continuam lá. Mover para a função pura um teste que já existe é trabalho à parte, e até lá alguns comportamentos podem ser testados nos dois lugares;

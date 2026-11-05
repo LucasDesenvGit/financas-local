@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.11] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Template e CSS da tela de Transações em arquivo próprio** (parte de #475; ADR 0059). O template de 438 linhas foi para `transacoes.component.html`, e o CSS para `transacoes.component.css`. O `transacoes.component.ts` caiu de 1.286 para 765 linhas e fica só com o estado e as chamadas da API. O conteúdo não mudou: o JavaScript compilado da tela é idêntico, byte a byte, ao de antes. Nada muda para quem usa.
+
 ## [3.3.10] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

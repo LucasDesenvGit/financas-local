@@ -1,0 +1,81 @@
+/* #123: nome dado por você em cima; o do banco embaixo, menor (cor suave do tema, com contraste de texto). */
+.linha-descricao { display: flex; align-items: center; gap: 4px; min-width: 0; }
+/* #244: cabeçalho que ordena: o texto do th, com alvo de 24 px (WCAG 2.5.8) e a seta da direção. */
+.botao-ordenar {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; cursor: pointer; text-align: inherit;
+}
+.botao-ordenar:hover { color: var(--texto-forte); }
+.botao-ordenar:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; border-radius: 4px; }
+.seta-ordem { font-size: 0.7rem; opacity: 0.35; min-width: 0.8em; }
+.seta-ordem.ativa { opacity: 1; color: var(--primaria-forte); }
+.linha-descricao .truncar { min-width: 0; }
+/* #265: o selo do serviço antes do nome, um pouco mais afastado que o ✎. */
+.linha-descricao app-selo-servico { margin-right: 6px; }
+.botao-renomear { min-width: 24px; min-height: 24px; font-size: 0.85rem; opacity: 0.65; flex: none; }
+.botao-renomear:hover, .botao-renomear:focus-visible { opacity: 1; }
+.descricao-original { font-size: 0.78rem; color: var(--texto-suave); margin-top: 1px; }
+.valor.fora-dos-totais { color: var(--texto-suave); }
+.faixa-filtros {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  margin: -4px 4px 14px; font-size: 0.9rem;
+}
+.chip-filtro { gap: 2px; padding-right: 2px; background: var(--primaria-suave); color: var(--primaria-forte); font-weight: 550; }
+.chip-remover {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: 2px;
+  border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; font-size: 0.8rem; line-height: 1;
+}
+.chip-remover:hover, .chip-remover:focus-visible { background: var(--superficie); }
+.linha-sugestoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tabela-sugestoes td { vertical-align: top; }
+.tabela-sugestoes td:first-child { max-width: 280px; }
+.tabela-sugestoes select { min-width: 180px; }
+/* #254: o margin-top negativo dos chips (feito para o formulário) puxava os chips para cima do motivo. */
+.tabela-sugestoes .sugestoes-chips { margin-top: 6px; }
+.tabela-sugestoes .aviso-regra { display: block; max-width: 240px; margin-top: 4px; font-size: 0.78rem; }
+tr.encerrada td { opacity: 0.55; }
+.barra-edicao { margin-bottom: 14px; }
+.barra-edicao .bloco-titulo { flex-wrap: wrap; gap: 10px; }
+.barra-edicao p { margin: 6px 0; }
+.todas-do-filtro { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 8px; }
+.todas-do-filtro label { min-width: 240px; }
+.sugestao-regra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px;
+  border-radius: var(--raio-pequeno); background: var(--primaria-suave); }
+.celula-edicao { display: flex; gap: 6px; align-items: center; }
+.select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
+tr.alterada td { background: var(--alerta-suave); }
+/* #141: transação aberta por link (Relatórios › Maiores despesas): fundo e faixa à esquerda, diferente da seleção. */
+tr.destacada td { background: var(--info-suave); }
+tr.destacada td:first-child { box-shadow: inset 4px 0 0 var(--primaria); }
+.botao-ativo { background: var(--primaria-suave); color: var(--primaria-forte); }
+.filtro-generica { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 8px; }
+.filtro-lancamento { display: grid; gap: 6px; min-width: 180px; }
+.filtro-lancamento label { display: flex; align-items: center; gap: 2px; min-width: 0; font-size: 0.85rem; font-weight: 600; color: var(--texto-suave); }
+.etiqueta-lancamento { display: inline-flex; align-items: center; gap: 4px; background: var(--primaria-suave); color: var(--primaria-forte); }
+.conta-transacao { display: inline-flex; align-items: center; gap: 8px; }
+.conta-transacao .tipo-conta { display: block; font-size: 0.75rem; }
+.filtro-generica label.checkbox { min-width: 0; padding-bottom: 0; }
+.dica-generica { margin: -4px 4px 14px; font-size: 0.88rem; max-width: 90ch; }
+.botao-revisada { min-height: 24px; padding: 0 4px; font-size: 0.82rem; }
+/* Celular no modo edição: cada transação vira um bloco, com o seletor de categoria em largura total (sem rolagem lateral). */
+@media (max-width: 760px) {
+  .tabela-edicao thead { display: none; }
+  .tabela-edicao tbody tr {
+    display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+    grid-template-areas: "check desc valor" "check data conta" "check cat cat";
+    padding: 10px 12px; border-bottom: 1px solid var(--linha);
+  }
+  .tabela-edicao tbody td { padding: 0; border: 0; }
+  .tabela-edicao tbody tr.alterada { background: var(--alerta-suave); }
+  .tabela-edicao tbody tr.alterada td { background: none; }
+  .tabela-edicao tbody td:nth-child(1) { grid-area: check; }
+  .tabela-edicao tbody td:nth-child(2) { grid-area: data; font-size: 0.8rem; color: var(--texto-suave); }
+  .tabela-edicao tbody td:nth-child(3) { grid-area: desc; min-width: 0; }
+  .tabela-edicao tbody td:nth-child(4) { grid-area: cat; }
+  .tabela-edicao tbody td:nth-child(5) { grid-area: conta; font-size: 0.8rem; text-align: right; }
+  .tabela-edicao tbody td:nth-child(6) { grid-area: valor; }
+  .tabela-edicao tbody td.vazio { grid-column: 1 / -1; grid-area: auto; }
+  .tabela-edicao .celula-edicao { width: 100%; }
+  .tabela-edicao .select-categoria { flex: 1; min-width: 0; }
+}
+:host ::ng-deep .modal:has(.tabela-sugestoes) { width: min(1150px, 96vw); }
