@@ -27,6 +27,7 @@ Ao propor, revisar ou implementar qualquer coisa de UI/UX (telas, navegação, g
 ## Padrões já adotados
 
 A partir das referências acima (seguir, salvo motivo registrado):
+- **Confirmação pelo modal do site, nunca pelo `confirm()` do navegador** (#631, [ADR 0057](adr/0057-confirmacao-pelo-modal-do-site-e-nao-pelo-confirm.md)): `await confirmacao.confirmar({ titulo, mensagem, confirmar: '<verbo>', perigo })`. A pergunta diz o objeto ("Excluir a meta “Viagem”?"), o botão diz o verbo e sai vermelho quando a ação apaga (Nielsen 5), e o foco começa no Cancelar (WAI-ARIA, "Alert and Message Dialogs").
 - **Detalhe por navegação, não modal**, quando já existe tela com o detalhe (ex.: total por categoria → `/transacoes` filtrada), levando o contexto completo (categoria + período + tipo) em query params.
 - **Filtro ativo sempre visível** (chips com ✕ e "Limpar filtros") em tela que pode abrir já filtrada.
 - **Escolher data ou mês sobe de nível pelo título** (#264, #342): todo quadro de escolher data ou mês tem o título como botão que sobe de nível (dia → mês → ano, em páginas de 12 anos), e Esc volta um nível antes de fechar. Vale para o calendário dos campos de data e para o seletor de mês; componente novo de data segue o mesmo e entra em `testes/usabilidade/escolher-data-sobe-nivel.spec.ts` (Nielsen 4 e 7).

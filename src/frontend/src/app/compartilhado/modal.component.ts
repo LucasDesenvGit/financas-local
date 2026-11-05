@@ -20,7 +20,8 @@ const Z_MAXIMO = 58;
       <!-- Só o fundo sai com fade: o conteúdo do modal é apagado pela tela no mesmo instante (ex.: form = null), e a
            caixa saindo animada apareceria vazia. -->
       <div class="modal-fundo" [style.z-index]="zIndice()" (click)="fechar.emit()" animate.leave="sair"></div>
-      <section class="modal" [style.z-index]="zIndice() + 1" role="dialog" aria-modal="true" [attr.aria-label]="titulo()">
+      <section class="modal" [style.z-index]="zIndice() + 1" [attr.role]="papel()" aria-modal="true" [attr.aria-label]="titulo()"
+               [attr.aria-describedby]="descricao() || null">
         <header class="modal-cabecalho">
           <h2>{{ titulo() }}</h2>
           <button type="button" class="botao-icone" (click)="fechar.emit()" aria-label="Fechar">×</button>
@@ -35,6 +36,10 @@ const Z_MAXIMO = 58;
 export class ModalComponent implements OnDestroy {
   readonly titulo = input('');
   readonly aberto = input(false);
+  /** "alertdialog" na confirmação (#631, WAI-ARIA "Alert and Message Dialogs"); "dialog" no resto. */
+  readonly papel = input<'dialog' | 'alertdialog'>('dialog');
+  /** O id do texto que descreve a janela (aria-describedby), quando há um. */
+  readonly descricao = input('');
   readonly fechar = output<void>();
 
   private readonly nivel = computed(() => Math.max(0, pilha().indexOf(this)));

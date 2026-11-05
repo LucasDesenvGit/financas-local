@@ -29,6 +29,7 @@ Todos em `src/app/compartilhado/`, salvo indicação.
 | Interruptor (efeito imediato) | `<label class="interruptor"><input type="checkbox" role="switch" ...> Rótulo</label>` | o desenho está no `styles.css`; teclado e leitor de tela vêm do checkbox nativo. O que depende de "Salvar" é caixa de marcar, não interruptor |
 | Marcar linha de tabela | `<td><label class="celula-marcar"><input type="checkbox" [attr.aria-label]="'... ' + nome"></label></td>` e `[class.selecionada]` no `<tr>` | a célula inteira é o alvo; o nome da caixa diz qual linha |
 | Janela por cima | `<app-modal [titulo]="..." [aberto]="..." (fechar)="...">` (`modal.component.ts`) | o último aberto fica por cima e o Esc fecha só ele. Prefira navegar para a tela de detalhe quando ela existe (ADR 0018) |
+| Perguntar antes de agir (excluir, descartar) | `await inject(ConfirmacaoService).confirmar({ mensagem, confirmar: '<verbo>', perigo })` (`confirmacao.service.ts`; o `<app-confirmacao>` já está no `layout`) | nunca `confirm()` ([ADR 0057](../../../../docs/adr/0057-confirmacao-pelo-modal-do-site-e-nao-pelo-confirm.md)); no teste, espie o `confirmar` do serviço |
 | Menu de ações | `<app-menu-acoes>` (`menu-acoes.component.ts`) | padrão Menu Button do WAI-ARIA: setas, Home/End, Esc devolve o foco |
 | Paginação | `<app-paginacao>` (`paginacao.component.ts`) | primeira/última, janela de números com reticências, "ir para" e itens por página |
 

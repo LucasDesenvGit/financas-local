@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent, formatarValor } from '../compartilhado/campo-valor.component';
@@ -296,6 +297,8 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
             }
             <span class="cresce"></span>
             <button type="button" class="link" (click)="editar(m)" [attr.aria-label]="'Editar a meta ' + m.nome">Editar</button>
+            <!-- #631: excluir sem abrir a edição; pede confirmação no modal do site (Nielsen 5). -->
+            <button type="button" class="link perigo" (click)="excluirMeta(m)" [attr.aria-label]="'Excluir a meta ' + m.nome">Excluir</button>
           </footer>
           </div>
           </div>
@@ -535,6 +538,7 @@ import { ListaSuspensaDirective } from '../compartilhado/lista-suspensa.directiv
 })
 export class MetasComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
   private readonly router = inject(Router);
   private readonly rota = inject(ActivatedRoute);
@@ -938,10 +942,18 @@ export class MetasComponent implements OnInit {
   }
 
   excluir(): void {
-    if (!this.editandoId || !confirm('Excluir esta meta?')) return;
-    this.api.excluirMeta(this.editandoId).subscribe({
+    if (!this.editandoId) return;
+    const meta = this.metas().find((m) => m.id === this.editandoId);
+    if (meta) void this.excluirMeta(meta);
+  }
+
+  /** #631: o Excluir do card e o do formulário de edição pedem a mesma confirmação. */
+  async excluirMeta(m: Meta): Promise<void> {
+    if (!(await this.confirmacao.confirmar({ titulo: 'Excluir meta', mensagem: `Excluir a meta “${m.nome}”?`, confirmar: 'Excluir', perigo: true }))) return;
+    this.api.excluirMeta(m.id).subscribe({
       next: () => {
         this.form = null;
+        this.avisos.sucesso('Meta excluída.');
         this.carregar();
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))

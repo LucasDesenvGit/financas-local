@@ -38,20 +38,23 @@ function apiFalsa(metas: Meta[], plano: PlanoMetas) {
   const criadas: SalvarMeta[] = [];
   /** #359: as metas editadas (id e o que vai para a API). */
   const atualizadas: { id: number; dto: SalvarMeta }[] = [];
+  /** #631: os ids das metas excluídas. */
+  const excluidas: number[] = [];
   const api = {
     metas: () => of(metas), contas: () => of(CONTAS), reservas: () => of(RESERVAS), planoMetas: () => of(plano),
     aportesMeta: () => of([]),
     ordenarMetas: (ids: number[]) => { ordens.push(ids); return of(undefined); },
     salvarParametros: (valores: Record<string, number>) => { parametros.push(valores); return of([]); },
     criarMeta: (dto: SalvarMeta) => { criadas.push(dto); return of(metas[0]); },
-    atualizarMeta: (id: number, dto: SalvarMeta) => { atualizadas.push({ id, dto }); return of(metas[0]); }
+    atualizarMeta: (id: number, dto: SalvarMeta) => { atualizadas.push({ id, dto }); return of(metas[0]); },
+    excluirMeta: (id: number) => { excluidas.push(id); return of(undefined); }
   };
-  return { api, ordens, parametros, criadas, atualizadas };
+  return { api, ordens, parametros, criadas, atualizadas, excluidas };
 }
 
 /** Abre Metas com a API falsa (sem URL). */
 export function abrirMetas(metas: Meta[] = [], plano: PlanoMetas = semPlano()) {
-  const { api, ordens, parametros, criadas, atualizadas } = apiFalsa(metas, plano);
+  const { api, ordens, parametros, criadas, atualizadas, excluidas } = apiFalsa(metas, plano);
   TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: ApiService, useValue: api }] });
   const fixture = TestBed.createComponent(MetasComponent);
   fixture.detectChanges();
@@ -63,7 +66,7 @@ export function abrirMetas(metas: Meta[] = [], plano: PlanoMetas = semPlano()) {
     sel.dispatchEvent(new Event('change'));
     await atualizar();
   };
-  return { fixture, tela: fixture.componentInstance, raiz, atualizar, escolher, ordens, parametros, criadas, atualizadas };
+  return { fixture, tela: fixture.componentInstance, raiz, atualizar, escolher, ordens, parametros, criadas, atualizadas, excluidas };
 }
 
 /** Abre /metas pelo roteador de verdade (a URL é lida e gravada como no navegador), com a API falsa. */

@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -440,6 +441,7 @@ const FATURAS_VISIVEIS = 6;
 })
 export class ContasComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -834,8 +836,8 @@ export class ContasComponent implements OnInit {
     });
   }
 
-  excluir(): void {
-    if (!this.editandoId || !confirm('Excluir a conta e TODAS as suas transações? Esta ação não pode ser desfeita.')) return;
+  async excluir(): Promise<void> {
+    if (!this.editandoId || !(await this.confirmacao.confirmar({ titulo: 'Excluir conta', mensagem: 'Excluir a conta e TODAS as suas transações? Esta ação não pode ser desfeita.', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirConta(this.editandoId).subscribe({
       next: () => {
         this.form = null;

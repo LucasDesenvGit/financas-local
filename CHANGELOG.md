@@ -2,6 +2,12 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.0] — 2026-11-04 · desenvolvimento
+
+### Funcionalidades
+- **As confirmações usam uma janela do próprio site, e não a do navegador** (#631; ADR 0057). Antes de excluir, descartar ou trocar algo em lote, o site perguntava pela janela do navegador ("localhost:5443 diz", com "OK" e "Cancelar"). Agora a pergunta aparece numa janela no tema do site, com o nome do que vai mudar e o botão com o verbo da ação ("Excluir", "Descartar", "Salvar assim mesmo"), em vermelho quando apaga. "Cancelar" e Esc não fazem nada. Vale nas oito telas que perguntavam: Metas, Transações, Contas, Categorias, Investimentos, Contas a pagar, Configurações e Erros.
+- **Excluir uma meta direto do card** (#631). Cada meta ganhou "Excluir" ao lado de "Editar", com a mesma confirmação, sem precisar abrir a edição.
+
 ## [3.2.9] — 2026-11-04 · desenvolvimento
 
 ### Publicação e documentação

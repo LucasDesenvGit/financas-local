@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { ConfirmacaoService } from '../../src/app/compartilhado/confirmacao.service';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { ApiService } from '../../src/app/core/api.service';
@@ -50,11 +51,11 @@ describe('Regressão: erros do sistema', () => {
 
   it('resolver todos pede confirmação e manda o filtro atual', async () => {
     const t = await abrirErros('/configuracoes?aba=erros&origem=API');
-    const confirmar = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
-    t.tela.resolverTodos();
+    const confirmar = jest.spyOn(TestBed.inject(ConfirmacaoService), 'confirmar').mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    await t.tela.resolverTodos();
     expect(t.resolvidosEmLote).toHaveLength(0);
-    t.tela.resolverTodos();
-    expect(confirmar).toHaveBeenCalledWith('Marcar os 1 erro(s) deste filtro como resolvidos?');
+    await t.tela.resolverTodos();
+    expect(confirmar).toHaveBeenCalledWith(expect.objectContaining({ mensagem: 'Marcar os 1 erro(s) deste filtro como resolvidos?' }));
     expect(t.resolvidosEmLote[0]).toMatchObject({ origem: 'API', situacao: 'abertos' });
     confirmar.mockRestore();
   });

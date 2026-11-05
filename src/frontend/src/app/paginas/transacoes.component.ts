@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { CampoValorComponent } from '../compartilhado/campo-valor.component';
 import { PrivacidadeService } from '../core/privacidade.service';
@@ -635,6 +636,7 @@ function dataCurta(iso: string, comAno: boolean): string {
 })
 export class TransacoesComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly confirmacao = inject(ConfirmacaoService);
   private readonly avisos = inject(AvisosService);
   private readonly privacidade = inject(PrivacidadeService);
   private readonly rota = inject(ActivatedRoute);
@@ -916,14 +918,24 @@ export class TransacoesComponent implements OnInit {
   }
 
   buscar(pagina: number): void {
-    // #87: trocar de página ou de filtro perde as trocas não salvas; pergunta antes (Nielsen 5).
+    // #87: trocar de página ou de filtro perde as trocas não salvas; pergunta antes (Nielsen 5). Sem pendência, a busca
+    // continua na hora (síncrona), como antes do #631.
     if (this.pendentes().size) {
-      if (!confirm(`Descartar ${this.pendentes().size} alteração(ões) de categoria não salva(s)?`)) {
-        this.voltarAoFiltroAplicado();
-        return;
-      }
-      this.pendentes.set(new Map());
+      void this.confirmacao.confirmar({ titulo: 'Descartar alterações', mensagem: `Descartar ${this.pendentes().size} alteração(ões) de categoria não salva(s)?`, confirmar: 'Descartar', perigo: true })
+        .then((ok) => {
+          if (!ok) {
+            this.voltarAoFiltroAplicado();
+            return;
+          }
+          this.pendentes.set(new Map());
+          this.executarBusca(pagina);
+        });
+      return;
     }
+    this.executarBusca(pagina);
+  }
+
+  private executarBusca(pagina: number): void {
     this.filtro.pagina = pagina;
     if (this.transacaoDestacada() !== null) {
       const chave = JSON.stringify(this.filtro);
@@ -1234,9 +1246,9 @@ export class TransacoesComponent implements OnInit {
 
   /* ------------------------------ #87: modo edição ------------------------------ */
 
-  alternarModoEdicao(): void {
+  async alternarModoEdicao(): Promise<void> {
     if (this.modoEdicao() && this.pendentes().size
-      && !confirm(`Sair da edição e descartar ${this.pendentes().size} alteração(ões) não salva(s)?`)) return;
+      && !(await this.confirmacao.confirmar({ titulo: 'Sair da edição', mensagem: `Sair da edição e descartar ${this.pendentes().size} alteração(ões) não salva(s)?`, confirmar: 'Sair e descartar', perigo: true }))) return;
     this.pendentes.set(new Map());
     this.sugestoesRegra.set([]);
     this.categoriaTodas = null;
@@ -1268,8 +1280,8 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  descartarPendentes(): void {
-    if (!this.pendentes().size || !confirm(`Descartar ${this.pendentes().size} alteração(ões)?`)) return;
+  async descartarPendentes(): Promise<void> {
+    if (!this.pendentes().size || !(await this.confirmacao.confirmar({ titulo: 'Descartar alterações', mensagem: `Descartar ${this.pendentes().size} alteração(ões)?`, confirmar: 'Descartar', perigo: true }))) return;
     this.pendentes.set(new Map());
   }
 
@@ -1307,14 +1319,14 @@ export class TransacoesComponent implements OnInit {
   }
 
   /** "Todas as N do filtro", inclusive as das outras páginas, com confirmação (Nielsen 5). */
-  aplicarATodasDoFiltro(): void {
+  async aplicarATodasDoFiltro(): Promise<void> {
     const escolha = this.categoriaTodas;
     const total = this.pagina()?.total ?? 0;
     if (!escolha || !total) return;
     const f = this.filtroAplicado();
     const nome = escolha === 'auto' ? 'a categorização automática'
       : `“${this.rotuloCategoriaPorId(Number(escolha))}”`;
-    if (!confirm(`Trocar a categoria das ${total} transações do filtro (${rotuloPeriodo(f.inicio, f.fim)}) para ${nome}?`)) return;
+    if (!(await this.confirmacao.confirmar({ titulo: 'Trocar a categoria', mensagem: `Trocar a categoria das ${total} transações do filtro (${rotuloPeriodo(f.inicio, f.fim)}) para ${nome}?`, confirmar: 'Trocar a categoria' }))) return;
     this.salvando.set(true);
     this.api.alterarCategoriasEmLote({
       filtro: { ...f, pagina: 1 }, categoriaId: escolha === 'auto' ? null : Number(escolha), automatica: escolha === 'auto'
@@ -1474,7 +1486,7 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  aplicarConfiancaAlta(): void {
+  async aplicarConfiancaAlta(): Promise<void> {
     const linhas = this.linhasSugestao().filter((l) => !l.aplicada && l.confianca === 'alta' && l.escolhida);
     if (!linhas.length) return;
     // #254: duas linhas com a mesma regra e categorias diferentes: categoriza as duas, mas nenhuma cria a regra.
@@ -1482,7 +1494,7 @@ export class TransacoesComponent implements OnInit {
     const nota = semRegra.length
       ? `\n\nSem regra (o mesmo texto com categorias diferentes): ${[...new Set(semRegra.map((l) => `"${l.textoRegra}"`))].join(', ')}.`
       : '';
-    if (!confirm(`Aplicar ${linhas.length} sugestão(ões) de confiança alta?${nota}`)) return;
+    if (!(await this.confirmacao.confirmar({ titulo: 'Aplicar sugestões', mensagem: `Aplicar ${linhas.length} sugestão(ões) de confiança alta?${nota}`, confirmar: 'Aplicar' }))) return;
     for (const l of linhas) this.aplicarSugestao(semRegra.includes(l) ? { ...l, criarRegra: false } : l, true);
     this.avisos.sucesso(`${linhas.length} grupo(s) categorizado(s)` + (semRegra.length ? `; ${semRegra.length} sem regra, por conflito.` : '.'));
   }
@@ -1564,9 +1576,9 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  excluir(): void {
+  async excluir(): Promise<void> {
     const f = this.form;
-    if (!f?.id || !confirm('Excluir esta transação?')) return;
+    if (!f?.id || !(await this.confirmacao.confirmar({ titulo: 'Excluir transação', mensagem: 'Excluir esta transação?', confirmar: 'Excluir', perigo: true }))) return;
     this.api.excluirTransacao(f.id).subscribe({
       next: () => {
         this.form = null;

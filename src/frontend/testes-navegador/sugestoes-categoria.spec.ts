@@ -36,11 +36,11 @@ test('Sugestões de categoria: regras em conflito ou com aviso vêm desmarcadas,
   await expect(linhas.nth(2)).toContainText('Outra linha cria esta regra para Alimentação');
 
   // "Aplicar as 4 de confiança alta": categoriza todas, mas só cria a regra do IFOOD.
-  page.once('dialog', (d) => {
-    expect(d.message()).toContain('Sem regra (o mesmo texto com categorias diferentes): "MERCADOLIVRE"');
-    void d.accept();
-  });
+  // #631: a pergunta vem no modal do site (alertdialog), e não no confirm() do navegador.
   await page.getByRole('button', { name: /Aplicar as 4 de confiança alta/ }).click();
+  const confirmacao = page.getByRole('alertdialog', { name: 'Aplicar sugestões' });
+  await expect(confirmacao).toContainText('Sem regra (o mesmo texto com categorias diferentes): "MERCADOLIVRE"');
+  await confirmacao.getByRole('button', { name: 'Aplicar', exact: true }).click();
   await expect.poll(() => api.chamadas.filter((c) => c === 'POST /api/regras').length).toBe(1);
   await expect.poll(() => api.chamadas.filter((c) => c === 'PUT /api/transacoes/categoria-em-lote').length).toBe(4);
 });

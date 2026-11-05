@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ConfirmacaoService } from '../compartilhado/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -213,6 +214,7 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
 })
 export class ConfiguracoesComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly pedirConfirmacao = inject(ConfirmacaoService);
   private readonly auth = inject(AuthService);
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
@@ -344,8 +346,8 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  removerSecret(): void {
-    if (!confirm('Apagar o Client Secret? A sincronização vai parar até você informar um novo.')) return;
+  async removerSecret(): Promise<void> {
+    if (!(await this.pedirConfirmacao.confirmar({ titulo: 'Apagar o Client Secret', mensagem: 'Apagar o Client Secret? A sincronização vai parar até você informar um novo.', confirmar: 'Apagar', perigo: true }))) return;
     this.api.removerSecretPluggy().subscribe({
       next: () => {
         this.secretConfigurado = false;
@@ -397,9 +399,9 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  remover(c: Conexao): void {
+  async remover(c: Conexao): Promise<void> {
     const nome = this.nomeConexao(c);
-    if (!confirm(`Remover ${nome} e APAGAR todas as contas, transações e investimentos importados dela?`)) return;
+    if (!(await this.pedirConfirmacao.confirmar({ titulo: 'Remover conexão', mensagem: `Remover ${nome} e APAGAR todas as contas, transações e investimentos importados dela?`, confirmar: 'Remover e apagar', perigo: true }))) return;
     this.api.removerConexao(c.id).subscribe({
       next: () => {
         this.avisos.sucesso('Conexão removida.');

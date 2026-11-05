@@ -15,9 +15,13 @@ describe('Regressão: Méli Dólar como reserva em dólar (#169)', () => {
     podeTerSaldoAnterior: false, conferenciaAntiga: false, moeda: 'USD', quantidade: 41.46, cotacao: 5.0558, ...campos
   });
 
-  function salvar(r: Reserva, saldo: number, moeda: 'BRL' | 'USD') {
+  // #631: a pergunta vai pelo ConfirmacaoService; aqui, um falso que responde "Cancelar".
+  const confirmar = jest.fn().mockResolvedValue(false);
+
+  async function salvar(r: Reserva, saldo: number, moeda: 'BRL' | 'USD') {
     const pedidos: unknown[][] = [];
     const tela = {
+      confirmacao: { confirmar },
       formConferencia: { reserva: r, saldo, data: '2026-10-19', moeda },
       salvando: signal(false),
       conferenciaPlausivel: InvestimentosComponent.prototype.conferenciaPlausivel,
@@ -25,11 +29,11 @@ describe('Regressão: Méli Dólar como reserva em dólar (#169)', () => {
       avisos: { sucesso: jest.fn(), erro: jest.fn() },
       recarregarDepoisDeAlterar: jest.fn()
     };
-    InvestimentosComponent.prototype.salvarConferencia.call(tela);
+    await InvestimentosComponent.prototype.salvarConferencia.call(tela);
     return pedidos;
   }
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => { jest.restoreAllMocks(); confirmar.mockClear(); });
 
   it('a conferência do Méli Dólar abre em reais, com a estimativa atual', () => {
     const tela = { hoje: '2026-10-19', formConferencia: null as unknown };
@@ -37,20 +41,19 @@ describe('Regressão: Méli Dólar como reserva em dólar (#169)', () => {
     expect(tela.formConferencia).toMatchObject({ saldo: 209.6, moeda: 'BRL' });
   });
 
-  it('manda a moeda informada só para o Méli Dólar', () => {
-    expect(salvar(reserva(), 52.71, 'BRL')).toEqual([[1, 'Méli Dólar', 52.71, '2026-10-19', 'BRL']]);
-    expect(salvar(reserva(), 10, 'USD')).toEqual([[1, 'Méli Dólar', 10, '2026-10-19', 'USD']]);
+  it('manda a moeda informada só para o Méli Dólar', async () => {
+    expect(await salvar(reserva(), 52.71, 'BRL')).toEqual([[1, 'Méli Dólar', 52.71, '2026-10-19', 'BRL']]);
+    expect(await salvar(reserva(), 10, 'USD')).toEqual([[1, 'Méli Dólar', 10, '2026-10-19', 'USD']]);
     const emReais = reserva({ nome: 'Viagem', moeda: 'BRL', quantidade: null, cotacao: null, saldo: 1200, guardado: 1300 });
-    expect(salvar(emReais, 1250, 'BRL')).toEqual([[1, 'Viagem', 1250, '2026-10-19', undefined]]);
+    expect(await salvar(emReais, 1250, 'BRL')).toEqual([[1, 'Viagem', 1250, '2026-10-19', undefined]]);
   });
 
-  it('em dólar, a comparação com o esperado é feita em reais (pela PTAX)', () => {
-    const confirmar = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  it('em dólar, a comparação com o esperado é feita em reais (pela PTAX)', async () => {
     // US$ 41 ≈ R$ 207: perto do esperado, salva sem perguntar.
-    expect(salvar(reserva(), 41, 'USD')).toHaveLength(1);
+    expect(await salvar(reserva(), 41, 'USD')).toHaveLength(1);
     expect(confirmar).not.toHaveBeenCalled();
     // US$ 4.100 ≈ R$ 20,7 mil: mais de 10× o esperado, pergunta antes (e não salva com "Cancelar").
-    expect(salvar(reserva(), 4100, 'USD')).toHaveLength(0);
+    expect(await salvar(reserva(), 4100, 'USD')).toHaveLength(0);
     expect(confirmar).toHaveBeenCalled();
   });
 

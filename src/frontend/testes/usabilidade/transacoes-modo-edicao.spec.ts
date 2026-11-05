@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ConfirmacaoService } from '../../src/app/compartilhado/confirmacao.service';
 import { AvisosComponent, AvisosService } from '../../src/app/compartilhado/avisos.component';
 import { abrirTransacoes, parametrosDaUrl } from '../apoio/transacoes';
 import { abrirEdicao } from '../apoio/transacoes-edicao';
@@ -48,10 +49,11 @@ describe('Usabilidade: modo edição de categorias', () => {
 
   it('"todas do filtro" pede confirmação com a quantidade, o período e a categoria', async () => {
     const t = await abrirEdicao('/transacoes?editar=1&inicio=2026-09-01&fim=2026-09-30', undefined, 240);
-    const confirmar = jest.spyOn(window, 'confirm').mockReturnValue(false);
+    const confirmar = jest.spyOn(TestBed.inject(ConfirmacaoService), 'confirmar').mockResolvedValueOnce(false);
     t.tela.categoriaTodas = '20';
-    t.tela.aplicarATodasDoFiltro();
-    expect(confirmar).toHaveBeenCalledWith('Trocar a categoria das 240 transações do filtro (setembro/2026) para “Lazer”?');
+    await t.tela.aplicarATodasDoFiltro();
+    expect(confirmar).toHaveBeenCalledWith(expect.objectContaining({
+      mensagem: 'Trocar a categoria das 240 transações do filtro (setembro/2026) para “Lazer”?', confirmar: 'Trocar a categoria' }));
     expect(t.lotes).toEqual([]);
   });
 

@@ -7,6 +7,7 @@ import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.co
 import { CalculadoraComponent } from '../compartilhado/calculadora.component';
 import { StatusSincronizacaoComponent } from '../compartilhado/status-sincronizacao.component';
 import { NotificacoesComponent } from '../compartilhado/notificacoes.component';
+import { ConfirmacaoComponent } from '../compartilhado/confirmacao.component';
 import { IconeComponent } from '../compartilhado/icone.component';
 import { Icones } from '../compartilhado/icones';
 import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
@@ -106,7 +107,7 @@ export function roteiroDaTela(rota: string): string {
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, BotaoPrivacidadeComponent, CalculadoraComponent, MenuUsuarioComponent,
-    IconeComponent, StatusSincronizacaoComponent, NotificacoesComponent],
+    IconeComponent, StatusSincronizacaoComponent, NotificacoesComponent, ConfirmacaoComponent],
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()" [class.menu-recolhido]="recolhidoNoComputador()">
       <!-- #131: menu escondido (recolhido no computador, gaveta fechada no celular) fica fora do Tab (inert). -->
@@ -221,6 +222,8 @@ export function roteiroDaTela(rota: string): string {
         </main>
       </div>
     </div>
+    <!-- #631 (ADR 0057): a confirmação do site, no lugar do confirm() do navegador; as telas a pedem ao ConfirmacaoService. -->
+    <app-confirmacao />
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
