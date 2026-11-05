@@ -58,14 +58,15 @@ As issues e o andamento ficam no Project **"ClaudioFinancas"** ([users/LucasDese
 Outro PR subiu a versão antes do seu entrar e o seu ficou em conflito no `Directory.Build.props` e no `CHANGELOG.md`? Rode `scripts/geral/atualizar-pr.sh <número do PR>` (#587). Ele traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no mesmo nível que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo do CHANGELOG com o número novo e a data de hoje, confere e envia. Com `--sem-enviar`, só mostra. Conflito em outro arquivo, ele desfaz e lista: aí é `git merge origin/develop` e resolver à mão. O Dependabot não precisa subir: comente `@dependabot rebase` no PR.
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-1. No `develop`, no `CHANGELOG.md`, tire o ` · desenvolvimento` do título da versão do topo (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`, com a data de hoje) (#294). O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo: as notas do Release juntam todas, até a última publicada. **Depois do merge na `main`, traga a `main` de volta para o `develop`**, para o `CHANGELOG` do `develop` ficar igual ao publicado (na 2.17.0 isso não foi feito, e o `develop` ficou sem a seção dela).
-2. PR de `develop` para `main` e merge.
+1. Numa branch `release/X.Y.Z`, criada do `develop`, tire o ` · desenvolvimento` do título da versão do topo do `CHANGELOG.md`, com a data de hoje (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`) (#294), num commit `chore: versão X.Y.Z`. O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo. As notas do Release juntam todas, até a última publicada, e cortam no limite de 125 mil caracteres do GitHub, com um link para o resto (#641).
+2. PR de `release/X.Y.Z` para `main` e merge. Antes, confira que `main` e `develop` continuam protegidas contra apagar: em 2026-10-18, o merge de um PR para a `main` apagou o `develop`.
 3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
    - testa instalar, atualizar, desinstalar e migrar;
    - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e, do CHANGELOG, a seção da versão e as de desenvolvimento abaixo dela até a última publicada. Se alguém criou o Release à mão antes, o título e as notas são acertados.
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
+6. **Traga a `main` de volta para o `develop`:** PR de `main` para `develop` e merge. O check "versão subiu" não roda nele, porque a versão é a mesma (#641). Assim, o `CHANGELOG` do `develop` fica igual ao publicado: na 2.17.0, isso não foi feito, e o `develop` ficou sem a seção dela.
 
 Quem instala pelos scripts continua atualizando com `git pull` e `scripts/geral/instalar.sh` (ou `instalar-windows.cmd`). Só o `3-publicar-atualizar.sh` não basta quando o `go.mod` pede um Go mais novo: quem o baixa é a etapa 1 ([Atualizar](docs/INSTALACAO-PELO-CODIGO.md#atualizar)).
 

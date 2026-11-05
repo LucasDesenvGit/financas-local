@@ -40,7 +40,10 @@ jobs:
   versao:
     name: versão subiu
     # Pelo autor do PR, e não por quem disparou: o "@dependabot rebase" pedido por uma pessoa dispara em nome dela (#587).
-    if: github.event_name == 'pull_request' && github.base_ref == 'develop' && github.event.pull_request.user.login != 'dependabot[bot]'
+    # A main de volta ao develop, depois de publicar uma versão, não sobe a versão: ela é a mesma (#641, CONTRIBUINDO.md).
+    if: >-
+      github.event_name == 'pull_request' && github.base_ref == 'develop' && github.head_ref != 'main'
+      && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -61,6 +64,9 @@ jobs:
       # #600: as notas da versão de desenvolvimento cabem no limite do GitHub (125 mil caracteres).
       - name: Teste das notas de desenvolvimento
         run: python3 -B scripts/ci/test_notas_desenvolvimento.py
+      # #641: as notas do Release da tag também cabem no limite.
+      - name: Teste das notas da versão
+        run: python3 -B scripts/ci/test_notas_da_versao.py
 
   # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
   mudancas:
