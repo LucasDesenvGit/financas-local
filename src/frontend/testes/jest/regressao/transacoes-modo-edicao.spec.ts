@@ -1,4 +1,4 @@
-import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
+import { AvisosService } from '../../../src/app/core/avisos.service';
 import { TipoCorrespondencia } from '../../../src/app/core/modelos';
 import { TestBed } from '@angular/core/testing';
 import { ConfirmacaoService } from '../../../src/app/compartilhado/ui/confirmacao.service';

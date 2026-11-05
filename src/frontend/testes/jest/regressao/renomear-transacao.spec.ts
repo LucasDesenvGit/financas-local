@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
+import { AvisosService } from '../../../src/app/core/avisos.service';
 import { PaginaTransacoes, TipoCorrespondencia, TipoTransacao } from '../../../src/app/core/modelos';
 import { abrirRenomear, pix } from '../apoio/renomear';
 import { abrirTransacoes, paginaVazia } from '../apoio/transacoes';

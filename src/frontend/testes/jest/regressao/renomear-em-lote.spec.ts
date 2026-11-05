@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
+import { AvisosService } from '../../../src/app/core/avisos.service';
 import { ApiService } from '../../../src/app/core/api.service';
 import { RenomearEmLote, Transacao } from '../../../src/app/core/modelos';
 import { RenomearEmLoteComponent } from '../../../src/app/paginas/movimentacao/renomear-em-lote.component';

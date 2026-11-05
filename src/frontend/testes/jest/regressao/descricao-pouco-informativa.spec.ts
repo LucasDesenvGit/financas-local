@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
+import { AvisosService } from '../../../src/app/core/avisos.service';
 import { dataIso } from '../../../src/app/compartilhado/utilidades';
 import { abrirTransacoes, paginaVazia, parametrosDaUrl } from '../apoio/transacoes';
 import { transacao } from '../apoio/transacoes-edicao';

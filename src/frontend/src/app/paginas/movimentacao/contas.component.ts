@@ -7,7 +7,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Banco, Conta, ContaAgendada, Fatura, FaturaMes, NOMES_TIPO_CONTA, OrigemConta, SalvarConta, SituacaoFatura, TipoConta } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { visualBanco } from '../../compartilhado/bancos/bancos';
 import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';

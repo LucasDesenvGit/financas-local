@@ -1,12 +1,12 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Orcamento } from '../../core/modelos';
-import { IconeComponent } from '../../compartilhado/ui/icone.component';
-import { AcaoMenu, MenuAcoesComponent } from '../../compartilhado/ui/menu-acoes.component';
-import { Icones } from '../../compartilhado/ui/icones';
-import { MoedaPipe } from '../../compartilhado/moeda.pipe';
-import { NOMES_MESES, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../../compartilhado/utilidades';
+import { Orcamento } from '../core/modelos';
+import { IconeComponent } from '../compartilhado/ui/icone.component';
+import { AcaoMenu, MenuAcoesComponent } from '../compartilhado/ui/menu-acoes.component';
+import { Icones } from '../compartilhado/ui/icones';
+import { MoedaPipe } from '../compartilhado/moeda.pipe';
+import { NOMES_MESES, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../compartilhado/utilidades';
 import {
   CHAVE_AVISOS_MINIMIZADOS, CHAVE_AVISOS_OCULTOS, CHAVE_ORCAMENTOS_MINIMIZADOS, CHAVE_ORCAMENTOS_OCULTOS, ORCAMENTOS_VISIVEIS, avisosContinuamOcultos, chavePeriodo, guardar,
   impressaoAviso, lerAvisosOcultos, lerMinimizado, lerOrcamentosOcultos, mostrarOrcamentos, ocultarOrcamentos, orcamentosContinuamOcultos

@@ -29,17 +29,19 @@ const PASTAS_PROIBIDAS: Record<string, { proibidas: string[]; motivo: string }> 
   layout: { proibidas: ['paginas'], motivo: 'a casca da tela não depende de uma página' }
 };
 
+/** Regra 6 (#634, ADR 0058): dentro do compartilhado, o que não tem assunto do domínio não depende de um assunto. */
+const SUBPASTAS_PROIBIDAS: Record<string, { proibidas: string[]; motivo: string }> = {
+  'compartilhado/ui': {
+    proibidas: ['compartilhado/bancos', 'compartilhado/lancamentos', 'compartilhado/glossario'],
+    motivo: 'o componente de ui/ não sabe do domínio'
+  }
+};
+
 /**
- * Exceções das regras 2 a 4, com o motivo. *Julgamento (#476):* as três parecem estar no lugar errado, e não ser
- * exceção de verdade; ficam aqui até alguém mover.
+ * Exceções das regras 2 a 4, com o motivo. *Julgamento (#476):* parece estar no lugar errado, e não ser exceção de
+ * verdade; fica aqui até alguém mover. As do AvisosService e dos avisos do sino saíram na #634 (core/ e layout/).
  */
 const EXCECOES_DE_PASTA: Record<string, string> = {
-  'core/status-sincronizacao.service.ts -> compartilhado/avisos.component':
-    'o serviço abre o aviso padrão; o AvisosService poderia morar no core',
-  'layout/notificacoes.component.ts -> paginas/painel/painel-avisos':
-    'o sino das notificações mostra os avisos do Painel (#327); o cálculo dos avisos poderia morar no core',
-  'layout/notificacoes.component.ts -> paginas/painel/painel-avisos.component':
-    'o sino das notificações usa o componente dos avisos do Painel (#327)',
   'layout/shell.component.ts -> paginas/manual/manual-conteudo':
     'o botão de ajuda leva à seção do Manual da tela (ajudaDaUrl); a função poderia morar no core'
 };
@@ -95,6 +97,11 @@ function violacoes(grafo: Grafo): string[] {
       if (regra?.proibidas.includes(pasta(alvo)) && !EXCECOES_DE_PASTA[`${arquivo} -> ${alvo}`]) {
         v.push(`regra 2-4 (${regra.motivo}): ${arquivo} importa ${alvo}. O que fazer: mova o que é comum para o core (serviço, função) ou para o compartilhado (componente), ou registre em EXCECOES_DE_PASTA com o motivo.`);
       }
+      // Regra 6: o compartilhado/ui/ não importa as pastas de assunto do compartilhado.
+      const sub = Object.entries(SUBPASTAS_PROIBIDAS).find(([p]) => arquivo.startsWith(`${p}/`))?.[1];
+      if (sub?.proibidas.some((p) => alvo.startsWith(`${p}/`))) {
+        v.push(`regra 6 (${sub.motivo}): ${arquivo} importa ${alvo}. O que fazer: receba o dado pronto por input() (o ui/ só desenha), ou mova o componente para a pasta do assunto.`);
+      }
       // Regra 5: uma página com rota não importa outra página com rota.
       const origem = arquivo.replace(/\.ts$/, '');
       if (rotas.has(origem) && rotas.has(alvo) && alvo !== origem) {
@@ -125,8 +132,7 @@ describe('arquitetura do front-end (#476)', () => {
     const limpo = (): Grafo => ({
       'app.routes.ts': { imports: ['paginas/painel/painel.component', 'paginas/planejamento/metas.component'], texto: '' },
       'core/api.service.ts': { imports: ['@angular/common/http'], texto: 'inject(HttpClient)' },
-      'core/status-sincronizacao.service.ts': { imports: ['compartilhado/avisos.component'], texto: '' },
-      'layout/notificacoes.component.ts': { imports: ['paginas/painel/painel-avisos', 'paginas/painel/painel-avisos.component'], texto: '' },
+      'compartilhado/ui/modal.component.ts': { imports: ['compartilhado/ui/icone.component', 'compartilhado/utilidades'], texto: '' },
       'layout/shell.component.ts': { imports: ['paginas/manual/manual-conteudo'], texto: '' },
       'paginas/painel/painel.component.ts': { imports: ['core/api.service'], texto: '' },
       'paginas/planejamento/metas.component.ts': { imports: ['paginas/planejamento/metas-plano'], texto: '' }
@@ -148,6 +154,8 @@ describe('arquitetura do front-end (#476)', () => {
         'regra 2-4 (a casca da tela não depende de uma página): layout/menu.ts importa paginas/planejamento/metas.component'],
       ['página importa página', com('paginas/painel/painel.component.ts', ['paginas/planejamento/metas.component']),
         'regra 5 (página não depende de outra página): paginas/painel/painel.component.ts importa paginas/planejamento/metas.component'],
+      ['ui importa assunto', com('compartilhado/ui/modal.component.ts', ['compartilhado/glossario/termo.component']),
+        'regra 6 (o componente de ui/ não sabe do domínio): compartilhado/ui/modal.component.ts importa compartilhado/glossario/termo.component'],
       ['exceção que sarou', com('layout/shell.component.ts', []),
         'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual/manual-conteudo" não acontece mais']
     ];

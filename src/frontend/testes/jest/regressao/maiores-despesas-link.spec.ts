@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
-import { AvisosService } from '../../../src/app/compartilhado/avisos.component';
+import { AvisosService } from '../../../src/app/core/avisos.service';
 import { paramsTransacoes } from '../../../src/app/compartilhado/utilidades';
 import { ApiService } from '../../../src/app/core/api.service';
 import { TipoTransacao, Transacao } from '../../../src/app/core/modelos';

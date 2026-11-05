@@ -5,7 +5,7 @@ import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { ItemSugestaoOrcamento, NaturezaGasto, SugestaoOrcamento } from '../../core/modelos';
 import { PrivacidadeService } from '../../core/privacidade.service';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { IconeCategoriaComponent } from '../../compartilhado/lancamentos/icone-categoria.component';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';
 import { NOMES_MESES } from '../../compartilhado/utilidades';

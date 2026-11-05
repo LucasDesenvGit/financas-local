@@ -3,11 +3,11 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { ApiService } from '../core/api.service';
 import { Avisos } from '../core/modelos';
-import { PainelAvisosComponent } from '../paginas/painel/painel-avisos.component';
+import { PainelAvisosComponent } from './painel-avisos.component';
 import {
   CHAVE_AVISOS_MINIMIZADOS, CHAVE_ORCAMENTOS_MINIMIZADOS, avisosContinuamOcultos, chavePeriodo, lerAvisosOcultos, lerMinimizado,
   lerOrcamentosOcultos, orcamentosContinuamOcultos
-} from '../paginas/painel/painel-avisos';
+} from './painel-avisos';
 import { IconeComponent } from '../compartilhado/ui/icone.component';
 import { TermoComponent } from '../compartilhado/glossario/termo.component';
 import { dataIso } from '../compartilhado/utilidades';

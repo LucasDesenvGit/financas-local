@@ -9,7 +9,7 @@ import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { MesValores, TipoTransacao, Transacao, ValorCategoria } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { GraficoComponent } from '../../compartilhado/graficos/grafico.component';
 import { NOMES_MESES_CURTOS, dataIso, dataIsoValida, paramsTransacoes, pct, primeiroDiaMes, reaisOuNada } from '../../compartilhado/utilidades';
 import { CORES_GRAFICO } from '../../compartilhado/graficos/cores-graficos';

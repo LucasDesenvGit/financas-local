@@ -1,4 +1,4 @@
-import { Orcamento } from '../../core/modelos';
+import { Orcamento } from '../core/modelos';
 
 /**
  * #206: quando os avisos do Painel ficam ocultos e quando voltam. Tudo neste navegador (localStorage), como as outras

@@ -8,7 +8,7 @@ import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Categoria, Orcamento, TipoCategoria, TipoTransacao, ValorCategoria } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { MesAno, SeletorMesComponent } from '../../compartilhado/ui/seletor-mes.component';
 import { mesAnoDaUrl, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../../compartilhado/utilidades';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';

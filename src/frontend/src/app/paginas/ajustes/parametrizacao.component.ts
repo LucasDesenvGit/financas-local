@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { InfoSistema, Parametro, TipoParametro } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 
 interface GrupoParametros { nome: string; itens: Parametro[]; }
 

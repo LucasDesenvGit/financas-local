@@ -15,7 +15,7 @@ import {
 } from '../../core/modelos';
 import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
 import { SeloServicoComponent } from '../../compartilhado/bancos/selo-servico.component';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { dataIso, dataIsoValida, paramsTransacoes, paraData, primeiroDiaMes, ultimoDiaMes } from '../../compartilhado/utilidades';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';

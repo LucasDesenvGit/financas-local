@@ -5,7 +5,7 @@ import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Projecao, ProjecaoCategoria, ProjecaoMes } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { IconeCategoriaComponent } from '../../compartilhado/lancamentos/icone-categoria.component';
 import { GraficoComponent } from '../../compartilhado/graficos/grafico.component';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';

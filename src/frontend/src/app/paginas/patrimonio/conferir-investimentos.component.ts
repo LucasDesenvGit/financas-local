@@ -9,7 +9,7 @@ import {
   RendimentoComoInvestimento, ResultadoCorrecaoInvestimentos, TaxaB3, TipoOperacao, TipoParaCorrigir
 } from '../../core/modelos';
 import { PrivacidadeService } from '../../core/privacidade.service';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';
 import { TermoComponent } from '../../compartilhado/glossario/termo.component';

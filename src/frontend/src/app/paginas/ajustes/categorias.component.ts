@@ -9,7 +9,7 @@ import {
   RegraDescricao, SalvarRegraDescricao, PreviaRegraDescricao,
   TipoCategoria, TipoCorrespondencia, NaturezaGasto
 } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { IconeCategoriaComponent } from '../../compartilhado/lancamentos/icone-categoria.component';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { CORES_SUGERIDAS, paramsTransacoes, primeiroDiaMes, ultimoDiaMes } from '../../compartilhado/utilidades';

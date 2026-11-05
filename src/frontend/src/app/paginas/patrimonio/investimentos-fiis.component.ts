@@ -7,7 +7,7 @@ import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Fii, MesAMesFii, NOMES_ORIGEM_OPERACAO, OrigemOperacao, PainelFiis, TipoAtivo } from '../../core/modelos';
 import { PrivacidadeService } from '../../core/privacidade.service';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { GraficoComponent } from '../../compartilhado/graficos/grafico.component';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';
 import { CORES_GRAFICO } from '../../compartilhado/graficos/cores-graficos';

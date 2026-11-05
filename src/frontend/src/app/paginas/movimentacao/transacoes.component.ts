@@ -13,7 +13,7 @@ import {
   Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
   NaturezaGasto, SugestaoCategoria, TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao, OrdemTransacoes
 } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { PaginacaoComponent } from '../../compartilhado/ui/paginacao.component';
 import { OpcaoMultipla, SeletorMultiploComponent } from '../../compartilhado/ui/seletor-multiplo.component';

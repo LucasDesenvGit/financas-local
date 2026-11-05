@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { ResultadoRenomearEmLote, Transacao } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 
 type Escopo = 'so-estas' | 'regras';

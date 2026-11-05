@@ -9,7 +9,7 @@ import { AuthService } from '../../core/auth.service';
 import { StatusSincronizacaoService } from '../../core/status-sincronizacao.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
 import { bancoNoTexto } from '../../compartilhado/bancos/bancos';
 import { descreverEvento, origemDoAcesso } from './auditoria';

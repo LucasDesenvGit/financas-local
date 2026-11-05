@@ -16,7 +16,7 @@ Como o código do front-end é escrito aqui, com a fonte de cada ponto. As conta
 | Fluxo no template | `@if`, `@for` (com `track`), `@switch`; nada de `*ngIf`/`*ngFor` | `CONTRIBUINDO.md`; [Control flow](https://angular.dev/guide/templates/control-flow) |
 | Classe e estilo no template | `[class.x]` e `[style.x]`, nunca `NgClass`/`NgStyle` | [Style guide: prefer class and style](https://angular.dev/style-guide#prefer-class-and-style-over-ngclass-and-ngstyle) |
 | HTTP | só o `ApiService` (`core/api.service.ts`); a exceção registrada é o `auth.service.ts`. Erro da API vira texto com `mensagemDeErro` (`core/erro.interceptor.ts`) | `CLAUDE.md`; regra 1 do teste de arquitetura |
-| Quem importa quem | `core` não importa `compartilhado`, `layout` nem `paginas`; `compartilhado` não importa `paginas` nem `layout`; página com rota não importa outra página com rota | `testes/arquitetura/arquitetura.spec.ts` (regras 2 a 5; só local, #476) |
+| Quem importa quem | `core` não importa `compartilhado`, `layout` nem `paginas`; `compartilhado` não importa `paginas` nem `layout`; página com rota não importa outra página com rota; `compartilhado/ui` não importa `bancos`, `lancamentos` nem `glossario` | `testes/arquitetura/arquitetura.spec.ts` (regras 2 a 6; só local, #476, #634) |
 | Rotas | `loadComponent` em toda tela, `title: '<Tela> · Finanças Local'` | `app.routes.ts` |
 | Formulário | template-driven com `ngModel` (25 arquivos); sem `ReactiveFormsModule` | prática do código |
 | Inscrição em Observable | `.subscribe()` do `ApiService` direto; o que vive mais que a chamada usa `takeUntilDestroyed` | prática do código |

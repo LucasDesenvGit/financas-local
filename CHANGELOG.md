@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.8] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Sem exceções dos avisos no teste de arquitetura do front-end** (#634; ADR 0058). O `AvisosService` foi para o `core`, e o componente que mostra os avisos rápidos para `compartilhado/ui/`. Os avisos do sino das notificações (`painel-avisos`), que só o sino usa desde a #327, foram para `layout/`. Assim saem três das quatro exceções do `npm run test:arquitetura`, e ele ganha uma regra: o `compartilhado/ui/` não importa as pastas de assunto (`bancos/`, `lancamentos/`, `glossario/`). Nada muda para quem usa.
+
 ## [3.3.7] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

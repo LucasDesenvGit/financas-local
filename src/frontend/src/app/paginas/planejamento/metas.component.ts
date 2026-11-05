@@ -11,7 +11,7 @@ import { Conta, Meta, MetaAporte, PlanoMetas, Reserva, SalvarMeta } from '../../
 import { Degrau, PlanoDaMeta, dataPeloValorMensal, planejarMetas } from './metas-plano';
 import { TermoComponent } from '../../compartilhado/glossario/termo.component';
 import { NOMES_MESES } from '../../compartilhado/utilidades';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { CORES_SUGERIDAS, NOMES_CORES } from '../../compartilhado/utilidades';
 import { IconeComponent } from '../../compartilhado/ui/icone.component';

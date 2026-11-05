@@ -7,7 +7,7 @@ import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Conta, Painel, TrocosAutomaticos, ValorCategoria } from '../../core/modelos';
 import { FaturaAbertaDoCartao, faturasAbertasDe, lerCartoesNoPainel } from '../../compartilhado/lancamentos/faturas-no-painel';
 import { KpiFaturasAbertasComponent } from '../../compartilhado/lancamentos/kpi-faturas-abertas.component';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { GraficoComponent } from '../../compartilhado/graficos/grafico.component';
 import { MesAno, SeletorMesComponent } from '../../compartilhado/ui/seletor-mes.component';
 import { NOMES_MESES, NOMES_MESES_CURTOS, colunasEquilibradas, dataIso, mesAnoDaUrl, paramsTransacoes, pct, primeiroDiaMes, ultimoDiaMes } from '../../compartilhado/utilidades';

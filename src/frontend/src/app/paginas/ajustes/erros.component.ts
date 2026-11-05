@@ -8,7 +8,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { ErroSistema, ErroSistemaDetalhe, FiltroErros, NOMES_NIVEL_ERRO, NivelErro, PaginaErros, SituacaoErros } from '../../core/modelos';
-import { AvisosService } from '../../compartilhado/avisos.component';
+import { AvisosService } from '../../core/avisos.service';
 import { PaginacaoComponent } from '../../compartilhado/ui/paginacao.component';
 import { dataIsoValida } from '../../compartilhado/utilidades';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';

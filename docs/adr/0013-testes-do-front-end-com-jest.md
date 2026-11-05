@@ -53,8 +53,9 @@ Quem pode importar quem em `src/app` fica em `testes/arquitetura/arquitetura.spe
 - **Sem dependência nova:** os imports são lidos com uma expressão regular, como nos outros testes que leem o código.
 - **As regras:**
   1. o `@angular/common/http` só no `core/` e no `app.config.ts`, e o `HttpClient` injetado só no `ApiService` (exceção registrada: o `auth.service.ts`);
-  2. a 4. o `core/` não importa `compartilhado/`, `layout/` nem `paginas/`; o `compartilhado/` não importa `paginas/` nem `layout/`; o `layout/` não importa `paginas/`. Há três exceções registradas, que parecem estar no lugar errado;
-  5. uma página com rota (as do `app.routes.ts`) não importa outra página com rota. Aba e janela de uma página podem.
+  2. a 4. o `core/` não importa `compartilhado/`, `layout/` nem `paginas/`; o `compartilhado/` não importa `paginas/` nem `layout/`; o `layout/` não importa `paginas/`. Havia três exceções registradas, que pareciam estar no lugar errado; duas saíram na #634, e sobra a do `shell` com o `manual-conteudo`;
+  5. uma página com rota (as do `app.routes.ts`) não importa outra página com rota. Aba e janela de uma página podem;
+  6. o `compartilhado/ui/` não importa `compartilhado/bancos/`, `lancamentos/` nem `glossario/` (#634, ADR 0058).
 - A regra do componente de apresentação, que não importa o `ApiService`, entra com a #475.
 
 

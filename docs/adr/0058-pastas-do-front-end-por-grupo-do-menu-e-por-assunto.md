@@ -24,7 +24,7 @@ O back-end em Go já tem um pacote por assunto (ADR 0056), e o menu do site já 
 ```
 src/app/
   paginas/
-    painel/        painel e os avisos dele; rosca-categorias (só o Painel usa)
+    painel/        painel; rosca-categorias (só o Painel usa)
     movimentacao/  transações, contas e cartões, contas a pagar e as abas delas (assinaturas e recorrentes,
                    renomear, limite do cartão), conferir banco
     planejamento/  orçamentos (e a sugestão), metas (plano e evolução)
@@ -34,22 +34,24 @@ src/app/
     manual/        manual e manual-conteudo
     entrar.component.ts   (fora do menu)
   compartilhado/
-    ui/            sem assunto do domínio: modal, confirmação, paginação, lista suspensa, dica, menu de ações,
-                   seletores (múltiplo, mês, tema), campos de data e de valor, ícones
+    ui/            sem assunto do domínio: modal, confirmação, avisos rápidos, paginação, lista suspensa, dica,
+                   menu de ações, seletores (múltiplo, mês, tema), campos de data e de valor, ícones
     graficos/      gráfico, gráfico explicado, linhas, misto, cores, "mais análises"
     bancos/        bancos, serviços, logo do banco, selo do serviço
     lancamentos/   tipos de lançamento, ícone da categoria, faturas no painel, KPI das faturas abertas
     glossario/     glossário e <app-termo>
     moeda.pipe.ts, utilidades.ts   (usados por quase tudo)
-  layout/          o shell e o que só ele usa: botão de privacidade, calculadora, menu do usuário, notificações,
-                   status da sincronização
+  layout/          o shell e o que só ele usa: botão de privacidade, calculadora, menu do usuário, notificações
+                   (e os avisos do sino: painel-avisos), status da sincronização
+  core/            serviços e modelos, inclusive o AvisosService (os avisos rápidos que qualquer parte abre)
 ```
 
 - **Página:** na pasta do grupo do menu em que ela aparece. Aba, janela ou função pura de uma tela ficam na pasta da tela, mesmo que o nome não seja do grupo (`reserva-conferencia.ts` é de Investimentos, então `patrimonio/`).
 - **`compartilhado/`:** só o que duas ou mais partes usam. Sem assunto do domínio (`ui/`), ou com assunto (`graficos/`, `bancos/`, `lancamentos/`, `glossario/`). Na raiz, só o que quase tudo usa.
 - **Só o `shell` usa:** vai para `layout/`. **Só uma tela usa:** vai para a pasta da tela.
+- **O `compartilhado/ui/` não importa `bancos/`, `lancamentos/` nem `glossario/`** (regra 6 do teste de arquitetura): o que não sabe do domínio recebe o dado pronto.
 
-*Julgamento próprio (#634):* a issue punha `recorrentes.ts` e `assinaturas-recorrentes` em `planejamento/` e `reserva-conferencia.ts` em `movimentacao/`. Pelo grafo de imports, os dois primeiros são usados só por Contas e Contas a pagar (Movimentação), e o terceiro só por Investimentos (Patrimônio); ficaram com quem os usa. `confirmacao.component`/`.service` (ADR 0057, que entrou depois da issue) ficaram juntos em `ui/`, porque o serviço é usado por oito telas.
+*Julgamento próprio (#634):* a issue punha `recorrentes.ts` e `assinaturas-recorrentes` em `planejamento/` e `reserva-conferencia.ts` em `movimentacao/`. Pelo grafo de imports, os dois primeiros são usados só por Contas e Contas a pagar (Movimentação), e o terceiro só por Investimentos (Patrimônio); ficaram com quem os usa. `confirmacao.component`/`.service` (ADR 0057, que entrou depois da issue) ficaram juntos em `ui/`, porque o serviço é usado por oito telas. E a issue levava o cálculo dos avisos do sino (`painel-avisos.ts`) para o `core`: desde a #327, ele e o `painel-avisos.component` só servem ao sino das notificações, então foram para `layout/`, pela regra de cima, e o `core` continua só com serviços e modelos. O `AvisosService` foi para o `core`, e o componente que mostra os avisos rápidos, para o `ui/`.
 
 ## Consequências
 
@@ -57,7 +59,7 @@ src/app/
 - **Negativas:**
   - os imports ficam um nível mais fundos (`../../core/...`);
   - mudar uma tela de grupo no menu pede mover o arquivo junto, ou a pasta deixa de bater com o menu;
-  - um PR aberto antes da mudança, que cria arquivo nas pastas antigas, entra sem conflito, mas no lugar antigo. Depois de cada merge, confira que não voltou arquivo para a raiz de `paginas/` ou `compartilhado/` (fora `entrar`, `moeda.pipe`, `utilidades` e, até o PR 3 da #634, `avisos.component`).
+  - um PR aberto antes da mudança, que cria arquivo nas pastas antigas, entra sem conflito, mas no lugar antigo. Depois de cada merge, confira que não voltou arquivo para a raiz de `paginas/` ou `compartilhado/` (fora `entrar`, `moeda.pipe` e `utilidades`).
 - **Na prática:**
   - tela nova vai na pasta do grupo do menu dela; grupo novo no menu ganha pasta nova;
   - componente compartilhado novo: `ui/` se não sabe nada do domínio, senão a pasta do assunto (ou uma nova, com o assunto no nome);

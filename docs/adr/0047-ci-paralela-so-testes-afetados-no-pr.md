@@ -50,7 +50,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - PR que não mexe no instalador deixa de esperar ~7 min do .msi;
   - o front-end testa em paralelo com a API, e o navegador em duas máquinas;
   - PR de uma tela roda só os testes dela (ex.: Painel, 82 de 178 no navegador e 20 de 86 arquivos do Jest);
-  - o porquê da seleção aparece no resumo de cada execução ("rodando /painel porque mudou paginas/painel/painel-avisos.component.ts").
+  - o porquê da seleção aparece no resumo de cada execução ("rodando /painel porque mudou paginas/painel/painel.component.ts").
 - **Negativas:**
   - **um teste afetado pode escapar no PR:** dependência que o grafo não vê (ex.: CSS de componente que muda outra tela por cascata, teste que abre a tela por um caminho sem a rota escrita). Mitigação: tudo no merge e arquivos globais disparam tudo;
   - **mais minutos de CI no total** (cada job prepara a própria máquina), em troca de menos tempo de relógio;
