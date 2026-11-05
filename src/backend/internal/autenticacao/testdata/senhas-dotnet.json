@@ -1,0 +1,25 @@
+{
+  "comentario": "Hashes gerados pelo PasswordHasher do ASP.NET Identity (testdata/sonda-senha, a referencia). Rode a sonda de novo para trocar.",
+  "casos": [
+    {
+      "senha": "Senha-Forte-123",
+      "hash": "AQAAAAIAAYagAAAAEE2rovPf//IAL+Obn2xqRYAPBjIKWqoyFbTr1dkW1wCrzWg5wlAnDe7ajCGU1OfySA==",
+      "formato": "v3"
+    },
+    {
+      "senha": "çãõ €moji 😀",
+      "hash": "AQAAAAIAAYagAAAAEOyLhGUs37vlmH66wAKrxlmvQfGqhhtT1qKQtgSA4zFY0qB+BmShb2B789FbAR4hcg==",
+      "formato": "v3"
+    },
+    {
+      "senha": "Senha-Forte-123",
+      "hash": "AJ1wNSXrnNh+Y8+Wpy/L8gvR/ZlPmeS462uFfqTTTcXjaQw7cpcQGYhkDqry/uJ/eg==",
+      "formato": "v2"
+    },
+    {
+      "senha": "Senha-Forte-123",
+      "hash": "AQAAAAIAACcQAAAAENaqSkDa9Iq+iRsPtwaQ+Ti/iOnqJcrh+TLls1rihRqzCsoRMO8ypGzhXmWCWnoAnw==",
+      "formato": "v3-10mil"
+    }
+  ]
+}

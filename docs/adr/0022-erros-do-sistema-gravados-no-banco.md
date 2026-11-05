@@ -79,6 +79,7 @@ O porquê principal: o usuário passa a ver e resolver as falhas no próprio sit
   - Código próprio de log para manter (provedor, fila, gravador, limpeza).
 - **Na prática:**
   - basta logar com `ILogger` como já se faz: `LogWarning`/`LogError` em classes `Financas.*` aparecem na tela;
-  - a pasta do serviço define a origem (Pluggy → Open Finance, Investimentos, Cambio → Câmbio); pasta nova com origem própria entra em `RegistroErrosLoggerProvider.Origem`;
+  - a pasta do serviço define a origem (Pluggy → Open Finance, Investimentos, Cambio → Câmbio, Cripto → Cripto desde a #298); pasta nova com origem própria entra em `RegistroErrosLoggerProvider.Origem`;
   - não logar valores, tokens nem dados pessoais nas mensagens;
   - o `GravadorErrosHostedService` não pode ser capturado por esse provedor, para que uma falha ao gravar não gere outro erro a gravar.
+  - **Em Go** (#298, ADR 0049): o mesmo, com o `log/slog`. Avisos e erros (`log.Warn`, `log.Error`) vão para a tabela; a origem é o atributo `"origem"` (`"API"`, `"Open Finance"`, `"Investimentos"`, `"Câmbio"`, `"Cripto"`, `"Sistema"`); o erro vai no atributo `"erro"`, que vira o detalhe; o log feito com o contexto da requisição (`log.ErrorContext`) leva a rota e o usuário.

@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { mensagemDeErro } from './erro.interceptor';
 import { StatusSincronizacao } from './modelos';
-import { AvisosService } from '../compartilhado/avisos.component';
+import { AvisosService } from './avisos.service';
 
 /**
  * UX-8: se os dados estão atualizados. Consulta o status leve da API (GET /api/open-finance/status) a cada 2 min —

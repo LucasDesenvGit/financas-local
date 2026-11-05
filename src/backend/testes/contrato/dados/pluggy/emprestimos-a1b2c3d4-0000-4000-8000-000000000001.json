@@ -1,0 +1,82 @@
+{
+  "total": 3,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "emp-1",
+      "kind": "FINANCING",
+      "contractNumber": "CONTRATO-FALSO",
+      "productName": "  Financiamento Falso  ",
+      "type": "FINANCIAMENTO_HABITACIONAL_SFH",
+      "contractDate": "2024-05-10T03:00:00.000Z",
+      "contractAmount": 200000,
+      "currencyCode": "BRL",
+      "dueDate": "2044-05-10T03:00:00.000Z",
+      "installmentPeriodicity": "MENSAL",
+      "firstInstallmentDueDate": "2024-06-10T03:00:00.000Z",
+      "CET": 0.0975,
+      "amortizationScheduled": "SAC",
+      "interestRates": [
+        {
+          "taxPeriodicity": "AA",
+          "referentialRateIndexerType": "POS_FIXADO",
+          "referentialRateIndexerSubType": "TR_TBF",
+          "preFixedRate": 0.08755555555
+        }
+      ],
+      "installments": {
+        "totalNumberOfInstallments": 240,
+        "paidInstallments": "29",
+        "dueInstallments": 211,
+        "pastDueInstallments": 0
+      },
+      "payments": {
+        "contractOutstandingBalance": 185000.505,
+        "releases": [
+          {
+            "isOverParcelPayment": false,
+            "paidDate": "2026-10-10T03:00:00.000Z",
+            "paidAmount": 1890.125
+          },
+          {
+            "isOverParcelPayment": false,
+            "paidDate": "2026-09-10T03:00:00.000Z",
+            "paidAmount": 1880
+          },
+          {
+            "isOverParcelPayment": true,
+            "paidDate": "2026-10-11T03:00:00.000Z",
+            "paidAmount": 5000
+          },
+          {
+            "paidDate": "2026-08-10T03:00:00.000Z",
+            "paidAmount": 0
+          },
+          {
+            "paidAmount": 10
+          }
+        ]
+      }
+    },
+    {
+      "id": "emp-2",
+      "type": "CREDITO_PESSOAL_SEM_CONSIGNACAO",
+      "contractAmount": 1000,
+      "CET": 5000,
+      "installments": {
+        "dueInstallments": 3
+      },
+      "payments": {
+        "contractOutstandingBalance": 100
+      }
+    },
+    {
+      "id": "emp-3",
+      "productName": "Crédito Financiado",
+      "payments": {
+        "contractOutstandingBalance": -5
+      }
+    }
+  ]
+}

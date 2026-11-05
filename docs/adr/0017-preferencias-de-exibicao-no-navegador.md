@@ -15,7 +15,7 @@ Várias escolhas só mudam **como a tela aparece**, não o que o sistema faz: te
 
 ## Decisão
 
-Preferência de **exibição** fica no `localStorage`, com chaves `financas.*` (`financas.tema`, `financas.paleta`, `financas.cor`, `financas.ocultarValores`, `financas.tamanhoPagina`, `financas.maisAnalises.<tela>`, `financas.menuRecolhido`, `financas.menuGrupos` — os grupos do menu fechados, ADR 0046). Toda leitura e escrita fica em `try/catch`: sem armazenamento (modo privado, bloqueado), a tela funciona com o padrão e só não lembra. O que muda o **comportamento do sistema** vai para a Parametrização no banco (ADR 0015).
+Preferência de **exibição** fica no `localStorage`, com chaves `financas.*` (`financas.tema`, `financas.paleta`, `financas.cor`, `financas.ocultarValores`, `financas.tamanhoPagina`, `financas.maisAnalises.<tela>`, `financas.menuRecolhido`, `financas.menuGrupos` — os grupos do menu fechados, ADR 0046; `financas.recorrentesFechados` — os blocos fechados de "Assinaturas e recorrentes", #242; `financas.painel.orcamentosOcultos` e `financas.painel.avisosOcultos` — os avisos do Painel ocultos até algo mudar, #206, com o id da categoria e a impressão de cada aviso, nunca o texto; `financas.painel.orcamentosMinimizados` e `financas.painel.avisosMinimizados` — os cards do Painel minimizados até "Mostrar"; `financas.painel.faturasAbertas` — os cartões cuja fatura em aberto aparece em "Situação hoje", escolhidos em Contas e cartões, #322; `financas.metasFechadas` — as metas fechadas na sanfona de Metas, #335). Toda leitura e escrita fica em `try/catch`: sem armazenamento (modo privado, bloqueado), a tela funciona com o padrão e só não lembra. O que muda o **comportamento do sistema** vai para a Parametrização no banco (ADR 0015).
 
 ## Consequências
 
@@ -24,4 +24,4 @@ Preferência de **exibição** fica no `localStorage`, com chaves `financas.*` (
   - a escolha não acompanha a pessoa entre navegadores/aparelhos (configura de novo em cada um);
   - limpar os dados do navegador apaga as preferências;
   - "ocultar valores" é por navegador: quem ligou no computador e abre no celular vê os valores — é privacidade de tela, não controle de acesso.
-- **Na prática:** preferência visual nova usa uma chave `financas.<nome>` com `try/catch` e padrão seguro; nada de dado financeiro ou segredo no `localStorage`. Os testes limpam o `localStorage` entre um caso e outro (`testes/configurar-jest.ts`).
+- **Na prática:** preferência visual nova usa uma chave `financas.<nome>` com `try/catch` e padrão seguro; nada de dado financeiro ou segredo no `localStorage`. Os testes limpam o `localStorage` entre um caso e outro (`testes/jest/configurar-jest.ts`).

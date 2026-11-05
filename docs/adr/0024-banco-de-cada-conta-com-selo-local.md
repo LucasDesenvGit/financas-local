@@ -45,7 +45,7 @@ Cada conta tem um **banco**, que vale nesta ordem:
 
 O catálogo e a detecção ficam no `BancoService`, no back-end. A API devolve o código que vale (`ContaDto.Banco`) e se ele foi escolhido.
 
-O **selo** é desenhado no front-end (`compartilhado/bancos.ts` e `app-logo-banco`), sem baixar nada:
+O **selo** é desenhado no front-end (`compartilhado/bancos/bancos.ts` e `app-logo-banco`), sem baixar nada:
 - **Com desenho:** o da marca, do Simple Icons (CC0), copiado para o código (sem dependência npm nova) para Nubank, Mercado Pago, PicPay, PagBank, Nomad, Wise, Revolut e PayPal.
 - **Selo próprio:** cor da marca + sigla para os demais.
 - **Banco não identificado:** ícone neutro.
@@ -63,7 +63,7 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
   - fatura do mês e dívida total com o mesmo significado no Painel e em Contas (Nielsen 4).
 - **Negativas:**
   - para os bancos sem desenho no Simple Icons (Itaú, Bradesco, Santander, BB, Caixa, Inter, C6…), o selo é uma aproximação (cor + sigla), não o logotipo oficial;
-  - **banco novo entra em dois lugares:** `BancoService.Catalogo` (código, nome, termos) e `compartilhado/bancos.ts` (selo). Sem os dois, o banco aparece sem selo (ícone neutro);
+  - **banco novo entra em dois lugares:** `BancoService.Catalogo` (código, nome, termos) e `compartilhado/bancos/bancos.ts` (selo). Sem os dois, o banco aparece sem selo (ícone neutro);
   - a detecção por palavras pode errar (ex.: conta chamada "Next" sem ser do banco Next). Por isso o banco é sempre editável, e "Outro" desliga;
   - `ContaVinculadaId` não tem FK no banco (coluna nova num SQLite já existente): a API limpa a referência ao excluir a conta;
   - as marcas continuam sendo dos donos; aqui servem só para identificar a conta na tela do próprio usuário.
@@ -71,3 +71,43 @@ Na mesma mudança, o cartão passa a mostrar a **fatura do mês** (o que entrou 
   - **Banco novo:** acrescentar no `BancoService` e em `bancos.ts`; o desenho, quando houver no Simple Icons, é o `path` do SVG dele.
   - **Selo em outra tela:** use `<app-logo-banco [codigo]="...">`, decorativo quando o nome vem escrito ao lado e com `rotulo` quando aparece sozinho.
   - **Fatura do mês:** é só o `ContaService.FaturasDoMesAsync`, para o Painel e Contas não divergirem.
+
+## Atualização de 2026-10-20: selo das cobranças (issue #265)
+
+- **O que mudou:** o mesmo selo local identifica também o **serviço de cada cobrança** em Contas a pagar (aba Contas a
+  pagar, Assinaturas e recorrentes e Sugestões do extrato): YouTube, Netflix, Spotify, iFood, TIM, Claro, Esfera…
+  - Lista em `compartilhado/bancos/servicos.ts`, gerada a partir do pacote `simple-icons` 16.35.0 (CC0): o desenho quando o
+    Simple Icons tem a marca (46 dos 123), senão um selo próprio com a cor da marca e uma sigla, como os bancos sem desenho.
+    A maioria das marcas brasileiras (TIM, Claro, Oi, 99, Rappi, Magalu, Sem Parar, Sabesp, Enel, Unimed…) não está no
+    Simple Icons e fica com a sigla; as cores são aproximadas, e o selo não é o logotipo oficial. O Petlove (uma pata) e o
+    Bilhete Único (um ônibus) têm desenho próprio, também não oficial (#269). O Pix fica por último (marca específica ganha) e o Mercado Pago depois do
+    Mercado Livre ("MP*MERCADOLIVRE" é do Mercado Livre).
+  - O serviço é reconhecido no front-end pelo texto da cobrança (e depois pelo nome), em ordem do mais específico para o
+    mais geral; termo de até 4 letras só casa com a palavra inteira ("TIM" não casa com "TIMBRE").
+  - Sem serviço conhecido: o **ícone da categoria** (Lucide, `IconesCategoria` em `icones.ts`) num quadrado neutro;
+    categoria criada pela pessoa ou sem categoria: um recibo.
+  - Componente **`<app-selo-servico>`**, sobre o `<app-logo-banco>` (que ganhou `visualPronto` e `iconeGenerico`).
+    Decorativo: o nome vem escrito ao lado. É genérico, para qualquer lista de lançamentos: procura o serviço no texto
+    do banco (`texto`), no estabelecimento e no nome, nessa ordem, e cai no ícone da categoria (as de receita e
+    transferência também têm ícone). Usado em Transações (cada linha), Painel (Próximos vencimentos e Últimas
+    transações) e Contas a pagar (lista, Assinaturas e recorrentes e Sugestões do extrato).
+- **Por que no front-end, sem mudar a API:** é só a cara da cobrança; o texto já vem na lista. Sem rede: nada é
+  baixado, a CSP não muda.
+- **Custo aceito:** a lista de serviços é mantida à mão; serviço novo (ou que mudou de nome no extrato) fica com o ícone
+  da categoria até entrar em `servicos.ts`. Um termo pode casar com um texto que não é do serviço (ex.: "VIVO" num nome
+  próprio); o efeito é só o selo errado, e o nome continua escrito ao lado.
+- **Na prática:** tela nova com lançamentos ou cobranças usa `<app-selo-servico>` com os textos que tiver (exemplos no
+  comentário do componente). Serviço novo entra em `servicos.ts` (o `path` do SVG do Simple Icons, quando houver, ou cor e sigla),
+  com o termo do extrato; o teste `testes/jest/regressao/selo-cobranca.spec.ts` confere que todo serviço tem desenho ou sigla.
+
+## Atualização de 2026-10-21: bandeiras do Câmbio (issue #278)
+
+- **O que mudou:** o bloco Câmbio de Investimentos mostra a **bandeira do país** de cada moeda, à direita do código (a do euro é a da União Europeia), nas 10 moedas da PTAX.
+- **De onde vêm:** arquivos SVG do pacote [flag-icons](https://github.com/lipis/flag-icons) 7.2.3 (MIT), pasta `flags/4x3`, copiados sem alteração para `src/frontend/public/bandeiras/`, com a licença ao lado (`LICENSE.txt`). Foram conferidos antes de copiar: só desenho, sem script nem link externo.
+- **Por que arquivo e não desenho no código:**
+  - a CSP já permite imagem do próprio site (`img-src 'self'`), então nada é baixado da internet e a CSP não muda;
+  - os dez arquivos somam cerca de 6 KB e só são pedidos quando a tela abre;
+  - colocar o SVG dentro do HTML exigiria passar pelo sanitizador do Angular.
+- **Emoji de bandeira foi descartado:** no Windows, ele costuma aparecer como duas letras ("US").
+- **Decorativa:** `alt=""`, porque o nome da moeda está escrito ao lado (WCAG 1.1.1). Ela tem uma borda suave, para a bandeira branca do Japão não sumir no tema claro.
+- **Moeda nova na PTAX:** acrescente a bandeira de `flags/4x3` do mesmo pacote e a entrada em `MOEDAS_CAMBIO` (`investimentos-cambio.component.ts`).

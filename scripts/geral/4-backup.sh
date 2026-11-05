@@ -13,8 +13,9 @@
 #   scripts/geral/4-backup.sh --agendar --horario 23:00
 #
 # Dica: copie a pasta backups para um disco externo ou nuvem de confianca de
-# tempos em tempos. Para restaurar, com o servico parado, copie o .db do
-# backup para dados/sql/FinancasLocal.db.
+# tempos em tempos. Para restaurar, siga docs/OPERACAO.md: com o servico
+# parado, copie o .db do backup para dados/sql/FinancasLocal.db e apague os
+# FinancasLocal.db-wal e FinancasLocal.db-shm que tiverem ficado ao lado.
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
@@ -100,10 +101,7 @@ arquivo="$PastaBackups/FinancasLocal_$(date +%Y%m%d_%H%M%S).db"
 
 etapa "Fazendo backup em $arquivo"
 [[ -f "$banco" ]] || erro_sai "Banco nao encontrado em $banco. Rode antes o 2-criar-banco.sh."
-# O shell do sqlite3 so tem escape dentro de "...": \ e \" (apostrofo ou aspas no caminho).
-arquivo_sql=${arquivo//\\/\\\\}
-arquivo_sql=${arquivo_sql//\"/\\\"}
-sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ".backup \"$arquivo_sql\""
+sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ".backup \"$(caminho_sqlite "$arquivo")\""
 [[ "$(sqlite3 "$arquivo" 'PRAGMA integrity_check;')" == 'ok' ]] || erro_sai 'Verificacao de integridade do backup falhou.'
 ok 'backup concluido e verificado'
 

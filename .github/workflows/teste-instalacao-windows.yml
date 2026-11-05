@@ -1,7 +1,12 @@
 # Testa o instalador do Windows (instalar-windows.cmd + scripts/windows/instalar-windows.ps1) num
 # Windows de verdade, com o Windows PowerShell 5.1. O PATH e reduzido ao do Windows puro para
-# esconder o dotnet/node/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
+# esconder o dotnet/node/go/sqlite3 que ja vem no runner: assim o teste baixa tudo, como num
 # computador novo. Nao cobre o pedido de elevacao (UAC): o runner ja roda como Administrador.
+# O que o runner (Windows Server) ainda esconde (#277), e por que nao pesa: o WebView2 e o Edge ja vem instalados (o
+# aviso do .msi sem WebView2 nao e exercitado; no Windows 11 ele tambem vem); a ICU vem no proprio Windows; os
+# pacotes do Visual C++ ficam de fora porque o Go e o gerenciador compilam sem cgo; e nao ha
+# SmartScreen ("O Windows protegeu o computador", .msi sem assinatura) nem Windows 10 anterior ao 1809 (o .msi recusa).
+# O Linux tem o teste num conteiner minimo de verdade (teste-instalacao-linux.yml, job "minimo").
 name: Teste de instalação no Windows
 
 on:
@@ -13,6 +18,8 @@ on:
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
       - banco/**
+      - src/backend/go.mod
+      - src/gerenciador-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   pull_request:
     branches: [main, develop]
@@ -22,6 +29,8 @@ on:
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
       - banco/**
+      - src/backend/go.mod
+      - src/gerenciador-go/go.mod
       - .github/workflows/teste-instalacao-windows.yml
   workflow_dispatch:
 
@@ -48,26 +57,70 @@ jobs:
         shell: powershell
         run: |
           $env:PATH = $env:PATH_WINDOWS_PURO
-          if (Get-Command dotnet, node, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
+          if (Get-Command dotnet, node, go, sqlite3 -ErrorAction SilentlyContinue) { throw "PATH ainda tem ferramentas do runner" }
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Conferir instalacao
         shell: powershell
         run: |
-          foreach ($p in "ferramentas\node\node.exe", "ferramentas\dotnet\dotnet.exe", "ferramentas\sqlite\sqlite3.exe",
+          foreach ($p in "ferramentas\node\node.exe", "ferramentas\go\bin\go.exe", "ferramentas\sqlite\sqlite3.exe",
                          "dados\sql\FinancasLocal.db", "dados\chaves\financaslocal.pfx",
-                         "publicado\api\Financas.Api.dll", "publicado\api\wwwroot\index.html",
-                         "publicado\api\appsettings.Production.json") {
+                         "publicado\api\financas-go.exe", "publicado\api\wwwroot\index.html",
+                         "publicado\api\appsettings.json", "publicado\api\appsettings.Production.json") {
             if (-not (Test-Path $p)) { throw "nao encontrado: $p" }
           }
+          # #86: sem o .NET em lugar nenhum.
+          foreach ($p in "ferramentas\dotnet", "publicado\api\Financas.Api.dll", "dados\backend") {
+            if (Test-Path $p) { throw "sobrou do .NET: $p" }
+          }
           if ((Get-Service FinancasLocal).Status -ne "Running") { throw "servico FinancasLocal nao esta rodando" }
+          if ((Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'").PathName -notlike "*financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "o servico nao e o Go" }
           curl.exe -k -fsS https://127.0.0.1:5443/api/auth/estado
           if ($LASTEXITCODE -ne 0) { throw "API nao respondeu" }
           # Sem -k: so passa se o certificado estiver nas Autoridades Raiz da maquina.
           # --ssl-no-revoke: certificado autoassinado nao tem lista de revogacao.
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado
           if ($LASTEXITCODE -ne 0) { throw "certificado nao e confiavel para o Windows" }
+
+      # O site e o Go sozinho (#85; sem o .NET desde a #86): o login e a rota do Go respondem.
+      - name: Login e /api/go/saude
+        shell: powershell
+        run: |
+          $site = "https://127.0.0.1:5443"
+          '{"login":"verificador","senha":"Teste#Win2026"}' | Set-Content corpo.json -NoNewline
+          curl.exe -k -fsS -c c.txt -b c.txt "$site/api/auth/estado" | Out-Null
+          $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] }) | Select-Object -Last 1
+          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$site/api/auth/configurar" | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "nao deu para criar o usuario" }
+          $semLogin = curl.exe -k -s -o NUL -w "%{http_code}" "$site/api/go/saude"
+          if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }
+          $texto = curl.exe -k -fsS -b c.txt "$site/api/go/saude"
+          $saude = $texto | ConvertFrom-Json
+          if (-not $saude -or $saude.usuario -ne "verificador" -or $saude.diarioDoBanco -ne "wal") { throw "GET /api/go/saude: $texto" }
+          "Go: $texto"
+          $global:LASTEXITCODE = 0
+
+      # #430 (ADR 0052): o gerenciador em Go pelos scripts, com o Go que a instalacao baixou. Um resto da publicacao
+      # em C# na pasta padrao tem de sair; os atalhos apontam para o .exe novo, com o mesmo nome.
+      - name: Gerenciador em Go (instalar-gerenciador.ps1)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force publicado\gerenciador | Out-Null
+          Set-Content publicado\gerenciador\Financas.Gerenciador.dll "resto do gerenciador em C#"
+          $env:PATH = $env:PATH_WINDOWS_PURO
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1
+          if ($LASTEXITCODE -ne 0) { throw "instalar-gerenciador.ps1 terminou com $LASTEXITCODE" }
+          $exe = Join-Path $PWD "publicado\gerenciador\Financas.Gerenciador.exe"
+          if (-not (Test-Path $exe)) { throw "nao encontrado: $exe" }
+          if (Test-Path publicado\gerenciador\Financas.Gerenciador.dll) { throw "sobrou o gerenciador em C#" }
+          $arquivos = @(Get-ChildItem publicado\gerenciador -Recurse -File)
+          if ($arquivos.Count -ne 1) { throw "a pasta do gerenciador tem $($arquivos.Count) arquivos: $($arquivos.Name -join ', ')" }
+          $shell = New-Object -ComObject WScript.Shell
+          $atalho = Join-Path ([Environment]::GetFolderPath("Programs")) "Finanças Local\Gerenciador do Finanças Local.lnk"
+          if (-not (Test-Path $atalho)) { throw "sem o atalho do Menu Iniciar" }
+          if ($shell.CreateShortcut($atalho).TargetPath -ne $exe) { throw "o atalho aponta para $($shell.CreateShortcut($atalho).TargetPath)" }
+          "Gerenciador em Go: $([math]::Round((Get-Item $exe).Length / 1MB, 1)) MB"
 
       # Segunda execucao pelo .cmd: testa a atualizacao (backup do banco, copia da versao
       # anterior, servico parado antes da copia, certificado reaproveitado) e o proprio .cmd.
@@ -80,12 +133,121 @@ jobs:
           call instalar-windows.cmd -PularBuild
           if errorlevel 1 exit /b 1
           dir /b backups\FinancasLocal-antes-instalacao-*.db || exit /b 1
-          if not exist publicado\api-anterior\Financas.Api.dll exit /b 1
+          if not exist publicado\api-anterior\financas-go.exe exit /b 1
           powershell.exe -NoProfile -Command "if (-not (Select-String -Path instaladores\instalacao-windows.log -SimpleMatch 'certificado existente reaproveitado' -Quiet)) { exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
 
+      # #468: o passo a passo do docs/OPERACAO.md: a copia volta, e o que veio depois dela sai.
+      - name: Restaurar a copia (docs/OPERACAO.md)
+        shell: powershell
+        run: |
+          $sqlite = "ferramentas\sqlite\sqlite3.exe"
+          $banco = "dados\sql\FinancasLocal.db"
+          $copia = Get-ChildItem backups\FinancasLocal-antes-instalacao-*.db | Sort-Object LastWriteTime | Select-Object -Last 1
+          & $sqlite $banco "INSERT INTO Configuracao (Chave, Valor, AtualizadoEm) VALUES ('teste.depois-da-copia', 'x', '2026-01-01 00:00:00');"
+          if ($LASTEXITCODE -ne 0) { throw "nao deu para gravar a marca no banco" }
+
+          Stop-Service FinancasLocal
+          New-Item -ItemType Directory -Force dados\antes-de-restaurar | Out-Null
+          Copy-Item "$banco*" dados\antes-de-restaurar\
+          Copy-Item $copia.FullName $banco -Force
+          Remove-Item "$banco-wal", "$banco-shm" -ErrorAction SilentlyContinue
+          Start-Service FinancasLocal
+
+          foreach ($i in 1..30) {
+            curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado
+            if ($LASTEXITCODE -eq 0) { break }
+            Start-Sleep -Seconds 1
+          }
+          if ($LASTEXITCODE -ne 0) { throw "o site nao voltou depois de restaurar" }
+          $marcas = & $sqlite $banco "SELECT COUNT(*) FROM Configuracao WHERE Chave = 'teste.depois-da-copia';"
+          if ($marcas -ne "0") { throw "a copia nao voltou: $marcas marca(s) no banco" }
+          $integridade = & $sqlite $banco "PRAGMA integrity_check;"
+          if ($integridade -ne "ok") { throw "banco corrompido depois de restaurar: $integridade" }
+          if (-not (Test-Path dados\antes-de-restaurar\FinancasLocal.db)) { throw "o banco de antes nao foi guardado" }
+
       # parar-windows.cmd (sem o UAC: o runner ja e Administrador): para, tira do inicio automatico e confere que
       # nada ficou de pe; depois o instalador sobe de novo e devolve o inicio automatico.
+      # #84 (ADR 0049): o Go como Servico do Windows, e o servico volta como estava. O -inicio-do-relogio deixa um aviso
+      # no log ao subir: e ele que tem de chegar ao Log de Eventos.
+      - name: Go como servico (Windows)
+        shell: powershell
+        run: |
+          $nome = "FinancasLocal"
+          $filtro = "Name='$nome'"
+          $site = "https://127.0.0.1:5443/api/auth/estado"
+          function Trocar-Linha($linha) {
+            $r = Get-CimInstance Win32_Service -Filter $filtro | Invoke-CimMethod -MethodName Change -Arguments @{ PathName = $linha }
+            if ($r.ReturnValue -ne 0) { throw "nao deu para trocar a linha do servico: $($r.ReturnValue)" }
+          }
+          function Esperar-Site {
+            for ($i = 0; $i -lt 30; $i++) {
+              $texto = curl.exe -k -fsS $site
+              if ($LASTEXITCODE -eq 0 -and $texto) { return $texto }
+              Start-Sleep 1
+            }
+            throw "o site nao respondeu"
+          }
+
+          $antes = (Get-CimInstance Win32_Service -Filter $filtro).PathName
+          Stop-Service $nome
+          $exe = Join-Path $PWD "publicado\api\financas-go.exe"
+          Trocar-Linha "`"$exe`" -aplicar-esquema -rotinas-de-partida -inicio-do-relogio 2026-10-15T01:00:00Z"
+          $inicio = Get-Date
+          Start-Service $nome
+          Esperar-Site
+
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          if ($go.Count -ne 1) { throw "processos do Go: $($go.Count) (esperado 1)" }
+          $pai = Get-CimInstance Win32_Process -Filter "ProcessId=$($go[0].ParentProcessId)"
+          if ($pai.Name -ne "services.exe") { throw "o pai do Go e $($pai.Name), e nao o gerenciador de servicos" }
+          $eventos = @(Get-WinEvent -FilterHashtable @{ LogName = "Application"; ProviderName = $nome; Level = 3; StartTime = $inicio } -ErrorAction SilentlyContinue)
+          if ($eventos.Count -eq 0) { throw "o aviso do Go nao chegou ao Log de Eventos" }
+          $eventos[0].Message
+
+          Stop-Service $nome
+          (Get-Service $nome).WaitForStatus("Stopped", "00:00:45")
+          if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go com o servico parado" }
+          $saida = (Get-CimInstance Win32_Service -Filter $filtro).ExitCode
+          if ($saida -ne 0) { throw "o servico parou com o codigo $saida" }
+
+          Trocar-Linha $antes
+          Start-Service $nome
+          Esperar-Site
+          $global:LASTEXITCODE = 0
+
+      # #86: quem atualiza vindo da 3.0 tem o .NET portatil, a API .NET publicada e dados\backend: o servico fica no Go
+      # e, com o site no ar, o que so o .NET usava sai.
+      - name: Atualizacao vinda da 3.0 (com o .NET ao lado)
+        shell: powershell
+        run: |
+          $env:PATH = $env:PATH_WINDOWS_PURO
+          New-Item -ItemType Directory -Force ferramentas\dotnet, ferramentas\dotnet-home, ferramentas\nuget-pacotes | Out-Null
+          Set-Content ferramentas\dotnet\dotnet.exe "falso"
+          Set-Content publicado\api\Financas.Api.dll "falso"
+          Set-Content dados\backend "dotnet"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\windows\instalar-windows.ps1 -PularBuild | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "instalar-windows.ps1 terminou com $LASTEXITCODE" }
+          $linha = (Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'").PathName
+          if ($linha -notlike "*financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "o servico nao e o Go: $linha" }
+          foreach ($p in "ferramentas\dotnet", "ferramentas\dotnet-home", "ferramentas\nuget-pacotes", "publicado\api\Financas.Api.dll", "dados\backend") {
+            if (Test-Path $p) { throw "sobrou: $p" }
+          }
+          curl.exe -k -fsS https://127.0.0.1:5443/api/auth/estado
+          if ($LASTEXITCODE -ne 0) { throw "o site nao respondeu" }
+
+      # #614: o mesmo pelo Git Bash (scripts/geral/3-publicar-atualizar.sh, o caminho do instalar.sh), que registra o
+      # servico com o sc.exe: tem de trocar e subir o servico de verdade.
+      - name: Atualizacao pelo Git Bash (3-publicar-atualizar.sh, sc.exe)
+        shell: bash
+        run: |
+          linha() { powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Service -Filter \"Name='FinancasLocal'\").PathName"; }
+          echo dotnet > dados/backend
+          bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/git-bash.log"
+          linha | grep -q 'financas-go.exe" -aplicar-esquema -rotinas-de-partida' || { echo "::error::o servico nao e o Go: $(linha)"; exit 1; }
+          [[ ! -e dados/backend ]] || { echo "::error::sobrou dados/backend"; exit 1; }
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+
       - name: Parar (parar-windows.cmd -Desativar)
         shell: cmd
         env:
@@ -98,6 +260,7 @@ jobs:
           if not "%CODIGO%"=="0" exit /b 1
           powershell.exe -NoProfile -Command "$s = Get-Service FinancasLocal; Write-Host $s.Status $s.StartType; if ($s.Status -ne 'Stopped' -or $s.StartType -ne 'Manual') { exit 1 }" || exit /b 1
           findstr /c:"nenhum processo com o banco aberto" parar.log || exit /b 1
+          powershell.exe -NoProfile -Command "if (Get-Process financas-go -ErrorAction SilentlyContinue) { Write-Host 'sobrou processo do Go'; exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado && exit /b 1
           exit /b 0
 
@@ -136,7 +299,7 @@ jobs:
 
       - name: Guardar log da instalacao
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: instalacao-windows-log
           path: instaladores/instalacao-windows.log

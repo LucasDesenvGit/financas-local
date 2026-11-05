@@ -1,6 +1,6 @@
 # 0005. Segredos criptografados no banco com ASP.NET Data Protection
 
-- **Status:** Aceita
+- **Status:** Substituída por [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): desde a #85, os segredos são do Go (AES-256-GCM, prefixo `v2:`, `internal/segredos`, com a chave protegida pelo DPAPI no Windows), e o Data Protection saiu com o .NET na #86.
 - **Data:** 2026-10-15
 - **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md)
 

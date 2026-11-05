@@ -40,7 +40,7 @@ A issue #119 pediu um `.msi` de "Avançar, Avançar, Concluir" e um gerenciador.
 O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/FinancasLocal.wxs` (WiX 5.0.2).
 
 **Como ele é montado:**
-- API e gerenciador vão **self-contained `win-x64` na mesma pasta**: o computador não precisa de .NET, Node, Git, bash nem `sqlite3`.
+- API e gerenciador vão **self-contained `win-x64` na mesma pasta**: o computador não precisa de .NET, Node, Git, bash nem `sqlite3`. Desde a #277, o gerenciador é o em Go, um `.exe` só (ADR 0052).
 - A API cria e atualiza o banco ao iniciar (ADR 0003).
 - O workflow `.github/workflows/versao.yml` gera e testa o pacote a cada pull request que mexe no instalador. Na tag `vX.Y.Z`, publica o `.msi` e o `SHA256SUMS.txt` no Release. A cada push no `develop`, publica a versão de desenvolvimento (ver a atualização no fim).
 - A versão vem do `Directory.Build.props`, e a tag tem de ser igual.
@@ -57,7 +57,7 @@ O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/Financ
 - **Na instalação, no reparo e na atualização**, antes de registrar o serviço:
   1. cria e protege a pasta de dados;
   2. **migra a instalação pelos scripts**, quando existe o serviço `FinancasLocal` apontando para outra pasta: para o serviço, copia banco e chaves (sem apagar a pasta antiga), deixa uma nota e remove o serviço antigo, que tem o mesmo nome;
-  3. gera ou reaproveita o certificado (5 anos, SAN `localhost`/`127.0.0.1`/`::1`) e o põe nas Autoridades Raiz da máquina, como na 0012.
+  3. gera ou reaproveita o certificado (SAN `localhost`/`127.0.0.1`/`::1`) e o põe nas Autoridades Raiz da máquina, como na 0012. Desde a #277, quem gera é o `financas-go.exe gerar-certificado` (#84), como nos scripts (ver a atualização no fim).
 - **Só na desinstalação de verdade** (não na troca de versão): tira o certificado. Com `APAGARDADOS=1`, apaga também os dados.
 
 **Interface:** boas-vindas, pasta de instalação e progresso, sem tela de licença (o projeto não tem uma). No fim, uma caixa marcada para abrir o gerenciador.
@@ -120,3 +120,61 @@ Pedido do usuário: deixar o `.msi` do `develop` à mão e garantir que quem já
   - as notas começando por **"Como instalar ou atualizar"** (o `.msi`, o aviso do Windows sobre instalador não assinado e o link para a instalação pelo código) e, em **"O que mudou"**, a seção da versão no `CHANGELOG.md` sem o cabeçalho `## [X.Y.Z] — data`, que repetiria o título;
   - não é pré-lançamento nem rascunho e fica como o mais recente, que é o que o gerenciador consulta.
 - **Custo:** quem editar as notas de um Release à mão e depois recriar a tag perde a edição. As notas vêm do `CHANGELOG.md`: é lá que se corrige.
+
+## Avaliação de 2026-10-20: tempo de CI do instalador (issue #204)
+
+Avaliado sem mudança, com o motivo registrado:
+- **A instalação pelos scripts roda em dois workflows** (`teste-instalacao-windows.yml`, ~111 s, e o job "migrar da instalação pelos scripts" do `versao.yml`, ~88 s). Os objetivos são diferentes:
+  - o primeiro instala, atualiza, para e sobe de novo **pelos scripts**;
+  - o segundo instala pelos scripts e **migra para o `.msi`**.
+
+  Juntar exigiria levar a instalação de um runner para outro. Os triggers também são diferentes, e os dois rodam em paralelo, sem somar no tempo do PR.
+- **O "Versão" não reaproveita o build da CI:** o `.msi` precisa da API e do gerenciador publicados **self-contained para win-x64**, e a CI compila em Linux, sem isso. Não é o mesmo artefato.
+- **O "Versão" continua em todo push do `develop`:** é ele que publica o pré-lançamento "desenvolvimento", de onde a instalação de desenvolvimento se atualiza pelo gerenciador (ADR 0040).
+
+## Atualização de 2026-11-02: o .msi preparado para o Go (issue #277, parte 1)
+
+A decisão continua; o `.msi` passa a fazer, na instalação, o que os scripts já faziam com o Go (#84), e fecha três lacunas.
+
+- **Certificado pelo Go:** o `configurar.ps1` chama o `financas-go.exe gerar-certificado`, com a senha pela entrada padrão, no lugar do `New-SelfSignedCertificate`. A regra é a mesma: reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias. A CI confere, na atualização, que o certificado foi reaproveitado.
+- **A chave dos segredos do Go na migração dos scripts:** além dos `key-*.xml` do .NET, a migração copia o `segredos.chave` (segredos `v2:`, #76), pela mesma regra (só se a pasta nova ainda não tem a dela). Vale porque o serviço antigo e o novo rodam na mesma conta (LocalSystem), dona do DPAPI que protege o arquivo. O `sessao-go.chave` não vai: a inversão (#85) desloga todos de qualquer jeito.
+- **Versão mínima do Windows:** o `.msi` (`Launch`) e o `instalar-windows.ps1` recusam um Windows abaixo da compilação **17763** (Windows 10 versão 1809 / Windows Server 2019), com uma mensagem clara, em vez de um site que não abre. O motivo é o certificado: o Go grava o `.pfx` com AES e SHA-256 (`pkcs12.Modern2023`), que o Windows lê [a partir do Server 2019](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12#pkg-variables); o próprio Go pede só o [Windows 10 ou o Server 2016](https://go.dev/wiki/MinimumRequirements). A compilação vem do registro (`CurrentBuildNumber`), porque o `VersionNT` do Windows Installer responde 603 no Windows 8.1, no 10 e no 11 ([valores](https://learn.microsoft.com/windows/win32/msi/operating-system-property-values)); a comparação com um número é numérica ([sintaxe das condições](https://learn.microsoft.com/windows/win32/msi/conditional-statement-syntax)).
+- **Firefox:** com o Firefox instalado, a tela final do instalador avisa que ele não usa os certificados do Windows por padrão ([Mozilla](https://wiki.mozilla.org/CA/AddRootToFirefox)) e diz como aceitar, como os scripts desde a #300. O instalador **não muda o Firefox sozinho**: ligar `security.enterprise_roots.enabled` (ou a política `ImportEnterpriseRoots`) faz ele confiar em todos os certificados do sistema, inclusive os de empresa, e essa escolha é de quem usa. O aviso só aparece com interface (não no `/qn`).
+
+**Consequência negativa:** quem está num Windows 10 anterior ao 1809 (todos sem suporte da Microsoft desde 2020) não consegue mais instalar nem atualizar; a versão já instalada continua funcionando enquanto o certificado atual valer.
+
+## Atualização de 2026-11-02: o `.msi` "só Go", pronto e desligado (issue #277, parte 4)
+
+- `gerar-msi.ps1 -SoGo` monta o pacote **sem a API em .NET**. O serviço `FinancasLocal` passa a ser o `financas-go.exe -aplicar-esquema -rotinas-de-partida`, como no teste do Go sozinho da #84, que faz o que o .NET faz ao subir. O `.wxs` escolhe o executável do serviço pela variável `SoGo` do WiX (padrão 0). O pacote leva o `appsettings.json` da API, que o Go lê junto do `appsettings.Production.json` e do `configuracao.json` (ADR 0049).
+- **Pronto, mas desligado:** os pacotes publicados (Release e "desenvolvimento") continuam com .NET + Go. Quem liga o "só Go" é a inversão (#85), depois do ensaio, com a volta automática e o aviso dos segredos e do login.
+- A CI ("Versão (instalador .msi)") gera o "só Go" depois de desinstalar o pacote normal e o instala sobre os dados mantidos. Confere que:
+  - o serviço é o Go, sem a API em .NET;
+  - o usuário continua lá;
+  - o login do Go entra com a mesma senha;
+  - o `/api/go/saude` responde.
+
+  Depois, desinstala.
+- **O que ainda falta para ligar** (fica na #85): o Go sozinho roda só as tarefas de `Go:Tarefas` (hoje câmbio e cripto, não a sincronização); os segredos gravados pelo .NET precisam ser informados de novo; todos são deslogados uma vez.
+
+## Avaliação de 2026-11-02: o que a #277 deixou de fora, e por quê (issue #277, parte 6)
+
+A #277 pedia para decidir três pontos. *Julgamento de quem fez a #277, não confirmado com o time:* nenhum entra agora; cada um vira issue quando alguém precisar.
+
+- **Assinatura do `.msi`:** continua sem. O Windows mostra "O Windows protegeu o computador" e o README ensina a passar (**Mais informações › Executar assim mesmo**). Assinar exige um certificado de código pago; a decisão não muda.
+- **Windows ARM (`arm64`):** fica de fora. A API e o gerenciador em Go compilam para `windows/arm64` sem cgo, então o custo de compilar é baixo. Mas o `.msi` (`-arch x64`), a API em .NET até a #86 e o WebView2 nesse sistema nunca foram testados, e a CI não tem um runner ARM com Windows. Quem precisar abre a issue; depois da #86 (sem o .NET), o caminho fica mais curto.
+- **Pacote pronto no Linux** (AppImage, `.deb` ou `.tar.gz` já compilado, a ideia da #50): fica de fora. Depois da #86, o site é um executável Go sem cgo e caberia num `.tar.gz` com o `wwwroot`. Mas o gerenciador em Go precisa de cgo, do GTK 4 e do WebKitGTK 6.0 da própria distribuição, o que pede um pacote por distribuição ou um AppImage com as bibliotecas dentro. Hoje a instalação pelos scripts compila no computador e diz o que falta (partes 3 e 5).
+
+**Medidas** (o runner do Windows, não um computador de uso; para comparar versões): o `.msi` caiu de 57 MB para 53 MB com o gerenciador em Go (parte 2). O workflow "Versão (instalador .msi)" escreve no log, a cada execução, o tamanho do `.msi` e da pasta instalada e a memória da API e do Go nos dois pacotes, o de hoje e o "só Go" (linhas `TAMANHO` e `MEMORIA`). Os números de cada versão vão no épico #70.
+
+## Atualização de 2026-11-02: o WiX sem o SDK do .NET (issue #446)
+
+**Decisão (do usuário, 02/11):** o WiX 5.0.2 passa a vir do `.msi` do próprio CLI (`wix-cli-x64.msi`, no GitHub Releases do WiX), e não do `dotnet tool install`. Esse `.msi` instala a compilação **net472** do `wix.exe`, que roda no **.NET Framework 4.7.2** do próprio Windows (Windows 10 1803 em diante), sem o SDK nem o runtime do .NET moderno, e já traz as extensões `UI` e `Util`. Isso foi conferido no código-fonte do WiX: [`src/setup/wix-cli/wix-cli.wixproj`](https://github.com/wixtoolset/wix/blob/v5.0.2/src/setup/wix-cli/wix-cli.wixproj) e [`Package.wxs`](https://github.com/wixtoolset/wix/blob/v5.0.2/src/setup/wix-cli/Package.wxs).
+
+- **No `versao.yml`:** o passo "WiX" baixa o arquivo da versão fixada (`WIX_VERSAO`) e confere o SHA-256 (`WIX_SHA256`, o mesmo do `wix-cli-x64.metadata.json` que o WiX publica junto). Depois instala com `msiexec /qn` e põe a pasta do `wix.exe` (a variável `WIX5` que o `.msi` grava) no PATH dos passos seguintes.
+- **Alternativas descartadas:**
+  - manter o `dotnet tool` (o SDK do .NET ficaria na CI só por causa do WiX);
+  - outra ferramenta de `.msi` (reescrever o `.wxs`, com dependência nova e sem ganho).
+- **Ficamos no WiX 5.0.2.** O 6 e o 7 também publicam o `wix-cli-x64.msi`, mas subir de versão é outra decisão. *Inferido, não conferido:* desde o WiX 6, o projeto pede uma taxa de manutenção (OSMF) a quem ganha dinheiro com ele.
+- **O que ainda fica de `dotnet` no workflow "Versão"** (a resposta que a #86 pede): o `setup-dotnet` continua enquanto o pacote publicado levar a API em .NET. O `gerar-msi.ps1` sem `-SoGo` ainda roda o `dotnet publish`. Ele sai na inversão (#85), quando o pacote publicado passar a ser o "só Go", e o resto do C# sai na #86. O WiX não precisa mais dele.
+- **Consequência negativa:** trocar a versão do WiX pede atualizar o `WIX_SHA256` à mão, com o valor do `wix-cli-x64.metadata.json` da versão nova.
+

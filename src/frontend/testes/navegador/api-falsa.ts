@@ -1,0 +1,403 @@
+import { Page, Route } from '@playwright/test';
+
+/**
+ * API falsa dos testes no navegador (#185, ADR 0041): responde as chamadas /api/** com dados de exemplo, sem back-end
+ * e sem nenhum dado real. Um GET que ninguém simulou é anotado em `semSimulacao` e o teste falha: tela nova, endpoint
+ * novo aqui.
+ */
+export interface ApiFalsa {
+  /** "GET /api/x": chamadas sem simulação (o teste falha se houver). */
+  semSimulacao: string[];
+  /** Corpo dos erros que o site mandou para /api/erros/front-end (o teste falha se houver). */
+  errosDoSite: string[];
+  /** Todas as chamadas, para conferir uma ação ("POST /api/metas"…). */
+  chamadas: string[];
+  /** #244: as mesmas chamadas com a query ("GET /api/transacoes?ordem=valor&…"), para conferir os parâmetros. */
+  chamadasComQuery: string[];
+}
+
+const hoje = new Date();
+/** "AAAA-MM-DD" na data local. */
+const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const ano = hoje.getFullYear();
+/** Reserva fictícia (aba Reservas de Investimentos). */
+const reserva = (campos: Record<string, unknown>) => ({
+  contaId: 1, nomeConta: 'Banco Fictício', nome: 'Reserva', saldo: 0, guardado: 500, retirado: 100, movimentos: 3,
+  primeiroMovimento: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), ultimoMovimento: dataIso(new Date(ano, hoje.getMonth(), 1)),
+  saldoConferido: null, dataConferencia: null, podeTerSaldoAnterior: false, conferenciaAntiga: false, ...campos
+});
+const mes = hoje.getMonth() + 1;
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const mesesAtras = (n: number) => {
+  const d = new Date(ano, hoje.getMonth() - n, 1);
+  return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
+};
+
+const categorias = [
+  { id: 1, nome: 'Alimentação', tipo: 1, cor: '#f2b880', icone: null, categoriaPaiId: null, ativa: true, natureza: 1 },
+  { id: 2, nome: 'Transporte', tipo: 1, cor: '#92c8f0', icone: null, categoriaPaiId: null, ativa: true, natureza: 1 },
+  { id: 3, nome: 'Lazer', tipo: 1, cor: '#c3b1e1', icone: null, categoriaPaiId: null, ativa: true, natureza: 2 },
+  { id: 4, nome: 'Salário', tipo: 2, cor: '#8fd8b0', icone: null, categoriaPaiId: null, ativa: true, natureza: null },
+  { id: 5, nome: 'Transferências', tipo: 3, cor: '#b5b5c3', icone: null, categoriaPaiId: null, ativa: true, natureza: null }
+];
+
+const contas = [
+  { id: 1, nome: 'Conta Exemplo', tipo: 1, origem: 2, numero: null, moeda: 'BRL', saldo: 3250.5, saldoInicial: 0,
+    limiteCredito: null, limiteDisponivel: null, diaFechamento: null, diaVencimento: null, cor: '#a7a3f5', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null },
+  // #245: ligado à Conta Exemplo, que também tem recorrentes: o card da conta mostra "Cartões: …" e a linha de recorrentes.
+  { id: 2, nome: 'Cartão Exemplo', tipo: 3, origem: 2, numero: null, moeda: 'BRL', saldo: -820.1, saldoInicial: 0,
+    limiteCredito: 5000, limiteDisponivel: 4179.9, diaFechamento: 3, diaVencimento: 10, cor: '#92c8f0', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null,
+    contaVinculadaId: 1 },
+  // #251: cartão de crédito com a fatura do mês já paga e a próxima, ainda aberta.
+  { id: 3, nome: 'Cartão Crédito', tipo: 3, origem: 2, numero: '5555 4444 3333 1234', moeda: 'BRL', saldo: -207.8, saldoInicial: 0,
+    limiteCredito: 3000, limiteDisponivel: 2792.2, diaFechamento: 3, diaVencimento: 10, cor: '#d4a5e8', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: 1, nomeInstituicao: 'Banco Exemplo', atualizadoEm: hoje.toISOString(), banco: null,
+    faturaMes: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 612.3, parcelasMes: 0, faturaId: 9,
+      vencimento: dataIso(new Date(ano, hoje.getMonth(), 10)), situacao: 'paga', fechamento: dataIso(new Date(ano, hoje.getMonth(), 3)),
+      proxima: { contaId: 3, cartao: 'Cartão Crédito', valorMes: 207.8, parcelasMes: 0, faturaId: null,
+        vencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), situacao: 'aberta',
+        fechamento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)) } } },
+  { id: 5, nome: 'Poupança Exemplo com um nome bem comprido, que quebra em duas linhas', tipo: 1, origem: 1, numero: null, moeda: 'BRL', saldo: 12000, saldoInicial: 12000,
+    limiteCredito: null, limiteDisponivel: null, diaFechamento: null, diaVencimento: null, cor: '#8fd8b0', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: null, nomeInstituicao: null, atualizadoEm: hoje.toISOString(), banco: null },
+  { id: 4, nome: 'Cartão Segundo com um nome bem comprido, que quebra em duas linhas', tipo: 3, origem: 1, numero: null, moeda: 'BRL', saldo: -150, saldoInicial: 0,
+    limiteCredito: null, limiteDisponivel: null, diaFechamento: 20, diaVencimento: 28, cor: '#f2b880', incluirNoSaldo: true,
+    arquivada: false, conexaoBancariaId: null, nomeInstituicao: null, atualizadoEm: hoje.toISOString(), banco: null }
+];
+
+const transacoes = [
+  { id: 1, contaId: 2, contaNome: 'Cartão Exemplo', data: iso(hoje), descricao: 'Mercado do bairro', descricaoOriginal: 'MERCADO DO BAIRRO',
+    valor: -152.3, tipo: 1, status: 1, categoriaId: 1, categoriaNome: 'Alimentação', categoriaCor: '#f2b880', categoriaManual: false,
+    ignorarRelatorios: false, emergencia: false, observacao: null, parcelaNumero: null, parcelaTotal: null },
+  { id: 2, contaId: 1, contaNome: 'Conta Exemplo', data: iso(hoje), descricao: 'Salário', descricaoOriginal: 'SALARIO',
+    valor: 5000, tipo: 2, status: 1, categoriaId: 4, categoriaNome: 'Salário', categoriaCor: '#8fd8b0', categoriaManual: false,
+    ignorarRelatorios: false, emergencia: false, observacao: null, parcelaNumero: null, parcelaTotal: null }
+];
+
+const porCategoria = [
+  { categoriaId: 1, nome: 'Alimentação', cor: '#f2b880', valor: 1200 },
+  { categoriaId: 2, nome: 'Transporte', cor: '#92c8f0', valor: 450 },
+  { categoriaId: 3, nome: 'Lazer', cor: '#c3b1e1', valor: 300 }
+];
+const evolucao = Array.from({ length: 12 }, (_, i) => ({ ...mesesAtras(11 - i), receitas: 5000, despesas: 3500 + i * 40 }));
+/**
+ * #254: as sugestões do print da issue. Duas linhas pedem a mesma regra ("MERCADOLIVRE") com categorias diferentes, uma
+ * tem aviso da API, e o motivo longo com chips embaixo é o caso em que os chips cobriam o texto.
+ */
+const sugestao = (chave: string, exemplo: string, categoriaId: number, categoriaNome: string, textoRegra: string,
+  avisoRegra: string | null = null) => ({
+  chave, exemplo, quantidade: 17, total: -1234.5, transacaoIds: [1, 2], categoriaId, categoriaNome, categoriaCor: '#f2b880',
+  confianca: 'alta', motivo: 'Você já usou para transações iguais (73% das 77 parecidas)', textoRegra, avisoRegra,
+  alternativas: [{ categoriaId: 2, nome: 'Transporte', cor: '#92c8f0', motivo: 'outra' },
+    { categoriaId: 3, nome: 'Lazer', cor: '#c3b1e1', motivo: 'outra' }]
+});
+const sugestoesCategoria = [
+  sugestao('MERCADOLIVRE MERCADOLIVRE', 'MERCADOLIVRE*MERCADOLIVRE', 1, 'Alimentação', 'MERCADOLIVRE'),
+  sugestao('PAGAMENTO CARTAO CREDITO', 'PAGAMENTO CARTAO CREDITO BCE', 5, 'Transferências', 'PAGAMENTO CARTAO CREDITO BCE',
+    '"PAGAMENTO CARTAO CREDITO BCE" também aparece em 4 transações de outras categorias (Lazer).'),
+  sugestao('MERCADOLIVRE MERCADOLI', 'MERCADOLIVRE*MERCADOLI', 3, 'Lazer', 'MERCADOLIVRE'),
+  sugestao('IFOOD AGENCIA', 'IFD*iFood', 1, 'Alimentação', 'IFOOD')
+];
+/** #206: quatro estourados (um por emergência), para o card mostrar os 3 piores e o "Ver todos". */
+const orcamento = (id: number, categoriaId: number, categoriaNome: string, valor: number, gasto: number,
+  situacao: 'estourado' | 'emergencia' = 'estourado') => ({
+  id, categoriaId, categoriaNome, categoriaCor: '#f2b880', ano, mes, valor, gasto,
+  percentual: Math.round(gasto / valor * 1000) / 10, gastoEmergencia: situacao === 'emergencia' ? gasto - valor : 0, situacao
+});
+const orcamentosEstourados = [
+  orcamento(1, 3, 'Lazer', 100, 348), orcamento(2, 1, 'Alimentação', 1000, 1200),
+  orcamento(3, 2, 'Transporte', 400, 450, 'emergencia'), orcamento(4, 4, 'Seguros', 200, 210)
+];
+const resumoAno = { receitas: 50000, despesas: 38000, resultado: 12000, taxaPoupanca: 24 };
+const credito = (natureza: number) => ({ natureza, contratosAbertos: 0, contratosQuitados: 0, saldoDevedor: 0, valorContratado: 0,
+  parcelaMensal: 0, totalPago: 0, parcelasEmAtraso: 0 });
+
+/** Respostas dos GET, pelo caminho sem a query. */
+const respostas: Record<string, unknown> = {
+  '/api/auth/estado': { configurado: true, autenticado: true, login: 'teste', versao: '0.0.0-teste' },
+  // #327: as notificações da barra do topo (os mesmos avisos do Painel).
+  '/api/painel/avisos': { ano, mes, alertas: ['Conta "Aluguel" vencida desde 05/10.'], orcamentosEstourados,
+    poucoInformativas: 9, poucoInformativasDesde: dataIso(new Date(ano, hoje.getMonth(), hoje.getDate() - 89)),
+    exemploPoucoInformativa: 'Pagamento recebido' },
+  '/api/painel': {
+    saldoContas: 3250.5, dividaCartoes: 820.1, totalInvestido: 10000, patrimonioLiquido: 12430.4, rendaVariavel: 4000,
+    patrimonioSemRendaVariavel: 8430.4, receitasMes: 5000, despesasMes: 1950, gastosPorCategoria: porCategoria, evolucao,
+    orcamentos: [], proximasContas: [], ultimasTransacoes: transacoes,
+    // #334: uma parcela já lançada com data futura, fora de "Últimas".
+    transacoesFuturas: [{ ...transacoes[0], id: 900, descricao: 'Loja Exemplo 11/11', data: dataIso(new Date(ano, hoje.getMonth() + 5, 15)), valor: -200.73 }], quantidadeFuturas: 1, alertas: ['Conta "Aluguel" vencida desde 05/10.'],
+    ultimaSincronizacao: hoje.toISOString(), orcamentosEstourados,
+    despesasEmergenciaMes: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0, diasProximosVencimentos: 7,
+    faturasDoMes: [
+      { contaId: 2, cartao: 'Cartão Exemplo', valorMes: 820.1, parcelasMes: 0, faturaId: null, vencimento: null, situacao: null },
+      { contaId: 4, cartao: 'Cartão Segundo com um nome bem comprido, que quebra em duas linhas', valorMes: 150, parcelasMes: 0, faturaId: null, vencimento: null, situacao: null }
+    ],
+    totalFaturasDoMes: 970.1, poucoInformativas: 0, poucoInformativasDesde: null, exemploPoucoInformativa: null,
+    creditosCorretoraComoReceita: 0, totalCreditosCorretoraComoReceita: 0,
+    trocosAutomaticos: { quantidade: 2, total: 5.4, ids: [1, 2], desde: dataIso(new Date(ano, hoje.getMonth(), 1)), ate: dataIso(hoje) }
+  },
+  '/api/relatorios/categorias': porCategoria,
+  '/api/relatorios/fluxo': evolucao,
+  '/api/relatorios/maiores-despesas': transacoes.filter((t) => t.valor < 0),
+  '/api/relatorios/anual': {
+    ano, anoComparacao: ano - 1, mesLimite: mes, anosDisponiveis: [ano - 1, ano],
+    resumo: resumoAno, resumoAnteriorMesmoPeriodo: resumoAno, resumoAnteriorCompleto: resumoAno,
+    meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, receitas: 5000, despesas: 3800, receitasAnterior: 4800,
+      despesasAnterior: 3700, patrimonioEstimado: 10000 + i * 500, futuro: i + 1 > mes })),
+    categorias: [],
+    distribuicao: { receitas: 50000, essenciais: 22000, estiloDeVida: 12000, naoClassificado: 4000, poupanca: 12000 },
+    saude: { patrimonioAtual: 12430, reservaLiquida: 8000, gastoMensalMedio: 3800, gastoEssencialMensalMedio: 2200,
+      mesesDeReserva: 2.1, mesesDeReservaEssencial: 3.6, rendaMensalMedia: 5000, parcelasMensais: 0, comprometimentoParcelas: 0,
+      mesesAnalisados: 12, parcelasFinanciamentos: 0, parcelasEmprestimos: 0, dividaFinanciamentos: 0, dividaEmprestimos: 0 }
+  },
+  '/api/relatorios/projecao': {
+    mesesConsiderados: 6, mediaReceitas: 5000, mediaDespesas: 3800, saldoDisponivelAtual: 3250.5,
+    meses: Array.from({ length: 6 }, (_, i) => ({ ...mesesAtras(-i), receitas: 5000, despesasAVista: 3300, parcelas: 500,
+      // #257: saldo negativo largo, o caso em que o "-" quebrava a linha sozinho no celular.
+      despesas: 3800, resultado: 1200, saldoProjetado: -14863.64 + 1200 * i, atual: i === 0 })),
+    // #314: categorias fictícias, para o "Gasto médio por categoria" aparecer (e em duas colunas no computador).
+    categorias: [
+      { categoriaId: 1, nome: 'Alimentação', cor: '#f4a261', mediaMensal: 1127.54, ultimoMes: 1206.47 },
+      { categoriaId: 2, nome: 'Mercado', cor: '#e9c46a', mediaMensal: 882.67, ultimoMes: 1182.78 },
+      { categoriaId: 3, nome: 'Transporte', cor: '#a7a3f5', mediaMensal: 769.08, ultimoMes: 876.75 },
+      { categoriaId: 4, nome: 'Compras', cor: '#9fd2f6', mediaMensal: 339.75, ultimoMes: 217.44 },
+      { categoriaId: 5, nome: 'Moradia', cor: '#c9a0dc', mediaMensal: 125.74, ultimoMes: 35.21 },
+      { categoriaId: null, nome: 'Sem categoria', cor: '#b0b0b0', mediaMensal: 30.89, ultimoMes: 30.89 }
+    ]
+  },
+  '/api/contas': contas,
+  // #323: as faturas de outro mês (a mesma resposta para qualquer mês pedido).
+  '/api/contas/faturas-do-mes': [
+    { contaId: 3, cartao: 'Cartão Crédito', valorMes: 1234.56, parcelasMes: 200, faturaId: 8, vencimento: '2026-09-10',
+      situacao: 'paga', fechamento: '2026-09-03', banco: null }
+  ],
+  '/api/contas/bancos': [],
+  // #245: histórico de faturas do Cartão Exemplo (6 meses), para abrir e ver que só ele cresce.
+  '/api/contas/2/faturas': Array.from({ length: 6 }, (_, i) => ({
+    id: 100 + i, dataVencimento: dataIso(new Date(ano, hoje.getMonth() - i, 10)), dataFechamento: dataIso(new Date(ano, hoje.getMonth() - i, 3)),
+    valorTotal: 800 + i * 37.5, valorMinimo: null, valorPago: i === 0 ? null : 800 + i * 37.5, quantidadeTransacoes: 12,
+    situacao: i === 0 ? 'fechada' : 'paga'
+  })),
+  // #172: "Conferir com o banco".
+  '/api/conferencia-banco': {
+    contas: [{ id: 1, nome: 'Conta Corrente', banco: 'nubank', openFinance: true, saldo: 1000, pistas: [
+      { texto: 'O saldo vem do banco, atualizado em 19/10/2026. O que entrou ou saiu depois ainda não chegou.', valor: null },
+      { texto: 'Reservas e caixinhas desta conta (o app pode mostrar o saldo com elas)', valor: 2000, rota: '/investimentos',
+        parametros: { aba: 'reservas' } }
+    ] }],
+    cartoes: [{ id: 2, nome: 'Cartão Roxo', banco: 'nubank', faturaMes: 511.72, situacao: 'aberta', fechamento: null,
+      vencimento: '2026-11-10', dividaTotal: 1200, pistas: [
+        { texto: 'Parcelas nesta fatura (o app pode mostrá-las à parte)', valor: 59.9 }
+      ] }],
+    investimentos: [{ chave: 'of-1', nome: 'CDB · Nubank', origem: 'Open Finance', saldo: 1500, pistas: [] }]
+  },
+  '/api/transacoes': { itens: transacoes, total: transacoes.length, pagina: 1, tamanhoPagina: 50, totalReceitas: 5000, totalDespesas: 152.3 },
+  '/api/transacoes/sugestoes-categoria': sugestoesCategoria,
+  // A edição de uma transação pede as sugestões dela (teclado.spec.ts abre a primeira).
+  '/api/transacoes/1/sugestoes-categoria': [],
+  '/api/transacoes/2/sugestoes-categoria': [],
+  '/api/categorias': categorias,
+  '/api/regras': [],
+  // #241: as duas contas do condomínio, separadas pelo valor.
+  '/api/regras-descricao': [
+    { id: 1, texto: 'CONDOMINIO', tipoCorrespondencia: 1, novaDescricao: 'Condomínio — taxa', ativa: true, transacoes: 6,
+      valorMinimo: 800, valorMaximo: 900 },
+    { id: 2, texto: 'CONDOMINIO', tipoCorrespondencia: 1, novaDescricao: 'Condomínio — fundo de reserva', ativa: true,
+      transacoes: 6, valorMinimo: null, valorMaximo: 250 }
+  ],
+  '/api/regras-descricao/previa': { quantidade: 6, exemplos: ['PAGAMENTO CONDOMINIO EDIF SOLAR'] },
+  '/api/orcamentos': [],
+  // #316: duas metas fictícias: uma em andamento com ícone (viagem) e uma "concluída por você" com 1% (como no defeito).
+  // #546: a Viagem vence 12 meses depois do mês atual (não numa data fixa): o plano tem mais de 10 meses em qualquer mês.
+  '/api/metas': [
+    { id: 1, nome: 'Viagem', valorAlvo: 8000, valorAtual: 2400, dataAlvo: dataIso(new Date(ano, hoje.getMonth() + 12, 1)), contaId: null, contaNome: null,
+      cor: '#92c8f0', concluida: false, percentual: 30, aporteMensalSugerido: 600, valorInicial: 2400, saldoConta: 0,
+      reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 1, icone: 'viagem' },
+    { id: 2, nome: 'RESERVA', valorAlvo: 30000, valorAtual: 200, dataAlvo: `${ano + 3}-01-01`, contaId: null, contaNome: null,
+      cor: '#8fd5b4', concluida: true, percentual: 1, aporteMensalSugerido: null, valorInicial: 200, saldoConta: 0,
+      reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 0, icone: null }
+  ],
+  '/api/reservas': [],
+  // #318: aportes fictícios da Viagem nos últimos meses (o gráfico "Como está indo"); a RESERVA não tem nenhum.
+  '/api/metas/1/aportes': [
+    { data: dataIso(new Date(ano, hoje.getMonth() - 3, 5)), valor: 500 },
+    { data: dataIso(new Date(ano, hoje.getMonth() - 2, 5)), valor: 600 },
+    { data: dataIso(new Date(ano, hoje.getMonth() - 1, 5)), valor: 600 },
+    { data: dataIso(new Date(ano, hoje.getMonth(), 2)), valor: 700 }
+  ],
+  '/api/metas/2/aportes': [],
+  '/api/metas/plano': { disponivel: false, mesesConsiderados: 1, ano, mes, margemPercentual: 10, saldoContas: 0, faturaAPagar: 0,
+    saldoFimDoMes: 0, melhorMesRecente: 0, meses: [] },
+  // #158: uma conta paga à mão, um débito automático e uma assinatura no cartão (baixa sozinha), e duas sugestões.
+  '/api/contas-agendadas': [
+    { id: 1, descricao: 'Escola', valor: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Educação', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 20, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 1, textoCobranca: null, observacao: null },
+    { id: 2, descricao: 'Luz', valor: 180, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 15)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Moradia', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 25, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 2, textoCobranca: 'ENERGIA', observacao: null },
+    { id: 3, descricao: 'Streaming', valor: 44.9, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 12)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Lazer', contaId: 2, contaNome: 'Cartão Exemplo', ativa: true,
+      ultimoPagamentoEm: null, diasParaVencer: 22, dataLimite: null, pagamentosRestantes: null, encerrada: false,
+      formaCobranca: 3, textoCobranca: 'STREAMING', observacao: 'conta da família' }
+  ],
+  // #158: um aviso de aumento, com a ação "Atualizar o valor".
+  '/api/contas-agendadas/avisos': [
+    { contaAgendadaId: 3, descricao: 'Streaming', tipo: 'aumentou', texto: 'Streaming aumentou na última cobrança.',
+      valorAnterior: 44.9, valorNovo: 49.9, contaNovaId: null, contaNovaNome: null, data: null }
+  ],
+  '/api/contas-agendadas/sugestoes': [
+    // #265: serviço conhecido (selo do YouTube); as outras sugestões ficam com o ícone da categoria ou o recibo.
+    { chave: 'youtube', descricao: 'Google YouTubePremium', valor: 26.9, valorVariavel: false, valorMinimo: 26.9, valorMaximo: 26.9,
+      proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 18)), diaHabitual: 18, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 18)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 18)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'YOUTUBEPREMIUM',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'YOUTUBEPREMIUM', recorrencia: 1,
+      chaveExtrato: 'YOUTUBEPREMIUM', pareceSerId: null, pareceSerNome: null },
+    { chave: 'musica#2', descricao: 'MUSICA APP', valor: 21.9, valorVariavel: false, valorMinimo: 21.9, valorMaximo: 21.9,
+      proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 3)), diaHabitual: 3, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 3)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 3)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'MUSICA',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'MUSICA', recorrencia: 1,
+      chaveExtrato: 'MUSICA', pareceSerId: null, pareceSerNome: null },
+    { chave: 'nuvem', descricao: 'NUVEM ANUAL', valor: 119, valorVariavel: false, valorMinimo: 119, valorMaximo: 119,
+      proximoVencimento: dataIso(new Date(ano + 1, hoje.getMonth(), 5)), diaHabitual: 5, meses: 2, pagamentos: 2,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 5)), primeiroPagamento: dataIso(new Date(ano - 1, hoje.getMonth(), 5)),
+      categoriaId: null, categoriaNome: null, contaId: 2, contaNome: 'Cartão Exemplo', termoBusca: 'NUVEM',
+      vencimentoSemPagamento: null, formaCobranca: 3, textoCobranca: 'NUVEM', recorrencia: 2,
+      chaveExtrato: 'NUVEM', pareceSerId: null, pareceSerNome: null },
+    // #205: parecida com "Escola" (valor, dia e conta), com outro nome: "parece ser Escola" e "é a mesma".
+    { chave: 'PESSOA EXEMPLO', descricao: 'PIX ENVIADO PESSOA EXEMPLO', valor: 1450, valorVariavel: false, valorMinimo: 1450,
+      valorMaximo: 1450, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 10)), diaHabitual: 10, meses: 6, pagamentos: 6,
+      ultimoPagamento: dataIso(new Date(ano, hoje.getMonth(), 10)), primeiroPagamento: dataIso(new Date(ano, hoje.getMonth() - 5, 10)),
+      categoriaId: null, categoriaNome: null, contaId: 1, contaNome: 'Conta Exemplo', termoBusca: 'PESSOA',
+      vencimentoSemPagamento: null, formaCobranca: 1, textoCobranca: 'PESSOA', recorrencia: 1,
+      chaveExtrato: 'PESSOA EXEMPLO', pareceSerId: 1, pareceSerNome: 'Escola' }
+  ],
+  '/api/investimentos': [],
+  '/api/investimentos/historico': {
+    desde: dataIso(new Date(ano, hoje.getMonth() - 1, 20)),
+    meses: [
+      { ...mesesAtras(1), desde: dataIso(new Date(ano, hoje.getMonth() - 1, 20)), rendimento: 12.3, saldo: 5012.3,
+        porInvestimento: [{ nome: 'Caixinha viagem', rendimento: 10, saldo: 4010 }, { nome: 'CDB · Banco X', rendimento: 2.3, saldo: 1002.3 }] },
+      { ...mesesAtras(0), desde: null, rendimento: 40.5, saldo: 5552.8,
+        porInvestimento: [{ nome: 'Caixinha viagem', rendimento: 33, saldo: 4543 }, { nome: 'Fundo Y', rendimento: null, saldo: 1009.8 }] }
+    ]
+  },
+  '/api/emprestimos': { financiamentos: credito(1), emprestimos: credito(2), contratos: [], pagamentosPorMes: [] },
+  '/api/cambio/moedas': [],
+  // #247: o câmbio em Investimentos (PTAX de compra; o iene aparece por 100).
+  '/api/cambio/cotacoes': { atualizadoEm: hoje.toISOString(), cotacoes: [
+    { moeda: 'USD', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 5.4321, venda: 5.4327, fonte: 'PTAX' },
+    { moeda: 'EUR', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 6.3012, venda: 6.3044, fonte: 'PTAX' },
+    { moeda: 'JPY', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 0.0362, venda: 0.0363, fonte: 'PTAX' },
+    // #278: mais moedas da PTAX (as que faltam aparecem como "sem cotação guardada ainda").
+    { moeda: 'GBP', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 7.2154, venda: 7.2191, fonte: 'PTAX' },
+    { moeda: 'CHF', dataSolicitada: dataIso(hoje), data: dataIso(hoje), compra: 6.7012, venda: 6.7049, fonte: 'PTAX' }
+  ] },
+  // #279 (ADR 0048): criptomoedas em reais (valores fictícios); a SOL ainda sem variação em 24 h, a USDT sem cotação.
+  '/api/cripto/cotacoes': { atualizadoEm: hoje.toISOString(), cotacoes: [
+    { moeda: 'BTC', preco: 419262, dataHora: hoje.toISOString(), variacao24h: 2.04, fonte: 'Mercado Bitcoin' },
+    { moeda: 'ETH', preco: 12382, dataHora: hoje.toISOString(), variacao24h: -1.37, fonte: 'Mercado Bitcoin' },
+    { moeda: 'SOL', preco: 538.82, dataHora: hoje.toISOString(), variacao24h: null, fonte: 'Mercado Bitcoin' }
+  ] },
+  '/api/carteira': {
+    selic: { metaAnual: 15, acumulado12Meses: 14.2, acumuladoAno: 11.5, atualizadaAte: iso(hoje) },
+    rendaVariavel: { valorMercado: 0, custo: 0, valorizacao: 0, valorizacaoPercentual: null, lucroRealizado: 0, proventosRecebidos: 0,
+      proventos12Meses: 0, resultadoTotal: 0, valorSeFosseSelic: 0, diferencaSelic: 0, resultadoTotalPercentual: null,
+      resultadoSelicPercentual: null },
+    // #330: sem posição aberta, a distribuição fica sozinha em "Mais análises" (só Reservas, como no print da issue).
+    posicoes: [], evolucao: [], openFinance: [], totalOpenFinance: 0, totalInvestimentosManuais: 0, totalGeral: 2350,
+    distribuicao: [{ nome: 'Reservas', valor: 2350 }],
+    cotacoesAtualizadasEm: null, cotacoesDesatualizadas: false, openFinanceNaoRegistrados: 0, moedasSemCotacao: [],
+    // #237: numa conta, o banco detalha uma reserva pelo nome e outra fica fora da lista; na outra, manda só o total.
+    reservas: [
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Viagem', saldo: 1200, informadoPeloBanco: true }),
+      reserva({ contaId: 1, nomeConta: 'Banco Fictício', nome: 'Presentes', saldo: 150, foraDaListaDoBanco: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Carro', saldo: 400, podeTerSaldoAnterior: true }),
+      reserva({ contaId: 2, nomeConta: 'Carteira Digital', nome: 'Reservado', saldo: 600, guardado: 0, retirado: 0, movimentos: 0,
+        primeiroMovimento: null, ultimoMovimento: null, restanteDoBanco: true, totalDoBanco: 1000 })
+    ],
+    totalReservas: 2350, cotasDiferentes: []
+  },
+  // #173: um FII fictício e seis meses de "Mês a mês" (aporte, subscrição, venda, rendimentos e valorização dos dois sinais).
+  '/api/carteira/fiis': {
+    resumo: { valorMercado: 1020, custo: 980, valorizacao: 40, valorizacaoPercentual: 4.08, renda12Meses: 60, rendaMediaMensal: 10,
+      rendaMensalEstimada: 10, dy12Meses: 5.9, yieldOnCost12Meses: 6.1, recebidoExtrato12Meses: 60, rentabilidadeTotal: 10.2,
+      rentabilidadeSelic: 8.5, rentabilidadeIfix: 3.1, quantidadeFiis: 1 },
+    fiis: [{ id: 1, ticker: 'MXRF11', nome: 'Fundo de Teste', segmento: 'Papel (recebíveis)', segmentoSugerido: false,
+      quantidade: 100, precoMedio: 9.8, custo: 980, precoAtual: 10.2, variacaoDia: 0.3, valorMercado: 1020, valorizacao: 40,
+      valorizacaoPercentual: 4.08, ultimoRendimento: 0.1, dataComUltimo: '2026-09-30', rendimentosPorCota12Meses: 0.6,
+      dyMensal: 0.98, dy12Meses: 5.9, yieldOnCost12Meses: 6.1, yieldOnCostMensal: 1.02, rendaMensalEstimada: 10,
+      proventos12Meses: 60, proventosTotal: 60, recebidoExtrato12Meses: 60, pesoCarteira: 100, fonteCotacao: 'Yahoo',
+      precoManual: false }],
+    lotes: [], proventos: [], evolucao: [], rentabilidade: [], segmentos: [{ nome: 'Papel (recebíveis)', valor: 1020 }],
+    historicos: [], segmentosDisponiveis: ['Papel (recebíveis)'],
+    mesAMes: [
+      { ...mesesAtras(5), aportes: 980, subscricoes: 0, resgates: 0, rendimentosRecebidos: 0, rendimentosEstimados: 0, valorizacao: -12.5, saldo: 967.5,
+        idsAportes: [101] },
+      { ...mesesAtras(4), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 8, saldo: 975.5 },
+      { ...mesesAtras(3), aportes: 0, subscricoes: 15, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: -5.5, saldo: 985 },
+      { ...mesesAtras(2), aportes: 0, subscricoes: 0, resgates: 20, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 15, saldo: 980 },
+      { ...mesesAtras(1), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 0, valorizacao: 22, saldo: 1002 },
+      { ...mesesAtras(0), aportes: 0, subscricoes: 0, resgates: 0, rendimentosRecebidos: 10, rendimentosEstimados: 10, valorizacao: 18, saldo: 1020,
+        porFii: [{ ticker: 'MXRF11', valor: 8 }, { ticker: null, valor: 2 }], idsRendimentos: [201, 202] }
+    ]
+  },
+  '/api/carteira/extrato/sugestoes': [],
+  '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null,
+    taxas: [{ data: dataIso(new Date(ano, hoje.getMonth() - 1, 8)), conta: 'Nubank', debitado: 1010.4, trocos: 10.1, valorDasCotas: 1000,
+      taxa: 0.3, operacoes: [{ operacaoId: 31, ticker: 'MXRF11', quantidade: 100, taxa: 0.3 }] }] },
+  '/api/carteira/configuracao': { tokenBrapiConfigurado: false },
+  '/api/parametros': [],
+  '/api/parametros/sistema': { versao: '0.0.0-teste', dotNet: '10.0', sistemaOperacional: 'Teste', iniciadoEm: hoje.toISOString(),
+    caminhoBanco: '/teste/FinancasLocal.db', tamanhoBancoBytes: 1024, pastaChaves: '/teste/chaves', contas: 2, transacoes: 2,
+    conexoesAtivas: 1, ultimaSincronizacao: hoje.toISOString() },
+  '/api/open-finance/configuracao': { clientId: null, secretConfigurado: false, intervaloHoras: 6, diasRetroativos: 30, habilitada: true },
+  // #376: duas conexões fictícias: uma de banco com selo (Nubank) e uma de banco sem selo (ícone neutro).
+  '/api/open-finance/conexoes': [
+    { id: 1, pluggyItemId: 'item-exemplo-1', nomeInstituicao: 'MeuPluggy', corPrimaria: '#820AD1', status: 'UPDATED',
+      statusExecucao: 'SUCCESS', ultimaAtualizacaoInstituicao: null, consentimentoExpiraEm: null, ultimaSincronizacaoEm: null,
+      ultimoErro: null, ativa: true, quantidadeContas: 2, nomeExibicao: 'Nubank' },
+    { id: 2, pluggyItemId: 'item-exemplo-2', nomeInstituicao: 'MeuPluggy', corPrimaria: null, status: 'UPDATED',
+      statusExecucao: 'SUCCESS', ultimaAtualizacaoInstituicao: null, consentimentoExpiraEm: null, ultimaSincronizacaoEm: null,
+      ultimoErro: null, ativa: true, quantidadeContas: 1, nomeExibicao: 'Banco Exemplo' }
+  ],
+  '/api/open-finance/status': { ultimaSincronizacao: hoje.toISOString(), emExecucao: false, conexoesAtivas: 1, conexoesComErro: 0,
+    consentimentosVencendo: 0 },
+  '/api/open-finance/logs': [],
+  '/api/open-finance/categorias': [],
+  // #284: dados fictícios para Configurações › Segurança › Acessos recentes (data com hora, nome em código, 127.0.0.1).
+  '/api/auth/auditoria': [
+    { id: 3, dataHora: '2026-10-21T05:21:00', evento: 'LoginSucesso', login: 'teste', ip: '127.0.0.1', userAgent: null },
+    { id: 2, dataHora: '2026-10-20T06:33:00', evento: 'RegraDescricaoCriada (22)', login: 'teste', ip: '::1', userAgent: null },
+    { id: 1, dataHora: '2026-10-19T17:20:00', evento: 'CredencialPluggyAlterada', login: 'teste', ip: '127.0.0.1', userAgent: null }
+  ],
+  '/api/erros': { itens: [], total: 0, pagina: 1, tamanhoPagina: 50, abertos: 0, origens: [] }
+};
+
+/** Liga a API falsa na página. `alterar` troca respostas para um teste ("/api/auth/estado" deslogado…). */
+export async function ligarApiFalsa(page: Page, alterar: Record<string, unknown> = {}): Promise<ApiFalsa> {
+  const api: ApiFalsa = { semSimulacao: [], errosDoSite: [], chamadas: [], chamadasComQuery: [] };
+  const tabela = { ...respostas, ...alterar };
+  await page.route('**/api/**', async (route: Route) => {
+    const req = route.request();
+    const caminho = new URL(req.url()).pathname;
+    api.chamadas.push(`${req.method()} ${caminho}`);
+    api.chamadasComQuery.push(`${req.method()} ${caminho}${new URL(req.url()).search}`);
+    if (req.method() === 'POST' && caminho === '/api/erros/front-end') {
+      api.errosDoSite.push(req.postData() ?? '');
+      return route.fulfill({ status: 204 });
+    }
+    if (req.method() !== 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    if (!(caminho in tabela)) {
+      api.semSimulacao.push(`GET ${caminho}`);
+      return route.fulfill({ status: 404, contentType: 'application/json', body: '{"mensagem":"sem simulação"}' });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(tabela[caminho]) });
+  });
+  return api;
+}

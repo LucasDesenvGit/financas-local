@@ -80,7 +80,7 @@ baixar_arquivo() {
 }
 
 # Caminho no formato que programas nativos entendem. No Git Bash, $Raiz fica no
-# formato POSIX (ex.: /c/FinancasLocal), que node.exe/dotnet.exe nao entendem
+# formato POSIX (ex.: /c/FinancasLocal), que node.exe/go.exe nao entendem
 # quando o caminho vai dentro de variavel de ambiente ou de um arquivo; la ele
 # vira o formato misto (C:/FinancasLocal).
 caminho_nativo() {
@@ -154,17 +154,44 @@ requer_comando() {
     command -v "$nome" >/dev/null 2>&1 || erro_sai "$mensagem"
 }
 
-# ---------------------------------------------------------------- Ambiente de build (dotnet/node portateis ou do PATH)
-configurar_ambiente_build() {
-    local dotnet_bin=dotnet node_bin=node
-    if [[ "$SO" == windows ]]; then dotnet_bin=dotnet.exe; node_bin=node.exe; fi
-
-    if [[ -x "$Ferramentas/dotnet/$dotnet_bin" ]]; then
-        export PATH="$Ferramentas/dotnet:$PATH"
-        export DOTNET_ROOT="$Ferramentas/dotnet"
-    elif ! command -v dotnet >/dev/null 2>&1; then
-        erro_sai 'SDK do .NET nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
+# ---------------------------------------------------------------- Porta ocupada (#300)
+# quem_usa_a_porta PORTA -> "nome (PID n)" de quem escuta na porta, ou nada se ela esta livre.
+# Linux: ss; Windows (Git Bash): netstat + PowerShell (Get-Process); macOS: lsof. Sem a ferramenta, nada (nao bloqueia).
+quem_usa_a_porta() {
+    local porta="$1" pid="" nome=""
+    case "$SO" in
+        linux)
+            local linha
+            linha="$(ss -ltnpH "sport = :$porta" 2>/dev/null | head -n1 || true)"
+            [[ -n "$linha" ]] || return 0
+            pid="$(grep -oE 'pid=[0-9]+' <<<"$linha" | head -n1 | cut -d= -f2 || true)"
+            nome="$(grep -oE '\(\("[^"]+"' <<<"$linha" | head -n1 | cut -d'"' -f2 || true)"
+            ;;
+        windows)
+            pid="$(netstat -ano 2>/dev/null | tr -d '\r' \
+                | awk -v p=":$porta" '$1 == "TCP" && $4 == "LISTENING" && substr($2, length($2) - length(p) + 1) == p { print $5; exit }')"
+            [[ -n "$pid" ]] || return 0
+            # Get-Process, e nao tasklist /FI: o tasklist com filtro chegou a travar 30 s num Windows 11.
+            nome="$(timeout 15 powershell.exe -NoProfile -Command "(Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName" 2>/dev/null | tr -d '\r' || true)"
+            ;;
+        osx)
+            pid="$(lsof -nP -iTCP:"$porta" -sTCP:LISTEN -t 2>/dev/null | head -n1 || true)"
+            [[ -n "$pid" ]] || return 0
+            nome="$(ps -p "$pid" -o comm= 2>/dev/null || true)"
+            ;;
+        *) return 0 ;;
+    esac
+    if [[ -n "$pid" ]]; then
+        echo "${nome:-programa desconhecido} (PID $pid)"
+    else
+        echo "outro programa"
     fi
+}
+
+# ---------------------------------------------------------------- Ambiente de build (node/go portateis ou do PATH)
+configurar_ambiente_build() {
+    local node_bin=node
+    [[ "$SO" == windows ]] && node_bin=node.exe
 
     if [[ -x "$Ferramentas/node/bin/$node_bin" ]]; then
         export PATH="$Ferramentas/node/bin:$PATH"
@@ -174,11 +201,24 @@ configurar_ambiente_build() {
         erro_sai 'Node.js nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     fi
 
-    export DOTNET_CLI_HOME="$Ferramentas/dotnet-home"
-    export NUGET_PACKAGES="$Ferramentas/nuget-pacotes"
-    export DOTNET_CLI_TELEMETRY_OPTOUT=1
-    export DOTNET_NOLOGO=1
-    export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+    # Go (#231): o portatil, se houver; senao, o do PATH (o 1-preparar-ambiente.sh confere a versao). So o
+    # 3-publicar-atualizar.sh precisa dele, e reclama se faltar.
+    local go_bin=go
+    [[ "$SO" == windows ]] && go_bin=go.exe
+    if [[ -x "$Ferramentas/go/bin/$go_bin" ]]; then
+        export PATH="$Ferramentas/go/bin:$PATH"
+    fi
+    # Modulos e cache de compilacao dentro de ferramentas/ (como o npm). GOTOOLCHAIN=local: nunca baixar
+    # outra versao do Go por conta propria. -modcacherw: o cache de modulos fica apagavel com rm -rf.
+    # CGO_ENABLED=0: o executavel nao depende de compilador C (o SQLite e o modernc.org/sqlite, em Go puro).
+    # (caminho_nativo: o go.exe nao entende /c/... dentro de variavel de ambiente.)
+    GOPATH="$(caminho_nativo "$Ferramentas/go-caminho")"
+    GOCACHE="$(caminho_nativo "$Ferramentas/go-cache")"
+    export GOPATH GOCACHE
+    export GOTOOLCHAIN=local
+    export GOFLAGS=-modcacherw
+    export CGO_ENABLED=0
+
     export npm_config_cache="$Ferramentas/npm-cache"
     export npm_config_update_notifier=false
     export NG_CLI_ANALYTICS=false
@@ -194,6 +234,18 @@ configurar_ambiente_build() {
 # .timeout: se a API (no ar durante uma atualizacao) estiver gravando, o sqlite3 espera ate 15 s
 # em vez de falhar com "database is locked". Uso: sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ...
 SQLITE_ESPERA=(-cmd '.timeout 15000')
+
+# caminho_sqlite <caminho>: o caminho para DENTRO de um comando do sqlite3 (.backup "..."), entre as aspas duplas. No
+# Windows, o Git Bash so converte /c/... em C:/... quando o caminho e um argumento de um programa do Windows, e nao
+# dentro de um texto: o sqlite3 do Windows nao abre /c/Users/... ("cannot open"). O escape e o do shell do sqlite3, que
+# so tem \ e \" dentro de "...".
+caminho_sqlite() {
+    local c="$1"
+    if [[ "$SO" == windows ]] && command -v cygpath >/dev/null 2>&1; then c="$(cygpath -m "$c")"; fi
+    c=${c//\\/\\\\}
+    c=${c//\"/\\\"}
+    printf '%s' "$c"
+}
 
 coluna_existe() {
     local tabela="$1" coluna="$2" colunas

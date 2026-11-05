@@ -1,0 +1,68 @@
+{
+  "total": 6,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "fi-cdb",
+      "name": "CDB Banco Falso",
+      "type": "FIXED_INCOME",
+      "subtype": "CDB",
+      "currencyCode": "BRL",
+      "balance": 1050.755,
+      "amountOriginal": 1000,
+      "amountProfit": 50.755,
+      "annualRate": 12.34565,
+      "dueDate": "2030-01-15T03:00:00.000Z",
+      "purchaseDate": "2025-03-10T03:00:00.000Z",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "fi-taxa-absurda",
+      "name": "Taxa fora do limite",
+      "type": "FIXED_INCOME",
+      "balance": 10,
+      "fixedAnnualRate": 123456,
+      "issueDate": "2025-05-01T03:00:00.000Z"
+    },
+    {
+      "id": "eq-fii",
+      "name": "FALS11",
+      "type": "EQUITY",
+      "subtype": "STOCK",
+      "code": "FALS11",
+      "issuer": "FALSO FDO INV IMOB - FII",
+      "currencyCode": "BRL",
+      "balance": 1000,
+      "amountOriginal": 950,
+      "quantity": 10.5,
+      "purchaseDate": "2026-01-10T03:00:00.000Z"
+    },
+    {
+      "id": "eq-acao",
+      "name": "ACAO FALSA",
+      "type": "EQUITY",
+      "subtype": "STOCK",
+      "code": "FALS3",
+      "currencyCode": "BRL",
+      "balance": 300,
+      "quantity": 3
+    },
+    {
+      "id": "et-sem-historico",
+      "name": "ETF FALSO",
+      "type": "ETF",
+      "code": "FALS1",
+      "currencyCode": "BRL",
+      "balance": 500,
+      "quantity": "7"
+    },
+    {
+      "id": "eq-invalido",
+      "name": "SEM TICKER",
+      "type": "EQUITY",
+      "code": "???",
+      "balance": 1
+    }
+  ]
+}

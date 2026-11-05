@@ -1,0 +1,13 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "saldos": [
+    {"conta":1,"saldo":"-1.0"},
+    {"conta":2,"saldo":"111.0"},
+    {"conta":3,"saldo":"5000.0"},
+    {"conta":4,"saldo":"0.0"},
+    {"conta":5,"saldo":"123.40"},
+    {"conta":6,"saldo":"0.0"}
+  ]
+}

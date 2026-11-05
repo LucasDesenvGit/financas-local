@@ -1,0 +1,227 @@
+<header class="cabecalho-pagina">
+  <h1>Transações</h1>
+  <div class="acoes">
+    <button type="button" class="botao" [class.botao-ativo]="modoEdicao()" [attr.aria-pressed]="modoEdicao()"
+      (click)="alternarModoEdicao()">✎ {{ modoEdicao() ? 'Sair da edição' : 'Editar categorias' }}</button>
+    <button type="button" class="botao" (click)="abrirSugestoes()">✦ Sugestões de categoria</button>
+    <button type="button" class="botao" (click)="abrirTransferencia()">⇄ Transferência</button>
+    <button type="button" class="botao botao-primario" (click)="novo()">+ Lançamento</button>
+  </div>
+</header>
+
+<section class="filtros">
+  <label>De <app-campo-data [(ngModel)]="filtro.inicio" (alterado)="buscar(1)" /></label>
+  <label>Até <app-campo-data [(ngModel)]="filtro.fim" (alterado)="buscar(1)" /></label>
+  <label>Conta
+    <select [(ngModel)]="filtro.contaId" (change)="buscar(1)">
+      <option [ngValue]="null">Todas</option>
+      @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
+    </select>
+  </label>
+  <app-seletor-multiplo rotulo="Categoria" [opcoes]="opcoesCategoria()" [selecionadas]="filtroCategorias"
+    (mudou)="aplicarFiltroCategorias($event)" />
+  <label>Tipo
+    <select [(ngModel)]="filtro.tipo" (change)="buscar(1)">
+      <option [ngValue]="null">Todos</option>
+      <option [ngValue]="TipoTransacao.Despesa">Despesas</option>
+      <option [ngValue]="TipoTransacao.Receita">Receitas</option>
+      <option [ngValue]="TipoTransacao.Transferencia">Transferências</option>
+    </select>
+  </label>
+  <div class="filtro-lancamento">
+    <label for="filtro-lancamento">Lançamento <app-termo chave="tipoLancamento" /></label>
+    <select id="filtro-lancamento" name="lancamento" [(ngModel)]="filtro.lancamento" (change)="buscar(1)">
+      <option [ngValue]="null">Todos</option>
+      @for (g of gruposLancamento; track g.valor) { <option [ngValue]="g.valor">{{ g.rotulo }}</option> }
+    </select>
+  </div>
+  <label class="checkbox"><input type="checkbox" [(ngModel)]="filtro.somenteEmergencias" (change)="buscar(1)">
+    <span class="texto-emergencia">Só emergências</span></label>
+  <span class="filtro-generica">
+    <label class="checkbox"><input type="checkbox" name="poucoInformativa" [(ngModel)]="filtro.poucoInformativa" (change)="buscar(1)">
+      Descrição pouco informativa</label>
+    <app-termo chave="descricaoPoucoInformativa" />
+  </span>
+  <label class="cresce">Buscar
+    <input type="search" [(ngModel)]="filtro.busca" (keyup.enter)="buscar(1)" placeholder="descrição, estabelecimento…" maxlength="100">
+  </label>
+</section>
+
+@if (chipsFiltro(); as chips) {
+  @if (chips.length) {
+    <section class="faixa-filtros expandir" aria-label="Filtros ativos" animate.leave="recolher">
+      <strong>Filtrando:</strong>
+      @for (c of chips; track c.id) {
+        <span class="chip chip-filtro">
+          @if (c.cor) { <span class="ponto" [style.background]="c.cor"></span> }
+          {{ c.rotulo }}
+          <button type="button" class="chip-remover" (click)="removerFiltro(c.id)"
+            [attr.aria-label]="'Remover filtro: ' + c.rotulo" [title]="'Remover filtro: ' + c.rotulo">✕</button>
+        </span>
+      }
+      <button type="button" class="link" (click)="limparFiltros()">Limpar filtros</button>
+    </section>
+  }
+}
+
+@if (filtroAplicado().poucoInformativa) {
+  <p class="dica-generica texto-suave expandir" animate.leave="recolher">
+    Transações cuja descrição não diz o que foi (PIX ENVIADO, PAGAMENTO, TED, só o nome do banco). Cada uma sai desta
+    lista quando você escolhe a categoria (dá para várias de uma vez em "Editar categorias"), dá um nome mais claro
+    a ela ou marca "revisada".
+  </p>
+}
+
+@if (modoEdicao()) {
+  <!-- Abre e recolhe animando a altura: a lista abaixo não pula de uma vez ao entrar/sair do modo edição. -->
+  <app-transacoes-barra-edicao class="painel-bloco barra-edicao expandir" animate.leave="recolher"
+    [quantidadePendentes]="quantidadePendentes()" [salvando]="salvando()" [soSemCategoriaAtivo]="soSemCategoriaAtivo()"
+    [total]="pagina()?.total ?? 0" [categorias]="categoriasRotuladas()" [sugestoesRegra]="sugestoesRegra()"
+    [(categoriaTodas)]="categoriaTodas" (descartar)="descartarPendentes()" (salvar)="salvarPendentes()"
+    (soSemCategoria)="soSemCategoria()" (aplicarATodas)="aplicarATodasDoFiltro()" (criarRegra)="criarRegraSugerida($event)"
+    (dispensarRegra)="dispensarRegra($event)" />
+}
+
+@if (pagina(); as p) {
+  <section class="resumo-filtro">
+    <span>{{ p.total }} transação(ões)</span>
+    <span class="positivo">Receitas {{ p.totalReceitas | currency }}</span>
+    <span class="negativo">Despesas {{ p.totalDespesas | currency }}</span>
+    <span>Resultado <strong>{{ p.totalReceitas - p.totalDespesas | currency }}</strong></span>
+  </section>
+
+  <!-- #133: a contagem é anunciada quando muda (região aria-live sempre presente). -->
+  <span class="so-leitor" aria-live="polite">{{ textoSelecao() }}</span>
+  <!-- A barra abre e fecha animando a altura (sem empurrar a tabela de uma vez) e fica fixa no topo ao rolar. -->
+  <div class="barra-lote-espaco" [class.aberta]="selecionadas().size > 0" [attr.inert]="selecionadas().size ? null : ''">
+    <div class="barra-lote-dentro">
+    <app-transacoes-barra-lote [textoSelecao]="textoSelecao()" [categorias]="categoriasRotuladas()" [modoEdicao]="modoEdicao()"
+      [poucoInformativa]="!!filtroAplicado().poucoInformativa" [(categoria)]="categoriaLote" (categorizar)="categorizarLote()"
+      (renomear)="renomearSelecionadas()" (marcarRevisadas)="marcarRevisadasSelecionadas()"
+      (marcarEmergencia)="marcarEmergenciaLote($event)" (limpar)="limparSelecao()" />
+    </div>
+  </div>
+
+  <div class="tabela-rolagem" (keydown.escape)="limparSelecao()">
+    <table class="tabela" [class.tabela-edicao]="modoEdicao()">
+      <thead>
+        <tr>
+          <th class="col-check"><label class="celula-marcar"><input type="checkbox" [checked]="todasSelecionadas()"
+            [indeterminate]="algumaSelecionadaNaPagina() && !todasSelecionadas()" (change)="alternarTodas()"
+            aria-label="Selecionar todas desta página"></label></th>
+          <!-- #244: ordenar pelo cabeçalho (WAI-ARIA APG, Sortable Table): botão no th, aria-sort só na coluna que vale. -->
+          @for (col of colunasOrdenaveis.slice(0, 1); track col.chave) {
+            <th [attr.aria-sort]="ariaSort(col.chave)"><button type="button" class="botao-ordenar" (click)="ordenar(col.chave)">
+              {{ col.rotulo }}<span class="seta-ordem" [class.ativa]="ordemAtual() === col.chave" aria-hidden="true">{{ seta(col.chave) }}</span></button></th>
+          }
+          <th>Descrição</th>
+          @for (col of colunasOrdenaveis.slice(1); track col.chave) {
+            <th [class.direita]="col.chave === 'valor'" [attr.aria-sort]="ariaSort(col.chave)"><button type="button" class="botao-ordenar"
+              (click)="ordenar(col.chave)">{{ col.rotulo }}<span class="seta-ordem" [class.ativa]="ordemAtual() === col.chave"
+              aria-hidden="true">{{ seta(col.chave) }}</span></button></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of p.itens; track t.id; let i = $index) {
+          <tr (click)="modoEdicao() ? null : editar(t)" [class.clicavel]="!modoEdicao()" [class.ignorada]="t.ignorarRelatorios"
+            [class.alterada]="pendentes().has(t.id)" [class.selecionada]="selecionadas().has(t.id)"
+            [class.destacada]="transacaoDestacada() === t.id" [attr.aria-current]="transacaoDestacada() === t.id ? 'true' : null"
+            [attr.tabindex]="transacaoDestacada() === t.id ? -1 : null" [attr.data-transacao]="t.id">
+            <!-- #133: a célula inteira marca (sem abrir a edição); Shift+clique seleciona o intervalo. -->
+            <td class="col-check" (click)="$event.stopPropagation()" (mousedown)="shiftNoClique = $event.shiftKey">
+              <label class="celula-marcar"><input type="checkbox" [checked]="selecionadas().has(t.id)"
+                (click)="marcar(i, $event)" [attr.aria-label]="nomeSelecao(t)"></label>
+            </td>
+            <td class="nowrap">{{ t.data | date: 'dd/MM/yy' }}</td>
+            <td>
+              <div class="linha-descricao">
+                <!-- #265: selo do serviço (pelo texto do banco) ou ícone da categoria; decorativo, o nome vem ao lado. -->
+                <app-selo-servico [texto]="t.descricaoOriginal" [estabelecimento]="t.estabelecimento" [nome]="t.descricao" [tipo]="t.tipoLancamento"
+                  [categoria]="t.categoriaNome" [tamanho]="22" />
+                @if (modoEdicao()) {
+                  <div class="truncar" [title]="t.descricao">{{ t.descricao }}</div>
+                } @else {
+                  <!-- WCAG 2.1.1: o clique na linha é atalho de mouse; pelo teclado, a edição abre por este botão. -->
+                  <button type="button" class="botao-texto truncar" [title]="t.descricao"
+                    (click)="$event.stopPropagation(); editar(t)" [attr.aria-label]="'Editar: ' + t.descricao">{{ t.descricao }}</button>
+                }
+                <button type="button" class="botao-icone botao-renomear" (click)="$event.stopPropagation(); renomeando.set(t)"
+                  [attr.aria-label]="'Renomear: ' + t.descricao">✎</button>
+              </div>
+              @if (t.descricaoOriginal && t.descricaoOriginal !== t.descricao) {
+                <div class="descricao-original truncar" [title]="t.descricaoOriginal">do banco: {{ t.descricaoOriginal }}</div>
+              }
+              <div class="detalhe">
+                <span class="etiqueta etiqueta-lancamento"><app-icone [icone]="iconeLancamento(t)" [tamanho]="13" />{{ rotuloLancamento(t) }}</span>
+                @if (foraDosGastos(t)) {
+                  <span class="etiqueta etiqueta-suave">fora dos gastos</span>
+                } @else if (somandoNosTotais(t); as onde) {
+                  <span class="etiqueta etiqueta-alerta">somando {{ onde === 'gastos' ? 'nos gastos' : 'nas receitas' }}</span>
+                }
+                @if (t.parcelaTotal && t.parcelaTotal > 1) { <span class="etiqueta">{{ t.parcelaNumero }}/{{ t.parcelaTotal }}</span> }
+                @if (t.status === StatusTransacao.Pendente) { <span class="etiqueta etiqueta-alerta">pendente</span> }
+                @if (t.emergencia) { <span class="etiqueta etiqueta-emergencia">emergência</span> }
+                @if (t.openFinance) { <span class="etiqueta">open finance</span> }
+                @if (t.observacao) { <span class="texto-suave truncar">{{ t.observacao }}</span> }
+                @if (filtroAplicado().poucoInformativa) {
+                  <button type="button" class="link botao-revisada" (click)="$event.stopPropagation(); marcarRevisadas([t.id])"
+                    [attr.aria-label]="'Marcar como revisada: ' + t.descricao">✓ marcar como revisada</button>
+                }
+              </div>
+            </td>
+            <td>
+              @if (modoEdicao()) {
+                <div class="celula-edicao">
+                  <select class="select-categoria" [ngModel]="valorCategoria(t)" (ngModelChange)="mudarCategoria(t, $event)"
+                    (keydown.escape)="desfazerLinha(t)" [attr.aria-label]="'Categoria de ' + t.descricao + ', ' + (t.data | date: 'dd/MM')">
+                    @if (t.categoriaId === null) { <option value="" disabled>Sem categoria</option> }
+                    <option value="auto">Automática (regras)</option>
+                    @if (t.categoriaId !== null && !idsCategoriasOferecidas().has(t.categoriaId)) {
+                      <option [value]="'' + t.categoriaId">{{ t.categoriaNome }} (inativa)</option>
+                    }
+                    @for (c of categorias(); track c.id) { <option [value]="'' + c.id">{{ rotuloCategoria(c) }}</option> }
+                  </select>
+                  @if (pendentes().has(t.id)) { <span class="etiqueta etiqueta-alerta">alterada</span> }
+                </div>
+              } @else {
+                @if (t.categoriaNome) {
+                  <span class="chip"><span class="ponto" [style.background]="t.categoriaCor"></span>{{ t.categoriaNome }}</span>
+                } @else { <span class="texto-suave">—</span> }
+              }
+            </td>
+            <td class="texto-suave">
+              <span class="conta-transacao">
+                <app-logo-banco [codigo]="contaDe(t)?.banco" [tamanho]="20" [cartao]="ehDeCartao(t)" />
+                <span>{{ t.contaNome }} @if (ehDeCartao(t)) {<small class="tipo-conta">cartão de crédito</small>}</span>
+              </span>
+            </td>
+            <!-- Fora dos gastos (pagamento de fatura, transferência): valor em cor neutra, para não parecer receita ou despesa. -->
+            <td class="direita valor nowrap" [class.fora-dos-totais]="foraDosGastos(t)"
+              [class.positivo]="t.valor > 0 && !foraDosGastos(t)" [class.negativo]="t.valor < 0 && !foraDosGastos(t)">{{ t.valor | currency }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="vazio">Nenhuma transação encontrada para os filtros.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-paginacao [pagina]="p.pagina" [tamanho]="p.tamanhoPagina" [total]="p.total"
+    (paginaMudou)="buscar($event)" (tamanhoMudou)="mudarTamanhoPagina($event)" />
+}
+
+<app-renomear-transacao [transacao]="renomeando()" (fechar)="renomeando.set(null)" (renomeada)="aoRenomear()" />
+<app-renomear-em-lote [transacoes]="renomeandoLote()" (fechar)="renomeandoLote.set(null)" (renomeada)="aoRenomearLote()" />
+
+<app-transacoes-lancamento [lancamento]="form" [contasManuais]="contasManuais()" [categorias]="categoriasRotuladas()"
+  [sugestoes]="sugestoesForm()" [salvando]="salvando()" (salvar)="salvar($event)" (excluir)="excluir()" (fechar)="form = null" />
+
+<app-transacoes-sugestoes [aberta]="sugestoesAbertas()" [carregando]="carregandoSugestoes()"
+  [somenteSemCategoria]="somenteSemCategoria()" [salvando]="salvando()" [quantidadeAlta]="quantidadeAlta()"
+  [linhas]="linhasSugestao()" [categorias]="categoriasRotuladas()" [conflitos]="conflitos()"
+  (mudar)="mudarLinha($event.chave, $event.mudanca)" (trocarModo)="trocarModoSugestoes($event)" (aplicar)="aplicarSugestao($event)"
+  (aplicarAltas)="aplicarConfiancaAlta()" (fechar)="fecharSugestoes()" />
+
+<app-transacoes-transferencia [transferencia]="transferencia" [contas]="contas()" [salvando]="salvando()"
+  (salvar)="salvarTransferencia($event)" (fechar)="transferencia = null" />

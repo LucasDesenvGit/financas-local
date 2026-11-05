@@ -2,13 +2,15 @@ import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRen
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { ajudaDaUrl } from '../paginas/manual-conteudo';
-import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.component';
-import { CalculadoraComponent } from '../compartilhado/calculadora.component';
-import { StatusSincronizacaoComponent } from '../compartilhado/status-sincronizacao.component';
-import { IconeComponent } from '../compartilhado/icone.component';
-import { Icones } from '../compartilhado/icones';
-import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
+import { ajudaDaUrl } from '../paginas/manual/manual-conteudo';
+import { BotaoPrivacidadeComponent } from './botao-privacidade.component';
+import { CalculadoraComponent } from './calculadora.component';
+import { StatusSincronizacaoComponent } from './status-sincronizacao.component';
+import { NotificacoesComponent } from './notificacoes.component';
+import { ConfirmacaoComponent } from '../compartilhado/ui/confirmacao.component';
+import { IconeComponent } from '../compartilhado/ui/icone.component';
+import { Icones } from '../compartilhado/ui/icones';
+import { MenuUsuarioComponent } from './menu-usuario.component';
 import { LucideIcon } from '@lucide/angular';
 
 export interface ItemMenu { rota: string; rotulo: string; icone: LucideIcon; }
@@ -105,7 +107,7 @@ export function roteiroDaTela(rota: string): string {
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, BotaoPrivacidadeComponent, CalculadoraComponent, MenuUsuarioComponent,
-    IconeComponent, StatusSincronizacaoComponent],
+    IconeComponent, StatusSincronizacaoComponent, NotificacoesComponent, ConfirmacaoComponent],
   template: `
     <div class="app" [class.menu-aberto]="menuAberto()" [class.menu-recolhido]="recolhidoNoComputador()">
       <!-- #131: menu escondido (recolhido no computador, gaveta fechada no celular) fica fora do Tab (inert). -->
@@ -196,7 +198,7 @@ export function roteiroDaTela(rota: string): string {
             </button>
             <a class="barra-titulo so-celular" routerLink="/painel" aria-label="Finanças, ir para o Painel">
               <span class="barra-titulo-simbolo" aria-hidden="true"><app-icone [icone]="Icones.marca" [tamanho]="16" [traco]="2" /></span>
-              Finanças
+              <span class="barra-titulo-nome">Finanças</span>
             </a>
           </div>
           <div class="barra-acoes">
@@ -207,6 +209,8 @@ export function roteiroDaTela(rota: string): string {
                 <app-icone [icone]="Icones.ajuda" [tamanho]="18" /><span class="rotulo-ajuda">Ajuda</span>
               </a>
             }
+            <!-- #327: avisos e orçamentos estourados, em qualquer tela (saíram do topo do Painel). -->
+            <app-notificacoes />
             <app-status-sincronizacao />
             <app-botao-privacidade />
             <app-calculadora />
@@ -218,6 +222,8 @@ export function roteiroDaTela(rota: string): string {
         </main>
       </div>
     </div>
+    <!-- #631 (ADR 0057): a confirmação do site, no lugar do confirm() do navegador; as telas a pedem ao ConfirmacaoService. -->
+    <app-confirmacao />
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`

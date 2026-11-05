@@ -3,12 +3,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   OpcaoCategoria, SugestaoCategoria,
-  AtualizarAtivo, Carteira, CotacaoMoeda, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
+  AtualizarAtivo, Carteira, CotacaoMoeda, CotacoesAtuais, CotacoesCripto, MoedaCambio, ResultadoImportacaoCarteira, ImportarExtratoItem, OperacaoAtivo, PainelFiis, ResultadoCotacoes, SalvarOperacao,
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
   AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
-  Fatura, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, Orcamento, PaginaTransacoes, Painel, Regra,
+  Fatura, FaturaMes, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, Avisos, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
@@ -31,6 +31,8 @@ export class ApiService {
   }
 
   // Painel e relatórios
+  /** #327: as notificações da barra do topo (o mês atual). */
+  avisos(): Observable<Avisos> { return this.http.get<Avisos>(`${this.base}/painel/avisos`); }
   painel(ano: number, mes: number): Observable<Painel> {
     return this.http.get<Painel>(`${this.base}/painel`, { params: this.params({ ano, mes }) });
   }
@@ -51,6 +53,10 @@ export class ApiService {
   }
 
   // Contas
+  /** #323: a fatura de cada cartão que fecha no mês escolhido (Contas e cartões, outros meses). */
+  faturasDoMes(ano: number, mes: number): Observable<FaturaMes[]> {
+    return this.http.get<FaturaMes[]>(`${this.base}/contas/faturas-do-mes`, { params: { ano, mes } });
+  }
   contas(incluirArquivadas = false): Observable<Conta[]> {
     return this.http.get<Conta[]>(`${this.base}/contas`, { params: this.params({ incluirArquivadas }) });
   }
@@ -172,6 +178,7 @@ export class ApiService {
   criarMeta(dto: SalvarMeta): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas`, dto); }
   atualizarMeta(id: number, dto: SalvarMeta): Observable<Meta> { return this.http.put<Meta>(`${this.base}/metas/${id}`, dto); }
   aporteMeta(id: number, valor: number): Observable<Meta> { return this.http.post<Meta>(`${this.base}/metas/${id}/aporte`, { valor }); }
+  aportesMeta(id: number): Observable<MetaAporte[]> { return this.http.get<MetaAporte[]>(`${this.base}/metas/${id}/aportes`); }
   excluirMeta(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/metas/${id}`); }
 
   // Contas a pagar
@@ -214,6 +221,9 @@ export class ApiService {
 
   // Carteira (renda variável + comparação com a Selic)
   moedasCambio(): Observable<MoedaCambio[]> { return this.http.get<MoedaCambio[]>(`${this.base}/cambio/moedas`); }
+  /** #247: a última cotação guardada de cada moeda. */
+  cotacoesCambio(): Observable<CotacoesAtuais> { return this.http.get<CotacoesAtuais>(`${this.base}/cambio/cotacoes`); }
+  cotacoesCripto(): Observable<CotacoesCripto> { return this.http.get<CotacoesCripto>(`${this.base}/cripto/cotacoes`); }
   cotacaoCambio(moeda: string, data: string): Observable<CotacaoMoeda> {
     return this.http.get<CotacaoMoeda>(`${this.base}/cambio/cotacao`, { params: this.params({ moeda, data }) });
   }

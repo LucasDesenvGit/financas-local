@@ -1,0 +1,20 @@
+{
+ "/v8/finance/chart/MXRF11.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"timestamp\": [1772456400, 1772542800, 1772629200, 1773061200], \"indicators\": {\"quote\": [{\"close\": [9.8, 10.0, 10.2, 9.9]}]}}]}}"
+  }
+ ],
+ "/v8/finance/chart/PETR4.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"timestamp\": [1775048400, 1775134800], \"indicators\": {\"quote\": [{\"close\": [30.0, 31.0]}]}}]}}"
+  }
+ ],
+ "/v8/finance/chart/ITSA4.SA": [
+  {
+   "status": 500,
+   "corpo": "{}"
+  }
+ ]
+}

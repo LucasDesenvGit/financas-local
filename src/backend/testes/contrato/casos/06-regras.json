@@ -1,0 +1,232 @@
+{
+  "descricao": "Regras de categorização (#77, RegrasController) e regras de descrição (#123/#241/#250, ADR 0030, RegrasDescricaoController). O 'reaplicar' recategoriza todas as transações de categoria automática (CategorizacaoService.Resolver, AplicarTipo) e depois as transferências (ADR 0031); criar, editar ou apagar uma regra de descrição renomeia as transações de nome automático e recategoriza as que mudaram. O banco de depois do 05-categorias (a regra PADARIA saiu com a categoria). Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "listar regras",
+      "comentario": "Ordem: Prioridade e Id.",
+      "metodo": "GET",
+      "caminho": "/api/regras"
+    },
+    {
+      "nome": "listar regras sem login",
+      "metodo": "GET",
+      "caminho": "/api/regras",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "criar regra",
+      "comentario": "Texto aparado; Ativa ausente vale true; CriadoEm é o relógio.",
+      "metodo": "POST",
+      "caminho": "/api/regras",
+      "corpo": { "texto": "  cinema ", "tipoCorrespondencia": 1, "categoriaId": 7, "prioridade": 80 },
+      "capturar": { "idRegra": "/id" }
+    },
+    {
+      "nome": "criar regra com categoria que não existe",
+      "metodo": "POST",
+      "caminho": "/api/regras",
+      "corpo": { "texto": "qualquer", "tipoCorrespondencia": 1, "categoriaId": 999, "prioridade": 1 }
+    },
+    {
+      "nome": "criar regra com texto curto e prioridade alta",
+      "metodo": "POST",
+      "caminho": "/api/regras",
+      "corpo": { "texto": "a", "tipoCorrespondencia": 1, "categoriaId": 7, "prioridade": 10001 }
+    },
+    {
+      "nome": "criar regra com objeto vazio",
+      "metodo": "POST",
+      "caminho": "/api/regras",
+      "corpo": {}
+    },
+    {
+      "nome": "criar regra com a prioridade em texto",
+      "metodo": "POST",
+      "caminho": "/api/regras",
+      "corpo": { "texto": "teatro", "tipoCorrespondencia": 2, "categoriaId": 7, "prioridade": "70", "ativa": false },
+      "capturar": { "idRegraTeatro": "/id" }
+    },
+    {
+      "nome": "criar regra com a prioridade negativa",
+      "metodo": "POST",
+      "caminho": "/api/regras",
+      "corpo": { "texto": "negativa", "tipoCorrespondencia": 1, "categoriaId": 7, "prioridade": -1 }
+    },
+    {
+      "nome": "editar regra",
+      "metodo": "PUT",
+      "caminho": "/api/regras/{{idRegra}}",
+      "corpo": { "texto": " LOJA DE ROUPAS ", "tipoCorrespondencia": 2, "categoriaId": 16, "prioridade": 10, "ativa": true }
+    },
+    {
+      "nome": "editar regra que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/regras/999",
+      "corpo": { "texto": "nada", "tipoCorrespondencia": 1, "categoriaId": 7, "prioridade": 1 }
+    },
+    {
+      "nome": "editar regra com categoria que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/regras/{{idRegra}}",
+      "corpo": { "texto": "nada", "tipoCorrespondencia": 1, "categoriaId": 999, "prioridade": 1 }
+    },
+    {
+      "nome": "excluir regra que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/regras/999"
+    },
+    {
+      "nome": "excluir regra",
+      "metodo": "DELETE",
+      "caminho": "/api/regras/{{idRegraTeatro}}"
+    },
+    {
+      "nome": "reaplicar regras",
+      "comentario": "Recategoriza as transações de categoria automática com as regras de agora (a LOJA DE ROUPAS vai para Cuidados pessoais; quem não bate em regra nem no mapa da Pluggy fica sem categoria) e acerta o tipo de cada uma; depois, as transferências entre contas suas (ADR 0031).",
+      "metodo": "POST",
+      "caminho": "/api/regras/reaplicar"
+    },
+    {
+      "nome": "reaplicar regras de novo",
+      "comentario": "Nada mais muda.",
+      "metodo": "POST",
+      "caminho": "/api/regras/reaplicar"
+    },
+    {
+      "nome": "reaplicar sem login",
+      "metodo": "POST",
+      "caminho": "/api/regras/reaplicar",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "listar regras de descrição",
+      "comentario": "Ordem: nova descrição e Id; com quantas transações têm o nome dado por cada uma.",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao"
+    },
+    {
+      "nome": "prévia sem texto",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=%20%20"
+    },
+    {
+      "nome": "prévia que contém",
+      "comentario": "Sem tipo, vale 'contém'. Bate a descrição do banco ou o nome de agora; os exemplos são os 3 primeiros textos diferentes.",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=pix"
+    },
+    {
+      "nome": "prévia igual, pelo nome do tipo",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=Supermercado%20Exemplo&tipo=Igual"
+    },
+    {
+      "nome": "prévia que começa com, pelo número do tipo",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=loja%20de%20m%C3%B3veis&tipo=2"
+    },
+    {
+      "nome": "prévia com tipo que não existe",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=pix&tipo=abc"
+    },
+    {
+      "nome": "prévia com faixa de valor",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=loja&valorMinimo=100&valorMaximo=200.5"
+    },
+    {
+      "nome": "prévia com valor que não é número",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao/previa?texto=loja&valorMinimo=abc"
+    },
+    {
+      "nome": "criar regra de descrição",
+      "comentario": "Renomeia as 11 compras do supermercado (nome automático) e recategoriza as que mudaram: a regra SUPERMERCADO continua batendo pela descrição do banco.",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": " SUPERMERCADO EXEMPLO ", "tipoCorrespondencia": 3, "novaDescricao": " Supermercado do bairro " },
+      "capturar": { "idDescricao": "/id" }
+    },
+    {
+      "nome": "criar regra de descrição em cadeia",
+      "comentario": "#250: a segunda olha o nome dado pela primeira.",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": "do bairro", "tipoCorrespondencia": 1, "novaDescricao": "Mercado da esquina", "ativa": true },
+      "capturar": { "idDescricaoCadeia": "/id" }
+    },
+    {
+      "nome": "criar regra de descrição com tipo que não existe",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": "qualquer coisa", "tipoCorrespondencia": 9, "novaDescricao": "Outra" }
+    },
+    {
+      "nome": "criar regra de descrição com a faixa invertida",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": "qualquer coisa", "tipoCorrespondencia": 1, "novaDescricao": "Outra", "valorMinimo": 200, "valorMaximo": 100.5 }
+    },
+    {
+      "nome": "criar regra de descrição com valor fora da faixa",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": "qualquer coisa", "tipoCorrespondencia": 1, "novaDescricao": "Outra", "valorMinimo": 0, "valorMaximo": 1000000000 }
+    },
+    {
+      "nome": "criar regra de descrição sem os textos",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": "x", "tipoCorrespondencia": 1, "novaDescricao": "" }
+    },
+    {
+      "nome": "criar regra de descrição com faixa de valor",
+      "comentario": "Só as compras de móveis entre 100 e 200 (sem o sinal) ganham o nome.",
+      "metodo": "POST",
+      "caminho": "/api/regras-descricao",
+      "corpo": { "texto": "LOJA DE MOVEIS", "tipoCorrespondencia": 2, "novaDescricao": "Móveis novos", "valorMinimo": 100, "valorMaximo": 200.50 },
+      "capturar": { "idDescricaoFaixa": "/id" }
+    },
+    {
+      "nome": "editar regra de descrição",
+      "metodo": "PUT",
+      "caminho": "/api/regras-descricao/{{idDescricao}}",
+      "corpo": { "texto": "SUPERMERCADO EXEMPLO", "tipoCorrespondencia": 3, "novaDescricao": "Supermercado da vila", "ativa": true }
+    },
+    {
+      "nome": "editar regra de descrição que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/regras-descricao/999",
+      "corpo": { "texto": "nada", "tipoCorrespondencia": 1, "novaDescricao": "Nada" }
+    },
+    {
+      "nome": "desligar a regra de descrição da cadeia",
+      "metodo": "PUT",
+      "caminho": "/api/regras-descricao/{{idDescricaoCadeia}}",
+      "corpo": { "texto": "do bairro", "tipoCorrespondencia": 1, "novaDescricao": "Mercado da esquina", "ativa": false }
+    },
+    {
+      "nome": "excluir a regra de descrição do aluguel",
+      "comentario": "As 12 transações voltam ao nome do banco e são recategorizadas: sem regra de categoria para o texto do banco, ficam sem categoria.",
+      "metodo": "DELETE",
+      "caminho": "/api/regras-descricao/1"
+    },
+    {
+      "nome": "excluir regra de descrição que não existe",
+      "metodo": "DELETE",
+      "caminho": "/api/regras-descricao/999"
+    },
+    {
+      "nome": "excluir regra de descrição sem login",
+      "metodo": "DELETE",
+      "caminho": "/api/regras-descricao/{{idDescricaoFaixa}}",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "listar regras de descrição depois das mudanças",
+      "metodo": "GET",
+      "caminho": "/api/regras-descricao"
+    }
+  ]
+}

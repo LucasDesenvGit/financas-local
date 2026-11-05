@@ -7,8 +7,12 @@
         2. Instalacao antiga pelos scripts (servico FinancasLocal apontando para outra pasta): para o servico,
            copia banco e chaves para a pasta nova (sem apagar nada da antiga) e remove o servico antigo,
            para o .msi poder registrar o dele.
-        3. Certificado HTTPS de 127.0.0.1/localhost: reaproveita o atual ou gera um novo (5 anos), confia
-           nele nas Autoridades Raiz da maquina e grava dados\configuracao.json (caminho e senha do .pfx).
+           Leva tambem o segredos.chave, a chave dos segredos do Go (#277).
+        3. Certificado HTTPS de 127.0.0.1/localhost, pelo financas-go.exe gerar-certificado (#84, #277): reaproveita
+           o atual ou gera um novo, confia nele nas Autoridades Raiz da maquina e grava dados\configuracao.json
+           (caminho e senha do .pfx).
+        4. Porta 5443 (#300): se outro programa estiver nela, para com a mensagem no log do msiexec. O servico
+           e vital no .msi: sem isso, ele nao sobe e a instalacao falha com um erro generico do Windows Installer.
     -Acao desinstalar  (so na desinstalacao de verdade, nao na troca de versao)
         Tira o certificado das Autoridades Raiz. Os dados ficam, salvo -ApagarDados 1.
 
@@ -70,8 +74,9 @@ function Migrar-Instalacao-Antiga {
     if ($linha -like ("*" + $PastaPrograma.TrimEnd('\') + "*")) { return }   # ja e o servico do .msi
 
     Log "servico $NomeServico da instalacao pelos scripts encontrado: $linha"
-    # Ex.: "D:\...\dotnet.exe" "D:\FinancasLocal\publicado\api\Financas.Api.dll"  ou  ...\Financas.Api.exe
-    $m = [regex]::Match($linha, '([A-Za-z]:\\[^"]*?Financas\.Api\.(dll|exe))')
+    # Ex.: "D:\...\dotnet.exe" "D:\FinancasLocal\publicado\api\Financas.Api.dll"  ou  ...\Financas.Api.exe, ou (#85, o
+    # Go na frente) "D:\FinancasLocal\publicado\api\financas-go.exe" -aplicar-esquema ...: a pasta e a mesma.
+    $m = [regex]::Match($linha, '([A-Za-z]:\\[^"]*?(Financas\.Api\.(dll|exe)|financas-go\.exe))')
     $bancoAntigo = $null; $chavesAntigas = $null
     if ($m.Success) {
         $pastaAntiga = Split-Path -Parent $m.Groups[1].Value
@@ -119,6 +124,15 @@ function Migrar-Instalacao-Antiga {
         Copy-Item -Path (Join-Path $chavesAntigas "key-*.xml") -Destination $chavesNovas -Force -ErrorAction SilentlyContinue
         Log "chaves de protecao de dados copiadas de $chavesAntigas"
     }
+    # #277: a chave dos segredos do Go (segredos v2, internal/segredos). Sem ela, o Go cria outra e os segredos que ele
+    # gravou ficam ilegiveis. Vale porque o servico antigo e o novo rodam na mesma conta (LocalSystem), dona do DPAPI
+    # que protege o arquivo. Pela mesma regra das outras chaves: so se a pasta nova ainda nao tem a dela.
+    $segredosAntigo = if ($chavesAntigas) { Join-Path $chavesAntigas "segredos.chave" } else { $null }
+    $segredosNovo = Join-Path $chavesNovas "segredos.chave"
+    if ($segredosAntigo -and (Test-Path -LiteralPath $segredosAntigo) -and -not (Test-Path -LiteralPath $segredosNovo)) {
+        Copy-Item -LiteralPath $segredosAntigo -Destination $segredosNovo -Force
+        Log "chave dos segredos copiada de $chavesAntigas"
+    }
 
     # O .msi registra o servico com o mesmo nome; a pasta antiga fica como estava.
     & sc.exe delete $NomeServico | Out-Null
@@ -143,34 +157,20 @@ function Senha-Atual {
 
 function Preparar-Certificado {
     $senha = Senha-Atual
-    $reaproveitar = $false
-    if ($senha -and (Test-Path -LiteralPath $Pfx)) {
-        try {
-            $atual = Ler-Pfx $senha
-            $reaproveitar = $atual.NotAfter -gt (Get-Date).AddDays(30)
-        } catch { $reaproveitar = $false }
-    }
-
-    if ($reaproveitar) {
-        Log "certificado atual reaproveitado"
-    } else {
+    if (-not $senha) {
         $bytes = New-Object byte[] 24
         [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
         $senha = [Convert]::ToBase64String($bytes)
-        # IP no SAN: o navegador exige para https://127.0.0.1.
-        $cert = New-SelfSignedCertificate -Subject "CN=localhost" -FriendlyName $NomeServico `
-            -TextExtension @("2.5.29.17={text}DNS=localhost&IPAddress=127.0.0.1&IPAddress=::1") `
-            -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 -KeyExportPolicy Exportable `
-            -Type SSLServerAuthentication -NotAfter (Get-Date).AddYears(5) -CertStoreLocation "Cert:\LocalMachine\My"
-        try {
-            $segura = ConvertTo-SecureString $senha -AsPlainText -Force
-            if (Test-Path -LiteralPath $Pfx) { Remove-Item -LiteralPath $Pfx -Force }
-            Export-PfxCertificate -Cert $cert -FilePath $Pfx -Password $segura | Out-Null
-        } finally {
-            Remove-Item -LiteralPath ("Cert:\LocalMachine\My\" + $cert.Thumbprint) -Force -ErrorAction SilentlyContinue
-        }
-        Log "certificado novo gerado ($($cert.Thumbprint))"
     }
+
+    # #277: quem cuida do certificado e o executavel do Go (#84), como nos scripts: reaproveita o .pfx que abre com a
+    # senha e vale por mais de 30 dias, e gera outro (127.0.0.1, ::1 e localhost no SAN) no caso contrario. A senha vai
+    # pela entrada padrao, nao na linha de comando, onde outro programa a veria.
+    $go = Join-Path $PastaPrograma "financas-go.exe"
+    $resultado = $senha | & $go gerar-certificado -pfx $Pfx
+    if ($LASTEXITCODE -ne 0) { throw "O executavel do Go nao conseguiu preparar o certificado HTTPS ($LASTEXITCODE)." }
+    if ($resultado -eq "reaproveitado") { Log "certificado atual reaproveitado" }
+    else { Log "certificado novo gerado" }
 
     # Confia so na parte publica, na loja da maquina (vale para todas as contas, como no instalar-windows.ps1).
     $completo = Ler-Pfx $senha
@@ -200,6 +200,19 @@ function Preparar-Certificado {
     Log "configuracao gravada em $Configuracao"
 }
 
+# ------------------------------------------------------------------ 4) Porta ocupada (#300)
+# O servico do Financas Local ja parou (troca de versao) ou foi removido (migracao): quem estiver na porta e outro
+# programa. Sem acento nem dois-pontos colado em variavel (o arquivo e lido na pagina de codigo do sistema).
+function Conferir-Porta {
+    $conexao = Get-NetTCPConnection -LocalPort 5443 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conexao) { Log "porta 5443 livre"; return }
+    $processo = Get-Process -Id $conexao.OwningProcess -ErrorAction SilentlyContinue
+    $nome = if ($processo) { $processo.ProcessName } else { "programa desconhecido" }
+    if ($nome -eq "Financas.Api" -or $nome -eq "financas-go") { Log "porta 5443 com o proprio Financas Local (PID $($conexao.OwningProcess))"; return }
+    throw ("A porta 5443 esta em uso por $nome (PID $($conexao.OwningProcess)). O site do Financas Local nao sobe " +
+           "enquanto ela estiver ocupada. Feche esse programa (ou pare o servico dele) e rode o instalador de novo.")
+}
+
 # ------------------------------------------------------------------ Desinstalar
 function Desinstalar {
     $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
@@ -221,6 +234,7 @@ try {
     if ($Acao -eq "instalar") {
         Preparar-Dados
         Migrar-Instalacao-Antiga
+        Conferir-Porta
         Preparar-Certificado
     } else {
         Desinstalar

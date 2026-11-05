@@ -1,0 +1,400 @@
+{
+  "dotnet": "10.0.13",
+  "casos": [
+    {
+      "entrada": "",
+      "regras": "",
+      "palavras": ""
+    },
+    {
+      "entrada": "   ",
+      "regras": "",
+      "palavras": ""
+    },
+    {
+      "entrada": "\t\n",
+      "regras": "",
+      "palavras": ""
+    },
+    {
+      "entrada": "abc",
+      "regras": "ABC",
+      "palavras": "ABC"
+    },
+    {
+      "entrada": "  Supermercado Exemplo  ",
+      "regras": "SUPERMERCADO EXEMPLO",
+      "palavras": "SUPERMERCADO EXEMPLO"
+    },
+    {
+      "entrada": "Ação",
+      "regras": "ACAO",
+      "palavras": "ACAO"
+    },
+    {
+      "entrada": "AÇÃO",
+      "regras": "ACAO",
+      "palavras": "ACAO"
+    },
+    {
+      "entrada": "ação ",
+      "regras": "ACAO",
+      "palavras": "ACAO"
+    },
+    {
+      "entrada": "Pão de Açúcar",
+      "regras": "PAO DE ACUCAR",
+      "palavras": "PAO DE ACUCAR"
+    },
+    {
+      "entrada": "Itaú",
+      "regras": "ITAU",
+      "palavras": "ITAU"
+    },
+    {
+      "entrada": "itaú",
+      "regras": "ITAU",
+      "palavras": "ITAU"
+    },
+    {
+      "entrada": "Café",
+      "regras": "CAFE",
+      "palavras": "CAFE"
+    },
+    {
+      "entrada": "Café",
+      "regras": "CAFE",
+      "palavras": "CAFE"
+    },
+    {
+      "entrada": "naïve",
+      "regras": "NAIVE",
+      "palavras": "NAIVE"
+    },
+    {
+      "entrada": "Ångström",
+      "regras": "ANGSTROM",
+      "palavras": "ANGSTROM"
+    },
+    {
+      "entrada": "ÆØÅ æøå",
+      "regras": "ÆØA ÆØA",
+      "palavras": "ÆØA ÆØA"
+    },
+    {
+      "entrada": "straße",
+      "regras": "STRAßE",
+      "palavras": "STRAßE"
+    },
+    {
+      "entrada": "STRASSE",
+      "regras": "STRASSE",
+      "palavras": "STRASSE"
+    },
+    {
+      "entrada": "ﬁnal",
+      "regras": "ﬁNAL",
+      "palavras": "ﬁNAL"
+    },
+    {
+      "entrada": "Ǆ ǅ ǆ",
+      "regras": "Ǆ Ǆ Ǆ",
+      "palavras": "Ǆ Ǆ Ǆ"
+    },
+    {
+      "entrada": "ı İ i I",
+      "regras": "ı I I I",
+      "palavras": "ı I I I"
+    },
+    {
+      "entrada": "ΣΊΣΥΦΟΣ σίσυφος ς",
+      "regras": "ΣΙΣΥΦΟΣ ΣΙΣΥΦΟΣ Σ",
+      "palavras": "ΣΙΣΥΦΟΣ ΣΙΣΥΦΟΣ Σ"
+    },
+    {
+      "entrada": "Ӂ ӂ",
+      "regras": "Ж Ж",
+      "palavras": "Ж Ж"
+    },
+    {
+      "entrada": "Ñandú",
+      "regras": "NANDU",
+      "palavras": "NANDU"
+    },
+    {
+      "entrada": "ÿ Ÿ",
+      "regras": "Y Y",
+      "palavras": "Y Y"
+    },
+    {
+      "entrada": "µ",
+      "regras": "Μ",
+      "palavras": "Μ"
+    },
+    {
+      "entrada": "ŉ",
+      "regras": "ŉ",
+      "palavras": "ŉ"
+    },
+    {
+      "entrada": "ǰ",
+      "regras": "J",
+      "palavras": "J"
+    },
+    {
+      "entrada": "ﬀ",
+      "regras": "ﬀ",
+      "palavras": "ﬀ"
+    },
+    {
+      "entrada": "Ⅻ ⅻ",
+      "regras": "Ⅻ Ⅻ",
+      "palavras": ""
+    },
+    {
+      "entrada": "①",
+      "regras": "①",
+      "palavras": ""
+    },
+    {
+      "entrada": "ａｂｃ ＡＢＣ",
+      "regras": "ＡＢＣ ＡＢＣ",
+      "palavras": "ＡＢＣ ＡＢＣ"
+    },
+    {
+      "entrada": "x\u00A0y",
+      "regras": "X\u00A0Y",
+      "palavras": "X Y"
+    },
+    {
+      "entrada": "x\u2003y",
+      "regras": "X\u2003Y",
+      "palavras": "X Y"
+    },
+    {
+      "entrada": "a​b",
+      "regras": "A​B",
+      "palavras": "A B"
+    },
+    {
+      "entrada": "tab\tdentro",
+      "regras": "TAB\tDENTRO",
+      "palavras": "TAB DENTRO"
+    },
+    {
+      "entrada": "linha\nnova",
+      "regras": "LINHA\nNOVA",
+      "palavras": "LINHA NOVA"
+    },
+    {
+      "entrada": "PIX - ENVIADO*João",
+      "regras": "PIX - ENVIADO*JOAO",
+      "palavras": "PIX ENVIADO JOAO"
+    },
+    {
+      "entrada": "TRANSF.123/45",
+      "regras": "TRANSF.123/45",
+      "palavras": "TRANSF 123 45"
+    },
+    {
+      "entrada": "Méli Dólar",
+      "regras": "MELI DOLAR",
+      "palavras": "MELI DOLAR"
+    },
+    {
+      "entrada": "MELI DOLAR",
+      "regras": "MELI DOLAR",
+      "palavras": "MELI DOLAR"
+    },
+    {
+      "entrada": "\uD83D\uDE00 emoji",
+      "regras": "\uD83D\uDE00 EMOJI",
+      "palavras": "EMOJI"
+    },
+    {
+      "entrada": "\uD835\uDC00\uD835\uDC01\uD835\uDC02",
+      "regras": "\uD835\uDC00\uD835\uDC01\uD835\uDC02",
+      "palavras": ""
+    },
+    {
+      "entrada": "a\uD83D\uDE00b",
+      "regras": "A\uD83D\uDE00B",
+      "palavras": "A B"
+    },
+    {
+      "entrada": "日本語テキスト",
+      "regras": "日本語テキスト",
+      "palavras": "日本語テキスト"
+    },
+    {
+      "entrada": "한국어",
+      "regras": "한국어",
+      "palavras": "한국어"
+    },
+    {
+      "entrada": "עברית",
+      "regras": "עברית",
+      "palavras": "עברית"
+    },
+    {
+      "entrada": "العربية",
+      "regras": "العربية",
+      "palavras": "العربية"
+    },
+    {
+      "entrada": "ไทย",
+      "regras": "ไทย",
+      "palavras": "ไทย"
+    },
+    {
+      "entrada": "é́",
+      "regras": "E",
+      "palavras": "E"
+    },
+    {
+      "entrada": "́inicio",
+      "regras": "INICIO",
+      "palavras": "INICIO"
+    },
+    {
+      "entrada": "Ⓐ",
+      "regras": "Ⓐ",
+      "palavras": ""
+    },
+    {
+      "entrada": "ǈ",
+      "regras": "Ǉ",
+      "palavras": "Ǉ"
+    },
+    {
+      "entrada": "ꞵ",
+      "regras": "Ꞵ",
+      "palavras": "Ꞵ"
+    },
+    {
+      "entrada": "Ꞵ",
+      "regras": "Ꞵ",
+      "palavras": "Ꞵ"
+    },
+    {
+      "entrada": "ỳ",
+      "regras": "Y",
+      "palavras": "Y"
+    },
+    {
+      "entrada": "Ḁ",
+      "regras": "A",
+      "palavras": "A"
+    },
+    {
+      "entrada": "ß ẞ",
+      "regras": "ß ẞ",
+      "palavras": "ß ẞ"
+    },
+    {
+      "entrada": "ʼn",
+      "regras": "ʼN",
+      "palavras": "ʼN"
+    },
+    {
+      "entrada": "Kelvin K",
+      "regras": "KELVIN K",
+      "palavras": "KELVIN K"
+    },
+    {
+      "entrada": "Ω Ohm",
+      "regras": "Ω OHM",
+      "palavras": "Ω OHM"
+    },
+    {
+      "entrada": "Å angstrom",
+      "regras": "A ANGSTROM",
+      "palavras": "A ANGSTROM"
+    },
+    {
+      "entrada": "LOJA DE MOVEIS FICTICIA 9/10",
+      "regras": "LOJA DE MOVEIS FICTICIA 9/10",
+      "palavras": "LOJA DE MOVEIS FICTICIA 9 10"
+    },
+    {
+      "entrada": "ſ longo",
+      "regras": "S LONGO",
+      "palavras": "S LONGO"
+    },
+    {
+      "entrada": "ꭰ ᏸ",
+      "regras": "Ꭰ Ᏸ",
+      "palavras": "Ꭰ Ᏸ"
+    },
+    {
+      "entrada": "ͅ iota",
+      "regras": " IOTA",
+      "palavras": "IOTA"
+    },
+    {
+      "entrada": "ẛ",
+      "regras": "S",
+      "palavras": "S"
+    },
+    {
+      "entrada": "ﬆ",
+      "regras": "ﬆ",
+      "palavras": "ﬆ"
+    },
+    {
+      "entrada": "և",
+      "regras": "և",
+      "palavras": "և"
+    },
+    {
+      "entrada": "ᾀ",
+      "regras": "Α",
+      "palavras": "Α"
+    },
+    {
+      "entrada": "ᾳ",
+      "regras": "Α",
+      "palavras": "Α"
+    },
+    {
+      "entrada": "ⱥ",
+      "regras": "Ⱥ",
+      "palavras": "Ⱥ"
+    },
+    {
+      "entrada": "ɐ",
+      "regras": "Ɐ",
+      "palavras": "Ɐ"
+    },
+    {
+      "entrada": "ɫ",
+      "regras": "Ɫ",
+      "palavras": "Ɫ"
+    },
+    {
+      "entrada": "ᵹ",
+      "regras": "Ᵹ",
+      "palavras": "Ᵹ"
+    },
+    {
+      "entrada": "ßé",
+      "regras": "ßE",
+      "palavras": "ßE"
+    },
+    {
+      "entrada": "cafȩ́",
+      "regras": "CAFE",
+      "palavras": "CAFE"
+    },
+    {
+      "entrada": "İstanbul",
+      "regras": "ISTANBUL",
+      "palavras": "ISTANBUL"
+    },
+    {
+      "entrada": "İ",
+      "regras": "I",
+      "palavras": "I"
+    }
+  ]
+}

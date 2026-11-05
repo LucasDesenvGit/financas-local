@@ -14,6 +14,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# #255 (ADR 0047): o antigo job "build" virou quatro, em paralelo (o tempo do PR é o do mais lento, não a soma):
+# "o que mudou" decide; "API e banco", "front-end: Jest" e "front-end: navegador" (em 2 partes) rodam juntos. No PR, só
+# os testes afetados pelo que mudou; no push do develop/main, tudo. #231 (ADR 0049): o job "Go" roda junto, só quando
+# o PR mexe no que o Go lê. Caches: node_modules, build do Angular, Jest e o Chromium do Playwright. #86: sem o
+# .NET; o contrato e o teste de inicialização sobem o Go.
 jobs:
   # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
   manual:
@@ -34,7 +39,11 @@ jobs:
   # ADR 0039: todo PR para o develop sobe a versão no Directory.Build.props, pelo tipo do título.
   versao:
     name: versão subiu
-    if: github.event_name == 'pull_request' && github.base_ref == 'develop' && github.actor != 'dependabot[bot]'
+    # Pelo autor do PR, e não por quem disparou: o "@dependabot rebase" pedido por uma pessoa dispara em nome dela (#587).
+    # A main de volta ao develop, depois de publicar uma versão, não sobe a versão: ela é a mesma (#641, CONTRIBUINDO.md).
+    if: >-
+      github.event_name == 'pull_request' && github.base_ref == 'develop' && github.head_ref != 'main'
+      && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -46,58 +55,469 @@ jobs:
           BASE: ${{ github.base_ref }}
           TITULO_PR: ${{ github.event.pull_request.title }}
         run: python3 scripts/ci/verificar-versao.py
+      # #294: uma seção de cada tipo por versão no CHANGELOG (entrada nova vai dentro da seção que já existe).
+      - name: CHANGELOG sem seção repetida
+        run: python3 scripts/ci/verificar-changelog.py
+      # #587: o scripts/geral/atualizar-pr.sh resolve o conflito de versão e de CHANGELOG pela mesma regra.
+      - name: Teste do atualizar-pr
+        run: python3 -B scripts/geral/test_atualizar_versao_do_pr.py
+      # #600: as notas da versão de desenvolvimento cabem no limite do GitHub (125 mil caracteres).
+      - name: Teste das notas de desenvolvimento
+        run: python3 -B scripts/ci/test_notas_desenvolvimento.py
+      # #641: as notas do Release da tag também cabem no limite.
+      - name: Teste das notas da versão
+        run: python3 -B scripts/ci/test_notas_da_versao.py
 
-  build:
-    name: build
+  # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
+  mudancas:
+    name: o que mudou
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
+    outputs:
+      frontend: ${{ steps.afetados.outputs.frontend }}
+      tudo: ${{ steps.afetados.outputs.tudo }}
+      playwright: ${{ steps.afetados.outputs.playwright }}
+      jest: ${{ steps.afetados.outputs.jest }}
+      go: ${{ steps.go.outputs.go }}
+      gerenciador: ${{ steps.gerenciador.outputs.gerenciador }}
+      contrato: ${{ steps.contrato.outputs.contrato }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Testes afetados
+        id: afetados
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 scripts/ci/testes-afetados.py --base "origin/${{ github.base_ref }}"
+          else
+            python3 scripts/ci/testes-afetados.py
+          fi
+
+      # #231: o Go também lê o esquema (banco/, 2-criar-banco.sh).
+      # #370/#371: e os scripts da cobertura e do tempo, que rodam no job dele. #457: e o das regras de ouro, com a lista
+      # de exceções e o teste dele.
+      - name: Go afetado
+        id: go
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/backend/|banco/|scripts/geral/2-criar-banco\.sh$|scripts/ci/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "Nada do que o Go lê mudou: o job Go fica de fora." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # #418 (ADR 0052): o gerenciador em Go é um módulo à parte; o job dele roda só quando ele muda.
+      - name: Gerenciador em Go afetado
+        id: gerenciador
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "gerenciador=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/gerenciador-go/|\.github/workflows/ci\.yml$)'; then
+            echo "gerenciador=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gerenciador=false" >> "$GITHUB_OUTPUT"
+            echo "O gerenciador em Go não mudou: o job dele fica de fora." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # #72: o contrato roda quando muda o back-end, o esquema ou o que monta o banco do contrato.
+      - name: Contrato afetado
+        id: contrato
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "contrato=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/backend/|banco/|scripts/geral/(2-criar-banco|comum)\.sh$|\.github/workflows/ci\.yml$)'; then
+            echo "contrato=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "contrato=false" >> "$GITHUB_OUTPUT"
+            echo "Nada do back-end mudou: o contrato fica de fora." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  api:
+    name: API e banco
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: .NET
-        uses: actions/setup-dotnet@v4
+      - name: Go
+        uses: actions/setup-go@v7
         with:
-          dotnet-version: 10.0.x
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
-      # #204: pacotes NuGet entre execuções (o projeto não tem packages.lock.json; a chave são os .csproj).
-      - name: Cache dos pacotes NuGet
-        uses: actions/cache@v4
+      # #309: liga o site de verdade (banco temporário, HTTPS com certificado descartável) e espera /api/auth/estado:
+      # pega o que só aparece ao iniciar. #86: é o Go, montado como a publicação o monta, com a linha do serviço. O que
+      # é só do Windows continua com o teste do .msi (ADR 0047).
+      - name: Ligar o site (teste de inicialização)
+        run: bash scripts/ci/ligar-api.sh
+
+      - name: Conferir scripts SQL (idempotentes)
+        run: python3 scripts/ci/verificar-sql.py
+
+      - name: Conferir os diagramas do banco
+        run: python3 scripts/ci/gerar-diagrama-banco.py --conferir
+
+      # #305: a regra do cache longo (estaticos.go, no Go desde a #86) aceita o hash do build do Angular, e não o que
+      # não tem hash.
+      - name: Conferir o cache dos arquivos do build
+        run: python3 scripts/ci/verificar-cache-estaticos.py
+
+      - name: Aplicar schema num banco SQLite descartável
+        run: |
+          rm -f /tmp/ci-financaslocal.db
+          sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
+          sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
+
+  # #231 (ADR 0049): o back-end em Go. Os mesmos comandos do "Antes de subir" do src/backend/README.md.
+  go:
+    name: Go
+    needs: mudancas
+    if: needs.mudancas.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      # A versão vem do go.mod; o cache guarda os módulos e o que já foi compilado (chave: go.sum).
+      - name: Go
+        uses: actions/setup-go@v7
         with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
-          restore-keys: nuget-${{ runner.os }}-
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
 
-      - name: Compilar API
-        run: dotnet build FinancasLocal.sln -c Release
+      - name: Formatação (gofmt)
+        run: |
+          fora=$(gofmt -l .)
+          if [ -n "$fora" ]; then echo "Arquivos fora do gofmt (rode gofmt -w .):"; echo "$fora"; exit 1; fi
+
+      - name: go vet
+        run: go vet ./...
+
+      # #457 (ADR 0051): float64, time.Now() e time.Sleep de teste fora das exceções escritas (regras-go-excecoes.txt, com
+      # o motivo de cada uma). O teste do próprio script roda antes: regra que não pega o caso ruim não guarda nada.
+      - name: Regras de ouro (float64, time.Now, time.Sleep)
+        run: |
+          python3 -B ../../scripts/ci/test_verificar_regras_go.py
+          python3 -B ../../scripts/ci/verificar-regras-go.py
+
+      # #370 e #371: um go test só dá o resultado, a cobertura e o tempo. Com -json, quem mostra a saída do que
+      # falhou é o verificar-tempo-testes-go.py, que também confere o tempo de cada teste e de cada pacote.
+      - name: Testes (com detector de corrida e cobertura)
+        run: |
+          set +e
+          go test -race -json -coverpkg=./internal/... -coverprofile="$RUNNER_TEMP/cobertura.out" ./... > "$RUNNER_TEMP/testes.json"
+          resultado=$?
+          set -e
+          python3 ../../scripts/ci/verificar-tempo-testes-go.py "$RUNNER_TEMP/testes.json"
+          exit $resultado
+
+      # O piso de cada pacote (cobertura-minima.txt) só sobe: no PR, o arquivo do develop entra como --base.
+      - name: Cobertura por pacote (piso que só sobe)
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          base=()
+          if [ -n "$BASE" ] && git fetch -q --depth=1 origin "$BASE" &&
+             git show FETCH_HEAD:src/backend/cobertura-minima.txt > "$RUNNER_TEMP/pisos-base.txt" 2>/dev/null; then
+            base=(--base "$RUNNER_TEMP/pisos-base.txt")
+          fi
+          python3 ../../scripts/ci/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
+
+      # O sqlc compila com cgo (o gcc já vem no runner). Falha se uma consulta .sql mudou sem gerar o código Go.
+      - name: Código gerado em dia (go generate)
+        run: |
+          go generate ./...
+          git diff --exit-code -- . || { echo "Rode 'go generate ./...' em src/backend e suba o código gerado."; exit 1; }
+
+      - name: Compila para Windows
+        run: GOOS=windows GOARCH=amd64 go build ./...
+
+      # Falha só se o código chama uma função com vulnerabilidade conhecida (não basta o módulo estar no go.mod).
+      # #449: o govulncheck só olha os arquivos do GOOS em que roda; a segunda rodada, com GOOS=windows, cobre os
+      # _windows.go (DPAPI dos segredos, serviço do Windows). O back-end não usa cgo, então a análise cruzada vale.
+      # Instalado antes, porque um "GOOS=windows go run" compilaria o próprio govulncheck para Windows.
+      - name: Vulnerabilidades (govulncheck, Linux e Windows)
+        run: |
+          GOBIN="$RUNNER_TEMP/bin" go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          "$RUNNER_TEMP/bin/govulncheck" ./...
+          GOOS=windows "$RUNNER_TEMP/bin/govulncheck" ./...
+
+  # #459 (ADR 0051): o back-end em Go também no Windows, onde ele vai rodar como serviço. O job "Go" acima só compila
+  # para Windows; aqui rodam os testes dos arquivos _windows.go (DPAPI dos segredos, descrição do sistema) e, depois, os
+  # do serviço do Windows (#84). Sem o -race: no Windows ele pede cgo, como no job do gerenciador.
+  go-windows:
+    name: Go (Windows)
+    needs: mudancas
+    if: needs.mudancas.outputs.go == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: src/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes
+        run: go test ./...
+
+  # #418 (ADR 0052): o gerenciador em Go (src/gerenciador-go) no Windows. Lá ele compila sem cgo, então o teste roda
+  # sem o -race; o do Linux é o job abaixo.
+  gerenciador-go:
+    name: gerenciador em Go
+    needs: mudancas
+    if: needs.mudancas.outputs.gerenciador == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+        working-directory: src/gerenciador-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/gerenciador-go/go.mod
+          cache-dependency-path: src/gerenciador-go/go.sum
+
+      - name: Formatação (gofmt)
+        run: |
+          fora=$(gofmt -l .)
+          if [ -n "$fora" ]; then echo "Arquivos fora do gofmt (rode gofmt -w .):"; echo "$fora"; exit 1; fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes
+        run: go test ./...
+
+      # #435 (ADR 0052): o ícone (o cofrinho) e o manifesto do .exe, no rsrc_windows_amd64.syso que o go build junta
+      # sozinho. A descrição "Finanças Local" é o nome no topo das notificações e no Gerenciador de Tarefas (#448); sem
+      # número de versão, para o .syso não mudar a cada PR. A CI gera de novo, com o go-winres (versão fixa), e confere
+      # com o do repositório: assim ninguém precisa rodar o go-winres na própria máquina. Faltando ou diferente, falha e
+      # deixa o gerado no artefato "icone-gerenciador".
+      - name: Ícone do .exe em dia (go-winres)
+        run: |
+          mkdir -p "$RUNNER_TEMP/winres"
+          go run github.com/tc-hib/go-winres@v0.3.3 simply --arch amd64 --manifest gui --icon icone.ico --file-description "Finanças Local" --product-name "Finanças Local" --out "$RUNNER_TEMP/winres/rsrc"
+          if ! cmp -s "$RUNNER_TEMP/winres/rsrc_windows_amd64.syso" rsrc_windows_amd64.syso; then
+            echo "::error::O rsrc_windows_amd64.syso não está em dia com o icone.ico: baixe o artefato icone-gerenciador e suba o arquivo em src/gerenciador-go/."
+            exit 1
+          fi
+
+      - name: Ícone gerado (artefato)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: icone-gerenciador
+          path: ${{ runner.temp }}/winres/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # Como o README do módulo: sem cgo, sem F12 nem menu do botão direito (-tags production).
+      - name: Compila
+        env:
+          CGO_ENABLED: '0'
+        run: go build -tags production -trimpath -ldflags "-s -w -H=windowsgui" -o gerenciador-go.exe .
+
+      - name: Vulnerabilidades (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # #417 (ADR 0052): o gerenciador em Go no Linux. Lá o Wails pede cgo, o GTK 4 e o WebKitGTK 6.0 (os -dev, para
+  # compilar), então o teste roda com o -race. O resumo do job anota o tempo de instalar os pacotes e de compilar, e o
+  # tamanho do executável (critério de aceite da #417). O gofmt fica no job do Windows; o govulncheck roda nos dois,
+  # porque ele só olha os arquivos do sistema em que roda (#449).
+  gerenciador-go-linux:
+    name: gerenciador em Go (Linux)
+    needs: mudancas
+    if: needs.mudancas.outputs.gerenciador == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/gerenciador-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/gerenciador-go/go.mod
+          cache-dependency-path: src/gerenciador-go/go.sum
+
+      - name: GTK 4 e WebKitGTK 6.0
+        run: |
+          inicio=$SECONDS
+          antes=$(df --output=used -B1M / | tail -1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+          depois=$(df --output=used -B1M / | tail -1)
+          {
+            echo "### Gerenciador em Go no Linux (#417)"
+            echo "- pacotes de compilar (GTK 4 e WebKitGTK 6.0, -dev): $((SECONDS - inicio)) s, $((depois - antes)) MB no disco do runner"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes
+        run: go test -race ./...
+
+      # Como no Windows: sem F12 nem menu do botão direito (-tags production). O cache do Go guarda os pacotes já
+      # compilados entre as rodadas, então o tempo é o de uma compilação com o cache do setup-go.
+      - name: Compila
+        run: |
+          inicio=$SECONDS
+          CGO_ENABLED=1 go build -tags production -trimpath -ldflags "-s -w" -o gerenciador-go .
+          echo "- compilação com cgo: $((SECONDS - inicio)) s; executável: $(du -h gerenciador-go | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- bibliotecas que o executável pede: $(objdump -p gerenciador-go | awk '/NEEDED/ {print $2}' | tr '\n' ' ')" >> "$GITHUB_STEP_SUMMARY"
+
+      # #449: o código só de Linux (os _linux.go e o Wails do Linux: WebKitGTK, GTK 4, bandeja pelo D-Bus) só é
+      # analisado aqui. Precisa do GTK e do WebKitGTK -dev instalados acima, para carregar os pacotes com cgo. Não cobre
+      # as falhas das próprias bibliotecas do sistema (C/C++): essas chegam pelas atualizações da distribuição.
+      - name: Vulnerabilidades (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # #72 (ADR 0049 e 0051): testes de contrato. Sobe o Go como o serviço instalado, sobre o banco fictício, sem rede,
+  # com o relógio começando em 2026-10-15 01:00 UTC e a Pluggy falsa, e confere que ele responde e grava igual a
+  # src/backend/testes/contrato/esperado. Os esperados foram gravados do .NET até a #86; desde então, são a
+  # regressão do Go.
+  contrato:
+    name: contrato
+    needs: mudancas
+    if: needs.mudancas.outputs.contrato == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      # O Ubuntu 24.04 só deixa criar namespace de usuário (unshare -rn, a rede sem saída) com esta chave desligada.
+      - name: Rede isolada
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Contrato contra o Go
+        run: bash src/backend/testes/contrato/rodar.sh
+
+  jest:
+    name: "front-end: Jest"
+    needs: mudancas
+    if: needs.mudancas.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: src/frontend/package-lock.json
 
-      - name: Compilar front-end
+      # #255: o node_modules inteiro pela versão do Node e o package-lock; acertou, pula o npm ci.
+      - name: Cache do node_modules
+        id: modulos
+        uses: actions/cache@v6
+        with:
+          path: src/frontend/node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('src/frontend/package-lock.json') }}
+
+      - name: Dependências (npm ci)
+        if: steps.modulos.outputs.cache-hit != 'true'
         working-directory: src/frontend
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
+        run: npm ci --no-audit --no-fund
+
+      # #255: a transformação do TypeScript do Jest (a parte cara da 1ª execução) entre execuções.
+      - name: Cache do Jest
+        uses: actions/cache@v6
+        with:
+          path: src/frontend/.jest-cache
+          key: jest-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: jest-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
+
+      - name: Tipos
+        working-directory: src/frontend
+        run: npm run test:tipos
 
       - name: Testes do front-end (Jest)
         working-directory: src/frontend
-        run: |
-          npm run test:tipos
-          npm test -- --ci --json --outputFile=jest-resultado.json
+        run: npm test -- --ci --cacheDirectory=.jest-cache --json --outputFile=jest-resultado.json ${{ needs.mudancas.outputs.jest }}
 
       # #204: trava de desempenho. Arquivo de teste acima de 20 s ou suíte acima de 150 s falha (aviso a partir de
       # 10 s por arquivo). Ver "Testes rápidos" no CONTRIBUINDO.md.
       - name: Tempo dos testes do Jest
         run: python3 scripts/ci/verificar-tempo-testes.py src/frontend/jest-resultado.json
 
+  navegador:
+    name: "front-end: navegador (${{ matrix.parte }}/2)"
+    needs: mudancas
+    if: needs.mudancas.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        parte: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Cache do node_modules
+        id: modulos
+        uses: actions/cache@v6
+        with:
+          path: src/frontend/node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('src/frontend/package-lock.json') }}
+
+      - name: Dependências (npm ci)
+        if: steps.modulos.outputs.cache-hit != 'true'
+        working-directory: src/frontend
+        run: npm ci --no-audit --no-fund
+
+      # #255: o cache de build do Angular (angular.json: "cli.cache.environment": "all", para valer também na CI).
+      - name: Cache do build do Angular
+        uses: actions/cache@v6
+        with:
+          path: src/frontend/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
+
+      - name: Compilar front-end
+        working-directory: src/frontend
+        run: npm run build
+
       # ADR 0041: o build de produção num navegador de verdade, com a CSP da API e a API falsa (sem back-end).
       # #204: o Chromium fica em cache pela versão do Playwright; as bibliotecas do sistema (--with-deps) vêm do apt.
       - name: Cache do navegador dos testes
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}
@@ -106,25 +526,49 @@ jobs:
         working-directory: src/frontend
         run: npx playwright install --with-deps chromium
 
+      # #255: os testes divididos em 2 partes, em máquinas diferentes; no PR, só os afetados (a parte que não tem nenhum
+      # passa sem rodar nada).
       - name: Testes no navegador (Playwright)
         working-directory: src/frontend
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.parte }}/2 --pass-with-no-tests ${{ needs.mudancas.outputs.playwright }}
 
       - name: Relatório dos testes no navegador
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: testes-navegador
+          name: testes-navegador-${{ matrix.parte }}
           path: |
-            src/frontend/testes-navegador/relatorio
-            src/frontend/testes-navegador/resultados
+            src/frontend/testes/navegador/relatorio
+            src/frontend/testes/navegador/resultados
           if-no-files-found: ignore
 
-      - name: Conferir scripts SQL (idempotentes)
-        run: python3 scripts/ci/verificar-sql.py
-
-      - name: Aplicar schema num banco SQLite descartável
+  # O check exigido pela proteção do develop/main se chama "build" (o nome do job antigo). Este job junta todos os outros
+  # (#86: também o Go no Windows e o gerenciador em Go, desde que o Go é o site e o gerenciador em Go vai no .msi):
+  # passa só se todos passaram ou foram pulados de propósito (PR sem front-end); se um falhou ou foi cancelado, falha
+  # e o merge fica bloqueado, como antes.
+  build:
+    name: build
+    if: always()
+    needs: [mudancas, api, go, go-windows, gerenciador-go, gerenciador-go-linux, contrato, jest, navegador]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resultado dos jobs
+        env:
+          O_QUE_MUDOU: ${{ needs.mudancas.result }}
+          API: ${{ needs.api.result }}
+          GO: ${{ needs.go.result }}
+          GO_WINDOWS: ${{ needs.go-windows.result }}
+          GERENCIADOR: ${{ needs.gerenciador-go.result }}
+          GERENCIADOR_LINUX: ${{ needs.gerenciador-go-linux.result }}
+          CONTRATO: ${{ needs.contrato.result }}
+          JEST: ${{ needs.jest.result }}
+          NAVEGADOR: ${{ needs.navegador.result }}
         run: |
-          rm -f /tmp/ci-financaslocal.db
-          sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
-          sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
+          falhou=0
+          for nome in O_QUE_MUDOU API GO GO_WINDOWS GERENCIADOR GERENCIADOR_LINUX CONTRATO JEST NAVEGADOR; do
+            resultado="${!nome}"
+            echo "$nome: $resultado"
+            case "$resultado" in success|skipped) ;; *) falhou=1 ;; esac
+          done
+          exit $falhou

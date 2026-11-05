@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/lembrar-trabalho-longo.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

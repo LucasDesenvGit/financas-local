@@ -174,6 +174,13 @@ CREATE TABLE IF NOT EXISTS Conta
     Banco               TEXT    NULL,
     -- ADR 0024: cartão → conta a que pertence (de onde paga a fatura). Sem FK: a API limpa ao excluir a conta.
     ContaVinculadaId    INTEGER NULL,
+    -- #168 (ADR 0010): reservas/caixinhas informadas pela instituição (NULL = não informa; estimadas pelo extrato).
+    SaldoReservado      TEXT    NULL,
+    -- #168: reservas com nome e valor (lista em JSON: nome e valor de cada uma), quando a instituição detalha.
+    ReservasInformadas  TEXT    NULL,
+    -- #171: "você reduziu o limite no app?" (1 sim, 0 é compromisso, NULL sem resposta) e a diferença quando respondeu.
+    LimiteAjustadoNoApp     INTEGER NULL,
+    LimiteDiferencaAvaliada TEXT    NULL,
     -- CriadoEm/AtualizadoEm preenchidos pela API (DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     AtualizadoEm        TEXT    NOT NULL,
@@ -282,6 +289,8 @@ CREATE TABLE IF NOT EXISTS Investimento
     DataVencimento      TEXT    NULL,
     DataAplicacao       TEXT    NULL,
     Status              TEXT    NULL,
+    -- #170: nome escolhido pelo usuário ("Caixinha viagem"); a sincronização não mexe nele.
+    NomePersonalizado   TEXT    NULL,
     -- Preenchido pela API (Investimento.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     AtualizadoEm        TEXT    NOT NULL,
     CONSTRAINT UQ_Investimento_PluggyInvestmentId UNIQUE (PluggyInvestmentId),
@@ -370,6 +379,12 @@ CREATE TABLE IF NOT EXISTS Meta
     -- Ordem de prioridade (1 = primeira) para o assistente de metas dividir a sobra; 0 = ainda sem ordem.
     -- Bancos antigos: coluna via 2-criar-banco.sh.
     Prioridade  INTEGER NOT NULL CONSTRAINT DF_Meta_Prioridade DEFAULT 0,
+    -- #316: ícone escolhido para a meta (nome da lista do front-end); NULL = o padrão (cofrinho).
+    -- Bancos antigos: coluna via 2-criar-banco.sh.
+    Icone       TEXT    NULL,
+    -- #359: quanto a pessoa disse que vai guardar por mês (o plano das metas usa esse valor); NULL = o plano decide.
+    -- Bancos antigos: coluna via 2-criar-banco.sh.
+    GuardarPorMes TEXT  NULL,
     -- Preenchido pela API (Meta.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm    TEXT    NOT NULL,
     CONSTRAINT CK_Meta_ValorAlvo CHECK (CAST(ValorAlvo AS REAL) > 0),
@@ -390,6 +405,11 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     UltimoPagamentoEm   TEXT    NULL,
     -- #69: último vencimento que ainda se repete (NULL = sem fim). Ao pagar e passar dele, a conta é encerrada.
     DataLimite          TEXT    NULL,
+    -- #158 (ADR 0043): FormaCobranca 1 À mão, 2 Débito automático, 3 Cartão de crédito; TextoCobranca liga às
+    -- cobranças do extrato ("a descrição do banco contém"); Observacao é texto livre.
+    FormaCobranca       INTEGER NOT NULL CONSTRAINT DF_ContaAgendada_FormaCobranca DEFAULT 1,
+    TextoCobranca       TEXT    NULL,
+    Observacao          TEXT    NULL,
     -- #205: chave da descrição do banco (a do agrupamento das sugestões do extrato) do pagamento que é esta conta.
     ChaveExtrato        TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
@@ -594,3 +614,36 @@ CREATE TABLE IF NOT EXISTS HistoricoInvestimento
     AtualizadoEm        TEXT    NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_HistoricoInvestimento_Investimento_Data ON HistoricoInvestimento (PluggyInvestmentId, Data);
+
+/* ------------------------------------------------------------------ */
+/* Cotação de criptomoedas (#279, ADR 0048)                            */
+/* ------------------------------------------------------------------ */
+/* Último negócio em reais no Mercado Bitcoin (API pública), gravado a cada 30 minutos pela API (CriptoHostedService)
+   e guardado por 30 dias, para a tela funcionar sem internet e para a variação em 24 h. Cripto negocia 24 h por dia:
+   a chave é moeda + data e hora da fonte (UTC). */
+CREATE TABLE IF NOT EXISTS CotacaoCripto
+(
+    Moeda        TEXT NOT NULL,
+    DataHora     TEXT NOT NULL,
+    Preco        TEXT NOT NULL,
+    -- Preenchido pela API (CotacaoCripto.AtualizadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    AtualizadoEm TEXT NOT NULL,
+    CONSTRAINT PK_CotacaoCripto PRIMARY KEY (Moeda, DataHora)
+);
+
+/* ------------------------------------------------------------------ */
+/* Aportes das metas (#318)                                            */
+/* ------------------------------------------------------------------ */
+/* Um registro por "+ aporte" (ou retirada, valor negativo), com a data em Brasília: é o histórico do gráfico "Como
+   está indo" da meta. Meta.ValorAtual continua sendo o total; antes desta tabela, os aportes não tinham data. */
+CREATE TABLE IF NOT EXISTS MetaAporte
+(
+    Id       INTEGER NOT NULL CONSTRAINT PK_MetaAporte PRIMARY KEY AUTOINCREMENT,
+    MetaId   INTEGER NOT NULL,
+    Data     TEXT    NOT NULL,
+    Valor    TEXT    NOT NULL,
+    -- Preenchido pela API (MetaAporte.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
+    CriadoEm TEXT    NOT NULL,
+    CONSTRAINT FK_MetaAporte_Meta FOREIGN KEY (MetaId) REFERENCES Meta (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_MetaAporte_Meta_Data ON MetaAporte (MetaId, Data);

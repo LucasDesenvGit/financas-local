@@ -19,7 +19,7 @@ Até aqui o projeto não tinha nenhum teste automatizado: a validação era buil
 
 Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`, fora do build do Angular:
 
-- ficam em `src/frontend/testes/`, separados por objetivo: `regressao/` (comportamento que já quebrou ou que um PR garantiu) e `usabilidade/` (critérios de UI/UX do CLAUDE.md — Nielsen, WCAG 2.2 — que dá para verificar sem navegador: nome/estado acessível, teclado, Esc, conteúdo carregado só sob demanda, filtro ativo visível); `apoio/` tem o que os testes compartilham;
+- ficam em `src/frontend/testes/`, separados por objetivo: `regressao/` (comportamento que já quebrou ou que um PR garantiu) e `usabilidade/` (critérios de UI/UX de [docs/UI-UX.md](../UI-UX.md), até a #566 no CLAUDE.md — Nielsen, WCAG 2.2 — que dá para verificar sem navegador: nome/estado acessível, teclado, Esc, conteúdo carregado só sob demanda, filtro ativo visível); `apoio/` tem o que os testes compartilham;
 - `npm test` roda tudo; `npm run test:regressao` e `npm run test:usabilidade` rodam cada grupo; `npm run test:tipos` confere os tipos dos testes (o ts-jest só transpila);
 - a CI roda `test:tipos` e `npm test` logo depois do build do front-end.
 
@@ -28,16 +28,43 @@ Os testes do front-end usam **Jest 30 + `jest-preset-angular` 17**, com `jsdom`,
 - **Positivas:** os comportamentos das UX-1 a UX-11 têm rede de proteção (84 testes, ~5 s); cada teste diz qual issue ou princípio protege; uma mudança que quebre, por exemplo, o `replaceUrl` dos filtros ou o "conteúdo só ao abrir" falha na CI (conferido quebrando o código de propósito).
 - **Negativas:**
   - 5 dependências de desenvolvimento novas — `jest`, `jest-environment-jsdom`, `jest-preset-angular`, `@types/jest` e `@types/node` (para testes que leem arquivos, como o `styles.css`) — e ~370 pacotes no `package-lock.json`, que não vão para o bundle publicado mas aumentam o `npm ci`;
-  - o jsdom não calcula layout nem implementa a Popover API: tamanho de alvo (24×24), contraste e posição real ficam fora — a posição do balão é testada com `getBoundingClientRect` simulado, e a Popover API com um substituto mínimo (`testes/apoio/popover.ts`);
+  - o jsdom não calcula layout nem implementa a Popover API: tamanho de alvo (24×24), contraste e posição real ficam fora — a posição do balão é testada com `getBoundingClientRect` simulado, e a Popover API com um substituto mínimo (`testes/jest/apoio/popover.ts`);
   - se o Angular padronizar o Vitest, migrar os testes será trabalho extra (a API do Vitest é quase igual à do Jest);
   - o back-end (.NET) continua sem testes automatizados.
-- **Na prática:** bug corrigido ganha teste em `testes/regressao/` no mesmo PR; padrão novo de UI/UX do CLAUDE.md ganha teste em `testes/usabilidade/`. Telas que usam o roteador são abertas com `RouterTestingHarness` (veja `testes/apoio/transacoes.ts`), sempre com a API falsa (nunca HTTP de verdade). O `import` do `jest-preset-angular/setup-env/zone` tem de ser o primeiro do `testes/configurar-jest.ts`.
+- **Na prática:** bug corrigido ganha teste em `testes/jest/regressao/` no mesmo PR; padrão novo de UI/UX ([docs/UI-UX.md](../UI-UX.md)) ganha teste em `testes/jest/usabilidade/`. Telas que usam o roteador são abertas com `RouterTestingHarness` (veja `testes/jest/apoio/transacoes.ts`), sempre com a API falsa (nunca HTTP de verdade). O `import` do `jest-preset-angular/setup-env/zone` tem de ser o primeiro do `testes/jest/configurar-jest.ts`.
 
 ## Atualização de 2026-10-20: ícones substituídos nos testes (issue #204)
 
 - **Problema medido:** o Jest levava ~7,5 min na CI (350 s de um job de 7,7 min) e ~200 s aqui, com dezenas de arquivos de teste levando ~46 s cada, qualquer que fosse o número de testes. A causa: o `@lucide/angular` é **um arquivo só, de 10,6 MB, com ~1.900 componentes** declarados de forma parcial, e o Angular em JIT (o modo dos testes) compila todos ao carregar o pacote. Todo arquivo de teste que encosta num ícone, direta ou indiretamente (ex.: o selo do banco), pagava ~15 s. O build de produção não paga isso: ele compila antes e leva só os ícones usados.
-- **Decisão:** nos testes do Jest, o `@lucide/angular` é trocado por um substituto (`moduleNameMapper` → `testes/apoio/lucide-falso.js`): a mesma diretiva `[lucideIcon]`, sem desenhar o ícone, e um objeto fixo por nome de ícone (dá para conferir **qual** ícone a tela usa, como no teste do #135).
+- **Decisão:** nos testes do Jest, o `@lucide/angular` é trocado por um substituto (`moduleNameMapper` → `testes/jest/apoio/lucide-falso.js`): a mesma diretiva `[lucideIcon]`, sem desenhar o ícone, e um objeto fixo por nome de ícone (dá para conferir **qual** ícone a tela usa, como no teste do #135).
 - **Resultado:** 199 s → **22 s** aqui (26 s com 2 workers, como o runner da CI); soma dos tempos por arquivo de 2.059 s para 171 s; os 537 testes continuam passando.
 - **Custo:** o Jest não confere o desenho do ícone (o `<svg>` gerado pela Lucide). Isso fica com os testes no navegador (ADR 0041), que usam o pacote de verdade.
 - **Descartado:** `isolatedModules` (transpilar sem checar tipos): medido, não mudou nada (o tempo não era a checagem de tipos).
 - **Para não voltar:** a CI falha com arquivo de teste acima de 20 s ou suíte acima de 150 s, e avisa a partir de 10 s por arquivo (`scripts/ci/verificar-tempo-testes.py`, lendo o JSON do Jest). Os limites, a regra de onde cada teste mora (Jest × navegador) e como medir estão em "Testes rápidos", no `CONTRIBUINDO.md`.
+
+## Atualização de 2026-10-20: testes de estilo saíram do Jest (issue #204)
+
+Os 43 casos que liam o `styles.css` por `cssRules` ou pela ordem das regras foram para o navegador (ADR 0041, `testes/navegador/estilos.spec.ts`), que mede o efeito de verdade. No Jest ficam a lógica, o componente, o texto, a acessibilidade e as propriedades simples que o jsdom calcula (`width`, `min-height`, `visibility`), além do contraste do tema calculado a partir das cores.
+
+## Atualização de 2026-11-01: teste de arquitetura local (issue #476)
+
+Quem pode importar quem em `src/app` fica em `testes/arquitetura/arquitetura.spec.ts`, no estilo do ArchUnit do Java.
+- **Só local** (decisão de 29/10/2026): a pasta fica fora de `testes/jest/`, e o `jest.config.js` só procura lá, então o `npm test` e a CI não o rodam. Roda com `npm run test:arquitetura`.
+- **Sem dependência nova:** os imports são lidos com uma expressão regular, como nos outros testes que leem o código.
+- **As regras:**
+  1. o `@angular/common/http` só no `core/` e no `app.config.ts`, e o `HttpClient` injetado só no `ApiService` (exceção registrada: o `auth.service.ts`);
+  2. a 4. o `core/` não importa `compartilhado/`, `layout/` nem `paginas/`; o `compartilhado/` não importa `paginas/` nem `layout/`; o `layout/` não importa `paginas/`. Havia três exceções registradas, que pareciam estar no lugar errado; duas saíram na #634, e sobra a do `shell` com o `manual-conteudo`;
+  5. uma página com rota (as do `app.routes.ts`) não importa outra página com rota. Aba e janela de uma página podem;
+  6. o `compartilhado/ui/` não importa `compartilhado/bancos/`, `lancamentos/` nem `glossario/` (#634, ADR 0058);
+  7. a lógica de uma tela (`paginas/<grupo>/<tela>.ts`, o que não é componente, diretiva, pipe nem serviço) não importa `@angular/*`, `rxjs` nem o `ApiService` (#475, ADR 0059);
+  8. o componente de apresentação (a tabela `APRESENTACAO`) não importa o `ApiService` nem o `@angular/router` (#475, ADR 0059); a tabela é explícita, porque pelo nome não dá para diferenciá-lo das abas e janelas que chamam a API.
+
+
+## Atualização de 2026-11-05: os testes numa pasta só (issue #634)
+
+As três pastas de teste que ficavam soltas na raiz do `src/frontend` passaram para dentro de `testes/`, uma subpasta por ferramenta:
+- `testes/jest/` (o que era `testes/`: `regressao/`, `usabilidade/`, `apoio/` e o `configurar-jest.ts`), a única pasta do `npm test` (`roots` do `jest.config.js`);
+- `testes/navegador/` (o que era `testes-navegador/`, ADR 0041) e `testes/arquitetura/` (o que era `testes-arquitetura/`), que continuam fora do `npm test` e da CI do Jest;
+- `testes/rodar-afetados.mjs` na raiz de `testes/`, porque serve ao Jest e ao navegador.
+- **A regra:** um nível por ferramenta, sem misturar no mesmo nível "por objetivo" (`regressao`, `usabilidade`) com "por ferramenta" (`navegador`). A separação entre as ferramentas continua; só o lugar mudou.
+- **Sem mudança de comportamento:** os mesmos 110 arquivos e 778 testes do Jest, em 12 s antes e depois; o `test:tipos` continua só no Jest (`include` do `tsconfig.spec.json` em `testes/jest/`).

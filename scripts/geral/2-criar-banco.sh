@@ -40,10 +40,7 @@ ok 'pastas criadas e protegidas (melhor esforco)'
 if [[ -f "$banco" ]]; then
     etapa 'Backup do banco antes da atualizacao'
     copia="$PastaBackups/FinancasLocal-antes-instalacao-$(date +%Y%m%d_%H%M%S).db"
-    # O shell do sqlite3 so tem escape dentro de "...": \ e \" (apostrofo ou aspas no caminho).
-    copia_sql=${copia//\\/\\\\}
-    copia_sql=${copia_sql//\"/\\\"}
-    sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ".backup \"$copia_sql\""
+    sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ".backup \"$(caminho_sqlite "$copia")\""
     # shellcheck disable=SC2012
     ls -1 "$PastaBackups"/FinancasLocal-antes-instalacao-*.db 2>/dev/null | sort -r | tail -n +6 | while IFS= read -r velho; do rm -f "$velho"; done
     ok "copia em $copia"
@@ -79,6 +76,8 @@ adicionar_coluna_se_ausente "ContaAgendada" "Observacao" "TEXT NULL"
 adicionar_coluna_se_ausente "ContaAgendada" "ChaveExtrato" "TEXT NULL"
 adicionar_coluna_se_ausente "RegraDescricao" "ValorMinimo" "TEXT NULL"
 adicionar_coluna_se_ausente "RegraDescricao" "ValorMaximo" "TEXT NULL"
+adicionar_coluna_se_ausente "Meta" "Icone" "TEXT NULL"
+adicionar_coluna_se_ausente "Meta" "GuardarPorMes" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

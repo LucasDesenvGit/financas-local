@@ -2,7 +2,1296 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [Não publicado]
+## [3.3.14] — 2026-11-05
+
+### Publicação e documentação
+- **A janela de sugestões de categoria de Transações vira componente de apresentação** (parte de #475; ADR 0059). "Sugestões de categoria" saiu da tela para `transacoes-sugestoes.component.ts`. Antes, a janela mudava as linhas direto na lista da tela; agora ela avisa cada mudança (a categoria escolhida, "criar regra") e a tela refaz a lista. Os conflitos de regra (#254) passaram a ser recalculados pela tela sempre que as linhas ou as regras criadas mudam. Testes novos conferem as duas funções puras e a janela, que não mexe no que recebe; o teste no navegador do conflito falha se a tela não refizer a lista. Os prints da janela saíram iguais aos de antes. Nada muda para quem usa.
+
+## [3.3.13] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **As barras de edição de categorias e das selecionadas de Transações viram componentes de apresentação** (parte de #475; ADR 0059). A barra "Editando categorias" e a das ações nas selecionadas saíram da tela para `transacoes-barra-edicao.component.ts` e `transacoes-barra-lote.component.ts`. Elas mostram o estado e avisam a tela de cada ação; a tela é quem grava. Na barra de edição, o próprio elemento do componente é o bloco, porque a linha embaixo do título usa `>` no CSS e sumiria com o componente no meio; um teste no navegador confere essa linha. Um teste novo usa os controles das barras, e não os métodos da tela, e confere o que chega na API. Os prints das barras abertas saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
+
+## [3.3.12] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **As janelas de lançamento e de transferência de Transações viram componentes de apresentação** (parte de #475; ADR 0059). "Novo lançamento" / "Editar transação" e "Transferência entre contas" saíram da tela para `transacoes-lancamento.component.ts` e `transacoes-transferencia.component.ts`. Elas recebem o formulário, editam uma cópia e avisam a tela, que é quem grava; fechar sem salvar não muda nada. O teste de arquitetura ganha a regra 8: componente de apresentação, listado na tabela `APRESENTACAO`, não chama a API nem lê a rota. As duas janelas, que não tinham teste, ganharam testes no Jest e no navegador, do botão até o pedido que chega na API. Os prints das janelas saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
+
+## [3.3.11] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Template e CSS da tela de Transações em arquivo próprio** (parte de #475; ADR 0059). O template de 438 linhas foi para `transacoes.component.html`, e o CSS para `transacoes.component.css`. O `transacoes.component.ts` caiu de 1.286 para 765 linhas e fica só com o estado e as chamadas da API. O conteúdo não mudou: o JavaScript compilado da tela é idêntico, byte a byte, ao de antes. Nada muda para quem usa.
+
+## [3.3.10] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Os testes que leem o código enxergam o template em arquivo próprio** (parte de #475; ADR 0059). Sete testes do front-end procuram coisas no template das telas como texto, por exemplo campo de data sem o `app-campo-data`, clique sem caminho pelo teclado ou `<select>` sem a lista suspensa do site. Eles liam só o `.ts`: com o template num `.html`, passariam sem olhar nada. Agora leem pelo `testes/jest/apoio/codigo.ts`, que junta ao `.ts` o template e o CSS que o componente aponta. Um teste novo falha se um `.html` ou `.css` não é apontado por nenhum componente. O `testes-afetados.py` conta o `.html` e o `.css` como o componente deles, em vez de rodar todos os testes. Nada muda para quem usa.
+
+## [3.3.9] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **A lógica da tela de Transações em funções puras** (parte de #475; ADR 0059). A regra da tela saiu do componente para `paginas/movimentacao/transacoes.ts`, que não usa Angular. Ali ficam o filtro que vai e volta da URL, os chips de "Filtrando:", a ordenação, a seleção, o modo edição de categorias, as sugestões e o formulário. O componente caiu de 1.642 para 1.286 linhas, e um teste novo (`transacoes-logica.spec.ts`) confere essas regras sem abrir a tela: 20 casos em 0,5 s. A ADR 0059 registra como as páginas grandes do front-end se dividem: componente da tela, componentes de apresentação e funções puras. O teste de arquitetura ganha a regra 7: a lógica de uma tela não importa Angular, rxjs nem o `ApiService`. Nada muda para quem usa.
+
+## [3.3.8] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Sem exceções dos avisos no teste de arquitetura do front-end** (#634; ADR 0058). O `AvisosService` foi para o `core`, e o componente que mostra os avisos rápidos para `compartilhado/ui/`. Os avisos do sino das notificações (`painel-avisos`), que só o sino usa desde a #327, foram para `layout/`. Assim saem três das quatro exceções do `npm run test:arquitetura`, e ele ganha uma regra: o `compartilhado/ui/` não importa as pastas de assunto (`bancos/`, `lancamentos/`, `glossario/`). Nada muda para quem usa.
+
+## [3.3.7] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Páginas e componentes do front-end organizados por assunto** (parte de #634; ADR 0058). As 37 páginas, que ficavam numa pasta só, agora ficam numa subpasta por grupo do menu (`paginas/painel/`, `movimentacao/`, `planejamento/`, `patrimonio/`, `analises/`, `ajustes/`, `manual/`). Os componentes compartilhados se dividem em `ui/` e por assunto (`graficos/`, `bancos/`, `lancamentos/`, `glossario/`), e o que só a barra de cima e o menu usam foi para `layout/`. Só mudaram os lugares e os imports. Nada muda para quem usa. Branch aberta antes desta mudança que cria arquivo em `paginas/` ou `compartilhado/`: mova-o para a pasta nova antes do merge.
+
+## [3.3.6] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Os testes do front-end numa pasta só** (parte de #634). As três pastas de teste que ficavam soltas em `src/frontend` agora ficam dentro de `testes/`, uma por ferramenta: `testes/jest/` (o que era `testes/`), `testes/navegador/` (o que era `testes-navegador/`) e `testes/arquitetura/` (o que era `testes-arquitetura/`). Os comandos são os mesmos (`npm test`, `npm run test:navegador`, `npm run test:afetados`, `npm run test:arquitetura`) e rodam os mesmos testes, no mesmo tempo. Nada muda para quem usa. Branch aberta antes desta mudança que cria teste novo: mova-o para a pasta nova antes do merge.
+
+## [3.3.5] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **As notas da versão publicada cabem no limite do GitHub** (#641). O Release de uma versão junta, nas notas, ela e as de desenvolvimento desde a última publicada, a 2.17.0: quase 200 versões, que passam dos 125 mil caracteres que o GitHub aceita. Sem o corte, o workflow "Versão (instalador .msi)" falharia na tag e não publicaria o `.msi`. Agora as versões entram até onde couber, cortadas no fim de uma, com um link para o `CHANGELOG.md` da tag, como no pré-lançamento de desenvolvimento (#600). O PR que traz a `main` de volta ao `develop` depois de publicar não precisa subir a versão.
+
+## [3.3.4] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **O teste de contrato confere o certificado do site** (#638). O cliente do contrato não pula mais a verificação do HTTPS (`InsecureSkipVerify`, o alerta #14 do code scanning): o Go sobe com o certificado do `gerar-certificado`, como numa instalação, e o cliente confia só nele. Nada muda para quem usa.
+
+## [3.3.3] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Aviso no Painel também quando o banco espera um dado seu no Meu Pluggy** (#532). A conexão no estado `WAITING_USER_INPUT` aparecia como "Precisa de ação sua" em Configurações, mas o Painel e o sino não avisavam nada, e ela também não contava entre as conexões com problema. Agora os dois estados da Pluggy que pedem ação geram o aviso.
+
+## [3.3.2] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Transferência, lançamento e conta a pagar sem data são recusados** (#503). Uma chamada direta à API sem a data gravava a transferência, o lançamento ou o vencimento da conta a pagar em 01/01/0001, e o acerto das transferências passava a falhar. Agora é um erro de campo obrigatório, e nada é gravado. Pelo site nada muda: o formulário sempre manda a data.
+
+## [3.3.1] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Ordem por valor certa nas Transações e nas maiores despesas** (#499). Ao ordenar Transações pela coluna Valor, os valores com centavos (12,75, 27,45) ficavam fora do lugar, e a lista de maiores despesas dos relatórios podia pôr uma despesa de 27,45 antes de outra de 223,50, ou deixar o aluguel de fora das primeiras. Agora as duas seguem o número. Vinha da ordem do .NET, que lia o ponto do decimal como separador de milhar, e o Go tinha copiado isso na migração.
+
+## [3.3.0] — 2026-11-04 · desenvolvimento
+
+### Funcionalidades
+- **As confirmações usam uma janela do próprio site, e não a do navegador** (#631; ADR 0057). Antes de excluir, descartar ou trocar algo em lote, o site perguntava pela janela do navegador ("localhost:5443 diz", com "OK" e "Cancelar"). Agora a pergunta aparece numa janela no tema do site, com o nome do que vai mudar e o botão com o verbo da ação ("Excluir", "Descartar", "Salvar assim mesmo"), em vermelho quando apaga. "Cancelar" e Esc não fazem nada. Vale nas oito telas que perguntavam: Metas, Transações, Contas, Categorias, Investimentos, Contas a pagar, Configurações e Erros.
+- **Excluir uma meta direto do card** (#631). Cada meta ganhou "Excluir" ao lado de "Editar", com a mesma confirmação, sem precisar abrir a edição.
+
+## [3.2.9] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **Licença MIT** (#473; épico #465). Nada muda para quem usa. O repositório passa a dizer o que se pode fazer com o código.
+
+## [3.2.8] — 2026-11-04 · desenvolvimento
+
+### Publicação e documentação
+- **O diagrama de Componentes do back-end em Go** (#464, épico #465). A página nova `docs/arquitetura/componentes.md` traz o nível 3 do C4: os 61 pacotes do site agrupados por papel (entrada, servidor, autenticação, rotas, assuntos, regras sem HTTP, sincronização, partida, tarefas, clientes de fora, transversais e base), quem chama quem, onde fica a regra de cada assunto e as cinco regras de dependência que o teste de arquitetura confere. O teste de arquitetura local passa a acusar pacote que falta na página ou que ela cita sem existir mais. Os fluxos ganham "Um pedido à API", pelos componentes, e a ADR 0055, o `CLAUDE.md`, o padrão de um assunto e a skill `go-no-projeto` pedem a linha do pacote novo na página. Os comentários dos pacotes `api`, `tarefas` e `sessao` deixam de falar do .NET na frente.
+
+## [3.2.7] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI exige também o Go no Windows e o gerenciador em Go** (#86). O check `build`, que barra o merge, passa a juntar os jobs "Go (Windows)", "gerenciador em Go" e "gerenciador em Go (Linux)". Eles ficavam de fora enquanto o código só de Windows do Go não rodava no site e o `.msi` levava o gerenciador em C#.
+
+## [3.2.6] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A documentação conta o sistema sem o .NET** (#86, parte 6; épico #70). O README, a arquitetura (os diagramas de contêineres, de implantação e dos fluxos), a segurança, o modelo de ameaças (sem a fronteira entre o .NET e o Go), o guia do banco, a instalação pelo código (o desenvolvimento passa a ser só com o Go), as regras do `CLAUDE.md`, o README do back-end e as skills descrevem o site como ele é: um executável só, em Go. As ADRs que o .NET sustentava foram marcadas como substituídas (a 0005) ou em parte substituídas (a 0002, a 0011 e a 0012), e a 0049 registra o fim da migração. A remoção do .NET (#86) está completa.
+
+## [3.2.5] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go muda para `src/backend`** (#86, parte 5; épico #70). Era `src/backend-go`, de quando o .NET ocupava `src/backend`. O módulo passa a ser `github.com/LucasDesenvGit/financas-local/src/backend`, e os scripts, a CI, o instalador e a documentação seguem o caminho novo. Nada muda para quem usa. Quem tem um clone antigo pode apagar as pastas que sobraram do .NET em `src/backend/Financas.Api` e `src/backend/Financas.MigrarSqlite` (o git as ignora).
+
+## [3.2.4] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O back-end em Go perde o modo de rodar atrás do .NET** (#86; épico #70). Sem o .NET, a opção `-atras-do-dotnet`, o segredo interno entre os dois e a configuração `Go:Tarefas` viraram código sem uso e saíram. O site continua igual, com as mesmas opções e as mesmas tarefas em segundo plano.
+
+## [3.2.3] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **O código C# sai do repositório** (#86, parte 4; épico #70). A API em .NET, o `Financas.MigrarSqlite` (a migração do SQL Server), o `FinancasLocal.sln` e as sondas em C# dos testes do Go ficam só na tag `v-ultimo-dotnet`. Os gabaritos que as sondas gravaram continuam valendo, como regressão do Go. Nada muda para quem usa: o site é o Go desde a 3.0.0.
+
+## [3.2.2] — 2026-11-03 · desenvolvimento
+
+### Publicação e documentação
+- **A CI não usa mais o .NET** (#86, parte 3; ADR 0051). O contrato roda contra o Go sozinho, como o serviço instalado, e os esperados gravados do .NET viram a regressão do Go: um esperado só muda com o motivo no PR. O teste de inicialização sobe o Go, a CSP dos testes no navegador vem do Go, e saem o teste do .NET com o Go atrás dele e o NuGet do Dependabot. O `medir-desempenho.py` mede o Go.
+
+## [3.2.1] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Os arquivos do site voltam a ficar guardados no navegador** (#618). Desde a 3.0.0, o site em Go só dava o cache de um ano a uns 3 dos 35 arquivos do build: a regra que a #305 tinha corrigido no .NET não tinha vindo para o Go. Os outros iam sem cache, e o navegador perguntava ao site por eles a cada tela.
+
+## [3.2.0] — 2026-11-03 · desenvolvimento
+
+### Funcionalidades
+- **A instalação pelos scripts e o instalador `.msi` não usam mais o .NET** (#86, parte 2; épico #70; ADR 0049). A preparação do ambiente não baixa mais o SDK do .NET e a publicação compila só o Go e o front-end, o que deixa a instalação e a atualização mais rápidas. Depois de o site responder, a atualização apaga o que só o .NET usava. Quem já está na 3.0 não precisa fazer nada.
+  - **Saíram:** a opção `--backend` (no Windows, `-Backend`), o `voltar-para-dotnet`, o `-ComDotnet` do `gerar-msi.ps1` e o `--compiladores` do `parar`. Para voltar à última versão com o .NET: `git checkout v-ultimo-dotnet` e o `instalar.sh` de novo; a mensagem de falha da atualização diz isso.
+
+## [3.1.0] — 2026-11-03 · desenvolvimento
+
+### Funcionalidades
+- **O gerenciador em C# sai; fica só o em Go** (#86, parte 1; épico #70; ADR 0052). No Linux, sem o GTK 4 e o WebKitGTK 6.0, a instalação diz o comando que instala esses pacotes e não instala gerenciador nenhum (o site funciona do mesmo jeito). Quem ainda tinha o gerenciador em C# tem os atalhos e o "Iniciar com o sistema" trocados pelo em Go na próxima atualização.
+
+## [3.0.2] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Atualização pelo Git Bash no Windows não deixa mais o site fora do ar em silêncio** (#614). Sem administrador, o `instalar.sh` publicava os arquivos novos, não conseguia trocar nem iniciar o serviço e terminava em "Pronto!", com o site parado. Agora ele para logo no começo, antes de mexer em qualquer coisa, e diz para abrir o Git Bash como administrador. Uma falha ao registrar ou iniciar o serviço também passa a ser erro, com o motivo, e a escolha entre Go e .NET só é gravada quando é aplicada.
+
+## [3.0.1] — 2026-11-03 · desenvolvimento
+
+### Correções
+- **Atualização pelos scripts no Windows parava no backup do banco** (#85). Com o `sqlite3` do próprio Windows, a cópia do banco antes de atualizar, a cópia antes de pôr o Go na frente e o `4-backup.sh` falhavam com `cannot open "/c/Users/..."`: o caminho ia no formato do Git Bash dentro do comando do `sqlite3`, que o Windows não abre. Agora vai no formato do Windows. Nada era mudado antes do erro.
+
+## [3.0.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O site passa a rodar no back-end em Go, sem o .NET** (#85; épico #70; ADR 0049). É mais leve: o instalador `.msi` cai de 53 MB para 13 MB, a pasta instalada de 150 MB para 35 MB, e a memória do site de cerca de 150 MB para cerca de 18 MB. As telas e os números são os mesmos: o ensaio comparou 92 de 93 telas iguais, e a sincronização com a Pluggy grava o mesmo que antes.
+  - **O que você precisa fazer, uma vez:** depois de atualizar, entre de novo com o seu usuário e a sua senha (a senha não muda) e informe outra vez o **Client Secret da Pluggy**, em Open Finance, e o **token da brapi**, em Investimentos, se usar. A versão nova não lê os segredos gravados pela anterior; até você informar, o Client Secret aparece como não configurado e a sincronização não roda.
+  - **Se algo der errado:** a atualização pelos scripts guarda uma cópia do banco antes e volta sozinha para a versão em .NET se o site não subir. Para voltar à mão: `scripts/geral/voltar-para-dotnet.sh` (no Windows, `scripts\windows\voltar-para-dotnet.ps1`); pelo `.msi`, desinstale (os dados ficam) e instale o da versão 2.x. Na volta, os dois segredos precisam ser informados de novo.
+
+## [2.69.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O Go sozinho na frente roda tudo o que o .NET roda** (#85, parte 2; épico #70; ADR 0049). Ele passa a rodar, sem precisar de configuração, as tarefas em segundo plano: câmbio, cripto e a sincronização do Open Finance. Um Client Secret que ele não consegue ler, por ter sido gravado pela versão em .NET, aparece como não configurado na tela do Open Finance, para ser informado de novo, em vez de "configurado" com a sincronização falhando.
+
+## [2.68.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Opção para pôr o Go na frente, com volta automática** (#85, parte 1; épico #70; ADR 0049). Na instalação pelos scripts, `--backend go` (no Windows, `-Backend go`) faz o site rodar só no Go. Antes da troca, o banco é copiado e conferido; se o Go não subir em 30 s, o site volta sozinho para o .NET. O `voltar-para-dotnet` volta à mão e avisa para informar de novo o Client Secret da Pluggy e o token da brapi. O padrão continua sendo o .NET.
+
+## [2.67.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **O instalador `.msi` é gerado sem o SDK do .NET para o WiX** (#446; épico #70; ADR 0029). A CI instala o WiX 5.0.2 pelo `.msi` do próprio WiX, conferido pelo SHA-256, e não mais pelo `dotnet tool`. O SDK do .NET só continua na CI enquanto o pacote levar a API em .NET, até a inversão (#85).
+
+## [2.67.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go também pelos scripts do Windows, e o "Atualizar o gerenciador e reabrir"** (#430; épico #70; ADR 0052). O `instalar-gerenciador.ps1` passa a compilar o gerenciador novo, um `.exe` só, no lugar do de C#. Os atalhos e o "Iniciar com o Windows" continuam valendo. Na instalação de desenvolvimento, depois de "Atualizar para a última do develop" dar certo, aparece o botão **Atualizar o gerenciador e reabrir**, como no gerenciador em C#. Ele fecha, instala o gerenciador da versão nova numa janela que mostra o andamento e abre de novo.
+
+## [2.66.3] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instaladores com o Go: fechamento** (#277, parte 6; épico #70). O README ganha dois problemas comuns: o instalador que recusa um Windows antigo e o gerenciador que não abre sem o WebView2. A ADR 0029 registra por que a assinatura do `.msi`, o Windows ARM e um pacote pronto no Linux ficam de fora. A CI do instalador passa a anotar o tamanho e a memória do pacote de hoje e do "só Go".
+
+## [2.66.2] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Instalação no Linux sem a ICU** (#277, parte 5). Num Linux mínimo, sem a `libicu`, o .NET não rodava, e a instalação só parava no meio da compilação, com uma mensagem técnica. Agora ela confere a ICU antes de baixar qualquer coisa e diz o pacote junto com o resto (no Debian e no Ubuntu, `libicu-dev`, e também `ca-certificates`). Um teste novo instala tudo do zero num `debian:stable-slim`, só com o que o script pede, e sobe o site com o .NET e com o Go sozinho.
+
+## [2.66.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instalador `.msi` só com o Go, pronto e desligado** (#277, parte 4; épico #70). O `gerar-msi.ps1 -SoGo` monta o pacote sem a API em .NET, com o executável do Go como serviço, e a CI o instala e confere o login e o site. Os pacotes publicados continuam iguais; a troca é da inversão (#85).
+
+## [2.66.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go no Linux** (#277, parte 3; épico #70; ADR 0052). O `instalar.sh` e o `scripts/linux/instalar-gerenciador.sh` compilam o gerenciador novo, com o atalho e o ícone no menu de aplicativos, e o "Iniciar com o sistema" passa a abri-lo. Se faltar o GTK 4 ou o WebKitGTK 6.0, o script mostra o comando que instala esses pacotes na sua distribuição e, por enquanto, instala o gerenciador em C#, como antes. A instalação também avisa quando o site só vai subir com a sessão aberta (*linger* desligado). No terminal, `--situacao` mostra a situação do site sem abrir a janela, como no gerenciador em C#.
+
+## [2.65.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O instalador `.msi` traz o gerenciador em Go** (#277, parte 2; épico #70; ADR 0052). Ele substitui o de C#, tem o mesmo nome e os mesmos atalhos, e "Iniciar com o Windows" continua ligado para quem já usava. É um arquivo só, de ~16 MB, no lugar de ~240 arquivos e 121 MB. A janela usa o WebView2 da Microsoft: se ele faltar, a tela final do instalador avisa e diz onde baixar, e o site funciona do mesmo jeito.
+
+## [2.64.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Instalador `.msi` preparado para o Go** (#277, parte 1; épico #70). O certificado HTTPS passa a ser feito pelo executável do Go, como nos scripts, e o que ainda vale é reaproveitado. Quem passa dos scripts para o `.msi` leva também a chave dos segredos do Go. O instalador e o `instalar-windows.ps1` recusam, com uma mensagem clara, um Windows anterior ao Windows 10 versão 1809 (ou ao Windows Server 2019), em vez de instalar um site que não abre. Com o Firefox instalado, a tela final avisa que ele não usa os certificados do Windows por padrão e diz como aceitar.
+
+## [2.63.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **A versão de desenvolvimento volta a ser publicada** (#600). As notas dela copiavam o CHANGELOG inteiro desde a última versão publicada e passaram do limite de 125 mil caracteres do GitHub, e o workflow "Versão (instalador .msi)" falhava no develop, sem pré-lançamento "desenvolvimento" para os gerenciadores. Agora essa parte entra até onde couber, cortada no fim de uma versão, com um link para o resto no `CHANGELOG.md`; os blocos por versão, que os gerenciadores leem, entram inteiros.
+
+## [2.63.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Certificado HTTPS feito pelo executável do Go, sem o .NET** (#84, parte final; épico #70). Numa instalação nova ou quando o certificado está para vencer, ele sai do `gerar-certificado`, e o certificado que ainda vale continua. No Linux, a instalação não tenta mais confiar nele sozinha: ela mostra os comandos com o caminho do arquivo, como já fazia nas distribuições em que a tentativa falhava. O site segue rodando no .NET; a CI agora confere o Go sozinho como serviço nos dois sistemas, e o gerenciador, o `parar` e o `.msi` reconhecem o processo dele.
+
+## [2.62.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **O Go pronto para rodar como serviço e gerar o próprio certificado** (#84, parte 1; épico #70). Nada muda para quem usa: o serviço continua sendo o .NET, e os scripts ainda não usam isso. No Windows, o executável agora conversa com o gerenciador de serviços e escreve avisos e erros no Log de Eventos. O subcomando `gerar-certificado` reaproveita o `.pfx` que ainda vale e gera outro quando faltam 30 dias, com a parte pública num `.pem` ao lado.
+
+## [2.61.2] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Gerenciador manda atualizar a instalação pelos scripts com o `instalar.sh`** (#598). Na instalação pelos scripts, o gerenciador do Linux mostrava o comando `git pull && scripts/geral/3-publicar-atualizar.sh && scripts/linux/instalar-gerenciador.sh`, e o do Windows citava o `3-publicar-atualizar.sh`. Quando o código novo pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha. Agora o comando é `git pull && scripts/geral/instalar.sh`, que traz o .NET e o Go das versões novas e, no Linux, já atualiza o gerenciador no fim; o texto do Windows pede o `git pull` e o `instalar-windows.cmd` (ou o `instalar.sh`). Vale nas duas janelas em C# e no gerenciador em Go. Manual: não se aplica (o Manual já manda usar o `instalar.sh`).
+
+## [2.61.1] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Arquitetura de acordo com o que o Go já atende** (#575, seção 2 da varredura de 01/11/2026, revista com o `develop` de 02/11). O `ARQUITETURA.md` passa a dizer que todos os assuntos já têm código Go: o planejamento atende o site, e os investimentos, o painel e o Open Finance estão portados e passam no contrato, mas desligados em `Go:Prefixos` (o Open Finance, até a troca dos segredos, #85). O mapa de contextos ganha a seta do planejamento para o painel e marca os assuntos desligados no site; o diagrama de contêineres, a PTAX que o .NET ainda consulta; o Go sozinho deixa de ser "o esqueleto da #73"; a lista dos serviços do .NET fica completa, com o câmbio e a cripto rodando pelo `Go:Tarefas`; e a tabela de pastas do Go remete ao README dele. Nos fluxos: o planejamento entre o que o Go atende, as seis rotinas da partida e o carimbo da sessão conferido em todo pedido (só o CSRF é dos que gravam). No domínio, conta a pagar, orçamento e meta em Go. O modelo de ameaças ganha a fronteira do gerenciador com a API e o banco (o certificado aceito sem conferir no loopback e a cópia como administrador) e as cópias automáticas em `dados/backups`. O índice das ADRs diz que a 0047 está em parte substituída pela 0050, que a 0052 substitui a 0028 e a 0033 quando o gerenciador em Go for publicado, e que a mutação da 0051 roda também no PR (#456). Os requisitos não funcionais ganham o limite de 60 s por pacote do Go. Manual: não se aplica.
+
+## [2.61.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Tarefa periódica da sincronização em Go** (#83, parte 5 de 5; épico #70). Nada muda para quem usa: `Go:Tarefas` continua sem `Sincronizacao`, e o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Com a mesma agenda do .NET, a tarefa divide com as rotas a trava de uma rodada por vez, e todo o código do Open Finance fica pronto no Go.
+
+## [2.60.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Sincronização do Open Finance em Go** (#83, partes 3 e 4 de 5; épico #70). Nada muda para quem usa: o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Passam para o Go a sincronização completa (contas, faturas, transações, investimentos, empréstimos e a carteira de renda variável) e as rotas `testar`, `conexoes`, `sincronizar` e `importar-open-finance`. O contrato ganha uma Pluggy falsa, para o .NET e o Go sincronizarem o mesmo cenário.
+
+## [2.59.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Rotas do Open Finance em Go** (#83, parte 2 de 5; épico #70). Nada muda para quem usa: o prefixo `open-finance` continua desligado no site até a troca dos segredos (#85). Passam para o Go as 12 rotas que não sincronizam: credenciais, seu nome nos Pix, conexões, status, logs e o mapa de categorias da Pluggy.
+
+## [2.58.6] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Dependências do front-end: Angular 22.2.4, Lucide 1.64.0 e `@types/node` 26.6.6** (#590, Dependabot #584, #585 e #586, juntos num PR só porque mexem no mesmo `package-lock.json`). O Angular (`common`, `compiler`, `core`, `forms`, `platform-browser`, `router` e `compiler-cli`) sobe uma correção, 22.2.3 → 22.2.4; os ícones do `@lucide/angular` vão de 1.61.0 a 1.64.0; o `@types/node`, só de desenvolvimento, de 26.6.5 a 26.6.6. O `package-lock.json` tem os mesmos pacotes que o Dependabot gerou em cada um. Manual: não se aplica.
+
+## [2.58.5] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Um comando resolve o conflito de versão e de CHANGELOG dos PRs** (#587). Nada muda para quem usa. Todo PR sobe a versão e escreve no topo do CHANGELOG (ADR 0039), então cada merge deixava os outros PRs abertos em conflito nesses dois arquivos. Agora `scripts/geral/atualizar-pr.sh <número do PR>` traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no nível em que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo com o número novo e a data de hoje, confere e envia; conflito em outro arquivo, ele desfaz e lista. O check "versão subiu" passa a pular o Dependabot pelo autor do PR: um `@dependabot rebase` pedido por uma pessoa disparava em nome dela e o check cobrava a versão. ADR 0039 atualizada. Manual: não se aplica.
+
+## [2.58.4] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Instalação e contribuição de acordo com o que os scripts e a CI fazem** (#575, seção 3 da varredura de 01/11/2026). Quem instala pelos scripts passa a ser orientado a atualizar com `git pull` e `scripts/geral/instalar.sh`: só o `3-publicar-atualizar.sh` falha quando o `go.mod` pede um Go mais novo, que só a etapa 1 baixa (README, `INSTALACAO-PELO-CODIGO.md`, `CONTRIBUINDO.md` e o modelo de PR). O guia de instalação pelo código ganha o Go no desenvolvimento local (sem o `financas-go` ao lado da API, as rotas do Go respondem 503), os dois processos do sistema instalado, a árvore de pastas de hoje, o que desinstalar além da pasta (a unidade do systemd, o *linger* e o certificado) e o que os gerenciadores fazem de fato; o .NET é conferido só pelo SHA-512. O `CONTRIBUINDO.md` ganha a tabela completa dos jobs da CI, a exceção dos jobs fora do `build` (Go no Windows e gerenciador em Go, até a #84/#85 ou o gerenciador em Go no `.msi`), o `feat(banco)!` como marca de estrutura (a API aplica o esquema sozinha), o `test:afetados` no checklist e as convenções do Go. O modelo de PR acompanha o `CLAUDE.md`; o de bug pede Configurações › Erros e o log do Linux. O `CLAUDE.md` cita o gerenciador em Go e o workflow do `.msi` entre os que seguem o guia de restaurar. Também: as telas do README, "Procurar versão nova ao abrir", o passo do diagrama e os prefixos `DF_`/`UX_` no guia do banco, as ligações sem chave estrangeira, as cotações e índices públicos no `DADOS-PESSOAIS.md` e a origem dos erros no Visualizador de Eventos (`Financas.Api`, pelo código; não conferido num Windows). Manual: não se aplica.
+
+## [2.58.3] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Privacidade e Manual de acordo com o que o sistema faz** (#575, seção 1 da varredura de 01/11/2026). O Manual passa a listar tudo o que sai do computador: o Mercado Bitcoin (cotação das criptomoedas, só os pares fixos), o token da brapi (quando você informou um) e o GitHub, que o gerenciador consulta para achar versão nova. Ele deixa de dizer "nunca nome ou CPF de terceiros": o nome não fica em campo próprio, mas a descrição vem do banco como está e costuma trazer o nome de quem pagou ou recebeu. Os avisos que foram para o sino (#327) deixam de aparecer como "o Painel avisa": consentimento vencendo, descrições pouco informativas, cobranças que não vieram, cartão arquivado e reservas para conferir; "Conhecendo a tela" ganha o sino. Cópia do banco, restauração, atualização e problemas comuns passam a ter os passos pelo gerenciador, para quem instalou pelo `.msi`, além dos scripts. Seção nova "Fonte das cotações e token da brapi", em Investimentos. A Segurança do Manual lista tudo o que a auditoria registra. Em `docs/`: o `DADOS-PESSOAIS.md` ganha "Seu nome nos Pix" e diz onde se informa o token da brapi; o `SEGURANCA.md` diz que o token vai no cabeçalho `Authorization`, que o bloqueio do login se ajusta em Parametrização e onde fica a pasta `dados` em cada jeito de instalar; o `MODELO-DE-AMEACAS.md` acompanha a auditoria, o bloqueio e a pasta `dados`.
+
+## [2.58.2] — 2026-11-02 · desenvolvimento
+
+### Publicação e documentação
+- **Documentação do Go e das skills de acordo com o código** (#575, seção 4 da varredura de 01/11/2026). A skill `migrar-para-go` manda arredondar com `tipos.Arredondar`, e não com o `RoundBank` do `shopspring/decimal`, que mexe na escala e muda o JSON, e passa a citar o `tipos.Dividir` para a divisão; a cascata ao apagar se confere no `01-estrutura.sql` e no `FinancasDbContext.cs`, e não numa tabela da #74 que não está no repositório. A revisão da `go-no-projeto` põe o `float64`, o `time.Now()` e o `time.Sleep` entre o que a CI já pega (#457), e pacote novo passa a pedir 80% de cobertura e um lugar numa das listas de mutação (#456). O README do Go ganha os pacotes que faltavam na tabela (contas a pagar, orçamentos, metas, conferência com o banco, cobranças, partida, erros e o teste de arquitetura), as 18 rotas da carteira, o Go sozinho como ele é hoje (com login e todas as rotas) e o job "Go (Windows)". O README do contrato lista os arquivos 08, 09 e 10; o exemplo do `testeapoio` usa um `Registrar` que existe; o do gerenciador cita os `foco_*.go`; o `CLAUDE.md` diz o que o agente `dev-go` carrega. Manual: não se aplica.
+
+## [2.58.1] — 2026-11-02 · desenvolvimento
+
+### Correções
+- **Remover a conexão apaga mesmo tudo o que veio dela** (#575). Ao remover uma conexão em Configurações, o banco já apagava em cascata as contas, transações, faturas, investimentos e empréstimos dela, mas duas tabelas ficavam: o histórico dos investimentos (`HistoricoInvestimento`, sem chave estrangeira de propósito, para guardar o investimento resgatado) e o registro das sincronizações (`SincronizacaoLog`, que só perdia o vínculo). Agora a API apaga as duas junto, numa transação só, e o texto de privacidade (`docs/DADOS-PESSOAIS.md`) diz exatamente o que sai. O registro de uma sincronização de todas as conexões juntas, que não é de nenhuma, continua. Quem já removeu uma conexão antes continua com o que sobrou dela: a correção não limpa o que ficou de remoções antigas. O contrato ganha o `16-open-finance`, com a remoção. Manual: não se aplica (o Manual não detalha o que a remoção apaga, e a confirmação da tela continua certa).
+
+## [2.58.0] — 2026-11-02 · desenvolvimento
+
+### Funcionalidades
+- **Cliente da Pluggy em Go** (#83, parte 1 de 5; épico #70). Nada muda para quem usa: o pacote `internal/pluggy` ainda não tem rota nem é chamado por ninguém. É a base da sincronização em Go, com as mesmas tentativas e mensagens do .NET, e não segue redirecionamento para fora do host configurado, para a API key não sair dele.
+
+## [2.57.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Painel em Go** (#80, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/painel` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, `GET /api/painel` (saldos, dívidas dos cartões e dos financiamentos, investido, patrimônio com e sem renda variável, receitas e despesas de emergência do mês, orçamentos e os estourados, faturas do mês, últimas e próximas transações, evolução de 12 meses) e `GET /api/painel/avisos` (os alertas na mesma ordem do C#: contas vencidas, moedas sem cotação, contas em outra moeda, cobranças, reservas a conferir, conexões do Open Finance, erros do sistema e contratos em atraso, além das descrições pouco informativas). Os 10 casos do contrato `13-painel`, gravados do .NET, passam com o Go atendendo. Com as partes 1 e 2, todas as rotas da #80 estão em Go. Manual: não se aplica.
+
+## [2.56.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Relatórios do painel em Go** (#80, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `/api/relatorios` no Go. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET, as rotas de Relatórios que faltavam: despesas por categoria, fluxo mensal (com as despesas de emergência), a visão anual (resumo do ano, comparação com outro ano, anos disponíveis, despesas por natureza e a saúde financeira com o patrimônio da carteira, das reservas e do Open Finance), a projeção dos próximos meses (médias, parcelas futuras e faturas dos cartões do Open Finance) e as maiores despesas do período. Os 29 casos do contrato `14-relatorios`, gravados do .NET, passam com o Go atendendo. Manual: não se aplica.
+
+## [2.55.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Empréstimos e investimentos do Open Finance em Go** (#80, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar os prefixos `painel` e `investimentos`. Passam a existir em Go, com o mesmo JSON e o mesmo banco do .NET: `GET /api/emprestimos` (os contratos com os totais de financiamentos e de empréstimos separados e os pagamentos dos últimos 12 meses, ADR 0014) e as 3 rotas de `/api/investimentos` (a lista com o saldo em reais, o histórico de rendimento mês a mês, ADR 0045, e o renomear). Os casos do contrato `15-emprestimos` e os novos de `11-investimentos`, gravados do .NET, passam com o Go atendendo. A gravação do histórico fica pronta para a sincronização do Open Finance (#83).
+
+## [2.54.8] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Méli Dólar reconhecido também com acento ("MÉLI DÓLAR")** (#567). A busca das transações de Méli Dólar no banco usava um `LIKE` que só ignora maiúsculas e minúsculas nas letras sem acento: "Méli", com o "é", ficava de fora. Isso valia em dois lugares, que agora aceitam o acento: a rotina de partida que passa para "Investimentos" as compras e vendas já importadas quando a regra padrão é criada (ADR 0038), e a reserva do Méli Dólar em Investimentos › Reservas, que deixava de somar essas compras e vendas. A comparação final continua pelo texto sem acento e sem caixa, então "MALI DOLAR" não entra. Nos dados reais conferidos o banco manda "MELI" sem acento; a correção protege quem receber com acento. Quem já tem a regra não refaz a busca da partida (sem marca nova); a reserva, que é calculada na hora, já passa a contar. Vale no C# e no Go, com os gabaritos gravados de novo pelas sondas do C#. Manual: não se aplica.
+
+## [2.54.7] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Erro que acontece na hora de parar a API deixa de se perder** (#569). O gravador de Configurações › Erros tira um lote da fila e grava no banco. Se o desligamento da API começava no meio dessa gravação, ela era cancelada e o lote, que já tinha saído da fila, se perdia; o erro só ficava no log do sistema. Agora o lote retirado é gravado com um prazo próprio, de 5 segundos, que não acaba com o desligamento, e o que ainda está na fila é gravado no fim também quando o laço termina sem exceção. Vale no C#, que é quem grava hoje, e no Go, que grava depois da inversão (#85); o Go ganha um teste determinístico da corrida, que fazia um teste antigo falhar 1 vez em 20 (#458). Manual: não se aplica.
+
+## [2.54.6] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Regras padrão novas criadas quando a categoria "Investimentos" volta** (#568). As regras padrão que chegaram depois da instalação (Méli Dólar, ADR 0038; aplicação e resgate, #172) passam para "Investimentos" as transações já importadas, uma vez por banco, e uma marca em `Configuracao` guarda que isso já foi feito. A marca era gravada antes de procurar a categoria: quem estava sem a categoria "Investimentos" (de transferência) na primeira subida da API, por tê-la apagado, renomeado ou trocado de tipo, nunca recebia essas regras, nem depois de criar a categoria de novo. Agora a marca só é gravada quando a categoria existe, e as regras nascem na primeira subida depois de ela voltar. Uma regra que você apagou continua sem voltar. A correção vale no C# e no Go, que tem o teste do caso. Manual: não se aplica.
+
+## [2.54.5] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`CLAUDE.md` enxuto, cada bloco no lugar dele** (#566, épico #486). Nada muda para quem usa. O `CLAUDE.md`, que entra inteiro em toda sessão e em todo subagente do Claude, cai de 36,7 KB para 17,7 KB. Fica o que vale em qualquer tarefa ou dispara no meio de outra (idioma, git, versão, CHANGELOG, ADRs, banco, dado pessoal, Manual, dinheiro no Go, segurança); o resto vai para o lugar dele, com uma linha dizendo quando ler. As referências de UI/UX e os padrões de tela adotados passam para um **`docs/UI-UX.md`** novo, com o mesmo conteúdo, porque as pessoas também precisam deles; o `README.md`, o `CONTRIBUINDO.md`, as ADRs 0013, 0018, 0020, 0021, 0046 e 0052, as skills e os comentários dos testes de usabilidade passam a citá-lo. O `CONTRIBUINDO.md` ganha a seção "O que a CI roda" (os scripts e os workflows, antes listados no `CLAUDE.md`), os comandos de *blocked by* e de sub-issue e o Project do backlog; as pegadinhas do Playwright, os testes do Go e a arquitetura do C# ficam só onde já estavam (`CONTRIBUINDO.md`, skill `testar-no-navegador`, ADR 0051, `docs/ARQUITETURA.md`). As convenções do código Go passam a ter como fonte a ADR 0049 e a skill `go-no-projeto`; no `CLAUDE.md` ficam a funcionalidade nova em Go e o dinheiro fora do `float64`.
+
+## [2.54.4] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Skill `angular-no-projeto` e agente `dev-angular`** (#559, épico #486). Nada muda para quem usa. O front-end ganha a mesma estrutura do Go (#560): uma skill permanente com o roteiro de tela nova, de mudança, de avaliação de UI/UX e de revisão, que aponta a fonte de cada regra (`CLAUDE.md`, ADRs 0013, 0017, 0018, 0020, 0021, 0026, 0032, 0041 e 0046, `CONTRIBUINDO.md`) em vez de copiá-la. As referências são lidas sob demanda: estilo, com os pontos em que o projeto diverge do angular.dev (`Eager` com zone.js no lugar de OnPush, template inline, pastas por tipo, testes fora da pasta do código, `MoedaPipe` no lugar do `CurrencyPipe`, nada de biblioteca de componentes), e a regra até então não escrita de que OnPush só vale com todo o estado em signal; os componentes de `compartilhado/` para cada padrão (gráfico, campo de valor e de data, seletor de mês, interruptor, termo, modal); onde mora cada teste e o que rodar antes do push; o checklist de avaliação de tela e de revisão do que a CI não pega; e exemplos que apontam para telas reais. O agente `dev-angular` tem três modos (avaliação de UI/UX, implementação e revisão), carrega as skills `angular-no-projeto` e `testar-no-navegador` na partida e usa o mesmo hook do `dev-go`, que barra `gh pr merge` e `git push` forçado. O `CONTRIBUINDO.md` passa a listar as skills e os agentes do projeto.
+
+## [2.54.3] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Skill `go-no-projeto` e agente `dev-go` enxuto** (#560, épico #486). Nada muda para quem usa. O Go do projeto ganha uma skill permanente: o roteiro de funcionalidade nova em Go, mudança e revisão, que aponta a fonte de cada regra (`CLAUDE.md`, ADRs 0049, 0051 e 0056, `CONTRIBUINDO.md`) em vez de copiá-la. Ela traz as referências lidas sob demanda: estilo, com os pontos em que o projeto diverge dos guias de fora (nomes em português, `Id`, `[]` no JSON, só a biblioteca padrão nos testes, camadas por assunto); exemplos, que apontam para pacotes reais; o checklist de revisão do que a CI não pega; e as fontes conferidas para a "Aula rápida". A `migrar-para-go` fica só com o que é da migração e perde o que tinha vencido (a ADR do Go "a aceitar", o govulncheck "quando estiver na CI", o `collate` como dependência nova). O agente `dev-go` passa a ter quatro modos (análise, porte, funcionalidade nova e revisão), carrega a skill na partida e tem um hook que barra `gh pr merge` e `git push` forçado. O `CONTRIBUINDO.md` e o README do Go passam a dizer que a mutação roda também no PR (#456).
+
+## [2.54.2] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Modelos de issue de manutenção e de investigação** (#562). Além de "Problema" e "Melhoria", o *New issue* passa a ter **Manutenção (chore)**, para a tarefa interna que o usuário não vê (dependência, CI, script, documentação, limpeza), e **Investigação (spike)**, para uma pergunta a responder antes de decidir, com prazo e com o que sai no fim (resposta, ADR ou issues novas). Cada um aplica a sua etiqueta, `chore` ou `spike`. Nada muda para quem usa.
+
+## [2.54.1] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do Go sem `time.Sleep` de espera e as regras de ouro conferidas na CI** (#457, #458, ADR 0051). Nada muda na tela. Os testes que dormiam para esperar trocaram o sono por sinal: o servidor avisa pelo `Opcoes.AoEscutar` quando já aceita conexões, o gravador de erros e o relógio de teste rodam no `testing/synctest` e a data do arquivo do esquema vai para o passado com `os.Chtimes`. Um teste do gravador que falhava uma vez em 20 (dependia de qual goroutine corria primeiro) ficou determinístico. No job "Go", o `scripts/ci/verificar-regras-go.py` agora falha com `float64` (e `Float64()`, `ParseFloat`), com `time.Now` fora do `internal/relogio` e com `time.Sleep` de teste fora do `synctest`, dizendo o que usar no lugar; as 52 exceções (nenhum `float64` era dinheiro) estão em `scripts/ci/regras-go-excecoes.txt`, cada uma com o motivo, e o script tem teste próprio. Manual: não se aplica.
+
+## [2.54.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Rotinas de partida em Go** (#444, épico #70). Nada muda para quem usa: o .NET continua rodando as seis rotinas que acertam dados toda vez que a API sobe, e o Go só as roda quando estiver na frente (opção `-rotinas-de-partida`, depois da inversão, #85). O pacote `internal/partida` chama, na ordem do `Program.cs`, a regra de cada assunto: regras padrão novas (com a marca em `Configuracao`), entradas nos cartões, compras parceladas estornadas (`ParcelasFuturas.ComprasEstornadas` portada para `internal/parcelas`), transferências, contas a pagar cobradas sozinhas e trocos sem dúvida. Cada rotina grava numa transação própria antes da próxima; erro numa vira aviso e a partida segue para as seguintes (o `try/catch` do .NET para na primeira; diferença registrada na ADR 0049). As três rotinas novas têm gabarito gravado pelo `CategorizacaoService` de verdade (sonda em C#), com 149 transações, e a segunda partida não muda nada.
+
+## [2.53.6] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **`govulncheck` também no Linux e com `GOOS=windows`** (#449). O `govulncheck` só olha os arquivos do sistema em que roda: o do gerenciador em Go rodava só no Windows, e o código só de Linux (os `_linux.go` e o Wails do Linux: WebKitGTK, GTK 4, bandeja pelo D-Bus) nunca era analisado; o do back-end rodava só no Linux, e os `_windows.go` (DPAPI dos segredos) ficavam de fora. Agora o job "gerenciador em Go (Linux)" roda o `govulncheck`, e o job "Go" roda duas vezes, a segunda com `GOOS=windows`. Não cobre as falhas das bibliotecas do sistema (WebKitGTK, GTK, WebView2), que chegam pelas atualizações da distribuição e do Windows. Nada muda para quem usa.
+
+## [2.53.5] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Planejamento atendido pelo Go** (#555, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `planejamento` entra em `Go:Prefixos` com `/api/contas-agendadas`, `/api/orcamentos` e `/api/metas`: as contas a pagar (lista, avisos, sugestões do extrato, criar, editar, "é a mesma", pagar e excluir), os orçamentos (lista do mês, salvar, excluir, a sugestão por categoria, aplicar e copiar do mês anterior) e as metas (lista, o plano do caixa, a ordem, criar, editar, aportes e excluir). Para voltar ao .NET: esvaziar a linha `planejamento` no `appsettings.json` e reiniciar o serviço.
+
+## [2.53.4] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Teste de mutação do back-end no PR** (#456, ADR 0051). Antes ele só rodava toda segunda e à mão, e uma regressão nos testes aparecia dias depois. Agora o PR que mexe no back-end mede os pacotes que mudou e falha abaixo do piso; o semanal continua medindo tudo. A CI também falha quando um pacote de `internal/` não está na lista da mutação nem na lista de fora de propósito (com o motivo). Entraram os 7 pacotes que faltavam (`auditoria`, `banco`, `banco/esquema`, `config`, `relogio`, `servidor`, `tarefas`), todos com 100%, depois de 3 mutações vivas no `config` e no `tarefas` mortas por teste novo. Nada muda para quem usa.
+
+## [2.53.3] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de CSP reconhece `</script >`** (#551, code scanning #2, CodeQL `js/bad-tag-filter`). A regex que procura `<script>` escrito no `index.html` só reconhecia o fechamento exato `</script>`; agora aceita espaço ou atributo antes do `>`. Era só o teste, sem risco real. Nada muda para quem usa.
+
+## [2.53.2] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **`minimatch` 11 no front-end** (#550, Dependabot #14, GHSA-g3hv-75wg-m249). O `minimatch` abaixo da 11.0.1 pode travar com certos padrões de glob; ele vinha do `glob` e do `test-exclude` (a cobertura do Jest), só em desenvolvimento, e nem o `test-exclude` mais novo aceita a 11. Agora é forçado pelo `overrides` do `package.json`. Nada muda para quem usa: não entra no site publicado.
+
+## [2.53.1] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes do Go mais rápidos: o banco de teste vem de um modelo** (#542). Cada teste aplicava o esquema inteiro num banco novo, o que custa ~370 ms com o `-race`; o `internal/carteira`, com uns 68 bancos, batia no limite de 60 s da CI e derrubava o job "Go" sem nada quebrado. Agora o esquema é aplicado uma vez por execução e cada teste recebe uma cópia do arquivo. Com `-race` e 4 núcleos, o pacote foi de 22 s para 10 s aqui. Nada muda para quem usa.
+
+## [2.53.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Metas em Go** (#79, parte 3 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`. As 8 rotas de `/api/metas` (lista com o progresso pelo saldo da conta ou do cofrinho, o plano do caixa mês a mês, a ordem de prioridade, criar, editar, aportes e excluir) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 49 casos do contrato `09-metas`, gravados do .NET, passam com o Go atendendo. Com isso, as 23 rotas de planejamento (orçamentos, metas e contas a pagar) estão em Go. As parcelas futuras do cartão (#165) passam a ser projetadas no pacote `internal/parcelas`, que a projeção (#80) também vai usar.
+
+## [2.52.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Orçamentos em Go** (#79, parte 2 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`, depois das metas. As 6 rotas de `/api/orcamentos` (lista do mês, salvar, excluir, sugestão por categoria, aplicar a sugestão e copiar do mês anterior) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 41 casos do contrato `08-orcamentos`, gravados do .NET, passam com o Go atendendo. A sugestão (#39) refaz no Go a base pela mediana dos 6 meses, a folga dos essenciais, o corte pelo uso do limite do cartão, o encaixe na renda e o arredondamento para R$ 10, com os motivos e avisos nos mesmos textos.
+
+## [2.51.1] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de Metas no navegador não depende mais do mês** (#546). A meta fictícia "Viagem" vencia em julho do ano seguinte: a partir de novembro, o plano dela tinha menos de 10 meses e o teste "o plano mês a mês aberto com 5 meses" falhava na CI, inclusive no `develop`. Agora ela vence 12 meses depois do mês atual. Nada muda para quem usa.
+
+## [2.51.0] — 2026-11-01 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar em Go** (#79, parte 1 de 3; épico #70). Nada muda para quem usa: o site continua no .NET até ligar o prefixo `planejamento`, depois de orçamentos e metas. As 9 rotas de `/api/contas-agendadas` (lista, avisos, sugestões do extrato, criar, editar, "é a mesma", pagar e excluir) passam a existir em Go, com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: os 44 casos do contrato `10-contas-agendadas`, gravados do .NET, passam com o Go atendendo. A conciliação com o extrato (#158) fica no pacote de regra `internal/cobrancas`, que a partida (#444) e a sincronização (#83) também vão usar.
+
+## [2.50.38] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0056: a arquitetura do código Go** (#474, épico #70). Nada muda para quem usa. Registra, com o time de acordo, como o back-end em Go se organiza: as camadas (HTTP, regra, banco) dentro de cada assunto, e não um pacote por camada; a regra de negócio sem HTTP; o mapa de contextos, que passa a ser a tabela `dependencias` do teste de arquitetura; objetos de valor e agregados só onde pagam; interface só com duas implementações de verdade; e o que não se adota (Clean Architecture completa, N-tier, ferramenta pronta), com o porquê. O teste de arquitetura ganha a regra dos módulos (#191): o núcleo não importa módulo, e um módulo não importa outro. `internal/README.md`, `CLAUDE.md`, a skill `migrar-para-go`, o agente `dev-go` e o `ARQUITETURA.md` apontam para a ADR.
+
+## [2.50.37] — 2026-11-01 · desenvolvimento
+
+### Publicação e documentação
+- **Testes de arquitetura locais, no Go e no front-end** (#476, épico #485). Nada muda para quem usa. Dois testes, no estilo do ArchUnit do Java, conferem quem pode importar quem: no Go, o driver do SQLite só no `internal/banco`, o apoio aos testes só em `_test.go`, a regra de negócio sem HTTP e um mapa de quais assuntos importam quais; no front-end, o HTTP só pelo `ApiService` e as pastas `core`, `compartilhado`, `layout` e `paginas` em camadas. São só locais (`go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura`), fora da CI por decisão de 29/10/2026. O `TamanhoUtf16` foi para o `internal/texto`, e o `regrasdescricao` deixou de depender do pacote do HTTP. ADRs 0051 e 0013, `CLAUDE.md`, skills e o agente `dev-go` atualizados.
+
+## [2.50.36] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Testes no navegador não falham mais no fim do mês** (#540). Nada muda para quem usa. O navegador do teste já rodava no fuso de Brasília, mas o código do teste e a API falsa rodavam no Node, que na CI fica em UTC: das 21h à meia-noite do último dia do mês, o teste via um mês e o site, o anterior, e 4 testes falhavam (metas, plano das metas, investimentos mês a mês e notificações). O `playwright.config.ts` passa a pôr o Node também no fuso de Brasília.
+
+## [2.50.35] — 2026-11-01 · desenvolvimento
+
+### Correções
+- **Teste de mutação do back-end em Go verde de novo** (#455, épico #374). Nada muda para quem usa. A medição semanal falhava desde 26/10: os 7 mutantes vivos do `internal/tipos` já tinham saído (#82, #447), mas o `internal/carteira` derrubava a máquina da CI. Trocar o `if m == ""` (ou tirar o `i += len(m)`) do laço dos números do extrato fazia ele acrescentar "" sem fim, até acabar a memória. O laço passa a dar uma volta por caractere, com o mesmo resultado (gabarito do C#), e o teste de mutação do back-end passa a mostrar o andamento no log, como o do gerenciador (#433). Os 31 pacotes medidos ficam em 100%.
+
+## [2.50.34] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Testes do código Go só do Windows na CI** (#459, épico #374). Nada muda para quem usa. O back-end em Go só rodava teste no Linux: o código só do Windows (a DPAPI que protege a chave dos segredos e a descrição do sistema) compilava, mas nunca rodava. Um job novo, "Go (Windows)", roda o `go vet` e o `go test` do back-end num `windows-latest`. Entram testes da DPAPI (a chave vai cifrada e só abre na mesma conta, com a mesma entropia), da descrição do Windows e das preferências do gerenciador no registro (numa chave só de teste, apagada no fim). É o que a #84 precisa para o serviço do Windows em Go nascer com teste. ADR 0051 atualizada.
+
+## [2.50.33] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o cache do NuGet deixa de mudar a cada PR** (#526). Nada muda para quem usa. A chave do cache do NuGet (`ci.yml` e `versao.yml`) incluía o `Directory.Build.props`, que só guarda a versão e sobe em todo PR: cada PR criava um cache novo de ~700 MB, o repositório chegou a 10,4 GB (o limite do Actions é 10 GB) e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A chave passa a ser os `.csproj` e a versão do SDK do .NET. ADR 0047 atualizada.
+
+## [2.50.32] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Metas e primeira medição dos requisitos não funcionais** (#470; épico #465). Nada muda para quem usa. Para quem desenvolve: `docs/REQUISITOS-NAO-FUNCIONAIS.md` agora tem as metas de memória, disco, partida e telas, e o novo `scripts/geral/medir-desempenho.py` mede partida e telas com 5 anos de transações fictícias.
+
+## [2.50.31] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Restaurar uma cópia testado no `.msi`** (#527). Nada muda para quem usa. O workflow do instalador agora segue o guia de restaurar num Windows limpo e confere que a senha volta para a da data da cópia, que era a parte que faltava da #468.
+
+## [2.50.30] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Requisitos não funcionais e índice da documentação** (#470; épico #465). Nada muda para quem usa. Para quem desenvolve: o novo `docs/REQUISITOS-NAO-FUNCIONAIS.md` diz quanto o sistema pode gastar e o que ele garante, com medida, meta e como medir, e `docs/ARQUITETURA.md` ganha o índice no formato arc42.
+
+## [2.50.29] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Como avisar de uma falha, e o modelo de ameaças** (#469; épico #465). O novo `SECURITY.md` diz como avisar de uma falha de segurança sem abrir uma issue pública. O `docs/MODELO-DE-AMEACAS.md` diz de quem o sistema se protege e o que fica de fora, com STRIDE por fronteira de confiança e os pontos da #68 ligados.
+
+## [2.50.28] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Inventário de dados pessoais** (#471; épico #465). Novo `docs/DADOS-PESSOAIS.md`: o que o sistema guarda, de onde vem, o que sai do computador, por quanto tempo fica e como apagar, inclusive nas cópias e nos logs.
+
+## [2.50.27] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **O domínio em desenho** (#467; épico #465). Nada muda para quem usa. Para quem desenvolve: o novo `docs/arquitetura/dominio.md` tem os diagramas de estados da conexão com a Pluggy, da transação, da conta a pagar e do gerenciador, as classes do centro do domínio e a lista de termos usados no código.
+
+## [2.50.26] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **O banco e os fluxos em desenho** (#463; épico #465). Nada muda para quem usa. Para quem desenvolve: `docs/BANCO-DE-DADOS.md` passa a ter o modelo de dados em diagramas por assunto, gerados do `01-estrutura.sql` pelo `scripts/ci/gerar-diagrama-banco.py`, e a CI confere que estão em dia. O novo `docs/arquitetura/fluxos.md` mostra o login, o repasse ao Go, a partida da API, a sincronização com a Pluggy e a atualização pelo gerenciador, e `docs/ARQUITETURA.md` ganha as camadas do Angular.
+
+## [2.50.25] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Guia para quando algo dá errado** (#468; épico #465). O Manual ganhou a seção **Restaurar uma cópia**, e o novo `docs/OPERACAO.md` tem os comandos para Windows e Linux, o que fazer com as chaves perdidas e com uma atualização que falhou. O README e os Problemas comuns apontam para ele.
+
+## [2.50.24] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Restaurar a cópia do banco é testado de verdade** (#468; épico #465). Nada muda para quem usa. Para quem desenvolve: os workflows "Teste de instalação" do Linux e do Windows agora restauram uma cópia com o serviço de verdade, conferem que o que veio depois dela saiu e que o banco está íntegro.
+
+## [2.50.23] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **A arquitetura em desenho** (#462; épico #465). Nada muda para quem usa. Para quem desenvolve: `docs/ARQUITETURA.md` passa a começar pelos diagramas Mermaid de Contexto, Contêineres, mapa de contextos e implantação no Windows e no Linux, com as decisões em resumo, no lugar do diagrama em texto. A [ADR 0055](docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md) registra o padrão e a regra de manter o desenho em dia no mesmo PR.
+
+## [2.50.22] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Conferir com o banco passa a ser atendido pelo Go** (#445; épico #70). Nada muda para quem usa: a tela é a mesma e as respostas são conferidas contra as do .NET. Para quem desenvolve: o pacote `internal/conferenciabanco` traz o `ConferenciaBancoService` do C#, e `/api/conferencia-banco` entra no assunto `cadastros` de `Go:Prefixos`. Para voltar ao .NET, basta tirar o prefixo.
+
+## [2.50.21] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **O painel dos FIIs em Go, ainda desligado** (#82, parte 7; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ter o `FiiService` do C# e `GET /api/carteira/fiis`: a renda de cada fundo, as compras comparadas com hoje, os proventos por mês, a evolução contra Selic e IFIX e o crédito ligado ao fundo, conferidos contra o C# de verdade (`testdata/fiis.json`). O porte achou uma diferença em `tipos.Dividir`: o quociente que arredonda para zero é o `0` sem casas no decimal do .NET, e o Go devolvia `0.00`.
+
+## [2.50.20] — 2026-10-31 · desenvolvimento
+
+### Publicação e documentação
+- **Conferir investimentos em Go, ainda desligado** (#299; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ter o `ConferenciaInvestimentosService` do C# (ADRs 0027 e 0044): a análise do extrato (a compra ligada à operação, o troco, a sobra de centavos, o valor da venda e a taxa da B3 que falta), `GET /api/carteira/conferencia`, corrigir, desfazer e os trocos automáticos, com `ClassificarTrocosSemDuvida`, `ResumoTrocosAutomaticos`, `CreditosComoReceita` e `ProventosDaCorretora` prontos para a sincronização (#83), o painel (#80) e os FIIs. O comportamento é conferido contra o C# de verdade: a sonda grava um gabarito de 43 passos (`testdata/conferencia.json`), com o banco depois de cada passo, e o `12-conferencia-investimentos` tem 42 casos de contrato gravados do .NET.
+
+## [2.50.19] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **O extrato da carteira em Go, ainda desligado** (#82, parte 6; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ler as compras e vendas nas descrições do extrato (`GET /api/carteira/extrato/sugestoes`) e a importá-las (`POST /api/carteira/extrato/importar`), conferido contra o C# por gabaritos, que chamam as próprias regex e o `Interpretar` do .NET. `respostas.CampoListaDeObjetos` passa a ter o `[MinLength]`, o `[Required]` e a validar os campos de cada item.
+
+## [2.50.18] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **A escrita da carteira em Go, ainda desligada** (#82, parte 5; épico #70). Nada muda para quem usa. Para quem desenvolve: `internal/carteira` passa a ter as rotas que gravam (operações, ativos e o token da brapi), conferidas contra o C# pelos casos de contrato. O cofre dos segredos só abre a chave no primeiro uso (`segredos.Tardio`), para o Go atrás do .NET não criar o arquivo da chave antes da troca dos segredos (#85).
+
+## [2.50.17] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **As cotações em Go, ainda desligadas** (#82, parte 4; épico #70). Nada muda para quem usa. Para quem desenvolve: o pacote `internal/cotacoes` traz o `CotacaoService` do C# (Yahoo Finance, brapi, proventos, históricos mensais e o IFIX) e a rota `POST /api/carteira/atualizar-cotacoes`, conferidos contra o C# por gabaritos, inclusive com 106 respostas estranhas das fontes. A brapi só entra no Go com a troca dos segredos (#85, ADR 0049). Os avisos da Selic passam a sair com a origem "Investimentos", como no .NET.
+
+## [2.50.16] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **A leitura da carteira em Go, ainda desligada** (#82, parte 3; épico #70). Nada muda para quem usa: a rota continua no .NET até o resto dos investimentos ficar pronto. Para quem desenvolve: o pacote `internal/carteira` traz o `CarteiraService` do C# (`GET /api/carteira` e as operações de um ativo), conferido contra o C# por gabaritos e por 8 casos novos de contrato. O `internal/tipos` passa a reduzir as casas quando o resultado não cabe nos 96 bits do decimal, como o C#.
+
+## [2.50.15] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **A Selic em Go, ainda sem uso** (#82, parte 2; épico #70). Nada muda para quem usa. Para quem desenvolve: o pacote `internal/selic` traz o `SelicService` do C# (a Selic diária, a meta e o fator), conferido contra o .NET 10 por gabaritos, e `internal/tipos` ganha as conversões do .NET entre `decimal` e `double` e o `decimal.TryParse`. O `(decimal)double` muda no .NET 11: ver o PR antes de atualizar o .NET. O `internal/tipos` volta a ter mutação 100%.
+
+## [2.50.14] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **As reservas em Go, ainda desligadas** (#82, parte 1; épico #70). Nada muda para quem usa: a rota continua no .NET até o resto dos investimentos ficar pronto. Para quem desenvolve: o pacote `internal/reservas` traz o `ReservaService` do C# (`GET /api/reservas`, conferir e tirar a conferência), com o Méli Dólar pela PTAX e o reservado informado pelo banco, conferido contra o C# por gabaritos e por 23 casos de contrato. Mutação 100%.
+
+## [2.50.13] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **Apoio para testar os serviços de fora sem rede** (#460; épico #374). Nada muda para quem usa. Para quem desenvolve: o `testeapoio.ServicoDeFora` faz o papel de um serviço de fora (PTAX, Mercado Bitcoin, e os que vêm na #82 e na #83: Yahoo, brapi, BCB, Pluggy) num servidor HTTPS de teste, com as rotas cadastradas, as respostas de `testdata/` e os erros prontos (tempo esgotado, 401, 429, 500, JSON quebrado, página vazia). Ele confere os cabeçalhos que o .NET manda e guarda os pedidos sem o valor dos segredos. O câmbio e a cripto passam a usá-lo, e a ADR 0051 diz como testar integração de fora.
+
+## [2.50.12] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **Transações atendidas pelo Go** (#78, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `transacoes` entra em `Go:Prefixos` com `/api/transacoes`: a lista, obter, o lançamento manual, as sugestões de categoria, alterar, ajustar, excluir, as alterações em lote, a transferência, o renomear e a categoria em lote com o Desfazer. Para voltar ao .NET, basta esvaziar a linha do `transacoes` no `appsettings.json`. O C# do assunto só sai depois de uma versão publicada sem precisar voltar. Quem estiver com a tela aberta na hora da atualização perde o "Desfazer" do que acabou de fazer (ele fica na memória de quem atende).
+
+## [2.50.11] — 2026-10-30 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 4: o renomear e a categoria em lote com Desfazer** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado. Com esta parte, as 18 rotas de `/api/transacoes` têm o código Go. Para quem desenvolve:
+  - a prévia do renomear, o renomear de uma e em lote, a categoria em lote (por transação e pelo filtro) e os dois Desfazer em Go, com o mesmo JSON e o mesmo banco do .NET: 67 casos novos no contrato `07-transacoes`, gravados do .NET, passam com o Go atendendo;
+  - o pacote `desfazer`: o estado de antes de uma alteração em lote, na memória, por 10 minutos, com a chave de uso único;
+  - o 415 do Go (corpo que não é JSON) sai com `application/json`, como o do .NET;
+  - a prévia do renomear recusa o tipo vazio, como o .NET ("The value '' is invalid.").
+
+## [2.50.10] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 3: as rotas que gravam** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado. Para quem desenvolve:
+  - alterar (`PUT /api/transacoes/{id}`), ajustar (`PATCH`), excluir, emergência, revisada e categoria em lote, e a transferência em Go, com o mesmo JSON e o mesmo banco do .NET: 57 casos novos no contrato `07-transacoes`, gravados do .NET, passam com o Go atendendo;
+  - o contrato achou um bug do C#, na #503: a transferência sem data grava `0001-01-01`, e todo acerto das transferências seguinte quebra.
+
+## [2.50.9] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 2: as sugestões de categoria** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado. Para quem desenvolve:
+  - `GET /api/transacoes/sugestoes-categoria` e `GET /api/transacoes/{id}/sugestoes-categoria` em Go, com o mesmo JSON do .NET: 13 casos novos no contrato `07-transacoes`, gravados do .NET, passam com o Go atendendo;
+  - o pacote `sugestoes`: o histórico (o que você escolheu à mão pesa mais), as palavras-chave, os grupos por descrição parecida, o texto da regra e o aviso dela (#254), conferidos contra o próprio C# por um gabarito, inclusive o percentual do motivo em pt-BR.
+
+## [2.50.8] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Categorias, regras e contas atendidas pelo Go** (#77, passo 2 da ADR 0049). Nada muda na tela: as mesmas respostas, agora vindas do Go, atrás do .NET. O assunto `cadastros` entra em `Go:Prefixos` com `/api/categorias`, `/api/regras`, `/api/regras-descricao` e `/api/contas`; a conferência com o banco (`/api/conferencia-banco`) continua no .NET até a #445. Para voltar ao .NET, basta esvaziar a linha do `cadastros` no `appsettings.json`. O C# desses assuntos só sai depois de uma versão publicada sem precisar voltar.
+
+## [2.50.7] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Transações em Go, parte 1** (#78; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `transacoes` ser ligado em `Go:Prefixos`, depois das 18 rotas. Para quem desenvolve:
+  - `GET /api/transacoes` (os filtros, a ordem, a paginação e os totais), `GET /api/transacoes/{id}` e o lançamento manual (`POST`), com o mesmo JSON e o mesmo banco do .NET: o contrato `07-transacoes` (68 casos), gravado do .NET, passa com o Go atendendo, e o `/api/transacoes` passa a ser conferido pelo Go atrás do .NET;
+  - a ordem por valor reproduz a do .NET, com o defeito dela: em pt-BR, valores com centavos saem fora de ordem (#499, aberta para corrigir nos dois lados);
+  - a descrição pouco informativa (#9) num pacote próprio, que o painel (#80) vai usar;
+  - a prévia das regras de descrição passa a recusar o número que não existe no enum, como o .NET já fazia.
+
+## [2.50.6] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Contas em Go** (#77, parte 2; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `cadastros` ser ligado em `Go:Prefixos` (passo 2 da ADR 0049). Para quem desenvolve:
+  - as 9 rotas de `/api/contas` (lista, criar, editar, excluir, a fatura do mês de cada cartão, as faturas importadas, os bancos e o "você reduziu o limite no app?"), com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: o contrato `04-contas` (63 casos), gravado do .NET, passa com o Go atendendo;
+  - a fatura do cartão (ciclo, mês de cobrança de cada lançamento, pago e situação) no pacote `faturas`, que o painel (#80) vai usar, conferida contra o próprio C# por um gabarito de mais de 1.900 combinações gravado por uma sonda;
+  - o banco de cada conta (ADR 0024) em `bancos`, e o reconhecimento das parcelas da mesma compra em `parcelas`, com a regex do .NET escrita à mão (no Go, `\d`, `\s` e `\b` são só ASCII);
+  - a ordem de texto da cultura pt-BR (`golang.org/x/text/collate`, na ADR 0049): no empate da fatura do mês, "árvore" vem antes de "Bolsa", como no C#;
+  - a leitura da query (`[FromQuery]`) num lugar só, no pacote `respostas`, com o int e o bool lidos como o ASP.NET lê.
+  - o repasse do .NET ao Go passa o `Content-Type` também quando o corpo vem vazio: antes, o Go respondia 415 (sem tipo) no lugar do 400 do corpo vazio que o .NET dá;
+  - A conferência com o banco (`/api/conferencia-banco`) fica para a #445, junto com as reservas (#82).
+
+## [2.50.5] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **README mais curto, com diagramas** (#461). Caiu de ~2.230 para ~1.030 palavras, sem perder informação: o que saiu foi para documentos ligados por link.
+  - Diagramas Mermaid: **Como funciona** (contexto, com o que vai para cada endereço da internet), os 4 passos do Meu Pluggy e a atualização pelo gerenciador.
+  - Seção nova **Instalar no Linux**, com os três comandos (antes, o Linux só tinha um link).
+  - Detalhe movido para `docs/SEGURANCA.md` (tabela completa do que sai e detalhes técnicos), `docs/PROBLEMAS-COMUNS.md`, `docs/INSTALADOR-E-GERENCIADOR.md` (opções do `.msi`, gerenciador, voltar de versão, desinstalar) e `docs/INSTALACAO-PELO-CODIGO.md` (passar dos scripts para o `.msi`).
+  - A pilha no fim cita o Go (ADR 0049). O `CLAUDE.md` passa a citar o Project do GitHub e o `olinda.bcb.gov.br` entre as saídas de rede.
+
+## [2.50.4] — 2026-10-29 · desenvolvimento
+
+### Correções
+- **Alertas do CodeQL** (code scanning). Nada muda para quem usa. Junta num PR só as correções que valem das sugeridas pelo Copilot Autofix (#491 a #494), e reescreve a #490:
+  - a falha de rede com a Pluggy vai para o log só com o nome do recurso (`items`, `accounts`…), sem os ids de item e de conta que iam no caminho (alertas 4 e 5); o código da moeda vai sem quebra de linha, para que nenhum texto vindo de fora forje uma linha nova (alerta 6);
+  - a regex que lê a CSP do `Seguranca.cs` no servidor dos testes no navegador não tem mais quantificador aninhado (alerta 3);
+  - o ⓘ do gerenciador em Go acha a explicação por `getElementById`, e não pelo `$` com o texto do atributo (alerta 1);
+  - o `lerInt32` do Go converte o hexadecimal sem estreitar o tipo: `0xFFFFFFFF` continua -1, como o `Convert.ToInt32(texto, 16)` (alerta 7), agora com teste em tabela.
+
+## [2.50.3] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Base dos relatórios e totais de empréstimos em Go** (#447; épico #70). Nada muda para quem usa: o .NET continua atendendo tudo, e esta parte não tem rota. Para quem desenvolve, o que a #79 (orçamentos, metas e contas a pagar) e a #80 (painel e relatórios) vão reaproveitar, portado do `RelatorioService` e do `EmprestimoService` com os mesmos números:
+  - `internal/relatorios`: as transações que entram nos relatórios (sem transferências, ADR 0031, e sem as marcadas para ignorar, ADR 0036), o total por categoria (subcategoria somada no pai, estorno abatendo a despesa), o orçamento do mês contra o gasto (percentual com arredondamento bancário e a situação `ok`, `alerta`, `emergencia` ou `estourado`), as contas a pagar com o próximo vencimento e os pagamentos que faltam, a janela dos últimos meses completos e a renda média com as parcelas do cartão;
+  - `internal/emprestimos`: saldo devedor e parcela mensal de financiamentos e de empréstimos (ADR 0014);
+  - o vencimento mensal imita o `AddMonths` do .NET (31/01 + 1 mês = 28/02), e não o `AddDate` do Go (03/03): `Data.SomarMeses` em `internal/tipos`, junto de `NumeroDoDia` (o `DayNumber`) e `Decimal.NaEscalaDoBanco`;
+  - o dinheiro é somado e comparado em Go, com decimal, e nunca no SQL; a soma sai na escala que o `ef_sum` do EF Core devolvia (`21.0`, e não `21.00`);
+  - os dois pacotes entram no teste de mutação com piso 100% e no piso de cobertura; a fábrica dos testes ganha conexão bancária, empréstimo, orçamento e conta agendada.
+
+## [2.50.2] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Análise de segurança do código com o CodeQL** (#451, ADR 0054). Nada muda para quem usa. Um workflow novo (`codeql.yml`) analisa o código em C#, Go, TypeScript, Python e os próprios workflows em todo PR, no push do `develop` e do `main` e toda quinta. Ele procura dado de fora chegando a SQL, comando do sistema, caminho de arquivo ou HTML, e injeção nos workflows. Os achados vão para Security › Code scanning e viram anotações no PR, sem bloquear o merge. O Go é compilado à mão, com o GTK 4 e o WebKitGTK do gerenciador. O Dependabot passa a olhar também as bibliotecas do gerenciador em Go (menos o Wails, que sobe à mão, ADR 0052).
+
+## [2.50.1] — 2026-10-29 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@angular/build` e `@angular/cli` 22.2.4 → 22.2.5** (#453, Dependabot, alertas 2 a 7). Leva o `vite` de 8.3.0 a 8.3.5, que corrige 6 falhas de segurança do servidor de desenvolvimento (`ng serve`), entre elas as do `launch-editor` que vem dentro dele. Só as ferramentas de build do front-end mudam; nada muda no site publicado. Fica aberto o alerta do `deepmerge` (12), que ainda não tem versão corrigida e só entra pelo Jest, nos testes.
+
+## [2.50.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: aviso na bandeja com a janela fechada** (#448, épico #70). Nada muda para quem usa: o gerenciador instalado continua o de C#. Como o de C#, com a janela fechada, o gerenciador em Go avisa quando o site que estava no ar desliga ou para de responder, e quando acha versão nova ("Versão nova: X."). No Windows, é a notificação do ícone da bandeja; no Linux, a da área de trabalho, pelo `notify-send`. Com o site parado por fora (pelo `services.msc`), o "desligando…" no meio não impede mais o aviso, como impedia no C#. O `.exe` passa a se chamar "Finanças Local" no topo da notificação e no Gerenciador de Tarefas. Era o que faltava do gerenciador em C# no de Go, fora a atualização do próprio gerenciador (#430).
+
+## [2.49.2] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **Agente `dev-go` e skill `migrar-para-go` no Sonnet** (épico #70). Nada muda para quem usa. Os dois rodavam no modelo da conversa (Opus) e passam a fixar o Sonnet, mais barato. A "Aula rápida" dos PRs do épico passa a pedir link nas 3 a 5 afirmações técnicas principais, e não em todas; o que não tiver link não é citado como fato.
+
+## [2.49.1] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **Categorias, regras de categorização e regras de descrição em Go** (#77, parte 1; épico #70). Nada muda para quem usa: o .NET continua atendendo até o assunto `cadastros` ser ligado em `Go:Prefixos` (passo 2 da ADR 0049, depois da parte 2). Para quem desenvolve:
+  - as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` (prévia, cadeia #250, faixa de valor #241), com o mesmo JSON, as mesmas mensagens e o mesmo banco do .NET: o contrato `05-categorias` (33 casos) e `06-regras` (38 casos), gravado do .NET, passa com o Go atendendo;
+  - a regra fica em pacotes que a sincronização (#83) vai reaproveitar: `categorizacao` (o `CategorizacaoService`), `regrasdescricao`, `transferencias` (ADR 0031), `tipolancamento` (ADR 0025) e o modelo de `Transacao`, que grava só as colunas que mudaram;
+  - a normalização de texto das regras (sem acento, maiúsculas) em `internal/texto`, conferida contra o próprio C# por um gabarito de 79 casos; usa o `golang.org/x/text`, que entrou na lista de bibliotecas da ADR 0049;
+  - o padrão de um assunto em Go (camadas, entrada e saída iguais às do .NET, gravar como o EF Core, testes) em `src/backend-go/internal/README.md`.
+
+## [2.49.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go no Linux** (#417, épico #70, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. O gerenciador em Go passa a funcionar no Linux, testado num KDE de verdade (Wayland, GTK 4 e WebKitGTK 6.0): liga, desliga e reinicia o site pelo `systemctl --user`, sem senha, e espera o site responder; segue o tema claro ou escuro do sistema; "Iniciar com o sistema" pelo `~/.config/autostart`; a bandeja do KDE, com a situação no menu; e, como o de C# do Linux, "Ver o registro do serviço", o comando para atualizar pelos scripts com "Copiar o comando" e "Manter o site no ar sem login". Os ícones dos botões vêm do lucide (os do site), em SVG. Fechar a janela, no Linux, só a esconde: destruída, ela deixava um processo do WebKit vivo a cada vez. O resultado do teste (memória, pacotes, compilação e as ressalvas) está na ADR 0052.
+
+### Publicação e documentação
+- **Skill `migrar-para-go`: merge só com o OK de quem pediu** (#417). Nada muda para quem usa. A skill passa a dizer que o PR é aberto e acompanhado até a CI ficar verde, mas o `gh pr merge` só roda com um "pode" explícito para aquele PR, e como pôr a trava também nas configurações do Claude Code (`permissions.ask`).
+
+## [2.48.2] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o gerenciador em Go compilado e testado no Linux** (#417, épico #70, ADR 0052). Nada muda para quem usa. O job "gerenciador em Go (Linux)" instala o GTK 4 e o WebKitGTK 6.0 num Ubuntu 24.04, roda o `go vet` e o `go test -race` (no Linux o Wails pede cgo) e compila o gerenciador, anotando no resumo o tempo dos pacotes e da compilação, o tamanho do executável e as bibliotecas que ele pede. Roda junto com o do Windows, quando o `src/gerenciador-go/` muda.
+
+## [2.48.1] — 2026-10-28 · desenvolvimento
+
+### Correções
+- **Trocar o tipo de uma categoria para despesa ou receita** (#438). Dava "Ocorreu um erro interno" e deixava a categoria com o tipo novo, mas as transações dela continuavam como transferência, fora dos relatórios. Agora as transações ficam com o tipo pelo sinal (no cartão, entrada é estorno, ADR 0036) e voltam aos relatórios.
+
+## [2.48.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: o cofrinho no `.exe`** (#435, épico #70, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. O `.exe` do gerenciador em Go passa a ter o ícone do Finanças Local no Explorer, na barra de tarefas e no Alt+Tab, e o manifesto do Windows (controles comuns v6 e escala por monitor). O arquivo do ícone é gerado pelo go-winres na CI, que confere se o do repositório está em dia: ninguém precisa rodar a ferramenta na própria máquina.
+
+## [2.47.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: "O que mudou" depois de atualizar pelo develop** (#432, épico #70). Nada muda para quem usa: o gerenciador instalado continua o de C#. Depois de "Atualizar para a última do develop", aparece "O que mudou", com as seções do `CHANGELOG.md` do próprio clone entre a versão de antes e a nova, sem rede. Na janela de notas (também a da versão nova pelo GitHub), cada versão fica separada da anterior por uma linha, com o número num selo, e cada tipo de mudança (Funcionalidades, Correções, Publicação e documentação) ganha uma barra da cor dele; o *itálico* do Markdown também passa a aparecer.
+
+### Publicação e documentação
+- **CI: teste de mutação do gerenciador em Go na CI** (#433). Nada muda para quem usa. Rodado na máquina de quem desenvolve, o teste de mutação do gerenciador chegava a 8 GB de memória e travava o computador. Agora ele roda no workflow "Teste de mutação (Go)", num job próprio, no PR que mexe em `src/gerenciador-go/` (além do semanal e do manual), com a lista de pacotes, os pisos e as equivalentes do gerenciador em arquivos à parte. O do back-end continua só semanal e manual.
+
+## [2.46.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: atualizar para a última do develop** (#428, épico #70, ADR 0040). Nada muda para quem usa: o gerenciador instalado continua o de C#. Na instalação de desenvolvimento pelos scripts (a pasta do projeto num clone na branch develop), o gerenciador em Go mostra "Atualizar para a última do develop", como o de C#: pergunta antes, traz o develop pelo git como o usuário (só avança, recusa com alteração local ou outra branch) e reinstala o site pedindo o UAC, com a saída dos scripts e do instalador ao vivo numa caixa da janela. "Atualizar o gerenciador e reabrir" fica para a #430.
+
+## [2.45.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: versão nova pelo GitHub** (#420, épico #70, ADRs 0028 e 0053). Nada muda para quem usa: o gerenciador instalado continua o de C#. No gerenciador em Go instalado pelo `.msi`, "Procurar versão nova" passa a funcionar (também ao abrir, se a preferência estiver ligada): com versão nova, aparecem "Atualizar para X", que pergunta antes, baixa com a barra de progresso e "Cancelar download", confere o SHA-256 e abre o instalador, e "O que mudou", com as notas formatadas e primeiro só o que mudou desde a sua versão. Em Mais opções, o interruptor novo **"Receber versões de desenvolvimento"**, desligado por padrão, faz a procura olhar as versões geradas do develop; um ⓘ explica que elas são menos testadas e que, desligando, só vem versão publicada mais nova que a instalada. "Atualizar pelo develop" e "Atualizar o gerenciador e reabrir" ficam para a #428.
+
+## [2.44.1] — 2026-10-28 · desenvolvimento
+
+### Correções
+- **Gerenciador em Go: a janela reaberta vem para a frente** (#419, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. Abrindo o gerenciador em Go de novo depois de fechar a janela, ela abria atrás das outras: a segunda cópia só avisa a primeira e fecha, e o Windows não deixava a primeira trazer a janela para a frente. Agora a segunda cópia passa esse direito adiante, e a janela criada de novo pede o foco ao aparecer.
+- **Gerenciador em Go: o resultado da cópia do banco no desenho do gerenciador** (#419). Em vez da caixa do Windows, o aviso aparece dentro da janela, com a faixa da marca e o cofrinho, as cores do tema (claro ou escuro) e os botões do gerenciador; o arquivo e a pasta ficam em linhas separadas, e "Abrir a pasta" abre o Explorer com a cópia selecionada. Fecha com Esc ou "OK", que recebe o foco.
+
+## [2.44.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: situação, ligar e desligar e cópia do banco** (#419, épico #70, ADR 0052). Nada muda para quem usa: o gerenciador instalado continua o de C#. O gerenciador em Go passa a ler a situação de verdade, de 5 em 5 segundos, como o de C# (o serviço e se o site responde, com a versão dele e o aviso de porta ocupada), na janela, que se atualiza sem recarregar, e no ícone da bandeja, com o ponto da cor da situação. Ligar, desligar e reiniciar pedem o UAC só para a ação, e "Salvar uma cópia do banco…" faz a cópia com o site no ar. A pasta de dados e o endereço vêm dos mesmos `appsettings` da API, as preferências passam a ser gravadas, e "Baixar o instalador .msi" abre a página da versão. Falta o aviso na bandeja quando o site cai com a janela fechada.
+
+## [2.43.1] — 2026-10-28 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o gerenciador em Go também é testado** (#418, ADR 0052). Nada muda para quem usa. O job novo "gerenciador em Go" roda num Windows quando o `src/gerenciador-go/` muda: `gofmt`, `go vet`, os testes, a compilação sem cgo e o `govulncheck`. No Linux, ele entra com a #417.
+
+## [2.43.0] — 2026-10-28 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador em Go: a janela e a bandeja, no Windows** (#418, épico #70, ADR 0052). Nada muda para quem usa por enquanto: o gerenciador em C# continua sendo o instalado. Em `src/gerenciador-go/`, o esqueleto do gerenciador novo com o Wails v3: a janela igual à de hoje (os mesmos cartões, textos, ícones e botões bloqueados com o site desligado, sem barra de rolagem, sem F12 nem menu do botão direito), o ícone na bandeja com a situação no topo do menu, uma cópia só (abrir de novo mostra a janela da que já está aberta) e `--bandeja` para começar sem janela. Fechar destrói a janela: parado na bandeja, ele fica em ~51 MB (com a janela, ~200 MB). A situação do site, ligar e desligar e a cópia do banco vêm na #419; a versão nova, na #420; o Linux, na #417.
+
+## [2.42.20] — 2026-10-27 · desenvolvimento
+
+### Publicação e documentação
+- **Go: câmbio e cripto no teste de mutação, sem mutação viva** (#422, épico #374). Nada muda para quem usa. Os dois assuntos entraram no Go sem passar pelo teste de mutação; agora entram, com 100%: o `cambio` tinha 20 mutações vivas (90,1%) e a `cripto` 18 (82,2%). Faltavam os testes das bordas (status 299, corpo no tamanho máximo exato, exatamente 30 minutos entre consultas e entre tentativas, lista de moedas com exatamente 7 dias, data só com o dia), do item ignorado antes de um válido, das correções somadas de duas moedas, da variação contra a cotação mais perto de 24 h e de que o sucesso não deixa aviso. Três trechos que não mudavam o resultado ficaram mais simples, e uma mutação que não muda nada entrou na lista de equivalentes, com o porquê. Os pisos da cobertura sobem para 84,1% e 86,5%.
+
+## [2.42.19] — 2026-10-27 · desenvolvimento
+
+### Publicação e documentação
+- **Contrato do Go sozinho de volta ao verde, agora com o câmbio e a cripto** (#416, épico #70). Nada muda para quem usa. Desde o câmbio no Go (#392), o `17-erros` falhava no `--go-sozinho`: na rodada completa, os casos do câmbio rodam antes e, sem internet, deixam 4 avisos abertos que entram na contagem. O modo sozinho passa a rodar também o `02-cambio` e o `03-cripto`, na mesma ordem, e sobe o Go sem saída para a internet (`HTTPS_PROXY` numa porta fechada, sem precisar do `unshare`): os 123 casos passam, inclusive no Git Bash do Windows.
+
+## [2.42.18] — 2026-10-27 · desenvolvimento
+
+### Publicação e documentação
+- **Gerenciador em Go: decidido** (#276, épico #70, ADR 0052, aceita). Nada muda para quem usa por enquanto. O gerenciador vai para Go como um programa com o Wails v3: janela própria igual à de hoje (o mesmo desenho, os mesmos ícones, os botões bloqueados com o site desligado, sem barra de rolagem) e o ícone na bandeja, em ~11 MB num arquivo, contra os 121 MB (240 arquivos) de hoje. Medido no Windows 11: ~200 MB de memória com a janela aberta; fechada, a janela é destruída e o gerenciador parado fica em ~50 MB. A página pelo Edge (mais leve com a janela aberta, mas com cara de navegador) e o Fyne (o leitor de tela não vê nada) ficam de fora.
+
+## [2.42.17] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a leitura do JSON sem mutação viva** (#402, épico #374). Nada muda para quem usa. O teste de mutação da `respostas` vai de 72% para 100%. O erro do JSON que não abre (corpo cortado ou estragado) passa a ser montado relendo o corpo byte a byte, e é conferido com um gabarito gravado pelo próprio .NET (`testdata/sonda-json`, 50 corpos). Com isso, o Go também passou a dar a mesma mensagem do .NET em dois casos em que dava outra: o número cortado num `-`, `.` ou `e` ("Expected a digit") e a vírgula sobrando numa lista. Também entraram os testes de propriedade a mais com objetos e listas dentro e de texto com o tamanho máximo exato. Os pisos da mutação e da cobertura vão a 100% e 95,6%.
+
+## [2.42.15] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Câmbio e criptomoedas passam a ser atendidos pelo Go** (#81, épico #70, passo 2 da ADR 0049). Nada muda para quem usa: as cotações de moedas e de criptomoedas, a lista de moedas e as atualizações automáticas (câmbio de 15 em 15 minutos depois do fechamento das 13h30, cripto de 30 em 30) agora rodam no back-end em Go, atrás do .NET, com o mesmo JSON e o mesmo banco, conferidos pelo contrato `02-cambio` e `03-cripto`. As tarefas do .NET para os dois ficam desligadas.
+  - **Para voltar ao .NET**, sem reinstalar: no `appsettings.json` da API, `"cambio": ""` em `Go:Prefixos` e `"Tarefas": ""`, e reiniciar o serviço. Mude no arquivo, não por variável de ambiente: o Go lê o `Go:Tarefas` só dos arquivos.
+  - O C# do câmbio só sai depois de uma versão publicada sem precisar voltar (ADR 0049), e só o que nenhum outro C# usa: o conversor de moedas continua servindo o painel e a carteira em .NET.
+
+## [2.42.14] — 2026-10-26 · desenvolvimento
+
+### Correções
+- **Filtro de datas da tela de Erros com um dia de começo de horário de verão** (#393). Nos dias em que o horário de verão começava em Brasília (até 2019, como 04/11/2018), a meia-noite não existia, e o filtro que começava ou terminava num desses dias dava erro 500. Agora o dia começa à 01:00, a primeira hora que existe, como no Go (#394).
+
+## [2.42.13] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `chart.js` 4.5.1 → 4.6.1** (#408, Dependabot). A biblioteca dos gráficos; os testes no navegador abrem todas as telas, inclusive as que têm gráfico, sem erro.
+
+## [2.42.12] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@angular/build` e `@angular/cli` 22.2.3 → 22.2.4** (#407, Dependabot). As ferramentas de build do front-end; nada muda para quem usa.
+
+## [2.42.11] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `@lucide/angular` 1.60.0 → 1.61.0** (#406, Dependabot). Os ícones do front-end; nada muda para quem usa.
+
+## [2.42.10] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `modernc.org/sqlite` 1.60.1 → 1.61.0** (#405, Dependabot). O driver do SQLite do back-end em Go; nada muda para quem usa.
+
+## [2.42.9] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: os erros do sistema sem mutação viva** (#401, épico #374). Nada muda para quem usa. O teste de mutação dos `erros` vai de 88% para 100%, com os testes que faltavam: as bordas da leitura do filtro na URL (valor só com espaço, tamanho 1, `&` vazio, escape inválido, lista de níveis); a lista filtrada pela origem e a página 2; o lote de no máximo 100; dois erros diferentes no mesmo lote; gravar e limpar sem log quando dá certo; e o detalhe do log (atributo que não é erro, erro simples e `errors.Join`). Duas mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100%.
+
+## [2.42.8] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a autenticação sem mutação viva** (#399, épico #374). Nada muda para quem usa. O teste de mutação da `autenticacao` vai de 91% para 100%, com os testes que faltavam: a chave de sessão criada com 32 bytes; o cookie assinado com conteúdo que não é sessão (JSON quebrado, usuário 0); a renovação exatamente na metade da janela; o CSRF com o segredo vazio; a limpeza do limitador com 1024 IPs; o hash v3 com subchave de 16 bytes; a auditoria do configurar e do login; e o hash antigo (v2) refeito no login. Três mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 76%. Também volta a 100% a `configuracao`: com o câmbio (#392), os testes do pacote passaram a chegar no `ObterData`, e faltava o teste dele.
+
+## [2.42.7] — 2026-10-26 · desenvolvimento
+
+### Publicação e documentação
+- **Go: a configuração sem mutação viva** (#400, épico #374). Nada muda para quem usa. O teste de mutação da `configuracao` vai de 88% para 100%: faltavam o teste de ler um inteiro e um booleano que existem no banco (só a chave que falta era conferida) e um número com o dígito 9 na leitura de inteiros. As duas mutações que não mudam o resultado entraram na lista de equivalentes, com o porquê. O piso da mutação vai a 100% e o da cobertura a 87,3%.
+
+## [2.42.5] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Câmbio e criptomoedas em Go** (#81, épico #70, ADRs 0007, 0048 e 0049). Nada muda para quem usa: o .NET continua atendendo até o prefixo ser ligado em `Go:Prefixos` (PR à parte). O Go ganhou:
+  - o cliente da PTAX do Banco Central e o do Mercado Bitcoin (só HTTPS, 30 s e 20 s, `User-Agent: FinancasLocal/1.0`), testados com respostas gravadas de verdade, inclusive fim de semana e feriado sem cotação, erro 500 e tempo esgotado;
+  - `GET /api/cambio/moedas`, `/cotacoes` e `/cotacao` e `GET /api/cripto/cotacoes`, com o mesmo JSON e o mesmo banco do .NET (escala dos decimais, data com `Z`, o 400 automático da data inválida);
+  - o conversor para reais (o `ConversorMoeda`), para a carteira (#82) e o painel (#80) usarem;
+  - as tarefas em segundo plano (câmbio de 15 em 15 minutos, depois do fechamento das 13h30; cripto de 30 em 30), que só rodam com o nome em `Go:Tarefas` e param com o serviço, sem derrubar o processo num erro;
+  - a aritmética do decimal do C# em Go (`tipos.Dividir`, `tipos.Arredondar`), conferida contra o .NET por uma sonda: o shopspring divide e arredonda diferente, e a variação de 10% sairia `10.00` em vez de `10.0`.
+  - os casos de contrato `02-cambio` (15) e `03-cripto` (2), gravados do .NET na CI (Linux), que passam também com o Go atendendo;
+  - os logs da cripto saem com a origem "Cripto", como o .NET desde a #298;
+  - **correção na convivência** (`ProcessoGo`): o atributo `erro` de um log do Go vai para o detalhe do erro, como a exceção de um log do .NET, e não mais para a mensagem. O texto do erro muda a cada vez (a porta de um erro de rede, por exemplo) e, na mensagem, fazia cada aviso repetido virar uma linha nova na tela de Erros, em vez de somar uma ocorrência.
+
+## [2.42.4] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Go: fuzz nos tipos de dinheiro e data** (#372, épico #374). Nada muda para quem usa. Para quem desenvolve:
+  - há 7 alvos de fuzz: decimal no banco e no JSON, data, data e hora, GUID, o começo do dia em Brasília e o primeiro e o último dia do mês;
+  - as sementes são o gabarito do EF Core, e o que o fuzz acha fica em `testdata/fuzz/` e roda em todo `go test`;
+  - o fuzz achou 2 bugs no Go, já corrigidos:
+    - nos dias em que o horário de verão começava (até 2019), o começo do dia caía às 23:00 do dia anterior. O C# lança exceção nesse dia (#393);
+    - o GUID com hífen fora do lugar era aceito, e o `Guid.Parse` do .NET o recusa;
+  - como rodar está no `CONTRIBUINDO.md`, em "Testes do back-end (Go)".
+
+## [2.42.3] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **CI do Go: cobertura com piso, trava de tempo e fuzz semanal** (#370, #371, #372; épico #374). Nada muda para quem usa. Para quem desenvolve:
+  - **cobertura** (#370): o job "Go" mede a cobertura de cada pacote, com o piso em `src/backend-go/cobertura-minima.txt`, e o piso só sobe:
+    - pacote abaixo do piso falha, mostrando as funções que nenhum teste roda;
+    - pacote novo precisa de 80%;
+    - descer um piso falha;
+  - **tempo** (#371):
+    - teste com mais de 20 s falha, e com mais de 5 s gera um aviso;
+    - pacote com mais de 60 s, ou a suíte com mais de 120 s, falha;
+    - os 10 testes mais lentos vão para o resumo do job;
+  - **fuzz** (#372): o workflow "Fuzz do Go" roda o `-fuzz` de cada alvo toda segunda e à mão, fora do PR. O que ele acha sai no artefato `achados-do-fuzz`.
+
+## [2.42.2] — 2026-10-25 · desenvolvimento
+
+### Publicação e documentação
+- **Go: teste de mutação toda semana** (#373, épico #374, ADR 0051). Nada muda para quem usa. Para quem desenvolve:
+  - o workflow "Teste de mutação (Go)" roda o [gremlins](https://github.com/go-gremlins/gremlins) toda segunda (e à mão), nunca em PR. Ele estraga o código de propósito, numa cópia, e conta o que os testes não pegaram, nos pacotes de `scripts/ci/mutacao-go.txt`, com um piso por pacote que só sobe;
+  - primeira medição: `tipos`, `parametros` e `segredos` em 100%; `autenticacao` 91%, `configuracao` 88%, `erros` 88%, `respostas` 73%. As mutações vivas desses quatro viraram as issues #399 a #402;
+  - testes novos que a medição pediu: os bits de versão e de variante do `NovoGuid`, o JSON inválido de `Data` e `Guid`, a chave repetida no meio dos parâmetros e o nome do sistema operacional;
+  - ponto cego anotado na ADR: a mutação dentro de `case` não é testada pela ferramenta, porque a cobertura do Go não conta a condição do `case`. Nessas regras, continua valendo a mutação à mão no PR.
+
+## [2.42.1] — 2026-10-25 · desenvolvimento
+
+### Correções
+- **Erros do sistema: o token depois de "Authorization: Bearer" não aparece mais** (#396). Na limpeza dos textos de Configurações › Erros, `Authorization: Bearer abc` virava `Authorization: [removido] abc`, e o token ficava à mostra; agora vira `Authorization: Bearer [removido]`. O valor limpo também para no `)`, `]` ou `}` que fecha o que veio antes (`(senha: x)` vira `(senha: [removido])`, e não perde o parêntese). Vale para os erros gravados daqui em diante, no .NET e no Go.
+
+## [2.42.0] — 2026-10-24 · desenvolvimento
+
+### Funcionalidades
+- **Erros do sistema: origem "Cripto"** (#298). Em Configurações › Erros, os avisos e erros da cotação das criptomoedas aparecem com a origem própria, e não mais misturados em "Sistema". Os que já estavam gravados continuam como estavam.
+
+### Publicação e documentação
+- **Go: erros do sistema** (#298, épico #70, ADR 0022). Nada muda para quem usa: no site, quem grava os erros e atende Configurações › Erros continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho grava os próprios avisos e erros em `ErroSistema`: um handler do `log/slog` põe na fila, e o gravador limpa os dados sensíveis, agrupa a mesma ocorrência em 24 h e apaga os antigos uma vez por dia, como o .NET (mesma assinatura, conferida com valores calculados pelo .NET);
+  - as 5 rotas de `api/erros` em Go, com o contrato novo `17-erros` (52 casos, gravados do .NET), que passa no .NET e no Go sozinho;
+  - a leitura de JSON do pacote `respostas` passou a andar token a token: o erro de tipo num campo agora cita o tipo do DTO e a posição do fim do valor, como o .NET (antes saía "System.String" e o fim do corpo);
+  - os erros internos do Go saem com a origem "API", e o log feito durante uma requisição leva a rota e o usuário.
+
+## [2.41.8] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Go: parâmetros, configurações e o esquema novo dos segredos** (#76, épico #70). Nada muda para quem usa: no site, quem atende a Parametrização e guarda os segredos continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho tem as 3 rotas de `api/parametros` (lista, gravação que valida tudo antes, diagnóstico do sistema) e o `ConfiguracaoService`, com as mesmas regras do `int.TryParse`, `bool.TryParse` e `DateTime.TryParse` do C#; o contrato `01-parametros` passa, 14 de 14, e o `--go-sozinho` agora roda `00-auth` e `01-parametros`;
+  - os segredos ganharam o esquema que substitui o Data Protection: AES-256-GCM, valor `v2:` com nonce novo a cada gravação, chave em `dados/chaves/segredos.chave` (DPAPI no Windows, `0600` no Linux). O valor antigo volta como "precisa ser informado de novo", sem mexer na linha. Fica desligado até a #85 (ADR 0049);
+  - as respostas de erro do ASP.NET e a auditoria saíram do pacote da autenticação para `internal/respostas` e `internal/auditoria`, para todos os assuntos usarem;
+  - o contrato passa a comparar os caminhos de pasta com `/` também no Windows.
+
+## [2.41.7] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Dependências: `fast-uri` 3.1.8 → 3.1.9** (#375, Dependabot). Correção de segurança na leitura de endereços (URIs), numa dependência indireta só das ferramentas de build do front-end; nada muda no site.
+
+## [2.41.6] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Go: login, sessão, CSRF e limite de tentativas** (#75, épico #70). Nada muda para quem usa: no site, quem faz o login continua sendo o .NET, até a inversão (#85). Para quem desenvolve:
+  - o Go sozinho (`cmd/financas` sem `-atras-do-dotnet`) tem os 6 endpoints de `api/auth` e põe a autenticação na frente de todo `/api`: 401 sem login, CSRF nos métodos que mudam algo, 5 tentativas por minuto por IP;
+  - a senha continua no hash v3 do ASP.NET Identity: o Go aceita o hash gravado pelo .NET, e o .NET aceita o gravado pelo Go (conferido pela sonda em `internal/autenticacao/testdata`);
+  - a sessão é um cookie assinado (HMAC-SHA256) com o carimbo de segurança, conferido no banco a cada requisição. A chave fica em `dados/chaves/sessao-go.chave`, e na inversão todos saem da conta uma vez (ADR 0049);
+  - o contrato `00-auth` passa no Go sozinho, 40 de 40: `rodar-dotnet.sh --go-sozinho` roda sem o .NET, e também no Windows, com o `sqlite3`.
+
+## [2.41.5] — 2026-10-24 · desenvolvimento
+
+### Publicação e documentação
+- **Apoio comum aos testes do back-end em Go** (#369, épico #374, ADR 0051). Nada muda para quem usa. O pacote `internal/testeapoio`, só para testes, dá aos três assuntos do #70 o mesmo jeito de testar:
+  - banco temporário com o esquema real (`NovoBanco`, `NovoBancoVazio`), fechado sozinho no fim do teste; uns 5 ms por banco, e pode rodar em paralelo;
+  - fábrica de dados inventados no formato do EF Core (conta, categoria, subcategoria, transação, regra de categorização), com valores padrão e só o que importa trocado no teste;
+  - relógios parados em Brasília ("hoje é dia 31", "23h30 de 31/12") e o handler chamado com o usuário logado, conferindo o JSON pelo comparador do contrato (sem `float64`, `[]` diferente de `null`);
+  - o `TestEmTransacao` deixou de usar `time.Now()` (uma das dívidas da ADR 0051).
+
+## [2.41.4] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Cópia do banco antes da atualização não impede mais a API de subir** (#365, #366). Ao atualizar um banco que já existe, a API faz uma cópia em `dados/backups` e apaga as antigas, guardando as 5 mais recentes:
+  - **cópia antiga que não dá para apagar** (de outro dono ou só leitura, como uma cópia feita à mão como administrador) fica para a próxima, com um aviso no log que diz o arquivo. Antes, a falta de permissão parava a partida (#365);
+  - **duas atualizações no mesmo segundo** (o serviço reiniciando logo depois de uma atualização que falhou) não dão mais o mesmo nome: o nome da cópia ganhou os milissegundos (`FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db`). Antes, a segunda parava a partida (#366);
+  - as 5 guardadas continuam as mais recentes, misturando nomes antigos e novos: a ordem pelo nome passou a ser byte a byte, que não depende do idioma do computador.
+  - O mesmo vale para o porte em Go (`AplicarEsquema`).
+
+## [2.41.3] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Regras enxergam o nome dado por outra regra** (#250). Antes, toda regra comparava só com a descrição que veio do banco.
+  - **Regra de categoria:** vale pela descrição do banco **e** pelo nome que a transação tem agora. "Contém Aluguel" → Moradia pega a transação que uma regra de descrição renomeou de "PIX TRANSF 123" para "Aluguel". As regras que usam o texto do banco continuam valendo.
+  - **Regras de descrição em cadeia:** a primeira olha a descrição do banco, e a seguinte, o nome que a anterior deu ("Aluguel" → "Aluguel apto 12"). Cada regra entra uma vez só, então não há ciclo, e a cadeia tem no máximo 10 passos.
+  - **A categoria acompanha:** criar, editar ou excluir uma regra de descrição aplica de novo as regras de categoria nas transações que mudaram de nome (menos as de categoria escolhida à mão). Isso vale também na sincronização e em "Reaplicar regras".
+  - **Prévia:** a da regra de descrição acha também pelo nome atual.
+
+## [2.41.2] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Banco: as 8 colunas que só nasciam por `ALTER TABLE` agora estão no `CREATE TABLE`** (#367). `Conta` (`SaldoReservado`, `ReservasInformadas`, `LimiteAjustadoNoApp`, `LimiteDiferencaAvaliada`), `Investimento` (`NomePersonalizado`) e `ContaAgendada` (`FormaCobranca`, `TextoCobranca`, `Observacao`) entram no `banco/01-estrutura.sql` com a mesma definição das linhas `adicionar_coluna_se_ausente`, que continuam no `2-criar-banco.sh` para atualizar bancos antigos.
+  - **Banco que já existe:** a estrutura não muda. Banco novo fica com as mesmas colunas de antes, só em outra ordem, e sem as 8 mensagens "coluna adicionada" no log.
+  - **Uma cópia a mais em `dados/backups`, uma vez só:** a assinatura do esquema (`PRAGMA user_version`) muda, e a API faz a cópia de sempre antes de conferir o banco (`FinancasLocal-antes-atualizacao-*.db`). É o esperado. Nos reinícios seguintes, não há cópia nova.
+  - **Para quem desenvolve:** o Go ganhou dois testes. Um falha se uma coluna das linhas `adicionar_coluna_se_ausente` faltar no `CREATE TABLE`. O outro falha se o banco novo e o antigo atualizado ficarem com colunas diferentes (tipo, `NOT NULL` ou padrão).
+
+## [2.41.1] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Regra de testes do back-end em Go** (#368, épico #374, ADR 0051). Nada muda para quem usa. Toda regra do back-end em Go passa a nascer com teste unitário, além do caso de contrato do endpoint:
+  - unitário em tabela no pacote do assunto; consultas num SQLite de verdade, em arquivo temporário com o esquema real (sem mock); handlers com `httptest`; só a biblioteca padrão, sem `testify`;
+  - uma etapa do #70 só fica pronta com cada regra do levantamento na tabela de testes, os casos-limite que se aplicam (negativo, zero, 8 casas, `NULL`, meia-noite em Brasília, virada de mês e de ano, dias 29 a 31, acento) e o teste provado contra o código estragado de propósito;
+  - proibido em teste: `time.Now()`, `time.Sleep` para esperar, rede e dado real. O `t.Parallel()` vale para os testes com banco próprio;
+  - a regra está no `CLAUDE.md`, no `CONTRIBUINDO.md` ("Testes do back-end (Go)"), na skill `migrar-para-go`, no agente `dev-go` e no modelo de PR. O C# continua sem testes, só com o checklist.
+
+## [2.41.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Conexões: o selo do banco no lugar da bolinha colorida** (#376). Cada conexão do Open Finance aparece com o selo do banco, o mesmo de Contas e cartões, achado pelo nome da instituição; banco que o site não conhece aparece com o ícone neutro de banco. O número de contas e o conector ("via MeuPluggy") ficam numa linha embaixo do nome. Os selos vão no próprio site: nada é baixado da internet.
+
+## [2.40.2] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: relógio de teste e contrato rodando contra o Go atrás do .NET** (#363, épico #70). Nada muda para quem usa. Para quem desenvolve:
+  - o Go ganha uma opção só para teste, `-inicio-do-relogio`, desligada por padrão: o relógio começa num instante dado e anda dali, como a libfaketime faz com o .NET no contrato (ela não age sobre o Go). O .NET a passa ao Go quando `Go:InicioDoRelogio` tem um instante (vazio no `appsettings.json`);
+  - o contrato compila o Go e o sobe atrás do .NET, com o mesmo relógio. `PREFIXOS_GO="/api/..."` passa um assunto pelo Go com os mesmos esperados; `--go` passa os assuntos ligados em `testes/contrato/assuntos-no-go.txt`, e a CI roda as duas rodadas. O `/api/go/saude` devolve a hora e a data do relógio do Go e ganhou casos de contrato (58 casos);
+  - para os assuntos feitos em paralelo (#75, #77, #81) não se chocarem: cada assunto registra as rotas com uma linha no `internal/api`, tem um número de arquivo de casos reservado (tabela no README do contrato) e uma entrada própria em `Go:Prefixos`, que passa a ser uma entrada por assunto (o texto com `;` continua valendo).
+
+## [2.40.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Investimentos: Câmbio e Criptomoedas com as colunas alinhadas** (#377). Os dois blocos usam a mesma grade:
+  - código com largura fixa, bandeira ou ícone, nome, valor, variação e fonte;
+  - o nome começa e o valor termina no mesmo ponto em todas as linhas, e também de um bloco para o outro;
+  - no câmbio, que não tem variação, a data termina onde termina a de cripto;
+  - no celular, a variação e a fonte ficam embaixo do nome.
+
+## [2.40.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Categorias com o ícone na cor delas, no lugar da bolinha** (#336).
+  - **Onde aparece:** no Painel ("Gastos por categoria" e Orçamentos), nas Análises (Relatórios, Visão anual e Projeção), em Categorias e regras e em Orçamentos, inclusive na sugestão de orçamentos.
+  - **Como é:** um quadrado arredondado com o ícone da categoria (talheres em Alimentação, casa em Moradia…), na cor dela, com o fundo dessa cor suave. Categoria sem ícone conhecido mostra a primeira letra do nome.
+  - **Contraste:** o ícone tem pelo menos 3:1 sobre o fundo nos dois temas e em todas as paletas, conferido pelo teste.
+  - **A rosca do Painel:**
+    - o total do mês fica no centro;
+    - as categorias menores que 3% ficam juntas em "Outras", e clicar nessa fatia abre todas as despesas do mês;
+    - as fatias ganham um espaço entre elas.
+  - **A lista do Painel:** cada categoria mostra o ícone, uma barrinha embaixo do nome, o valor e o %. Aparecem as 8 maiores, e "Mostrar todas" abre o resto.
+  - **Orçamentos no Painel:** o bloco ocupa a altura do vizinho, com as linhas dividindo a altura por igual e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.
+  - **Animações:** as categorias que "Mostrar todas" acrescenta entram crescendo, uma depois da outra, e o bloco de Orçamentos acompanha. O conteúdo de "Mais análises", em todas as telas, desce aparecendo ao abrir e sobe sumindo ao fechar. Com "reduzir movimento" ligado no sistema, não há animação.
+
+## [2.39.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Contas a pagar: nome, conta e forma de cobrança alinhados** (#379). O selo da cobrança fica numa coluna própria. À direita dele, o nome, a conta (com o selo do banco), a forma de cobrança ("paga à mão", "débito automático"…) e a observação ficam empilhados, todos começando no mesmo ponto. Antes, as linhas de baixo começavam antes do nome, cada uma num lugar diferente, o que ficava mais visível nas transferências. Vale também para as sugestões achadas no extrato.
+
+## [2.39.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **Metas: a data alvo pelo valor que você vai guardar por mês** (#359). No formulário, "Quanto vou guardar por mês" calcula quando a meta chega ao alvo, contando o mês atual, e preenche a data alvo. Uma frase mostra a conta ("Com R$ 1.000,00 por mês, você chega lá em mar./2027 (6 meses)"). Mudar o alvo ou o que já está guardado recalcula; a data continua editável à mão. Criar sem data alvo continua possível, e a meta fica "sem data definida". O valor por mês fica gravado na meta (coluna nova `Meta.GuardarPorMes`) e volta ao editar. O plano guarda esse valor todo mês, antes das outras metas e pela prioridade, sem passar da parte da sobra que vai para as metas (a meta avisa o mês em que não dá). No formulário, valor por mês acima do que sobra para as metas (a maior sobra dos próximos 12 meses, menos o que as outras metas já guardam) é bloqueado: o erro aparece ao digitar, com o máximo, e "Salvar" fica desabilitado. O plano mês a mês para no mês em que a meta é alcançada, e os degraus também não passam dessa parte da sobra. No topo, a recomendação vira uma caixa em destaque numa linha só, com o limite ao lado e o essencial em negrito; os avisos amarelos das metas (prazo e valor por mês) viram caixas no mesmo estilo, com valores e meses em negrito, e os links do aviso de prazo ficam na linha de baixo, separados por "|". O ícone da meta aparece, translúcido, no centro do anel do percentual, e o miolo do anel enche de baixo para cima na cor da meta, até o percentual guardado. Os botões do cartão ficam "+ Aporte" e "Editar", e a etiqueta "Concluída" (ou "Concluída por você"), com maiúscula. A meta concluída ganha uma caixa verde "Meta alcançada!" no lado do plano, e o hover do título dela fica verde translúcido. O gráfico "Como está indo" acompanha os aportes: todos no mesmo dia, um ponto por aporte na hora e minuto (a API devolve a hora do aporte, em Brasília); todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês. A lista de aportes mostra a hora.
+
+## [2.38.1] — 2026-10-23 · desenvolvimento
+
+### Correções
+- **Metas: card espremido com uma meta só, e um card mais fácil de ler** (#335).
+  - **Cada meta é uma sanfona** na largura toda, como os grupos de "Assinaturas e recorrentes". Fechada, mostra o percentual, os valores e quanto guardar no mês. Todas começam abertas, as fechadas ficam lembradas neste navegador, e há "Fechar todas"/"Abrir todas".
+  - **Aberta, no computador**, o anel, os valores e a prioridade ficam centralizados à esquerda, e o plano do mês à direita; as ações ("+ aporte", "editar") ficam embaixo, na largura toda. No celular, um embaixo do outro.
+  - **"Consigo guardar outro valor"** fica na mesma linha de "Este mês: guarde".
+  - **A lista "Depois:" saiu.** O "Plano mês a mês" já vem aberto, com 5 meses; "Mostrar mais" acrescenta 5 de cada vez, até 12.
+  - **Meta sem data alvo** mostra "sem data definida", e as metas não desalinham.
+
+## [2.38.0] — 2026-10-23 · desenvolvimento
+
+### Funcionalidades
+- **O back-end em Go passa a rodar no site, atrás do .NET** (#231, épico #70, ADR 0049). Nada muda nas telas; é a base para cada assunto passar para o Go, um de cada vez:
+  - o .NET continua cuidando do login, do CSRF e dos segredos, inicia o Go junto com ele e repassa ao Go só as rotas da lista `Go:Prefixos` (por enquanto, só `/api/go/saude`, que confere o caminho todo até o banco). Tirar uma rota da lista e reiniciar o serviço a devolve ao .NET, sem reinstalar;
+  - o Go só responde ao .NET (segredo interno, só no próprio computador), para junto com ele e, se cair, volta sozinho;
+  - o banco passa para o modo WAL, para os dois usarem o mesmo arquivo ao mesmo tempo. Para restaurar uma cópia, com o serviço parado, apague também os arquivos `-wal` e `-shm` ao lado do banco;
+  - a instalação pelos scripts baixa o Go (conferido pelo SHA-256 oficial) e compila o back-end em Go; ela fica mais demorada e ocupa mais espaço em `ferramentas/` enquanto o .NET e o Go convivem. O `.msi` só ganha o executável do Go.
+
+## [2.37.9] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: testes de contrato do back-end** (#72, épico #70). Primeiros testes automatizados do back-end; nada muda para quem usa. Para quem desenvolve:
+  - o que a API .NET responde e grava hoje fica registrado, caso a caso: status, JSON e as linhas que mudam no banco, com o formato exato de cada coluna. O Go vai ter de responder e gravar igual;
+  - a API roda sobre um banco de dados inventado, sem internet e com o relógio controlado, para o resultado ser o mesmo a cada execução;
+  - já cobertos: entrar, sair, configurar o usuário, trocar a senha, bloqueio por tentativas, auditoria e a Parametrização (54 casos). Cada próxima etapa grava os casos do próprio assunto;
+  - a CI roda o contrato em todo PR que mexe no back-end.
+
+## [2.37.8] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: esquema do banco ao iniciar, igual ao do .NET** (#297, épico #70). Ainda não roda no site: até a inversão (#85), quem cria e atualiza o banco continua sendo o .NET. Para quem desenvolve:
+  - o Go aplica os mesmos scripts de `banco/` e as mesmas colunas novas do `2-criar-banco.sh`, com a mesma assinatura no banco: trocar entre o .NET e o Go não refaz a cópia de segurança a cada partida;
+  - cópia em `dados/backups` antes de mudar um banco que já existe (as 5 mais recentes) e dados iniciais só no banco novo, como no .NET;
+  - conferido contra o código do .NET: banco igual tabela por tabela, coluna por coluna, índices e dados iniciais;
+  - mudou o `banco/`? Rode `go generate ./...` em `src/backend-go` (passo novo no `docs/BANCO-DE-DADOS.md`).
+
+## [2.37.7] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **CI: job do back-end em Go** (#231, épico #70). Roda em paralelo com os outros, só quando o PR mexe no que o Go lê, e entra no check `build`:
+  - formatação, `go vet`, testes com o detector de corrida, código gerado pelo `sqlc` em dia, compilação para Windows e `govulncheck`;
+  - o Dependabot passa a acompanhar os módulos do Go.
+
+## [2.37.6] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: esqueleto do servidor** (#73, épico #70). Ainda não roda no site. Para quem desenvolve:
+  - o servidor em Go serve o site em HTTPS, só no próprio computador, lendo os mesmos `appsettings` e o mesmo certificado que os scripts e o `.msi` já geram;
+  - cabeçalhos de segurança, cache, erros e o filtro de endereço iguais aos do .NET, conferidos contra o site rodando, rota por rota;
+  - toda chamada a `/api` ainda responde 404: as rotas entram assunto por assunto.
+
+## [2.37.5] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **Go: camada de banco compatível com o EF Core** (#74, épico #70). Primeiro código Go do projeto, em `src/backend-go/`; ainda não roda no site. Para quem desenvolve:
+  - tipos `Decimal`, `Data`, `DataHora` e `Guid`, que gravam e leem o banco no mesmo formato do .NET, conferidos contra um gabarito gerado pelo próprio EF Core;
+  - abertura do banco com os mesmos ajustes do .NET, transação que desfaz sozinha em caso de erro, e o relógio no fuso de Brasília;
+  - `sqlc` lendo o esquema do `banco/` (com as colunas novas do `2-criar-banco.sh`) e as primeiras consultas, da `Configuracao`;
+  - lida uma cópia do banco real inteira sem nenhum erro de formato.
+
+## [2.37.4] — 2026-10-23 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0049: o back-end vai para Go, trocado aos poucos atrás do .NET** (#71, épico #70). Nada muda no site ainda; a ADR registra como a migração vai ser feita:
+  - o .NET continua na frente (login, segredos, esquema do banco) e repassa ao Go, um assunto de cada vez, as rotas que já foram migradas; voltar um assunto é tirar a rota da lista;
+  - o C# de cada assunto é apagado depois de uma versão publicada com ele no Go;
+  - o esquema novo dos segredos é feito em Go, mas só é usado na troca; nesse dia, o Client Secret da Pluggy e o token da brapi são informados de novo, uma vez;
+  - bibliotecas: `net/http`, `modernc.org/sqlite`, `sqlc`, `shopspring/decimal` e `log/slog`;
+  - as ADRs 0002, 0005, 0011 e 0012 apontam o que a 0049 vai substituir, e o `CLAUDE.md` ganhou as convenções do código Go.
+
+## [2.37.3] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Gerenciador (Windows): a seta dos botões de baixar e a barra de rolagem no tema escuro** (#337).
+  - Em "Atualizar para a última do develop" e "Baixar o instalador .msi", a seta saía de um caractere da fonte de ícones do Windows, fina e com outro peso que o texto. Agora ela é desenhada: o ícone "download", o mesmo do site.
+  - No tema escuro, a caixa com a saída da atualização e a janela "O que mudou" tinham a barra de rolagem clara do Windows. Agora ela fica escura, com o tema escuro do próprio Windows.
+
+## [2.37.2] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Painel: "Últimas transações" mostrava parcelas futuras** (#334). As parcelas que o banco já manda com data futura (ex.: "Casasbahiacom 11/11" em 15/04) ficavam no topo e escondiam o que aconteceu nos últimos dias. Agora a lista vai até hoje, e as futuras ficam no botão "Futuras (N)", com o ano na data. "ver todas" abre Transações no mesmo recorte (até hoje, ou de amanhã em diante).
+
+## [2.37.1] — 2026-10-22 · desenvolvimento
+
+### Publicação e documentação
+- **CI: o instalador `.msi` só é gerado no merge para o develop, e não mais no PR** (#344, ADR 0050). O PR é refeito várias vezes, e cada `.msi` gerado nele era jogado fora; o PR fica ~7 min mais rápido quando mexe no instalador. Para testar o instalador antes do merge, o workflow "Versão (instalador .msi)" roda à mão na branch. Saiu o `scripts/ci/precisa-msi.py`.
+
+## [2.37.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Seletor de mês: o ano abre os anos** (#342). No quadro do seletor de mês (Painel, Contas e cartões, Orçamentos…), o ano é um botão que abre uma página de 12 anos, como o título do calendário dos campos de data. Escolher um ano volta aos meses dele, e Esc volta um nível antes de fechar. A regra entrou no `CLAUDE.md` e num teste que confere os dois quadros, para nenhum componente de data novo ficar de fora.
+
+## [2.36.1] — 2026-10-22 · desenvolvimento
+
+### Correções
+- **Investimentos › Mais análises: "Distribuição" sem o canto vazio** (#330). Sem ações nem FIIs em carteira, não há o card de rentabilidade × Selic, e a distribuição ficava em meia largura, com a outra metade vazia. Agora ela ocupa a largura toda, com a rosca à esquerda e a lista à direita (no celular, um embaixo do outro).
+
+## [2.36.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Criptomoedas: a fonte da cotação em cada moeda** (#329). Cada linha diz de onde veio o preço e quando ("Mercado Bitcoin · 22/10 16:00"), como o "PTAX de …" do câmbio. Com mais de 2 horas, a linha diz "desatualizada". No celular, a fonte e a hora ficam numa linha própria, e a variação em 24 h não fica mais espremida.
+
+## [2.35.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Contas e cartões: as faturas de outros meses** (#323). O seletor de mês, como no Painel, fica em "Cartões de crédito" e muda a fatura de cada cartão e o total "Faturas de …". O mês fica na URL. Saldo, dívida total, limite e "Fatura em aberto" continuam sendo os de hoje, e a tela diz isso. O link "Faturas do mês" do Painel abre Contas no mesmo mês. Endpoint novo: `GET /api/contas/faturas-do-mes`.
+
+## [2.34.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Notificações na barra do topo** (#327). Os orçamentos estourados e os avisos (conta vencida, Open Finance, erros…) saíram do topo do Painel e foram para o **sino** da barra do topo, em qualquer tela.
+  - O sino mostra quantas notificações estão pendentes; o que foi ocultado ou minimizado sai da conta.
+  - O card abre pelo sino e fecha com Esc, com um clique fora ou ao ir para outra tela.
+  - Os cards e o "Ocultar"/"Mostrar" são os mesmos de antes, e as escolhas continuam guardadas no navegador.
+  - O Painel não é mais empurrado para baixo pelos avisos.
+  - Se as notificações não carregarem, o card diz isso e oferece "Tentar de novo".
+  - Endpoint novo `GET /api/painel/avisos` (os avisos do mês atual, sem o resto do Painel).
+
+## [2.33.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Selo da transação também pelas etiquetas** (#325). Antes, o selo vinha só do nome. Agora:
+  - "Pix enviado" e "Pix recebido" sem serviço conhecido ganham o selo do Pix (ex.: "Transferência Recebida|Fulano");
+  - "Pagamento de fatura" ganha o logo do banco citado no texto (ex.: "Fatura Paga Itau Uniclass" → Itaú);
+  - sem marca nem categoria, aparece o ícone do tipo, o mesmo da etiqueta, no lugar do recibo;
+  - o **Keeta** (delivery) entrou na lista de serviços.
+
+## [2.32.0] — 2026-10-22 · desenvolvimento
+
+### Funcionalidades
+- **Fatura em aberto no Painel e em Contas e cartões** (#322). Em Contas e cartões, cada cartão ganhou o interruptor "Fatura no Painel". O card "Fatura em aberto", no Painel ("Situação hoje") e no topo de Contas e cartões, soma a fatura em aberto dos cartões ligados: a do mês, enquanto não fecha; depois, a próxima. "ver detalhes" mostra a de cada cartão, com quando fecha, quando vence e o link para o histórico. A escolha fica no navegador, como as outras preferências de exibição (ADR 0017).
+
+## [2.31.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Metas: gráfico "Como está indo"** (#318). Em cada meta, um botão abre o gráfico com o total guardado no fim de cada mês, o caminho do plano até o valor alvo e o próprio alvo. Cada "+ aporte" muda o gráfico, e embaixo ficam os últimos aportes. **Banco:** tabela nova `MetaAporte`, criada sozinha ao atualizar. Ela guarda a data e o valor de cada aporte; antes, o aporte só somava no total. O histórico começa a partir desta versão.
+
+## [2.30.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Ícone em cada meta** (#316): casa, carro, viagem, estudo, reserva e outros 11, escolhidos no formulário e mostrados no cartão, na cor da meta. Ajuda a achar a meta de olho. O cartão ganhou divisórias entre o progresso, o plano do mês e as ações. **Banco:** coluna nova `Meta.Icone`, criada sozinha ao atualizar.
+
+### Correções
+- **Metas: "concluída" com 1% e "guardar R$ 0,00"** (#316).
+  - Quando a meta chega ao alvo, ela fica concluída. Se depois o alvo aumentava, a meta continuava concluída (ex.: R$ 200 de R$ 30.000). Agora, aumentar o alvo para acima do que já foi guardado devolve a meta ao plano, e o formulário diz isso.
+  - Marcada como concluída antes de chegar ao alvo, o cartão diz "concluída por você", e o formulário mostra quanto falta.
+  - Sem meta em andamento, o assistente diz isso, em vez de "recomendo guardar R$ 0,00".
+  - "R$ 200,00de R$ 30.000,00" ganhou o espaço.
+  - As cores do formulário têm nome para o leitor de tela ("Cor azul", e não o código).
+
+## [2.29.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Projeção mais fácil de ler** (#314).
+  - **O mês em que o saldo vira** ganha um selo, "saldo volta ao positivo" ou "saldo fica negativo", e a frase do gráfico diz o mês (sem valores, com "ocultar valores").
+  - **"Gasto médio por categoria" na largura toda**, em duas colunas no computador, sem a metade da direita vazia.
+  - **A porcentagem diz o que compara:** "último mês +34%", com a regra das cores escrita embaixo (antes só num texto que aparecia ao passar o mouse).
+  - **O nome da categoria abre Transações** com as despesas dela nos mesmos meses da média, e cada uma tem a barrinha proporcional, como em Relatórios.
+
+## [2.28.1] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Projeção › Mês a mês: "Saldo previsto" cortado em tela de notebook** (#312). A 1366 px, a tabela ficava em meia largura, ao lado de "Gasto médio por categoria", e a última coluna só aparecia rolando para o lado; "em parcelas" quebrava em duas linhas. Agora a tabela ocupa a largura toda (o gasto por categoria vai para baixo), e "em parcelas" fica numa linha só.
+
+## [2.28.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Instalação mais clara quando algo atrapalha** (#300).
+  - **Porta 5443 ocupada:** a instalação diz qual programa está nela e o PID, em vez de o site simplesmente não subir.
+    - Pelo `.msi`, a instalação para com a mensagem no log do instalador.
+    - Pelo `instalar-windows.cmd`, ela para antes de trocar a versão, sem mudar nada.
+    - Pelos scripts bash, ela avisa antes de ligar o serviço e repete no teste final, se o site não responder.
+  - **Firefox:** no fim da instalação, se ele estiver instalado, aparece como fazê-lo aceitar o certificado do site.
+  - **Certificado no Linux:** quando a confiança automática falha, a instalação salva a parte pública do certificado (sem a chave) e mostra os comandos da sua distribuição (Debian/Ubuntu, Fedora, Arch) e do Chrome/Chromium.
+  - **Gerenciador no Linux:** o `instalar.sh` já instala o gerenciador no fim (`--sem-gerenciador` para não instalar). No Windows pelos scripts, ele mostra o comando.
+
+## [2.27.4] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **A CI liga a API de verdade em todo PR de back-end** (#309). Antes, a API só era ligada no teste do instalador do Windows, que roda em poucos PRs: um erro que só aparece ao iniciar (serviço sem registro, configuração, esquema do banco) passava batido. Agora o job "API e banco" liga a API num banco temporário e espera ela responder (`scripts/ci/ligar-api.sh`, ~10 s).
+
+## [2.27.3] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **PR só de CI não roda o instalador do Windows** (#307). PR com título `ci:` não gera nem testa o `.msi` (~7 min), mesmo mexendo no `versao.yml`. Se ele mexer de fato no instalador, no gerenciador ou na inicialização da API, o `.msi` roda, e a CI avisa que o título não combina. Registrado no `CLAUDE.md` e na ADR 0047.
+
+## [2.27.2] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **O site abre mais rápido: cache longo em todos os arquivos do build** (#305). Os arquivos com hash no nome (que nunca mudam de conteúdo) ficam um ano no cache do navegador, mas a regra só aceitava maiúsculas e números, e o hash do Angular de hoje tem minúsculas, "_" e "-": só 3 dos 35 arquivos recebiam o cache longo, e o navegador perguntava de novo pelos outros 32 a cada abertura. Agora os 35 recebem; `index.html`, favicon, manifesto e ícones continuam sendo conferidos a cada abertura. A CI confere a regra contra nomes de um build de verdade (`scripts/ci/verificar-cache-estaticos.py`).
+
+## [2.27.1] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **Skill e agente do Claude Code para a migração do back-end para Go** (épico #70). A skill `migrar-para-go` e o agente `dev-go` analisam o C# de um assunto e o portam para Go seguindo as etapas do épico:
+  - contrato idêntico ao do .NET, banco no formato do EF Core, dinheiro nunca em `float64`;
+  - nenhum código Go antes da ADR da #71; troca aos poucos, com o .NET na frente repassando ao Go os assuntos migrados;
+  - as armadilhas C# → Go: arredondamento bancário do `Math.Round`, lista vazia que vira `null`, ordenação estável, busca com acento.
+- O CHANGELOG da 2.17.0 que estava só no `main` (#249) já tinha voltado com a #294; o `main` entra no histórico do `develop` sem mudar o texto.
+
+## [2.27.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: "O que mudou" legível e só com o que é novo para você** (#294).
+  - As notas aparecem formatadas (títulos, listas, negrito e links clicáveis), e não mais com os símbolos do Markdown.
+  - Primeiro vem só o que mudou desde a versão instalada; o resto (como instalar, versões anteriores e tudo desde a última publicada) fica em **Ver tudo**.
+  - As notas da versão de desenvolvimento listam, por versão, os PRs que entraram nela.
+
+### Publicação e documentação
+- **CHANGELOG com uma seção por versão** (#294). O "Não publicado" juntava tudo desde a 2.1.0, inclusive o que já tinha saído na 2.17.0: a seção da 2.17.0 ficou só na branch da versão e não voltou para o develop. Agora:
+  - a 2.17.0 voltou, com o texto publicado;
+  - o que entrou depois está na versão de cada PR (de 2.17.1 a 2.27.0), achada pelo histórico do git, com "· desenvolvimento" até ser publicada;
+  - cada versão tem um título de cada tipo (Funcionalidades, Correções…), e a CI confere (`scripts/ci/verificar-changelog.py`);
+  - publicar uma versão é tirar o "· desenvolvimento" do título dela; as notas juntam as versões de desenvolvimento desde a última publicada.
+
+## [2.26.1] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Gráficos de linha num padrão só** (#292). Na Visão anual, uns eram preenchidos e outros não, e o **Patrimônio estimado** era preenchido até o zero: com valor negativo, a faixa ficava acima da linha. Agora todos seguem a mesma regra, aplicada sozinha pelo componente de gráfico (ADR 0021), também em Investimentos e FIIs:
+  - a linha principal é preenchida da linha até a base, com um ponto em cada mês;
+  - a linha tracejada de comparação fica sem preenchimento.
+
+## [2.26.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: o menu do botão direito na bandeja com o visual do site** (#289).
+  - **No Windows:**
+    - as cores do site, no tema claro e no escuro, como a janela;
+    - um ícone em cada item e "Abrir o site" em destaque;
+    - itens mais altos e cantos arredondados no Windows 11;
+    - **no topo, a situação do site**, por exemplo "Finanças Local · No ar", com o ponto colorido.
+  - **Teclado e alto contraste:** o teclado continua funcionando e pula a linha da situação. Com o alto contraste do Windows ligado, fica o desenho do sistema.
+  - **No Linux:** o menu ganha a mesma linha da situação. As cores lá são do ambiente gráfico.
+
+## [2.25.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Criptomoedas em Investimentos** (#279, ADR 0048): logo abaixo do Câmbio, o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether.
+  - É o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia, com a data e a hora sempre à vista.
+  - Cada moeda tem o ícone da marca ao lado do código, um arquivo do próprio site (simple-icons, CC0).
+  - A variação em 24 h é calculada pelo próprio site, contra a cotação guardada um dia antes. Aparece depois do primeiro dia com o site ligado; sem esse dado, a tela diz isso em vez de inventar um número.
+  - **Banco:** tabela nova `CotacaoCripto`, criada sozinha ao atualizar.
+  - **Rede:** domínio novo de saída, `api.mercadobitcoin.net`. Só os pares fixos (BTC-BRL…) são enviados, nenhum dado seu.
+
+## [2.24.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Câmbio em Investimentos: bandeira de cada moeda e mais moedas** (#278).
+  - Cada moeda ganhou a bandeira do país à direita do código (a do euro é a da União Europeia).
+  - Além do dólar, do euro e do iene, "Mais 7 moedas" mostra as outras que o Banco Central publica na PTAX: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca. O site lembra se você deixou aberto.
+  - As bandeiras são arquivos do próprio site ([flag-icons](https://github.com/lipis/flag-icons), MIT), sem buscar nada na internet.
+
+## [2.23.4] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **Testes afetados também localmente** (#286): `npm run test:afetados`, em `src/frontend`. Ele roda o Jest, o build e os testes no navegador **só no que mudou** desde o develop, inclusive o que ainda não foi commitado, com a mesma escolha que a CI faz no PR. Numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira, que continua rodando na CI, no merge.
+
+## [2.23.3] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Gráficos de barras com linha: a linha fica por cima, com um ponto em cada mês** (#282). Ela sumia atrás das barras no **Fluxo de caixa mensal** (Relatórios) e no **Saldo previsto** (Projeção). Agora é um padrão do site, aplicado sozinho a todo gráfico de barras com linha (também na Visão anual e em Investimentos), registrado na ADR 0021.
+  - No Fluxo de caixa, a tabela ganhou a coluna "Saldo acumulado".
+  - "Emergências" só aparece na legenda e no "como ler" quando houve alguma no período.
+- **Visão anual › Resultado acumulado:** o preenchimento ia da linha até o zero. Nos meses com acumulado negativo, a faixa ficava acima da linha e parecia invertida; agora vai sempre da linha até a base do gráfico.
+- **Campos de número sem as setinhas do navegador** (#283): elas não tinham o estilo do site e destoavam no tema escuro (Parametrização e outras telas). As setas do teclado continuam mudando o valor.
+- **Configurações › Segurança › Acessos recentes** (#284):
+  - a data com hora não fica mais por cima do evento (a mesma correção vale para as datas de "Maiores despesas" em Relatórios);
+  - os eventos aparecem em português ("Entrou no site", "Regra de descrição criada (22)");
+  - o endereço do próprio computador aparece como "Acesso local".
+
+## [2.23.2] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **A skill `trabalho-longo` é oferecida na hora certa** (#280). Numa sessão com muitas issues pedidas uma de cada vez, ela nunca foi oferecida, e o trabalho parou quando acabou o limite de uso. Agora:
+  - o `CLAUDE.md` e a skill têm um critério objetivo: mais de uma issue ou PR, a 2ª issue na mesma conversa, ou conversa já resumida;
+  - um hook do Claude Code, versionado em `.claude/settings.json`, lembra automaticamente quando o pedido tem link de issue ou PR ou a sessão fica longa. Vale para todos do projeto; para desligar, use `FINANCAS_SEM_LEMBRETE_TRABALHO_LONGO=1`.
+
+## [2.23.1] — 2026-10-21 · desenvolvimento
+
+### Correções
+- **Contas a pagar: selo do banco colado no nome e YouTube com o selo do Google** (#274). O selo do banco e o nome da conta ganham espaço depois do nome da cobrança; e, entre o texto da cobrança, o estabelecimento e o nome, vale a marca mais específica ("GOOGLE" + "Google YouTubePremium" dá YouTube; "PIX ENVIADO" + "Netflix" dá Netflix).
+
+## [2.23.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Investimentos: câmbio do dia** (#247). No Resumo, o bloco "Câmbio" mostra 1 dólar, 1 euro e 100 ienes em reais, pela PTAX de compra do Banco Central que o site já guarda, com a data de cada cotação e o ⓘ da PTAX. Funciona sem internet, com a última cotação e a data dela.
+
+### Correções
+- **O ⓘ dos termos fechava sozinho no celular** (#247): a rolagem que vem com o toque fechava a explicação logo depois de abrir. Agora ela acompanha o ⓘ e só fecha se ele sair da tela.
+
+## [2.22.1] — 2026-10-21 · desenvolvimento
+
+### Publicação e documentação
+- **CI mais rápida** (#255, ADR 0047): o PR roda só os testes do front-end afetados pelo que mudou (tudo no merge); API, Jest e testes no navegador (em 2 partes) rodam em paralelo; o instalador .msi só é gerado e testado no PR que mexe nele (antes rodava em todo PR, por causa da linha da versão); caches de node_modules, do build do Angular, do Jest e do NuGet no Windows. A imagem Docker do Playwright foi avaliada e descartada (mais lenta de baixar que o navegador em cache).
+
+## [2.22.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Transações: ordenar a lista pelo cabeçalho** (#244). Clicar em Data, Categoria, Conta ou Valor ordena a lista inteira (não só a página), e clicar de novo inverte; a seta mostra a coluna e a direção. Em Valor, o maior lançamento primeiro, gasto ou receita; sem categoria fica no fim. A ordem fica no endereço da página (F5 e link salvo mantêm).
+
+## [2.21.0] — 2026-10-21 · desenvolvimento
+
+### Funcionalidades
+- **Mais selos de marcas** (#269): Pix, Mercado Pago ("MP*MP", "MP*NOME"), Uber pelo processador ("DL*UberRides", "UBERTRIP", "Uber One"), Bilhete Único ("BILHUNICO", com um ônibus), Cobasi, Petz, Petlove (com uma pata) e Extra (só nas formas da loja, para "extrato" e "hora extra" não virarem a loja).
+
+## [2.20.0] — 2026-10-20 · desenvolvimento
+
+### Funcionalidades
+- **Calendário: escolher o mês e o ano pelo título** (#264). Em todo campo de data, clicar no título do calendário ("outubro de 2026") mostra os 12 meses do ano; clicar de novo ("2026") mostra uma página de 12 anos. Escolher um ano leva aos meses, e um mês aos dias. As setas continuam iguais, e Esc volta um passo antes de fechar. Meses e anos fora do permitido ficam desabilitados.
+
+## [2.19.2] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Calendário do "Até (opcional)" abria em dezembro de 2099** (#263). Em Contas a pagar, com o próximo vencimento no futuro, o calendário do "Até" vazio abria no fim do intervalo permitido. Agora todo campo de data vazio abre no mês de hoje ou, se hoje não pode ser escolhido, no mês da data aceita mais perto de hoje.
+
+## [2.19.1] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Contas e cartões: recorrentes em cima do rodapé e histórico de faturas esticando os outros cartões** (#245). Na conta com cartões ligados e cobranças recorrentes, a linha "N cobranças recorrentes" caía em cima do número da conta e de "transações · editar"; agora cada linha tem o seu lugar. Abrir o "Histórico de faturas" de um cartão aumenta só aquele cartão: os vizinhos da mesma linha ficam como estavam, sem espaço vazio.
+
+## [2.19.0] — 2026-10-20 · desenvolvimento
+
+### Funcionalidades
+- **Ícone de cada cobrança em Contas a pagar** (#265): o selo do serviço quando o site o reconhece pelo texto do extrato, no mesmo estilo dos bancos. São 116 marcas comuns no Brasil: streaming e música (Netflix, Spotify, YouTube, Globoplay, Disney+…), telefone e internet (Vivo, TIM, Claro, Oi), transporte e comida (Uber, 99, iFood, Rappi, Sem Parar), compras (Amazon, Mercado Livre, Shopee, Magalu), luz, água e gás (Enel, Sabesp, Cemig…), saúde, academia, viagens, programas e IA; senão, o ícone da categoria (Moradia, Educação, Saúde…). Aparece em Contas a pagar (lista, "Assinaturas e recorrentes" e sugestões do extrato), em Transações (cada linha) e no Painel (próximos vencimentos e últimas transações). Nada é baixado da internet.
+- **Contas a pagar com o selo do banco e blocos que abrem e fecham** (#242). O selo do banco ou do cartão aparece ao lado da conta de cada cobrança, nas sugestões do extrato e no título de cada bloco de "Assinaturas e recorrentes". Cada bloco agora abre e fecha pelo título (clique ou teclado). Fechado, ele ainda mostra quantas cobranças tem e o total por mês. Dá para deixar vários abertos, e "Fechar todos" / "Abrir todos" faz de uma vez. O site lembra, neste navegador, quais você fechou.
+
+## [2.18.2] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Projeção e estornos de compra parcelada** (#257). Compra parcelada devolvida inteira (o banco estorna o valor total) agora conta como cancelada: o estorno e as parcelas já lançadas saem dos relatórios. Antes, o estorno do total abatia o gasto de um mês em que só a 1ª parcela tinha sido cobrada, e as despesas do mês ficavam negativas no Painel, nos Orçamentos e na Projeção. Na Projeção, as parcelas futuras do cartão não são mais descontadas duas vezes (no "Disponível hoje" e de novo em cada mês), e o valor negativo não quebra mais a linha entre o "−" e o número.
+
+## [2.18.1] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Sugestões de categoria com regras mais seguras** (#254). A regra sugerida agora sai da descrição do banco, que é o que a regra confere, e não do nome do estabelecimento: antes, um grupo de pagamento de fatura sugeria "contém BANCO", que pegaria Pix e tarifas. A caixa "criar regra" vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. "Aplicar as N de confiança alta" não cria mais duas regras iguais com categorias diferentes. As categorias sugeridas (as bolinhas) não cobrem mais o texto do motivo.
+
+## [2.18.0] — 2026-10-20 · desenvolvimento
+
+### Funcionalidades
+- **Avisos do Painel agrupados e que dá para ocultar** (#206): os orçamentos estourados agora ficam num card só, "N orçamentos estourados neste mês", com as piores categorias primeiro. Cada uma mostra quanto passou (em R$ e %), uma barra em que a parte clara é o limite, e o nome leva às despesas dela no mês. As que passaram só por emergência ficam em laranja, e "Ver todos" mostra o resto. Os outros avisos (conta vencida, consentimento, erros) vão para um card próprio. O menu "Ocultar" de cada card tem "Minimizar" (lembrado: o card fica recolhido toda vez que abrir o Painel, até clicar em "Mostrar") e "Ocultar até…" (lembrado). Recolhido, o card vira uma linha com a quantidade. O dos orçamentos volta sozinho no mês seguinte, se outra categoria estourar ou se uma piorar de faixa; o dos outros avisos volta quando aparece um aviso novo.
+
+## [2.17.3] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Painel alinhado** (#246, #258): "posição em … · não muda com o mês escolhido" fica à direita, na linha de "Situação hoje", como o seletor de mês da seção de baixo. Os avisos discretos do topo (descrições pouco informativas, trocos) usam a largura toda e não quebram mais em duas linhas com espaço sobrando.
+
+## [2.17.2] — 2026-10-20 · desenvolvimento
+
+### Publicação e documentação
+- **Testes de estilo no navegador** (#204): o visual que os testes antigos só adivinhavam lendo o CSS (cards do mesmo tamanho, colunas, divisórias, avisos centralizados, a seta das listas, as animações e "reduzir movimento") agora é medido na tela de verdade, e cada teste foi conferido estragando a regra de propósito. Os testes antigos saíram (nada ficou sem cobertura). A CI também confirmou que não dá para juntar os testes de instalação do Windows nem reaproveitar o build no instalador; o motivo está na ADR 0029.
+
+## [2.17.1] — 2026-10-20 · desenvolvimento
+
+### Correções
+- **Contas e cartões: fatura já paga aparecia como "fechada", e o card não mostrava a fatura seguinte** (#251). O Nubank não manda pelo Open Finance o pagamento da fatura, só o lançamento "Pagamento recebido" no cartão, e esse lançamento não era usado para saber se a fatura foi paga.
+  - A fatura passa a contar como paga também pelo pagamento lançado no cartão entre o vencimento anterior e o vencimento dela (pagar antes do fechamento conta). Vale para o card, o Painel ("Faturas do mês"), o histórico de faturas, "Conferir com o banco" e o "fatura a pagar" do plano das metas.
+  - Depois que a fatura do mês fecha, o card mostra embaixo a **próxima fatura**: o valor que já entrou nela, quando fecha e quando vence.
 
 ## [2.17.0] — 2026-10-20
 
@@ -91,6 +1380,69 @@ Primeira versão publicada desde a 2.1.0. O número saltou porque, desde a ADR 0
   - **Ainda aberta:** soma as compras desde o fechamento anterior e a parcela do mês, menos os estornos.
   - **Na tela:** o Painel e Contas e cartões mostram quando a fatura fecha e quando vence.
 - **Ícone de "ocultar valores" parecia invertido.** Com os valores ocultos, o botão ficava destacado com o olho aberto. Agora o ícone mostra o estado, como nos apps de banco: olho riscado (e botão destacado) quando os valores estão ocultos, e olho aberto quando estão à mostra. A dica continua dizendo a ação do clique.
+- **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.
+- **Listas suspensas no visual do site:** o campo fechado ganhou uma seta própria, no lugar da caixa do sistema, e fica numa linha só. A lista que abre continua a do navegador, e o teclado, o leitor de tela e o celular funcionam como antes.
+- **O que aparece depois entra com um fade curto,** em vez de surgir de uma vez: botões, avisos, etiquetas, cards, blocos, menus que abrem, listas vazias e mensagens de erro. Nada anima com "reduzir movimento" no sistema.
+- **Caixa de marcar nova e seleção de várias linhas melhor** (#133, ADR 0032).
+  - **Caixa nova em todo o site:** no visual do site, nos temas claro e escuro, com os estados marcada, parcial (traço) e desabilitada.
+  - **Nas tabelas:** a célula inteira é clicável e a linha selecionada fica destacada (Transações, Investimentos › importar do extrato, Sugestão de orçamentos, Conferir investimentos).
+  - **Em Transações:**
+    - Shift+clique seleciona um intervalo; Esc limpa;
+    - "Selecionar todas desta página" mostra o estado parcial;
+    - a barra diz "5 selecionadas (2 em outras páginas)", abre com animação, sem empurrar a tabela de uma vez, e fica fixa no topo ao rolar.
+  - **Trocar de página mantém a seleção;** trocar o filtro limpa, com o aviso "Seleção limpa ao trocar o filtro".
+  - **Leitor de tela:** cada caixa diz qual é a transação ("Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00"), e a contagem é anunciada.
+- **Campo de valor em reais padrão** (#132, ADR 0032), em todos os campos de dinheiro: Transações, Contas e cartões, Contas a pagar, Metas, Orçamentos, Investimentos e Conferir investimentos.
+  - **Entende o jeito brasileiro:** "1.234,56", "1234,56", "R$ 1.234,56" (colado do app do banco) e "1234.56". "1.500" é mil e quinhentos, não 1,5.
+  - **Formata enquanto você digita:** "124214" já aparece como "124.214", com o cursor no lugar. Ao sair do campo, completa as casas ("124.214,00").
+  - O símbolo da moeda fica dentro do campo. Investimentos aceitam outra moeda e até 4 casas.
+  - **No celular**, abre o teclado numérico. **No computador**, a rodinha do mouse não muda mais o valor, e as setinhas saíram.
+  - **Erro em texto, perto do campo:** "Informe um valor maior que zero.".
+  - **Orçamentos:** continua salvando ao sair da linha, e agora também com Enter.
+  - Os valores enviados à API não mudam.
+- **Interruptor para o que muda a tela na hora** (#130, ADR 0032).
+  - "Mostrar arquivadas" (Contas e cartões), "Mostrar encerradas" (Investimentos › Posições) e "Agrupar subcategorias" (Relatórios) viraram interruptores. As caixas de marcar de formulário, com "Salvar", não mudam.
+  - **"Mostrar arquivadas":**
+    - o estado fica na URL (`?arquivadas=1`), e recarregar, voltar ou abrir um link salvo mostra a tela do mesmo jeito;
+    - conta ou cartão arquivado mostra o selo **"Arquivada"** em texto.
+  - Os filtros de Transações continuam caixas de marcar, por consistência com a barra de filtros (o porquê está na ADR 0032).
+- **Esconder o menu lateral no computador** (#131).
+  - **Botão ☰:** o mesmo botão da barra de cima, que antes só aparecia no celular, agora também esconde e mostra o menu no computador. O conteúdo passa a usar a largura toda, e os gráficos se redesenham sozinhos.
+  - **Nome acessível:** fixo, "Menu de navegação", e o leitor de tela ouve pelo `aria-expanded` se o menu está aberto ou fechado.
+  - **Menu escondido:** sai da ordem do Tab (`inert`), tanto no computador quanto com a gaveta do celular fechada.
+  - **A escolha fica salva neste navegador** (`financas.menuRecolhido`, ADR 0017), e o padrão é o menu aberto. No celular a gaveta continua começando fechada.
+  - **Com o menu escondido, a página ganha a largura do menu** (até 1632 px) e fica **centralizada**, sem encostar à esquerda com um vazio grande à direita em tela larga.
+  - **Animação:**
+    - ao esconder, o menu desliza enquanto a coluna encolhe;
+    - ao mostrar, a coluna abre de uma vez e o conteúdo, o ☰ e o título deslizam junto com o menu, só com `transform` (sem o pisca-pisca de refazer o layout a cada quadro);
+    - nada disso acontece com movimento reduzido no sistema.
+  - **Gaveta do celular:** dá para fechar sem escolher uma tela. As formas são:
+    - o **✕ "Fechar menu"**;
+    - **tocar no fundo escuro**;
+    - **arrastar para a esquerda**;
+    - **Esc**, que também devolve o foco ao ☰.
+
+    A gaveta ocupa no máximo 85% da tela. Aberta, o foco vai para o ✕ e o conteúdo atrás sai do Tab.
+- **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
+  - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
+- **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
+  - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
+  - Sem animação com movimento reduzido no sistema.
+- **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
+  - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
+  - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
+  - **Versão nova:** nessa instalação, ele não oferece o `.msi` e diz como atualizar pelos scripts.
+- **Visual novo do gerenciador e do instalador**, com a identidade do site.
+  - **Gerenciador:** cabeçalho com a marca, cartões, botões arredondados e um ponto colorido com a situação. Segue o tema claro ou escuro do Windows, inclusive na barra de título. As preferências viraram interruptores (liga/desliga), e o botão em destaque é a próxima ação provável: "Abrir o site" quando está no ar, "Ligar" quando está desligado.
+  - **Instalador `.msi`:** imagens com o degradê da marca e o cofrinho nas telas de boas-vindas, de conclusão e no topo das demais (`instalador/imagens`).
+- **Instalador `.msi` do `develop`, com link fixo** (ADR 0029). A cada merge no `develop`, depois dos testes de instalação, a CI publica o `FinancasLocal-desenvolvimento.msi` no pré-lançamento [desenvolvimento](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento).
+  - **Versão mostrada:** `X.Y.Z-dev.N`, no site e no gerenciador.
+  - **Troca entre as duas:** o `.msi` de mesma versão `X.Y.Z` substitui o instalado, e a versão publicada e a de desenvolvimento trocam uma pela outra sem ficarem as duas instaladas. A CI testa essa troca.
+  - **Avisos do gerenciador:** continuam só para as versões publicadas.
+- **Mais fácil sair da instalação pelos scripts:** o gerenciador dessa instalação diz que o `.msi` traz o banco e as chaves e tem o botão **Baixar o instalador .msi**.
+- **Atalho do gerenciador na área de trabalho**, para abrir com um clique.
+  - **`.msi`:** o atalho vai para a área de trabalho de todos os usuários. Com `ATALHOAREADETRABALHO=0`, instala sem ele. A desinstalação remove o atalho.
+  - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
 
 ### Funcionalidades
 - **Regras de descrição por valor** (#241, ADR 0030 e 0043): separam cobranças que chegam do banco com a mesma descrição e só mudam no valor, como duas contas do condomínio.
@@ -189,71 +1541,6 @@ Primeira versão publicada desde a 2.1.0. O número saltou porque, desde a ADR 0
   - o campo de adicionar tem rótulo e dica;
   - o "Histórico de sincronizações" ganhou o visual do "Mais análises".
 - **O calendário abre por cima de tudo:** dentro de um modal, ele não é mais cortado.
-
-### Correções
-- **Radio buttons:** ficavam esticados na largura toda (Renomear transação). Agora têm o visual da caixa de marcar nova, redondos.
-- **Listas suspensas no visual do site:** o campo fechado ganhou uma seta própria, no lugar da caixa do sistema, e fica numa linha só. A lista que abre continua a do navegador, e o teclado, o leitor de tela e o celular funcionam como antes.
-- **O que aparece depois entra com um fade curto,** em vez de surgir de uma vez: botões, avisos, etiquetas, cards, blocos, menus que abrem, listas vazias e mensagens de erro. Nada anima com "reduzir movimento" no sistema.
-- **Caixa de marcar nova e seleção de várias linhas melhor** (#133, ADR 0032).
-  - **Caixa nova em todo o site:** no visual do site, nos temas claro e escuro, com os estados marcada, parcial (traço) e desabilitada.
-  - **Nas tabelas:** a célula inteira é clicável e a linha selecionada fica destacada (Transações, Investimentos › importar do extrato, Sugestão de orçamentos, Conferir investimentos).
-  - **Em Transações:**
-    - Shift+clique seleciona um intervalo; Esc limpa;
-    - "Selecionar todas desta página" mostra o estado parcial;
-    - a barra diz "5 selecionadas (2 em outras páginas)", abre com animação, sem empurrar a tabela de uma vez, e fica fixa no topo ao rolar.
-  - **Trocar de página mantém a seleção;** trocar o filtro limpa, com o aviso "Seleção limpa ao trocar o filtro".
-  - **Leitor de tela:** cada caixa diz qual é a transação ("Selecionar: PIX ENVIADO JOAO, 12/10/2026, R$ 150,00"), e a contagem é anunciada.
-- **Campo de valor em reais padrão** (#132, ADR 0032), em todos os campos de dinheiro: Transações, Contas e cartões, Contas a pagar, Metas, Orçamentos, Investimentos e Conferir investimentos.
-  - **Entende o jeito brasileiro:** "1.234,56", "1234,56", "R$ 1.234,56" (colado do app do banco) e "1234.56". "1.500" é mil e quinhentos, não 1,5.
-  - **Formata enquanto você digita:** "124214" já aparece como "124.214", com o cursor no lugar. Ao sair do campo, completa as casas ("124.214,00").
-  - O símbolo da moeda fica dentro do campo. Investimentos aceitam outra moeda e até 4 casas.
-  - **No celular**, abre o teclado numérico. **No computador**, a rodinha do mouse não muda mais o valor, e as setinhas saíram.
-  - **Erro em texto, perto do campo:** "Informe um valor maior que zero.".
-  - **Orçamentos:** continua salvando ao sair da linha, e agora também com Enter.
-  - Os valores enviados à API não mudam.
-- **Interruptor para o que muda a tela na hora** (#130, ADR 0032).
-  - "Mostrar arquivadas" (Contas e cartões), "Mostrar encerradas" (Investimentos › Posições) e "Agrupar subcategorias" (Relatórios) viraram interruptores. As caixas de marcar de formulário, com "Salvar", não mudam.
-  - **"Mostrar arquivadas":**
-    - o estado fica na URL (`?arquivadas=1`), e recarregar, voltar ou abrir um link salvo mostra a tela do mesmo jeito;
-    - conta ou cartão arquivado mostra o selo **"Arquivada"** em texto.
-  - Os filtros de Transações continuam caixas de marcar, por consistência com a barra de filtros (o porquê está na ADR 0032).
-- **Esconder o menu lateral no computador** (#131).
-  - **Botão ☰:** o mesmo botão da barra de cima, que antes só aparecia no celular, agora também esconde e mostra o menu no computador. O conteúdo passa a usar a largura toda, e os gráficos se redesenham sozinhos.
-  - **Nome acessível:** fixo, "Menu de navegação", e o leitor de tela ouve pelo `aria-expanded` se o menu está aberto ou fechado.
-  - **Menu escondido:** sai da ordem do Tab (`inert`), tanto no computador quanto com a gaveta do celular fechada.
-  - **A escolha fica salva neste navegador** (`financas.menuRecolhido`, ADR 0017), e o padrão é o menu aberto. No celular a gaveta continua começando fechada.
-  - **Com o menu escondido, a página ganha a largura do menu** (até 1632 px) e fica **centralizada**, sem encostar à esquerda com um vazio grande à direita em tela larga.
-  - **Animação:**
-    - ao esconder, o menu desliza enquanto a coluna encolhe;
-    - ao mostrar, a coluna abre de uma vez e o conteúdo, o ☰ e o título deslizam junto com o menu, só com `transform` (sem o pisca-pisca de refazer o layout a cada quadro);
-    - nada disso acontece com movimento reduzido no sistema.
-  - **Gaveta do celular:** dá para fechar sem escolher uma tela. As formas são:
-    - o **✕ "Fechar menu"**;
-    - **tocar no fundo escuro**;
-    - **arrastar para a esquerda**;
-    - **Esc**, que também devolve o foco ao ☰.
-
-    A gaveta ocupa no máximo 85% da tela. Aberta, o foco vai para o ✕ e o conteúdo atrás sai do Tab.
-- **A marca "Finanças" leva ao Painel:** no topo do menu e no título da barra de cima (que aparece no celular e com o menu escondido). No celular, clicar nela também fecha a gaveta.
-  - O título da barra tem o **cofrinho** da marca e entra e sai com fade.
-- **Transição entre telas:** a tela nova entra com um fade curto e sobe 8 px.
-  - Só ao trocar de tela; filtros, página da tabela e âncoras do manual não animam.
-  - Sem animação com movimento reduzido no sistema.
-- **Gerenciador também na instalação pelos scripts** (Windows, ADR 0028).
-  - **Como instalar:** `scripts\instalar-gerenciador.ps1` publica o gerenciador em `publicado\gerenciador` e cria o atalho no Menu Iniciar, sem administrador.
-  - **Como acha o site:** pelo serviço `FinancasLocal`, e o banco pelo `appsettings` da instalação.
-  - **Versão nova:** nessa instalação, ele não oferece o `.msi` e diz como atualizar pelos scripts.
-- **Visual novo do gerenciador e do instalador**, com a identidade do site.
-  - **Gerenciador:** cabeçalho com a marca, cartões, botões arredondados e um ponto colorido com a situação. Segue o tema claro ou escuro do Windows, inclusive na barra de título. As preferências viraram interruptores (liga/desliga), e o botão em destaque é a próxima ação provável: "Abrir o site" quando está no ar, "Ligar" quando está desligado.
-  - **Instalador `.msi`:** imagens com o degradê da marca e o cofrinho nas telas de boas-vindas, de conclusão e no topo das demais (`instalador/imagens`).
-- **Instalador `.msi` do `develop`, com link fixo** (ADR 0029). A cada merge no `develop`, depois dos testes de instalação, a CI publica o `FinancasLocal-desenvolvimento.msi` no pré-lançamento [desenvolvimento](https://github.com/LucasDesenvGit/financas-local/releases/tag/desenvolvimento).
-  - **Versão mostrada:** `X.Y.Z-dev.N`, no site e no gerenciador.
-  - **Troca entre as duas:** o `.msi` de mesma versão `X.Y.Z` substitui o instalado, e a versão publicada e a de desenvolvimento trocam uma pela outra sem ficarem as duas instaladas. A CI testa essa troca.
-  - **Avisos do gerenciador:** continuam só para as versões publicadas.
-- **Mais fácil sair da instalação pelos scripts:** o gerenciador dessa instalação diz que o `.msi` traz o banco e as chaves e tem o botão **Baixar o instalador .msi**.
-- **Atalho do gerenciador na área de trabalho**, para abrir com um clique.
-  - **`.msi`:** o atalho vai para a área de trabalho de todos os usuários. Com `ATALHOAREADETRABALHO=0`, instala sem ele. A desinstalação remove o atalho.
-  - **`instalar-gerenciador.ps1`:** o atalho vai para a área de trabalho do usuário. Com `-SemAtalhoNaAreaDeTrabalho`, não cria.
 
 ### Correções (layout)
 - **Painel: cards do mês reorganizados.**

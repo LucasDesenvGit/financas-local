@@ -124,6 +124,13 @@ export const CORES_SUGERIDAS = [
   '#f8c09a', '#f4a89a', '#f5a3b0', '#f3b3d3', '#d4a5e8', '#a9b4c6'
 ];
 
+/** #316: o nome de cada cor sugerida, para o leitor de tela (Nielsen 2: "Cor lilás", e não "Cor #a7a3f5"). */
+export const NOMES_CORES: Record<string, string> = {
+  '#a7a3f5': 'lilás', '#92c8f0': 'azul', '#8fd5b4': 'verde', '#8fd8d8': 'turquesa', '#b5cf9a': 'verde-oliva',
+  '#f2d98b': 'amarelo', '#f8c09a': 'laranja', '#f4a89a': 'salmão', '#f5a3b0': 'rosa', '#f3b3d3': 'rosa-claro',
+  '#d4a5e8': 'roxo', '#a9b4c6': 'cinza-azulado'
+};
+
 /** Valor em reais para frases-resumo; com "Ocultar valores" ligado devolve null (a frase usa só percentuais). */
 export function reaisOuNada(valor: number, oculto: boolean): string | null {
   return oculto ? null : valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -133,4 +140,18 @@ export function reaisOuNada(valor: number, oculto: boolean): string | null {
 export function pct(valor: number): string {
   const abs = Math.abs(valor);
   return `${abs.toLocaleString('pt-BR', { maximumFractionDigits: abs < 10 ? 1 : 0 })}%`;
+}
+
+/**
+ * #322: quantas colunas a grade de KPIs usa para não sobrar um card sozinho na última linha (no computador): até 5
+ * cards, todos numa linha; depois, a maior entre 5, 4 e 3 que deixa a última linha cheia ou com uma vaga só
+ * (6 → 3 + 3, 7 → 4 + 3, 8 → 4 + 4, 9 → 5 + 4).
+ */
+export function colunasEquilibradas(cards: number): number {
+  if (cards <= 5) return Math.max(cards, 1);
+  for (const colunas of [5, 4, 3]) {
+    const sobra = cards % colunas;
+    if (sobra === 0 || sobra >= colunas - 1) return colunas;
+  }
+  return 3;
 }

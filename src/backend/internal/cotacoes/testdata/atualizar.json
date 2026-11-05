@@ -1,0 +1,69 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "resultado": [
+    {"atualizados":6,"proventosNovos":4,"falhas":["EEE.L","GGGG3","HHHH3","KKKK3"]}
+  ],
+  "ativos": [
+    {"Id":1,"Ticker":"AAAA11","Nome":"Fundo de Investimento Imobiliário AAAA","Tipo":1,"PrecoAtual":"100.0","PrecoAnterior":"99.5","Atualizado":1,"FonteCotacao":"Yahoo Finance"},
+    {"Id":2,"Ticker":"BBBB3","Nome":"Nome guardado","Tipo":2,"PrecoAtual":"12.3456","PrecoAnterior":"12.2","Atualizado":1,"FonteCotacao":"Yahoo Finance"},
+    {"Id":3,"Ticker":"CCCC3","Nome":"C Curto","Tipo":2,"PrecoAtual":"77.0","PrecoAnterior":null,"Atualizado":0,"FonteCotacao":"Manual"},
+    {"Id":4,"Ticker":"DDD","Nome":"D Corp","Tipo":2,"PrecoAtual":"200.1","PrecoAnterior":"199.0","Atualizado":1,"FonteCotacao":"Yahoo Finance"},
+    {"Id":5,"Ticker":"EEE.L","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
+    {"Id":6,"Ticker":"FFFF3","Nome":"F Curto","Tipo":2,"PrecoAtual":"33.3333","PrecoAnterior":"33.0","Atualizado":1,"FonteCotacao":"brapi.dev"},
+    {"Id":7,"Ticker":"GGGG3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
+    {"Id":8,"Ticker":"HHHH3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
+    {"Id":9,"Ticker":"IIII3","Nome":null,"Tipo":2,"PrecoAtual":"7.5","PrecoAnterior":null,"Atualizado":1,"FonteCotacao":"brapi.dev"},
+    {"Id":10,"Ticker":"JJJJ3","Nome":null,"Tipo":2,"PrecoAtual":"5.5556","PrecoAnterior":null,"Atualizado":1,"FonteCotacao":"Yahoo Finance"},
+    {"Id":11,"Ticker":"KKKK3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
+    {"Id":12,"Ticker":"LLLL3","Nome":"L","Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null}
+  ],
+  "proventos": [
+    {"AtivoId":2,"DataCom":"2026-02-27","ValorPorCota":"0.12345679"},
+    {"AtivoId":2,"DataCom":"2026-06-01","ValorPorCota":"0.1"},
+    {"AtivoId":2,"DataCom":"2026-07-03","ValorPorCota":"0.3"},
+    {"AtivoId":3,"DataCom":"2026-01-30","ValorPorCota":"1.25"},
+    {"AtivoId":7,"DataCom":"2026-01-30","ValorPorCota":"0.7"}
+  ],
+  "mensais": [
+    {"AtivoId":2,"Mes":"2026-08-01","Fechamento":"10.7556"},
+    {"AtivoId":2,"Mes":"2026-10-01","Fechamento":"11.2"}
+  ],
+  "indices": [
+    {"Codigo":"IFIX","Mes":"2026-08-01","Fechamento":"3300.1235"},
+    {"Codigo":"IFIX","Mes":"2026-09-01","Fechamento":"3400.0"}
+  ],
+  "pedidos": [
+    "/v8/finance/chart/AAAA11.SA?range=5d&interval=1d",
+    "/v8/finance/chart/AAAA11.SA?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/BBBB3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/BBBB3.SA?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/CCCC3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/CCCC3.SA?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/DDD?range=5d&interval=1d",
+    "/v8/finance/chart/DDD?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/EEE.L?range=5d&interval=1d",
+    "/v8/finance/chart/EEE.L?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/FFFF3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/FFFF3.SA?range=5y&interval=1mo&events=div",
+    "/api/quote/FFFF3",
+    "/v8/finance/chart/GGGG3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/GGGG3.SA?range=5y&interval=1mo&events=div",
+    "/api/quote/GGGG3",
+    "/v8/finance/chart/HHHH3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/HHHH3.SA?range=5y&interval=1mo&events=div",
+    "/api/quote/HHHH3",
+    "/v8/finance/chart/IIII3.SA?range=5d&interval=1d",
+    "/api/quote/IIII3",
+    "/v8/finance/chart/JJJJ3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/JJJJ3.SA?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/KKKK3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/KKKK3.SA?range=5y&interval=1mo&events=div",
+    "/api/quote/KKKK3",
+    "/v8/finance/chart/LLLL3.SA?range=5d&interval=1d",
+    "/v8/finance/chart/LLLL3.SA?range=5y&interval=1mo&events=div",
+    "/v8/finance/chart/IFIX.SA?range=10y&interval=1mo",
+    "/v8/finance/chart/%5EIFIX?range=10y&interval=1mo"
+  ]
+}

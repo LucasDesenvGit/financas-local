@@ -2,77 +2,54 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**O que fica aqui** (#566): o que vale em qualquer tarefa ou dispara de lado, no meio de outra. O que é de um assunto só está no lugar dele (skill, `CONTRIBUINDO.md` ou `docs/`), com uma linha aqui dizendo quando ler. Regra nova segue o mesmo critério.
+
+## Idioma
+
+**Responda sempre em português do Brasil**, para qualquer pessoa da equipe: respostas, perguntas, resumos de fim de tarefa, descrições de PR e de issue, mensagens de commit e comentários no código. Vale também quando o conteúdo técnico (log, erro, documentação) vier em inglês e depois de a conversa ser resumida. Nomes de comandos, arquivos e APIs ficam como são.
+
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: API em C#/.NET 10 hospedada via Kestrel (sem IIS — `UseWindowsService`/`UseSystemd` em `Program.cs`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
 
 ## Comandos
 
 ```bash
-# Build
-dotnet build FinancasLocal.sln -c Release      # back-end (Financas.Api + Financas.MigrarSqlite)
-cd src/frontend && npm run build                # front-end (produção)
-cd src/frontend && npm test                     # testes do front-end (Jest): test:regressao | test:usabilidade | test:tipos
-cd src/frontend && npm run test:navegador       # testes no navegador (Playwright): build de produção + CSP da API + API falsa (ADR 0041)
-cd src/frontend && npm start                    # front-end em dev (http://localhost:4200, proxy /api -> API)
-
-# CI roda também:
-python3 scripts/ci/verificar-sql.py             # confere que banco/01-estrutura.sql é idempotente
-# Workflows "Teste de instalação no Linux/Windows": instalam do zero num runner limpo quando scripts/ ou banco/ mudam
-
-# Banco (sem migrations)
-scripts/geral/2-criar-banco.sh                  # roda os scripts de banco/ em ordem (colunas novas: helper adicionar_coluna_se_ausente)
-
-# Publicação
-scripts/geral/3-publicar-atualizar.sh           # compila front+API, publica, cuida de certificado e do serviço do sistema
-scripts/geral/instalar.sh                       # etapas 1-3 de uma vez (bash)
-instalar-windows.cmd                            # Windows sem bash: eleva e roda scripts/windows/instalar-windows.ps1 (etapas 1-3 em PowerShell 5.1, ADR 0012)
-instalador/gerar-msi.ps1                        # gera o FinancasLocal-<versão>.msi (WiX 5; a CI faz isso no workflow "Versão" e publica na tag vX.Y.Z; ADR 0029)
-
-# Migrar dados de uma instalação antiga (SQL Server/IIS) para o SQLite novo — seguro rodar mesmo sem SQL Server disponível
-dotnet run --project src/backend/Financas.MigrarSqlite -- "<connection string SQL Server origem>" "<caminho .db destino>"
+cd src/backend && go test -race ./...                      # back-end Go ("Antes de subir" do src/backend/README.md)
+cd src/frontend && npm run build                              # front-end (produção)
+cd src/frontend && npm run test:tipos && npm test             # Jest
+cd src/frontend && NAVEGADOR=chromium npm run test:afetados   # antes do push: Jest + navegador só no que mudou (#286)
+cd src/frontend && npm start                                  # front-end em dev (http://localhost:4200, proxy /api -> API)
+scripts/geral/2-criar-banco.sh                                # banco (sem migrations)
+scripts/geral/3-publicar-atualizar.sh                         # compila, publica, certificado e serviço do sistema
+scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows sem bash: instalar-windows.cmd, ADR 0012)
 ```
 
-**Testes rápidos (#204):** cada comportamento testado num lugar só: lógica no Jest, desenho/CSS/rota/CSP no navegador. A CI falha com arquivo do Jest acima de 20 s ou suíte acima de 150 s (`scripts/ci/verificar-tempo-testes.py`). Biblioteca pesada no front-end vira substituto leve nos testes do Jest (`testes/apoio/`, `moduleNameMapper`, como o `lucide-falso.js`); antes de pôr uma dependência nova, meça um teste que a use. Mexeu em teste ou em CI: tempo antes e depois no PR. Detalhes em [CONTRIBUINDO.md](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci).
+O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
 
-**Testes no navegador** (Playwright, [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)), em `src/frontend/testes-navegador/`: o build de produção com a CSP da API e a API falsa (`api-falsa.ts`, sem dado real); cada tela do menu abre sem erro de console, exceção ou bloqueio de CSP, em computador e celular. **Mudou tela, CSS, rota ou chamada da API no front-end? Use a skill `testar-no-navegador`** (`.claude/skills/`): roda a regressão, tira prints das telas mudadas para olhar e diz o que foi conferido. Tela nova no menu entra em `TELAS` (`base.ts`), e endpoint novo, na API falsa.
+**O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `src/backend/cmd/financas/` ou `src/backend/internal/banco/esquema_banco.go`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0039), sem produto junto.
 
-Testes automatizados só no front-end, com Jest + `jest-preset-angular` em `src/frontend/testes/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)): `regressao/` (bug corrigido ou comportamento garantido por um PR — cada bug corrigido ganha teste aqui) e `usabilidade/` (critérios de UI/UX desta página verificáveis sem navegador). A CI roda `npm run test:tipos` e `npm test`. O back-end não tem testes automatizados; além disso, vale o checklist manual do PR (ver [CONTRIBUINDO.md](CONTRIBUINDO.md)).
+## Testes
 
-Em desenvolvimento no Visual Studio, o perfil *Desenvolvimento (Kestrel)* sobe a API em `https://localhost:7443`; as chaves do Data Protection ficam em `dados\chaves-dev` (Client Secret da Pluggy precisa ser reinformado).
+- **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou. Mexeu em teste ou em CI: tempo antes e depois no PR.
+- **Go: toda regra nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): unitário em tabela, SQLite real, `httptest`, só a biblioteca padrão; bug corrigido ganha teste que falha antes. Detalhes em [CONTRIBUINDO.md, "Testes do back-end (Go)"](CONTRIBUINDO.md#testes-do-back-end-go).
+- **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura` (#476). Ele é só local, por decisão de 29/10/2026, e a CI não o roda. Dependência nova de propósito entra na tabela do teste, com o motivo, no mesmo PR.
 
-## Arquitetura (resumo — detalhes em docs/ARQUITETURA.md)
+## Arquitetura (detalhes em docs/ARQUITETURA.md)
 
-Angular é publicado dentro do `wwwroot` da própria API: mesma origem, sem CORS, cookies `__Host-`.
+Angular é publicado no `wwwroot`, ao lado do executável do Go (`financas-go`): mesma origem, sem CORS, cookies `__Host-`. Um pacote por assunto em `src/backend/internal/<assunto>`, rotas juntadas em `internal/api` ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)); pastas em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-**Back-end** (`src/backend/Financas.Api`):
-- `Controllers/` — endpoints finos (`BaseController` padroniza erros); um controller pode cobrir múltiplos recursos relacionados (ex.: `PlanejamentoControllers.cs` reúne orçamentos/metas/contas a pagar).
-- `Servicos/` — regra de negócio: `RelatorioService` (painel/orçamentos/projeção/visão anual), `CategorizacaoService` (regras automáticas), `SugestaoCategoriaService`, `ContaService`, `ConfiguracaoService`, `AuditoriaService`, `Relogio` (hora sempre em fuso de Brasília).
-- `Servicos/Pluggy/` — cliente HTTP próprio (sem SDK) para Open Finance; `SincronizacaoHostedService` agenda `SincronizacaoService` periodicamente (endpoint `/v2/transactions`, paginação por cursor).
-- `Servicos/Investimentos/` — carteira de renda variável: `CarteiraService`, `CotacaoService` (Yahoo Finance/brapi), `SelicService` (api.bcb.gov.br), `FiiService`, `ExtratoCarteiraService` (importa compras/vendas a partir da descrição de transações), `ConferenciaInvestimentosService` ("Conferir investimentos": tipo FII, cotas que faltam, troco × provento; ADR 0027).
-- `Entidades/` — classes mapeadas no EF Core (`Financeiro.cs`, `Carteira.cs`, `OpenFinance.cs`, `Seguranca.cs`, `Enums.cs`).
-- `Data/FinancasDbContext.cs` — único lugar com nomes/tamanhos/precisão/índices das tabelas; deve ficar em sincronia manual com `banco/01-estrutura.sql`.
-- `Dtos/Dtos.cs` — todos os DTOs num arquivo único.
-- `Seguranca/` — cabeçalhos de segurança, validação de sessão, constantes de cookies.
+- **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente. Página grande ([ADR 0059](docs/adr/0059-paginas-grandes-divididas-em-tela-apresentacao-e-funcoes-puras.md)): a tela guarda o estado e fala com a API, os componentes de apresentação só recebem `input()` e avisam por `output()`, e a regra vai para funções puras em `<tela>.ts`, testadas sem `TestBed`.
+- **Gerenciador** (`src/gerenciador-go/`, a janela do Windows e do Linux em Go com o Wails, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): o de C# saiu na #86.
 
-**Gerenciador** (`src/gerenciador/`): situação do site, ligar/desligar, cópia do banco. `Financas.Gerenciador.Nucleo` tem o que vale nos dois sistemas (instalação, situação, serviço, cópia do banco); `Financas.Gerenciador` é a janela do Windows (WinForms, UAC, versão nova pelo GitHub Releases; ADR 0028), instalada pelo `.msi` ou pelo `scripts/windows/instalar-gerenciador.ps1`; `Financas.Gerenciador.Linux` é a do Linux (Avalonia, `systemctl --user`, sem rede; ADR 0033), pelo `scripts/linux/instalar-gerenciador.sh`. Texto ou ação nova vai nas duas janelas.
+## Banco (sem migrations, SQLite)
 
-**Front-end** (`src/frontend/src/app`):
-- `core/` — `ApiService` (único ponto de chamadas HTTP), modelos TS, autenticação, tema, privacidade (ocultar valores).
-- `compartilhado/` — componentes reutilizáveis (gráfico Chart.js, modal, paginação, calculadora flutuante, pipe de moeda).
-- `layout/` — casca da tela (menu lateral).
-- `paginas/` — uma página por rota.
-- Componentes standalone, signals e control flow (`@if`/`@for`), com `changeDetection: ChangeDetectionStrategy.Eager`: desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns (não signals) — componente novo sem `Eager` pode não atualizar a tela.
-
-**Banco** (`banco/`) — **sem EF Core Migrations**, de propósito, em SQLite:
-- `01-estrutura.sql` — tabelas/índices/restrições com `CREATE TABLE/INDEX IF NOT EXISTS` (idempotência nativa do SQLite); baseline limpa da troca SQL Server → SQLite, com tabelas novas acrescentadas no fim — verificado pelo CI via `scripts/ci/verificar-sql.py` e aplicado de fato a um banco SQLite descartável no CI. Nunca apagar/renomear coluna em uso sem bloco de transição.
-- `02-dados-iniciais.sql` — categorias/config/regras padrão.
-- A API também aplica esses scripts ao iniciar (`Data/EsquemaBanco.cs`, embutidos no build; cópia em `dados/backups` antes de mudar um banco existente; dados iniciais só no banco novo) — é o que a instalação pelo .msi usa.
-- Coluna nova numa tabela existente: SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no bash: chamar `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`, checa via `PRAGMA table_info`) em `scripts/geral/2-criar-banco.sh`, não no SQL — uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e a API (`EsquemaBanco`) leem essas linhas.
-- **Pastas dos scripts (#154):** `scripts/geral/` é o bash que roda nos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/` têm o que só funciona num deles; `scripts/ci/`, o que só a CI usa. Script novo vai na pasta do sistema em que roda. Os `.cmd` ficam na raiz.
-- Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa). Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
-- Versão do sistema: só no `Directory.Build.props` (API e gerenciador); a tag `vX.Y.Z` tem de ser igual. **Todo PR para o `develop` sobe esse número** (ver Git / commits).
-- Ao mudar a estrutura: atualizar `Entidades/` + `FinancasDbContext.cs`, rodar `2-criar-banco.sh`, e usar `feat(banco)!:` no commit. Passos detalhados em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+- `banco/01-estrutura.sql` é idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`, tabela nova no fim, conferido pelo `scripts/ci/verificar-sql.py`); `02-dados-iniciais.sql` traz o padrão. O site aplica os dois ao iniciar (`-aplicar-esquema`, `internal/banco/esquema_banco.go`, com uma cópia embutida dos scripts que o `go generate` mantém em dia). Nunca apagar/renomear coluna em uso sem bloco de transição.
+- **Coluna nova numa tabela existente:** `adicionar_coluna_se_ausente` em `scripts/geral/2-criar-banco.sh`, não no SQL. Uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e o Go (`internal/banco/esquema`) leem essas linhas.
+- **Mudou a estrutura:** o SQL, o `2-criar-banco.sh`, `go generate ./...` em `src/backend` (a cópia embutida e as consultas do `sqlc`), `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+- **Dado pessoal novo:** tabela ou coluna com dado pessoal, ou dado novo que sai do computador, entra em [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md) no mesmo PR.
+- **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação" (#468) e "Versão (instalador .msi)" (#527), que seguem o guia.
+- **Scripts (#154):** `scripts/geral/` é o bash dos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/ci/`, o que só a CI usa; os `.cmd` na raiz. Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa); serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
 
 ## Decisões de arquitetura (ADRs) — obrigatório
 
@@ -86,78 +63,55 @@ As decisões ficam em `docs/adr/` (índice, critérios e ciclo de vida em [docs/
 
 Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoint que só segue padrões já registrados.
 
+**Requisitos não funcionais** ([docs/REQUISITOS-NAO-FUNCIONAIS.md](docs/REQUISITOS-NAO-FUNCIONAIS.md)): mudança que mexe numa meta (memória, tamanho, partida) mede antes e depois no PR, como já se faz com o tempo dos testes. Partida e telas: `python3 scripts/geral/medir-desempenho.py --api <pasta publicada>`.
+
+**Diagramas sempre junto** ([ADR 0055](docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md)): mudou um contêiner, uma saída de rede ou uma fronteira? Atualize os diagramas de Contexto, de Contêineres e de implantação em `docs/ARQUITETURA.md` **no mesmo PR**, como o Manual (#177). Pacote novo em `src/backend/internal/` entra na tabela do [diagrama de Componentes](docs/arquitetura/componentes.md) (#464; o teste de arquitetura local confere). Termo novo do domínio entra na lista de [`docs/arquitetura/dominio.md`](docs/arquitetura/dominio.md), e estado novo (enum, `Status`) atualiza o diagrama de estados de lá.
+
 ## Convenções de código
 
-- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
+- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
 - Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
-- Consultas ao banco **só via LINQ/lambda** sobre entidades mapeadas (nunca SQL montado a partir de texto do usuário); atualizações em massa com `ExecuteUpdate`/`ExecuteDelete`.
-- Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** via ASP.NET Data Protection — nunca em arquivo de config nem devolvidos pela API.
-- Front-end chama a API só pelo `ApiService` (não usar `HttpClient` direto nos componentes).
+- Consultas ao banco **só parametrizadas** (`?` ou o código gerado pelo `sqlc`), nunca SQL montado a partir de texto do usuário.
+- **Código Go:** assunto novo ganha pacote em `src/backend/internal/<assunto>` e uma linha em `internal/api`, com casos de contrato (`testes/contrato`). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
+- Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** (`internal/segredos`: AES-256-GCM, prefixo `v2:`) — nunca em arquivo de config nem devolvidos pela API.
 - Formatação: `.editorconfig`.
 
-## UI/UX — referências obrigatórias
+## UI/UX
 
-Ao propor, revisar ou implementar qualquer coisa de UI/UX (telas, navegação, gráficos, filtros, cards de melhoria), basear a recomendação nestas fontes e **citar qual princípio sustenta cada decisão**:
+**Mexeu em tela, navegação, gráfico, filtro, formulário ou UX? Leia [docs/UI-UX.md](docs/UI-UX.md) antes de propor, revisar ou implementar:** as referências obrigatórias (Shneiderman, Nielsen, WCAG 2.2, NN/g, WAI-ARIA) e os padrões já adotados. Cite o princípio que sustenta cada decisão, separe o que vem das fontes do que é julgamento próprio e diga quando algo não foi validado com uso real.
 
-| Fonte | Usar para | Link |
-|---|---|---|
-| Shneiderman — *"Overview first, zoom and filter, then details-on-demand"* (*The Eyes Have It*, IEEE Symposium on Visual Languages, 1996) | Gráficos, painéis, drill-down do resumo ao detalhe | [doi:10.1109/VL.1996.545307](https://doi.org/10.1109/VL.1996.545307) |
-| Nielsen — 10 heurísticas de usabilidade (NN/g) | Avaliação geral de tela; as mais usadas aqui: 1 *Visibility of System Status*, 2 *Match Between the System and the Real World* (sem jargão), 3 *User Control and Freedom*, 4 *Consistency and Standards*, 6 *Recognition Rather than Recall*, 8 *Aesthetic and Minimalist Design*, 10 *Help and Documentation* | [nngroup.com/articles/ten-usability-heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/) |
-| Nielsen — *Progressive Disclosure* (NN/g, 2006) | Telas densas: mostrar primeiro o essencial, o especializado atrás de um controle secundário ("Mais análises", abas) | [nngroup.com/articles/progressive-disclosure](https://www.nngroup.com/articles/progressive-disclosure/) |
-| WCAG 2.2 — 1.1.1 *Non-text Content* (A) | Todo gráfico (`<canvas>`) tem alternativa em texto: a frase-resumo do bloco serve para isso | [w3.org/WAI/WCAG22/Understanding/non-text-content](https://www.w3.org/WAI/WCAG22/Understanding/non-text-content) |
-| WCAG 2.2 — 2.1.1 *Keyboard* (A) | Toda ação clicável funciona por teclado; clique em `<canvas>` (Chart.js) **nunca** é o único caminho, precisa de equivalente em HTML (`<a>`/`<button>`) | [w3.org/WAI/WCAG22/Understanding/keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboard) |
-| WCAG 2.2 — 1.4.3 *Contrast (Minimum)* (AA) | Texto ≥ 4,5:1 sobre o fundo (3:1 se grande: 18 pt, ou 14 pt em negrito); cores do tema conferidas em `testes/regressao/contraste-tema.spec.ts` | [w3.org/WAI/WCAG22/Understanding/contrast-minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum) |
-| WCAG 2.2 — 2.5.8 *Target Size (Minimum)* (AA) | Alvo de clique/toque ≥ 24×24 CSS px (fatias pequenas de gráfico não atendem) | [w3.org/WAI/WCAG22/Understanding/target-size-minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum) |
-| WCAG 2.2 — 1.4.13 *Content on Hover or Focus* (AA) | Tooltips: dispensável, alcançável e persistente; em toque não existe hover | [w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus) |
-| WCAG 2.2 — 1.4.11 *Non-text Contrast* (AA) | Borda e estados de controles (caixa de marcar, interruptor, foco) com contraste ≥ 3:1 com o que está ao lado | [w3.org/WAI/WCAG22/Understanding/non-text-contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast) |
-| Kendrick — *Toggle-Switch Guidelines* (NN/g, 2018) | Interruptor só para efeito **imediato**; o que depende de "Salvar" fica caixa de marcar; rótulo curto, palavra-chave primeiro (teste: ler com "ligado/desligado" no fim) | [nngroup.com/articles/toggle-switch-guidelines](https://www.nngroup.com/articles/toggle-switch-guidelines/) |
-| WAI-ARIA APG — *Switch Pattern* | Interruptor: `role="switch"` (no checkbox nativo usa o `checked`), Espaço alterna, rótulo **não muda** com o estado | [w3.org/WAI/ARIA/apg/patterns/switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/) |
-| WAI-ARIA APG — *Disclosure (Show/Hide) Pattern* | Mostrar e esconder um bloco (grupo do menu, seção que abre): o controle é `<button>`, Enter e Espaço alternam, `aria-expanded` diz o estado e `aria-controls` aponta para o conteúdo | [w3.org/WAI/ARIA/apg/patterns/disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/) |
-| Huei-Hsin Wang — *Accordions on Desktop: When and How to Use* (NN/g, 2023) | Sanfona: deixar várias seções abertas ao mesmo tempo (fechar as outras sozinho atrapalha quem usa mais de uma) | [nngroup.com/articles/accordions-on-desktop](https://www.nngroup.com/articles/accordions-on-desktop/) |
-| WCAG 2.2 — 3.3.1 *Error Identification* (A) | Erro de entrada detectado: diz qual campo e o que está errado, em texto | [w3.org/WAI/WCAG22/Understanding/error-identification](https://www.w3.org/WAI/WCAG22/Understanding/error-identification) |
-| WCAG 2.2 — 3.3.2 *Labels or Instructions* (A) | Todo campo com rótulo visível (o "R$" dentro do campo não substitui o rótulo) | [w3.org/WAI/WCAG22/Understanding/labels-or-instructions](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions) |
+## Skills e agentes do projeto (`.claude/`)
 
-Padrões já adotados a partir delas (seguir, salvo motivo registrado):
-- **Detalhe por navegação, não modal**, quando já existe tela com o detalhe (ex.: total por categoria → `/transacoes` filtrada), levando o contexto completo (categoria + período + tipo) em query params.
-- **Filtro ativo sempre visível** (chips com ✕ e "Limpar filtros") em tela que pode abrir já filtrada.
-- **Estado de tela navegável na URL**: botão voltar do navegador tem que funcionar; atualização de filtro usa `replaceUrl` para não poluir o histórico.
-- **Clique em linha ou bloco é atalho de mouse**: a mesma ação tem `<button>`/`<a>` no template (ex.: o nome da transação abre a edição), conferido em `testes/regressao/clique-com-teclado.spec.ts` (WCAG 2.1.1).
-- **Gráfico se explica**: título + frase-resumo com a conclusão + linha "como ler" + legenda quando há mais de uma série; resumo respeita "ocultar valores".
-- **Termo técnico com definição no contexto** (ⓘ que abre por clique/teclado, vindo de um glossário único) — nunca só em `title=`, que não funciona em toque nem teclado.
-- **Tela densa mostra primeiro a resposta à pergunta principal dela**; análises de apoio vão para `<app-mais-analises>` (botão com `aria-expanded` que diz o que tem dentro, conteúdo em `<ng-template>` criado só ao abrir, escolha lembrada por tela). Nada é removido: tudo a no máximo um clique.
-- **Interruptor** (`label.interruptor` + `role="switch"` no checkbox nativo) para o que muda a tela na hora; caixa de marcar para o que depende de "Salvar" ([ADR 0032](docs/adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)).
-- **Menu lateral em grupos** que abrem e fecham, vários abertos ao mesmo tempo, todos abertos no começo; tela nova entra no grupo do assunto dela em `MENU` ([ADR 0046](docs/adr/0046-menu-lateral-em-grupos-que-abrem-e-fecham.md)).
-- **Seleção em tabela:** a célula inteira é o alvo (`label.celula-marcar`), a linha marcada fica destacada (`tr.selecionada`), e o nome da caixa diz qual linha é ([ADR 0032](docs/adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)).
-- O porquê e o custo aceito de cada padrão acima estão nas ADRs [0017](docs/adr/0017-preferencias-de-exibicao-no-navegador.md) a [0021](docs/adr/0021-componentes-padrao-para-graficos-e-telas-densas.md).
-
-Ao responder: separar explicitamente o que vem dessas fontes do que é **julgamento próprio** (trade-off sem fonte direta), e dizer quando algo não foi validado com uso real. Fonte nova entra nesta tabela com link verificado, não citada de memória.
+- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). A `migrar-para-go` era a da migração do épico #70, que terminou na #86: serve só para consultar como um assunto foi portado do C# (que está na tag `v-ultimo-dotnet`). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
+- **Angular:** a skill `angular-no-projeto` é o roteiro de todo trabalho no front-end (tela nova, mudança, avaliação de UI/UX, revisão); a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` carrega as duas, para avaliar telas em paralelo (um agente por tela), implementar ou revisar (#559).
+- **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` em uma frase quando o pedido cita mais de uma issue ou PR, ou um épico; quando é a 2ª issue ou PR na mesma conversa, ou a conversa já foi resumida; ou quando a pessoa fala em "deixar rodando" ou "continuar depois". Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou. O hook `lembrar-trabalho-longo.sh` lembra sozinho em parte desses casos (#280).
 
 ## Git / commits
 
-Conventional Commits em português (ver [CONTRIBUINDO.md](CONTRIBUINDO.md) para fluxo de branches completo). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
+Conventional Commits em português (fluxo de branches, comandos e Project em [CONTRIBUINDO.md](CONTRIBUINDO.md)). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
 
-**Todo PR para o `develop` sobe a versão no `Directory.Build.props`, pelo tipo do título** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md); o check "versão subiu" da CI confere):
+**Versão: só no `Directory.Build.props`** (API e gerenciador); a tag `vX.Y.Z` tem de ser igual. **Todo PR para o `develop` sobe esse número, pelo tipo do título** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md); o check "versão subiu" da CI confere):
 - `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) → o número do meio (2.2.0 → 2.3.0);
 - `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` → o último (2.2.0 → 2.2.1);
 - quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
-- Outro PR subiu antes? `git merge origin/develop`, pegue a maior e suba de novo. Diga ao usuário, no fim, de qual para qual versão foi.
+- Outro PR subiu antes? `scripts/geral/atualizar-pr.sh <PR>` traz o `develop` e resolve a versão e o CHANGELOG (#587); conflito em outro arquivo, `git merge origin/develop` à mão. Diga ao usuário, no fim, de qual para qual versão foi.
 
-**O branch padrão do repositório é o `develop`** (#142). Por isso, todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge. Fora do branch padrão, a palavra-chave é ignorada.
+**`CHANGELOG.md`: uma seção por versão** (#294). A entrada de um PR vai na seção da versão dele: `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se não existir, **dentro** do `### Funcionalidades`/`### Correções`/`### Publicação e documentação` que já existe nela (nunca outro título de mesmo tipo). Ao trazer o `develop` e subir a versão de novo, **mova a entrada para a seção da versão nova**. Antes do push, rode `python3 scripts/ci/verificar-changelog.py` (`--corrigir` junta tipos repetidos). As notas das versões e a janela "O que mudou" do gerenciador saem dele: seção errada vira nota errada para quem atualiza.
+
+**Issues** (o branch padrão é o `develop`, #142):
+- Todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge.
 - **Branch nova:** de preferência criada pela issue, com `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
-- **Issue nova já nasce no nome de quem pediu:** `gh issue create --assignee @me` (a conta do `gh` é a do usuário) ou o login de quem pediu, se for outra pessoa. **Exceção, os épicos:** veja a regra abaixo.
-- **Épico e as histórias dele não são atribuídos a ninguém:** nem ao criar, nem depois, nem ao ligar uma história ao épico (sub-issue). O épico é a demanda inteira, e ninguém "é dono" dela. Só quando uma pessoa **pega uma história**, pedindo aqui, essa história (e só ela) vai para o nome dela, com a etiqueta "em progresso". O épico continua sem ninguém. Se o usuário pedir para não atribuir uma issue a ele, não atribua.
-- **Dependência entre issues vai no GitHub, não só no texto:** quando uma issue só pode começar depois de outra estar pronta, marque com *blocked by* (painel **Relationships**), além do "Depende de: #N" no texto. Assim ninguém pega uma issue que ainda está bloqueada. Vale ao criar uma issue, ao montar as histórias de um épico (inclusive entre elas) e ao descobrir uma dependência nova numa issue que já existe.
-  - Comando: `gh api -X POST repos/LucasDesenvGit/financas-local/issues/<bloqueada>/dependencies/blocked_by -F issue_id=<id>`. O `<id>` é o id numérico da issue que bloqueia (`gh api repos/LucasDesenvGit/financas-local/issues/<N> -q .id`), não o número dela.
-  - Só dependência real: "de preferência antes" não bloqueia. Ligar uma história ao épico (sub-issue, `.../issues/<épico>/sub_issues -F sub_issue_id=<id>`) é outra coisa e não substitui o *blocked by*.
+- **Issue nova já nasce no nome de quem pediu** (`gh issue create --assignee @me`, ou o login de quem pediu). **Exceção, os épicos:** o épico e as histórias dele não são atribuídos a ninguém, nem ao criar, nem depois, nem ao ligar uma história ao épico. Só a história que uma pessoa **pega**, pedindo aqui, vai para o nome dela, com a etiqueta "em progresso". Se o usuário pedir para não atribuir uma issue a ele, não atribua.
 - **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
-- **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma com `gh issue create`.
-
-**Pedido grande demais para uma vez só** (vários PRs, muitas horas): antes de começar, ofereça a skill `trabalho-longo` (`.claude/skills/`). Ela põe o plano em arquivo, cria o agendamento que retoma sozinho depois do limite de uso e faz o fechamento.
+- **Dependência entre issues vai no GitHub, não só no texto:** issue que só pode começar depois de outra pronta ganha *blocked by* (comando em [CONTRIBUINDO.md](CONTRIBUINDO.md#branches)), além do "Depende de: #N" no texto. Vale ao criar uma issue, ao montar as histórias de um épico e ao descobrir uma dependência nova. Só dependência real: "de preferência antes" não bloqueia, e ligar ao épico (sub-issue) não substitui o *blocked by*.
+- **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma.
+- **Backlog e andamento** ficam no Project "ClaudioFinancas" ([users/LucasDesenvGit/projects/2](https://github.com/users/LucasDesenvGit/projects/2)): consulte quando a conversa for sobre backlog, andamento ou o que falta (campos e comandos em [CONTRIBUINDO.md](CONTRIBUINDO.md#backlog-no-project)).
 
 ## Segurança (específico deste projeto — não genérico)
 
-Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo Kestrel — sem IIS/proxy). Pontos que afetam como escrever código aqui:
-- Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo da API, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
-- Segredos (Client Secret da Pluggy, token da brapi) via ASP.NET Data Protection, chaves em `dados/chaves`: DPAPI no Windows (`OperatingSystem.IsWindows()` em `Program.cs`), permissão de arquivo no Linux.
+Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo executável do Go — sem IIS/proxy). Pontos que afetam como escrever código aqui:
+- Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo do site, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
+- Segredos (Client Secret da Pluggy, token da brapi) com a chave em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows (`internal/segredos/protecao_windows.go`), permissão de arquivo (0600) no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
-- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `query1.finance.yahoo.com`/`brapi.dev` (API) e `api.github.com`/`github.com` (só o gerenciador: o do Windows para versão nova, ADR 0028; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop" nas duas janelas, ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver tabela em [README.md](README.md#segurança)).
+- **Modelo de ameaças em dia:** uma saída de rede nova, uma fronteira nova (processo, porta, pasta) ou uma mudança no login revisa o [modelo de ameaças](docs/MODELO-DE-AMEACAS.md) no mesmo PR.
+- Saídas de rede permitidas e já implementadas: `api.pluggy.ai`, `api.bcb.gov.br`, `olinda.bcb.gov.br` (câmbio PTAX), `query1.finance.yahoo.com`/`brapi.dev`, `api.mercadobitcoin.net` (cripto, ADR 0048) (o site) e `api.github.com`/`github.com` (só o gerenciador: versão nova, ADR 0052; e, na instalação de desenvolvimento, o botão "Atualizar para a última do develop", ADR 0040) — qualquer integração externa nova deve seguir o mesmo padrão (HTTPS, dado mínimo enviado, ver a tabela em [docs/SEGURANCA.md](docs/SEGURANCA.md#o-que-sai-para-a-internet) e o diagrama "Como funciona" do [README.md](README.md#como-funciona), que mudam junto).

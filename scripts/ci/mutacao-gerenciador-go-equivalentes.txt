@@ -1,0 +1,4 @@
+# Mutações equivalentes conhecidas do gerenciador em Go: as que não mudam o resultado, e por isso nenhum teste pega.
+# Mesmo formato do mutacao-go-equivalentes.txt: pacote | arquivo | tipo | a linha do código | por que não muda nada.
+
+internal/icones | icones.go | CONDITIONALS_BOUNDARY | if math.Hypot(dx, dy) <= raio { | as amostras ficam no meio de cada quarto de pixel ((n+0,5)/4), e nenhuma cai exatamente na borda do círculo nos tamanhos usados: < e <= dão o mesmo desenho

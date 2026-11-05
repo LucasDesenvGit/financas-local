@@ -2,7 +2,7 @@
 
 - **Status:** Aceita
 - **Data:** 2026-10-16 (registrada depois das decisões, nos PRs #44, #45, #47, #48, #49 e #57 — UX-1 a UX-6)
-- **Relacionadas:** épico de UX #30; referências de UI/UX do `CLAUDE.md`
+- **Relacionadas:** épico de UX #30; referências de UI/UX em [docs/UI-UX.md](../UI-UX.md) (até a #566, no `CLAUDE.md`)
 
 ## Contexto
 
@@ -22,7 +22,7 @@ Os resumos (Painel, Orçamentos, Visão anual, Categorias) mostravam totais por 
 
 ## Consequências
 
-- **Positivas:** uma lista de transações só; link compartilhável; F5 e voltar funcionam; testado em `testes/regressao/transacoes-filtros-url.spec.ts` e `testes/usabilidade/filtros-ativos-transacoes.spec.ts`.
+- **Positivas:** uma lista de transações só; link compartilhável; F5 e voltar funcionam; testado em `testes/jest/regressao/transacoes-filtros-url.spec.ts` e `testes/jest/usabilidade/filtros-ativos-transacoes.spec.ts`.
 - **Negativas:**
   - o nome dos parâmetros vira contrato público: link salvo quebra se um nome mudar — renomear exige aceitar o nome antigo por um tempo;
   - parâmetro inválido é descartado em silêncio (só a URL se corrige): quem colou um link errado não recebe mensagem;

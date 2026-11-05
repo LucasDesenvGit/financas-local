@@ -1,0 +1,58 @@
+# Pacotes do Go medidos pelo teste de mutação (#373, ADR 0051; scripts/ci/mutacao-go.py) e o piso da eficácia de
+# cada um, em % (mortas / (mortas + vivas), sem as equivalentes conhecidas).
+#
+# O piso só sobe: subiu a eficácia de um pacote, suba o piso dele no mesmo PR. Assunto novo do épico #70 com regra de
+# negócio ou dinheiro entra aqui no PR dele, com o piso da primeira medição.
+#
+# Primeira medição: 25/10/2026 (#373).
+
+internal/tipos          100
+internal/parametros     100
+internal/segredos       100
+internal/autenticacao   100
+internal/configuracao   100
+internal/erros          100
+internal/respostas      100
+internal/cambio         100
+internal/cripto         100
+internal/reservas       100
+internal/selic          100
+internal/carteira       100
+internal/conferenciabanco 100
+internal/cotacoes       100
+internal/pluggy         100
+internal/openfinance    100
+internal/sincronizacao  86
+internal/texto           100
+internal/tipolancamento  100
+internal/transacoes      100
+internal/categorizacao   100
+internal/regrasdescricao 100
+internal/transferencias  100
+internal/categorias      100
+internal/relatorios     100
+internal/emprestimos    100
+internal/bancos          100
+internal/parcelas        100
+internal/faturas         100
+internal/contas          100
+internal/poucoinformativa 100
+internal/extrato         100
+internal/sugestoes       100
+internal/desfazer        100
+internal/cobrancas       100
+internal/contasagendadas 100
+internal/orcamentos      100
+internal/metas           100
+# #456: os que faltavam, medidos em 01/11/2026. config e tarefas tinham 3 mutações vivas, mortas por teste no mesmo PR.
+internal/auditoria       100
+internal/banco           100
+internal/banco/esquema   100
+internal/config          100
+internal/relogio         100
+internal/servidor        100
+internal/tarefas         100
+# #444: as rotinas de partida, medidas em 01/11/2026.
+internal/partida         100
+internal/investimentos   100
+internal/painel          100

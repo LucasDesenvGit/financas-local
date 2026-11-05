@@ -1,0 +1,43 @@
+{
+  "total": 2,
+  "totalPages": 1,
+  "page": 1,
+  "results": [
+    {
+      "id": "conta-corrente-1",
+      "itemId": "item-ficticio-1",
+      "type": "BANK",
+      "subtype": "CHECKING_ACCOUNT",
+      "number": "0001/12345-0",
+      "name": "Conta Corrente",
+      "marketingName": "Conta Fictícia",
+      "balance": 1520.35,
+      "currencyCode": "BRL",
+      "creditData": null,
+      "bankData": {
+        "closingBalance": 1520.35,
+        "automaticallyInvestedBalance": "300.5",
+        "hasReservedBalance": true,
+        "reservedBalances": [{ "name": "Viagem", "amount": 250.5 }, "formato novo"]
+      }
+    },
+    {
+      "id": "cartao-1",
+      "itemId": "item-ficticio-1",
+      "type": "CREDIT",
+      "subtype": "CREDIT_CARD",
+      "number": "1234",
+      "name": "Cartão Fictício",
+      "marketingName": null,
+      "balance": 840.1,
+      "currencyCode": "BRL",
+      "creditData": {
+        "creditLimit": 5000,
+        "availableCreditLimit": "4159.9",
+        "balanceCloseDate": "2026-10-20T03:00:00.000Z",
+        "balanceDueDate": "2026-10-28T03:00:00.000Z"
+      },
+      "bankData": null
+    }
+  ]
+}

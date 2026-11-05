@@ -1,0 +1,133 @@
+/* A janela do C# (FormPrincipal.cs) em HTML: as cores são as do Tema.cs (as mesmas do site), as medidas as do
+   Controles.cs (cabeçalho de 72, cartão de 448 com 16/14 de respiro, botão de 34 com 14/6, ponto de 28 com halo). */
+:root { --fundo: #f5f4fa; --superficie: #ffffff; --superficie-2: #f4f3fa; --superficie-3: #eae8f4; --linha: #e2dfee;
+  --texto: #2b2939; --texto-suave: #66637e; --primaria: #6267da; --primaria-hover: #575bcc; --primaria-texto: #ffffff;
+  --primaria-suave: #edecfe; --positivo: #2a9a6a; --negativo: #d2546b; --alerta: #b27612; --marca-inicio: #b9b6ff;
+  --marca-fim: #9fd2f6; --marca-texto: #23214a; color-scheme: light; }
+[data-tema="escuro"] { --fundo: #13121a; --superficie: #1b1a25; --superficie-2: #22212e; --superficie-3: #2b2a3a; --linha: #2e2d3e;
+  --texto: #e4e2f0; --texto-suave: #a9a6c2; --primaria: #a3a6ff; --primaria-hover: #b3b6ff; --primaria-texto: #16152a;
+  --primaria-suave: #2a2950; --positivo: #7fd9ad; --negativo: #ff9db0; --alerta: #f3c56f; color-scheme: dark; }
+/* Sem barra de rolagem: a janela cresce e encolhe com o conteúdo, como o AutoSize do C# (o script no fim da página). */
+html, body { overflow: hidden; }
+/* Escondido é escondido, mesmo nos elementos que o CSS põe em flex ou grid. */
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; user-select: none; }
+.raiz { width: 480px; }
+.cabecalho { height: 72px; display: flex; align-items: center; gap: 14px; padding: 0 18px;
+  background: linear-gradient(135deg, var(--marca-inicio), var(--marca-fim)); color: var(--marca-texto); }
+.cabecalho .moldura { width: 44px; height: 44px; border-radius: 12px; background: rgb(255 255 255 / 59%); display: grid; place-items: center; }
+.cabecalho img { width: 40px; height: 40px; display: block; }
+.cabecalho strong { display: block; font: 600 18.5px/1.2 "Segoe UI Semibold", "Segoe UI", sans-serif; }
+.cabecalho span { font-size: 12.5px; opacity: .85; }
+.corpo { padding: 16px 16px 8px; }
+.cartao { width: 448px; box-sizing: border-box; background: var(--superficie); border: 1px solid var(--linha); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 12px; }
+.situacao { display: flex; align-items: flex-start; margin-bottom: 14px; }
+.ponto { width: 28px; height: 28px; border-radius: 50%; margin: 4px 12px 0 0; flex: none; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--cor) 19%, transparent); }
+.ponto::after { content: ""; width: 46%; height: 46%; border-radius: 50%; background: var(--cor); }
+.ponto.positivo { --cor: var(--positivo); } .ponto.negativo { --cor: var(--negativo); }
+.ponto.alerta { --cor: var(--alerta); } .ponto.neutro { --cor: var(--texto-suave); }
+.titulo { font-size: 16.5px; font-weight: 600; margin: 0; color: var(--texto); }
+.detalhe { margin: 0; color: var(--texto-suave); }
+.subtitulo { font: 600 12px "Segoe UI Semibold", "Segoe UI", sans-serif; color: var(--texto-suave); margin: 0 0 6px; }
+.versao { margin: 0 0 10px; }
+.linha { display: flex; flex-wrap: wrap; }
+.botao { min-height: 34px; padding: 6px 14px; margin: 0 8px 8px 0; border-radius: 8px; border: 1px solid var(--linha);
+  background: var(--superficie-2); color: var(--texto); font: inherit; cursor: default; display: inline-flex; align-items: center; }
+.botao:hover:not(:disabled) { background: var(--primaria-suave); border-color: color-mix(in srgb, var(--linha), var(--primaria) 45%); }
+.botao:active:not(:disabled) { background: var(--superficie-3); }
+.botao.primario { background: var(--primaria); border-color: var(--primaria); color: var(--primaria-texto); }
+.botao.primario:hover:not(:disabled) { background: var(--primaria-hover); border-color: var(--primaria-hover); }
+.botao.discreto { background: transparent; border-color: transparent; color: var(--primaria); }
+.botao.discreto:hover:not(:disabled) { background: var(--primaria-suave); border-color: transparent; }
+/* Bloqueado como no C#: fundo, texto e borda misturados ao fundo do cartão. */
+.botao:disabled { color: color-mix(in srgb, var(--texto), var(--superficie) 50%);
+  background: color-mix(in srgb, var(--superficie-2), var(--superficie) 55%); border-color: color-mix(in srgb, var(--linha), var(--superficie) 55%); }
+.botao:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+.ico { font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 14px; margin-right: 8px; }
+.mais { margin: 0 0 4px; }
+.interruptor { display: flex; align-items: center; gap: 10px; margin: 4px 0 6px; }
+.interruptor input { appearance: none; width: 40px; height: 20px; margin: 0; flex: none; border-radius: 10px; background: var(--primaria); position: relative; }
+.interruptor input::after { content: ""; position: absolute; top: 4px; left: 24px; width: 12px; height: 12px; border-radius: 50%; background: var(--primaria-texto); }
+.interruptor input:not(:checked) { background: var(--superficie-3); }
+.interruptor input:not(:checked)::after { left: 4px; background: var(--texto-suave); }
+.interruptor input:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+.rodape { color: var(--texto-suave); margin: 6px 0 0; user-select: text; overflow-wrap: anywhere; }
+/* Como o ToolTip do C# (DicaQuandoBloqueado): o botão bloqueado não recebe o mouse, então a dica sai pelo que o envolve. */
+.com-dica { position: relative; display: inline-flex; }
+.dica { display: none; position: absolute; z-index: 1; left: 0; top: calc(100% - 4px); width: max-content; max-width: 300px;
+  padding: 5px 8px; border-radius: 6px; background: var(--texto); color: var(--fundo); font-size: 12px; }
+.com-dica:hover .dica { display: block; }
+/* O aviso (resultado da cópia do banco) no desenho do gerenciador: a faixa da marca com o cofrinho, o cartão e os
+   botões de sempre. */
+.aviso { width: 400px; max-width: calc(100vw - 48px); padding: 0; border: 1px solid var(--linha); border-radius: 12px;
+  background: var(--superficie); color: var(--texto); box-shadow: 0 12px 32px rgb(0 0 0 / 28%); }
+.aviso::backdrop { background: rgb(0 0 0 / 40%); }
+.aviso-cabecalho { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--marca-texto);
+  background: linear-gradient(135deg, var(--marca-inicio), var(--marca-fim)); }
+.aviso-cabecalho .moldura { width: 30px; height: 30px; border-radius: 8px; background: rgb(255 255 255 / 59%); display: grid; place-items: center; }
+.aviso-cabecalho img { width: 26px; height: 26px; display: block; }
+.aviso-cabecalho strong { font: 600 14px "Segoe UI Semibold", "Segoe UI", sans-serif; }
+.aviso-corpo { display: flex; gap: 14px; padding: 16px 16px 6px; }
+.aviso-simbolo { font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 24px; line-height: 1; margin-top: 1px; flex: none; }
+.aviso-simbolo.sucesso { color: var(--positivo); } .aviso-simbolo.alerta { color: var(--alerta); }
+.aviso h2 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.aviso dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0 0 8px; }
+.aviso dt { color: var(--texto-suave); }
+.aviso dd { margin: 0; overflow-wrap: anywhere; user-select: text; }
+.aviso p { margin: 0; color: var(--texto-suave); }
+.aviso-botoes { display: flex; justify-content: flex-end; padding: 10px 8px 6px 16px; }
+.aviso-simbolo.pergunta { color: var(--primaria); }
+/* Download da versão nova: a barra e "Cancelar download" (a BarraProgresso do C#). */
+.baixando { align-items: center; gap: 10px; margin-top: 2px; }
+.baixando progress { flex: 1; height: 8px; margin: 0 0 8px; appearance: none; border: 0; border-radius: 4px; background: var(--superficie-3); }
+.baixando progress::-webkit-progress-bar { background: var(--superficie-3); border-radius: 4px; }
+.baixando progress::-webkit-progress-value { background: var(--primaria); border-radius: 4px; }
+/* Interruptor com o ⓘ que explica (o termo técnico com definição no contexto, por clique ou teclado). */
+.com-info { display: flex; align-items: center; gap: 4px; }
+.com-info .interruptor { margin-right: 0; }
+.info { min-width: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--primaria);
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 14px; cursor: default; }
+.info:hover { background: var(--primaria-suave); }
+.info:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.info-texto { margin: 0 0 8px 50px; color: var(--texto-suave); }
+/* "O que mudou": mais largo que o aviso, com a rolagem só no texto das notas. */
+.aviso.notas { width: 440px; }
+.notas-corpo { padding: 14px 16px 0; }
+.notas-corpo > h2 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.notas-texto { max-height: calc(100vh - 230px); overflow: auto; padding: 10px 12px; border-radius: 8px; background: var(--superficie-2);
+  user-select: text; }
+.notas-texto:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.notas-texto h3, .notas-texto h4 { font-size: 14.5px; margin: 10px 0 4px; }
+.notas-texto h5, .notas-texto h6 { font-size: 13px; margin: 8px 0 4px; }
+.notas-texto > :first-child { margin-top: 0; }
+.notas-texto p { margin: 0 0 6px; }
+.notas-texto ul { margin: 0 0 6px; padding-left: 20px; }
+.notas-texto code { font: 12px Consolas, monospace; color: var(--texto-suave); }
+.notas-texto a { color: var(--primaria); }
+/* A saída dos scripts do develop (o _saida do C#): fonte de largura fixa, com a rolagem só dentro da caixa. */
+.saida { display: block; width: 100%; height: 150px; box-sizing: border-box; margin: 4px 0 8px; padding: 6px 8px; resize: none;
+  border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie-2); color: var(--texto);
+  font: 11.5px/1.4 Consolas, monospace; user-select: text; }
+.saida:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+/* "O que mudou": cada versão separada da anterior por uma linha, com o número num selo nas cores do botão principal; cada
+   tipo de mudança com a barra da cor dele, e o nome do tipo escrito (a cor nunca é a única pista, WCAG 1.4.1). */
+.notas-texto .nota-versao { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; padding-top: 12px;
+  border-top: 1px solid var(--linha); font-size: 12.5px; font-weight: 400; color: var(--texto-suave); }
+.notas-texto .nota-versao:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.selo-versao { padding: 2px 9px; border-radius: 999px; background: var(--primaria); color: var(--primaria-texto); font-size: 12.5px; font-weight: 600; }
+.notas-texto .nota-tipo { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+.notas-texto .nota-tipo::before { content: ""; flex: none; width: 4px; height: 15px; border-radius: 2px; background: var(--cor-tipo); }
+.nota-tipo.funcionalidades { --cor-tipo: var(--positivo); }
+.nota-tipo.correcoes { --cor-tipo: var(--alerta); }
+.nota-tipo.documentacao { --cor-tipo: var(--texto-suave); }
+/* No Linux, os ícones são os SVG do lucide (os do site), do tamanho da fonte e na cor do texto. */
+.ico svg, .aviso-simbolo svg, .info svg { display: block; width: 1em; height: 1em; }
+.info svg { margin: auto; }
+/* O comando para atualizar pelos scripts (Linux), numa linha, para copiar. */
+.comando .saida { height: auto; margin-top: 0; white-space: nowrap; }
+.copiado { align-self: center; margin: 0 0 8px; color: var(--texto-suave); }
+/* O registro do serviço (Linux), no diálogo das notas: o texto como o journalctl escreveu. */
+.notas-texto pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 11.5px/1.4 Consolas, monospace; user-select: text; }
+.sem-login p { margin: 4px 0 6px; color: var(--texto-suave); }

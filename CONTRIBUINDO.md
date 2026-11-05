@@ -29,7 +29,23 @@ git push
 gh pr create --base develop --fill    # na descrição: Closes #<número>
 ```
 
-Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --assignee @me`): todo PR fecha a issue dele. **Épicos e as histórias deles ficam sem ninguém atribuído:** só a história que alguém pega para fazer vai para o nome dessa pessoa; o épico continua sem dono. Ao começar a trabalhar numa issue, ponha a etiqueta "em progresso" (`gh issue edit <número> --add-label "em progresso"`) e tire ao fechar.
+Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --assignee @me`): todo PR fecha a issue dele. **Épicos e as histórias deles ficam sem ninguém atribuído:** só a história que alguém pega para fazer vai para o nome dessa pessoa; o épico continua sem dono. Ao começar a trabalhar numa issue, atribua-a a você e ponha a etiqueta "em progresso" (`gh issue edit <número> --add-assignee @me --add-label "em progresso"`); tire a etiqueta ao fechar.
+
+**Dependência entre issues vai no GitHub** (painel **Relationships**), além do "Depende de: #N" no texto, para ninguém pegar uma issue ainda bloqueada. O `<id>` é o id numérico da issue, não o número dela:
+
+```bash
+gh api repos/LucasDesenvGit/financas-local/issues/<N> -q .id                                  # o id de uma issue
+gh api -X POST repos/LucasDesenvGit/financas-local/issues/<bloqueada>/dependencies/blocked_by -F issue_id=<id da que bloqueia>
+gh api -X POST repos/LucasDesenvGit/financas-local/issues/<épico>/sub_issues -F sub_issue_id=<id da história>   # ligar ao épico
+```
+
+Ligar uma história ao épico (sub-issue) é outra coisa e não substitui o *blocked by*. Só dependência real bloqueia: "de preferência antes" não.
+
+### Backlog no Project
+
+As issues e o andamento ficam no Project **"ClaudioFinancas"** ([users/LucasDesenvGit/projects/2](https://github.com/users/LucasDesenvGit/projects/2)). Issue nova (e sub-issue) entra sozinha, pelo workflow "Auto-add to project", com o Status `Backlog`.
+- **Campos:** **Status** (Backlog, In progress, In review, Done, Epic), **Priority** (P0–P2) e **Size** (XS–XL). Na prática, a prioridade vai na etiqueta `prioridade: alta|média|baixa`.
+- **Pelo `gh`** (a conta precisa do escopo `project`): `gh project item-list 2 --owner LucasDesenvGit`, `gh project field-list 2 --owner LucasDesenvGit` e `gh project item-edit`.
 
 **Todo PR para o `develop` sobe a versão** no `Directory.Build.props`, pelo tipo do título ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)). O check "versão subiu" da CI confere.
 
@@ -39,19 +55,20 @@ Não há issue? Crie uma antes, já no nome de quem pediu (`gh issue create --as
 | `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` | o último | 2.2.0 → 2.2.1 |
 | Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) | o primeiro | 2.2.0 → 3.0.0 |
 
-Outro PR subiu a versão antes do seu entrar? `git merge origin/develop`, pegue a versão maior e suba de novo pelo tipo do seu PR. O Dependabot não precisa subir.
+Outro PR subiu a versão antes do seu entrar e o seu ficou em conflito no `Directory.Build.props` e no `CHANGELOG.md`? Rode `scripts/geral/atualizar-pr.sh <número do PR>` (#587). Ele traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no mesmo nível que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo do CHANGELOG com o número novo e a data de hoje, confere e envia. Com `--sem-enviar`, só mostra. Conflito em outro arquivo, ele desfaz e lista: aí é `git merge origin/develop` e resolver à mão. O Dependabot não precisa subir: comente `@dependabot rebase` no PR.
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-1. No `develop`, no `CHANGELOG.md`, troque `## [Não publicado]` pela versão que está no `Directory.Build.props` (ex.: `## [2.2.0] - AAAA-MM-DD`) e abra uma seção `## [Não publicado]` vazia acima. O número já vem certo dos PRs.
-2. PR de `develop` para `main` e merge.
+1. Numa branch `release/X.Y.Z`, criada do `develop`, tire o ` · desenvolvimento` do título da versão do topo do `CHANGELOG.md`, com a data de hoje (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`) (#294), num commit `chore: versão X.Y.Z`. O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo. As notas do Release juntam todas, até a última publicada, e cortam no limite de 125 mil caracteres do GitHub, com um link para o resto (#641).
+2. PR de `release/X.Y.Z` para `main` e merge. Antes, confira que `main` e `develop` continuam protegidas contra apagar: em 2026-10-18, o merge de um PR para a `main` apagou o `develop`.
 3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
    - testa instalar, atualizar, desinstalar e migrar;
-   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e a seção do CHANGELOG nas notas. Se alguém criou o Release à mão antes, o título e as notas são acertados.
+   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e, do CHANGELOG, a seção da versão e as de desenvolvimento abaixo dela até a última publicada. Se alguém criou o Release à mão antes, o título e as notas são acertados.
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
+6. **Traga a `main` de volta para o `develop`:** PR de `main` para `develop` e merge. O check "versão subiu" não roda nele, porque a versão é a mesma (#641). Assim, o `CHANGELOG` do `develop` fica igual ao publicado: na 2.17.0, isso não foi feito, e o `develop` ficou sem a seção dela.
 
-Quem instala pelos scripts continua atualizando com `scripts/geral/3-publicar-atualizar.sh` (ou `instalar-windows.cmd`).
+Quem instala pelos scripts continua atualizando com `git pull` e `scripts/geral/instalar.sh` (ou `instalar-windows.cmd`). Só o `3-publicar-atualizar.sh` não basta quando o `go.mod` pede um Go mais novo: quem o baixa é a etapa 1 ([Atualizar](docs/INSTALACAO-PELO-CODIGO.md#atualizar)).
 
 ## Mensagens de commit
 
@@ -69,7 +86,37 @@ Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos
 Exemplos:
 - `feat(investimentos): comparar cada compra de FII com a cotação atual`
 - `fix(open-finance): não duplicar transações ao renovar o consentimento`
-- `feat(banco)!: nova coluna Transacao.Emergencia` (o `!` indica que é preciso rodar `2-criar-banco.sh`)
+- `feat(banco)!: nova coluna Transacao.Emergencia` (o `!` marca que a estrutura do banco mudou; não sobe o primeiro número da versão nem pede nada de quem atualiza, porque a API aplica o esquema sozinha ao iniciar, [ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md))
+
+## O que a CI roda
+
+Além do build e dos testes do back-end e do front-end, a CI confere o que dá para rodar aqui também:
+
+```bash
+python3 scripts/ci/verificar-sql.py                           # banco/01-estrutura.sql é idempotente (e é aplicado a um SQLite descartável)
+python3 scripts/ci/gerar-diagrama-banco.py --conferir         # os diagramas de docs/BANCO-DE-DADOS.md estão em dia
+python3 scripts/ci/testes-afetados.py --base origin/develop   # no PR, só os testes afetados (ADR 0047): mostra quais
+python3 scripts/ci/verificar-changelog.py                     # CHANGELOG: uma seção por versão, sem tipo repetido (#294)
+```
+
+| Workflow ou job | Quando | O que faz |
+|---|---|---|
+| **CI › o que mudou** | todo PR e push | decide o que roda: no PR, só o afetado (ADR 0047); no push do `develop`/`main`, tudo |
+| **CI › API e banco** | todo PR e push | o site (Go) ligando de verdade, como o serviço (`scripts/ci/ligar-api.sh`), `verificar-sql.py`, os diagramas do banco e o cache dos arquivos do build |
+| **CI › front-end: Jest** e **navegador** (2 partes) | PR que mexe no front-end; todo push | Jest e Playwright, só os testes afetados no PR ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
+| **CI › Go** (#231) | PR que mexe no que o Go lê (o Go, o `banco/`, o `2-criar-banco.sh`, a CSP); todo push | `gofmt`, `go vet`, regras de ouro (#457: `float64`, `time.Now` e `time.Sleep` de teste fora de `scripts/ci/regras-go-excecoes.txt`), `go test -race` com cobertura por pacote que só sobe (#370) e trava de tempo (#371), `go generate` em dia, build do Windows, govulncheck ([README do Go](src/backend/README.md)) |
+| **CI › Go (Windows)** (#459) | como o job Go | `go vet` e `go test` no `windows-latest`, para os `_windows.go` (DPAPI, serviço) |
+| **CI › gerenciador em Go** e **(Linux)** (#418, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)) | PR que mexe em `src/gerenciador-go/`; todo push | `go vet`, `go test`, a compilação e o govulncheck, no Windows (com `gofmt` e o ícone do `.exe`) e no Linux (com GTK e WebKitGTK) |
+| **CI › contrato** (#72) | PR que mexe no back-end ou no esquema; todo push | o contrato contra o Go sozinho, sem rede e com a Pluggy falsa (`testes/contrato/rodar.sh`); os esperados são a regressão do Go (ADR 0051) |
+| **CI › manual do site** (#177) | todo PR | avisa quando o PR muda telas ou endpoints sem mexer no Manual; não bloqueia |
+| **CI › versão subiu** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)) | PR para o `develop` | a versão do `Directory.Build.props` subiu pelo tipo do título, e o CHANGELOG está em ordem (#294) |
+| **CI › build** | sempre | junta os resultados (abaixo, em "Testes rápidos") |
+| **Teste de mutação (Go)** (#373, #456) | PR que mexe no Go ou no gerenciador em Go, toda segunda e à mão | no PR, os pacotes de `scripts/ci/mutacao-go.txt` (e os do gerenciador, em `mutacao-gerenciador-go.txt`) que ele mudou, com piso; no agendamento, as listas inteiras |
+| **Fuzz do Go** (#372) | toda segunda e à mão | o `-fuzz` dos alvos `FuzzXxx`; não roda no PR |
+| **CodeQL** (#451, [ADR 0054](docs/adr/0054-analise-de-seguranca-do-codigo-com-o-codeql.md)) | todo PR e push, toda quinta e à mão | segurança do código (Go, TS, Python, workflows); achados em Security › Code scanning, sem bloquear. Na quinta, porque as consultas ganham regras novas mesmo sem o código mudar |
+| **Teste de instalação no Linux** | PR e push que mexem em `scripts/geral/`, `scripts/linux/`, `banco/`, `src/gerenciador-go/` ou no `go.mod` do Go | instala do zero num runner limpo e restaura uma cópia, seguindo o [guia de operação](docs/OPERACAO.md) |
+| **Teste de instalação no Windows** | PR e push que mexem em `scripts/windows/`, nos `.cmd` da raiz, no `2-criar-banco.sh`, em `banco/` ou no `go.mod` do Go | o mesmo, pelo `instalar-windows.ps1` |
+| **Versão (instalador .msi)** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)) | push do `develop`, tag `vX.Y.Z` e à mão | gera e testa o `.msi` (`instalador/gerar-msi.ps1`, WiX 5, ADR 0029), restaurando uma cópia pelo guia de operação (#527); na tag, publica o Release |
 
 ## Testes rápidos (padrões de CI)
 
@@ -79,18 +126,50 @@ Em outubro de 2026 o Jest chegou a levar ~6 min na CI (#204): um pacote pesado i
 
 | O que testar | Onde | Por quê |
 |---|---|---|
-| Lógica, cálculo, componente isolado, texto, atributo de acessibilidade | **Jest** (`testes/regressao`, `testes/usabilidade`) | rápido, sem navegador ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)) |
-| Desenho, CSS calculado (`var()`, grid, tamanho de alvo), rota de verdade, CSP, console, celular | **Navegador** (`testes-navegador/`) | o jsdom não calcula estilo nem aplica a CSP ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
+| Lógica, cálculo, componente isolado, texto, atributo de acessibilidade | **Jest** (`testes/jest/regressao`, `testes/jest/usabilidade`) | rápido, sem navegador ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)) |
+| Desenho, CSS calculado (`var()`, grid, tamanho de alvo), rota de verdade, CSP, console, celular | **Navegador** (`testes/navegador/`) | o jsdom não calcula estilo nem aplica a CSP ([ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)) |
 
-Não repita no Jest o que o navegador já confere, e vice-versa. Teste do Jest que lê o `styles.css` por `cssRules` para adivinhar o estilo é candidato a ir para o navegador.
+Não repita no Jest o que o navegador já confere, e vice-versa.
+
+**Localmente, rode só o que mudou** (#286): `cd src/frontend && NAVEGADOR=chromium npm run test:afetados`.
+- **O que ele roda:** a mesma escolha que a CI faz no PR (`scripts/ci/testes-afetados.py`, ADR 0047), contando também o que ainda não foi commitado. Ou seja:
+  - o Jest dos arquivos ligados à mudança;
+  - o build;
+  - os testes no navegador das telas afetadas.
+- **Mudou arquivo global** (estilos, `core/`, configuração): roda tudo.
+- **O front-end não mudou:** não roda nada.
+- **Tempo (medido em 21/10/2026):** numa mudança de uma tela, ~45 s, contra ~2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge.
+- **O Python 3 é achado sozinho:** `python` no Windows, `python3` no Linux.
+
+- **Estilo calculado se testa no navegador**, em `testes/navegador/estilos.spec.ts`: layout (alturas, colunas, largura), borda, grid/subgrid, `var()`, quem vence na cascata, animação, "reduzir movimento", tamanho de alvo. **Não escreva teste do Jest que procura a regra no `styles.css`** (`cssRules`, ordem das regras no arquivo): ele quebra quando a regra é reescrita com o mesmo efeito e passa quando outra regra a anula. Propriedade simples que o jsdom calcula (`width`, `min-height`, `visibility`) pode ficar no Jest.
+- **Meça o efeito, não a regra:** "os três cards têm a mesma altura" (`boundingBox`), não "existe `align-items: stretch`".
+- **Teste novo de estilo prova que falha:** estrague a regra no CSS do build (`dist/…/styles-*.css`), rode o teste, veja falhar e restaure. Se não falhar, os dados da API falsa provavelmente não exercitam o caso (ex.: dois cards com o mesmo conteúdo ficam iguais mesmo sem a regra): use conteúdos de tamanhos diferentes.
+
+**Antes de subir (push) mudança no front-end, rode os testes no navegador com o mesmo navegador da CI** (#264: passou no Edge daqui e falhou na CI):
+- `npx playwright install chromium` uma vez; depois `NAVEGADOR=chromium npm run test:afetados` (o Chromium do Playwright, o mesmo da CI, só no que o PR afeta; #286). Não rode a suíte inteira a cada envio: ela roda na CI, no merge. O Edge do computador continua para o dia a dia.
+- **Teste novo no navegador:** rode com `--repeat-each=5`, nos dois projetos (computador e celular). Teste que passa uma vez e falha na quinta é instável e vai falhar na CI.
+- **Falhou só na CI:** baixe o artefato (`gh run download <run> -n testes-navegador`) e olhe o `test-failed-1.png` e o `error-context.md` antes de mexer. Não suba "tentativas" para ver se passa.
+- No celular, o toque pode rolar a página: componente que fecha sozinho ao rolar precisa aguentar a rolagem do próprio toque (o calendário fechava antes de aparecer).
+- **Medida em px tem folga de 0,5:** com as fontes do Linux da CI, uma caixa de 24 px no CSS mede 23,99997 (#271). Alvo mínimo se confere com `toBeGreaterThanOrEqual(23.5)`, nunca `(24)`; igualdade de tamanho, com `toBeLessThan(2)` na diferença.
+- **Não leia o que vai mudar antes de esperar a mudança:** depois de um clique que troca o conteúdo, espere o sinal da troca (`await expect(titulo).not.toHaveText(antes)`) antes de ler; na CI, mais lenta, a leitura pegava o estado anterior (#271, calendário).
 
 **Limites de tempo (a CI confere):**
 - **Jest:** cada arquivo de teste até **10 s** (passou disso, a CI avisa) e no máximo **20 s** (passou, falha); a suíte inteira até **150 s** (`scripts/ci/verificar-tempo-testes.py`). Referência hoje: ~34 s a suíte, 6 s o arquivo mais lento, 0,7 s a mediana (2 workers, como a CI).
 - **Navegador:** cada teste até 30 s (padrão do Playwright); a suíte hoje leva ~30 s.
+- **Go** (#371, `scripts/ci/verificar-tempo-testes-go.py`, sobre o `go test -race -json` do job "Go"):
+  - **teste:** aviso a partir de **5 s** e falha a partir de **20 s**;
+  - **pacote:** até **60 s**;
+  - **suíte:** até **120 s**, do primeiro ao último teste, com os pacotes em paralelo;
+  - **referência** (24/10/2026, CI, com `-race`): ~22 s a suíte; `banco` 20 s e `autenticacao` 17 s.
+  - **Causas comuns de teste lento:**
+    - `time.Sleep` para esperar: use um sinal ou o `testing/synctest`;
+    - banco recriado em cada subteste: um banco por teste, com os subtestes em cima dele quando não gravam;
+    - rede de verdade: proibida (ADR 0051).
+  - **No resumo do job:** os 10 testes mais lentos.
 
 **Importação pesada é a causa nº 1 de teste lento.** Um arquivo de teste importa a tela, que importa os componentes dela, que importam bibliotecas. Biblioteca grande (ícones, gráficos, editores…) carregada no Jest custa em todo arquivo que encosta nela:
-- **antes de pôr uma dependência nova no front-end**, rode um teste que a use e veja o tempo (`npx jest testes/<arquivo>.spec.ts`);
-- **se pesar**, troque-a nos testes do Jest por um substituto leve em `testes/apoio/`, ligado no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js` (ícones). O build e os testes no navegador continuam com a de verdade.
+- **antes de pôr uma dependência nova no front-end**, rode um teste que a use e veja o tempo (`npx jest testes/jest/<pasta>/<arquivo>.spec.ts`);
+- **se pesar**, troque-a nos testes do Jest por um substituto leve em `testes/jest/apoio/`, ligado no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js` (ícones). O build e os testes no navegador continuam com a de verdade.
 
 **Como medir quando algo ficou lento:**
 1. `npx jest --ci --json --outputFile=jest-resultado.json` e `python3 ../../scripts/ci/verificar-tempo-testes.py jest-resultado.json`: os arquivos mais lentos;
@@ -98,28 +177,133 @@ Não repita no Jest o que o navegador já confere, e vice-versa. Teste do Jest q
 3. **importar peça por peça** num teste temporário (`await import(...)` com o tempo de cada um) acha a importação que pesa. Foi assim que o #204 achou os 15 s do `@lucide/angular`.
 
 **Workflows da CI:**
+- **no PR, só os testes afetados** ([ADR 0047](docs/adr/0047-ci-paralela-so-testes-afetados-no-pr.md)): `scripts/ci/testes-afetados.py` liga cada arquivo mudado às telas que o usam (grafo de imports) e roda só os testes delas; arquivo global (`styles.css`, `core/`, `layout/`, rotas, configuração, apoio dos testes, a própria CI) roda tudo. No push do `develop`/`main`, sempre tudo. O porquê aparece no resumo da execução. Para ver aqui o que rodaria: `python3 scripts/ci/testes-afetados.py --base origin/develop`;
+- **teste no navegador novo abre a tela pela rota escrita** (`page.goto('/transacoes')`), senão a seleção não o acha (ele ainda roda no merge);
+- **arquivo novo que vale para todas as telas** fora das pastas já marcadas como globais: acrescente-o em `GLOBAIS` no `testes-afetados.py`;
+- **o .msi não roda no PR, só no merge para o develop, na tag e à mão** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)): PR que mexe no instalador, no gerenciador ou na inicialização da API roda o workflow "Versão (instalador .msi)" à mão na branch antes do merge;
+- jobs em paralelo (API, Jest, navegador em 2 partes): o tempo do PR é o do mais lento, não a soma. **O job final `build` junta os resultados e é o check exigido pela proteção do `develop`/`main`:** não troque o nome dele; job novo no `ci.yml` entra no `needs` dele. Desde a #86, todos entram, inclusive o `Go (Windows)` e o `gerenciador em Go` (Windows e Linux), que até ali ficavam de fora porque o Go só de Windows não rodava no site e o `.msi` levava o gerenciador em C# (ADR 0052);
 - todo workflow de PR tem `concurrency` com `cancel-in-progress`;
 - filtros `paths:` por pasta (`scripts/geral/**`), não por nome de arquivo, para um arquivo novo também disparar;
 - cache do que é baixado sempre igual (npm, NuGet, navegador do Playwright), menos quando baixar do zero é justamente o que se testa (os testes de instalação);
 - **mexeu em teste ou em CI? Ponha no PR o tempo antes e depois**, por job e pelos passos mais caros.
 
+## Testes do back-end (Go)
+
+O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração começou pelo contrato. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
+
+| O que testar | Onde | Como |
+|---|---|---|
+| Regra de negócio, cálculo, conversão, validação | `*_test.go` no pacote do assunto (`internal/<assunto>`) | tabela de casos com `t.Run` |
+| Consulta SQL, transação, cascata | o mesmo pacote | SQLite **de verdade** num arquivo do `t.TempDir()`, com o esquema real; sem mock de banco e sem `:memory:` |
+| Handler: status, validação, erro | o mesmo pacote | `httptest.NewRequestWithContext` + `httptest.NewRecorder`, com o usuário por `sessao.ComUsuario` |
+| O mesmo JSON e o mesmo banco de antes | `testes/contrato` (#72) | casos gravados do .NET até a #86; hoje, a regressão do Go (`rodar.sh --atualizar`, com o `git diff` conferido) |
+| Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
+
+O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/testeapoio` ([README](src/backend/internal/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
+
+**Uma etapa do #70 está pronta quando:**
+- cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
+- cada ponto de risco de equivalência do levantamento tem um teste;
+- cada endpoint tem caso de contrato, inclusive os de erro;
+- cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste com o SQLite real;
+- os casos-limite que se aplicam estão na tabela (o PR diz quais não se aplicam):
+  - valor negativo, zero, 8 casas, meio centavo;
+  - `NULL` e lista vazia (`[]`, nunca `null`);
+  - meia-noite em Brasília × UTC, horário de verão antigo;
+  - virada de mês e de ano, dias 29, 30 e 31;
+  - texto com acento e maiúsculas.
+
+**Teste novo prova que falha:** estrague o código de propósito (troque `RoundBank` por `Round`, tire um filtro, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta.
+
+**Teste de mutação (#373, #456):** o workflow "Teste de mutação (Go)" roda o gremlins nos pacotes de `scripts/ci/mutacao-go.txt`: no PR, só nos que o PR mudou; toda segunda, em todos. Falha quando um pacote fica abaixo do piso dele.
+- **Assunto novo com regra de negócio ou dinheiro:** entra nessa lista no PR dele, com o piso da primeira medição: `python3 scripts/ci/mutacao-go.py internal/<assunto>`, uns 2 min.
+- **Mutação viva:** vira teste. Se ela não muda o resultado (é equivalente), vai para `scripts/ci/mutacao-go-equivalentes.txt` com o porquê.
+- **Ponto cego:** o gremlins não testa mutação dentro de `case`. Ali, a mutação à mão no PR continua valendo.
+
+**Proibido em teste:**
+- `time.Now()`: use o `relogio.Fixo`;
+- `time.Sleep` para esperar algo: espere um sinal (canal, `sync.WaitGroup`) ou use o `testing/synctest` em código com temporizador. Um teto (`time.After` num `select`) pode;
+- rede de verdade: respostas gravadas. O próprio teste ouvindo em `127.0.0.1` pode;
+- dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
+- biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
+
+**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/verificar-regras-go.py`, rodado em `src/backend` (o mesmo do job "Go"), falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
+- **Exceção:** uma linha em `scripts/ci/regras-go-excecoes.txt`, com o motivo, pelo texto da linha do código (como o `mutacao-go-equivalentes.txt`). Exceção que não casa mais com nenhuma linha também falha.
+- **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro; `time.Now` só para hora de sistema (duração, validade de certificado); `time.Sleep` só quando o tempo é o que se testa.
+
+**`t.Parallel()`:**
+- **use** nos testes de banco e de HTTP que têm o próprio banco no próprio `t.TempDir()`;
+- **não use** com `t.Setenv` ou `t.Chdir` (o Go recusa), variável de pacote, banco dividido, tempo real ou processo filho, nem no contrato (casos em ordem, no mesmo banco).
+
+**Como escrever:**
+- mensagem com a função, o obtido e o esperado (`Hoje = 2026-10-16, esperado 2026-10-15`);
+- nome do caso em português, dizendo a regra;
+- `t.Error` para continuar, `t.Fatal` só na preparação;
+- `t.Helper()` nos ajudantes e `t.Context()` no lugar de `context.Background()`.
+
+**Fuzz** ([Go Fuzzing](https://go.dev/doc/security/fuzz/), #372), nos tipos que todo assunto usa: `internal/tipos` e `internal/relogio`.
+- **O que confere:** o Go gera as entradas, e o alvo confere o que vale para qualquer uma: ida e volta pelo banco e pelo JSON, a escala do decimal, o formato do EF Core e o dia de Brasília.
+- **Sementes:** os valores do gabarito do EF Core.
+- **Achado:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda em todo `go test`, como regressão. Comite o arquivo junto com a correção.
+- **Rodar:**
+
+  ```bash
+  go test ./internal/tipos -run '^$' -fuzz '^FuzzDecimalNoBanco$' -fuzztime 5m
+  ```
+
+  Um alvo por vez: o `-fuzz` não aceita mais de um.
+- **Tipo novo** em `internal/tipos` ganha um alvo `FuzzXxx`, com as sementes do gabarito.
+
+**Gabarito** (*golden file*) fica em `testdata/`. Os que vieram do .NET ou do EF Core (pelas sondas, que saíram na #86) não são mais regravados: são a regressão. Os outros são regravados só por opção explícita (`-atualizar`), olhando a diferença no PR.
+
+**Antes de subir:** em `src/backend`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend/README.md#antes-de-subir-push)). A CI confere também a trava de tempo (acima, em "Testes rápidos") e a cobertura com piso por pacote (abaixo). A mutação automática roda no PR, nos pacotes que ele mudou (#373, #456; tabela em "O que a CI roda").
+
+**Cobertura** (#370): o piso de cada pacote fica em `src/backend/cobertura-minima.txt` e **só sobe**.
+- **O que a CI confere** (`scripts/ci/verificar-cobertura-go.py`):
+  - pacote abaixo do piso falha, mostrando as funções que nenhum teste roda;
+  - pacote novo precisa de 80%;
+  - descer um piso falha, comparando com o arquivo do `develop`;
+  - subiu a cobertura 1 ponto ou mais: a CI avisa para subir o piso no mesmo PR.
+- **"fora"**, com o motivo na linha, é só para código gerado.
+- **Ver localmente:** em `src/backend`,
+
+  ```bash
+  go test -coverpkg=./internal/... -coverprofile=c.out ./...
+  go tool cover -html=c.out
+  ```
+
+  O `go tool cover -func=c.out` dá a lista por função.
+- **Atenção:** cobertura mede linha executada, não regra conferida. Ela não substitui a tabela regra → teste nem as mutações.
+
 ## Checklist do pull request
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
-- [ ] Compila: `dotnet build FinancasLocal.sln -c Release` e `npm run build` em `src/frontend`.
-- [ ] Testes no navegador passam: `npm run test:navegador` em `src/frontend` (a CI também roda; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes-navegador/base.ts`); endpoint novo, em `testes-navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
-- [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/regressao/`; padrão novo de UI/UX, em `testes/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
-- [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`) chamado em `scripts/geral/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)) — e entidades/`FinancasDbContext` ajustados. Sem migrations.
+- [ ] Compila: `go build ./...` em `src/backend` e `npm run build` em `src/frontend`.
+- [ ] Testes no navegador passam: `NAVEGADOR=chromium npm run test:afetados` em `src/frontend`, que roda o Jest e o navegador só no que mudou (#286; a suíte inteira roda na CI, no merge; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes/navegador/base.ts`); endpoint novo, em `testes/navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
+- [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/jest/regressao/`; padrão novo de UI/UX, em `testes/jest/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
+- [ ] Back-end em Go: regra nova com teste unitário, consulta nova com teste no SQLite real, endpoint novo com caso de contrato, e as mutações listadas no PR ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md), "Testes do back-end (Go)" acima).
+- [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`) chamado em `scripts/geral/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)). Sem migrations.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.
-- [ ] Consultas ao banco só com LINQ/lambda sobre entidades mapeadas (sem SQL montado em código).
+- [ ] Consultas ao banco só parametrizadas (`sqlc` ou `?`), sem SQL montado com texto do usuário.
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
-- [ ] README/CHANGELOG atualizados quando a mudança afeta o uso.
-- [ ] **Manual do site** (`src/frontend/src/app/paginas/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
-- [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
+- [ ] README/CHANGELOG atualizados quando a mudança afeta o uso. No `CHANGELOG.md` (#294), a entrada vai na seção da **versão do seu PR** (a do `Directory.Build.props`): `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se ainda não existe, e **dentro** do título do tipo que já existe nela (`### Funcionalidades`, `### Correções`, `### Publicação e documentação`…). Outro PR subiu a versão antes? Depois do `git merge origin/develop`, a sua entrada muda para a seção da versão nova. A CI confere (`scripts/ci/verificar-changelog.py`: tipo repetido, versão repetida ou fora de ordem, versão acima da do `Directory.Build.props`; `--corrigir` junta tipos repetidos), porque as notas das versões e a janela "O que mudou" do gerenciador saem dele.
+- [ ] **Manual do site** (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
+- [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
+
+## Claude Code no projeto
+
+Quem usa o Claude Code no projeto recebe, pelo repositório:
+- **as skills de `.claude/skills/`**: `angular-no-projeto` e `testar-no-navegador` (front-end), `go-no-projeto` e `migrar-para-go` (Go) e `trabalho-longo`;
+- **os agentes de `.claude/agents/`**: `dev-angular` (#559) e `dev-go` (#560), que carregam as skills do assunto e têm um hook só deles (`.claude/hooks/bloquear-merge-em-agente.sh`) que barra `gh pr merge` e `git push` forçado;
+- **o hook de `.claude/settings.json`** (#280). A cada pedido, ele roda `.claude/hooks/lembrar-trabalho-longo.sh` (bash, sem dependência nova; no Windows, pelo Git Bash). Quando o pedido tem link de issue ou PR, cita um épico ou a sessão fica longa, ele lembra o Claude de oferecer a skill `trabalho-longo`, para o trabalho continuar sozinho quando o limite de uso voltar.
+  - O hook nunca bloqueia o pedido.
+  - Ele avisa uma vez por motivo e por sessão.
+  - Para desligar, defina `FINANCAS_SEM_LEMBRETE_TRABALHO_LONGO=1` no ambiente.
 
 ## Convenções de código
 
 - Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
-- Back-end: um serviço por assunto em `Servicos/`, controllers finos, DTOs em `Dtos/Dtos.cs`.
-- Front-end: componentes standalone, signals e control flow (`@if`, `@for`); chamadas HTTP só pelo `ApiService`.
+- Back-end em Go: um pacote por assunto em `src/backend/internal/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
+- Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
+- Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").
 - Formatação definida no `.editorconfig`.

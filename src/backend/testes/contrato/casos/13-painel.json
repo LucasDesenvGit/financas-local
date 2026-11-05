@@ -1,0 +1,59 @@
+{
+  "descricao": "Painel (#80, PainelController): o resumo do mês (saldos, receitas e despesas, gastos por categoria, fluxo de 12 meses, orçamentos, contas a pagar, faturas, patrimônio, investimentos, crédito e os avisos) e os avisos da barra do topo (#327). Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Só lê: não muda o banco.",
+  "casos": [
+    {
+      "nome": "painel do mês atual",
+      "comentario": "Sem ano e mês: outubro de 2026.",
+      "metodo": "GET",
+      "caminho": "/api/painel"
+    },
+    {
+      "nome": "painel de setembro",
+      "metodo": "GET",
+      "caminho": "/api/painel?ano=2026&mes=9"
+    },
+    {
+      "nome": "painel de um mês antigo",
+      "metodo": "GET",
+      "caminho": "/api/painel?ano=2025&mes=11"
+    },
+    {
+      "nome": "painel de um mês futuro",
+      "metodo": "GET",
+      "caminho": "/api/painel?ano=2027&mes=1"
+    },
+    {
+      "nome": "painel com o mês 13",
+      "metodo": "GET",
+      "caminho": "/api/painel?mes=13"
+    },
+    {
+      "nome": "painel com o ano fora",
+      "metodo": "GET",
+      "caminho": "/api/painel?ano=1999&mes=1"
+    },
+    {
+      "nome": "painel com o ano que não é número",
+      "metodo": "GET",
+      "caminho": "/api/painel?ano=abc"
+    },
+    {
+      "nome": "painel sem login",
+      "metodo": "GET",
+      "caminho": "/api/painel",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "avisos da barra do topo",
+      "comentario": "Os avisos e os orçamentos estourados do mês atual, com as descrições pouco informativas dos últimos 90 dias.",
+      "metodo": "GET",
+      "caminho": "/api/painel/avisos"
+    },
+    {
+      "nome": "avisos sem login",
+      "metodo": "GET",
+      "caminho": "/api/painel/avisos",
+      "sessao": "visitante"
+    }
+  ]
+}

@@ -1,24 +1,17 @@
 # Instalador .msi do Windows (#119, ADR 0029): gera o FinancasLocal-<versao>.msi e testa num Windows limpo
 # (instalação silenciosa, atualização para uma versão seguinte, desinstalação e migração de uma instalação feita pelos
 # scripts). Na tag vX.Y.Z, publica o .msi e o SHA256SUMS.txt no Release, que é de onde o gerenciador baixa.
-# Fora da tag, o .msi é de desenvolvimento (X.Y.Z-dev.<execução>); a cada push no develop, depois de todos os testes,
-# ele vai para o pré-lançamento "desenvolvimento" (link fixo). O gerenciador só olha o Release mais recente
-# (releases/latest), que nunca é um pré-lançamento.
+# Fora da tag, o .msi é de desenvolvimento (X.Y.Z-dev.<execução>); a cada push no develop (o merge de um PR), depois
+# de todos os testes, ele vai para o pré-lançamento "desenvolvimento" (link fixo). O gerenciador só olha o Release mais
+# recente (releases/latest), que nunca é um pré-lançamento.
+# #344 (ADR 0050): no PR o .msi não roda (o PR é refeito várias vezes, e cada .msi era jogado fora). Para testar o
+# instalador antes do merge, "Run workflow" (workflow_dispatch) na branch do PR.
 name: Versão (instalador .msi)
 
 on:
   push:
     tags: ["v*"]
     branches: [develop]
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - instalador/**
-      - src/gerenciador/**
-      - Directory.Build.props
-      - src/backend/Financas.Api/Program.cs
-      - src/backend/Financas.Api/Data/EsquemaBanco.cs
-      - .github/workflows/versao.yml
   workflow_dispatch:
 
 permissions:
@@ -30,6 +23,7 @@ concurrency:
 
 env:
   WIX_VERSAO: "5.0.2"
+  WIX_SHA256: "097383B2773BDD3D76A6A2CD3F4DE6357BAE59172E1B6FA5AD87CE062074E8D0"
   SITE: https://127.0.0.1:5443
 
 jobs:
@@ -45,15 +39,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: src/frontend/package-lock.json
+
+      # #231 (ADR 0049): o back-end em Go vai no .msi, ao lado da API (o gerar-msi.ps1 compila).
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
+
+      # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
+      - name: Cache do build do Angular
+        uses: actions/cache@v6
+        with:
+          path: src/frontend/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
 
       - name: Versão (Directory.Build.props; na tag, tem de ser igual)
         id: versao
@@ -76,11 +80,23 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\instalador\configurar.ps1", [ref]$null, [ref]$erros) | Out-Null
           if (@($erros).Count) { $erros | ForEach-Object { "linha $($_.Extent.StartLineNumber): $($_.Message)" }; exit 1 }
 
+      # #446 (ADR 0029): o WiX pelo .msi do próprio CLI (a compilação net472, que roda no .NET Framework do Windows, com
+      # as extensões UI e Util dentro), e não pelo dotnet tool: gerar o .msi não precisa do SDK do .NET. O arquivo é o
+      # do GitHub Releases do WiX, conferido pelo SHA-256 fixado (o mesmo do wix-cli-x64.metadata.json da versão).
       - name: WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix --version $env:WIX_VERSAO
-          wix extension add -g "WixToolset.UI.wixext/$env:WIX_VERSAO" "WixToolset.Util.wixext/$env:WIX_VERSAO"
+          $msi = Join-Path $env:RUNNER_TEMP "wix-cli-x64.msi"
+          Invoke-WebRequest "https://github.com/wixtoolset/wix/releases/download/v$env:WIX_VERSAO/wix-cli-x64.msi" -OutFile $msi
+          $hash = (Get-FileHash $msi -Algorithm SHA256).Hash
+          if ($hash -ne $env:WIX_SHA256) { throw "o wix-cli-x64.msi baixado ($hash) não confere com o SHA-256 fixado" }
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v wix-cli.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec terminou com $($p.ExitCode) (veja wix-cli.log)" }
+          # O .msi grava a pasta do wix.exe no PATH da máquina e em WIX5; o passo seguinte só vê pelo GITHUB_PATH.
+          $pasta = [Environment]::GetEnvironmentVariable("WIX5", "Machine")
+          if (-not $pasta -or -not (Test-Path (Join-Path $pasta "wix.exe"))) { throw "wix.exe não encontrado (WIX5=$pasta)" }
+          $pasta >> $env:GITHUB_PATH
+          & (Join-Path $pasta "wix.exe") --version
 
       - name: Gerar o .msi
         shell: pwsh
@@ -100,12 +116,25 @@ jobs:
         run: |
           $servico = Get-CimInstance Win32_Service -Filter "Name='FinancasLocal'"
           if (-not $servico -or $servico.State -ne "Running") { throw "serviço FinancasLocal não está rodando" }
-          if ($servico.PathName -notlike "*Program Files\FinancasLocal\Financas.Api.exe*") { throw "serviço aponta para $($servico.PathName)" }
+          # #85: o serviço é o Go sozinho; a API em .NET não vai no pacote (#86: nem existe mais).
+          if ($servico.PathName -notlike "*Program Files\FinancasLocal\financas-go.exe*-aplicar-esquema -rotinas-de-partida*") { throw "serviço aponta para $($servico.PathName)" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o pacote levou a API em .NET" }
           foreach ($p in "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db", "$env:ProgramData\FinancasLocal\dados\configuracao.json",
                          "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe", "$env:ProgramFiles\FinancasLocal\wwwroot\index.html",
                          "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") {
             if (-not (Test-Path $p)) { throw "não encontrado: $p" }
           }
+          # #277 (ADR 0052): o gerenciador é o em Go, um .exe só: nada do C# nem do runtime de janelas do .NET ao lado.
+          foreach ($p in "Financas.Gerenciador.dll", "System.Windows.Forms.dll") {
+            if (Test-Path "$env:ProgramFiles\FinancasLocal\$p") { throw "sobrou do gerenciador em C#: $p" }
+          }
+          # #277: o tamanho do .msi e da pasta instalada, para comparar com a linha de base do épico #70 (157 MB).
+          $msiMb = [math]::Round((Get-Item "saida-instalador\FinancasLocal-${{ steps.versao.outputs.rotulo }}.msi").Length / 1MB, 1)
+          $pasta = Get-ChildItem "$env:ProgramFiles\FinancasLocal" -Recurse -File
+          $pastaMb = [math]::Round(($pasta | Measure-Object Length -Sum).Sum / 1MB, 1)
+          $gerMb = [math]::Round((Get-Item "$env:ProgramFiles\FinancasLocal\Financas.Gerenciador.exe").Length / 1MB, 1)
+          "### Tamanhos`n`n| O quê | Tamanho |`n|---|---|`n| .msi | $msiMb MB |`n| Pasta instalada | $pastaMb MB ($($pasta.Count) arquivos) |`n| Gerenciador | $gerMb MB |" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "TAMANHO so Go: .msi $msiMb MB, pasta instalada $pastaMb MB ($($pasta.Count) arquivos), gerenciador $gerMb MB"
           # Sem -k: só passa se o certificado estiver nas Autoridades Raiz (e tiver 127.0.0.1 no SAN).
           $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json
           if ($estado.versao -ne "${{ steps.versao.outputs.rotulo }}") { throw "versão do site: $($estado.versao)" }
@@ -115,6 +144,26 @@ jobs:
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
+          # #85: o Go sozinho responde, com o login dele.
+          $saude = $null
+          for ($i = 0; $i -lt 15; $i++) {
+            $saude = curl.exe --ssl-no-revoke -fsS -b c.txt "$env:SITE/api/go/saude" | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0 -and $saude) { break }
+            Start-Sleep 2
+          }
+          if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador" -or $saude.diarioDoBanco -ne "wal" -or $saude.versao -ne "${{ steps.versao.outputs.rotulo }}") {
+            throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)"
+          }
+          $semLogin = curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" "$env:SITE/api/go/saude"
+          if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          if ($go.Count -ne 1) { throw "processos do Go: $($go.Count) (esperado 1)" }
+          if (Get-Process Financas.Api -ErrorAction SilentlyContinue) { throw "a API em .NET está rodando" }
+          "Go sozinho: $($saude | ConvertTo-Json -Compress)"
+          # #277: memória com o site no ar e um usuário logado (conjunto de trabalho e bytes privados, o método da #86).
+          # Num runner, não num computador de uso: serve para comparar uma versão com a outra, não como número absoluto.
+          $proc = Get-Process financas-go
+          Write-Host ("MEMORIA so Go financas-go: conjunto de trabalho {0} MB, privados {1} MB" -f [math]::Round($proc.WorkingSet64 / 1MB), [math]::Round($proc.PrivateMemorySize64 / 1MB))
 
       - name: Trocar pela mesma versão do Release (a de desenvolvimento não fica instalada junto)
         if: github.ref_type != 'tag'
@@ -143,11 +192,75 @@ jobs:
           if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
+          # #277: o financas-go.exe gerar-certificado reaproveitou o certificado que ainda vale (não trocou o confiável).
+          if (-not (Select-String -Path atualizar.log -SimpleMatch "certificado atual reaproveitado" -Quiet)) { throw "a atualização não reaproveitou o certificado (veja atualizar.log)" }
+          # #231: a troca de versão parou o Go antigo junto (o arquivo foi trocado) e subiu o novo.
+          $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")
+          if ($go.Count -ne 1) { throw "processos do Go depois da atualização: $($go.Count) (esperado 1)" }
           # Os arquivos de dados continuam legíveis (permissões herdadas da pasta) depois da segunda configuração.
           foreach ($p in "sql\FinancasLocal.db", "certificado\financaslocal.pfx", "configuracao.json") {
             # Abre só para ler, dividindo com a API (que está com o banco aberto): falha só se faltar permissão.
             [IO.File]::Open("$env:ProgramData\FinancasLocal\dados\$p", "Open", "Read", "ReadWrite").Dispose()
           }
+
+      # Os comandos do guia, "No Windows, pelo .msi" (docs/OPERACAO.md). A senha trocada depois da cópia é a prova de que
+      # ela voltou: o guia diz que a senha volta junto, e isso confere também o login depois de restaurar.
+      - name: Restaurar a cópia (docs/OPERACAO.md)
+        shell: pwsh
+        run: |
+          function EsperarSite {
+            for ($i = 0; $i -lt 30; $i++) {
+              curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" 2>$null | Out-Null
+              if ($LASTEXITCODE -eq 0) { return }
+              Start-Sleep 2
+            }
+            throw "o site não voltou"
+          }
+          function Enviar([string]$rota, [string]$corpo) {
+            curl.exe --ssl-no-revoke -fsS -c r.txt -b r.txt "$env:SITE/api/auth/estado" | Out-Null
+            $xsrf = (Get-Content r.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
+            $corpo | Set-Content corpo.json -NoNewline
+            curl.exe --ssl-no-revoke -s -o NUL -w "%{http_code}" -c r.txt -b r.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE$rota"
+          }
+          function Entrar([string]$senha) {
+            Remove-Item r.txt -ErrorAction SilentlyContinue
+            Enviar "/api/auth/entrar" "{`"login`":`"verificador`",`"senha`":`"$senha`"}"
+          }
+
+          $copia = "$env:RUNNER_TEMP\FinancasLocal-copia.db"
+          $dados = "$env:ProgramData\FinancasLocal\dados"
+
+          Stop-Service FinancasLocal
+          Copy-Item "$dados\sql\FinancasLocal.db" $copia
+          Start-Service FinancasLocal
+          EsperarSite
+
+          $codigo = Entrar "Teste#Msi2026"
+          if ($codigo -ne "200") { throw "login antes de trocar a senha: $codigo" }
+          $codigo = Enviar "/api/auth/alterar-senha" '{"senhaAtual":"Teste#Msi2026","novaSenha":"Outra#Msi2026"}'
+          if ($codigo -ne "204") { throw "trocar a senha: $codigo" }
+
+          Stop-Service FinancasLocal
+          New-Item -ItemType Directory -Force "$dados\antes-de-restaurar" | Out-Null
+          Copy-Item "$dados\sql\FinancasLocal.db*" "$dados\antes-de-restaurar\"
+          Copy-Item $copia "$dados\sql\FinancasLocal.db" -Force
+          Remove-Item "$dados\sql\FinancasLocal.db-wal", "$dados\sql\FinancasLocal.db-shm" -ErrorAction SilentlyContinue
+          Start-Service FinancasLocal
+          EsperarSite
+
+          if (-not (Test-Path "$dados\antes-de-restaurar\FinancasLocal.db")) { throw "o banco de antes não foi guardado" }
+          $codigo = Entrar "Outra#Msi2026"
+          if ($codigo -ne "401") { throw "a senha trocada depois da cópia ainda entra: $codigo (a cópia não voltou)" }
+          $codigo = Entrar "Teste#Msi2026"
+          if ($codigo -ne "200") { throw "a senha da cópia não entra: $codigo" }
+          # O Go sobe de novo com o serviço e lê o banco restaurado.
+          $saude = $null
+          for ($i = 0; $i -lt 15; $i++) {
+            $saude = curl.exe --ssl-no-revoke -fsS -b r.txt "$env:SITE/api/go/saude" 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0 -and $saude) { break }
+            Start-Sleep 2
+          }
+          if ($saude.situacao -ne "ok" -or $saude.usuario -ne "verificador") { throw "GET /api/go/saude: $($saude | ConvertTo-Json -Compress)" }
 
       - name: Desinstalar (mantém os dados, tira o certificado)
         shell: pwsh
@@ -158,12 +271,13 @@ jobs:
           if (Get-Service FinancasLocal -ErrorAction SilentlyContinue) { throw "o serviço continua registrado" }
           if (Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.FriendlyName -eq "FinancasLocal" }) { throw "o certificado continua confiável" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\sql\FinancasLocal.db")) { throw "a desinstalação apagou os dados" }
-          if (Test-Path "$env:ProgramFiles\FinancasLocal\Financas.Api.exe") { throw "o programa continua instalado" }
+          if (Test-Path "$env:ProgramFiles\FinancasLocal\financas-go.exe") { throw "o programa continua instalado" }
           if (Test-Path "$env:PUBLIC\Desktop\Gerenciador do Finanças Local.lnk") { throw "o atalho da área de trabalho ficou" }
+          if (Get-Process financas-go -ErrorAction SilentlyContinue) { throw "sobrou processo do Go depois de desinstalar" }
 
       - name: Logs do msiexec
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-msiexec
           path: |
@@ -171,12 +285,20 @@ jobs:
             C:\ProgramData\FinancasLocal\dados\*.txt
 
       - name: Guardar o .msi (para testar antes da versão)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: instalador
           path: |
             saida-instalador/FinancasLocal-${{ steps.versao.outputs.rotulo }}.msi
           retention-days: 14
+
+      # #294 e #641: como instalar e o CHANGELOG da versão até a última publicada, cortado no limite do GitHub.
+      - name: Notas do Release (só na tag)
+        if: github.ref_type == 'tag'
+        shell: bash
+        env:
+          VERSAO: ${{ steps.versao.outputs.versao }}
+        run: bash scripts/ci/notas-da-versao.sh > notas.md
 
       - name: Publicar no Release (só na tag)
         if: github.ref_type == 'tag'
@@ -189,23 +311,6 @@ jobs:
           # SHA256SUMS só do .msi da versão (o da versão seguinte foi gerado só para o teste).
           $hash = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLowerInvariant()
           [IO.File]::WriteAllText("$PWD\saida-instalador\SHA256SUMS.txt", "$hash  FinancasLocal-$versao.msi`n")
-          # Notas: como instalar e, depois, a seção da versão no CHANGELOG.md (ou a "Não publicado", se ainda não foi
-          # renomeada), sem o cabeçalho "## [X.Y.Z] — data", que repetiria o título.
-          $texto = Get-Content CHANGELOG.md -Raw
-          $m = [regex]::Match($texto, "(?ms)^## \[$([regex]::Escape($versao))\][^\n]*\n(.*?)(?=^## \[)")
-          if (-not $m.Success) { $m = [regex]::Match($texto, "(?ms)^## \[Não publicado\][^\n]*\n(.*?)(?=^## \[)") }
-          $notas = @"
-          ## Como instalar ou atualizar
-
-          - **Windows:** baixe o ``FinancasLocal-$versao.msi`` (em **Assets**, abaixo) e abra. Ele instala ou atualiza a versão que você tem e **mantém os seus dados**. Quem já tem o Gerenciador do Finanças Local recebe o aviso e atualiza por ele.
-          - **"O Windows protegeu o computador":** o instalador ainda não é assinado. Clique em **Mais informações › Executar assim mesmo**. Para conferir o arquivo, compare o ``Get-FileHash`` dele com o ``SHA256SUMS.txt``.
-          - **Linux, ou instalado pelos scripts:** veja [Instalar a partir do código](https://github.com/${{ github.repository }}/blob/v$versao/docs/INSTALACAO-PELO-CODIGO.md).
-
-          ## O que mudou
-
-          $($m.Groups[1].Value.Trim())
-          "@
-          $notas | Set-Content notas.md -Encoding utf8
           # Título e notas sempre acertados: se alguém criou o Release à mão antes da tag, ele é corrigido aqui.
           gh release view "v$versao" *> $null
           if ($LASTEXITCODE -ne 0) {
@@ -236,8 +341,11 @@ jobs:
           curl.exe -k -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
           curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+          # #277: a chave dos segredos do Go (o Go só a cria no primeiro segredo; aqui, uma de mentira, que ninguém lê
+          # antes da conferência). A migração tem de levá-la igual, junto das chaves do .NET.
+          if (-not (Test-Path dados\chaves\segredos.chave)) { [IO.File]::WriteAllBytes("$PWD\dados\chaves\segredos.chave", [byte[]](1..64)) }
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: instalador
           path: saida-instalador
@@ -258,11 +366,14 @@ jobs:
           if (-not $estado.configurado) { throw "o banco da instalação antiga não veio" }
           if (-not (Test-Path "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt")) { throw "sem a nota da migração" }
           if (-not (Test-Path "dados\sql\FinancasLocal.db")) { throw "a migração apagou o banco antigo" }
+          $novo = "$env:ProgramData\FinancasLocal\dados\chaves\segredos.chave"
+          if (-not (Test-Path $novo)) { throw "a migração não levou o segredos.chave" }
+          if ((Get-FileHash $novo).Hash -ne (Get-FileHash dados\chaves\segredos.chave).Hash) { throw "o segredos.chave chegou diferente" }
           Get-Content "$env:ProgramData\FinancasLocal\dados\migrado-da-instalacao-por-scripts.txt"
 
       - name: Logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-migracao
           path: |
@@ -278,10 +389,15 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      # O título de cada PR nas notas (gh pr view); sem isto, as notas mostram só "PR #N".
+      pull-requests: read
     steps:
+      # Histórico inteiro: as notas listam os PRs desde a versão de desenvolvimento anterior (#294).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: instalador
           path: saida-instalador
@@ -294,18 +410,9 @@ jobs:
           # Nome fixo, para o link não mudar; a versão de verdade fica no título, nas notas e no próprio site.
           cp "saida-instalador/FinancasLocal-$ROTULO.msi" FinancasLocal-desenvolvimento.msi
           sha256sum FinancasLocal-desenvolvimento.msi > SHA256SUMS.txt
-          {
-            echo "**Versão de desenvolvimento $ROTULO**, gerada do develop no commit $GITHUB_SHA."
-            echo
-            echo "Tem o que já foi aprovado nos PRs e ainda não saiu numa versão. Pode ter coisa ainda não testada no uso real."
-            echo "Para o dia a dia, prefira a [versão mais recente](https://github.com/$GITHUB_REPOSITORY/releases/latest)."
-            echo
-            echo "- **Instalar ou atualizar:** baixe o \`FinancasLocal-desenvolvimento.msi\` e abra. Ele troca a versão instalada (pelo \`.msi\` ou pelos scripts) e mantém os dados."
-            echo "- **Voltar para a versão publicada:** instale o \`.msi\` da versão mais recente por cima; a mesma versão X.Y.Z troca uma pela outra."
-            echo "- **Avisos do gerenciador:** instalado este \`.msi\`, o gerenciador avisa e atualiza para a versão de desenvolvimento mais nova (ADR 0040). Quem tem uma versão publicada não recebe aviso destas."
-            echo
-            awk '/^## \[Não publicado\]/{f=1; next} /^## \[/{if (f) exit} f' CHANGELOG.md
-          } > notas.md
+          # #294: um bloco por versão de desenvolvimento com os PRs que entraram nela (acumulados) e, embaixo, tudo desde
+          # a última versão publicada. O gerenciador mostra primeiro os blocos mais novos que a versão instalada.
+          bash scripts/ci/notas-desenvolvimento.sh > notas.md
           gh release delete desenvolvimento --cleanup-tag --yes || true
           gh release create desenvolvimento FinancasLocal-desenvolvimento.msi SHA256SUMS.txt --prerelease --latest=false \
             --target "$GITHUB_SHA" --title "Finanças Local $ROTULO (desenvolvimento)" --notes-file notas.md

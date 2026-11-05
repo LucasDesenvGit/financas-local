@@ -1,0 +1,1257 @@
+[
+  {
+    "nome": "listar",
+    "requisicao": "GET /api/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "categoriaPaiId": null,
+        "cor": "#e7b3ea",
+        "icone": "pessoal",
+        "id": 27,
+        "natureza": 2,
+        "nome": "Academia",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f8c09a",
+        "icone": "restaurante",
+        "id": 1,
+        "natureza": 2,
+        "nome": "Alimentação",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#c9b3f5",
+        "icone": "sacola",
+        "id": 8,
+        "natureza": 2,
+        "nome": "Compras",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#e7b3ea",
+        "icone": "pessoal",
+        "id": 16,
+        "natureza": 2,
+        "nome": "Cuidados pessoais",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f5a3b0",
+        "icone": "coracao",
+        "id": 14,
+        "natureza": 2,
+        "nome": "Doações",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#8fd8d8",
+        "icone": "livro",
+        "id": 6,
+        "natureza": 1,
+        "nome": "Educação",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#c4bcb4",
+        "icone": "imposto",
+        "id": 11,
+        "natureza": 1,
+        "nome": "Impostos e taxas",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f19c9c",
+        "icone": "juros",
+        "id": 17,
+        "natureza": 1,
+        "nome": "Juros e empréstimos",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f3b3d3",
+        "icone": "lazer",
+        "id": 7,
+        "natureza": 2,
+        "nome": "Lazer",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f2d98b",
+        "icone": "carrinho",
+        "id": 2,
+        "natureza": 1,
+        "nome": "Mercado",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#d4a5e8",
+        "icone": "casa",
+        "id": 3,
+        "natureza": 1,
+        "nome": "Moradia",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#b4bccb",
+        "icone": "outros",
+        "id": 18,
+        "natureza": 2,
+        "nome": "Outros gastos",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": 1,
+        "cor": "#f8c09a",
+        "icone": "restaurante",
+        "id": 26,
+        "natureza": 2,
+        "nome": "Padaria",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#e3c48f",
+        "icone": "pet",
+        "id": 15,
+        "natureza": 2,
+        "nome": "Pets",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": 1,
+        "cor": "#f8c09a",
+        "icone": "restaurante",
+        "id": 25,
+        "natureza": 2,
+        "nome": "Restaurantes",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f4a89a",
+        "icone": "saude",
+        "id": 5,
+        "natureza": 1,
+        "nome": "Saúde",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a9b4c6",
+        "icone": "escudo",
+        "id": 13,
+        "natureza": 1,
+        "nome": "Seguros",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a7a3f5",
+        "icone": "assinatura",
+        "id": 9,
+        "natureza": 2,
+        "nome": "Serviços e assinaturas",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#b8b0a8",
+        "icone": "banco",
+        "id": 12,
+        "natureza": 1,
+        "nome": "Tarifas bancárias",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#92c8f0",
+        "icone": "carro",
+        "id": 4,
+        "natureza": 1,
+        "nome": "Transporte",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#9fd2f6",
+        "icone": "aviao",
+        "id": 10,
+        "natureza": 2,
+        "nome": "Viagens",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#b5e3c4",
+        "icone": "entrada",
+        "id": 21,
+        "natureza": null,
+        "nome": "Outras receitas",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a8dcb9",
+        "icone": "grafico",
+        "id": 20,
+        "natureza": null,
+        "nome": "Rendimentos",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#8fd5b4",
+        "icone": "salario",
+        "id": 19,
+        "natureza": null,
+        "nome": "Salário",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#8fd8c8",
+        "icone": "investimento",
+        "id": 24,
+        "natureza": null,
+        "nome": "Investimentos",
+        "tipo": 3
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a9c9d6",
+        "icone": "cartao",
+        "id": 23,
+        "natureza": null,
+        "nome": "Pagamento de fatura",
+        "tipo": 3
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#9ccfc6",
+        "icone": "transferencia",
+        "id": 22,
+        "natureza": null,
+        "nome": "Transferências",
+        "tipo": 3
+      }
+    ]
+  },
+  {
+    "nome": "listar sem login",
+    "requisicao": "GET /api/categorias",
+    "status": 401
+  },
+  {
+    "nome": "criar subcategoria",
+    "requisicao": "POST /api/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": 7,
+      "cor": "#123ABC",
+      "icone": "filme",
+      "id": 28,
+      "natureza": 2,
+      "nome": "Cinema",
+      "tipo": 1
+    },
+    "banco": {
+      "Categoria": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaPaiId": 7,
+            "Cor": "#123ABC",
+            "Icone": "filme",
+            "Id": 28,
+            "Natureza": 2,
+            "Nome": "Cinema",
+            "Tipo": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar receita ignora a natureza",
+    "requisicao": "POST /api/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": false,
+      "categoriaPaiId": null,
+      "cor": "#0F766E",
+      "icone": null,
+      "id": 29,
+      "natureza": null,
+      "nome": "Bicos",
+      "tipo": 2
+    },
+    "banco": {
+      "Categoria": {
+        "inseridas": [
+          {
+            "Ativa": 0,
+            "CategoriaPaiId": null,
+            "Cor": "#0F766E",
+            "Icone": null,
+            "Id": 29,
+            "Natureza": null,
+            "Nome": "Bicos",
+            "Tipo": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar com o nome de outra em minúsculas",
+    "requisicao": "POST /api/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": null,
+      "cor": "#64748b",
+      "icone": null,
+      "id": 30,
+      "natureza": null,
+      "nome": "mercado",
+      "tipo": 1
+    },
+    "banco": {
+      "Categoria": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaPaiId": null,
+            "Cor": "#64748b",
+            "Icone": null,
+            "Id": 30,
+            "Natureza": null,
+            "Nome": "mercado",
+            "Tipo": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar com nome repetido",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Já existe uma categoria com esse nome."
+    }
+  },
+  {
+    "nome": "criar com pai que não existe",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Categoria pai inválida."
+    }
+  },
+  {
+    "nome": "criar com pai que já é subcategoria",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Só é permitido um nível de subcategoria."
+    }
+  },
+  {
+    "nome": "criar com tipo diferente do pai",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A subcategoria deve ter o mesmo tipo da categoria pai."
+    }
+  },
+  {
+    "nome": "criar sem nome e com cor errada",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Cor": [
+          "The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."
+        ],
+        "Nome": [
+          "The Nome field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com nome e ícone longos",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Icone": [
+          "The field Icone must be a string with a maximum length of 40."
+        ],
+        "Nome": [
+          "The field Nome must be a string with a maximum length of 80."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com objeto vazio",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Cor": [
+          "The Cor field is required."
+        ],
+        "Nome": [
+          "The Nome field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com tipo em texto",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$.tipo": [
+          "The JSON value could not be converted to Financas.Api.Dtos.SalvarCategoriaDto. Path: $.tipo | LineNumber: 0 | BytePositionInLine: 37."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar com pai em texto",
+    "requisicao": "POST /api/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": 7,
+      "cor": "#64748b",
+      "icone": null,
+      "id": 31,
+      "natureza": null,
+      "nome": "Pai em texto",
+      "tipo": 1
+    },
+    "banco": {
+      "Categoria": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaPaiId": 7,
+            "Cor": "#64748b",
+            "Icone": null,
+            "Id": 31,
+            "Natureza": null,
+            "Nome": "Pai em texto",
+            "Tipo": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "criar com JSON quebrado",
+    "requisicao": "POST /api/categorias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "$": [
+          "Expected start of a property name or value, but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 21."
+        ],
+        "dto": [
+          "The dto field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "criar sem login",
+    "requisicao": "POST /api/categorias",
+    "status": 401
+  },
+  {
+    "nome": "editar",
+    "requisicao": "PUT /api/categorias/{{idCinema}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": false,
+      "categoriaPaiId": 7,
+      "cor": "#abcdef",
+      "icone": null,
+      "id": 28,
+      "natureza": 1,
+      "nome": "Cinema e teatro",
+      "tipo": 1
+    },
+    "banco": {
+      "Categoria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 28
+            },
+            "colunas": {
+              "Ativa": {
+                "antes": 1,
+                "depois": 0
+              },
+              "Cor": {
+                "antes": "#123ABC",
+                "depois": "#abcdef"
+              },
+              "Icone": {
+                "antes": "filme",
+                "depois": null
+              },
+              "Natureza": {
+                "antes": 2,
+                "depois": 1
+              },
+              "Nome": {
+                "antes": "Cinema",
+                "depois": "Cinema e teatro"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "editar a que não existe",
+    "requisicao": "PUT /api/categorias/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "editar com id que não é número",
+    "requisicao": "PUT /api/categorias/abc",
+    "status": 404
+  },
+  {
+    "nome": "editar para ser pai dela mesma",
+    "requisicao": "PUT /api/categorias/{{idCinema}}",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Uma categoria não pode ser pai dela mesma."
+    }
+  },
+  {
+    "nome": "editar para ser pai dela mesma, com o id em texto",
+    "requisicao": "PUT /api/categorias/{{idCinema}}",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Uma categoria não pode ser pai dela mesma."
+    }
+  },
+  {
+    "nome": "editar a que tem subcategorias para virar subcategoria",
+    "requisicao": "PUT /api/categorias/1",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Esta categoria possui subcategorias e não pode virar subcategoria."
+    }
+  },
+  {
+    "nome": "editar com o nome de outra",
+    "requisicao": "PUT /api/categorias/{{idCinema}}",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Já existe uma categoria com esse nome."
+    }
+  },
+  {
+    "nome": "trocar o tipo para transferência",
+    "requisicao": "PUT /api/categorias/21",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": null,
+      "cor": "#64748b",
+      "icone": null,
+      "id": 21,
+      "natureza": null,
+      "nome": "Outras receitas",
+      "tipo": 3
+    },
+    "banco": {
+      "Categoria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "Cor": {
+                "antes": "#b5e3c4",
+                "depois": "#64748b"
+              },
+              "Icone": {
+                "antes": "entrada",
+                "depois": null
+              },
+              "Tipo": {
+                "antes": 2,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 169
+            },
+            "colunas": {
+              "IgnorarRelatorios": {
+                "antes": 0,
+                "depois": 1
+              },
+              "Tipo": {
+                "antes": 2,
+                "depois": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "trocar o tipo de volta para receita",
+    "requisicao": "PUT /api/categorias/21",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": null,
+      "cor": "#64748b",
+      "icone": null,
+      "id": 21,
+      "natureza": null,
+      "nome": "Outras receitas",
+      "tipo": 2
+    },
+    "banco": {
+      "Categoria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 21
+            },
+            "colunas": {
+              "Tipo": {
+                "antes": 3,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 169
+            },
+            "colunas": {
+              "IgnorarRelatorios": {
+                "antes": 1,
+                "depois": 0
+              },
+              "Tipo": {
+                "antes": 3,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "trocar o tipo de uma categoria de cartão",
+    "requisicao": "PUT /api/categorias/8",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": null,
+      "cor": "#64748b",
+      "icone": null,
+      "id": 8,
+      "natureza": null,
+      "nome": "Compras",
+      "tipo": 2
+    },
+    "banco": {
+      "Categoria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "Cor": {
+                "antes": "#c9b3f5",
+                "depois": "#64748b"
+              },
+              "Icone": {
+                "antes": "sacola",
+                "depois": null
+              },
+              "Natureza": {
+                "antes": 2,
+                "depois": null
+              },
+              "Tipo": {
+                "antes": 1,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 121
+            },
+            "colunas": {
+              "IgnorarRelatorios": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "trocar o tipo de uma categoria de cartão de volta",
+    "requisicao": "PUT /api/categorias/8",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ativa": true,
+      "categoriaPaiId": null,
+      "cor": "#64748b",
+      "icone": null,
+      "id": 8,
+      "natureza": 2,
+      "nome": "Compras",
+      "tipo": 1
+    },
+    "banco": {
+      "Categoria": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 8
+            },
+            "colunas": {
+              "Natureza": {
+                "antes": null,
+                "depois": 2
+              },
+              "Tipo": {
+                "antes": 2,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a que tem subcategorias",
+    "requisicao": "DELETE /api/categorias/1",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Exclua ou mova as subcategorias antes."
+    }
+  },
+  {
+    "nome": "excluir a que não existe",
+    "requisicao": "DELETE /api/categorias/999",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Registro não encontrado."
+    }
+  },
+  {
+    "nome": "excluir com transações e regra",
+    "requisicao": "DELETE /api/categorias/26",
+    "status": 204,
+    "banco": {
+      "Categoria": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CategoriaPaiId": 1,
+            "Cor": "#f8c09a",
+            "Icone": "restaurante",
+            "Id": 26,
+            "Natureza": 2,
+            "Nome": "Padaria",
+            "Tipo": 1
+          }
+        ]
+      },
+      "RegraCategorizacao": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "CategoriaId": 26,
+            "CriadoEm": "2025-11-02 10:00:00",
+            "Id": 28,
+            "Prioridade": 100,
+            "Texto": "PADARIA",
+            "TipoCorrespondencia": 1
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 168
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": 26,
+                "depois": null
+              },
+              "CategoriaManual": {
+                "antes": 1,
+                "depois": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a subcategoria criada",
+    "requisicao": "DELETE /api/categorias/{{idCinema}}",
+    "status": 204,
+    "banco": {
+      "Categoria": {
+        "removidas": [
+          {
+            "Ativa": 0,
+            "CategoriaPaiId": 7,
+            "Cor": "#abcdef",
+            "Icone": null,
+            "Id": 28,
+            "Natureza": 1,
+            "Nome": "Cinema e teatro",
+            "Tipo": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir sem login",
+    "requisicao": "DELETE /api/categorias/{{idBicos}}",
+    "status": 401
+  },
+  {
+    "nome": "listar depois das mudanças",
+    "requisicao": "GET /api/categorias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "ativa": false,
+        "categoriaPaiId": null,
+        "cor": "#e7b3ea",
+        "icone": "pessoal",
+        "id": 27,
+        "natureza": 2,
+        "nome": "Academia",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f8c09a",
+        "icone": "restaurante",
+        "id": 1,
+        "natureza": 2,
+        "nome": "Alimentação",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#64748b",
+        "icone": null,
+        "id": 8,
+        "natureza": 2,
+        "nome": "Compras",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#e7b3ea",
+        "icone": "pessoal",
+        "id": 16,
+        "natureza": 2,
+        "nome": "Cuidados pessoais",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f5a3b0",
+        "icone": "coracao",
+        "id": 14,
+        "natureza": 2,
+        "nome": "Doações",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#8fd8d8",
+        "icone": "livro",
+        "id": 6,
+        "natureza": 1,
+        "nome": "Educação",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#c4bcb4",
+        "icone": "imposto",
+        "id": 11,
+        "natureza": 1,
+        "nome": "Impostos e taxas",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f19c9c",
+        "icone": "juros",
+        "id": 17,
+        "natureza": 1,
+        "nome": "Juros e empréstimos",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f3b3d3",
+        "icone": "lazer",
+        "id": 7,
+        "natureza": 2,
+        "nome": "Lazer",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f2d98b",
+        "icone": "carrinho",
+        "id": 2,
+        "natureza": 1,
+        "nome": "Mercado",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#d4a5e8",
+        "icone": "casa",
+        "id": 3,
+        "natureza": 1,
+        "nome": "Moradia",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#b4bccb",
+        "icone": "outros",
+        "id": 18,
+        "natureza": 2,
+        "nome": "Outros gastos",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": 7,
+        "cor": "#64748b",
+        "icone": null,
+        "id": 31,
+        "natureza": null,
+        "nome": "Pai em texto",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#e3c48f",
+        "icone": "pet",
+        "id": 15,
+        "natureza": 2,
+        "nome": "Pets",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": 1,
+        "cor": "#f8c09a",
+        "icone": "restaurante",
+        "id": 25,
+        "natureza": 2,
+        "nome": "Restaurantes",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#f4a89a",
+        "icone": "saude",
+        "id": 5,
+        "natureza": 1,
+        "nome": "Saúde",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a9b4c6",
+        "icone": "escudo",
+        "id": 13,
+        "natureza": 1,
+        "nome": "Seguros",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a7a3f5",
+        "icone": "assinatura",
+        "id": 9,
+        "natureza": 2,
+        "nome": "Serviços e assinaturas",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#b8b0a8",
+        "icone": "banco",
+        "id": 12,
+        "natureza": 1,
+        "nome": "Tarifas bancárias",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#92c8f0",
+        "icone": "carro",
+        "id": 4,
+        "natureza": 1,
+        "nome": "Transporte",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#9fd2f6",
+        "icone": "aviao",
+        "id": 10,
+        "natureza": 2,
+        "nome": "Viagens",
+        "tipo": 1
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#64748b",
+        "icone": null,
+        "id": 30,
+        "natureza": null,
+        "nome": "mercado",
+        "tipo": 1
+      },
+      {
+        "ativa": false,
+        "categoriaPaiId": null,
+        "cor": "#0F766E",
+        "icone": null,
+        "id": 29,
+        "natureza": null,
+        "nome": "Bicos",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#64748b",
+        "icone": null,
+        "id": 21,
+        "natureza": null,
+        "nome": "Outras receitas",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a8dcb9",
+        "icone": "grafico",
+        "id": 20,
+        "natureza": null,
+        "nome": "Rendimentos",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#8fd5b4",
+        "icone": "salario",
+        "id": 19,
+        "natureza": null,
+        "nome": "Salário",
+        "tipo": 2
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#8fd8c8",
+        "icone": "investimento",
+        "id": 24,
+        "natureza": null,
+        "nome": "Investimentos",
+        "tipo": 3
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#a9c9d6",
+        "icone": "cartao",
+        "id": 23,
+        "natureza": null,
+        "nome": "Pagamento de fatura",
+        "tipo": 3
+      },
+      {
+        "ativa": true,
+        "categoriaPaiId": null,
+        "cor": "#9ccfc6",
+        "icone": "transferencia",
+        "id": 22,
+        "natureza": null,
+        "nome": "Transferências",
+        "tipo": 3
+      }
+    ]
+  }
+]

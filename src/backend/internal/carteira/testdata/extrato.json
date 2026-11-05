@@ -1,0 +1,63 @@
+{
+  "dotnet": [
+    "10.0.13"
+  ],
+  "hoje": [
+    "2026-10-30"
+  ],
+  "sugestoes": [
+    {"transacaoId":41,"data":"2026-04-10","descricao":"COMPRA ITSA4 0,00","valor":0.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":30,"data":"2026-04-09","descricao":"COMPRA ITSA4 1,5 x 2,5 x 3","valor":-3.75,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":3,"precoUnitario":1.25,"fechamentoNoDia":null,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":31,"data":"2026-04-09","descricao":"COMPRA ITSA4 1.5","valor":-1.5,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":32,"data":"2026-04-09","descricao":"COMPRA ITSA4 1.234","valor":-1234.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":1234,"precoUnitario":1.0,"fechamentoNoDia":null,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":33,"data":"2026-04-09","descricao":"COMPRA ITSA4 1.234,56","valor":-1234.56,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":34,"data":"2026-04-09","descricao":"COMPRA ITSA4 12345678","valor":-1234.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":35,"data":"2026-04-09","descricao":"COMPRA ITSA4 0","valor":-1234.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":36,"data":"2026-04-09","descricao":"COMPRA ITSA4 1,2,3","valor":-1234.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":37,"data":"2026-04-09","descricao":"COMPRA ITSA4 12/04","valor":-10.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":38,"data":"2026-04-09","descricao":"COMPRA ITSA4 12/04/26","valor":-10.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":39,"data":"2026-04-09","descricao":"COMPRA ITSA4 5 X 2,00 TAXA","valor":-10.25,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":5,"precoUnitario":2.00,"fechamentoNoDia":null,"origem":"extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":40,"data":"2026-04-09","descricao":"COMPRA ITSA4 5 X 2,00","valor":-11.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":5,"precoUnitario":2.2,"fechamentoNoDia":null,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":27,"data":"2026-04-08","descricao":"ITSA4 VENDAS","valor":70.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":2,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":28,"data":"2026-04-08","descricao":"ITSA4 VENDAX CORRETORA","valor":70.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":2,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":29,"data":"2026-04-08","descricao":"ITSA4 XVENDA CORRETORA","valor":70.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":2,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":25,"data":"2026-04-06","descricao":"compra itsa4 7 x 10,00","valor":-70.0,"contaNome":"Conta Corrente","ticker":"ITSA4","tipo":1,"quantidade":7,"precoUnitario":10.00,"fechamentoNoDia":null,"origem":"extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":19,"data":"2026-04-03","descricao":"WEGE3 APLICAÇÃO","valor":-10.0,"contaNome":"Conta Corrente","ticker":"WEGE3","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":20,"data":"2026-04-03","descricao":"WEGE3 AÇÕES","valor":-10.0,"contaNome":"Conta Corrente","ticker":"WEGE3","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":21,"data":"2026-04-03","descricao":"WEGE3 LIQUIDAÇÃO","valor":-10.0,"contaNome":"Conta Corrente","ticker":"WEGE3","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":24,"data":"2026-04-03","descricao":"WEGE3 B3","valor":-10.0,"contaNome":"Conta Corrente","ticker":"WEGE3","tipo":1,"quantidade":3,"precoUnitario":3.3333,"fechamentoNoDia":null,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":10,"data":"2026-04-02","descricao":"SELL PETR4 100","valor":3000.0,"contaNome":"Conta Corrente","ticker":"PETR4","tipo":2,"quantidade":100,"precoUnitario":30.0,"fechamentoNoDia":31.0,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":11,"data":"2026-04-02","descricao":"PETR4 CREDITO","valor":300.0,"contaNome":"Corretora","ticker":"PETR4","tipo":2,"quantidade":10,"precoUnitario":30.0,"fechamentoNoDia":31.0,"origem":"cotação do dia","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":12,"data":"2026-04-02","descricao":"PETR4 COMPRA","valor":300.0,"contaNome":"Corretora","ticker":"PETR4","tipo":1,"quantidade":10,"precoUnitario":30.0,"fechamentoNoDia":31.0,"origem":"cotação do dia","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":15,"data":"2026-04-02","descricao":"WEGE3 NA CATEGORIA","valor":-10.0,"contaNome":"Conta Corrente","ticker":"WEGE3","tipo":1,"quantidade":null,"precoUnitario":null,"fechamentoNoDia":null,"origem":null,"jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":6,"data":"2026-03-09","descricao":"NOTA MXRF11 1.000 x 10,10","valor":-10100.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":1000,"precoUnitario":10.10,"fechamentoNoDia":9.9,"origem":"extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":7,"data":"2026-03-09","descricao":"COMPRA MXRF11F 5","valor":-50.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":5,"precoUnitario":10.0,"fechamentoNoDia":9.9,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":false},
+    {"transacaoId":8,"data":"2026-03-09","descricao":"VENDA MXRF11 10 x 10,20","valor":102.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":2,"quantidade":10,"precoUnitario":10.20,"fechamentoNoDia":9.9,"origem":"extrato","jaImportada":false,"possivelDuplicata":true},
+    {"transacaoId":5,"data":"2026-03-06","descricao":"NOTA MXRF11 03/03/2026","valor":-100.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":10,"precoUnitario":10.0,"fechamentoNoDia":10.2,"origem":"cotação do dia","jaImportada":false,"possivelDuplicata":true},
+    {"transacaoId":4,"data":"2026-03-05","descricao":"NOTA MXRF11","valor":-100.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":10,"precoUnitario":10.0,"fechamentoNoDia":10.2,"origem":"cotação do dia","jaImportada":false,"possivelDuplicata":true},
+    {"transacaoId":2,"data":"2026-03-04","descricao":"C/ MXRF11 10 UN","valor":-100.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":10,"precoUnitario":10.0,"fechamentoNoDia":10.2,"origem":"quantidade do extrato","jaImportada":false,"possivelDuplicata":true},
+    {"transacaoId":3,"data":"2026-03-04","descricao":"COMPRA MXRF11 9,90","valor":-99.0,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":10,"precoUnitario":9.90,"fechamentoNoDia":10.2,"origem":"preço do extrato","jaImportada":false,"possivelDuplicata":true},
+    {"transacaoId":1,"data":"2026-03-03","descricao":"COMPRA MXRF11 10 x 9,85","valor":-98.5,"contaNome":"Conta Corrente","ticker":"MXRF11","tipo":1,"quantidade":10,"precoUnitario":9.85,"fechamentoNoDia":10.0,"origem":"extrato","jaImportada":true,"possivelDuplicata":true}
+  ],
+  "proventos": [
+    {"id":43,"ticker":"ITSA4","data":"2026-04-10","valor":"1.5"},
+    {"id":42,"ticker":"MXRF11","data":"2026-03-10","valor":"9.5"}
+  ],
+  "criadas": [
+    4
+  ],
+  "ativos": [
+    {"Id":1,"Ticker":"BBAS3","Tipo":2,"Moeda":"BRL"},
+    {"Id":2,"Ticker":"MXRF11","Tipo":1,"Moeda":"BRL"},
+    {"Id":3,"Ticker":"KNRI11","Tipo":1,"Moeda":"BRL"},
+    {"Id":4,"Ticker":"WEGE3","Tipo":2,"Moeda":"BRL"}
+  ],
+  "operacoes": [
+    {"AtivoId":2,"Tipo":1,"Data":"2026-03-03","Quantidade":"10.0","PrecoUnitario":"9.85","Taxas":"0.0","Cambio":"1.0","Observacao":null,"Origem":3,"TransacaoId":1},
+    {"AtivoId":2,"Tipo":2,"Data":"2026-03-12","Quantidade":"1.0","PrecoUnitario":"10.0","Taxas":"0.0","Cambio":"1.0","Observacao":null,"Origem":1,"TransacaoId":null},
+    {"AtivoId":2,"Tipo":1,"Data":"2026-03-04","Quantidade":"10.123457","PrecoUnitario":"10.0","Taxas":"1.12","Cambio":"1.0","Observacao":"Importada do extrato","Origem":3,"TransacaoId":2},
+    {"AtivoId":3,"Tipo":1,"Data":"2026-03-09","Quantidade":"2.0","PrecoUnitario":"150.0","Taxas":"0.0","Cambio":"1.0","Observacao":"Importada do extrato","Origem":3,"TransacaoId":7},
+    {"AtivoId":3,"Tipo":2,"Data":"2026-03-09","Quantidade":"1.0","PrecoUnitario":"151.0","Taxas":"0.5","Cambio":"1.0","Observacao":"Importada do extrato","Origem":3,"TransacaoId":8},
+    {"AtivoId":4,"Tipo":1,"Data":"2026-04-01","Quantidade":"1.0","PrecoUnitario":"40.0","Taxas":"0.0","Cambio":"1.0","Observacao":"Importada do extrato","Origem":3,"TransacaoId":9}
+  ]
+}

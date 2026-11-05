@@ -1,6 +1,6 @@
 # 0002. SQLite e Kestrel no lugar de SQL Server Express e IIS
 
-- **Status:** Aceita (em parte substituída pela [0012](0012-instalador-do-windows-em-powershell.md): no Windows, a instalação é em PowerShell)
+- **Status:** Aceita em parte. O SQLite e o "sem IIS nem proxy" continuam. No Windows, a instalação é em PowerShell (em parte substituída pela [0012](0012-instalador-do-windows-em-powershell.md)). O Kestrel foi substituído pelo servidor HTTPS do próprio Go ([0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): na frente desde a #85, sozinho desde a #86, que tirou o .NET.
 - **Data:** 2026-10-15
 - **Relacionadas:** [0003](0003-esquema-por-scripts-sql-idempotentes.md)
 

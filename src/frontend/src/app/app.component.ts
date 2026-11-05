@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AvisosComponent } from './compartilhado/avisos.component';
+import { AvisosComponent } from './compartilhado/ui/avisos.component';
 import { TemaService } from './core/tema.service';
 
 @Component({

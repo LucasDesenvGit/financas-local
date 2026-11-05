@@ -1,0 +1,162 @@
+{
+  "descricao": "Relatórios (#80, RelatoriosController): gasto por categoria, fluxo mês a mês, visão anual com a saúde financeira, projeção e maiores despesas. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília, e a base tem transações de 2025-04 em diante. Só lê: não muda o banco.",
+  "casos": [
+    {
+      "nome": "despesas por categoria em setembro",
+      "comentario": "As subcategorias somadas na categoria pai; estorno abate (ADR 0036); sem categoria por último se houver.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2026-09-01&fim=2026-09-30"
+    },
+    {
+      "nome": "receitas por categoria no ano, sem agrupar",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2026-01-01&fim=2026-10-14&tipo=2&agrupar=false"
+    },
+    {
+      "nome": "categorias com o tipo pelo nome",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2026-01-01&fim=2026-10-14&tipo=Receita"
+    },
+    {
+      "nome": "categorias de transferência",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2026-01-01&fim=2026-10-14&tipo=3"
+    },
+    {
+      "nome": "categorias com o fim antes do início",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2026-10-01&fim=2026-09-30"
+    },
+    {
+      "nome": "categorias com mais de 3660 dias",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2016-01-01&fim=2026-10-14"
+    },
+    {
+      "nome": "categorias sem as datas",
+      "comentario": "DateOnly sem valor vale 01/01/0001 nos dois: período de um dia, sem nada.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias"
+    },
+    {
+      "nome": "categorias com data que não é data",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=ontem&fim=2026-10-14"
+    },
+    {
+      "nome": "categorias sem login",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/categorias?inicio=2026-09-01&fim=2026-09-30",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "fluxo dos últimos 12 meses",
+      "comentario": "Inclui os meses sem movimento; a emergência é o valor absoluto das saídas marcadas.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/fluxo?inicio=2025-11-01&fim=2026-10-31"
+    },
+    {
+      "nome": "fluxo desde antes da primeira transação",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/fluxo?inicio=2025-01-15&fim=2025-06-10"
+    },
+    {
+      "nome": "fluxo com o fim antes do início",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/fluxo?inicio=2026-10-01&fim=2026-09-30"
+    },
+    {
+      "nome": "fluxo sem login",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/fluxo?inicio=2025-11-01&fim=2026-10-31",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "visão anual do ano atual",
+      "comentario": "2026 comparado com 2025: meses até outubro, patrimônio no fim de cada mês, categorias pela raiz, distribuição por natureza e a saúde financeira.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/anual"
+    },
+    {
+      "nome": "visão anual de um ano passado",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/anual?ano=2025&comparar=2024"
+    },
+    {
+      "nome": "visão anual de um ano futuro",
+      "comentario": "Nenhum mês até hoje: tudo futuro.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/anual?ano=2027"
+    },
+    {
+      "nome": "visão anual com o ano fora",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/anual?ano=1999"
+    },
+    {
+      "nome": "visão anual com a comparação fora",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/anual?ano=2026&comparar=2101"
+    },
+    {
+      "nome": "visão anual sem login",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/anual",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "projeção dos próximos 6 meses",
+      "comentario": "Médias dos meses completos, o mês atual com o que falta, as parcelas futuras e o saldo de partida.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/projecao"
+    },
+    {
+      "nome": "projeção de 1 mês",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/projecao?meses=1"
+    },
+    {
+      "nome": "projeção de 24 meses",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/projecao?meses=24"
+    },
+    {
+      "nome": "projeção de 0 meses",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/projecao?meses=0"
+    },
+    {
+      "nome": "projeção de 25 meses",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/projecao?meses=25"
+    },
+    {
+      "nome": "projeção sem login",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/projecao",
+      "sessao": "visitante"
+    },
+    {
+      "nome": "maiores despesas de 2026",
+      "comentario": "As 15 mais negativas, sem as ignoradas nos relatórios.",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/maiores-despesas?inicio=2026-01-01&fim=2026-10-14"
+    },
+    {
+      "nome": "maiores despesas de setembro",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/maiores-despesas?inicio=2026-09-01&fim=2026-09-30"
+    },
+    {
+      "nome": "maiores despesas com o fim antes do início",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/maiores-despesas?inicio=2026-10-01&fim=2026-09-30"
+    },
+    {
+      "nome": "maiores despesas sem login",
+      "metodo": "GET",
+      "caminho": "/api/relatorios/maiores-despesas?inicio=2026-09-01&fim=2026-09-30",
+      "sessao": "visitante"
+    }
+  ]
+}

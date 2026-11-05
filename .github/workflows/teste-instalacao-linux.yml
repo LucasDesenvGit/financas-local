@@ -1,5 +1,5 @@
 # Testa a instalacao pelos scripts bash (scripts/geral/instalar.sh = etapas 1, 2 e 3) num Linux de
-# verdade. O runner ja traz dotnet, node e sqlite3 em /usr/bin, entao reduzir o PATH nao basta:
+# verdade. O runner ja traz dotnet, node, go e sqlite3 em /usr/bin, entao reduzir o PATH nao basta:
 # o teste monta uma pasta com todos os comandos do sistema MENOS esses (e python3/jq, para provar
 # que os scripts nao dependem deles) e usa so ela no PATH. Assim tudo e baixado, como num
 # computador novo. O servico roda no systemd --user, como numa instalacao real.
@@ -12,7 +12,8 @@ on:
       - scripts/geral/**
       - scripts/linux/**
       - banco/**
-      - src/gerenciador/**
+      - src/gerenciador-go/**
+      - src/backend/go.mod
       - .github/workflows/teste-instalacao-linux.yml
   pull_request:
     branches: [main, develop]
@@ -20,7 +21,8 @@ on:
       - scripts/geral/**
       - scripts/linux/**
       - banco/**
-      - src/gerenciador/**
+      - src/gerenciador-go/**
+      - src/backend/go.mod
       - .github/workflows/teste-instalacao-linux.yml
   workflow_dispatch:
 
@@ -44,19 +46,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Preparar PATH sem dotnet, node, sqlite3 e python
+      - name: Preparar PATH sem dotnet, node, go, sqlite3 e python
         run: |
           limpo="$RUNNER_TEMP/bin-limpo"
           mkdir -p "$limpo"
           for arq in /usr/bin/* /bin/* /usr/sbin/* /sbin/*; do
             nome="$(basename "$arq")"
             case "$nome" in
-              dotnet|node|nodejs|npm|npx|corepack|sqlite3|python|python3|python3.*|jq) continue ;;
+              dotnet|node|nodejs|npm|npx|corepack|go|gofmt|sqlite3|python|python3|python3.*|jq) continue ;;
             esac
             [[ -e "$limpo/$nome" ]] || ln -s "$arq" "$limpo/$nome"
           done
           echo "PATH_LIMPO=$limpo" >> "$GITHUB_ENV"
-          for cmd in dotnet node sqlite3 python3 jq; do
+          for cmd in dotnet node go sqlite3 python3 jq; do
             if PATH="$limpo" command -v "$cmd" >/dev/null; then echo "::error::$cmd ainda visivel"; exit 1; fi
           done
 
@@ -74,28 +76,73 @@ jobs:
 
       - name: Conferir instalacao
         run: |
-          for p in ferramentas/node/bin/node ferramentas/dotnet/dotnet ferramentas/sqlite/sqlite3 \
+          for p in ferramentas/node/bin/node ferramentas/go/bin/go ferramentas/sqlite/sqlite3 \
                    dados/sql/FinancasLocal.db dados/chaves/financaslocal.pfx \
-                   publicado/api/Financas.Api.dll publicado/api/wwwroot/index.html \
-                   publicado/api/appsettings.Production.json; do
+                   publicado/api/financas-go publicado/api/wwwroot/index.html \
+                   publicado/api/appsettings.json publicado/api/appsettings.Production.json; do
             [[ -e "$p" ]] || { echo "::error::nao encontrado: $p"; exit 1; }
+          done
+          # #86: sem o .NET em lugar nenhum.
+          for p in ferramentas/dotnet publicado/api/Financas.Api.dll dados/backend; do
+            [[ ! -e "$p" ]] || { echo "::error::sobrou do .NET: $p"; exit 1; }
           done
           systemctl --user is-active --quiet financaslocal.service || { echo "::error::servico nao esta ativo"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
-      # Gerenciador do Linux (ADR 0033): publica, cria o atalho e pergunta a situacao pelo --situacao, que usa o
-      # systemd do usuario e /api/auth/estado sem abrir janela (o runner nao tem tela).
-      - name: Gerenciador (instalar-gerenciador.sh)
+      # O site e o Go sozinho (#85; sem o .NET desde a #86): o login e a rota do Go respondem.
+      - name: Login e /api/go/saude
         run: |
-          env PATH="$PATH_LIMPO" bash scripts/linux/instalar-gerenciador.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-gerenciador.log"
-          exe="$PWD/publicado/gerenciador/Financas.Gerenciador.Linux"
-          atalho="$HOME/.local/share/applications/financaslocal-gerenciador.desktop"
-          for p in "$exe" publicado/gerenciador/icone.png "$atalho"; do
+          site=https://127.0.0.1:5443
+          c="$RUNNER_TEMP/cookies.txt"
+          curl -k -fsS -c "$c" -b "$c" "$site/api/auth/estado" >/dev/null
+          token() { awk '$6 == "__Host-XSRF-TOKEN" { print $7 }' "$c" | tail -n1; }
+          curl -k -fsS -c "$c" -b "$c" -H "X-XSRF-TOKEN: $(token)" -H 'Content-Type: application/json' \
+            -d '{"login":"verificador","senha":"Teste#Linux2026"}' "$site/api/auth/configurar" >/dev/null
+          [[ "$(curl -k -s -o /dev/null -w '%{http_code}' "$site/api/go/saude")" == 401 ]] || { echo "::error::sem login devia ser 401"; exit 1; }
+          saude="$(curl -k -fsS -b "$c" "$site/api/go/saude")"
+          echo "$saude"
+          [[ "$saude" == *'"usuario":"verificador"'* && "$saude" == *'"diarioDoBanco":"wal"'* ]] || { echo "::error::GET /api/go/saude: $saude"; exit 1; }
+          pid="$(systemctl --user show -p MainPID --value financaslocal.service)"
+          [[ "$(cat "/proc/$pid/comm")" == financas-go ]] || { echo "::error::o servico nao e o Go: $(cat "/proc/$pid/comm")"; exit 1; }
+
+      # Gerenciador do Linux (#277, #86, ADR 0052): sem o GTK 4 e o WebKitGTK 6.0, o script diz o comando que instala o
+      # que falta e para, sem instalar nada (o gerenciador em C# saiu na #86). Com elas, compila o em Go, que responde
+      # ao --situacao, sem abrir janela (o runner nao tem tela). Quem vinha do em C# tem o atalho e o "Iniciar com o
+      # sistema" trocados: um atalho antigo, de mentira, prova isso no passo seguinte.
+      - name: Gerenciador sem as bibliotecas do em Go (instalar-gerenciador.sh)
+        run: |
+          if pkg-config --exists webkitgtk-6.0 2>/dev/null; then echo "::error::o runner ja tem o WebKitGTK 6.0: o caso sem ele nao e testado"; exit 1; fi
+          if env PATH="$PATH_LIMPO" bash scripts/linux/instalar-gerenciador.sh > "$RUNNER_TEMP/instalacao-gerenciador.log" 2>&1; then
+            echo "::error::o script terminou bem sem as bibliotecas"; cat "$RUNNER_TEMP/instalacao-gerenciador.log"; exit 1
+          fi
+          cat "$RUNNER_TEMP/instalacao-gerenciador.log"
+          grep -q 'sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev' "$RUNNER_TEMP/instalacao-gerenciador.log" || { echo "::error::o script nao disse o que instalar"; exit 1; }
+          [[ ! -e publicado/gerenciador-go/financas-gerenciador ]] || { echo "::error::instalou o gerenciador sem as bibliotecas"; exit 1; }
+          # Um gerenciador em C# antigo (ate a 3.0), de mentira: a pasta, o atalho do menu e o "Iniciar com o sistema".
+          antigo="$PWD/publicado/gerenciador/Financas.Gerenciador.Linux"
+          mkdir -p publicado/gerenciador "$HOME/.local/share/applications" "$HOME/.config/autostart"
+          { echo '#!/bin/sh'; echo 'exit 0'; } > "$antigo"; chmod +x "$antigo"
+          { echo '[Desktop Entry]'; echo 'Type=Application'; echo 'Name=Antigo'; echo "Exec=\"$antigo\""; } > "$HOME/.local/share/applications/financaslocal-gerenciador.desktop"
+          { echo '[Desktop Entry]'; echo 'Type=Application'; echo "Exec=\"$antigo\" --bandeja"; } > "$HOME/.config/autostart/financaslocal-gerenciador.desktop"
+
+      - name: Gerenciador em Go (instalar-gerenciador.sh)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+          env PATH="$PATH_LIMPO" bash scripts/linux/instalar-gerenciador.sh 2>&1 | tee "$RUNNER_TEMP/instalacao-gerenciador-go.log"
+          exe="$PWD/publicado/gerenciador-go/financas-gerenciador"
+          atalho="$HOME/.local/share/applications/br.financaslocal.Gerenciador.desktop"
+          for p in "$exe" publicado/gerenciador-go/icone.png "$atalho"; do
             [[ -e "$p" ]] || { echo "::error::nao encontrado: $p"; exit 1; }
           done
-          grep -qF "Exec=\"$exe\"" "$atalho" || { echo "::error::o atalho nao aponta para o gerenciador"; cat "$atalho"; exit 1; }
-          "$exe" --situacao | tee "$RUNNER_TEMP/situacao.txt"
-          grep -q 'O site está no ar' "$RUNNER_TEMP/situacao.txt" || { echo "::error::o gerenciador nao viu o site no ar"; exit 1; }
+          grep -qF "Exec=\"$exe\"" "$atalho" || { echo "::error::o atalho nao aponta para o gerenciador em Go"; cat "$atalho"; exit 1; }
+          grep -qF "Icon=$PWD/publicado/gerenciador-go/icone.png" "$atalho" || { echo "::error::o atalho sem o icone"; cat "$atalho"; exit 1; }
+          [[ ! -e "$HOME/.local/share/applications/financaslocal-gerenciador.desktop" ]] || { echo "::error::sobrou o atalho do em C# no menu"; exit 1; }
+          [[ ! -e publicado/gerenciador ]] || { echo "::error::sobrou a pasta do gerenciador em C#"; exit 1; }
+          grep -qF "Exec=\"$exe\" --bandeja" "$HOME/.config/autostart/financaslocal-gerenciador.desktop" || { echo "::error::o iniciar com o sistema nao passou para o em Go"; cat "$HOME/.config/autostart/financaslocal-gerenciador.desktop"; exit 1; }
+          "$exe" --situacao | tee "$RUNNER_TEMP/situacao-go.txt"
+          grep -q 'O site está no ar' "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::o gerenciador em Go nao viu o site no ar"; exit 1; }
+          grep -q "Gerenciador: $(grep -o '<Version>[^<]*' Directory.Build.props | head -n1 | cut -d'>' -f2)" "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::versao do gerenciador"; exit 1; }
 
       - name: Atualizacao (instalar.sh --pular-build)
         run: |
@@ -105,10 +152,81 @@ jobs:
           ls backups/FinancasLocal-antes-instalacao-*.db || { echo "::error::backup do banco antes da atualizacao nao foi feito"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
 
+      # #84: a unidade do systemd e o Go sozinho; o log chega ao journald e o servico para limpo.
+      - name: Go como servico (systemd)
+        run: |
+          site=https://127.0.0.1:5443/api/auth/estado
+          unidade="$HOME/.config/systemd/user/financaslocal.service"
+          diario() { sudo journalctl _SYSTEMD_USER_UNIT=financaslocal.service --no-pager; }
+          grep -q "ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida" "$unidade" || { echo "::error::a unidade nao e o Go"; cat "$unidade"; exit 1; }
+          for _ in $(seq 1 10); do diario | grep -q 'msg=iniciando ' && break; sleep 1; done
+          diario | grep -q 'msg=iniciando ' || { echo "::error::o log do Go nao chegou ao journald"; diario | tail -30; exit 1; }
+
+          systemctl --user stop financaslocal.service
+          if pgrep -af publicado/api/financas-go; then echo "::error::sobrou processo do Go com o servico parado"; exit 1; fi
+          resultado="$(systemctl --user show -p Result --value financaslocal.service)"
+          [[ "$resultado" == success ]] || { echo "::error::o Go parou com $resultado"; diario | tail -30; exit 1; }
+          systemctl --user start financaslocal.service
+          for _ in $(seq 1 30); do curl -k -fsS "$site" && break; sleep 1; done
+          curl -k -fsS "$site"
+
+      # #86: quem atualiza vindo da 3.0 tem o .NET portatil, a API .NET publicada e dados/backend. Se o Go nao sobe,
+      # o script diz como voltar (a tag v-ultimo-dotnet) e nao apaga nada; quando sobe, o que so o .NET usava sai.
+      - name: Atualizacao vinda da 3.0 (com o .NET ao lado)
+        run: |
+          unidade="$HOME/.config/systemd/user/financaslocal.service"
+          site=https://127.0.0.1:5443/api/auth/estado
+          plantar() {
+            mkdir -p ferramentas/dotnet ferramentas/dotnet-home ferramentas/nuget-pacotes
+            touch ferramentas/dotnet/dotnet publicado/api/Financas.Api.dll
+            echo dotnet > dados/backend
+          }
+
+          # O Go nao sobe: no lugar dele, um script que falha so com -aplicar-esquema (o servico) e passa o resto ao Go
+          # de verdade (o gerar-certificado).
+          plantar
+          mv publicado/preparo/financas-go publicado/preparo/financas-go.real
+          { echo '#!/bin/sh'; echo 'case "$*" in *-aplicar-esquema*) exit 1 ;; esac'; echo 'exec "$(dirname "$0")/financas-go.real" "$@"'; } > publicado/preparo/financas-go
+          chmod +x publicado/preparo/financas-go
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-falha.log"
+          mv -f publicado/preparo/financas-go.real publicado/preparo/financas-go
+          grep -q 'git checkout v-ultimo-dotnet' "$RUNNER_TEMP/instalacao-falha.log" || { echo "::error::o script nao disse como voltar"; exit 1; }
+          [[ -d ferramentas/dotnet-home ]] || { echo "::error::apagou o .NET com o site fora do ar"; exit 1; }
+
+          # O Go sobe: a unidade e o Go, e o que so o .NET usava sai.
+          env PATH="$PATH_LIMPO" bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/instalacao-sem-dotnet.log"
+          grep -q "ExecStart=$PWD/publicado/api/financas-go -aplicar-esquema -rotinas-de-partida" "$unidade" || { echo "::error::a unidade nao e o Go"; cat "$unidade"; exit 1; }
+          for p in ferramentas/dotnet ferramentas/dotnet-home ferramentas/nuget-pacotes publicado/api/Financas.Api.dll publicado/api/financas-go.real dados/backend; do
+            [[ ! -e "$p" ]] || { echo "::error::sobrou: $p"; exit 1; }
+          done
+          curl -k -fsS "$site"
+
       - name: Backup (4-backup.sh)
         run: |
           env PATH="$PATH_LIMPO" bash scripts/geral/4-backup.sh
           ls backups/FinancasLocal_*.db
+
+      # #468: o passo a passo do docs/OPERACAO.md: a copia volta, e o que veio depois dela sai.
+      - name: Restaurar a copia (docs/OPERACAO.md)
+        run: |
+          sqlite=ferramentas/sqlite/sqlite3
+          banco=dados/sql/FinancasLocal.db
+          copia="$(ls -t backups/FinancasLocal_*.db | head -1)"
+          "$sqlite" "$banco" "INSERT INTO Configuracao (Chave, Valor, AtualizadoEm) VALUES ('teste.depois-da-copia', 'x', '2026-01-01 00:00:00');"
+
+          systemctl --user stop financaslocal.service
+          mkdir -p dados/antes-de-restaurar
+          cp "$banco"* dados/antes-de-restaurar/
+          cp "$copia" "$banco"
+          rm -f "$banco-wal" "$banco-shm"
+          systemctl --user start financaslocal.service
+
+          for _ in $(seq 1 30); do curl -k -fsS https://127.0.0.1:5443/api/auth/estado && break; sleep 1; done
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+          marcas="$("$sqlite" "$banco" "SELECT COUNT(*) FROM Configuracao WHERE Chave = 'teste.depois-da-copia';")"
+          [[ "$marcas" == 0 ]] || { echo "::error::a copia nao voltou: $marcas marca(s) no banco"; exit 1; }
+          [[ "$("$sqlite" "$banco" 'PRAGMA integrity_check;')" == ok ]] || { echo "::error::banco corrompido depois de restaurar"; exit 1; }
+          [[ -e dados/antes-de-restaurar/FinancasLocal.db ]] || { echo "::error::o banco de antes nao foi guardado"; exit 1; }
 
       - name: Parar (parar.sh --desativar)
         run: |
@@ -117,7 +235,8 @@ jobs:
           estado="$(systemctl --user is-enabled financaslocal.service || true)"
           [[ "$estado" == disabled ]] || { echo "::error::servico continua habilitado ($estado)"; exit 1; }
           if curl -k -fsS https://127.0.0.1:5443/api/auth/estado; then echo "::error::API continua respondendo"; exit 1; fi
-          if publicado/gerenciador/Financas.Gerenciador.Linux --situacao; then echo "::error::o gerenciador diz que o site esta no ar"; exit 1; fi
+          if publicado/gerenciador-go/financas-gerenciador --situacao; then echo "::error::o gerenciador diz que o site esta no ar"; exit 1; fi
+          if pgrep -af publicado/api/financas-go; then echo "::error::sobrou processo do Go com o servico parado"; exit 1; fi
 
       - name: Subir de novo (3-publicar-atualizar.sh --pular-build)
         run: |
@@ -146,8 +265,54 @@ jobs:
 
       - name: Guardar logs da instalacao
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: instalacao-linux-log
           path: ${{ runner.temp }}/instalacao-*.log
+          if-no-files-found: ignore
+
+  # #277: num Linux minimo de verdade (debian:stable-slim, sem nada alem do sistema base). O job acima reduz o PATH,
+  # mas o runner continua trazendo bibliotecas (certificados, fontes) que um computador recem-instalado pode nao
+  # ter. Aqui elas faltam de verdade: primeiro o script tem de dizer o que instalar; depois, so com o que ele disse,
+  # tudo e baixado e compilado, e o Go sobe. Sem systemd no conteiner, sobe a mao.
+  minimo:
+    name: instalar num Linux minimo (debian:stable-slim)
+    runs-on: ubuntu-latest
+    container: debian:stable-slim
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sem as ferramentas basicas, o script diz o que instalar
+        run: |
+          if bash scripts/geral/1-preparar-ambiente.sh > "$RUNNER_TEMP/instalacao-minimo-0.log" 2>&1; then
+            echo "::error::o 1-preparar-ambiente.sh passou sem curl nem unzip"; exit 1
+          fi
+          cat "$RUNNER_TEMP/instalacao-minimo-0.log"
+          dica="$(grep -o 'apt install [a-z0-9 .-]*' "$RUNNER_TEMP/instalacao-minimo-0.log" | head -n1)"
+          [[ -n "$dica" ]] || { echo "::error::o script nao disse o comando de instalar"; exit 1; }
+          echo "DICA=$dica" >> "$GITHUB_ENV"
+
+      - name: Instalar so o que o script disse
+        run: |
+          apt-get update -qq
+          apt-get ${DICA#apt } -y --no-install-recommends
+
+      - name: Instalacao do zero (instalar.sh, sem gerenciador)
+        run: bash scripts/geral/instalar.sh --sem-gerenciador 2>&1 | tee "$RUNNER_TEMP/instalacao-minimo-1.log"
+
+      - name: O Go sozinho sobe sem o systemd
+        run: |
+          cd publicado/api
+          ./financas-go -aplicar-esquema -rotinas-de-partida > "$RUNNER_TEMP/instalacao-minimo-go.log" 2>&1 &
+          for _ in $(seq 1 30); do curl -k -fsS https://127.0.0.1:5443/api/auth/estado && break; sleep 1; done
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado || { echo "::error::o Go sozinho nao subiu"; cat "$RUNNER_TEMP/instalacao-minimo-go.log"; exit 1; }
+          kill %1; wait || true
+
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: instalacao-linux-minimo-log
+          path: ${{ runner.temp }}/instalacao-minimo-*.log
           if-no-files-found: ignore

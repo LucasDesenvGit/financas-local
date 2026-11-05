@@ -1,0 +1,164 @@
+{
+ "/v8/finance/chart/BBBB3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 12.34565, \"longName\": \"Banco B\", \"shortName\": \"BB\", \"currency\": \"BRL\"}, \"timestamp\": [1793106000, 1793192400, 1793278800], \"indicators\": {\"quote\": [{\"close\": [12.1, 12.20005, 12.3]}]}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"timestamp\": [1785762000, 1788181200, 1788267600, 1790773200, 1790859600, 1790946000], \"indicators\": {\"quote\": [{\"close\": [10.5, 10.75555, null, 0, 11.1, 11.2]}]}, \"events\": {\"dividends\": {\"1772456400\": {\"amount\": 0.123456789, \"date\": 1772456400}, \"1772542800\": {\"amount\": 0.5, \"date\": 1772456400}, \"sem-valor\": {\"date\": 1775048400}, \"sem-data\": {\"amount\": 0.2}, \"nulo\": null, \"zero\": {\"amount\": 0, \"date\": 1777899600}, \"ja-guardado\": {\"amount\": 9.0, \"date\": 1780405200}, \"numa-segunda\": {\"amount\": 0.3, \"date\": 1783342800}}}}], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/AAAA11.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 100, \"longName\": \"Fundo de Investimento Imobiliário AAAA\", \"previousClose\": 99.5, \"currency\": \"BRL\"}, \"timestamp\": [1793278800], \"indicators\": {\"quote\": [{\"close\": [100]}]}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/CCCC3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 50.5, \"shortName\": \"C Curto\", \"chartPreviousClose\": 49.5, \"currency\": \"BRL\"}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"1\": {\"amount\": 1.25, \"date\": 1770037200}}}}], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/DDD": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 200.1, \"longName\": \"D Corp\", \"currency\": \"USD\"}, \"timestamp\": [1793192400, 1793278800], \"indicators\": {\"quote\": [{\"close\": [199, 200]}]}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/EEE.L": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 300, \"currency\": \"GBp\"}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/FFFF3.SA": [
+  {
+   "status": 404,
+   "corpo": "{}"
+  },
+  {
+   "status": 404,
+   "corpo": "{}"
+  }
+ ],
+ "/api/quote/FFFF3": [
+  {
+   "status": 200,
+   "corpo": "{\"results\": [{\"regularMarketPrice\": 33.333333, \"regularMarketPreviousClose\": 33, \"longName\": null, \"shortName\": \"F Curto\"}]}"
+  }
+ ],
+ "/v8/finance/chart/GGGG3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"currency\": \"BRL\"}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"1\": {\"amount\": 0.7, \"date\": 1770037200}}}}], \"error\": null}}"
+  }
+ ],
+ "/api/quote/GGGG3": [
+  {
+   "status": 200,
+   "corpo": "{\"results\": [{\"longName\": \"Sem preço\"}]}"
+  }
+ ],
+ "/v8/finance/chart/HHHH3.SA": [
+  {
+   "status": 500,
+   "corpo": "{}"
+  },
+  {
+   "status": 500,
+   "corpo": "{}"
+  }
+ ],
+ "/api/quote/HHHH3": [
+  {
+   "status": 401,
+   "corpo": "{}"
+  }
+ ],
+ "/v8/finance/chart/IIII3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\""
+  },
+  {
+   "status": 404,
+   "corpo": "{}"
+  }
+ ],
+ "/api/quote/IIII3": [
+  {
+   "status": 200,
+   "corpo": "{\"results\": [{\"regularMarketPrice\": 7.5}]}"
+  }
+ ],
+ "/v8/finance/chart/JJJJ3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 5.55555, \"chartPreviousClose\": 0}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/KKKK3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  }
+ ],
+ "/api/quote/KKKK3": [
+  {
+   "status": 200,
+   "corpo": "{\"results\": []}"
+  }
+ ],
+ "/v8/finance/chart/LLLL3.SA": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 0, \"longName\": \"L\", \"currency\": \"BRL\"}}], \"error\": null}}"
+  },
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
+  }
+ ],
+ "/v8/finance/chart/IFIX.SA": [
+  {
+   "status": 404,
+   "corpo": "{}"
+  }
+ ],
+ "/v8/finance/chart/^IFIX": [
+  {
+   "status": 200,
+   "corpo": "{\"chart\": {\"result\": [{\"timestamp\": [1785762000, 1788267600], \"indicators\": {\"quote\": [{\"close\": [3300.123456, 3400]}]}}], \"error\": null}}"
+  }
+ ]
+}

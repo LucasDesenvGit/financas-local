@@ -138,6 +138,9 @@ export enum TipoLancamento {
   Deposito = 12, TarifaJuros = 13, Rendimento = 14, AplicacaoResgate = 15, Salario = 16, Credito = 17, Dinheiro = 18
 }
 
+/** #244: colunas pelas quais a lista de Transações pode ser ordenada (a mesma lista fixa da API). */
+export type OrdemTransacoes = 'data' | 'categoria' | 'conta' | 'valor';
+
 export interface FiltroTransacoes {
   inicio?: string | null; fim?: string | null; contaId?: number | null; categoriaId?: number | null;
   /** Várias categorias (cada uma inclui as subcategorias); com semCategoria, soma também as sem categoria. */
@@ -152,6 +155,9 @@ export interface FiltroTransacoes {
   semNatureza?: boolean;
   /** #173 d): só estes lançamentos (o detalhe de um número de outra tela). */
   ids?: number[] | null;
+  /** #244: ordenação (sem ela, data mais recente primeiro). "valor" é sem o sinal: o maior lançamento primeiro. */
+  ordem?: OrdemTransacoes | null;
+  direcao?: 'asc' | 'desc' | null;
 }
 
 export interface PaginaTransacoes {
@@ -237,6 +243,17 @@ export interface Meta {
   reservaNome: string | null; saldoReserva: number | null; reservaConferir: boolean; reservaNaoEncontrada: boolean;
   /** #90: ordem de prioridade (1 = primeira); 0 = ainda sem ordem. */
   prioridade: number;
+  /** #316: chave do ícone (IconesMeta); null = o padrão (cofrinho). */
+  icone?: string | null;
+  /** #359: quanto a pessoa disse que vai guardar por mês (o plano usa esse valor); null = o plano decide. */
+  guardarPorMes?: number | null;
+}
+
+/** #318: um aporte da meta (data AAAA-MM-DD; valor negativo é retirada), para o gráfico "Como está indo". */
+export interface MetaAporte {
+  data: string; valor: number;
+  /** #359: "HH:mm" (Brasília) em que o aporte foi registrado, para o gráfico de um dia só. */
+  hora?: string | null;
 }
 
 /**
@@ -258,6 +275,10 @@ export interface PlanoMetas {
 export interface SalvarMeta {
   nome: string; valorAlvo: number; valorAtual: number; dataAlvo: string | null; contaId: number | null;
   cor: string; concluida: boolean; reservaNome: string | null;
+  /** #316: chave do ícone (IconesMeta); null = o padrão. */
+  icone?: string | null;
+  /** #359: quanto vai guardar por mês; null = o plano decide. */
+  guardarPorMes?: number | null;
 }
 
 export interface ContaAgendada {
@@ -334,6 +355,8 @@ export interface SugestaoCategoria {
   categoriaId: number | null; categoriaNome: string | null; categoriaCor: string | null;
   confianca: 'alta' | 'media' | 'baixa' | 'nenhuma'; motivo: string | null; textoRegra: string;
   alternativas: OpcaoCategoria[];
+  /** #254: por que não criar a regra sem olhar (já existe, ou o texto pega transações de outras categorias). */
+  avisoRegra?: string | null;
 }
 
 export interface ResumoAno { receitas: number; despesas: number; resultado: number; taxaPoupanca: number; }
@@ -367,6 +390,13 @@ export interface Projecao {
   meses: ProjecaoMes[]; categorias: ProjecaoCategoria[];
 }
 
+/** #327: avisos e orçamentos estourados do mês atual (as notificações da barra do topo). */
+export interface Avisos {
+  ano: number; mes: number; alertas: string[]; orcamentosEstourados: Orcamento[];
+  /** #9/#327: transações recentes com descrição pouco informativa (aviso discreto, fora do contador). */
+  poucoInformativas?: number; poucoInformativasDesde?: string | null; exemploPoucoInformativa?: string | null;
+}
+
 export interface Painel {
   saldoContas: number; dividaCartoes: number; totalInvestido: number; patrimonioLiquido: number;
   rendaVariavel: number; patrimonioSemRendaVariavel: number;
@@ -384,6 +414,10 @@ export interface Painel {
   creditosCorretoraComoReceita: number; totalCreditosCorretoraComoReceita: number;
   /** #173 b) (ADR 0044): trocos que a sincronização classificou sozinha. */
   trocosAutomaticos?: TrocosAutomaticos | null;
+  /** #206: todos os orçamentos do mês acima de 100%, os piores primeiro (card agrupado; não vêm mais em `alertas`). */
+  orcamentosEstourados?: Orcamento[] | null;
+  /** #334: transações com data depois de hoje (parcelas já lançadas), as mais próximas primeiro, e quantas são. */
+  transacoesFuturas?: Transacao[] | null; quantidadeFuturas?: number;
 }
 
 /** #173 b): os trocos classificados na sincronização que continuam como ficaram (desde/ate: as datas deles). */
@@ -398,6 +432,8 @@ export interface FaturaMes {
   fechamento?: string | null;
   /** ADR 0024: banco do cartão, para o selo. */
   banco?: string | null;
+  /** #251: a fatura seguinte, ainda aberta; só vem quando a do mês já fechou. */
+  proxima?: FaturaMes | null;
 }
 
 export interface Emprestimo {
@@ -591,6 +627,13 @@ export interface MoedaCambio { codigo: string; nome: string; }
 export interface CotacaoMoeda {
   moeda: string; dataSolicitada: string; data: string; compra: number; venda: number; fonte: string;
 }
+
+/** #247: a última cotação guardada de cada moeda (GET /api/cambio/cotacoes; não consulta a internet). */
+export interface CotacoesAtuais { atualizadoEm: string | null; cotacoes: CotacaoMoeda[]; }
+
+/** ADR 0048: última cotação guardada de uma criptomoeda em reais (Mercado Bitcoin); variacao24h null sem dado de 24 h antes. */
+export interface CotacaoCripto { moeda: string; preco: number; dataHora: string; variacao24h: number | null; fonte: string; }
+export interface CotacoesCripto { atualizadoEm: string | null; cotacoes: CotacaoCripto[]; }
 
 export interface AtualizarAtivo {
   nome: string | null; tipo: TipoAtivo; segmento: string | null; precoManual: boolean; precoAtual: number | null;

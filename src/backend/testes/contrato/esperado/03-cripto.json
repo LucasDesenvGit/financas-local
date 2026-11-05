@@ -1,0 +1,25 @@
+[
+  {
+    "nome": "cotações guardadas, com a variação em 24 h",
+    "requisicao": "GET /api/cripto/cotacoes",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "atualizadoEm": null,
+      "cotacoes": [
+        {
+          "dataHora": "2026-10-14T21:00:00Z",
+          "fonte": "Mercado Bitcoin",
+          "moeda": "BTC",
+          "preco": 618900.12,
+          "variacao24h": 1.07
+        }
+      ]
+    }
+  },
+  {
+    "nome": "sem login",
+    "requisicao": "GET /api/cripto/cotacoes",
+    "status": 401
+  }
+]
