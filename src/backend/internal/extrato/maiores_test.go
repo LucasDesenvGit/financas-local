@@ -44,7 +44,8 @@ func TestMaioresDespesas(t *testing.T) {
 	for _, d := range lista {
 		partes = append(partes, fmt.Sprintf("%d:%s", d.Id, d.Valor))
 	}
-	quer := fmt.Sprintf("%d:-1850.0|%d:-1850.0|%d:-27.45", novo, velho, lista[2].Id)
+	// #499: -223,50 é maior despesa que -27,45 (a collation EF_DECIMAL do C# lia "-27.45" como -2745).
+	quer := fmt.Sprintf("%d:-1850.0|%d:-1850.0|%d:-223.5", novo, velho, lista[2].Id)
 	if strings.Join(partes, "|") != quer || len(lista) != 3 {
 		t.Errorf("maiores: %s, quer %s", strings.Join(partes, "|"), quer)
 	}
