@@ -178,8 +178,7 @@ func TestFiltros(t *testing.T) {
 	}
 }
 
-// Regra: as ordens (#244): valor sem o sinal, com a ordem do EF_DECIMAL em pt-BR (#499: "12.75" vale 1275 e fica
-// depois de "100.0" e de "18.9"), categoria sem diferença de maiúsculas com as sem categoria no fim, conta sem
+// Regra: as ordens (#244): valor sem o sinal, pelo número (#499), categoria sem diferença de maiúsculas com as sem categoria no fim, conta sem
 // diferença de maiúsculas, e data crescente; a data mais recente e o Id desempatam.
 func TestOrdens(t *testing.T) {
 	c := novoCenario(t)
@@ -187,8 +186,8 @@ func TestOrdens(t *testing.T) {
 		query    string
 		esperado []int64
 	}{
-		{"ordem=valor&direcao=asc", []int64{c.semCategoria, c.restauranteJantar, c.pix, c.mercadoMes, c.padaria, c.ignorada, c.salarioMes}},
-		{"ordem=valor", []int64{c.salarioMes, c.ignorada, c.padaria, c.mercadoMes, c.pix, c.restauranteJantar, c.semCategoria}},
+		{"ordem=valor&direcao=asc", []int64{c.semCategoria, c.padaria, c.restauranteJantar, c.pix, c.mercadoMes, c.ignorada, c.salarioMes}},
+		{"ordem=valor", []int64{c.salarioMes, c.ignorada, c.mercadoMes, c.pix, c.restauranteJantar, c.padaria, c.semCategoria}},
 		{"ordem=categoria&direcao=asc", []int64{c.padaria, c.mercadoMes, c.restauranteJantar, c.salarioMes, c.ignorada, c.semCategoria, c.pix}},
 		{"ordem=categoria", []int64{c.salarioMes, c.restauranteJantar, c.mercadoMes, c.padaria, c.ignorada, c.semCategoria, c.pix}},
 		{"ordem=conta&direcao=asc", []int64{c.restauranteJantar, c.ignorada, c.semCategoria, c.salarioMes, c.pix, c.mercadoMes, c.padaria}},
@@ -207,30 +206,33 @@ func TestOrdens(t *testing.T) {
 	if pg := listar(t, c.mux, "ordem=valor&tamanhoPagina=2&pagina=5"); len(pg.Itens) != 0 {
 		t.Errorf("ordem por valor além do fim: %s", pg.ids())
 	}
-	if pg := listar(t, c.mux, "ordem=valor&tamanhoPagina=2&pagina=2"); pg.ids() != fmt.Sprintf("%d %d", c.padaria, c.mercadoMes) {
+	if pg := listar(t, c.mux, "ordem=valor&tamanhoPagina=2&pagina=2"); pg.ids() != fmt.Sprintf("%d %d", c.mercadoMes, c.pix) {
 		t.Errorf("ordem por valor, página 2: %s", pg.ids())
 	}
 }
 
-// Regra: a chave da ordem pelo valor é a do EF_DECIMAL em pt-BR (#499): o texto sem os pontos, como número inteiro;
-// o negativo entra pelo valor sem o sinal, no formato do banco.
-func TestCompararComoOEFDecimal(t *testing.T) {
+// Regra (#499): a ordem pelo valor é a do número sem o sinal, com os centavos no lugar certo. A collation EF_DECIMAL do
+// C# lia o texto em pt-BR e dava "12.75" > "18.9" e "100.0" < "12.75".
+func TestCompararSemSinal(t *testing.T) {
 	casos := []struct {
 		a, b     string
 		esperado int
 	}{
-		{"18.9", "12.75", -1}, // 189 < 1275
-		{"-18.9", "-12.75", -1},
-		{"100.0", "12.75", -1}, // 1000 < 1275
-		{"6500.0", "12.75", 1}, // 65000 > 1275
-		{"0.01", "0.1", 0},     // 1 = 1
-		{"-10.00", "10.0", 0},  // o negativo no formato do banco: 10.0
+		{"12.75", "18.9", -1},
+		{"18.9", "12.75", 1},
+		{"12.75", "100.0", -1},
+		{"6500.0", "12.75", 1},
+		{"0.01", "0.1", -1},
+		{"0.10", "0.1", 0},    // a escala não muda o valor
+		{"-10.00", "10.0", 0}, // sem o sinal
+		{"-27.45", "-223.5", -1},
+		{"-0.01", "0.0", 1},
 		{"0.0", "0.01", -1},
 	}
 	for _, c := range casos {
 		a, _ := tipos.NovoDecimal(c.a)
 		b, _ := tipos.NovoDecimal(c.b)
-		if obtido := compararComoOEFDecimal(a, b); obtido != c.esperado {
+		if obtido := compararSemSinal(a, b); obtido != c.esperado {
 			t.Errorf("comparar(%s, %s) = %d, esperado %d", c.a, c.b, obtido, c.esperado)
 		}
 	}

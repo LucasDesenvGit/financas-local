@@ -231,10 +231,13 @@ func (c *CampoDecimal) validar(erros map[string][]string) {
 }
 
 // CampoData é um parâmetro DateOnly (não anulável) de um record: o System.Text.Json lê só o texto "aaaa-mm-dd"; null,
-// número ou outro formato é erro de conversão. Sem a propriedade no JSON, fica a data zero (01/01/0001).
+// número ou outro formato é erro de conversão. Sem a propriedade no JSON, fica a data zero (01/01/0001), como no C#; com
+// Obrigatoria, é o 400 de campo obrigatório (#503): a transação e a conta a pagar eram gravadas com a data zero.
 type CampoData struct {
 	Propriedade string
+	Obrigatoria bool
 	Valor       tipos.Data
+	veio        bool
 }
 
 func (c *CampoData) propriedade() string { return c.Propriedade }
@@ -248,11 +251,15 @@ func (c *CampoData) ler(t json.Token) bool {
 	if err != nil {
 		return false
 	}
-	c.Valor = d
+	c.Valor, c.veio = d, true
 	return true
 }
 
-func (c *CampoData) validar(map[string][]string) {}
+func (c *CampoData) validar(erros map[string][]string) {
+	if c.Obrigatoria && !c.veio {
+		erros[c.Propriedade] = append(erros[c.Propriedade], Obrigatorio(c.Propriedade))
+	}
+}
 
 // CampoDecimalOpcional é um parâmetro decimal? de um record: número JSON (com a escala que veio) ou número em texto
 // (AllowReadingFromString). null ou ausente fica nil. Com Faixa, o [Range] em double, como o RangeAttribute(double,

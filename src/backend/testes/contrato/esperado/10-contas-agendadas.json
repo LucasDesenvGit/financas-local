@@ -306,6 +306,23 @@
     }
   },
   {
+    "nome": "criar sem o próximo vencimento",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "ProximoVencimento": [
+          "The ProximoVencimento field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
     "nome": "criar no cartão com a cobrança já no extrato (id 8)",
     "requisicao": "POST /api/contas-agendadas",
     "status": 204,

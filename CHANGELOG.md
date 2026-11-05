@@ -7,6 +7,21 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Correções
 - **O teste de contrato confere o certificado do site** (#638). O cliente do contrato não pula mais a verificação do HTTPS (`InsecureSkipVerify`, o alerta #14 do code scanning): o Go sobe com o certificado do `gerar-certificado`, como numa instalação, e o cliente confia só nele. Nada muda para quem usa.
 
+## [3.3.3] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Aviso no Painel também quando o banco espera um dado seu no Meu Pluggy** (#532). A conexão no estado `WAITING_USER_INPUT` aparecia como "Precisa de ação sua" em Configurações, mas o Painel e o sino não avisavam nada, e ela também não contava entre as conexões com problema. Agora os dois estados da Pluggy que pedem ação geram o aviso.
+
+## [3.3.2] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Transferência, lançamento e conta a pagar sem data são recusados** (#503). Uma chamada direta à API sem a data gravava a transferência, o lançamento ou o vencimento da conta a pagar em 01/01/0001, e o acerto das transferências passava a falhar. Agora é um erro de campo obrigatório, e nada é gravado. Pelo site nada muda: o formulário sempre manda a data.
+
+## [3.3.1] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Ordem por valor certa nas Transações e nas maiores despesas** (#499). Ao ordenar Transações pela coluna Valor, os valores com centavos (12,75, 27,45) ficavam fora do lugar, e a lista de maiores despesas dos relatórios podia pôr uma despesa de 27,45 antes de outra de 223,50, ou deixar o aluguel de fora das primeiras. Agora as duas seguem o número. Vinha da ordem do .NET, que lia o ponto do decimal como separador de milhar, e o Go tinha copiado isso na migração.
+
 ## [3.3.0] — 2026-11-04 · desenvolvimento
 
 ### Funcionalidades

@@ -245,7 +245,8 @@ func (s *Servico) lerStatus(ctx context.Context) (statusDto, error) {
 		}
 		d.ConexoesAtivas++
 		// A mesma regra dos alertas do Painel: erro na última sincronização ou instituição pedindo ação no Meu Pluggy.
-		if (ultimoErro != nil && *ultimoErro != "") || (situacao != nil && (*situacao == "LOGIN_ERROR" || *situacao == "WAITING_USER_ACTION")) {
+		if (ultimoErro != nil && *ultimoErro != "") || (situacao != nil && (*situacao == "LOGIN_ERROR" || *situacao == "WAITING_USER_ACTION" ||
+			*situacao == "WAITING_USER_INPUT")) {
 			d.ConexoesComErro++
 		}
 		if expira != nil && !expira.Tempo().After(limite) {

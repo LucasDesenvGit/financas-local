@@ -1023,6 +1023,29 @@
       }
     },
     {
+      "nome": "transferir sem data",
+      "comentario": "#503: 400, e nada é gravado. O .NET gravava os dois lados em 01/01/0001, e o acerto das transferências passava a falhar.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes/transferencia",
+      "corpo": {
+        "contaOrigemId": 3,
+        "contaDestinoId": 4,
+        "valor": 10
+      }
+    },
+    {
+      "nome": "lançar sem data",
+      "comentario": "#503: o lançamento manual também exige a data.",
+      "metodo": "POST",
+      "caminho": "/api/transacoes",
+      "corpo": {
+        "contaId": 3,
+        "descricao": "Sem data",
+        "valor": 10,
+        "tipo": 1
+      }
+    },
+    {
       "nome": "transferir com conta inexistente",
       "metodo": "POST",
       "caminho": "/api/transacoes/transferencia",
