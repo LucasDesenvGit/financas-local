@@ -41,7 +41,10 @@ Página grande se divide em três partes.
   - template em `.html` some de quem lê só o `.ts`. Teste que lê o código das telas como texto com `readFileSync` direto, sem o `apoio/codigo.ts`, passa sem olhar o template.
 - **Na prática:**
   - tela nova ou página grande que for mexida: regra nova vai para `<tela>.ts`, com teste no Jest sem `TestBed`; o método do componente só chama a função;
-  - o teste de arquitetura (regra 7, `npm run test:arquitetura`, só local) confere que `paginas/<grupo>/<tela>.ts` não importa `@angular/*`, `rxjs` nem o `ApiService`. A regra do componente de apresentação (não importa o `ApiService`) entra com o primeiro deles, junto com um jeito de diferenciá-lo pelo nome;
+  - o teste de arquitetura (regra 7, `npm run test:arquitetura`, só local) confere que `paginas/<grupo>/<tela>.ts` não importa `@angular/*`, `rxjs` nem o `ApiService`;
+  - **componente de apresentação novo** (3.3.12): `paginas/<grupo>/<tela>-<parte>.component.ts` e uma linha na tabela `APRESENTACAO` do teste de arquitetura, cuja regra 8 confere que ele não importa o `ApiService` nem o `@angular/router`. A tabela é explícita porque o nome não basta: `contas-agendadas` é uma tela com rota e começa com `contas-` (*julgamento próprio*);
+  - **janela que edita** (formulário em modal): recebe o formulário por `input()`, edita uma cópia (`linkedSignal`, refeita a cada formulário novo que chega) e avisa com ela em `output()`. Fechar sem salvar não muda o estado da tela (Nielsen 3). Exemplo: `transacoes-lancamento.component.ts`;
+  - o CSS de componente é encapsulado: ao mover um pedaço do template para um filho, as regras do `.css` da tela que ele usava vão junto para o filho (ou para o `styles.css`, se mais de uma tela usa);
   - **pré-requisito do `templateUrl`** (3.3.10):
     - teste que lê o código de um componente como texto usa o `testes/jest/apoio/codigo.ts` (`codigo(caminho)` ou `codigosDoApp(...pastas)`), que junta ao `.ts` o template e o CSS apontados. Já usam: `campo-valor`, `campo-data`, `clique-com-teclado`, `lista-suspensa-aberta`, `animacoes`, `reserva-informada-pelo-banco` e `contraste-tema`;
     - o `codigo-dos-componentes.spec.ts` falha se um `.html` ou `.css` de `src/app` não é apontado por nenhum componente (ficaria invisível para esses testes);

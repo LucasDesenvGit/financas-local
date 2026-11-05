@@ -45,6 +45,17 @@ const LOGICA_DA_TELA = /^paginas\/(?:[^/]+\/)?[^/]+(?<!\.(?:component|directive|
 const PROIBIDOS_NA_LOGICA = [/^@angular\//, /^rxjs/, /^core\/api\.service$/];
 
 /**
+ * Regra 8 (#475, ADR 0059): os componentes de apresentação, que recebem por input() e avisam por output(). Não chamam a
+ * API nem leem a rota: quem faz isso é o componente da tela. A lista é explícita porque o nome não basta (`contas-agendadas`
+ * é uma tela com rota e começa com `contas-`). Componente de apresentação novo entra aqui.
+ */
+const APRESENTACAO: Record<string, string> = {
+  'paginas/movimentacao/transacoes-lancamento.component.ts': 'janela "Novo lançamento" / "Editar transação"',
+  'paginas/movimentacao/transacoes-transferencia.component.ts': 'janela "Transferência entre contas"'
+};
+const PROIBIDOS_NA_APRESENTACAO = [/^core\/api\.service$/, /^@angular\/router$/];
+
+/**
  * Exceções das regras 2 a 4, com o motivo. *Julgamento (#476):* parece estar no lugar errado, e não ser exceção de
  * verdade; fica aqui até alguém mover. As do AvisosService e dos avisos do sino saíram na #634 (core/ e layout/).
  */
@@ -113,11 +124,20 @@ function violacoes(grafo: Grafo): string[] {
       if (LOGICA_DA_TELA.test(arquivo) && PROIBIDOS_NA_LOGICA.some((r) => r.test(alvo))) {
         v.push(`regra 7 (a lógica da tela é função pura, ADR 0059): ${arquivo} importa ${alvo}. O que fazer: deixe a chamada da API, a rota e o estado no componente da tela, e receba o dado pronto por parâmetro (a URL como { get(nome) }).`);
       }
+      // Regra 8: o componente de apresentação não chama a API nem lê a rota.
+      if (APRESENTACAO[arquivo] && PROIBIDOS_NA_APRESENTACAO.some((r) => r.test(alvo))) {
+        v.push(`regra 8 (o componente de apresentação só recebe e avisa, ADR 0059): ${arquivo} importa ${alvo}. O que fazer: receba o dado por input() e avise por output(); a chamada da API e a rota ficam no componente da tela.`);
+      }
       // Regra 5: uma página com rota não importa outra página com rota.
       const origem = arquivo.replace(/\.ts$/, '');
       if (rotas.has(origem) && rotas.has(alvo) && alvo !== origem) {
         v.push(`regra 5 (página não depende de outra página): ${arquivo} importa ${alvo}. O que fazer: leve para a outra tela pela rota (com o contexto na URL), ou mova o que é comum para o compartilhado.`);
       }
+    }
+  }
+  for (const arquivo of Object.keys(APRESENTACAO)) {
+    if (!grafo[arquivo]) {
+      v.push(`regra 8: "${arquivo}" está em APRESENTACAO, mas não existe. O que fazer: corrija o caminho ou tire da tabela.`);
     }
   }
   for (const chave of Object.keys(EXCECOES_DE_PASTA)) {
@@ -146,7 +166,8 @@ describe('arquitetura do front-end (#476)', () => {
       'compartilhado/ui/modal.component.ts': { imports: ['compartilhado/ui/icone.component', 'compartilhado/utilidades'], texto: '' },
       'layout/shell.component.ts': { imports: ['paginas/manual/manual-conteudo'], texto: '' },
       'paginas/painel/painel.component.ts': { imports: ['core/api.service'], texto: '' },
-      'paginas/planejamento/metas.component.ts': { imports: ['paginas/planejamento/metas-plano'], texto: '' }
+      'paginas/planejamento/metas.component.ts': { imports: ['paginas/planejamento/metas-plano'], texto: '' },
+      ...Object.fromEntries(Object.keys(APRESENTACAO).map((a) => [a, { imports: ['compartilhado/ui/modal.component'], texto: '' }]))
     });
     const com = (arquivo: string, imports: string[], texto = ''): Grafo => ({ ...limpo(), [arquivo]: { imports, texto } });
 
@@ -171,6 +192,10 @@ describe('arquitetura do front-end (#476)', () => {
         'regra 7 (a lógica da tela é função pura, ADR 0059): paginas/planejamento/metas-plano.ts importa core/api.service'],
       ['lógica da tela usa Angular', com('paginas/planejamento/metas-plano.ts', ['@angular/router']),
         'regra 7 (a lógica da tela é função pura, ADR 0059): paginas/planejamento/metas-plano.ts importa @angular/router'],
+      ['apresentação chama a API', com('paginas/movimentacao/transacoes-lancamento.component.ts', ['core/api.service']),
+        'regra 8 (o componente de apresentação só recebe e avisa, ADR 0059): paginas/movimentacao/transacoes-lancamento.component.ts importa core/api.service'],
+      ['apresentação que sumiu', (() => { const g = limpo(); delete g['paginas/movimentacao/transacoes-transferencia.component.ts']; return g; })(),
+        'regra 8: "paginas/movimentacao/transacoes-transferencia.component.ts" está em APRESENTACAO, mas não existe'],
       ['exceção que sarou', com('layout/shell.component.ts', []),
         'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual/manual-conteudo" não acontece mais']
     ];

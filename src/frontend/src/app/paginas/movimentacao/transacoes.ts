@@ -282,6 +282,14 @@ export function rotuloCategoria(c: Categoria, todas: Categoria[]): string {
   return pai ? `${pai.nome} › ${c.nome}` : c.nome;
 }
 
+/** Categoria pronta para um select: o id e o rótulo com o pai ("Lazer › Cinema"). */
+export interface CategoriaRotulada { id: number; rotulo: string }
+
+/** As categorias `oferecidas`, na ordem delas, com o rótulo que leva o nome do pai (`todas` incluem as inativas). */
+export function categoriasRotuladas(oferecidas: Categoria[], todas: Categoria[]): CategoriaRotulada[] {
+  return oferecidas.map((c) => ({ id: c.id, rotulo: rotuloCategoria(c, todas) }));
+}
+
 /** O rótulo da categoria pelo id; 'categoria' se ela não está na lista. */
 export function rotuloCategoriaPorId(id: number, todas: Categoria[]): string {
   const c = todas.find((x) => x.id === id);

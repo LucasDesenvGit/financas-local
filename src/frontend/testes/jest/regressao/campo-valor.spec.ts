@@ -192,8 +192,8 @@ describe('Regressão: campo de valor em reais (#132)', () => {
   });
 
   it('nenhum campo de dinheiro das telas voltou a ser <input type="number">', () => {
-    const telas = ['movimentacao/transacoes', 'movimentacao/contas', 'movimentacao/contas-agendadas', 'planejamento/metas',
-      'planejamento/orcamentos', 'patrimonio/investimentos', 'patrimonio/conferir-investimentos'];
+    const telas = ['movimentacao/transacoes', 'movimentacao/transacoes-lancamento', 'movimentacao/transacoes-transferencia',
+      'movimentacao/contas', 'movimentacao/contas-agendadas', 'planejamento/metas', 'planejamento/orcamentos', 'patrimonio/investimentos', 'patrimonio/conferir-investimentos'];
     const dinheiro = /type="number"[^>]*\[\(ngModel\)\]="[^"]*\b(valor|valorAlvo|valorAtual|valorAporte|valorEditado|saldo|saldoInicial|limiteCredito|precoUnitario|precoAtual|preco|taxas)"/;
     for (const tela of telas) {
       const fonte = codigo(join(APP, `paginas/${tela}.component.ts`));

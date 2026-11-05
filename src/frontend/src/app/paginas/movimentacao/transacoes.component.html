@@ -260,71 +260,8 @@
 <app-renomear-transacao [transacao]="renomeando()" (fechar)="renomeando.set(null)" (renomeada)="aoRenomear()" />
 <app-renomear-em-lote [transacoes]="renomeandoLote()" (fechar)="renomeandoLote.set(null)" (renomeada)="aoRenomearLote()" />
 
-<app-modal [aberto]="form !== null" [titulo]="form?.id ? 'Editar transação' : 'Novo lançamento'" (fechar)="form = null">
-  @if (form; as fm) {
-    <form (ngSubmit)="salvar()" #f="ngForm" class="formulario">
-      @if (fm.openFinance) {
-        <p class="aviso-inline expandir" animate.leave="recolher">Transação importada do Open Finance: valor, data e conta vêm do banco.
-          @if (fm.descricaoOriginal) { <br><small>Original: {{ fm.descricaoOriginal }}</small> }
-        </p>
-      } @else {
-        <div class="grade-campos">
-          <label>Tipo
-            <select name="tipo" [(ngModel)]="fm.tipo">
-              <option [ngValue]="TipoTransacao.Despesa">Despesa</option>
-              <option [ngValue]="TipoTransacao.Receita">Receita</option>
-            </select>
-          </label>
-          <label>Conta
-            <select name="conta" [(ngModel)]="fm.contaId" required>
-              @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
-            </select>
-          </label>
-          <label>Data <app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio /></label>
-          <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
-        </div>
-        @if (!contasManuais().length) {
-          <p class="erro">Crie uma conta manual (ex.: "Carteira") em Contas e cartões para lançar manualmente.</p>
-        }
-      }
-      <label>Descrição <input name="descricao" [(ngModel)]="fm.descricao" required maxlength="300"></label>
-      <label>Categoria
-        <select name="categoria" [(ngModel)]="fm.categoriaId">
-          <option [ngValue]="null">Automática (regras)</option>
-          @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ rotuloCategoria(c) }}</option> }
-        </select>
-      </label>
-      @if (sugestoesForm().length) {
-        <div class="sugestoes-chips expandir" animate.leave="recolher">
-          <span class="texto-suave">Sugestões:</span>
-          @for (o of sugestoesForm(); track o.categoriaId) {
-            <button type="button" class="chip-sugestao" [title]="o.motivo" (click)="fm.categoriaId = o.categoriaId">
-              <span class="ponto" [style.background]="o.cor"></span>{{ o.nome }}
-            </button>
-          }
-        </div>
-      }
-      <label>Observação <textarea name="observacao" [(ngModel)]="fm.observacao" rows="2" maxlength="1000"></textarea></label>
-      <label class="checkbox"><input type="checkbox" name="ignorar" [(ngModel)]="fm.ignorarRelatorios"> Ignorar nos relatórios e totais</label>
-      @if (fm.tipo === TipoTransacao.Despesa) {
-        <label class="checkbox"><input type="checkbox" name="emergencia" [(ngModel)]="fm.emergencia">
-          <span class="texto-emergencia">Gasto de emergência</span>
-          <small class="texto-suave">(destacado em laranja nos orçamentos e relatórios)</small></label>
-      }
-      @if (!fm.openFinance) {
-        <label class="checkbox"><input type="checkbox" name="pendente" [(ngModel)]="fm.pendente"> Pendente (ainda não efetivada)</label>
-      }
-      <div class="rodape-form">
-        @if (fm.id && !fm.openFinance) {
-          <button type="button" class="botao botao-perigo" (click)="excluir()">Excluir</button>
-        }
-        <span class="cresce"></span>
-        <button type="button" class="botao" (click)="form = null">Cancelar</button>
-        <button class="botao botao-primario" [disabled]="f.invalid || salvando()">Salvar</button>
-      </div>
-    </form>
-  }
-</app-modal>
+<app-transacoes-lancamento [lancamento]="form" [contasManuais]="contasManuais()" [categorias]="categoriasRotuladas()"
+  [sugestoes]="sugestoesForm()" [salvando]="salvando()" (salvar)="salvar($event)" (excluir)="excluir()" (fechar)="form = null" />
 
 <app-modal [aberto]="sugestoesAbertas()" titulo="Sugestões de categoria" (fechar)="fecharSugestoes()">
   <div class="formulario">
@@ -409,30 +346,5 @@
   </div>
 </app-modal>
 
-<app-modal [aberto]="transferencia !== null" titulo="Transferência entre contas" (fechar)="transferencia = null">
-  @if (transferencia; as tf) {
-    <form (ngSubmit)="salvarTransferencia()" #ft="ngForm" class="formulario">
-      <p class="texto-suave">Os lançamentos são criados apenas nas contas manuais. O lado do Open Finance chega pela sincronização.</p>
-      <div class="grade-campos">
-        <label>De
-          <select name="origem" [(ngModel)]="tf.contaOrigemId" required>
-            @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
-          </select>
-        </label>
-        <label>Para
-          <select name="destino" [(ngModel)]="tf.contaDestinoId" required>
-            @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
-          </select>
-        </label>
-        <label>Data <app-campo-data name="data" [(ngModel)]="tf.data" obrigatorio /></label>
-        <label>Valor <app-campo-valor name="valor" [(ngModel)]="tf.valor" obrigatorio [minimo]="0.01" /></label>
-      </div>
-      <label>Descrição <input name="descricao" [(ngModel)]="tf.descricao" maxlength="200" placeholder="Transferência"></label>
-      <div class="rodape-form">
-        <span class="cresce"></span>
-        <button type="button" class="botao" (click)="transferencia = null">Cancelar</button>
-        <button class="botao botao-primario" [disabled]="ft.invalid || salvando()">Transferir</button>
-      </div>
-    </form>
-  }
-</app-modal>
+<app-transacoes-transferencia [transferencia]="transferencia" [contas]="contas()" [salvando]="salvando()"
+  (salvar)="salvarTransferencia($event)" (fechar)="transferencia = null" />
