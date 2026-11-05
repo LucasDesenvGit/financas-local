@@ -17,7 +17,7 @@ Menu, botões e cartões usavam caracteres de texto como ícone (⟳, 👁, ☰)
 
 ## Decisão
 
-Usamos `@lucide/angular` na versão **fixa** `1.59.0` (antes, `lucide-angular` `1.0.0`), empacotado no build. Os ícones usados ficam registrados num lugar só (`compartilhado/icones.ts`, como componentes `LucideXxx`) e são desenhados pelo componente `app-icone` (`<svg [lucideIcon]>`), decorativo (`aria-hidden`) e na cor do texto. O nome do botão continua no `aria-label`/texto, não no ícone.
+Usamos `@lucide/angular` na versão **fixa** `1.59.0` (antes, `lucide-angular` `1.0.0`), empacotado no build. Os ícones usados ficam registrados num lugar só (`compartilhado/ui/icones.ts`, como componentes `LucideXxx`) e são desenhados pelo componente `app-icone` (`<svg [lucideIcon]>`), decorativo (`aria-hidden`) e na cor do texto. O nome do botão continua no `aria-label`/texto, não no ícone.
 
 ## Consequências
 

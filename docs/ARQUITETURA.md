@@ -215,7 +215,7 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 | 9. Decisões | [ADRs](adr/README.md) |
 | 10. Qualidade | [Requisitos não funcionais](REQUISITOS-NAO-FUNCIONAIS.md) |
 | 11. Riscos e dívidas | [Modelo de ameaças](MODELO-DE-AMEACAS.md), a [#68](https://github.com/LucasDesenvGit/financas-local/issues/68) e as consequências das ADRs |
-| 12. Glossário | [`glossario.ts`](../src/frontend/src/app/compartilhado/glossario.ts) e os [termos para quem desenvolve](arquitetura/dominio.md#termos-para-quem-desenvolve) |
+| 12. Glossário | [`glossario.ts`](../src/frontend/src/app/compartilhado/glossario/glossario.ts) e os [termos para quem desenvolve](arquitetura/dominio.md#termos-para-quem-desenvolve) |
 
 ## Decisões em resumo
 
@@ -288,13 +288,15 @@ O caminho de uma tela até a API: a página chama um método do `ApiService`, qu
 
 | Pasta | Responsabilidade |
 |---|---|
-| `src/app/core/` | `ApiService` (todas as chamadas HTTP), modelos (interfaces TypeScript), autenticação, tema, privacidade. |
-| `src/app/compartilhado/` | Componentes reutilizáveis: gráfico (Chart.js), modal, paginação, calculadora, pipe de moeda que respeita "ocultar valores", campo de valor em dinheiro (`app-campo-valor`, [ADR 0032](adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)). |
-| `src/app/layout/` | Estrutura da tela: barra superior e menu lateral, em grupos que abrem e fecham (`MENU` em `shell.component.ts`, [ADR 0046](adr/0046-menu-lateral-em-grupos-que-abrem-e-fecham.md)). |
-| `src/app/paginas/` | Uma página por rota. |
+| `src/app/core/` | `ApiService` (todas as chamadas HTTP), modelos (interfaces TypeScript), autenticação, tema, privacidade, avisos rápidos (`AvisosService`). |
+| `src/app/compartilhado/` | O que duas ou mais partes usam ([ADR 0058](adr/0058-pastas-do-front-end-por-grupo-do-menu-e-por-assunto.md)): `ui/` sem assunto do domínio (modal, confirmação, paginação, lista suspensa, campos de data e de valor, [ADR 0032](adr/0032-controles-padrao-interruptor-e-campo-de-valor.md), ícones), `graficos/` (Chart.js), `bancos/`, `lancamentos/` e `glossario/`; na raiz, o pipe de moeda que respeita "ocultar valores" e as utilidades. |
+| `src/app/layout/` | Estrutura da tela: barra superior e menu lateral, em grupos que abrem e fecham (`MENU` em `shell.component.ts`, [ADR 0046](adr/0046-menu-lateral-em-grupos-que-abrem-e-fecham.md)), e o que só ela usa (calculadora, notificações e os avisos do sino, menu do usuário, privacidade, status da sincronização). |
+| `src/app/paginas/` | Uma subpasta por grupo do menu (`painel/`, `movimentacao/`, `planejamento/`, `patrimonio/`, `analises/`, `ajustes/`, `manual/`), com as telas, as abas e a lógica pura de cada uma ([ADR 0058](adr/0058-pastas-do-front-end-por-grupo-do-menu-e-por-assunto.md)); o `entrar.component.ts` fica na raiz. |
 | `src/styles.css` | Tema (tokens de cor claros/escuros) e componentes visuais globais. |
-| `testes-navegador/` | Testes no navegador com Playwright ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)): o build de produção servido com a CSP da API (`servidor.mjs`), a API falsa (`api-falsa.ts`), as fixtures que tratam erro de console, exceção e bloqueio de CSP como falha (`base.ts`) e os prints sob demanda (`fotos.spec.ts`). |
-| `testes/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). Fora do build do Angular. |
+| `testes/` | Todos os testes do front-end, fora do build do Angular, com uma subpasta por ferramenta (#634). Na raiz, só o `rodar-afetados.mjs` (`npm run test:afetados`), que serve ao Jest e ao navegador. |
+| `testes/jest/` | Testes com Jest ([ADR 0013](adr/0013-testes-do-front-end-com-jest.md)): `regressao/`, `usabilidade/` e `apoio/` (API falsa, abertura de telas pelo roteador). É a única pasta do `npm test` (`roots` do `jest.config.js`). |
+| `testes/navegador/` | Testes no navegador com Playwright ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)): o build de produção servido com a CSP da API (`servidor.mjs`), a API falsa (`api-falsa.ts`), as fixtures que tratam erro de console, exceção e bloqueio de CSP como falha (`base.ts`) e os prints sob demanda (`fotos.spec.ts`). |
+| `testes/arquitetura/` | Teste de arquitetura (quem pode importar quem em `src/app`, #476). Só local: roda com `npm run test:arquitetura`, e nem o `npm test` nem a CI o rodam. |
 
 Angular 22 com zone.js (`provideZoneChangeDetection`) e componentes standalone. Todo componente declara `changeDetection: ChangeDetectionStrategy.Eager` — o comportamento padrão até o Angular 21 —, porque várias telas guardam estado em campos comuns e não em signals; o padrão OnPush do Angular 22 deixaria essas telas sem atualizar.
 

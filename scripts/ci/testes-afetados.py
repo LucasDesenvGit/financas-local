@@ -35,7 +35,7 @@ GLOBAIS = [
     r'^src/frontend/src/app/app\.[^/]+\.ts$', r'^src/frontend/src/app/app\.component\.ts$',
     r'^src/frontend/src/app/core/', r'^src/frontend/src/app/layout/',
     r'^src/frontend/(package(-lock)?\.json|angular\.json|tsconfig[^/]*\.json|jest\.config\.js|playwright\.config\.ts)$',
-    r'^src/frontend/testes/(apoio|configurar-jest)', r'^src/frontend/testes-navegador/(base\.ts|api-falsa\.ts|servidor\.mjs)$',
+    r'^src/frontend/testes/jest/(apoio|configurar-jest)', r'^src/frontend/testes/navegador/(base\.ts|api-falsa\.ts|servidor\.mjs)$',
     r'^src/frontend/public/', r'^src/frontend/src/assets/',
     # A CSP que os testes no navegador aplicam vem daqui (ADR 0041; do Go desde a #86).
     r'^src/backend/internal/servidor/intermediarios\.go$',
@@ -85,7 +85,7 @@ def executar(d):
         passos += [('Jest (tudo)', jest), build, ('navegador (tudo)', [*playwright, 'test'])]
     else:
         if d.get('jest'):
-            passos.append(('Jest (afetados)', [*jest, '--roots', '<rootDir>/testes', '--roots', '<rootDir>/src',
+            passos.append(('Jest (afetados)', [*jest, '--roots', '<rootDir>/testes/jest', '--roots', '<rootDir>/src',
                                                '--findRelatedTests', *d['jest'], '--passWithNoTests']))
         if d.get('grep'):
             passos += [build, ('navegador (afetados)', [*playwright, 'test', '--grep', d['grep']])]
@@ -102,7 +102,7 @@ def executar(d):
 
 
 def rotas_por_componente():
-    """'src/frontend/src/app/paginas/x.component.ts' → ['rota', …] (a rota "manual/:capitulo" conta como "manual")."""
+    """'src/frontend/src/app/paginas/<grupo>/x.component.ts' → ['rota', …] (a rota "manual/:capitulo" conta como "manual")."""
     texto = open(os.path.join(RAIZ, APP, 'app.routes.ts'), encoding='utf-8').read()
     mapa = {}
     for m in re.finditer(r"path:\s*'([^']*)'[^{}]*?import\('\./([^']+)'\)", texto, flags=re.S):
@@ -145,13 +145,13 @@ def telas_afetadas(arquivo, reverso, componentes):
 
 
 def specs_navegador():
-    pasta = os.path.join(RAIZ, FRONT, 'testes-navegador')
+    pasta = os.path.join(RAIZ, FRONT, 'testes', 'navegador')
     return {n: open(os.path.join(pasta, n), encoding='utf-8').read() for n in sorted(os.listdir(pasta)) if n.endswith('.spec.ts')}
 
 
 def jest_que_leem_codigo():
     saida = []
-    for pasta, _, arquivos in os.walk(os.path.join(RAIZ, FRONT, 'testes')):
+    for pasta, _, arquivos in os.walk(os.path.join(RAIZ, FRONT, 'testes', 'jest')):
         for nome in arquivos:
             if nome.endswith('.spec.ts'):
                 caminho = os.path.join(pasta, nome)
@@ -173,10 +173,10 @@ def decidir(lista):
     for a in lista:
         if not a.startswith(f'{FRONT}/'):
             continue
-        if a.startswith(f'{FRONT}/testes-navegador/') and a.endswith('.spec.ts'):
+        if a.startswith(f'{FRONT}/testes/navegador/') and a.endswith('.spec.ts'):
             specs_mudados.add(os.path.basename(a))
             motivo.append(f'teste no navegador mudou: {os.path.basename(a)}')
-        elif a.startswith(f'{FRONT}/testes/') and a.endswith('.spec.ts'):
+        elif a.startswith(f'{FRONT}/testes/jest/') and a.endswith('.spec.ts'):
             jest_mudados.add(a[len(FRONT) + 1:])
             motivo.append(f'teste do Jest mudou: {a[len(FRONT) + 1:]}')
         elif a.startswith(f'{APP}/') and a.endswith('.ts'):
@@ -186,7 +186,7 @@ def decidir(lista):
             rotas |= r
             fontes.append(a[len(FRONT) + 1:])
             motivo.append(f'{a[len(APP) + 1:]} → {", ".join("/" + x for x in sorted(r))}')
-        elif a.startswith(f'{FRONT}/testes-navegador/fotos') or a.endswith('.md'):
+        elif a.startswith(f'{FRONT}/testes/navegador/fotos') or a.endswith('.md'):
             continue
         else:
             return {'frontend': True, 'tudo': True, 'motivo': [f'arquivo do front-end sem regra: {a} (na dúvida, tudo)']}
@@ -222,9 +222,9 @@ def main():
     d = decidir(lista) if lista is not None else {'frontend': True, 'tudo': True, 'motivo': ['sem base (push): tudo']}
 
     playwright = '' if d['tudo'] else (f'--grep "{d["grep"]}"' if d.get('grep') else '')
-    # O jest.config.js só olha testes/ (roots); para seguir os imports até src/, a seleção põe src/ também (não há
+    # O jest.config.js só olha testes/jest/ (roots); para seguir os imports até src/, a seleção põe src/ também (não há
     # teste dentro de src/, então nada a mais roda). As aspas protegem o <rootDir> do shell.
-    raizes = "--roots '<rootDir>/testes' --roots '<rootDir>/src'"
+    raizes = "--roots '<rootDir>/testes/jest' --roots '<rootDir>/src'"
     jest = '' if d['tudo'] else (f"{raizes} --findRelatedTests {' '.join(d['jest'])} --passWithNoTests" if d.get('jest') else '--listTests')
     linhas = ['## Testes do front-end neste PR (#255)', '']
     if not d['frontend']:

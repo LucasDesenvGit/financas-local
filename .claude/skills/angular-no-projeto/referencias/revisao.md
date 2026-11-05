@@ -36,7 +36,7 @@ Separe o que viu no print do que leu no código, e diga o que não deu para ver 
 - [ ] Nada carregado de fora (fonte, script, imagem): a CSP barra e a ADR 0004 proíbe.
 
 **Testes**
-- [ ] Bug corrigido com teste em `testes/regressao/` que falhava antes.
+- [ ] Bug corrigido com teste em `testes/jest/regressao/` que falhava antes.
 - [ ] Cada comportamento num lugar só: lógica no Jest, desenho no navegador.
 - [ ] Tela nova em `TELAS` e endpoint novo na `api-falsa.ts`; teste novo no navegador com `--repeat-each=5` dito no PR.
 

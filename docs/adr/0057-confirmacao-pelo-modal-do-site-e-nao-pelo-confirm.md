@@ -59,5 +59,5 @@ O site pedia confirmação pela janela nativa do navegador (`window.confirm()`) 
   - **não use `confirm()`, `alert()` nem `prompt()`** no front-end: confirmação é `await this.confirmacao.confirmar({ titulo, mensagem, confirmar: '<verbo>', perigo })`;
   - a mensagem diz o objeto da ação ("Excluir a meta “Viagem”?"), e o verbo do botão é o da ação;
   - `perigo: true` vale para o que apaga ou não tem volta;
-  - o teste da tela espia o serviço; o desenho e o foco do modal são testados uma vez, em `testes/usabilidade/confirmacao.spec.ts`;
+  - o teste da tela espia o serviço; o desenho e o foco do modal são testados uma vez, em `testes/jest/usabilidade/confirmacao.spec.ts`;
   - num componente que já tenha um campo `confirmacao` (Configurações tem, o da senha), dê outro nome ao serviço (`pedirConfirmacao`).

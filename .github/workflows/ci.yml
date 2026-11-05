@@ -538,8 +538,8 @@ jobs:
         with:
           name: testes-navegador-${{ matrix.parte }}
           path: |
-            src/frontend/testes-navegador/relatorio
-            src/frontend/testes-navegador/resultados
+            src/frontend/testes/navegador/relatorio
+            src/frontend/testes/navegador/resultados
           if-no-files-found: ignore
 
   # O check exigido pela proteção do develop/main se chama "build" (o nome do job antigo). Este job junta todos os outros

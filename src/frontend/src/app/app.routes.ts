@@ -17,82 +17,82 @@ export const rotas: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'painel' },
       {
         path: 'painel',
-        loadComponent: () => import('./paginas/painel.component').then((m) => m.PainelComponent),
+        loadComponent: () => import('./paginas/painel/painel.component').then((m) => m.PainelComponent),
         title: 'Painel · Finanças Local'
       },
       {
         path: 'transacoes',
-        loadComponent: () => import('./paginas/transacoes.component').then((m) => m.TransacoesComponent),
+        loadComponent: () => import('./paginas/movimentacao/transacoes.component').then((m) => m.TransacoesComponent),
         title: 'Transações · Finanças Local'
       },
       {
         path: 'contas',
-        loadComponent: () => import('./paginas/contas.component').then((m) => m.ContasComponent),
+        loadComponent: () => import('./paginas/movimentacao/contas.component').then((m) => m.ContasComponent),
         title: 'Contas e cartões · Finanças Local'
       },
       {
         path: 'orcamentos',
-        loadComponent: () => import('./paginas/orcamentos.component').then((m) => m.OrcamentosComponent),
+        loadComponent: () => import('./paginas/planejamento/orcamentos.component').then((m) => m.OrcamentosComponent),
         title: 'Orçamentos · Finanças Local'
       },
       {
         path: 'metas',
-        loadComponent: () => import('./paginas/metas.component').then((m) => m.MetasComponent),
+        loadComponent: () => import('./paginas/planejamento/metas.component').then((m) => m.MetasComponent),
         title: 'Metas · Finanças Local'
       },
       {
         path: 'contas-a-pagar',
-        loadComponent: () => import('./paginas/contas-agendadas.component').then((m) => m.ContasAgendadasComponent),
+        loadComponent: () => import('./paginas/movimentacao/contas-agendadas.component').then((m) => m.ContasAgendadasComponent),
         title: 'Contas a pagar · Finanças Local'
       },
       {
         path: 'investimentos',
-        loadComponent: () => import('./paginas/investimentos.component').then((m) => m.InvestimentosComponent),
+        loadComponent: () => import('./paginas/patrimonio/investimentos.component').then((m) => m.InvestimentosComponent),
         title: 'Investimentos · Finanças Local'
       },
       {
         path: 'emprestimos',
-        loadComponent: () => import('./paginas/emprestimos.component').then((m) => m.EmprestimosComponent),
+        loadComponent: () => import('./paginas/patrimonio/emprestimos.component').then((m) => m.EmprestimosComponent),
         title: 'Empréstimos e financiamentos · Finanças Local'
       },
       {
         path: 'relatorios',
-        loadComponent: () => import('./paginas/relatorios.component').then((m) => m.RelatoriosComponent),
+        loadComponent: () => import('./paginas/analises/relatorios.component').then((m) => m.RelatoriosComponent),
         title: 'Relatórios · Finanças Local'
       },
       {
         path: 'anual',
-        loadComponent: () => import('./paginas/anual.component').then((m) => m.AnualComponent),
+        loadComponent: () => import('./paginas/analises/anual.component').then((m) => m.AnualComponent),
         title: 'Visão anual · Finanças Local'
       },
       {
         path: 'projecao',
-        loadComponent: () => import('./paginas/projecao.component').then((m) => m.ProjecaoComponent),
+        loadComponent: () => import('./paginas/analises/projecao.component').then((m) => m.ProjecaoComponent),
         title: 'Projeção · Finanças Local'
       },
       {
         path: 'categorias',
-        loadComponent: () => import('./paginas/categorias.component').then((m) => m.CategoriasComponent),
+        loadComponent: () => import('./paginas/ajustes/categorias.component').then((m) => m.CategoriasComponent),
         title: 'Categorias e regras · Finanças Local'
       },
       {
         path: 'conferir-banco',
-        loadComponent: () => import('./paginas/conferir-banco.component').then((m) => m.ConferirBancoComponent),
+        loadComponent: () => import('./paginas/movimentacao/conferir-banco.component').then((m) => m.ConferirBancoComponent),
         title: 'Conferir com o banco · Finanças Local'
       },
       {
         path: 'configuracoes',
-        loadComponent: () => import('./paginas/configuracoes.component').then((m) => m.ConfiguracoesComponent),
+        loadComponent: () => import('./paginas/ajustes/configuracoes.component').then((m) => m.ConfiguracoesComponent),
         title: 'Configurações · Finanças Local'
       },
       {
         path: 'manual',
-        loadComponent: () => import('./paginas/manual.component').then((m) => m.ManualComponent),
+        loadComponent: () => import('./paginas/manual/manual.component').then((m) => m.ManualComponent),
         title: 'Manual · Finanças Local'
       },
       {
         path: 'manual/:capitulo',
-        loadComponent: () => import('./paginas/manual.component').then((m) => m.ManualComponent),
+        loadComponent: () => import('./paginas/manual/manual.component').then((m) => m.ManualComponent),
         title: 'Manual · Finanças Local'
       }
     ]

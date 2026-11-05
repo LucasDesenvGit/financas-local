@@ -5,5 +5,5 @@
     "types": ["jest", "node"],
     "esModuleInterop": true
   },
-  "include": ["testes/**/*.ts", "src/**/*.d.ts"]
+  "include": ["testes/jest/**/*.ts", "src/**/*.d.ts"]
 }

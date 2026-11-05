@@ -32,4 +32,4 @@ O build de produção do front-end não usa SRI (`"subresourceIntegrity": false`
 
 - **Positivas:** console sem erro de CSP; a CSP fica como estava, sem depender do conteúdo do build; nenhum código novo na API.
 - **Negativas:** o navegador não confere mais o hash de `main`, `polyfills` e do CSS (os chunks lazy já não eram conferidos). Se um dia o site passar a carregar arquivo de outra origem, isso precisa ser revisto (e a ADR 0004 já proíbe).
-- **Na prática:** o teste `testes/regressao/csp-sem-script-inline.spec.ts` falha se o `angular.json` voltar a ligar o `subresourceIntegrity` ou se o `src/index.html` ganhar um `<script>` com conteúdo. Uma opção nova do build que gere script inline precisa de hash na CSP ou de outra saída registrada aqui.
+- **Na prática:** o teste `testes/jest/regressao/csp-sem-script-inline.spec.ts` falha se o `angular.json` voltar a ligar o `subresourceIntegrity` ou se o `src/index.html` ganhar um `<script>` com conteúdo. Uma opção nova do build que gere script inline precisa de hash na CSP ou de outra saída registrada aqui.

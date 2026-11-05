@@ -2,6 +2,21 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.8] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Sem exceções dos avisos no teste de arquitetura do front-end** (#634; ADR 0058). O `AvisosService` foi para o `core`, e o componente que mostra os avisos rápidos para `compartilhado/ui/`. Os avisos do sino das notificações (`painel-avisos`), que só o sino usa desde a #327, foram para `layout/`. Assim saem três das quatro exceções do `npm run test:arquitetura`, e ele ganha uma regra: o `compartilhado/ui/` não importa as pastas de assunto (`bancos/`, `lancamentos/`, `glossario/`). Nada muda para quem usa.
+
+## [3.3.7] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Páginas e componentes do front-end organizados por assunto** (parte de #634; ADR 0058). As 37 páginas, que ficavam numa pasta só, agora ficam numa subpasta por grupo do menu (`paginas/painel/`, `movimentacao/`, `planejamento/`, `patrimonio/`, `analises/`, `ajustes/`, `manual/`). Os componentes compartilhados se dividem em `ui/` e por assunto (`graficos/`, `bancos/`, `lancamentos/`, `glossario/`), e o que só a barra de cima e o menu usam foi para `layout/`. Só mudaram os lugares e os imports. Nada muda para quem usa. Branch aberta antes desta mudança que cria arquivo em `paginas/` ou `compartilhado/`: mova-o para a pasta nova antes do merge.
+
+## [3.3.6] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **Os testes do front-end numa pasta só** (parte de #634). As três pastas de teste que ficavam soltas em `src/frontend` agora ficam dentro de `testes/`, uma por ferramenta: `testes/jest/` (o que era `testes/`), `testes/navegador/` (o que era `testes-navegador/`) e `testes/arquitetura/` (o que era `testes-arquitetura/`). Os comandos são os mesmos (`npm test`, `npm run test:navegador`, `npm run test:afetados`, `npm run test:arquitetura`) e rodam os mesmos testes, no mesmo tempo. Nada muda para quem usa. Branch aberta antes desta mudança que cria teste novo: mova-o para a pasta nova antes do merge.
+
 ## [3.3.5] — 2026-11-04 · desenvolvimento
 
 ### Publicação e documentação

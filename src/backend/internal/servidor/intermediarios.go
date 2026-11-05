@@ -12,7 +12,7 @@ import (
 )
 
 // Cabeçalhos de segurança, os mesmos do CabecalhosSegurancaMiddleware do .NET. Desde a #86, esta é a fonte: o
-// TestCabecalhosDeSeguranca fixa os valores, e os testes no navegador (testes-navegador/servidor.mjs) leem a csp
+// TestCabecalhosDeSeguranca fixa os valores, e os testes no navegador (testes/navegador/servidor.mjs) leem a csp
 // daqui. Mudar um deles é decisão de segurança (ADR).
 const csp = "default-src 'self'; " +
 	"script-src 'self'; " +

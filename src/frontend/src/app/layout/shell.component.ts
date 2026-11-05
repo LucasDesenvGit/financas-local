@@ -2,15 +2,15 @@ import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRen
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { ajudaDaUrl } from '../paginas/manual-conteudo';
-import { BotaoPrivacidadeComponent } from '../compartilhado/botao-privacidade.component';
-import { CalculadoraComponent } from '../compartilhado/calculadora.component';
-import { StatusSincronizacaoComponent } from '../compartilhado/status-sincronizacao.component';
-import { NotificacoesComponent } from '../compartilhado/notificacoes.component';
-import { ConfirmacaoComponent } from '../compartilhado/confirmacao.component';
-import { IconeComponent } from '../compartilhado/icone.component';
-import { Icones } from '../compartilhado/icones';
-import { MenuUsuarioComponent } from '../compartilhado/menu-usuario.component';
+import { ajudaDaUrl } from '../paginas/manual/manual-conteudo';
+import { BotaoPrivacidadeComponent } from './botao-privacidade.component';
+import { CalculadoraComponent } from './calculadora.component';
+import { StatusSincronizacaoComponent } from './status-sincronizacao.component';
+import { NotificacoesComponent } from './notificacoes.component';
+import { ConfirmacaoComponent } from '../compartilhado/ui/confirmacao.component';
+import { IconeComponent } from '../compartilhado/ui/icone.component';
+import { Icones } from '../compartilhado/ui/icones';
+import { MenuUsuarioComponent } from './menu-usuario.component';
 import { LucideIcon } from '@lucide/angular';
 
 export interface ItemMenu { rota: string; rotulo: string; icone: LucideIcon; }

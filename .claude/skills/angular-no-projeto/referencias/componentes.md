@@ -2,7 +2,7 @@
 
 Antes de fazer um gráfico, um campo, um filtro, um balão ou um modal, procure aqui: o padrão já tem componente, com a acessibilidade e os testes feitos. Refazer um deles numa tela quebra a consistência (Nielsen 4) e perde o que o componente já resolve. O código é a fonte: o comentário no topo de cada arquivo diz como usar, e esta tabela só diz **qual** usar.
 
-Todos em `src/app/compartilhado/`, salvo indicação.
+Todos em `src/app/compartilhado/`, numa subpasta (`ui/`, `graficos/`, `bancos/`, `lancamentos/`, `glossario/`; ADR 0058), salvo indicação.
 
 ## Gráficos e telas densas (ADR 0021)
 
@@ -39,7 +39,7 @@ Todos em `src/app/compartilhado/`, salvo indicação.
 |---|---|---|
 | Termo técnico com definição | `<app-termo chave="...">texto</app-termo>` (`termo.component.ts`), com a definição em `glossario.ts` | ⓘ que abre por clique, toque e teclado, balão na top layer (ADR 0020). Termo novo: uma entrada no glossário, nunca o texto na tela |
 | Dica de botão só com ícone | atributo `appDica="..."` (`dica.directive.ts`) | aparece no hover **e** no foco, some com Esc (WCAG 1.4.13). Nunca só `title=` |
-| Aviso depois de uma ação | `inject(AvisosService)`: `.sucesso(texto, acao?)`, `.erro(texto)`, `.info(texto)` (`avisos.component.ts`) | aviso com "Desfazer" fica mais tempo |
+| Aviso depois de uma ação | `inject(AvisosService)`: `.sucesso(texto, acao?)`, `.erro(texto)`, `.info(texto)` (`core/avisos.service.ts`; o `<app-avisos>` do `ui/` já fica no `app.component`) | aviso com "Desfazer" fica mais tempo |
 | Dinheiro no texto | `{{ valor \| currency }}` com o `MoedaPipe` nos `imports` (`moeda.pipe.ts`) | "ocultar valores" e o "−" de verdade. **Não** importe o `CurrencyPipe` do Angular |
 | Ícone | `<app-icone [icone]="Icones.x">` (`icone.component.ts`), com os ícones de `Icones` em `icones.ts` | Lucide empacotado no build (ADR 0016); no Jest vira o `lucide-falso.js` |
 | Ícone da categoria, selo do banco, selo do serviço | `<app-icone-categoria>`, `<app-logo-banco>` (ADR 0024), `<app-selo-servico>` (#265) | decorativos: o nome vem escrito ao lado (WCAG 1.1.1) |
@@ -48,4 +48,4 @@ Todos em `src/app/compartilhado/`, salvo indicação.
 
 ## Componente novo em `compartilhado/`
 
-Só quando uma segunda tela precisar (antes disso, fica na tela). Ele não importa `paginas/` nem `layout/` (teste de arquitetura), traz o comentário no topo com o princípio de UI/UX e um exemplo de uso, e ganha teste em `testes/usabilidade/` com o critério que ele garante. Padrão novo de UI entra na lista "padrões já adotados" de `docs/UI-UX.md`, com ADR se mudar o que já foi decidido.
+Só quando uma segunda tela precisar (antes disso, fica na pasta da tela; se só o `shell` usa, em `layout/`). Vai para `ui/` se não sabe nada do domínio, senão para a pasta do assunto (ADR 0058). Ele não importa `paginas/` nem `layout/` (teste de arquitetura), traz o comentário no topo com o princípio de UI/UX e um exemplo de uso, e ganha teste em `testes/jest/usabilidade/` com o critério que ele garante. Padrão novo de UI entra na lista "padrões já adotados" de `docs/UI-UX.md`, com ADR se mudar o que já foi decidido.

@@ -7,12 +7,12 @@
     "start": "ng serve",
     "build": "ng build --configuration production",
     "test": "jest",
-    "test:regressao": "jest testes/regressao",
-    "test:usabilidade": "jest testes/usabilidade",
+    "test:regressao": "jest testes/jest/regressao",
+    "test:usabilidade": "jest testes/jest/usabilidade",
     "test:tipos": "tsc -p tsconfig.spec.json --noEmit",
     "test:navegador": "ng build --configuration production && playwright test",
     "test:afetados": "node testes/rodar-afetados.mjs",
-    "test:arquitetura": "jest --roots \"<rootDir>/testes-arquitetura\""
+    "test:arquitetura": "jest --roots \"<rootDir>/testes/arquitetura\""
   },
   "dependencies": {
     "@angular/common": "^22.2.4",

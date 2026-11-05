@@ -22,7 +22,7 @@ Os resumos (Painel, Orçamentos, Visão anual, Categorias) mostravam totais por 
 
 ## Consequências
 
-- **Positivas:** uma lista de transações só; link compartilhável; F5 e voltar funcionam; testado em `testes/regressao/transacoes-filtros-url.spec.ts` e `testes/usabilidade/filtros-ativos-transacoes.spec.ts`.
+- **Positivas:** uma lista de transações só; link compartilhável; F5 e voltar funcionam; testado em `testes/jest/regressao/transacoes-filtros-url.spec.ts` e `testes/jest/usabilidade/filtros-ativos-transacoes.spec.ts`.
 - **Negativas:**
   - o nome dos parâmetros vira contrato público: link salvo quebra se um nome mudar — renomear exige aceitar o nome antigo por um tempo;
   - parâmetro inválido é descartado em silêncio (só a URL se corrige): quem colou um link errado não recebe mensagem;
