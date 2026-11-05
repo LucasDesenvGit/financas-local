@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.9] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **A lógica da tela de Transações em funções puras** (parte de #475; ADR 0059). A regra da tela saiu do componente para `paginas/movimentacao/transacoes.ts`, que não usa Angular. Ali ficam o filtro que vai e volta da URL, os chips de "Filtrando:", a ordenação, a seleção, o modo edição de categorias, as sugestões e o formulário. O componente caiu de 1.642 para 1.286 linhas, e um teste novo (`transacoes-logica.spec.ts`) confere essas regras sem abrir a tela: 20 casos em 0,5 s. A ADR 0059 registra como as páginas grandes do front-end se dividem: componente da tela, componentes de apresentação e funções puras. O teste de arquitetura ganha a regra 7: a lógica de uma tela não importa Angular, rxjs nem o `ApiService`. Nada muda para quem usa.
+
 ## [3.3.8] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

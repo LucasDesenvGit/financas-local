@@ -19,6 +19,7 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 | Estado na URL, detalhe por navegação, chips de filtro | [ADR 0018](../../../docs/adr/0018-estado-da-tela-na-url-e-detalhe-por-navegacao.md) |
 | Glossário e `<app-termo>` | [ADR 0020](../../../docs/adr/0020-glossario-unico-com-balao-na-top-layer.md) |
 | Gráficos, `<app-mais-analises>`, telas densas | [ADR 0021](../../../docs/adr/0021-componentes-padrao-para-graficos-e-telas-densas.md) |
+| Página grande: componente da tela, componentes de apresentação, funções puras, quando o template vai para `.html` | [ADR 0059](../../../docs/adr/0059-paginas-grandes-divididas-em-tela-apresentacao-e-funcoes-puras.md) |
 | Manual do site como dados | [ADR 0026](../../../docs/adr/0026-manual-do-site-como-dados-no-front-end.md) e `CLAUDE.md`, "Manual do site sempre junto" |
 | Interruptor, caixa de marcar, campo de valor, campo de data, lista suspensa, seleção em tabela | [ADR 0032](../../../docs/adr/0032-controles-padrao-interruptor-e-campo-de-valor.md) |
 | Menu lateral em grupos | [ADR 0046](../../../docs/adr/0046-menu-lateral-em-grupos-que-abrem-e-fecham.md) |
@@ -40,7 +41,7 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits").
 2. **ADR antes do código** quando a tela trouxer dependência nova, padrão de UI novo ou desvio de um padrão adotado (`CLAUDE.md`, "Decisões de arquitetura").
 3. **Endpoint:** o back-end é em Go (skill `go-no-projeto`). No front-end: o modelo em `core/modelos.ts` e o método no `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
-4. **Lógica fora do componente:** cálculo, texto e decisão vão para funções puras num `.ts` ao lado da tela (`paginas/<grupo>/<tela>.ts`) ou em `compartilhado/` se mais de uma tela usa, testadas no Jest sem `TestBed` (`referencias/testes.md`). A divisão das páginas grandes ainda está em discussão na #475: siga o que ela decidir quando a ADR for aceita.
+4. **Lógica fora do componente:** cálculo, texto e decisão vão para funções puras num `.ts` ao lado da tela (`paginas/<grupo>/<tela>.ts`) ou em `compartilhado/` se mais de uma tela usa, testadas no Jest sem `TestBed` (`referencias/testes.md`). Página grande: componente da tela, componentes de apresentação e funções puras (ADR 0059).
 5. **Componente** em `paginas/<grupo>/<tela>.component.ts` (o grupo do menu em que a tela aparece; ADR 0058), na forma de `referencias/estilo.md` (standalone, `Eager`, template inline, `inject()`, signals, `@if`/`@for`), com os componentes de `compartilhado/` (`referencias/componentes.md`).
 6. **Rota e menu:** `loadComponent` e `title: '<Tela> · Finanças Local'` em `app.routes.ts`; a tela no grupo do assunto em `MENU` (`layout/shell.component.ts`, ADR 0046).
 7. **UI/UX:** cada decisão de desenho cita o princípio de `docs/UI-UX.md` que a sustenta, separando o que vem da fonte do que é julgamento seu.

@@ -39,7 +39,7 @@ O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CON
 
 Angular é publicado no `wwwroot`, ao lado do executável do Go (`financas-go`): mesma origem, sem CORS, cookies `__Host-`. Um pacote por assunto em `src/backend/internal/<assunto>`, rotas juntadas em `internal/api` ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)); pastas em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-- **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente.
+- **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente. Página grande ([ADR 0059](docs/adr/0059-paginas-grandes-divididas-em-tela-apresentacao-e-funcoes-puras.md)): a tela guarda o estado e fala com a API, os componentes de apresentação só recebem `input()` e avisam por `output()`, e a regra vai para funções puras em `<tela>.ts`, testadas sem `TestBed`.
 - **Gerenciador** (`src/gerenciador-go/`, a janela do Windows e do Linux em Go com o Wails, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): o de C# saiu na #86.
 
 ## Banco (sem migrations, SQLite)
