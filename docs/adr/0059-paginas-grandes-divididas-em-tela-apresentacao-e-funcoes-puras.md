@@ -28,6 +28,7 @@ Página grande se divide em três partes.
 - **Funções puras** (`paginas/<grupo>/<tela>.ts`, ao lado da página): cálculo, decisão, texto, agrupamento, filtro ↔ URL e montagem do que vai para a API. Sem Angular: a URL entra como `{ get(nome) }`, como o `ParamMap`, e um tipo de um componente só entra com `import type`. Os testes ficam em `testes/jest/regressao/`, sem `TestBed`.
 - **Template e CSS em arquivo próprio** (`templateUrl`/`styleUrl`, o mesmo nome do `.ts`) quando o template passa de **150 linhas** (*julgamento próprio*: abaixo disso, ler tudo num arquivo só é mais fácil). O pré-requisito de "Na prática" entrou na 3.3.10.
 - **Aos poucos:** `transacoes` primeiro, em PRs pequenos, uma parte da tela por PR. As outras páginas grandes seguem o padrão quando alguém mexe nelas, sem um PR gigante. Os testes do navegador da tela não mudam, porque o comportamento não muda.
+  - Em Transações (05/11/2026), viraram componentes as janelas de lançamento, de transferência e de sugestões, e as barras de edição e das selecionadas. **Os filtros ficaram na tela** (decisão do usuário): eles editam o filtro da tela direto, por `ngModel`, e separá-los mexe no estado mais central da tela para um ganho pequeno. A tabela também ficou, como diz "Consequências".
 
 ## Consequências
 
