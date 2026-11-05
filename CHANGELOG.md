@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.3] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **Aviso no Painel também quando o banco espera um dado seu no Meu Pluggy** (#532). A conexão no estado `WAITING_USER_INPUT` aparecia como "Precisa de ação sua" em Configurações, mas o Painel e o sino não avisavam nada, e ela também não contava entre as conexões com problema. Agora os dois estados da Pluggy que pedem ação geram o aviso.
+
 ## [3.3.2] — 2026-11-04 · desenvolvimento
 
 ### Correções

@@ -1,0 +1,14 @@
+{
+  "id": "A1B2C3D4-0000-4000-8000-000000000001",
+  "connector": {
+    "id": 612,
+    "name": "Banco Falso",
+    "primaryColor": "EF3E42",
+    "isOpenFinance": true
+  },
+  "status": "WAITING_USER_INPUT",
+  "executionStatus": "WAITING_USER_INPUT",
+  "lastUpdatedAt": "2026-10-14T10:30:00.000Z",
+  "consentExpiresAt": "2027-04-14T10:30:00.000Z",
+  "error": null
+}

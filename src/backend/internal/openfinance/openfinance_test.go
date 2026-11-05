@@ -537,7 +537,7 @@ func TestStatus(t *testing.T) {
 		func(k *testeapoio.ConexaoBancaria) { k.UltimoErro = p("") },
 		func(k *testeapoio.ConexaoBancaria) { k.Status = p("LOGIN_ERROR") },
 		func(k *testeapoio.ConexaoBancaria) { k.Status = p("WAITING_USER_ACTION") },
-		func(k *testeapoio.ConexaoBancaria) { k.Status = p("WAITING_USER_INPUT") }, // #532: não conta, como no .NET hoje
+		func(k *testeapoio.ConexaoBancaria) { k.Status = p("WAITING_USER_INPUT") }, // #532: também pede ação
 		func(k *testeapoio.ConexaoBancaria) {
 			k.Ativa, k.UltimoErro, k.ConsentimentoExpiraEm = false, p("falhou"), &vencido
 		}, // desligada
@@ -548,7 +548,7 @@ func TestStatus(t *testing.T) {
 	c.definir(t, configuracao.UltimaSincronizacaoGeral, "2026-10-14T09:00:00.0000000Z")
 	c.falso.emExecucao = true
 	testeapoio.ConferirJSON(t, c.chamar(t, "GET", "/api/open-finance/status", "").Corpo,
-		`{"ultimaSincronizacao":"2026-10-14T09:00:00Z","emExecucao":true,"conexoesAtivas":8,"conexoesComErro":3,"consentimentosVencendo":2}`)
+		`{"ultimaSincronizacao":"2026-10-14T09:00:00Z","emExecucao":true,"conexoesAtivas":8,"conexoesComErro":4,"consentimentosVencendo":2}`)
 }
 
 // Regra: a mesma do Painel. Uma conexão por caso: na soma, uma condição invertida compensa a outra.
@@ -565,7 +565,8 @@ func TestStatusConexaoComErro(t *testing.T) {
 		{"erro vazio", p(""), nil, 0},
 		{"LOGIN_ERROR", nil, p("LOGIN_ERROR"), 1},
 		{"WAITING_USER_ACTION", nil, p("WAITING_USER_ACTION"), 1},
-		{"WAITING_USER_INPUT não conta, como no .NET (#532)", nil, p("WAITING_USER_INPUT"), 0},
+		{"WAITING_USER_INPUT também pede ação (#532)", nil, p("WAITING_USER_INPUT"), 1},
+		{"OUTDATED não pede ação", nil, p("OUTDATED"), 0},
 	}
 	for _, caso := range casos {
 		t.Run(caso.nome, func(t *testing.T) {
