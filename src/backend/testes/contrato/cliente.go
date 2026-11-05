@@ -3,6 +3,7 @@ package contrato
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"mime"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -27,11 +29,29 @@ const (
 type Sessao struct {
 	alvo    *url.URL
 	origem  string
+	raizes  *x509.CertPool
 	cliente *http.Client
 }
 
-func novaSessao(alvo *url.URL, origem string) (*Sessao, error) {
-	s := &Sessao{alvo: alvo, origem: origem}
+// lerRaiz lê a parte pública do certificado do servidor sob teste (o .pem que o gerar-certificado grava ao lado do .pfx).
+func lerRaiz(caminho string) (*x509.CertPool, error) {
+	if caminho == "" {
+		return nil, fmt.Errorf("-raiz é obrigatório com -alvo: o .pem do certificado do servidor (veja testes/contrato/README.md)")
+	}
+	texto, err := os.ReadFile(caminho)
+	if err != nil {
+		return nil, fmt.Errorf("-raiz: %w", err)
+	}
+	raizes := x509.NewCertPool()
+	if !raizes.AppendCertsFromPEM(texto) {
+		return nil, fmt.Errorf("-raiz %s: nenhum certificado no arquivo", caminho)
+	}
+	return raizes, nil
+}
+
+// novaSessao fala com o alvo confiando só nas raizes: a parte pública do certificado do servidor sob teste.
+func novaSessao(alvo *url.URL, origem string, raizes *x509.CertPool) (*Sessao, error) {
+	s := &Sessao{alvo: alvo, origem: origem, raizes: raizes}
 	return s, s.limpar()
 }
 
@@ -54,8 +74,9 @@ func (s *Sessao) limpar() error {
 		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			DialContext: discador.DialContext,
-			// O servidor sob teste usa um certificado descartável, criado para a execução.
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // só 127.0.0.1, certificado de teste
+			// O servidor sob teste usa o certificado do gerar-certificado, criado para a execução, e o cliente confia só
+			// nele (#638): a conexão é conferida como a do navegador.
+			TLSClientConfig: &tls.Config{RootCAs: s.raizes, MinVersion: tls.VersionTLS12},
 		},
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}

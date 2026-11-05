@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.4] — 2026-11-04 · desenvolvimento
+
+### Correções
+- **O teste de contrato confere o certificado do site** (#638). O cliente do contrato não pula mais a verificação do HTTPS (`InsecureSkipVerify`, o alerta #14 do code scanning): o Go sobe com o certificado do `gerar-certificado`, como numa instalação, e o cliente confia só nele. Nada muda para quem usa.
+
 ## [3.3.3] — 2026-11-04 · desenvolvimento
 
 ### Correções

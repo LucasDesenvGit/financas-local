@@ -85,6 +85,13 @@ versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.p
         -o "$pasta/financas-go$exe" ./cmd/financas &&
     go build -o "$pasta/pluggy-falsa$exe" ./testes/contrato/pluggyfalsa)
 
+# O certificado do Go é o da instalação (gerar-certificado, #84), lido do appsettings como no site, e o comparador
+# confia só na parte pública dele (-raiz): a conexão é conferida, sem InsecureSkipVerify (#638).
+senha_certificado=contrato
+printf '%s\n' "$senha_certificado" | "$pasta/financas-go$exe" gerar-certificado -pfx "$pasta/dados/chaves/financaslocal.pfx" >/dev/null
+printf '{"Kestrel":{"Endpoints":{"Https":{"Certificate":{"Path":"dados/chaves/financaslocal.pfx","Password":"%s"}}}}}\n' \
+    "$senha_certificado" >"$pasta/appsettings.Production.json"
+
 # Todos os arquivos de casos, na ordem: os de um arquivo deixam rastro no banco que os seguintes veem.
 somente="${CONTRATO_SOMENTE:-}"
 if [[ -z "$somente" ]]; then
@@ -106,7 +113,7 @@ for _ in $(seq 1 40); do [[ -s "$PASTA/pluggy-raiz.pem" ]] && break; sleep 0.25;
 
 Pluggy__UrlBase="https://127.0.0.1:5452/" SSL_CERT_FILE="$PASTA/pluggy-raiz.pem" \
 HTTPS_PROXY="$PROXY" HTTP_PROXY="$PROXY" NO_PROXY= \
-    "$PASTA/financas-go$EXE" -pasta "$PASTA" -endereco "127.0.0.1:$PORTA" -certificado-temporario \
+    "$PASTA/financas-go$EXE" -pasta "$PASTA" -endereco "127.0.0.1:$PORTA" \
         -wwwroot "$PASTA_GO/internal/servidor/testdata/wwwroot" -banco "$PASTA/dados/sql/FinancasLocal.db" \
         -chaves "$PASTA/dados/chaves" -inicio-do-relogio "$INICIO" -aplicar-esquema -rotinas-de-partida \
         >"$PASTA/go.log" 2>&1 &
@@ -128,7 +135,7 @@ echo "Contrato contra o Go: $SOMENTE"
 cd "$PASTA_CONTRATO"
 status=0
 "$PASTA/contrato.test$EXE" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" \
-    -banco="$PASTA/dados/sql/FinancasLocal.db" -inicio="$INICIO" -somente="$SOMENTE" $ATUALIZAR || status=$?
+    -raiz="$PASTA/dados/chaves/financaslocal.pem" -banco="$PASTA/dados/sql/FinancasLocal.db" -inicio="$INICIO" -somente="$SOMENTE" $ATUALIZAR || status=$?
 if [[ $status -ne 0 ]]; then echo "--- Fim do log do Go ---"; tail -n 60 "$PASTA/go.log"; fi
 exit $status
 DENTRO
