@@ -28,6 +28,8 @@ import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component'
 import { SeloServicoComponent } from '../../compartilhado/bancos/selo-servico.component';
 import { TransacoesLancamentoComponent } from './transacoes-lancamento.component';
 import { TransacoesTransferenciaComponent } from './transacoes-transferencia.component';
+import { TransacoesBarraEdicaoComponent } from './transacoes-barra-edicao.component';
+import { TransacoesBarraLoteComponent } from './transacoes-barra-lote.component';
 import {
   COLUNAS_ORDENAVEIS, ChipFiltro, ParametrosUrl, EscolhaCategoria, FormTransacao, FormTransferencia, LinhaSugestao, SugestaoRegra,
   ajusteDoForm, alternarPagina, ariaSortDe, camposDeCategorias, categoriasRotuladas, categoriasDoFiltro, chipsDoFiltro, comEscolha, direcaoAoClicar,
@@ -45,7 +47,8 @@ import {
   selector: 'app-transacoes',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, ModalComponent, PaginacaoComponent, SeletorMultiploComponent, TermoComponent,
     IconeComponent, LogoBancoComponent, RenomearTransacaoComponent, RenomearEmLoteComponent, SeloServicoComponent,
-    CampoDataComponent, TransacoesLancamentoComponent, TransacoesTransferenciaComponent],
+    CampoDataComponent, TransacoesLancamentoComponent, TransacoesTransferenciaComponent,
+    TransacoesBarraEdicaoComponent, TransacoesBarraLoteComponent],
   templateUrl: './transacoes.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './transacoes.component.css'

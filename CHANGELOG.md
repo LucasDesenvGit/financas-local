@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.13] — 2026-11-05 · desenvolvimento
+
+### Publicação e documentação
+- **As barras de edição de categorias e das selecionadas de Transações viram componentes de apresentação** (parte de #475; ADR 0059). A barra "Editando categorias" e a das ações nas selecionadas saíram da tela para `transacoes-barra-edicao.component.ts` e `transacoes-barra-lote.component.ts`. Elas mostram o estado e avisam a tela de cada ação; a tela é quem grava. Na barra de edição, o próprio elemento do componente é o bloco, porque a linha embaixo do título usa `>` no CSS e sumiria com o componente no meio; um teste no navegador confere essa linha. Um teste novo usa os controles das barras, e não os métodos da tela, e confere o que chega na API. Os prints das barras abertas saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
+
 ## [3.3.12] — 2026-11-05 · desenvolvimento
 
 ### Publicação e documentação

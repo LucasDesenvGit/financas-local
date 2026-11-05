@@ -35,12 +35,6 @@
 .tabela-sugestoes .aviso-regra { display: block; max-width: 240px; margin-top: 4px; font-size: 0.78rem; }
 tr.encerrada td { opacity: 0.55; }
 .barra-edicao { margin-bottom: 14px; }
-.barra-edicao .bloco-titulo { flex-wrap: wrap; gap: 10px; }
-.barra-edicao p { margin: 6px 0; }
-.todas-do-filtro { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 8px; }
-.todas-do-filtro label { min-width: 240px; }
-.sugestao-regra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px;
-  border-radius: var(--raio-pequeno); background: var(--primaria-suave); }
 .celula-edicao { display: flex; gap: 6px; align-items: center; }
 .select-categoria { min-width: 190px; min-height: 32px; padding: 5px 8px; }
 tr.alterada td { background: var(--alerta-suave); }

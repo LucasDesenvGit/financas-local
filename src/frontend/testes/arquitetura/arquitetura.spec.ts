@@ -51,7 +51,9 @@ const PROIBIDOS_NA_LOGICA = [/^@angular\//, /^rxjs/, /^core\/api\.service$/];
  */
 const APRESENTACAO: Record<string, string> = {
   'paginas/movimentacao/transacoes-lancamento.component.ts': 'janela "Novo lançamento" / "Editar transação"',
-  'paginas/movimentacao/transacoes-transferencia.component.ts': 'janela "Transferência entre contas"'
+  'paginas/movimentacao/transacoes-transferencia.component.ts': 'janela "Transferência entre contas"',
+  'paginas/movimentacao/transacoes-barra-edicao.component.ts': 'barra "Editando categorias"',
+  'paginas/movimentacao/transacoes-barra-lote.component.ts': 'ações nas transações selecionadas'
 };
 const PROIBIDOS_NA_APRESENTACAO = [/^core\/api\.service$/, /^@angular\/router$/];
 

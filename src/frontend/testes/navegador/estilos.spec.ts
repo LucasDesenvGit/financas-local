@@ -205,6 +205,14 @@ test.describe('Divisórias', () => {
     expect(await temLinha(secoes.nth(1), 'top')).toBe(true);
   });
 
+  // #475: a barra é um componente de apresentação; com o componente entre o bloco e o título, o `>` da regra não casaria.
+  test('Transações: a barra "Editando categorias" tem a linha abaixo do título', async ({ page }) => {
+    await abrir(page, '/transacoes?editar=1');
+    const titulo = page.locator('.barra-edicao .bloco-titulo');
+    await expect(titulo).toBeVisible();
+    expect(await temLinha(titulo, 'bottom')).toBe(true);
+  });
+
   test('o h2 que abre um bloco ganha a linha, o do meio não; o .cabecalho-bloco também', async ({ page }) => {
     await abrir(page, '/relatorios');
     const bloco = await injetar(page, '<section class="painel-bloco"><h2>Fluxo de caixa mensal</h2><p>conteúdo</p><h2>outro título</h2></section>');

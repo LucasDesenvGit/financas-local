@@ -74,46 +74,12 @@
 
 @if (modoEdicao()) {
   <!-- Abre e recolhe animando a altura: a lista abaixo não pula de uma vez ao entrar/sair do modo edição. -->
-  <section class="painel-bloco barra-edicao expandir" aria-labelledby="titulo-edicao" animate.leave="recolher">
-    <div class="bloco-titulo">
-      <h2 id="titulo-edicao">Editando categorias</h2>
-      <div class="acoes">
-        <span role="status">{{ quantidadePendentes() ? quantidadePendentes() + ' alteração(ões) não salva(s)' : 'Nenhuma alteração pendente' }}</span>
-        <button type="button" class="botao" [disabled]="!quantidadePendentes()" (click)="descartarPendentes()">Descartar</button>
-        <button type="button" class="botao botao-primario" [disabled]="!quantidadePendentes() || salvando()"
-          (click)="salvarPendentes()">Salvar alterações ({{ quantidadePendentes() }})</button>
-      </div>
-    </div>
-    <p class="texto-suave pequeno-texto">
-      Troque a categoria direto na lista ou marque várias linhas e use a barra de seleção. Nada é gravado até
-      "Salvar alterações"; Esc numa linha desfaz a troca dela. Só a categoria muda por aqui.
-      @if (!soSemCategoriaAtivo()) {
-        <button type="button" class="link" (click)="soSemCategoria()">Ver só as sem categoria</button>
-      }
-    </p>
-    @if (pagina(); as p) {
-      @if (p.total > 0) {
-        <div class="todas-do-filtro">
-          <label>Todas as {{ p.total }} transações do filtro
-            <select [(ngModel)]="categoriaTodas" name="categoriaTodas">
-              <option [ngValue]="null">— escolher categoria —</option>
-              <option ngValue="auto">Categorização automática (regras)</option>
-              @for (c of categorias(); track c.id) { <option [ngValue]="'' + c.id">{{ rotuloCategoria(c) }}</option> }
-            </select>
-          </label>
-          <button type="button" class="botao" [disabled]="!categoriaTodas || salvando()" (click)="aplicarATodasDoFiltro()">
-            Aplicar a todas as {{ p.total }}</button>
-        </div>
-      }
-    }
-    @for (r of sugestoesRegra(); track r.texto + r.categoriaId) {
-      <p class="sugestao-regra" role="status">
-        {{ r.quantidade }} transações “{{ r.texto }}” foram para {{ r.categoriaNome }}. Criar regra para as próximas?
-        <button type="button" class="botao botao-pequeno" (click)="criarRegraSugerida(r)">Criar regra</button>
-        <button type="button" class="link" (click)="dispensarRegra(r)">agora não</button>
-      </p>
-    }
-  </section>
+  <app-transacoes-barra-edicao class="painel-bloco barra-edicao expandir" animate.leave="recolher"
+    [quantidadePendentes]="quantidadePendentes()" [salvando]="salvando()" [soSemCategoriaAtivo]="soSemCategoriaAtivo()"
+    [total]="pagina()?.total ?? 0" [categorias]="categoriasRotuladas()" [sugestoesRegra]="sugestoesRegra()"
+    [(categoriaTodas)]="categoriaTodas" (descartar)="descartarPendentes()" (salvar)="salvarPendentes()"
+    (soSemCategoria)="soSemCategoria()" (aplicarATodas)="aplicarATodasDoFiltro()" (criarRegra)="criarRegraSugerida($event)"
+    (dispensarRegra)="dispensarRegra($event)" />
 }
 
 @if (pagina(); as p) {
@@ -129,22 +95,10 @@
   <!-- A barra abre e fecha animando a altura (sem empurrar a tabela de uma vez) e fica fixa no topo ao rolar. -->
   <div class="barra-lote-espaco" [class.aberta]="selecionadas().size > 0" [attr.inert]="selecionadas().size ? null : ''">
     <div class="barra-lote-dentro">
-    <section class="barra-lote" (keydown.escape)="limparSelecao()" aria-label="Ações nas transações selecionadas">
-      <span class="contagem-selecao">{{ textoSelecao() }}</span>
-      <select [(ngModel)]="categoriaLote">
-        <option [ngValue]="null">Categorização automática</option>
-        @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ rotuloCategoria(c) }}</option> }
-      </select>
-      <button type="button" class="botao botao-primario" (click)="categorizarLote()">
-        {{ modoEdicao() ? 'Trocar nas selecionadas' : 'Aplicar categoria' }}</button>
-      <button type="button" class="botao" (click)="renomearSelecionadas()">✎ Renomear</button>
-      @if (filtroAplicado().poucoInformativa) {
-        <button type="button" class="botao" (click)="marcarRevisadasSelecionadas()">Marcar como revisadas</button>
-      }
-      <button type="button" class="botao botao-emergencia" (click)="marcarEmergenciaLote(true)">Marcar emergência</button>
-      <button type="button" class="botao" (click)="marcarEmergenciaLote(false)">Desmarcar emergência</button>
-      <button type="button" class="botao" (click)="limparSelecao()">✕ Limpar seleção</button>
-    </section>
+    <app-transacoes-barra-lote [textoSelecao]="textoSelecao()" [categorias]="categoriasRotuladas()" [modoEdicao]="modoEdicao()"
+      [poucoInformativa]="!!filtroAplicado().poucoInformativa" [(categoria)]="categoriaLote" (categorizar)="categorizarLote()"
+      (renomear)="renomearSelecionadas()" (marcarRevisadas)="marcarRevisadasSelecionadas()"
+      (marcarEmergencia)="marcarEmergenciaLote($event)" (limpar)="limparSelecao()" />
     </div>
   </div>
 
