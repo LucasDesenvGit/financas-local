@@ -6,7 +6,7 @@
 | Troquei de computador, ou apaguei a pasta `chaves` | [Chaves perdidas](#chaves-perdidas) |
 | Uma atualização não funcionou | [Atualização que falhou](#atualização-que-falhou) |
 
-Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) (**Mais opções**) e, pelos scripts, no `scripts/geral/4-backup.sh`.
+Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) (**Mais opções**) e, pelos scripts, no `scripts/geral/4-backup.sh`. Backup diário agendado antes da #154, pelo caminho antigo `scripts/4-backup.sh`? A atualização pelos scripts troca sozinha a entrada do crontab ou do Agendador de Tarefas pelo caminho novo, com o mesmo horário (#655); se ela avisar que não conseguiu, rode `scripts/geral/4-backup.sh --agendar`.
 
 ## Restaurar uma cópia
 

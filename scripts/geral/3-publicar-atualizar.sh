@@ -371,6 +371,43 @@ if [[ "$sucesso" -eq 1 ]]; then
     done
 fi
 
+# #655: o backup agendado antes da #154 chama o repasse scripts/4-backup.sh. Troca pelo caminho novo, mantendo
+# horario e --manter, para o repasse poder sair sem o backup parar em silencio.
+backup_antigo="$Raiz/scripts/4-backup.sh"
+backup_novo="$Raiz/scripts/geral/4-backup.sh"
+case "$SO" in
+    linux|osx)
+        cron_atual="$(crontab -l 2>/dev/null || true)"
+        if grep -qF "$backup_antigo " <<<"$cron_atual"; then
+            if grep -qF "$backup_novo " <<<"$cron_atual"; then
+                cron_novo="$(grep -vF "$backup_antigo " <<<"$cron_atual" || true)"   # ja agendado pelo novo: so tira o velho
+            else
+                cron_novo="${cron_atual//"$backup_antigo "/"$backup_novo "}"
+            fi
+            if printf '%s\n' "$cron_novo" | crontab -; then
+                ok "Backup agendado passou para o caminho novo ($backup_novo)."
+            else
+                aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar"
+            fi
+        fi
+        ;;
+    windows)
+        powershell.exe -NoProfile -NonInteractive -Command '
+            $t = Get-ScheduledTask -TaskName "FinancasLocal - Backup diario" -ErrorAction SilentlyContinue
+            if (-not $t) { exit 0 }
+            $a = $t.Actions[0]
+            if ($a.Arguments -notmatch "\\scripts\\4-backup\.sh") { exit 0 }
+            $a.Arguments = $a.Arguments -replace "\\scripts\\4-backup\.sh", "\scripts\geral\4-backup.sh"
+            Set-ScheduledTask -TaskName $t.TaskName -TaskPath $t.TaskPath -Action $a | Out-Null
+            exit 2' >/dev/null 2>&1
+        case $? in
+            0) ;;
+            2) ok "Backup agendado passou para o caminho novo ($backup_novo)." ;;
+            *) aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar" ;;
+        esac
+        ;;
+esac
+
 if [[ "$SO" == windows ]] && reg.exe query 'HKLM\SOFTWARE\Mozilla\Mozilla Firefox' >/dev/null 2>&1; then
     aviso 'Firefox instalado: por padrao ele nao usa os certificados do Windows e mostra um aviso no site.'
     aviso 'Para aceitar: em about:config, deixe security.enterprise_roots.enabled como true (ou use o Edge/Chrome).'

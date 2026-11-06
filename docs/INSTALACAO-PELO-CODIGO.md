@@ -130,7 +130,7 @@ financas-local/
 ├── instalador/            instalador .msi do Windows (WiX): FinancasLocal.wxs, configurar.ps1 e gerar-msi.ps1
 ├── scripts/
 │   ├── geral/            o bash dos dois sistemas (no Windows, pelo Git Bash): instalar, publicar, banco, backup, parar
-│   ├── windows/          o que só roda no Windows (instalar, parar e atualizar, o gerenciador e o configurar-github.ps1)
+│   ├── windows/          o que só roda no Windows (instalar, parar e atualizar, e o gerenciador)
 │   ├── linux/            o que só roda no Linux (gerenciador)
 │   └── ci/               o que só a CI usa (verificadores, mutação, cobertura)
 ├── src/backend/           o back-end em Go (ADR 0049): o site e a API

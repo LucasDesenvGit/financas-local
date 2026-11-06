@@ -650,6 +650,22 @@ function Mostrar-EventosServico([datetime]$desde) {
     }
 }
 
+# #655: o backup agendado antes da #154 chama o repasse scripts\4-backup.sh. Troca pelo caminho novo, mantendo
+# horario e --manter, para o repasse poder sair sem o backup parar em silencio.
+function Migrar-BackupAgendado {
+    $tarefa = Get-ScheduledTask -TaskName "FinancasLocal - Backup diario" -ErrorAction SilentlyContinue
+    if (-not $tarefa) { return }
+    $acao = $tarefa.Actions[0]
+    if ($acao.Arguments -notmatch '\\scripts\\4-backup\.sh') { return }
+    try {
+        $acao.Arguments = $acao.Arguments -replace '\\scripts\\4-backup\.sh', '\scripts\geral\4-backup.sh'
+        Set-ScheduledTask -TaskName $tarefa.TaskName -TaskPath $tarefa.TaskPath -Action $acao | Out-Null
+        Ok "Backup agendado passou para o caminho novo (scripts\geral\4-backup.sh)."
+    } catch {
+        Aviso "Nao deu para trocar o backup agendado. No Git Bash, rode: scripts/geral/4-backup.sh --agendar"
+    }
+}
+
 # ================================================================= Principal
 Garantir-Pasta $Instaladores
 $log = Join-Path $Instaladores "instalacao-windows.log"
@@ -696,6 +712,7 @@ try {
     Preparar-Ambiente
     Criar-Banco
     Publicar
+    Migrar-BackupAgendado
 
     # #300: o Firefox nao usa os certificados do Windows por padrao e mostra um aviso no site.
     if (Test-Path -LiteralPath "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox") {
