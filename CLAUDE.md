@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md). **O mapa das pastas para pessoas** é o README de cada uma (`src/backend`, `src/frontend`, `src/gerenciador-go`, `banco`, `instalador`, `docs`): pasta principal nova ganha o dela, de 10 a 20 linhas, apontando para o `docs/ARQUITETURA.md` em vez de repetir (#657).
 
 ## Comandos
 
@@ -70,7 +70,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 ## Convenções de código
 
 - **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
-- Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
+- Nomes em português em todo o código (`XxxService` no Angular, `Servico` e `NovoServico` no Go, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só parametrizadas** (`?` ou o código gerado pelo `sqlc`), nunca SQL montado a partir de texto do usuário.
 - **Código Go:** assunto novo ganha pacote em `src/backend/internal/<assunto>` e uma linha em `internal/api`, com casos de contrato (`testes/contrato`). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** (`internal/segredos`: AES-256-GCM, prefixo `v2:`) — nunca em arquivo de config nem devolvidos pela API.

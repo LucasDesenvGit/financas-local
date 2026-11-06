@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.15] — 2026-11-06 · desenvolvimento
+
+### Publicação e documentação
+- **README de mapa nas pastas principais e o back-end explicado sem o .NET** (#657). `src/frontend`, `docs`, `banco` e `instalador` ganham um README curto: o que tem na pasta, por onde começar e o que não mexer, com link para o `docs/ARQUITETURA.md`. O `CLAUDE.md` aponta para eles como o mapa para pessoas. O README do Go, o `internal/README.md` e o domínio (`docs/arquitetura/dominio.md`) deixam de explicar o Go pelo C# (o `XxxService`, o controller, o model binding do ASP.NET, a coluna "No .NET"); o que ficou do .NET está marcado como histórico. No domínio, as referências a arquivos que não existem mais apontam para o pacote em Go, e duas informações velhas foram corrigidas: o `WAITING_USER_INPUT` gera alerta no Painel desde a #532, e o instalador leva o gerenciador em Go desde a #277. Um `.vscode/settings.json` esconde do editor as pastas geradas (`ferramentas/`, `publicado/`, `instaladores/`, `src/frontend/dist/` e `__pycache__`); `dados/` e `backups/` continuam visíveis. Nada muda para quem usa.
+
 ## [3.3.14] — 2026-11-05
 
 ### Publicação e documentação
