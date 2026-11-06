@@ -12,7 +12,7 @@ Uso (a pasta publicada, ou uma com o financas-go e o appsettings.json):
     (cd src/backend && CGO_ENABLED=0 go build -trimpath -o <pasta>/financas-go ./cmd/financas)
     cp src/backend/appsettings.json <pasta>/
     cp -r src/frontend/dist/financas-web/browser <pasta>/wwwroot   # depois do npm run build
-    python3 scripts/geral/medir-desempenho.py --api <pasta>
+    python3 scripts/dev/medir-desempenho.py --api <pasta>
 
 Com a pasta do site instalado (publicado/api), o banco, as chaves e o certificado dela não são usados: o Go
 recebe outros pelas opções.

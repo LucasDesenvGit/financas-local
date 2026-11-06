@@ -9,8 +9,8 @@
 - Antes, cada PR abria a própria "### Correções" no topo de um "Não publicado" que juntava tudo, e a seção da 2.17.0
   publicada nem voltou para o develop; as notas e a janela "O que mudou" do gerenciador ficavam repetidas e longas.
 
-Uso na CI:   python3 scripts/ci/verificar-changelog.py             (falha com título repetido na mesma versão)
-Corrigir:    python3 scripts/ci/verificar-changelog.py --corrigir  (junta as repetidas, na ordem em que cada uma
+Uso na CI:   python3 scripts/ci/versao/verificar-changelog.py             (falha com título repetido na mesma versão)
+Corrigir:    python3 scripts/ci/versao/verificar-changelog.py --corrigir  (junta as repetidas, na ordem em que cada uma
                                                                       apareceu primeiro, e mantém as entradas)
 """
 import io
@@ -18,7 +18,9 @@ import os
 import re
 import sys
 
-RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from comum import RAIZ, PROPS, ler_versao
+
 ARQUIVO = os.path.join(RAIZ, 'CHANGELOG.md')
 
 
@@ -78,9 +80,7 @@ def juntar(versoes):
 
 def problemas_de_versao(versoes):
     """Versão repetida, fora de ordem (a mais nova em cima) ou acima da do Directory.Build.props."""
-    props = io.open(os.path.join(RAIZ, 'Directory.Build.props'), encoding='utf-8').read()
-    atual = re.search(r'<Version>(\d+)\.(\d+)\.(\d+)</Version>', props)
-    atual = tuple(int(x) for x in atual.groups()) if atual else None
+    atual = ler_versao(io.open(os.path.join(RAIZ, PROPS), encoding='utf-8').read())
     numeros = []
     for cabecalho, _, _ in versoes:
         m = re.match(r'## \[(\d+)\.(\d+)\.(\d+)\]', cabecalho or '')
@@ -119,7 +119,7 @@ def main():
         print('CHANGELOG.md tem título repetido na mesma versão (a entrada nova vai DENTRO da seção que já existe):')
         for cabecalho, titulo in achadas:
             print(f'  - {cabecalho}: "{titulo}"')
-        print('Para juntar: python3 scripts/ci/verificar-changelog.py --corrigir')
+        print('Para juntar: python3 scripts/ci/versao/verificar-changelog.py --corrigir')
         return 1
     print('OK: CHANGELOG.md sem título repetido na mesma versão.')
     return 0

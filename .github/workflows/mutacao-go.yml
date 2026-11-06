@@ -4,9 +4,9 @@ name: Teste de mutação (Go)
 # (troca < por <=, && por ||, + por -...), e conta as mudanças que os testes não pegaram. É lento (~1 min por pacote).
 # #456: no PR que mexe no back-end, mede só os pacotes da lista que o PR mudou, e falha abaixo do piso; toda segunda de
 # manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow), mede a lista inteira. Antes de medir, confere que
-# todo pacote de internal/ está na lista ou em scripts/ci/mutacao-go-fora.txt, com o motivo.
-# Os pacotes e os pisos ficam em scripts/ci/mutacao-go.txt; o relatório sai no resumo do job e no artefato.
-# #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/mutacao-gerenciador-go.txt) roda no PR que mexe nele,
+# todo pacote de internal/ está na lista ou em scripts/ci/go/mutacao-go-fora.txt, com o motivo.
+# Os pacotes e os pisos ficam em scripts/ci/go/mutacao-go.txt; o relatório sai no resumo do job e no artefato.
+# #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/go/mutacao-gerenciador-go.txt) roda no PR que mexe nele,
 # para o teste pesado não rodar na máquina de quem desenvolve (chegava a 8 GB de memória).
 on:
   pull_request:
@@ -14,16 +14,16 @@ on:
     paths:
       - 'src/backend/**'
       - 'src/gerenciador-go/**'
-      - 'scripts/ci/mutacao-go.py'
-      - 'scripts/ci/mutacao-go*.txt'
-      - 'scripts/ci/mutacao-gerenciador-go*.txt'
+      - 'scripts/ci/go/mutacao-go.py'
+      - 'scripts/ci/go/mutacao-go*.txt'
+      - 'scripts/ci/go/mutacao-gerenciador-go*.txt'
       - '.github/workflows/mutacao-go.yml'
   schedule:
     - cron: '0 9 * * 1' # segunda, 06:00 em Brasília
   workflow_dispatch:
     inputs:
       pacotes:
-        description: 'Pacotes, separados por espaço (vazio: todos os de scripts/ci/mutacao-go.txt). Ex.: internal/plataforma/tipos internal/ajustes/parametros'
+        description: 'Pacotes, separados por espaço (vazio: todos os de scripts/ci/go/mutacao-go.txt). Ex.: internal/plataforma/tipos internal/ajustes/parametros'
         required: false
         default: ''
 
@@ -56,9 +56,9 @@ jobs:
           BASE: ${{ github.base_ref }}
         run: |
           if [ -n "$BASE" ]; then
-            python3 scripts/ci/mutacao-go.py --base "origin/$BASE"   # PR: só os pacotes mudados
+            python3 scripts/ci/go/mutacao-go.py --base "origin/$BASE"   # PR: só os pacotes mudados
           else
-            python3 scripts/ci/mutacao-go.py $PACOTES               # semanal e à mão
+            python3 scripts/ci/go/mutacao-go.py $PACOTES               # semanal e à mão
           fi
 
       - name: Relatório e resultados
@@ -90,7 +90,7 @@ jobs:
         env:
           BASE: ${{ github.base_ref }}
         # No PR, só se o gerenciador (ou a própria mutação) mudou: o workflow agora roda também nos PRs do back-end.
-        run: python3 scripts/ci/mutacao-go.py --gerenciador ${BASE:+--base "origin/$BASE"}
+        run: python3 scripts/ci/go/mutacao-go.py --gerenciador ${BASE:+--base "origin/$BASE"}
 
       - name: Relatório e resultados
         if: always()

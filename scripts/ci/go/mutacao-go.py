@@ -18,12 +18,12 @@ O gerenciador em Go (src/gerenciador-go, ADR 0052) é outro módulo, com a lista
 (mutacao-gerenciador-go.txt e mutacao-gerenciador-go-equivalentes.txt). No PR que o muda, mede a lista dele inteira
 (#433), na CI, para o teste pesado não rodar na máquina de quem desenvolve.
 
-Uso:   python3 scripts/ci/mutacao-go.py                        # todos os pacotes de mutacao-go.txt
-       python3 scripts/ci/mutacao-go.py internal/ajustes/parametros    # só os dados (fora da lista: mede, sem piso)
-       python3 scripts/ci/mutacao-go.py --base origin/develop  # no PR: só os pacotes que mudaram desde a base
-       python3 scripts/ci/mutacao-go.py --conferir-lista       # só confere a lista (rápido, sem medir)
-       python3 scripts/ci/mutacao-go.py --gerenciador          # os do gerenciador (mutacao-gerenciador-go.txt)
-       python3 scripts/ci/mutacao-go.py --gerenciador --base origin/develop  # no PR: se o gerenciador mudou
+Uso:   python3 scripts/ci/go/mutacao-go.py                        # todos os pacotes de mutacao-go.txt
+       python3 scripts/ci/go/mutacao-go.py internal/ajustes/parametros    # só os dados (fora da lista: mede, sem piso)
+       python3 scripts/ci/go/mutacao-go.py --base origin/develop  # no PR: só os pacotes que mudaram desde a base
+       python3 scripts/ci/go/mutacao-go.py --conferir-lista       # só confere a lista (rápido, sem medir)
+       python3 scripts/ci/go/mutacao-go.py --gerenciador          # os do gerenciador (mutacao-gerenciador-go.txt)
+       python3 scripts/ci/go/mutacao-go.py --gerenciador --base origin/develop  # no PR: se o gerenciador mudou
 Saída: <módulo>/mutacao/<pacote>.json (o do gremlins) e <módulo>/mutacao/relatorio.md (também no resumo do job,
        quando roda no GitHub Actions).
 """
@@ -33,6 +33,9 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from comum import arquivos_mudados
+
 GREMLINS = 'github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0'
 # Todos os operadores do gremlins, inclusive os desligados por padrão: os pacotes medidos são poucos e pequenos.
 OPERADORES = ['--invert-logical', '--invert-loopctrl', '--invert-assignments', '--invert-bitwise', '--invert-bwassign',
@@ -41,7 +44,7 @@ OPERADORES = ['--invert-logical', '--invert-loopctrl', '--invert-assignments', '
 EXECUCAO = ['--workers', '4', '--timeout-coefficient', '30']
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-RAIZ = os.path.dirname(os.path.dirname(AQUI))
+RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(AQUI)))
 # O módulo medido: o back-end (padrão) ou, com --gerenciador, o gerenciador; cada um com a sua lista.
 GERENCIADOR = '--gerenciador' in sys.argv[1:]
 MODULO = 'src/gerenciador-go' if GERENCIADOR else 'src/backend'
@@ -54,7 +57,7 @@ TITULO = '## Teste de mutação (gerenciador em Go)' if GERENCIADOR else '## Tes
 # lista dele deixa de fora, de propósito, os pacotes que chamam o Windows (a mutação roda no Linux).
 FORA = 'mutacao-go-fora.txt'
 # Arquivos da própria mutação: se só eles mudaram, o PR mede um pacote pequeno, para o script novo rodar de verdade.
-DA_MUTACAO = ('scripts/ci/mutacao-go', 'scripts/ci/mutacao-gerenciador-go', '.github/workflows/mutacao-go.yml')
+DA_MUTACAO = ('scripts/ci/go/mutacao-go', 'scripts/ci/go/mutacao-gerenciador-go', '.github/workflows/mutacao-go.yml')
 PACOTE_DE_PROVA = 'internal/plataforma/tipos'
 
 
@@ -100,25 +103,23 @@ def conferir_lista(limites, fora):
     existentes = pacotes_do_modulo()
     erros = []
     for p in sorted(existentes - set(limites) - set(fora)):
-        erros.append(f'{p} não está em scripts/ci/{LISTA} nem em scripts/ci/{FORA}. Com regra de negócio: meça '
+        erros.append(f'{p} não está em scripts/ci/go/{LISTA} nem em scripts/ci/go/{FORA}. Com regra de negócio: meça '
                      f'(Actions → "Teste de mutação (Go)" → Run workflow, com "{p}" em pacotes) e ponha na lista com o '
                      f'piso da medição. Sem regra (código gerado, só montagem, apoio a teste): ponha em {FORA}, com o '
                      f'motivo.')
     for p in sorted(set(limites) & set(fora)):
-        erros.append(f'{p} está em scripts/ci/{LISTA} e em scripts/ci/{FORA}: deixe só num dos dois.')
+        erros.append(f'{p} está em scripts/ci/go/{LISTA} e em scripts/ci/go/{FORA}: deixe só num dos dois.')
     for p in sorted((set(limites) | set(fora)) - existentes):
         erros.append(f'{p} está na lista, mas não existe em {MODULO}: tire a linha.')
     for p, motivo in sorted(fora.items()):
         if not motivo:
-            erros.append(f'{p} está em scripts/ci/{FORA} sem o motivo.')
+            erros.append(f'{p} está em scripts/ci/go/{FORA} sem o motivo.')
     return erros
 
 
 def mudados(base):
     """Arquivos que o PR mudou em relação à base (o que o merge leva: base...HEAD)."""
-    saida = subprocess.run(['git', 'diff', '--name-only', f'{base}...HEAD'], cwd=RAIZ, check=True,
-                           capture_output=True, text=True).stdout
-    return [a for a in saida.splitlines() if a]
+    return arquivos_mudados(base, cwd=RAIZ)
 
 
 def pacotes_mudados(arquivos, limites):

@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.16] — 2026-11-06 · desenvolvimento
+
+### Publicação e documentação
+- **Os scripts de `scripts/ci/` ficam por assunto, e as ferramentas de quem desenvolve vão para `scripts/dev/`** (parte de #655). A `ci/` tinha 26 itens numa pasta só; agora tem `versao/`, `go/`, `front/` e `banco/`, e o `atualizar-pr.sh`, o `atualizar-versao-do-pr.py`, o `medir-desempenho.py` e o `gerar-diagrama-banco.py` ficam em `dev/`. O `<Version>` do `Directory.Build.props`, a regra "`feat` sobe o número do meio, o resto sobe o último" e a lista de arquivos do PR passam a ficar num lugar só, o `ci/comum.py` (o `verificar-changelog.py` agora também aceita espaço dentro do `<Version>`). Os dois scripts de notas dos Releases viram o `ci/versao/notas.sh --versao` / `--desenvolvimento`, com os testes dos dois num arquivo. O novo `scripts/README.md` é o índice de todos os scripts, e a tabela do `docs/ARQUITETURA.md` aponta para ele. Os caminhos que os gerenciadores e o agendador de backup chamam não mudaram. Manual: não se aplica.
+
 ## [3.3.15] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação

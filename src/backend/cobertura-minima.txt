@@ -1,4 +1,4 @@
-# Piso de cobertura por pacote do Go (#370, ADR 0051), conferido na CI por scripts/ci/verificar-cobertura-go.py.
+# Piso de cobertura por pacote do Go (#370, ADR 0051), conferido na CI por scripts/ci/go/verificar-cobertura-go.py.
 #
 # - A cobertura é a do go test -coverpkg=./internal/... ./... (o pacote conta as linhas que qualquer teste roda).
 # - O piso começou no valor de 24/10/2026, medido na CI (Linux), e só sobe: subiu a cobertura, suba o piso no mesmo PR (a CI avisa).

@@ -12,13 +12,13 @@ Confere:
 - o que não tem hash (index.html, favicon, manifesto, ícones, bandeiras) não recebe: ficaria um ano sem atualizar;
 - se houver um build local (src/frontend/dist/financas-web/browser), todo .js/.css da raiz dele recebe.
 
-Uso: python3 scripts/ci/verificar-cache-estaticos.py
+Uso: python3 scripts/ci/front/verificar-cache-estaticos.py
 """
 import os
 import re
 import sys
 
-RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 ESTATICOS = os.path.join(RAIZ, 'src', 'backend', 'internal', 'plataforma', 'servidor', 'estaticos.go')
 BUILD = os.path.join(RAIZ, 'src', 'frontend', 'dist', 'financas-web', 'browser')
 

@@ -34,7 +34,7 @@ jobs:
         env:
           BASE: ${{ github.base_ref }}
           CORPO_PR: ${{ github.event.pull_request.body }}
-        run: python3 scripts/ci/verificar-manual.py
+        run: python3 scripts/ci/front/verificar-manual.py
 
   # ADR 0039: todo PR para o develop sobe a versão no Directory.Build.props, pelo tipo do título.
   versao:
@@ -54,21 +54,18 @@ jobs:
         env:
           BASE: ${{ github.base_ref }}
           TITULO_PR: ${{ github.event.pull_request.title }}
-        run: python3 scripts/ci/verificar-versao.py
+        run: python3 scripts/ci/versao/verificar-versao.py
       # #294: uma seção de cada tipo por versão no CHANGELOG (entrada nova vai dentro da seção que já existe).
       - name: CHANGELOG sem seção repetida
-        run: python3 scripts/ci/verificar-changelog.py
-      # #587: o scripts/geral/atualizar-pr.sh resolve o conflito de versão e de CHANGELOG pela mesma regra.
+        run: python3 scripts/ci/versao/verificar-changelog.py
+      # #587: o scripts/dev/atualizar-pr.sh resolve o conflito de versão e de CHANGELOG pela mesma regra.
       - name: Teste do atualizar-pr
-        run: python3 -B scripts/geral/test_atualizar_versao_do_pr.py
-      # #600: as notas da versão de desenvolvimento cabem no limite do GitHub (125 mil caracteres).
-      - name: Teste das notas de desenvolvimento
-        run: python3 -B scripts/ci/test_notas_desenvolvimento.py
-      # #641: as notas do Release da tag também cabem no limite.
-      - name: Teste das notas da versão
-        run: python3 -B scripts/ci/test_notas_da_versao.py
+        run: python3 -B scripts/dev/test_atualizar_versao_do_pr.py
+      # #600 e #641: as notas dos Releases (da versão e de desenvolvimento) cabem no limite do GitHub (125 mil caracteres).
+      - name: Teste das notas dos Releases
+        run: python3 -B scripts/ci/versao/test_notas.py
 
-  # #255: no PR, o que rodar (scripts/ci/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
+  # #255: no PR, o que rodar (scripts/ci/front/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
   mudancas:
     name: o que mudou
     runs-on: ubuntu-latest
@@ -89,9 +86,9 @@ jobs:
         id: afetados
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            python3 scripts/ci/testes-afetados.py --base "origin/${{ github.base_ref }}"
+            python3 scripts/ci/front/testes-afetados.py --base "origin/${{ github.base_ref }}"
           else
-            python3 scripts/ci/testes-afetados.py
+            python3 scripts/ci/front/testes-afetados.py
           fi
 
       # #231: o Go também lê o esquema (banco/, 2-criar-banco.sh).
@@ -103,7 +100,7 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend/|banco/|scripts/geral/2-criar-banco\.sh$|scripts/ci/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend/|banco/|scripts/geral/2-criar-banco\.sh$|scripts/ci/go/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
@@ -158,15 +155,15 @@ jobs:
         run: bash scripts/ci/ligar-api.sh
 
       - name: Conferir scripts SQL (idempotentes)
-        run: python3 scripts/ci/verificar-sql.py
+        run: python3 scripts/ci/banco/verificar-sql.py
 
       - name: Conferir os diagramas do banco
-        run: python3 scripts/ci/gerar-diagrama-banco.py --conferir
+        run: python3 scripts/dev/gerar-diagrama-banco.py --conferir
 
       # #305: a regra do cache longo (estaticos.go, no Go desde a #86) aceita o hash do build do Angular, e não o que
       # não tem hash.
       - name: Conferir o cache dos arquivos do build
-        run: python3 scripts/ci/verificar-cache-estaticos.py
+        run: python3 scripts/ci/front/verificar-cache-estaticos.py
 
       - name: Aplicar schema num banco SQLite descartável
         run: |
@@ -206,8 +203,8 @@ jobs:
       # o motivo de cada uma). O teste do próprio script roda antes: regra que não pega o caso ruim não guarda nada.
       - name: Regras de ouro (float64, time.Now, time.Sleep)
         run: |
-          python3 -B ../../scripts/ci/test_verificar_regras_go.py
-          python3 -B ../../scripts/ci/verificar-regras-go.py
+          python3 -B ../../scripts/ci/go/test_verificar_regras_go.py
+          python3 -B ../../scripts/ci/go/verificar-regras-go.py
 
       # #370 e #371: um go test só dá o resultado, a cobertura e o tempo. Com -json, quem mostra a saída do que
       # falhou é o verificar-tempo-testes-go.py, que também confere o tempo de cada teste e de cada pacote.
@@ -217,7 +214,7 @@ jobs:
           go test -race -json -coverpkg=./internal/... -coverprofile="$RUNNER_TEMP/cobertura.out" ./... > "$RUNNER_TEMP/testes.json"
           resultado=$?
           set -e
-          python3 ../../scripts/ci/verificar-tempo-testes-go.py "$RUNNER_TEMP/testes.json"
+          python3 ../../scripts/ci/go/verificar-tempo-testes-go.py "$RUNNER_TEMP/testes.json"
           exit $resultado
 
       # O piso de cada pacote (cobertura-minima.txt) só sobe: no PR, o arquivo do develop entra como --base.
@@ -230,7 +227,7 @@ jobs:
              git show FETCH_HEAD:src/backend/cobertura-minima.txt > "$RUNNER_TEMP/pisos-base.txt" 2>/dev/null; then
             base=(--base "$RUNNER_TEMP/pisos-base.txt")
           fi
-          python3 ../../scripts/ci/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
+          python3 ../../scripts/ci/go/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
 
       # O sqlc compila com cgo (o gcc já vem no runner). Falha se uma consulta .sql mudou sem gerar o código Go.
       - name: Código gerado em dia (go generate)
@@ -470,7 +467,7 @@ jobs:
       # #204: trava de desempenho. Arquivo de teste acima de 20 s ou suíte acima de 150 s falha (aviso a partir de
       # 10 s por arquivo). Ver "Testes rápidos" no CONTRIBUINDO.md.
       - name: Tempo dos testes do Jest
-        run: python3 scripts/ci/verificar-tempo-testes.py src/frontend/jest-resultado.json
+        run: python3 scripts/ci/front/verificar-tempo-testes.py src/frontend/jest-resultado.json
 
   navegador:
     name: "front-end: navegador (${{ matrix.parte }}/2)"
