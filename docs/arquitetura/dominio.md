@@ -8,7 +8,7 @@ Os estados pelos quais as coisas passam, as classes do centro do domínio e os t
 
 ### Conexão com a Pluggy
 
-**Onde está hoje:** Go, em `internal/sincronizacao` e `internal/openfinance` (#83).
+**Onde está hoje:** Go, em `internal/openfinance/sincronizacao` e `internal/openfinance/openfinance` (#83).
 
 ```mermaid
 stateDiagram-v2
@@ -46,7 +46,7 @@ O sistema não decide o status: a cada sincronização, ele grava o que a Pluggy
 
 ### Transação
 
-**Onde está hoje:** Go. A sincronização, em `internal/sincronizacao`; a leitura e a edição, em `internal/extrato`; os acertos que o site faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em `internal/categorizacao`, `internal/parcelas` e `internal/transferencias`, chamados por `internal/partida` (#444).
+**Onde está hoje:** Go. A sincronização, em `internal/openfinance/sincronizacao`; a leitura e a edição, em `internal/movimentacao/extrato`; os acertos que o site faz ao subir (entradas nos cartões, compras parceladas estornadas, transferências), em `internal/ajustes/categorizacao`, `internal/movimentacao/parcelas` e `internal/movimentacao/transferencias`, chamados por `internal/partida` (#444).
 
 ```mermaid
 stateDiagram-v2
@@ -68,7 +68,7 @@ stateDiagram-v2
 
 ### Conta a pagar
 
-**Onde está hoje:** Go, atendendo o site (#79, #555): `internal/contasagendadas` (o `pagar`) e `internal/cobrancas` (a conciliação, que a partida, #444, e a sincronização, #83, também chamam). Os avisos que vão para o sino saem do `PainelController.cs` (.NET), com o painel em Go (`internal/painel`, #80) pronto e desligado no site.
+**Onde está hoje:** Go, atendendo o site (#79, #555): `internal/movimentacao/contasagendadas` (o `pagar`) e `internal/movimentacao/cobrancas` (a conciliação, que a partida, #444, e a sincronização, #83, também chamam). Os avisos que vão para o sino saem do `PainelController.cs` (.NET), com o painel em Go (`internal/analises/painel`, #80) pronto e desligado no site.
 
 ```mermaid
 stateDiagram-v2
@@ -201,8 +201,8 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Preço médio | `Posicao.PrecoMedio`, `carteira.Calcular` | Custo ÷ quantidade. A venda não muda o preço médio | `precoMedio` |
 | Provento | `ProventoAtivo`, `ProventoRecebido` | O previsto vem da data-com; o recebido, do extrato | `dy` |
 | Troco | `creditoDeOperacao`, `ClassificarTrocosSemDuvida` | Crédito da corretora que volta de uma compra: não é rendimento (ADR 0044) | `trocoDeCompra` |
-| Transferência entre contas próprias | `Transacao.TransferenciaGrupo`, `internal/transferencias` | Só ela fica fora dos relatórios ([ADR 0031](../adr/0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md)) | — |
+| Transferência entre contas próprias | `Transacao.TransferenciaGrupo`, `internal/movimentacao/transferencias` | Só ela fica fora dos relatórios ([ADR 0031](../adr/0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md)) | — |
 | Estorno | `TipoPeloSinal`, `AplicarTipo` | Entrada no cartão abate o gasto, sem virar receita ([ADR 0036](../adr/0036-receita-e-despesa-pelo-tipo-estorno-abate-gasto.md)) | — |
 | Emergência | `Transacao.Emergencia` | Gasto marcado à mão, destacado nos relatórios e orçamentos | `reservaEmergencia`, para a reserva |
-| Reserva | `ReservaDto`, `internal/reservas` | Dinheiro separado dentro de uma conta ([ADR 0010](../adr/0010-reservas-estimadas-pelo-extrato.md), [0037](../adr/0037-reservas-pelo-valor-do-open-finance.md)) | — |
+| Reserva | `ReservaDto`, `internal/patrimonio/reservas` | Dinheiro separado dentro de uma conta ([ADR 0010](../adr/0010-reservas-estimadas-pelo-extrato.md), [0037](../adr/0037-reservas-pelo-valor-do-open-finance.md)) | — |
 | Conta a pagar | `ContaAgendada` | Compromisso com vencimento e recorrência; não confundir com `Conta` | — |

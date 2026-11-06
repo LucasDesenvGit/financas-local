@@ -7,11 +7,11 @@
 # Formato: pacote e, depois de um espaço, o motivo.
 
 internal/api                    só junta as rotas dos assuntos num ServeMux; quem confere o que cada rota faz é o contrato
-internal/banco/consultas        código gerado pelo sqlc (go generate em dia na CI); as consultas são testadas pelos assuntos
-internal/banco/esquema/embutido só o //go:embed dos scripts de banco/
-internal/banco/esquema/gerar    o programa do go generate que copia os scripts; a CI confere que a cópia está em dia
-internal/saude                  o diagnóstico GET /api/go/saude, sem regra; conferido pelo contrato 90-go
-internal/sessao                 só lê o usuário que o .NET pôs na requisição (18 linhas); usado em todos os testes de rota
-internal/testeapoio             apoio aos testes (banco temporário, fábrica, HTTP); não entra no executável
-internal/versao                 só a variável da versão, gravada na compilação
-internal/servicosistema  conversa com o sistema operacional, quase todo em _windows.go, que a medição no Linux não compila; sem regra de negócio
+internal/plataforma/banco/consultas        código gerado pelo sqlc (go generate em dia na CI); as consultas são testadas pelos assuntos
+internal/plataforma/banco/esquema/embutido só o //go:embed dos scripts de banco/
+internal/plataforma/banco/esquema/gerar    o programa do go generate que copia os scripts; a CI confere que a cópia está em dia
+internal/plataforma/saude                  o diagnóstico GET /api/go/saude, sem regra; conferido pelo contrato 90-go
+internal/plataforma/sessao                 só lê o usuário que o .NET pôs na requisição (18 linhas); usado em todos os testes de rota
+internal/plataforma/testeapoio             apoio aos testes (banco temporário, fábrica, HTTP); não entra no executável
+internal/plataforma/versao                 só a variável da versão, gravada na compilação
+internal/plataforma/servicosistema  conversa com o sistema operacional, quase todo em _windows.go, que a medição no Linux não compila; sem regra de negócio

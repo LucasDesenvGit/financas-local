@@ -193,13 +193,13 @@ O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração c
 
 | O que testar | Onde | Como |
 |---|---|---|
-| Regra de negócio, cálculo, conversão, validação | `*_test.go` no pacote do assunto (`internal/<assunto>`) | tabela de casos com `t.Run` |
+| Regra de negócio, cálculo, conversão, validação | `*_test.go` no pacote do assunto (`internal/<area>/<assunto>`) | tabela de casos com `t.Run` |
 | Consulta SQL, transação, cascata | o mesmo pacote | SQLite **de verdade** num arquivo do `t.TempDir()`, com o esquema real; sem mock de banco e sem `:memory:` |
 | Handler: status, validação, erro | o mesmo pacote | `httptest.NewRequestWithContext` + `httptest.NewRecorder`, com o usuário por `sessao.ComUsuario` |
 | O mesmo JSON e o mesmo banco de antes | `testes/contrato` (#72) | casos gravados do .NET até a #86; hoje, a regressão do Go (`rodar.sh --atualizar`, com o `git diff` conferido) |
 | Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
 
-O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/testeapoio` ([README](src/backend/internal/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
+O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/plataforma/testeapoio` ([README](src/backend/internal/plataforma/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
 
 **Uma etapa do #70 está pronta quando:**
 - cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
@@ -216,7 +216,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 **Teste novo prova que falha:** estrague o código de propósito (troque `RoundBank` por `Round`, tire um filtro, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta.
 
 **Teste de mutação (#373, #456):** o workflow "Teste de mutação (Go)" roda o gremlins nos pacotes de `scripts/ci/mutacao-go.txt`: no PR, só nos que o PR mudou; toda segunda, em todos. Falha quando um pacote fica abaixo do piso dele.
-- **Assunto novo com regra de negócio ou dinheiro:** entra nessa lista no PR dele, com o piso da primeira medição: `python3 scripts/ci/mutacao-go.py internal/<assunto>`, uns 2 min.
+- **Assunto novo com regra de negócio ou dinheiro:** entra nessa lista no PR dele, com o piso da primeira medição: `python3 scripts/ci/mutacao-go.py internal/<area>/<assunto>`, uns 2 min.
 - **Mutação viva:** vira teste. Se ela não muda o resultado (é equivalente), vai para `scripts/ci/mutacao-go-equivalentes.txt` com o porquê.
 - **Ponto cego:** o gremlins não testa mutação dentro de `case`. Ali, a mutação à mão no PR continua valendo.
 
@@ -227,7 +227,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
 - biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
 
-**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/verificar-regras-go.py`, rodado em `src/backend` (o mesmo do job "Go"), falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
+**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/verificar-regras-go.py`, rodado em `src/backend` (o mesmo do job "Go"), falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/plataforma/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
 - **Exceção:** uma linha em `scripts/ci/regras-go-excecoes.txt`, com o motivo, pelo texto da linha do código (como o `mutacao-go-equivalentes.txt`). Exceção que não casa mais com nenhuma linha também falha.
 - **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro; `time.Now` só para hora de sistema (duração, validade de certificado); `time.Sleep` só quando o tempo é o que se testa.
 
@@ -241,18 +241,18 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - `t.Error` para continuar, `t.Fatal` só na preparação;
 - `t.Helper()` nos ajudantes e `t.Context()` no lugar de `context.Background()`.
 
-**Fuzz** ([Go Fuzzing](https://go.dev/doc/security/fuzz/), #372), nos tipos que todo assunto usa: `internal/tipos` e `internal/relogio`.
+**Fuzz** ([Go Fuzzing](https://go.dev/doc/security/fuzz/), #372), nos tipos que todo assunto usa: `internal/plataforma/tipos` e `internal/plataforma/relogio`.
 - **O que confere:** o Go gera as entradas, e o alvo confere o que vale para qualquer uma: ida e volta pelo banco e pelo JSON, a escala do decimal, o formato do EF Core e o dia de Brasília.
 - **Sementes:** os valores do gabarito do EF Core.
 - **Achado:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda em todo `go test`, como regressão. Comite o arquivo junto com a correção.
 - **Rodar:**
 
   ```bash
-  go test ./internal/tipos -run '^$' -fuzz '^FuzzDecimalNoBanco$' -fuzztime 5m
+  go test ./internal/plataforma/tipos -run '^$' -fuzz '^FuzzDecimalNoBanco$' -fuzztime 5m
   ```
 
   Um alvo por vez: o `-fuzz` não aceita mais de um.
-- **Tipo novo** em `internal/tipos` ganha um alvo `FuzzXxx`, com as sementes do gabarito.
+- **Tipo novo** em `internal/plataforma/tipos` ganha um alvo `FuzzXxx`, com as sementes do gabarito.
 
 **Gabarito** (*golden file*) fica em `testdata/`. Os que vieram do .NET ou do EF Core (pelas sondas, que saíram na #86) não são mais regravados: são a regressão. Os outros são regravados só por opção explícita (`-atualizar`), olhando a diferença no PR.
 
@@ -303,7 +303,7 @@ Quem usa o Claude Code no projeto recebe, pelo repositório:
 ## Convenções de código
 
 - Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
-- Back-end em Go: um pacote por assunto em `src/backend/internal/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
+- Back-end em Go: um pacote por assunto em `src/backend/internal/<area>/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
 - Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
 - Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").
 - Formatação definida no `.editorconfig`.

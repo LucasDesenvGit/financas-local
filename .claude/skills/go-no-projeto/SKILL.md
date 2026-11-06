@@ -16,9 +16,9 @@ Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o
 | Como o .NET saiu (a história da troca), "Aula rápida" | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | Camadas por assunto, regra sem HTTP, mapa de contextos, interfaces | [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Testes (onde mora cada um, pronto quando, proibido, mutação, fuzz, cobertura) | [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md) e `CONTRIBUINDO.md`, "Testes do back-end (Go)" |
-| Apoio dos testes (banco temporário, fábrica, relógio, `Chamar`, serviço de fora) | [`internal/testeapoio/README.md`](../../../src/backend/internal/testeapoio/README.md) |
+| Apoio dos testes (banco temporário, fábrica, relógio, `Chamar`, serviço de fora) | [`internal/plataforma/testeapoio/README.md`](../../../src/backend/internal/plataforma/testeapoio/README.md) |
 | Rota nova, ligar no site, rodar, antes de subir | [`src/backend/README.md`](../../../src/backend/README.md) |
-| Banco no formato do EF Core, `sqlc`, esquema | [`internal/banco/README.md`](../../../src/backend/internal/banco/README.md) e `docs/BANCO-DE-DADOS.md` |
+| Banco no formato do EF Core, `sqlc`, esquema | [`internal/plataforma/banco/README.md`](../../../src/backend/internal/plataforma/banco/README.md) e `docs/BANCO-DE-DADOS.md` |
 | Gerenciador em Go (`src/gerenciador-go`) | [ADR 0052](../../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md): outro módulo, com bibliotecas próprias; o estilo daqui vale |
 
 ## Referências (leia quando o passo pedir)
@@ -36,8 +36,8 @@ Todo o back-end é Go: assunto novo ganha um pacote, e mudança num assunto fica
 
 1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits").
 2. **ADR antes do código** quando a funcionalidade trouxer dependência, saída de rede, tabela além da rotina ou padrão novo (`CLAUDE.md`, "Decisões de arquitetura").
-3. **Banco:** tabela nova em `banco/01-estrutura.sql` (o Go só cria tabela por esses scripts, no `-aplicar-esquema`), `go generate ./...` e `docs/BANCO-DE-DADOS.md`. Consulta pelo `sqlc` (`internal/banco/consultas/sql`, depois `go generate ./...`) ou com `?`.
-4. **Pacote `internal/<assunto>`** com HTTP → regra → banco dentro (ADR 0056), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, o pacote na tabela de `docs/arquitetura/componentes.md` (o mesmo teste confere) e o termo novo em `docs/arquitetura/dominio.md`.
+3. **Banco:** tabela nova em `banco/01-estrutura.sql` (o Go só cria tabela por esses scripts, no `-aplicar-esquema`), `go generate ./...` e `docs/BANCO-DE-DADOS.md`. Consulta pelo `sqlc` (`internal/plataforma/banco/consultas/sql`, depois `go generate ./...`) ou com `?`.
+4. **Pacote `internal/<area>/<assunto>`** com HTTP → regra → banco dentro (ADR 0056), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, o pacote na tabela de `docs/arquitetura/componentes.md` (o mesmo teste confere) e o termo novo em `docs/arquitetura/dominio.md`.
 5. **Rotas** pelo `Registrar(mux, ...)` do pacote e uma linha em `internal/api/api.go` (README do Go, "Rota nova"), com os casos de contrato num número livre de `20` a `89`.
 6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/mutacao-go-fora.txt`, com o motivo: a CI falha com pacote que não está em nenhum dos dois (#456).
 7. **Front-end, Manual, diagramas** (ADR 0055) e `docs/DADOS-PESSOAIS.md` se houver dado pessoal novo: no mesmo PR, como manda o `CLAUDE.md`.
@@ -54,7 +54,7 @@ Em `src/backend`, os comandos de "Antes de subir" do README do Go, mais:
 
 ```bash
 go test -tags arquitetura ./internal/arquitetura/      # só local (#476)
-python3 ../../scripts/ci/mutacao-go.py internal/<assunto>   # pacote com regra; a CI mede no PR (#456)
+python3 ../../scripts/ci/mutacao-go.py internal/<area>/<assunto>   # pacote com regra; a CI mede no PR (#456)
 ```
 
 - **Go não instalado** (`go version` falha; nesta máquina pode ser o sandbox do Flatpak: `flatpak-spawn --host`): diga isso e não afirme que passou.

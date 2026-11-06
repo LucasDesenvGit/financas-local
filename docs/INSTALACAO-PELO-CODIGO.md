@@ -105,7 +105,7 @@ A ferramenta que trazia os dados de uma instalação antiga com IIS e SQL Server
   ```bash
   cd src/backend
   go run ./cmd/financas -endereco localhost:7443 -certificado-temporario \
-    -wwwroot internal/servidor/testdata/wwwroot -banco <cópia>/FinancasLocal.db -aplicar-esquema
+    -wwwroot internal/plataforma/servidor/testdata/wwwroot -banco <cópia>/FinancasLocal.db -aplicar-esquema
   ```
   São as mesmas opções que o contrato usa (`testes/contrato/rodar.sh`). As chaves ficam em `chaves`, ao lado da pasta `sql` da cópia; um segredo gravado com outra chave precisa ser informado de novo. O resto (testes, contrato, rodar como serviço) está no [README do Go](../src/backend/README.md).
 - No front-end, rode `npm start` em `src\frontend`. O Angular abre em `http://localhost:4200` e redireciona `/api` para o back-end.

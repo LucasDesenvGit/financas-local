@@ -30,7 +30,7 @@ import (
 
 const modulo = "github.com/LucasDesenvGit/financas-local/src/backend/"
 
-// pacote é o que as regras olham de cada pacote, com o módulo cortado ("internal/carteira").
+// pacote é o que as regras olham de cada pacote, com o módulo cortado ("internal/patrimonio/carteira").
 type pacote struct {
 	Caminho string
 	Imports []string // diretos, fora dos _test.go
@@ -43,44 +43,44 @@ type pacote struct {
 const driverDoBanco = "modernc.org/sqlite"
 
 var podemUsarODriver = map[string]string{
-	"internal/banco":         "abre o banco (WAL, busy_timeout) para todo mundo",
-	"internal/banco/esquema": "aplica o banco/01-estrutura.sql",
-	"testes/contrato":        "abre o banco dos casos para conferir o que foi gravado",
+	"internal/plataforma/banco":         "abre o banco (WAL, busy_timeout) para todo mundo",
+	"internal/plataforma/banco/esquema": "aplica o banco/01-estrutura.sql",
+	"testes/contrato":                   "abre o banco dos casos para conferir o que foi gravado",
 }
 
 // Regra 2: o apoio aos testes.
-const apoioAosTestes = "internal/testeapoio"
+const apoioAosTestes = "internal/plataforma/testeapoio"
 
 // Regra 3: pacote de regra não conhece HTTP, nem por outro pacote.
-var proibidosNaRegra = []string{"net/http", "internal/respostas", "internal/servidor"}
+var proibidosNaRegra = []string{"net/http", "internal/plataforma/respostas", "internal/plataforma/servidor"}
 
 var regraSemHTTP = []string{
-	"internal/banco", "internal/banco/consultas", "internal/bancos", "internal/categorizacao", "internal/cobrancas",
-	"internal/configuracao",
-	"internal/desfazer", "internal/emprestimos", "internal/faturas", "internal/parcelas", "internal/poucoinformativa",
-	"internal/regrasdescricao", "internal/relatorios", "internal/relogio", "internal/segredos", "internal/sugestoes",
-	"internal/texto", "internal/tipolancamento", "internal/tipos", "internal/transacoes",
+	"internal/plataforma/banco", "internal/plataforma/banco/consultas", "internal/movimentacao/bancos", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas",
+	"internal/plataforma/configuracao",
+	"internal/plataforma/desfazer", "internal/patrimonio/emprestimos", "internal/movimentacao/faturas", "internal/movimentacao/parcelas", "internal/movimentacao/poucoinformativa",
+	"internal/ajustes/regrasdescricao", "internal/analises/relatorios", "internal/plataforma/relogio", "internal/plataforma/segredos", "internal/movimentacao/sugestoes",
+	"internal/plataforma/texto", "internal/movimentacao/tipolancamento", "internal/plataforma/tipos", "internal/movimentacao/transacoes",
 }
 
 // Regra de pacote que ainda chega ao HTTP por outro pacote. Quando deixar de chegar, o teste avisa para tirar daqui.
 var regraComHTTPPorEnquanto = map[string]string{
-	"internal/transferencias": "usa o reservas.EhMovimentoDeReserva, uma regra pura que mora num assunto com rotas",
-	"internal/tarefas":        "registra a falha das tarefas no sistema de erros (erros.OrigemCripto, erros.OrigemSistema)",
+	"internal/movimentacao/transferencias": "usa o reservas.EhMovimentoDeReserva, uma regra pura que mora num assunto com rotas",
+	"internal/plataforma/tarefas":          "registra a falha das tarefas no sistema de erros (erros.OrigemCripto, erros.OrigemSistema)",
 }
 
 // Regra 4: quem importa quem. Todo pacote de internal/ está num destes grupos.
 var (
 	// base: o que qualquer pacote pode importar (banco, tipos, relógio, HTTP comum, texto, sessão).
 	base = []string{
-		"internal/banco", "internal/banco/consultas", "internal/banco/esquema", "internal/banco/esquema/embutido",
-		"internal/banco/esquema/gerar", "internal/config", "internal/relogio", "internal/respostas", "internal/servicosistema",
-		"internal/servidor", "internal/sessao", "internal/testeapoio", "internal/texto", "internal/tipos",
+		"internal/plataforma/banco", "internal/plataforma/banco/consultas", "internal/plataforma/banco/esquema", "internal/plataforma/banco/esquema/embutido",
+		"internal/plataforma/banco/esquema/gerar", "internal/plataforma/config", "internal/plataforma/relogio", "internal/plataforma/respostas", "internal/plataforma/servicosistema",
+		"internal/plataforma/servidor", "internal/plataforma/sessao", "internal/plataforma/testeapoio", "internal/plataforma/texto", "internal/plataforma/tipos",
 	}
 	// transversais: serviços que qualquer assunto usa (auditoria, parâmetros do banco, erros do sistema, tarefas em
 	// segundo plano, segredos, versão).
 	transversais = []string{
-		"internal/auditoria", "internal/configuracao", "internal/erros", "internal/segredos", "internal/tarefas",
-		"internal/versao",
+		"internal/plataforma/auditoria", "internal/plataforma/configuracao", "internal/plataforma/erros", "internal/plataforma/segredos", "internal/plataforma/tarefas",
+		"internal/plataforma/versao",
 	}
 	// montadores: juntam tudo (rotas e programa) e podem importar qualquer assunto.
 	montadores = []string{"internal/api", "cmd/financas", "testes/contrato", "testes/contrato/pluggyfalsa", "internal/arquitetura"}
@@ -96,66 +96,66 @@ var dependencias = []struct {
 	Para   []string
 	Motivo string
 }{
-	{"internal/autenticacao", nil, "só os transversais (auditoria, erros)"},
-	{"internal/bancos", nil, "catálogo de bancos"},
-	{"internal/cambio", nil, "PTAX; só os transversais"},
-	{"internal/carteira", []string{"internal/bancos", "internal/cambio", "internal/categorizacao", "internal/contas",
-		"internal/cotacoes", "internal/desfazer", "internal/reservas", "internal/selic", "internal/transacoes"},
+	{"internal/plataforma/autenticacao", nil, "só os transversais (auditoria, erros)"},
+	{"internal/movimentacao/bancos", nil, "catálogo de bancos"},
+	{"internal/patrimonio/cambio", nil, "PTAX; só os transversais"},
+	{"internal/patrimonio/carteira", []string{"internal/movimentacao/bancos", "internal/patrimonio/cambio", "internal/ajustes/categorizacao", "internal/movimentacao/contas",
+		"internal/patrimonio/cotacoes", "internal/plataforma/desfazer", "internal/patrimonio/reservas", "internal/patrimonio/selic", "internal/movimentacao/transacoes"},
 		"a carteira junta posições, cotações, câmbio, reservas e as transações de investimento (#82, #299)"},
-	{"internal/categorias", []string{"internal/categorizacao", "internal/regrasdescricao", "internal/transacoes",
-		"internal/transferencias"}, "as rotas de categorias e regras reaplicam as regras nas transações (#77)"},
-	{"internal/categorizacao", []string{"internal/parcelas", "internal/tipolancamento", "internal/transacoes"},
+	{"internal/ajustes/categorias", []string{"internal/ajustes/categorizacao", "internal/ajustes/regrasdescricao", "internal/movimentacao/transacoes",
+		"internal/movimentacao/transferencias"}, "as rotas de categorias e regras reaplicam as regras nas transações (#77)"},
+	{"internal/ajustes/categorizacao", []string{"internal/movimentacao/parcelas", "internal/movimentacao/tipolancamento", "internal/movimentacao/transacoes"},
 		"a regra de categoria olha o tipo do lançamento e grava na transação; o acerto das compras parceladas estornadas casa o estorno com as parcelas (#444)"},
-	{"internal/cobrancas", []string{"internal/relatorios", "internal/sugestoes"},
+	{"internal/movimentacao/cobrancas", []string{"internal/analises/relatorios", "internal/movimentacao/sugestoes"},
 		"a conciliação avança o vencimento como a lista e usa a chave do extrato das sugestões (#79, #158, #205)"},
-	{"internal/contasagendadas", []string{"internal/categorizacao", "internal/cobrancas", "internal/relatorios",
-		"internal/sugestoes", "internal/transacoes"},
+	{"internal/movimentacao/contasagendadas", []string{"internal/ajustes/categorizacao", "internal/movimentacao/cobrancas", "internal/analises/relatorios",
+		"internal/movimentacao/sugestoes", "internal/movimentacao/transacoes"},
 		"as contas a pagar listam pela base dos relatórios, conciliam e lançam a despesa do pagamento (#79)"},
-	{"internal/conferenciabanco", []string{"internal/bancos", "internal/cambio", "internal/carteira", "internal/contas",
-		"internal/faturas", "internal/reservas"}, "a conferência do banco compara os saldos de todos esses (#445)"},
-	{"internal/contas", []string{"internal/bancos", "internal/faturas"}, "a conta mostra o banco e a fatura do cartão"},
-	{"internal/cotacoes", []string{"internal/cambio"}, "cotação em dólar convertida pela PTAX"},
-	{"internal/cripto", nil, "Mercado Bitcoin; só os transversais"},
-	{"internal/desfazer", nil, "o desfazer das ações em massa"},
-	{"internal/emprestimos", nil, "totais de empréstimos (#447)"},
-	{"internal/extrato", []string{"internal/categorizacao", "internal/desfazer", "internal/poucoinformativa",
-		"internal/regrasdescricao", "internal/sugestoes", "internal/tipolancamento", "internal/transacoes",
-		"internal/transferencias"}, "a tela de transações junta as regras, as sugestões e o desfazer (#78)"},
-	{"internal/faturas", []string{"internal/bancos", "internal/parcelas"}, "a fatura soma as parcelas do cartão"},
-	{"internal/investimentos", []string{"internal/cambio", "internal/carteira"},
+	{"internal/movimentacao/conferenciabanco", []string{"internal/movimentacao/bancos", "internal/patrimonio/cambio", "internal/patrimonio/carteira", "internal/movimentacao/contas",
+		"internal/movimentacao/faturas", "internal/patrimonio/reservas"}, "a conferência do banco compara os saldos de todos esses (#445)"},
+	{"internal/movimentacao/contas", []string{"internal/movimentacao/bancos", "internal/movimentacao/faturas"}, "a conta mostra o banco e a fatura do cartão"},
+	{"internal/patrimonio/cotacoes", []string{"internal/patrimonio/cambio"}, "cotação em dólar convertida pela PTAX"},
+	{"internal/patrimonio/cripto", nil, "Mercado Bitcoin; só os transversais"},
+	{"internal/plataforma/desfazer", nil, "o desfazer das ações em massa"},
+	{"internal/patrimonio/emprestimos", nil, "totais de empréstimos (#447)"},
+	{"internal/movimentacao/extrato", []string{"internal/ajustes/categorizacao", "internal/plataforma/desfazer", "internal/movimentacao/poucoinformativa",
+		"internal/ajustes/regrasdescricao", "internal/movimentacao/sugestoes", "internal/movimentacao/tipolancamento", "internal/movimentacao/transacoes",
+		"internal/movimentacao/transferencias"}, "a tela de transações junta as regras, as sugestões e o desfazer (#78)"},
+	{"internal/movimentacao/faturas", []string{"internal/movimentacao/bancos", "internal/movimentacao/parcelas"}, "a fatura soma as parcelas do cartão"},
+	{"internal/patrimonio/investimentos", []string{"internal/patrimonio/cambio", "internal/patrimonio/carteira"},
 		"o saldo em reais pelo câmbio e o nome de exibição da carteira (#170)"},
-	{"internal/metas", []string{"internal/contas", "internal/faturas", "internal/parametros", "internal/parcelas",
-		"internal/relatorios", "internal/reservas", "internal/transacoes"},
+	{"internal/planejamento/metas", []string{"internal/movimentacao/contas", "internal/movimentacao/faturas", "internal/ajustes/parametros", "internal/movimentacao/parcelas",
+		"internal/analises/relatorios", "internal/patrimonio/reservas", "internal/movimentacao/transacoes"},
 		"o progresso soma o saldo da conta ou do cofrinho; o plano usa as faturas, as parcelas e o histórico"},
-	{"internal/orcamentos", []string{"internal/emprestimos", "internal/parametros", "internal/relatorios", "internal/transacoes"},
+	{"internal/planejamento/orcamentos", []string{"internal/patrimonio/emprestimos", "internal/ajustes/parametros", "internal/analises/relatorios", "internal/movimentacao/transacoes"},
 		"a lista do mês e a sugestão (#39) usam a base dos relatórios, os totais de empréstimos, os parâmetros e o tipo da transação (#79)"},
-	{"internal/partida", []string{"internal/carteira", "internal/categorizacao", "internal/cobrancas", "internal/transferencias"},
+	{"internal/partida", []string{"internal/patrimonio/carteira", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas", "internal/movimentacao/transferencias"},
 		"as seis rotinas que acertam dados ao subir chamam a regra de cada assunto, na ordem do .NET: nenhuma regra mora aqui (#444)"},
-	{"internal/parametros", nil, "só os transversais (auditoria, configuração)"},
-	{"internal/painel", []string{"internal/cambio", "internal/carteira", "internal/contas", "internal/contasagendadas",
-		"internal/emprestimos", "internal/extrato", "internal/faturas", "internal/poucoinformativa", "internal/relatorios",
-		"internal/reservas", "internal/transacoes"},
+	{"internal/ajustes/parametros", nil, "só os transversais (auditoria, configuração)"},
+	{"internal/analises/painel", []string{"internal/patrimonio/cambio", "internal/patrimonio/carteira", "internal/movimentacao/contas", "internal/movimentacao/contasagendadas",
+		"internal/patrimonio/emprestimos", "internal/movimentacao/extrato", "internal/movimentacao/faturas", "internal/movimentacao/poucoinformativa", "internal/analises/relatorios",
+		"internal/patrimonio/reservas", "internal/movimentacao/transacoes"},
 		"as rotas da entrada painel (#80): o painel junta o resumo e os avisos de cada assunto (contas, carteira, contas a pagar, faturas, reservas)"},
-	{"internal/openfinance", []string{"internal/categorizacao", "internal/contas", "internal/cotacoes", "internal/pluggy", "internal/sincronizacao", "internal/transacoes",
-		"internal/transferencias"}, "as conexões usam o nome e as faturas das contas; mapear uma categoria reaplica as regras; as rotas chamam a sincronização (#83)"},
-	{"internal/parcelas", nil, "parcelas de compras no cartão"},
-	{"internal/pluggy", nil, "cliente HTTP da Pluggy (ADR 0006); não grava no banco"},
-	{"internal/poucoinformativa", nil, "descrição que não diz nada"},
-	{"internal/regrasdescricao", []string{"internal/categorizacao", "internal/transacoes"},
+	{"internal/openfinance/openfinance", []string{"internal/ajustes/categorizacao", "internal/movimentacao/contas", "internal/patrimonio/cotacoes", "internal/openfinance/pluggy", "internal/openfinance/sincronizacao", "internal/movimentacao/transacoes",
+		"internal/movimentacao/transferencias"}, "as conexões usam o nome e as faturas das contas; mapear uma categoria reaplica as regras; as rotas chamam a sincronização (#83)"},
+	{"internal/movimentacao/parcelas", nil, "parcelas de compras no cartão"},
+	{"internal/openfinance/pluggy", nil, "cliente HTTP da Pluggy (ADR 0006); não grava no banco"},
+	{"internal/movimentacao/poucoinformativa", nil, "descrição que não diz nada"},
+	{"internal/ajustes/regrasdescricao", []string{"internal/ajustes/categorizacao", "internal/movimentacao/transacoes"},
 		"a regra de descrição renomeia a transação e recategoriza"},
-	{"internal/relatorios", []string{"internal/parcelas", "internal/transacoes"},
+	{"internal/analises/relatorios", []string{"internal/movimentacao/parcelas", "internal/movimentacao/transacoes"},
 		"a base dos relatórios lê as transações (#447); a projeção soma as parcelas futuras (#80, #165)"},
-	{"internal/reservas", []string{"internal/cambio"}, "reserva em dólar convertida pela PTAX"},
-	{"internal/saude", nil, "GET de saúde da API"},
-	{"internal/selic", nil, "Selic do BCB"},
-	{"internal/sincronizacao", []string{"internal/carteira", "internal/categorizacao", "internal/cobrancas", "internal/contas", "internal/cotacoes",
-		"internal/emprestimos", "internal/investimentos", "internal/pluggy", "internal/regrasdescricao", "internal/transacoes", "internal/transferencias"},
+	{"internal/patrimonio/reservas", []string{"internal/patrimonio/cambio"}, "reserva em dólar convertida pela PTAX"},
+	{"internal/plataforma/saude", nil, "GET de saúde da API"},
+	{"internal/patrimonio/selic", nil, "Selic do BCB"},
+	{"internal/openfinance/sincronizacao", []string{"internal/patrimonio/carteira", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas", "internal/movimentacao/contas", "internal/patrimonio/cotacoes",
+		"internal/patrimonio/emprestimos", "internal/patrimonio/investimentos", "internal/openfinance/pluggy", "internal/ajustes/regrasdescricao", "internal/movimentacao/transacoes", "internal/movimentacao/transferencias"},
 		"a sincronização grava em cada assunto e chama, no fim, as mesmas rotinas da partida (#83)"},
-	{"internal/sugestoes", nil, "sugestões de categoria pelo histórico"},
-	{"internal/tipolancamento", nil, "tipo de cada lançamento (ADR 0025)"},
-	{"internal/transacoes", nil, "o modelo da transação"},
-	{"internal/transferencias", []string{"internal/categorizacao", "internal/reservas", "internal/tipolancamento",
-		"internal/transacoes"}, "transferência entre contas e movimento de reserva (ADR 0031)"},
+	{"internal/movimentacao/sugestoes", nil, "sugestões de categoria pelo histórico"},
+	{"internal/movimentacao/tipolancamento", nil, "tipo de cada lançamento (ADR 0025)"},
+	{"internal/movimentacao/transacoes", nil, "o modelo da transação"},
+	{"internal/movimentacao/transferencias", []string{"internal/ajustes/categorizacao", "internal/patrimonio/reservas", "internal/movimentacao/tipolancamento",
+		"internal/movimentacao/transacoes"}, "transferência entre contas e movimento de reserva (ADR 0031)"},
 }
 
 /* ------------------------------------------------------------ as regras */
@@ -172,8 +172,8 @@ func violacoes(pacotes []pacote) []string {
 		// Regra 1: o driver do SQLite.
 		for _, imp := range p.Imports {
 			if (imp == driverDoBanco || strings.HasPrefix(imp, driverDoBanco+"/")) && podemUsarODriver[p.Caminho] == "" {
-				v = append(v, fmt.Sprintf("regra 1 (só o internal/banco abre o SQLite): %s importa %s. O que fazer: "+
-					"use o *sql.DB que o internal/banco abre (WAL, busy_timeout, formato do EF Core).", p.Caminho, imp))
+				v = append(v, fmt.Sprintf("regra 1 (só o internal/plataforma/banco abre o SQLite): %s importa %s. O que fazer: "+
+					"use o *sql.DB que o internal/plataforma/banco abre (WAL, busy_timeout, formato do EF Core).", p.Caminho, imp))
 			}
 		}
 		// Regra 2: o apoio aos testes só em _test.go.
@@ -290,7 +290,7 @@ func violacoes(pacotes []pacote) []string {
 	return v
 }
 
-// caminhoAte mostra por onde o pacote chega ao proibido (" (por internal/x → internal/respostas)"), para a mensagem
+// caminhoAte mostra por onde o pacote chega ao proibido (" (por internal/x → internal/plataforma/respostas)"), para a mensagem
 // apontar o import que precisa sair. Vazio quando o import é direto.
 func caminhoAte(porCaminho map[string]pacote, de, ate string) string {
 	var passos []string
@@ -370,8 +370,8 @@ func TestArquitetura(t *testing.T) {
 // paginaDosComponentes é o diagrama de Componentes (C4 nível 3, #464), a partir desta pasta.
 var paginaDosComponentes = filepath.Join("..", "..", "..", "..", "docs", "arquitetura", "componentes.md")
 
-// pacoteCitado acha os pacotes citados entre crases na página ("`internal/banco`"). A crase de fechar logo depois do
-// nome separa o internal/banco do internal/banco/consultas e deixa de fora os arquivos ("`internal/x/y.go`").
+// pacoteCitado acha os pacotes citados entre crases na página ("`internal/plataforma/banco`"). A crase de fechar logo depois do
+// nome separa o internal/plataforma/banco do internal/plataforma/banco/consultas e deixa de fora os arquivos ("`internal/x/y.go`").
 var pacoteCitado = regexp.MustCompile("`((?:cmd|internal|testes)/[a-z0-9/]+)`")
 
 // pacotesForaDaPagina devolve uma mensagem por pacote que existe e não está na página, e por pacote citado que não
@@ -425,13 +425,13 @@ func TestPacotesForaDaPagina(t *testing.T) {
 		pagina   string
 		mensagem []string
 	}{
-		{"todos citados", []string{"internal/banco", "internal/banco/consultas"},
-			"| Base | `internal/banco`, `internal/banco/consultas` |", nil},
-		{"falta um", []string{"internal/banco", "internal/novo"}, "`internal/banco`",
+		{"todos citados", []string{"internal/plataforma/banco", "internal/plataforma/banco/consultas"},
+			"| Base | `internal/plataforma/banco`, `internal/plataforma/banco/consultas` |", nil},
+		{"falta um", []string{"internal/plataforma/banco", "internal/novo"}, "`internal/plataforma/banco`",
 			[]string{"diagrama de Componentes: internal/novo não está"}},
-		{"o de dentro não conta pelo de fora", []string{"internal/banco"}, "`internal/banco/consultas`", []string{
-			"diagrama de Componentes: docs/arquitetura/componentes.md cita internal/banco/consultas",
-			"diagrama de Componentes: internal/banco não está",
+		{"o de dentro não conta pelo de fora", []string{"internal/plataforma/banco"}, "`internal/plataforma/banco/consultas`", []string{
+			"diagrama de Componentes: docs/arquitetura/componentes.md cita internal/plataforma/banco/consultas",
+			"diagrama de Componentes: internal/plataforma/banco não está",
 		}},
 		{"arquivo não é pacote", []string{"internal/x"}, "`internal/x` e `internal/x/y_test.go`", nil},
 		{"saiu do código", []string{"cmd/financas"}, "`cmd/financas` e `internal/velho`",
@@ -496,7 +496,7 @@ func TestCadaRegraFalha(t *testing.T) {
 		return append(r, func() pacote { p := pacote{Caminho: caminho}; f(&p); return p }())
 	}
 	// O módulo pode usar o núcleo: um assunto, sem linha na tabela.
-	if v := violacoes(mudar("internal/trabalho", func(p *pacote) { p.Imports = []string{"internal/transacoes"} })); len(v) > 0 {
+	if v := violacoes(mudar("internal/trabalho", func(p *pacote) { p.Imports = []string{"internal/movimentacao/transacoes"} })); len(v) > 0 {
 		t.Errorf("módulo usando um assunto do núcleo: %v", v)
 	}
 	casos := []struct {
@@ -504,25 +504,25 @@ func TestCadaRegraFalha(t *testing.T) {
 		grafo    []pacote
 		mensagem string
 	}{
-		{"driver fora do banco", mudar("internal/carteira", func(p *pacote) { p.Imports = []string{driverDoBanco} }),
-			"regra 1 (só o internal/banco abre o SQLite): internal/carteira importa modernc.org/sqlite"},
-		{"apoio no programa", mudar("internal/contas", func(p *pacote) { p.Deps = []string{apoioAosTestes} }),
-			"regra 2 (o internal/testeapoio é só para _test.go): internal/contas chega a ele"},
-		{"regra com HTTP", mudar("internal/transacoes", func(p *pacote) {
-			p.Imports, p.Deps = []string{"internal/respostas"}, []string{"internal/respostas", "net/http"}
-		}), "regra 3 (a regra de negócio não conhece HTTP): internal/transacoes chega a net/http, internal/respostas"},
-		{"exceção que sarou", mudar("internal/tarefas", func(p *pacote) { p.Deps = nil }),
-			"regra 3: internal/tarefas não chega mais ao HTTP"},
+		{"driver fora do banco", mudar("internal/patrimonio/carteira", func(p *pacote) { p.Imports = []string{driverDoBanco} }),
+			"regra 1 (só o internal/plataforma/banco abre o SQLite): internal/patrimonio/carteira importa modernc.org/sqlite"},
+		{"apoio no programa", mudar("internal/movimentacao/contas", func(p *pacote) { p.Deps = []string{apoioAosTestes} }),
+			"regra 2 (o internal/plataforma/testeapoio é só para _test.go): internal/movimentacao/contas chega a ele"},
+		{"regra com HTTP", mudar("internal/movimentacao/transacoes", func(p *pacote) {
+			p.Imports, p.Deps = []string{"internal/plataforma/respostas"}, []string{"internal/plataforma/respostas", "net/http"}
+		}), "regra 3 (a regra de negócio não conhece HTTP): internal/movimentacao/transacoes chega a net/http, internal/plataforma/respostas"},
+		{"exceção que sarou", mudar("internal/plataforma/tarefas", func(p *pacote) { p.Deps = nil }),
+			"regra 3: internal/plataforma/tarefas não chega mais ao HTTP"},
 		{"pacote sem grupo", mudar("internal/novo", func(*pacote) {}),
 			"regra 4: internal/novo não está em nenhum grupo"},
-		{"assunto fora do mapa", mudar("internal/selic", func(p *pacote) { p.Imports = []string{"internal/carteira"} }),
-			"regra 4 (mapa de contextos): internal/selic importa internal/carteira"},
+		{"assunto fora do mapa", mudar("internal/patrimonio/selic", func(p *pacote) { p.Imports = []string{"internal/patrimonio/carteira"} }),
+			"regra 4 (mapa de contextos): internal/patrimonio/selic importa internal/patrimonio/carteira"},
 		{"módulo importa módulo", mudar("internal/noticias", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
 			"regra 5 (um módulo não depende de outro): internal/noticias importa internal/trabalho"},
-		{"núcleo importa módulo", mudar("internal/contas", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
-			"regra 5 (o núcleo não depende de módulo): internal/contas importa o módulo internal/trabalho"},
-		{"base que depende de assunto", mudar("internal/tipos", func(p *pacote) { p.Imports = []string{"internal/contas"} }),
-			"regra 4: internal/tipos (base) importa o assunto internal/contas"},
+		{"núcleo importa módulo", mudar("internal/movimentacao/contas", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
+			"regra 5 (o núcleo não depende de módulo): internal/movimentacao/contas importa o módulo internal/trabalho"},
+		{"base que depende de assunto", mudar("internal/plataforma/tipos", func(p *pacote) { p.Imports = []string{"internal/movimentacao/contas"} }),
+			"regra 4: internal/plataforma/tipos (base) importa o assunto internal/movimentacao/contas"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {

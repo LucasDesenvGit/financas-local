@@ -33,15 +33,16 @@ Nada conferia essas regras. A #476 criou o teste de arquitetura local (ADR 0051)
 
 ### Camadas dentro de cada assunto
 
-Cada assunto é um pacote `internal/<assunto>` com **HTTP → regra → banco** dentro, o padrão da #77. Não há um pacote por camada.
+Cada assunto é um pacote `internal/<area>/<assunto>` com **HTTP → regra → banco** dentro, o padrão da #77. Não há um pacote por camada.
+- **Áreas (#656, 06/11/2026):** os assuntos ficam agrupados pelas mesmas áreas das telas do front-end (`movimentacao`, `planejamento`, `patrimonio`, `analises`, `ajustes`), mais `openfinance` (o assunto é grande, e a tela dele fica em `ajustes` no front-end) e `plataforma` (a base e os transversais que todos usam). `api`, `partida` e `arquitetura`, que juntam ou conferem todos os outros, ficam na raiz de `internal/`. A área só organiza as pastas: o nome do pacote não muda (`transacoes.NovoServico`), e quem pode importar quem continua na tabela `dependencias`, não na área. A tabela das áreas está no [`internal/README.md`](../../src/backend/internal/README.md#as-áreas). Antes da #656, os 55 pacotes ficavam numa lista só, em `internal/<assunto>`.
 - A regra vai para um pacote próprio só quando **outro assunto** também a usa (`categorizacao`, `transacoes`, `tipolancamento`).
 - As dependências entram pelo construtor (`NovoServico(db, relogio, log)`), sem container de injeção.
 
 ### Regra de dependência
 
-**Pacote de regra não conhece HTTP:** não chega a `net/http`, `internal/respostas` nem `internal/servidor`, nem por outro pacote. Quem fala HTTP são só as rotas do assunto e o `internal/api`.
+**Pacote de regra não conhece HTTP:** não chega a `net/http`, `internal/plataforma/respostas` nem `internal/plataforma/servidor`, nem por outro pacote. Quem fala HTTP são só as rotas do assunto e o `internal/api`.
 - A lista dos pacotes de regra e as exceções, com o motivo, ficam no teste de arquitetura (`regraSemHTTP` e `regraComHTTPPorEnquanto` em `internal/arquitetura/arquitetura_test.go`).
-- Função de texto ou de cálculo usada pela regra mora num pacote de regra ou de base, e não no `respostas`. Foi o que a #476 fez com o `TamanhoUtf16`, que foi para o `internal/texto`.
+- Função de texto ou de cálculo usada pela regra mora num pacote de regra ou de base, e não no `respostas`. Foi o que a #476 fez com o `TamanhoUtf16`, que foi para o `internal/plataforma/texto`.
 
 ### DDD estratégico
 
@@ -56,13 +57,13 @@ O núcleo não importa módulo, e um módulo não importa outro. O teste de arqu
 
 ### DDD tático, só onde paga
 
-- **Objetos de valor:** tipos que garantem a regra em vez de a revisão garantir. O que existe é o `internal/tipos`: `Decimal` (dinheiro e quantidade, sem `float64`), `Data`, `DataHora` e `Guid`, no formato do EF Core. Os próximos entram **aos poucos**, quando um assunto novo precisar:
+- **Objetos de valor:** tipos que garantem a regra em vez de a revisão garantir. O que existe é o `internal/plataforma/tipos`: `Decimal` (dinheiro e quantidade, sem `float64`), `Data`, `DataHora` e `Guid`, no formato do EF Core. Os próximos entram **aos poucos**, quando um assunto novo precisar:
   - `Dinheiro`, separado da quantidade, para a soma de dinheiro com quantidade não compilar;
   - `Mes`/`Periodo`, para os filtros de mês do Painel e dos relatórios (#80);
   - `Ticker`, para os ativos da carteira.
 - **Agregados**, só onde há regra que precisa valer sempre:
-  - **a carteira:** a posição e o preço médio são calculados das operações, e só o `internal/carteira` grava operação (`OperacaoAtivo`). O preço do ativo é do `internal/cotacoes`;
-  - **a fatura do cartão:** a fatura do mês sai das parcelas e do ciclo, e só o `internal/faturas` a calcula (`faturas.DoMesDosCartoes`, que o `contas` e a `conferenciabanco` chamam).
+  - **a carteira:** a posição e o preço médio são calculados das operações, e só o `internal/patrimonio/carteira` grava operação (`OperacaoAtivo`). O preço do ativo é do `internal/patrimonio/cotacoes`;
+  - **a fatura do cartão:** a fatura do mês sai das parcelas e do ciclo, e só o `internal/movimentacao/faturas` a calcula (`faturas.DoMesDosCartoes`, que o `contas` e a `conferenciabanco` chamam).
 
   Os outros assuntos leem pelo que esses dois expõem. Não há agregado para cada uma das 32 tabelas.
 
@@ -71,7 +72,7 @@ O núcleo não importa módulo, e um módulo não importa outro. O teste de arqu
 **Interface pequena, declarada por quem usa**, quando há duas implementações de verdade: a real e a falsa dos testes.
 - É o que a `carteira`, a `conferenciabanco` e o `cambio` (`fonteDeCotacoes`) já fazem.
 - **Fonte de cotação:**
-  - hoje, só as ações e os FIIs têm duas fontes: o Yahoo e, se ele falhar, a brapi (`internal/cotacoes`). A troca já existe dentro do pacote;
+  - hoje, só as ações e os FIIs têm duas fontes: o Yahoo e, se ele falhar, a brapi (`internal/patrimonio/cotacoes`). A troca já existe dentro do pacote;
   - o câmbio (PTAX) e a cripto (Mercado Bitcoin) têm uma fonte cada. Quando ganharem uma segunda, a fonte vira uma interface declarada pelo `cambio` ou pelo `cripto`, com a troca quando uma falha;
   - uma interface comum entre as três não entra: elas dão dados diferentes (moeda, cripto, ativo da B3).
 - **A Pluggy não ganha interface** enquanto for a única fonte de transações.
@@ -93,6 +94,6 @@ Vale para assunto novo e para assunto que ainda vai migrar (#79, #80, #83, #84).
   - **objetos de valor aos poucos:** até o `Dinheiro` existir, misturar dinheiro com quantidade continua compilando. A #457 confere o `float64` na CI;
   - **a regra fica perto do banco:** sem repositório, trocar o SQLite exigiria mexer em cada assunto. *Julgamento:* não está nos planos (ADR 0002).
 - **Na prática:**
-  - **assunto novo:** `internal/<assunto>` com HTTP, regra e banco, uma linha em `dependencias` (com quem ele importa e por quê) e o termo novo na lista de termos;
+  - **assunto novo:** `internal/<area>/<assunto>` com HTTP, regra e banco, uma linha em `dependencias` (com quem ele importa e por quê) e o termo novo na lista de termos;
   - **regra usada por outro assunto:** pacote próprio, na lista `regraSemHTTP`;
   - antes de subir, `go test -tags arquitetura ./internal/arquitetura/` (CLAUDE.md, skill `go-no-projeto`, agente `dev-go`).
