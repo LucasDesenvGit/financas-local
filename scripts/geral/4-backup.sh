@@ -62,17 +62,13 @@ if [[ "$agendar" -eq 1 ]]; then
             requer_comando crontab 'crontab nao encontrado no PATH; nao e possivel agendar automaticamente neste sistema.'
             linha_cron="$minuto $hora * * * $script_path --manter $manter"
             cron_atual="$(crontab -l 2>/dev/null || true)"
-            # #154: o caminho antigo (scripts/4-backup.sh, antes das pastas geral/windows/linux) sai junto,
-            # senao o backup rodaria duas vezes por dia (pelo repasse e pelo caminho novo).
-            for antigo in "$script_path" "$Raiz/scripts/4-backup.sh"; do
-                if [[ -n "$cron_atual" ]] && grep -qF "$antigo " <<<"$cron_atual"; then
-                    aviso "Ja existe uma entrada de backup agendada ($antigo); substituindo."
-                    # "|| true": se a entrada removida era a unica linha do crontab,
-                    # o grep -v nao encontra nenhuma linha remanescente e sai com
-                    # status 1 (nao e um erro aqui, so significa "sobrou vazio").
-                    cron_atual="$(grep -vF "$antigo " <<<"$cron_atual" || true)"
-                fi
-            done
+            if [[ -n "$cron_atual" ]] && grep -qF "$script_path " <<<"$cron_atual"; then
+                aviso "Ja existe uma entrada de backup agendada; substituindo."
+                # "|| true": se a entrada removida era a unica linha do crontab,
+                # o grep -v nao encontra nenhuma linha remanescente e sai com
+                # status 1 (nao e um erro aqui, so significa "sobrou vazio").
+                cron_atual="$(grep -vF "$script_path " <<<"$cron_atual" || true)"
+            fi
             { [[ -n "$cron_atual" ]] && printf '%s\n' "$cron_atual"; printf '%s\n' "$linha_cron"; } | crontab -
             ok "Backup diario agendado para $horario via crontab do usuario."
             ;;

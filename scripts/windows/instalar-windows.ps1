@@ -37,29 +37,8 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"   # a barra de progresso deixa o Invoke-WebRequest muito lento no 5.1
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# ---------------------------------------------------------------- Pastas (mesma convencao do comum.sh)
-$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$Ferramentas = Join-Path $Raiz "ferramentas"
-$Instaladores = Join-Path $Raiz "instaladores"
-$Dados = Join-Path $Raiz "dados"
-$PastaSql = Join-Path $Dados "sql"
-$PastaChaves = Join-Path $Dados "chaves"
-$PastaBackups = Join-Path $Raiz "backups"
-$PastaPublicado = Join-Path $Raiz "publicado"
-$NomeServico = "FinancasLocal"
-
-# ---------------------------------------------------------------- Mensagens
-$script:EtapaAtual = "inicio"
-function Etapa([string]$texto) { $script:EtapaAtual = $texto; Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
-function Ok([string]$texto) { Write-Host "    OK  $texto" -ForegroundColor Green }
-function Aviso([string]$texto) { Write-Host "    !!  $texto" -ForegroundColor Yellow }
-# Erros previstos (com mensagem pronta) sao marcados para o catch final nao mostrar a linha do
-# script; os inesperados mostram, para achar a causa.
-function ErroSai([string]$texto) {
-    $erro = New-Object System.Exception $texto
-    $erro.Data["Previsto"] = $true
-    throw $erro
-}
+# Pastas e Etapa/Ok/Aviso/ErroSai: scripts\windows\comum.ps1 (como o comum.sh no bash).
+. (Join-Path $PSScriptRoot "comum.ps1")
 
 # ---------------------------------------------------------------- Utilitarios
 function Garantir-Pasta([string]$caminho) {
