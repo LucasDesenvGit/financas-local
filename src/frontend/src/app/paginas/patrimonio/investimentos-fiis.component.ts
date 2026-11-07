@@ -16,6 +16,7 @@ import { TermoComponent } from '../../compartilhado/glossario/termo.component';
 import { MaisAnalisesComponent } from '../../compartilhado/graficos/mais-analises.component';
 import { OrigemIdsUrl, paramsTransacoes, pct, primeiroDiaMes, reaisOuNada, ultimoDiaMes } from '../../compartilhado/utilidades';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
+import { totalDosFiis } from './fiis-total';
 
 // Paleta dos fundos: sem o verde/rosa de ganhou/perdeu nem o laranja da Selic, que têm significado (UX-9).
 const CORES = ['#a7a3f5', '#92c8f0', '#c3b1e1', '#8fd8d8', '#f3b3d3', '#f2d98b', '#b5cf9a', '#d4a5e8', '#a9b4c6',
@@ -184,8 +185,17 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
           </section>
         }
 
-        <section class="painel-bloco">
-          <h2>Meus FIIs</h2>
+        <section class="painel-bloco meus-fiis" aria-labelledby="titulo-meus-fiis">
+          <!-- #384: o valor da carteira ao lado do título, para ler de longe (Shneiderman: overview first). -->
+          @let t = total();
+          <div class="cabecalho-bloco">
+            <h2 id="titulo-meus-fiis">Meus FIIs</h2>
+            <p class="total-topo">
+              <strong>{{ t.valorAtual | currency }}</strong>
+              <span class="texto-suave">investido {{ t.investido | currency }}</span>
+              @if (t.semCotacao) { <span class="texto-suave">· {{ avisoSemCotacao(t.semCotacao) }}</span> }
+            </p>
+          </div>
           <div class="tabela-rolagem">
             <table class="tabela tabela-fiis">
               <thead>
@@ -226,6 +236,22 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
                   </tr>
                 }
               </tbody>
+              <!-- #384: o total alinhado com as colunas; o sinal da valorização também em texto (WCAG 1.4.1). -->
+              <tfoot class="linha-total">
+                <tr>
+                  <th scope="row" colspan="3">Total<br><small class="texto-suave">{{ t.fundos }} {{ t.fundos === 1 ? 'fundo' : 'fundos' }}</small></th>
+                  <td class="direita">{{ t.investido | currency }}<br><small class="texto-suave">investido</small></td>
+                  <td class="direita">{{ t.valorAtual | currency }}<br><small class="texto-suave">valor atual</small>
+                    @if (t.semCotacao) { <br><small class="texto-suave">{{ avisoSemCotacao(t.semCotacao) }}</small> }</td>
+                  <td class="direita" [class.positivo]="t.valorizacao >= 0" [class.negativo]="t.valorizacao < 0">
+                    {{ pct(t.valorizacaoPercentual) }}<br><small>{{ t.valorizacao > 0 ? '+' : '' }}{{ t.valorizacao | currency }}</small></td>
+                  <td></td>
+                  <td></td>
+                  <td class="direita"><strong>{{ pct(t.yieldOnCostMensal, false) }}</strong><br><small class="texto-suave">ao mês</small></td>
+                  <td class="direita positivo">{{ t.rendaMensal | currency }}</td>
+                  <td class="direita">100%</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
           <p class="texto-suave nota">
@@ -363,6 +389,10 @@ const compacto = (v: string | number) => Number(v).toLocaleString('pt-BR', { not
     .tabela-fiis td:first-child, .tabela-fiis td:nth-child(2) { white-space: normal; }
     .select-compacto { padding: 4px 8px; font-size: 0.85rem; min-width: 130px; }
     .nota { font-size: 0.82rem; margin: 12px 2px 0; }
+    .total-topo { margin: 0 0 0 auto; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 10px; }
+    .total-topo strong { font-size: 1.35rem; }
+    .linha-total th, .linha-total td { border-top: 2px solid var(--linha); border-bottom: 0; font-weight: 600; white-space: nowrap; }
+    .linha-total th { text-align: left; color: var(--texto); font-size: 0.92rem; }
   `
 })
 export class InvestimentosFiisComponent {
@@ -428,6 +458,13 @@ export class InvestimentosFiisComponent {
       },
       error: (e) => this.avisos.erro(mensagemDeErro(e))
     });
+  }
+
+  /** #384: o total de "Meus FIIs", na linha do fim da tabela e ao lado do título. */
+  readonly total = computed(() => totalDosFiis(this.dados()?.fiis ?? []));
+
+  avisoSemCotacao(n: number): string {
+    return n === 1 ? '1 fundo sem cotação, fora do valor atual' : `${n} fundos sem cotação, fora do valor atual`;
   }
 
   readonly lotesFiltrados = computed(() => {
