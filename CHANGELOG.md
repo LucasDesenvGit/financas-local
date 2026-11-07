@@ -2,6 +2,18 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.16] — 2026-11-07 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0060 (proposta): CDBs e caixinhas numa aba própria, com o rendimento no valor, e a regra caixinha × reserva** (#338). Antes de mexer no banco, a decisão fica escrita para aprovar:
+  - os três grupos (CDBs e caixinhas, Reservas, Open Finance), cada aplicação num só;
+  - a classificação automática, com a troca manual valendo mais e guardada no banco;
+  - o rendimento de cada aplicação: pelo valor aplicado, pelo histórico ou estimado pelo % do CDI;
+  - o "rendimento automático" que se desliga;
+  - as metas ligadas a um cofrinho, que continuam ligadas.
+
+  A implementação vem em quatro PRs depois desta. Nada muda para quem usa.
+
 ## [3.3.15] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação
