@@ -57,7 +57,8 @@ TITULO = '## Teste de mutação (gerenciador em Go)' if GERENCIADOR else '## Tes
 # lista dele deixa de fora, de propósito, os pacotes que chamam o Windows (a mutação roda no Linux).
 FORA = 'mutacao-go-fora.txt'
 # Arquivos da própria mutação: se só eles mudaram, o PR mede um pacote pequeno, para o script novo rodar de verdade.
-DA_MUTACAO = ('scripts/ci/go/mutacao-go', 'scripts/ci/go/mutacao-gerenciador-go', '.github/workflows/mutacao-go.yml')
+DA_MUTACAO = ('scripts/ci/go/mutacao-go', 'scripts/ci/go/mutacao-gerenciador-go', 'scripts/ci/comum.py',
+              '.github/workflows/mutacao-go.yml')
 PACOTE_DE_PROVA = 'internal/plataforma/tipos'
 
 

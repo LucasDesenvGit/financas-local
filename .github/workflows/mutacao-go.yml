@@ -17,6 +17,7 @@ on:
       - 'scripts/ci/go/mutacao-go.py'
       - 'scripts/ci/go/mutacao-go*.txt'
       - 'scripts/ci/go/mutacao-gerenciador-go*.txt'
+      - 'scripts/ci/comum.py' # o mutacao-go.py usa o arquivos_mudados dele
       - '.github/workflows/mutacao-go.yml'
   schedule:
     - cron: '0 9 * * 1' # segunda, 06:00 em Brasília
