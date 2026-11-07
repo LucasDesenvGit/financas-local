@@ -1279,8 +1279,11 @@ export const MANUAL: CapituloManual[] = [
           'Abra Configurações › Erros.',
           'Filtre por situação, origem, nível e período. O mesmo erro repetido aparece uma vez, com quantas vezes aconteceu.',
           '“detalhe” mostra a explicação técnica; “Resolvido” tira da lista (e “Reabrir” traz de volta).',
-          'Tokens, senhas, CPF e valores são removidos antes de gravar.'
+          'Tokens, senhas, CPF e valores são removidos antes de gravar.',
+          '“Reportar para o Claude” copia o erro (a mensagem, a tela, quantas vezes, a explicação técnica e a versão do site, sem o seu login) num texto que começa com /reportar-erro. Cole no Claude Code: ele procura se já existe uma issue, analisa o erro e pergunta se resolve agora, só cataloga ou se é do ambiente de desenvolvimento. O site não manda nada para a internet: quem envia é você, ao colar.',
+          'Se o navegador não deixar copiar sozinho, o texto aparece embaixo do erro, já selecionado: copie com Ctrl+C.'
         ],
+        dicas: ['O repositório do projeto é público. Antes de abrir uma issue, o Claude relê o texto e tira o que sobrou de dado pessoal (nomes, descrições de transação).'],
         abrir: [{ rotulo: 'Abrir os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }]
       }
     ]
