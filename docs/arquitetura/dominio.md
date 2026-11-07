@@ -31,18 +31,18 @@ stateDiagram-v2
 
 O sistema não decide o status: a cada sincronização, ele grava o que a Pluggy informar, em `Status` e `StatusExecucao`. Por isso, o diagrama mostra o que o site faz com cada valor, e não a ordem em que a Pluggy passa por eles.
 
-| Status da Pluggy | O que a tela mostra (`configuracoes.component.ts`) | Alerta no Painel (`OpenFinanceController.Status`) |
+| Status da Pluggy | O que a tela mostra (`configuracoes.component.ts`) | Alerta no Painel (`internal/analises/painel`, `avisosDasConexoes`) |
 |---|---|---|
 | `UPDATED` | Atualizada | Não |
 | `UPDATING` | Atualizando… | Não |
 | `OUTDATED` | Desatualizada | Não |
 | `LOGIN_ERROR` | Erro de login no banco | Sim |
-| `WAITING_USER_INPUT` | Precisa de ação sua | Não |
+| `WAITING_USER_INPUT` | Precisa de ação sua | Sim (desde a #532) |
 | `WAITING_USER_ACTION` | Precisa de ação sua | Sim |
 
 - **Erro e consentimento são independentes:** a conexão pode estar nos dois alertas ao mesmo tempo.
-- **Desativada:** fica fora da sincronização, do status e dos investimentos (`Where(c => c.Ativa)`). `AlterarAtiva` liga e desliga.
-- **`DiasAvisoConsentimento`:** parâmetro de 1 a 120 dias, com padrão 30 (`Servicos/ParametroService.cs`).
+- **Desativada:** fica fora da sincronização, do status e dos investimentos (as consultas filtram `WHERE "Ativa"`, em `internal/openfinance/openfinance` e `internal/patrimonio/carteira`). A rota de ativar e desativar é o `alterarAtiva` do `internal/openfinance/openfinance`.
+- **`DiasAvisoConsentimento`:** parâmetro de 1 a 120 dias, com padrão 30 (o catálogo em `internal/ajustes/parametros/catalogo.go`).
 
 ### Transação
 
@@ -68,7 +68,7 @@ stateDiagram-v2
 
 ### Conta a pagar
 
-**Onde está hoje:** Go, atendendo o site (#79, #555): `internal/movimentacao/contasagendadas` (o `pagar`) e `internal/movimentacao/cobrancas` (a conciliação, que a partida, #444, e a sincronização, #83, também chamam). Os avisos que vão para o sino saem do `PainelController.cs` (.NET), com o painel em Go (`internal/analises/painel`, #80) pronto e desligado no site.
+**Onde está hoje:** Go, atendendo o site (#79, #555): `internal/movimentacao/contasagendadas` (o `pagar`) e `internal/movimentacao/cobrancas` (a conciliação, que a partida, #444, e a sincronização, #83, também chamam). Os avisos que vão para o sino saem do painel (`internal/analises/painel`, `Servico.Avisos`, #80).
 
 ```mermaid
 stateDiagram-v2
@@ -93,7 +93,7 @@ stateDiagram-v2
 
 ### Gerenciador
 
-**Onde está hoje:** a referência é o gerenciador em Go ([ADR 0052](../adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)), em `src/gerenciador-go/internal/tela/tela.go`, `internal/situacao/situacao.go` e `versao_nova.go`. O de C# ainda é o que o instalador leva.
+**Onde está hoje:** a referência é o gerenciador em Go ([ADR 0052](../adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)), em `src/gerenciador-go/internal/tela/tela.go`, `internal/situacao/situacao.go` e `versao_nova.go`.
 
 A situação do site:
 

@@ -200,7 +200,7 @@ O detalhe do que é estável hoje (o LLD), em diagramas:
 
 ## Índice da documentação
 
-As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento.
+As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento. A lista dos arquivos, um por linha, está no [README da pasta](README.md).
 
 | Seção | Onde está |
 |---|---|

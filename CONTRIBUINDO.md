@@ -302,7 +302,7 @@ Quem usa o Claude Code no projeto recebe, pelo repositório:
 
 ## Convenções de código
 
-- Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
+- Nomes em português, seguindo o que já existe (ex.: `XxxService` no Angular, `Servico` e `NovoServico` no Go, `XxxDto`, `SalvarXxxDto`).
 - Back-end em Go: um pacote por assunto em `src/backend/internal/<area>/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
 - Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
 - Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").
