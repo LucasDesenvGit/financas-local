@@ -2,6 +2,19 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.16] — 2026-11-07 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0061 (proposta): acesso pelo celular na rede de casa** (#328). A #328 pede abrir o site no celular, no mesmo Wi-Fi, e isso contraria o "só escuta em `127.0.0.1`" (ADR 0002). Por isso, a decisão vem antes do código:
+  - desligado por padrão;
+  - quando ligado, o site escuta também no IP da rede;
+  - o certificado é assinado por uma autoridade local, com o IP no certificado, e o celular confia nela uma vez;
+  - o firewall abre a porta só para a rede de casa (perfil Particular no Windows);
+  - o limite de tentativas de login vale por aparelho;
+  - a skill `revisar-no-celular`.
+
+  As alternativas (o cabo USB com `adb reverse`, um túnel de VPN, um proxy reverso) e os riscos estão na ADR. Nada muda para quem usa.
+
 ## [3.3.15] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação
