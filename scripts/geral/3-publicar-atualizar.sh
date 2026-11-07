@@ -38,6 +38,25 @@ done
 # #86: o .NET saiu; o servico e sempre o Go. A escolha da #85 (dados/backend) nao vale mais.
 rm -f "$Dados/backend"
 
+# #655: o backup agendado antes da #154 chama o repasse scripts/4-backup.sh, que saiu. Troca pelo caminho novo,
+# mantendo horario e --manter, para o backup nao parar em silencio (no Windows, o instalar-windows.ps1 faz o mesmo).
+# Roda antes do build: se a atualizacao parar depois, o agendamento ja aponta para o arquivo que existe.
+backup_antigo="$Raiz/scripts/4-backup.sh"
+backup_novo="$Raiz/scripts/geral/4-backup.sh"
+cron_atual="$(crontab -l 2>/dev/null || true)"
+if grep -qF "$backup_antigo " <<<"$cron_atual"; then
+    if grep -qF "$backup_novo " <<<"$cron_atual"; then
+        cron_novo="$(grep -vF "$backup_antigo " <<<"$cron_atual" || true)"   # ja agendado pelo novo: so tira o velho
+    else
+        cron_novo="${cron_atual//"$backup_antigo "/"$backup_novo "}"
+    fi
+    if printf '%s\n' "$cron_novo" | crontab -; then
+        ok "Backup agendado passou para o caminho novo ($backup_novo)."
+    else
+        aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar"
+    fi
+fi
+
 pasta_front="$Raiz/src/frontend"
 preparo="$PastaPublicado/preparo"
 destino="$PastaPublicado/api"
@@ -63,7 +82,7 @@ if [[ "$pular_build" -eq 0 ]]; then
     command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     versao_sistema="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
     (cd "$Raiz/src/backend" && go build -trimpath \
-        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$versao_sistema" \
+        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$versao_sistema" \
         -o "$(caminho_nativo "$preparo/$nome_go")" ./cmd/financas)
     ok "back-end em Go compilado ($(go env GOVERSION))"
 
@@ -304,24 +323,6 @@ if [[ "$sucesso" -eq 1 ]]; then
         [[ -e "$velho" ]] || continue
         rm -rf "$velho" && ok "o que so o .NET usava saiu: $velho"
     done
-fi
-
-# #655: o backup agendado antes da #154 chama o repasse scripts/4-backup.sh, que saiu. Troca pelo caminho novo,
-# mantendo horario e --manter, para o backup nao parar em silencio. (No Windows, o instalar-windows.ps1 faz o mesmo.)
-backup_antigo="$Raiz/scripts/4-backup.sh"
-backup_novo="$Raiz/scripts/geral/4-backup.sh"
-cron_atual="$(crontab -l 2>/dev/null || true)"
-if grep -qF "$backup_antigo " <<<"$cron_atual"; then
-    if grep -qF "$backup_novo " <<<"$cron_atual"; then
-        cron_novo="$(grep -vF "$backup_antigo " <<<"$cron_atual" || true)"   # ja agendado pelo novo: so tira o velho
-    else
-        cron_novo="${cron_atual//"$backup_antigo "/"$backup_novo "}"
-    fi
-    if printf '%s\n' "$cron_novo" | crontab -; then
-        ok "Backup agendado passou para o caminho novo ($backup_novo)."
-    else
-        aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar"
-    fi
 fi
 
 echo ''

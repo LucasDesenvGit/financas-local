@@ -42,7 +42,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
 | Nenhuma atualização apaga dados | Dados depois de atualizar | Todos ficam | Os workflows "Teste de instalação" atualizam em cima de uma instalação, mas não comparam os dados | Medida: nada compara os dados antes e depois |
-| Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `AplicarEsquema` (`internal/banco`) | Medida no código e nos testes do pacote |
+| Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `AplicarEsquema` (`internal/plataforma/banco`) | Medida no código e nos testes do pacote |
 | Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts e no `.msi` |
 | Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar. Investimentos abre, mas cada abertura espera a falha do Banco Central (#534) | À mão | Sem medida. Investimentos: ~4,1 s por abertura com a saída numa porta fechada, no Windows |
 | Site fora do ar | O serviço | Reinício sozinho | A recuperação do serviço: `Restart=` da unidade do systemd e o `ServiceConfig` do `.msi` | Sem teste desde a #86 (o teste era do Go atrás do .NET, que voltava sozinho) |

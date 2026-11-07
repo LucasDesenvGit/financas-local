@@ -19,7 +19,7 @@ O gerenciador em Go (src/gerenciador-go, ADR 0052) é outro módulo, com a lista
 (#433), na CI, para o teste pesado não rodar na máquina de quem desenvolve.
 
 Uso:   python3 scripts/ci/mutacao-go.py                        # todos os pacotes de mutacao-go.txt
-       python3 scripts/ci/mutacao-go.py internal/parametros    # só os dados (fora da lista: mede, sem piso)
+       python3 scripts/ci/mutacao-go.py internal/ajustes/parametros    # só os dados (fora da lista: mede, sem piso)
        python3 scripts/ci/mutacao-go.py --base origin/develop  # no PR: só os pacotes que mudaram desde a base
        python3 scripts/ci/mutacao-go.py --conferir-lista       # só confere a lista (rápido, sem medir)
        python3 scripts/ci/mutacao-go.py --gerenciador          # os do gerenciador (mutacao-gerenciador-go.txt)
@@ -55,7 +55,7 @@ TITULO = '## Teste de mutação (gerenciador em Go)' if GERENCIADOR else '## Tes
 FORA = 'mutacao-go-fora.txt'
 # Arquivos da própria mutação: se só eles mudaram, o PR mede um pacote pequeno, para o script novo rodar de verdade.
 DA_MUTACAO = ('scripts/ci/mutacao-go', 'scripts/ci/mutacao-gerenciador-go', '.github/workflows/mutacao-go.yml')
-PACOTE_DE_PROVA = 'internal/tipos'
+PACOTE_DE_PROVA = 'internal/plataforma/tipos'
 
 
 def ler_linhas(nome):
@@ -176,7 +176,7 @@ def medir(pacote, conhecidas):
     os.makedirs(SAIDA, exist_ok=True)
     saida_json = os.path.join(SAIDA, pacote.replace('/', '-') + '.json')
     # O andamento do gremlins (sem --silent) fica no log: mostra o último mutante quando um deles faz o teste rodar sem
-    # parar e o job cai (#433 no gerenciador; #455 no back-end, com o internal/carteira).
+    # parar e o job cai (#433 no gerenciador; #455 no back-end, com o internal/patrimonio/carteira).
     comando = ['go', 'run', GREMLINS, 'unleash', './' + pacote, '--output', saida_json] + OPERADORES + EXECUCAO
     print(f'== {pacote}', flush=True)
     subprocess.run(comando, cwd=GO, check=True)

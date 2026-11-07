@@ -23,7 +23,7 @@ Use ao revisar um PR com Go e no fim do seu próprio trabalho. Cada achado sai c
 **Forma do código (ADR 0056)**
 - [ ] O teste de arquitetura passa (`go test -tags arquitetura ./internal/arquitetura/`). **É só local**: rode você; a CI não roda.
 - [ ] Dependência nova entre assuntos tem a linha em `dependencias` com um motivo que convence. Na dúvida, pergunte se a regra comum não deveria ir para um pacote de regra.
-- [ ] Pacote de regra sem `net/http`, `internal/respostas` nem `internal/servidor`.
+- [ ] Pacote de regra sem `net/http`, `internal/plataforma/respostas` nem `internal/plataforma/servidor`.
 - [ ] Interface nova tem duas implementações de verdade e é declarada por quem usa.
 - [ ] Goroutine nova tem dono que a encerra pelo `context`.
 

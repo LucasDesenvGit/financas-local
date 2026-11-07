@@ -23,13 +23,13 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/carteira"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/categorizacao"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/cobrancas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/relogio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/transferencias"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/categorizacao"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/cobrancas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transferencias"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/carteira"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 // Opcoes são as dependências de Executar.

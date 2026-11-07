@@ -1,6 +1,6 @@
 // Pacote api junta as rotas de todos os assuntos já em Go num ServeMux só. É o MapControllers do Go.
 //
-// Cada assunto tem o próprio pacote (internal/<assunto>) e exporta Registrar(mux, <o que ele usa>), que põe as
+// Cada assunto tem o próprio pacote (internal/<area>/<assunto>) e exporta Registrar(mux, <o que ele usa>), que põe as
 // rotas dele no mux com o padrão do Go 1.22 ("GET /api/assunto/{id}"). Aqui entra uma linha por assunto, e só isso:
 // assim, assuntos feitos em paralelo (#75, #77, #81) não mexem nas mesmas linhas. No merge, conflito neste arquivo é
 // sempre "fique com as duas linhas" (e o gofmt põe os imports em ordem).
@@ -14,30 +14,30 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/cambio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/carteira"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/categorias"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/conferenciabanco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/config"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/contas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/contasagendadas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/cotacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/cripto"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/extrato"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/investimentos"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/metas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/openfinance"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/orcamentos"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/painel"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/parametros"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/pluggy"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/relogio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/reservas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/saude"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/segredos"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/selic"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/sincronizacao"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/versao"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/categorias"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/parametros"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/painel"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/conferenciabanco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contasagendadas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/extrato"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/openfinance/openfinance"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/openfinance/pluggy"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/openfinance/sincronizacao"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/carteira"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cotacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cripto"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/investimentos"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/reservas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/selic"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/planejamento/metas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/planejamento/orcamentos"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/saude"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/segredos"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao"
 )
 
 // Dependencias de todos os assuntos, passadas pelo construtor (sem container de injeção). Cada assunto recebe no
