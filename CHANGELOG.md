@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.4.0] — 2026-11-07 · desenvolvimento
+
+### Funcionalidades
+- **Investimentos › Open Finance: o rendimento por investimento em linhas e a grade que recolhe** (#331). Em "Rendimento por mês", o mês mais recente já abre por investimento: cada um numa linha, do que mais rendeu ao que menos, com uma barrinha do tamanho do rendimento, como em "Gasto por categoria", no lugar da linha corrida. "sem o valor aplicado" virou etiqueta, e a explicação longa foi para o ⓘ "Como o rendimento é calculado". A tabela dos investimentos do Open Finance recolhe pelo título; recolhida, mostra quantos são e o total, e a escolha fica guardada neste navegador (`financas.investimentos.gradeOFRecolhida`, ADR 0017). Feito a partir do #348, fechado sem merge. O Manual foi junto.
+
 ## [3.3.15] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação
