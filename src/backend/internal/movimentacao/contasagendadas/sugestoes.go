@@ -362,7 +362,7 @@ func avaliar(chave, chaveTexto string, todos []lancamento, hoje, desdeMensal tip
 
 	meses := map[int]bool{}
 	for _, l := range itens {
-		meses[l.data.Ano()*12+int(l.data.Mes())-1] = true
+		meses[mesCorrido(l.data)] = true
 	}
 	chaveExtrato := chaveTexto
 	return SugestaoDto{
@@ -431,22 +431,21 @@ func ehMensal(datas []tipos.Data, hoje tipos.Data) bool {
 		return false
 	}
 	meses := map[int]bool{}
-	menor, maior := 0, 0
-	for i, d := range datas {
-		m := d.Ano()*12 + int(d.Mes()) - 1
+	menor := mesCorrido(datas[0])
+	maior := menor
+	for _, d := range datas {
+		m := mesCorrido(d)
 		meses[m] = true
-		if i == 0 || m < menor {
-			menor = m
-		}
-		if i == 0 || m > maior {
-			maior = m
-		}
+		menor, maior = min(menor, m), max(maior, m)
 	}
 	if len(meses) < minimoMeses || 2*len(datas) > 3*len(meses) {
 		return false
 	}
 	return 10*len(meses) >= 6*(maior-menor+1)
 }
+
+// mesCorrido conta os meses desde o ano zero: dois meses seguidos dão números seguidos, também na virada do ano.
+func mesCorrido(d tipos.Data) int { return d.Ano()*12 + int(d.Mes()) }
 
 // ehAnual (#158): 2 ou 3 cobranças, cada uma de 330 a 400 dias depois da anterior (mais recente primeiro).
 func ehAnual(datas []tipos.Data) bool {
@@ -504,11 +503,9 @@ func temBorda(s string, i int) bool {
 		r := []rune(s[:i])
 		antes = palavraNET(r[len(r)-1])
 	}
-	if i < len(s) {
-		for _, r := range s[i:] {
-			depois = palavraNET(r)
-			break
-		}
+	for _, r := range s[i:] { // no fim do texto, s[i:] é vazio
+		depois = palavraNET(r)
+		break
 	}
 	return antes != depois
 }
@@ -605,9 +602,6 @@ func semAsParecidas(lista []SugestaoDto, cadastradas []cadastrada) []SugestaoDto
 		if c.ativa && c.chaveExtrato == nil {
 			livres = append(livres, c)
 		}
-	}
-	if len(livres) == 0 || len(lista) == 0 {
-		return lista
 	}
 	candidatas := make([][]cadastrada, len(lista))
 	usos := map[int64]int{}
