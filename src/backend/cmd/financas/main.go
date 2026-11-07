@@ -34,6 +34,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/partida"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cripto"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
@@ -189,7 +190,8 @@ func rodar(ctx context.Context) error {
 	// #298: os erros do sistema. O gravador para depois do servidor e grava o que sobrou na fila antes de o banco
 	// fechar (o defer acima).
 	erros.Registrar(rotas, erros.NovoServico(db, filaDeErros, rel, log))
-	gravador := erros.NovoGravador(db, filaDeErros, rel, parametrosDoSite(db, rel, log, cfg), logSemTabela)
+	parametrosSite := parametrosDoSite(db, rel, log, cfg)
+	gravador := erros.NovoGravador(db, filaDeErros, rel, parametrosSite, logSemTabela)
 	ctxGravador, pararGravador := context.WithCancel(context.Background())
 	gravadorParou := make(chan struct{})
 	go func() {
@@ -199,6 +201,17 @@ func rodar(ctx context.Context) error {
 	defer func() {
 		pararGravador()
 		<-gravadorParou
+	}()
+	// #530: a auditoria de acesso tem prazo; a limpeza roda ao subir e uma vez por dia, e para antes de o banco fechar.
+	ctxLimpeza, pararLimpeza := context.WithCancel(ctx)
+	limpezaParou := make(chan struct{})
+	go func() {
+		defer close(limpezaParou)
+		auditoria.NovaLimpeza(db, parametrosSite, rel, log).Rodar(ctxLimpeza)
+	}()
+	defer func() {
+		pararLimpeza()
+		<-limpezaParou
 	}()
 	log.Info("iniciando", "versao", versao.Atual)
 	return servidor.Rodar(ctx, servidor.Opcoes{
@@ -228,8 +241,8 @@ func avisarRelogioDeTeste(log *slog.Logger, instante *time.Time) {
 		"inicio", instante.Format(time.RFC3339Nano), "origem", "Sistema")
 }
 
-// parametrosDoSite é o ParametroService que o gravador usa para o prazo dos erros (os padrões do appsettings, como
-// no api.NovasRotas).
+// parametrosDoSite é o ParametroService que o gravador e a limpeza da auditoria usam para os prazos (os padrões do
+// appsettings, como no api.NovasRotas).
 func parametrosDoSite(db *sql.DB, rel relogio.Relogio, log *slog.Logger, cfg config.Config) *parametros.Servico {
 	return parametros.Novo(parametros.Opcoes{DB: db, Relogio: rel, Log: log, Versao: versao.Atual,
 		CaminhoBanco: cfg.BancoCaminho, PastaChaves: cfg.PastaChaves, Padroes: parametros.PadroesDoAppsettings(cfg)})
