@@ -18,3 +18,4 @@ internal/desenvolvimento  100
 internal/comando          100
 internal/servico          100
 internal/preferencias     100
+internal/restauracao      100

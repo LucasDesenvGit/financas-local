@@ -20,6 +20,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/icones"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/preferencias"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
@@ -280,6 +281,45 @@ func (g *gerenciador) salvarCopia() *tela.Aviso {
 	return &aviso
 }
 
+// restaurarCopia (#533) pergunta qual cópia, confere o arquivo antes de desligar o site (um arquivo errado não derruba
+// nada), restaura (no Windows, elevado) e devolve o aviso para a janela mostrar (nil: escolha cancelada).
+func (g *gerenciador) restaurarCopia() *tela.Aviso {
+	opcoes := &application.OpenFileDialogOptions{
+		Title:          "Restaurar uma cópia do banco",
+		CanChooseFiles: true,
+		Directory:      preferencias.PastaDocumentos(),
+		Filters:        []application.FileFilter{{DisplayName: "Banco do Finanças Local (*.db)", Pattern: "*.db"}},
+	}
+	g.trava.Lock()
+	if g.janela != nil {
+		opcoes.Window = g.janela
+	}
+	g.trava.Unlock()
+	origem, err := g.app.Dialog.OpenFileWithOptions(opcoes).PromptForSingleSelection()
+	if err != nil || origem == "" {
+		return nil
+	}
+	if err := restauracao.Conferir(origem); err != nil {
+		log.Print(err)
+		a := tela.AvisoDaRestauracao(tela.NaoEhCopia)
+		return &a
+	}
+	a := tela.AvisoDaRestauracao(resultadoDaRestauracao(restaurarBanco(g.inst.CaminhoBanco, origem)))
+	return &a
+}
+
+// resultadoDaRestauracao traduz o resultado da ação (elevada ou não) para o aviso.
+func resultadoDaRestauracao(r elevacao.Resultado) tela.Restauracao {
+	switch r {
+	case elevacao.Feito:
+		return tela.Restaurada
+	case elevacao.Cancelado:
+		return tela.RestauracaoCancelada
+	default:
+		return tela.RestauracaoFalhou
+	}
+}
+
 // verSemLogin lê se o site fica no ar sem a sessão aberta (Linux; o loginctl leva um instante).
 func (g *gerenciador) verSemLogin() {
 	semLogin := lerSemLogin()
@@ -368,6 +408,13 @@ func (g *gerenciador) rotas() http.Handler {
 				_ = json.NewEncoder(w).Encode(aviso)
 				return
 			}
+		case "restaurar":
+			// Como a cópia: espera o diálogo, a conferência e o UAC, e responde com o aviso.
+			if aviso := g.restaurarCopia(); aviso != nil {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(aviso)
+				return
+			}
 		case "abrir-pasta":
 			g.abrirPasta()
 		case "copiar-comando":
@@ -420,6 +467,10 @@ func (g *gerenciador) rotas() http.Handler {
 	})
 	mux.HandleFunc("GET /confirmar-develop", func(w http.ResponseWriter, _ *http.Request) {
 		responderJSON(w, g.confirmacaoDoDevelop())
+	})
+	mux.HandleFunc("GET /confirmar-restauracao", func(w http.ResponseWriter, _ *http.Request) {
+		a := tela.ConfirmarRestauracao(linux)
+		responderJSON(w, &a)
 	})
 	mux.HandleFunc("GET /confirmar-atualizacao", func(w http.ResponseWriter, _ *http.Request) {
 		responderJSON(w, g.confirmacao())

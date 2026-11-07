@@ -58,6 +58,11 @@ func executarNoServico(acao string) (elevacao.Resultado, string) {
 // copiarBanco pelo UAC: o banco fica na pasta de dados do serviço.
 func copiarBanco(_, destino string) elevacao.Resultado { return elevacao.Executar("--backup", destino) }
 
+// restaurarBanco pelo UAC (#533): parar o serviço e mexer na pasta de dados pedem administrador.
+func restaurarBanco(_, copia string) elevacao.Resultado {
+	return elevacao.Executar("--restaurar", copia)
+}
+
 // reinstalar roda o instalar-windows.ps1 como administrador, num passo à parte, e acompanha o log dele.
 func reinstalar(raiz string, escrever func(string)) elevacao.Resultado {
 	ctx, parar := context.WithCancel(context.Background())

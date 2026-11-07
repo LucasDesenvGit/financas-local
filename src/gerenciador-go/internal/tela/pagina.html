@@ -47,7 +47,8 @@
       data-rotulo="{{.RotuloMais}}" aria-label="{{if .MaisOpcoes}}Menos opções (esconder){{else}}{{.RotuloMais}}{{end}}"
       >{{if .MaisOpcoes}}Menos opções ▴{{else}}Mais opções ▾{{end}}</button>
     <section class="cartao" id="painel-mais"{{if not .MaisOpcoes}} hidden{{end}}>
-      <div class="linha"><button class="botao" type="button" data-acao="copia" accesskey="c">{{.Icone "salvar"}}Salvar uma cópia do banco…</button></div>
+      <div class="linha"><button class="botao" type="button" data-acao="copia" accesskey="c">{{.Icone "salvar"}}Salvar uma cópia do banco…</button>
+        <button id="restaurar" class="botao" type="button" accesskey="r">{{.Icone "reiniciar"}}Restaurar uma cópia…</button></div>
       <div class="linha">
         <span class="com-dica"><button id="erros" class="botao pagina-do-site" type="button" data-pagina="configuracoes?aba=erros" accesskey="e"{{if not .PaginasDoSiteHabilitadas}} disabled aria-describedby="dica-erros"{{end}}>{{.Icone "erros"}}Ver os erros do site</button><span id="dica-erros" class="dica" role="tooltip"{{if .PaginasDoSiteHabilitadas}} hidden{{end}}>{{dica}}</span></span>
         {{if .Linux}}<button id="registro" class="botao" type="button" accesskey="g">{{.Icone "registro"}}Ver o registro do serviço</button>{{end}}
@@ -126,7 +127,7 @@
     });
     else if (b.dataset.acao) fetch('/acao/' + b.dataset.acao, { method: 'POST' }).then(atualizar);
   });
-  var aviso = $('aviso'), aoConfirmar = null;
+  var aviso = $('aviso'), aoConfirmar = null, rotuloConfirmar = $('aviso-confirmar').innerHTML;
   // O aviso no desenho do gerenciador: resultado (OK) ou pergunta (Cancelar e a ação, que recebe o foco).
   function mostrarAviso(a, confirmar) {
     ['sucesso', 'alerta', 'pergunta'].forEach(function (t) { $('aviso-simbolo-' + t).hidden = a.tipo !== t; });
@@ -138,6 +139,8 @@
     $('aviso-abrir-pasta').hidden = !a.arquivo;
     aoConfirmar = confirmar || null;
     $('aviso-ok').hidden = !!aoConfirmar;
+    $('aviso-confirmar').innerHTML = rotuloConfirmar;
+    if (a.confirmar) $('aviso-confirmar').textContent = a.confirmar;
     $('aviso-cancelar').hidden = $('aviso-confirmar').hidden = !aoConfirmar;
     aviso.showModal();
     $(aoConfirmar ? 'aviso-confirmar' : 'aviso-ok').focus();
@@ -153,6 +156,17 @@
   if ($('atualizar')) $('atualizar').addEventListener('click', function () {
     fetch('/confirmar-atualizacao').then(function (r) { return r.ok ? r.json() : null; }).then(function (a) {
       if (a) mostrarAviso(a, function () { fetch('/acao/atualizar', { method: 'POST' }).then(atualizar); });
+    });
+  });
+  // #533: restaurar uma cópia. Primeiro o que muda; confirmado, o gerenciador pergunta o arquivo, confere, restaura (no
+  // Windows, pelo UAC) e responde com o resultado.
+  $('restaurar').addEventListener('click', function () {
+    fetch('/confirmar-restauracao').then(function (r) { return r.ok ? r.json() : null; }).then(function (a) {
+      if (a) mostrarAviso(a, function () {
+        fetch('/acao/restaurar', { method: 'POST' }).then(function (r) {
+          if (r.status === 200) return r.json().then(mostrarAviso);
+        });
+      });
     });
   });
   // Atualizar pelo develop: confirmar antes, como o C#; a saída dos scripts chega pela consulta abaixo.

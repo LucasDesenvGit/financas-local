@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.4.0] — 2026-11-07 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: "Restaurar uma cópia…"** (#533). Em Mais opções, ao lado de "Salvar uma cópia do banco…", nos dois sistemas. O gerenciador diz o que muda (tudo volta para a data da cópia, inclusive a senha), pede o arquivo e confere que ele é uma cópia do banco do Finanças Local antes de desligar o site. Depois desliga, guarda o banco de agora em `dados/antes-de-restaurar`, põe a cópia no lugar sem o `-wal` e o `-shm` do banco antigo (o passo que mais dava errado à mão) e liga de novo. Se algo falhar no meio, devolve o banco de antes. No Windows, pede permissão de administrador. O Manual, o guia de operação, o `DADOS-PESSOAIS.md` e o modelo de ameaças foram junto.
+
 ## [3.3.15] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação

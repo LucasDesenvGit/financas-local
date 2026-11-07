@@ -10,10 +10,11 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 | "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432); "Atualizar o gerenciador e reabrir" quando a reinstalação dá certo (#430) | |
 | Linux (#417): instalado pelo `scripts/linux/instalar-gerenciador.sh` com o atalho `br.financaslocal.Gerenciador.desktop` (#277); `systemctl --user` sem senha, tema pelo portal, "Iniciar com o sistema" (`~/.config/autostart`), registro do serviço, comando para atualizar, "sem login" (linger), ícones em SVG | |
 | Aviso na bandeja com a janela fechada: o site caiu, versão nova (#448) | |
+| "Restaurar uma cópia…" em Mais opções: confere o arquivo, guarda o banco de agora em `dados/antes-de-restaurar`, troca e liga de novo; no Windows, pelo UAC (`--restaurar`) (#533) | |
 
 ## Organização
 
-- `main.go`: a entrada, e as ações que o próprio gerenciador roda como administrador (`--servico ligar|desligar|reiniciar`, `--backup "destino"`, `--instalar-pelos-scripts`), como o `Program.cs`. `--situacao` escreve a situação e sai (0 = no ar), sem janela, como o do Linux em C# (#277).
+- `main.go`: a entrada, e as ações que o próprio gerenciador roda como administrador (`--servico ligar|desligar|reiniciar`, `--backup "destino"`, `--restaurar "cópia"`, `--instalar-pelos-scripts`), como o `Program.cs`. `--situacao` escreve a situação e sai (0 = no ar), sem janela, como o do Linux em C# (#277).
 - `gerenciador.go`: o Wails (janela, bandeja, instância única), a consulta da situação e as rotas da página, servidas por dentro do programa, **sem porta aberta** (`AssetOptions.Handler`).
 - `sistema_windows.go`, `sistema_linux.go`: o que muda entre os dois. No Windows, ligar, desligar, copiar o banco e reinstalar pedem o UAC; no Linux, rodam no próprio gerenciador, e fechar a janela só a esconde (ADR 0052, #417).
 - `foco_windows.go`, `foco_linux.go`: abrir o gerenciador de novo traz a janela que já está aberta para a frente. No Windows, a segunda cópia passa à primeira o direito de vir para a frente (`AllowSetForegroundWindow`) antes de avisá-la e fechar; no Linux, não precisa.
@@ -23,6 +24,7 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 - `internal/servico`, `internal/elevacao`: o serviço do Windows e o UAC só para a ação; no Linux, a unidade `financaslocal.service` do `systemd --user`, o linger e o registro.
 - `internal/comando`: roda os programas do sistema (`systemctl`, `loginctl`, `journalctl`, `busctl`), como o `Comando.cs`.
 - `internal/copia`: a cópia do banco pelo `VACUUM INTO` (`modernc.org/sqlite`, o mesmo da API).
+- `internal/restauracao`: o "Restaurar uma cópia" (#533), com os passos do `docs/OPERACAO.md`: conferir a cópia antes de desligar o site, guardar o banco de agora, trocar sem o `-wal` e o `-shm` antigos e devolver o de antes se algo falhar no meio.
 - `internal/atualizacao`: a versão nova pelo GitHub Releases (o `Atualizacoes.cs`): procurar, baixar conferindo o SHA-256, abrir o `.msi` e as notas separadas e em HTML seguro. `versao_nova.go` liga isso à janela.
 - `internal/desenvolvimento`: o "Atualizar para a última do develop" (ADR 0040): reconhecer o clone na `develop`, rodar os scripts com a saída ao vivo e acompanhar o log do instalador. `develop.go` liga isso à janela.
 - `internal/icones`: o ícone da bandeja com o ponto da cor da situação.
