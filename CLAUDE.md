@@ -31,7 +31,7 @@ O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CON
 
 ## Testes
 
-- **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou. Mexeu em teste ou em CI: tempo antes e depois no PR.
+- **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou, e a `revisar-no-celular` (largura, toque, alvo de 24 px, teclado virtual; #328) em toda mudança de tela. Mexeu em teste ou em CI: tempo antes e depois no PR.
 - **Go: toda regra nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): unitário em tabela, SQLite real, `httptest`, só a biblioteca padrão; bug corrigido ganha teste que falha antes. Detalhes em [CONTRIBUINDO.md, "Testes do back-end (Go)"](CONTRIBUINDO.md#testes-do-back-end-go).
 - **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura` (#476). Ele é só local, por decisão de 29/10/2026, e a CI não o roda. Dependência nova de propósito entra na tabela do teste, com o motivo, no mesmo PR.
 
@@ -109,7 +109,7 @@ Conventional Commits em português (fluxo de branches, comandos e Project em [CO
 
 ## Segurança (específico deste projeto — não genérico)
 
-Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo executável do Go — sem IIS/proxy). Pontos que afetam como escrever código aqui:
+Tudo roda local (bind em `127.0.0.1:5443`, direto pelo executável do Go — sem IIS/proxy). A única exceção é o **acesso pelo celular** ([ADR 0061](docs/adr/0061-acesso-pelo-celular-na-rede-local.md), `internal/plataforma/celular`): desligado por padrão, ligado com login, abre um segundo servidor só num IPv4 privado da rede de casa, com o mesmo pipeline e a autoridade local. Não abra outra porta nem outro endereço fora dele. Pontos que afetam como escrever código aqui:
 - Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo do site, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
 - Segredos (Client Secret da Pluggy, token da brapi) com a chave em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows (`internal/plataforma/segredos/protecao_windows.go`), permissão de arquivo (0600) no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.
