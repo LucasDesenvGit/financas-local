@@ -59,3 +59,6 @@ src/frontend/jest-resultado.json
 # Teste de mutação do Go (#373): saída do scripts/ci/mutacao-go.py
 src/backend/mutacao/
 src/gerenciador-go/mutacao/
+
+# Python (os scripts de scripts/ci e scripts/geral)
+__pycache__/

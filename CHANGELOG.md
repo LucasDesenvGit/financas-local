@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.16] — 2026-11-06 · desenvolvimento
+
+### Publicação e documentação
+- **Limpeza da pasta `scripts/`** (parte de #655). A atualização pelos scripts (`3-publicar-atualizar.sh` e `instalar-windows.ps1`) troca sozinha, logo no começo, o backup diário agendado pelo caminho antigo, `scripts/4-backup.sh`, pelo novo, `scripts/geral/4-backup.sh`, com o mesmo horário e o mesmo `--manter`, no crontab e no Agendador de Tarefas. Assim o repasse da raiz de `scripts/` pode sair numa versão seguinte sem o backup de ninguém parar em silêncio. Saem os `.pyc` versionados (o `.gitignore` ganha `__pycache__/`) e o `configurar-github.ps1`, de uso único, que nada chamava; a proteção das branches que ele aplicava fica no `CONTRIBUINDO.md`. O comentário do `instalar.sh` dizia que o `instalar-windows.cmd` o abria no Git Bash; desde a ADR 0012, ele roda o `instalar-windows.ps1`. Nada muda para quem usa.
+
 ## [3.3.15] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação

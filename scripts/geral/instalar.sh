@@ -10,8 +10,8 @@
 #   a janela que mostra se o site esta no ar e liga e desliga (#300).
 #
 # Pode ser executado de novo para atualizar: as tres etapas sao idempotentes.
-# No Windows, o instalar-windows.cmd (na raiz) abre este script no Git Bash
-# como Administrador.
+# No Windows, o caminho sem Git Bash e o instalar-windows.cmd (na raiz), que
+# roda o scripts/windows/instalar-windows.ps1 como Administrador (ADR 0012).
 #
 # Ao migrar de uma instalacao com SQL Server, NAO use este script: siga a
 # secao "Migrar de uma instalacao com SQL Server" de docs/INSTALACAO-PELO-CODIGO.md.
