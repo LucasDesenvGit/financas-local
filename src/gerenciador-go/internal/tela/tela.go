@@ -446,6 +446,8 @@ type Aviso struct {
 	// eles aparece "Abrir a pasta".
 	Arquivo string `json:"arquivo,omitempty"`
 	Pasta   string `json:"pasta,omitempty"`
+	// Confirmar é o texto do botão da pergunta, quando não é o "Atualizar" de sempre (#533: "Escolher a cópia…").
+	Confirmar string `json:"confirmar,omitempty"`
 }
 
 // AvisoDaCopia é o resultado de "Salvar uma cópia do banco…", com os textos do SalvarCopiaAsync do C#.
@@ -460,6 +462,50 @@ func AvisoDaCopia(feito, cancelado bool, destino string) Aviso {
 	default:
 		return Aviso{Tipo: "alerta", Titulo: "Cópia do banco",
 			Mensagem: "Não deu para copiar o banco. Confira se a pasta escolhida aceita gravação."}
+	}
+}
+
+// ConfirmarRestauracao é a pergunta antes de "Restaurar uma cópia…" (#533): o que muda, antes de escolher o arquivo.
+func ConfirmarRestauracao(linux bool) Aviso {
+	administrador := " O Windows vai pedir permissão de administrador."
+	if linux {
+		administrador = ""
+	}
+	return Aviso{Tipo: "pergunta", Titulo: "Restaurar uma cópia do banco?", Confirmar: "Escolher a cópia…",
+		Mensagem: "Tudo volta para a data da cópia, inclusive a senha do site: entre com a senha que valia naquele dia. " +
+			"O que você lançou ou mudou à mão depois da cópia se perde; o que veio do Open Finance volta na próxima " +
+			"sincronização. O banco de agora fica guardado na pasta dados, em antes-de-restaurar, e o site fica fora do " +
+			"ar por alguns segundos. Cópia de uma versão mais nova que a instalada? Atualize o sistema antes." + administrador}
+}
+
+// Restauracao é o resultado de "Restaurar uma cópia…".
+type Restauracao int
+
+const (
+	Restaurada Restauracao = iota
+	RestauracaoCancelada
+	NaoEhCopia
+	RestauracaoFalhou
+)
+
+// AvisoDaRestauracao é o aviso do resultado de "Restaurar uma cópia…" (#533).
+func AvisoDaRestauracao(r Restauracao) Aviso {
+	const titulo = "Restaurar uma cópia do banco"
+	switch r {
+	case Restaurada:
+		return Aviso{Tipo: "sucesso", Titulo: "Cópia restaurada",
+			Mensagem: "O site voltou para a data da cópia: entre com a senha que valia naquele dia. Confira a última " +
+				"transação e Configurações › Erros. Deu tudo certo? Apague a pasta antes-de-restaurar, dentro da pasta " +
+				"dados: ela tem o banco de antes."}
+	case RestauracaoCancelada:
+		return Aviso{Tipo: "alerta", Titulo: titulo, Mensagem: "Cancelado: o banco não mudou."}
+	case NaoEhCopia:
+		return Aviso{Tipo: "alerta", Titulo: titulo,
+			Mensagem: "Esse arquivo não é uma cópia do banco do Finanças Local, ou está estragado. O banco não mudou."}
+	default:
+		return Aviso{Tipo: "alerta", Titulo: titulo,
+			Mensagem: "Não deu para restaurar a cópia. Se o banco chegou a ser trocado, o de antes foi devolvido. " +
+				"Confira se o site está no ar; o passo a passo à mão está no guia de operação (docs/OPERACAO.md)."}
 	}
 }
 

@@ -217,9 +217,10 @@ func TestNomesDosBotoes(t *testing.T) {
 		t.Error("sobrou um & de atalho")
 	}
 	icones := regexp.MustCompile(`<span class="ico"[^>]*>`).FindAllString(html, -1)
-	// Abrir, Desligar, Reiniciar; Atualizar, Procurar, O que mudou, Cancelar download; Salvar uma cópia, Ver os erros,
-	// Abrir o manual; Abrir a pasta e Atualizar (do aviso); Ver tudo e Ver a página da versão (das notas).
-	if len(icones) != 14 {
+	// Abrir, Desligar, Reiniciar; Atualizar, Procurar, O que mudou, Cancelar download; Salvar uma cópia, Restaurar uma
+	// cópia (#533), Ver os erros, Abrir o manual; Abrir a pasta e Atualizar (do aviso); Ver tudo e Ver a página da versão
+	// (das notas).
+	if len(icones) != 15 {
 		t.Errorf("%d ícones", len(icones))
 	}
 	for _, i := range icones {
@@ -648,5 +649,69 @@ func TestPaginaNoLinux(t *testing.T) {
 	windows := escrever(t, Tela{MaisOpcoes: true, Comando: "x", SemLogin: "nao"})
 	if strings.Contains(windows, `id="registro"`) || strings.Contains(windows, `id="sem-login"`) || strings.Contains(windows, "<svg") {
 		t.Error("no Windows, coisa do Linux")
+	}
+}
+
+// Regra (#533): a pergunta antes de restaurar diz o que muda (a senha, o que se perde, onde fica o banco de antes, a
+// versão mais nova), com o botão "Escolher a cópia…"; só no Windows, avisa do administrador.
+func TestConfirmarRestauracao(t *testing.T) {
+	t.Parallel()
+	windows, linux := ConfirmarRestauracao(false), ConfirmarRestauracao(true)
+	if windows.Tipo != "pergunta" || windows.Titulo != "Restaurar uma cópia do banco?" || windows.Confirmar != "Escolher a cópia…" {
+		t.Errorf("%+v", windows)
+	}
+	for _, parte := range []string{"inclusive a senha do site", "depois da cópia se perde", "em antes-de-restaurar",
+		"versão mais nova", "fora do ar por alguns segundos"} {
+		if !strings.Contains(windows.Mensagem, parte) || !strings.Contains(linux.Mensagem, parte) {
+			t.Errorf("sem %q", parte)
+		}
+	}
+	if !strings.HasSuffix(windows.Mensagem, " O Windows vai pedir permissão de administrador.") ||
+		strings.Contains(linux.Mensagem, "administrador") {
+		t.Errorf("administrador: %q / %q", windows.Mensagem, linux.Mensagem)
+	}
+}
+
+// Regra (#533): o resultado da restauração: restaurada é sucesso (e diz da senha e da pasta antes-de-restaurar); o resto
+// é alerta, dizendo se o banco mudou.
+func TestAvisoDaRestauracao(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		r         Restauracao
+		tipo, tem string
+	}{
+		{Restaurada, "sucesso", "Apague a pasta antes-de-restaurar"},
+		{RestauracaoCancelada, "alerta", "Cancelado: o banco não mudou."},
+		{NaoEhCopia, "alerta", "não é uma cópia do banco do Finanças Local"},
+		{RestauracaoFalhou, "alerta", "o de antes foi devolvido"},
+	}
+	for _, c := range casos {
+		a := AvisoDaRestauracao(c.r)
+		if a.Tipo != c.tipo || !strings.Contains(a.Mensagem, c.tem) || a.Arquivo != "" || a.Confirmar != "" {
+			t.Errorf("%d: %+v", c.r, a)
+		}
+	}
+	if a := AvisoDaRestauracao(Restaurada); a.Titulo != "Cópia restaurada" || !strings.Contains(a.Mensagem, "senha que valia") {
+		t.Errorf("%+v", a)
+	}
+}
+
+// Regra (#533): "Restaurar uma cópia…" fica em Mais opções, ao lado de salvar, nos dois sistemas; a pergunta troca o
+// texto do botão de confirmar e o devolve depois.
+func TestBotaoRestaurar(t *testing.T) {
+	t.Parallel()
+	for _, linux := range []bool{false, true} {
+		html := escrever(t, Tela{Linux: linux})
+		for _, parte := range []string{`id="restaurar" class="botao" type="button" accesskey="r"`, `Restaurar uma cópia…</button>`,
+			`fetch('/confirmar-restauracao')`, `fetch('/acao/restaurar', { method: 'POST' })`,
+			`$('aviso-confirmar').innerHTML = rotuloConfirmar;`, `if (a.confirmar) $('aviso-confirmar').textContent = a.confirmar;`} {
+			if !strings.Contains(html, parte) {
+				t.Errorf("linux %v: sem %s", linux, parte)
+			}
+		}
+		painel := html[strings.Index(html, `id="painel-mais"`):]
+		if strings.Index(painel, `id="restaurar"`) < 0 || strings.Index(painel, `id="restaurar"`) > strings.Index(painel, `id="erros"`) {
+			t.Errorf("linux %v: o botão não está em Mais opções, depois de salvar", linux)
+		}
 	}
 }

@@ -19,6 +19,7 @@ Os passos abaixo são testados nos workflows "Teste de instalação" a cada muda
 | Cópia | Onde fica | Quem faz |
 |---|---|---|
 | A que você salvou | Na pasta que você escolheu | Gerenciador, em **Mais opções** |
+| O banco de antes da última restauração | `dados\antes-de-restaurar` | Gerenciador, ao restaurar, ou os comandos abaixo |
 | Antes de cada atualização que muda o banco | `dados\backups\FinancasLocal-antes-atualizacao-*.db` (as 5 mais recentes) | O próprio sistema |
 | Pelos scripts | `backups\FinancasLocal_*.db` e `backups\FinancasLocal-antes-instalacao-*.db`, na pasta do projeto | `4-backup.sh` e a instalação pelos scripts |
 
@@ -29,6 +30,19 @@ Os passos abaixo são testados nos workflows "Teste de instalação" a cada muda
 - Cópia de uma versão **mais nova** que a instalada: atualize o sistema antes.
 
 > **Não pule a remoção do `-wal` e do `-shm`.** O banco roda em modo WAL, e esses arquivos pertencem ao banco antigo. Se ficarem ao lado da cópia, [ela pode corromper](https://www.sqlite.org/howtocorrupt.html).
+
+### Pelo gerenciador (Windows e Linux)
+
+Em **Mais opções › Restaurar uma cópia…** (#533). O gerenciador diz o que muda, pede o arquivo e:
+1. confere que ele é uma cópia do banco do Finanças Local (um SQLite inteiro, com as tabelas do site), antes de desligar o site;
+2. desliga o site;
+3. guarda o banco de agora, com o `-wal` e o `-shm`, em `dados\antes-de-restaurar` (trocando o que estiver lá);
+4. põe a cópia no lugar e apaga o `-wal` e o `-shm` do banco antigo;
+5. liga o site.
+
+Se o passo 4 falhar no meio, ele devolve o banco de antes e liga o site. No Windows, pede permissão de administrador.
+
+Depois, siga em [Conferir](#conferir). Os comandos abaixo são o mesmo, à mão.
 
 ### No Windows, pelo `.msi`
 
