@@ -13,10 +13,20 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
-// textoFixo implementa encoding.TextMarshaler, como o tipo de dinheiro e o de data do projeto.
-type textoFixo string
+// textoFixo implementa encoding.TextMarshaler, como o tipo de dinheiro e o de data do projeto. É uma struct para o
+// MarshalText dar um texto diferente do %+v ("{texto:...}"), e o teste saber qual dos dois foi usado. Com erro, o
+// texto sai pelo %+v, como no TextHandler.
+type textoFixo struct {
+	texto  string
+	falhar bool
+}
 
-func (t textoFixo) MarshalText() ([]byte, error) { return []byte(t), nil }
+func (t textoFixo) MarshalText() ([]byte, error) {
+	if t.falhar {
+		return nil, errors.New("sem texto")
+	}
+	return []byte(t.texto), nil
+}
 
 // valorComposto é um valor sem Error nem MarshalText: o TextHandler o escreve com %+v.
 type valorComposto struct{ Pix string }
@@ -54,8 +64,11 @@ func TestComLimpeza(t *testing.T) {
 			},
 			`level=ERROR msg=sincronizar erro="GET https://api.pluggy.ai/items?[removido] saldo R$ [removido]"`},
 		{"atributo que é TextMarshaler",
-			func(l *slog.Logger) { l.Info("valor", "v", textoFixo("R$ 99,90")) },
+			func(l *slog.Logger) { l.Info("valor", "v", textoFixo{texto: "R$ 99,90"}) },
 			`level=INFO msg=valor v="R$ [removido]"`},
+		{"atributo que é TextMarshaler, com erro",
+			func(l *slog.Logger) { l.Info("valor", "v", textoFixo{texto: "R$ 99,90", falhar: true}) },
+			`level=INFO msg=valor v="{texto:R$ [removido] falhar:true}"`},
 		{"atributo de outro tipo, escrito com %+v",
 			func(l *slog.Logger) { l.Info("pix", "dados", valorComposto{Pix: "123.456.789-09"}) },
 			`level=INFO msg=pix dados={Pix:[removido]}`},
