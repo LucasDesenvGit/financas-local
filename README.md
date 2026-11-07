@@ -13,7 +13,7 @@ flowchart LR
     %% Contexto do C4 (provisório até o HLD da #462)
     voce(["Você<br/>no navegador"])
     subgraph pc["Seu computador"]
-        site["Finanças Local<br/>site, API e banco SQLite<br/>só responde em 127.0.0.1"]
+        site["Finanças Local<br/>site, API e banco SQLite<br/>responde em 127.0.0.1"]
         ger["Gerenciador<br/>liga, desliga e atualiza"]
     end
     pluggy["Pluggy<br/>api.pluggy.ai"]
@@ -21,8 +21,10 @@ flowchart LR
     cot["Yahoo Finance e brapi<br/>query1.finance.yahoo.com<br/>brapi.dev"]
     mb["Mercado Bitcoin<br/>api.mercadobitcoin.net"]
     gh["GitHub<br/>api.github.com<br/>github.com"]
+    cel(["Seu celular<br/>no Wi-Fi de casa"])
 
     voce -->|"HTTPS, usuário e senha"| site
+    cel -.->|"só com o acesso pelo celular ligado"| site
     site -->|"credenciais da Pluggy"| pluggy
     site -->|"datas e código da moeda"| bcb
     site -->|"código do ativo"| cot
@@ -100,7 +102,7 @@ No Windows: **Configurações › Aplicativos › Aplicativos instalados › Fin
 
 ## Segurança
 
-- **Seus dados ficam no seu computador**, na pasta `dados`, que só a conta do serviço e os administradores acessam. O site só responde no próprio computador, por HTTPS, e pede usuário e senha.
+- **Seus dados ficam no seu computador**, na pasta `dados`, que só a conta do serviço e os administradores acessam. O site só responde no próprio computador, por HTTPS, e pede usuário e senha. O **acesso pelo celular** (Configurações › Segurança) vem desligado; ligado, os aparelhos da sua rede de casa chegam à tela de entrar.
 - **O que sai para a internet** está no diagrama de [Como funciona](#como-funciona): só o mínimo, por HTTPS.
 - **Segredos** (como o Client Secret da Pluggy) ficam criptografados, e o site nunca os devolve.
 - **Recomendado:** criptografia do disco (BitLocker ou LUKS) e, de vez em quando, uma cópia do banco pelo gerenciador num disco externo.
