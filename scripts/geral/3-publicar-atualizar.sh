@@ -10,7 +10,9 @@
 #    appsettings.Production.json (com caminhos absolutos, ja que o processo
 #    pode rodar como servico a partir de outro diretorio de trabalho)
 #  - Registra e inicia um servico nativo do sistema operacional
-#    (systemd --user no Linux, sc.exe no Windows)
+#    (systemd --user no Linux)
+#
+# No Windows (Git Bash), repassa para o scripts/windows/instalar-windows.ps1, que faz as tres etapas (ADR 0012, #655).
 #
 # Rode de novo sempre que atualizar o codigo: a publicacao nao apaga dados.
 #
@@ -21,16 +23,39 @@
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 
 pular_build=0
+argumentos_ps=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --pular-build) pular_build=1 ;;
+        --pular-build) pular_build=1; argumentos_ps+=(-PularBuild) ;;
         *) erro_sai "Argumento desconhecido: $1 (use --pular-build)" ;;
     esac
     shift
 done
 
+# No Windows, o .ps1 faz as etapas 1 a 3 (e exige Administrador). A saida e o log (instaladores\instalacao-windows.log) sao dele.
+[[ "$SO" != windows ]] || repassar_para_powershell instalar-windows.ps1 "${argumentos_ps[@]+"${argumentos_ps[@]}"}"
+
 # #86: o .NET saiu; o servico e sempre o Go. A escolha da #85 (dados/backend) nao vale mais.
 rm -f "$Dados/backend"
+
+# #655: o backup agendado antes da #154 chama o repasse scripts/4-backup.sh, que saiu. Troca pelo caminho novo,
+# mantendo horario e --manter, para o backup nao parar em silencio (no Windows, o instalar-windows.ps1 faz o mesmo).
+# Roda antes do build: se a atualizacao parar depois, o agendamento ja aponta para o arquivo que existe.
+backup_antigo="$Raiz/scripts/4-backup.sh"
+backup_novo="$Raiz/scripts/geral/4-backup.sh"
+cron_atual="$(crontab -l 2>/dev/null || true)"
+if grep -qF "$backup_antigo " <<<"$cron_atual"; then
+    if grep -qF "$backup_novo " <<<"$cron_atual"; then
+        cron_novo="$(grep -vF "$backup_antigo " <<<"$cron_atual" || true)"   # ja agendado pelo novo: so tira o velho
+    else
+        cron_novo="${cron_atual//"$backup_antigo "/"$backup_novo "}"
+    fi
+    if printf '%s\n' "$cron_novo" | crontab -; then
+        ok "Backup agendado passou para o caminho novo ($backup_novo)."
+    else
+        aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar"
+    fi
+fi
 
 pasta_front="$Raiz/src/frontend"
 preparo="$PastaPublicado/preparo"
@@ -41,34 +66,10 @@ nome_servico='FinancasLocal'
 # node, e o certificado, pelo executavel do Go.
 configurar_ambiente_build
 
-# #614: sem administrador, o servico do Windows nao para, nao troca e nao sobe, e o site fica fora do ar com a
-# publicacao nova pela metade. Para antes de mexer em qualquer coisa.
-if [[ "$SO" == windows ]] && ! net session >/dev/null 2>&1; then
-    erro_sai 'Este Git Bash nao esta como Administrador, e o servico do Windows precisa disso. Nada foi mudado.
-       Feche e abra o Git Bash com o botao direito > "Executar como administrador" (ou use o instalar-windows.cmd).'
-fi
-
 # ------------------------------------------------------------------ Build
-nome_go=financas-go; [[ "$SO" == windows ]] && nome_go=financas-go.exe
+nome_go=financas-go
 if [[ "$pular_build" -eq 0 ]]; then
     etapa 'Compilando o front-end (Angular)'
-    # O Windows nao apaga um .exe em execucao: com um "npm start" aberto (ng serve + esbuild.exe de
-    # src/frontend/node_modules), o "npm ci" falha com EPERM. Encerra so o que roda de dentro dessa pasta
-    # (mesma regra do Encerrar-UsoDoFrontEnd do instalar-windows.ps1). No Linux, apagar arquivo em uso funciona.
-    if [[ "$SO" == windows ]]; then
-        MODULOS_FRONT="$(cygpath -w "$pasta_front/node_modules")" powershell.exe -NoProfile -NonInteractive -Command '
-            $modulos = $env:MODULOS_FRONT.ToLowerInvariant()
-            $emUso = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
-                ($_.ExecutablePath -and $_.ExecutablePath.ToLowerInvariant().StartsWith($modulos)) -or
-                ($_.CommandLine -and $_.CommandLine.ToLowerInvariant().Contains($modulos)) })
-            if ($emUso.Count -eq 0) { exit 0 }
-            Write-Host "    !!  Encerrando $($emUso.Count) processo(s) que usam o front-end (ex.: um npm start aberto); sem isso o npm ci falha:" -ForegroundColor Yellow
-            foreach ($p in $emUso) {
-                Write-Host "    !!    PID $($p.ProcessId): $($p.Name)" -ForegroundColor Yellow
-                Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
-            }
-            Start-Sleep -Seconds 1' || aviso 'Nao deu para conferir processos usando o front-end; se o npm ci falhar com EPERM, feche o "npm start".'
-    fi
     (cd "$pasta_front" && npm ci --no-audit --no-fund && npm run build)
     ok 'front-end compilado'
 
@@ -164,13 +165,9 @@ else
     ok "certificado gerado em $pfx"
 fi
 
-if [[ "$SO" == windows ]] && certutil.exe -addstore -f Root "$(caminho_nativo "$pem")" >/dev/null 2>&1; then
-    ok 'certificado marcado como confiavel neste computador'
-else
-    aviso 'A instalacao nao mexe nos certificados confiaveis do sistema: isso pede sudo e e decisao de quem instala.'
-    aviso 'Sem isso, o navegador mostra um aviso de seguranca ao abrir o site.'
-    passo_a_passo_certificado
-fi
+aviso 'A instalacao nao mexe nos certificados confiaveis do sistema: isso pede sudo e e decisao de quem instala.'
+aviso 'Sem isso, o navegador mostra um aviso de seguranca ao abrir o site.'
+passo_a_passo_certificado
 
 # ------------------------------------------------------------------ Configuracao de producao
 etapa 'Gerando appsettings.Production.json'
@@ -199,15 +196,6 @@ require("fs").writeFileSync(e.DESTINO_CONFIG, JSON.stringify(config, null, 2) + 
 ok 'configuracao gerada'
 
 # ------------------------------------------------------------------ Copia dos arquivos
-# O Windows trava o executavel em uso: o servico tem de parar antes da copia.
-if [[ "$SO" == windows ]] && sc.exe query "$nome_servico" >/dev/null 2>&1; then
-    sc.exe stop "$nome_servico" >/dev/null 2>&1 || true
-    for _ in $(seq 1 15); do
-        sc.exe query "$nome_servico" 2>/dev/null | grep -q STOPPED && break
-        sleep 2
-    done
-fi
-
 etapa "Publicando em $destino"
 garantir_pasta "$destino"
 # Ha uma breve janela de indisponibilidade durante a copia (poucos segundos).
@@ -224,8 +212,8 @@ fi
 ok 'arquivos publicados'
 
 # ------------------------------------------------------------------ Porta ocupada (#300)
-# Outro programa na porta impede o site de subir. No Windows o servico ja parou para a copia; no Linux
-# o proprio servico pode estar no ar (vai ser reiniciado), e esse nao conta.
+# Outro programa na porta impede o site de subir. No Linux o proprio servico pode estar no ar
+# (vai ser reiniciado), e esse nao conta.
 porta_site=5443
 ocupante="$(quem_usa_a_porta "$porta_site")"
 if [[ -n "$ocupante" && "$SO" == linux ]] && command -v systemctl >/dev/null 2>&1; then
@@ -242,7 +230,6 @@ etapa "Registrando o servico $nome_servico"
 # #84: o ponto unico que diz o que o servico executa: o Go sozinho, que aplica o esquema e roda as rotinas de
 # partida (desde a #86, sem o .NET).
 exe_servico="$destino/financas-go"
-[[ "$SO" == windows ]] && exe_servico="$destino/financas-go.exe"
 args_servico="-aplicar-esquema -rotinas-de-partida"
 
 servico_registrado=0   # 1 quando o servico foi registrado e iniciado; sem isso (ex.: conteiner sem systemd), nada a testar
@@ -294,39 +281,6 @@ EOF
         aviso 'Registro automatico de servico (launchd) nao implementado para macOS.'
         aviso "Para rodar manualmente: $exe_servico $args_servico"
         ;;
-    windows)
-        # sc.exe e bem especifico sobre espacos: "chave= valor", com um unico
-        # espaco apos o "=" e nenhum antes. Por isso binPath= e o valor vao
-        # como argumentos separados do bash.
-        exe_servico_win="$(cygpath -w "$exe_servico" 2>/dev/null || echo "$exe_servico")"
-        bin_path="\"$exe_servico_win\" $args_servico"   # as opcoes do Go, sem aspas
-        comando_create="sc.exe create $nome_servico binPath= \"$bin_path\" start= auto"
-        comando_start="sc.exe start $nome_servico"
-        # #614: falhar aqui e erro, e nao aviso: o site estaria fora do ar. A saida do
-        # sc.exe vai junto, para dizer o motivo.
-        if sc.exe query "$nome_servico" >/dev/null 2>&1; then
-            sc.exe stop "$nome_servico" >/dev/null 2>&1 || true
-            if ! saida_sc="$(sc.exe config "$nome_servico" binPath= "$bin_path" start= auto 2>&1)"; then
-                erro_sai "Nao foi possivel reconfigurar o servico: $saida_sc
-       Num prompt como Administrador: sc.exe config $nome_servico binPath= \"$bin_path\" start= auto && $comando_start"
-            fi
-        elif ! saida_sc="$(sc.exe create "$nome_servico" binPath= "$bin_path" start= auto 2>&1)"; then
-            erro_sai "Nao foi possivel criar o servico: $saida_sc
-       Num prompt como Administrador: $comando_create && $comando_start"
-        fi
-        # O sc.exe stop e assincrono: espera o servico parar de verdade (ate 30 s) antes de iniciar de novo.
-        for _ in $(seq 1 30); do
-            sc.exe query "$nome_servico" 2>/dev/null | grep -q STOPPED && break
-            sleep 1
-        done
-        if saida_sc="$(sc.exe start "$nome_servico" 2>&1)"; then
-            ok 'servico do Windows registrado e iniciado'
-            servico_registrado=1
-        else
-            erro_sai "Nao foi possivel iniciar o servico: $saida_sc
-       Rode manualmente, como Administrador: $comando_start"
-        fi
-        ;;
 esac
 }
 
@@ -357,8 +311,8 @@ fi
 if [[ "$sucesso" -eq 1 ]]; then
     ok "API respondeu: $resposta"
 else
-    aviso "O site nao respondeu em $url_teste. Veja o registro do servico (Linux: journalctl --user -u financaslocal.service;"
-    aviso 'Windows: Visualizador de Eventos). As copias do banco ficam em backups/. Para voltar a versao com o .NET:'
+    aviso "O site nao respondeu em $url_teste. Veja o registro do servico (journalctl --user -u financaslocal.service)."
+    aviso 'As copias do banco ficam em backups/. Para voltar a versao com o .NET:'
     aviso '  git checkout v-ultimo-dotnet && scripts/geral/instalar.sh'
     ocupante="$(quem_usa_a_porta 5443)"
     [[ -n "$ocupante" ]] && aviso "Quem esta na porta 5443 agora: $ocupante. Se nao for o Financas Local, feche esse programa."
@@ -369,11 +323,6 @@ if [[ "$sucesso" -eq 1 ]]; then
         [[ -e "$velho" ]] || continue
         rm -rf "$velho" && ok "o que so o .NET usava saiu: $velho"
     done
-fi
-
-if [[ "$SO" == windows ]] && reg.exe query 'HKLM\SOFTWARE\Mozilla\Mozilla Firefox' >/dev/null 2>&1; then
-    aviso 'Firefox instalado: por padrao ele nao usa os certificados do Windows e mostra um aviso no site.'
-    aviso 'Para aceitar: em about:config, deixe security.enterprise_roots.enabled como true (ou use o Edge/Chrome).'
 fi
 
 echo ''

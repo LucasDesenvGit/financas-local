@@ -40,8 +40,7 @@ done
 if [[ "$SO" == windows ]]; then
     argumentos_ps=()
     [[ $desativar -eq 1 ]] && argumentos_ps+=(-Desativar)
-    exec powershell.exe -NoProfile -ExecutionPolicy Bypass \
-        -File "$(caminho_nativo "$Raiz/scripts/windows/parar-windows.ps1")" "${argumentos_ps[@]}"
+    repassar_para_powershell parar-windows.ps1 "${argumentos_ps[@]+"${argumentos_ps[@]}"}"
 fi
 
 # ------------------------------------------------------------------ 1. Servico do sistema (Linux)
