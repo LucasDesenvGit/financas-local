@@ -1,5 +1,5 @@
 # Mutações equivalentes conhecidas (#373, ADR 0051): as que não mudam o resultado do código, e por isso nenhum teste
-# pega. O scripts/ci/mutacao-go.py as tira da conta e do relatório.
+# pega. O scripts/ci/go/mutacao-go.py as tira da conta e do relatório.
 #
 # Uma por linha, separada por " | ": pacote | arquivo | tipo da mutação | a linha do código, sem os espaços das pontas | por que não muda
 # nada. É pelo texto da linha, e não pelo número: a linha mudou, a entrada para de valer e a mutação volta ao

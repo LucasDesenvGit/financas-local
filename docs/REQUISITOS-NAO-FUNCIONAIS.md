@@ -19,7 +19,7 @@ As metas de memória e de disco são as do site em Go, sozinho desde a 3.0.0 (#8
 | Tempo de partida | Segundos do início da API até `GET /api/auth/estado` responder | 2,2 s (31/10/2026, 2.50.31, Windows) | Até 5 s | `medir-desempenho.py`, 3 partidas | Medida |
 | Tempo de resposta das telas principais | A chamada mais lenta ao abrir a tela | Painel 84 ms, Transações 23 ms, Investimentos 43 ms (mesma medição) | Até 300 ms por tela | `medir-desempenho.py`, com 5 anos de transações fictícias | Medida |
 
-Partida e telas saem de `scripts/geral/medir-desempenho.py`, com 9.170 transações fictícias, num computador de desenvolvimento (Core i5, 16 GB):
+Partida e telas saem de `scripts/dev/medir-desempenho.py`, com 9.170 transações fictícias, num computador de desenvolvimento (Core i5, 16 GB):
 - **É o tempo da API:** o navegador ainda desenha a tela.
 - **Em cada tela vale a chamada mais lenta,** porque o navegador as faz em paralelo.
 - **A saída para a internet é recusada na hora,** para o número não virar a espera de uma conexão.
@@ -58,7 +58,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
-| Tempo dos testes do Jest | Segundos | Até 20 s por arquivo e 150 s por suíte | `scripts/ci/verificar-tempo-testes.py` | Conferida na CI |
-| Tempo dos testes do Go | Segundos | Até 20 s por teste, 60 s por pacote e 120 s por suíte | `scripts/ci/verificar-tempo-testes-go.py` | Conferida na CI |
+| Tempo dos testes do Jest | Segundos | Até 20 s por arquivo e 150 s por suíte | `scripts/ci/front/verificar-tempo-testes.py` | Conferida na CI |
+| Tempo dos testes do Go | Segundos | Até 20 s por teste, 60 s por pacote e 120 s por suíte | `scripts/ci/go/verificar-tempo-testes-go.py` | Conferida na CI |
 | Cobertura do Go | % por pacote | Só sobe (#370); pacote novo nasce com 80% | `cobertura-minima.txt` e `verificar-cobertura-go.py` | Conferida na CI |
-| Mutação do Go | % por pacote | O piso de `mutacao-go.txt` só sobe (#373) | `scripts/ci/mutacao-go.py` | Conferida na CI, toda segunda e quando muda |
+| Mutação do Go | % por pacote | O piso de `mutacao-go.txt` só sobe (#373) | `scripts/ci/go/mutacao-go.py` | Conferida na CI, toda segunda e quando muda |

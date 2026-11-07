@@ -8,7 +8,7 @@ src/backend e falha em:
 
 Comentário e texto entre aspas não contam: só o código. Dentro de um synctest.Test, o time.Now e o time.Sleep são do
 relógio de mentira e passam sozinhos. O resto só passa com uma exceção escrita, com o motivo, em
-scripts/ci/regras-go-excecoes.txt, no mesmo formato do mutacao-go-equivalentes.txt:
+scripts/ci/go/regras-go-excecoes.txt, no mesmo formato do mutacao-go-equivalentes.txt:
 
     regra | arquivo (a partir de src/backend) | a linha do código, sem os espaços das pontas e sem o comentário | motivo
 
@@ -20,7 +20,7 @@ Limites conhecidos (*julgamento*): conferência por linha, sem os tipos do Go (g
 (`import t "time"`) escapa; time.Since e time.Until, que leem o relógio por dentro, não são conferidos (fora da #457).
 
 Uso (na CI, em src/backend):
-  python3 ../../scripts/ci/verificar-regras-go.py
+  python3 ../../scripts/ci/go/verificar-regras-go.py
 """
 import argparse
 import os
@@ -47,13 +47,13 @@ PADROES = {
 
 MENSAGENS = {
     FLOAT: ('float64 não é para dinheiro, quantidade nem taxa: use tipos.Decimal. Se é um fator ou uma pontuação que o '
-            'C# também calcula em double, escreva a exceção, com o motivo, em scripts/ci/regras-go-excecoes.txt'),
+            'C# também calcula em double, escreva a exceção, com o motivo, em scripts/ci/go/regras-go-excecoes.txt'),
     AGORA: ('time.Now() fora do internal/plataforma/relogio: a hora vem de um relogio.Relogio recebido pelo construtor '
             '(relogio.Fixo no teste, relogio.Sistema em produção). Se é hora de sistema e não de negócio (medir '
-            'duração, validade de certificado), escreva a exceção, com o motivo, em scripts/ci/regras-go-excecoes.txt'),
+            'duração, validade de certificado), escreva a exceção, com o motivo, em scripts/ci/go/regras-go-excecoes.txt'),
     DORMIR: ('time.Sleep em teste: não espere por tempo. Espere um sinal (canal, sync.WaitGroup, o AoEscutar do '
              'servidor...), use o testing/synctest, ou os.Chtimes para a data de um arquivo. Se o tempo é o que se '
-             'testa, escreva a exceção, com o motivo, em scripts/ci/regras-go-excecoes.txt'),
+             'testa, escreva a exceção, com o motivo, em scripts/ci/go/regras-go-excecoes.txt'),
 }
 
 

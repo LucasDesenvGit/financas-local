@@ -1,4 +1,4 @@
-# Pacotes do Go medidos pelo teste de mutação (#373, ADR 0051; scripts/ci/mutacao-go.py) e o piso da eficácia de
+# Pacotes do Go medidos pelo teste de mutação (#373, ADR 0051; scripts/ci/go/mutacao-go.py) e o piso da eficácia de
 # cada um, em % (mortas / (mortas + vivas), sem as equivalentes conhecidas).
 #
 # O piso só sobe: subiu a eficácia de um pacote, suba o piso dele no mesmo PR. Assunto novo do épico #70 com regra de

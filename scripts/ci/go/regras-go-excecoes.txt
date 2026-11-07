@@ -1,5 +1,5 @@
 # Exceções das regras de ouro do Go (#457, ADR 0049 e ADR 0051): o float64, o time.Now() e o time.Sleep de teste que
-# o scripts/ci/verificar-regras-go.py deixa passar, cada um com o porquê. Sem a exceção aqui, o job "Go" falha.
+# o scripts/ci/go/verificar-regras-go.py deixa passar, cada um com o porquê. Sem a exceção aqui, o job "Go" falha.
 #
 # Uma por linha, separada por " | ": regra | arquivo (a partir de src/backend) | a linha do código, sem os espaços das
 # pontas e sem o comentário | por que pode. A regra é float64 (que pega também Float64(), ParseFloat e FormatFloat),

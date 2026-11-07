@@ -9,22 +9,22 @@ Todo pull request para o develop sobe a versão no Directory.Build.props (ADR 00
 
 Falha o PR se a versão não subiu ou subiu menos do que o tipo pede.
 
-Uso (na CI): BASE=<branch de destino> TITULO_PR=<título do PR> python3 scripts/ci/verificar-versao.py
+Uso (na CI): BASE=<branch de destino> TITULO_PR=<título do PR> python3 scripts/ci/versao/verificar-versao.py
 """
 import os
-import re
 import subprocess
 import sys
 
-ARQUIVO = 'Directory.Build.props'
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from comum import PROPS as ARQUIVO, ler_versao, texto_da_versao as texto, versao_minima, nivel_do_titulo
 
 
 def versao(conteudo: str) -> tuple[int, int, int]:
-    achado = re.search(r'<Version>\s*(\d+)\.(\d+)\.(\d+)\s*</Version>', conteudo)
+    achado = ler_versao(conteudo)
     if not achado:
         print(f'::error title=Versão::Não achei <Version>X.Y.Z</Version> no {ARQUIVO}.')
         sys.exit(1)
-    return tuple(int(n) for n in achado.groups())
+    return achado
 
 
 base = os.environ.get('BASE', 'develop')
@@ -34,14 +34,9 @@ anterior = subprocess.run(['git', 'show', f'origin/{base}:{ARQUIVO}'], capture_o
 with open(ARQUIVO, encoding='utf-8') as f:
     atual = f.read()
 de, para = versao(anterior), versao(atual)
-texto = lambda v: '.'.join(map(str, v))
-
-tipo = re.match(r'\s*([a-z]+)', titulo)
-tipo = tipo.group(1) if tipo else ''
-if tipo == 'feat':
-    minima, nome = (de[0], de[1] + 1, 0), 'funcionalidade (feat): sobe o número do meio'
-else:
-    minima, nome = (de[0], de[1], de[2] + 1), 'correção ou ajuste: sobe o último número'
+minima = versao_minima(de, titulo)
+nome = ('funcionalidade (feat): sobe o número do meio' if nivel_do_titulo(titulo) == 1
+        else 'correção ou ajuste: sobe o último número')
 
 if para < minima:
     print(f'::error title=Versão::O {ARQUIVO} está em {texto(para)}; o {base} está em {texto(de)}. '

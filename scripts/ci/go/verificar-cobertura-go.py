@@ -13,7 +13,7 @@ prova que falha" da ADR 0051.
 
 Uso (na CI, em src/backend):
   go test -race -coverpkg=./internal/... -coverprofile=cobertura.out ./...
-  python3 ../../scripts/ci/verificar-cobertura-go.py cobertura.out cobertura-minima.txt [--base pisos-do-develop.txt]
+  python3 ../../scripts/ci/go/verificar-cobertura-go.py cobertura.out cobertura-minima.txt [--base pisos-do-develop.txt]
 """
 import argparse
 import math

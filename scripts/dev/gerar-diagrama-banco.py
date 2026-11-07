@@ -11,7 +11,7 @@ import sys
 
 SQL = "banco/01-estrutura.sql"
 DOC = "docs/BANCO-DE-DADOS.md"
-INICIO = "<!-- diagramas-do-banco: início (gerado por scripts/ci/gerar-diagrama-banco.py) -->"
+INICIO = "<!-- diagramas-do-banco: início (gerado por scripts/dev/gerar-diagrama-banco.py) -->"
 FIM = "<!-- diagramas-do-banco: fim -->"
 
 ASSUNTOS = {
@@ -95,7 +95,7 @@ def principal():
     novo = doc[:doc.index(INICIO)] + trecho(tabelas) + doc[doc.index(FIM) + len(FIM):]
     if "--conferir" in sys.argv:
         if novo != doc:
-            print(f"{DOC} está velho: rode python3 scripts/ci/gerar-diagrama-banco.py", file=sys.stderr)
+            print(f"{DOC} está velho: rode python3 scripts/dev/gerar-diagrama-banco.py", file=sys.stderr)
             return 1
         print(f"OK: {len(tabelas)} tabelas nos diagramas de {DOC}.")
         return 0

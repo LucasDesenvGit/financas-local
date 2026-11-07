@@ -15,11 +15,11 @@
   para mais é seguro; para menos, não.
 - Nada do front-end mudou: frontend=false (os jobs do front-end são pulados).
 
-Uso na CI:  python3 scripts/ci/testes-afetados.py --base origin/develop   (escreve em $GITHUB_OUTPUT e no resumo)
-Uso local:  python3 scripts/ci/testes-afetados.py --base origin/develop   (mostra o que rodaria e os comandos)
+Uso na CI:  python3 scripts/ci/front/testes-afetados.py --base origin/develop   (escreve em $GITHUB_OUTPUT e no resumo)
+Uso local:  python3 scripts/ci/front/testes-afetados.py --base origin/develop   (mostra o que rodaria e os comandos)
 Rodar:      cd src/frontend && npm run test:afetados   (#286: --base origin/develop --local --executar; inclui o que
             ainda não foi commitado e roda Jest e navegador só nos afetados; NAVEGADOR=chromium para o navegador da CI)
-Teste:      python3 scripts/ci/testes-afetados.py --arquivos a.ts b.css    (sem git; simula a lista de mudados)
+Teste:      python3 scripts/ci/front/testes-afetados.py --arquivos a.ts b.css    (sem git; simula a lista de mudados)
 """
 import argparse
 import os
@@ -27,7 +27,10 @@ import re
 import subprocess
 import sys
 
-RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from comum import arquivos_mudados
+
+RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 FRONT = 'src/frontend'
 APP = f'{FRONT}/src/app'
 
@@ -41,11 +44,11 @@ GLOBAIS = [
     r'^src/frontend/public/', r'^src/frontend/src/assets/',
     # A CSP que os testes no navegador aplicam vem daqui (ADR 0041; do Go desde a #86).
     r'^src/backend/internal/plataforma/servidor/intermediarios\.go$',
-    r'^\.github/workflows/ci\.yml$', r'^scripts/ci/testes-afetados\.py$',
+    r'^\.github/workflows/ci\.yml$', r'^scripts/ci/front/testes-afetados\.py$',
 ]
 # O que conta como "front-end" (fora disso, os jobs do front-end não rodam).
 DO_FRONT = [r'^src/frontend/', r'^src/backend/internal/plataforma/servidor/intermediarios\.go$', r'^\.github/workflows/ci\.yml$',
-            r'^scripts/ci/testes-afetados\.py$']
+            r'^scripts/ci/front/testes-afetados\.py$']
 
 
 def escapar(texto):
@@ -61,7 +64,7 @@ def git(*args):
 def mudados(base, local=False):
     """Arquivos mudados desde a base. Com local=True (#286), também o que ainda não foi commitado (alterado e novo)."""
     ponto = git('merge-base', base, 'HEAD').strip()
-    lista = [l for l in git('diff', '--name-only', f'{ponto}...HEAD').splitlines() if l.strip()]
+    lista = arquivos_mudados(ponto, cwd=RAIZ)
     if local:
         lista += git('diff', '--name-only', 'HEAD').splitlines()
         lista += git('ls-files', '--others', '--exclude-standard').splitlines()

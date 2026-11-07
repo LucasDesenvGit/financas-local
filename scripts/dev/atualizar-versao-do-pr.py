@@ -9,17 +9,19 @@ antes, os dois arquivos conflitam. Este script, rodado no meio do `git merge ori
   do que o tipo do título pede (feat → o do meio; o resto → o último);
 - põe no topo a seção que o PR tinha acrescentado, com o número novo e a data de hoje.
 
-Quem chama é o scripts/geral/atualizar-pr.sh. Uso direto (na pasta do repositório, com o merge parado):
-    python3 scripts/geral/atualizar-versao-do-pr.py "<título do PR>"
+Quem chama é o scripts/dev/atualizar-pr.sh. Uso direto (na pasta do repositório, com o merge parado):
+    python3 scripts/dev/atualizar-versao-do-pr.py "<título do PR>"
 """
 import datetime
+import os
 import re
 import subprocess
 import sys
 
-PROPS = 'Directory.Build.props'
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ci'))
+from comum import PROPS, VERSAO, ler_versao, nivel_do_titulo, texto_da_versao as texto
+
 CHANGELOG = 'CHANGELOG.md'
-VERSAO = re.compile(r'<Version>\s*(\d+)\.(\d+)\.(\d+)\s*</Version>')
 SECAO = re.compile(r'^## \[(\d+\.\d+\.\d+)\] — \d{4}-\d{2}-\d{2}')
 
 
@@ -28,14 +30,10 @@ class Problema(Exception):
 
 
 def versao(conteudo):
-    achado = VERSAO.search(conteudo)
+    achado = ler_versao(conteudo)
     if not achado:
         raise Problema(f'não achei <Version>X.Y.Z</Version> no {PROPS}')
-    return tuple(int(n) for n in achado.groups())
-
-
-def texto(v):
-    return '.'.join(map(str, v))
+    return achado
 
 
 def nivel_do_pr(base, pr):
@@ -44,11 +42,6 @@ def nivel_do_pr(base, pr):
         if pr[i] != base[i]:
             return i if pr[i] > base[i] else None
     return None
-
-
-def nivel_do_titulo(titulo):
-    """O mínimo pelo tipo do título (Conventional Commits): feat sobe o do meio; o resto, o último."""
-    return 1 if re.match(r'\s*feat\b', titulo) else 2
 
 
 def nova_versao(develop, base, pr, titulo):
