@@ -32,6 +32,47 @@ done
 # #86: o .NET saiu; o servico e sempre o Go. A escolha da #85 (dados/backend) nao vale mais.
 rm -f "$Dados/backend"
 
+# #655: o backup agendado antes da #154 chama o repasse scripts/4-backup.sh. Troca pelo caminho novo, mantendo
+# horario e --manter, para o repasse poder sair sem o backup parar em silencio. Roda antes do build: se a
+# atualizacao parar depois, o agendamento ja aponta para o arquivo que existe.
+backup_antigo="$Raiz/scripts/4-backup.sh"
+backup_novo="$Raiz/scripts/geral/4-backup.sh"
+case "$SO" in
+    linux|osx)
+        cron_atual="$(crontab -l 2>/dev/null || true)"
+        if grep -qF "$backup_antigo " <<<"$cron_atual"; then
+            if grep -qF "$backup_novo " <<<"$cron_atual"; then
+                cron_novo="$(grep -vF "$backup_antigo " <<<"$cron_atual" || true)"   # ja agendado pelo novo: so tira o velho
+            else
+                cron_novo="${cron_atual//"$backup_antigo "/"$backup_novo "}"
+            fi
+            if printf '%s\n' "$cron_novo" | crontab -; then
+                ok "Backup agendado passou para o caminho novo ($backup_novo)."
+            else
+                aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar"
+            fi
+        fi
+        ;;
+    windows)
+        # set -e: o codigo de saida do PowerShell (2 = migrou, 1 = falhou) nao pode encerrar o script.
+        rc=0
+        powershell.exe -NoProfile -NonInteractive -Command '
+            $ErrorActionPreference = "Stop"
+            $t = Get-ScheduledTask -TaskName "FinancasLocal - Backup diario" -ErrorAction SilentlyContinue
+            if (-not $t) { exit 0 }
+            $a = $t.Actions[0]
+            if ($a.Arguments -notmatch "\\scripts\\4-backup\.sh") { exit 0 }
+            $a.Arguments = $a.Arguments -replace "\\scripts\\4-backup\.sh", "\scripts\geral\4-backup.sh"
+            Set-ScheduledTask -TaskName $t.TaskName -TaskPath $t.TaskPath -Action $a | Out-Null
+            exit 2' >/dev/null 2>&1 || rc=$?
+        case $rc in
+            0) ;;
+            2) ok "Backup agendado passou para o caminho novo ($backup_novo)." ;;
+            *) aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar" ;;
+        esac
+        ;;
+esac
+
 pasta_front="$Raiz/src/frontend"
 preparo="$PastaPublicado/preparo"
 destino="$PastaPublicado/api"
@@ -370,43 +411,6 @@ if [[ "$sucesso" -eq 1 ]]; then
         rm -rf "$velho" && ok "o que so o .NET usava saiu: $velho"
     done
 fi
-
-# #655: o backup agendado antes da #154 chama o repasse scripts/4-backup.sh. Troca pelo caminho novo, mantendo
-# horario e --manter, para o repasse poder sair sem o backup parar em silencio.
-backup_antigo="$Raiz/scripts/4-backup.sh"
-backup_novo="$Raiz/scripts/geral/4-backup.sh"
-case "$SO" in
-    linux|osx)
-        cron_atual="$(crontab -l 2>/dev/null || true)"
-        if grep -qF "$backup_antigo " <<<"$cron_atual"; then
-            if grep -qF "$backup_novo " <<<"$cron_atual"; then
-                cron_novo="$(grep -vF "$backup_antigo " <<<"$cron_atual" || true)"   # ja agendado pelo novo: so tira o velho
-            else
-                cron_novo="${cron_atual//"$backup_antigo "/"$backup_novo "}"
-            fi
-            if printf '%s\n' "$cron_novo" | crontab -; then
-                ok "Backup agendado passou para o caminho novo ($backup_novo)."
-            else
-                aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar"
-            fi
-        fi
-        ;;
-    windows)
-        powershell.exe -NoProfile -NonInteractive -Command '
-            $t = Get-ScheduledTask -TaskName "FinancasLocal - Backup diario" -ErrorAction SilentlyContinue
-            if (-not $t) { exit 0 }
-            $a = $t.Actions[0]
-            if ($a.Arguments -notmatch "\\scripts\\4-backup\.sh") { exit 0 }
-            $a.Arguments = $a.Arguments -replace "\\scripts\\4-backup\.sh", "\scripts\geral\4-backup.sh"
-            Set-ScheduledTask -TaskName $t.TaskName -TaskPath $t.TaskPath -Action $a | Out-Null
-            exit 2' >/dev/null 2>&1
-        case $? in
-            0) ;;
-            2) ok "Backup agendado passou para o caminho novo ($backup_novo)." ;;
-            *) aviso "Nao deu para trocar o backup agendado. Rode: scripts/geral/4-backup.sh --agendar" ;;
-        esac
-        ;;
-esac
 
 if [[ "$SO" == windows ]] && reg.exe query 'HKLM\SOFTWARE\Mozilla\Mozilla Firefox' >/dev/null 2>&1; then
     aviso 'Firefox instalado: por padrao ele nao usa os certificados do Windows e mostra um aviso no site.'

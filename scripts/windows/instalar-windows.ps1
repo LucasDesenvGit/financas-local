@@ -709,10 +709,10 @@ try {
     $pastaSqlite = Join-Path $Ferramentas "sqlite"
     if (Test-Path -LiteralPath $pastaSqlite) { Adicionar-Path $pastaSqlite }
 
+    Migrar-BackupAgendado   # antes de tudo: se a instalacao parar depois, o backup ja aponta para o caminho novo
     Preparar-Ambiente
     Criar-Banco
     Publicar
-    Migrar-BackupAgendado
 
     # #300: o Firefox nao usa os certificados do Windows por padrao e mostra um aviso no site.
     if (Test-Path -LiteralPath "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox") {
