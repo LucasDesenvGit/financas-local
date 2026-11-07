@@ -207,12 +207,34 @@ func TestFalhaNoMeio(t *testing.T) {
 		renomear = func(string, string) error { return errors.New("disco cheio") }
 		t.Cleanup(func() { renomear = os.Rename })
 		s := &servicoFalso{}
-		if _, err := Restaurar(banco, copia, s); err == nil || !strings.Contains(err.Error(), "disco cheio") {
+		// O banco de antes voltou sem erro: o erro é só o da troca.
+		if _, err := Restaurar(banco, copia, s); err == nil || !strings.Contains(err.Error(), "disco cheio") ||
+			strings.Contains(err.Error(), "voltar o banco de antes") {
 			t.Errorf("erro %v", err)
 		}
 		if strings.Join(s.pedidos, ",") != "desligar,ligar" || ler(t, banco+"-wal") != "do banco de agora-wal" ||
 			ler(t, banco+"-shm") != "do banco de agora-shm" || existe(banco+".restaurando") || marca(t, banco) != "agora" {
 			t.Errorf("pedidos %v, banco %q", s.pedidos, marca(t, banco))
+		}
+	})
+	t.Run("o -wal que não dá para guardar", func(t *testing.T) {
+		banco, copia := instalacao(t)
+		// O -wal é uma pasta: abrir dá certo, ler não. Só o -wal e o -shm que não existem podem faltar no guardado.
+		if err := os.Remove(banco + "-wal"); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Mkdir(banco+"-wal", 0o700); err != nil {
+			t.Fatal(err)
+		}
+		s := &servicoFalso{}
+		if _, err := Restaurar(banco, copia, s); err == nil || !strings.Contains(err.Error(), "guardar o banco de antes") {
+			t.Errorf("erro %v", err)
+		}
+		if strings.Join(s.pedidos, ",") != "desligar,ligar" || ler(t, banco+"-shm") != "do banco de agora-shm" {
+			t.Errorf("pedidos %v", s.pedidos)
+		}
+		if info, err := os.Stat(banco + "-wal"); err != nil || !info.IsDir() {
+			t.Errorf("o -wal mudou: %v", err)
 		}
 	})
 	t.Run("antes de mexer no banco", func(t *testing.T) {

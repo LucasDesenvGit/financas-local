@@ -47,8 +47,11 @@ func Conferir(copia string) error {
 	}
 	defer db.Close()
 	var resultado string
-	if err := db.QueryRow("PRAGMA quick_check").Scan(&resultado); err != nil || resultado != "ok" {
-		return fmt.Errorf("%w: quick_check %q %v", ErrNaoEhCopia, resultado, err)
+	if err := db.QueryRow("PRAGMA quick_check").Scan(&resultado); err != nil {
+		return fmt.Errorf("%w: %v", ErrNaoEhCopia, err)
+	}
+	if resultado != "ok" {
+		return fmt.Errorf("%w: quick_check %q", ErrNaoEhCopia, resultado)
 	}
 	var tabelas int
 	err = db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ('Transacao', 'Conta', 'Usuario')`).
