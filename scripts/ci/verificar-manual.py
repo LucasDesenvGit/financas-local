@@ -15,8 +15,8 @@ import sys
 
 MANUAL = 'src/frontend/src/app/paginas/manual/manual-conteudo.ts'
 VISIVEIS = ('src/frontend/src/app/paginas/', 'src/frontend/src/app/compartilhado/', 'src/frontend/src/app/layout/')
-# #86: os endpoints são as rotas do Go, um rotas*.go em cada assunto (src/backend/internal/<assunto>/).
-ROTAS_GO = re.compile(r'^src/backend/internal/[^/]+/rotas[^/]*\.go$')
+# #86: os endpoints são as rotas do Go, um rotas*.go em cada assunto (src/backend/internal/<area>/<assunto>/).
+ROTAS_GO = re.compile(r'^src/backend/internal/(?:[^/]+/)+rotas[^/]*\.go$')
 IGNORAR = (MANUAL, 'src/frontend/src/app/paginas/manual/manual.component.ts')
 
 base = os.environ.get('BASE', 'develop')

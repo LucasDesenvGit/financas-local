@@ -102,6 +102,11 @@ def main():
     if a.base and os.path.exists(a.base):
         for pacote, antes in ler_pisos(a.base).items():
             agora = pisos.get(pacote)
+            if agora is None:
+                # Pacote que só mudou de pasta (#656: "banco" -> "plataforma/banco"): vale a linha nova, se for uma só.
+                movido = [p for p in pisos if p.endswith('/' + pacote)]
+                if len(movido) == 1:
+                    pacote, agora = f'{pacote} (agora {movido[0]})', pisos[movido[0]]
             if isinstance(antes, float) and (agora is None or isinstance(agora, tuple) or agora < antes):
                 depois = 'sem linha' if agora is None else ('fora' if isinstance(agora, tuple) else f'{agora:.1f}')
                 print(f'::error title=Piso de cobertura desceu::{pacote}: o piso era {antes:.1f} no develop e ficou '

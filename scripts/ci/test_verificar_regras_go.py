@@ -42,9 +42,9 @@ def dos_arquivos(problemas):
 
 class Float64(unittest.TestCase):
     def test_pega_o_float64_no_codigo(self):
-        p = Projeto(self, {'internal/contas/contas.go': 'package contas\n\nvar saldo float64\n'})
+        p = Projeto(self, {'internal/movimentacao/contas/contas.go': 'package contas\n\nvar saldo float64\n'})
         problemas = p.conferir()
-        self.assertEqual(dos_arquivos(problemas), [('internal/contas/contas.go', 3)])
+        self.assertEqual(dos_arquivos(problemas), [('internal/movimentacao/contas/contas.go', 3)])
         self.assertIn('tipos.Decimal', problemas[0][2])
 
     def test_pega_o_decimal_virando_float(self):
@@ -81,9 +81,9 @@ class Float64(unittest.TestCase):
 
 class TimeNow(unittest.TestCase):
     def test_pega_o_time_now_fora_do_relogio(self):
-        p = Projeto(self, {'internal/contas/contas.go': 'package contas\n\nvar hoje = time.Now()\n'})
+        p = Projeto(self, {'internal/movimentacao/contas/contas.go': 'package contas\n\nvar hoje = time.Now()\n'})
         problemas = p.conferir()
-        self.assertEqual(dos_arquivos(problemas), [('internal/contas/contas.go', 3)])
+        self.assertEqual(dos_arquivos(problemas), [('internal/movimentacao/contas/contas.go', 3)])
         self.assertIn('relogio.Relogio', problemas[0][2])
         self.assertIn('relogio.Fixo', problemas[0][2])
 
@@ -93,8 +93,8 @@ class TimeNow(unittest.TestCase):
         self.assertEqual(dos_arquivos(p.conferir()), [('internal/x/x.go', 3)])
 
     def test_o_pacote_relogio_pode(self):
-        fontes = {'internal/relogio/relogio.go': 'package relogio\n\nfunc agora() time.Time { return time.Now() }\n',
-                  'internal/relogio/relogio_test.go': 'package relogio\n\nvar x = time.Now()\n'}
+        fontes = {'internal/plataforma/relogio/relogio.go': 'package relogio\n\nfunc agora() time.Time { return time.Now() }\n',
+                  'internal/plataforma/relogio/relogio_test.go': 'package relogio\n\nvar x = time.Now()\n'}
         self.assertEqual(Projeto(self, fontes).conferir(), [])
 
     def test_so_o_pacote_relogio_e_so_o_dele(self):
@@ -133,33 +133,33 @@ class TimeSleep(unittest.TestCase):
 
 
 class Excecoes(unittest.TestCase):
-    CODIGO = {'internal/selic/serie.go': 'package selic\n\nvar acumulado []float64\n'}
+    CODIGO = {'internal/patrimonio/selic/serie.go': 'package selic\n\nvar acumulado []float64\n'}
 
     def test_a_excecao_deixa_passar(self):
         p = Projeto(self, self.CODIGO,
-                    'float64 | internal/selic/serie.go | var acumulado []float64 | fator da Selic, o C# usa double\n')
+                    'float64 | internal/patrimonio/selic/serie.go | var acumulado []float64 | fator da Selic, o C# usa double\n')
         self.assertEqual(p.conferir(), [])
 
     def test_a_excecao_vale_so_para_a_regra_e_o_arquivo_dela(self):
-        excecao = 'float64 | internal/selic/serie.go | var acumulado []float64 | fator da Selic\n'
+        excecao = 'float64 | internal/patrimonio/selic/serie.go | var acumulado []float64 | fator da Selic\n'
         outro = dict(self.CODIGO, **{'internal/outro/outro.go': 'package outro\n\nvar acumulado []float64\n'})
         self.assertEqual(dos_arquivos(Projeto(self, outro, excecao).conferir()), [('internal/outro/outro.go', 3)])
 
     def test_linha_mudada_perde_a_excecao_e_a_excecao_velha_aparece(self):
-        p = Projeto(self, {'internal/selic/serie.go': 'package selic\n\nvar acumulado []float64 // mudou\nvar saldo float64\n'},
-                    'float64 | internal/selic/serie.go | var acumulado []float64 | fator da Selic\n')
+        p = Projeto(self, {'internal/patrimonio/selic/serie.go': 'package selic\n\nvar acumulado []float64 // mudou\nvar saldo float64\n'},
+                    'float64 | internal/patrimonio/selic/serie.go | var acumulado []float64 | fator da Selic\n')
         # o comentário no fim da linha não conta: a exceção ainda vale; a linha nova do saldo não tem exceção
-        self.assertEqual(dos_arquivos(p.conferir()), [('internal/selic/serie.go', 4)])
-        p = Projeto(self, {'internal/selic/serie.go': 'package selic\n\nvar acumulado []float32\n'},
-                    'float64 | internal/selic/serie.go | var acumulado []float64 | fator da Selic\n')
+        self.assertEqual(dos_arquivos(p.conferir()), [('internal/patrimonio/selic/serie.go', 4)])
+        p = Projeto(self, {'internal/patrimonio/selic/serie.go': 'package selic\n\nvar acumulado []float32\n'},
+                    'float64 | internal/patrimonio/selic/serie.go | var acumulado []float64 | fator da Selic\n')
         problemas = p.conferir()
-        self.assertEqual(dos_arquivos(problemas), [('internal/selic/serie.go', 3), ('internal/selic/serie.go', 0)])
+        self.assertEqual(dos_arquivos(problemas), [('internal/patrimonio/selic/serie.go', 3), ('internal/patrimonio/selic/serie.go', 0)])
         self.assertIn('não casa com nenhuma linha', problemas[1][2])
 
     def test_excecao_sem_motivo_e_erro(self):
-        p = Projeto(self, self.CODIGO, 'float64 | internal/selic/serie.go | var acumulado []float64 |\n')
+        p = Projeto(self, self.CODIGO, 'float64 | internal/patrimonio/selic/serie.go | var acumulado []float64 |\n')
         self.assertTrue(any('esperado "regra | arquivo | linha do código | motivo"' in m for _, _, m in p.conferir()))
-        p = Projeto(self, self.CODIGO, 'float64 | internal/selic/serie.go | var acumulado []float64\n')
+        p = Projeto(self, self.CODIGO, 'float64 | internal/patrimonio/selic/serie.go | var acumulado []float64\n')
         self.assertTrue(any('esperado' in m for _, _, m in p.conferir()))
 
     def test_regra_desconhecida_e_erro(self):
@@ -168,13 +168,13 @@ class Excecoes(unittest.TestCase):
 
     def test_comentarios_e_linhas_em_branco_na_lista_sao_ignorados(self):
         p = Projeto(self, self.CODIGO,
-                    '# um comentário\n\nfloat64 | internal/selic/serie.go | var acumulado []float64 | fator da Selic\n')
+                    '# um comentário\n\nfloat64 | internal/patrimonio/selic/serie.go | var acumulado []float64 | fator da Selic\n')
         self.assertEqual(p.conferir(), [])
 
     def test_o_time_sleep_de_teste_excetuado_passa(self):
         fonte = 'package banco\n\nfunc g() {\n\ttime.Sleep(r.segurar)\n}\n'
-        p = Projeto(self, {'internal/banco/wal_test.go': fonte},
-                    'time.Sleep | internal/banco/wal_test.go | time.Sleep(r.segurar) | o tempo é a carga do teste\n')
+        p = Projeto(self, {'internal/plataforma/banco/wal_test.go': fonte},
+                    'time.Sleep | internal/plataforma/banco/wal_test.go | time.Sleep(r.segurar) | o tempo é a carga do teste\n')
         self.assertEqual(p.conferir(), [])
 
 

@@ -7,7 +7,7 @@ O banco é **SQLite**, num arquivo local (`dados/sql/FinancasLocal.db`), criado 
 | `banco/01-estrutura.sql` | Tabelas, índices e restrições, todos com `CREATE TABLE/INDEX IF NOT EXISTS`. |
 | `banco/02-dados-iniciais.sql` | Categorias padrão, configurações e regras de categorização iniciais. |
 
-`scripts/geral/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. O site também os aplica ao iniciar (`-aplicar-esquema`, `src/backend/internal/banco/esquema_banco.go`, com os scripts embutidos no executável; os dados iniciais só no banco novo), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
+`scripts/geral/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. O site também os aplica ao iniciar (`-aplicar-esquema`, `src/backend/internal/plataforma/banco/esquema_banco.go`, com os scripts embutidos no executável; os dados iniciais só no banco novo), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
 
 O `01-estrutura.sql` é uma baseline limpa da troca SQL Server → SQLite: as colunas que antes chegavam por `ALTER TABLE` incremental (blocos `v4`–`v7`) já nascem dentro do `CREATE TABLE`.
 
@@ -232,11 +232,11 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 
    Coluna `NOT NULL` adicionada a uma tabela com dados precisa de `DEFAULT`.
 
-   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/windows/instalar-windows.ps1`) e o próprio site (`src/backend/internal/banco/esquema`, que embute uma cópia do `2-criar-banco.sh`) leem essas linhas em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
+   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/windows/instalar-windows.ps1`) e o próprio site (`src/backend/internal/plataforma/banco/esquema`, que embute uma cópia do `2-criar-banco.sh`) leem essas linhas em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
 
 ### Depois de qualquer mudança
 
-1. Em `src/backend`, rode `go generate ./...` e suba o que ele mudar: o site leva uma cópia dos scripts dentro do executável e um esquema para o `sqlc` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha. Consulta nova vai em `internal/banco/consultas` (o `sqlc`) ou no pacote do assunto, sempre parametrizada.
+1. Em `src/backend`, rode `go generate ./...` e suba o que ele mudar: o site leva uma cópia dos scripts dentro do executável e um esquema para o `sqlc` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha. Consulta nova vai em `internal/plataforma/banco/consultas` (o `sqlc`) ou no pacote do assunto, sempre parametrizada.
 2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
 4. Tabela nova: entra em `ASSUNTOS` no `scripts/ci/gerar-diagrama-banco.py`. Rode `python3 scripts/ci/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
@@ -246,5 +246,5 @@ Regras:
 - Nunca apague ou renomeie colunas em uso sem um bloco de transição.
 - Nada de sintaxe do SQL Server (`GO`, `dbo.`, `[...]`, `IDENTITY`, `N'...'`, `OBJECT_ID`, `COL_LENGTH`): o `verificar-sql.py` recusa.
 - Restrições e índices com nome explícito: `PK_`, `FK_`, `UQ_`, `CK_`, `DF_` (valor padrão), `IX_` (índice) e `UX_` (índice único, inclusive o parcial, com `WHERE`).
-- Decimais e datas são gravados como `TEXT`, no formato que o EF Core usava (`internal/tipos`), para os bancos que já existem continuarem os mesmos.
+- Decimais e datas são gravados como `TEXT`, no formato que o EF Core usava (`internal/plataforma/tipos`), para os bancos que já existem continuarem os mesmos.
 - Chaves estrangeiras só valem com `PRAGMA foreign_keys = ON`, que o `banco.Abrir` liga em toda conexão — não desligue isso, senão os `ON DELETE CASCADE/SET NULL` deixam de valer.

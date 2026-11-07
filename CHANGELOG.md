@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.3.15] — 2026-11-06 · desenvolvimento
+## [3.3.16] — 2026-11-06 · desenvolvimento
 
 ### Publicação e documentação
 - **Limpeza da pasta `scripts/`** (parte de #655). A atualização pelos scripts (`3-publicar-atualizar.sh` e `instalar-windows.ps1`) troca sozinha o backup diário agendado pelo caminho antigo, `scripts/4-backup.sh`, pelo novo, `scripts/geral/4-backup.sh`, com o mesmo horário e o mesmo `--manter`, no crontab e no Agendador de Tarefas. Assim o repasse da raiz de `scripts/` pode sair numa versão seguinte sem o backup de ninguém parar em silêncio. Saem os `.pyc` versionados (o `.gitignore` ganha `__pycache__/`) e o `configurar-github.ps1`, de uso único, que nada chamava. O comentário do `instalar.sh` dizia que o `instalar-windows.cmd` o abria no Git Bash; desde a ADR 0012, ele roda o `instalar-windows.ps1`. Nada muda para quem usa.
+
+## [3.3.15] — 2026-11-06 · desenvolvimento
+
+### Publicação e documentação
+- **Os pacotes do back-end ficam agrupados por área, como as telas do front-end** (#656; ADR 0056). Os 55 pacotes de `src/backend/internal/` estavam numa lista só; agora ficam em `internal/<area>/<assunto>`, com as áreas do front-end (`movimentacao`, `planejamento`, `patrimonio`, `analises`, `ajustes`), mais `openfinance` e `plataforma` (banco, tipos, login, erros do sistema e o resto que todos usam). `api`, `partida` e `arquitetura` ficam na raiz. O nome de cada pacote não mudou, só o caminho do import; a tabela das áreas está no `internal/README.md`. As listas da CI (mutação, cobertura, exceções), o `sqlc.yaml` e a documentação foram junto. Três testes que liam arquivos por caminho relativo foram acertados; um deles, o que confere que o apoio aos testes não entra no executável, olhava só `internal/` em vez do módulo inteiro e volta a olhar tudo. Nada muda para quem usa.
 
 ## [3.3.14] — 2026-11-05
 

@@ -441,7 +441,7 @@ function Publicar {
         Push-Location (Join-Path $Raiz "src\backend")
         try {
             Executar "go" @("build", "-trimpath",
-                "-ldflags", "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$versaoSistema",
+                "-ldflags", "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$versaoSistema",
                 "-o", (Join-Path $preparo "financas-go.exe"), "./cmd/financas")
         } finally { Pop-Location }
         Ok "back-end em Go compilado ($(& go env GOVERSION))"

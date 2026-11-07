@@ -81,7 +81,7 @@ if [[ "$pular_build" -eq 0 ]]; then
     command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     versao_sistema="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
     (cd "$Raiz/src/backend" && go build -trimpath \
-        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$versao_sistema" \
+        -ldflags "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$versao_sistema" \
         -o "$(caminho_nativo "$preparo/$nome_go")" ./cmd/financas)
     ok "back-end em Go compilado ($(go env GOVERSION))"
 

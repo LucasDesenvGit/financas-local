@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/relogio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/testeapoio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/transacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 // A partida de cada teste roda "hoje" (30/10/2026, meio-dia em Brasília); os dados do banco foram gravados "ontem", para o
