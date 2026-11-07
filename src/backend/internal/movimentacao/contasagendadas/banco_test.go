@@ -321,7 +321,7 @@ func TestSugerir(t *testing.T) {
 		t.Errorf("condomínio: %+v", condominio)
 	}
 	if seguro.Chave != "SEGURO ANUAL CASA" || seguro.Recorrencia != 2 || seguro.ProximoVencimento.String() != "2027-10-01" ||
-		seguro.VencimentoSemPagamento != nil || seguro.Valor.String() != "1050.0" || !seguro.ValorVariavel ||
+		seguro.VencimentoSemPagamento != nil || seguro.Meses != 2 || seguro.Valor.String() != "1050.0" || !seguro.ValorVariavel ||
 		seguro.ValorMinimo.String() != "900.0" || seguro.ValorMaximo.String() != "1200.0" {
 		t.Errorf("seguro: %+v", seguro)
 	}
