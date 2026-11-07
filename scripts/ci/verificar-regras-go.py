@@ -3,7 +3,7 @@
 As regras de ouro do back-end em Go, conferidas pela CI e não só pela revisão (#457, ADR 0049 e ADR 0051). Lê os .go de
 src/backend e falha em:
 - float64 (e float32, Float64(), ParseFloat...): dinheiro, quantidade e taxa são tipos.Decimal;
-- time.Now: a hora vem do relogio.Relogio (só o internal/relogio chama time.Now), e o teste usa o relogio.Fixo;
+- time.Now: a hora vem do relogio.Relogio (só o internal/plataforma/relogio chama time.Now), e o teste usa o relogio.Fixo;
 - time.Sleep em _test.go: espere por um sinal (canal, WaitGroup) ou rode dentro do synctest.Test.
 
 Comentário e texto entre aspas não contam: só o código. Dentro de um synctest.Test, o time.Now e o time.Sleep são do
@@ -48,7 +48,7 @@ PADROES = {
 MENSAGENS = {
     FLOAT: ('float64 não é para dinheiro, quantidade nem taxa: use tipos.Decimal. Se é um fator ou uma pontuação que o '
             'C# também calcula em double, escreva a exceção, com o motivo, em scripts/ci/regras-go-excecoes.txt'),
-    AGORA: ('time.Now() fora do internal/relogio: a hora vem de um relogio.Relogio recebido pelo construtor '
+    AGORA: ('time.Now() fora do internal/plataforma/relogio: a hora vem de um relogio.Relogio recebido pelo construtor '
             '(relogio.Fixo no teste, relogio.Sistema em produção). Se é hora de sistema e não de negócio (medir '
             'duração, validade de certificado), escreva a exceção, com o motivo, em scripts/ci/regras-go-excecoes.txt'),
     DORMIR: ('time.Sleep em teste: não espere por tempo. Espere um sinal (canal, sync.WaitGroup, o AoEscutar do '
@@ -122,7 +122,7 @@ def achados_do_arquivo(caminho, fonte):
     for regra, padrao in PADROES.items():
         if regra == DORMIR and not caminho.endswith('_test.go'):
             continue
-        if regra == AGORA and caminho.startswith('internal/relogio/'):
+        if regra == AGORA and caminho.startswith('internal/plataforma/relogio/'):
             continue
         for achado in padrao.finditer(codigo):
             if regra != FLOAT and any(inicio <= achado.start() < fim for inicio, fim in bolhas):

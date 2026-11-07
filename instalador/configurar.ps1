@@ -124,7 +124,7 @@ function Migrar-Instalacao-Antiga {
         Copy-Item -Path (Join-Path $chavesAntigas "key-*.xml") -Destination $chavesNovas -Force -ErrorAction SilentlyContinue
         Log "chaves de protecao de dados copiadas de $chavesAntigas"
     }
-    # #277: a chave dos segredos do Go (segredos v2, internal/segredos). Sem ela, o Go cria outra e os segredos que ele
+    # #277: a chave dos segredos do Go (segredos v2, internal/plataforma/segredos). Sem ela, o Go cria outra e os segredos que ele
     # gravou ficam ilegiveis. Vale porque o servico antigo e o novo rodam na mesma conta (LocalSystem), dona do DPAPI
     # que protege o arquivo. Pela mesma regra das outras chaves: so se a pasta nova ainda nao tem a dela.
     $segredosAntigo = if ($chavesAntigas) { Join-Path $chavesAntigas "segredos.chave" } else { $null }

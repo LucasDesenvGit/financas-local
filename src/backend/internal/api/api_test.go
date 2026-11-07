@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/api"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/testeapoio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
 // #86: até aqui, o api.Montar só era chamado nos testes pelo modo "atrás do .NET" (cmd/financas), que saiu. Regras: os

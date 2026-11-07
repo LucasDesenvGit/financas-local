@@ -6,7 +6,7 @@ Como as partes conversam nos caminhos que cruzam o sistema. Os nomes dos partici
 
 ## Login e sessão
 
-**Quem atende:** o site (`internal/autenticacao`, #75).
+**Quem atende:** o site (`internal/plataforma/autenticacao`, #75).
 
 ```mermaid
 sequenceDiagram
@@ -107,7 +107,7 @@ sequenceDiagram
 
 ## Sincronização com a Pluggy
 
-**Quem atende:** o site (`internal/sincronizacao`, #83).
+**Quem atende:** o site (`internal/openfinance/sincronizacao`, #83).
 
 ```mermaid
 sequenceDiagram

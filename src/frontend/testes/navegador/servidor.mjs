@@ -1,5 +1,5 @@
 // Servidor dos testes no navegador (#185, ADR 0041): serve o build de produção (dist/) como a API serve o wwwroot,
-// com a MESMA Content-Security-Policy, lida do back-end em Go (internal/servidor/intermediarios.go; não há cópia
+// com a MESMA Content-Security-Policy, lida do back-end em Go (internal/plataforma/servidor/intermediarios.go; não há cópia
 // para ficar velha). Assim um script
 // inline bloqueado, como o do #157, aparece no teste. As chamadas /api/** nunca chegam aqui: o Playwright as responde
 // com a API falsa (api-falsa.ts).
@@ -21,7 +21,7 @@ if (!existsSync(join(pasta, 'index.html'))) {
 
 /** A CSP do site: as partes de "const csp = \"...\" + \"...\"" do intermediarios.go do Go, juntas. */
 function cspDaApi() {
-  const arquivo = resolve(aqui, '..', '..', '..', 'backend', 'internal', 'servidor', 'intermediarios.go');
+  const arquivo = resolve(aqui, '..', '..', '..', 'backend', 'internal', 'plataforma', 'servidor', 'intermediarios.go');
   const fonte = readFileSync(arquivo, 'utf8');
   // As partes entre aspas, ligadas por "+" (com quebra de linha no meio). A CSP tem ";" DENTRO das aspas
   // ('self';), e o Go não fecha a instrução com ";": o bloco acaba na primeira parte que não é seguida de "+".

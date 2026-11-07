@@ -30,7 +30,7 @@ gh api repos/LucasDesenvGit/financas-local/issues/<N>/dependencies/blocked_by -q
 ## 1. Regras que não se negociam
 
 1. **Contrato idêntico.** Cada endpoint em Go devolve o **mesmo status e o mesmo JSON** do .NET (nomes em camelCase, `null` × ausente, `[]` × `null`, ordem dos itens, casas decimais) e deixa o banco **no mesmo estado**. O juiz é o teste de contrato (#72, `src/backend/testes/contrato/`): endpoint sem caso de contrato não está pronto.
-2. **Banco no formato do EF Core** (#74), para dar para voltar ao .NET: `decimal` em `TEXT` (`-5000.0`), `DateTime` em `TEXT` (`2026-10-15 22:55:31.3481471`), `DateOnly` (`2026-10-15`), GUID em **maiúsculas**, `bool` e `enum` em `INTEGER`. O `internal/tipos` já faz isso; tipo novo confere a regra no código-fonte do EF Core / Microsoft.Data.Sqlite, com link, antes de cravar.
+2. **Banco no formato do EF Core** (#74), para dar para voltar ao .NET: `decimal` em `TEXT` (`-5000.0`), `DateTime` em `TEXT` (`2026-10-15 22:55:31.3481471`), `DateOnly` (`2026-10-15`), GUID em **maiúsculas**, `bool` e `enum` em `INTEGER`. O `internal/plataforma/tipos` já faz isso; tipo novo confere a regra no código-fonte do EF Core / Microsoft.Data.Sqlite, com link, antes de cravar.
 3. **Dinheiro nunca em `float64`**: nem no cálculo, nem no JSON, nem no SQL (`CLAUDE.md`). Onde o C# usa `double` de propósito (o fator da Selic), o Go repete e diz no comentário.
 4. **`banco/01-estrutura.sql` continua a fonte única do esquema.** Go não cria nem altera tabela por conta própria.
 5. **Só cópias do banco** em desenvolvimento e teste. Nunca abra `dados/sql/FinancasLocal.db` com o .NET rodando, nunca suba dados reais (o repositório é compartilhado).
@@ -85,18 +85,18 @@ Fluxo de uma etapa (uma issue = um PR, partindo do `develop`):
 | No C# | O risco em Go | Como fazer |
 |---|---|---|
 | `Math.Round(x, 2)` — **144 usos, só 2 com `MidpointRounding`** | o padrão do C# é o **arredondamento bancário** (`ToEven`); `decimal.Round` arredonda "para cima" no .5 | `tipos.Arredondar(x, 2)` onde o C# não diz o modo (bancário, e não mexe em quem já tem menos casas: `250.0` continua `250.0`); `Round` do `shopspring/decimal`, pelo `.Decimal()`, só onde ele diz `AwayFromZero` |
-| `a / b` em `decimal` | o `shopspring/decimal` divide com 16 casas e arredonda "para cima"; o C# vai até 28 casas, com escala própria | `tipos.Dividir(a, b)` (devolve `ErrDivisaoPorZero` e `ErrEstouro`, as exceções do C#); para as outras contas, `tipos.Multiplicar`, `Somar`, `Subtrair`, `Maior` e `Menor`, que guardam a escala como o C# (gabarito em `internal/tipos/testdata`) |
+| `a / b` em `decimal` | o `shopspring/decimal` divide com 16 casas e arredonda "para cima"; o C# vai até 28 casas, com escala própria | `tipos.Dividir(a, b)` (devolve `ErrDivisaoPorZero` e `ErrEstouro`, as exceções do C#); para as outras contas, `tipos.Multiplicar`, `Somar`, `Subtrair`, `Maior` e `Menor`, que guardam a escala como o C# (gabarito em `internal/plataforma/tipos/testdata`) |
 | `decimal` serializado pelo `System.Text.Json` | preserva a escala (`10.50`); `float64` vira `10.5` | `tipos.Decimal`, que tem `MarshalJSON` próprio; o contrato pega a diferença |
 | `List<T>` vazia → `[]` | `nil` slice vira `null` no JSON | inicializar com `[]T{}` ou `make` em toda saída |
 | `OrderBy`/`ThenBy` do LINQ (estável) | `sort.Slice` não é estável | `slices.SortStableFunc` com o mesmo critério e desempate |
-| `string.Compare`/`OrderBy` em texto (sensível à cultura) | Go compara bytes (ordinal) | conferir caso a caso; se o .NET usa cultura, a ordem pt-BR do `internal/texto` (`x/text/collate`, conferida por gabarito do C#) |
-| `ToLower()`/`Contains` e `LIKE` do SQLite | `LIKE` só ignora caixa em ASCII; acentos mudam o resultado | reproduzir onde o .NET filtra (no SQL ou em memória), com as normalizações do `internal/texto`, e testar com "Ação"/"acao" |
+| `string.Compare`/`OrderBy` em texto (sensível à cultura) | Go compara bytes (ordinal) | conferir caso a caso; se o .NET usa cultura, a ordem pt-BR do `internal/plataforma/texto` (`x/text/collate`, conferida por gabarito do C#) |
+| `ToLower()`/`Contains` e `LIKE` do SQLite | `LIKE` só ignora caixa em ASCII; acentos mudam o resultado | reproduzir onde o .NET filtra (no SQL ou em memória), com as normalizações do `internal/plataforma/texto`, e testar com "Ação"/"acao" |
 | `DateTime` sem `Kind`, `DateOnly` | fuso trocado muda o mês do lançamento | `time.Time` sempre com local explícito; `tipos.Data` só com ano/mês/dia |
 | `enum` | o JSON hoje sai como **número** (sem `JsonStringEnumConverter` na API) | tipo `int` nomeado; não trocar por texto |
 | `DeleteBehavior` do EF (`Cascade`, `SetNull`, `ClientSetNull`) | parte da cascata era feita pelo EF, não pela FK | conferir as duas fontes: o `ON DELETE` das chaves em `banco/01-estrutura.sql` e o `OnDelete(DeleteBehavior...)` do `FinancasDbContext.cs`; o que só o EF fazia (e o que nenhum dos dois apaga, como o `HistoricoInvestimento`, #575) fica explícito, numa transação |
 | `ExecuteUpdate`/`ExecuteDelete` | atualização em massa sem transação explícita | `UPDATE`/`DELETE` parametrizado dentro de `banco.EmTransacao` |
-| `SaveChanges` do EF | grava só as colunas que mudaram | o `Gravar` de `internal/transacoes` faz o mesmo; não regrave a linha inteira |
-| Validação por atributos (`[Required]`, `[MaxLength]`) e `ModelState` | some sem aviso | validar na entrada, com a mesma mensagem e o mesmo 400 (`internal/respostas`, `ValidationProblemDetails`) |
+| `SaveChanges` do EF | grava só as colunas que mudaram | o `Gravar` de `internal/movimentacao/transacoes` faz o mesmo; não regrave a linha inteira |
+| Validação por atributos (`[Required]`, `[MaxLength]`) e `ModelState` | some sem aviso | validar na entrada, com a mesma mensagem e o mesmo 400 (`internal/plataforma/respostas`, `ValidationProblemDetails`) |
 | Exceção capturada no `BaseController` | erro engolido ou status diferente | mapear cada exceção do C# para um erro tipado em Go |
 
 ## 5. Desempenho da migração

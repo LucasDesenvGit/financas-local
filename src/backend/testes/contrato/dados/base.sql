@@ -11,7 +11,7 @@
    (CriadoEm, AtualizadoEm) são anteriores ao início do relógio: o que for
    gravado durante o contrato aparece como "<relógio +N min>" nos esperados.
 
-   Formato do EF Core (internal/tipos): decimal em TEXT ("-5000.0", "12.5"),
+   Formato do EF Core (internal/plataforma/tipos): decimal em TEXT ("-5000.0", "12.5"),
    data em "AAAA-MM-DD", data e hora em "AAAA-MM-DD hh:mm:ss[.fffffff]" (UTC),
    GUID em maiúsculas, booleano e enum em INTEGER.
 

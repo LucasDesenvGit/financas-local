@@ -92,7 +92,7 @@ if (-not $SoPacote) {
     Push-Location (Join-Path $Raiz "src\backend")
     try {
         Executar "go" @("build", "-trimpath", "-ldflags",
-            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$Rotulo",
+            "-s -w -X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$Rotulo",
             "-o", (Join-Path $Publicado "financas-go.exe"), "./cmd/financas")
     } finally {
         Pop-Location
