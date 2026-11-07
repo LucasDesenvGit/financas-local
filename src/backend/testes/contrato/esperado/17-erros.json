@@ -1104,10 +1104,10 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 23,
+      "abertos": 22,
       "itens": [
         {
-          "id": 25,
+          "id": 24,
           "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido]) CPF [removido], valor R$ [removido]",
           "nivel": 4,
           "ocorrencias": 1,
@@ -1141,7 +1141,7 @@
     "corpo": {
       "categoria": "Front-end",
       "detalhe": "Error: falhou\n    at https://127.0.0.1:5443/main.js?[removido]\n    Authorization: Bearer [removido]",
-      "id": 25
+      "id": 24
     }
   },
   {
@@ -1202,10 +1202,10 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 21,
+      "abertos": 20,
       "itens": [
         {
-          "id": 25,
+          "id": 24,
           "mensagem": "TypeError: x is undefined (token=[removido], senha: [removido]) CPF [removido], valor R$ [removido]",
           "nivel": 4,
           "ocorrencias": 2,
@@ -1237,7 +1237,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "abertos": 21,
+      "abertos": 20,
       "itens": [
         {
           "id": 7,
