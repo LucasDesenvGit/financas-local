@@ -1,48 +1,48 @@
-# sqlc (ADR 0049): gera internal/banco/consultas a partir do SQL. Rodar: go generate ./...
+# sqlc (ADR 0049): gera internal/plataforma/banco/consultas a partir do SQL. Rodar: go generate ./...
 # O esquema é o mesmo do .NET (banco/01-estrutura.sql mais as colunas novas do 2-criar-banco.sh), reescrito
-# pelo gerador em internal/banco/esquema para o parser do sqlc entender.
+# pelo gerador em internal/plataforma/banco/esquema para o parser do sqlc entender.
 version: "2"
 sql:
   - engine: "sqlite"
-    schema: "internal/banco/esquema/esquema-sqlc.sql"
-    queries: "internal/banco/consultas/sql"
+    schema: "internal/plataforma/banco/esquema/esquema-sqlc.sql"
+    queries: "internal/plataforma/banco/consultas/sql"
     gen:
       go:
         package: "consultas"
-        out: "internal/banco/consultas"
+        out: "internal/plataforma/banco/consultas"
         emit_pointers_for_null_types: true
         overrides:
           # Formato do EF Core: data e hora em TEXT, bool em INTEGER (pacote tipos).
           - column: "Configuracao.AtualizadoEm"
             go_type:
-              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
+              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
               type: "DataHora"
           - column: "Configuracao.Protegido"
             go_type: "bool"
           # #75: Usuario e AuditoriaAcesso no formato do EF Core.
           - column: "Usuario.CarimboSeguranca"
             go_type:
-              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
+              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
               type: "Guid"
           - column: "Usuario.CriadoEm"
             go_type:
-              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
+              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
               type: "DataHora"
           - column: "Usuario.BloqueadoAte"
             nullable: true
             go_type:
-              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
+              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
               type: "DataHora"
               pointer: true
           - column: "Usuario.UltimoLoginEm"
             nullable: true
             go_type:
-              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
+              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
               type: "DataHora"
               pointer: true
           - column: "AuditoriaAcesso.DataHora"
             go_type:
-              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/tipos"
+              import: "github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
               type: "DataHora"
           - column: "Usuario.TentativasFalhas"
             go_type: "int"

@@ -81,7 +81,7 @@ exe="$(cd "$pasta_go" && go env GOEXE)" # ".exe" no Windows
 versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.props" | head -n1)"
 (cd "$pasta_go" &&
     go test -c -o "$pasta/contrato.test$exe" ./testes/contrato &&
-    CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend/internal/versao.Atual=$versao" \
+    CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$versao" \
         -o "$pasta/financas-go$exe" ./cmd/financas &&
     go build -o "$pasta/pluggy-falsa$exe" ./testes/contrato/pluggyfalsa)
 
@@ -114,7 +114,7 @@ for _ in $(seq 1 40); do [[ -s "$PASTA/pluggy-raiz.pem" ]] && break; sleep 0.25;
 Pluggy__UrlBase="https://127.0.0.1:5452/" SSL_CERT_FILE="$PASTA/pluggy-raiz.pem" \
 HTTPS_PROXY="$PROXY" HTTP_PROXY="$PROXY" NO_PROXY= \
     "$PASTA/financas-go$EXE" -pasta "$PASTA" -endereco "127.0.0.1:$PORTA" \
-        -wwwroot "$PASTA_GO/internal/servidor/testdata/wwwroot" -banco "$PASTA/dados/sql/FinancasLocal.db" \
+        -wwwroot "$PASTA_GO/internal/plataforma/servidor/testdata/wwwroot" -banco "$PASTA/dados/sql/FinancasLocal.db" \
         -chaves "$PASTA/dados/chaves" -inicio-do-relogio "$INICIO" -aplicar-esquema -rotinas-de-partida \
         >"$PASTA/go.log" 2>&1 &
 pid=$!

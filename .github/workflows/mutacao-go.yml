@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       pacotes:
-        description: 'Pacotes, separados por espaço (vazio: todos os de scripts/ci/mutacao-go.txt). Ex.: internal/tipos internal/parametros'
+        description: 'Pacotes, separados por espaço (vazio: todos os de scripts/ci/mutacao-go.txt). Ex.: internal/plataforma/tipos internal/ajustes/parametros'
         required: false
         default: ''
 

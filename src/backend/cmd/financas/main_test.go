@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/relogio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/servidor"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
 )
 
 // inicioDoContrato é o InicioPadrao do testes/contrato: em Brasília ainda é 14/10, 22h.

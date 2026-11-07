@@ -2,13 +2,30 @@
 
 A decisão por trás deste padrão está na [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md): camadas dentro de cada assunto, regra sem HTTP, mapa de contextos e o que **não** se adota (um pacote por camada, Clean Architecture completa, N-tier). O teste de arquitetura local confere (`go test -tags arquitetura ./internal/arquitetura/`, #476).
 
-Cada assunto do épico #70 é um pacote em `internal/<assunto>`, com a mesma forma. O modelo é o `internal/categorias`, com as regras em `internal/categorizacao`, `regrasdescricao` e `transferencias`.
+Cada assunto do épico #70 é um pacote em `internal/<area>/<assunto>`, com a mesma forma. O modelo é o `internal/ajustes/categorias`, com as regras em `internal/ajustes/categorizacao`, `regrasdescricao` e `internal/movimentacao/transferencias`.
+
+## As áreas
+
+As áreas são as mesmas das telas do front-end (`src/frontend/src/app/paginas/`), para a mesma palavra levar à mesma pasta nos dois lados (#656). A área só organiza: o pacote continua com o nome do assunto (`transacoes.NovoServico`), e quem importa quem fica na tabela `dependencias` do teste de arquitetura.
+
+| Pasta | O que tem | Pacotes |
+|---|---|---|
+| `movimentacao/` | o dinheiro que entra e sai: transações, contas, cartões, contas a pagar | `transacoes`, `extrato`, `transferencias`, `parcelas`, `faturas`, `contas`, `contasagendadas`, `cobrancas`, `conferenciabanco`, `sugestoes`, `bancos`, `tipolancamento`, `poucoinformativa` |
+| `planejamento/` | orçamentos e metas | `orcamentos`, `metas` |
+| `patrimonio/` | investimentos, reservas, empréstimos e as cotações | `carteira`, `investimentos`, `reservas`, `cambio`, `cotacoes`, `cripto`, `selic`, `emprestimos` |
+| `analises/` | relatórios e painel | `relatorios`, `painel` |
+| `ajustes/` | os cadastros e a parametrização | `categorias`, `categorizacao`, `regrasdescricao`, `parametros` |
+| `openfinance/` | a Pluggy e a sincronização (no front-end, a tela fica em `ajustes`) | `openfinance`, `pluggy`, `sincronizacao` |
+| `plataforma/` | o que todos usam: banco, tipos, HTTP comum, login, erros do sistema, auditoria, segredos, tarefas | `banco`, `tipos`, `texto`, `relogio`, `config`, `respostas`, `servidor`, `servicosistema`, `sessao`, `autenticacao`, `auditoria`, `configuracao`, `erros`, `segredos`, `tarefas`, `versao`, `saude`, `desfazer`, `testeapoio` |
+| raiz de `internal/` | quem junta ou confere todos os outros | `api`, `partida`, `arquitetura` |
+
+**Assunto novo:** vai para a área da tela dele. Se ninguém o vê como tela e todos os assuntos o usam, é `plataforma`. Em dúvida, a ADR 0056 decide pelo mapa de contextos, não pelo nome.
 
 ## As três camadas
 
 | Camada | Onde | O que faz |
 |---|---|---|
-| HTTP | `internal/<assunto>`, uma função por rota (`rotas*.go`) | lê e valida a entrada (pacote `respostas`), chama a regra e responde o JSON |
+| HTTP | `internal/<area>/<assunto>`, uma função por rota (`rotas*.go`) | lê e valida a entrada (pacote `respostas`), chama a regra e responde o JSON |
 | Regra | o mesmo pacote, ou um pacote próprio quando outro assunto também usa (`categorizacao`, que a sincronização #83 reaproveita) | a regra de negócio, sem nada de HTTP |
 | Banco | SQL com `?` (ou o código do `sqlc`) dentro da regra | ler e gravar no formato do banco: dinheiro, datas e booleanos como texto e inteiro (pacote `tipos`) |
 
@@ -51,4 +68,4 @@ Cada assunto do épico #70 é um pacote em `internal/<assunto>`, com a mesma for
 - **Regra:** tabela com `t.Run`, num SQLite de verdade (`testeapoio.NovoBancoVazio`).
 - **HTTP:** com `httptest`, para o que o contrato não cobre.
 - **Contrato:** `testes/contrato/casos/NN-assunto.json` (com `rodar.sh --atualizar` e o `git diff` conferido).
-- **Comportamento difícil de acertar** (normalização de texto, arredondamento do decimal): um gabarito em `testdata/` (`internal/texto/testdata`, `internal/tipos/testdata`). *Histórico:* esses gabaritos foram gravados chamando o C#, antes de o .NET sair na #86; ficam como regressão.
+- **Comportamento difícil de acertar** (normalização de texto, arredondamento do decimal): um gabarito em `testdata/` (`internal/plataforma/texto/testdata`, `internal/plataforma/tipos/testdata`). *Histórico:* esses gabaritos foram gravados chamando o C#, antes de o .NET sair na #86; ficam como regressão.

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/servidor"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
 )
 
 // Regra (#638): o cliente do contrato confere o certificado do servidor, e confia só no .pem que recebeu. Sem ele, ou com

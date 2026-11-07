@@ -49,7 +49,7 @@ func codificar(v any) ([]byte, error) {
 }
 
 // CompararJSON lê os dois JSON sem float64 e devolve as diferenças, com as regras do comparar abaixo (vazio = iguais).
-// É o mesmo comparador dos casos de contrato, exportado para os testes de HTTP (internal/testeapoio, #369).
+// É o mesmo comparador dos casos de contrato, exportado para os testes de HTTP (internal/plataforma/testeapoio, #369).
 func CompararJSON(esperado, obtido []byte) ([]string, error) {
 	e, err := decodificar(esperado)
 	if err != nil {
