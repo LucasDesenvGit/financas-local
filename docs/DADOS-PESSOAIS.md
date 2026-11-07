@@ -22,8 +22,8 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **O que é** | `Usuario`: login, hash da senha (PBKDF2), tentativas e último login. `AuditoriaAcesso`: evento, login, IP e navegador de cada ação registrada (login, senha, parâmetros, credenciais, conexões, alterações em lote e conferências) |
 | **De onde vem** | De você, e do próprio sistema |
 | **Sai do computador?** | Não |
-| **Por quanto tempo** | Sem prazo: a auditoria não é apagada sozinha |
-| **Como apagar** | Só apagando tudo. A tela de Segurança lista a auditoria, mas não apaga |
+| **Por quanto tempo** | `Usuario`: enquanto houver o login. `AuditoriaAcesso`: 180 dias, ajustável de 30 a 730 em Configurações › Parametrização › Segurança (“Guardar o histórico de acessos por”, #530) |
+| **Como apagar** | A auditoria mais antiga que o prazo é apagada sozinha, ao subir o site e uma vez por dia. Para apagar antes, diminua o prazo. O `Usuario`, só apagando tudo |
 
 ### Credenciais
 
