@@ -58,12 +58,15 @@ func Nova(o Opcoes) *Autenticacao {
 	}
 }
 
-// Rotas de api/auth que não exigem login (AllowAnonymous), mas os POST exigem CSRF, como no .NET.
+// Rotas de api/auth que não exigem login (AllowAnonymous), mas os POST exigem CSRF, como no .NET. A autoridade do
+// acesso pelo celular (#328) também: o celular a baixa antes de confiar no site e de entrar, e ela é só o certificado
+// público (o pacote celular a serve só com o acesso ligado).
 var rotasAnonimas = map[string]bool{
-	"GET /api/auth/estado":      true,
-	"POST /api/auth/configurar": true,
-	"POST /api/auth/entrar":     true,
-	"POST /api/auth/sair":       true,
+	"GET /api/auth/estado":        true,
+	"POST /api/auth/configurar":   true,
+	"POST /api/auth/entrar":       true,
+	"POST /api/auth/sair":         true,
+	"GET /api/celular/autoridade": true,
 }
 
 // Rotas da política "login" (EnableRateLimiting): 5 por minuto por IP, somadas.
@@ -169,7 +172,6 @@ func metodoSeguro(metodo string) bool {
 	return false
 }
 
-// ipDe é o Connection.RemoteIpAddress: o IP de quem conectou (o site escuta só em 127.0.0.1; não há proxy na frente).
 // erroInterno é o UseExceptionHandler: o erro vai para o log, e quem pediu recebe só o 500 de sempre.
 func (a *Autenticacao) erroInterno(w http.ResponseWriter, r *http.Request, oque string, err error) {
 	a.o.Log.ErrorContext(r.Context(), "erro na autenticação", "origem", erros.OrigemAPI, "etapa", oque, "erro", err)

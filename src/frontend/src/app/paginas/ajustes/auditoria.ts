@@ -24,7 +24,9 @@ const NOMES_EVENTOS: Record<string, string> = {
   ConferenciaInvestimentos: 'Conferência de investimentos aplicada',
   ConferenciaInvestimentosDesfeita: 'Conferência de investimentos desfeita',
   TrocosAutomaticos: 'Trocos automáticos aplicados',
-  TrocosAutomaticosDesfeitos: 'Trocos automáticos desfeitos'
+  TrocosAutomaticosDesfeitos: 'Trocos automáticos desfeitos',
+  AcessoCelularLigado: 'Acesso pelo celular ligado',
+  AcessoCelularDesligado: 'Acesso pelo celular desligado'
 };
 
 /** "RegraDescricaoCriada (22)" → "Regra de descrição criada (22)"; evento desconhecido volta igual. */
@@ -34,7 +36,10 @@ export function descreverEvento(evento: string): string {
   return nome ? nome + (m![2] ? ' ' + m![2].trim() : '') : evento;
 }
 
-/** Endereços do próprio computador: o site só aceita conexões dele (bind em 127.0.0.1). */
+/**
+ * Endereços do próprio computador (o site escuta em 127.0.0.1). Com o acesso pelo celular ligado (#328), o IP do celular
+ * aparece como veio: dá para ver qual aparelho da rede entrou.
+ */
 const ENDERECOS_LOCAIS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1', 'localhost']);
 
 /** "127.0.0.1" → "Acesso local"; outro endereço aparece como veio (para não esconder nada estranho). */

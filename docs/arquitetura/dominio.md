@@ -206,3 +206,4 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Emergência | `Transacao.Emergencia` | Gasto marcado à mão, destacado nos relatórios e orçamentos | `reservaEmergencia`, para a reserva |
 | Reserva | `ReservaDto`, `internal/patrimonio/reservas` | Dinheiro separado dentro de uma conta ([ADR 0010](../adr/0010-reservas-estimadas-pelo-extrato.md), [0037](../adr/0037-reservas-pelo-valor-do-open-finance.md)) | — |
 | Conta a pagar | `ContaAgendada` | Compromisso com vencimento e recorrência; não confundir com `Conta` | — |
+| Acesso pelo celular | `internal/plataforma/celular`, `Configuracao` `AcessoCelular.Ip` | Desligado por padrão; ligado, o site escuta também num IPv4 privado da rede de casa, com o certificado da autoridade local ([ADR 0061](../adr/0061-acesso-pelo-celular-na-rede-local.md)) | — |

@@ -19,7 +19,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 
 | | |
 |---|---|
-| **O que é** | `Usuario`: login, hash da senha (PBKDF2), tentativas e último login. `AuditoriaAcesso`: evento, login, IP e navegador de cada ação registrada (login, senha, parâmetros, credenciais, conexões, alterações em lote e conferências) |
+| **O que é** | `Usuario`: login, hash da senha (PBKDF2), tentativas e último login. `AuditoriaAcesso`: evento, login, IP e navegador de cada ação registrada (login, senha, parâmetros, credenciais, conexões, alterações em lote, conferências e o acesso pelo celular ligado e desligado). O IP é `127.0.0.1` no computador e, com o acesso pelo celular ligado, o do aparelho na rede de casa |
 | **De onde vem** | De você, e do próprio sistema |
 | **Sai do computador?** | Não |
 | **Por quanto tempo** | Sem prazo: a auditoria não é apagada sozinha |
@@ -44,6 +44,16 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **Sai do computador?** | Não |
 | **Por quanto tempo** | Até você trocar ou apagar |
 | **Como apagar** | Esvazie o campo e clique em **Salvar nome** |
+
+### Acesso pelo celular
+
+| | |
+|---|---|
+| **O que é** | `Configuracao` (`AcessoCelular.Ip`): o IP deste computador na rede de casa, escolhido ao ligar o acesso pelo celular ([ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)). Fora do banco, em `dados/chaves`, a autoridade que assina o certificado do celular (`celular-autoridade.chave`, a chave, e `celular-autoridade.crt`, a parte pública): não é dado pessoal, mas é chave a proteger como as outras |
+| **De onde vem** | De você, em **Configurações › Segurança**, se ligar. A autoridade, do próprio sistema, na primeira vez que liga |
+| **Sai do computador?** | Não para a internet. Com o acesso ligado, o site responde aos aparelhos da sua rede de casa, que veem o que você abrir neles depois de entrar. A parte pública da autoridade vai para o celular que a baixar |
+| **Por quanto tempo** | O IP, até desligar. A autoridade, até você apagar os dois arquivos (ela vale 10 anos) |
+| **Como apagar** | **Desligar o acesso pelo celular** apaga o IP e a regra do firewall do Windows. A autoridade fica, para o celular não precisar instalar de novo; para trocá-la, com o acesso desligado, apague os dois arquivos `celular-autoridade` (e remova a antiga do celular) |
 
 ### Dados bancários da Pluggy
 
