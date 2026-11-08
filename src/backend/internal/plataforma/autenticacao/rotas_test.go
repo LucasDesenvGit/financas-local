@@ -223,11 +223,26 @@ func TestSessaoExpiraERenova(t *testing.T) {
 	n.esperar(t, "GET", "/api/auth/estado", nil, 200, `"autenticado":false`)
 }
 
+// Regra (#328): a autoridade do acesso pelo celular passa sem login, porque o celular a baixa antes de confiar no site e
+// de entrar (é só o certificado público). Aqui o mux não tem a rota: o 404 mostra que ela passou da autenticação.
+func TestAutoridadeDoCelularSemLogin(t *testing.T) {
+	a := novoAmbiente(t)
+	n := a.navegador()
+	if status, _ := n.pedir("GET", "/api/celular/autoridade", nil, true); status != 404 {
+		t.Errorf("sem login: %d, esperado o 404 do mux (passou da autenticação)", status)
+	}
+	// Só o GET: outro método na mesma rota exige login.
+	if status, _ := n.pedir("POST", "/api/celular/autoridade", map[string]string{}, true); status != 401 {
+		t.Errorf("POST sem login: %d", status)
+	}
+}
+
 func TestRotaQueNaoEAnonimaExigeLogin(t *testing.T) {
 	a := novoAmbiente(t)
 	n := a.navegador()
 	for _, c := range []struct{ metodo, caminho string }{
 		{"GET", "/api/auth/auditoria"}, {"POST", "/api/auth/alterar-senha"}, {"GET", "/api/contas"}, {"GET", "/api/go/saude"},
+		{"GET", "/api/celular"}, {"POST", "/api/celular/ligar"}, {"POST", "/api/celular/desligar"},
 	} {
 		if status, corpo := n.pedir(c.metodo, c.caminho, nil, true); status != 401 || corpo != "" {
 			t.Errorf("%s %s: %d %q", c.metodo, c.caminho, status, corpo)
