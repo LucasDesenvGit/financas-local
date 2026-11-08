@@ -1,0 +1,11 @@
+{
+  // Pastas geradas que não são código (#657): continuam no disco e no .gitignore, só somem da árvore e da busca.
+  // dados/ e backups/ ficam visíveis de propósito: são os dados de quem usa, e escondê-los facilita apagar sem querer.
+  "files.exclude": {
+    "ferramentas": true,
+    "publicado": true,
+    "instaladores": true,
+    "src/frontend/dist": true,
+    "**/__pycache__": true
+  }
+}

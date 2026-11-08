@@ -4,7 +4,7 @@ import { dirname, join, relative, sep } from 'path';
 /**
  * #475 (ADR 0059): o código de src/app como os testes que o leem como texto precisam ver. Componente com o template e o
  * CSS em arquivo próprio (`templateUrl`, `styleUrl`, `styleUrls`) vem com eles juntos, como se estivessem inline; sem
- * isso, o teste que procura no template passaria sem olhar nada. O `scripts/ci/testes-afetados.py` acha pelo nome deste
+ * isso, o teste que procura no template passaria sem olhar nada. O `scripts/ci/front/testes-afetados.py` acha pelo nome deste
  * arquivo os testes que o usam (eles rodam a cada mudança no front-end).
  */
 export const APP = join(__dirname, '..', '..', '..', 'src', 'app');

@@ -49,6 +49,9 @@ var Catalogo = []Definicao{
 	{Chave: "Seguranca.MinutosBloqueio", Grupo: "Segurança", Nome: "Tempo de bloqueio",
 		Descricao: "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
 		Tipo:      Inteiro, Padrao: 15, Minimo: 1, Maximo: 1440, Unidade: texto("minutos"), DoAppsettings: true},
+	{Chave: "Seguranca.DiasRetencaoAuditoria", Grupo: "Segurança", Nome: "Guardar o histórico de acessos por",
+		Descricao: "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+		Tipo:      Inteiro, Padrao: 180, Minimo: 30, Maximo: 730, Unidade: texto("dias")},
 
 	{Chave: "Orcamento.MetaPoupanca", Grupo: "Orçamentos", Nome: "Meta de poupança",
 		Descricao: "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",

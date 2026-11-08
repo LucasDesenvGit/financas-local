@@ -21,7 +21,7 @@ O que o SQL não mostra:
 - **GUID em maiúsculas**, e `bool` e `enum` em `INTEGER`.
 - **Ligações sem chave estrangeira:** `Conta.ContaVinculadaId`, `Transacao.RegraDescricaoId`, `Transacao.PluggyCategoriaId` (para `CategoriaPluggy`), `CategoriaPluggy.PaiPluggyId`, `OperacaoAtivo.TransacaoId`, `HistoricoInvestimento.ConexaoBancariaId` e `HistoricoInvestimento.PluggyInvestmentId` (para `Investimento`, de propósito: o histórico do investimento resgatado fica) apontam para outra tabela, mas o banco não confere. Quem apaga a linha de cima cuida delas no código.
 
-<!-- diagramas-do-banco: início (gerado por scripts/ci/gerar-diagrama-banco.py) -->
+<!-- diagramas-do-banco: início (gerado por scripts/dev/gerar-diagrama-banco.py) -->
 
 ### Segurança
 
@@ -238,8 +238,8 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 
 1. Em `src/backend`, rode `go generate ./...` e suba o que ele mudar: o site leva uma cópia dos scripts dentro do executável e um esquema para o `sqlc` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha. Consulta nova vai em `internal/plataforma/banco/consultas` (o `sqlc`) ou no pacote do assunto, sempre parametrizada.
 2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
-3. Rode `python3 scripts/ci/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
-4. Tabela nova: entra em `ASSUNTOS` no `scripts/ci/gerar-diagrama-banco.py`. Rode `python3 scripts/ci/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
+3. Rode `python3 scripts/ci/banco/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
+4. Tabela nova: entra em `ASSUNTOS` no `scripts/dev/gerar-diagrama-banco.py`. Rode `python3 scripts/dev/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
 5. No commit, use `feat(banco)!:` para marcar que a estrutura mudou. Quem atualiza não precisa fazer nada: o site aplica o esquema ao iniciar ([ADR 0039](adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
 
 Regras:
