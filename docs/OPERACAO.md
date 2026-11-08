@@ -6,7 +6,7 @@
 | Troquei de computador, ou apaguei a pasta `chaves` | [Chaves perdidas](#chaves-perdidas) |
 | Uma atualização não funcionou | [Atualização que falhou](#atualização-que-falhou) |
 
-Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) (**Mais opções**) e, pelos scripts, no `scripts/geral/4-backup.sh`.
+Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) (**Mais opções**) e, pelos scripts, no `scripts/geral/4-backup.sh`. Backup diário agendado antes da #154, pelo caminho antigo `scripts/4-backup.sh`? A atualização pelos scripts troca sozinha a entrada do crontab ou do Agendador de Tarefas pelo caminho novo, com o mesmo horário (#655); se ela avisar que não conseguiu, rode `scripts/geral/4-backup.sh --agendar`.
 
 ## Restaurar uma cópia
 
@@ -81,8 +81,9 @@ A pasta `dados\chaves` guarda as chaves que protegem os segredos gravados no ban
 |---|---|
 | Client Secret da Pluggy e token da brapi | Todas as transações, contas, metas e investimentos, que não usam essas chaves |
 | A sessão aberta no navegador: entre de novo | A senha do site, que fica no banco |
+| Com o acesso pelo celular ligado, a autoridade do celular: o site cria outra ao subir, e o celular precisa instalá-la de novo | O endereço do celular, que fica no banco |
 
-**O que fazer:** informe o Client Secret da Pluggy e o token da brapi de novo em **Configurações**. O sistema cria chaves novas sozinho.
+**O que fazer:** informe o Client Secret da Pluggy e o token da brapi de novo em **Configurações**. O sistema cria chaves novas sozinho. Usa o acesso pelo celular? No celular, remova o certificado antigo "Finanças Local (celular)" e instale o novo, como no Manual (Configurações › Segurança).
 
 **Instalou pelos scripts?** O certificado do site também fica nessa pasta (`dados/chaves/financaslocal.pfx`). Rode `scripts/geral/3-publicar-atualizar.sh` para criar outro. No `.msi`, ele fica em `dados\certificado`.
 

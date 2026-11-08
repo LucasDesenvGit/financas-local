@@ -7,7 +7,7 @@ import {
   SugestaoExtrato, ConferenciaInvestimentos, CorrigirInvestimentos, ResultadoCorrecaoInvestimentos,
   PreviaRenomear, RenomearTransacao, ResultadoRenomear, RegraDescricao, SalvarRegraDescricao, TipoCorrespondencia,
   RenomearEmLote, ResultadoRenomearEmLote, PreviaRegraDescricao,
-  AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
+  AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, SituacaoCelular, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FaturaMes, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, Avisos, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
@@ -337,6 +337,10 @@ export class ApiService {
     return this.http.post<void>(`${this.base}/auth/alterar-senha`, { senhaAtual, novaSenha });
   }
   auditoria(): Observable<Auditoria[]> { return this.http.get<Auditoria[]>(`${this.base}/auth/auditoria`); }
+  /** #328: o acesso pelo celular na rede de casa. */
+  situacaoCelular(): Observable<SituacaoCelular> { return this.http.get<SituacaoCelular>(`${this.base}/celular`); }
+  ligarCelular(ip: string): Observable<SituacaoCelular> { return this.http.post<SituacaoCelular>(`${this.base}/celular/ligar`, { ip }); }
+  desligarCelular(): Observable<SituacaoCelular> { return this.http.post<SituacaoCelular>(`${this.base}/celular/desligar`, {}); }
 
   /* ----- Erros do sistema (#11) ----- */
   erros(filtro: FiltroErros): Observable<PaginaErros> {
