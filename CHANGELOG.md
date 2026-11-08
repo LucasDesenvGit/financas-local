@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.5.1] — 2026-11-08 · desenvolvimento
+
+### Correções
+- **O log do serviço tira segredo, CPF e valor em reais, como os erros gravados no banco** (#531). O `journald` (Linux) e o Visualizador de Eventos (Windows) recebiam as mensagens como vieram; agora passam pelo mesmo `Limpar` da tabela de erros (ADR 0022), na mensagem e em todo atributo que vira texto, inclusive os erros embrulhados e os grupos. A tabela continua recebendo o erro original, com o tipo, e limpa ao gravar. O `docs/DADOS-PESSOAIS.md` e a ADR 0022 foram junto. Nada muda na tela.
+
 ## [3.5.0] — 2026-11-08 · desenvolvimento
 
 ### Funcionalidades

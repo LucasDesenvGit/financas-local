@@ -120,7 +120,7 @@ Antes de gravar, o `Sanitizador` tira o que está no padrão de segredo, CPF e v
 | **Por quanto tempo** | O que o sistema operacional guardar |
 | **Como apagar** | Pelas ferramentas do sistema operacional |
 
-**O log não passa pelo `Sanitizador`.** Mensagens de erro podem chegar como vieram, e no Linux o nível padrão é mais detalhado que no Windows.
+**O log passa pela mesma limpeza dos erros gravados no banco** (#531): o que está no padrão de segredo, CPF ou valor em reais sai como `[removido]`, na mensagem e nos atributos. É uma limpeza por padrão de texto, e não uma garantia. No Linux, o `journald` recebe também as informações; no Windows, o Visualizador de Eventos recebe só os avisos e os erros.
 
 ## O navegador
 
