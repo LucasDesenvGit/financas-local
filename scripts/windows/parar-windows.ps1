@@ -27,14 +27,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$PastaSql = Join-Path (Join-Path $Raiz "dados") "sql"
-$NomeServico = "FinancasLocal"
+. (Join-Path $PSScriptRoot "comum.ps1")
 $script:Problemas = 0
 
-function Etapa([string]$texto) { Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
-function Ok([string]$texto) { Write-Host "    OK  $texto" -ForegroundColor Green }
-function Aviso([string]$texto) { Write-Host "    !!  $texto" -ForegroundColor Yellow }
 function Problema([string]$texto) { $script:Problemas++; Aviso $texto }
 
 $ehAdministrador = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(

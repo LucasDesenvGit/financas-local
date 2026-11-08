@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md). **O mapa das pastas para pessoas** é o README de cada uma (`src/backend`, `src/frontend`, `src/gerenciador-go`, `banco`, `instalador`, `docs`): pasta principal nova ganha o dela, de 10 a 20 linhas, apontando para o `docs/ARQUITETURA.md` em vez de repetir (#657).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux (scripts bash no Linux, PowerShell ou `.msi` no Windows, [ADR 0012](docs/adr/0012-instalador-do-windows-em-powershell.md)): back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md). **O mapa das pastas para pessoas** é o README de cada uma (`src/backend`, `src/frontend`, `src/gerenciador-go`, `banco`, `instalador`, `docs`): pasta principal nova ganha o dela, de 10 a 20 linhas, apontando para o `docs/ARQUITETURA.md` em vez de repetir (#657).
 
 ## Comandos
 
@@ -22,7 +22,7 @@ cd src/frontend && NAVEGADOR=chromium npm run test:afetados   # antes do push: J
 cd src/frontend && npm start                                  # front-end em dev (http://localhost:4200, proxy /api -> API)
 scripts/geral/2-criar-banco.sh                                # banco (sem migrations)
 scripts/geral/3-publicar-atualizar.sh                         # compila, publica, certificado e serviço do sistema
-scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows sem bash: instalar-windows.cmd, ADR 0012)
+scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows, repassa para scripts/windows/instalar-windows.ps1; sem bash: instalar-windows.cmd, ADR 0012)
 ```
 
 O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
@@ -49,7 +49,7 @@ Angular é publicado no `wwwroot`, ao lado do executável do Go (`financas-go`):
 - **Mudou a estrutura:** o SQL, o `2-criar-banco.sh`, `go generate ./...` em `src/backend` (a cópia embutida e as consultas do `sqlc`), `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 - **Dado pessoal novo:** tabela ou coluna com dado pessoal, ou dado novo que sai do computador, entra em [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md) no mesmo PR.
 - **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação" (#468) e "Versão (instalador .msi)" (#527), que seguem o guia.
-- **Scripts (#154):** `scripts/geral/` é o bash dos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/ci/`, o que só a CI usa; os `.cmd` na raiz. Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa); serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
+- **Scripts (#154):** `scripts/geral/` é o bash do Linux e do macOS; no Windows, o `instalar.sh`, o `3-publicar-atualizar.sh` e o `parar.sh` só repassam para o `.ps1` de `scripts/windows/`, e só o `2-criar-banco.sh` e o `4-backup.sh` rodam em bash (Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/ci/`, o que só a CI usa; os `.cmd` na raiz. As etapas 1 e 3 do Windows existem só no `instalar-windows.ps1` (e as pastas e mensagens comuns, no `scripts/windows/comum.ps1`); mudou o `2-criar-banco.sh`? O `.ps1` lê dele a lista de colunas novas, e o `4-backup.sh` precisa continuar rodando no Git Bash. Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029): confira se mudam juntos.
 
 ## Decisões de arquitetura (ADRs) — obrigatório
 

@@ -6,14 +6,14 @@ Para quem usa **Linux**, quer mexer no código ou prefere os scripts ao instalad
 
 **Windows, com dois cliques:** dê dois cliques em `instalar-windows.cmd`, na raiz do projeto. Ele pede permissão de Administrador e roda `scripts/windows/instalar-windows.ps1`, que faz as três etapas abaixo usando só o PowerShell que já vem no Windows — não precisa instalar Git, bash, Python nem nada antes. No fim, abre o site no navegador. Pode rodar de novo para atualizar: antes, o banco é copiado para `backups/`, e se a versão nova não subir a anterior volta sozinha. Se algo falhar, a janela fica aberta com o erro e a etapa em que parou, e a saída completa fica em `instaladores/instalacao-windows.log`.
 
-**Linux (ou Windows pelo Git Bash), com um comando:**
+**Linux (ou macOS), com um comando** (no Windows pelo Git Bash aberto como Administrador, o `instalar.sh` repassa para o `instalar-windows.ps1`, o mesmo dos dois cliques acima, e a saída fica no mesmo `instaladores/instalacao-windows.log`):
 
 ```bash
 cd financas-local/scripts/geral
 ./instalar.sh                # roda 1, 2 e 3 em sequência e para no primeiro erro
 ```
 
-**Etapa por etapa (bash).** Abra um terminal com bash (no Linux, o do sistema; no Windows, o **Git Bash**, que vem com o [Git for Windows](https://git-scm.com/download/win), ou o WSL). No Windows, abra o Git Bash **como Administrador** para o `3-publicar-atualizar.sh`, que registra o serviço. O backup (`4-backup.sh`) continua precisando de bash no Windows.
+**Etapa por etapa (bash).** Só no Linux e no macOS: abra um terminal com bash. No Windows, as etapas 1 e 3 existem só no `instalar-windows.ps1` (o `3-publicar-atualizar.sh` repassa para ele, e o `1-preparar-ambiente.sh` recusa); o `2-criar-banco.sh` e o backup (`4-backup.sh`) continuam em bash, pelo **Git Bash** do [Git for Windows](https://git-scm.com/download/win).
 
 ```bash
 cd financas-local/scripts/geral
@@ -57,16 +57,16 @@ scripts/linux/instalar-gerenciador.sh
 | Node.js LTS (portátil em `ferramentas/node`, usado só para compilar o Angular) | `nodejs.org` | SHA-256 do `SHASUMS256.txt` oficial |
 | `sqlite3` (CLI) | o do sistema, se houver; senão portátil em `ferramentas/sqlite`, baixado de `www.sqlite.org` (Linux arm64: gerenciador de pacotes) | SHA3-256 publicado na página oficial de download |
 
-`1-preparar-ambiente.sh` confere antes as ferramentas básicas do terminal (`curl`, `tar`, `sha256sum`…, todas presentes no Git Bash), depois verifica cada um desses componentes, só baixa/instala o que ainda não estiver disponível e, no final, mostra a versão de cada um. Rode-o de novo a cada poucos meses para receber as correções de segurança do Go e do Node.js.
+`1-preparar-ambiente.sh` confere antes as ferramentas básicas do terminal (`curl`, `tar`, `sha256sum`…), depois verifica cada um desses componentes, só baixa/instala o que ainda não estiver disponível e, no final, mostra a versão de cada um. Rode-o de novo a cada poucos meses para receber as correções de segurança do Go e do Node.js.
 
 ## Atualizar
 
 ```bash
 git pull
-scripts/geral/instalar.sh     # no Windows, num Git Bash aberto como Administrador; no Linux, atualiza também o gerenciador
+scripts/geral/instalar.sh     # no Windows, num Git Bash como Administrador, repassa para o instalar-windows.ps1; no Linux, atualiza também o gerenciador
 ```
 
-Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows sem bash, rode o `instalar-windows.cmd` de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
+Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows, rode o `instalar-windows.cmd` (ou o `instalar.sh` num Git Bash como Administrador, que repassa para o mesmo `.ps1`) de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
 
@@ -79,7 +79,7 @@ O serviço é o Go sozinho desde a 3.0.0 (#85), e a instalação pelos scripts n
 
 ### Instalado pelos scripts e quer passar para o instalador
 
-No Windows, dá para passar desta instalação (feita com o `instalar-windows.cmd` ou o `3-publicar-atualizar.sh`) para o `.msi` a qualquer momento: baixe o `.msi` da [versão mais recente](https://github.com/LucasDesenvGit/financas-local/releases/latest) e abra. Ele encontra a instalação antiga, **copia o banco e as chaves** para `C:\ProgramData\FinancasLocal\dados` e troca o serviço antigo pelo dele. A pasta antiga **não é apagada**, e se o banco antigo não for achado, ele para sem mudar nada e o site antigo volta a rodar. O Client Secret da Pluggy continua funcionando. Daí em diante, a versão nova chega pelo gerenciador ([Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md)).
+No Windows, dá para passar desta instalação (feita com o `instalar-windows.cmd` ou o `instalar.sh` pelo Git Bash) para o `.msi` a qualquer momento: baixe o `.msi` da [versão mais recente](https://github.com/LucasDesenvGit/financas-local/releases/latest) e abra. Ele encontra a instalação antiga, **copia o banco e as chaves** para `C:\ProgramData\FinancasLocal\dados` e troca o serviço antigo pelo dele. A pasta antiga **não é apagada**, e se o banco antigo não for achado, ele para sem mudar nada e o site antigo volta a rodar. O Client Secret da Pluggy continua funcionando. Daí em diante, a versão nova chega pelo gerenciador ([Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md)).
 
 ## Parar e desinstalar
 
@@ -88,11 +88,11 @@ O sistema instalado é **um processo**: o back-end em Go (`financas-go`), rodand
 - **Parar no Windows:** dê dois cliques em `parar-windows.cmd`, na raiz (pede permissão de Administrador; não precisa de bash).
 - **Parar no Linux/macOS:** `scripts/geral/parar.sh`.
 
-Os dois param o serviço, o site rodando fora dele (`financas-go`) e o front de desenvolvimento (`npm start`), e avisam se algum programa ainda está com o banco aberto. Opção: `--desativar` / `-Desativar` (não sobe sozinho no próximo login/boot). Para subir de novo, rode a publicação (`3-publicar-atualizar.sh` ou `instalar-windows.cmd`).
+Os dois param o serviço, o site rodando fora dele (`financas-go`) e o front de desenvolvimento (`npm start`), e avisam se algum programa ainda está com o banco aberto. Opção: `--desativar` / `-Desativar` (não sobe sozinho no próximo login/boot). Para subir de novo, rode a publicação (`3-publicar-atualizar.sh` no Linux, `instalar-windows.cmd` no Windows).
 
 **Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/geral/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela.
 
-- **Windows:** remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. O certificado do site fica nos confiáveis: pelo `instalar-windows.cmd`, nos do computador (`Cert:\LocalMachine\Root`, com o nome amigável `FinancasLocal`), que se apagam em `certlm.msc` › **Autoridades de Certificação Raiz Confiáveis**; pelo Git Bash, nos da sua conta, pelo `dotnet dev-certs https --trust`, que se apagam com `dotnet dev-certs https --clean`.
+- **Windows:** remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. O certificado do site fica nos confiáveis: nos do computador (`Cert:\LocalMachine\Root`, com o nome amigável `FinancasLocal`), que se apagam em `certlm.msc` › **Autoridades de Certificação Raiz Confiáveis**.
 - **Linux:** apague a unidade do serviço, `~/.config/systemd/user/financaslocal.service`, e rode `systemctl --user daemon-reload`. Se ligou **Manter o site no ar sem login**, desligue com `loginctl disable-linger`. Com o gerenciador, apague também `~/.local/share/applications/br.financaslocal.Gerenciador.desktop` (o em C#: `financaslocal-gerenciador.desktop`), `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. O certificado que você pôs nos confiáveis (tabela em [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado)) sai com o comando de remoção da sua distribuição.
 
 ## Migrar de uma instalação com SQL Server
@@ -129,7 +129,7 @@ financas-local/
 ├── docs/                  arquitetura, guia do banco, esta página e ADRs (docs/adr)
 ├── instalador/            instalador .msi do Windows (WiX): FinancasLocal.wxs, configurar.ps1 e gerar-msi.ps1
 ├── scripts/
-│   ├── geral/            o bash dos dois sistemas (no Windows, pelo Git Bash): instalar, publicar, banco, backup, parar
+│   ├── geral/            o bash do Linux (no Windows, só o banco e o backup; o resto repassa para o PowerShell): instalar, publicar, banco, backup, parar
 │   ├── windows/          o que só roda no Windows (instalar, parar e atualizar, e o gerenciador)
 │   ├── linux/            o que só roda no Linux (gerenciador)
 │   └── ci/               o que só a CI usa (verificadores, mutação, cobertura)
@@ -151,7 +151,7 @@ financas-local/
 | Windows: o `instalar-windows.cmd` falhou | Veja a linha `ERRO` na janela e o log completo em `instaladores/instalacao-windows.log` |
 | Windows: `npm error EPERM ... esbuild.exe` | Um `npm start` aberto está usando o arquivo. Os scripts atuais encerram o que roda de dentro de `src/frontend/node_modules` antes do `npm ci`; numa versão antiga, feche o `npm start` e rode de novo |
 | Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
-| Windows: o serviço não é registrado/iniciado | Rode o `3-publicar-atualizar.sh` num Git Bash aberto como Administrador |
+| Windows: o serviço não é registrado/iniciado | Rode o `instalar-windows.cmd` (ele pede Administrador); pelo Git Bash, abra-o como Administrador |
 | Navegador alerta sobre o certificado | Veja [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado), abaixo |
 | O site não sobe e a instalação diz que a porta 5443 está em uso | Outro programa está na porta: a instalação diz qual e o PID. Feche esse programa (ou pare o serviço dele) e rode de novo. No Windows pelo PowerShell, a instalação para antes de trocar a versão, sem mudar nada |
 | O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |
@@ -160,7 +160,7 @@ financas-local/
 
 O site usa um certificado HTTPS feito na instalação, só para este computador. No Windows, a instalação o deixa confiável sozinha. No Linux, ela não mexe nos certificados do sistema, porque isso pede `sudo` e é decisão de quem instala: ela mostra os comandos abaixo, já com o caminho do arquivo.
 
-- **Windows:** rode o `3-publicar-atualizar.sh` (ou o `instalar-windows.cmd`) de novo, que recoloca o certificado nos confiáveis.
+- **Windows:** rode o `instalar-windows.cmd` de novo, que recoloca o certificado nos confiáveis.
 - **Firefox (em qualquer sistema):** por padrão, ele não usa os certificados do sistema. Em `about:config`, deixe `security.enterprise_roots.enabled` como `true`; ou importe o `.pem` (abaixo) em **Configurações › Privacidade e segurança › Certificados › Ver certificados › Servidores › Importar**. A instalação não muda o Firefox sozinha: ligar essa opção faz ele confiar em todos os certificados do sistema, inclusive os de empresa, e essa escolha é sua.
 - **Linux:** a parte pública do certificado (sem a chave) fica em `dados/chaves/financaslocal.pem`. Confie nele uma vez:
 
