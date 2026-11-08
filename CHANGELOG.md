@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.5.0] — 2026-11-08 · desenvolvimento
+
+### Funcionalidades
+- **Meus FIIs mostra o total da carteira** (#384). A tabela ganha uma linha "Total" no fim, alinhada com as colunas: o investido (cotas × preço médio), o valor atual (cotas × cotação), a valorização em R$ e em % com o sinal em texto, o yield on cost da carteira (a renda do mês sobre o investido), a renda por mês e o peso de 100%. Ao lado do título "Meus FIIs", o valor atual em destaque, com o investido do lado. O fundo sem cotação entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa. Com "ocultar valores", ficam só os percentuais. O Manual ganha a seção "Total da carteira de FIIs".
+
 ## [3.4.5] — 2026-11-08 · desenvolvimento
 
 ### Publicação e documentação
