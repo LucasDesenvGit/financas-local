@@ -7,8 +7,8 @@ As pastas separam **quem roda** (#154, #655):
 
 | Pasta | O que tem |
 |---|---|
-| `geral/` | O que quem **instala** roda: bash que funciona nos dois sistemas (no Windows, pelo Git Bash/MSYS ou WSL). |
-| `windows/`, `linux/` | O que só funciona num dos dois. No Windows, a instalação também tem uma versão em PowerShell que dispensa o bash ([ADR 0012](../docs/adr/0012-instalador-do-windows-em-powershell.md)). |
+| `geral/` | O que quem **instala** roda, em bash, no Linux e no macOS. No Windows, só o `2-criar-banco.sh` e o `4-backup.sh` rodam em bash (Git Bash); o `instalar.sh`, o `3-publicar-atualizar.sh` e o `parar.sh` repassam para o PowerShell. |
+| `windows/`, `linux/` | O que só funciona num dos dois. No Windows, a instalação existe só em PowerShell: o `.ps1` daqui e o `.msi` ([ADR 0012](../docs/adr/0012-instalador-do-windows-em-powershell.md), [0029](../docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)). |
 | `dev/` | Ferramentas de quem **desenvolve**, rodadas à mão (a CI usa algumas). |
 | `ci/` | O que a **CI** roda, por assunto: `versao/`, `go/`, `front/` e `banco/`. Cada um pode ser rodado à mão, na pasta do repositório (o cabeçalho de cada arquivo diz como). |
 
@@ -24,16 +24,17 @@ caminho do `geral/4-backup.sh`.
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `geral/instalar.sh` | As etapas 1, 2 e 3 em sequência; para no primeiro erro. | Pessoa, no Linux ou no Git Bash; a CI ("Teste de instalação") |
-| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, Go (a linha do `src/backend/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/`. Não depende de Python ([ADR 0011](../docs/adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). | Pessoa (etapa 1 do `instalar.sh`) |
+| `geral/instalar.sh` | As etapas 1, 2 e 3 em sequência; para no primeiro erro. No Git Bash do Windows, repassa para o `windows/instalar-windows.ps1`. | Pessoa, no Linux ou no Git Bash; a CI ("Teste de instalação") |
+| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, Go (a linha do `src/backend/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/`. Não depende de Python ([ADR 0011](../docs/adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). No Windows, recusa e manda usar o `instalar-windows.cmd`. | Pessoa (etapa 1 do `instalar.sh`) |
 | `geral/2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. Também é lido pelo site (cópia embutida em `internal/plataforma/banco/esquema`) e pelo `instalar-windows.ps1`, que tiram dele a lista de colunas novas. | Pessoa (etapa 2); o `go generate` e a CI leem |
-| `geral/3-publicar-atualizar.sh` | Compila o front-end e o back-end em Go (`financas-go`), publica em `publicado/api`, gera ou reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). | Pessoa (etapa 3); `atualizar.sh`; a CI |
+| `geral/3-publicar-atualizar.sh` | Compila o front-end e o back-end em Go (`financas-go`), publica em `publicado/api`, gera ou reaproveita o certificado HTTPS local e registra o serviço (systemd `--user`). No Git Bash do Windows, repassa para o `windows/instalar-windows.ps1`. | Pessoa (etapa 3); `atualizar.sh`; a CI |
 | `geral/4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar (`--agendar`). | Pessoa; o crontab ou o Agendador de Tarefas; a CI |
 | `geral/atualizar.sh` | Só na instalação de desenvolvimento (clone na branch `develop`, [ADR 0040](../docs/adr/0040-versao-de-desenvolvimento-pelo-gerenciador.md)): traz o `develop` (só avança, recusa com alteração local ou outra branch) e reinstala. | Gerenciador (botão "Atualizar para a última do develop") |
 | `geral/parar.sh` | Para o serviço, o site fora dele e o `npm start`; no Git Bash, repassa para o `windows/parar-windows.ps1`. | Pessoa |
-| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, caminho nativo no Windows, extração de `.zip`, conferência de hash, ajudantes de coluna do banco). | Os outros scripts de `geral/` (`source`) |
-| `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash; lê a lista de colunas novas do `geral/2-criar-banco.sh`. | Pessoa, pelo `instalar-windows.cmd` (que pede elevação) |
-| `windows/parar-windows.ps1` | O `parar.sh` em PowerShell. | Pessoa, pelo `parar-windows.cmd` |
+| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, repasse para o PowerShell e caminho nativo no Windows, extração de `.zip`, conferência de hash, ajudantes de coluna do banco). | Os outros scripts de `geral/` (`source`) |
+| `windows/comum.ps1` | Pastas e `Etapa`/`Ok`/`Aviso`/`ErroSai` dos `.ps1` de `windows/` (#655). O `instalador/configurar.ps1` (`.msi`) não o usa. | Os outros `.ps1` de `windows/` (dot-source) |
+| `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash: a única implementação das etapas 1 e 3 no Windows. Lê a lista de colunas novas do `geral/2-criar-banco.sh`. | Pessoa, pelo `instalar-windows.cmd` (que pede elevação) ou pelo `instalar.sh` e o `3-publicar-atualizar.sh` no Git Bash; o `atualizar-windows.ps1` |
+| `windows/parar-windows.ps1` | O `parar.sh` em PowerShell. | Pessoa, pelo `parar-windows.cmd` ou pelo `parar.sh` no Git Bash |
 | `windows/atualizar-windows.ps1` | O `atualizar.sh` no Windows (instalação de desenvolvimento). | Gerenciador |
 | `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: compilam o gerenciador em Go (`publicado/gerenciador` no Windows, #430; `publicado/gerenciador-go` no Linux, #277) e criam os atalhos. Rodar de novo atualiza. | Pessoa; o `instalar.sh`; o gerenciador no Linux |
 

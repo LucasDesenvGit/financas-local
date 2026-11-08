@@ -2,10 +2,18 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.4.3] — 2026-11-08 · desenvolvimento
+## [3.4.4] — 2026-11-08 · desenvolvimento
 
 ### Publicação e documentação
 - **Os scripts de `scripts/ci/` ficam por assunto, e as ferramentas de quem desenvolve vão para `scripts/dev/`** (parte de #655). A `ci/` tinha 26 itens numa pasta só; agora tem `versao/`, `go/`, `front/` e `banco/`, e o `atualizar-pr.sh`, o `atualizar-versao-do-pr.py`, o `medir-desempenho.py` e o `gerar-diagrama-banco.py` ficam em `dev/`. O `<Version>` do `Directory.Build.props`, a regra "`feat` sobe o número do meio, o resto sobe o último" e a lista de arquivos do PR passam a ficar num lugar só, o `ci/comum.py` (o `verificar-changelog.py` agora também aceita espaço dentro do `<Version>`). Os dois scripts de notas dos Releases viram o `ci/versao/notas.sh --versao` / `--desenvolvimento`, com os testes dos dois num arquivo. O novo `scripts/README.md` é o índice de todos os scripts, e a tabela do `docs/ARQUITETURA.md` aponta para ele. Os caminhos que os gerenciadores e o agendador de backup chamam não mudaram. Manual: não se aplica.
+
+## [3.4.3] — 2026-11-08 · desenvolvimento
+
+### Publicação e documentação
+- **No Windows, o Git Bash passa a repassar para o PowerShell** (parte de #655; ADR 0012). O `scripts/geral/instalar.sh` e o `scripts/geral/3-publicar-atualizar.sh` rodados no Git Bash do Windows chamam o `scripts/windows/instalar-windows.ps1` (como o `parar.sh` já fazia com o `parar-windows.ps1`): `--pular-build` vira `-PularBuild`, e a saída e o log (`instaladores\instalacao-windows.log`) são os do `.ps1`. Saíram do bash os ramos do Windows das etapas 1 e 3 (serviço com `sc.exe`, certificado, download do Node, do Go e do sqlite3), cerca de 140 linhas a menos para manter em duas linguagens. O Windows fica com dois caminhos de instalação, o `.ps1` e o `.msi`. O `2-criar-banco.sh` e o `4-backup.sh` continuam em bash no Windows. Quem atualiza roda `instalar.sh` ou `instalar-windows.cmd` como antes.
+- **`scripts/windows/comum.ps1`**: as pastas e as mensagens (`Etapa`, `Ok`, `Aviso`, `ErroSai`) que quatro `.ps1` repetiam ficam num arquivo só, carregado por dot-source. O `instalador/configurar.ps1` (`.msi`) não muda.
+- **Repasses da raiz de `scripts/` apagados**: `scripts/3-publicar-atualizar.sh`, `scripts/4-backup.sh` e `scripts/instalar-gerenciador.sh`. O backup agendado pelo caminho antigo já é migrado a cada atualização (crontab pelo `3-publicar-atualizar.sh`, Agendador de Tarefas pelo `instalar-windows.ps1`). Quem ainda usa esses caminhos precisa trocar por `scripts/geral/` e `scripts/linux/`.
+- O "Teste de instalação (Windows)" confere o repasse do Git Bash; docs, `CLAUDE.md` e a ADR 0012 atualizados.
 
 ## [3.4.2] — 2026-11-08 · desenvolvimento
 

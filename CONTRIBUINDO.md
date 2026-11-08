@@ -81,7 +81,7 @@ Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerad
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
 6. **Traga a `main` de volta para o `develop`:** PR de `main` para `develop` e merge. O check "versão subiu" não roda nele, porque a versão é a mesma (#641). Assim, o `CHANGELOG` do `develop` fica igual ao publicado: na 2.17.0, isso não foi feito, e o `develop` ficou sem a seção dela.
 
-Quem instala pelos scripts continua atualizando com `git pull` e `scripts/geral/instalar.sh` (ou `instalar-windows.cmd`). Só o `3-publicar-atualizar.sh` não basta quando o `go.mod` pede um Go mais novo: quem o baixa é a etapa 1 ([Atualizar](docs/INSTALACAO-PELO-CODIGO.md#atualizar)).
+Quem instala pelos scripts continua atualizando com `git pull` e `scripts/geral/instalar.sh` (no Windows, ele repassa para o `instalar-windows.ps1`, o mesmo do `instalar-windows.cmd`). Só o `3-publicar-atualizar.sh` não basta quando o `go.mod` pede um Go mais novo: quem o baixa é a etapa 1 ([Atualizar](docs/INSTALACAO-PELO-CODIGO.md#atualizar)).
 
 ## Mensagens de commit
 
@@ -128,7 +128,7 @@ python3 scripts/ci/versao/verificar-changelog.py                     # CHANGELOG
 | **Fuzz do Go** (#372) | toda segunda e à mão | o `-fuzz` dos alvos `FuzzXxx`; não roda no PR |
 | **CodeQL** (#451, [ADR 0054](docs/adr/0054-analise-de-seguranca-do-codigo-com-o-codeql.md)) | todo PR e push, toda quinta e à mão | segurança do código (Go, TS, Python, workflows); achados em Security › Code scanning, sem bloquear. Na quinta, porque as consultas ganham regras novas mesmo sem o código mudar |
 | **Teste de instalação no Linux** | PR e push que mexem em `scripts/geral/`, `scripts/linux/`, `banco/`, `src/gerenciador-go/` ou no `go.mod` do Go | instala do zero num runner limpo e restaura uma cópia, seguindo o [guia de operação](docs/OPERACAO.md) |
-| **Teste de instalação no Windows** | PR e push que mexem em `scripts/windows/`, nos `.cmd` da raiz, no `2-criar-banco.sh`, em `banco/` ou no `go.mod` do Go | o mesmo, pelo `instalar-windows.ps1` |
+| **Teste de instalação no Windows** | PR e push que mexem em `scripts/windows/`, nos `.cmd` da raiz, no `instalar.sh`, no `3-publicar-atualizar.sh`, no `comum.sh`, no `2-criar-banco.sh`, em `banco/` ou no `go.mod` do Go | o mesmo, pelo `instalar-windows.ps1` e pelo repasse do Git Bash |
 | **Versão (instalador .msi)** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)) | push do `develop`, tag `vX.Y.Z` e à mão | gera e testa o `.msi` (`instalador/gerar-msi.ps1`, WiX 5, ADR 0029), restaurando uma cópia pelo guia de operação (#527); na tag, publica o Release |
 
 ## Testes rápidos (padrões de CI)

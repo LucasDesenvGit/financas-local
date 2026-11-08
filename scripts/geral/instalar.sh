@@ -10,8 +10,10 @@
 #   a janela que mostra se o site esta no ar e liga e desliga (#300).
 #
 # Pode ser executado de novo para atualizar: as tres etapas sao idempotentes.
-# No Windows, o caminho sem Git Bash e o instalar-windows.cmd (na raiz), que
-# roda o scripts/windows/instalar-windows.ps1 como Administrador (ADR 0012).
+# No Windows, a logica existe num lugar so: o scripts/windows/instalar-windows.ps1 (ADR 0012, #655).
+# O instalar-windows.cmd (na raiz) o roda como Administrador, sem precisar de bash; rodado pelo
+# Git Bash, este script repassa para ele (--pular-build vira -PularBuild; --sem-gerenciador nao se aplica,
+# o gerenciador no Windows e o scripts/windows/instalar-gerenciador.ps1). Exige Administrador.
 #
 # Ao migrar de uma instalacao com SQL Server, NAO use este script: siga a
 # secao "Migrar de uma instalacao com SQL Server" de docs/INSTALACAO-PELO-CODIGO.md.
@@ -27,13 +29,19 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # --sem-gerenciador e daqui; o resto vai para o 3-publicar-atualizar.sh.
 com_gerenciador=1
 argumentos_publicar=()
+argumentos_ps=()
 for argumento in "$@"; do
-    if [[ "$argumento" == --sem-gerenciador ]]; then com_gerenciador=0; else argumentos_publicar+=("$argumento"); fi
+    case "$argumento" in
+        --sem-gerenciador) com_gerenciador=0 ;;
+        --pular-build)     argumentos_publicar+=("$argumento"); argumentos_ps+=(-PularBuild) ;;
+        *)                 argumentos_publicar+=("$argumento") ;;   # o 3-publicar-atualizar.sh recusa o que nao conhece
+    esac
 done
 
-if [[ "$SO" == windows ]] && ! net session >/dev/null 2>&1; then
-    aviso 'Este Git Bash nao esta como Administrador: o servico do Windows provavelmente nao sera registrado.'
-    aviso 'Para evitar, use o instalar-windows.cmd ou abra o Git Bash como Administrador.'
+# Windows: o .ps1 faz as tres etapas e confere se esta como Administrador.
+if [[ "$SO" == windows ]]; then
+    [[ ${#argumentos_publicar[@]} -eq ${#argumentos_ps[@]} ]] || erro_sai "Opcao desconhecida: ${argumentos_publicar[*]} (no Windows, use --pular-build)"
+    repassar_para_powershell instalar-windows.ps1 "${argumentos_ps[@]+"${argumentos_ps[@]}"}"
 fi
 
 etapa '[1/3] Preparando o ambiente'
@@ -53,10 +61,6 @@ if [[ "$SO" == linux && "$com_gerenciador" -eq 1 ]]; then
     else
         aviso 'Nao foi possivel instalar o gerenciador; o site esta instalado. Para tentar de novo: scripts/linux/instalar-gerenciador.sh'
     fi
-elif [[ "$SO" == windows ]]; then
-    echo ''
-    echo 'Gerenciador (ver se o site esta no ar, ligar, desligar, copiar o banco):'
-    echo '   powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1'
 fi
 
 echo ''
