@@ -13,7 +13,7 @@ Teste lento quase sempre é time.Sleep, banco recriado em cada subteste ou rede 
 
 Uso (na CI, em src/backend):
   go test -race -json ./... > testes.json
-  python3 ../../scripts/ci/verificar-tempo-testes-go.py testes.json
+  python3 ../../scripts/ci/go/verificar-tempo-testes-go.py testes.json
 """
 import json
 import os

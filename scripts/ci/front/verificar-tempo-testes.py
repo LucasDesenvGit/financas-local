@@ -9,7 +9,7 @@ Antes do #204, um pacote pesado importado nos testes deixava cada arquivo em ~46
 limites teriam pego. Arquivo lento quase sempre é importação pesada (ver CONTRIBUINDO.md, "Testes rápidos").
 
 Uso (na CI): npm test -- --ci --json --outputFile=jest-resultado.json
-             python3 scripts/ci/verificar-tempo-testes.py src/frontend/jest-resultado.json
+             python3 scripts/ci/front/verificar-tempo-testes.py src/frontend/jest-resultado.json
 """
 import json
 import sys

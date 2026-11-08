@@ -114,7 +114,7 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 ```bash
 gofmt -l .                 # não pode listar nada
 go vet ./...
-python3 ../../scripts/ci/verificar-regras-go.py   # float64, time.Now() e time.Sleep de teste só com a exceção escrita (#457)
+python3 ../../scripts/ci/go/verificar-regras-go.py   # float64, time.Now() e time.Sleep de teste só com a exceção escrita (#457)
 go test -race ./...
 go generate ./... && git diff --exit-code -- .   # código gerado e cópia dos scripts do banco em dia
 go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
@@ -129,7 +129,7 @@ bash ../../scripts/ci/ligar-api.sh
 Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação (Go)" mede só os pacotes que o PR mudou; toda segunda, todos. À mão, antes de subir um pacote com regra:
 
 ```bash
-python3 ../../scripts/ci/mutacao-go.py internal/ajustes/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
+python3 ../../scripts/ci/go/mutacao-go.py internal/ajustes/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
 A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`); o contrato, no job "contrato", e o site ligando, no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".

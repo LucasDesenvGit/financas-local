@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Teste do scripts/geral/atualizar-versao-do-pr.py (#587): a versão nova a partir da do develop, no nível que o PR subiu
+Teste do scripts/dev/atualizar-versao-do-pr.py (#587): a versão nova a partir da do develop, no nível que o PR subiu
 e nunca abaixo do tipo do título, e a seção do PR no topo do CHANGELOG. Os casos com git de verdade (merge parado nos
 conflitos) usam um repositório temporário. Só a biblioteca padrão (unittest).
 
-Uso:  python3 -B scripts/geral/test_atualizar_versao_do_pr.py
+Uso:  python3 -B scripts/dev/test_atualizar_versao_do_pr.py
 """
 import datetime
 import importlib.util

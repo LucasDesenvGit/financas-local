@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Teste do scripts/ci/verificar-regras-go.py (#457): a regra pega o caso ruim, deixa passar o que é permitido e a exceção,
+Teste do scripts/ci/go/verificar-regras-go.py (#457): a regra pega o caso ruim, deixa passar o que é permitido e a exceção,
 e a mensagem diz o que usar no lugar. Só a biblioteca padrão (unittest), sem Go instalado.
 
-Uso:  python3 -B scripts/ci/test_verificar_regras_go.py
+Uso:  python3 -B scripts/ci/go/test_verificar_regras_go.py
 """
 import importlib.util
 import os

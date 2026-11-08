@@ -10,7 +10,7 @@
 #   2. se o conflito e so nesses dois arquivos, sobe a versao do develop
 #      no mesmo nivel que o PR tinha subido (nunca menos do que o tipo do
 #      titulo pede) e poe a secao do PR no topo, com o numero novo e a
-#      data de hoje (scripts/geral/atualizar-versao-do-pr.py);
+#      data de hoje (scripts/dev/atualizar-versao-do-pr.py);
 #   3. confere com o verificar-versao.py e o verificar-changelog.py e
 #      envia com a sua conta (a CI roda normal).
 # Conflito em outro arquivo: desfaz e diz quais resolver a mao.
@@ -18,8 +18,8 @@
 # Precisa de git, gh (logado) e python3 (ou python, no Windows).
 #
 # Uso:
-#   scripts/geral/atualizar-pr.sh <numero do PR>
-#   scripts/geral/atualizar-pr.sh <numero do PR> --sem-enviar   # so prepara e mostra
+#   scripts/dev/atualizar-pr.sh <numero do PR>
+#   scripts/dev/atualizar-pr.sh <numero do PR> --sem-enviar   # so prepara e mostra
 # =====================================================================
 set -euo pipefail
 
@@ -82,8 +82,8 @@ if git merge-base --is-ancestor HEAD "origin/$branch"; then
     echo "O PR ja estava em dia com o develop: nada a enviar."
     exit 0
 fi
-BASE=develop TITULO_PR="$titulo" "$python" -B scripts/ci/verificar-versao.py
-"$python" -B scripts/ci/verificar-changelog.py
+BASE=develop TITULO_PR="$titulo" "$python" -B scripts/ci/versao/verificar-versao.py
+"$python" -B scripts/ci/versao/verificar-changelog.py
 git --no-pager log --oneline -1
 
 if [ "$enviar" = 0 ]; then

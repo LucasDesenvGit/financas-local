@@ -6,12 +6,14 @@ atualizar o Manual do site (#177). O Manual fica em src/frontend/src/app/paginas
 Dispensa: escrever "Manual: não se aplica" (ou "Manual: nao se aplica") na descrição do PR, para bugfix ou refatoração
 que não muda o que o usuário vê.
 
-Uso (na CI): BASE=<branch de destino> CORPO_PR=<descrição do PR> python3 scripts/ci/verificar-manual.py
+Uso (na CI): BASE=<branch de destino> CORPO_PR=<descrição do PR> python3 scripts/ci/front/verificar-manual.py
 """
 import os
 import re
-import subprocess
 import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from comum import arquivos_mudados
 
 MANUAL = 'src/frontend/src/app/paginas/manual/manual-conteudo.ts'
 VISIVEIS = ('src/frontend/src/app/paginas/', 'src/frontend/src/app/compartilhado/', 'src/frontend/src/app/layout/')
@@ -26,8 +28,7 @@ if re.search(r'manual:\s*n[aã]o se aplica', corpo, re.IGNORECASE):
     print('Manual: não se aplica (dito na descrição do PR).')
     sys.exit(0)
 
-alterados = subprocess.run(['git', 'diff', '--name-only', f'origin/{base}...HEAD'], capture_output=True, text=True,
-                           check=False).stdout.split()
+alterados = arquivos_mudados(f'origin/{base}', check=False)
 if MANUAL in alterados:
     print('Manual atualizado neste PR.')
     sys.exit(0)

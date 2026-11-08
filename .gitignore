@@ -57,7 +57,7 @@ src/frontend/testes/navegador/fotos/
 # Resultado do Jest em JSON, lido pela trava de desempenho da CI (#204)
 src/frontend/jest-resultado.json
 
-# Teste de mutação do Go (#373): saída do scripts/ci/mutacao-go.py
+# Teste de mutação do Go (#373): saída do scripts/ci/go/mutacao-go.py
 src/backend/mutacao/
 src/gerenciador-go/mutacao/
 
