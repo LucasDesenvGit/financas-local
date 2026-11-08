@@ -298,7 +298,7 @@ jobs:
         shell: bash
         env:
           VERSAO: ${{ steps.versao.outputs.versao }}
-        run: bash scripts/ci/notas-da-versao.sh > notas.md
+        run: bash scripts/ci/versao/notas.sh --versao > notas.md
 
       - name: Publicar no Release (só na tag)
         if: github.ref_type == 'tag'
@@ -412,7 +412,7 @@ jobs:
           sha256sum FinancasLocal-desenvolvimento.msi > SHA256SUMS.txt
           # #294: um bloco por versão de desenvolvimento com os PRs que entraram nela (acumulados) e, embaixo, tudo desde
           # a última versão publicada. O gerenciador mostra primeiro os blocos mais novos que a versão instalada.
-          bash scripts/ci/notas-desenvolvimento.sh > notas.md
+          bash scripts/ci/versao/notas.sh --desenvolvimento > notas.md
           gh release delete desenvolvimento --cleanup-tag --yes || true
           gh release create desenvolvimento FinancasLocal-desenvolvimento.msi SHA256SUMS.txt --prerelease --latest=false \
             --target "$GITHUB_SHA" --title "Finanças Local $ROTULO (desenvolvimento)" --notes-file notas.md
