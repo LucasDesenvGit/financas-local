@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.4.1] — 2026-11-08 · desenvolvimento
+## [3.4.2] — 2026-11-08 · desenvolvimento
 
 ### Publicação e documentação
 - **README de mapa nas pastas principais e o back-end explicado sem o .NET** (#657). `src/frontend`, `docs`, `banco` e `instalador` ganham um README curto: o que tem na pasta, por onde começar e o que não mexer, com link para o `docs/ARQUITETURA.md`. O `CLAUDE.md` aponta para eles como o mapa para pessoas. O README do Go, o `internal/README.md` e o domínio (`docs/arquitetura/dominio.md`) deixam de explicar o Go pelo C# (o `XxxService`, o controller, o model binding do ASP.NET, a coluna "No .NET"); o que ficou do .NET está marcado como histórico. No domínio, as referências a arquivos que não existem mais apontam para o pacote em Go, e duas informações velhas foram corrigidas: o `WAITING_USER_INPUT` gera alerta no Painel desde a #532, e o instalador leva o gerenciador em Go desde a #277. Um `.vscode/settings.json` esconde do editor as pastas geradas (`ferramentas/`, `publicado/`, `instaladores/`, `src/frontend/dist/` e `__pycache__`); `dados/` e `backups/` continuam visíveis. **Tem um `.vscode/settings.json` seu, sem versionar?** Renomeie antes de atualizar, senão o `git pull` (e o `atualizar.sh`) para com "untracked working tree files would be overwritten"; depois, junte o que for seu ao arquivo novo. Nada muda para quem usa o site.
+
+## [3.4.1] — 2026-11-08 · desenvolvimento
+
+### Publicação e documentação
+- **Limpeza da pasta `scripts/`** (parte de #655). A atualização pelos scripts (`3-publicar-atualizar.sh` e `instalar-windows.ps1`) troca sozinha, logo no começo, o backup diário agendado pelo caminho antigo, `scripts/4-backup.sh`, pelo novo, `scripts/geral/4-backup.sh`, com o mesmo horário e o mesmo `--manter`, no crontab e no Agendador de Tarefas. Assim o repasse da raiz de `scripts/` pode sair numa versão seguinte sem o backup de ninguém parar em silêncio. Saem os `.pyc` versionados (o `.gitignore` ganha `__pycache__/`) e o `configurar-github.ps1`, de uso único, que nada chamava; a proteção das branches que ele aplicava fica no `CONTRIBUINDO.md`. O comentário do `instalar.sh` dizia que o `instalar-windows.cmd` o abria no Git Bash; desde a ADR 0012, ele roda o `instalar-windows.ps1`. Nada muda para quem usa.
 
 ## [3.4.0] — 2026-11-07 · desenvolvimento
 
