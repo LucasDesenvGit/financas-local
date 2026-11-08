@@ -25,7 +25,7 @@ Um comportamento testado num lugar só (#204). Não repita no Jest o que o naveg
 - **Teste novo no navegador** abre a tela pela rota escrita (`page.goto('/transacoes')`), senão a escolha dos testes afetados não o acha, e roda `--repeat-each=5` nos dois projetos antes do push.
 - **Medida em px:** folga de 0,5 (`toBeGreaterThanOrEqual(23.5)` para 24 px).
 - **Depois de um clique que troca o conteúdo:** espere a troca (`not.toHaveText(antes)`) antes de ler.
-- **Arquivo novo que vale para todas as telas** fora das pastas globais: entra em `GLOBAIS` no `scripts/ci/testes-afetados.py`.
+- **Arquivo novo que vale para todas as telas** fora das pastas globais: entra em `GLOBAIS` no `scripts/ci/front/testes-afetados.py`.
 
 O porquê de cada uma está no `CONTRIBUINDO.md` e na `testar-no-navegador`.
 

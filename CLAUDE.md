@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux com os mesmos scripts bash: back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux (scripts bash no Linux, PowerShell ou `.msi` no Windows, [ADR 0012](docs/adr/0012-instalador-do-windows-em-powershell.md)): back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md). **O mapa das pastas para pessoas** é o README de cada uma (`src/backend`, `src/frontend`, `src/gerenciador-go`, `banco`, `instalador`, `docs`): pasta principal nova ganha o dela, de 10 a 20 linhas, apontando para o `docs/ARQUITETURA.md` em vez de repetir (#657).
 
 ## Comandos
 
@@ -22,7 +22,7 @@ cd src/frontend && NAVEGADOR=chromium npm run test:afetados   # antes do push: J
 cd src/frontend && npm start                                  # front-end em dev (http://localhost:4200, proxy /api -> API)
 scripts/geral/2-criar-banco.sh                                # banco (sem migrations)
 scripts/geral/3-publicar-atualizar.sh                         # compila, publica, certificado e serviço do sistema
-scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows sem bash: instalar-windows.cmd, ADR 0012)
+scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows, repassa para scripts/windows/instalar-windows.ps1; sem bash: instalar-windows.cmd, ADR 0012)
 ```
 
 O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
@@ -31,7 +31,7 @@ O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CON
 
 ## Testes
 
-- **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou. Mexeu em teste ou em CI: tempo antes e depois no PR.
+- **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou, e a `revisar-no-celular` (largura, toque, alvo de 24 px, teclado virtual; #328) em toda mudança de tela. Mexeu em teste ou em CI: tempo antes e depois no PR.
 - **Go: toda regra nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): unitário em tabela, SQLite real, `httptest`, só a biblioteca padrão; bug corrigido ganha teste que falha antes. Detalhes em [CONTRIBUINDO.md, "Testes do back-end (Go)"](CONTRIBUINDO.md#testes-do-back-end-go).
 - **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura` (#476). Ele é só local, por decisão de 29/10/2026, e a CI não o roda. Dependência nova de propósito entra na tabela do teste, com o motivo, no mesmo PR.
 
@@ -44,12 +44,12 @@ Angular é publicado no `wwwroot`, ao lado do executável do Go (`financas-go`):
 
 ## Banco (sem migrations, SQLite)
 
-- `banco/01-estrutura.sql` é idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`, tabela nova no fim, conferido pelo `scripts/ci/verificar-sql.py`); `02-dados-iniciais.sql` traz o padrão. O site aplica os dois ao iniciar (`-aplicar-esquema`, `internal/plataforma/banco/esquema_banco.go`, com uma cópia embutida dos scripts que o `go generate` mantém em dia). Nunca apagar/renomear coluna em uso sem bloco de transição.
+- `banco/01-estrutura.sql` é idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`, tabela nova no fim, conferido pelo `scripts/ci/banco/verificar-sql.py`); `02-dados-iniciais.sql` traz o padrão. O site aplica os dois ao iniciar (`-aplicar-esquema`, `internal/plataforma/banco/esquema_banco.go`, com uma cópia embutida dos scripts que o `go generate` mantém em dia). Nunca apagar/renomear coluna em uso sem bloco de transição.
 - **Coluna nova numa tabela existente:** `adicionar_coluna_se_ausente` em `scripts/geral/2-criar-banco.sh`, não no SQL. Uma chamada por linha, argumentos entre aspas duplas, porque o `instalar-windows.ps1` e o Go (`internal/plataforma/banco/esquema`) leem essas linhas.
-- **Mudou a estrutura:** o SQL, o `2-criar-banco.sh`, `go generate ./...` em `src/backend` (a cópia embutida e as consultas do `sqlc`), `python3 scripts/ci/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+- **Mudou a estrutura:** o SQL, o `2-criar-banco.sh`, `go generate ./...` em `src/backend` (a cópia embutida e as consultas do `sqlc`), `python3 scripts/dev/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
 - **Dado pessoal novo:** tabela ou coluna com dado pessoal, ou dado novo que sai do computador, entra em [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md) no mesmo PR.
 - **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação" (#468) e "Versão (instalador .msi)" (#527), que seguem o guia.
-- **Scripts (#154):** `scripts/geral/` é o bash dos dois sistemas (no Windows, pelo Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/ci/`, o que só a CI usa; os `.cmd` na raiz. Mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`? Confira se `scripts/windows/instalar-windows.ps1` precisa da mesma mudança (e vice-versa); serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029).
+- **Scripts (#154):** `scripts/geral/` é o bash do Linux e do macOS; no Windows, o `instalar.sh`, o `3-publicar-atualizar.sh` e o `parar.sh` só repassam para o `.ps1` de `scripts/windows/`, e só o `2-criar-banco.sh` e o `4-backup.sh` rodam em bash (Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/dev/`, as ferramentas de quem desenvolve; `scripts/ci/` (em `versao/`, `go/`, `front/` e `banco/`), o que a CI roda; os `.cmd` na raiz. O índice de todos, com quem roda cada um, é o [scripts/README.md](scripts/README.md): script novo ou movido entra nele. As etapas 1 e 3 do Windows existem só no `instalar-windows.ps1` (e as pastas e mensagens comuns, no `scripts/windows/comum.ps1`); mudou o `2-criar-banco.sh`? O `.ps1` lê dele a lista de colunas novas, e o `4-backup.sh` precisa continuar rodando no Git Bash. Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029): confira se mudam juntos.
 
 ## Decisões de arquitetura (ADRs) — obrigatório
 
@@ -63,14 +63,14 @@ As decisões ficam em `docs/adr/` (índice, critérios e ciclo de vida em [docs/
 
 Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoint que só segue padrões já registrados.
 
-**Requisitos não funcionais** ([docs/REQUISITOS-NAO-FUNCIONAIS.md](docs/REQUISITOS-NAO-FUNCIONAIS.md)): mudança que mexe numa meta (memória, tamanho, partida) mede antes e depois no PR, como já se faz com o tempo dos testes. Partida e telas: `python3 scripts/geral/medir-desempenho.py --api <pasta publicada>`.
+**Requisitos não funcionais** ([docs/REQUISITOS-NAO-FUNCIONAIS.md](docs/REQUISITOS-NAO-FUNCIONAIS.md)): mudança que mexe numa meta (memória, tamanho, partida) mede antes e depois no PR, como já se faz com o tempo dos testes. Partida e telas: `python3 scripts/dev/medir-desempenho.py --api <pasta publicada>`.
 
 **Diagramas sempre junto** ([ADR 0055](docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md)): mudou um contêiner, uma saída de rede ou uma fronteira? Atualize os diagramas de Contexto, de Contêineres e de implantação em `docs/ARQUITETURA.md` **no mesmo PR**, como o Manual (#177). Pacote novo em `src/backend/internal/` entra na tabela do [diagrama de Componentes](docs/arquitetura/componentes.md) (#464; o teste de arquitetura local confere). Termo novo do domínio entra na lista de [`docs/arquitetura/dominio.md`](docs/arquitetura/dominio.md), e estado novo (enum, `Status`) atualiza o diagrama de estados de lá.
 
 ## Convenções de código
 
 - **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
-- Nomes em português em todo o código (`XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
+- Nomes em português em todo o código (`XxxService` no Angular, `Servico` e `NovoServico` no Go, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só parametrizadas** (`?` ou o código gerado pelo `sqlc`), nunca SQL montado a partir de texto do usuário.
 - **Código Go:** assunto novo ganha pacote em `src/backend/internal/<area>/<assunto>` e uma linha em `internal/api`, com casos de contrato (`testes/contrato`). **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
 - Segredos (Client Secret da Pluggy, token da brapi) ficam **criptografados na tabela `Configuracao`** (`internal/plataforma/segredos`: AES-256-GCM, prefixo `v2:`) — nunca em arquivo de config nem devolvidos pela API.
@@ -94,9 +94,9 @@ Conventional Commits em português (fluxo de branches, comandos e Project em [CO
 - `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) → o número do meio (2.2.0 → 2.3.0);
 - `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` → o último (2.2.0 → 2.2.1);
 - quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
-- Outro PR subiu antes? `scripts/geral/atualizar-pr.sh <PR>` traz o `develop` e resolve a versão e o CHANGELOG (#587); conflito em outro arquivo, `git merge origin/develop` à mão. Diga ao usuário, no fim, de qual para qual versão foi.
+- Outro PR subiu antes? `scripts/dev/atualizar-pr.sh <PR>` traz o `develop` e resolve a versão e o CHANGELOG (#587); conflito em outro arquivo, `git merge origin/develop` à mão. Diga ao usuário, no fim, de qual para qual versão foi.
 
-**`CHANGELOG.md`: uma seção por versão** (#294). A entrada de um PR vai na seção da versão dele: `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se não existir, **dentro** do `### Funcionalidades`/`### Correções`/`### Publicação e documentação` que já existe nela (nunca outro título de mesmo tipo). Ao trazer o `develop` e subir a versão de novo, **mova a entrada para a seção da versão nova**. Antes do push, rode `python3 scripts/ci/verificar-changelog.py` (`--corrigir` junta tipos repetidos). As notas das versões e a janela "O que mudou" do gerenciador saem dele: seção errada vira nota errada para quem atualiza.
+**`CHANGELOG.md`: uma seção por versão** (#294). A entrada de um PR vai na seção da versão dele: `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se não existir, **dentro** do `### Funcionalidades`/`### Correções`/`### Publicação e documentação` que já existe nela (nunca outro título de mesmo tipo). Ao trazer o `develop` e subir a versão de novo, **mova a entrada para a seção da versão nova**. Antes do push, rode `python3 scripts/ci/versao/verificar-changelog.py` (`--corrigir` junta tipos repetidos). As notas das versões e a janela "O que mudou" do gerenciador saem dele: seção errada vira nota errada para quem atualiza.
 
 **Issues** (o branch padrão é o `develop`, #142):
 - Todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge.
@@ -109,7 +109,7 @@ Conventional Commits em português (fluxo de branches, comandos e Project em [CO
 
 ## Segurança (específico deste projeto — não genérico)
 
-Tudo roda local, sem exposição de rede (bind só em `127.0.0.1:5443`, direto pelo executável do Go — sem IIS/proxy). Pontos que afetam como escrever código aqui:
+Tudo roda local (bind em `127.0.0.1:5443`, direto pelo executável do Go — sem IIS/proxy). A única exceção é o **acesso pelo celular** ([ADR 0061](docs/adr/0061-acesso-pelo-celular-na-rede-local.md), `internal/plataforma/celular`): desligado por padrão, ligado com login, abre um segundo servidor só num IPv4 privado da rede de casa, com o mesmo pipeline e a autoridade local. Não abra outra porta nem outro endereço fora dele. Pontos que afetam como escrever código aqui:
 - Acesso ao banco é só permissão de arquivo do SO sobre `dados/` — SQLite não tem login/usuário de banco; quem lê/grava é o processo do site, rodando como a conta do serviço do sistema (systemd no Linux, Serviço do Windows no Windows). Sem senha de banco em lugar nenhum.
 - Segredos (Client Secret da Pluggy, token da brapi) com a chave em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows (`internal/plataforma/segredos/protecao_windows.go`), permissão de arquivo (0600) no Linux.
 - CSP restritiva: nada de scripts/recursos de terceiros carregados do front-end.

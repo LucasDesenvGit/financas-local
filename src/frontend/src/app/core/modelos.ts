@@ -510,6 +510,20 @@ export interface Auditoria {
   id: number; dataHora: string; evento: string; login: string | null; ip: string | null; userAgent: string | null;
 }
 
+/** #328 (ADR 0061): um IP deste computador na rede de casa, para o acesso pelo celular. */
+export interface EnderecoCelular { ip: string; interface: string; rede: string; }
+
+/** #328: o acesso pelo celular (Configurações › Segurança). Desligado: só ip pode vir (o escolhido antes). */
+export interface SituacaoCelular {
+  ligado: boolean;
+  ip: string | null;
+  endereco: string | null;
+  ipIndisponivel: boolean;
+  enderecos: EnderecoCelular[];
+  impressaoDigital: string | null;
+  avisos: string[];
+}
+
 /* ----------------------------- Carteira de investimentos ----------------------------- */
 export enum TipoAtivo { Fii = 1, Acao = 2, Etf = 3, Bdr = 4, Outro = 5 }
 export enum TipoOperacao { Compra = 1, Venda = 2 }
