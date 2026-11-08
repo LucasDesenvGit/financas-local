@@ -37,29 +37,8 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"   # a barra de progresso deixa o Invoke-WebRequest muito lento no 5.1
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# ---------------------------------------------------------------- Pastas (mesma convencao do comum.sh)
-$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$Ferramentas = Join-Path $Raiz "ferramentas"
-$Instaladores = Join-Path $Raiz "instaladores"
-$Dados = Join-Path $Raiz "dados"
-$PastaSql = Join-Path $Dados "sql"
-$PastaChaves = Join-Path $Dados "chaves"
-$PastaBackups = Join-Path $Raiz "backups"
-$PastaPublicado = Join-Path $Raiz "publicado"
-$NomeServico = "FinancasLocal"
-
-# ---------------------------------------------------------------- Mensagens
-$script:EtapaAtual = "inicio"
-function Etapa([string]$texto) { $script:EtapaAtual = $texto; Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
-function Ok([string]$texto) { Write-Host "    OK  $texto" -ForegroundColor Green }
-function Aviso([string]$texto) { Write-Host "    !!  $texto" -ForegroundColor Yellow }
-# Erros previstos (com mensagem pronta) sao marcados para o catch final nao mostrar a linha do
-# script; os inesperados mostram, para achar a causa.
-function ErroSai([string]$texto) {
-    $erro = New-Object System.Exception $texto
-    $erro.Data["Previsto"] = $true
-    throw $erro
-}
+# Pastas e Etapa/Ok/Aviso/ErroSai: scripts\windows\comum.ps1 (como o comum.sh no bash).
+. (Join-Path $PSScriptRoot "comum.ps1")
 
 # ---------------------------------------------------------------- Utilitarios
 function Garantir-Pasta([string]$caminho) {
@@ -650,6 +629,22 @@ function Mostrar-EventosServico([datetime]$desde) {
     }
 }
 
+# #655: o backup agendado antes da #154 chama o repasse scripts\4-backup.sh. Troca pelo caminho novo, mantendo
+# horario e --manter, para o repasse poder sair sem o backup parar em silencio.
+function Migrar-BackupAgendado {
+    $tarefa = Get-ScheduledTask -TaskName "FinancasLocal - Backup diario" -ErrorAction SilentlyContinue
+    if (-not $tarefa) { return }
+    $acao = $tarefa.Actions[0]
+    if ($acao.Arguments -notmatch '\\scripts\\4-backup\.sh') { return }
+    try {
+        $acao.Arguments = $acao.Arguments -replace '\\scripts\\4-backup\.sh', '\scripts\geral\4-backup.sh'
+        Set-ScheduledTask -TaskName $tarefa.TaskName -TaskPath $tarefa.TaskPath -Action $acao | Out-Null
+        Ok "Backup agendado passou para o caminho novo (scripts\geral\4-backup.sh)."
+    } catch {
+        Aviso "Nao deu para trocar o backup agendado. No Git Bash, rode: scripts/geral/4-backup.sh --agendar"
+    }
+}
+
 # ================================================================= Principal
 Garantir-Pasta $Instaladores
 $log = Join-Path $Instaladores "instalacao-windows.log"
@@ -693,6 +688,7 @@ try {
     $pastaSqlite = Join-Path $Ferramentas "sqlite"
     if (Test-Path -LiteralPath $pastaSqlite) { Adicionar-Path $pastaSqlite }
 
+    Migrar-BackupAgendado   # antes de tudo: se a instalacao parar depois, o backup ja aponta para o caminho novo
     Preparar-Ambiente
     Criar-Banco
     Publicar

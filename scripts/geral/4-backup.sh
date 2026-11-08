@@ -62,8 +62,8 @@ if [[ "$agendar" -eq 1 ]]; then
             requer_comando crontab 'crontab nao encontrado no PATH; nao e possivel agendar automaticamente neste sistema.'
             linha_cron="$minuto $hora * * * $script_path --manter $manter"
             cron_atual="$(crontab -l 2>/dev/null || true)"
-            # #154: o caminho antigo (scripts/4-backup.sh, antes das pastas geral/windows/linux) sai junto,
-            # senao o backup rodaria duas vezes por dia (pelo repasse e pelo caminho novo).
+            # #154/#655: a entrada do caminho antigo (scripts/4-backup.sh, cujo repasse saiu) sai junto; senao,
+            # quem reagendar antes de uma atualizacao que a migre fica com uma entrada que falha todo dia.
             for antigo in "$script_path" "$Raiz/scripts/4-backup.sh"; do
                 if [[ -n "$cron_atual" ]] && grep -qF "$antigo " <<<"$cron_atual"; then
                     aviso "Ja existe uma entrada de backup agendada ($antigo); substituindo."

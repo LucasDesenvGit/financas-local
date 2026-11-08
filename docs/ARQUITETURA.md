@@ -17,8 +17,10 @@ flowchart TB
     cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
     mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
     github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
+    celular["Seu celular<br/>[Pessoa, na rede de casa]<br/>Só com o acesso pelo celular ligado"]
 
     pessoa -- "usa pelo navegador, em 127.0.0.1" --> sistema
+    celular -.->|"HTTPS pelo IP do computador na rede de casa (ADR 0061)"| sistema
     sistema -- "as credenciais da Pluggy que você informou" --> pluggy
     sistema -- "só datas e o código da moeda" --> bcb
     sistema -- "só o código do ativo" --> cotacoes
@@ -28,20 +30,22 @@ flowchart TB
 
 ## Contêineres
 
-As partes que rodam e como conversam (nível 2 do C4). A fronteira é o computador: nada escuta fora de `127.0.0.1`.
+As partes que rodam e como conversam (nível 2 do C4). A fronteira é o computador: nada escuta fora de `127.0.0.1`, a não ser com o acesso pelo celular ligado ([ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)), que abre a porta só no IP da rede de casa.
 
 ```mermaid
 flowchart TB
     pessoa["Você<br/>[Pessoa]"]
 
-    subgraph computador["Seu computador: nada escuta fora de 127.0.0.1"]
+    subgraph computador["Seu computador: nada escuta fora de 127.0.0.1, menos o acesso pelo celular"]
         navegador["Navegador<br/>[Contêiner: Angular]<br/>O site, servido pelo próprio back-end"]
         servico["Serviço do sistema<br/>[Serviço do Windows ou systemd]<br/>Sobe o site e o mantém no ar"]
         gerenciador["Gerenciador<br/>[Contêiner: Go com o Wails, ADR 0052]<br/>Liga, desliga, copia o banco e atualiza"]
         site["Site<br/>[Contêiner: Go, financas-go, 127.0.0.1:5443]<br/>Serve o Angular e a /api: login, CSRF,<br/>segredos, esquema do banco e todos os assuntos"]
         banco[("Banco<br/>[SQLite em WAL]<br/>dados/sql/FinancasLocal.db")]
-        chaves[("Chaves<br/>[sessão e segredos]<br/>dados/chaves")]
+        chaves[("Chaves<br/>[sessão, segredos e a autoridade do celular]<br/>dados/chaves")]
     end
+
+    celular["Seu celular<br/>[Navegador, na rede de casa]<br/>Só com o acesso ligado"]
 
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]"]
     bcb["Banco Central: Selic e PTAX<br/>[Sistema de fora]"]
@@ -63,13 +67,15 @@ flowchart TB
     site -- "HTTPS" --> cotacoes
     site -- "HTTPS" --> mercado
     gerenciador -- "HTTPS" --> github
+    celular -.->|"HTTPS no IP da rede:5443, só a sub-rede local"| site
 ```
 
 Cada caixa, em uma frase:
 - **Navegador:** o Angular é publicado no `wwwroot`, ao lado do executável do site, então site e API têm a mesma origem: sem CORS, cookies `__Host-` e proteção CSRF simples.
-- **Site:** um executável só, em Go (`financas-go`), que serve o Angular e a `/api` direto em HTTPS, sem IIS nem proxy, como serviço do sistema (Serviço do Windows ou systemd). Ao iniciar (`-aplicar-esquema -rotinas-de-partida`), aplica o esquema do banco, com uma cópia antes de mudar um banco existente, e roda as rotinas que acertam dados. Os scripts bash são os mesmos nos dois sistemas (`scripts/geral/`, no Windows pelo Git Bash); o `instalar-windows.cmd` faz o mesmo sem bash, e o `.msi` instala sem precisar do código. Até a 3.0, havia uma API em .NET na frente e o Go atrás dela ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)); o .NET saiu na #86. Detalhes em [Back-end](#back-end--srcbackend).
+- **Site:** um executável só, em Go (`financas-go`), que serve o Angular e a `/api` direto em HTTPS, sem IIS nem proxy, como serviço do sistema (Serviço do Windows ou systemd). Ao iniciar (`-aplicar-esquema -rotinas-de-partida`), aplica o esquema do banco, com uma cópia antes de mudar um banco existente, e roda as rotinas que acertam dados. Os scripts bash (`scripts/geral/`) instalam no Linux; no Windows, a instalação é o `instalar-windows.ps1` (pelo `instalar-windows.cmd` ou pelo Git Bash, que repassa para ele), e o `.msi` instala sem precisar do código. Até a 3.0, havia uma API em .NET na frente e o Go atrás dela ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)); o .NET saiu na #86. Detalhes em [Back-end](#back-end--srcbackend).
 - **Banco:** o acesso é a permissão do sistema operacional sobre a pasta `dados`.
 - **Gerenciador:** roda como o usuário, fora do site.
+- **Celular:** só com o acesso pelo celular ligado (Configurações › Segurança). O site abre um segundo servidor no IP escolhido da rede de casa, com o mesmo login e um certificado da autoridade local que o celular instala uma vez (`internal/plataforma/celular`).
 
 O que sai para a internet e como o site se protege (login, sessão, CSRF, cabeçalhos, segredos): [SEGURANCA.md](SEGURANCA.md).
 
@@ -153,12 +159,15 @@ flowchart TB
             chaves[("chaves<br/>a dos segredos protegida pelo DPAPI")]
             certificado["certificado\financaslocal.pfx"]
         end
+
+        regra["Regra do firewall FinancasLocal-celular<br/>só com o acesso pelo celular ligado:<br/>perfil Particular, sub-rede local, porta 5443"]
     end
 
     servico --> site
     site --> banco
     site --> chaves
     site --> certificado
+    site -.->|"netsh, ao ligar e desligar"| regra
     atalho --> gerenciador
     gerenciador --> servico
 ```
@@ -200,7 +209,7 @@ O detalhe do que é estável hoje (o LLD), em diagramas:
 
 ## Índice da documentação
 
-As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento.
+As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento. A lista dos arquivos, um por linha, está no [README da pasta](README.md).
 
 | Seção | Onde está |
 |---|---|
@@ -317,21 +326,6 @@ App pequeno que mostra se o site está no ar, liga, desliga e reinicia o serviç
 
 ## Scripts — `scripts/`
 
-Separados pelo sistema em que rodam (#154): `geral/` é o bash que roda nos dois (no Windows, pelo Git Bash/MSYS ou WSL); `windows/` e `linux/` têm o que só funciona num deles. No Windows, a instalação também tem uma versão em PowerShell que dispensa o bash ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)). Os `.cmd` (`instalar-windows.cmd`, `parar-windows.cmd`) ficam na raiz, porque são a porta de entrada de quem não usa terminal.
+Separados por quem roda (#154, #655): `geral/` é o bash do Linux e do macOS (no Windows, só o `2-criar-banco.sh` e o `4-backup.sh` rodam em bash, pelo Git Bash; o `instalar.sh`, o `3-publicar-atualizar.sh` e o `parar.sh` repassam para o PowerShell); `windows/` e `linux/` têm o que só funciona num deles; `dev/` tem as ferramentas de quem desenvolve; `ci/`, o que a CI roda, dividido em `versao/`, `go/`, `front/` e `banco/`. A instalação do Windows existe só em PowerShell, então o Windows tem dois caminhos: o `.ps1` e o `.msi` ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [0029](adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)). Os `.cmd` (`instalar-windows.cmd`, `parar-windows.cmd`) ficam na raiz, porque são a porta de entrada de quem não usa terminal.
 
-| Script | Função |
-|---|---|
-| `geral/instalar.sh` | Roda as etapas 1, 2 e 3 em sequência e para no primeiro erro. |
-| `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, Go (a linha do `src/backend/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/` (reaproveita um `go` da mesma linha e um `sqlite3` do PATH). Não depende de Python ([ADR 0011](adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). |
-| `geral/2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. Também é lido pelo site (uma cópia embutida no executável, `internal/plataforma/banco/esquema`) e pelo `instalar-windows.ps1`, que tiram dele a lista de colunas novas. |
-| `geral/3-publicar-atualizar.sh` | Compila o front-end e o back-end em Go (`financas-go`), publica em `publicado/api` (o executável, o `appsettings.json` e o `wwwroot`), gera/reaproveita o certificado HTTPS local e registra o serviço (systemd `--user` no Linux, `sc.exe` no Windows). |
-| `geral/4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar. |
-| `geral/atualizar.sh`, `windows/atualizar-windows.ps1` | Só na instalação de desenvolvimento (clone na branch `develop`, ADR 0040): trazem o `develop` (só avançam, recusam com alteração local ou outra branch) e reinstalam. Chamados pelo botão do gerenciador. |
-| `geral/parar.sh` | Para o serviço, o site fora dele e o `npm start`; no Git Bash, repassa para o `windows/parar-windows.ps1`. |
-| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, caminho nativo no Windows, extração de `.zip`, conferência de hash, helpers de coluna do banco). |
-| `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash; chamado por `instalar-windows.cmd` (na raiz), que pede elevação. Lê a lista de colunas novas do `geral/2-criar-banco.sh`. Mudanças nas etapas 1 e 3 do bash precisam ser refletidas aqui. |
-| `windows/parar-windows.ps1` | O `parar.sh` em PowerShell; chamado por `parar-windows.cmd` (na raiz). |
-| `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: compilam o gerenciador em Go em `publicado/gerenciador` (Windows, #430) ou `publicado/gerenciador-go` (Linux, #277) e criam os atalhos (Menu Iniciar no Windows, menu de aplicativos no Linux, e a área de trabalho). Rodar de novo atualiza o gerenciador. |
-| `windows/configurar-github.ps1` | Cria o repositório no GitHub, envia as branches e aplica as proteções. |
-| `ci/verificar-sql.py`, `ci/verificar-manual.py`, `ci/verificar-versao.py`, `ci/verificar-tempo-testes.py` | Usados na CI: banco idempotente e sem T-SQL, aviso de Manual desatualizado, versão subiu (ADR 0039) e tempo dos testes do Jest (#204). |
-| `3-publicar-atualizar.sh`, `4-backup.sh`, `instalar-gerenciador.sh` (na raiz de `scripts/`) | **Repasses temporários** para os caminhos novos: o backup agendado antes da mudança e o comando que o gerenciador do Linux antigo mostra continuam funcionando. Podem ser apagados numa versão futura. |
+O que cada script faz e quem o roda (pessoa, CI ou gerenciador) está no índice único, o [scripts/README.md](../scripts/README.md).

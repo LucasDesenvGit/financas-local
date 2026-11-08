@@ -19,7 +19,7 @@ As metas de memória e de disco são as do site em Go, sozinho desde a 3.0.0 (#8
 | Tempo de partida | Segundos do início da API até `GET /api/auth/estado` responder | 2,2 s (31/10/2026, 2.50.31, Windows) | Até 5 s | `medir-desempenho.py`, 3 partidas | Medida |
 | Tempo de resposta das telas principais | A chamada mais lenta ao abrir a tela | Painel 84 ms, Transações 23 ms, Investimentos 43 ms (mesma medição) | Até 300 ms por tela | `medir-desempenho.py`, com 5 anos de transações fictícias | Medida |
 
-Partida e telas saem de `scripts/geral/medir-desempenho.py`, com 9.170 transações fictícias, num computador de desenvolvimento (Core i5, 16 GB):
+Partida e telas saem de `scripts/dev/medir-desempenho.py`, com 9.170 transações fictícias, num computador de desenvolvimento (Core i5, 16 GB):
 - **É o tempo da API:** o navegador ainda desenha a tela.
 - **Em cada tela vale a chamada mais lenta,** porque o navegador as faz em paralelo.
 - **A saída para a internet é recusada na hora,** para o número não virar a espera de uma conexão.
@@ -44,7 +44,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 | Nenhuma atualização apaga dados | Dados depois de atualizar | Todos ficam | Os workflows "Teste de instalação" atualizam em cima de uma instalação, mas não comparam os dados | Medida: nada compara os dados antes e depois |
 | Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `AplicarEsquema` (`internal/plataforma/banco`) | Medida no código e nos testes do pacote |
 | Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts e no `.msi` |
-| Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar. Investimentos abre, mas cada abertura espera a falha do Banco Central (#534) | À mão | Sem medida. Investimentos: ~4,1 s por abertura com a saída numa porta fechada, no Windows |
+| Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar. Investimentos espera a falha do Banco Central só na primeira abertura: depois dela, a Selic fica 15 min sem nova tentativa (#534) | `medir-desempenho.py` com a saída num proxy que demora 2 s e fecha (o roteiro está no PR da #534) | Medida em 07/11/2026: `GET /api/carteira` levava ~4,0 s em toda abertura (série e meta, 2 s cada); agora ~2,0 s na primeira e ~3 ms nas seguintes |
 | Site fora do ar | O serviço | Reinício sozinho | A recuperação do serviço: `Restart=` da unidade do systemd e o `ServiceConfig` do `.msi` | Sem teste desde a #86 (o teste era do Go atrás do .NET, que voltava sozinho) |
 
 ## Portabilidade
@@ -58,7 +58,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
-| Tempo dos testes do Jest | Segundos | Até 20 s por arquivo e 150 s por suíte | `scripts/ci/verificar-tempo-testes.py` | Conferida na CI |
-| Tempo dos testes do Go | Segundos | Até 20 s por teste, 60 s por pacote e 120 s por suíte | `scripts/ci/verificar-tempo-testes-go.py` | Conferida na CI |
+| Tempo dos testes do Jest | Segundos | Até 20 s por arquivo e 150 s por suíte | `scripts/ci/front/verificar-tempo-testes.py` | Conferida na CI |
+| Tempo dos testes do Go | Segundos | Até 20 s por teste, 60 s por pacote e 120 s por suíte | `scripts/ci/go/verificar-tempo-testes-go.py` | Conferida na CI |
 | Cobertura do Go | % por pacote | Só sobe (#370); pacote novo nasce com 80% | `cobertura-minima.txt` e `verificar-cobertura-go.py` | Conferida na CI |
-| Mutação do Go | % por pacote | O piso de `mutacao-go.txt` só sobe (#373) | `scripts/ci/mutacao-go.py` | Conferida na CI, toda segunda e quando muda |
+| Mutação do Go | % por pacote | O piso de `mutacao-go.txt` só sobe (#373) | `scripts/ci/go/mutacao-go.py` | Conferida na CI, toda segunda e quando muda |

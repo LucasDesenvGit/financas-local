@@ -32,6 +32,11 @@ export const GLOSSARIO = {
     termo: 'Selic',
     definicao: 'A taxa básica de juros do Brasil, definida pelo Banco Central. Aplicações de renda fixa simples (Tesouro Selic, CDB de liquidez diária) rendem perto dela, por isso serve de régua para outros investimentos.'
   },
+  rendimentoOpenFinance: {
+    termo: 'Rendimento dos investimentos do Open Finance',
+    definicao: 'Quanto o saldo cresceu além do valor aplicado: o que você guardou ou tirou no mês não conta como rendimento. O site guarda o saldo de cada investimento a cada sincronização; antes da primeira, o Open Finance não informa.',
+    exemplo: 'Fundo sem o valor aplicado mostra só o saldo, sem o rendimento. Valores brutos, antes do IR.'
+  },
   ifix: {
     termo: 'IFIX',
     definicao: 'O índice dos fundos imobiliários da bolsa: mostra como os FIIs em geral se saíram, para comparar com os seus.'

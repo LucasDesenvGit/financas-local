@@ -22,8 +22,11 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -34,8 +37,10 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/partida"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cripto"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/celular"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
@@ -119,7 +124,8 @@ func rodar(ctx context.Context) error {
 	}
 	// #298: quem põe os avisos e erros na tabela (Configurações › Erros) é o próprio Go: o handler do pacote erros os
 	// põe na fila, e o gravador os grava.
-	texto := servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil))
+	// #531: o log do serviço (journald, Log de Eventos) passa pela mesma limpeza da tabela antes de sair do processo.
+	texto := erros.ComLimpeza(servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil)))
 	filaDeErros := erros.NovaFila()
 	log, logSemTabela := slog.New(erros.NovoHandler(texto, filaDeErros, rel)), slog.New(texto)
 	slog.SetDefault(log)
@@ -189,7 +195,8 @@ func rodar(ctx context.Context) error {
 	// #298: os erros do sistema. O gravador para depois do servidor e grava o que sobrou na fila antes de o banco
 	// fechar (o defer acima).
 	erros.Registrar(rotas, erros.NovoServico(db, filaDeErros, rel, log))
-	gravador := erros.NovoGravador(db, filaDeErros, rel, parametrosDoSite(db, rel, log, cfg), logSemTabela)
+	parametrosSite := parametrosDoSite(db, rel, log, cfg)
+	gravador := erros.NovoGravador(db, filaDeErros, rel, parametrosSite, logSemTabela)
 	ctxGravador, pararGravador := context.WithCancel(context.Background())
 	gravadorParou := make(chan struct{})
 	go func() {
@@ -200,10 +207,54 @@ func rodar(ctx context.Context) error {
 		pararGravador()
 		<-gravadorParou
 	}()
+	// #530: a auditoria de acesso tem prazo; a limpeza roda ao subir e uma vez por dia, e para antes de o banco fechar.
+	ctxLimpeza, pararLimpeza := context.WithCancel(ctx)
+	limpezaParou := make(chan struct{})
+	go func() {
+		defer close(limpezaParou)
+		auditoria.NovaLimpeza(db, parametrosSite, rel, log).Rodar(ctxLimpeza)
+	}()
+	defer func() {
+		pararLimpeza()
+		<-limpezaParou
+	}()
+	site := servidor.Opcoes{Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas)}
+	// #328 (ADR 0061): o acesso pelo celular, desligado por padrão. Ligado, escuta também no IP da rede de casa, com o
+	// mesmo pipeline do site, só com esse IP nos hosts permitidos e o certificado da autoridade local.
+	acessoCelular, err := novoAcessoCelular(db, rel, log, site)
+	if err != nil {
+		return err
+	}
+	celular.Registrar(rotas, acessoCelular)
+	acessoCelular.Iniciar(ctx)
+	defer func() {
+		prazo, cancelar := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancelar()
+		acessoCelular.Parar(prazo)
+	}()
 	log.Info("iniciando", "versao", versao.Atual)
-	return servidor.Rodar(ctx, servidor.Opcoes{
-		Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas),
-	})
+	return servidor.Rodar(ctx, site)
+}
+
+// novoAcessoCelular monta o acesso pelo celular na porta do site.
+func novoAcessoCelular(db *sql.DB, rel relogio.Relogio, log *slog.Logger, site servidor.Opcoes) (*celular.Servico, error) {
+	_, textoPorta, err := net.SplitHostPort(site.Config.Endereco)
+	if err != nil {
+		return nil, fmt.Errorf("o endereço do site %q: %w", site.Config.Endereco, err)
+	}
+	porta, err := strconv.Atoi(textoPorta)
+	if err != nil {
+		return nil, fmt.Errorf("a porta do site %q: %w", site.Config.Endereco, err)
+	}
+	return celular.Novo(celular.Opcoes{
+		DB: db, Relogio: rel, Log: log, PastaChaves: site.Config.PastaChaves, Porta: porta, Firewall: celular.FirewallDoSistema(),
+		NovoServidor: func(ip string, c tls.Certificate) (*http.Server, error) {
+			daRede := site
+			daRede.Config.HostsPermitidos = []string{ip}
+			daRede.Certificado = c
+			return servidor.NovoServidor(daRede)
+		},
+	}), nil
 }
 
 // novoRelogio devolve o relógio do sistema, ou, com -inicio-do-relogio, um que começa no instante dado e anda dali
@@ -228,8 +279,8 @@ func avisarRelogioDeTeste(log *slog.Logger, instante *time.Time) {
 		"inicio", instante.Format(time.RFC3339Nano), "origem", "Sistema")
 }
 
-// parametrosDoSite é o ParametroService que o gravador usa para o prazo dos erros (os padrões do appsettings, como
-// no api.NovasRotas).
+// parametrosDoSite é o ParametroService que o gravador e a limpeza da auditoria usam para os prazos (os padrões do
+// appsettings, como no api.NovasRotas).
 func parametrosDoSite(db *sql.DB, rel relogio.Relogio, log *slog.Logger, cfg config.Config) *parametros.Servico {
 	return parametros.Novo(parametros.Opcoes{DB: db, Relogio: rel, Log: log, Versao: versao.Atual,
 		CaminhoBanco: cfg.BancoCaminho, PastaChaves: cfg.PastaChaves, Padroes: parametros.PadroesDoAppsettings(cfg)})

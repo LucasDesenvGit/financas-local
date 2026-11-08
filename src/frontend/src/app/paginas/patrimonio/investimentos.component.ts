@@ -301,6 +301,17 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             <button type="button" class="botao botao-primario" (click)="importarOpenFinance()" [disabled]="importandoOpenFinance()">
               {{ importandoOpenFinance() ? 'Registrando…' : 'Registrar compras na carteira' }}</button>
           </div>
+          <!-- #331: a grade recolhe pelo título (Disclosure: botão com aria-expanded e aria-controls), e a escolha fica
+               neste navegador (ADR 0017). Recolhida, o total e quantos são continuam à vista. -->
+          <div class="cabecalho-grade-of">
+            <h2><button type="button" class="botao-grade-of" [attr.aria-expanded]="!gradeOfRecolhida()" aria-controls="grade-of"
+              (click)="alternarGradeOf()"><span aria-hidden="true">{{ gradeOfRecolhida() ? '▸' : '▾' }}</span>
+              Investimentos do Open Finance</button></h2>
+            <span class="texto-suave">{{ d.openFinance.length }} {{ d.openFinance.length === 1 ? 'investimento' : 'investimentos' }} ·
+              {{ d.totalOpenFinance | currency }}</span>
+          </div>
+          <div id="grade-of">
+          @if (!gradeOfRecolhida()) {
           <div class="tabela-rolagem">
             <table class="tabela">
               <thead>
@@ -350,6 +361,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
             A comparação usa a data e o valor aplicado informados pela instituição. Em produtos com vários aportes (fundos,
             previdência) a instituição pode informar só o total, e o resultado fica aproximado. Valores brutos, antes do IR.
           </p>
+          }
+          </div>
           <app-rendimento-investimentos-of />
         }
 
@@ -742,6 +755,14 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: `
     .barra-abas { margin-bottom: 16px; }
+    /* #331: o título da grade do Open Finance, que recolhe. Alvo de 32 px (WCAG 2.5.8 pede 24). */
+    .cabecalho-grade-of { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin: 4px 0 8px; }
+    .cabecalho-grade-of h2 { margin: 0; font-size: 1rem; }
+    .botao-grade-of {
+      font: inherit; color: var(--texto-forte); background: none; border: 0; padding: 4px 6px 4px 0; min-height: 32px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .botao-grade-of:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; border-radius: 6px; }
     /* #330: a distribuição sozinha ocupa a largura toda, com a rosca e a lista lado a lado. */
     .grade-2.grade-sozinha { grid-template-columns: minmax(0, 1fr); }
     .distribuicao-larga .distribuicao-corpo {
@@ -790,6 +811,26 @@ export class InvestimentosComponent implements OnInit {
   readonly dados = signal<Carteira | null>(null);
   private readonly rota = inject(ActivatedRoute);
   readonly aba = signal<Aba>('resumo');
+
+  /** #331: a grade do Open Finance recolhida, lembrada neste navegador (ADR 0017). */
+  static readonly CHAVE_GRADE_OF = 'financas.investimentos.gradeOFRecolhida';
+  readonly gradeOfRecolhida = signal(InvestimentosComponent.lerGradeOf());
+
+  alternarGradeOf(): void {
+    this.gradeOfRecolhida.update((v) => !v);
+    try {
+      localStorage.setItem(InvestimentosComponent.CHAVE_GRADE_OF, this.gradeOfRecolhida() ? '1' : '0');
+    } catch { /* sem armazenamento (modo privado): a grade só não lembra */ }
+  }
+
+  private static lerGradeOf(): boolean {
+    try {
+      return localStorage.getItem(InvestimentosComponent.CHAVE_GRADE_OF) === '1';
+    } catch {
+      return false;
+    }
+  }
+
   readonly mostrarEncerradas = signal(false);
   readonly atualizando = signal(false);
   readonly salvando = signal(false);

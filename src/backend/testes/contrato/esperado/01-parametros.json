@@ -102,6 +102,18 @@
         "valor": 15
       },
       {
+        "chave": "Seguranca.DiasRetencaoAuditoria",
+        "descricao": "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+        "grupo": "Segurança",
+        "maximo": 730,
+        "minimo": 30,
+        "nome": "Guardar o histórico de acessos por",
+        "padrao": 180,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 180
+      },
+      {
         "chave": "Orcamento.MetaPoupanca",
         "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
         "grupo": "Orçamentos",
@@ -370,6 +382,18 @@
         "valor": 15
       },
       {
+        "chave": "Seguranca.DiasRetencaoAuditoria",
+        "descricao": "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+        "grupo": "Segurança",
+        "maximo": 730,
+        "minimo": 30,
+        "nome": "Guardar o histórico de acessos por",
+        "padrao": 180,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 180
+      },
+      {
         "chave": "Orcamento.MetaPoupanca",
         "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
         "grupo": "Orçamentos",
@@ -610,6 +634,18 @@
         "tipo": 1,
         "unidade": "minutos",
         "valor": 1440
+      },
+      {
+        "chave": "Seguranca.DiasRetencaoAuditoria",
+        "descricao": "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+        "grupo": "Segurança",
+        "maximo": 730,
+        "minimo": 30,
+        "nome": "Guardar o histórico de acessos por",
+        "padrao": 180,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 180
       },
       {
         "chave": "Orcamento.MetaPoupanca",
@@ -876,6 +912,18 @@
         "valor": 1440
       },
       {
+        "chave": "Seguranca.DiasRetencaoAuditoria",
+        "descricao": "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+        "grupo": "Segurança",
+        "maximo": 730,
+        "minimo": 30,
+        "nome": "Guardar o histórico de acessos por",
+        "padrao": 180,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 180
+      },
+      {
         "chave": "Orcamento.MetaPoupanca",
         "descricao": "Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
         "grupo": "Orçamentos",
@@ -1103,6 +1151,18 @@
         "tipo": 1,
         "unidade": "minutos",
         "valor": 1440
+      },
+      {
+        "chave": "Seguranca.DiasRetencaoAuditoria",
+        "descricao": "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+        "grupo": "Segurança",
+        "maximo": 730,
+        "minimo": 30,
+        "nome": "Guardar o histórico de acessos por",
+        "padrao": 180,
+        "tipo": 1,
+        "unidade": "dias",
+        "valor": 180
       },
       {
         "chave": "Orcamento.MetaPoupanca",

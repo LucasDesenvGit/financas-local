@@ -104,7 +104,11 @@ func TestListarTemOCatalogoNaOrdem(t *testing.T) {
 	testeapoio.ConferirJSON(t, mustJSON(t, lista[0]), `{"chave":"Sincronizacao.Habilitada","grupo":"Sincronização",
 		"nome":"Sincronização automática","descricao":"Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
 		"tipo":2,"valor":1,"padrao":1,"minimo":null,"maximo":null,"unidade":null}`)
-	testeapoio.ConferirJSON(t, mustJSON(t, lista[8]), `{"chave":"Orcamento.MetaPoupanca","grupo":"Orçamentos","nome":"Meta de poupança",
+	testeapoio.ConferirJSON(t, mustJSON(t, lista[8]), `{"chave":"Seguranca.DiasRetencaoAuditoria","grupo":"Segurança",
+		"nome":"Guardar o histórico de acessos por",
+		"descricao":"Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
+		"tipo":1,"valor":180,"padrao":180,"minimo":30,"maximo":730,"unidade":"dias"}`) // #530
+	testeapoio.ConferirJSON(t, mustJSON(t, lista[9]), `{"chave":"Orcamento.MetaPoupanca","grupo":"Orçamentos","nome":"Meta de poupança",
 		"descricao":"Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
 		"tipo":1,"valor":20,"padrao":20,"minimo":0,"maximo":60,"unidade":"% da renda"}`)
 }
@@ -138,6 +142,7 @@ func TestListarNormalizaOsValoresGravados(t *testing.T) {
 		{"Seguranca.MaximoTentativasLogin", "abc", 0, 7, 7},   // padrão do appsettings
 		{"Sincronizacao.IntervaloHoras", "x", 0, 6, 6},        // padrão no appsettings não vale aqui
 		{"Diagnostico.DiasRetencaoErros", "1000", 0, 365, 90}, // limitado ao máximo
+		{"Seguranca.DiasRetencaoAuditoria", "10", 0, 30, 180}, // #530: limitado ao mínimo
 		{"Painel.DiasProximosVencimentos", " 15", 0, 15, 15},  // espaço que o int.TryParse não aceita: padrão
 	}
 	for _, c := range casos {

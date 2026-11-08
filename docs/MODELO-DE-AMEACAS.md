@@ -2,14 +2,15 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 03/11/2026, revisado na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
+> **Data:** 07/11/2026, revisado no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
-O sistema só escuta em `127.0.0.1`, então o risco real não vem da rede. Ele vem de:
+O sistema escuta em `127.0.0.1`, então, com o acesso pelo celular desligado (o padrão), o risco real não vem da rede. Ele vem de:
 - **outro processo ou outro usuário no mesmo computador**, como um malware rodando com a sua conta;
 - **um site aberto no navegador**, que tenta falar com `127.0.0.1`;
-- **quem pega o arquivo**: uma cópia do banco, um disco perdido.
+- **quem pega o arquivo**: uma cópia do banco, um disco perdido;
+- **com o acesso pelo celular ligado, quem está na rede de casa**: um convidado no Wi-Fi, um aparelho com falha, um roteador comprometido (fronteira 7).
 
 ## Fora do escopo
 
@@ -38,6 +39,10 @@ flowchart TB
         end
     end
 
+    subgraph rede["Rede de casa (só com o acesso pelo celular ligado)"]
+        celular["Celular<br/>e os outros aparelhos do Wi-Fi"]
+    end
+
     subgraph internet["Serviços de fora"]
         pluggy["Pluggy"]
         cotacoes["Banco Central, Yahoo,<br/>brapi, Mercado Bitcoin"]
@@ -54,6 +59,7 @@ flowchart TB
     gerenciador -- "5. arquivo" --> copias
     gerenciador -- "6. HTTPS local, aceita o certificado sem conferir" --> api
     gerenciador -- "6. VACUUM INTO, como administrador no Windows" --> banco
+    celular -- "7. HTTPS no IP da rede:5443, cookie e CSRF" --> api
 ```
 
 ## Ameaças por fronteira
@@ -123,6 +129,21 @@ O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site resp
 | **Vazamento** | A cópia vai para um lugar inseguro | O gerenciador avisa que a cópia tem todos os seus dados | A cópia sai sem criptografia (#68, item 2) |
 | **Negação de serviço** | A cópia trava o site | `VACUUM INTO` lê numa transação, com o banco em WAL, e o site continua no ar | — |
 | **Aumento de privilégio** | Outro programa usa a instância elevada do gerenciador | A instância elevada só aceita as ações fixas (`--backup <destino>`, `--restaurar <cópia>`, `--servico ligar\|desligar\|reiniciar` e, só na instalação de desenvolvimento, `--instalar-pelos-scripts`) e pede o UAC a cada vez | Quem aprova o UAC não vê o arquivo da `--restaurar`: um programa que já roda na sua conta pode pedir a restauração de um arquivo dele, e o aviso do Windows mostra só o gerenciador (*julgamento*: o mesmo vale para o destino da `--backup`) |
+
+### 7. Celular ↔ site, pela rede de casa (#328)
+
+Só existe com o acesso pelo celular ligado (Configurações › Segurança, [ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)). O site abre um segundo servidor no IP escolhido (um IPv4 privado deste computador), com o mesmo login, CSRF e cabeçalhos do servidor de `127.0.0.1`.
+
+| | Ameaça | Proteção que existe | O que falta |
+|---|---|---|---|
+| **Falsificação** | Alguém no Wi-Fi tenta adivinhar a senha | O mesmo login da fronteira 1: bloqueio por tentativas e limite de 5 por minuto **por IP** (cada aparelho tem o seu) | A senha passa a ser a barreira: sem política de senha (#68, item 8), uma senha fraca é risco real. A tela de ligar avisa |
+| **Falsificação** | Um aparelho da rede se passa pelo site para o celular (homem no meio), para pegar a senha | HTTPS com o certificado de uma autoridade local que o celular instalou; a tela mostra a impressão digital para conferir | Na primeira vez, o celular baixa a autoridade por uma conexão em que ainda não confia: quem estiver no meio nesse momento pode trocar o arquivo. Conferir a impressão digital fecha isso, mas depende da pessoa (*julgamento*) |
+| **Adulteração** | Um site de fora aponta um domínio para o IP da rede (DNS rebinding) | O servidor da rede só aceita o próprio IP no `Host` | — |
+| **Repúdio** | Não saber qual aparelho entrou ou ligou o acesso | A auditoria grava o IP de cada login e o ligar e desligar | — |
+| **Vazamento** | Roubar a chave da autoridade para assinar outros sites em que o celular confia | A chave fica em `dados/chaves`, com a proteção das outras chaves, e a autoridade tem restrição de nomes: só IPs de rede de casa, nenhum nome de site | Com a chave, dá para se passar por outro IP da rede de casa (o roteador) para o celular. A restrição não foi conferida num celular de verdade (*não validado com uso real*) |
+| **Vazamento** | A porta aberta num Wi-Fi público (café, aeroporto) | No Windows, a regra do firewall vale só no perfil Particular e só para a sub-rede local; a tela avisa quando a rede está como Pública | No Linux, o site não mexe no firewall: sem `ufw` nem `firewalld` ligados, a porta fica aberta em qualquer rede em que o IP escolhido estiver |
+| **Negação de serviço** | Um aparelho da rede enche o site de pedidos | Os mesmos limites da fronteira 1 (login e corpo) | Sem limite de pedidos fora do login (*julgamento*: o mesmo risco de antes, agora com a rede de casa) |
+| **Aumento de privilégio** | Alguém usa uma rota sem login pela rede | Tudo exige login; a única rota nova sem login é a da autoridade (`GET /api/celular/autoridade`), que entrega só o certificado público | — |
 
 ## Ligação com a #68
 

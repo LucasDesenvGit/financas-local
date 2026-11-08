@@ -25,11 +25,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+. (Join-Path $PSScriptRoot "comum.ps1")
 $Branch = "develop"
 
-function Etapa([string]$texto) { Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
-function Ok([string]$texto) { Write-Host "    OK  $texto" -ForegroundColor Green }
 function Recusa([string]$motivo, [string]$oQueFazer) {
     Write-Host "    !!  $motivo" -ForegroundColor Yellow
     if ($oQueFazer) { Write-Host "        $oQueFazer" }
