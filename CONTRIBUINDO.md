@@ -60,6 +60,19 @@ Outro PR subiu a versão antes do seu entrar e o seu ficou em conflito no `Direc
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
 1. Numa branch `release/X.Y.Z`, criada do `develop`, tire o ` · desenvolvimento` do título da versão do topo do `CHANGELOG.md`, com a data de hoje (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`) (#294), num commit `chore: versão X.Y.Z`. O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo. As notas do Release juntam todas, até a última publicada, e cortam no limite de 125 mil caracteres do GitHub, com um link para o resto (#641).
 2. PR de `release/X.Y.Z` para `main` e merge. Antes, confira que `main` e `develop` continuam protegidas contra apagar: em 2026-10-18, o merge de um PR para a `main` apagou o `develop`.
+   Para conferir, `gh api repos/LucasDesenvGit/financas-local/branches/develop/protection` (precisa ser dono do repositório). Para reaplicar, em `main` e em `develop` (eram do `configurar-github.ps1`, que saiu na #655):
+   ```bash
+   for b in main develop; do
+     gh api -X PUT repos/LucasDesenvGit/financas-local/branches/$b/protection --input - <<'JSON'
+   {"required_status_checks": {"strict": true, "contexts": ["build"]},
+    "enforce_admins": false,
+    "required_pull_request_reviews": {"required_approving_review_count": 0, "dismiss_stale_reviews": true},
+    "restrictions": null, "allow_force_pushes": false, "allow_deletions": false,
+    "required_conversation_resolution": true}
+   JSON
+   done
+   ```
+   O `required_conversation_resolution` faz o merge esperar que toda conversa da revisão esteja resolvida.
 3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
@@ -302,7 +315,7 @@ Quem usa o Claude Code no projeto recebe, pelo repositório:
 
 ## Convenções de código
 
-- Nomes em português, seguindo o que já existe (ex.: `XxxService`, `XxxController`, `XxxDto`, `SalvarXxxDto`).
+- Nomes em português, seguindo o que já existe (ex.: `XxxService` no Angular, `Servico` e `NovoServico` no Go, `XxxDto`, `SalvarXxxDto`).
 - Back-end em Go: um pacote por assunto em `src/backend/internal/<area>/<assunto>`, com HTTP, regra e banco dentro ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [o padrão de um assunto](src/backend/internal/README.md)); dinheiro sempre em `tipos.Decimal`, nunca em `float64`.
 - Front-end: componentes standalone, signals e control flow (`@if`, `@for`), com `ChangeDetectionStrategy.Eager` (o app roda com zone.js); chamadas HTTP só pelo `ApiService`. Tela, gráfico, filtro ou formulário seguem as referências e os padrões de [docs/UI-UX.md](docs/UI-UX.md).
 - Claude Code: o roteiro do front-end está na skill `angular-no-projeto`, e o do Go, na `go-no-projeto` (ver "Claude Code no projeto").

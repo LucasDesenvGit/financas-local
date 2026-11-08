@@ -97,6 +97,7 @@ var dependencias = []struct {
 	Motivo string
 }{
 	{"internal/plataforma/autenticacao", nil, "só os transversais (auditoria, erros)"},
+	{"internal/plataforma/celular", nil, "acesso pelo celular (#328): só os transversais (auditoria, configuração, erros) e a base (o servidor monta o da rede)"},
 	{"internal/movimentacao/bancos", nil, "catálogo de bancos"},
 	{"internal/patrimonio/cambio", nil, "PTAX; só os transversais"},
 	{"internal/patrimonio/carteira", []string{"internal/movimentacao/bancos", "internal/patrimonio/cambio", "internal/ajustes/categorizacao", "internal/movimentacao/contas",

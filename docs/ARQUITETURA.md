@@ -17,8 +17,10 @@ flowchart TB
     cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
     mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
     github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
+    celular["Seu celular<br/>[Pessoa, na rede de casa]<br/>Só com o acesso pelo celular ligado"]
 
     pessoa -- "usa pelo navegador, em 127.0.0.1" --> sistema
+    celular -.->|"HTTPS pelo IP do computador na rede de casa (ADR 0061)"| sistema
     sistema -- "as credenciais da Pluggy que você informou" --> pluggy
     sistema -- "só datas e o código da moeda" --> bcb
     sistema -- "só o código do ativo" --> cotacoes
@@ -28,20 +30,22 @@ flowchart TB
 
 ## Contêineres
 
-As partes que rodam e como conversam (nível 2 do C4). A fronteira é o computador: nada escuta fora de `127.0.0.1`.
+As partes que rodam e como conversam (nível 2 do C4). A fronteira é o computador: nada escuta fora de `127.0.0.1`, a não ser com o acesso pelo celular ligado ([ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)), que abre a porta só no IP da rede de casa.
 
 ```mermaid
 flowchart TB
     pessoa["Você<br/>[Pessoa]"]
 
-    subgraph computador["Seu computador: nada escuta fora de 127.0.0.1"]
+    subgraph computador["Seu computador: nada escuta fora de 127.0.0.1, menos o acesso pelo celular"]
         navegador["Navegador<br/>[Contêiner: Angular]<br/>O site, servido pelo próprio back-end"]
         servico["Serviço do sistema<br/>[Serviço do Windows ou systemd]<br/>Sobe o site e o mantém no ar"]
         gerenciador["Gerenciador<br/>[Contêiner: Go com o Wails, ADR 0052]<br/>Liga, desliga, copia o banco e atualiza"]
         site["Site<br/>[Contêiner: Go, financas-go, 127.0.0.1:5443]<br/>Serve o Angular e a /api: login, CSRF,<br/>segredos, esquema do banco e todos os assuntos"]
         banco[("Banco<br/>[SQLite em WAL]<br/>dados/sql/FinancasLocal.db")]
-        chaves[("Chaves<br/>[sessão e segredos]<br/>dados/chaves")]
+        chaves[("Chaves<br/>[sessão, segredos e a autoridade do celular]<br/>dados/chaves")]
     end
+
+    celular["Seu celular<br/>[Navegador, na rede de casa]<br/>Só com o acesso ligado"]
 
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]"]
     bcb["Banco Central: Selic e PTAX<br/>[Sistema de fora]"]
@@ -63,6 +67,7 @@ flowchart TB
     site -- "HTTPS" --> cotacoes
     site -- "HTTPS" --> mercado
     gerenciador -- "HTTPS" --> github
+    celular -.->|"HTTPS no IP da rede:5443, só a sub-rede local"| site
 ```
 
 Cada caixa, em uma frase:
@@ -70,6 +75,7 @@ Cada caixa, em uma frase:
 - **Site:** um executável só, em Go (`financas-go`), que serve o Angular e a `/api` direto em HTTPS, sem IIS nem proxy, como serviço do sistema (Serviço do Windows ou systemd). Ao iniciar (`-aplicar-esquema -rotinas-de-partida`), aplica o esquema do banco, com uma cópia antes de mudar um banco existente, e roda as rotinas que acertam dados. Os scripts bash são os mesmos nos dois sistemas (`scripts/geral/`, no Windows pelo Git Bash); o `instalar-windows.cmd` faz o mesmo sem bash, e o `.msi` instala sem precisar do código. Até a 3.0, havia uma API em .NET na frente e o Go atrás dela ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)); o .NET saiu na #86. Detalhes em [Back-end](#back-end--srcbackend).
 - **Banco:** o acesso é a permissão do sistema operacional sobre a pasta `dados`.
 - **Gerenciador:** roda como o usuário, fora do site.
+- **Celular:** só com o acesso pelo celular ligado (Configurações › Segurança). O site abre um segundo servidor no IP escolhido da rede de casa, com o mesmo login e um certificado da autoridade local que o celular instala uma vez (`internal/plataforma/celular`).
 
 O que sai para a internet e como o site se protege (login, sessão, CSRF, cabeçalhos, segredos): [SEGURANCA.md](SEGURANCA.md).
 
@@ -153,12 +159,15 @@ flowchart TB
             chaves[("chaves<br/>a dos segredos protegida pelo DPAPI")]
             certificado["certificado\financaslocal.pfx"]
         end
+
+        regra["Regra do firewall FinancasLocal-celular<br/>só com o acesso pelo celular ligado:<br/>perfil Particular, sub-rede local, porta 5443"]
     end
 
     servico --> site
     site --> banco
     site --> chaves
     site --> certificado
+    site -.->|"netsh, ao ligar e desligar"| regra
     atalho --> gerenciador
     gerenciador --> servico
 ```
@@ -200,7 +209,7 @@ O detalhe do que é estável hoje (o LLD), em diagramas:
 
 ## Índice da documentação
 
-As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento.
+As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice só aponta: o conteúdo fica em cada documento. A lista dos arquivos, um por linha, está no [README da pasta](README.md).
 
 | Seção | Onde está |
 |---|---|

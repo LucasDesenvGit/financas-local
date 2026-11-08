@@ -56,3 +56,4 @@ internal/plataforma/tarefas         100
 internal/partida         100
 internal/patrimonio/investimentos   100
 internal/analises/painel          100
+internal/plataforma/celular         100
