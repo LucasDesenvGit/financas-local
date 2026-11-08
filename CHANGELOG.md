@@ -2,10 +2,47 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.5.0] — 2026-11-08 · desenvolvimento
+## [3.7.0] — 2026-11-08 · desenvolvimento
 
 ### Funcionalidades
 - **A auditoria de acesso tem prazo: 180 dias, e depois é apagada sozinha** (#530). Cada entrada, saída, troca de senha e mudança registrada fica em "Acessos recentes", com o IP e o navegador, e a tabela só crescia: a tela lista, mas não apaga. Agora o site apaga os acessos mais antigos que o prazo ao subir e uma vez por dia, como já faz com os erros do sistema. O prazo fica em Configurações › Parametrização › Segurança ("Guardar o histórico de acessos por", de 30 a 730 dias). `docs/DADOS-PESSOAIS.md` e o Manual foram junto.
+
+## [3.6.0] — 2026-11-08 · desenvolvimento
+
+### Funcionalidades
+- **Investimentos › Open Finance: o rendimento por investimento em linhas e a grade que recolhe** (#331). Em "Rendimento por mês", o mês mais recente já abre por investimento: cada um numa linha, do que mais rendeu ao que menos, com uma barrinha do tamanho do rendimento, como em "Gasto por categoria", no lugar da linha corrida. "sem o valor aplicado" virou etiqueta, e a explicação longa foi para o ⓘ "Como o rendimento é calculado". A tabela dos investimentos do Open Finance recolhe pelo título; recolhida, mostra quantos são e o total, e a escolha fica guardada neste navegador (`financas.investimentos.gradeOFRecolhida`, ADR 0017). Feito a partir do #348, fechado sem merge. O Manual foi junto.
+
+## [3.5.3] — 2026-11-08 · desenvolvimento
+
+### Publicação e documentação
+- **O teste de mutação de `contasagendadas` volta a 100%** (#640). O piso de 100% entrou junto com o pacote (#79, parte 1), quando ele ainda não tinha teste próprio: toda mutação saía "sem teste" e não contava. Os testes vieram depois, e 46 mutações sobreviviam. Agora cada uma tem o teste que a pega, ou foi tirada por uma refatoração que não muda o comportamento: o mês corrido num lugar só, o `min`/`max` no lugar das comparações e dois atalhos que davam no mesmo. Quatro que não mudam o resultado foram para `mutacao-go-equivalentes.txt`, com o motivo. Os testes novos cobrem a virada do ano nas mensais, a categoria mais frequente, a parcela no cartão, a faixa da variável, o limite de 20.000 lançamentos e os avisos de aumento pela data da cobrança. Nada muda para quem usa.
+
+## [3.5.2] — 2026-11-08 · desenvolvimento
+
+### Correções
+- **Investimentos sem internet abre sem esperar a cada vez** (#534). Quando a consulta da Selic ao Banco Central falhava (sem internet, API fora do ar), nada ficava guardado, e cada abertura de Investimentos esperava a falha de novo: a série e a meta, uma depois da outra. Agora, depois de uma falha, a Selic fica 15 minutos sem nova tentativa, pela série e pela meta, e sem novo aviso em Configurações › Erros; o que está no banco continua valendo. Pedido cancelado e erro ao gravar não contam como falha. Medido com uma rede que demora 2 s para falhar: o `GET /api/carteira` levava ~4,0 s em toda abertura; agora leva ~2,0 s na primeira e ~3 ms nas seguintes. A linha "Sem internet" de `docs/REQUISITOS-NAO-FUNCIONAIS.md` foi junto.
+
+## [3.5.1] — 2026-11-08 · desenvolvimento
+
+### Correções
+- **O log do serviço tira segredo, CPF e valor em reais, como os erros gravados no banco** (#531). O `journald` (Linux) e o Visualizador de Eventos (Windows) recebiam as mensagens como vieram; agora passam pelo mesmo `Limpar` da tabela de erros (ADR 0022), na mensagem e em todo atributo que vira texto, inclusive os erros embrulhados e os grupos. A tabela continua recebendo o erro original, com o tipo, e limpa ao gravar. O `docs/DADOS-PESSOAIS.md` e a ADR 0022 foram junto. Nada muda na tela.
+
+## [3.5.0] — 2026-11-08 · desenvolvimento
+
+### Funcionalidades
+- **Meus FIIs mostra o total da carteira** (#384). A tabela ganha uma linha "Total" no fim, alinhada com as colunas: o investido (cotas × preço médio), o valor atual (cotas × cotação), a valorização em R$ e em % com o sinal em texto, o yield on cost da carteira (a renda do mês sobre o investido), a renda por mês e o peso de 100%. Ao lado do título "Meus FIIs", o valor atual em destaque, com o investido do lado. O fundo sem cotação entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa. Com "ocultar valores", ficam só os percentuais. O Manual ganha a seção "Total da carteira de FIIs".
+
+## [3.4.5] — 2026-11-08 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0060 (proposta): CDBs e caixinhas numa aba própria, com o rendimento no valor, e a regra caixinha × reserva** (#338). Antes de mexer no banco, a decisão fica escrita para aprovar:
+  - os três grupos (CDBs e caixinhas, Reservas, Open Finance), cada aplicação num só;
+  - a classificação automática, com a troca manual valendo mais e guardada no banco;
+  - o rendimento de cada aplicação: pelo valor aplicado, pelo histórico ou estimado pelo % do CDI;
+  - o "rendimento automático" que se desliga;
+  - as metas ligadas a um cofrinho, que continuam ligadas.
+
+  A implementação vem em quatro PRs depois desta. Nada muda para quem usa.
 
 ## [3.4.4] — 2026-11-08 · desenvolvimento
 

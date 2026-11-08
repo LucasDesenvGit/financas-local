@@ -124,7 +124,8 @@ func rodar(ctx context.Context) error {
 	}
 	// #298: quem põe os avisos e erros na tabela (Configurações › Erros) é o próprio Go: o handler do pacote erros os
 	// põe na fila, e o gravador os grava.
-	texto := servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil))
+	// #531: o log do serviço (journald, Log de Eventos) passa pela mesma limpeza da tabela antes de sair do processo.
+	texto := erros.ComLimpeza(servicosistema.ComLogDoSistema(slog.NewTextHandler(os.Stderr, nil)))
 	filaDeErros := erros.NovaFila()
 	log, logSemTabela := slog.New(erros.NovoHandler(texto, filaDeErros, rel)), slog.New(texto)
 	slog.SetDefault(log)

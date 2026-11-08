@@ -97,4 +97,5 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0057](0057-confirmacao-pelo-modal-do-site-e-nao-pelo-confirm.md) | Confirmação pelo modal do site (`ConfirmacaoService` e `<app-confirmacao>`, alertdialog com o foco no Cancelar), e não pelo `confirm()` do navegador (#631) | Aceita |
 | [0058](0058-pastas-do-front-end-por-grupo-do-menu-e-por-assunto.md) | Pastas do front-end: páginas por grupo do menu, `compartilhado/` dividido em `ui/` e por assunto, e o que só o shell usa em `layout/` (#634) | Aceita |
 | [0059](0059-paginas-grandes-divididas-em-tela-apresentacao-e-funcoes-puras.md) | Páginas grandes do front-end divididas em componente da tela, componentes de apresentação e funções puras, e não no MVP "de livro" (#475) | Aceita |
+| [0060](0060-cdbs-e-caixinhas-com-rendimento-e-a-regra-caixinha-x-reserva.md) | CDBs e caixinhas numa aba própria, com o rendimento no valor, e a regra caixinha × reserva (#338) | Proposta |
 | [0061](0061-acesso-pelo-celular-na-rede-local.md) | Acesso pelo celular na rede de casa: desligado por padrão, HTTPS pelo IP com uma autoridade local e porta só para a rede local (#328) | Aceita |

@@ -1120,6 +1120,27 @@ export const MANUAL: CapituloManual[] = [
         termos: ['selic', 'ifix']
       },
       {
+        id: 'total-fiis',
+        titulo: 'Total da carteira de FIIs',
+        paraQueServe: 'Ver de uma vez quanto os seus FIIs valem, quanto você investiu e quanto eles rendem por mês.',
+        passos: [
+          'Abra Investimentos › FIIs e desça até “Meus FIIs”. Ao lado do título fica o valor atual da carteira, com o investido do lado.',
+          'A última linha da tabela, “Total”, soma os fundos, coluna por coluna:',
+          '“investido”, na coluna do preço médio: a soma de cotas × preço médio de cada fundo, o que você pagou;',
+          '“valor atual”, na coluna da cotação: a soma de cotas × cotação de hoje;',
+          'Valorização: o valor atual menos o que você pagou, em R$ e em % sobre o investido, com o sinal (+ ou −);',
+          '“ao mês”, no yield on cost: a renda do mês sobre o investido;',
+          'Renda/mês: a soma da renda estimada de cada fundo (último rendimento × suas cotas). O peso do total é 100%.',
+          'Fundo sem cotação (o Yahoo Finance e a brapi não responderam ou não conhecem o código): ele entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa (“1 fundo sem cotação, fora do valor atual”).'
+        ],
+        abrir: [{ rotulo: 'Abrir Meus FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
+        dicas: [
+          'Com “ocultar valores”, o total esconde os reais e mostra só os percentuais, como o resto da tabela.',
+          'O card “Patrimônio em FIIs”, no topo da aba, conta o fundo sem cotação pelo preço médio. Por isso, só quando falta uma cotação, ele pode ficar diferente do total da tabela.'
+        ],
+        termos: ['precoMedio', 'yieldOnCost']
+      },
+      {
         id: 'fonte-das-cotacoes',
         titulo: 'Fonte das cotações e token da brapi',
         paraQueServe: 'Saber de onde vêm as cotações e, se quiser, informar o token da brapi para quando o Yahoo Finance não responder.',
@@ -1167,7 +1188,8 @@ export const MANUAL: CapituloManual[] = [
           'Clique em “renomear” para dar o seu nome (ex.: “Caixinha viagem”). A sincronização não muda o nome que você escolher.',
           'Para voltar ao nome automático, abra “renomear” e clique em “Voltar ao nome automático” (ou salve com o campo vazio).',
           'A coluna Instituição mostra o banco da conexão.',
-          '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). “por investimento” abre o de cada um.'
+          '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). O mês mais recente já vem aberto por investimento: cada um numa linha, do que mais rendeu ao que menos, com uma barrinha do tamanho do rendimento; “por investimento” abre os outros meses. O ⓘ “Como o rendimento é calculado” explica a conta.',
+          'A tabela dos investimentos recolhe pelo título “Investimentos do Open Finance”: recolhida, mostra só quantos são e o total. A escolha fica guardada neste navegador.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }],
         dicas: [
