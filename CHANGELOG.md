@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.5.2] — 2026-11-08 · desenvolvimento
+
+### Correções
+- **Investimentos sem internet abre sem esperar a cada vez** (#534). Quando a consulta da Selic ao Banco Central falhava (sem internet, API fora do ar), nada ficava guardado, e cada abertura de Investimentos esperava a falha de novo: a série e a meta, uma depois da outra. Agora, depois de uma falha, a Selic fica 15 minutos sem nova tentativa, pela série e pela meta, e sem novo aviso em Configurações › Erros; o que está no banco continua valendo. Pedido cancelado e erro ao gravar não contam como falha. Medido com uma rede que demora 2 s para falhar: o `GET /api/carteira` levava ~4,0 s em toda abertura; agora leva ~2,0 s na primeira e ~3 ms nas seguintes. A linha "Sem internet" de `docs/REQUISITOS-NAO-FUNCIONAIS.md` foi junto.
+
 ## [3.5.1] — 2026-11-08 · desenvolvimento
 
 ### Correções
