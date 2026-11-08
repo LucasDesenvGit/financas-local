@@ -15,17 +15,14 @@
 param([string]$Destino = "", [switch]$SemAtalhoNaAreaDeTrabalho)
 
 $ErrorActionPreference = "Stop"
-$Raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+. (Join-Path $PSScriptRoot "comum.ps1")
 $Padrao = Join-Path $Raiz "publicado\gerenciador"
 if (-not $Destino) { $Destino = $Padrao }
 $Nome = "Finan" + [char]0x00E7 + "as Local"
 
-function Etapa([string]$texto) { Write-Host "==> $texto" -ForegroundColor Cyan }
-
 # #430 (ADR 0052): o gerenciador em Go (src\gerenciador-go), compilado sem cgo. O Go e o portatil do projeto
 # (ferramentas\go), se houver, com o mesmo ambiente do instalar-windows.ps1: modulos e cache em ferramentas\, nunca
 # baixar outra versao do Go sozinho (GOTOOLCHAIN=local).
-$Ferramentas = Join-Path $Raiz "ferramentas"
 $go = Join-Path $Ferramentas "go\bin\go.exe"
 if (-not (Test-Path -LiteralPath $go)) {
     $comando = Get-Command go -ErrorAction SilentlyContinue

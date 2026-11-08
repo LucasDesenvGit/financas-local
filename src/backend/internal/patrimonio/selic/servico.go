@@ -3,8 +3,10 @@ package selic
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
@@ -25,6 +27,10 @@ const (
 	validadeDaConsulta = 6 * time.Hour
 	// validadeDaMeta: a meta é consultada no máximo uma vez nesse tempo.
 	validadeDaMeta = 12 * time.Hour
+	// pausaDepoisDaFalha (#534): depois de uma falha do Banco Central (sem internet, API fora do ar), quanto tempo
+	// esperar para tentar de novo. Sem a pausa, cada abertura de Investimentos esperava a falha outra vez: ~2 s por
+	// chamada numa porta fechada no Windows, até 30 s numa rede que não responde. A Selic muda uma vez por dia útil.
+	pausaDepoisDaFalha = 15 * time.Minute
 )
 
 // fonte é o que o serviço usa do Banco Central. A interface é de quem usa: o de verdade é o Cliente.
@@ -33,13 +39,19 @@ type fonte interface {
 	BuscarMeta(ctx context.Context) (*string, error)
 }
 
-// Servico é o SelicService.
+// errEmPausa: o Banco Central falhou há menos de pausaDepoisDaFalha, e o serviço não tentou de novo.
+var errEmPausa = errors.New("o Banco Central falhou há pouco; a próxima tentativa fica para depois da pausa")
+
+// Servico é o SelicService. Um só para o processo (api.go): a hora da última falha vale para todos os pedidos.
 type Servico struct {
 	db      *sql.DB
 	config  *configuracao.Servico
 	fonte   fonte
 	relogio relogio.Relogio
 	log     *slog.Logger
+
+	mu       sync.Mutex
+	falhouEm time.Time // a última falha do Banco Central; zero se ainda não falhou
 }
 
 // NovoServico monta o serviço com o banco, a fonte, o relógio e o log.
@@ -47,9 +59,33 @@ func NovoServico(db *sql.DB, f fonte, r relogio.Relogio, log *slog.Logger) *Serv
 	return &Servico{db: db, config: configuracao.Novo(db, r), fonte: f, relogio: r, log: log}
 }
 
-// avisar registra o aviso com a origem do C#: o SelicService fica em Servicos.Investimentos.
+// avisar registra o aviso com a origem do C#: o SelicService fica em Servicos.Investimentos. Na pausa depois de uma
+// falha, não avisa: ninguém tentou, e a falha que a começou já foi avisada.
 func (s *Servico) avisar(msg string, err error) {
+	if errors.Is(err, errEmPausa) {
+		return
+	}
 	s.log.Warn(msg, "origem", "Investimentos", "erro", err)
+}
+
+// perguntarAoBancoCentral faz a chamada, se o Banco Central não falhou há menos de pausaDepoisDaFalha (#534). A
+// falha começa a pausa; passada a pausa, a primeira chamada tenta de novo. O pedido cancelado não conta como falha:
+// quem desistiu foi o navegador.
+func (s *Servico) perguntarAoBancoCentral(ctx context.Context, chamar func() error) error {
+	agora := s.relogio.Agora()
+	s.mu.Lock()
+	falhouEm := s.falhouEm
+	s.mu.Unlock()
+	if agora.Sub(falhouEm) < pausaDepoisDaFalha { // sem falha, falhouEm é zero, e a diferença passa de qualquer pausa
+		return errEmPausa
+	}
+	err := chamar()
+	if err != nil && ctx.Err() == nil {
+		s.mu.Lock()
+		s.falhouEm = agora
+		s.mu.Unlock()
+	}
+	return err
 }
 
 // faixa é um período que falta buscar.
@@ -121,7 +157,11 @@ func (s *Servico) baixarFaixas(ctx context.Context, faltam []faixa) error {
 }
 
 func (s *Servico) baixar(ctx context.Context, de, ate tipos.Data) error {
-	taxas, err := s.fonte.BuscarTaxas(ctx, de, ate)
+	var taxas []Taxa
+	err := s.perguntarAoBancoCentral(ctx, func() (err error) {
+		taxas, err = s.fonte.BuscarTaxas(ctx, de, ate)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -217,7 +257,11 @@ func (s *Servico) MetaAtual(ctx context.Context) (*tipos.Decimal, error) {
 // consultarMeta busca a meta e a grava com a hora da consulta. nil se a resposta não trouxe um número; nesse caso, nada
 // é gravado.
 func (s *Servico) consultarMeta(ctx context.Context) (*tipos.Decimal, error) {
-	texto, err := s.fonte.BuscarMeta(ctx)
+	var texto *string
+	err := s.perguntarAoBancoCentral(ctx, func() (err error) {
+		texto, err = s.fonte.BuscarMeta(ctx)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

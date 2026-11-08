@@ -37,7 +37,7 @@ NAVEGADOR=chromium npx playwright test                  # tudo, com o Chromium d
 - tudo, se mudou arquivo global (estilos, `core/`, configuração);
 - nada, se o front-end não mudou.
 
-Numa mudança de uma tela, leva uns 45 s, contra uns 2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge. `python3 ../../scripts/ci/testes-afetados.py --base origin/develop` só mostra o que rodaria.
+Numa mudança de uma tela, leva uns 45 s, contra uns 2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge. `python3 ../../scripts/ci/front/testes-afetados.py --base origin/develop` só mostra o que rodaria.
 
 Falhou só na CI? `gh run download <run> -n testes-navegador` e olhe o print e o `error-context.md` antes de mexer; não suba tentativas para ver se passa.
 

@@ -16,12 +16,14 @@ import { descreverEvento, origemDoAcesso } from './auditoria';
 import { ParametrizacaoComponent } from './parametrizacao.component';
 import { AparenciaComponent } from './aparencia.component';
 import { ErrosComponent } from './erros.component';
+import { AcessoCelularComponent } from './acesso-celular.component';
 
 type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erros';
 
 @Component({
   selector: 'app-configuracoes',
-  imports: [FormsModule, DatePipe, LogoBancoComponent, ParametrizacaoComponent, AparenciaComponent, ErrosComponent],
+  imports: [FormsModule, DatePipe, LogoBancoComponent, ParametrizacaoComponent, AparenciaComponent, ErrosComponent,
+    AcessoCelularComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -72,6 +74,8 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
     </div>
     <p class="texto-suave">Limite de tentativas de login e tempo de bloqueio ficam em
       <button type="button" class="link" (click)="mudarAba('parametrizacao')">Parametrização</button>.</p>
+    <!-- #328 (ADR 0061): abrir no celular, na rede de casa. -->
+    <app-acesso-celular />
     }
     @default {
     <section class="painel-bloco">
