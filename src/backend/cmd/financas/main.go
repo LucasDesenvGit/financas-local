@@ -22,8 +22,11 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +40,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/celular"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
@@ -213,10 +217,43 @@ func rodar(ctx context.Context) error {
 		pararLimpeza()
 		<-limpezaParou
 	}()
+	site := servidor.Opcoes{Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas)}
+	// #328 (ADR 0061): o acesso pelo celular, desligado por padrão. Ligado, escuta também no IP da rede de casa, com o
+	// mesmo pipeline do site, só com esse IP nos hosts permitidos e o certificado da autoridade local.
+	acessoCelular, err := novoAcessoCelular(db, rel, log, site)
+	if err != nil {
+		return err
+	}
+	celular.Registrar(rotas, acessoCelular)
+	acessoCelular.Iniciar(ctx)
+	defer func() {
+		prazo, cancelar := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancelar()
+		acessoCelular.Parar(prazo)
+	}()
 	log.Info("iniciando", "versao", versao.Atual)
-	return servidor.Rodar(ctx, servidor.Opcoes{
-		Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas),
-	})
+	return servidor.Rodar(ctx, site)
+}
+
+// novoAcessoCelular monta o acesso pelo celular na porta do site.
+func novoAcessoCelular(db *sql.DB, rel relogio.Relogio, log *slog.Logger, site servidor.Opcoes) (*celular.Servico, error) {
+	_, textoPorta, err := net.SplitHostPort(site.Config.Endereco)
+	if err != nil {
+		return nil, fmt.Errorf("o endereço do site %q: %w", site.Config.Endereco, err)
+	}
+	porta, err := strconv.Atoi(textoPorta)
+	if err != nil {
+		return nil, fmt.Errorf("a porta do site %q: %w", site.Config.Endereco, err)
+	}
+	return celular.Novo(celular.Opcoes{
+		DB: db, Relogio: rel, Log: log, PastaChaves: site.Config.PastaChaves, Porta: porta, Firewall: celular.FirewallDoSistema(),
+		NovoServidor: func(ip string, c tls.Certificate) (*http.Server, error) {
+			daRede := site
+			daRede.Config.HostsPermitidos = []string{ip}
+			daRede.Certificado = c
+			return servidor.NovoServidor(daRede)
+		},
+	}), nil
 }
 
 // novoRelogio devolve o relógio do sistema, ou, com -inicio-do-relogio, um que começa no instante dado e anda dali

@@ -2,7 +2,8 @@
 # =====================================================================
 # FinancasLocal - funcoes compartilhadas pelos scripts de instalacao.
 # Carregado com 'source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"' (nao execute
-# diretamente). Funciona em Linux, macOS e Windows (via Git Bash/MSYS ou WSL).
+# diretamente). Funciona em Linux e macOS. No Windows (Git Bash/MSYS) so o 2-criar-banco.sh e o 4-backup.sh
+# rodam em bash; o instalar.sh, o 3-publicar-atualizar.sh e o parar.sh repassam para o PowerShell (ADR 0012, #655).
 # =====================================================================
 
 set -euo pipefail
@@ -80,28 +81,25 @@ baixar_arquivo() {
 }
 
 # Caminho no formato que programas nativos entendem. No Git Bash, $Raiz fica no
-# formato POSIX (ex.: /c/FinancasLocal), que node.exe/go.exe nao entendem
-# quando o caminho vai dentro de variavel de ambiente ou de um arquivo; la ele
+# formato POSIX (ex.: /c/FinancasLocal), que o powershell.exe nao entende; la ele
 # vira o formato misto (C:/FinancasLocal).
 caminho_nativo() {
     if [[ "$SO" == windows ]]; then cygpath -m "$1"; else echo "$1"; fi
 }
 
+# repassar_para_powershell script.ps1 [argumentos]: no Git Bash, a logica do Windows existe num lugar so, o .ps1 de
+# scripts/windows (ADR 0012, #655). Substitui o processo: o codigo de saida e o do PowerShell.
+repassar_para_powershell() {
+    local script="$1"; shift
+    exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(caminho_nativo "$Raiz/scripts/windows/$script")" "$@"
+}
+
 # extrair_zip arquivo.zip pasta_destino
-# O Git Bash nem sempre traz o unzip; no Windows o PowerShell (Expand-Archive)
-# esta sempre disponivel e serve de alternativa.
 extrair_zip() {
     local arquivo="$1" destino="$2"
     garantir_pasta "$destino"
-    if command -v unzip >/dev/null 2>&1; then
-        unzip -q -o "$arquivo" -d "$destino"
-    elif [[ "$SO" == windows ]] && command -v powershell.exe >/dev/null 2>&1; then
-        ORIGEM_ZIP="$(cygpath -w "$arquivo")" DESTINO_ZIP="$(cygpath -w "$destino")" \
-            powershell.exe -NoProfile -NonInteractive -Command \
-            '$ErrorActionPreference = "Stop"; $ProgressPreference = "SilentlyContinue"; Expand-Archive -LiteralPath $env:ORIGEM_ZIP -DestinationPath $env:DESTINO_ZIP -Force'
-    else
-        erro_sai "unzip nao encontrado para extrair $(basename "$arquivo"). Instale o unzip e rode de novo."
-    fi
+    command -v unzip >/dev/null 2>&1 || erro_sai "unzip nao encontrado para extrair $(basename "$arquivo"). Instale o unzip e rode de novo."
+    unzip -q -o "$arquivo" -d "$destino"
 }
 
 # verificar_hash arquivo hash_esperado algoritmo(sha256|sha512|sha3-256)
@@ -156,7 +154,7 @@ requer_comando() {
 
 # ---------------------------------------------------------------- Porta ocupada (#300)
 # quem_usa_a_porta PORTA -> "nome (PID n)" de quem escuta na porta, ou nada se ela esta livre.
-# Linux: ss; Windows (Git Bash): netstat + PowerShell (Get-Process); macOS: lsof. Sem a ferramenta, nada (nao bloqueia).
+# Linux: ss; macOS: lsof. Sem a ferramenta, nada (nao bloqueia).
 quem_usa_a_porta() {
     local porta="$1" pid="" nome=""
     case "$SO" in
@@ -166,13 +164,6 @@ quem_usa_a_porta() {
             [[ -n "$linha" ]] || return 0
             pid="$(grep -oE 'pid=[0-9]+' <<<"$linha" | head -n1 | cut -d= -f2 || true)"
             nome="$(grep -oE '\(\("[^"]+"' <<<"$linha" | head -n1 | cut -d'"' -f2 || true)"
-            ;;
-        windows)
-            pid="$(netstat -ano 2>/dev/null | tr -d '\r' \
-                | awk -v p=":$porta" '$1 == "TCP" && $4 == "LISTENING" && substr($2, length($2) - length(p) + 1) == p { print $5; exit }')"
-            [[ -n "$pid" ]] || return 0
-            # Get-Process, e nao tasklist /FI: o tasklist com filtro chegou a travar 30 s num Windows 11.
-            nome="$(timeout 15 powershell.exe -NoProfile -Command "(Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName" 2>/dev/null | tr -d '\r' || true)"
             ;;
         osx)
             pid="$(lsof -nP -iTCP:"$porta" -sTCP:LISTEN -t 2>/dev/null | head -n1 || true)"
@@ -190,22 +181,15 @@ quem_usa_a_porta() {
 
 # ---------------------------------------------------------------- Ambiente de build (node/go portateis ou do PATH)
 configurar_ambiente_build() {
-    local node_bin=node
-    [[ "$SO" == windows ]] && node_bin=node.exe
-
-    if [[ -x "$Ferramentas/node/bin/$node_bin" ]]; then
+    if [[ -x "$Ferramentas/node/bin/node" ]]; then
         export PATH="$Ferramentas/node/bin:$PATH"
-    elif [[ -x "$Ferramentas/node/$node_bin" ]]; then
-        export PATH="$Ferramentas/node:$PATH"
     elif ! command -v node >/dev/null 2>&1; then
         erro_sai 'Node.js nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
     fi
 
     # Go (#231): o portatil, se houver; senao, o do PATH (o 1-preparar-ambiente.sh confere a versao). So o
     # 3-publicar-atualizar.sh precisa dele, e reclama se faltar.
-    local go_bin=go
-    [[ "$SO" == windows ]] && go_bin=go.exe
-    if [[ -x "$Ferramentas/go/bin/$go_bin" ]]; then
+    if [[ -x "$Ferramentas/go/bin/go" ]]; then
         export PATH="$Ferramentas/go/bin:$PATH"
     fi
     # Modulos e cache de compilacao dentro de ferramentas/ (como o npm). GOTOOLCHAIN=local: nunca baixar

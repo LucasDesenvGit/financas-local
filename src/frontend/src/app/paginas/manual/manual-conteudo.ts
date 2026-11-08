@@ -50,7 +50,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'O que é o Finanças Local',
         paraQueServe: 'Um controle financeiro pessoal que roda no seu computador: seus dados ficam com você, não num serviço na internet.',
         passos: [
-          'O site abre no seu navegador, mas quem responde é um programa instalado no seu computador (o endereço começa com https://localhost ou https://127.0.0.1).',
+          'O site abre no seu navegador, mas quem responde é um programa instalado no seu computador (o endereço começa com https://localhost ou https://127.0.0.1; no celular, com o acesso pelo celular ligado, é o IP do computador na rede de casa).',
           'Os dados ficam num arquivo de banco de dados na pasta “dados” da instalação.',
           'Os extratos dos bancos chegam pelo Open Finance, através do Meu Pluggy, só quando você configura isso.',
           'Para a internet saem só pedidos de cotação e de taxas (códigos de ativos e de moedas e datas), a conversa com a Pluggy e, no gerenciador, a procura de versão nova no GitHub. Valores e dados pessoais não saem.'
@@ -1267,8 +1267,25 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
-          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador (o site só aceita acesso dele).',
+          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.',
           'Os acessos ficam guardados por 180 dias e depois são apagados sozinhos, uma vez por dia. Para mudar o prazo (de 30 a 730 dias), use Configurações › Parametrização › Segurança, “Guardar o histórico de acessos por”.'
+        ],
+        abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
+      },
+      {
+        id: 'acesso-pelo-celular',
+        titulo: 'Acesso pelo celular',
+        paraQueServe: 'Abrir o site no celular, na mesma rede Wi-Fi de casa. Vem desligado: assim, o site só abre neste computador.',
+        passos: [
+          'Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do Wi-Fi ou do cabo da sua casa).',
+          'Clique em “Ligar o acesso pelo celular” e confirme. Ligado, qualquer aparelho da sua rede chega à tela de entrar: use uma senha forte e não ligue em rede pública (café, aeroporto).',
+          'No Windows, a porta abre no firewall só para a rede de casa, e só se a rede estiver como Particular. Se a tela avisar que a rede está como Pública e esta for a sua casa, mude para Particular em Configurações › Rede e Internet. No Linux, se o firewall (ufw ou firewalld) estiver ligado, a tela mostra o comando para rodar uma vez.',
+          'No celular, no mesmo Wi-Fi, abra o endereço do certificado que a tela mostra (termina em /api/celular/autoridade). Desta vez o navegador avisa que a conexão não é particular: é esperado, siga em “Avançado” e “Continuar”.',
+          'Android: abra o arquivo baixado ou vá em Configurações › Segurança › Criptografia e credenciais › Instalar um certificado › Certificado de CA. iPhone: em Ajustes › Perfil Transferido, toque em Instalar; depois, em Ajustes › Geral › Sobre › Ajustes de Confiança de Certificados, ligue “Finanças Local (celular)”.',
+          'Para conferir que o certificado é deste computador, compare a impressão digital da tela com a que o iPhone mostra em “Mais detalhes” ao instalar.',
+          'Depois disso, abra no celular o endereço que a tela mostra (https://, o IP e :5443) e entre com o seu usuário e a sua senha. Fora de casa, o celular não chega ao site.',
+          'Se o roteador der outro IP a este computador, a tela avisa: desligue e ligue de novo com o endereço novo (o certificado do celular continua valendo). Para o endereço não mudar, reserve o IP no roteador.',
+          '“Desligar o acesso pelo celular” fecha a porta na hora e apaga a regra do firewall do Windows. Ligar e desligar aparecem nos acessos recentes.'
         ],
         abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
       },
@@ -1300,6 +1317,7 @@ export const MANUAL: CapituloManual[] = [
           'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance e brapi, que recebe também o seu token, se você informou um); e o pedido das cotações de criptomoedas ao Mercado Bitcoin, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
           'Não sai: valores, quantidades e dados pessoais.',
+          'Com o acesso pelo celular ligado (Configurações › Segurança), o site também atende os aparelhos da sua rede de casa, que chegam à tela de entrar. Nada vai para a internet por causa disso, e fora de casa o celular não chega ao site.',
           'Do Pix e da TED, o nome e o CPF de quem pagou ou recebeu não são guardados à parte: fica o meio e se as duas pontas são a mesma pessoa. Mas a descrição vem do banco como está e costuma trazer o nome (“PIX ENVIADO FULANO”); ela fica guardada, só no seu computador.'
         ]
       },

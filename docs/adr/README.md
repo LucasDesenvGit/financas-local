@@ -39,7 +39,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | ADR | Título | Status |
 |---|---|---|
 | [0001](0001-registrar-decisoes-em-adrs.md) | Registrar decisões de arquitetura em ADRs | Aceita |
-| [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) | SQLite e Kestrel no lugar de SQL Server Express e IIS | Aceita em parte (o SQLite continua; a instalação no Windows, pela 0012; o Kestrel, pela 0049) |
+| [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) | SQLite e Kestrel no lugar de SQL Server Express e IIS | Aceita em parte (o SQLite continua; a instalação no Windows, pela 0012; o Kestrel, pela 0049; o "só escuta em 127.0.0.1", pela 0061) |
 | [0003](0003-esquema-por-scripts-sql-idempotentes.md) | Esquema do banco por scripts SQL idempotentes, sem migrations | Aceita |
 | [0004](0004-front-end-publicado-no-wwwroot-da-api.md) | Front-end publicado dentro da API (mesma origem) | Aceita |
 | [0005](0005-segredos-criptografados-com-data-protection.md) | Segredos criptografados no banco com ASP.NET Data Protection | Substituída por 0049 |
@@ -49,7 +49,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0009](0009-ativos-no-exterior-na-carteira-manual.md) | Ativos no exterior na carteira manual | Aceita |
 | [0010](0010-reservas-estimadas-pelo-extrato.md) | Reservas estimadas pelo extrato, com conferência manual | Substituída por 0037 |
 | [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) | Ferramentas de instalação portáteis, sem depender de Python | Aceita (em parte substituída pela 0049: o SDK do .NET saiu na #86) |
-| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029 e, no SDK do .NET, que saiu na #86, pela 0049) |
+| [0012](0012-instalador-do-windows-em-powershell.md) | Instalador do Windows em PowerShell, sem bash | Aceita (em parte substituída pela 0029 e, no SDK do .NET, que saiu na #86, pela 0049; desde a #655 o Git Bash repassa para o `.ps1`) |
 | [0013](0013-testes-do-front-end-com-jest.md) | Testes automatizados do front-end com Jest | Aceita |
 | [0014](0014-emprestimos-e-financiamentos-pelo-open-finance.md) | Empréstimos e financiamentos pelo Open Finance, separados e fora das despesas | Aceita |
 | [0015](0015-parametros-do-sistema-no-banco-editaveis-pelo-site.md) | Parâmetros do sistema no banco, editáveis pelo site | Aceita |
@@ -97,3 +97,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0057](0057-confirmacao-pelo-modal-do-site-e-nao-pelo-confirm.md) | Confirmação pelo modal do site (`ConfirmacaoService` e `<app-confirmacao>`, alertdialog com o foco no Cancelar), e não pelo `confirm()` do navegador (#631) | Aceita |
 | [0058](0058-pastas-do-front-end-por-grupo-do-menu-e-por-assunto.md) | Pastas do front-end: páginas por grupo do menu, `compartilhado/` dividido em `ui/` e por assunto, e o que só o shell usa em `layout/` (#634) | Aceita |
 | [0059](0059-paginas-grandes-divididas-em-tela-apresentacao-e-funcoes-puras.md) | Páginas grandes do front-end divididas em componente da tela, componentes de apresentação e funções puras, e não no MVP "de livro" (#475) | Aceita |
+| [0061](0061-acesso-pelo-celular-na-rede-local.md) | Acesso pelo celular na rede de casa: desligado por padrão, HTTPS pelo IP com uma autoridade local e porta só para a rede local (#328) | Aceita |

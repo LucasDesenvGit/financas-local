@@ -17,6 +17,9 @@ on:
       - parar-windows.cmd
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
+      - scripts/geral/instalar.sh
+      - scripts/geral/3-publicar-atualizar.sh
+      - scripts/geral/comum.sh
       - banco/**
       - src/backend/go.mod
       - src/gerenciador-go/go.mod
@@ -28,6 +31,9 @@ on:
       - parar-windows.cmd
       - scripts/windows/**
       - scripts/geral/2-criar-banco.sh
+      - scripts/geral/instalar.sh
+      - scripts/geral/3-publicar-atualizar.sh
+      - scripts/geral/comum.sh
       - banco/**
       - src/backend/go.mod
       - src/gerenciador-go/go.mod
@@ -236,17 +242,23 @@ jobs:
           curl.exe -k -fsS https://127.0.0.1:5443/api/auth/estado
           if ($LASTEXITCODE -ne 0) { throw "o site nao respondeu" }
 
-      # #614: o mesmo pelo Git Bash (scripts/geral/3-publicar-atualizar.sh, o caminho do instalar.sh), que registra o
-      # servico com o sc.exe: tem de trocar e subir o servico de verdade.
-      - name: Atualizacao pelo Git Bash (3-publicar-atualizar.sh, sc.exe)
+      # #614, #655: o Git Bash (instalar.sh e 3-publicar-atualizar.sh) repassa para o instalar-windows.ps1 (ADR 0012): a
+      # logica do Windows existe num lugar so. Tem de trocar e subir o servico de verdade, com o codigo de saida e o
+      # log do .ps1, e recusar o que o .ps1 nao entende.
+      - name: Repasse do Git Bash (instalar.sh e 3-publicar-atualizar.sh)
         shell: bash
         run: |
           linha() { powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Service -Filter \"Name='FinancasLocal'\").PathName"; }
           echo dotnet > dados/backend
           bash scripts/geral/3-publicar-atualizar.sh --pular-build 2>&1 | tee "$RUNNER_TEMP/git-bash.log"
+          grep -q 'instalacao no Windows em' "$RUNNER_TEMP/git-bash.log" || { echo "::error::o 3-publicar-atualizar.sh nao repassou para o instalar-windows.ps1"; exit 1; }
           linha | grep -q 'financas-go.exe" -aplicar-esquema -rotinas-de-partida' || { echo "::error::o servico nao e o Go: $(linha)"; exit 1; }
           [[ ! -e dados/backend ]] || { echo "::error::sobrou dados/backend"; exit 1; }
           curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+          bash scripts/geral/instalar.sh --pular-build --sem-gerenciador 2>&1 | tee "$RUNNER_TEMP/git-bash-instalar.log"
+          grep -q 'Instalacao concluida' "$RUNNER_TEMP/git-bash-instalar.log" || { echo "::error::o instalar.sh nao chegou ao fim"; exit 1; }
+          curl -k -fsS https://127.0.0.1:5443/api/auth/estado
+          if bash scripts/geral/instalar.sh --opcao-que-nao-existe; then echo "::error::o instalar.sh aceitou uma opcao desconhecida"; exit 1; fi
 
       - name: Parar (parar-windows.cmd -Desativar)
         shell: cmd
