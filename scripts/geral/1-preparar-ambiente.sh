@@ -12,7 +12,8 @@
 #
 # Tudo e baixado so por HTTPS e conferido pelo hash publicado pela origem.
 # Sem IIS e sem SQL Server Express: o executavel do Go hospeda o site e o
-# banco e SQLite (desde a #86, sem o .NET). Funciona em Linux, macOS e Windows (Git Bash ou WSL).
+# banco e SQLite (desde a #86, sem o .NET). Funciona em Linux e macOS; no Windows, quem faz isto e o
+# scripts/windows/instalar-windows.ps1 (ADR 0012, #655).
 # Pode ser executado de novo: so baixa o que estiver faltando ou desatualizado.
 #
 # Uso:
@@ -20,6 +21,8 @@
 # =====================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/comum.sh"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+[[ "$SO" != windows ]] || erro_sai 'No Windows, use o instalar-windows.cmd (ou scripts/geral/instalar.sh, que repassa para o PowerShell).'
 
 echo "FinancasLocal - preparacao do ambiente em $Raiz ($SO/$ARCH)"
 
@@ -32,30 +35,17 @@ faltando=()
 for cmd in curl tar awk sed grep find; do
     command -v "$cmd" >/dev/null 2>&1 || faltando+=("$cmd")
 done
-# tar -xz (pacotes .tar.gz do Linux/macOS) depende do gzip.
-[[ "$SO" == windows ]] || command -v gzip >/dev/null 2>&1 || faltando+=("gzip")
+# tar -xz (pacotes .tar.gz) depende do gzip.
+command -v gzip >/dev/null 2>&1 || faltando+=("gzip")
 command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 || faltando+=("sha256sum")
 command -v sha512sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 || faltando+=("sha512sum")
-if ! command -v unzip >/dev/null 2>&1; then
-    if [[ "$SO" == windows ]] && command -v powershell.exe >/dev/null 2>&1; then
-        aviso 'unzip nao encontrado; os pacotes .zip serao extraidos pelo PowerShell.'
-    else
-        faltando+=("unzip")
-    fi
-fi
+command -v unzip >/dev/null 2>&1 || faltando+=("unzip")
 if [[ ${#faltando[@]} -gt 0 ]]; then
     case "$SO" in
-        windows) dica='Use o Git Bash do Git for Windows (winget install Git.Git), que ja traz todas elas.' ;;
         linux)   dica='Instale pelo gerenciador de pacotes da distro (ex.: sudo apt install curl ca-certificates tar unzip coreutils).' ;;
         osx)     dica='Instale com o Homebrew (ex.: brew install coreutils).' ;;
     esac
     erro_sai "Ferramentas ausentes: ${faltando[*]}. $dica"
-fi
-if [[ "$SO" == windows ]]; then
-    command -v cygpath >/dev/null 2>&1 || erro_sai 'cygpath nao encontrado. Rode os scripts pelo Git Bash (Git for Windows), nao pelo PowerShell/cmd.'
-    if [[ "$Raiz" == *' '* ]]; then
-        aviso "O caminho da instalacao tem espacos ($Raiz). Funciona, mas se algo falhar, mova a pasta para um caminho sem espacos (ex.: C:/FinancasLocal)."
-    fi
 fi
 ok 'ferramentas basicas disponiveis'
 
@@ -68,8 +58,6 @@ case "$SO-$ARCH" in
     linux-arm64)   chave_arquivos_node="linux-arm64";   sufixo_node="linux-arm64" ;;
     osx-x64)       chave_arquivos_node="osx-x64-tar";   sufixo_node="darwin-x64" ;;
     osx-arm64)     chave_arquivos_node="osx-arm64-tar"; sufixo_node="darwin-arm64" ;;
-    windows-x64)   chave_arquivos_node="win-x64-zip";   sufixo_node="win-x64" ;;
-    windows-arm64) chave_arquivos_node="win-arm64-zip"; sufixo_node="win-arm64" ;;
     *) erro_sai "Combinacao de SO/arquitetura sem pacote Node.js conhecido: $SO/$ARCH" ;;
 esac
 
@@ -88,13 +76,11 @@ node_versao="$(awk -F'\t' -v chave="$chave_arquivos_node" '
 
 versao_instalada=""
 [[ -x "$destino_node/bin/node" ]] && versao_instalada="$("$destino_node/bin/node" --version)"
-[[ -x "$destino_node/node.exe" ]] && versao_instalada="$("$destino_node/node.exe" --version)"
 
 if [[ "$versao_instalada" == "$node_versao" ]]; then
     ok "Node.js $node_versao ja presente"
 else
-    extensao_node="tar.gz"; [[ "$SO" == windows ]] && extensao_node="zip"
-    nome_pacote_node="node-$node_versao-$sufixo_node.$extensao_node"
+    nome_pacote_node="node-$node_versao-$sufixo_node.tar.gz"
     arq_node="$Instaladores/$nome_pacote_node"
     arq_shas="$Instaladores/node-$node_versao-SHASUMS256.txt"
     [[ -f "$arq_node" ]] || baixar_arquivo "https://nodejs.org/dist/$node_versao/$nome_pacote_node" "$arq_node"
@@ -107,11 +93,7 @@ else
     pasta_tmp="$Instaladores/node-extracao"
     rm -rf "$pasta_tmp"
     garantir_pasta "$pasta_tmp"
-    if [[ "$SO" == windows ]]; then
-        extrair_zip "$arq_node" "$pasta_tmp"
-    else
-        tar -xzf "$arq_node" -C "$pasta_tmp"
-    fi
+    tar -xzf "$arq_node" -C "$pasta_tmp"
     rm -rf "$destino_node"
     mv "$pasta_tmp/node-$node_versao-$sufixo_node" "$destino_node"
     rm -rf "$pasta_tmp"
@@ -119,11 +101,7 @@ else
 fi
 
 # Daqui em diante o node portatil e usado para ler JSON e conferir SHA3-256.
-if [[ "$SO" == windows ]]; then
-    export PATH="$destino_node:$PATH"
-else
-    export PATH="$destino_node/bin:$PATH"
-fi
+export PATH="$destino_node/bin:$PATH"
 node --version >/dev/null 2>&1 || erro_sai "O Node.js em $destino_node nao executa. Apague a pasta e rode de novo."
 
 # ------------------------------------------------------------------ Go (#231, ADR 0049 e 0011)
@@ -137,10 +115,9 @@ go_linha="$(cut -d. -f1-2 <<<"$go_minimo")"
 # versao_ao_menos ATUAL MINIMA: verdadeiro se ATUAL >= MINIMA (1.27.10 > 1.27.9).
 versao_ao_menos() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }
 
-go_bin=go; [[ "$SO" == windows ]] && go_bin=go.exe
 destino_go="$Ferramentas/go"
 usar_go_do_path=0
-if [[ ! -x "$destino_go/bin/$go_bin" ]] && command -v go >/dev/null 2>&1; then
+if [[ ! -x "$destino_go/bin/go" ]] && command -v go >/dev/null 2>&1; then
     go_do_path="$(GOTOOLCHAIN=local go env GOVERSION 2>/dev/null | sed 's/^go//' || true)"
     if [[ -n "$go_do_path" && "$(cut -d. -f1-2 <<<"$go_do_path")" == "$go_linha" ]] && versao_ao_menos "$go_do_path" "$go_minimo"; then
         ok "Go $go_do_path ja disponivel no PATH ($(command -v go))"
@@ -150,16 +127,15 @@ fi
 
 if [[ "$usar_go_do_path" -eq 0 ]]; then
     case "$SO" in
-        linux)   go_so=linux;   extensao_go=tar.gz ;;
-        osx)     go_so=darwin;  extensao_go=tar.gz ;;
-        windows) go_so=windows; extensao_go=zip ;;
+        linux)   go_so=linux ;;
+        osx)     go_so=darwin ;;
     esac
     case "$ARCH" in x64) go_arch=amd64 ;; arm64) go_arch=arm64 ;; esac
 
     etapa "Obtendo a versao mais recente do Go $go_linha (indice oficial em go.dev/dl)"
     arq_indice_go="$Instaladores/go-versoes.json"
     curl -fsSL 'https://go.dev/dl/?mode=json' -o "$arq_indice_go" || erro_sai 'Nao foi possivel obter o indice de versoes do Go (sem internet?).'
-    leitura_go="$(GO_LINHA="$go_linha" GO_MINIMO="$go_minimo" GO_SO="$go_so" GO_ARCH="$go_arch" GO_EXT="$extensao_go" node -e '
+    leitura_go="$(GO_LINHA="$go_linha" GO_MINIMO="$go_minimo" GO_SO="$go_so" GO_ARCH="$go_arch" GO_EXT=tar.gz node -e '
 const e = process.env;
 const numeros = v => v.replace(/^go/, "").split(".").map(Number);
 const aoMenos = (a, b) => { for (let i = 0; i < 3; i++) { const d = (a[i] || 0) - (b[i] || 0); if (d) return d > 0; } return true; };
@@ -177,7 +153,7 @@ process.exit(1);
     ok "Go ${go_versao#go}"
 
     versao_go_instalada=""
-    [[ -x "$destino_go/bin/$go_bin" ]] && versao_go_instalada="$(GOTOOLCHAIN=local "$destino_go/bin/$go_bin" env GOVERSION 2>/dev/null || true)"
+    [[ -x "$destino_go/bin/go" ]] && versao_go_instalada="$(GOTOOLCHAIN=local "$destino_go/bin/go" env GOVERSION 2>/dev/null || true)"
     if [[ "$versao_go_instalada" == "$go_versao" ]]; then
         ok "Go ${go_versao#go} ja presente em $destino_go"
     else
@@ -190,11 +166,7 @@ process.exit(1);
         pasta_tmp="$Instaladores/go-extracao"
         rm -rf "$pasta_tmp"
         garantir_pasta "$pasta_tmp"
-        if [[ "$SO" == windows ]]; then
-            extrair_zip "$arq_go" "$pasta_tmp"
-        else
-            tar -xzf "$arq_go" -C "$pasta_tmp"
-        fi
+        tar -xzf "$arq_go" -C "$pasta_tmp"
         rm -rf "$destino_go"
         mv "$pasta_tmp/go" "$destino_go"
         rm -rf "$pasta_tmp"
@@ -209,8 +181,6 @@ if command -v sqlite3 >/dev/null 2>&1 && sqlite3 --version >/dev/null 2>&1; then
     ok "sqlite3 disponivel ($(sqlite3 --version | awk '{print $1}'), $(command -v sqlite3))"
 else
     case "$SO-$ARCH" in
-        windows-x64)   sufixo_sqlite="win-x64" ;;
-        windows-arm64) sufixo_sqlite="win-arm64" ;;
         linux-x64)     sufixo_sqlite="linux-x64" ;;
         osx-x64)       sufixo_sqlite="osx-x64" ;;
         osx-arm64)     sufixo_sqlite="osx-arm64" ;;
@@ -241,7 +211,7 @@ else
     pasta_tmp="$Instaladores/sqlite-extracao"
     rm -rf "$pasta_tmp"
     extrair_zip "$arq_sqlite" "$pasta_tmp"
-    executavel="$(find "$pasta_tmp" -type f \( -name sqlite3 -o -name sqlite3.exe \) | head -n1)"
+    executavel="$(find "$pasta_tmp" -type f -name sqlite3 | head -n1)"
     [[ -n "$executavel" ]] || erro_sai "sqlite3 nao encontrado dentro de $(basename "$arq_sqlite")."
     rm -rf "$destino_sqlite"
     mv "$(dirname "$executavel")" "$destino_sqlite"
@@ -259,11 +229,6 @@ ok "go      $(go env GOVERSION)"
 ok "node    $(node --version)"
 ok "npm     $(npm --version)"
 ok "sqlite3 $(sqlite3 --version | awk '{print $1}')"
-if [[ "$SO" == windows ]] && ! net session >/dev/null 2>&1; then
-    aviso 'Este terminal nao esta como Administrador. O 2-criar-banco.sh funciona assim, mas'
-    aviso 'rode o 3-publicar-atualizar.sh num Git Bash aberto como Administrador (registro do servico).'
-fi
-
 echo ''
 echo -e "\033[32mAmbiente pronto. Proximo passo:\033[0m"
 echo "   $script_dir/2-criar-banco.sh"

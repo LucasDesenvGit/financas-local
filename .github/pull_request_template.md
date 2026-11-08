@@ -16,7 +16,7 @@ Closes #<!-- número da issue -->
 ## Checklist
 
 - [ ] Versão subiu no `Directory.Build.props`, pelo tipo do título (ADR 0039; o check "versão subiu" confere)
-- [ ] `CHANGELOG.md`: a entrada na seção da versão deste PR, dentro do título do tipo que já existe nela (`python3 scripts/ci/verificar-changelog.py`)
+- [ ] `CHANGELOG.md`: a entrada na seção da versão deste PR, dentro do título do tipo que já existe nela (`python3 scripts/ci/versao/verificar-changelog.py`)
 - [ ] Front-end: `npm run build`, `npm run test:tipos` e `npm test` em `src/frontend`, e `NAVEGADOR=chromium npm run test:afetados` antes do push (bug corrigido ganha teste de regressão)
 - [ ] Regras novas do back-end Go com teste unitário (ADR 0051): tabela regra → teste no PR, consulta nova no SQLite real, endpoint novo com caso de contrato, mutações listadas; `gofmt`, `go vet` e `go test -race` limpos
 - [ ] Mexeu em import, pacote ou pasta nova (Go ou front-end)? Teste de arquitetura, que só roda local: `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura`

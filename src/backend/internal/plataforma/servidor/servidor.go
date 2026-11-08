@@ -88,17 +88,15 @@ func limparCaminho(caminho string) string {
 	return limpo
 }
 
-// Rodar escuta em HTTPS até o contexto acabar (sinal de parar) e então para com elegância: espera as requisições
-// em andamento por até 30 s.
-func Rodar(ctx context.Context, o Opcoes) error {
-	if err := config.ConferirSoLocal(o.Config.Endereco); err != nil {
-		return err
-	}
+// NovoServidor monta o servidor HTTPS com o pipeline do NovoHandler, o certificado e os prazos do site, sem escutar.
+// O acesso pelo celular (#328, ADR 0061) monta o dele com o mesmo pipeline, só com o IP da rede nos hosts permitidos e
+// o certificado da autoridade local.
+func NovoServidor(o Opcoes) (*http.Server, error) {
 	handler, err := NovoHandler(o)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	servidor := &http.Server{
+	return &http.Server{
 		Addr:    o.Config.Endereco,
 		Handler: handler,
 		TLSConfig: &tls.Config{
@@ -108,6 +106,18 @@ func Rodar(ctx context.Context, o Opcoes) error {
 		ReadHeaderTimeout: prazoDosCabecalhos,
 		IdleTimeout:       prazoParado,
 		ErrorLog:          slog.NewLogLogger(o.Log.Handler(), slog.LevelWarn),
+	}, nil
+}
+
+// Rodar escuta em HTTPS até o contexto acabar (sinal de parar) e então para com elegância: espera as requisições
+// em andamento por até 30 s.
+func Rodar(ctx context.Context, o Opcoes) error {
+	if err := config.ConferirSoLocal(o.Config.Endereco); err != nil {
+		return err
+	}
+	servidor, err := NovoServidor(o)
+	if err != nil {
+		return err
 	}
 
 	// A porta é aberta aqui, e não dentro do ListenAndServeTLS: quando o Listen volta, o sistema já aceita conexões
