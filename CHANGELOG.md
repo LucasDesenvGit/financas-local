@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.8.0] — 2026-11-08 · desenvolvimento
+
+### Funcionalidades
+- **Configurações › Erros: "Reportar para o Claude"** (#332). Cada erro ganha um botão que copia um texto pronto para colar no Claude Code: começa com `/reportar-erro` e traz a mensagem, a origem, o nível, a tela, quantas vezes aconteceu, a explicação técnica e a versão do site, sem o login de quem estava na sessão (o texto já vem sem tokens, senhas, CPF e valores, ADR 0022). O botão avisa "Copiado. Cole no Claude Code."; sem a área de transferência, o texto aparece embaixo do erro, já selecionado. A skill nova `reportar-erro` (`.claude/skills/`) recebe o texto, procura uma issue aberta com o mesmo erro, analisa onde está no código e pergunta se resolve agora, só cataloga ou se é do ambiente de desenvolvimento. O site não manda nada para a internet: quem envia é a pessoa, ao colar. O Manual foi junto.
+
 ## [3.7.0] — 2026-11-08 · desenvolvimento
 
 ### Funcionalidades

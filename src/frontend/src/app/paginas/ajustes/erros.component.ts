@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +9,8 @@ import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { ErroSistema, ErroSistemaDetalhe, FiltroErros, NOMES_NIVEL_ERRO, NivelErro, PaginaErros, SituacaoErros } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
+import { AuthService } from '../../core/auth.service';
+import { textoParaOClaude } from './reportar-erro';
 import { PaginacaoComponent } from '../../compartilhado/ui/paginacao.component';
 import { dataIsoValida } from '../../compartilhado/utilidades';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
@@ -82,11 +84,26 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
                   <button type="button" class="link" [attr.aria-expanded]="aberto() === e.id"
                     [attr.aria-controls]="aberto() === e.id ? 'detalhe-erro-' + e.id : null"
                     [attr.aria-label]="'Detalhe do erro de ' + (e.ultimaEm | date: 'dd/MM HH:mm')" (click)="alternarDetalhe(e)">detalhe</button>
+                  <!-- #332: copia o erro, já sem dados sensíveis, para colar no Claude Code (sem saída de rede nova). -->
+                  <button type="button" class="link" (click)="reportar(e)"
+                    [attr.aria-label]="'Reportar para o Claude o erro de ' + (e.ultimaEm | date: 'dd/MM HH:mm')">Reportar para o Claude</button>
                   <button type="button" class="botao botao-pequeno" (click)="alternarResolvido(e)"
                     [attr.aria-label]="(e.resolvido ? 'Reabrir o erro de ' : 'Marcar como resolvido o erro de ') + (e.ultimaEm | date: 'dd/MM HH:mm')">
                     {{ e.resolvido ? 'Reabrir' : 'Resolvido' }}</button>
                 </td>
               </tr>
+              @if (reporte()?.id === e.id) {
+                <!-- #332: sem a área de transferência (o navegador não deixou), o texto fica aqui, já selecionado. -->
+                <tr class="linha-detalhe linha-reporte">
+                  <td colspan="5">
+                    <label class="rotulo-reporte" [for]="'reporte-erro-' + e.id">Não deu para copiar sozinho: copie o texto abaixo
+                      (Ctrl+C) e cole no Claude Code.</label>
+                    <textarea #caixaReporte class="texto-reporte" [id]="'reporte-erro-' + e.id" readonly rows="8"
+                      [value]="reporte()!.texto"></textarea>
+                    <button type="button" class="link" (click)="reporte.set(null)">Fechar</button>
+                  </td>
+                </tr>
+              }
               @if (aberto() === e.id) {
                 <tr class="linha-detalhe" [id]="'detalhe-erro-' + e.id">
                   <td colspan="5">
@@ -132,6 +149,8 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
     .nivel-4, .nivel-5 { background: var(--negativo-suave); color: var(--negativo); }
     .nivel-5 { font-weight: 700; }
     .linha-detalhe td { background: var(--superficie-2); }
+    .rotulo-reporte { display: block; margin-bottom: 6px; }
+    .texto-reporte { width: 100%; font-family: monospace; font-size: 0.78rem; }
     .dados-erro { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0 0 8px; font-size: 0.85rem; }
     .dados-erro dt { color: var(--texto-suave); }
     .dados-erro dd { margin: 0; overflow-wrap: anywhere; }
@@ -157,6 +176,7 @@ export class ErrosComponent implements OnInit {
   private readonly avisos = inject(AvisosService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly situacoes: { id: SituacaoErros; rotulo: string }[] = [
     { id: 'abertos', rotulo: 'Em aberto' },
@@ -170,6 +190,9 @@ export class ErrosComponent implements OnInit {
   readonly pagina = signal<PaginaErros | null>(null);
   readonly aberto = signal<number | null>(null);
   readonly detalhe = signal<ErroSistemaDetalhe | null>(null);
+  /** #332: o texto do "Reportar para o Claude" que não deu para copiar sozinho, na linha do erro. */
+  readonly reporte = signal<{ id: number; texto: string } | null>(null);
+  private readonly caixaReporte = viewChild<ElementRef<HTMLTextAreaElement>>('caixaReporte');
   /** Origens que já aparecem no banco, mais a do filtro atual (para o select não ficar sem a opção escolhida). */
   readonly origens = computed(() => {
     const lista = this.pagina()?.origens ?? [];
@@ -187,6 +210,14 @@ export class ErrosComponent implements OnInit {
   });
 
   constructor() {
+    // #332: a caixa com o texto aparece já com o foco e tudo selecionado, pronta para o Ctrl+C.
+    effect(() => {
+      const caixa = this.caixaReporte()?.nativeElement;
+      if (caixa) {
+        caixa.focus();
+        caixa.select();
+      }
+    });
     // Botão voltar/avançar e links para a aba já filtrada: a URL manda.
     this.rota.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => {
       const novo = ErrosComponent.filtroDaUrl(p, this.tamanho());
@@ -246,6 +277,30 @@ export class ErrosComponent implements OnInit {
       next: (d) => { if (this.aberto() === e.id) this.detalhe.set(d); },
       error: (err) => this.avisos.erro(mensagemDeErro(err))
     });
+  }
+
+  /**
+   * #332: monta o texto do erro (com a pilha, que vem do detalhe) e copia para a área de transferência. Sem ela (o
+   * navegador sem permissão, ou fora de HTTPS), mostra o texto selecionado na linha do erro, para copiar à mão.
+   */
+  reportar(e: ErroSistema): void {
+    this.reporte.set(null);
+    this.api.erroDetalhe(e.id).subscribe({
+      next: (d) => this.copiar(e.id, textoParaOClaude(e, d, this.auth.estado()?.versao)),
+      error: (err) => this.avisos.erro(mensagemDeErro(err))
+    });
+  }
+
+  /** O .then(ok, falha) pega a recusa já na hora; com o await, a rejeição passava um instante sem quem a tratasse. */
+  private copiar(id: number, texto: string): void {
+    const mostrar = () => this.reporte.set({ id, texto });
+    try {
+      const area = navigator.clipboard;
+      if (!area) return mostrar();
+      area.writeText(texto).then(() => this.avisos.sucesso('Copiado. Cole no Claude Code.'), mostrar);
+    } catch {
+      mostrar();
+    }
   }
 
   alternarResolvido(e: ErroSistema): void {
