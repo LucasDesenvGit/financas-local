@@ -16,7 +16,7 @@ Use ao revisar um PR com Go e no fim do seu próprio trabalho. Cada achado sai c
 
 **Dinheiro, hora e banco** (o `float64`, o `time.Now()` e o `time.Sleep` a CI já pega)
 - [ ] Nenhum `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com `tipos.Decimal`.
-- [ ] Exceção nova em `scripts/ci/regras-go-excecoes.txt` tem um motivo que convence.
+- [ ] Exceção nova em `scripts/ci/go/regras-go-excecoes.txt` tem um motivo que convence.
 - [ ] Gravação no formato do EF Core (decimal com escala, data, GUID em maiúsculas); atualização em massa dentro de `banco.EmTransacao`.
 - [ ] Lista de saída é `[]T{}`, não `nil`, quando o assunto ainda não tem caso de contrato que pegaria.
 

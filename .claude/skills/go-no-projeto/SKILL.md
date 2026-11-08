@@ -39,7 +39,7 @@ Todo o back-end é Go: assunto novo ganha um pacote, e mudança num assunto fica
 3. **Banco:** tabela nova em `banco/01-estrutura.sql` (o Go só cria tabela por esses scripts, no `-aplicar-esquema`), `go generate ./...` e `docs/BANCO-DE-DADOS.md`. Consulta pelo `sqlc` (`internal/plataforma/banco/consultas/sql`, depois `go generate ./...`) ou com `?`.
 4. **Pacote `internal/<area>/<assunto>`** com HTTP → regra → banco dentro (ADR 0056), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, o pacote na tabela de `docs/arquitetura/componentes.md` (o mesmo teste confere) e o termo novo em `docs/arquitetura/dominio.md`.
 5. **Rotas** pelo `Registrar(mux, ...)` do pacote e uma linha em `internal/api/api.go` (README do Go, "Rota nova"), com os casos de contrato num número livre de `20` a `89`.
-6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/mutacao-go-fora.txt`, com o motivo: a CI falha com pacote que não está em nenhum dos dois (#456).
+6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/go/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/go/mutacao-go-fora.txt`, com o motivo: a CI falha com pacote que não está em nenhum dos dois (#456).
 7. **Front-end, Manual, diagramas** (ADR 0055) e `docs/DADOS-PESSOAIS.md` se houver dado pessoal novo: no mesmo PR, como manda o `CLAUDE.md`.
 
 ## Mudança em Go que já existe
@@ -54,7 +54,7 @@ Em `src/backend`, os comandos de "Antes de subir" do README do Go, mais:
 
 ```bash
 go test -tags arquitetura ./internal/arquitetura/      # só local (#476)
-python3 ../../scripts/ci/mutacao-go.py internal/<area>/<assunto>   # pacote com regra; a CI mede no PR (#456)
+python3 ../../scripts/ci/go/mutacao-go.py internal/<area>/<assunto>   # pacote com regra; a CI mede no PR (#456)
 ```
 
 - **Go não instalado** (`go version` falha; nesta máquina pode ser o sandbox do Flatpak: `flatpak-spawn --host`): diga isso e não afirme que passou.
@@ -62,7 +62,7 @@ python3 ../../scripts/ci/mutacao-go.py internal/<area>/<assunto>   # pacote com 
 
 ## Desempenho: medir, não presumir
 
-- Compare com as metas de `docs/REQUISITOS-NAO-FUNCIONAIS.md` e diga como mediu (`python3 scripts/geral/medir-desempenho.py`).
+- Compare com as metas de `docs/REQUISITOS-NAO-FUNCIONAIS.md` e diga como mediu (`python3 scripts/dev/medir-desempenho.py`).
 - Código quente (relatórios, sincronização): `go test -bench . -benchmem` e `pprof` antes de otimizar. Otimização que complica o código precisa de número que a justifique.
 
 ## Como entregar
