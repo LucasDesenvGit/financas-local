@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.5.3] — 2026-11-08 · desenvolvimento
+
+### Publicação e documentação
+- **O teste de mutação de `contasagendadas` volta a 100%** (#640). O piso de 100% entrou junto com o pacote (#79, parte 1), quando ele ainda não tinha teste próprio: toda mutação saía "sem teste" e não contava. Os testes vieram depois, e 46 mutações sobreviviam. Agora cada uma tem o teste que a pega, ou foi tirada por uma refatoração que não muda o comportamento: o mês corrido num lugar só, o `min`/`max` no lugar das comparações e dois atalhos que davam no mesmo. Quatro que não mudam o resultado foram para `mutacao-go-equivalentes.txt`, com o motivo. Os testes novos cobrem a virada do ano nas mensais, a categoria mais frequente, a parcela no cartão, a faixa da variável, o limite de 20.000 lançamentos e os avisos de aumento pela data da cobrança. Nada muda para quem usa.
+
 ## [3.5.2] — 2026-11-08 · desenvolvimento
 
 ### Correções

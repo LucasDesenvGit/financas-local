@@ -60,3 +60,7 @@ internal/analises/painel | painel.go | INVERT_LOGICAL | if errors.Is(err, contex
 internal/analises/relatorios | projecao.go | INVERT_LOOPCTRL | break | o "último mês" casa pelo Id e pelo nome: os Ids da lista são únicos, então no máximo um casa, e parar ou seguir dá no mesmo (#80)
 internal/analises/relatorios | projecao.go | CONDITIONALS_BOUNDARY | if len(semId) > 0 { | um grupo "sem categoria" vazio soma zero, que não passa de zero e não entra na lista: o resultado é o mesmo (#80)
 internal/analises/relatorios | anual.go | CONDITIONALS_BOUNDARY | if tipos.NovaData(r.Ano, monthOf(r.Mes), 1).NumeroDoDia() > fimMes.NumeroDoDia() { | compara o dia 1 de um mês com o último dia de outro: os dois nunca são o mesmo dia (#80)
+internal/movimentacao/contasagendadas | contasagendadas.go | CONDITIONALS_BOUNDARY | if d.FormaCobranca >= 1 && d.FormaCobranca <= 3 { | com "> 1", a forma 1 cai no "à mão", e a forma 1 é a própria FormaAMao: dá no mesmo (#640)
+internal/movimentacao/contasagendadas | sugestoes.go | CONDITIONALS_BOUNDARY | for inicio := m[0]; inicio < m[1]; inicio++ { | com "<=", a volta a mais tem inicio = m[1], e o laço de dentro (fim de m[1] até fim > inicio) não roda nenhuma vez (#640)
+internal/movimentacao/contasagendadas | sugestoes.go | CONDITIONALS_BOUNDARY | if texto.TamanhoUtf16(s) <= n { | com "<", o texto de n chars UTF-16 é cortado em n, e sai igual (#640)
+internal/movimentacao/contasagendadas | sugestoes.go | CONDITIONALS_BOUNDARY | if d < 0 { | com "<=", o d = 0 vira -0, que também é 0 (#640)
