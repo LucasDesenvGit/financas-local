@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.7.0] — 2026-11-08 · desenvolvimento
+
+### Funcionalidades
+- **A auditoria de acesso tem prazo: 180 dias, e depois é apagada sozinha** (#530). Cada entrada, saída, troca de senha e mudança registrada fica em "Acessos recentes", com o IP e o navegador, e a tabela só crescia: a tela lista, mas não apaga. Agora o site apaga os acessos mais antigos que o prazo ao subir e uma vez por dia, como já faz com os erros do sistema. O prazo fica em Configurações › Parametrização › Segurança ("Guardar o histórico de acessos por", de 30 a 730 dias). `docs/DADOS-PESSOAIS.md` e o Manual foram junto.
+
 ## [3.6.0] — 2026-11-08 · desenvolvimento
 
 ### Funcionalidades

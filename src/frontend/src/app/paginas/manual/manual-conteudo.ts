@@ -1265,7 +1265,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Ajustar o comportamento do site sem mexer em arquivo nenhum.',
         passos: [
           'Abra Configurações › Parametrização.',
-          'Cada parâmetro mostra o que faz, a faixa válida e o padrão: sincronização, Painel, segurança do login, orçamentos, metas, transações e erros.',
+          'Cada parâmetro mostra o que faz, a faixa válida e o padrão: sincronização, Painel, segurança do login e por quanto tempo o histórico de acessos fica guardado, orçamentos, metas, transações e erros.',
           'Mude o valor e salve: vale na hora.',
           'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.'
         ],
@@ -1289,7 +1289,8 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
-          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.'
+          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.',
+          'Os acessos ficam guardados por 180 dias e depois são apagados sozinhos, uma vez por dia. Para mudar o prazo (de 30 a 730 dias), use Configurações › Parametrização › Segurança, “Guardar o histórico de acessos por”.'
         ],
         abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
       },
