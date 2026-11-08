@@ -20,6 +20,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/servico"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
@@ -82,6 +83,15 @@ func copiarBanco(caminhoBanco, destino string) elevacao.Resultado {
 			// O motivo vai para o terminal; a janela diz o que fazer.
 			log.Print(err)
 		}
+		return elevacao.Falhou
+	}
+	return elevacao.Feito
+}
+
+// restaurarBanco (#533): o banco e o serviço são do próprio usuário, então roda aqui mesmo.
+func restaurarBanco(caminhoBanco, copia string) elevacao.Resultado {
+	if _, err := restauracao.Restaurar(caminhoBanco, copia, servicoDoSite{}); err != nil {
+		log.Print(err)
 		return elevacao.Falhou
 	}
 	return elevacao.Feito

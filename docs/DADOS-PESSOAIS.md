@@ -134,6 +134,7 @@ Toda cópia do banco tem **tudo** o que estava nele quando foi feita:
 |---|---|
 | Automática, antes de mudar a estrutura | `dados/backups` (as 5 mais recentes) |
 | Pelo gerenciador | Onde você escolheu |
+| O banco de antes de restaurar uma cópia (#533) | `dados/antes-de-restaurar`, até você apagar |
 | Pelos scripts | `backups`, na pasta do projeto |
 
 **Apagar um dado no site não o apaga das cópias.** Para que ele suma de vez, apague as cópias também. A cópia não é criptografada: guarde-a num lugar seguro.

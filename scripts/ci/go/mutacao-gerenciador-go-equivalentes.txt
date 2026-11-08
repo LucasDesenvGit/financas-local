@@ -2,3 +2,4 @@
 # Mesmo formato do mutacao-go-equivalentes.txt: pacote | arquivo | tipo | a linha do código | por que não muda nada.
 
 internal/icones | icones.go | CONDITIONALS_BOUNDARY | if math.Hypot(dx, dy) <= raio { | as amostras ficam no meio de cada quarto de pixel ((n+0,5)/4), e nenhuma cai exatamente na borda do círculo nos tamanhos usados: < e <= dão o mesmo desenho
+internal/restauracao | restauracao.go | CONDITIONALS_NEGATION | if err := para.Sync(); err != nil { | com "== nil", o Sync que deu certo fecha e devolve nil, como o return para.Close(); o Sync que falha (disco cheio na hora de gravar, energia caindo) não dá para provocar no teste (#533)

@@ -118,16 +118,17 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 
 ### 6. Gerenciador ↔ API e banco
 
-O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site responde (`GET /api/auth/estado`) e copia o banco com `VACUUM INTO`. No Windows, copiar, ligar e desligar rodam numa instância dele elevada pelo UAC (`--backup`, `--servico`), porque a pasta de dados só abre para o sistema e os administradores.
+O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site responde (`GET /api/auth/estado`) e copia o banco com `VACUUM INTO`. Ele também restaura uma cópia escolhida por você (#533): confere o arquivo, desliga o site, guarda o banco de agora em `dados/antes-de-restaurar`, troca e liga. No Windows, copiar, restaurar, ligar e desligar rodam numa instância dele elevada pelo UAC (`--backup`, `--restaurar`, `--servico`), porque a pasta de dados só abre para o sistema e os administradores.
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
 | **Falsificação** | Outro processo ocupa a porta do site e se passa pela API para o gerenciador | A consulta não manda nada seu e só muda a situação mostrada ("no ar", "não responde") | O gerenciador aceita qualquer certificado quando o endereço é de loopback (`situacao.go`, `InsecureSkipVerify`), para funcionar antes de o sistema confiar no certificado. Conferir o certificado da instalação, pela impressão digital, fecharia isso (*julgamento*) |
 | **Adulteração** | Um destino escolhido sobrescreve um arquivo importante | O destino vem da janela de salvar, escolhido por você | No Windows, a gravação roda como administrador: o destino pode ser uma pasta que a sua conta não escreveria |
-| **Repúdio** | Não saber quem copiou o banco | — | A cópia pelo gerenciador não entra na auditoria do site |
+| **Adulteração** | Um banco montado por outra pessoa entra no lugar do seu pela restauração (#533) | O arquivo vem da janela de abrir, escolhido por você, depois da pergunta que diz o que muda; o gerenciador confere que é um banco do site, e o de antes fica em `dados/antes-de-restaurar` | A conferência vê a estrutura, não a origem: um banco do site adulterado passa (*julgamento*: é o mesmo risco de restaurar à mão) |
+| **Repúdio** | Não saber quem copiou ou restaurou o banco | — | A cópia e a restauração pelo gerenciador não entram na auditoria do site (a restauração troca a própria auditoria pela da cópia) |
 | **Vazamento** | A cópia vai para um lugar inseguro | O gerenciador avisa que a cópia tem todos os seus dados | A cópia sai sem criptografia (#68, item 2) |
 | **Negação de serviço** | A cópia trava o site | `VACUUM INTO` lê numa transação, com o banco em WAL, e o site continua no ar | — |
-| **Aumento de privilégio** | Outro programa usa a instância elevada do gerenciador | A instância elevada só aceita as ações fixas (`--backup <destino>`, `--servico ligar\|desligar\|reiniciar` e, só na instalação de desenvolvimento, `--instalar-pelos-scripts`) e pede o UAC a cada vez | — |
+| **Aumento de privilégio** | Outro programa usa a instância elevada do gerenciador | A instância elevada só aceita as ações fixas (`--backup <destino>`, `--restaurar <cópia>`, `--servico ligar\|desligar\|reiniciar` e, só na instalação de desenvolvimento, `--instalar-pelos-scripts`) e pede o UAC a cada vez | Quem aprova o UAC não vê o arquivo da `--restaurar`: um programa que já roda na sua conta pode pedir a restauração de um arquivo dele, e o aviso do Windows mostra só o gerenciador (*julgamento*: o mesmo vale para o destino da `--backup`) |
 
 ### 7. Celular ↔ site, pela rede de casa (#328)
 

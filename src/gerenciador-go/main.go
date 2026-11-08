@@ -16,6 +16,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/copia"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/servico"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
@@ -37,7 +38,8 @@ var exemplos = map[string]tela.Situacao{
 }
 
 func main() {
-	// Como o Program.cs: --servico ligar|desligar|reiniciar, --backup "destino" e --instalar-pelos-scripts (só na
+	// Como o Program.cs: --servico ligar|desligar|reiniciar, --backup "destino", --restaurar "cópia" (#533) e
+	// --instalar-pelos-scripts (só na
 	// instalação de desenvolvimento, ADR 0040) são as ações que o próprio gerenciador roda como administrador (UAC),
 	// sem janela.
 	if len(os.Args) == 3 && os.Args[1] == "--servico" && servico.AcaoValida(os.Args[2]) {
@@ -52,6 +54,9 @@ func main() {
 	}
 	if len(os.Args) == 3 && os.Args[1] == "--backup" {
 		os.Exit(backup(os.Args[2]))
+	}
+	if len(os.Args) == 3 && os.Args[1] == "--restaurar" {
+		os.Exit(restaurar(os.Args[2]))
 	}
 	// --situacao: como o do Program.cs do Linux, escreve a situação e sai (0 = no ar), sem janela; a CI usa (#277).
 	if len(os.Args) == 2 && os.Args[1] == "--situacao" {
@@ -91,3 +96,18 @@ func backup(destino string) int {
 		return 1
 	}
 }
+
+// restaurar roda elevado (#533): 0 = feito, 1 = não deu (o motivo vai para o log; a janela diz o que fazer).
+func restaurar(copiaEscolhida string) int {
+	if _, err := restauracao.Restaurar(instalacao.Atual().CaminhoBanco, copiaEscolhida, servicoDoSite{}); err != nil {
+		log.Print(err)
+		return 1
+	}
+	return 0
+}
+
+// servicoDoSite liga e desliga o serviço do site para a restauração (no Windows, quem chama já está elevado).
+type servicoDoSite struct{}
+
+func (servicoDoSite) Desligar() error { return servico.Executar("desligar") }
+func (servicoDoSite) Ligar() error    { return servico.Executar("ligar") }

@@ -1372,7 +1372,10 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Restaurar uma cópia',
         paraQueServe: 'Voltar o banco para uma cópia salva, depois de um problema.',
         passos: [
-          'Pare o site: “Desligar” no gerenciador (ou o serviço do Finanças Local, se instalou pelos scripts).',
+          'Pelo gerenciador (Windows e Linux): abra “Mais opções” e clique em “Restaurar uma cópia…”. Ele diz o que muda e, se você seguir, pede o arquivo da cópia. No Windows, pede permissão de administrador.',
+          'O gerenciador confere que o arquivo é uma cópia do banco do Finanças Local antes de desligar o site. Depois desliga, guarda o banco de agora na pasta dados, em “antes-de-restaurar”, põe a cópia no lugar (sem os arquivos -wal e -shm do banco antigo) e liga o site de novo. Se algo der errado no meio, ele devolve o banco de antes.',
+          'Abra o site, entre e confira a última transação e Configurações › Erros. Deu tudo certo? Apague a pasta “antes-de-restaurar”.',
+          'Sem o gerenciador, à mão: pare o site (“Desligar” no gerenciador, ou o serviço do Finanças Local, se instalou pelos scripts).',
           'Ache a pasta de dados: C:\\ProgramData\\FinancasLocal\\dados, se instalou pelo .msi (só abre como administrador), ou a pasta “dados” do projeto, se instalou pelos scripts.',
           'Guarde o banco atual: copie os arquivos FinancasLocal.db* da pasta dados/sql para outra pasta.',
           'Copie a cópia por cima de dados/sql/FinancasLocal.db.',
