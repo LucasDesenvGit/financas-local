@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 07/11/2026, revisado no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
+> **Data:** 09/11/2026, revisado no gerenciador que mostra o acesso pelo celular (#679): uma rota nova sem login, só para o próprio computador. Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
@@ -118,7 +118,7 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 
 ### 6. Gerenciador ↔ API e banco
 
-O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site responde (`GET /api/auth/estado`) e copia o banco com `VACUUM INTO`. Ele também restaura uma cópia escolhida por você (#533): confere o arquivo, desliga o site, guarda o banco de agora em `dados/antes-de-restaurar`, troca e liga. No Windows, copiar, restaurar, ligar e desligar rodam numa instância dele elevada pelo UAC (`--backup`, `--restaurar`, `--servico`), porque a pasta de dados só abre para o sistema e os administradores.
+O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site responde (`GET /api/auth/estado`) e se o acesso pelo celular está ligado (`GET /api/celular/estado`, #679; só lê, e o site só responde ao próprio computador) e copia o banco com `VACUUM INTO`. Ele também restaura uma cópia escolhida por você (#533): confere o arquivo, desliga o site, guarda o banco de agora em `dados/antes-de-restaurar`, troca e liga. No Windows, copiar, restaurar, ligar e desligar rodam numa instância dele elevada pelo UAC (`--backup`, `--restaurar`, `--servico`), porque a pasta de dados só abre para o sistema e os administradores.
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
@@ -143,7 +143,7 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 | **Vazamento** | Roubar a chave da autoridade para assinar outros sites em que o celular confia | A chave fica em `dados/chaves`, com a proteção das outras chaves, e a autoridade tem restrição de nomes: só IPs de rede de casa, nenhum nome de site | Com a chave, dá para se passar por outro IP da rede de casa (o roteador) para o celular. A restrição não foi conferida num celular de verdade (*não validado com uso real*) |
 | **Vazamento** | A porta aberta num Wi-Fi público (café, aeroporto) | No Windows, a regra do firewall vale só no perfil Particular e só para a sub-rede local; a tela avisa quando a rede está como Pública | No Linux, o site não mexe no firewall: sem `ufw` nem `firewalld` ligados, a porta fica aberta em qualquer rede em que o IP escolhido estiver |
 | **Negação de serviço** | Um aparelho da rede enche o site de pedidos | Os mesmos limites da fronteira 1 (login e corpo) | Sem limite de pedidos fora do login (*julgamento*: o mesmo risco de antes, agora com a rede de casa) |
-| **Aumento de privilégio** | Alguém usa uma rota sem login pela rede | Tudo exige login; a única rota nova sem login é a da autoridade (`GET /api/celular/autoridade`), que entrega só o certificado público | — |
+| **Aumento de privilégio** | Alguém usa uma rota sem login pela rede | Tudo exige login, menos duas rotas novas: a da autoridade (`GET /api/celular/autoridade`), que entrega só o certificado público, e a do estado para o gerenciador (`GET /api/celular/estado`, #679), que só responde a quem pede do próprio computador (pela rede, 404) e só diz ligado e o endereço | A conferência é pelo endereço de quem conectou: vale porque o site é servido direto, sem proxy na frente. Um proxy local no futuro faria todo pedido parecer do próprio computador (*julgamento*: o teste dela está em `celular/rotas_test.go`) |
 
 ## Ligação com a #68
 

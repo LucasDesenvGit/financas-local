@@ -41,8 +41,10 @@ const (
 //go:embed icone.png
 var icone []byte
 
-// As páginas do site que a janela abre no navegador (Abrir o site, Ver os erros do site, Abrir o manual).
-var paginasDoSite = map[string]bool{"": true, "configuracoes?aba=erros": true, "manual": true}
+// As páginas do site que a janela abre no navegador (Abrir o site, Ver os erros do site, Abrir o manual e, #679, a
+// Segurança, onde se liga e desliga o acesso pelo celular).
+var paginasDoSite = map[string]bool{"": true, "configuracoes?aba=erros": true, "manual": true,
+	"configuracoes?aba=seguranca": true}
 
 // O que a janela diz enquanto liga, desliga ou reinicia (ServicoAsync do C#).
 var enquanto = map[string]string{"ligar": "Ligando o site…", "desligar": "Desligando o site…", "reiniciar": "Reiniciando o site…"}

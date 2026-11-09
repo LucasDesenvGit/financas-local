@@ -110,6 +110,57 @@ func TestSemResposta(t *testing.T) {
 	}
 }
 
+// Regra (#679): no ar, o estado do acesso pelo celular vem da rota que o site só responde ao próprio computador. Versão
+// antiga (404), erro ou resposta que não lê: não conhecido.
+func TestCelular(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		nome   string
+		status int
+		corpo  string
+		quer   tela.Celular
+	}{
+		{"ligado", 200, `{"ligado":true,"endereco":"https://192.168.0.10:5443"}`,
+			tela.Celular{Conhecido: true, Ligado: true, Endereco: "https://192.168.0.10:5443"}},
+		{"desligado", 200, `{"ligado":false,"endereco":null}`, tela.Celular{Conhecido: true}},
+		{"desligado com endereço (ignora)", 200, `{"ligado":false,"endereco":"https://x"}`, tela.Celular{Conhecido: true}},
+		{"ligado sem endereço", 200, `{"ligado":true}`, tela.Celular{Conhecido: true, Ligado: true}},
+		{"versão sem a rota", 404, ``, tela.Celular{}},
+		{"status 204", 204, ``, tela.Celular{}},
+		{"sem o campo ligado", 200, `{"endereco":"https://x"}`, tela.Celular{}},
+		{"não é JSON", 200, `não é JSON`, tela.Celular{}},
+	}
+	for _, c := range casos {
+		srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/api/auth/estado":
+				_, _ = w.Write([]byte(`{"versao":"3.11.0"}`))
+			case "/api/celular/estado":
+				w.WriteHeader(c.status)
+				_, _ = w.Write([]byte(c.corpo))
+			default:
+				http.NotFound(w, r)
+			}
+		}))
+		obtida := consulta(servico.Rodando, nil, srv.URL+"/", false).Consultar(t.Context())
+		srv.Close()
+		if obtida.Estado != tela.NoAr || obtida.Celular != c.quer {
+			t.Errorf("%s: %+v", c.nome, obtida)
+		}
+	}
+	// O site que cai entre as duas perguntas: no ar, mas o celular não conhecido.
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/auth/estado" {
+			panic(http.ErrAbortHandler)
+		}
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+	if obtida := consulta(servico.Rodando, nil, srv.URL+"/", false).Consultar(t.Context()); obtida.Celular != (tela.Celular{}) {
+		t.Errorf("site que caiu: %+v", obtida)
+	}
+}
+
 // Regra: o 299 ainda é sucesso.
 func TestStatus299(t *testing.T) {
 	t.Parallel()
