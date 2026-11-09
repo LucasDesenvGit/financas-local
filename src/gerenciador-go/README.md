@@ -20,7 +20,7 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 - `foco_windows.go`, `foco_linux.go`: abrir o gerenciador de novo traz a janela que já está aberta para a frente. No Windows, a segunda cópia passa à primeira o direito de vir para a frente (`AllowSetForegroundWindow`) antes de avisá-la e fechar; no Linux, não precisa.
 - `internal/tela`: a página (`pagina.html`, `estilo.css`) e o que ela mostra em cada situação. Não depende do Wails: os testes rodam sem janela.
 - `internal/instalacao`: onde estão a API, o banco, os dados e o endereço (o `Instalacao.cs`), pelos mesmos `appsettings`.
-- `internal/situacao`: o serviço e o `GET /api/auth/estado` (o `VerificadorSituacao`).
+- `internal/situacao`: o serviço, o `GET /api/auth/estado` (o `VerificadorSituacao`) e o `GET /api/celular/estado` (#679: o cartão "Acesso pelo celular").
 - `internal/servico`, `internal/elevacao`: o serviço do Windows e o UAC só para a ação; no Linux, a unidade `financaslocal.service` do `systemd --user`, o linger e o registro.
 - `internal/comando`: roda os programas do sistema (`systemctl`, `loginctl`, `journalctl`, `busctl`), como o `Comando.cs`.
 - `internal/copia`: a cópia do banco pelo `VACUUM INTO` (`modernc.org/sqlite`, o mesmo da API).

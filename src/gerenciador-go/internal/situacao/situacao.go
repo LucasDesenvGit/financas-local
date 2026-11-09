@@ -78,7 +78,8 @@ func (c Consulta) Consultar(ctx context.Context) tela.Situacao {
 		if versao != "" {
 			detalhe = "Versão " + versao + " · " + c.Instalacao.Site
 		}
-		return tela.Situacao{Estado: tela.NoAr, Titulo: "O site está no ar.", Detalhe: detalhe, VersaoSite: versao}
+		return tela.Situacao{Estado: tela.NoAr, Titulo: "O site está no ar.", Detalhe: detalhe, VersaoSite: versao,
+			Celular: c.celular(ctx)}
 	}
 	return tela.Situacao{Estado: tela.SemResposta, Titulo: "O site está ligado, mas não responde.",
 		Detalhe: "Acabou de ligar? Espere alguns segundos. Se continuar assim, clique em “Reiniciar”."}
@@ -105,6 +106,37 @@ func (c Consulta) responde(ctx context.Context) (versao string, ok bool) {
 		versao, _ = corpo.Versao.(string)
 	}
 	return versao, true
+}
+
+// celular é o estado do acesso pelo celular (#679), pela rota que o site só responde ao próprio computador
+// (GET /api/celular/estado, sem login). Versão antiga (404), erro ou resposta que não lê: não conhecido, e o cartão
+// some.
+func (c Consulta) celular(ctx context.Context) tela.Celular {
+	pedido, err := http.NewRequestWithContext(ctx, http.MethodGet, c.Instalacao.Pagina("api/celular/estado"), nil)
+	if err != nil {
+		return tela.Celular{}
+	}
+	resposta, err := c.Cliente.Do(pedido)
+	if err != nil {
+		return tela.Celular{}
+	}
+	defer resposta.Body.Close()
+	if resposta.StatusCode != http.StatusOK {
+		return tela.Celular{}
+	}
+	var corpo struct {
+		Ligado   *bool   `json:"ligado"`
+		Endereco *string `json:"endereco"`
+	}
+	dados, err := io.ReadAll(io.LimitReader(resposta.Body, 4<<10))
+	if err != nil || json.Unmarshal(dados, &corpo) != nil || corpo.Ligado == nil {
+		return tela.Celular{}
+	}
+	estado := tela.Celular{Conhecido: true, Ligado: *corpo.Ligado}
+	if estado.Ligado && corpo.Endereco != nil {
+		estado.Endereco = *corpo.Endereco
+	}
+	return estado
 }
 
 // porta do endereço do site (443 quando ele não diz).

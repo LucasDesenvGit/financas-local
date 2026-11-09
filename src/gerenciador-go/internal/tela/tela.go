@@ -31,6 +31,16 @@ type Situacao struct {
 	Detalhe string
 	// VersaoSite é a que o site no ar informa ("" quando ele não responde ou não informa).
 	VersaoSite string
+	// Celular é o acesso pelo celular (#679), que o site no ar informa.
+	Celular Celular
+}
+
+// Celular é o acesso pelo celular do site (#328, #679): Conhecido quando o site respondeu (versões antigas não têm a
+// rota); Endereco só ligado.
+type Celular struct {
+	Conhecido bool
+	Ligado    bool
+	Endereco  string
 }
 
 // Verificando é a situação antes da primeira consulta (a do ItemSituacao do menu da bandeja em C#).
@@ -280,6 +290,35 @@ func (t Tela) LigarTexto() string {
 
 func (t Tela) LigarTecla() string { return strings.ToLower(t.LigarTexto()[:1]) }
 
+// CelularVisivel: o cartão do acesso pelo celular (#679) só aparece com o site no ar e numa versão que diz o estado.
+func (t Tela) CelularVisivel() bool {
+	return t.Situacao.Estado == NoAr && t.Situacao.Celular.Conhecido
+}
+
+// PontoCelular é a cor do ponto do cartão: verde ligado, cinza desligado (o desligado é o normal, e não um problema).
+func (t Tela) PontoCelular() string {
+	if t.Situacao.Celular.Ligado {
+		return "positivo"
+	}
+	return "neutro"
+}
+
+// TextoCelular diz o estado em palavras, e o endereço quando ligado (a cor do ponto nunca é a única pista, WCAG 1.4.1).
+func (t Tela) TextoCelular() string {
+	if t.Situacao.Celular.Ligado {
+		return "Ligado. No celular, no mesmo Wi-Fi, abra " + t.Situacao.Celular.Endereco
+	}
+	return "Desligado: o site só abre neste computador."
+}
+
+// BotaoCelular diz o que a pessoa vai fazer na tela que o botão abre.
+func (t Tela) BotaoCelular() string {
+	if t.Situacao.Celular.Ligado {
+		return "Desligar no site"
+	}
+	return "Ligar no site"
+}
+
 // PaginasDoSiteHabilitadas: erros e manual são páginas do site, e só abrem com ele no ar.
 func (t Tela) PaginasDoSiteHabilitadas() bool { return t.Situacao.Estado == NoAr }
 
@@ -311,6 +350,10 @@ type Atualizacao struct {
 	ReabrirGerenciador  bool   `json:"reabrirGerenciador"`
 	SemLogin            string `json:"semLogin"`
 	TextoSemLogin       string `json:"textoSemLogin"`
+	CelularVisivel      bool   `json:"celularVisivel"`
+	PontoCelular        string `json:"pontoCelular"`
+	TextoCelular        string `json:"textoCelular"`
+	BotaoCelular        string `json:"botaoCelular"`
 }
 
 // Atualizacao da tela, com as mesmas regras da página inteira.
@@ -325,6 +368,8 @@ func (t Tela) Atualizacao() Atualizacao {
 		Baixando: t.Procura.Baixando, Progresso: t.Procura.Progresso,
 		Develop: t.Develop.Disponivel, DevelopRodando: t.Develop.Rodando, Saida: t.Develop.Saida,
 		NotasDevelop: t.Develop.Notas, ReabrirGerenciador: t.Develop.ReabrirGerenciador, SemLogin: t.SemLogin, TextoSemLogin: t.TextoSemLogin(),
+		CelularVisivel: t.CelularVisivel(), PontoCelular: t.PontoCelular(), TextoCelular: t.TextoCelular(),
+		BotaoCelular: t.BotaoCelular(),
 	}
 }
 
@@ -375,12 +420,12 @@ func ConfirmarAtualizacao(versao string) Aviso {
 var glifos = map[string]string{
 	"abrir": "\uE8A7", "ligar": "\uE7E8", "reiniciar": "\uE72C", "baixar": "\uE896", "procurar": "\uE721",
 	"informacao": "\uE946", "cancelar": "\uE711", "pasta": "\uE838", "erros": "\uE7BA", "manual": "\uE897", "salvar": "\uE74E",
-	"sucesso": "\uE930", "alerta": "\uE7BA", "copiar": "\uE8C8", "registro": "\uE8A5",
+	"sucesso": "\uE930", "alerta": "\uE7BA", "copiar": "\uE8C8", "registro": "\uE8A5", "celular": "\uE8EA",
 }
 
 // No Linux, que não tem a fonte de ícones do Windows, os mesmos ícones vêm do lucide (os do site, @lucide/angular
 // 1.61.0, licença ISC): external-link, power, rotate-cw, download, search, info, x, folder-open, triangle-alert,
-// circle-question-mark, save, circle-check, copy e scroll-text.
+// circle-question-mark, save, circle-check, copy, scroll-text e smartphone.
 var desenhos = map[string]string{
 	"abrir":      `<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>`,
 	"ligar":      `<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>`,
@@ -396,6 +441,7 @@ var desenhos = map[string]string{
 	"sucesso":    `<circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/>`,
 	"alerta":     `<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>`,
 	"copiar":     `<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>`,
+	"celular":    `<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>`,
 	"registro":   `<path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>`,
 }
 

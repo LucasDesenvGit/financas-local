@@ -1307,7 +1307,8 @@ export const MANUAL: CapituloManual[] = [
           'Para conferir que o certificado é deste computador, compare a impressão digital da tela com a que o iPhone mostra em “Mais detalhes” ao instalar.',
           'Depois disso, abra no celular o endereço que a tela mostra (https://, o IP e :5443), pelo QR code “4. O site” ou digitando, e entre com o seu usuário e a sua senha. Fora de casa, o celular não chega ao site.',
           'Se o roteador der outro IP a este computador, a tela avisa: desligue e ligue de novo com o endereço novo (o certificado do celular continua valendo). Para o endereço não mudar, reserve o IP no roteador.',
-          '“Desligar o acesso pelo celular” fecha a porta na hora e apaga a regra do firewall do Windows. Ligar e desligar aparecem nos acessos recentes.'
+          '“Desligar o acesso pelo celular” fecha a porta na hora e apaga a regra do firewall do Windows. Ligar e desligar aparecem nos acessos recentes.',
+          'O gerenciador (a janela da bandeja) mostra se o acesso está ligado, com o endereço, no cartão “Acesso pelo celular”. O botão dele (“Ligar no site” ou “Desligar no site”) abre esta tela: ligar e desligar é sempre aqui, com o seu login.'
         ],
         abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
       },

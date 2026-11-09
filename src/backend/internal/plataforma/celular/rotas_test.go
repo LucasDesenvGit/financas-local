@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"testing"
 
@@ -95,4 +96,37 @@ func TestRotas(t *testing.T) {
 	r = testeapoio.Chamar(t, mux, "POST", "/api/celular/desligar", "")
 	r.ConferirStatus(t, 200)
 	r.ConferirJSON(t, desligado)
+}
+
+// Regra (#679): o estado curto, sem login, responde só ao próprio computador (127.0.0.1 ou ::1), com ligado e o
+// endereço; de outro aparelho da rede, 404, como se a rota não existisse.
+func TestEstadoParaOGerenciador(t *testing.T) {
+	a := novoAmbiente(t)
+	mux := a.rotas()
+	pedir := func(remoto string) *httptest.ResponseRecorder {
+		r := httptest.NewRequestWithContext(t.Context(), "GET", RotaEstado, nil)
+		r.RemoteAddr = remoto
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, r)
+		return w
+	}
+	for _, remoto := range []string{"192.168.0.20:50000", "10.0.0.20:443", "sem-porta", "[fe80::1]:1"} {
+		if w := pedir(remoto); w.Code != 404 || w.Body.Len() != 0 {
+			t.Errorf("de %s: %d %s", remoto, w.Code, w.Body)
+		}
+	}
+	w := pedir("127.0.0.1:50000")
+	if w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("desligado: %d %v", w.Code, w.Header())
+	}
+	testeapoio.ConferirJSON(t, w.Body.Bytes(), `{"ligado":false,"endereco":null}`)
+
+	if _, err := a.s.Ligar(t.Context(), a.pedido(), "192.168.0.10"); err != nil {
+		t.Fatal(err)
+	}
+	w = pedir("[::1]:50000")
+	if w.Code != 200 {
+		t.Fatalf("ligado: %d", w.Code)
+	}
+	testeapoio.ConferirJSON(t, w.Body.Bytes(), `{"ligado":true,"endereco":"https://192.168.0.10:5443"}`)
 }

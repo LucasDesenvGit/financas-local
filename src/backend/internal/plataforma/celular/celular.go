@@ -192,6 +192,24 @@ func (s *Servico) Situacao(ctx context.Context) Situacao {
 	return s.situacao(ctx)
 }
 
+// EstadoCurto é o que o gerenciador mostra (#679): só se está ligado e o endereço. Não lista a rede nem pergunta ao
+// firewall, porque o gerenciador consulta a cada poucos segundos.
+type EstadoCurto struct {
+	Ligado   bool    `json:"ligado"`
+	Endereco *string `json:"endereco"` // https://IP:porta, só ligado
+}
+
+// Estado é o EstadoCurto de agora.
+func (s *Servico) Estado() EstadoCurto {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.escuta == nil {
+		return EstadoCurto{}
+	}
+	endereco := "https://" + net.JoinHostPort(s.escuta.endereco.IP, strconv.Itoa(s.o.Porta))
+	return EstadoCurto{Ligado: true, Endereco: &endereco}
+}
+
 // Autoridade é o certificado público da autoridade (DER), para o celular baixar; só com o acesso ligado.
 func (s *Servico) Autoridade() ([]byte, bool) {
 	s.mu.Lock()
