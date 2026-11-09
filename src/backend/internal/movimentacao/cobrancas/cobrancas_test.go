@@ -369,3 +369,26 @@ func TestConciliarSemContas(t *testing.T) {
 		t.Errorf("%d, %v", mudaram, err)
 	}
 }
+
+// Regra: a falha ao ler as regras, as cobranças ou ao gravar a conta volta como erro, sem engolir.
+func TestConciliarErroDoBanco(t *testing.T) {
+	t.Parallel()
+	for _, quebrar := range []string{`DROP TABLE "RegraDescricao"`, `DROP TABLE "Transacao"`,
+		`CREATE TRIGGER "nao_grava" BEFORE UPDATE ON "ContaAgendada" BEGIN SELECT RAISE(ABORT, 'não grava'); END`} {
+		db := testeapoio.NovoBancoVazio(t)
+		fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 14))
+		conta := fab.Conta()
+		fab.ContaAgendada(func(a *testeapoio.ContaAgendada) {
+			a.ProximoVencimento, a.FormaCobranca, a.TextoCobranca = testeapoio.Dia(2026, 10, 15), 2, ptr("ACADEMIA")
+		})
+		fab.Transacao(conta, func(tr *testeapoio.Transacao) {
+			tr.Data, tr.Valor, tr.Descricao = testeapoio.Dia(2026, 10, 12), testeapoio.Valor("-89.9"), "ACADEMIA"
+		})
+		if _, err := db.Exec(quebrar); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err == nil {
+			t.Errorf("%s: devia falhar", quebrar)
+		}
+	}
+}
