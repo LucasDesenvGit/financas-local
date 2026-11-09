@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.9.2] — 2026-11-09 · desenvolvimento
+
+### Publicação e documentação
+- **O teste de mutação de `cobrancas`, `orcamentos` e `metas` volta a 100%** (#675). A primeira rodada inteira depois da divisão por grupo (#673) achou os três abaixo do piso (85,5%, 81,7% e 83,5%): as rodadas antigas eram canceladas antes de chegar a eles. Cada uma das 92 mutações vivas tem agora o teste que a pega, foi tirada por uma refatoração que não muda o comportamento ou, quando não muda o resultado, foi para `mutacao-go-equivalentes.txt` com o motivo:
+  - `cobrancas`: sai a conferência "a conta mudou?", que nunca dava falso (toda cobrança casada avança o vencimento ou encerra a conta); testes do estorno lido antes da cobrança, da chave vazia e da de 150 chars;
+  - `orcamentos`: testes da sugestão para o que entra na base, a virada do ano, o cartão com uso baixo e em alerta, o arredondamento, o corte do sem natureza, a ordem dos itens e o período nos limites;
+  - `metas`: testes do plano com 3 meses, da fatura aberta, da que fecha ou vence hoje, do pagamento lançado no cartão, das compras à vista e das parcelas recentes, e das rotas (cofrinho de outra conta, aporte que conclui, ordem com as sem prioridade).
+  Nada muda para quem usa.
+
 ## [3.9.1] — 2026-11-08 · desenvolvimento
 
 ### Publicação e documentação

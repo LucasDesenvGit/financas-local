@@ -119,11 +119,17 @@ type candidata struct {
 // Conciliar dá baixa nas contas a pagar cobradas sozinhas (débito automático ou cartão) cuja cobrança já chegou no
 // extrato (#158): o último pagamento vai para a data dela e o próximo vencimento avança, como no "Pagar" (#69: passou
 // da data limite, a conta é encerrada). A cobrança casada também grava a chave do extrato (#205), se a conta ainda não
-// tinha. Grava só as contas que mudaram e devolve quantas.
+// tinha. Grava as contas conciliadas e devolve quantas.
+//
+// Toda conta casada muda (#675): a cobrança está na janela [vencimento - 10 dias, hoje], então o avancar passa pelo
+// menos um vencimento (ou encerra a conta). Por isso não há "gravar só se mudou": essa conferência nunca dava falso.
 func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (int, error) {
 	contas, err := lerContas(ctx, q)
-	if err != nil || len(contas) == 0 {
+	if err != nil {
 		return 0, err
+	}
+	if len(contas) == 0 {
+		return 0, nil
 	}
 	regrasPorValor, err := RegrasPorValor(ctx, q)
 	if err != nil {
@@ -143,7 +149,6 @@ func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (int, err
 		if casada == nil {
 			continue
 		}
-		antes := *c
 		var chave string
 		if casada.porValor {
 			chave = ChaveDaRegra(casada.texto)
@@ -157,12 +162,10 @@ func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (int, err
 		}
 		c.ultimoPagamentoEm = &casada.data
 		avancar(c, casada.data)
-		if mudou(antes, *c) {
-			if err := gravar(ctx, q, c); err != nil {
-				return mudaram, err
-			}
-			mudaram++
+		if err := gravar(ctx, q, c); err != nil {
+			return mudaram, err
 		}
+		mudaram++
 	}
 	return mudaram, nil
 }
@@ -195,15 +198,6 @@ func maisRecente(candidatas []candidata, procurado string) *candidata {
 	}
 	return melhor
 }
-
-func mudou(a, b contaAConciliar) bool {
-	return !datasIguais(a.ultimoPagamentoEm, b.ultimoPagamentoEm) || !a.proximoVencimento.Igual(b.proximoVencimento) ||
-		a.ativa != b.ativa || !textosIguais(a.chaveExtrato, b.chaveExtrato)
-}
-
-func datasIguais(a, b *tipos.Data) bool { return a == b || (a != nil && b != nil && a.Igual(*b)) }
-
-func textosIguais(a, b *string) bool { return a == b || (a != nil && b != nil && *a == *b) }
 
 func lerContas(ctx context.Context, q consultas.DBTX) ([]*contaAConciliar, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "TextoCobranca", "ProximoVencimento", "ContaId", "Recorrencia",

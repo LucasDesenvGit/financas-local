@@ -12,6 +12,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/parametros"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
@@ -19,8 +20,13 @@ func dec(s string) decimal.Decimal { return decimal.RequireFromString(s) }
 
 func ambiente(t *testing.T) (*sql.DB, *testeapoio.Fabrica, *http.ServeMux) {
 	t.Helper()
+	return ambienteEm(t, testeapoio.HojeEmBrasilia(2026, 10, 14))
+}
+
+// ambienteEm é o ambiente com o relógio parado em r.
+func ambienteEm(t *testing.T, r relogio.Fixo) (*sql.DB, *testeapoio.Fabrica, *http.ServeMux) {
+	t.Helper()
 	db := testeapoio.NovoBancoVazio(t)
-	r := testeapoio.HojeEmBrasilia(2026, 10, 14)
 	log := slog.New(slog.DiscardHandler)
 	mux := http.NewServeMux()
 	Registrar(mux, NovoServico(db, parametros.Novo(parametros.Opcoes{DB: db, Relogio: r, Log: log}), r, log))

@@ -29,9 +29,9 @@ plataforma/erros                93.3
 movimentacao/extrato            95.4
 movimentacao/faturas            94.2
 patrimonio/investimentos        92.0
-planejamento/metas              88.0
+planejamento/metas              90.1
 openfinance/openfinance         87.1
-planejamento/orcamentos         83.5
+planejamento/orcamentos         89.0
 analises/painel                 93.0
 ajustes/parametros              81.5
 movimentacao/parcelas           100.0
