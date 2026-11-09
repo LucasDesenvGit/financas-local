@@ -71,7 +71,7 @@ Na raiz de `ci/`:
 | `verificar-regras-go.py` | As regras de ouro (`float64`, `time.Now()`, `time.Sleep` em teste, #457), com as exceções em `regras-go-excecoes.txt`. O teste é o `test_verificar_regras_go.py`. | CI |
 | `verificar-cobertura-go.py` | Catraca da cobertura: o piso de cada pacote (`src/backend/cobertura-minima.txt`) só sobe (#370). | CI |
 | `verificar-tempo-testes-go.py` | Trava de tempo dos testes do Go: por teste, por pacote e da suíte (#371). | CI |
-| `mutacao-go.py` | Teste de mutação (gremlins) nos pacotes das listas `mutacao-go.txt` e `mutacao-gerenciador-go.txt`, com os equivalentes (`*-equivalentes.txt`) e os fora de propósito (`mutacao-go-fora.txt`). `--conferir-lista` só confere a lista (#373, #456). | CI (workflow "Teste de mutação (Go)"); pessoa |
+| `mutacao-go.py` | Teste de mutação (gremlins) nos pacotes das listas `mutacao-go.txt` e `mutacao-gerenciador-go.txt`, com os equivalentes (`*-equivalentes.txt`) e os fora de propósito (`mutacao-go-fora.txt`). `--conferir-lista` só confere a lista (#373, #456); `--grupos` e `--grupo` dividem a medição por área, um job por grupo no workflow (#673). | CI (workflow "Teste de mutação (Go)"); pessoa |
 
 `ci/front/` (front-end):
 
