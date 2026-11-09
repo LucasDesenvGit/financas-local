@@ -93,7 +93,11 @@ jobs:
           PACOTES: ${{ inputs.pacotes }}
           BASE: ${{ github.base_ref }}
           GRUPO: ${{ matrix.grupo }}
+        # #673: teto de 4 GB de memória por processo. Um mutante que faz um laço sem fim com append (o k++ que vira
+        # k-- no relatorios) comia a memória toda e derrubava o runner ("shutdown signal"), sem relatório. Com o teto, o
+        # teste morre por falta de memória e a mutação conta como pega. A máquina tem 16 GB e o gremlins roda 4 workers.
         run: |
+          ulimit -v 4194304
           if [ -n "$BASE" ]; then
             python3 scripts/ci/go/mutacao-go.py --grupo "$GRUPO" --base "origin/$BASE"   # PR: só os pacotes mudados
           else
