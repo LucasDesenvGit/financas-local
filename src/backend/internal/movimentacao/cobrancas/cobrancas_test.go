@@ -2,6 +2,7 @@ package cobrancas
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"testing"
 
@@ -277,5 +278,94 @@ func TestChaves(t *testing.T) {
 	}
 	if obtido := ChaveDaRegra(strings.Repeat("D", 150)); obtido != strings.Repeat("D", 150) {
 		t.Errorf("ChaveDaRegra de 150: %d", len(obtido))
+	}
+	// #675: a primeira letra fora do plano básico (U+10000) chega ao C# em duas metades que não são letra: a parte com
+	// ela sai da chave, como as com número.
+	if obtido := ChaveDe("BOLETO F I A P \U00010000"); obtido != "BOLETO F I A P" {
+		t.Errorf("ChaveDe com U+10000: %q", obtido)
+	}
+}
+
+// conciliarUma concilia uma conta a pagar "ACADEMIA FORMA" (vencimento em 15/10, hoje 14/10) com as cobranças dadas, na
+// ordem em que são gravadas, e devolve o último pagamento e a chave do extrato gravados (nil quando NULL).
+func conciliarUma(t *testing.T, regra func(db *sql.DB) *int64, cobrancas ...func(*testeapoio.Transacao)) (ultimo, chave *string) {
+	t.Helper()
+	db := testeapoio.NovoBancoVazio(t)
+	fab := testeapoio.NovaFabrica(t, db, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	conta := fab.Conta()
+	var regraId *int64
+	if regra != nil {
+		regraId = regra(db)
+	}
+	agendada := fab.ContaAgendada(func(a *testeapoio.ContaAgendada) {
+		a.ProximoVencimento, a.FormaCobranca, a.TextoCobranca = testeapoio.Dia(2026, 10, 15), 2, ptr("ACADEMIA FORMA")
+	})
+	for _, mudar := range cobrancas {
+		fab.Transacao(conta, func(tr *testeapoio.Transacao) {
+			tr.Data, tr.Valor, tr.Descricao = testeapoio.Dia(2026, 10, 12), testeapoio.Valor("-89.9"), "DEB AUT ACADEMIA FORMA"
+			tr.RegraDescricaoId = regraId
+			mudar(tr)
+		})
+	}
+	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`SELECT "UltimoPagamentoEm", "ChaveExtrato" FROM "ContaAgendada" WHERE "Id" = ?`,
+		agendada.Id).Scan(&ultimo, &chave); err != nil {
+		t.Fatal(err)
+	}
+	return ultimo, chave
+}
+
+// Regra (#675): um estorno lido antes da cobrança é pulado, e a leitura segue até a cobrança.
+func TestConciliarPulaOEstornoESegue(t *testing.T) {
+	t.Parallel()
+	ultimo, _ := conciliarUma(t, nil,
+		func(tr *testeapoio.Transacao) {
+			tr.Data, tr.Valor = testeapoio.Dia(2026, 10, 13), testeapoio.Valor("89.9")
+		},
+		func(tr *testeapoio.Transacao) {})
+	if ultimo == nil || *ultimo != "2026-10-12" {
+		t.Errorf("último pagamento: %v", ultimo)
+	}
+}
+
+// Regra (#205, #675): a cobrança casada sem chave (o estabelecimento só com números) concilia, mas não grava chave
+// vazia: a coluna fica NULL, para a próxima cobrança com chave preencher.
+func TestConciliarSemChaveNaoGravaVazia(t *testing.T) {
+	t.Parallel()
+	ultimo, chave := conciliarUma(t, nil, func(tr *testeapoio.Transacao) { tr.Estabelecimento = ptr("1234") })
+	if ultimo == nil || chave != nil {
+		t.Errorf("último %v, chave %v (quer NULL)", ultimo, chave)
+	}
+}
+
+// Regra (#241, #675): a chave com exatamente 150 chars (o tamanho da coluna) é gravada inteira.
+func TestConciliarChaveNoLimiteDaColuna(t *testing.T) {
+	t.Parallel()
+	nome := "ACADEMIA FORMA " + strings.Repeat("X", 150-len("ACADEMIA FORMA "))
+	regra := func(db *sql.DB) *int64 {
+		var id int64
+		if err := db.QueryRow(`INSERT INTO "RegraDescricao" ("Texto", "TipoCorrespondencia", "NovaDescricao", "ValorMinimo",
+			"Ativa", "CriadoEm") VALUES ('ACADEMIA', 1, ?, '50.0', 1, '2026-01-01 12:00:00') RETURNING "Id"`, nome).Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		return &id
+	}
+	_, chave := conciliarUma(t, regra, func(tr *testeapoio.Transacao) { tr.Descricao = nome })
+	if chave == nil || *chave != nome {
+		t.Errorf("chave de 150: %v", chave)
+	}
+}
+
+// Regra (#675): sem conta a pagar a conciliar, nada muda e nada é lido além delas.
+func TestConciliarSemContas(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	if _, err := db.Exec(`DROP TABLE "RegraDescricao"`); err != nil {
+		t.Fatal(err)
+	}
+	if mudaram, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err != nil || mudaram != 0 {
+		t.Errorf("%d, %v", mudaram, err)
 	}
 }

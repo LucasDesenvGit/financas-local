@@ -1,10 +1,13 @@
 package metas
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -379,5 +382,121 @@ func TestErroDoBanco(t *testing.T) {
 		if r := testeapoio.Chamar(t, mux, c.metodo, c.caminho, c.corpo); r.Status != http.StatusInternalServerError {
 			t.Errorf("%s %s: %d", c.metodo, c.caminho, r.Status)
 		}
+	}
+}
+
+// Regra (#675): a sugestão por mês conta os meses até a data na virada do ano (outubro de 2026 a abril de 2027: 6).
+func TestParaDtoNoAnoQueVem(t *testing.T) {
+	t.Parallel()
+	m := meta{valorAlvo: dec("1200.0"), valorAtual: dec("0"), dataAlvo: ptr(testeapoio.Dia(2027, 4, 14))}
+	dto, err := paraDto(m, nil, nil, testeapoio.Dia(2026, 10, 14))
+	if err != nil || dto.AporteMensalSugerido == nil || !dto.AporteMensalSugerido.Decimal().Equal(dec("200").Decimal()) {
+		t.Errorf("sugestão: %v, %v", dto.AporteMensalSugerido, err)
+	}
+}
+
+// Regra (#89): o cofrinho da meta é o da mesma conta e do mesmo nome; sem conta, nenhum.
+func TestReservaDa(t *testing.T) {
+	t.Parallel()
+	lista := []reservas.ReservaDto{{ContaId: 2, Nome: "Viagem"}, {ContaId: 1, Nome: "Carro"}, {ContaId: 1, Nome: "Viagem"}}
+	if r := reservaDa(meta{contaId: ptr(int64(1)), reservaNome: ptr("viagem")}, lista); r != &lista[2] {
+		t.Errorf("da conta 1: %+v", r)
+	}
+	if r := reservaDa(meta{reservaNome: ptr("Viagem")}, lista); r != nil {
+		t.Errorf("sem conta: %+v", r)
+	}
+}
+
+// Regra (#89): a meta ligada a uma conta mostra o saldo dela, mesmo quando é a única da lista.
+func TestMetaSoComContaMostraOSaldo(t *testing.T) {
+	t.Parallel()
+	_, fab, mux, _ := ambiente(t, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	conta := fab.Conta()
+	fab.Transacao(conta, func(tr *testeapoio.Transacao) { tr.Valor, tr.Tipo = dec("500.0"), 2 })
+	r := testeapoio.Chamar(t, mux, "POST", "/api/metas", `{"nome":"Reserva","valorAlvo":1000,"valorAtual":0,"cor":"#123abc",`+
+		`"concluida":false,"contaId":`+itoa(conta.Id)+`}`)
+	if m := lerJSON[MetaDto](t, r.Corpo); r.Status != 200 || !m.ValorAtual.Decimal().Equal(dec("500").Decimal()) {
+		t.Errorf("criar: %d %s", r.Status, r.Corpo)
+	}
+	lista := lerJSON[[]MetaDto](t, testeapoio.Chamar(t, mux, "GET", "/api/metas", "").Corpo)
+	if len(lista) != 1 || !lista[0].ValorAtual.Decimal().Equal(dec("500").Decimal()) {
+		t.Errorf("lista: %+v", lista)
+	}
+}
+
+// Regra (#89): ao criar, o cofrinho precisa existir na conta escolhida; o de mesmo nome em outra conta não vale.
+func TestCriarComCofrinhoDeOutraConta(t *testing.T) {
+	t.Parallel()
+	_, fab, mux, _ := ambiente(t, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	fab.Conta(func(c *testeapoio.Conta) {
+		c.Origem, c.SaldoReservado, c.ReservasInformadas = 2, ptr(dec("800.0")), ptr(`[{"nome":"Caixinha viagem","valor":800.0}]`)
+	})
+	outra := fab.Conta()
+	base := `"valorAlvo":1000,"valorAtual":0,"cor":"#123abc","concluida":false,"contaId":` + itoa(outra.Id)
+	for _, nome := range []string{"Caixinha viagem", "Nenhuma"} {
+		r := testeapoio.Chamar(t, mux, "POST", "/api/metas", `{"nome":"X",`+base+`,"reservaNome":"`+nome+`"}`)
+		if r.Status != 400 || lerJSON[map[string]string](t, r.Corpo)["mensagem"] != "Cofrinho inválido para esta conta." {
+			t.Errorf("%s: %d %s", nome, r.Status, r.Corpo)
+		}
+	}
+}
+
+// Regra (#318): o aporte que chega ao alvo grava a meta como concluída.
+func TestAporteQueChegaAoAlvoGravaConcluida(t *testing.T) {
+	t.Parallel()
+	db, _, mux, _ := ambiente(t, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	id := inserirMeta(t, db, "Meta", 1, false, "")
+	if r := testeapoio.Chamar(t, mux, "POST", "/api/metas/"+itoa(id)+"/aporte", `{"valor":1000}`); r.Status != 200 {
+		t.Fatalf("aporte: %d %s", r.Status, r.Corpo)
+	}
+	var concluida bool
+	if err := db.QueryRow(`SELECT "Concluida" FROM "Meta" WHERE "Id" = ?`, id).Scan(&concluida); err != nil || !concluida {
+		t.Errorf("concluída gravada: %t, %v", concluida, err)
+	}
+}
+
+// Regra: na nova ordem, as metas fora da lista seguem pela prioridade que tinham, e as sem prioridade (0) vão para o fim.
+func TestOrdemSemPrioridadeNoFim(t *testing.T) {
+	t.Parallel()
+	db, _, mux, _ := ambiente(t, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	semOrdem := inserirMeta(t, db, "Sem ordem", 0, false, "")
+	terceira := inserirMeta(t, db, "Terceira", 3, false, "")
+	primeira := inserirMeta(t, db, "Primeira", 1, false, "")
+	if r := testeapoio.Chamar(t, mux, "PUT", "/api/metas/prioridades", `{"ids":[`+itoa(terceira)+`]}`); r.Status != 204 {
+		t.Fatalf("ordem: %d %s", r.Status, r.Corpo)
+	}
+	for id, quer := range map[int64]int64{terceira: 1, primeira: 2, semOrdem: 3} {
+		var obtido int64
+		_ = db.QueryRow(`SELECT "Prioridade" FROM "Meta" WHERE "Id" = ?`, id).Scan(&obtido)
+		if obtido != quer {
+			t.Errorf("meta %d: prioridade %d, quer %d", id, obtido, quer)
+		}
+	}
+}
+
+// Regra: o pedido cancelado não vira 500, venha o cancelamento no erro ou no contexto; a meta que some depois de
+// gravada é 500.
+func TestErroInterno(t *testing.T) {
+	t.Parallel()
+	_, _, _, s := ambiente(t, testeapoio.HojeEmBrasilia(2026, 10, 14))
+	cancelado, cancelar := context.WithCancel(context.Background())
+	cancelar()
+	for nome, c := range map[string]struct {
+		ctx context.Context
+		err error
+	}{
+		"contexto cancelado": {cancelado, errors.New("o banco parou")},
+		"erro de cancelado":  {context.Background(), context.Canceled},
+	} {
+		w := httptest.NewRecorder()
+		s.erroInterno(w, httptest.NewRequest("GET", "/api/metas", nil).WithContext(c.ctx), "teste", c.err)
+		if w.Code != http.StatusOK || w.Body.Len() != 0 {
+			t.Errorf("%s: %d %s", nome, w.Code, w.Body)
+		}
+	}
+	w := httptest.NewRecorder()
+	s.responderMeta(w, httptest.NewRequest("GET", "/api/metas", nil), 999)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("meta que sumiu: %d %s", w.Code, w.Body)
 	}
 }

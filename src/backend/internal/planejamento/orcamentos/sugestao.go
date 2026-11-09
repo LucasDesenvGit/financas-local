@@ -196,7 +196,7 @@ func (s *Servico) Sugerir(ctx context.Context, ano, mes int) (SugestaoDto, error
 		porId[l.categoriaId] = l
 	}
 	porCartao := map[int64]decimal.Decimal{}
-	if meses > 0 {
+	if meses != 0 { // meses nunca é negativo
 		despesas, err := s.relatorios.Relevantes(ctx, inicio, fim)
 		if err != nil {
 			return SugestaoDto{}, err
