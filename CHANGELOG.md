@@ -2,6 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.9.1] — 2026-11-08 · desenvolvimento
+
+### Publicação e documentação
+- **Teste de mutação do Go: um job por grupo, em paralelo** (#673). A rodada semanal, com a lista inteira num job só, passava dos 60 min e era cancelada (~62 min em 02/11):
+  - o workflow "Teste de mutação (Go)" mede cada grupo num job da matriz, com 30 min de limite: a área do pacote (`ajustes`, `analises`, `movimentacao`, `openfinance`, `patrimonio`, `planejamento`, `plataforma` e a raiz) e o `carteira`, sozinho, porque leva ~15 min;
+  - no PR, só os grupos dos pacotes mudados; pacote novo entra no grupo da área sem mudar o workflow;
+  - o `mutacao-go.py` ganha `--grupos` (a matriz, em JSON) e `--grupo`; a lista, a terceira coluna opcional;
+  - teto de 4 GB de memória por processo na mutação: um mutante com laço sem fim (no `relatorios`) derrubava o runner sem relatório;
+  - ADR 0051, `CONTRIBUINDO.md` e o README dos scripts atualizados.
+
 ## [3.9.0] — 2026-11-08 · desenvolvimento
 
 ### Funcionalidades

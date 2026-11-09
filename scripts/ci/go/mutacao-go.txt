@@ -5,6 +5,10 @@
 # negócio ou dinheiro entra aqui no PR dele, com o piso da primeira medição.
 #
 # Primeira medição: 25/10/2026 (#373).
+#
+# #673: o workflow mede um grupo por job, em paralelo, para cada job ficar abaixo de 30 min. O grupo é a área do pacote
+# (internal/<area>/<assunto>; sem área, "raiz"). Um pacote pesado ganha o job dele com uma terceira coluna, o nome do
+# grupo: hoje, só o carteira (~15 min sozinho, quase metade da área patrimonio). Pacote novo não precisa de nada.
 
 internal/plataforma/tipos          100
 internal/ajustes/parametros     100
@@ -17,7 +21,7 @@ internal/patrimonio/cambio         100
 internal/patrimonio/cripto         100
 internal/patrimonio/reservas       100
 internal/patrimonio/selic          100
-internal/patrimonio/carteira       100
+internal/patrimonio/carteira       100  carteira
 internal/movimentacao/conferenciabanco 100
 internal/patrimonio/cotacoes       100
 internal/openfinance/pluggy         100

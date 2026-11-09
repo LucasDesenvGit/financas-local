@@ -14,6 +14,11 @@ semana e à mão, pelo workflow "Teste de mutação (Go)", mede a lista inteira.
 de internal/ com código fora de teste está na lista ou em mutacao-go-fora.txt, com o motivo: pacote novo não fica de
 fora sem ninguém perceber.
 
+Por grupo (#673): a lista inteira passou dos 60 min, e o workflow mede cada grupo num job, em paralelo. O grupo de um
+pacote é a área dele (internal/<area>/<assunto>; internal/<assunto>, sem área, fica no grupo "raiz"), ou o nome da
+terceira coluna da lista, para um pacote pesado ter o job dele. --grupos diz quais grupos medir (em JSON, para a
+matriz do workflow), e --grupo mede só um: pacote novo entra num grupo sem mudar o workflow.
+
 O gerenciador em Go (src/gerenciador-go, ADR 0052) é outro módulo, com a lista e as equivalentes dele
 (mutacao-gerenciador-go.txt e mutacao-gerenciador-go-equivalentes.txt). No PR que o muda, mede a lista dele inteira
 (#433), na CI, para o teste pesado não rodar na máquina de quem desenvolve.
@@ -22,6 +27,8 @@ Uso:   python3 scripts/ci/go/mutacao-go.py                        # todos os pac
        python3 scripts/ci/go/mutacao-go.py internal/ajustes/parametros    # só os dados (fora da lista: mede, sem piso)
        python3 scripts/ci/go/mutacao-go.py --base origin/develop  # no PR: só os pacotes que mudaram desde a base
        python3 scripts/ci/go/mutacao-go.py --conferir-lista       # só confere a lista (rápido, sem medir)
+       python3 scripts/ci/go/mutacao-go.py --grupos [--base origin/develop | pacotes]  # os grupos a medir, em JSON
+       python3 scripts/ci/go/mutacao-go.py --grupo patrimonio [--base origin/develop]  # só os pacotes de um grupo
        python3 scripts/ci/go/mutacao-go.py --gerenciador          # os do gerenciador (mutacao-gerenciador-go.txt)
        python3 scripts/ci/go/mutacao-go.py --gerenciador --base origin/develop  # no PR: se o gerenciador mudou
 Saída: <módulo>/mutacao/<pacote>.json (o do gremlins) e <módulo>/mutacao/relatorio.md (também no resumo do job,
@@ -77,6 +84,25 @@ def pisos():
         pacote, piso = linha.split()[:2]
         resultado[pacote] = float(piso)
     return resultado
+
+
+def grupos_fixos():
+    """pacote → grupo, para os pacotes com a terceira coluna na lista (#673)."""
+    resultado = {}
+    for linha in ler_linhas(LISTA):
+        partes = linha.split()
+        if len(partes) >= 3 and not partes[2].startswith('#'):
+            resultado[partes[0]] = partes[2]
+    return resultado
+
+
+def grupo_de(pacote, fixos):
+    """O grupo em que o pacote é medido: o da terceira coluna da lista, ou a área (internal/<area>/<assunto>), ou
+    "raiz" para internal/<assunto>."""
+    if pacote in fixos:
+        return fixos[pacote]
+    partes = pacote.strip('./').split('/')
+    return partes[1] if len(partes) >= 3 and partes[0] == 'internal' else 'raiz'
 
 
 def fora_de_proposito():
@@ -202,8 +228,8 @@ def medir(pacote, conhecidas):
             'sem_teste': sem_teste, 'eficacia': eficacia, 'segundos': dados.get('elapsed_time', 0)}
 
 
-def relatorio(resultados, limites):
-    linhas = [TITULO, '',
+def relatorio(resultados, limites, titulo=TITULO):
+    linhas = [titulo, '',
               '| Pacote | Mortas | Vivas | Equivalentes | Sem teste | Eficácia | Piso |', '|---|---|---|---|---|---|---|']
     for r in resultados:
         piso = limites.get(r['pacote'])
@@ -220,7 +246,7 @@ def relatorio(resultados, limites):
     return '\n'.join(linhas) + '\n'
 
 
-def escrever(texto):
+def escrever(texto, saida=sys.stdout):
     """O relatório no arquivo, no resumo do job (no GitHub Actions) e na saída."""
     os.makedirs(SAIDA, exist_ok=True)
     with open(os.path.join(SAIDA, 'relatorio.md'), 'w', encoding='utf-8') as f:
@@ -228,7 +254,7 @@ def escrever(texto):
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
             f.write(texto)
-    print(texto)
+    print(texto, file=saida)
 
 
 def main():
@@ -237,6 +263,9 @@ def main():
     argumentos.add_argument('--gerenciador', action='store_true', help='o módulo do gerenciador, e não o back-end')
     argumentos.add_argument('--base', help='no PR: medir só o que mudou desde esta base (ex.: origin/develop)')
     argumentos.add_argument('--conferir-lista', action='store_true', help='só conferir a lista, sem medir')
+    argumentos.add_argument('--grupos', action='store_true',
+                            help='só dizer os grupos a medir, em JSON (a matriz do workflow, #673)')
+    argumentos.add_argument('--grupo', help='medir só os pacotes deste grupo (#673)')
     opcoes = argumentos.parse_args()
 
     limites = pisos()
@@ -255,14 +284,30 @@ def main():
     elif opcoes.base:
         pedidos = escolher_no_pr(mudados(opcoes.base), limites)
         if not pedidos:
-            escrever(f'{TITULO}\n\nNada a medir: o PR não mexe em pacote da lista ({MODULO}).\n')
+            # Com --grupos, a saída é o JSON da matriz: o aviso vai só para o resumo do job e para o stderr.
+            escrever(f'{TITULO}\n\nNada a medir: o PR não mexe em pacote da lista ({MODULO}).\n',
+                     sys.stderr if opcoes.grupos else sys.stdout)
+            if opcoes.grupos:
+                print('[]')
             return
     else:
         pedidos = list(limites)
 
+    fixos = grupos_fixos()
+    if opcoes.grupos:
+        print(json.dumps(sorted({grupo_de(p, fixos) for p in pedidos})))
+        return
+    titulo = TITULO
+    if opcoes.grupo:
+        pedidos = [p for p in pedidos if grupo_de(p, fixos) == opcoes.grupo]
+        titulo = f'{TITULO} — {opcoes.grupo}'
+        if not pedidos:
+            escrever(f'{titulo}\n\nNada a medir neste grupo.\n')
+            return
+
     conhecidas = equivalentes()
     resultados = [medir(p, conhecidas) for p in pedidos]
-    escrever(relatorio(resultados, limites))
+    escrever(relatorio(resultados, limites, titulo))
     abaixo = [r for r in resultados if r['pacote'] in limites and r['eficacia'] < limites[r['pacote']]]
     for r in abaixo:
         print(f"::error::{r['pacote']}: eficácia {r['eficacia']:.1f}% abaixo do piso de {limites[r['pacote']]:.0f}%: "

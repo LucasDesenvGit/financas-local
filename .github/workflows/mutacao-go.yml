@@ -5,7 +5,8 @@ name: Teste de mutação (Go)
 # #456: no PR que mexe no back-end, mede só os pacotes da lista que o PR mudou, e falha abaixo do piso; toda segunda de
 # manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow), mede a lista inteira. Antes de medir, confere que
 # todo pacote de internal/ está na lista ou em scripts/ci/go/mutacao-go-fora.txt, com o motivo.
-# Os pacotes e os pisos ficam em scripts/ci/go/mutacao-go.txt; o relatório sai no resumo do job e no artefato.
+# Os pacotes e os pisos ficam em scripts/ci/go/mutacao-go.txt; o relatório sai no resumo e no artefato de cada grupo.
+# #673: um job por grupo, em paralelo (abaixo, no job "grupos").
 # #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/go/mutacao-gerenciador-go.txt) roda no PR que mexe nele,
 # para o teste pesado não rodar na máquina de quem desenvolve (chegava a 8 GB de memória).
 on:
@@ -36,10 +37,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  mutacao:
-    name: Teste de mutação (Go)
+  # #673: a lista inteira passou dos 60 min num job só (~62 min em 02/11). Cada grupo (a área do pacote, ou a terceira
+  # coluna da lista para um pacote pesado) vira um job da matriz, em paralelo. Este job só escolhe os grupos: no PR, os
+  # dos pacotes mudados; toda semana, todos; à mão, os dos pacotes pedidos. Pacote novo entra sem mudar o workflow.
+  grupos:
+    name: Teste de mutação (Go) — grupos
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 5
+    outputs:
+      grupos: ${{ steps.escolher.outputs.grupos }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # no PR, o script compara com a base (base...HEAD)
+
+      - name: Escolher os grupos
+        id: escolher
+        env:
+          PACOTES: ${{ inputs.pacotes }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE" ]; then
+            grupos=$(python3 scripts/ci/go/mutacao-go.py --grupos --base "origin/$BASE")   # PR: só os pacotes mudados
+          else
+            grupos=$(python3 scripts/ci/go/mutacao-go.py --grupos $PACOTES)               # semanal e à mão
+          fi
+          echo "Grupos: $grupos"
+          echo "grupos=$grupos" >> "$GITHUB_OUTPUT"
+
+  mutacao:
+    name: Teste de mutação (Go) — ${{ matrix.grupo }}
+    needs: grupos
+    if: needs.grupos.outputs.grupos != '[]'
+    runs-on: ubuntu-latest
+    # #673: a meta é cada grupo abaixo de 30 min. Passou? Dê ao pacote mais lento do grupo um grupo próprio, na terceira
+    # coluna de scripts/ci/go/mutacao-go.txt.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false # um grupo abaixo do piso não esconde o resultado dos outros
+      matrix:
+        grupo: ${{ fromJSON(needs.grupos.outputs.grupos) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,18 +92,23 @@ jobs:
         env:
           PACOTES: ${{ inputs.pacotes }}
           BASE: ${{ github.base_ref }}
+          GRUPO: ${{ matrix.grupo }}
+        # #673: teto de 4 GB de memória por processo. Um mutante que faz um laço sem fim com append (o k++ que vira
+        # k-- no relatorios) comia a memória toda e derrubava o runner ("shutdown signal"), sem relatório. Com o teto, o
+        # teste morre por falta de memória e a mutação conta como pega. A máquina tem 16 GB e o gremlins roda 4 workers.
         run: |
+          ulimit -v 4194304
           if [ -n "$BASE" ]; then
-            python3 scripts/ci/go/mutacao-go.py --base "origin/$BASE"   # PR: só os pacotes mudados
+            python3 scripts/ci/go/mutacao-go.py --grupo "$GRUPO" --base "origin/$BASE"   # PR: só os pacotes mudados
           else
-            python3 scripts/ci/go/mutacao-go.py $PACOTES               # semanal e à mão
+            python3 scripts/ci/go/mutacao-go.py --grupo "$GRUPO" $PACOTES               # semanal e à mão
           fi
 
       - name: Relatório e resultados
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: mutacao-go
+          name: mutacao-go-${{ matrix.grupo }}
           path: src/backend/mutacao/
           if-no-files-found: ignore
           retention-days: 30
