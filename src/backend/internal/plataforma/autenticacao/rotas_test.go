@@ -254,3 +254,32 @@ func TestRotaQueNaoEAnonimaExigeLogin(t *testing.T) {
 		t.Errorf("rota inexistente: %d", status)
 	}
 }
+
+// Regra (#684): as rotas do gerenciador passam sem login e sem CSRF (o pacote celular exige o loopback e o segredo
+// dele); outra rota anônima continua pedindo o CSRF nos POST.
+func TestRotasDoGerenciadorSemLoginNemCsrf(t *testing.T) {
+	a := novoAmbiente(t)
+	mux := http.NewServeMux()
+	feito := func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }
+	for _, rota := range []string{"POST /api/celular/gerenciador/ligar", "POST /api/celular/gerenciador/desligar",
+		"POST /api/auth/sair", "POST /api/celular/ligar", "GET /api/celular/gerenciador/ligar"} {
+		mux.HandleFunc(rota, feito)
+	}
+	protegido := a.auth.Proteger(mux)
+	for _, c := range []struct {
+		metodo, caminho string
+		status          int
+	}{
+		{"POST", "/api/celular/gerenciador/ligar", 204},
+		{"POST", "/api/celular/gerenciador/desligar", 204},
+		{"POST", "/api/auth/sair", 400},                // anônima, mas com CSRF
+		{"POST", "/api/celular/ligar", 401},            // o ligar do site exige login
+		{"GET", "/api/celular/gerenciador/ligar", 401}, // só o POST é anônimo
+	} {
+		w := httptest.NewRecorder()
+		protegido.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), c.metodo, c.caminho, nil))
+		if w.Code != c.status {
+			t.Errorf("%s %s: %d, esperado %d", c.metodo, c.caminho, w.Code, c.status)
+		}
+	}
+}

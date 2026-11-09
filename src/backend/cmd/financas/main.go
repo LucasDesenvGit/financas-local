@@ -246,8 +246,13 @@ func novoAcessoCelular(db *sql.DB, rel relogio.Relogio, log *slog.Logger, site s
 	if err != nil {
 		return nil, fmt.Errorf("a porta do site %q: %w", site.Config.Endereco, err)
 	}
+	chaveGerenciador, err := celular.CarregarChaveDoGerenciador(site.Config.PastaChaves)
+	if err != nil {
+		return nil, err
+	}
 	return celular.Novo(celular.Opcoes{
 		DB: db, Relogio: rel, Log: log, PastaChaves: site.Config.PastaChaves, Porta: porta, Firewall: celular.FirewallDoSistema(),
+		ChaveGerenciador: chaveGerenciador,
 		NovoServidor: func(ip string, c tls.Certificate) (*http.Server, error) {
 			daRede := site
 			daRede.Config.HostsPermitidos = []string{ip}

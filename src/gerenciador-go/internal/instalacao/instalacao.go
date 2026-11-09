@@ -21,7 +21,9 @@ type Instalacao struct {
 	// PastaPrograma é a pasta da API (a do serviço; sem o serviço, a do próprio gerenciador).
 	PastaPrograma string
 	PastaDados    string
-	CaminhoBanco  string
+	// PastaChaves é a do Seguranca:PastaChaves, ou dados/chaves: lá o site guarda o segredo do gerenciador (#684).
+	PastaChaves  string
+	CaminhoBanco string
 	// PeloMsi: instalado pelo .msi; só então o gerenciador procura e instala versões novas do GitHub.
 	PeloMsi bool
 	// Site é o endereço com a barra no fim (https://127.0.0.1:5443/).
@@ -57,6 +59,15 @@ func Ler(pastaPrograma string) Instalacao {
 		}
 		i.PastaDados = absoluto(pastaPrograma, expandir(dados))
 		i.CaminhoBanco = filepath.Join(i.PastaDados, "sql", "FinancasLocal.db")
+	}
+
+	i.PastaChaves = filepath.Join(i.PastaDados, "chaves")
+	chaves, temChaves := texto(producao, "Seguranca", "PastaChaves")
+	if !temChaves {
+		chaves, temChaves = texto(geral, "Seguranca", "PastaChaves")
+	}
+	if temChaves {
+		i.PastaChaves = absoluto(pastaPrograma, expandir(strings.ReplaceAll(chaves, "/", string(filepath.Separator))))
 	}
 
 	url, ok := texto(producao, "Kestrel", "Endpoints", "Https", "Url")

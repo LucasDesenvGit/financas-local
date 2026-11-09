@@ -2,6 +2,12 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.12.0] — 2026-11-09 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: liga e desliga o acesso pelo celular direto** (#684), sem abrir o site. No cartão "Acesso pelo celular", "Ligar o acesso" usa o endereço escolhido da última vez (ou o principal do computador) e "Desligar o acesso" fecha a porta; no Windows, pede a permissão de administrador. "Ver no site" abre Configurações › Segurança, para o QR code, outro endereço e os avisos do firewall.
+  - O site cria um segredo para o gerenciador em `dados/chaves` e ganha `POST /api/celular/gerenciador/ligar` e `desligar`: sem login, só do próprio computador e com o segredo (ADR 0061 e o modelo de ameaças atualizados).
+
 ## [3.11.0] — 2026-11-09 · desenvolvimento
 
 ### Funcionalidades

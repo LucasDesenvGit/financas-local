@@ -7,6 +7,6 @@
     Para publicar, a tag vX.Y.Z tem de ser igual a este número: o workflow de versão confere.
   -->
   <PropertyGroup>
-    <Version>3.11.0</Version>
+    <Version>3.12.0</Version>
   </PropertyGroup>
 </Project>

@@ -14,6 +14,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/w32"
 	"golang.org/x/sys/windows"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/acessocelular"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
@@ -53,6 +54,15 @@ func prepararBandeja(b *application.SystemTray, abrir func()) { b.OnDoubleClick(
 // executarNoServico pelo UAC; a mensagem do erro fica nos eventos do Windows.
 func executarNoServico(acao string) (elevacao.Resultado, string) {
 	return elevacao.Executar("--servico", acao), ""
+}
+
+// mudarAcessoCelular pelo UAC (#684): o segredo do site fica na pasta das chaves, que só administradores leem.
+func mudarAcessoCelular(_ instalacao.Instalacao, ligar bool) acessocelular.Resultado {
+	acao := "desligar"
+	if ligar {
+		acao = "ligar"
+	}
+	return acessocelular.DoElevado(elevacao.ExecutarComCodigo("--celular", acao))
 }
 
 // copiarBanco pelo UAC: o banco fica na pasta de dados do serviço.

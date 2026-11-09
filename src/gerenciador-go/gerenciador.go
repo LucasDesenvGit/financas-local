@@ -15,6 +15,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/acessocelular"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/atualizacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/elevacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/icones"
@@ -72,6 +73,9 @@ type gerenciador struct {
 	comando      string
 	semLogin     string
 	erroSemLogin string
+	// O acesso pelo celular (#684): o que está fazendo ("ligar", "desligar" ou "") e o aviso da última vez.
+	celularMudando string
+	avisoCelular   string
 
 	bandeja      *application.SystemTray
 	itemSituacao *application.MenuItem
@@ -148,6 +152,9 @@ func (g *gerenciador) tela() tela.Tela {
 		Comando:      g.comando,
 		SemLogin:     g.semLogin,
 		ErroSemLogin: g.erroSemLogin,
+
+		CelularMudando: g.celularMudando,
+		AvisoCelular:   g.avisoCelular,
 	}
 }
 
@@ -239,6 +246,29 @@ func (g *gerenciador) acaoNoServico(acao string) {
 	case elevacao.Falhou:
 		g.trocarDetalhe(tela.NaoDeuCerto(motivo, ondeVerOErro))
 	}
+}
+
+// mudarCelular liga ou desliga o acesso pelo celular (#684): no Windows, pelo gerenciador elevado, que lê o segredo do
+// site; no Linux, aqui mesmo. Depois consulta de novo, e o cartão mostra o estado novo e, se não deu, o motivo.
+func (g *gerenciador) mudarCelular(ligar bool) {
+	g.trava.Lock()
+	if g.celularMudando != "" {
+		g.trava.Unlock()
+		return
+	}
+	g.celularMudando, g.avisoCelular = "desligar", ""
+	if ligar {
+		g.celularMudando = "ligar"
+	}
+	g.trava.Unlock()
+
+	resultado := mudarAcessoCelular(g.inst, ligar)
+	g.atualizarSituacao()
+
+	g.trava.Lock()
+	g.celularMudando = ""
+	g.avisoCelular = acessocelular.Texto(resultado)
+	g.trava.Unlock()
 }
 
 // esperarResponder: o serviço sobe antes do site responder; a janela continua em "Ligando o site…" até ele responder
@@ -424,6 +454,9 @@ func (g *gerenciador) rotas() http.Handler {
 				http.Error(w, "não deu para copiar", http.StatusInternalServerError)
 				return
 			}
+		case "celular-ligar", "celular-desligar":
+			// Como ligar o site: o UAC não segura a página, e o estado novo chega pelo GET /estado.
+			go g.mudarCelular(acao == "celular-ligar")
 		case "sem-login":
 			go g.manterSemLogin()
 		case "baixar-msi":

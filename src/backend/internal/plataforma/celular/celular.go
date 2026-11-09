@@ -59,6 +59,8 @@ type Opcoes struct {
 	NovoServidor func(ip string, certificado tls.Certificate) (*http.Server, error)
 	Enderecos    func() ([]Endereco, error)                  // padrão: EnderecosDoComputador
 	Escutar      func(endereco string) (net.Listener, error) // padrão: net.Listen("tcp", ...)
+	// ChaveGerenciador é o segredo do gerenciador (CarregarChaveDoGerenciador, #684); vazio: as rotas dele dão 404.
+	ChaveGerenciador string
 }
 
 // Servico liga e desliga o acesso, e guarda o servidor da rede enquanto ele está ligado.

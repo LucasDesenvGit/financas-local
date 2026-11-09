@@ -94,6 +94,10 @@ type Tela struct {
 	SemLogin string
 	// ErroSemLogin troca o texto do "sem login" quando ligar não deu certo.
 	ErroSemLogin string
+	// CelularMudando é o que o gerenciador está fazendo no acesso pelo celular (#684): "ligar", "desligar" ou "".
+	CelularMudando string
+	// AvisoCelular é o resultado da última vez que ligou ou desligou, quando não foi o esperado ("" se deu certo).
+	AvisoCelular string
 }
 
 // NaoDeuCerto é o detalhe quando ligar, desligar ou reiniciar falha: o motivo, quando o sistema diz (no Linux, o do
@@ -304,20 +308,42 @@ func (t Tela) PontoCelular() string {
 }
 
 // TextoCelular diz o estado em palavras, e o endereço quando ligado (a cor do ponto nunca é a única pista, WCAG 1.4.1).
+// Enquanto liga ou desliga, diz isso, e no Windows avisa do UAC antes de ele aparecer (Nielsen 1 e 5).
 func (t Tela) TextoCelular() string {
+	if t.CelularMudando != "" {
+		texto := "Desligando o acesso pelo celular…"
+		if t.CelularMudando == "ligar" {
+			texto = "Ligando o acesso pelo celular…"
+		}
+		if !t.Linux {
+			texto += " O Windows vai pedir permissão de administrador."
+		}
+		return texto
+	}
 	if t.Situacao.Celular.Ligado {
 		return "Ligado. No celular, no mesmo Wi-Fi, abra " + t.Situacao.Celular.Endereco
 	}
 	return "Desligado: o site só abre neste computador."
 }
 
-// BotaoCelular diz o que a pessoa vai fazer na tela que o botão abre.
+// BotaoCelular é o botão que liga ou desliga daqui (#684), com o verbo do que vai acontecer (Nielsen 2).
 func (t Tela) BotaoCelular() string {
 	if t.Situacao.Celular.Ligado {
-		return "Desligar no site"
+		return "Desligar o acesso"
 	}
-	return "Ligar no site"
+	return "Ligar o acesso"
 }
+
+// AcaoCelular é a ação do botão (POST /acao/{acao}).
+func (t Tela) AcaoCelular() string {
+	if t.Situacao.Celular.Ligado {
+		return "celular-desligar"
+	}
+	return "celular-ligar"
+}
+
+// CelularHabilitado: o botão para enquanto liga ou desliga, para o segundo clique não pedir outro UAC.
+func (t Tela) CelularHabilitado() bool { return t.CelularMudando == "" }
 
 // PaginasDoSiteHabilitadas: erros e manual são páginas do site, e só abrem com ele no ar.
 func (t Tela) PaginasDoSiteHabilitadas() bool { return t.Situacao.Estado == NoAr }
@@ -354,6 +380,9 @@ type Atualizacao struct {
 	PontoCelular        string `json:"pontoCelular"`
 	TextoCelular        string `json:"textoCelular"`
 	BotaoCelular        string `json:"botaoCelular"`
+	AcaoCelular         string `json:"acaoCelular"`
+	CelularHabilitado   bool   `json:"celularHabilitado"`
+	AvisoCelular        string `json:"avisoCelular"`
 }
 
 // Atualizacao da tela, com as mesmas regras da página inteira.
@@ -369,7 +398,8 @@ func (t Tela) Atualizacao() Atualizacao {
 		Develop: t.Develop.Disponivel, DevelopRodando: t.Develop.Rodando, Saida: t.Develop.Saida,
 		NotasDevelop: t.Develop.Notas, ReabrirGerenciador: t.Develop.ReabrirGerenciador, SemLogin: t.SemLogin, TextoSemLogin: t.TextoSemLogin(),
 		CelularVisivel: t.CelularVisivel(), PontoCelular: t.PontoCelular(), TextoCelular: t.TextoCelular(),
-		BotaoCelular: t.BotaoCelular(),
+		BotaoCelular: t.BotaoCelular(), AcaoCelular: t.AcaoCelular(), CelularHabilitado: t.CelularHabilitado(),
+		AvisoCelular: t.AvisoCelular,
 	}
 }
 
