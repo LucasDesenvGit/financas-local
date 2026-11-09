@@ -12,7 +12,7 @@ import {
   LucidePiggyBank, LucideReceipt, LucideReceiptText, LucideRefreshCw, LucideRepeat2, LucideSettings, LucideShoppingBag,
   LucideSlidersHorizontal, LucideSun, LucideTags, LucideTarget, LucideTrendingUp, LucideTriangleAlert, LucideUndo2,
   LucideWallet, LucideX,
-  LucideLuggage, LucideGift, LucideBaby, LucideGem, LucideLaptop, LucideSmartphone, LucideBike
+  LucideLuggage, LucideGift, LucideBaby, LucideGem, LucideLaptop, LucideSmartphone, LucideBike, LucidePowerOff, LucideDownload
 } from '@lucide/angular';
 import type { LucideIcon } from '@lucide/angular';
 
@@ -58,6 +58,10 @@ export const Icones = {
   menuLateral: LucideMenu,
   sair: LucideLogOut,
   alerta: LucideTriangleAlert,
+  /** #677: o acesso pelo celular (ligar), desligar e baixar o certificado. */
+  celular: LucideSmartphone,
+  desligar: LucidePowerOff,
+  baixar: LucideDownload,
   // Marca e indicadores
   marca: LucidePiggyBank,
   patrimonio: LucideWallet,

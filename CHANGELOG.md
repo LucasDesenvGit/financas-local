@@ -2,12 +2,20 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.10.0] — 2026-11-09 · desenvolvimento
+## [3.11.0] — 2026-11-09 · desenvolvimento
 
 ### Funcionalidades
 - **Gerenciador: o acesso pelo celular à vista** (#679). Com o site no ar, um cartão "Acesso pelo celular" mostra se ele está ligado (ponto verde e o endereço para abrir no celular) ou desligado, e muda sozinho. O botão "Ligar no site" ou "Desligar no site" abre o site em Configurações › Segurança: ligar e desligar continua lá, com login.
   - O site ganha `GET /api/celular/estado`, sem login, que só responde a quem pede do próprio computador e só diz ligado e o endereço (ADR 0061 e o modelo de ameaças atualizados).
   - Site de versão anterior, sem a rota: o cartão não aparece.
+
+## [3.10.0] — 2026-11-09 · desenvolvimento
+
+### Funcionalidades
+- **Acesso pelo celular com QR code e ícones nos botões** (#677). Em Configurações › Segurança › "Acesso pelo celular", ligado:
+  - dois QR codes no passo a passo: "1. Certificado", que abre o certificado para instalar no celular, e "4. O site", que abre o site. A câmera do celular lê, sem digitar IP e porta;
+  - o QR é desenhado no próprio site, preto no branco também no tema escuro, sem nada baixado de fora (ADR 0062, com o `qrcode-generator` só para a matriz);
+  - ícones em "Ligar o acesso pelo celular", "Desligar o acesso pelo celular" e "Baixar o certificado neste computador".
 
 ## [3.9.2] — 2026-11-09 · desenvolvimento
 
