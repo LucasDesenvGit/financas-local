@@ -5,7 +5,7 @@ const impressao = Array.from({ length: 32 }, (_, i) => (i * 7 % 256).toString(16
 
 /**
  * #328 (ADR 0061): o quadro "Acesso pelo celular" em Configurações › Segurança (API falsa, IPs fictícios). Ligar pede
- * confirmação e mostra o endereço, os avisos e os passos; desligar volta ao começo. Sem erro de CSP nem rolagem para o lado.
+ * confirmação e mostra o endereço, os avisos, os passos e os QR codes (#677); desligar volta ao começo. Sem erro de CSP nem rolagem para o lado.
  */
 test('Configurações › Segurança: ligar e desligar o acesso pelo celular', async ({ page, problemas }) => {
   const ligada = { ligado: true, ip: '192.168.0.10', endereco: 'https://192.168.0.10:5443', ipIndisponivel: false,
@@ -35,6 +35,14 @@ test('Configurações › Segurança: ligar e desligar o acesso pelo celular', a
   await expect(quadro.locator('.aviso-inline')).toContainText('Pública');
   await expect(quadro.locator('.impressao-digital')).toHaveText(impressao);
   await expect(quadro.getByRole('link', { name: 'Baixar o certificado neste computador' })).toHaveAttribute('href', '/api/celular/autoridade');
+  // #677: os dois QR codes aparecem, inteiros e no tamanho em que a câmera lê (168 px), sem erro de CSP.
+  for (const nome of ['certificado', 'site']) {
+    const qr = quadro.getByRole('img', { name: new RegExp(`QR code do endereço do ${nome}`) });
+    await expect(qr).toBeVisible();
+    const caixa = (await qr.boundingBox())!;
+    expect(caixa.width, `QR do ${nome}`).toBeGreaterThanOrEqual(167.5);
+    expect(caixa.height, `QR do ${nome}`).toBeGreaterThanOrEqual(167.5);
+  }
   const sobra = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(sobra, 'a tela rola para o lado').toBeLessThanOrEqual(1);
 
