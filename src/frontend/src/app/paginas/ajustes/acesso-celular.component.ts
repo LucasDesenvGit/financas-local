@@ -6,7 +6,10 @@ import { mensagemDeErro } from '../../core/erro.interceptor';
 import { SituacaoCelular } from '../../core/modelos';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
+import { IconeComponent } from '../../compartilhado/ui/icone.component';
+import { Icones } from '../../compartilhado/ui/icones';
 import { CAMINHO_AUTORIDADE, abertoPelaRede, enderecoDaAutoridade, ipInicial } from './acesso-celular';
+import { QrCodeComponent } from './qr-code.component';
 
 /**
  * #328 (ADR 0061): o acesso pelo celular na rede de casa, em Configurações › Segurança. Desligado por padrão. Ligar
@@ -15,7 +18,7 @@ import { CAMINHO_AUTORIDADE, abertoPelaRede, enderecoDaAutoridade, ipInicial } f
  */
 @Component({
   selector: 'app-acesso-celular',
-  imports: [ListaSuspensaDirective, FormsModule],
+  imports: [ListaSuspensaDirective, FormsModule, IconeComponent, QrCodeComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <section class="painel-bloco acesso-celular" aria-labelledby="titulo-acesso-celular">
@@ -32,6 +35,14 @@ import { CAMINHO_AUTORIDADE, abertoPelaRede, enderecoDaAutoridade, ipInicial } f
           }
           <details class="guia" open>
             <summary>Como abrir no celular (uma vez)</summary>
+            @if (autoridade(); as a) {
+              <p class="texto-suave">Com a câmera do celular, leia o código do passo 1 e, depois de instalar o certificado, o do
+                passo 4. Ou digite os endereços.</p>
+              <div class="qrs-celular">
+                <app-qr-code [texto]="a" legenda="1. Certificado" rotulo="QR code do endereço do certificado, o do passo 1" />
+                <app-qr-code [texto]="s.endereco!" legenda="4. O site" rotulo="QR code do endereço do site, o do passo 4" />
+              </div>
+            }
             <ol>
               <li>No celular, conectado ao mesmo Wi-Fi, abra <strong class="quebra">{{ autoridade() }}</strong>. Desta vez o navegador
                 avisa que a conexão não é particular: é esperado, porque o celular ainda não conhece o certificado. Siga em
@@ -46,10 +57,12 @@ import { CAMINHO_AUTORIDADE, abertoPelaRede, enderecoDaAutoridade, ipInicial } f
               iPhone mostra em “Mais detalhes” ao instalar:</p>
             <p><code class="impressao-digital">{{ s.impressaoDigital }}</code></p>
             <p class="texto-suave">Prefere mandar o arquivo de outro jeito (cabo, e-mail para você mesmo)?
-              <a [href]="caminhoAutoridade" download="financas-local-celular.crt">Baixar o certificado neste computador</a>.</p>
+              <a class="link-com-icone" [href]="caminhoAutoridade" download="financas-local-celular.crt"><app-icone
+                [icone]="Icones.baixar" [tamanho]="16" />Baixar o certificado neste computador</a>.</p>
           </details>
           <div class="rodape-form"><span class="cresce"></span>
-            <button type="button" class="botao" (click)="desligar()" [disabled]="ocupado()">Desligar o acesso pelo celular</button>
+            <button type="button" class="botao" (click)="desligar()" [disabled]="ocupado()">
+              <app-icone [icone]="Icones.desligar" />Desligar o acesso pelo celular</button>
           </div>
         } @else {
           <p>Abra o site no celular, na mesma rede Wi-Fi de casa. Desligado, o site só abre neste computador.</p>
@@ -70,7 +83,7 @@ import { CAMINHO_AUTORIDADE, abertoPelaRede, enderecoDaAutoridade, ipInicial } f
                 endereço não mudar, reserve esse IP no roteador.</small>
               <div class="rodape-form"><span class="cresce"></span>
                 <button type="button" class="botao botao-primario" (click)="ligar()" [disabled]="ocupado() || !ipEscolhido">
-                  Ligar o acesso pelo celular</button>
+                  <app-icone [icone]="Icones.celular" />Ligar o acesso pelo celular</button>
               </div>
             </div>
           } @else {
@@ -88,6 +101,8 @@ import { CAMINHO_AUTORIDADE, abertoPelaRede, enderecoDaAutoridade, ipInicial } f
     .acesso-celular .endereco-celular, .acesso-celular .quebra, .impressao-digital { overflow-wrap: anywhere; }
     .impressao-digital { font-size: 0.85rem; }
     .acesso-celular ol { padding-left: 1.2rem; display: grid; gap: 6px; }
+    .qrs-celular { display: flex; flex-wrap: wrap; gap: 16px 24px; margin: 8px 0 12px; }
+    .link-com-icone { display: inline-flex; align-items: center; gap: 4px; vertical-align: bottom; }
   `]
 })
 export class AcessoCelularComponent implements OnInit {
@@ -100,6 +115,7 @@ export class AcessoCelularComponent implements OnInit {
   readonly ocupado = signal(false);
   readonly caminhoAutoridade = CAMINHO_AUTORIDADE;
   readonly nomeDoArquivo = 'financas-local-celular.crt';
+  readonly Icones = Icones;
   ipEscolhido = '';
 
   ngOnInit(): void {

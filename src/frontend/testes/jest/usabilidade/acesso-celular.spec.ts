@@ -6,7 +6,7 @@ import { AvisosService } from '../../../src/app/core/avisos.service';
 import { SituacaoCelular } from '../../../src/app/core/modelos';
 import { ConfirmacaoService, PedidoConfirmacao } from '../../../src/app/compartilhado/ui/confirmacao.service';
 import { AcessoCelularComponent } from '../../../src/app/paginas/ajustes/acesso-celular.component';
-import { abertoPelaRede, enderecoDaAutoridade, ipInicial } from '../../../src/app/paginas/ajustes/acesso-celular';
+import { MARGEM_DO_QR, abertoPelaRede, desenharQr, enderecoDaAutoridade, ipInicial } from '../../../src/app/paginas/ajustes/acesso-celular';
 import { descreverEvento } from '../../../src/app/paginas/ajustes/auditoria';
 
 const wifi = { ip: '192.168.0.10', interface: 'Wi-Fi', rede: '192.168.0.0/24' };
@@ -92,6 +92,32 @@ describe('Usabilidade: acesso pelo celular (#328)', () => {
     expect(texto(baixar)).toBe('Baixar o certificado neste computador');
   });
 
+  it('#677: ligado, um QR code para o certificado e outro para o site, com legenda e nome para o leitor de tela (WCAG 1.1.1)', async () => {
+    const t = await abrir(ligada);
+    const qrs = Array.from(t.raiz.querySelectorAll('.qrs-celular figure'));
+    expect(qrs.map((f) => texto(f.querySelector('figcaption')))).toEqual(['1. Certificado', '4. O site']);
+    const imagens = qrs.map((f) => f.querySelector('svg')!);
+    expect(imagens.map((i) => i.getAttribute('role'))).toEqual(['img', 'img']);
+    expect(imagens[0].getAttribute('aria-label')).toContain('certificado');
+    expect(imagens[1].getAttribute('aria-label')).toContain('site');
+    expect(imagens[0].querySelector('path')!.getAttribute('d')).toBe(desenharQr('https://192.168.0.10:5443/api/celular/autoridade').caminho);
+    expect(imagens[1].querySelector('path')!.getAttribute('d')).toBe(desenharQr('https://192.168.0.10:5443').caminho);
+  });
+
+  it('#677: os botões e o link de baixar têm ícone, decorativo (aria-hidden), e o texto continua sendo o nome', async () => {
+    const desligado = await abrir(situacao());
+    expect(desligado.botao('Ligar o acesso pelo celular').querySelector('svg[aria-hidden=true]')).not.toBeNull();
+    TestBed.resetTestingModule();
+    const t = await abrir(ligada);
+    expect(t.botao('Desligar o acesso pelo celular').querySelector('svg[aria-hidden=true]')).not.toBeNull();
+    expect(t.raiz.querySelector('a[download] svg[aria-hidden=true]')).not.toBeNull();
+  });
+
+  it('desligado, sem QR code', async () => {
+    const t = await abrir(situacao());
+    expect(t.raiz.querySelector('.qrs-celular')).toBeNull();
+  });
+
   it('o IP escolhido antes que saiu do computador aparece, e a lista começa no primeiro de agora', async () => {
     const t = await abrir(situacao({ ip: '192.168.1.50', ipIndisponivel: true }));
     expect(texto(t.raiz)).toContain('estava ligado em 192.168.1.50, que não está mais neste computador');
@@ -143,6 +169,29 @@ describe('Regras do acesso pelo celular (#328)', () => {
   it('o endereço do certificado é o do site ligado com o caminho da autoridade', () => {
     expect(enderecoDaAutoridade(ligada)).toBe('https://192.168.0.10:5443/api/celular/autoridade');
     expect(enderecoDaAutoridade(situacao())).toBeNull();
+  });
+
+  it('#677: o QR code tem a margem de 4 módulos e os três quadrados de canto (o que a câmera procura)', () => {
+    const { lado, caminho } = desenharQr('https://192.168.0.10:5443/api/celular/autoridade');
+    const n = lado - 2 * MARGEM_DO_QR;
+    expect((n - 21) % 4).toBe(0); // os tamanhos do QR: 21, 25, 29... módulos
+    const escuros = new Set(Array.from(caminho.matchAll(/M(\d+) (\d+)h1v1h-1z/g), (m) => `${m[1]},${m[2]}`));
+    expect(escuros.size).toBe(caminho.split('M').length - 1);
+    for (const [x, y] of [[0, 0], [n - 7, 0], [0, n - 7]]) {
+      // A borda de 7×7 do quadrado de canto é escura, o anel de dentro é claro e o miolo 3×3 é escuro.
+      for (let i = 0; i < 7; i++) {
+        for (const [cx, cy] of [[x + i, y], [x + i, y + 6], [x, y + i], [x + 6, y + i]]) {
+          expect(escuros.has(`${cx + MARGEM_DO_QR},${cy + MARGEM_DO_QR}`)).toBe(true);
+        }
+      }
+      expect(escuros.has(`${x + 1 + MARGEM_DO_QR},${y + 1 + MARGEM_DO_QR}`)).toBe(false);
+      expect(escuros.has(`${x + 3 + MARGEM_DO_QR},${y + 3 + MARGEM_DO_QR}`)).toBe(true);
+    }
+    for (const ponto of escuros) {
+      const [cx, cy] = ponto.split(',').map(Number);
+      expect(cx >= MARGEM_DO_QR && cy >= MARGEM_DO_QR && cx < lado - MARGEM_DO_QR && cy < lado - MARGEM_DO_QR).toBe(true);
+    }
+    expect(desenharQr('https://10.0.0.20:5443').caminho).not.toBe(caminho);
   });
 
   it('ligar e desligar aparecem em português nos acessos recentes', () => {
