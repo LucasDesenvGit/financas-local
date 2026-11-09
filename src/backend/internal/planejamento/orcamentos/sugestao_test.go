@@ -104,7 +104,8 @@ func sugerido(i ItemSugestaoDto) string {
 }
 
 // Regra (#39, passo 1): a base é das despesas (valor negativo, tipo despesa, com categoria), sem as compras
-// parceladas (a de 1 parcela entra); a subcategoria soma na principal; a categoria inativa não entra nem aparece.
+// parceladas (a de 1 parcela entra); a subcategoria soma na principal; a categoria inativa não entra nem aparece, e as
+// categorias depois dela continuam entrando.
 func TestSugerirOQueEntraNaBase(t *testing.T) {
 	t.Parallel()
 	c := novoCenario(t, 2026, 10, 14)
@@ -114,6 +115,7 @@ func TestSugerirOQueEntraNaBase(t *testing.T) {
 	antiga := c.categoria("Antiga", naturezaEstiloVida, func(x *testeapoio.Categoria) { x.Ativa = false })
 	c.todoMes(c.corrente, mercado, "-100.0")
 	c.todoMes(c.corrente, antiga, "-100.0")
+	c.todoMes(c.corrente, c.categoria("Depois", naturezaEstiloVida), "-50.0")                                          // depois das puladas: entra
 	c.gasto(c.corrente, mercado, testeapoio.Dia(2026, 5, 10), "50.0")                                                  // estorno
 	c.gasto(c.corrente, mercado, testeapoio.Dia(2026, 6, 10), "-70.0", func(tr *testeapoio.Transacao) { tr.Tipo = 2 }) // receita
 	tres, uma := int64(3), int64(1)
@@ -131,8 +133,8 @@ func TestSugerirOQueEntraNaBase(t *testing.T) {
 	for n := range itens {
 		nomes = append(nomes, n)
 	}
-	if len(itens) != 1 {
-		t.Errorf("itens: %v (quer só o Mercado)", nomes)
+	if _, depois := itens["Depois"]; len(itens) != 2 || !depois {
+		t.Errorf("itens: %v (quer o Mercado e o Depois)", nomes)
 	}
 }
 
@@ -203,7 +205,7 @@ func TestSugerirCartaoEmAlertaSoCortaOEstiloDeVidaNoCartao(t *testing.T) {
 }
 
 // Regra (#39, passo 5): o essencial arredonda para a dezena mais próxima; o estilo de vida e o sem natureza, para
-// baixo. Sem renda, nada é cortado para caber.
+// baixo. Sem renda, nada é cortado para caber. A categoria sem natureza é avisada.
 func TestSugerirArredondamento(t *testing.T) {
 	t.Parallel()
 	c := novoCenario(t, 2026, 10, 14)
@@ -211,28 +213,35 @@ func TestSugerirArredondamento(t *testing.T) {
 	c.todoMes(c.corrente, c.categoria("Mercado", naturezaEssencial), "-806.0") // + 5% = 846,30
 	c.todoMes(c.corrente, c.categoria("Lazer", naturezaEstiloVida), "-965.0")
 	c.todoMes(c.corrente, c.categoria("Outros", 0), "-965.0")
-	_, itens := c.sugerir()
+	s, itens := c.sugerir()
 	for nome, quer := range map[string]string{"Mercado": "850", "Lazer": "960", "Outros": "960"} {
 		if obtido := sugerido(itens[nome]); obtido != quer {
 			t.Errorf("%s: %s, quer %s", nome, obtido, quer)
 		}
 	}
+	semNatureza := "1 categoria está sem natureza (essencial ou estilo de vida). Classifique em Categorias e regras para a " +
+		"sugestão ficar melhor."
+	if !slices.Contains(s.Avisos, semNatureza) {
+		t.Errorf("avisos: %q", s.Avisos)
+	}
 }
 
 // Regra (#39, passos 4 e 5): o arredondamento do essencial para cima pode passar do disponível; aí o maior que não é
-// essencial perde R$ 10 até caber. Renda 998, sem poupança: Mercado 846,30 vira 850, e o Lazer 150 vira 140.
+// essencial perde R$ 10 até caber. Renda 1.048, sem poupança: Mercado 846,30 vira 850, e o maior estilo de vida
+// (o Lazer, 150, antes do Cinema, 50) vira 140.
 func TestSugerirArredondamentoQuePassaDoDisponivel(t *testing.T) {
 	t.Parallel()
 	c := novoCenario(t, 2026, 10, 14)
 	c.fab.Configuracao("Orcamento.MetaPoupanca", "0")
-	c.renda("998.0")
+	c.renda("1048.0")
 	c.todoMes(c.corrente, c.categoria("Mercado", naturezaEssencial), "-806.0")
 	c.todoMes(c.corrente, c.categoria("Lazer", naturezaEstiloVida), "-150.0")
+	c.todoMes(c.corrente, c.categoria("Cinema", naturezaEstiloVida), "-50.0")
 	s, itens := c.sugerir()
-	if sugerido(itens["Mercado"]) != "850" || sugerido(itens["Lazer"]) != "140" || !igual(s.TotalSugerido, "990") ||
-		s.FaltaParaCaber != nil {
-		t.Errorf("mercado %s, lazer %s, total %s, falta %v", sugerido(itens["Mercado"]), sugerido(itens["Lazer"]),
-			s.TotalSugerido, s.FaltaParaCaber)
+	if sugerido(itens["Mercado"]) != "850" || sugerido(itens["Lazer"]) != "140" || sugerido(itens["Cinema"]) != "50" ||
+		!igual(s.TotalSugerido, "1040") || s.FaltaParaCaber != nil {
+		t.Errorf("mercado %s, lazer %s, cinema %s, total %s, falta %v", sugerido(itens["Mercado"]), sugerido(itens["Lazer"]),
+			sugerido(itens["Cinema"]), s.TotalSugerido, s.FaltaParaCaber)
 	}
 }
 
@@ -294,7 +303,7 @@ func TestMediana(t *testing.T) {
 }
 
 // Regra (#39): os itens da tela vão pelo sugerido, mesmo com a média em outra ordem (os sem sugestão no fim, pela
-// média); ficam só os com sugestão,
+// média, mesmo com o nome em outra ordem); ficam só os com sugestão,
 // gasto ou orçamento atual; "selecionado" é o que tem sugestão e ainda não tem orçamento.
 func TestItens(t *testing.T) {
 	t.Parallel()
@@ -302,7 +311,7 @@ func TestItens(t *testing.T) {
 	linhas := []*linha{
 		{nome: "A", valor: valor("100"), media: dec("500"), mesesComGasto: 6},
 		{nome: "B", valor: valor("300"), media: dec("50"), mesesComGasto: 6},
-		{nome: "C", media: dec("10"), mesesComGasto: 1},
+		{nome: "Z", media: dec("10"), mesesComGasto: 1},
 		{nome: "E"},
 		{nome: "F", atual: valor("50")},
 		{nome: "G", valor: valor("200"), atual: valor("200"), media: dec("200"), mesesComGasto: 6},
@@ -314,7 +323,7 @@ func TestItens(t *testing.T) {
 			selecionados = append(selecionados, i.Nome)
 		}
 	}
-	if !slices.Equal(nomes, []string{"B", "G", "A", "C", "F"}) || !slices.Equal(selecionados, []string{"B", "A"}) {
+	if !slices.Equal(nomes, []string{"B", "G", "A", "Z", "F"}) || !slices.Equal(selecionados, []string{"B", "A"}) {
 		t.Errorf("itens %v, selecionados %v", nomes, selecionados)
 	}
 }
