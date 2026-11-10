@@ -67,11 +67,27 @@ func TestBancoDaProducaoEAbsoluto(t *testing.T) {
 	}
 }
 
-// Regra (#684): a pasta das chaves vem do Seguranca:PastaChaves (o da produção antes do geral; relativa à pasta da
-// API, se não for absoluta), como no site; sem ele, dados/chaves.
+// Regra (#684, #686): a pasta das chaves é a do site. Pelo .msi, a chaves da pasta de dados, mesmo com o
+// "dados/chaves" relativo do appsettings.json do .msi (que o site troca). Pelos scripts, o Seguranca:PastaChaves (o da
+// produção antes do geral; relativo à pasta da API) quando a pasta existe; senão, a chaves ao lado da pasta do banco.
 func TestPastaDasChaves(t *testing.T) {
-	t.Parallel()
+	dados := t.TempDir()
+	t.Setenv("FINANCAS_TESTE_CHAVES", dados)
+	msi := pastaCom(t, map[string]string{
+		"appsettings.Production.json": `{"Dados": {"Pasta": "%FINANCAS_TESTE_CHAVES%"}}`,
+		"appsettings.json":            `{"Banco": {"Caminho": "dados/sql/FinancasLocal.db"}, "Seguranca": {"PastaChaves": "dados/chaves"}}`,
+	})
+	if err := os.MkdirAll(filepath.Join(msi, "dados", "chaves"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if i := Ler(msi); i.PastaChaves != filepath.Join(dados, "chaves") {
+		t.Errorf("pelo .msi: %s", i.PastaChaves)
+	}
+
 	absoluta := filepath.Join(t.TempDir(), "minhas-chaves")
+	if err := os.MkdirAll(absoluta, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	pasta := pastaCom(t, map[string]string{
 		"appsettings.Production.json": `{"Seguranca": {"PastaChaves": ` + string(mustJSON(absoluta)) + `}}`,
 		"appsettings.json":            `{"Banco": {"Caminho": "dados/sql/FinancasLocal.db"}, "Seguranca": {"PastaChaves": "outra/chaves"}}`,
@@ -79,11 +95,26 @@ func TestPastaDasChaves(t *testing.T) {
 	if i := Ler(pasta); i.PastaChaves != absoluta {
 		t.Errorf("da produção: %s", i.PastaChaves)
 	}
+
 	pasta = pastaCom(t, map[string]string{
 		"appsettings.json": `{"Banco": {"Caminho": "dados/sql/FinancasLocal.db"}, "Seguranca": {"PastaChaves": "outra/chaves"}}`,
 	})
+	if i := Ler(pasta); i.PastaChaves != filepath.Join(pasta, "dados", "chaves") {
+		t.Errorf("a do appsettings não existe: %s", i.PastaChaves)
+	}
+	if err := os.MkdirAll(filepath.Join(pasta, "outra", "chaves"), 0o700); err != nil {
+		t.Fatal(err)
+	}
 	if i := Ler(pasta); i.PastaChaves != filepath.Join(pasta, "outra", "chaves") {
-		t.Errorf("relativa: %s", i.PastaChaves)
+		t.Errorf("relativa que existe: %s", i.PastaChaves)
+	}
+
+	pasta = pastaCom(t, map[string]string{"appsettings.json": `{"Banco": {"Caminho": "dados/sql/FinancasLocal.db"}}`})
+	if err := os.MkdirAll(filepath.Join(pasta, "chaves"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if i := Ler(pasta); i.PastaChaves != filepath.Join(pasta, "chaves") {
+		t.Errorf("sem o Seguranca:PastaChaves, o padrão do site: %s", i.PastaChaves)
 	}
 }
 
