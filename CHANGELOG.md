@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.12.1] — 2026-11-10 · desenvolvimento
+
+### Correções
+- **Gerenciador: "Ligar o acesso" pelo celular na instalação pelo .msi** (#686). Dizia "Não deu para mudar daqui", porque o gerenciador procurava o segredo do site em `Program Files\FinancasLocal\dados\chaves` (o "dados/chaves" relativo do `appsettings.json`), e não na pasta de dados, como o site. Agora segue a mesma regra do site.
+
 ## [3.12.0] — 2026-11-09 · desenvolvimento
 
 ### Funcionalidades
