@@ -21,6 +21,7 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 - `internal/tela`: a página (`pagina.html`, `estilo.css`) e o que ela mostra em cada situação. Não depende do Wails: os testes rodam sem janela.
 - `internal/instalacao`: onde estão a API, o banco, os dados e o endereço (o `Instalacao.cs`), pelos mesmos `appsettings`.
 - `internal/situacao`: o serviço, o `GET /api/auth/estado` (o `VerificadorSituacao`) e o `GET /api/celular/estado` (#679: o cartão "Acesso pelo celular").
+- `internal/acessocelular`: liga e desliga o acesso pelo celular (#684), com o segredo da pasta das chaves; no Windows, elevado (`--celular`).
 - `internal/servico`, `internal/elevacao`: o serviço do Windows e o UAC só para a ação; no Linux, a unidade `financaslocal.service` do `systemd --user`, o linger e o registro.
 - `internal/comando`: roda os programas do sistema (`systemctl`, `loginctl`, `journalctl`, `busctl`), como o `Comando.cs`.
 - `internal/copia`: a cópia do banco pelo `VACUUM INTO` (`modernc.org/sqlite`, o mesmo da API).

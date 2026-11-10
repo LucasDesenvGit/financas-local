@@ -15,6 +15,7 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/acessocelular"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/comando"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/copia"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
@@ -74,6 +75,11 @@ func executarNoServico(acao string) (elevacao.Resultado, string) {
 		return elevacao.Falhou, err.Error()
 	}
 	return elevacao.Feito, ""
+}
+
+// mudarAcessoCelular (#684): a pasta das chaves é do próprio usuário, então liga e desliga daqui mesmo.
+func mudarAcessoCelular(inst instalacao.Instalacao, ligar bool) acessocelular.Resultado {
+	return acessocelular.NaInstalacao(inst, ligar)
 }
 
 // copiarBanco: o banco é do próprio usuário (a pasta dados do projeto).

@@ -37,6 +37,8 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("POST /api/celular/desligar", s.desligarHTTP)
 	mux.HandleFunc("GET "+RotaAutoridade, s.autoridadeHTTP)
 	mux.HandleFunc("GET "+RotaEstado, s.estadoHTTP)
+	mux.HandleFunc("POST "+RotaGerenciadorLigar, s.ligarPeloGerenciadorHTTP)
+	mux.HandleFunc("POST "+RotaGerenciadorDesligar, s.desligarPeloGerenciadorHTTP)
 }
 
 // estadoHTTP é o EstadoCurto, só para o próprio computador (o gerenciador).
@@ -84,6 +86,8 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, sit Situacao
 		respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, sit)
 	case errors.Is(err, ErrEnderecoInvalido):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemEnderecoInvalido)
+	case errors.Is(err, ErrSemRede):
+		respostas.Mensagem(w, http.StatusConflict, MensagemSemRede)
 	case errors.Is(err, ErrEscutar):
 		s.o.Log.WarnContext(r.Context(), "acesso pelo celular: "+etapa, "origem", erros.OrigemAPI, "erro", err)
 		respostas.Mensagem(w, http.StatusConflict, MensagemEscutar)

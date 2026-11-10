@@ -33,7 +33,8 @@ func TestPeloMsi(t *testing.T) {
 	})
 	i := Ler(pasta)
 	if !i.PeloMsi || i.PastaDados != dados || i.CaminhoBanco != filepath.Join(dados, "sql", "FinancasLocal.db") ||
-		i.Site != "https://127.0.0.1:5999/" || i.Pagina("manual") != "https://127.0.0.1:5999/manual" {
+		i.Site != "https://127.0.0.1:5999/" || i.Pagina("manual") != "https://127.0.0.1:5999/manual" ||
+		i.PastaChaves != filepath.Join(dados, "chaves") {
 		t.Errorf("%+v", i)
 	}
 }
@@ -45,7 +46,8 @@ func TestPelosScripts(t *testing.T) {
 	pasta := pastaCom(t, map[string]string{"appsettings.json": `{"Banco": {"Caminho": "dados/SQL/FinancasLocal.db"}}`})
 	i := Ler(pasta)
 	if i.PeloMsi || i.CaminhoBanco != filepath.Join(pasta, "dados", "SQL", "FinancasLocal.db") ||
-		i.PastaDados != filepath.Join(pasta, "dados") || i.Site != "https://127.0.0.1:5443/" {
+		i.PastaDados != filepath.Join(pasta, "dados") || i.Site != "https://127.0.0.1:5443/" ||
+		i.PastaChaves != filepath.Join(pasta, "dados", "chaves") {
 		t.Errorf("%+v", i)
 	}
 }
@@ -62,6 +64,26 @@ func TestBancoDaProducaoEAbsoluto(t *testing.T) {
 	i := Ler(pasta)
 	if i.CaminhoBanco != banco || i.PastaDados != filepath.Dir(banco) || i.Site != "https://127.0.0.1:6000/" {
 		t.Errorf("%+v", i)
+	}
+}
+
+// Regra (#684): a pasta das chaves vem do Seguranca:PastaChaves (o da produção antes do geral; relativa à pasta da
+// API, se não for absoluta), como no site; sem ele, dados/chaves.
+func TestPastaDasChaves(t *testing.T) {
+	t.Parallel()
+	absoluta := filepath.Join(t.TempDir(), "minhas-chaves")
+	pasta := pastaCom(t, map[string]string{
+		"appsettings.Production.json": `{"Seguranca": {"PastaChaves": ` + string(mustJSON(absoluta)) + `}}`,
+		"appsettings.json":            `{"Banco": {"Caminho": "dados/sql/FinancasLocal.db"}, "Seguranca": {"PastaChaves": "outra/chaves"}}`,
+	})
+	if i := Ler(pasta); i.PastaChaves != absoluta {
+		t.Errorf("da produção: %s", i.PastaChaves)
+	}
+	pasta = pastaCom(t, map[string]string{
+		"appsettings.json": `{"Banco": {"Caminho": "dados/sql/FinancasLocal.db"}, "Seguranca": {"PastaChaves": "outra/chaves"}}`,
+	})
+	if i := Ler(pasta); i.PastaChaves != filepath.Join(pasta, "outra", "chaves") {
+		t.Errorf("relativa: %s", i.PastaChaves)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/acessocelular"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/copia"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
@@ -42,7 +43,8 @@ var exemplos = map[string]tela.Situacao{
 }
 
 func main() {
-	// Como o Program.cs: --servico ligar|desligar|reiniciar, --backup "destino", --restaurar "cópia" (#533) e
+	// Como o Program.cs: --servico ligar|desligar|reiniciar, --backup "destino", --restaurar "cópia" (#533),
+	// --celular ligar|desligar (#684) e
 	// --instalar-pelos-scripts (só na
 	// instalação de desenvolvimento, ADR 0040) são as ações que o próprio gerenciador roda como administrador (UAC),
 	// sem janela.
@@ -52,6 +54,11 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+	// --celular ligar|desligar (#684): liga ou desliga o acesso pelo celular do site; o código de saída é o
+	// acessocelular.Resultado (0 = feito).
+	if len(os.Args) == 3 && os.Args[1] == "--celular" && (os.Args[2] == "ligar" || os.Args[2] == "desligar") {
+		os.Exit(int(acessocelular.NaInstalacao(instalacao.Atual(), os.Args[2] == "ligar")))
 	}
 	if len(os.Args) == 2 && os.Args[1] == "--instalar-pelos-scripts" {
 		os.Exit(desenvolvimento.ReinstalarElevado())

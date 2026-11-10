@@ -20,15 +20,20 @@
         <button id="reiniciar" class="botao" type="button" data-acao="reiniciar" accesskey="r"{{if not .ReiniciarHabilitado}} disabled{{end}}>{{.Icone "reiniciar"}}Reiniciar</button>
       </div>
     </section>
-    <!-- #679: o acesso pelo celular. O gerenciador só mostra; ligar e desligar é no site, com login. -->
+    <!-- #679 e #684: o acesso pelo celular. Liga e desliga daqui (no Windows, com o UAC); o QR code, o certificado e os
+         avisos do firewall ficam no site. -->
     <section class="cartao" id="celular" aria-labelledby="titulo-celular"{{if not .CelularVisivel}} hidden{{end}}>
       <p class="subtitulo" id="titulo-celular">Acesso pelo celular</p>
       <div class="situacao celular">
         <span id="ponto-celular" class="ponto {{.PontoCelular}}" aria-hidden="true"></span>
         <p class="detalhe" id="texto-celular" role="status" aria-live="polite">{{.TextoCelular}}</p>
       </div>
-      <div class="linha"><button id="abrir-celular" class="botao" type="button" data-pagina="configuracoes?aba=seguranca"
-        aria-description="Abre o site em Configurações › Segurança, onde se liga e desliga">{{.Icone "celular"}}<span id="texto-botao-celular">{{.BotaoCelular}}</span></button></div>
+      <p class="detalhe" id="aviso-celular" role="status" aria-live="polite"{{if not .AvisoCelular}} hidden{{end}}>{{.AvisoCelular}}</p>
+      <div class="linha">
+        <button id="mudar-celular" class="botao" type="button" data-acao="{{.AcaoCelular}}"{{if not .CelularHabilitado}} disabled{{end}}>{{.Icone "celular"}}<span id="texto-botao-celular">{{.BotaoCelular}}</span></button>
+        <button id="abrir-celular" class="botao discreto" type="button" data-pagina="configuracoes?aba=seguranca"
+          aria-description="Abre o site em Configurações › Segurança: o QR code, o certificado e os avisos">{{.Icone "abrir"}}Ver no site</button>
+      </div>
     </section>
     <section class="cartao" aria-labelledby="titulo-versao">
       <p class="subtitulo" id="titulo-versao">Versão</p>
@@ -264,6 +269,10 @@
     $('ponto-celular').className = 'ponto ' + e.pontoCelular;
     if ($('texto-celular').textContent !== e.textoCelular) $('texto-celular').textContent = e.textoCelular;
     $('texto-botao-celular').textContent = e.botaoCelular;
+    $('mudar-celular').dataset.acao = e.acaoCelular;
+    $('mudar-celular').disabled = !e.celularHabilitado;
+    if ($('aviso-celular').textContent !== e.avisoCelular) $('aviso-celular').textContent = e.avisoCelular;
+    $('aviso-celular').hidden = !e.avisoCelular;
     if ($('versao').textContent !== e.versao) $('versao').textContent = e.versao;
     $('versao').hidden = !e.versao;
     if ($('saida')) {
