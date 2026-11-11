@@ -40,9 +40,16 @@ var shellExecuteEx = windows.NewLazySystemDLL("shell32.dll").NewProc("ShellExecu
 
 // Executar roda "gerenciador.exe argumentos" como administrador e espera. Cancelar o aviso do UAC dá Cancelado.
 func Executar(argumentos ...string) Resultado {
+	r, _ := ExecutarComCodigo(argumentos...)
+	return r
+}
+
+// ExecutarComCodigo é o Executar que também devolve o código de saída, para a ação dizer por que não deu (#684):
+// Feito só com 0; Falhou com o código (sem código, quando nem rodou).
+func ExecutarComCodigo(argumentos ...string) (Resultado, uint32) {
 	exe, err := os.Executable()
 	if err != nil {
-		return Falhou
+		return Falhou, 0
 	}
 	partes := make([]string, len(argumentos))
 	for i, a := range argumentos {
@@ -56,17 +63,20 @@ func Executar(argumentos ...string) Resultado {
 	info.tamanho = uint32(unsafe.Sizeof(info))
 	if ok, _, err := shellExecuteEx.Call(uintptr(unsafe.Pointer(&info))); ok == 0 {
 		if errors.Is(err, windows.ERROR_CANCELLED) {
-			return Cancelado
+			return Cancelado, 0
 		}
-		return Falhou
+		return Falhou, 0
 	}
 	defer windows.CloseHandle(info.processo)
 	if _, err := windows.WaitForSingleObject(info.processo, windows.INFINITE); err != nil {
-		return Falhou
+		return Falhou, 0
 	}
 	var codigo uint32
-	if err := windows.GetExitCodeProcess(info.processo, &codigo); err != nil || codigo != 0 {
-		return Falhou
+	if err := windows.GetExitCodeProcess(info.processo, &codigo); err != nil {
+		return Falhou, 0
 	}
-	return Feito
+	if codigo != 0 {
+		return Falhou, codigo
+	}
+	return Feito, 0
 }

@@ -58,7 +58,7 @@ flowchart TB
     navegador -- "HTTPS, /api" --> site
     servico -- "sobe" --> site
     gerenciador -- "liga e desliga" --> servico
-    gerenciador -- "confere se responde" --> site
+    gerenciador -- "confere se responde; liga e desliga o celular" --> site
     gerenciador -- "copia" --> banco
     site -- "lê e grava" --> banco
     site -- "assina a sessão e cifra os segredos" --> chaves

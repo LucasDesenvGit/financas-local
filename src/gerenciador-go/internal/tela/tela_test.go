@@ -217,10 +217,10 @@ func TestNomesDosBotoes(t *testing.T) {
 		t.Error("sobrou um & de atalho")
 	}
 	icones := regexp.MustCompile(`<span class="ico"[^>]*>`).FindAllString(html, -1)
-	// Abrir, Desligar, Reiniciar; Atualizar, Procurar, O que mudou, Cancelar download; Salvar uma cópia, Restaurar uma
-	// cópia (#533), Ver os erros, Abrir o manual; Abrir a pasta e Atualizar (do aviso); Ver tudo e Ver a página da versão
-	// (das notas).
-	if len(icones) != 15 {
+	// Abrir, Desligar, Reiniciar; Ligar ou desligar o acesso pelo celular e Ver no site (#679, #684); Atualizar, Procurar, O que mudou, Cancelar download;
+	// Salvar uma cópia, Restaurar uma cópia (#533), Ver os erros, Abrir o manual; Abrir a pasta e Atualizar (do aviso);
+	// Ver tudo e Ver a página da versão (das notas).
+	if len(icones) != 17 {
 		t.Errorf("%d ícones", len(icones))
 	}
 	for _, i := range icones {
@@ -274,14 +274,94 @@ func TestAtualizacao(t *testing.T) {
 	desligado := Tela{Situacao: Situacao{Estado: Desligado, Titulo: "O site está desligado.", Detalhe: "Clique"}, Versao: "v"}.Atualizacao()
 	if desligado != (Atualizacao{Ponto: "negativo", Titulo: "O site está desligado.", Detalhe: "Clique", AbrirPrimario: false,
 		LigarAcao: "ligar", LigarTexto: "Ligar", LigarTecla: "l", LigarHabilitado: true, LigarPrimario: true, Versao: "v",
-		ProcurarHabilitado: true, AtualizarTexto: "Atualizar para "}) {
+		ProcurarHabilitado: true, AtualizarTexto: "Atualizar para ", PontoCelular: "neutro",
+		TextoCelular: "Desligado: o site só abre neste computador.", BotaoCelular: "Ligar o acesso",
+		AcaoCelular: "celular-ligar", CelularHabilitado: true}) {
 		t.Errorf("desligado: %+v", desligado)
 	}
 	noAr := Tela{Situacao: Situacao{Estado: NoAr}}.Atualizacao()
 	if noAr != (Atualizacao{Ponto: "positivo", AbrirHabilitado: true, AbrirPrimario: true, LigarAcao: "desligar",
 		LigarTexto: "Desligar", LigarTecla: "d", LigarHabilitado: true, ReiniciarHabilitado: true, PaginasDoSite: true,
-		ProcurarHabilitado: true, AtualizarTexto: "Atualizar para "}) {
+		ProcurarHabilitado: true, AtualizarTexto: "Atualizar para ", PontoCelular: "neutro",
+		TextoCelular: "Desligado: o site só abre neste computador.", BotaoCelular: "Ligar o acesso",
+		AcaoCelular: "celular-ligar", CelularHabilitado: true}) {
 		t.Errorf("no ar: %+v", noAr)
+	}
+}
+
+// Regra (#679): o cartão do acesso pelo celular só aparece com o site no ar e o estado conhecido; diz ligado (com o
+// endereço, ponto verde) ou desligado (ponto cinza) em texto, e o botão diz o que fazer no site.
+func TestCelular(t *testing.T) {
+	t.Parallel()
+	ligado := Celular{Conhecido: true, Ligado: true, Endereco: "https://192.168.0.10:5443"}
+	casos := []struct {
+		nome                string
+		situacao            Situacao
+		visivel             bool
+		ponto, texto, botao string
+	}{
+		{"no ar, ligado", Situacao{Estado: NoAr, Celular: ligado}, true, "positivo",
+			"Ligado. No celular, no mesmo Wi-Fi, abra https://192.168.0.10:5443", "Desligar o acesso"},
+		{"no ar, desligado", Situacao{Estado: NoAr, Celular: Celular{Conhecido: true}}, true, "neutro",
+			"Desligado: o site só abre neste computador.", "Ligar o acesso"},
+		{"no ar, versão sem a rota", Situacao{Estado: NoAr}, false, "neutro",
+			"Desligado: o site só abre neste computador.", "Ligar o acesso"},
+		{"sem resposta", Situacao{Estado: SemResposta, Celular: ligado}, false, "positivo",
+			"Ligado. No celular, no mesmo Wi-Fi, abra https://192.168.0.10:5443", "Desligar o acesso"},
+	}
+	for _, c := range casos {
+		a := Tela{Situacao: c.situacao}.Atualizacao()
+		if a.CelularVisivel != c.visivel || a.PontoCelular != c.ponto || a.TextoCelular != c.texto || a.BotaoCelular != c.botao {
+			t.Errorf("%s: %+v", c.nome, a)
+		}
+	}
+	html := escrever(t, Tela{Situacao: Situacao{Estado: NoAr, Celular: ligado}})
+	for _, trecho := range []string{`<section class="cartao" id="celular" aria-labelledby="titulo-celular">`,
+		`<span id="ponto-celular" class="ponto positivo" aria-hidden="true">`,
+		`role="status" aria-live="polite">Ligado. No celular, no mesmo Wi-Fi, abra https://192.168.0.10:5443</p>`,
+		`data-pagina="configuracoes?aba=seguranca"`, `>Ver no site</button>`,
+		`<button id="mudar-celular" class="botao" type="button" data-acao="celular-desligar">`,
+		`<span id="texto-botao-celular">Desligar o acesso</span>`, `id="aviso-celular" role="status" aria-live="polite" hidden></p>`} {
+		if !strings.Contains(html, trecho) {
+			t.Errorf("sem %s", trecho)
+		}
+	}
+	if !strings.Contains(escrever(t, Tela{Situacao: Situacao{Estado: Desligado}}), `id="celular" aria-labelledby="titulo-celular" hidden>`) {
+		t.Error("o cartão aparece com o site desligado")
+	}
+}
+
+// Regra (#684): enquanto liga ou desliga, o cartão diz o quê (no Windows, avisa do UAC) e o botão para; depois, o
+// aviso do resultado aparece abaixo do estado.
+func TestCelularMudando(t *testing.T) {
+	t.Parallel()
+	no := Situacao{Estado: NoAr, Celular: Celular{Conhecido: true}}
+	casos := []struct {
+		nome  string
+		tela  Tela
+		texto string
+	}{
+		{"ligando no Windows", Tela{Situacao: no, CelularMudando: "ligar"},
+			"Ligando o acesso pelo celular… O Windows vai pedir permissão de administrador."},
+		{"desligando no Windows", Tela{Situacao: no, CelularMudando: "desligar"},
+			"Desligando o acesso pelo celular… O Windows vai pedir permissão de administrador."},
+		{"ligando no Linux", Tela{Situacao: no, CelularMudando: "ligar", Linux: true}, "Ligando o acesso pelo celular…"},
+	}
+	for _, c := range casos {
+		a := c.tela.Atualizacao()
+		if a.TextoCelular != c.texto || a.CelularHabilitado {
+			t.Errorf("%s: %q, habilitado %v", c.nome, a.TextoCelular, a.CelularHabilitado)
+		}
+	}
+	html := escrever(t, Tela{Situacao: no, CelularMudando: "ligar", AvisoCelular: "Cancelado: nada mudou."})
+	for _, trecho := range []string{`data-acao="celular-ligar" disabled>`,
+		`id="aviso-celular" role="status" aria-live="polite">Cancelado: nada mudou.</p>`} {
+		if !strings.Contains(html, trecho) {
+			t.Errorf("sem %s", trecho)
+		}
+	}
+	if a := (Tela{Situacao: no, AvisoCelular: "x"}).Atualizacao(); a.AvisoCelular != "x" || !a.CelularHabilitado {
+		t.Errorf("aviso: %+v", a)
 	}
 }
 

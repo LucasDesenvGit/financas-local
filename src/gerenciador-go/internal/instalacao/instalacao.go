@@ -21,7 +21,9 @@ type Instalacao struct {
 	// PastaPrograma é a pasta da API (a do serviço; sem o serviço, a do próprio gerenciador).
 	PastaPrograma string
 	PastaDados    string
-	CaminhoBanco  string
+	// PastaChaves é onde o site guarda o segredo do gerenciador (#684), pela mesma regra do site (pastaDasChaves).
+	PastaChaves  string
+	CaminhoBanco string
 	// PeloMsi: instalado pelo .msi; só então o gerenciador procura e instala versões novas do GitHub.
 	PeloMsi bool
 	// Site é o endereço com a barra no fim (https://127.0.0.1:5443/).
@@ -59,6 +61,8 @@ func Ler(pastaPrograma string) Instalacao {
 		i.CaminhoBanco = filepath.Join(i.PastaDados, "sql", "FinancasLocal.db")
 	}
 
+	i.PastaChaves = pastaDasChaves(i, producao, geral)
+
 	url, ok := texto(producao, "Kestrel", "Endpoints", "Https", "Url")
 	if !ok {
 		url, ok = texto(geral, "Kestrel", "Endpoints", "Https", "Url")
@@ -68,6 +72,29 @@ func Ler(pastaPrograma string) Instalacao {
 	}
 	i.Site = strings.TrimRight(url, "/") + "/"
 	return i
+}
+
+// pastaDasChaves segue o site (config.go e cmd/financas): pelo .msi, a chaves da pasta de dados, sem olhar o appsettings
+// (o appsettings.json do .msi traz um "dados/chaves" relativo que o site troca, #686); pelos scripts, o
+// Seguranca:PastaChaves (o da produção antes do geral, relativo à pasta da API) e, se a pasta não existir, a chaves ao
+// lado da pasta do banco.
+func pastaDasChaves(i Instalacao, producao, geral map[string]any) string {
+	aoLadoDoBanco := filepath.Join(filepath.Dir(filepath.Dir(i.CaminhoBanco)), "chaves")
+	if i.PeloMsi {
+		return aoLadoDoBanco
+	}
+	chaves, ok := texto(producao, "Seguranca", "PastaChaves")
+	if !ok {
+		chaves, ok = texto(geral, "Seguranca", "PastaChaves")
+	}
+	if !ok {
+		chaves = "chaves" // o padrão do site
+	}
+	pasta := absoluto(i.PastaPrograma, expandir(strings.ReplaceAll(chaves, "/", string(filepath.Separator))))
+	if _, err := os.Stat(pasta); err != nil {
+		return aoLadoDoBanco
+	}
+	return pasta
 }
 
 // executavelDaApi acha a API na linha do serviço: "...\Financas.Api.exe" (.msi), "...\dotnet.exe"

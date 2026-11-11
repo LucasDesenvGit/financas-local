@@ -23,6 +23,10 @@ body { margin: 0; background: var(--fundo); color: var(--texto); font: 13px/1.45
 .cartao { width: 448px; box-sizing: border-box; background: var(--superficie); border: 1px solid var(--linha); border-radius: 12px;
   padding: 14px 16px; margin-bottom: 12px; }
 .situacao { display: flex; align-items: flex-start; margin-bottom: 14px; }
+.situacao.celular { align-items: center; margin-bottom: 10px; }
+.situacao.celular .ponto { width: 20px; height: 20px; margin: 0 10px 0 0; }
+#texto-celular { overflow-wrap: anywhere; }
+#aviso-celular { margin: 0 0 10px; overflow-wrap: anywhere; }
 .ponto { width: 28px; height: 28px; border-radius: 50%; margin: 4px 12px 0 0; flex: none; display: grid; place-items: center;
   background: color-mix(in srgb, var(--cor) 19%, transparent); }
 .ponto::after { content: ""; width: 46%; height: 46%; border-radius: 50%; background: var(--cor); }
