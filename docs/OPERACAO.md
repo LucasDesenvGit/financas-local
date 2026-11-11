@@ -96,6 +96,7 @@ A pasta `dados\chaves` guarda as chaves que protegem os segredos gravados no ban
 | Client Secret da Pluggy e token da brapi | Todas as transações, contas, metas e investimentos, que não usam essas chaves |
 | A sessão aberta no navegador: entre de novo | A senha do site, que fica no banco |
 | Com o acesso pelo celular ligado, a autoridade do celular: o site cria outra ao subir, e o celular precisa instalá-la de novo | O endereço do celular, que fica no banco |
+| — | O botão do gerenciador que liga e desliga o acesso pelo celular: o segredo dele (`gerenciador-celular.chave`, #684) é criado de novo ao subir, sem nada a fazer |
 
 **O que fazer:** informe o Client Secret da Pluggy e o token da brapi de novo em **Configurações**. O sistema cria chaves novas sozinho. Usa o acesso pelo celular? No celular, remova o certificado antigo "Finanças Local (celular)" e instale o novo, como no Manual (Configurações › Segurança).
 

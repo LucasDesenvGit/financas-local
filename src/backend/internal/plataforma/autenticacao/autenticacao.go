@@ -60,13 +60,25 @@ func Nova(o Opcoes) *Autenticacao {
 
 // Rotas de api/auth que não exigem login (AllowAnonymous), mas os POST exigem CSRF, como no .NET. A autoridade do
 // acesso pelo celular (#328) também: o celular a baixa antes de confiar no site e de entrar, e ela é só o certificado
-// público (o pacote celular a serve só com o acesso ligado).
+// público (o pacote celular a serve só com o acesso ligado). E o estado dele, para o gerenciador, que não tem login
+// (#679): só ligado e o endereço, e só para quem pede do próprio computador.
 var rotasAnonimas = map[string]bool{
 	"GET /api/auth/estado":        true,
 	"POST /api/auth/configurar":   true,
 	"POST /api/auth/entrar":       true,
 	"POST /api/auth/sair":         true,
 	"GET /api/celular/autoridade": true,
+	"GET /api/celular/estado":     true, // #679: só para o 127.0.0.1 (o pacote celular confere)
+	// #684: o gerenciador liga e desliga; só do 127.0.0.1 e com o segredo dele (o pacote celular confere).
+	"POST /api/celular/gerenciador/ligar":    true,
+	"POST /api/celular/gerenciador/desligar": true,
+}
+
+// Rotas sem CSRF (#684): as do gerenciador, que não tem sessão nem o cookie do CSRF. O que as protege é o segredo num
+// cabeçalho próprio, que um site de fora nem consegue mandar (o navegador pede o preflight do CORS, que o site recusa).
+var rotasSemCsrf = map[string]bool{
+	"POST /api/celular/gerenciador/ligar":    true,
+	"POST /api/celular/gerenciador/desligar": true,
 }
 
 // Rotas da política "login" (EnableRateLimiting): 5 por minuto por IP, somadas.
@@ -141,7 +153,7 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 			respostas.SemCorpo(w, http.StatusUnauthorized)
 			return
 		}
-		if !metodoSeguro(r.Method) {
+		if !metodoSeguro(r.Method) && !rotasSemCsrf[chaveRota] {
 			if _, padrao := rotas.Handler(r); padrao != "/" && !csrfValido(a.o.Chave, req.segredo, r.Header.Get(CabecalhoXsrf), req.usuario()) {
 				respostas.CsrfRecusado(w)
 				return

@@ -2,6 +2,24 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.12.1] — 2026-11-10 · desenvolvimento
+
+### Correções
+- **Gerenciador: "Ligar o acesso" pelo celular na instalação pelo .msi** (#686). Dizia "Não deu para mudar daqui", porque o gerenciador procurava o segredo do site em `Program Files\FinancasLocal\dados\chaves` (o "dados/chaves" relativo do `appsettings.json`), e não na pasta de dados, como o site. Agora segue a mesma regra do site.
+
+## [3.12.0] — 2026-11-09 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: liga e desliga o acesso pelo celular direto** (#684), sem abrir o site. No cartão "Acesso pelo celular", "Ligar o acesso" usa o endereço escolhido da última vez (ou o principal do computador) e "Desligar o acesso" fecha a porta; no Windows, pede a permissão de administrador. "Ver no site" abre Configurações › Segurança, para o QR code, outro endereço e os avisos do firewall.
+  - O site cria um segredo para o gerenciador em `dados/chaves` e ganha `POST /api/celular/gerenciador/ligar` e `desligar`: sem login, só do próprio computador e com o segredo (ADR 0061 e o modelo de ameaças atualizados).
+
+## [3.11.0] — 2026-11-09 · desenvolvimento
+
+### Funcionalidades
+- **Gerenciador: o acesso pelo celular à vista** (#679). Com o site no ar, um cartão "Acesso pelo celular" mostra se ele está ligado (ponto verde e o endereço para abrir no celular) ou desligado, e muda sozinho. O botão "Ligar no site" ou "Desligar no site" abre o site em Configurações › Segurança: ligar e desligar continua lá, com login.
+  - O site ganha `GET /api/celular/estado`, sem login, que só responde a quem pede do próprio computador e só diz ligado e o endereço (ADR 0061 e o modelo de ameaças atualizados).
+  - Site de versão anterior, sem a rota: o cartão não aparece.
+
 ## [3.10.0] — 2026-11-09 · desenvolvimento
 
 ### Funcionalidades

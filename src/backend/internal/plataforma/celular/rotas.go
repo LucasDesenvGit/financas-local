@@ -2,6 +2,7 @@ package celular
 
 import (
 	"errors"
+	"net"
 	"net/http"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/erros"
@@ -9,9 +10,14 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
 )
 
-// RotaAutoridade é a única rota sem login (a autenticação a deixa passar): o celular baixa a autoridade antes de
+// RotaAutoridade é uma das duas rotas sem login (a autenticação a deixa passar): o celular baixa a autoridade antes de
 // confiar no site e de entrar. É só o certificado público.
 const RotaAutoridade = "/api/celular/autoridade"
+
+// RotaEstado é a outra rota sem login (#679): o gerenciador, que não tem login, mostra se o acesso está ligado. Ela
+// responde só a quem pede do próprio computador (127.0.0.1 ou ::1); de outro aparelho da rede, 404, como se não
+// existisse. Diz só ligado ou não e o endereço, que quem está na rede já vê na barra do navegador.
+const RotaEstado = "/api/celular/estado"
 
 // NomeDoArquivo é o nome do .crt que o celular baixa.
 const NomeDoArquivo = "financas-local-celular.crt"
@@ -30,6 +36,30 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("POST /api/celular/ligar", s.ligarHTTP)
 	mux.HandleFunc("POST /api/celular/desligar", s.desligarHTTP)
 	mux.HandleFunc("GET "+RotaAutoridade, s.autoridadeHTTP)
+	mux.HandleFunc("GET "+RotaEstado, s.estadoHTTP)
+	mux.HandleFunc("POST "+RotaGerenciadorLigar, s.ligarPeloGerenciadorHTTP)
+	mux.HandleFunc("POST "+RotaGerenciadorDesligar, s.desligarPeloGerenciadorHTTP)
+}
+
+// estadoHTTP é o EstadoCurto, só para o próprio computador (o gerenciador).
+func (s *Servico) estadoHTTP(w http.ResponseWriter, r *http.Request) {
+	if !doProprioComputador(r) {
+		respostas.SemCorpo(w, http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, s.Estado())
+}
+
+// doProprioComputador: o pedido veio do loopback. O site é servido direto pelo executável, sem proxy na frente, então
+// o RemoteAddr é o de quem conectou (ADR 0061).
+func doProprioComputador(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func (s *Servico) situacaoHTTP(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +86,8 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, sit Situacao
 		respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, sit)
 	case errors.Is(err, ErrEnderecoInvalido):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemEnderecoInvalido)
+	case errors.Is(err, ErrSemRede):
+		respostas.Mensagem(w, http.StatusConflict, MensagemSemRede)
 	case errors.Is(err, ErrEscutar):
 		s.o.Log.WarnContext(r.Context(), "acesso pelo celular: "+etapa, "origem", erros.OrigemAPI, "erro", err)
 		respostas.Mensagem(w, http.StatusConflict, MensagemEscutar)
