@@ -114,6 +114,7 @@ type candidata struct {
 	texto           string
 	estabelecimento *string
 	porValor        bool
+	criadoEm        tipos.DataHora
 }
 
 // Conciliar dá baixa nas contas a pagar cobradas sozinhas (débito automático ou cartão) cuja cobrança já chegou no
@@ -123,7 +124,37 @@ type candidata struct {
 //
 // Toda conta casada muda (#675): a cobrança está na janela [vencimento - 10 dias, hoje], então o avancar passa pelo
 // menos um vencimento (ou encerra a conta). Por isso não há "gravar só se mudou": essa conferência nunca dava falso.
-func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (int, error) {
+//
+// As pagas com um cofrinho (#691, ADR 0063) vêm junto: antes, a baixa automática cuja cobrança chegou pelo extrato é
+// desfeita (desfazerDuplicadas); depois, as em débito automático que venceram recebem a baixa (baixarPeloCofrinho).
+// agora é o carimbo do que o app grava.
+func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
+	// As regras por valor só são lidas se houver o que conciliar (#675).
+	var regras map[int64]bool
+	regrasPorValor := func() (map[int64]bool, error) {
+		if regras != nil {
+			return regras, nil
+		}
+		var err error
+		regras, err = RegrasPorValor(ctx, q)
+		return regras, err
+	}
+	mudaram, err := desfazerDuplicadas(ctx, q, hoje, regrasPorValor)
+	if err != nil {
+		return mudaram, err
+	}
+	casadas, err := conciliarPeloExtrato(ctx, q, hoje, regrasPorValor)
+	mudaram += casadas
+	if err != nil {
+		return mudaram, err
+	}
+	baixas, err := baixarPeloCofrinho(ctx, q, hoje, agora)
+	return mudaram + baixas, err
+}
+
+// conciliarPeloExtrato é a conciliação com as cobranças do extrato (#158).
+func conciliarPeloExtrato(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
+	carregarRegras func() (map[int64]bool, error)) (int, error) {
 	contas, err := lerContas(ctx, q)
 	if err != nil {
 		return 0, err
@@ -131,7 +162,7 @@ func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (int, err
 	if len(contas) == 0 {
 		return 0, nil
 	}
-	regrasPorValor, err := RegrasPorValor(ctx, q)
+	regrasPorValor, err := carregarRegras()
 	if err != nil {
 		return 0, err
 	}
@@ -219,12 +250,14 @@ func lerContas(ctx context.Context, q consultas.DBTX) ([]*contaAConciliar, error
 	return contas, linhas.Err()
 }
 
-// lerCandidatas são as despesas de desde a hoje, na conta da conta a pagar (ou em qualquer uma, se ela não diz). O
-// valor é texto no banco: o "menor que zero" é conferido em Go, com decimal.
+// lerCandidatas são as despesas de desde a hoje, na conta da conta a pagar (ou em qualquer uma, se ela não diz), sem
+// os lançamentos pagos pelo cofrinho no app (#691): só o que o banco mandou é cobrança. O valor é texto no banco: o
+// "menor que zero" é conferido em Go, com decimal.
 func lerCandidatas(ctx context.Context, q consultas.DBTX, desde, hoje tipos.Data, contaId *int64,
 	regrasPorValor map[int64]bool) ([]candidata, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Data", "Descricao", "DescricaoOriginal", "RegraDescricaoId", "Estabelecimento",
-		"Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ? AND (? IS NULL OR "ContaId" = ?) ORDER BY "Id"`,
+		"Valor", "CriadoEm" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ? AND (? IS NULL OR "ContaId" = ?)
+		AND "ReservaNome" IS NULL ORDER BY "Id"`,
 		desde, hoje, contaId, contaId)
 	if err != nil {
 		return nil, fmt.Errorf("ler as cobranças do extrato: %w", err)
@@ -239,7 +272,7 @@ func lerCandidatas(ctx context.Context, q consultas.DBTX, desde, hoje tipos.Data
 			regraId           *int64
 			valor             tipos.Decimal
 		)
-		if err := linhas.Scan(&x.data, &descricao, &descricaoOriginal, &regraId, &x.estabelecimento, &valor); err != nil {
+		if err := linhas.Scan(&x.data, &descricao, &descricaoOriginal, &regraId, &x.estabelecimento, &valor, &x.criadoEm); err != nil {
 			return nil, fmt.Errorf("ler cobrança do extrato: %w", err)
 		}
 		if !valor.Decimal().IsNegative() {

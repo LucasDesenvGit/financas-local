@@ -21,8 +21,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-05-10",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-04-10",
+        "ultimoPeloCofrinho": null,
         "valor": 99.0
       },
       {
@@ -41,8 +43,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-18",
         "recorrencia": 0,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": null,
+        "ultimoPeloCofrinho": null,
         "valor": 2100.0
       },
       {
@@ -61,8 +65,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-20",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-20",
+        "ultimoPeloCofrinho": null,
         "valor": 119.9
       },
       {
@@ -81,8 +87,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-20",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": "STREAMFLIX",
         "ultimoPagamentoEm": "2026-09-20",
+        "ultimoPeloCofrinho": null,
         "valor": 39.9
       },
       {
@@ -101,8 +109,10 @@
         "pagamentosRestantes": 3,
         "proximoVencimento": "2026-10-25",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-25",
+        "ultimoPeloCofrinho": null,
         "valor": 350.0
       },
       {
@@ -121,8 +131,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2027-01-15",
         "recorrencia": 2,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-01-15",
+        "ultimoPeloCofrinho": null,
         "valor": 1450.0
       }
     ]
@@ -297,6 +309,7 @@
             "Observacao": "Pago no dia 5",
             "ProximoVencimento": "2026-11-05",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": null,
             "Valor": "1800.5"
@@ -342,6 +355,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-10-25",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": "ASSINATURA STREAMFLIX",
             "UltimoPagamentoEm": "2026-09-20",
             "Valor": "39.9"
@@ -370,6 +384,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-10-30",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": null,
             "Valor": "600.0"
@@ -398,6 +413,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-10-16",
             "Recorrencia": 0,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": null,
             "Valor": "250.0"
@@ -521,6 +537,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-11-01",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": null,
             "Valor": "10.0"
@@ -755,6 +772,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": null,
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -882,6 +900,184 @@
     }
   },
   {
+    "nome": "criar com o cofrinho numa conta manual",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O cofrinho tem de ser de uma conta do Open Finance. Em conta manual, lance a despesa pelo Pagar."
+    }
+  },
+  {
+    "nome": "criar com o cofrinho no cartão",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A conta cobrada no cartão não sai de um cofrinho."
+    }
+  },
+  {
+    "nome": "criar à mão pelo cofrinho (id 12)",
+    "requisicao": "POST /api/contas-agendadas",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "inseridas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Escola",
+            "FormaCobranca": 1,
+            "Id": 12,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-20",
+            "Recorrencia": 1,
+            "ReservaNome": "Caixinha viagem",
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "120.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer o pagamento pelo cofrinho sem pagamento",
+    "requisicao": "DELETE /api/contas-agendadas/12/pagamento-cofrinho",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Esta conta a pagar não tem pagamento pelo cofrinho para mudar."
+    }
+  },
+  {
+    "nome": "pagar pelo cofrinho",
+    "requisicao": "POST /api/contas-agendadas/12/pagar",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 12
+            },
+            "colunas": {
+              "ProximoVencimento": {
+                "antes": "2026-10-20",
+                "depois": "2026-11-20"
+              },
+              "UltimoPagamentoEm": {
+                "antes": null,
+                "depois": "2026-10-14"
+              }
+            }
+          }
+        ]
+      },
+      "PagamentoCofrinho": {
+        "inseridas": [
+          {
+            "Automatico": 0,
+            "ContaAgendadaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 1,
+            "ProximoVencimento": "2026-11-20",
+            "TransacaoId": 178,
+            "UltimoPagamentoAnterior": null,
+            "Vencimento": "2026-10-20"
+          }
+        ]
+      },
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Escola",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 178,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "ReservaNome": "Caixinha viagem",
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-120.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar o pagamento pelo cofrinho com valor zero",
+    "requisicao": "PUT /api/contas-agendadas/12/pagamento-cofrinho",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Valor": [
+          "The field Valor must be between 0,01 and 999999999."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "ajustar o pagamento pelo cofrinho",
+    "requisicao": "PUT /api/contas-agendadas/12/pagamento-cofrinho",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 178
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "-120.0",
+                "depois": "-118.4"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ajustar o pagamento pelo cofrinho sem login",
+    "requisicao": "PUT /api/contas-agendadas/12/pagamento-cofrinho",
+    "status": 401
+  },
+  {
     "nome": "listar depois das mudanças",
     "requisicao": "GET /api/contas-agendadas",
     "status": 200,
@@ -903,8 +1099,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-05-10",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-04-10",
+        "ultimoPeloCofrinho": null,
         "valor": 99.0
       },
       {
@@ -923,8 +1121,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-16",
         "recorrencia": 0,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-10-14",
+        "ultimoPeloCofrinho": null,
         "valor": 275.25
       },
       {
@@ -943,8 +1143,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-18",
         "recorrencia": 0,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": null,
+        "ultimoPeloCofrinho": null,
         "valor": 2100.0
       },
       {
@@ -963,8 +1165,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-20",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-20",
+        "ultimoPeloCofrinho": null,
         "valor": 119.9
       },
       {
@@ -983,8 +1187,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-20",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": "STREAMFLIX",
         "ultimoPagamentoEm": "2026-09-20",
+        "ultimoPeloCofrinho": null,
         "valor": 39.9
       },
       {
@@ -1003,8 +1209,10 @@
         "pagamentosRestantes": 3,
         "proximoVencimento": "2026-10-25",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-25",
+        "ultimoPeloCofrinho": null,
         "valor": 350.0
       },
       {
@@ -1023,8 +1231,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-10-25",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": "ASSINATURA STREAMFLIX",
         "ultimoPagamentoEm": "2026-09-20",
+        "ultimoPeloCofrinho": null,
         "valor": 39.9
       },
       {
@@ -1043,9 +1253,40 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2026-11-01",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": null,
+        "ultimoPeloCofrinho": null,
         "valor": 10.0
+      },
+      {
+        "ativa": true,
+        "categoriaId": null,
+        "categoriaNome": null,
+        "contaId": 1,
+        "contaNome": "Conta Corrente Fictícia",
+        "dataLimite": null,
+        "descricao": "Escola",
+        "diasParaVencer": 37,
+        "encerrada": false,
+        "formaCobranca": 1,
+        "id": 12,
+        "observacao": null,
+        "pagamentosRestantes": null,
+        "proximoVencimento": "2026-11-20",
+        "recorrencia": 1,
+        "reservaNome": "Caixinha viagem",
+        "textoCobranca": null,
+        "ultimoPagamentoEm": "2026-10-14",
+        "ultimoPeloCofrinho": {
+          "automatico": false,
+          "data": "2026-10-14",
+          "podeDesfazer": true,
+          "reservaNome": "Caixinha viagem",
+          "transacaoId": 178,
+          "valor": 118.4
+        },
+        "valor": 120.0
       },
       {
         "ativa": true,
@@ -1063,8 +1304,10 @@
         "pagamentosRestantes": 5,
         "proximoVencimento": "2026-11-30",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-10-14",
+        "ultimoPeloCofrinho": null,
         "valor": 600.0
       },
       {
@@ -1083,8 +1326,10 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2027-01-05",
         "recorrencia": 1,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-10-14",
+        "ultimoPeloCofrinho": null,
         "valor": 1800.5
       },
       {
@@ -1103,11 +1348,88 @@
         "pagamentosRestantes": null,
         "proximoVencimento": "2027-01-15",
         "recorrencia": 2,
+        "reservaNome": null,
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-01-15",
+        "ultimoPeloCofrinho": null,
         "valor": 1450.0
       }
     ]
+  },
+  {
+    "nome": "desfazer o pagamento pelo cofrinho",
+    "requisicao": "DELETE /api/contas-agendadas/12/pagamento-cofrinho",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 12
+            },
+            "colunas": {
+              "ProximoVencimento": {
+                "antes": "2026-11-20",
+                "depois": "2026-10-20"
+              },
+              "UltimoPagamentoEm": {
+                "antes": "2026-10-14",
+                "depois": null
+              }
+            }
+          }
+        ]
+      },
+      "PagamentoCofrinho": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "TransacaoId": {
+                "antes": 178,
+                "depois": null
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Escola",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 178,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "ReservaNome": "Caixinha viagem",
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-118.4"
+          }
+        ]
+      }
+    }
   },
   {
     "nome": "apagar a despesa lançada",
@@ -1140,6 +1462,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": null,
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1169,6 +1492,7 @@
             "Observacao": "Pago no dia 5",
             "ProximoVencimento": "2027-01-05",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": "2026-10-14",
             "Valor": "1800.5"
@@ -1197,6 +1521,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-10-25",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": "ASSINATURA STREAMFLIX",
             "UltimoPagamentoEm": "2026-09-20",
             "Valor": "39.9"
@@ -1225,6 +1550,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-11-30",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": "2026-10-14",
             "Valor": "600.0"
@@ -1253,6 +1579,7 @@
             "Observacao": null,
             "ProximoVencimento": "2026-10-16",
             "Recorrencia": 0,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": "2026-10-14",
             "Valor": "275.25"
@@ -1281,9 +1608,53 @@
             "Observacao": null,
             "ProximoVencimento": "2026-11-01",
             "Recorrencia": 1,
+            "ReservaNome": null,
             "TextoCobranca": null,
             "UltimoPagamentoEm": null,
             "Valor": "10.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir a 12",
+    "requisicao": "DELETE /api/contas-agendadas/12",
+    "status": 204,
+    "banco": {
+      "ContaAgendada": {
+        "removidas": [
+          {
+            "Ativa": 1,
+            "CategoriaId": null,
+            "ChaveExtrato": null,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DataLimite": null,
+            "Descricao": "Escola",
+            "FormaCobranca": 1,
+            "Id": 12,
+            "Observacao": null,
+            "ProximoVencimento": "2026-10-20",
+            "Recorrencia": 1,
+            "ReservaNome": "Caixinha viagem",
+            "TextoCobranca": null,
+            "UltimoPagamentoEm": null,
+            "Valor": "120.0"
+          }
+        ]
+      },
+      "PagamentoCofrinho": {
+        "removidas": [
+          {
+            "Automatico": 0,
+            "ContaAgendadaId": 12,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 1,
+            "ProximoVencimento": "2026-11-20",
+            "TransacaoId": null,
+            "UltimoPagamentoAnterior": null,
+            "Vencimento": "2026-10-20"
           }
         ]
       }

@@ -291,6 +291,15 @@ export interface ContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** Inativa por ter passado da data limite ao pagar. */
   encerrada: boolean;
+  /** #691: "Pago com" este cofrinho (reserva) da conta de pagamento; null = o saldo da conta. */
+  reservaNome: string | null;
+  /** #691: a última baixa que o app deu pelo cofrinho, com "Ajustar valor" e "Desfazer". */
+  ultimoPeloCofrinho: PagamentoCofrinho | null;
+}
+
+/** #691: baixa de uma conta a pagar com a despesa saindo de um cofrinho (automática no vencimento ou pelo "Pagar"). */
+export interface PagamentoCofrinho {
+  transacaoId: number; data: string; valor: number; reservaNome: string; automatico: boolean; podeDesfazer: boolean;
 }
 
 export interface SalvarContaAgendada {
@@ -302,6 +311,8 @@ export interface SalvarContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** #205: a chave da sugestão do extrato que originou o cadastro (vazia na edição: a ligação que já existe fica). */
   chaveExtrato?: string | null;
+  /** #691: "Pago com" este cofrinho da conta (null = o saldo da conta). */
+  reservaNome: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */

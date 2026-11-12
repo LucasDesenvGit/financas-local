@@ -206,6 +206,14 @@ export class ApiService {
   pagarContaAgendada(id: number, lancarTransacao: boolean, data: string | null): Observable<void> {
     return this.http.post<void>(`${this.base}/contas-agendadas/${id}/pagar`, { lancarTransacao, data });
   }
+  /** #691: "Ajustar valor" da última baixa pelo cofrinho. */
+  ajustarPagamentoCofrinho(id: number, valor: number): Observable<void> {
+    return this.http.put<void>(`${this.base}/contas-agendadas/${id}/pagamento-cofrinho`, { valor });
+  }
+  /** #691: "Desfazer" a última baixa pelo cofrinho (o lançamento sai e o vencimento volta). */
+  desfazerPagamentoCofrinho(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/contas-agendadas/${id}/pagamento-cofrinho`);
+  }
 
   // Investimentos
   investimentos(): Observable<Investimento[]> { return this.http.get<Investimento[]>(`${this.base}/investimentos`); }

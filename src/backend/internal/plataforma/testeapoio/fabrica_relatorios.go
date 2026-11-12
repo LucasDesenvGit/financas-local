@@ -137,6 +137,7 @@ type ContaAgendada struct {
 	TextoCobranca     *string
 	Observacao        *string
 	ChaveExtrato      *string
+	ReservaNome       *string // #691: "Pago com" este cofrinho da conta
 	CriadoEm          tipos.DataHora
 }
 
@@ -153,8 +154,9 @@ func (f *Fabrica) ContaAgendada(ajustes ...func(*ContaAgendada)) ContaAgendada {
 	}
 	c.Id = f.inserir("ContaAgendada", `INSERT INTO ContaAgendada (Descricao, Valor, ProximoVencimento, Recorrencia,
 		CategoriaId, ContaId, Ativa, UltimoPagamentoEm, DataLimite, FormaCobranca, TextoCobranca, Observacao, ChaveExtrato,
-		CriadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		ReservaNome, CriadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia, c.CategoriaId, c.ContaId, bit(c.Ativa),
-		c.UltimoPagamentoEm, c.DataLimite, c.FormaCobranca, c.TextoCobranca, c.Observacao, c.ChaveExtrato, c.CriadoEm)
+		c.UltimoPagamentoEm, c.DataLimite, c.FormaCobranca, c.TextoCobranca, c.Observacao, c.ChaveExtrato, c.ReservaNome,
+		c.CriadoEm)
 	return c
 }

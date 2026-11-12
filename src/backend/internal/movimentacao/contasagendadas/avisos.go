@@ -174,13 +174,14 @@ func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 	return lista, linhas.Err()
 }
 
-// lerCobrancas são as saídas de desde a hoje, com o texto que a cobrança procura (cobrancas.TextoDaCobranca). O valor
+// lerCobrancas são as saídas de desde a hoje, com o texto que a cobrança procura (cobrancas.TextoDaCobranca), sem as
+// pagas pelo cofrinho no app (#691: não são cobrança do banco). O valor
 // é texto no banco: o "menor que zero" é conferido em Go.
 func (s *Servico) lerCobrancas(ctx context.Context, desde, hoje tipos.Data, regrasPorValor map[int64]bool) ([]cobranca, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT t."Data", t."Valor", t."ContaId", co."Nome", t."Descricao",
 		t."DescricaoOriginal", t."RegraDescricaoId"
 		FROM "Transacao" AS t INNER JOIN "Conta" AS co ON t."ContaId" = co."Id"
-		WHERE t."Data" >= ? AND t."Data" <= ? ORDER BY t."Id"`, desde, hoje)
+		WHERE t."Data" >= ? AND t."Data" <= ? AND t."ReservaNome" IS NULL ORDER BY t."Id"`, desde, hoje)
 	if err != nil {
 		return nil, fmt.Errorf("ler as cobranças dos avisos: %w", err)
 	}

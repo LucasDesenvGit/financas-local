@@ -70,6 +70,7 @@ type movimento struct {
 	data      tipos.Data
 	valor     tipos.Decimal
 	nome      string // o nome da reserva (ExtrairNome)
+	doApp     bool   // pago pelo cofrinho no app (#691): o nome vem do ReservaNome, e o do extrato, se houver, vale mais
 }
 
 // conferida é uma reserva conferida (ReservaConferencia).
@@ -102,6 +103,36 @@ func (s *Servico) movimentos(ctx context.Context, filtro string) ([]movimento, e
 		if err := linhas.Scan(&m.conta, &m.nomeConta, &m.descricao, &m.data, &m.valor); err != nil {
 			return nil, fmt.Errorf("ler lançamento de reserva: %w", err)
 		}
+		lista = append(lista, m)
+	}
+	return lista, linhas.Err()
+}
+
+// pagosPeloCofrinho são os lançamentos do app pagos direto de um cofrinho (#691, ADR 0063: Transacao.ReservaNome),
+// das mesmas contas dos lançamentos de reserva. Para a reserva, cada um é uma retirada: o valor vem com o sinal trocado
+// (a despesa de -50 é o "Dinheiro retirado" de +50), e o nome é o ReservaNome.
+func (s *Servico) pagosPeloCofrinho(ctx context.Context) ([]movimento, error) {
+	linhas, err := s.db.QueryContext(ctx, `SELECT t."ContaId", c."Nome", t."Descricao", t."Data", t."Valor", t."ReservaNome"
+		FROM "Transacao" AS t
+		INNER JOIN "Conta" AS c ON c."Id" = t."ContaId"
+		LEFT JOIN "ConexaoBancaria" AS b ON b."Id" = c."ConexaoBancariaId"
+		WHERE t."ReservaNome" IS NOT NULL AND t."Status" = 1 AND c."Origem" = 2 AND NOT c."Arquivada" AND c."IncluirNoSaldo"
+		AND (b."Id" IS NULL OR b."Ativa")`)
+	if err != nil {
+		return nil, fmt.Errorf("ler os lançamentos pagos pelo cofrinho: %w", err)
+	}
+	defer linhas.Close()
+	var lista []movimento
+	for linhas.Next() {
+		var m movimento
+		if err := linhas.Scan(&m.conta, &m.nomeConta, &m.descricao, &m.data, &m.valor, &m.nome); err != nil {
+			return nil, fmt.Errorf("ler lançamento pago pelo cofrinho: %w", err)
+		}
+		m.nome = strings.TrimFunc(m.nome, unicode.IsSpace)
+		if m.nome == "" || ehNomeMeliDolar(m.nome) {
+			continue
+		}
+		m.valor, m.doApp = tipos.DeDecimal(m.valor.Decimal().Neg()), true
 		lista = append(lista, m)
 	}
 	return lista, linhas.Err()
@@ -217,6 +248,11 @@ func (s *Servico) Listar(ctx context.Context) ([]ReservaDto, error) {
 	if err != nil {
 		return nil, err
 	}
+	pagos, err := s.pagosPeloCofrinho(ctx)
+	if err != nil {
+		return nil, err
+	}
+	movimentos = append(movimentos, pagos...)
 	conferidas, err := s.conferidas(ctx)
 	if err != nil {
 		return nil, err
@@ -237,11 +273,13 @@ func (s *Servico) Listar(ctx context.Context) ([]ReservaDto, error) {
 	grupos := map[chave][]movimento{}
 	var chaves []chave
 	for _, m := range movimentos {
-		nome := ExtrairNome(m.descricao)
-		if nome == nil {
-			continue
+		if m.nome == "" {
+			nome := ExtrairNome(m.descricao)
+			if nome == nil {
+				continue
+			}
+			m.nome = *nome
 		}
-		m.nome = *nome
 		k := chave{m.conta, texto.MaiusculasInvariantes(m.nome)}
 		if _, ok := grupos[k]; !ok {
 			chaves = append(chaves, k)
@@ -279,11 +317,13 @@ func (s *Servico) Listar(ctx context.Context) ([]ReservaDto, error) {
 			d.NomeConta, d.Nome = conferencia.nomeConta, conferencia.nome
 			saldoConferido, dataConferencia = &conferencia.saldo, &conferencia.data
 		} else {
-			// O nome do lançamento mais recente (o primeiro dele, no empate).
+			// O nome do lançamento mais recente (o primeiro dele, no empate). O do extrato vale mais que o digitado na
+			// conta a pagar (#691): só sem nenhum lançamento do extrato o nome vem do app.
 			d.NomeConta = lista[0].nomeConta
 			maisRecente := 0
 			for i := range lista {
-				if lista[i].data.Depois(lista[maisRecente].data) {
+				if lista[maisRecente].doApp && !lista[i].doApp ||
+					lista[i].doApp == lista[maisRecente].doApp && lista[i].data.Depois(lista[maisRecente].data) {
 					maisRecente = i
 				}
 			}
