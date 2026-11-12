@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 // Regra (#691, ADR 0063): o "Pago com" um cofrinho só vale com uma conta do Open Finance e fora do cartão; o nome é
@@ -94,17 +95,29 @@ func TestPagarPeloCofrinho(t *testing.T) {
 	if r := testeapoio.Chamar(t, mux, "PUT", caminho+"/pagamento-cofrinho", `{"valor":123.45}`); r.Status != 204 {
 		t.Errorf("ajustar: %d %s", r.Status, r.Corpo)
 	}
-	lista := lerJSON[[]map[string]any](t, testeapoio.Chamar(t, mux, "GET", "/api/contas-agendadas", "").Corpo)
-	var linha map[string]any
-	for _, c := range lista {
-		if c["id"] == float64(agendada.Id) {
-			linha = c
+	type ultimo struct {
+		Data         string
+		Valor        tipos.Decimal
+		Automatico   bool
+		PodeDesfazer bool
+	}
+	type linhaDaLista struct {
+		Id                 int64
+		ReservaNome        *string
+		ProximoVencimento  string
+		UltimoPeloCofrinho *ultimo
+	}
+	var linha *linhaDaLista
+	for _, c := range lerJSON[[]linhaDaLista](t, testeapoio.Chamar(t, mux, "GET", "/api/contas-agendadas", "").Corpo) {
+		if c.Id == agendada.Id {
+			linha = &c
 		}
 	}
-	u, _ := linha["ultimoPeloCofrinho"].(map[string]any)
-	if linha["reservaNome"] != "Emergência" || linha["proximoVencimento"] != "2026-11-14" || u == nil ||
-		u["data"] != "2026-10-13" || u["valor"] != 123.45 || u["automatico"] != false || u["podeDesfazer"] != true {
-		t.Errorf("na lista: %v", linha)
+	if linha == nil || linha.ReservaNome == nil || *linha.ReservaNome != "Emergência" || linha.ProximoVencimento != "2026-11-14" ||
+		linha.UltimoPeloCofrinho == nil || linha.UltimoPeloCofrinho.Data != "2026-10-13" ||
+		linha.UltimoPeloCofrinho.Valor.Decimal().Cmp(testeapoio.Valor("123.45").Decimal()) != 0 ||
+		linha.UltimoPeloCofrinho.Automatico || !linha.UltimoPeloCofrinho.PodeDesfazer {
+		t.Errorf("na lista: %+v", linha)
 	}
 	var valor, reserva string
 	if err := db.QueryRow(`SELECT "Valor", "ReservaNome" FROM "Transacao" WHERE "ContaId" = ?`, of.Id).Scan(&valor, &reserva); err != nil ||
