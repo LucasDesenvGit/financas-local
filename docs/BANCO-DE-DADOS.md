@@ -127,7 +127,7 @@ erDiagram
     Categoria |o--o{ ContaAgendada : "CategoriaId: SET NULL"
     Conta |o--o{ ContaAgendada : "ContaId: SET NULL"
     ContaAgendada ||--o{ PagamentoCofrinho : "ContaAgendadaId: CASCADE"
-    Transacao ||--o{ PagamentoCofrinho : "TransacaoId: CASCADE"
+    Transacao |o--o{ PagamentoCofrinho : "TransacaoId: SET NULL"
 ```
 
 ### Investimentos

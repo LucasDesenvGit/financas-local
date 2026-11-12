@@ -139,17 +139,20 @@ func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data, agora tip
 		regras, err = RegrasPorValor(ctx, q)
 		return regras, err
 	}
-	mudaram, err := desfazerDuplicadas(ctx, q, hoje, regrasPorValor)
+	// Com erro, nada ficou gravado (quem chama desfaz a transação do banco): devolve 0.
+	duplicadas, err := desfazerDuplicadas(ctx, q, hoje, regrasPorValor)
 	if err != nil {
-		return mudaram, err
+		return 0, err
 	}
 	casadas, err := conciliarPeloExtrato(ctx, q, hoje, regrasPorValor)
-	mudaram += casadas
 	if err != nil {
-		return mudaram, err
+		return 0, err
 	}
 	baixas, err := baixarPeloCofrinho(ctx, q, hoje, agora)
-	return mudaram + baixas, err
+	if err != nil {
+		return 0, err
+	}
+	return duplicadas + casadas + baixas, nil
 }
 
 // conciliarPeloExtrato é a conciliação com as cobranças do extrato (#158).

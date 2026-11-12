@@ -82,3 +82,67 @@ func pagoCom(reserva, valor string, dia int) func(*testeapoio.Transacao) {
 		tr.Descricao, tr.Valor, tr.Data, tr.ReservaNome = "Conta de luz", testeapoio.Valor(valor), testeapoio.Dia(2026, 10, dia), &reserva
 	}
 }
+
+// Regra (#691): ReservaNome em branco ou do Méli Dólar não vira reserva em reais; a falha ao ler os lançamentos pagos
+// pelo cofrinho volta como erro.
+func TestPagosPeloCofrinhoIgnoradosEErro(t *testing.T) {
+	t.Parallel()
+	s, db, fab, conta := bancoDaLista(t, nil)
+	fab.Transacao(conta, pagoCom("   ", "-10.00", 10))
+	fab.Transacao(conta, pagoCom("Méli Dólar", "-10.00", 10))
+	fab.Transacao(conta, pagoCom("Viagem", "-10.00", 10))
+	lista, err := s.Listar(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lista) != 1 || lista[0].Nome != "Viagem" {
+		t.Errorf("Listar = %+v, esperado só a reserva Viagem", lista)
+	}
+	if _, err := db.Exec(`ALTER TABLE "Transacao" RENAME COLUMN "ReservaNome" TO "OutroNome"`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Listar(t.Context()); err == nil {
+		t.Error("Listar sem a coluna ReservaNome devia falhar")
+	}
+}
+
+// Regra (#691): o nome da reserva é o do lançamento mais recente do extrato, em qualquer ordem de leitura, mesmo
+// que o pago pelo cofrinho no app seja mais novo; só sem lançamento do extrato o nome vem do app.
+func TestNomeDaReservaPeloExtratoMaisRecente(t *testing.T) {
+	t.Parallel()
+	reservado := func(descricao string, dia int) func(*testeapoio.Transacao) {
+		return func(tr *testeapoio.Transacao) {
+			tr.Descricao, tr.Valor, tr.Data = descricao, testeapoio.Valor("-100.00"), testeapoio.Dia(2026, 10, dia)
+		}
+	}
+	casos := []struct {
+		nome        string
+		lancamentos []func(*testeapoio.Transacao)
+		quer        string
+	}{
+		{"o mais novo do extrato lido primeiro", []func(*testeapoio.Transacao){reservado("Dinheiro reservado EMERGÊNCIA", 5),
+			reservado("Dinheiro reservado Emergência", 1), pagoCom("emergência", "-20.00", 20)}, "EMERGÊNCIA"},
+		{"o mais novo do extrato lido depois", []func(*testeapoio.Transacao){reservado("Dinheiro reservado Emergência", 1),
+			reservado("Dinheiro reservado EMERGÊNCIA", 5), pagoCom("emergência", "-20.00", 20)}, "EMERGÊNCIA"},
+		{"o do app lido primeiro", []func(*testeapoio.Transacao){pagoCom("emergência", "-20.00", 20),
+			reservado("Dinheiro reservado Emergência", 1)}, "Emergência"},
+		{"só o do app", []func(*testeapoio.Transacao){pagoCom("emergência", "-20.00", 20),
+			pagoCom("EMERGÊNCIA", "-20.00", 25)}, "EMERGÊNCIA"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			s, _, fab, conta := bancoDaLista(t, nil)
+			for _, l := range c.lancamentos {
+				fab.Transacao(conta, l)
+			}
+			lista, err := s.Listar(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(lista) != 1 || lista[0].Nome != c.quer {
+				t.Errorf("Listar = %+v, esperado a reserva %s", lista, c.quer)
+			}
+		})
+	}
+}
