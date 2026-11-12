@@ -26,7 +26,7 @@ describe('Regressão: avisos das recorrentes (#158)', () => {
         provide: ApiService,
         useValue: {
           contasAgendadas: () => of(itens), avisosContasAgendadas: () => of(avisos), sugestoesContasAgendadas: () => of([]),
-          contas: () => of([]), categorias: () => of([]),
+          contas: () => of([]), categorias: () => of([]), reservas: () => of([]),
           atualizarContaAgendada: (id: number, dto: SalvarContaAgendada) => { salvos.push([id, dto]); return of(undefined); }
         }
       }]

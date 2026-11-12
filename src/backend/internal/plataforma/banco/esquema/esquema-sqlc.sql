@@ -150,6 +150,7 @@ CREATE TABLE "Transacao" (
     "DescricaoManual" INTEGER NOT NULL,
     "TransferenciaGrupo" TEXT,
     "Observacao" TEXT,
+    "ReservaNome" TEXT,
     "CriadoEm" TEXT NOT NULL,
     "AtualizadoEm" TEXT NOT NULL
 );
@@ -251,6 +252,7 @@ CREATE TABLE "ContaAgendada" (
     "TextoCobranca" TEXT,
     "Observacao" TEXT,
     "ChaveExtrato" TEXT,
+    "ReservaNome" TEXT,
     "CriadoEm" TEXT NOT NULL
 );
 
@@ -378,5 +380,16 @@ CREATE TABLE "MetaAporte" (
     "MetaId" INTEGER NOT NULL,
     "Data" TEXT NOT NULL,
     "Valor" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "PagamentoCofrinho" (
+    "Id" INTEGER NOT NULL,
+    "ContaAgendadaId" INTEGER NOT NULL,
+    "TransacaoId" INTEGER,
+    "Vencimento" TEXT NOT NULL,
+    "ProximoVencimento" TEXT NOT NULL,
+    "UltimoPagamentoAnterior" TEXT,
+    "Automatico" INTEGER NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );

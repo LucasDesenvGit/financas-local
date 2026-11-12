@@ -103,7 +103,7 @@ func TestConciliar(t *testing.T) {
 				c.cobranca(tr)
 			})
 
-			mudaram, err := Conciliar(context.Background(), db, hoje)
+			mudaram, err := Conciliar(context.Background(), db, hoje, agoraDoTeste)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -150,7 +150,7 @@ func TestConciliarPelaConta(t *testing.T) {
 		tr.Data, tr.Valor, tr.Descricao = testeapoio.Dia(2026, 10, 13), testeapoio.Valor("-39.9"), "ASSINATURA STREAMFLIX"
 	})
 	for i, quer := range []int{1, 0} {
-		mudaram, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14))
+		mudaram, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste)
 		if err != nil || mudaram != quer {
 			t.Fatalf("rodada %d: %d, %v", i, mudaram, err)
 		}
@@ -181,7 +181,7 @@ func TestConciliarAMaisRecente(t *testing.T) {
 			tr.Estabelecimento = ptr(d.estabelecimento)
 		})
 	}
-	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err != nil {
+	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err != nil {
 		t.Fatal(err)
 	}
 	var ultimo, chave string
@@ -218,7 +218,7 @@ func TestConciliarPelaRegraComValor(t *testing.T) {
 		tr.Data, tr.Valor = testeapoio.Dia(2026, 10, 10), testeapoio.Valor("-700.0")
 		tr.Descricao, tr.DescricaoOriginal, tr.RegraDescricaoId = "Condomínio 2", ptr("BOLETO CONDOMINIO"), &regra
 	})
-	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err != nil {
+	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err != nil {
 		t.Fatal(err)
 	}
 	var chave string
@@ -307,7 +307,7 @@ func conciliarUma(t *testing.T, regra func(db *sql.DB) *int64, cobrancas ...func
 			mudar(tr)
 		})
 	}
-	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err != nil {
+	if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.QueryRow(`SELECT "UltimoPagamentoEm", "ChaveExtrato" FROM "ContaAgendada" WHERE "Id" = ?`,
@@ -365,7 +365,7 @@ func TestConciliarSemContas(t *testing.T) {
 	if _, err := db.Exec(`DROP TABLE "RegraDescricao"`); err != nil {
 		t.Fatal(err)
 	}
-	if mudaram, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err != nil || mudaram != 0 {
+	if mudaram, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err != nil || mudaram != 0 {
 		t.Errorf("%d, %v", mudaram, err)
 	}
 }
@@ -387,7 +387,7 @@ func TestConciliarErroDoBanco(t *testing.T) {
 		if _, err := db.Exec(quebrar); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14)); err == nil {
+		if _, err := Conciliar(context.Background(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err == nil {
 			t.Errorf("%s: devia falhar", quebrar)
 		}
 	}

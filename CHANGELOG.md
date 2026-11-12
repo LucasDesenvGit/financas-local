@@ -2,6 +2,19 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.13.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar: "Pago com" um cofrinho** (#691, parte 1). No Mercado Pago, o débito automático pago com o dinheiro de um cofrinho sai direto da reserva e não chega pelo Open Finance: a despesa sumia do mês e o cofrinho ficava acima do real. Agora, numa conta a pagar de conta do Open Finance, o campo "Pago com" escolhe o saldo da conta ou um cofrinho dela (ou outro, pelo nome).
+  - Com "débito automático", o site lança a despesa sozinho no vencimento, com o valor e a categoria, e o vencimento avança; com "paga à mão", o "Pagar" lança a mesma despesa. Ela entra no mês, na categoria, nos orçamentos e nos relatórios; o cofrinho baixa e o saldo da conta não muda.
+  - A lista mostra "paga pelo cofrinho … em … (automático)", com "ajustar valor" e "desfazer". Se a cobrança chegar pelo extrato mesmo assim, vale a do banco e a do site sai sozinha.
+  - Banco: colunas `ContaAgendada.ReservaNome` e `Transacao.ReservaNome` e a tabela `PagamentoCofrinho` (ADR 0063, proposta). O site aplica sozinho ao iniciar.
+
+## [3.12.2] — 2026-11-11 · desenvolvimento
+
+### Correções
+- **Go 1.27.4 no site e no gerenciador** (#694). O 1.27.3 tem uma falha de segurança no `net/http` da biblioteca padrão (GO-2026-6859), que o `govulncheck` da CI passou a apontar e que travava todo PR com Go. Quem instala pelos scripts recebe a versão nova sozinho (a mais nova da linha 1.27).
+
 ## [3.12.1] — 2026-11-10 · desenvolvimento
 
 ### Correções

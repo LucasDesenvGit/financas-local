@@ -24,7 +24,7 @@ export function contaAgendada(campos: Partial<ContaAgendada> = {}): ContaAgendad
     id: 1, descricao: 'Escola', valor: 1450, proximoVencimento: '2026-11-10', recorrencia: Recorrencia.Mensal,
     categoriaId: null, categoriaNome: null, contaId: null, contaNome: null, ativa: true, ultimoPagamentoEm: null,
     diasParaVencer: 25, dataLimite: null, pagamentosRestantes: null, encerrada: false, formaCobranca: FormaCobranca.AMao,
-    textoCobranca: null, observacao: null, ...campos
+    textoCobranca: null, observacao: null, reservaNome: null, ultimoPeloCofrinho: null, ...campos
   };
 }
 
@@ -51,6 +51,7 @@ export function abrirContasAPagar(sugestoes: SugestaoContaAgendada[] | 'erro', i
           desligarExtratoContaAgendada: (id: number) => { desligadas.push(id); return of(undefined); },
           contas: () => of([]),
           categorias: () => of([]),
+          reservas: () => of([]),
           sugestoesContasAgendadas: () => (sugestoes === 'erro' ? throwError(() => new Error('falhou')) : of(sugestoes))
         }
       }

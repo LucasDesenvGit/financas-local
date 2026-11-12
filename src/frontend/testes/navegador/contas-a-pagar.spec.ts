@@ -82,3 +82,31 @@ test('Contas a pagar: nome, conta e forma de cobrança alinhados depois do selo'
   // A conta fica embaixo do nome, sem encostar nele.
   expect(conta.y).toBeGreaterThanOrEqual(nome.y + nome.height - 0.5);
 });
+
+/**
+ * #691 (ADR 0063): a conta paga com o cofrinho diz de onde sai o dinheiro e a última baixa que o app deu, com "ajustar
+ * valor" e "desfazer"; o formulário mostra o "Pago com" só em conta do Open Finance, fora do cartão.
+ */
+test('Contas a pagar: pago com o cofrinho (#691)', async ({ page, api, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  await expect(page.getByText('cofrinho Emergência (Conta Exemplo)')).toBeVisible();
+  await expect(page.getByText(/paga pelo cofrinho Emergência em \d\d\/\d\d \(automático\)/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pagar Condomínio' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Ajustar o valor pago de Condomínio' }).click();
+  const ajuste = page.getByRole('dialog');
+  await ajuste.getByRole('button', { name: 'Salvar' }).click();
+  await expect.poll(() => api.chamadas.includes('PUT /api/contas-agendadas/4/pagamento-cofrinho')).toBe(true);
+
+  await page.getByRole('button', { name: '+ Nova conta' }).click();
+  const dialogo = page.getByRole('dialog');
+  await expect(dialogo.getByLabel('Pago com')).toHaveCount(0);
+  await dialogo.getByLabel('Conta de pagamento (opcional)').selectOption({ label: 'Conta Exemplo' });
+  await dialogo.getByLabel('Pago com').selectOption({ label: 'Cofrinho Emergência' });
+  await expect(dialogo).toContainText('o “Pagar” lança a despesa e baixa o cofrinho');
+  await dialogo.getByLabel('Pago com').selectOption({ label: 'Outro cofrinho…' });
+  await expect(dialogo.getByLabel('Nome do cofrinho')).toBeVisible();
+  await dialogo.getByLabel('Como é cobrada').selectOption({ label: 'no cartão de crédito' });
+  await expect(dialogo.getByLabel('Pago com')).toHaveCount(0);
+  expect(problemas.lista).toEqual([]);
+});

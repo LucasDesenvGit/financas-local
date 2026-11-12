@@ -1,5 +1,5 @@
 {
-  "descricao": "Contas a pagar (#79, ContasAgendadasController): lista, avisos (#158), sugestões do extrato (#62, #205), criar e editar com a conciliação da cobrança automática (#158, ADR 0043), o 'é a mesma' (#205), pagar com e sem lançar a despesa (#69) e excluir. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Só mexe nas contas a pagar que cria (ids 7 a 10) e na transação que o 'Pagar' lança, e apaga tudo no fim: as da base ficam como estavam, para os arquivos seguintes.",
+  "descricao": "Contas a pagar (#79, ContasAgendadasController): lista, avisos (#158), sugestões do extrato (#62, #205), criar e editar com a conciliação da cobrança automática (#158, ADR 0043), o 'é a mesma' (#205), pagar com e sem lançar a despesa (#69), pagar pelo cofrinho, ajustar e desfazer (#691) e excluir. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Só mexe nas contas a pagar que cria (ids 7 a 12) e nas transações que o 'Pagar' lança, e apaga tudo no fim: as da base ficam como estavam, para os arquivos seguintes.",
   "casos": [
     {
       "nome": "listar",
@@ -239,9 +239,69 @@
       "corpo": { "lancarTransacao": false }
     },
     {
+      "nome": "criar com o cofrinho numa conta manual",
+      "comentario": "#691 (ADR 0063): o cofrinho só existe em conta do Open Finance.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Cofrinho na poupança", "valor": 120, "proximoVencimento": "2026-10-20", "recorrencia": 1,
+        "categoriaId": null, "contaId": 3, "formaCobranca": 2, "reservaNome": "Emergência" }
+    },
+    {
+      "nome": "criar com o cofrinho no cartão",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Cofrinho no cartão", "valor": 120, "proximoVencimento": "2026-10-20", "recorrencia": 1,
+        "categoriaId": null, "contaId": 2, "formaCobranca": 3, "reservaNome": "Emergência" }
+    },
+    {
+      "nome": "criar à mão pelo cofrinho (id 12)",
+      "comentario": "#691: paga à mão com o dinheiro do cofrinho 'Caixinha viagem' da conta 1 (Open Finance). O nome é aparado.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas",
+      "corpo": { "descricao": "Escola", "valor": 120, "proximoVencimento": "2026-10-20", "recorrencia": 1,
+        "categoriaId": null, "contaId": 1, "formaCobranca": 1, "reservaNome": "  Caixinha viagem  " }
+    },
+    {
+      "nome": "desfazer o pagamento pelo cofrinho sem pagamento",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/12/pagamento-cofrinho"
+    },
+    {
+      "nome": "pagar pelo cofrinho",
+      "comentario": "#691: lança a despesa na conta do Open Finance, marcada com o cofrinho, e avança o vencimento.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/12/pagar",
+      "corpo": { "lancarTransacao": true, "data": "2026-10-14" }
+    },
+    {
+      "nome": "ajustar o pagamento pelo cofrinho com valor zero",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/12/pagamento-cofrinho",
+      "corpo": { "valor": 0 }
+    },
+    {
+      "nome": "ajustar o pagamento pelo cofrinho",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/12/pagamento-cofrinho",
+      "corpo": { "valor": 118.4 }
+    },
+    {
+      "nome": "ajustar o pagamento pelo cofrinho sem login",
+      "metodo": "PUT",
+      "caminho": "/api/contas-agendadas/12/pagamento-cofrinho",
+      "corpo": { "valor": 1 },
+      "sessao": "visitante"
+    },
+    {
       "nome": "listar depois das mudanças",
       "metodo": "GET",
       "caminho": "/api/contas-agendadas"
+    },
+    {
+      "nome": "desfazer o pagamento pelo cofrinho",
+      "comentario": "#691: o lançamento sai e o vencimento volta para 20/10.",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/12/pagamento-cofrinho"
     },
     {
       "nome": "apagar a despesa lançada",
@@ -273,6 +333,11 @@
       "nome": "excluir a 11",
       "metodo": "DELETE",
       "caminho": "/api/contas-agendadas/11"
+    },
+    {
+      "nome": "excluir a 12",
+      "metodo": "DELETE",
+      "caminho": "/api/contas-agendadas/12"
     },
     {
       "nome": "excluir a que não existe",

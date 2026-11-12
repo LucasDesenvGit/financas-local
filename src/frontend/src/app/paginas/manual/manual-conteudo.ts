@@ -864,7 +864,7 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'contas-a-pagar',
     titulo: 'Contas a pagar',
-    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos e as sugestões que vêm do extrato.',
+    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos, contas pagas com um cofrinho e as sugestões que vêm do extrato.',
     secoes: [
       {
         id: 'cadastrar-conta',
@@ -893,6 +893,21 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
         dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
+      },
+      {
+        id: 'pago-com-cofrinho',
+        titulo: 'Conta paga com um cofrinho',
+        paraQueServe: 'Registrar a conta que o banco paga direto com o dinheiro de um cofrinho (por exemplo, o débito automático pelo “Emergência” no Mercado Pago). Esse pagamento não passa pela conta e não chega pelo Open Finance.',
+        passos: [
+          'No cadastro, escolha a conta de pagamento do Open Finance onde fica o cofrinho. Aparece o campo “Pago com”.',
+          'Em “Pago com”, escolha o cofrinho. Se ele ainda não aparece na lista, use “Outro cofrinho…” e digite o nome como está no app do banco.',
+          'Com “débito automático”, o site lança a despesa sozinho no dia do vencimento, com o valor e a categoria da conta a pagar, e o vencimento avança. Com “paga à mão”, o “Pagar” já vem com o cofrinho.',
+          'A despesa entra no mês, na categoria, nos orçamentos e nos relatórios. O saldo estimado do cofrinho baixa; o saldo da conta não muda.',
+          'Na lista aparece “paga pelo cofrinho … em …”. Use “ajustar valor” quando a conta veio diferente (luz, água) e “desfazer” se ela não foi paga assim. Desfeita a baixa automática, o site não lança de novo aquele vencimento sozinho: use “Pagar” se ela foi paga.',
+          'Se a cobrança chegar pelo extrato mesmo assim (o cofrinho estava sem saldo e o banco tirou da conta), com o “Texto da cobrança no extrato”, vale a do banco e a despesa do site sai sozinha.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        dicas: ['Se o cofrinho mudar de nome no app do banco, a conta a pagar avisa “não encontrado”: edite e escolha o novo nome.']
       },
       {
         id: 'assinaturas-recorrentes',
@@ -932,7 +947,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',
         passos: [
           'Clique em “Pagar” na conta.',
-          'Confira a data. Se a conta de pagamento for manual, dá para lançar a despesa junto.',
+          'Confira a data. Se a conta de pagamento for manual, ou se a conta é paga com um cofrinho, dá para lançar a despesa junto.',
           'Confirme: o vencimento avança um mês (ou um ano). No último pagamento antes da data limite, a conta é encerrada sozinha.'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
@@ -1206,6 +1221,7 @@ export const MANUAL: CapituloManual[] = [
           'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
           'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
           'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
+          'Conta a pagar paga com o cofrinho (Contas a pagar › “Pago com”) também baixa a estimativa dele: a despesa conta como uma retirada.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso nas notificações (o sino da barra de cima).'
         ],

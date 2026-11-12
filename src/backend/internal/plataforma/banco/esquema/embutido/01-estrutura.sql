@@ -250,6 +250,9 @@ CREATE TABLE IF NOT EXISTS Transacao
     -- Guid gerado pela API quando aplicável (Transacao.TransferenciaGrupo); sem DEFAULT no banco.
     TransferenciaGrupo  TEXT    NULL,
     Observacao          TEXT    NULL,
+    -- #691 (ADR 0063): lançamento do app pago direto deste cofrinho (reserva) da conta: baixa a reserva e não
+    -- passa pelo saldo da conta. NULL = lançamento comum.
+    ReservaNome         TEXT    NULL,
     -- CriadoEm/AtualizadoEm preenchidos pela API (DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     AtualizadoEm        TEXT    NOT NULL,
@@ -412,6 +415,8 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     Observacao          TEXT    NULL,
     -- #205: chave da descrição do banco (a do agrupamento das sugestões do extrato) do pagamento que é esta conta.
     ChaveExtrato        TEXT    NULL,
+    -- #691 (ADR 0063): "Pago com" um cofrinho (reserva) da conta de pagamento. NULL = o saldo da conta.
+    ReservaNome         TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_ContaAgendada_Recorrencia CHECK (Recorrencia IN (0, 1, 2)),
@@ -647,3 +652,29 @@ CREATE TABLE IF NOT EXISTS MetaAporte
     CONSTRAINT FK_MetaAporte_Meta FOREIGN KEY (MetaId) REFERENCES Meta (Id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS IX_MetaAporte_Meta_Data ON MetaAporte (MetaId, Data);
+
+/* ------------------------------------------------------------------ */
+/* Pagamentos de contas a pagar pelo cofrinho (#691, ADR 0063)          */
+/* ------------------------------------------------------------------ */
+/* Uma linha por baixa que o app deu numa conta a pagar com a despesa saindo de um cofrinho (Transacao.ReservaNome):
+   automática no vencimento (débito automático) ou pelo "Pagar". Guarda o que o "Desfazer" precisa para voltar a
+   conta a pagar como estava e impede a baixa automática de repetir um vencimento desfeito. Apagar a conta a pagar apaga
+   a linha. */
+CREATE TABLE IF NOT EXISTS PagamentoCofrinho
+(
+    Id                      INTEGER NOT NULL CONSTRAINT PK_PagamentoCofrinho PRIMARY KEY AUTOINCREMENT,
+    ContaAgendadaId         INTEGER NOT NULL,
+    -- NULL: o lançamento foi apagado (desfeito, ou a cobrança chegou pelo extrato); a baixa automática não volta.
+    TransacaoId             INTEGER NULL,
+    -- O vencimento que este pagamento quitou, e o próximo e o último pagamento de antes dele.
+    Vencimento              TEXT    NOT NULL,
+    ProximoVencimento       TEXT    NOT NULL,
+    UltimoPagamentoAnterior TEXT    NULL,
+    Automatico              INTEGER NOT NULL CONSTRAINT DF_PagamentoCofrinho_Automatico DEFAULT 0,
+    -- Preenchido pela API (UTC); sem DEFAULT no banco.
+    CriadoEm                TEXT    NOT NULL,
+    CONSTRAINT FK_PagamentoCofrinho_ContaAgendada FOREIGN KEY (ContaAgendadaId) REFERENCES ContaAgendada (Id) ON DELETE CASCADE,
+    CONSTRAINT FK_PagamentoCofrinho_Transacao FOREIGN KEY (TransacaoId) REFERENCES Transacao (Id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS IX_PagamentoCofrinho_ContaAgendada ON PagamentoCofrinho (ContaAgendadaId, Id);
+CREATE INDEX IF NOT EXISTS IX_PagamentoCofrinho_Transacao ON PagamentoCofrinho (TransacaoId);

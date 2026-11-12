@@ -188,6 +188,7 @@ type Transacao struct {
 	DescricaoManual     bool
 	TransferenciaGrupo  *tipos.Guid
 	Observacao          *string
+	ReservaNome         *string // #691: pago direto deste cofrinho da conta
 	CriadoEm            tipos.DataHora
 	AtualizadoEm        tipos.DataHora
 }
@@ -207,13 +208,13 @@ func (f *Fabrica) Transacao(conta Conta, ajustes ...func(*Transacao)) Transacao 
 	tr.Id = f.inserir("Transacao", `INSERT INTO Transacao (ContaId, PluggyTransactionId, Data, Descricao,
 		DescricaoOriginal, Estabelecimento, Valor, Tipo, Status, CategoriaId, CategoriaManual, PluggyCategoriaId,
 		FaturaCartaoId, ParcelaNumero, ParcelaTotal, IgnorarRelatorios, Emergencia, DescricaoRevisada, MeioPagamento,
-		MesmaTitularidade, RegraDescricaoId, DescricaoManual, TransferenciaGrupo, Observacao, CriadoEm, AtualizadoEm)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		MesmaTitularidade, RegraDescricaoId, DescricaoManual, TransferenciaGrupo, Observacao, ReservaNome, CriadoEm,
+		AtualizadoEm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		tr.ContaId, tr.PluggyTransactionId, tr.Data, tr.Descricao, tr.DescricaoOriginal, tr.Estabelecimento, tr.Valor,
 		tr.Tipo, tr.Status, tr.CategoriaId, bit(tr.CategoriaManual), tr.PluggyCategoriaId, tr.FaturaCartaoId,
 		tr.ParcelaNumero, tr.ParcelaTotal, bit(tr.IgnorarRelatorios), bit(tr.Emergencia), bit(tr.DescricaoRevisada),
 		tr.MeioPagamento, bitOpcional(tr.MesmaTitularidade), tr.RegraDescricaoId, bit(tr.DescricaoManual),
-		tr.TransferenciaGrupo, tr.Observacao, tr.CriadoEm, tr.AtualizadoEm)
+		tr.TransferenciaGrupo, tr.Observacao, tr.ReservaNome, tr.CriadoEm, tr.AtualizadoEm)
 	return tr
 }
 

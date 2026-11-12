@@ -16,7 +16,7 @@ patrimonio/cambio               87.9
 patrimonio/carteira             97.3
 ajustes/categorias              87.0
 ajustes/categorizacao           96.1
-movimentacao/cobrancas          89.2
+movimentacao/cobrancas          92.3
 plataforma/config               86.7
 plataforma/configuracao         89.3
 movimentacao/contas             88.0
