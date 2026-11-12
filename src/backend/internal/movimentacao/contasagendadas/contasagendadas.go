@@ -91,6 +91,9 @@ type contaAgendadaDto struct {
 	relatorios.ContaAgendadaDto
 	ReservaNome        *string                       `json:"reservaNome"`
 	UltimoPeloCofrinho *cobrancas.UltimoPeloCofrinho `json:"ultimoPeloCofrinho"`
+	// UltimoSemDespesa (#691): o último pagamento, recente, de uma conta paga pelo cofrinho que ficou sem a despesa
+	// (dado antes do "Pago com", como os de 05/11): a tela oferece lançá-la pelo cofrinho.
+	UltimoSemDespesa *tipos.Data `json:"ultimoSemDespesa"`
 }
 
 func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
@@ -110,14 +113,98 @@ func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 		s.erroInterno(w, r, "listar os pagamentos pelo cofrinho", err)
 		return
 	}
+	semDespesa, err := s.ultimosSemDespesa(ctx, s.hoje())
+	if err != nil {
+		s.erroInterno(w, r, "listar os pagamentos sem despesa", err)
+		return
+	}
 	resposta := make([]contaAgendadaDto, len(lista))
 	for i, c := range lista {
 		resposta[i] = contaAgendadaDto{ContaAgendadaDto: c, ReservaNome: reservas[c.Id]}
 		if u, ok := ultimos[c.Id]; ok {
 			resposta[i].UltimoPeloCofrinho = &u
 		}
+		if d, ok := semDespesa[c.Id]; ok {
+			resposta[i].UltimoSemDespesa = &d
+		}
 	}
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, resposta)
+}
+
+// diasSemDespesa: o último pagamento de até tantos dias atrás, sem a despesa, ainda é oferecido para lançar.
+const diasSemDespesa = 45
+
+// ultimosSemDespesa são as contas a pagar com "Pago com" um cofrinho cujo último pagamento (de até 45 dias) não tem
+// lançamento: nem do app pelo cofrinho (com a mesma descrição, na data), nem cobrança do banco com o texto da cobrança
+// na data. É o pagamento dado antes de marcar o cofrinho (#691).
+func (s *Servico) ultimosSemDespesa(ctx context.Context, hoje tipos.Data) (map[int64]tipos.Data, error) {
+	linhas, err := s.db.QueryContext(ctx, `SELECT a."Id", a."UltimoPagamentoEm", a."TextoCobranca",
+		EXISTS (SELECT 1 FROM "Transacao" AS t WHERE t."ContaId" = a."ContaId" AND t."Data" = a."UltimoPagamentoEm"
+			AND t."ReservaNome" IS NOT NULL AND t."Descricao" = a."Descricao")
+		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
+		WHERE a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND a."UltimoPagamentoEm" IS NOT NULL
+		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, origemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
+	if err != nil {
+		return nil, fmt.Errorf("ler os pagamentos pelo cofrinho sem despesa: %w", err)
+	}
+	type candidata struct {
+		id      int64
+		data    tipos.Data
+		texto   *string
+		lancada bool
+	}
+	var lista []candidata
+	for linhas.Next() {
+		var c candidata
+		if err := linhas.Scan(&c.id, &c.data, &c.texto, &c.lancada); err != nil {
+			linhas.Close()
+			return nil, fmt.Errorf("ler pagamento pelo cofrinho sem despesa: %w", err)
+		}
+		if !c.lancada {
+			lista = append(lista, c)
+		}
+	}
+	linhas.Close()
+	if err := linhas.Err(); err != nil {
+		return nil, fmt.Errorf("ler os pagamentos pelo cofrinho sem despesa: %w", err)
+	}
+	resultado := map[int64]tipos.Data{}
+	for _, c := range lista {
+		cobrada := false
+		if c.texto != nil {
+			if cobrada, err = s.cobradaNoDia(ctx, c.id, c.data, *c.texto); err != nil {
+				return nil, err
+			}
+		}
+		if !cobrada {
+			resultado[c.id] = c.data
+		}
+	}
+	return resultado, nil
+}
+
+// cobradaNoDia diz se o extrato da conta da conta a pagar tem, no dia, uma saída do banco com o texto da cobrança.
+func (s *Servico) cobradaNoDia(ctx context.Context, id int64, dia tipos.Data, textoCobranca string) (bool, error) {
+	procurado := texto.ParaRegras(textoCobranca)
+	linhas, err := s.db.QueryContext(ctx, `SELECT t."Descricao", t."DescricaoOriginal" FROM "Transacao" AS t
+		INNER JOIN "ContaAgendada" AS a ON a."ContaId" = t."ContaId"
+		WHERE a."Id" = ? AND t."Data" = ? AND t."ReservaNome" IS NULL`, id, dia)
+	if err != nil {
+		return false, fmt.Errorf("ler as cobranças do dia: %w", err)
+	}
+	defer linhas.Close()
+	for linhas.Next() {
+		var descricao string
+		var original *string
+		if err := linhas.Scan(&descricao, &original); err != nil {
+			return false, fmt.Errorf("ler cobrança do dia: %w", err)
+		}
+		if procurado != "" && (strings.Contains(texto.ParaRegras(descricao), procurado) ||
+			original != nil && strings.Contains(texto.ParaRegras(*original), procurado)) {
+			return true, nil
+		}
+	}
+	return false, linhas.Err()
 }
 
 // reservasDasContas é o "Pago com" (ContaAgendada.ReservaNome) das contas a pagar que têm um cofrinho.
@@ -475,7 +562,11 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 	}
 	lancar := respostas.CampoBool{Propriedade: "LancarTransacao"}
 	data := respostas.CampoDataOpcional{Propriedade: "Data"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.PagarContaAgendadaDto", &lancar, &data) {
+	// #691: o cofrinho escolhido na hora (o "foi paga com um cofrinho?" do aviso) e se ele fica para as próximas.
+	reserva := respostas.CampoTexto{Propriedade: "ReservaNome", Maximo: tamanhoMaximoReserva, Opcional: true,
+		MensagemDoTamanho: "O nome do cofrinho pode ter até 100 caracteres."}
+	guardar := respostas.CampoBool{Propriedade: "GuardarCofrinho"}
+	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.PagarContaAgendadaDto", &lancar, &data, &reserva, &guardar) {
 		return
 	}
 	ctx := r.Context()
@@ -501,6 +592,15 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	escolhido := aparado(reserva.Valor)
+	if escolhido != nil && (!lancar.Valor || origem != origemOpenFinance || c.FormaCobranca == relatorios.FormaCartaoCredito) {
+		respostas.Mensagem(w, http.StatusBadRequest, "O pagamento pelo cofrinho lança a despesa numa conta do Open Finance, "+
+			"fora do cartão.")
+		return
+	}
+	if escolhido != nil {
+		c.ReservaNome = escolhido
+	}
 	peloCofrinho := lancar.Valor && c.ReservaNome != nil && origem == origemOpenFinance
 	if lancar.Valor && !peloCofrinho && origem != origemManual {
 		respostas.Mensagem(w, http.StatusBadRequest, "Para lançar a despesa, vincule uma conta manual. Em contas do Open "+
@@ -508,6 +608,11 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		if escolhido != nil && guardar.Valor {
+			if _, err := tx.ExecContext(ctx, `UPDATE "ContaAgendada" SET "ReservaNome" = ? WHERE "Id" = ?`, *escolhido, id); err != nil {
+				return fmt.Errorf("guardar o cofrinho da conta a pagar %d: %w", id, err)
+			}
+		}
 		if peloCofrinho {
 			return cobrancas.PagarPeloCofrinho(ctx, tx, &cobrancas.ContaDoCofrinho{Id: id, Descricao: c.Descricao,
 				Valor: c.Valor, ProximoVencimento: c.ProximoVencimento, Recorrencia: c.Recorrencia, CategoriaId: c.CategoriaId,

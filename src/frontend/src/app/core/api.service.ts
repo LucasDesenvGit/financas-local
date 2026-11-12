@@ -10,7 +10,7 @@ import {
   AvisoContaAgendada, ConferenciaBanco, AjusteTransacao, Auditoria, Categoria, SituacaoCelular, CategoriaPluggy, Conexao, ConfiguracaoPluggy, Conta, ContaAgendada,
   Fatura, FaturaMes, FiltroTransacoes, Investimento, Mensagem, MesValores, Meta, MetaAporte, Orcamento, Avisos, PaginaTransacoes, Painel, Regra,
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
-  SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
+  SaidaReserva, SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
   ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
@@ -203,8 +203,10 @@ export class ApiService {
     return this.http.delete<void>(`${this.base}/contas-agendadas/${id}/ligar-extrato`);
   }
   excluirContaAgendada(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/contas-agendadas/${id}`); }
-  pagarContaAgendada(id: number, lancarTransacao: boolean, data: string | null): Observable<void> {
-    return this.http.post<void>(`${this.base}/contas-agendadas/${id}/pagar`, { lancarTransacao, data });
+  /** #691: `cofrinho` paga pelo cofrinho escolhido na hora; `guardar` faz dele o "Pago com" da conta. */
+  pagarContaAgendada(id: number, lancarTransacao: boolean, data: string | null,
+    cofrinho?: { reservaNome: string; guardarCofrinho: boolean }): Observable<void> {
+    return this.http.post<void>(`${this.base}/contas-agendadas/${id}/pagar`, { lancarTransacao, data, ...cofrinho });
   }
   /** #691: "Ajustar valor" da última baixa pelo cofrinho. */
   ajustarPagamentoCofrinho(id: number, valor: number): Observable<void> {
@@ -258,8 +260,14 @@ export class ApiService {
     return this.http.post<ResultadoImportacaoCarteira>(`${this.base}/carteira/importar-open-finance`, {});
   }
   /** #169: `moeda` só no Méli Dólar: "BRL" quando o saldo foi informado em reais (a API converte pela PTAX). */
-  conferirReserva(contaId: number, nome: string, saldo: number, data: string, moeda?: string): Observable<void> {
-    return this.http.put<void>(`${this.base}/reservas/conferencia`, { contaId, nome, saldo, data, moeda });
+  /** #691: `registrarDiferenca` lança o que a estimativa passa do conferido como gasto do cofrinho (só com a data de hoje). */
+  conferirReserva(contaId: number, nome: string, saldo: number, data: string, moeda?: string,
+    registrarDiferenca = false): Observable<void> {
+    return this.http.put<void>(`${this.base}/reservas/conferencia`, { contaId, nome, saldo, data, moeda, registrarDiferenca });
+  }
+  /** #691: gasto pago direto do cofrinho, que não chega pelo Open Finance. */
+  registrarSaidaReserva(dto: SaidaReserva): Observable<void> {
+    return this.http.post<void>(`${this.base}/reservas/saida`, dto);
   }
   removerConferenciaReserva(contaId: number, nome: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/reservas/conferencia`, { params: this.params({ contaId, nome }) });

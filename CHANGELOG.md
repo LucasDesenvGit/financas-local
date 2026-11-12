@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.14.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Cofrinho: registrar saída, a diferença da conferência e "foi paga com um cofrinho?"** (#691, parte 2).
+  - Investimentos › Reservas: "registrar saída" lança um gasto pago direto do cofrinho (uma compra, por exemplo), que entra nos relatórios e baixa a estimativa. Na conferência com a data de hoje, com o saldo abaixo da estimativa, "Registrar a diferença como gasto do cofrinho" lança a diferença em vez de ela sumir.
+  - Contas a pagar: o aviso "não veio" de um débito automático do Open Finance, depois de sincronizar, pergunta "Foi paga com um cofrinho?" e abre o "Pagar" com o cofrinho e a data do vencimento, podendo guardá-lo como "Pago com". A conta com "Pago com" cujo último pagamento ficou sem a despesa oferece "lançar pelo cofrinho".
+
 ## [3.13.0] — 2026-11-11 · desenvolvimento
 
 ### Funcionalidades

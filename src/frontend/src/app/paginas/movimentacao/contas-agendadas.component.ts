@@ -53,6 +53,11 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
                 <button type="button" class="botao botao-pequeno" (click)="atualizarPeloAviso(a)"
                   [attr.aria-label]="'Atualizar o catálogo de ' + a.descricao + ': cobra em ' + a.contaNovaNome">Atualizar o catálogo</button>
               }
+              <!-- #691: a cobrança não chegou pelo extrato depois de sincronizar: pode ter saído direto de um cofrinho. -->
+              @if (a.tipo === 'nao-veio' && a.podeSerCofrinho) {
+                <button type="button" class="botao botao-pequeno" (click)="pagarPeloAviso(a)"
+                  [attr.aria-label]="'Foi paga com um cofrinho: ' + a.descricao">Foi paga com um cofrinho</button>
+              }
             </li>
           }
         </ul>
@@ -115,6 +120,12 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
                   @if (!cofrinhoEncontrado(c)) {
                     <small class="texto-alerta">Cofrinho “{{ c.reservaNome }}” não encontrado nas reservas de {{ c.contaNome }}:
                       a despesa continua sendo lançada com esse nome.</small>
+                  }
+                  <!-- #691: pagamento dado antes de marcar o cofrinho, sem a despesa: o app oferece lançar (Nielsen 1). -->
+                  @if (c.ultimoSemDespesa && c.reservaNome) {
+                    <small class="texto-alerta">o pagamento de {{ c.ultimoSemDespesa | date: 'dd/MM' }} está sem a despesa
+                      <button type="button" class="link" (click)="lancarUltimoPeloCofrinho(c)"
+                        [attr.aria-label]="'Lançar pelo cofrinho a despesa de ' + c.descricao">lançar pelo cofrinho</button></small>
                   }
                   <!-- #691: o que o app lançou sozinho fica à vista, com saída fácil (Nielsen 1 e 3). -->
                   @if (c.ultimoPeloCofrinho; as u) {
@@ -337,12 +348,27 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
 
     <app-modal [aberto]="pagando !== null" [titulo]="'Pagar · ' + (pagando?.descricao ?? '')" (fechar)="pagando = null">
       @if (pagando; as pg) {
-        <form (ngSubmit)="confirmarPagamento()" class="formulario">
+        <form (ngSubmit)="confirmarPagamento()" #fp="ngForm" class="formulario">
           <label>Data do pagamento <app-campo-data name="data" [(ngModel)]="dataPagamento" obrigatorio /></label>
           @if (pg.pagamentosRestantes === 1) {
             <p class="texto-suave" role="status">É o último pagamento (até {{ pg.dataLimite | date: 'dd/MM/yyyy' }}): a conta será encerrada.</p>
           }
-          @if (podeLancar(pg) && pg.reservaNome) {
+          @if (cofrinhoNoPagamento !== null) {
+            <!-- #691: "foi paga com um cofrinho?": escolher em vez de digitar (Nielsen 6), e guardar para as próximas. -->
+            @if (opcoesCofrinhoDe(pg).length) {
+              <label>Qual cofrinho
+                <select name="cofrinhoPagamento" [(ngModel)]="cofrinhoNoPagamento" required>
+                  @for (r of opcoesCofrinhoDe(pg); track r.nome) { <option [ngValue]="r.nome">Cofrinho {{ r.nome }}</option> }
+                </select>
+              </label>
+            } @else {
+              <label>Nome do cofrinho
+                <input name="cofrinhoPagamento" [(ngModel)]="cofrinhoNoPagamento" required maxlength="100" placeholder="ex.: Emergência"></label>
+            }
+            <label class="checkbox"><input type="checkbox" name="guardarCofrinho" [(ngModel)]="guardarCofrinho">
+              Usar este cofrinho nas próximas (o app lança no vencimento)</label>
+            <p class="texto-suave">A despesa é lançada na conta {{ pg.contaNome }}, saindo do cofrinho: o saldo da conta não muda.</p>
+          } @else if (podeLancar(pg) && pg.reservaNome) {
             <label class="checkbox"><input type="checkbox" name="lancar" [(ngModel)]="lancarTransacao">
               Lançar a despesa saindo do cofrinho {{ pg.reservaNome }} ({{ pg.contaNome }})</label>
           } @else if (podeLancar(pg)) {
@@ -354,7 +380,7 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
           <div class="rodape-form">
             <span class="cresce"></span>
             <button type="button" class="botao" (click)="pagando = null">Cancelar</button>
-            <button class="botao botao-primario">Confirmar pagamento</button>
+            <button class="botao botao-primario" [disabled]="fp.invalid">Confirmar pagamento</button>
           </div>
         </form>
       }
@@ -731,11 +757,52 @@ export class ContasAgendadasComponent implements OnInit {
     this.pagando = c;
     this.dataPagamento = dataIso();
     this.lancarTransacao = this.podeLancar(c);
+    this.cofrinhoNoPagamento = null;
+  }
+
+  /** #691: o cofrinho escolhido no "Pagar" aberto pelo aviso (null = o "Pagar" de sempre) e se ele fica para as próximas. */
+  cofrinhoNoPagamento: string | null = null;
+  guardarCofrinho = true;
+
+  opcoesCofrinhoDe(c: ContaAgendada): OpcaoCofrinho[] {
+    return opcoesCofrinho(this.reservas(), c.contaId, null);
+  }
+
+  /** #691: "Foi paga com um cofrinho": o "Pagar" com a data do vencimento e o primeiro cofrinho da conta já escolhidos. */
+  pagarPeloAviso(a: AvisoContaAgendada): void {
+    const c = this.itens().find((x) => x.id === a.contaAgendadaId);
+    if (!c) return;
+    this.pagando = c;
+    this.dataPagamento = a.data ?? dataIso();
+    this.lancarTransacao = true;
+    this.cofrinhoNoPagamento = this.opcoesCofrinhoDe(c)[0]?.nome ?? '';
+    this.guardarCofrinho = true;
+  }
+
+  /** #691: lança, pelo cofrinho, a despesa do último pagamento que ficou sem ela (confirma antes: Nielsen 5). */
+  async lancarUltimoPeloCofrinho(c: ContaAgendada): Promise<void> {
+    const data = c.ultimoSemDespesa;
+    if (!data || !c.reservaNome || c.contaId === null) return;
+    const [, m, d] = data.split('-');
+    if (!(await this.confirmacao.confirmar({ titulo: 'Lançar pelo cofrinho',
+      mensagem: `Lançar a despesa de ${c.descricao} de ${d}/${m}, no valor da conta a pagar, saindo do cofrinho ${c.reservaNome}? `
+        + 'Se o valor foi outro, ajuste depois em Transações.', confirmar: 'Lançar' }))) return;
+    this.api.registrarSaidaReserva({ contaId: c.contaId, nome: c.reservaNome, data, valor: c.valor, descricao: c.descricao,
+      categoriaId: c.categoriaId }).subscribe({
+      next: () => {
+        this.avisos.sucesso('Despesa lançada pelo cofrinho.');
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   confirmarPagamento(): void {
     if (!this.pagando) return;
-    this.api.pagarContaAgendada(this.pagando.id, this.lancarTransacao && this.podeLancar(this.pagando), this.dataPagamento)
+    const cofrinho = this.cofrinhoNoPagamento?.trim()
+      ? { reservaNome: this.cofrinhoNoPagamento.trim(), guardarCofrinho: this.guardarCofrinho } : undefined;
+    this.api.pagarContaAgendada(this.pagando.id, cofrinho ? true : this.lancarTransacao && this.podeLancar(this.pagando),
+      this.dataPagamento, cofrinho)
       .subscribe({
         next: () => {
           this.pagando = null;

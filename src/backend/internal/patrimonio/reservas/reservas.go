@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -620,8 +621,14 @@ var ErrSemCotacao = errors.New("Não há cotação do dólar para essa data. Inf
 // casas (convertida de volta pela mesma PTAX, dá o valor informado em reais). Os erros que voltam com a mensagem para
 // quem usa são ErrContaInvalida e ErrSemCotacao.
 func (s *Servico) Conferir(ctx context.Context, conta int64, nome string, saldo tipos.Decimal, data tipos.Data, moedaInformada *string) error {
+	return s.gravarConferencia(ctx, s.db, conta, nome, saldo, data, moedaInformada)
+}
+
+// gravarConferencia é o Conferir no banco ou numa transação dele (a conferência com a diferença como gasto, #691).
+func (s *Servico) gravarConferencia(ctx context.Context, q consultas.DBTX, conta int64, nome string, saldo tipos.Decimal, data tipos.Data,
+	moedaInformada *string) error {
 	var existe bool
-	if err := s.db.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM "Conta" WHERE "Id" = ?)`, conta).Scan(&existe); err != nil {
+	if err := q.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM "Conta" WHERE "Id" = ?)`, conta).Scan(&existe); err != nil {
 		return fmt.Errorf("conferir a conta: %w", err)
 	}
 	if !existe {
@@ -644,7 +651,7 @@ func (s *Servico) Conferir(ctx context.Context, conta int64, nome string, saldo 
 			}
 		}
 	}
-	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "Nome" FROM "ReservaConferencia" WHERE "ContaId" = ?`, conta)
+	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Nome" FROM "ReservaConferencia" WHERE "ContaId" = ?`, conta)
 	if err != nil {
 		return fmt.Errorf("ler as conferências da conta: %w", err)
 	}
@@ -667,10 +674,10 @@ func (s *Servico) Conferir(ctx context.Context, conta int64, nome string, saldo 
 	conferido := tipos.Arredondar(saldo, casas)
 	agora := tipos.NovaDataHora(s.relogio.Agora())
 	if id == nil {
-		_, err = s.db.ExecContext(ctx, `INSERT INTO "ReservaConferencia" ("ContaId", "Nome", "SaldoConferido", "DataConferencia",
+		_, err = q.ExecContext(ctx, `INSERT INTO "ReservaConferencia" ("ContaId", "Nome", "SaldoConferido", "DataConferencia",
 			"AtualizadoEm") VALUES (?, ?, ?, ?, ?)`, conta, nome, conferido, data, agora)
 	} else {
-		_, err = s.db.ExecContext(ctx, `UPDATE "ReservaConferencia" SET "SaldoConferido" = ?, "DataConferencia" = ?,
+		_, err = q.ExecContext(ctx, `UPDATE "ReservaConferencia" SET "SaldoConferido" = ?, "DataConferencia" = ?,
 			"AtualizadoEm" = ? WHERE "Id" = ?`, conferido, data, agora, *id)
 	}
 	if err != nil {

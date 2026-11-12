@@ -375,6 +375,431 @@
     "status": 401
   },
   {
+    "nome": "registrar saída do cofrinho",
+    "requisicao": "POST /api/reservas/saida",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Compra pelo cofrinho",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 179,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "ReservaNome": "Caixinha viagem",
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-35.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "registrar saída numa conta manual",
+    "requisicao": "POST /api/reservas/saida",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O cofrinho tem de ser de uma conta do Open Finance."
+    }
+  },
+  {
+    "nome": "registrar saída no futuro",
+    "requisicao": "POST /api/reservas/saida",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A data da saída não pode estar no futuro."
+    }
+  },
+  {
+    "nome": "registrar saída sem login",
+    "requisicao": "POST /api/reservas/saida",
+    "status": 401
+  },
+  {
+    "nome": "achar a saída lançada",
+    "requisicao": "GET /api/transacoes?busca=Compra%20pelo%20cofrinho&tamanhoPagina=1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "itens": [
+        {
+          "categoriaCor": null,
+          "categoriaId": null,
+          "categoriaNome": null,
+          "contaId": 1,
+          "contaNome": "Conta Corrente Fictícia",
+          "data": "2026-10-14",
+          "descricao": "Compra pelo cofrinho",
+          "descricaoOriginal": null,
+          "emergencia": false,
+          "estabelecimento": null,
+          "id": 179,
+          "ignorarRelatorios": false,
+          "observacao": null,
+          "openFinance": false,
+          "parcelaNumero": null,
+          "parcelaTotal": null,
+          "regraDescricaoId": null,
+          "status": 1,
+          "tipo": 1,
+          "tipoLancamento": 10,
+          "valor": -35.5
+        }
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 1,
+      "total": 1,
+      "totalDespesas": 35.5,
+      "totalReceitas": 0.0
+    }
+  },
+  {
+    "nome": "conferir um cofrinho fora da lista do banco",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 1,
+            "DataConferencia": "2026-10-14",
+            "Id": 4,
+            "Nome": "Emergência",
+            "SaldoConferido": "300.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "conferir com a diferença em outra data",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para registrar a diferença como gasto, confira com a data de hoje."
+    }
+  },
+  {
+    "nome": "conferir com a diferença como gasto",
+    "requisicao": "PUT /api/reservas/conferencia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 4
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "SaldoConferido": {
+                "antes": "300.0",
+                "depois": "250.0"
+              }
+            }
+          }
+        ]
+      },
+      "Transacao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Gasto pelo cofrinho Emergência (diferença da conferência)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 180,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "ReservaNome": "Emergência",
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-50.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "listar com a saída e a diferença",
+    "requisicao": "GET /api/reservas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "conferenciaAntiga": false,
+        "contaId": 1,
+        "cotacao": null,
+        "dataConferencia": null,
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": true,
+        "moeda": "BRL",
+        "movimentos": 1,
+        "nome": "Caixinha viagem",
+        "nomeConta": "Conta Corrente Fictícia",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": "2026-10-14",
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 35.5,
+        "saldo": 800.0,
+        "saldoConferido": null,
+        "totalDoBanco": null,
+        "ultimoMovimento": "2026-10-14"
+      },
+      {
+        "conferenciaAntiga": false,
+        "contaId": 2,
+        "cotacao": 5.4123,
+        "dataConferencia": "2026-10-14",
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": false,
+        "moeda": "USD",
+        "movimentos": 0,
+        "nome": "Méli Dólar",
+        "nomeConta": "Cartão Fictício Platinum",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": 100.12,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 541.90,
+        "saldoConferido": 100.12345679,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      },
+      {
+        "conferenciaAntiga": false,
+        "contaId": 1,
+        "cotacao": null,
+        "dataConferencia": "2026-10-14",
+        "foraDaListaDoBanco": true,
+        "guardado": 0,
+        "informadoPeloBanco": false,
+        "moeda": "BRL",
+        "movimentos": 1,
+        "nome": "Emergência",
+        "nomeConta": "Conta Corrente Fictícia",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": "2026-10-14",
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 250.0,
+        "saldoConferido": 250.0,
+        "totalDoBanco": null,
+        "ultimoMovimento": "2026-10-14"
+      },
+      {
+        "conferenciaAntiga": false,
+        "contaId": 2,
+        "cotacao": null,
+        "dataConferencia": "2026-10-14",
+        "foraDaListaDoBanco": false,
+        "guardado": 0,
+        "informadoPeloBanco": false,
+        "moeda": "BRL",
+        "movimentos": 0,
+        "nome": "Cofrinho",
+        "nomeConta": "Cartão Fictício Platinum",
+        "podeTerSaldoAnterior": false,
+        "primeiroMovimento": null,
+        "quantidade": null,
+        "restanteDoBanco": false,
+        "retirado": 0,
+        "saldo": 200.0,
+        "saldoConferido": 200.0,
+        "totalDoBanco": null,
+        "ultimoMovimento": null
+      }
+    ]
+  },
+  {
+    "nome": "achar a diferença lançada",
+    "requisicao": "GET /api/transacoes?busca=diferen%C3%A7a%20da%20confer%C3%AAncia&tamanhoPagina=1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "itens": [
+        {
+          "categoriaCor": null,
+          "categoriaId": null,
+          "categoriaNome": null,
+          "contaId": 1,
+          "contaNome": "Conta Corrente Fictícia",
+          "data": "2026-10-14",
+          "descricao": "Gasto pelo cofrinho Emergência (diferença da conferência)",
+          "descricaoOriginal": null,
+          "emergencia": false,
+          "estabelecimento": null,
+          "id": 180,
+          "ignorarRelatorios": false,
+          "observacao": null,
+          "openFinance": false,
+          "parcelaNumero": null,
+          "parcelaTotal": null,
+          "regraDescricaoId": null,
+          "status": 1,
+          "tipo": 1,
+          "tipoLancamento": 0,
+          "valor": -50.0
+        }
+      ],
+      "pagina": 1,
+      "tamanhoPagina": 1,
+      "total": 1,
+      "totalDespesas": 50.0,
+      "totalReceitas": 0.0
+    }
+  },
+  {
+    "nome": "apagar a saída lançada",
+    "requisicao": "DELETE /api/transacoes/{{idSaida}}",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Compra pelo cofrinho",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 179,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "ReservaNome": "Caixinha viagem",
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-35.5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "apagar a diferença lançada",
+    "requisicao": "DELETE /api/transacoes/{{idDiferenca}}",
+    "status": 204,
+    "banco": {
+      "Transacao": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "CategoriaId": null,
+            "CategoriaManual": 0,
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-10-14",
+            "Descricao": "Gasto pelo cofrinho Emergência (diferença da conferência)",
+            "DescricaoManual": 0,
+            "DescricaoOriginal": null,
+            "DescricaoRevisada": 0,
+            "Emergencia": 0,
+            "Estabelecimento": null,
+            "FaturaCartaoId": null,
+            "Id": 180,
+            "IgnorarRelatorios": 0,
+            "MeioPagamento": null,
+            "MesmaTitularidade": null,
+            "Observacao": null,
+            "ParcelaNumero": null,
+            "ParcelaTotal": null,
+            "PluggyCategoriaId": null,
+            "PluggyTransactionId": null,
+            "RegraDescricaoId": null,
+            "ReservaNome": "Emergência",
+            "Status": 1,
+            "Tipo": 1,
+            "TransferenciaGrupo": null,
+            "Valor": "-50.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "tirar a conferência da Emergência",
+    "requisicao": "DELETE /api/reservas/conferencia?contaId=1&nome=Emerg%C3%AAncia",
+    "status": 204,
+    "banco": {
+      "ReservaConferencia": {
+        "removidas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "ContaId": 1,
+            "DataConferencia": "2026-10-14",
+            "Id": 4,
+            "Nome": "Emergência",
+            "SaldoConferido": "250.0"
+          }
+        ]
+      }
+    }
+  },
+  {
     "nome": "tirar a conferência",
     "requisicao": "DELETE /api/reservas/conferencia?contaId=2&nome=%20cofrinho%20",
     "status": 204,

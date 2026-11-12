@@ -254,10 +254,20 @@ const respostas: Record<string, unknown> = {
       ultimoPagamentoEm: dataIso(new Date(ano, hoje.getMonth(), 5)), diasParaVencer: 15, dataLimite: null, pagamentosRestantes: null,
       encerrada: false, formaCobranca: 2, textoCobranca: null, observacao: null, reservaNome: 'Emergência',
       ultimoPeloCofrinho: { transacaoId: 90, data: dataIso(new Date(ano, hoje.getMonth(), 5)), valor: 618.4, reservaNome: 'Emergência',
-        automatico: true, podeDesfazer: true } }
+        automatico: true, podeDesfazer: true } },
+    // #691: paga à mão pelo cofrinho; o último pagamento ficou sem a despesa (dado antes de marcar o cofrinho).
+    { id: 5, descricao: 'Internet', valor: 99.9, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 8)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Moradia', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: dataIso(new Date(ano, hoje.getMonth(), 8)), diasParaVencer: 18, dataLimite: null, pagamentosRestantes: null,
+      encerrada: false, formaCobranca: 1, textoCobranca: null, observacao: null, reservaNome: 'Emergência', ultimoPeloCofrinho: null,
+      ultimoSemDespesa: dataIso(new Date(ano, hoje.getMonth(), 8)) }
   ],
   // #158: um aviso de aumento, com a ação "Atualizar o valor".
   '/api/contas-agendadas/avisos': [
+    // #691: o débito da Luz não chegou pelo extrato, e a conta já sincronizou depois: "foi paga com um cofrinho?".
+    { contaAgendadaId: 2, descricao: 'Luz', tipo: 'nao-veio', texto: 'A cobrança de Luz não chegou pelo extrato. Foi paga com um cofrinho?',
+      valorAnterior: null, valorNovo: null, contaNovaId: null, contaNovaNome: null, data: dataIso(new Date(ano, hoje.getMonth(), 5)),
+      podeSerCofrinho: true },
     { contaAgendadaId: 3, descricao: 'Streaming', tipo: 'aumentou', texto: 'Streaming aumentou na última cobrança.',
       valorAnterior: 44.9, valorNovo: 49.9, contaNovaId: null, contaNovaNome: null, data: null }
   ],

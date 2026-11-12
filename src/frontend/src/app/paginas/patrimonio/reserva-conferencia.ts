@@ -28,3 +28,19 @@ export function conferenciaForaDoEsperado(r: Reserva, saldo: number): boolean {
 export function podeConferirReserva(r: Reserva): boolean {
   return !r.informadoPeloBanco && !r.restanteDoBanco;
 }
+
+/**
+ * #691 (ADR 0063): a diferença que a conferência pode registrar como gasto do cofrinho: o que a estimativa passa do
+ * saldo informado, numa reserva em reais e conferível, com a data de hoje (a estimativa de agora é a do dia). 0 quando
+ * não cabe (aí a opção nem aparece).
+ */
+export function diferencaComoGasto(r: Reserva, saldo: number | null, data: string, hoje: string): number {
+  if (saldo === null || data !== hoje || r.moeda === 'USD' || !podeConferirReserva(r)) return 0;
+  const diferenca = Math.round((r.saldo - saldo) * 100) / 100;
+  return diferenca > 0 ? diferenca : 0;
+}
+
+/** #691: "registrar saída" vale em toda reserva em reais, menos na linha do restante do total do banco. */
+export function podeRegistrarSaida(r: Reserva): boolean {
+  return r.moeda !== 'USD' && !r.restanteDoBanco;
+}
