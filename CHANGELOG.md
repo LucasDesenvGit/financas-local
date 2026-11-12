@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.12.2] — 2026-11-11 · desenvolvimento
+
+### Correções
+- **Go 1.27.4 no site e no gerenciador** (#694). O 1.27.3 tem uma falha de segurança no `net/http` da biblioteca padrão (GO-2026-6859), que o `govulncheck` da CI passou a apontar e que travava todo PR com Go. Quem instala pelos scripts recebe a versão nova sozinho (a mais nova da linha 1.27).
+
 ## [3.12.1] — 2026-11-10 · desenvolvimento
 
 ### Correções

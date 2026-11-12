@@ -621,7 +621,14 @@ func TestServidorDaRedeQueCai(t *testing.T) {
 	if err := a.ouvintes["192.168.0.10:5443"].Close(); err != nil {
 		t.Fatal(err)
 	}
-	a.s.Parar(t.Context()) // espera o servidor terminar
+	// Espera o servidor ver o ouvinte fechado e sair sozinho. Sem isso, o Parar logo em seguida corria com ele: se o
+	// Shutdown chegava antes, o ServeTLS saía com ErrServerClosed e não registrava nada (falhou na CI no #695).
+	select {
+	case <-a.s.escuta.parou:
+	case <-time.After(5 * time.Second):
+		t.Fatal("o servidor da rede não parou com o ouvinte fechado")
+	}
+	a.s.Parar(t.Context())
 	if !a.log.tem("o servidor da rede parou") {
 		t.Errorf("o log não diz: %v", a.log.mensagens)
 	}
