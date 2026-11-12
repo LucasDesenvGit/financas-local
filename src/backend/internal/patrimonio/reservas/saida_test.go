@@ -154,3 +154,41 @@ func mesmoValor(a, b string) bool {
 	}
 	return testeapoio.Valor(a).Decimal().Cmp(testeapoio.Valor(b).Decimal()) == 0
 }
+
+// Regra (#691): a diferença como gasto só vale na reserva estimada: a que o banco informa pelo nome e a linha do
+// restante do total do banco não têm estimativa para comparar, e nada é gravado.
+func TestConferirComDiferencaSemEstimativa(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		nome, reservado, informadas, reserva string
+	}{
+		{"informada pelo banco pelo nome", "500.0", `[{"nome":"Emergência","valor":500.0}]`, "Emergência"},
+		{"restante do total do banco", "900.0", "", "Reservado"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			mux, db, of, _, _ := ambienteDaSaida(t)
+			var informadas any
+			if c.informadas != "" {
+				informadas = c.informadas
+			}
+			if _, err := db.Exec(`UPDATE "Conta" SET "SaldoReservado" = ?, "ReservasInformadas" = ? WHERE "Id" = ?`,
+				c.reservado, informadas, of.Id); err != nil {
+				t.Fatal(err)
+			}
+			resposta := testeapoio.Chamar(t, mux, "PUT", "/api/reservas/conferencia",
+				fmt.Sprintf(`{"contaId":%d,"nome":%q,"saldo":10,"registrarDiferenca":true}`, of.Id, c.reserva))
+			var m map[string]string
+			if resposta.Status != 400 || jsonDe(resposta.Corpo, &m) != nil ||
+				m["mensagem"] != "Esta reserva não tem estimativa para comparar (o valor vem do banco ou é em dólar)." {
+				t.Errorf("status %d: %s", resposta.Status, resposta.Corpo)
+			}
+			var lancamentos int
+			if err := db.QueryRow(`SELECT COUNT(*) FROM "Transacao" WHERE "ReservaNome" IS NOT NULL`).Scan(&lancamentos); err != nil ||
+				lancamentos != 0 {
+				t.Errorf("%d lançamentos pelo cofrinho, %v", lancamentos, err)
+			}
+		})
+	}
+}
