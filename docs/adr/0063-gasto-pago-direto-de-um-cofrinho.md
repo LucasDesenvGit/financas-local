@@ -24,6 +24,8 @@ Resultado: a despesa não entra nos relatórios, nos orçamentos e no painel, a 
 - **Cada baixa pelo cofrinho fica em `PagamentoCofrinho`** (conta a pagar, transação, vencimento pago, o próximo, o último pagamento de antes, automática ou não). Ela permite **"Desfazer"** (apaga o lançamento e volta o vencimento) e **"Ajustar valor"** dias depois, sem guardar nada na memória do processo. Desfeita, a linha fica sem o lançamento, e a baixa automática não repete aquele vencimento: a conta fica vencida, com "Pagar".
 - **Sem contar duas vezes:** se a cobrança chegar mesmo assim pelo extrato (por exemplo, o cofrinho estava sem saldo e o banco tirou da conta), com o texto da cobrança, até 10 dias antes ou depois do vencimento e importada depois da baixa, a conciliação apaga o lançamento automático e vale a do banco.
 - **Os lançamentos do app ficam fora do que procura cobranças do banco:** a conciliação, as sugestões e os avisos das recorrentes não os leem.
+- **Gasto do cofrinho fora das contas a pagar** (parte 2): "Registrar saída" na aba Reservas grava o mesmo lançamento do app (`POST /api/reservas/saida`). Na conferência, com o saldo abaixo da estimativa, "Registrar a diferença como gasto" lança a diferença e grava a conferência numa transação só. Isso só vale com a data de hoje, porque a estimativa de agora é a do dia: depois, a reserva fica exatamente com o conferido.
+- **Ajudar a descobrir** (parte 2): o aviso "não veio" pergunta "foi paga com um cofrinho?" quando a conta é do Open Finance, em débito automático, sem "Pago com", e a conexão já sincronizou depois do dia do vencimento. O "Pagar" aberto por ele lança pelo cofrinho escolhido e pode guardá-lo como "Pago com". Uma conta com "Pago com" cujo último pagamento (até 45 dias) não tem a despesa, nem do app nem cobrança do banco com o texto no dia, oferece "lançar pelo cofrinho".
 
 ## Consequências
 
@@ -39,5 +41,5 @@ Resultado: a despesa não entra nos relatórios, nos orçamentos e no painel, a 
   - a caixinha da ADR 0060, quando sair, também terá de baixar pelo `ReservaNome`.
 - **Na prática:**
   - colunas novas `ContaAgendada.ReservaNome` e `Transacao.ReservaNome` (`adicionar_coluna_se_ausente`) e a tabela `PagamentoCofrinho`, apagada junto com a conta a pagar e com o lançamento vazio (`SET NULL`) quando ele é apagado;
-  - a regra da baixa e da duplicata fica em `internal/movimentacao/cobrancas`; o cálculo das reservas, em `internal/patrimonio/reservas` (`ReservaNome` vira retirada);
+  - a regra da baixa e da duplicata fica em `internal/movimentacao/cobrancas` (`LancarDespesa` é o único lugar que grava o lançamento do cofrinho); o cálculo das reservas, a saída e a diferença da conferência, em `internal/patrimonio/reservas` (`ReservaNome` vira retirada);
   - código que procura cobranças do banco no extrato filtra `"ReservaNome" IS NULL`.

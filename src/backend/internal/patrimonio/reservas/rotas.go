@@ -18,6 +18,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("GET /api/reservas", s.listar)
 	mux.HandleFunc("PUT /api/reservas/conferencia", s.conferir)
 	mux.HandleFunc("DELETE /api/reservas/conferencia", s.removerConferencia)
+	mux.HandleFunc("POST /api/reservas/saida", s.registrarSaida)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
@@ -45,14 +46,18 @@ var padraoMoeda = func() *respostas.Padrao {
 }()
 
 // conferir é o PUT /api/reservas/conferencia: grava o saldo real da reserva; os lançamentos depois da data passam a
-// somar a partir dele. Sem a data, hoje em Brasília; no futuro, não.
+// somar a partir dele. Sem a data, hoje em Brasília; no futuro, não. Com RegistrarDiferenca (#691), o que a estimativa
+// passa do conferido vira um gasto do cofrinho, na categoria CategoriaId (opcional).
 func (s *Servico) conferir(w http.ResponseWriter, r *http.Request) {
 	conta := respostas.CampoInteiro{Propriedade: "ContaId"}
 	nome := respostas.CampoTexto{Propriedade: "Nome", Maximo: TamanhoMaximoNome}
 	saldo := respostas.CampoDecimal{Propriedade: "Saldo", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 999999999999}}
 	data := respostas.CampoDataOpcional{Propriedade: "Data"}
 	moeda := respostas.CampoTexto{Propriedade: "Moeda", Maximo: math.MaxInt, Opcional: true, Padrao: padraoMoeda}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ConferirReservaDto", &conta, &nome, &saldo, &data, &moeda) {
+	diferenca := respostas.CampoBool{Propriedade: "RegistrarDiferenca"}
+	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
+	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ConferirReservaDto", &conta, &nome, &saldo, &data, &moeda,
+		&diferenca, &categoria) {
 		return
 	}
 	hoje := relogio.Hoje(s.relogio)
@@ -65,15 +70,49 @@ func (s *Servico) conferir(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusBadRequest, "A data da conferência não pode estar no futuro.")
 		return
 	}
-	err := s.Conferir(r.Context(), conta.Valor, *nome.Valor, saldo.Valor, dia, moeda.Valor)
+	var err error
+	if diferenca.Valor {
+		err = s.ConferirComDiferenca(r.Context(), conta.Valor, *nome.Valor, saldo.Valor, dia, categoria.Valor)
+	} else {
+		err = s.Conferir(r.Context(), conta.Valor, *nome.Valor, saldo.Valor, dia, moeda.Valor)
+	}
+	s.responder(w, r, "conferir", err)
+}
+
+// responder é o 204, a mensagem dos erros de quem usa (400) ou o 500.
+func (s *Servico) responder(w http.ResponseWriter, r *http.Request, etapa string, err error) {
 	switch {
-	case errors.Is(err, ErrContaInvalida), errors.Is(err, ErrSemCotacao):
+	case errors.Is(err, ErrContaInvalida), errors.Is(err, ErrSemCotacao), errors.Is(err, ErrSoOpenFinance),
+		errors.Is(err, ErrSaidaMeliDolar), errors.Is(err, ErrCategoriaInvalida), errors.Is(err, ErrDiferencaSoHoje),
+		errors.Is(err, ErrSemDiferenca), errors.Is(err, ErrReservaInvalida):
 		respostas.Mensagem(w, http.StatusBadRequest, err.Error())
 	case err != nil:
-		s.erroInterno(w, r, "conferir", err)
+		s.erroInterno(w, r, etapa, err)
 	default:
 		respostas.SemCorpo(w, http.StatusNoContent)
 	}
+}
+
+// registrarSaida é o POST /api/reservas/saida (#691): o gasto pago direto do cofrinho, que não chega pelo Open
+// Finance. A data não pode estar no futuro.
+func (s *Servico) registrarSaida(w http.ResponseWriter, r *http.Request) {
+	conta := respostas.CampoInteiro{Propriedade: "ContaId"}
+	nome := respostas.CampoTexto{Propriedade: "Nome", Maximo: TamanhoMaximoNome}
+	data := respostas.CampoData{Propriedade: "Data", Obrigatoria: true}
+	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}
+	descricao := respostas.CampoTexto{Propriedade: "Descricao", Maximo: 300}
+	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
+	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SaidaReservaDto", &conta, &nome, &data, &valor, &descricao,
+		&categoria) {
+		return
+	}
+	if data.Valor.Depois(relogio.Hoje(s.relogio)) {
+		respostas.Mensagem(w, http.StatusBadRequest, "A data da saída não pode estar no futuro.")
+		return
+	}
+	_, err := s.RegistrarSaida(r.Context(), s.db, Saida{ContaId: conta.Valor, Nome: *nome.Valor, Data: data.Valor,
+		Valor: valor.Valor, Descricao: *descricao.Valor, CategoriaId: categoria.Valor})
+	s.responder(w, r, "registrar a saída", err)
 }
 
 // removerConferencia é o DELETE /api/reservas/conferencia?contaId=&nome=: o saldo volta a ser só a soma dos

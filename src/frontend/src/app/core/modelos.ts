@@ -295,6 +295,13 @@ export interface ContaAgendada {
   reservaNome: string | null;
   /** #691: a última baixa que o app deu pelo cofrinho, com "Ajustar valor" e "Desfazer". */
   ultimoPeloCofrinho: PagamentoCofrinho | null;
+  /** #691: o último pagamento (recente) que ficou sem despesa, para lançar pelo cofrinho. */
+  ultimoSemDespesa?: string | null;
+}
+
+/** #691: gasto pago direto de um cofrinho (POST /reservas/saida). */
+export interface SaidaReserva {
+  contaId: number; nome: string; data: string; valor: number; descricao: string; categoriaId: number | null;
 }
 
 /** #691: baixa de uma conta a pagar com a despesa saindo de um cofrinho (automática no vencimento ou pelo "Pagar"). */
@@ -321,6 +328,8 @@ export interface AvisoContaAgendada {
   contaAgendadaId: number; descricao: string; tipo: 'nao-veio' | 'mudou-de-cartao' | 'aumentou' | 'cartao-arquivado';
   texto: string; valorAnterior: number | null; valorNovo: number | null; contaNovaId: number | null;
   contaNovaNome: string | null; data: string | null;
+  /** #691: no "não veio" de conta do Open Finance sem "Pago com", depois de sincronizar: "foi paga com um cofrinho?". */
+  podeSerCofrinho?: boolean;
 }
 
 export interface SugestaoContaAgendada {

@@ -89,7 +89,8 @@ test('Contas a pagar: nome, conta e forma de cobrança alinhados depois do selo'
  */
 test('Contas a pagar: pago com o cofrinho (#691)', async ({ page, api, problemas }) => {
   await page.goto('/contas-a-pagar');
-  await expect(page.getByText('cofrinho Emergência (Conta Exemplo)')).toBeVisible();
+  const condominio = page.locator('tbody tr').filter({ hasText: 'Condomínio' });
+  await expect(condominio.getByText('cofrinho Emergência (Conta Exemplo)')).toBeVisible();
   await expect(page.getByText(/paga pelo cofrinho Emergência em \d\d\/\d\d \(automático\)/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pagar Condomínio' })).toHaveCount(0);
 
@@ -108,5 +109,25 @@ test('Contas a pagar: pago com o cofrinho (#691)', async ({ page, api, problemas
   await expect(dialogo.getByLabel('Nome do cofrinho')).toBeVisible();
   await dialogo.getByLabel('Como é cobrada').selectOption({ label: 'no cartão de crédito' });
   await expect(dialogo.getByLabel('Pago com')).toHaveCount(0);
+  expect(problemas.lista).toEqual([]);
+});
+
+/**
+ * #691, parte 2: o aviso "não veio" pergunta se foi paga com um cofrinho e abre o "Pagar" com ele escolhido; o
+ * pagamento sem despesa oferece "lançar pelo cofrinho".
+ */
+test('Contas a pagar: foi paga com um cofrinho e o pagamento sem despesa (#691)', async ({ page, api, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  await page.getByRole('button', { name: 'Foi paga com um cofrinho: Luz' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Pagar · Luz' });
+  await expect(dialogo.getByLabel('Qual cofrinho')).toHaveValue(/Emergência/);
+  await expect(dialogo.getByLabel('Usar este cofrinho nas próximas (o app lança no vencimento)')).toBeChecked();
+  await dialogo.getByRole('button', { name: 'Confirmar pagamento' }).click();
+  await expect.poll(() => api.chamadas.includes('POST /api/contas-agendadas/2/pagar')).toBe(true);
+
+  await expect(page.getByText(/o pagamento de \d\d\/\d\d está sem a despesa/)).toBeVisible();
+  await page.getByRole('button', { name: 'Lançar pelo cofrinho a despesa de Internet' }).click();
+  await page.getByRole('alertdialog', { name: 'Lançar pelo cofrinho' }).getByRole('button', { name: 'Lançar', exact: true }).click();
+  await expect.poll(() => api.chamadas.includes('POST /api/reservas/saida')).toBe(true);
   expect(problemas.lista).toEqual([]);
 });

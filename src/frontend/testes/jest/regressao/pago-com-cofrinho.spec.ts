@@ -3,6 +3,7 @@ import {
   aceitaCofrinho, baixaSozinha, cofrinhoEncontrado, mostrarPagar, opcoesCofrinho, podeLancar, textoPagamentoCofrinho
 } from '../../../src/app/paginas/movimentacao/pago-com-cofrinho';
 import { abrirContasAPagar, contaAgendada } from '../apoio/contas-agendadas';
+import { diferencaComoGasto, podeRegistrarSaida } from '../../../src/app/paginas/patrimonio/reserva-conferencia';
 
 /**
  * #691 (ADR 0063): no Mercado Pago, o débito automático pago com um cofrinho sai direto da reserva e não chega pelo
@@ -70,5 +71,34 @@ describe('#691: pago com o cofrinho', () => {
     tela.atualizarPeloAviso({ contaAgendadaId: 4, descricao: 'Escola', tipo: 'aumentou', texto: '', valorAnterior: 1450,
       valorNovo: 1500, contaNovaId: null, contaNovaNome: null, data: null });
     expect(salvos[0]).toMatchObject({ valor: 1500, reservaNome: 'Emergência' });
+  });
+});
+
+
+/** #691, parte 2: a diferença da conferência que pode virar gasto do cofrinho, e onde cabe "registrar saída". */
+describe('#691: diferença da conferência e saída do cofrinho', () => {
+  const reserva = (campos: Partial<Reserva>): Reserva => ({
+    contaId: 7, nomeConta: 'Mercado Pago', nome: 'Emergência', saldo: 900, guardado: 900, retirado: 0, movimentos: 3,
+    primeiroMovimento: null, ultimoMovimento: null, saldoConferido: null, dataConferencia: null,
+    podeTerSaldoAnterior: false, conferenciaAntiga: false, moeda: 'BRL', ...campos
+  });
+  const hoje = '2026-11-11';
+
+  it('só abaixo da estimativa, com a data de hoje, numa reserva em reais e conferível', () => {
+    expect(diferencaComoGasto(reserva({}), 850.45, hoje, hoje)).toBe(49.55);
+    expect(diferencaComoGasto(reserva({}), 900, hoje, hoje)).toBe(0);
+    expect(diferencaComoGasto(reserva({}), 950, hoje, hoje)).toBe(0);
+    expect(diferencaComoGasto(reserva({}), null, hoje, hoje)).toBe(0);
+    expect(diferencaComoGasto(reserva({}), 850, '2026-11-10', hoje)).toBe(0);
+    expect(diferencaComoGasto(reserva({ moeda: 'USD' }), 850, hoje, hoje)).toBe(0);
+    expect(diferencaComoGasto(reserva({ informadoPeloBanco: true }), 850, hoje, hoje)).toBe(0);
+    expect(diferencaComoGasto(reserva({ restanteDoBanco: true }), 850, hoje, hoje)).toBe(0);
+  });
+
+  it('"registrar saída" em toda reserva em reais, menos no restante do banco', () => {
+    expect(podeRegistrarSaida(reserva({}))).toBe(true);
+    expect(podeRegistrarSaida(reserva({ informadoPeloBanco: true }))).toBe(true);
+    expect(podeRegistrarSaida(reserva({ moeda: 'USD' }))).toBe(false);
+    expect(podeRegistrarSaida(reserva({ restanteDoBanco: true }))).toBe(false);
   });
 });

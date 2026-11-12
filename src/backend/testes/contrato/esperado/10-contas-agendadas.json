@@ -25,6 +25,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-04-10",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 99.0
       },
       {
@@ -47,6 +48,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": null,
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 2100.0
       },
       {
@@ -69,6 +71,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-20",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 119.9
       },
       {
@@ -91,6 +94,7 @@
         "textoCobranca": "STREAMFLIX",
         "ultimoPagamentoEm": "2026-09-20",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 39.9
       },
       {
@@ -113,6 +117,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-25",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 350.0
       },
       {
@@ -135,6 +140,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-01-15",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 1450.0
       }
     ]
@@ -891,6 +897,15 @@
     }
   },
   {
+    "nome": "pagar com o cofrinho escolhido sem conta",
+    "requisicao": "POST /api/contas-agendadas/9/pagar",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O pagamento pelo cofrinho lança a despesa numa conta do Open Finance, fora do cartão."
+    }
+  },
+  {
     "nome": "pagar a que não existe",
     "requisicao": "POST /api/contas-agendadas/9999/pagar",
     "status": 404,
@@ -1103,6 +1118,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-04-10",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 99.0
       },
       {
@@ -1125,6 +1141,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-10-14",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 275.25
       },
       {
@@ -1147,6 +1164,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": null,
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 2100.0
       },
       {
@@ -1169,6 +1187,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-20",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 119.9
       },
       {
@@ -1191,6 +1210,7 @@
         "textoCobranca": "STREAMFLIX",
         "ultimoPagamentoEm": "2026-09-20",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 39.9
       },
       {
@@ -1213,6 +1233,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-09-25",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 350.0
       },
       {
@@ -1235,6 +1256,7 @@
         "textoCobranca": "ASSINATURA STREAMFLIX",
         "ultimoPagamentoEm": "2026-09-20",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 39.9
       },
       {
@@ -1257,6 +1279,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": null,
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 10.0
       },
       {
@@ -1286,6 +1309,7 @@
           "transacaoId": 178,
           "valor": 118.4
         },
+        "ultimoSemDespesa": null,
         "valor": 120.0
       },
       {
@@ -1308,6 +1332,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-10-14",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 600.0
       },
       {
@@ -1330,6 +1355,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-10-14",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 1800.5
       },
       {
@@ -1352,6 +1378,7 @@
         "textoCobranca": null,
         "ultimoPagamentoEm": "2026-01-15",
         "ultimoPeloCofrinho": null,
+        "ultimoSemDespesa": null,
         "valor": 1450.0
       }
     ]

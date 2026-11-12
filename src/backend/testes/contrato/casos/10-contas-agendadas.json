@@ -233,6 +233,13 @@
       "corpo": { "lancarTransacao": false, "data": "2026-10-14" }
     },
     {
+      "nome": "pagar com o cofrinho escolhido sem conta",
+      "comentario": "#691: o cofrinho escolhido no Pagar (o do aviso \"foi paga com um cofrinho?\") só vale lançando numa conta do Open Finance.",
+      "metodo": "POST",
+      "caminho": "/api/contas-agendadas/9/pagar",
+      "corpo": { "lancarTransacao": true, "reservaNome": "Emergência", "guardarCofrinho": true }
+    },
+    {
       "nome": "pagar a que não existe",
       "metodo": "POST",
       "caminho": "/api/contas-agendadas/9999/pagar",

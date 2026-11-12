@@ -1640,7 +1640,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 179,
+            "Id": 181,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "TED",
             "MesmaTitularidade": null,
@@ -1670,7 +1670,7 @@
             "Emergencia": 0,
             "Estabelecimento": "Mercado Falso LTDA",
             "FaturaCartaoId": null,
-            "Id": 180,
+            "Id": 182,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PIX",
             "MesmaTitularidade": 0,
@@ -1700,7 +1700,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 181,
+            "Id": 183,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PIX",
             "MesmaTitularidade": 1,
@@ -1730,7 +1730,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 182,
+            "Id": 184,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1760,7 +1760,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 183,
+            "Id": 185,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1790,7 +1790,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 184,
+            "Id": 186,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1820,7 +1820,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 185,
+            "Id": 187,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1850,7 +1850,7 @@
             "Emergencia": 0,
             "Estabelecimento": "Loja Falsa",
             "FaturaCartaoId": 13,
-            "Id": 186,
+            "Id": 188,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "CARTAO",
             "MesmaTitularidade": null,
@@ -1880,7 +1880,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 187,
+            "Id": 189,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1910,7 +1910,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 188,
+            "Id": 190,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PAGAMENTO_FATURA",
             "MesmaTitularidade": null,
@@ -2369,7 +2369,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 189,
+            "Id": 191,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2389,7 +2389,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 183
+              "Id": 185
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2408,7 +2408,7 @@
           },
           {
             "chave": {
-              "Id": 184
+              "Id": 186
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2431,7 +2431,7 @@
           },
           {
             "chave": {
-              "Id": 187
+              "Id": 189
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2446,7 +2446,7 @@
           },
           {
             "chave": {
-              "Id": 188
+              "Id": 190
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2475,7 +2475,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 182,
+            "Id": 184,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2836,7 +2836,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 190,
+            "Id": 192,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2856,7 +2856,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 183
+              "Id": 185
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2875,7 +2875,7 @@
           },
           {
             "chave": {
-              "Id": 184
+              "Id": 186
             },
             "colunas": {
               "AtualizadoEm": {

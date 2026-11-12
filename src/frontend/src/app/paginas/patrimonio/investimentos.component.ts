@@ -10,7 +10,7 @@ import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import {
   AtualizarAtivo, Carteira, InvestimentoComparado, MoedaCambio, NOMES_ORIGEM_OPERACAO, NOMES_TIPO_ATIVO, OperacaoAtivo, OrigemOperacao, PosicaoAtivo,
-  Reserva, SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
+  Categoria, Reserva, SaidaReserva, SalvarOperacao, SugestaoExtrato, TipoAtivo, TipoOperacao
 } from '../../core/modelos';
 import { PrivacidadeService } from '../../core/privacidade.service';
 import { AvisosService } from '../../core/avisos.service';
@@ -27,7 +27,10 @@ import { InvestimentosCambioComponent } from './investimentos-cambio.component';
 import { InvestimentosCriptoComponent } from './investimentos-cripto.component';
 import { ConferirInvestimentosComponent } from './conferir-investimentos.component';
 import { RendimentoInvestimentosOfComponent } from './rendimento-investimentos-of.component';
-import { conferenciaForaDoEsperado, podeConferirReserva, valorEsperadoDaReserva } from './reserva-conferencia';
+import {
+  conferenciaForaDoEsperado, diferencaComoGasto, podeConferirReserva, podeRegistrarSaida, valorEsperadoDaReserva
+} from './reserva-conferencia';
+import { SaidaReservaComponent } from './saida-reserva.component';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
 
 const NOMES_TIPO_PLUGGY: Record<string, string> = {
@@ -52,7 +55,7 @@ type Aba = 'resumo' | 'fii' | 'rv' | 'of' | 'reservas';
 
 /** Formulário de conferência do saldo real de uma reserva. */
 /** #169: `moeda` só conta no Méli Dólar (o saldo pode ser informado em reais ou em dólares). */
-interface FormConferencia { reserva: Reserva; saldo: number | null; data: string; moeda: 'BRL' | 'USD' }
+interface FormConferencia { reserva: Reserva; saldo: number | null; data: string; moeda: 'BRL' | 'USD'; registrarDiferenca: boolean }
 
 /** Linha editável da importação pelo extrato. */
 interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas: number }
@@ -60,7 +63,8 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
 @Component({
   selector: 'app-investimentos',
   imports: [ListaSuspensaDirective, FormsModule, MoedaPipe, DatePipe, DecimalPipe, GraficoComponent, GraficoExplicadoComponent, ModalComponent, TermoComponent, MaisAnalisesComponent,
-    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent, InvestimentosCambioComponent, InvestimentosCriptoComponent],
+    InvestimentosFiisComponent, ConferirInvestimentosComponent, RendimentoInvestimentosOfComponent, CampoValorComponent, CampoDataComponent, InvestimentosCambioComponent, InvestimentosCriptoComponent,
+    SaidaReservaComponent],
   template: `
     <header class="cabecalho-pagina">
       <div>
@@ -423,6 +427,11 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
                         <button type="button" class="link" [class.destaque-conferir]="r.podeTerSaldoAnterior || r.conferenciaAntiga"
                           (click)="abrirConferencia(r)">conferir saldo</button>
                       }
+                      <!-- #691: gasto que saiu direto do cofrinho, sem passar pela conta (não chega pelo Open Finance). -->
+                      @if (podeRegistrarSaida(r)) {
+                        <br><button type="button" class="link" (click)="abrirSaida(r)"
+                          [attr.aria-label]="'Registrar saída do cofrinho ' + r.nome">registrar saída</button>
+                      }
                     </td>
                   </tr>
                 }
@@ -718,6 +727,15 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
           </div>
           <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong>
             @if (fc.reserva.moeda === 'USD' && fc.reserva.quantidade !== null) { ({{ fc.reserva.quantidade | currency: 'USD' }}) }</p>
+          <!-- #691: o saldo ficou abaixo da estimativa? Pode ter sido um gasto pago direto do cofrinho: em vez de a
+               diferença sumir, ela vira despesa (Nielsen 5: prevenir o erro). -->
+          @if (diferencaComoGasto(fc); as diferenca) {
+            <label class="checkbox"><input type="checkbox" name="registrarDiferenca" [(ngModel)]="fc.registrarDiferenca"
+              aria-describedby="ajuda-diferenca">
+              Registrar a diferença ({{ diferenca | currency }}) como gasto do cofrinho</label>
+            <p class="texto-suave pequeno-texto" id="ajuda-diferenca">Marque quando o dinheiro saiu direto do cofrinho, sem passar
+              pela conta (uma conta paga por ele, uma compra). O gasto entra nos relatórios, com a data de hoje.</p>
+          }
           <div class="rodape-form">
             @if (fc.reserva.dataConferencia) {
               <button type="button" class="botao botao-perigo" (click)="removerConferencia()">Voltar a estimar</button>
@@ -729,6 +747,12 @@ interface LinhaImportacao extends SugestaoExtrato { selecionada: boolean; taxas:
         </form>
       }
     </app-modal>
+
+    <!-- #691: registrar saída de um cofrinho (componente de apresentação; criado a cada abertura). -->
+    @if (saidaDe(); as r) {
+      <app-saida-reserva [reserva]="r" [categorias]="categorias()" [hoje]="hoje" [salvando]="salvando()"
+        (salvar)="registrarSaida($event)" (fechar)="saidaDe.set(null)" />
+    }
 
     <!-- Fonte das cotações -->
     <app-modal [aberto]="configAberta()" titulo="Fonte das cotações" (fechar)="configAberta.set(false)">
@@ -1269,8 +1293,43 @@ export class InvestimentosComponent implements OnInit {
   abrirConferencia(r: Reserva): void {
     // #169: o Méli Dólar começa em reais (o valor do app), com a estimativa atual.
     this.formConferencia = r.moeda === 'USD'
-      ? { reserva: r, saldo: r.saldo, data: this.hoje, moeda: 'BRL' }
-      : { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje, moeda: 'BRL' };
+      ? { reserva: r, saldo: r.saldo, data: this.hoje, moeda: 'BRL', registrarDiferenca: false }
+      : { reserva: r, saldo: r.saldoConferido ?? r.saldo, data: this.hoje, moeda: 'BRL', registrarDiferenca: false };
+  }
+
+  /** #691: a diferença que pode virar gasto do cofrinho (0 = não oferece; reserva-conferencia.ts). */
+  diferencaComoGasto(f: FormConferencia): number {
+    return diferencaComoGasto(f.reserva, f.saldo, f.data, this.hoje);
+  }
+
+  /** #691: "registrar saída" em toda reserva em reais, menos a linha do restante do banco (reserva-conferencia.ts). */
+  podeRegistrarSaida(r: Reserva): boolean {
+    return podeRegistrarSaida(r);
+  }
+
+  /** #691: a reserva com o formulário de saída aberto, e as categorias dele (lidas na primeira abertura). */
+  readonly saidaDe = signal<Reserva | null>(null);
+  readonly categorias = signal<Categoria[]>([]);
+
+  abrirSaida(r: Reserva): void {
+    if (!this.categorias().length) this.api.categorias().subscribe({ next: (c) => this.categorias.set(c), error: () => this.categorias.set([]) });
+    this.saidaDe.set(r);
+  }
+
+  registrarSaida(dto: SaidaReserva): void {
+    this.salvando.set(true);
+    this.api.registrarSaidaReserva(dto).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.saidaDe.set(null);
+        this.avisos.sucesso(`Saída do cofrinho ${dto.nome} registrada.`);
+        this.recarregarDepoisDeAlterar();
+      },
+      error: (e) => {
+        this.salvando.set(false);
+        this.avisos.erro(mensagemDeErro(e));
+      }
+    });
   }
 
   async salvarConferencia(): Promise<void> {
@@ -1281,11 +1340,12 @@ export class InvestimentosComponent implements OnInit {
     const emReais = emDolar && f.moeda === 'USD' ? (f.reserva.cotacao ? f.saldo * f.reserva.cotacao : null) : f.saldo;
     if (emReais !== null && !(await this.conferenciaPlausivel(f.reserva, emReais))) return;
     this.salvando.set(true);
-    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data, emDolar ? f.moeda : undefined).subscribe({
+    const diferenca = f.registrarDiferenca && this.diferencaComoGasto(f) > 0;
+    this.api.conferirReserva(f.reserva.contaId, f.reserva.nome, f.saldo, f.data, emDolar ? f.moeda : undefined, diferenca).subscribe({
       next: () => {
         this.salvando.set(false);
         this.formConferencia = null;
-        this.avisos.sucesso('Saldo da reserva conferido.');
+        this.avisos.sucesso(diferenca ? 'Saldo conferido, e a diferença registrada como gasto do cofrinho.' : 'Saldo da reserva conferido.');
         this.recarregarDepoisDeAlterar();
       },
       error: (e) => {
