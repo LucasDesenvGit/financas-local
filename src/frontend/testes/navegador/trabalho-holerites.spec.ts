@@ -102,3 +102,91 @@ test('Trabalho › Holerites: sem emprego, leva ao Salário', async ({ page }) =
   await page.goto('/trabalho/holerites');
   await expect(page.getByRole('link', { name: 'Trabalho › Salário' })).toHaveAttribute('href', '/trabalho/salario');
 });
+
+/**
+ * #228 (ADR 0068): "Ler holerite em PDF". O PDF com senha pede a senha; a prévia mostra cada linha com o tipo, a
+ * situação e a prova real; trocar o tipo refaz a prova; "Confirmar e gravar" manda o que a pessoa deixou, e o aviso
+ * traz "Desfazer". Dados e PDF fictícios (a leitura de verdade é testada no Go).
+ */
+test('Trabalho › Holerites: ler o holerite em PDF', async ({ page, problemas }) => {
+  problemas.ignorar('status of 400'); // o PDF com senha responde 400 de propósito
+  const pedidos: string[] = [];
+  const responder = (corpo: unknown, status = 200) => ({ status, contentType: 'application/json', body: JSON.stringify(corpo) });
+  const rubrica = (codigo: string, descricao: string, valor: number, provento: boolean, tipo: number, como = 'dicionario') =>
+    ({ codigo, descricao, referencia: '', valor, provento, trecho: `${codigo} ${descricao} ${valor}`, tipo, como });
+  const previa = { empregador: 'EMPRESA FICTÍCIA DE TESTES LTDA', cnpj: '12345678000195', mes: '2026-09-01',
+    rubricas: [rubrica('001', 'SALARIO', 5000, true, 0), rubrica('998', 'INSS', 501.51, false, 20),
+      rubrica('610', 'Seguro de Vida', 12.5, false, 14, 'desconhecida')],
+    totalVencimentos: 5000, totalDescontos: 514.01, liquido: 4485.99, salarioBase: 5000, baseInss: 5000, baseFgts: 5000,
+    fgtsDoMes: 400, baseIrrf: null, provas: [], existente: null,
+    comparacoes: [{ descricao: 'INSS', lido: 501.51, calculado: 501.51, diferenca: 0 }, { descricao: 'IRRF', lido: 0, calculado: 0, diferenca: 0 },
+      { descricao: 'Líquido', lido: 4485.99, calculado: 4498.49, diferenca: -12.5 }],
+    avisos: ['Este emprego não tem CNPJ cadastrado; o do PDF é 12.345.678/0001-95 (EMPRESA FICTÍCIA DE TESTES LTDA).'] };
+  const gravado = { ...holerite, id: 9, mes: '2026-09-01', situacao: 2, origem: 2, fechadoEm: '2026-11-14T10:00:00', lancamentos: [],
+    calculo: { ...calculo, mes: '2026-09-01', liquido: 4485.99 } };
+  await page.route('**/api/modulos', (r) => r.fulfill(responder([trabalho])));
+  await page.route('**/api/trabalho/empregos', (r) => r.fulfill(responder([emprego])));
+  await page.route('**/api/trabalho/empregos/1/holerites', (r) => r.fulfill(responder([])));
+  await page.route('**/api/trabalho/empregos/1/holerites/pdf', (r) => {
+    const corpo = JSON.parse(r.request().postData()!);
+    pedidos.push(`ler ${corpo.senha}`);
+    if (!corpo.senha) return r.fulfill(responder({ mensagem: 'O PDF tem senha: digite a senha para abrir.', motivo: 'senha' }, 400));
+    expect(atob(corpo.arquivo)).toBe('%PDF-1.4 holerite fictício');
+    return r.fulfill(responder(previa));
+  });
+  await page.route('**/api/trabalho/empregos/1/holerites/pdf/confirmar', (r) => {
+    pedidos.push(`confirmar ${r.request().postData()}`);
+    return r.fulfill(responder({ holerite: gravado, desfazer: 'abc123' }, 201));
+  });
+  await page.route('**/api/trabalho/empregos/1/holerites/pdf/desfazer/abc123', (r) => {
+    pedidos.push('desfazer');
+    return r.fulfill({ status: 204 });
+  });
+  await page.route('**/api/trabalho/holerites/9', (r) => r.fulfill(responder(gravado)));
+  await page.route('**/api/trabalho/holerites/9/recebimentos', (r) => r.fulfill(responder({ liquido: 4485.99, recebido: 0, diferenca: -4485.99,
+    recebimentos: [], sugestoes: [], outros: [] })));
+
+  await page.goto('/trabalho/holerites');
+  await page.getByLabel('Ler holerite em PDF').setInputFiles({ name: 'holerite-setembro.pdf', mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4 holerite fictício', 'latin1') });
+  const senha = page.locator('section', { has: page.getByRole('heading', { name: 'O PDF tem senha' }) });
+  await senha.getByLabel('Senha de holerite-setembro.pdf').fill('12345678900');
+  await senha.getByRole('button', { name: 'Abrir' }).click();
+
+  const bloco = page.locator('section.previa-pdf');
+  await expect(bloco.getByRole('heading', { name: 'Prévia do holerite em PDF' })).toBeVisible();
+  await expect(bloco).toContainText('Este emprego não tem CNPJ cadastrado');
+  const linhas = bloco.locator('table.previa tbody tr');
+  await expect(linhas.nth(0)).toContainText('reconhecido');
+  await expect(linhas.nth(2)).toContainText('escolha o tipo');
+  await expect(linhas.nth(2)).toContainText('No PDF: “610 Seguro de Vida 12.5”');
+  const provas = bloco.locator('ul.provas');
+  await expect(provas).toContainText('Líquido: R$ 4.485,99 somado, R$ 4.485,99 no PDF: bate com o PDF.');
+
+  const pasta = process.env['FOTOS_PASTA'];
+  if (pasta) {
+    mkdirSync(pasta, { recursive: true });
+    await page.screenshot({ path: join(pasta, `trabalho-holerite-pdf-${test.info().project.name}.png`), fullPage: true });
+  }
+
+  // Deixar o seguro de fora: a prova diz qual total não bateu e por quanto.
+  await linhas.nth(2).getByLabel('Deixar de fora').check();
+  await expect(provas).toContainText('Total de descontos: R$ 501,51 somado, R$ 514,01 no PDF: R$ 12,50 a menos que o impresso.');
+  await linhas.nth(2).getByLabel('Deixar de fora').uncheck();
+  await linhas.nth(2).getByLabel('Tipo de Seguro de Vida').selectOption({ label: 'Plano de saúde' });
+  await expect(linhas.nth(2)).toContainText('você escolheu: o site lembra no próximo mês');
+
+  await bloco.getByRole('button', { name: 'Confirmar e gravar' }).click();
+  await expect(page.getByText('Holerite de setembro de 2026 gravado, lido do PDF.')).toBeVisible();
+  const enviado = JSON.parse(pedidos.find((p) => p.startsWith('confirmar'))!.slice(10));
+  expect(enviado.mes).toBe('2026-09-01');
+  expect(enviado.rubricas[2]).toEqual({ codigo: '610', descricao: 'Seguro de Vida', referencia: '', valor: 12.5, provento: false, tipo: 12 });
+  expect(enviado.fgtsDoMes).toBe(400);
+  const aberto = page.locator('section', { has: page.getByRole('heading', { name: /setembro de 2026 Fechado/ }) });
+  await expect(aberto.getByText('Lido do PDF', { exact: true })).toBeVisible();
+  await expect(aberto.locator('tfoot')).toContainText('Líquido');
+
+  await page.getByRole('button', { name: 'Desfazer' }).click();
+  await expect(page.getByText('Desfeito: o holerite de setembro de 2026 voltou ao que era antes do PDF.')).toBeVisible();
+  expect(pedidos).toEqual(['ler ', 'ler 12345678900', expect.stringMatching(/^confirmar /), 'desfazer']);
+});

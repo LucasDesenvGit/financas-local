@@ -439,6 +439,7 @@ CREATE TABLE "Holerite" (
     "EmpregoId" INTEGER NOT NULL,
     "Mes" TEXT NOT NULL,
     "Situacao" INTEGER NOT NULL,
+    "Origem" INTEGER NOT NULL,
     "DiasUteis" INTEGER NOT NULL,
     "DiasDescanso" INTEGER NOT NULL,
     "Calculo" TEXT,
@@ -509,5 +510,14 @@ CREATE TABLE "Rescisao" (
     "Tipo" INTEGER NOT NULL,
     "Aviso" INTEGER NOT NULL,
     "Calculo" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "HoleriteRubricaEscolha" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Codigo" TEXT NOT NULL,
+    "Descricao" TEXT NOT NULL,
+    "Tipo" INTEGER NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );

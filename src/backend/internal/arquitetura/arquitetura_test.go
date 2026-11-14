@@ -60,7 +60,7 @@ var regraSemHTTP = []string{
 	"internal/plataforma/desfazer", "internal/patrimonio/emprestimos", "internal/movimentacao/faturas", "internal/movimentacao/parcelas", "internal/movimentacao/poucoinformativa",
 	"internal/ajustes/regrasdescricao", "internal/analises/relatorios", "internal/plataforma/relogio", "internal/plataforma/segredos", "internal/movimentacao/sugestoes",
 	"internal/plataforma/texto", "internal/movimentacao/tipolancamento", "internal/plataforma/tipos", "internal/movimentacao/transacoes",
-	"internal/modulos/trabalho/encargos",
+	"internal/modulos/trabalho/encargos", "internal/modulos/trabalho/leitor", "internal/modulos/trabalho/leitor/ficticios",
 }
 
 // Regra de pacote que ainda chega ao HTTP por outro pacote. Quando deixar de chegar, o teste avisa para tirar daqui.

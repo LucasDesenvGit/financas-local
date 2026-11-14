@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.21.0] — 2026-11-14 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Holerites: ler o holerite em PDF** (#228, ADR 0068, Proposta):
+  - "Ler holerite em PDF" aceita um ou vários PDFs (o ano de uma vez) e pede a senha quando o PDF tem; a senha só abre o arquivo;
+  - a prévia mostra cada linha com o tipo (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF, e dá para trocar o tipo, corrigir o valor ou deixar a linha de fora;
+  - a prova real confere a soma de cada coluna e o líquido com o que o PDF imprime, e diz qual total não bateu e por quanto; o INSS, o IRRF e o líquido lidos aparecem ao lado dos calculados, com aviso quando o CNPJ, o salário base ou o mês não conferem;
+  - a rubrica que o site não conhece se escolhe uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida;
+  - nada é gravado sem "Confirmar e gravar"; o holerite lido entra fechado e marcado "Lido do PDF" (o 13º, as férias, o FGTS e a rescisão usam esses números), com "Desfazer" no aviso, e "Reabrir" volta para a estimativa.
+  - Tudo lido no computador, sem serviço de fora, e o PDF não fica guardado. Biblioteca nova no Go: `github.com/ledongthuc/pdf` (BSD-3). Banco: a tabela `HoleriteRubricaEscolha` e a coluna `Holerite.Origem`.
+
 ## [3.20.0] — 2026-11-14 · desenvolvimento
 
 ### Funcionalidades

@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, CalculoRescisao, ComparacaoRescisao, TipoRescisao, AvisoRescisao, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, PreviaHoleritePdf, ConfirmarHoleritePdf, HoleritePdfGravado, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, CalculoRescisao, ComparacaoRescisao, TipoRescisao, AvisoRescisao, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -375,6 +375,16 @@ export class ApiService {
   fecharHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/fechar`, {}); }
   reabrirHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/reabrir`, {}); }
   excluirHolerite(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/trabalho/holerites/${id}`); }
+  /** #228: lê o PDF (em base64) e devolve a prévia; nada é gravado. A senha só abre o arquivo. */
+  lerHoleritePdf(empregoId: number, arquivo: string, senha: string): Observable<PreviaHoleritePdf> {
+    return this.http.post<PreviaHoleritePdf>(`${this.base}/trabalho/empregos/${empregoId}/holerites/pdf`, { arquivo, senha });
+  }
+  confirmarHoleritePdf(empregoId: number, dto: ConfirmarHoleritePdf): Observable<HoleritePdfGravado> {
+    return this.http.post<HoleritePdfGravado>(`${this.base}/trabalho/empregos/${empregoId}/holerites/pdf/confirmar`, dto);
+  }
+  desfazerHoleritePdf(empregoId: number, chave: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/trabalho/empregos/${empregoId}/holerites/pdf/desfazer/${encodeURIComponent(chave)}`, {});
+  }
   /** #214: o 13º salário do ano. */
   decimoTerceiro(empregoId: number, ano: number): Observable<DecimoTerceiro> {
     return this.http.get<DecimoTerceiro>(`${this.base}/trabalho/empregos/${empregoId}/decimo-terceiro/${ano}`);

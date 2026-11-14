@@ -139,6 +139,7 @@
       "id": 1,
       "lancamentos": [],
       "mes": "2026-10-01",
+      "origem": 1,
       "situacao": 1
     },
     "banco": {
@@ -153,6 +154,7 @@
             "FechadoEm": null,
             "Id": 1,
             "Mes": "2026-10-01",
+            "Origem": 1,
             "Situacao": 1
           }
         ]
@@ -376,6 +378,7 @@
         }
       ],
       "mes": "2026-10-01",
+      "origem": 1,
       "situacao": 1
     },
     "banco": {
@@ -680,6 +683,7 @@
         }
       ],
       "mes": "2026-10-01",
+      "origem": 1,
       "situacao": 2
     },
     "banco": {
@@ -829,6 +833,7 @@
         }
       ],
       "mes": "2026-11-01",
+      "origem": 1,
       "situacao": 1
     },
     "banco": {
@@ -843,6 +848,7 @@
             "FechadoEm": null,
             "Id": 2,
             "Mes": "2026-11-01",
+            "Origem": 1,
             "Situacao": 1
           }
         ]
@@ -876,6 +882,7 @@
         "id": 2,
         "liquido": 4723.39,
         "mes": "2026-11-01",
+        "origem": 1,
         "situacao": 1,
         "totalDescontos": 1276.61,
         "totalProventos": 6000.00
@@ -884,6 +891,7 @@
         "id": 1,
         "liquido": 5292.62,
         "mes": "2026-10-01",
+        "origem": 1,
         "situacao": 2,
         "totalDescontos": 2302.33,
         "totalProventos": 7594.95
@@ -1098,6 +1106,7 @@
         }
       ],
       "mes": "2026-10-01",
+      "origem": 1,
       "situacao": 1
     },
     "banco": {
