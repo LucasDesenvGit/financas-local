@@ -14,6 +14,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/fgts"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/recebimento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 )
@@ -28,6 +29,7 @@ type Modulo struct {
 	decimo   *decimoterceiro.Servico
 	ferias   *ferias.Servico
 	fgts     *fgts.Servico
+	receb    *recebimento.Servico
 }
 
 // Novo monta o módulo com o banco, o relógio e o log do site.
@@ -37,7 +39,8 @@ func Novo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Modulo {
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, r, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, r, log)
 	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimo, ferias: asFerias,
-		fgts: fgts.NovoServico(db, empregos, holerites, decimo, asFerias, r, log)}
+		fgts:  fgts.NovoServico(db, empregos, holerites, decimo, asFerias, r, log),
+		receb: recebimento.NovoServico(db, empregos, holerites, r, log)}
 }
 
 // Info é o que Configurações › Módulos mostra.
@@ -56,6 +59,7 @@ func (m *Modulo) Registrar(r *modulos.Rotas) {
 	decimoterceiro.Registrar(r, m.decimo)
 	ferias.Registrar(r, m.ferias)
 	fgts.Registrar(r, m.fgts)
+	recebimento.Registrar(r, m.receb)
 }
 
 // Tarefas: o Trabalho não tem tarefa em segundo plano.

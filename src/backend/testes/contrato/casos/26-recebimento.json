@@ -1,0 +1,21 @@
+{
+  "descricao": "Recebimento do salário (#212, ADR 0065): o crédito na conta ligado ao holerite, sem contar duas vezes. Usa o holerite 1 (outubro de 2026) do 22-holerite; as sugestões vêm dos créditos do base.sql entre 15/10 e 15/11/2026. O 22-holerite deixa o módulo ligado. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "o recebimento de outubro",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/holerites/1/recebimentos"
+    },
+    {
+      "nome": "ligar uma transação que não existe",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/holerites/1/recebimentos",
+      "corpo": { "transacaoId": 999999 }
+    },
+    {
+      "nome": "holerite que não existe",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/holerites/999/recebimentos"
+    }
+  ]
+}

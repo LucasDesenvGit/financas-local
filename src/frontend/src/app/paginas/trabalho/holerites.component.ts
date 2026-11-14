@@ -15,6 +15,7 @@ import {
   TIPOS_DESCONTO, TIPOS_PROVENTO, ehPorHora, ehProvento, lancamentoNovo, paraSalvar, rotuloTipo, textoSituacao, trocarTipo
 } from './holerites';
 import { empregoAtual, mesDaApi, nomeDoMes } from './salario';
+import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
 
 /**
  * #211 (ADR 0065): Trabalho › Holerites. A lista dos meses (bruto, descontos, líquido) e o holerite escolhido: os
@@ -24,7 +25,8 @@ import { empregoAtual, mesDaApi, nomeDoMes } from './salario';
  */
 @Component({
   selector: 'app-trabalho-holerites',
-  imports: [FormsModule, DatePipe, RouterLink, MoedaPipe, CampoValorComponent, ListaSuspensaDirective, SeletorMesComponent],
+  imports: [FormsModule, DatePipe, RouterLink, MoedaPipe, CampoValorComponent, ListaSuspensaDirective, SeletorMesComponent,
+    RecebimentoHoleriteComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina"><h1>Holerites</h1></header>
@@ -155,6 +157,7 @@ import { empregoAtual, mesDaApi, nomeDoMes } from './salario';
               }
             </div>
             @if (!fechado() && mudou()) { <p class="texto-suave">Salve antes de fechar.</p> }
+            <app-recebimento-holerite [holeriteId]="h.id" />
           </section>
         }
       </div>

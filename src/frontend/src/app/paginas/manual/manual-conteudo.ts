@@ -1301,11 +1301,13 @@ export const MANUAL: CapituloManual[] = [
           '“Dias úteis” e “Domingos e feriados” vêm do calendário (segunda a sábado, e os domingos): acerte os feriados. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
           '“Salvar e calcular” mostra o holerite: cada provento e desconto com a referência, o INSS, o IRRF (com a dedução que der menos imposto e a redução da Lei 15.270/2025), os totais, o líquido e o FGTS do mês (que a empresa deposita, sem sair do salário).',
           '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes.',
-          'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.'
+          'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.',
+          '“Recebido na conta”: ligue ao holerite o crédito do salário que caiu na conta. Em “Parece o salário”, o site sugere os créditos do dia 15 do mês ao dia 15 do seguinte, dizendo por quê (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário); “Outros créditos do período” deixa ligar qualquer outro. Um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite (o site liga só o que falta do líquido).',
+          'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.'
         ],
         dicas: [
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
-          'O holerite não é receita: a receita continua sendo a transação do salário na conta, sem contar duas vezes.'
+          'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.'
         ],
         abrir: [{ rotulo: 'Abrir os Holerites', rota: '/trabalho/holerites' }]
       },

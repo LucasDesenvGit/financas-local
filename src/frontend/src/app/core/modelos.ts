@@ -943,3 +943,12 @@ export interface LancamentoFgts { id: number; data: string; tipo: TipoLancamento
 export interface MesFgts { mes: string; correcao: number; deposito: number; distribuicao: number; saques: number; saldo: number; conferido: boolean; }
 export interface ConferenciaFgts { data: string; informado: number; estimado: number; diferenca: number; }
 export interface Fgts { saldo: number; ate: string; meses: MesFgts[]; conferencias: ConferenciaFgts[]; lancamentos: LancamentoFgts[]; }
+
+/** #212: o crédito do salário ligado ao holerite (não conta duas vezes: a receita é a transação). */
+export interface CreditoSalario { id: number; data: string; descricao: string; contaId: number; conta: string; valor: number; livre: number; }
+export interface RecebimentoHolerite extends CreditoSalario { valorLigado: number; }
+export interface SugestaoRecebimento extends CreditoSalario { motivos: string[]; }
+export interface RecebimentosHolerite {
+  liquido: number | null; recebido: number; diferenca: number | null;
+  recebimentos: RecebimentoHolerite[]; sugestoes: SugestaoRecebimento[]; outros: CreditoSalario[];
+}

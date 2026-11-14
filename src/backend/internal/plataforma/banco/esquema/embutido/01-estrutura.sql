@@ -832,3 +832,22 @@ CREATE TABLE IF NOT EXISTS FgtsLancamento
     CONSTRAINT FK_FgtsLancamento_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS IX_FgtsLancamento_Emprego_Data ON FgtsLancamento (EmpregoId, Data);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: o recebimento do salário (#212, ADR 0065)                 */
+/* ------------------------------------------------------------------ */
+/* Liga o crédito na conta (a transação, que é a receita dos relatórios) ao holerite que ele paga, sem contar duas
+   vezes: o holerite só explica. Valor é a parte da transação que é deste holerite (um crédito pode pagar mais de um
+   holerite, e um holerite pode vir em vários créditos, como adiantamento e saldo). */
+CREATE TABLE IF NOT EXISTS HoleriteRecebimento
+(
+    Id          INTEGER NOT NULL CONSTRAINT PK_HoleriteRecebimento PRIMARY KEY AUTOINCREMENT,
+    HoleriteId  INTEGER NOT NULL,
+    TransacaoId INTEGER NOT NULL,
+    Valor       TEXT    NOT NULL,
+    CriadoEm    TEXT    NOT NULL,
+    CONSTRAINT FK_HoleriteRecebimento_Holerite FOREIGN KEY (HoleriteId) REFERENCES Holerite (Id) ON DELETE CASCADE,
+    CONSTRAINT FK_HoleriteRecebimento_Transacao FOREIGN KEY (TransacaoId) REFERENCES Transacao (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRecebimento_Holerite_Transacao ON HoleriteRecebimento (HoleriteId, TransacaoId);
+CREATE INDEX IF NOT EXISTS IX_HoleriteRecebimento_Transacao ON HoleriteRecebimento (TransacaoId);
