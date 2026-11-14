@@ -27,7 +27,7 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
       ['Patrimônio', ['Investimentos', 'Empréstimos e financiamentos']],
       ['Análises', ['Relatórios', 'Visão anual', 'Projeção']],
       ['Ajustes', ['Categorias e regras', 'Configurações']],
-      ['Trabalho', ['Salário']]   // #210: o módulo, que só aparece ligado
+      ['Trabalho', ['Salário', 'Holerites']]   // #210, #211: o módulo, que só aparece ligado
     ]);
     expect(grupos.map((g) => g.id)).toEqual(GRUPOS);
   });

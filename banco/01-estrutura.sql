@@ -726,3 +726,45 @@ CREATE TABLE IF NOT EXISTS IrrfFaixa
     CONSTRAINT PK_IrrfFaixa PRIMARY KEY (Inicio, Ordem),
     CONSTRAINT FK_IrrfFaixa_IrrfVigencia FOREIGN KEY (Inicio) REFERENCES IrrfVigencia (Inicio) ON DELETE CASCADE
 );
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: holerite do mês (#211, ADR 0065)                          */
+/* ------------------------------------------------------------------ */
+/* Um holerite por emprego e mês (Mes é o dia 1). Situacao: 1 aberto (calculado na hora, pelo salário e pelas tabelas da
+   vigência), 2 fechado (congelado: Calculo guarda o resultado em JSON, e mudar o salário ou a tabela depois não muda o
+   mês). DiasUteis e DiasDescanso são os do DSR das horas extras. Não é receita: nada daqui entra nos relatórios. */
+CREATE TABLE IF NOT EXISTS Holerite
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_Holerite PRIMARY KEY AUTOINCREMENT,
+    EmpregoId    INTEGER NOT NULL,
+    Mes          TEXT    NOT NULL,
+    Situacao     INTEGER NOT NULL DEFAULT 1,
+    DiasUteis    INTEGER NOT NULL,
+    DiasDescanso INTEGER NOT NULL,
+    Calculo      TEXT    NULL,
+    FechadoEm    TEXT    NULL,
+    CriadoEm     TEXT    NOT NULL,
+    CONSTRAINT FK_Holerite_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_Holerite_Emprego_Mes ON Holerite (EmpregoId, Mes);
+
+/* Uma linha do holerite. Tipo: 1 hora extra, 2 adicional noturno, 3 outro provento (bônus, PLR, comissão...), 10 vale-
+   transporte, 11 VR/VA, 12 plano de saúde, 13 pensão alimentícia, 14 outro desconto. Quantidade e Percentual são das
+   horas (hora extra e adicional noturno); Valor, dos outros. IncideInss/IncideIrrf: o provento entra na base; DeduzIrrf:
+   o desconto entra nas deduções do IR. Recorrente: passa para o holerite do mês seguinte. */
+CREATE TABLE IF NOT EXISTS HoleriteLancamento
+(
+    Id          INTEGER NOT NULL CONSTRAINT PK_HoleriteLancamento PRIMARY KEY AUTOINCREMENT,
+    HoleriteId  INTEGER NOT NULL,
+    Tipo        INTEGER NOT NULL,
+    Descricao   TEXT    NOT NULL,
+    Quantidade  TEXT    NULL,
+    Percentual  TEXT    NULL,
+    Valor       TEXT    NULL,
+    IncideInss  INTEGER NOT NULL DEFAULT 1,
+    IncideIrrf  INTEGER NOT NULL DEFAULT 1,
+    DeduzIrrf   INTEGER NOT NULL DEFAULT 0,
+    Recorrente  INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT FK_HoleriteLancamento_Holerite FOREIGN KEY (HoleriteId) REFERENCES Holerite (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_HoleriteLancamento_Holerite ON HoleriteLancamento (HoleriteId);

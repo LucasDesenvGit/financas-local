@@ -96,6 +96,11 @@ export const rotas: Routes = [
             path: 'salario',
             loadComponent: () => import('./paginas/trabalho/salario.component').then((m) => m.TrabalhoSalarioComponent),
             title: 'Salário · Trabalho · Finanças Local'
+          },
+          {
+            path: 'holerites',
+            loadComponent: () => import('./paginas/trabalho/holerites.component').then((m) => m.TrabalhoHoleritesComponent),
+            title: 'Holerites · Trabalho · Finanças Local'
           }
         ]
       },

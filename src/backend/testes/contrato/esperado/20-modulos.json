@@ -7,7 +7,7 @@
     "corpo": [
       {
         "acessaInternet": false,
-        "descricao": "O salário pelo bruto, com o INSS e o IRRF estimados pelas tabelas oficiais e o histórico de aumentos. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "descricao": "O salário pelo bruto e o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
         "destinos": [],
         "id": "trabalho",
         "ligado": false,

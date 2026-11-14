@@ -42,6 +42,7 @@ export const Icones = {
   // #210: o grupo do módulo Trabalho (a pasta) e a tela do salário (a nota)
   grupoTrabalho: LucideBriefcase,
   trabalhoSalario: LucideBanknote,
+  trabalhoHolerites: LucideReceiptText,
   setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,

@@ -10,6 +10,7 @@ import (
 	"log/slog"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 )
@@ -19,12 +20,14 @@ const ID = "trabalho"
 
 // Modulo é o Trabalho, com os serviços dos assuntos dele.
 type Modulo struct {
-	emprego *emprego.Servico
+	emprego  *emprego.Servico
+	holerite *holerite.Servico
 }
 
 // Novo monta o módulo com o banco, o relógio e o log do site.
 func Novo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Modulo {
-	return &Modulo{emprego: emprego.NovoServico(db, r, log)}
+	empregos := emprego.NovoServico(db, r, log)
+	return &Modulo{emprego: empregos, holerite: holerite.NovoServico(db, empregos, r, log)}
 }
 
 // Info é o que Configurações › Módulos mostra.
@@ -32,13 +35,14 @@ func (m *Modulo) Info() modulos.Info {
 	return modulos.Info{
 		ID:        ID,
 		Nome:      "Trabalho",
-		Descricao: "O salário pelo bruto, com o INSS e o IRRF estimados pelas tabelas oficiais e o histórico de aumentos. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+		Descricao: "O salário pelo bruto e o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
 	}
 }
 
 // Registrar põe as rotas dos assuntos do Trabalho, guardadas pelo núcleo.
 func (m *Modulo) Registrar(r *modulos.Rotas) {
 	emprego.Registrar(r, m.emprego)
+	holerite.Registrar(r, m.holerite)
 }
 
 // Tarefas: o Trabalho não tem tarefa em segundo plano.

@@ -149,32 +149,36 @@ func TestIrrf(t *testing.T) {
 		tabela                 TabelaIrrf
 		rendimento, inss       string
 		dependentes            int
+		outras                 string // pensão e outras deduções da lei
 		deducao, base, imposto string
 		reducao, valor         string
 	}{
 		// 3000 - 607,20 (simplificado > 248,60) = 2392,80: isento pela tabela.
-		{"isento pela tabela", de2026, "3000.00", "248.60", 0, DeducaoSimplificada, "2392.80", "0.00", "0.00", "0.00"},
+		{"isento pela tabela", de2026, "3000.00", "248.60", 0, "0", DeducaoSimplificada, "2392.80", "0.00", "0.00", "0.00"},
 		// 5000 - 607,20 = 4392,80 x 22,5% - 675,49 = 312,89; até 5000 a redução zera o imposto (por isso 312,89).
-		{"5 mil, zerado pela redução", de2026, "5000.00", "501.51", 0, DeducaoSimplificada, "4392.80", "312.89", "312.89", "0.00"},
+		{"5 mil, zerado pela redução", de2026, "5000.00", "501.51", 0, "0", DeducaoSimplificada, "4392.80", "312.89", "312.89", "0.00"},
 		// 6000 - 641,51 (legais > 607,20) = 5358,49 x 27,5% - 908,73 = 564,85475; redução 978,62 - 0,133145 x 6000 = 179,75.
-		{"6 mil, redução parcial", de2026, "6000.00", "641.51", 0, DeducaoLegal, "5358.49", "564.85", "179.75", "385.10"},
+		{"6 mil, redução parcial", de2026, "6000.00", "641.51", 0, "0", DeducaoLegal, "5358.49", "564.85", "179.75", "385.10"},
 		// com 2 dependentes: 641,51 + 2 x 189,59 = 1020,69; 4979,31 x 27,5% - 908,73 = 460,58025.
-		{"6 mil, dois dependentes", de2026, "6000.00", "641.51", 2, DeducaoLegal, "4979.31", "460.58", "179.75", "280.83"},
+		{"6 mil, dois dependentes", de2026, "6000.00", "641.51", 2, "0", DeducaoLegal, "4979.31", "460.58", "179.75", "280.83"},
 		// redução no limite: 978,62 - 0,133145 x 7350 = 0,00425 → 0,00; 6518,49 x 27,5% - 908,73 = 883,85475.
-		{"no limite da redução", de2026, "7350.00", "831.51", 0, DeducaoLegal, "6518.49", "883.85", "0.00", "883.85"},
+		{"no limite da redução", de2026, "7350.00", "831.51", 0, "0", DeducaoLegal, "6518.49", "883.85", "0.00", "883.85"},
 		// 8000 - 921,51 = 7078,49 x 27,5% - 908,73 = 1037,85475: acima de 7350, sem redução.
-		{"8 mil, sem redução", de2026, "8000.00", "921.51", 0, DeducaoLegal, "7078.49", "1037.85", "0.00", "1037.85"},
+		{"8 mil, sem redução", de2026, "8000.00", "921.51", 0, "0", DeducaoLegal, "7078.49", "1037.85", "0.00", "1037.85"},
 		// 2025 não tem a redução: o mesmo 5000 paga 312,89.
-		{"2025, sem a redução", maio2025, "5000.00", "509.60", 0, DeducaoSimplificada, "4392.80", "312.89", "0.00", "312.89"},
+		{"2025, sem a redução", maio2025, "5000.00", "509.60", 0, "0", DeducaoSimplificada, "4392.80", "312.89", "0.00", "312.89"},
 		// a dedução maior que o rendimento não dá base negativa.
-		{"dedução maior que o rendimento", de2026, "500.00", "37.50", 0, DeducaoSimplificada, "0.00", "0.00", "0.00", "0.00"},
+		{"dedução maior que o rendimento", de2026, "500.00", "37.50", 0, "0", DeducaoSimplificada, "0.00", "0.00", "0.00", "0.00"},
+		// pensão de 1000 entra nas deduções legais: 641,51 + 1000 = 1641,51; 4358,49 x 22,5% - 675,49 = 305,17025;
+		// a redução (179,75) sai igual, porque vai pelo rendimento.
+		{"6 mil, com pensão", de2026, "6000.00", "641.51", 0, "1000.00", DeducaoLegal, "4358.49", "305.17", "179.75", "125.42"},
 		// primeira faixa com imposto: 3500 - 607,20 = 2892,80, na faixa de 15% (até 3751,05): 433,92 - 394,16 = 39,76.
-		{"faixa de 15%", de2026, "3500.00", "311.60", 0, DeducaoSimplificada, "2892.80", "39.76", "39.76", "0.00"},
+		{"faixa de 15%", de2026, "3500.00", "311.60", 0, "0", DeducaoSimplificada, "2892.80", "39.76", "39.76", "0.00"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			r := CalcularIrrf(c.tabela, v(c.rendimento), v(c.inss), c.dependentes)
+			r := CalcularIrrf(c.tabela, v(c.rendimento), v(c.inss), c.dependentes, v(c.outras))
 			got := []string{r.DeducaoUsada, r.Base.String(), r.ImpostoDaTabela.String(), r.ReducaoLei15270.String(), r.Valor.String()}
 			quer := []string{c.deducao, c.base, c.imposto, c.reducao, c.valor}
 			for i := range got {
@@ -191,7 +195,7 @@ func TestReducaoNaoPassaDoImposto(t *testing.T) {
 	_, irrf := tabelas(t)
 	de2026, _ := Vigente(irrf, testeapoio.Dia(2026, 1, 1))
 	// legais 563,49 < 607,20 (simplificado) → base 4892,80 x 27,5% - 908,73 = 436,79; redução 978,62 - 732,2975 = 246,32.
-	r := CalcularIrrf(de2026, v("5500.00"), v("563.49"), 0)
+	r := CalcularIrrf(de2026, v("5500.00"), v("563.49"), 0, v("0"))
 	if r.ReducaoLei15270.String() != "246.32" || r.Valor.String() != "190.47" {
 		t.Fatalf("redução %s, valor %s", r.ReducaoLei15270, r.Valor)
 	}
@@ -200,7 +204,7 @@ func TestReducaoNaoPassaDoImposto(t *testing.T) {
 	red := *t2.Reducao
 	red.Maxima = v("9999.00")
 	t2.Reducao = &red
-	if r := CalcularIrrf(t2, v("5000.00"), v("501.51"), 0); r.Valor.String() != "0.00" || r.ReducaoLei15270.String() != "312.89" {
+	if r := CalcularIrrf(t2, v("5000.00"), v("501.51"), 0, v("0")); r.Valor.String() != "0.00" || r.ReducaoLei15270.String() != "312.89" {
 		t.Fatalf("redução %s, valor %s", r.ReducaoLei15270, r.Valor)
 	}
 }

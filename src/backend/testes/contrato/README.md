@@ -82,7 +82,8 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `17-erros` | erros do sistema | #298 | `/api/erros` |
 | `20-modulos` | módulos que se ligam e desligam | #191 | `/api/modulos` |
 | `21-trabalho` | módulo Trabalho: emprego, salário, estimativa e tabelas | #210 | `/api/trabalho` |
-| `22` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
+| `22-holerite` | holerite do mês do Trabalho | #211 | `/api/trabalho/holerites` |
+| `23` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
 | `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |
 
 - Um arquivo pode usar o `base.sql`, a sessão `principal` do `00-auth` e o que um arquivo de número menor **já mesclado** deixou no banco; nunca o de um assunto ainda em andamento.

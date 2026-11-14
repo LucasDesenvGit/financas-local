@@ -17,7 +17,7 @@ describe('Regressão: Manual acompanha o site', () => {
 
   it('toda tela do menu tem capítulo (e seção, quando indicada) no manual, também as de dentro dos grupos', () => {
     const itens = telasDoMenu();
-    expect(itens.length).toBe(14);   // #227: as 13 telas de antes, agora em grupos; #210: o Salário do Trabalho (módulo)
+    expect(itens.length).toBe(15);   // #227: as 13 telas de antes, agora em grupos; #210 e #211: Salário e Holerites (módulo)
     for (const item of itens) {
       const ajuda = ajudaDaUrl(item.rota)!;
       expect(ajuda).toBeDefined();

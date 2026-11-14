@@ -1,0 +1,1141 @@
+[
+  {
+    "nome": "ligar o Trabalho",
+    "requisicao": "PUT /api/modulos/trabalho",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "acessaInternet": false,
+      "descricao": "O salário pelo bruto e o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+      "destinos": [],
+      "id": "trabalho",
+      "ligado": true,
+      "nome": "Trabalho"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ModuloLigado (trabalho)",
+            "Id": 51,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Modulos.trabalho.Ligado"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "false",
+                "depois": "true"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "abrir o holerite de outubro de 2026",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites",
+    "status": 201,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": null,
+      "calculo": {
+        "baseInss": 6000.00,
+        "descontos": [
+          {
+            "descricao": "INSS",
+            "referencia": "",
+            "tipo": 20,
+            "valor": 641.51
+          },
+          {
+            "descricao": "IRRF",
+            "referencia": "",
+            "tipo": 21,
+            "valor": 385.10
+          }
+        ],
+        "diasTrabalhados": 30,
+        "fgtsDoMes": 480.00,
+        "inss": {
+          "base": 6000.00,
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "noTeto": false,
+          "parcelas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00,
+              "de": 0.00,
+              "valor": 121.58
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84,
+              "de": 1621.00,
+              "valor": 115.37
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27,
+              "de": 2902.84,
+              "valor": 174.17
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 6000.00,
+              "de": 4354.27,
+              "valor": 230.40
+            }
+          ],
+          "valor": 641.51
+        },
+        "irrf": {
+          "aliquota": 0.275,
+          "base": 5358.49,
+          "deducaoUsada": "legal",
+          "deducoesLegais": 641.51,
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "impostoDaTabela": 564.85,
+          "parcelaADeduzir": 908.73,
+          "reducaoLei15270": 179.75,
+          "rendimento": 6000.00,
+          "simplificado": 607.20,
+          "valor": 385.10
+        },
+        "liquido": 4973.39,
+        "mes": "2026-10-01",
+        "proventos": [
+          {
+            "descricao": "Salário",
+            "referencia": "30 dias",
+            "tipo": 0,
+            "valor": 6000.00
+          }
+        ],
+        "salarioContratual": 6000.00,
+        "semEncargos": false,
+        "totalDescontos": 1026.61,
+        "totalProventos": 6000.00,
+        "valorHora": 27.27
+      },
+      "diasDescanso": 4,
+      "diasUteis": 27,
+      "empregoId": 1,
+      "fechadoEm": null,
+      "id": 1,
+      "lancamentos": [],
+      "mes": "2026-10-01",
+      "situacao": 1
+    },
+    "banco": {
+      "Holerite": {
+        "inseridas": [
+          {
+            "Calculo": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiasDescanso": 4,
+            "DiasUteis": 27,
+            "EmpregoId": 1,
+            "FechadoEm": null,
+            "Id": 1,
+            "Mes": "2026-10-01",
+            "Situacao": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "o mesmo mês de novo",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Já existe o holerite de outubro de 2026."
+    }
+  },
+  {
+    "nome": "lançamentos do mês",
+    "requisicao": "PUT /api/trabalho/holerites/1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": null,
+      "calculo": {
+        "baseInss": 6594.95,
+        "descontos": [
+          {
+            "descricao": "INSS",
+            "referencia": "",
+            "tipo": 20,
+            "valor": 724.81
+          },
+          {
+            "descricao": "IRRF",
+            "referencia": "",
+            "tipo": 21,
+            "valor": 467.52
+          },
+          {
+            "descricao": "Vale-transporte",
+            "referencia": "6% do salário (o limite)",
+            "tipo": 10,
+            "valor": 360.00
+          },
+          {
+            "descricao": "Plano de saúde",
+            "referencia": "",
+            "tipo": 12,
+            "valor": 250.00
+          },
+          {
+            "descricao": "Pensão alimentícia",
+            "referencia": "",
+            "tipo": 13,
+            "valor": 500.00
+          }
+        ],
+        "diasTrabalhados": 30,
+        "fgtsDoMes": 527.60,
+        "inss": {
+          "base": 6594.95,
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "noTeto": false,
+          "parcelas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00,
+              "de": 0.00,
+              "valor": 121.58
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84,
+              "de": 1621.00,
+              "valor": 115.37
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27,
+              "de": 2902.84,
+              "valor": 174.17
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 6594.95,
+              "de": 4354.27,
+              "valor": 313.70
+            }
+          ],
+          "valor": 724.81
+        },
+        "irrf": {
+          "aliquota": 0.275,
+          "base": 5370.14,
+          "deducaoUsada": "legal",
+          "deducoesLegais": 1224.81,
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "impostoDaTabela": 568.06,
+          "parcelaADeduzir": 908.73,
+          "reducaoLei15270": 100.54,
+          "rendimento": 6594.95,
+          "simplificado": 607.20,
+          "valor": 467.52
+        },
+        "liquido": 5292.62,
+        "mes": "2026-10-01",
+        "proventos": [
+          {
+            "descricao": "Salário",
+            "referencia": "30 dias",
+            "tipo": 0,
+            "valor": 6000.00
+          },
+          {
+            "descricao": "Horas extras",
+            "referencia": "10 h a 50%",
+            "tipo": 1,
+            "valor": 409.09
+          },
+          {
+            "descricao": "Adicional noturno",
+            "referencia": "20 h a 20%",
+            "tipo": 2,
+            "valor": 109.09
+          },
+          {
+            "descricao": "PLR",
+            "referencia": "",
+            "tipo": 3,
+            "valor": 1000.00
+          },
+          {
+            "descricao": "DSR sobre horas extras e adicional noturno",
+            "referencia": "÷ 27 dias úteis × 4 de descanso",
+            "tipo": 4,
+            "valor": 76.77
+          }
+        ],
+        "salarioContratual": 6000.00,
+        "semEncargos": false,
+        "totalDescontos": 2302.33,
+        "totalProventos": 7594.95,
+        "valorHora": 27.27
+      },
+      "diasDescanso": 4,
+      "diasUteis": 27,
+      "empregoId": 1,
+      "fechadoEm": null,
+      "id": 1,
+      "lancamentos": [
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 1,
+          "incideInss": true,
+          "incideIrrf": true,
+          "percentual": 50.0,
+          "quantidade": 10.0,
+          "recorrente": false,
+          "tipo": 1,
+          "valor": null
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 2,
+          "incideInss": true,
+          "incideIrrf": true,
+          "percentual": 20.0,
+          "quantidade": 20.0,
+          "recorrente": false,
+          "tipo": 2,
+          "valor": null
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "PLR",
+          "id": 3,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 3,
+          "valor": 1000.0
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 4,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 10,
+          "valor": 400.0
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 5,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": true,
+          "tipo": 12,
+          "valor": 250.0
+        },
+        {
+          "deduzIrrf": true,
+          "descricao": "",
+          "id": 6,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 13,
+          "valor": 500.0
+        }
+      ],
+      "mes": "2026-10-01",
+      "situacao": 1
+    },
+    "banco": {
+      "HoleriteLancamento": {
+        "inseridas": [
+          {
+            "DeduzIrrf": 0,
+            "Descricao": "",
+            "HoleriteId": 1,
+            "Id": 1,
+            "IncideInss": 1,
+            "IncideIrrf": 1,
+            "Percentual": "50.0",
+            "Quantidade": "10.0",
+            "Recorrente": 0,
+            "Tipo": 1,
+            "Valor": null
+          },
+          {
+            "DeduzIrrf": 0,
+            "Descricao": "",
+            "HoleriteId": 1,
+            "Id": 2,
+            "IncideInss": 1,
+            "IncideIrrf": 1,
+            "Percentual": "20.0",
+            "Quantidade": "20.0",
+            "Recorrente": 0,
+            "Tipo": 2,
+            "Valor": null
+          },
+          {
+            "DeduzIrrf": 0,
+            "Descricao": "PLR",
+            "HoleriteId": 1,
+            "Id": 3,
+            "IncideInss": 0,
+            "IncideIrrf": 0,
+            "Percentual": null,
+            "Quantidade": null,
+            "Recorrente": 0,
+            "Tipo": 3,
+            "Valor": "1000.0"
+          },
+          {
+            "DeduzIrrf": 0,
+            "Descricao": "",
+            "HoleriteId": 1,
+            "Id": 4,
+            "IncideInss": 0,
+            "IncideIrrf": 0,
+            "Percentual": null,
+            "Quantidade": null,
+            "Recorrente": 0,
+            "Tipo": 10,
+            "Valor": "400.0"
+          },
+          {
+            "DeduzIrrf": 0,
+            "Descricao": "",
+            "HoleriteId": 1,
+            "Id": 5,
+            "IncideInss": 0,
+            "IncideIrrf": 0,
+            "Percentual": null,
+            "Quantidade": null,
+            "Recorrente": 1,
+            "Tipo": 12,
+            "Valor": "250.0"
+          },
+          {
+            "DeduzIrrf": 1,
+            "Descricao": "",
+            "HoleriteId": 1,
+            "Id": 6,
+            "IncideInss": 0,
+            "IncideIrrf": 0,
+            "Percentual": null,
+            "Quantidade": null,
+            "Recorrente": 0,
+            "Tipo": 13,
+            "Valor": "500.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "lançamento sem horas",
+    "requisicao": "PUT /api/trabalho/holerites/1",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "As horas vão de 0,01 a 300."
+    }
+  },
+  {
+    "nome": "fechar outubro",
+    "requisicao": "POST /api/trabalho/holerites/1/fechar",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": null,
+      "calculo": {
+        "baseInss": 6594.95,
+        "descontos": [
+          {
+            "descricao": "INSS",
+            "referencia": "",
+            "tipo": 20,
+            "valor": 724.81
+          },
+          {
+            "descricao": "IRRF",
+            "referencia": "",
+            "tipo": 21,
+            "valor": 467.52
+          },
+          {
+            "descricao": "Vale-transporte",
+            "referencia": "6% do salário (o limite)",
+            "tipo": 10,
+            "valor": 360.00
+          },
+          {
+            "descricao": "Plano de saúde",
+            "referencia": "",
+            "tipo": 12,
+            "valor": 250.00
+          },
+          {
+            "descricao": "Pensão alimentícia",
+            "referencia": "",
+            "tipo": 13,
+            "valor": 500.00
+          }
+        ],
+        "diasTrabalhados": 30,
+        "fgtsDoMes": 527.60,
+        "inss": {
+          "base": 6594.95,
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "noTeto": false,
+          "parcelas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00,
+              "de": 0.00,
+              "valor": 121.58
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84,
+              "de": 1621.00,
+              "valor": 115.37
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27,
+              "de": 2902.84,
+              "valor": 174.17
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 6594.95,
+              "de": 4354.27,
+              "valor": 313.70
+            }
+          ],
+          "valor": 724.81
+        },
+        "irrf": {
+          "aliquota": 0.275,
+          "base": 5370.14,
+          "deducaoUsada": "legal",
+          "deducoesLegais": 1224.81,
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "impostoDaTabela": 568.06,
+          "parcelaADeduzir": 908.73,
+          "reducaoLei15270": 100.54,
+          "rendimento": 6594.95,
+          "simplificado": 607.20,
+          "valor": 467.52
+        },
+        "liquido": 5292.62,
+        "mes": "2026-10-01",
+        "proventos": [
+          {
+            "descricao": "Salário",
+            "referencia": "30 dias",
+            "tipo": 0,
+            "valor": 6000.00
+          },
+          {
+            "descricao": "Horas extras",
+            "referencia": "10 h a 50%",
+            "tipo": 1,
+            "valor": 409.09
+          },
+          {
+            "descricao": "Adicional noturno",
+            "referencia": "20 h a 20%",
+            "tipo": 2,
+            "valor": 109.09
+          },
+          {
+            "descricao": "PLR",
+            "referencia": "",
+            "tipo": 3,
+            "valor": 1000.00
+          },
+          {
+            "descricao": "DSR sobre horas extras e adicional noturno",
+            "referencia": "÷ 27 dias úteis × 4 de descanso",
+            "tipo": 4,
+            "valor": 76.77
+          }
+        ],
+        "salarioContratual": 6000.00,
+        "semEncargos": false,
+        "totalDescontos": 2302.33,
+        "totalProventos": 7594.95,
+        "valorHora": 27.27
+      },
+      "diasDescanso": 4,
+      "diasUteis": 27,
+      "empregoId": 1,
+      "fechadoEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+      "id": 1,
+      "lancamentos": [
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 1,
+          "incideInss": true,
+          "incideIrrf": true,
+          "percentual": 50.0,
+          "quantidade": 10.0,
+          "recorrente": false,
+          "tipo": 1,
+          "valor": null
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 2,
+          "incideInss": true,
+          "incideIrrf": true,
+          "percentual": 20.0,
+          "quantidade": 20.0,
+          "recorrente": false,
+          "tipo": 2,
+          "valor": null
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "PLR",
+          "id": 3,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 3,
+          "valor": 1000.0
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 4,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 10,
+          "valor": 400.0
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 5,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": true,
+          "tipo": 12,
+          "valor": 250.0
+        },
+        {
+          "deduzIrrf": true,
+          "descricao": "",
+          "id": 6,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 13,
+          "valor": 500.0
+        }
+      ],
+      "mes": "2026-10-01",
+      "situacao": 2
+    },
+    "banco": {
+      "Holerite": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "Calculo": {
+                "antes": null,
+                "depois": "{\"mes\":\"2026-10-01\",\"salarioContratual\":6000.00,\"diasTrabalhados\":30,\"valorHora\":27.27,\"proventos\":[{\"tipo\":0,\"descricao\":\"Salário\",\"referencia\":\"30 dias\",\"valor\":6000.00},{\"tipo\":1,\"descricao\":\"Horas extras\",\"referencia\":\"10 h a 50%\",\"valor\":409.09},{\"tipo\":2,\"descricao\":\"Adicional noturno\",\"referencia\":\"20 h a 20%\",\"valor\":109.09},{\"tipo\":3,\"descricao\":\"PLR\",\"referencia\":\"\",\"valor\":1000.00},{\"tipo\":4,\"descricao\":\"DSR sobre horas extras e adicional noturno\",\"referencia\":\"÷ 27 dias úteis × 4 de descanso\",\"valor\":76.77}],\"descontos\":[{\"tipo\":20,\"descricao\":\"INSS\",\"referencia\":\"\",\"valor\":724.81},{\"tipo\":21,\"descricao\":\"IRRF\",\"referencia\":\"\",\"valor\":467.52},{\"tipo\":10,\"descricao\":\"Vale-transporte\",\"referencia\":\"6% do salário (o limite)\",\"valor\":360.00},{\"tipo\":12,\"descricao\":\"Plano de saúde\",\"referencia\":\"\",\"valor\":250.00},{\"tipo\":13,\"descricao\":\"Pensão alimentícia\",\"referencia\":\"\",\"valor\":500.00}],\"totalProventos\":7594.95,\"totalDescontos\":2302.33,\"liquido\":5292.62,\"baseInss\":6594.95,\"inss\":{\"base\":6594.95,\"valor\":724.81,\"noTeto\":false,\"parcelas\":[{\"de\":0.00,\"ate\":1621.00,\"aliquota\":0.075,\"valor\":121.58},{\"de\":1621.00,\"ate\":2902.84,\"aliquota\":0.09,\"valor\":115.37},{\"de\":2902.84,\"ate\":4354.27,\"aliquota\":0.12,\"valor\":174.17},{\"de\":4354.27,\"ate\":6594.95,\"aliquota\":0.14,\"valor\":313.70}],\"fonte\":\"Portaria Interministerial MPS/MF nº 13, de 09/01/2026\"},\"irrf\":{\"rendimento\":6594.95,\"deducoesLegais\":1224.81,\"simplificado\":607.20,\"deducaoUsada\":\"legal\",\"base\":5370.14,\"aliquota\":0.275,\"parcelaADeduzir\":908.73,\"impostoDaTabela\":568.06,\"reducaoLei15270\":100.54,\"valor\":467.52,\"fonte\":\"Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)\"},\"fgtsDoMes\":527.60,\"semEncargos\":false}"
+              },
+              "FechadoEm": {
+                "antes": null,
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Situacao": {
+                "antes": 1,
+                "depois": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "fechado não muda",
+    "requisicao": "PUT /api/trabalho/holerites/1",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O holerite está fechado: reabra para mudar."
+    }
+  },
+  {
+    "nome": "novembro traz o plano de saúde recorrente",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites",
+    "status": 201,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": null,
+      "calculo": {
+        "baseInss": 6000.00,
+        "descontos": [
+          {
+            "descricao": "INSS",
+            "referencia": "",
+            "tipo": 20,
+            "valor": 641.51
+          },
+          {
+            "descricao": "IRRF",
+            "referencia": "",
+            "tipo": 21,
+            "valor": 385.10
+          },
+          {
+            "descricao": "Plano de saúde",
+            "referencia": "",
+            "tipo": 12,
+            "valor": 250.00
+          }
+        ],
+        "diasTrabalhados": 30,
+        "fgtsDoMes": 480.00,
+        "inss": {
+          "base": 6000.00,
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "noTeto": false,
+          "parcelas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00,
+              "de": 0.00,
+              "valor": 121.58
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84,
+              "de": 1621.00,
+              "valor": 115.37
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27,
+              "de": 2902.84,
+              "valor": 174.17
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 6000.00,
+              "de": 4354.27,
+              "valor": 230.40
+            }
+          ],
+          "valor": 641.51
+        },
+        "irrf": {
+          "aliquota": 0.275,
+          "base": 5358.49,
+          "deducaoUsada": "legal",
+          "deducoesLegais": 641.51,
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "impostoDaTabela": 564.85,
+          "parcelaADeduzir": 908.73,
+          "reducaoLei15270": 179.75,
+          "rendimento": 6000.00,
+          "simplificado": 607.20,
+          "valor": 385.10
+        },
+        "liquido": 4723.39,
+        "mes": "2026-11-01",
+        "proventos": [
+          {
+            "descricao": "Salário",
+            "referencia": "30 dias",
+            "tipo": 0,
+            "valor": 6000.00
+          }
+        ],
+        "salarioContratual": 6000.00,
+        "semEncargos": false,
+        "totalDescontos": 1276.61,
+        "totalProventos": 6000.00,
+        "valorHora": 27.27
+      },
+      "diasDescanso": 5,
+      "diasUteis": 25,
+      "empregoId": 1,
+      "fechadoEm": null,
+      "id": 2,
+      "lancamentos": [
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 7,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": true,
+          "tipo": 12,
+          "valor": 250.0
+        }
+      ],
+      "mes": "2026-11-01",
+      "situacao": 1
+    },
+    "banco": {
+      "Holerite": {
+        "inseridas": [
+          {
+            "Calculo": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiasDescanso": 5,
+            "DiasUteis": 25,
+            "EmpregoId": 1,
+            "FechadoEm": null,
+            "Id": 2,
+            "Mes": "2026-11-01",
+            "Situacao": 1
+          }
+        ]
+      },
+      "HoleriteLancamento": {
+        "inseridas": [
+          {
+            "DeduzIrrf": 0,
+            "Descricao": "",
+            "HoleriteId": 2,
+            "Id": 7,
+            "IncideInss": 0,
+            "IncideIrrf": 0,
+            "Percentual": null,
+            "Quantidade": null,
+            "Recorrente": 1,
+            "Tipo": 12,
+            "Valor": "250.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "a lista dos holerites",
+    "requisicao": "GET /api/trabalho/empregos/1/holerites",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "id": 2,
+        "liquido": 4723.39,
+        "mes": "2026-11-01",
+        "situacao": 1,
+        "totalDescontos": 1276.61,
+        "totalProventos": 6000.00
+      },
+      {
+        "id": 1,
+        "liquido": 5292.62,
+        "mes": "2026-10-01",
+        "situacao": 2,
+        "totalDescontos": 2302.33,
+        "totalProventos": 7594.95
+      }
+    ]
+  },
+  {
+    "nome": "reabrir outubro",
+    "requisicao": "POST /api/trabalho/holerites/1/reabrir",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": null,
+      "calculo": {
+        "baseInss": 6594.95,
+        "descontos": [
+          {
+            "descricao": "INSS",
+            "referencia": "",
+            "tipo": 20,
+            "valor": 724.81
+          },
+          {
+            "descricao": "IRRF",
+            "referencia": "",
+            "tipo": 21,
+            "valor": 467.52
+          },
+          {
+            "descricao": "Vale-transporte",
+            "referencia": "6% do salário (o limite)",
+            "tipo": 10,
+            "valor": 360.00
+          },
+          {
+            "descricao": "Plano de saúde",
+            "referencia": "",
+            "tipo": 12,
+            "valor": 250.00
+          },
+          {
+            "descricao": "Pensão alimentícia",
+            "referencia": "",
+            "tipo": 13,
+            "valor": 500.00
+          }
+        ],
+        "diasTrabalhados": 30,
+        "fgtsDoMes": 527.60,
+        "inss": {
+          "base": 6594.95,
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "noTeto": false,
+          "parcelas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00,
+              "de": 0.00,
+              "valor": 121.58
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84,
+              "de": 1621.00,
+              "valor": 115.37
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27,
+              "de": 2902.84,
+              "valor": 174.17
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 6594.95,
+              "de": 4354.27,
+              "valor": 313.70
+            }
+          ],
+          "valor": 724.81
+        },
+        "irrf": {
+          "aliquota": 0.275,
+          "base": 5370.14,
+          "deducaoUsada": "legal",
+          "deducoesLegais": 1224.81,
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "impostoDaTabela": 568.06,
+          "parcelaADeduzir": 908.73,
+          "reducaoLei15270": 100.54,
+          "rendimento": 6594.95,
+          "simplificado": 607.20,
+          "valor": 467.52
+        },
+        "liquido": 5292.62,
+        "mes": "2026-10-01",
+        "proventos": [
+          {
+            "descricao": "Salário",
+            "referencia": "30 dias",
+            "tipo": 0,
+            "valor": 6000.00
+          },
+          {
+            "descricao": "Horas extras",
+            "referencia": "10 h a 50%",
+            "tipo": 1,
+            "valor": 409.09
+          },
+          {
+            "descricao": "Adicional noturno",
+            "referencia": "20 h a 20%",
+            "tipo": 2,
+            "valor": 109.09
+          },
+          {
+            "descricao": "PLR",
+            "referencia": "",
+            "tipo": 3,
+            "valor": 1000.00
+          },
+          {
+            "descricao": "DSR sobre horas extras e adicional noturno",
+            "referencia": "÷ 27 dias úteis × 4 de descanso",
+            "tipo": 4,
+            "valor": 76.77
+          }
+        ],
+        "salarioContratual": 6000.00,
+        "semEncargos": false,
+        "totalDescontos": 2302.33,
+        "totalProventos": 7594.95,
+        "valorHora": 27.27
+      },
+      "diasDescanso": 4,
+      "diasUteis": 27,
+      "empregoId": 1,
+      "fechadoEm": null,
+      "id": 1,
+      "lancamentos": [
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 1,
+          "incideInss": true,
+          "incideIrrf": true,
+          "percentual": 50.0,
+          "quantidade": 10.0,
+          "recorrente": false,
+          "tipo": 1,
+          "valor": null
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 2,
+          "incideInss": true,
+          "incideIrrf": true,
+          "percentual": 20.0,
+          "quantidade": 20.0,
+          "recorrente": false,
+          "tipo": 2,
+          "valor": null
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "PLR",
+          "id": 3,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 3,
+          "valor": 1000.0
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 4,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 10,
+          "valor": 400.0
+        },
+        {
+          "deduzIrrf": false,
+          "descricao": "",
+          "id": 5,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": true,
+          "tipo": 12,
+          "valor": 250.0
+        },
+        {
+          "deduzIrrf": true,
+          "descricao": "",
+          "id": 6,
+          "incideInss": false,
+          "incideIrrf": false,
+          "percentual": null,
+          "quantidade": null,
+          "recorrente": false,
+          "tipo": 13,
+          "valor": 500.0
+        }
+      ],
+      "mes": "2026-10-01",
+      "situacao": 1
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "HoleriteReaberto (2026-10)",
+            "Id": 52,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Holerite": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "Calculo": {
+                "antes": "{\"mes\":\"2026-10-01\",\"salarioContratual\":6000.00,\"diasTrabalhados\":30,\"valorHora\":27.27,\"proventos\":[{\"tipo\":0,\"descricao\":\"Salário\",\"referencia\":\"30 dias\",\"valor\":6000.00},{\"tipo\":1,\"descricao\":\"Horas extras\",\"referencia\":\"10 h a 50%\",\"valor\":409.09},{\"tipo\":2,\"descricao\":\"Adicional noturno\",\"referencia\":\"20 h a 20%\",\"valor\":109.09},{\"tipo\":3,\"descricao\":\"PLR\",\"referencia\":\"\",\"valor\":1000.00},{\"tipo\":4,\"descricao\":\"DSR sobre horas extras e adicional noturno\",\"referencia\":\"÷ 27 dias úteis × 4 de descanso\",\"valor\":76.77}],\"descontos\":[{\"tipo\":20,\"descricao\":\"INSS\",\"referencia\":\"\",\"valor\":724.81},{\"tipo\":21,\"descricao\":\"IRRF\",\"referencia\":\"\",\"valor\":467.52},{\"tipo\":10,\"descricao\":\"Vale-transporte\",\"referencia\":\"6% do salário (o limite)\",\"valor\":360.00},{\"tipo\":12,\"descricao\":\"Plano de saúde\",\"referencia\":\"\",\"valor\":250.00},{\"tipo\":13,\"descricao\":\"Pensão alimentícia\",\"referencia\":\"\",\"valor\":500.00}],\"totalProventos\":7594.95,\"totalDescontos\":2302.33,\"liquido\":5292.62,\"baseInss\":6594.95,\"inss\":{\"base\":6594.95,\"valor\":724.81,\"noTeto\":false,\"parcelas\":[{\"de\":0.00,\"ate\":1621.00,\"aliquota\":0.075,\"valor\":121.58},{\"de\":1621.00,\"ate\":2902.84,\"aliquota\":0.09,\"valor\":115.37},{\"de\":2902.84,\"ate\":4354.27,\"aliquota\":0.12,\"valor\":174.17},{\"de\":4354.27,\"ate\":6594.95,\"aliquota\":0.14,\"valor\":313.70}],\"fonte\":\"Portaria Interministerial MPS/MF nº 13, de 09/01/2026\"},\"irrf\":{\"rendimento\":6594.95,\"deducoesLegais\":1224.81,\"simplificado\":607.20,\"deducaoUsada\":\"legal\",\"base\":5370.14,\"aliquota\":0.275,\"parcelaADeduzir\":908.73,\"impostoDaTabela\":568.06,\"reducaoLei15270\":100.54,\"valor\":467.52,\"fonte\":\"Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)\"},\"fgtsDoMes\":527.60,\"semEncargos\":false}",
+                "depois": null
+              },
+              "FechadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": null
+              },
+              "Situacao": {
+                "antes": 2,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+]

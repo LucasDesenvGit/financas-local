@@ -198,6 +198,8 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Módulo | `modulos.Modulo`, `internal/modulos/<id>`, `ModulosService` | Visualização fora do núcleo que se liga e desliga em Configurações › Módulos; desligada, não roda nem acessa a internet ([ADR 0064](../adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)) | — |
 | Salário com vigência | `SalarioVigencia`, `emprego.SalarioDoMes` | O salário de um mês é o da última vigência que começou até ele; um aumento não muda o passado ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)) | — |
 | Tabela do INSS e do IRRF | `encargos.TabelaInss`, `encargos.TabelaIrrf`, `encargos.Vigente` | Vale a da última vigência que começou até o mês; o IRRF usa a dedução que der menos imposto e, desde 2026, a redução da Lei 15.270/2025 | — |
+| Holerite | `Holerite`, `holerite.Calcular` | Aberto, é calculado na hora; fechado, guarda o cálculo (`Calculo`) e não muda com o salário ou a tabela depois ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). Não é receita | — |
+| DSR | `holerite.Calcular`, `DiasDoDsr` | Descanso semanal remunerado sobre as horas extras e o adicional noturno: o total ÷ os dias úteis × os domingos e feriados | — |
 | Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
 | Dívida total | `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |
 | Natureza do gasto | `NaturezaGasto`, `Categoria.Natureza` | Essencial ou estilo de vida, para a regra 50/30/20 | — |
