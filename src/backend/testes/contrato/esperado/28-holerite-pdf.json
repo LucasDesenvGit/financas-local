@@ -1,0 +1,523 @@
+[
+  {
+    "nome": "ler o holerite de setembro",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "avisos": [
+        "O salário base do PDF (R$ 5.000,00) é diferente do cadastrado para setembro de 2026 (R$ 6.000,00). Se foi aumento, registre em Trabalho › Salário, a partir de setembro de 2026.",
+        "O INSS do PDF (R$ 601,22) é diferente do calculado pelas tabelas (R$ 641,51). Costuma ser o cadastro: confira o salário e os dependentes do emprego.",
+        "O IRRF do PDF (R$ 437,45) é diferente do calculado pelas tabelas (R$ 385,10). Costuma ser o cadastro: confira o salário e os dependentes do emprego."
+      ],
+      "baseFgts": 5409.09,
+      "baseInss": 5409.09,
+      "baseIrrf": 4807.87,
+      "cnpj": "12345678000190",
+      "comparacoes": [
+        {
+          "calculado": 641.51,
+          "descricao": "INSS",
+          "diferenca": -40.29,
+          "lido": 601.22
+        },
+        {
+          "calculado": 385.10,
+          "descricao": "IRRF",
+          "diferenca": 52.35,
+          "lido": 437.45
+        },
+        {
+          "calculado": 4973.39,
+          "descricao": "Líquido",
+          "diferenca": -1052.97,
+          "lido": 3920.42
+        }
+      ],
+      "empregador": "EMPRESA FICTÍCIA DE TESTES LTDA",
+      "existente": null,
+      "fgtsDoMes": 432.73,
+      "liquido": 3920.42,
+      "mes": "2026-09-01",
+      "provas": [
+        {
+          "bateu": true,
+          "descricao": "Total de vencimentos",
+          "diferenca": 0.00,
+          "encontrado": 5409.09,
+          "impresso": 5409.09
+        },
+        {
+          "bateu": true,
+          "descricao": "Total de descontos",
+          "diferenca": 0.00,
+          "encontrado": 1488.67,
+          "impresso": 1488.67
+        },
+        {
+          "bateu": true,
+          "descricao": "Líquido",
+          "diferenca": 0.00,
+          "encontrado": 3920.42,
+          "impresso": 3920.42
+        }
+      ],
+      "rubricas": [
+        {
+          "codigo": "001",
+          "como": "dicionario",
+          "descricao": "SALARIO",
+          "provento": true,
+          "referencia": "30,00",
+          "tipo": 0,
+          "trecho": "001 SALARIO 30,00 5.000,00",
+          "valor": 5000.00
+        },
+        {
+          "codigo": "101",
+          "como": "dicionario",
+          "descricao": "HORAS EXTRAS 50%",
+          "provento": true,
+          "referencia": "10,00",
+          "tipo": 1,
+          "trecho": "101 HORAS EXTRAS 50% 10,00 340,91",
+          "valor": 340.91
+        },
+        {
+          "codigo": "102",
+          "como": "dicionario",
+          "descricao": "DSR S/ HORAS EXTRAS",
+          "provento": true,
+          "referencia": "",
+          "tipo": 4,
+          "trecho": "102 DSR S/ HORAS EXTRAS 68,18",
+          "valor": 68.18
+        },
+        {
+          "codigo": "998",
+          "como": "dicionario",
+          "descricao": "INSS",
+          "provento": false,
+          "referencia": "12,02",
+          "tipo": 20,
+          "trecho": "998 INSS 12,02 601,22",
+          "valor": 601.22
+        },
+        {
+          "codigo": "999",
+          "como": "dicionario",
+          "descricao": "IRRF",
+          "provento": false,
+          "referencia": "22,50",
+          "tipo": 21,
+          "trecho": "999 IRRF 22,50 437,45",
+          "valor": 437.45
+        },
+        {
+          "codigo": "210",
+          "como": "dicionario",
+          "descricao": "VALE TRANSPORTE 6%",
+          "provento": false,
+          "referencia": "6,00",
+          "tipo": 10,
+          "trecho": "210 VALE TRANSPORTE 6% 6,00 300,00",
+          "valor": 300.00
+        },
+        {
+          "codigo": "305",
+          "como": "dicionario",
+          "descricao": "ASSIST. MEDICA",
+          "provento": false,
+          "referencia": "",
+          "tipo": 12,
+          "trecho": "305 ASSIST. MEDICA 150,00",
+          "valor": 150.00
+        }
+      ],
+      "salarioBase": 5000.00,
+      "totalDescontos": 1488.67,
+      "totalVencimentos": 5409.09
+    }
+  },
+  {
+    "nome": "PDF com senha, sem a senha",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O PDF tem senha: digite a senha para abrir. Ela é usada só para abrir o arquivo e não fica guardada.",
+      "motivo": "senha"
+    }
+  },
+  {
+    "nome": "PDF com senha, a senha errada",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A senha não abriu o PDF. Confira e tente de novo.",
+      "motivo": "senha"
+    }
+  },
+  {
+    "nome": "o arquivo não é PDF",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O arquivo não é um PDF."
+    }
+  },
+  {
+    "nome": "confirmar setembro",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf/confirmar",
+    "status": 201,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "desfazer": "<texto>",
+      "holerite": {
+        "aviso": null,
+        "calculo": {
+          "baseInss": 5409.09,
+          "descontos": [
+            {
+              "descricao": "INSS",
+              "referencia": "12,02",
+              "tipo": 20,
+              "valor": 601.22
+            },
+            {
+              "descricao": "IRRF",
+              "referencia": "22,50",
+              "tipo": 21,
+              "valor": 437.45
+            },
+            {
+              "descricao": "VALE TRANSPORTE 6%",
+              "referencia": "6,00",
+              "tipo": 10,
+              "valor": 300.0
+            },
+            {
+              "descricao": "ASSIST. MEDICA",
+              "referencia": "",
+              "tipo": 12,
+              "valor": 150.0
+            }
+          ],
+          "diasTrabalhados": 30,
+          "fgtsDoMes": 432.73,
+          "inss": null,
+          "irrf": null,
+          "liquido": 3920.42,
+          "mes": "2026-09-01",
+          "proventos": [
+            {
+              "descricao": "SALARIO",
+              "referencia": "30,00",
+              "tipo": 0,
+              "valor": 5000.0
+            },
+            {
+              "descricao": "HORAS EXTRAS 50%",
+              "referencia": "10,00",
+              "tipo": 1,
+              "valor": 340.91
+            },
+            {
+              "descricao": "DSR S/ HORAS EXTRAS",
+              "referencia": "",
+              "tipo": 4,
+              "valor": 68.18
+            }
+          ],
+          "salarioContratual": 5000.0,
+          "semEncargos": false,
+          "totalDescontos": 1488.67,
+          "totalProventos": 5409.09,
+          "valorHora": 22.73
+        },
+        "diasDescanso": 4,
+        "diasUteis": 26,
+        "empregoId": 1,
+        "fechadoEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "id": 3,
+        "lancamentos": [],
+        "mes": "2026-09-01",
+        "origem": 2,
+        "situacao": 2
+      }
+    },
+    "banco": {
+      "Holerite": {
+        "inseridas": [
+          {
+            "Calculo": "{\"mes\":\"2026-09-01\",\"salarioContratual\":5000.0,\"diasTrabalhados\":30,\"valorHora\":22.73,\"proventos\":[{\"tipo\":0,\"descricao\":\"SALARIO\",\"referencia\":\"30,00\",\"valor\":5000.0},{\"tipo\":1,\"descricao\":\"HORAS EXTRAS 50%\",\"referencia\":\"10,00\",\"valor\":340.91},{\"tipo\":4,\"descricao\":\"DSR S/ HORAS EXTRAS\",\"referencia\":\"\",\"valor\":68.18}],\"descontos\":[{\"tipo\":20,\"descricao\":\"INSS\",\"referencia\":\"12,02\",\"valor\":601.22},{\"tipo\":21,\"descricao\":\"IRRF\",\"referencia\":\"22,50\",\"valor\":437.45},{\"tipo\":10,\"descricao\":\"VALE TRANSPORTE 6%\",\"referencia\":\"6,00\",\"valor\":300.0},{\"tipo\":12,\"descricao\":\"ASSIST. MEDICA\",\"referencia\":\"\",\"valor\":150.0}],\"totalProventos\":5409.09,\"totalDescontos\":1488.67,\"liquido\":3920.42,\"baseInss\":5409.09,\"inss\":null,\"irrf\":null,\"fgtsDoMes\":432.73,\"semEncargos\":false}",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiasDescanso": 4,
+            "DiasUteis": 26,
+            "EmpregoId": 1,
+            "FechadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 3,
+            "Mes": "2026-09-01",
+            "Origem": 2,
+            "Situacao": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ler de novo com setembro fechado",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "avisos": [
+        "O salário base do PDF (R$ 5.000,00) é diferente do cadastrado para setembro de 2026 (R$ 6.000,00). Se foi aumento, registre em Trabalho › Salário, a partir de setembro de 2026.",
+        "O holerite de setembro de 2026 está fechado: reabra antes de gravar o lido.",
+        "O INSS do PDF (R$ 601,22) é diferente do calculado pelas tabelas (R$ 641,51). Costuma ser o cadastro: confira o salário e os dependentes do emprego.",
+        "O IRRF do PDF (R$ 437,45) é diferente do calculado pelas tabelas (R$ 385,10). Costuma ser o cadastro: confira o salário e os dependentes do emprego."
+      ],
+      "baseFgts": 5409.09,
+      "baseInss": 5409.09,
+      "baseIrrf": 4807.87,
+      "cnpj": "12345678000190",
+      "comparacoes": [
+        {
+          "calculado": 641.51,
+          "descricao": "INSS",
+          "diferenca": -40.29,
+          "lido": 601.22
+        },
+        {
+          "calculado": 385.10,
+          "descricao": "IRRF",
+          "diferenca": 52.35,
+          "lido": 437.45
+        },
+        {
+          "calculado": 4973.39,
+          "descricao": "Líquido",
+          "diferenca": -1052.97,
+          "lido": 3920.42
+        }
+      ],
+      "empregador": "EMPRESA FICTÍCIA DE TESTES LTDA",
+      "existente": {
+        "aviso": null,
+        "calculo": {
+          "baseInss": 5409.09,
+          "descontos": [
+            {
+              "descricao": "INSS",
+              "referencia": "12,02",
+              "tipo": 20,
+              "valor": 601.22
+            },
+            {
+              "descricao": "IRRF",
+              "referencia": "22,50",
+              "tipo": 21,
+              "valor": 437.45
+            },
+            {
+              "descricao": "VALE TRANSPORTE 6%",
+              "referencia": "6,00",
+              "tipo": 10,
+              "valor": 300.0
+            },
+            {
+              "descricao": "ASSIST. MEDICA",
+              "referencia": "",
+              "tipo": 12,
+              "valor": 150.0
+            }
+          ],
+          "diasTrabalhados": 30,
+          "fgtsDoMes": 432.73,
+          "inss": null,
+          "irrf": null,
+          "liquido": 3920.42,
+          "mes": "2026-09-01",
+          "proventos": [
+            {
+              "descricao": "SALARIO",
+              "referencia": "30,00",
+              "tipo": 0,
+              "valor": 5000.0
+            },
+            {
+              "descricao": "HORAS EXTRAS 50%",
+              "referencia": "10,00",
+              "tipo": 1,
+              "valor": 340.91
+            },
+            {
+              "descricao": "DSR S/ HORAS EXTRAS",
+              "referencia": "",
+              "tipo": 4,
+              "valor": 68.18
+            }
+          ],
+          "salarioContratual": 5000.0,
+          "semEncargos": false,
+          "totalDescontos": 1488.67,
+          "totalProventos": 5409.09,
+          "valorHora": 22.73
+        },
+        "diasDescanso": 4,
+        "diasUteis": 26,
+        "empregoId": 1,
+        "fechadoEm": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
+        "id": 3,
+        "lancamentos": [],
+        "mes": "2026-09-01",
+        "origem": 2,
+        "situacao": 2
+      },
+      "fgtsDoMes": 432.73,
+      "liquido": 3920.42,
+      "mes": "2026-09-01",
+      "provas": [
+        {
+          "bateu": true,
+          "descricao": "Total de vencimentos",
+          "diferenca": 0.00,
+          "encontrado": 5409.09,
+          "impresso": 5409.09
+        },
+        {
+          "bateu": true,
+          "descricao": "Total de descontos",
+          "diferenca": 0.00,
+          "encontrado": 1488.67,
+          "impresso": 1488.67
+        },
+        {
+          "bateu": true,
+          "descricao": "Líquido",
+          "diferenca": 0.00,
+          "encontrado": 3920.42,
+          "impresso": 3920.42
+        }
+      ],
+      "rubricas": [
+        {
+          "codigo": "001",
+          "como": "dicionario",
+          "descricao": "SALARIO",
+          "provento": true,
+          "referencia": "30,00",
+          "tipo": 0,
+          "trecho": "001 SALARIO 30,00 5.000,00",
+          "valor": 5000.00
+        },
+        {
+          "codigo": "101",
+          "como": "dicionario",
+          "descricao": "HORAS EXTRAS 50%",
+          "provento": true,
+          "referencia": "10,00",
+          "tipo": 1,
+          "trecho": "101 HORAS EXTRAS 50% 10,00 340,91",
+          "valor": 340.91
+        },
+        {
+          "codigo": "102",
+          "como": "dicionario",
+          "descricao": "DSR S/ HORAS EXTRAS",
+          "provento": true,
+          "referencia": "",
+          "tipo": 4,
+          "trecho": "102 DSR S/ HORAS EXTRAS 68,18",
+          "valor": 68.18
+        },
+        {
+          "codigo": "998",
+          "como": "dicionario",
+          "descricao": "INSS",
+          "provento": false,
+          "referencia": "12,02",
+          "tipo": 20,
+          "trecho": "998 INSS 12,02 601,22",
+          "valor": 601.22
+        },
+        {
+          "codigo": "999",
+          "como": "dicionario",
+          "descricao": "IRRF",
+          "provento": false,
+          "referencia": "22,50",
+          "tipo": 21,
+          "trecho": "999 IRRF 22,50 437,45",
+          "valor": 437.45
+        },
+        {
+          "codigo": "210",
+          "como": "dicionario",
+          "descricao": "VALE TRANSPORTE 6%",
+          "provento": false,
+          "referencia": "6,00",
+          "tipo": 10,
+          "trecho": "210 VALE TRANSPORTE 6% 6,00 300,00",
+          "valor": 300.00
+        },
+        {
+          "codigo": "305",
+          "como": "dicionario",
+          "descricao": "ASSIST. MEDICA",
+          "provento": false,
+          "referencia": "",
+          "tipo": 12,
+          "trecho": "305 ASSIST. MEDICA 150,00",
+          "valor": 150.00
+        }
+      ],
+      "salarioBase": 5000.00,
+      "totalDescontos": 1488.67,
+      "totalVencimentos": 5409.09
+    }
+  },
+  {
+    "nome": "confirmar de novo",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf/confirmar",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O holerite do mês está fechado: reabra antes de gravar o lido."
+    }
+  },
+  {
+    "nome": "desfazer",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf/desfazer/{{chave}}",
+    "status": 204,
+    "banco": {
+      "Holerite": {
+        "removidas": [
+          {
+            "Calculo": "{\"mes\":\"2026-09-01\",\"salarioContratual\":5000.0,\"diasTrabalhados\":30,\"valorHora\":22.73,\"proventos\":[{\"tipo\":0,\"descricao\":\"SALARIO\",\"referencia\":\"30,00\",\"valor\":5000.0},{\"tipo\":1,\"descricao\":\"HORAS EXTRAS 50%\",\"referencia\":\"10,00\",\"valor\":340.91},{\"tipo\":4,\"descricao\":\"DSR S/ HORAS EXTRAS\",\"referencia\":\"\",\"valor\":68.18}],\"descontos\":[{\"tipo\":20,\"descricao\":\"INSS\",\"referencia\":\"12,02\",\"valor\":601.22},{\"tipo\":21,\"descricao\":\"IRRF\",\"referencia\":\"22,50\",\"valor\":437.45},{\"tipo\":10,\"descricao\":\"VALE TRANSPORTE 6%\",\"referencia\":\"6,00\",\"valor\":300.0},{\"tipo\":12,\"descricao\":\"ASSIST. MEDICA\",\"referencia\":\"\",\"valor\":150.0}],\"totalProventos\":5409.09,\"totalDescontos\":1488.67,\"liquido\":3920.42,\"baseInss\":5409.09,\"inss\":null,\"irrf\":null,\"fgtsDoMes\":432.73,\"semEncargos\":false}",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiasDescanso": 4,
+            "DiasUteis": 26,
+            "EmpregoId": 1,
+            "FechadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Id": 3,
+            "Mes": "2026-09-01",
+            "Origem": 2,
+            "Situacao": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desfazer de novo",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites/pdf/desfazer/{{chave}}",
+    "status": 404,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Não dá mais para desfazer: o prazo passou ou já foi desfeito."
+    }
+  }
+]

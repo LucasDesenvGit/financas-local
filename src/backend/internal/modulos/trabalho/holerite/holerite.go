@@ -27,6 +27,12 @@ const (
 	Fechado int64 = 2
 )
 
+// Origem do holerite: calculado pelo site (#211) ou lido do PDF (#228: fechado, com o que o PDF imprime).
+const (
+	Calculado int64 = 1
+	LidoDoPdf int64 = 2
+)
+
 // EventoReaberto é o da auditoria ao reabrir um holerite fechado ("HoleriteReaberto (2026-10)").
 const EventoReaberto = "HoleriteReaberto"
 
@@ -37,11 +43,15 @@ var (
 	ErrAberto        = errors.New("holerite aberto")
 	ErrJaExiste      = errors.New("já existe holerite do mês")
 	ErrSemTabela     = errors.New("sem tabela do INSS ou do IRRF para o mês")
+	ErrNaoELido      = errors.New("o holerite não é mais o lido do PDF")
+	// ErrInvalido é a família dos erros de validação, para quem chama de fora do pacote (a mensagem é o Error()).
+	ErrInvalido = errors.New("dados inválidos")
 )
 
 type erroDeValidacao struct{ mensagem string }
 
 func (e erroDeValidacao) Error() string { return e.mensagem }
+func (e erroDeValidacao) Unwrap() error { return ErrInvalido }
 
 func invalido(mensagem string) error { return erroDeValidacao{mensagem} }
 
@@ -51,6 +61,7 @@ type Holerite struct {
 	EmpregoId    int64             `json:"empregoId"`
 	Mes          tipos.Data        `json:"mes"`
 	Situacao     int64             `json:"situacao"`
+	Origem       int64             `json:"origem"`
 	DiasUteis    int64             `json:"diasUteis"`
 	DiasDescanso int64             `json:"diasDescanso"`
 	FechadoEm    *tipos.DataHora   `json:"fechadoEm"`
@@ -71,6 +82,7 @@ type Resumo struct {
 	Id             int64          `json:"id"`
 	Mes            tipos.Data     `json:"mes"`
 	Situacao       int64          `json:"situacao"`
+	Origem         int64          `json:"origem"`
 	TotalProventos *tipos.Decimal `json:"totalProventos"`
 	TotalDescontos *tipos.Decimal `json:"totalDescontos"`
 	Liquido        *tipos.Decimal `json:"liquido"`
@@ -92,7 +104,8 @@ func NovoServico(db *sql.DB, empregos *emprego.Servico, r relogio.Relogio, log *
 var meses = [...]string{"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro",
 	"outubro", "novembro", "dezembro"}
 
-func nomeDoMes(d tipos.Data) string { return fmt.Sprintf("%s de %d", meses[d.Mes()-1], d.Ano()) }
+// NomeDoMes é "outubro de 2026".
+func NomeDoMes(d tipos.Data) string { return fmt.Sprintf("%s de %d", meses[d.Mes()-1], d.Ano()) }
 
 // Criar abre o holerite do mês, com os dias do DSR do calendário e os lançamentos recorrentes do último holerite antes
 // dele (o plano de saúde do mês passado, por exemplo).
@@ -186,9 +199,9 @@ type consultor interface {
 func (s *Servico) ler(ctx context.Context, q consultor, id int64) (Holerite, *string, error) {
 	var h Holerite
 	var calculo *string
-	err := q.QueryRowContext(ctx, `SELECT "Id", "EmpregoId", "Mes", "Situacao", "DiasUteis", "DiasDescanso", "FechadoEm", "Calculo"
-		FROM "Holerite" WHERE "Id" = ?`, id).Scan(&h.Id, &h.EmpregoId, &h.Mes, &h.Situacao, &h.DiasUteis, &h.DiasDescanso,
-		&h.FechadoEm, &calculo)
+	err := q.QueryRowContext(ctx, `SELECT "Id", "EmpregoId", "Mes", "Situacao", "Origem", "DiasUteis", "DiasDescanso", "FechadoEm",
+		"Calculo" FROM "Holerite" WHERE "Id" = ?`, id).Scan(&h.Id, &h.EmpregoId, &h.Mes, &h.Situacao, &h.Origem, &h.DiasUteis,
+		&h.DiasDescanso, &h.FechadoEm, &calculo)
 	if errors.Is(err, sql.ErrNoRows) {
 		return h, nil, ErrNaoEncontrado
 	}
@@ -275,7 +288,7 @@ func (s *Servico) Listar(ctx context.Context, empregoId int64) ([]Resumo, error)
 		if err != nil {
 			return nil, err
 		}
-		r := Resumo{Id: h.Id, Mes: h.Mes, Situacao: h.Situacao}
+		r := Resumo{Id: h.Id, Mes: h.Mes, Situacao: h.Situacao, Origem: h.Origem}
 		if h.Calculo != nil {
 			r.TotalProventos, r.TotalDescontos, r.Liquido = &h.Calculo.TotalProventos, &h.Calculo.TotalDescontos, &h.Calculo.Liquido
 		}
@@ -396,7 +409,8 @@ func (s *Servico) Fechar(ctx context.Context, id int64) (Holerite, error) {
 	return s.Obter(ctx, id)
 }
 
-// Reabrir volta o holerite para aberto, para corrigir, e registra na auditoria (r: o pedido de quem reabriu).
+// Reabrir volta o holerite para aberto, para corrigir, e registra na auditoria (r: o pedido de quem reabriu). O lido do
+// PDF volta a ser o calculado, com os lançamentos que tinha antes de ler.
 func (s *Servico) Reabrir(ctx context.Context, r *http.Request, id int64) (Holerite, error) {
 	err := banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
 		var situacao int64
@@ -411,8 +425,8 @@ func (s *Servico) Reabrir(ctx context.Context, r *http.Request, id int64) (Holer
 		if situacao != Fechado {
 			return ErrAberto
 		}
-		if _, err := tx.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Calculo" = NULL, "FechadoEm" = NULL WHERE "Id" = ?`,
-			Aberto, id); err != nil {
+		if _, err := tx.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Origem" = ?, "Calculo" = NULL, "FechadoEm" = NULL
+			WHERE "Id" = ?`, Aberto, Calculado, id); err != nil {
 			return fmt.Errorf("reabrir o holerite: %w", err)
 		}
 		q := s.q.WithTx(tx)
@@ -427,6 +441,116 @@ func (s *Servico) Reabrir(ctx context.Context, r *http.Request, id int64) (Holer
 		return Holerite{}, err
 	}
 	return s.Obter(ctx, id)
+}
+
+// GravarLido grava o holerite lido do PDF (#228): fechado, com o cálculo montado do que o PDF imprime. O aberto do mês
+// (a estimativa) vira o lido e guarda os lançamentos para quando reabrir; o fechado, reabra antes (ErrFechado). Diz
+// também se o holerite já existia, para o desfazer.
+func (s *Servico) GravarLido(ctx context.Context, empregoId int64, c Calculo) (Holerite, bool, error) {
+	c.Mes = emprego.InicioDoMes(c.Mes)
+	e, err := s.empregos.Obter(ctx, empregoId)
+	if errors.Is(err, emprego.ErrNaoEncontrado) {
+		return Holerite{}, false, ErrNaoEncontrado
+	}
+	if err != nil {
+		return Holerite{}, false, err
+	}
+	if DiasTrabalhados(c.Mes, e.Admissao, e.Saida) == 0 {
+		return Holerite{}, false, invalido("O mês do holerite é de antes da admissão ou depois da saída deste emprego.")
+	}
+	dados, err := json.Marshal(c)
+	if err != nil {
+		return Holerite{}, false, fmt.Errorf("guardar o cálculo: %w", err)
+	}
+	var id int64
+	existia := false
+	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		agora := tipos.NovaDataHora(s.relogio.Agora())
+		var situacao int64
+		err := tx.QueryRowContext(ctx, `SELECT "Id", "Situacao" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" = ?`, empregoId,
+			c.Mes).Scan(&id, &situacao)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			uteis, descanso := DiasDoDsr(c.Mes)
+			r, err := tx.ExecContext(ctx, `INSERT INTO "Holerite" ("EmpregoId", "Mes", "Situacao", "Origem", "DiasUteis", "DiasDescanso",
+				"Calculo", "FechadoEm", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, empregoId, c.Mes, Fechado, LidoDoPdf, uteis,
+				descanso, string(dados), agora, agora)
+			if err != nil {
+				return fmt.Errorf("gravar o holerite lido: %w", err)
+			}
+			id, err = r.LastInsertId()
+			return err
+		case err != nil:
+			return fmt.Errorf("achar o holerite do mês: %w", err)
+		case situacao == Fechado:
+			return ErrFechado
+		}
+		existia = true
+		if _, err := tx.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Origem" = ?, "Calculo" = ?, "FechadoEm" = ?
+			WHERE "Id" = ?`, Fechado, LidoDoPdf, string(dados), agora, id); err != nil {
+			return fmt.Errorf("gravar o holerite lido: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return Holerite{}, false, err
+	}
+	h, err := s.Obter(ctx, id)
+	return h, existia, err
+}
+
+// DesfazerLido volta ao que era antes de gravar o lido do PDF: apaga o holerite, se ele era novo, ou volta para a
+// estimativa aberta que ele substituiu. Só enquanto ele continua o lido (ErrNaoELido se reabriram ou apagaram).
+func (s *Servico) DesfazerLido(ctx context.Context, id int64, existia bool) error {
+	return banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		var origem, situacao int64
+		err := tx.QueryRowContext(ctx, `SELECT "Origem", "Situacao" FROM "Holerite" WHERE "Id" = ?`, id).Scan(&origem, &situacao)
+		if errors.Is(err, sql.ErrNoRows) || (err == nil && (origem != LidoDoPdf || situacao != Fechado)) {
+			return ErrNaoELido
+		}
+		if err != nil {
+			return fmt.Errorf("ler o holerite: %w", err)
+		}
+		if !existia {
+			_, err = tx.ExecContext(ctx, `DELETE FROM "Holerite" WHERE "Id" = ?`, id)
+		} else {
+			_, err = tx.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Origem" = ?, "Calculo" = NULL, "FechadoEm" = NULL
+				WHERE "Id" = ?`, Aberto, Calculado, id)
+		}
+		if err != nil {
+			return fmt.Errorf("desfazer o holerite lido: %w", err)
+		}
+		return nil
+	})
+}
+
+// Estimativa é o cálculo do mês pelo salário e pelas tabelas, para comparar com o lido do PDF (#228): com os
+// lançamentos do holerite do mês, se houver, ou sem lançamentos. Nil quando não dá (sem salário ou sem tabela do mês).
+func (s *Servico) Estimativa(ctx context.Context, empregoId int64, mes tipos.Data) (*Calculo, error) {
+	mes = emprego.InicioDoMes(mes)
+	uteis, descanso := DiasDoDsr(mes)
+	h := Holerite{EmpregoId: empregoId, Mes: mes, DiasUteis: uteis, DiasDescanso: descanso}
+	var id int64
+	err := s.db.QueryRowContext(ctx, `SELECT "Id" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" = ?`, empregoId, mes).Scan(&id)
+	switch {
+	case err == nil:
+		if h, _, err = s.ler(ctx, s.db, id); err != nil {
+			return nil, err
+		}
+	case !errors.Is(err, sql.ErrNoRows):
+		return nil, fmt.Errorf("achar o holerite do mês: %w", err)
+	}
+	c, err := s.calcular(ctx, h)
+	var validacao erroDeValidacao
+	switch {
+	case errors.Is(err, ErrSemTabela) || errors.As(err, &validacao):
+		return nil, nil
+	case errors.Is(err, emprego.ErrNaoEncontrado):
+		return nil, ErrNaoEncontrado
+	case err != nil:
+		return nil, err
+	}
+	return &c, nil
 }
 
 // Excluir apaga o holerite aberto (o fechado, reabra antes).

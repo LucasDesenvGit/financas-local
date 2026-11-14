@@ -108,7 +108,7 @@ func (s *Servico) criarHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	h, err := s.Criar(r.Context(), id, mes)
 	if errors.Is(err, ErrJaExiste) {
-		respostas.Mensagem(w, http.StatusConflict, "Já existe o holerite de "+nomeDoMes(mes)+".")
+		respostas.Mensagem(w, http.StatusConflict, "Já existe o holerite de "+NomeDoMes(mes)+".")
 		return
 	}
 	s.responder(w, r, http.StatusCreated, h, err, "criar o holerite")

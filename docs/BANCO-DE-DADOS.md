@@ -258,6 +258,10 @@ erDiagram
     Rescisao {
         INTEGER EmpregoId PK,FK
     }
+    HoleriteRubricaEscolha {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
     Conta |o--o{ Emprego : "ContaId: SET NULL"
     Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
     InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
@@ -271,6 +275,7 @@ erDiagram
     Holerite ||--o{ HoleriteRecebimento : "HoleriteId: CASCADE"
     Transacao ||--o{ HoleriteRecebimento : "TransacaoId: CASCADE"
     Emprego ||--o{ Rescisao : "EmpregoId: CASCADE"
+    Emprego ||--o{ HoleriteRubricaEscolha : "EmpregoId: CASCADE"
 ```
 
 <!-- diagramas-do-banco: fim -->

@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS Transacao
     Emergencia          INTEGER NOT NULL CONSTRAINT DF_Transacao_Emergencia DEFAULT 0,
     -- #9: o usuário já olhou a descrição pouco informativa ("PIX ENVIADO") e ela sai do filtro.
     DescricaoRevisada   INTEGER NOT NULL CONSTRAINT DF_Transacao_DescricaoRevisada DEFAULT 0,
-    -- #111 (ADR 0025): tipo de operação informado pelo banco no Open Finance (operationType/paymentMethod da Pluggy).
+    -- #111 (ADR 0030): tipo de operação informado pelo banco no Open Finance (operationType/paymentMethod da Pluggy).
     MeioPagamento       TEXT    NULL,
     -- #111: quem pagou e quem recebeu têm o mesmo documento (transferência entre contas suas). Só o sim/não é
     -- guardado, nunca o CPF/CNPJ nem o nome. NULL = o banco não informou.
@@ -732,13 +732,16 @@ CREATE TABLE IF NOT EXISTS IrrfFaixa
 /* ------------------------------------------------------------------ */
 /* Um holerite por emprego e mês (Mes é o dia 1). Situacao: 1 aberto (calculado na hora, pelo salário e pelas tabelas da
    vigência), 2 fechado (congelado: Calculo guarda o resultado em JSON, e mudar o salário ou a tabela depois não muda o
-   mês). DiasUteis e DiasDescanso são os do DSR das horas extras. Não é receita: nada daqui entra nos relatórios. */
+   mês). DiasUteis e DiasDescanso são os do DSR das horas extras. Origem: 1 calculado, 2 lido do PDF (#228: fechado,
+   com o Calculo montado do que o PDF imprime; reabrir volta para o calculado). Não é receita: nada daqui entra nos
+   relatórios. */
 CREATE TABLE IF NOT EXISTS Holerite
 (
     Id           INTEGER NOT NULL CONSTRAINT PK_Holerite PRIMARY KEY AUTOINCREMENT,
     EmpregoId    INTEGER NOT NULL,
     Mes          TEXT    NOT NULL,
     Situacao     INTEGER NOT NULL DEFAULT 1,
+    Origem       INTEGER NOT NULL DEFAULT 1,
     DiasUteis    INTEGER NOT NULL,
     DiasDescanso INTEGER NOT NULL,
     Calculo      TEXT    NULL,
@@ -868,3 +871,21 @@ CREATE TABLE IF NOT EXISTS Rescisao
     CriadoEm  TEXT    NOT NULL,
     CONSTRAINT FK_Rescisao_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
 );
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: as rubricas do holerite em PDF (#228, ADR 0068)           */
+/* ------------------------------------------------------------------ */
+/* O leitor do holerite em PDF reconhece as rubricas comuns por um dicionário no código. A que ele não conhece, ou que a
+   pessoa corrigiu, fica aqui, por emprego (o empregador): o código e a descrição como estão no PDF (normalizada, ADR
+   0030) e o tipo da linha do holerite. No mês seguinte, ela já vem reconhecida. O PDF não é guardado. */
+CREATE TABLE IF NOT EXISTS HoleriteRubricaEscolha
+(
+    Id        INTEGER NOT NULL CONSTRAINT PK_HoleriteRubricaEscolha PRIMARY KEY AUTOINCREMENT,
+    EmpregoId INTEGER NOT NULL,
+    Codigo    TEXT    NOT NULL,
+    Descricao TEXT    NOT NULL,
+    Tipo      INTEGER NOT NULL,
+    CriadoEm  TEXT    NOT NULL,
+    CONSTRAINT FK_HoleriteRubricaEscolha_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRubricaEscolha_Emprego_Rubrica ON HoleriteRubricaEscolha (EmpregoId, Codigo, Descricao);

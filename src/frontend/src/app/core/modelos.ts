@@ -879,6 +879,15 @@ export enum TipoLancamentoHolerite {
   ValeTransporte = 10, ValeAlimentacao = 11, PlanoDeSaude = 12, PensaoAlimenticia = 13, OutroDesconto = 14
 }
 export enum SituacaoHolerite { Aberto = 1, Fechado = 2 }
+/** #228: o holerite calculado pelo site (#211) ou lido do PDF (fechado, com o que o PDF imprime). */
+export enum OrigemHolerite { Calculado = 1, LidoDoPdf = 2 }
+/** Tipo de uma linha do holerite: os lançamentos (1 a 14), o salário (0), o DSR (4), o INSS (20), o IRRF (21) e o
+ * adiantamento (22, só do PDF). Até 9, proventos. */
+export enum TipoLinhaHolerite {
+  Salario = 0, HoraExtra = 1, AdicionalNoturno = 2, OutroProvento = 3, Dsr = 4,
+  ValeTransporte = 10, ValeAlimentacao = 11, PlanoDeSaude = 12, PensaoAlimenticia = 13, OutroDesconto = 14,
+  Inss = 20, Irrf = 21, Adiantamento = 22
+}
 
 export interface LancamentoHolerite {
   id?: number;
@@ -903,13 +912,34 @@ export interface CalculoHolerite {
 }
 
 export interface Holerite {
-  id: number; empregoId: number; mes: string; situacao: SituacaoHolerite; diasUteis: number; diasDescanso: number;
+  id: number; empregoId: number; mes: string; situacao: SituacaoHolerite; origem: OrigemHolerite; diasUteis: number; diasDescanso: number;
   fechadoEm: string | null; lancamentos: LancamentoHolerite[]; calculo: CalculoHolerite | null; aviso: string | null;
 }
 
 export interface ResumoHolerite {
-  id: number; mes: string; situacao: SituacaoHolerite; totalProventos: number | null; totalDescontos: number | null; liquido: number | null;
+  id: number; mes: string; situacao: SituacaoHolerite; origem: OrigemHolerite; totalProventos: number | null; totalDescontos: number | null;
+  liquido: number | null;
 }
+
+/** #228 (ADR 0068): o holerite em PDF. Como o tipo da rubrica foi achado. */
+export type ComoRubrica = 'dicionario' | 'escolha' | 'desconhecida';
+export interface RubricaLida {
+  codigo: string; descricao: string; referencia: string; valor: number; provento: boolean; trecho: string;
+  tipo: TipoLinhaHolerite; como: ComoRubrica;
+}
+export interface ProvaHolerite { descricao: string; impresso: number; encontrado: number; diferenca: number; bateu: boolean; }
+export interface ComparacaoHolerite { descricao: string; lido: number; calculado: number; diferenca: number; }
+export interface PreviaHoleritePdf {
+  empregador: string; cnpj: string | null; mes: string | null; rubricas: RubricaLida[];
+  totalVencimentos: number | null; totalDescontos: number | null; liquido: number | null; salarioBase: number | null;
+  baseInss: number | null; baseFgts: number | null; fgtsDoMes: number | null; baseIrrf: number | null;
+  provas: ProvaHolerite[]; comparacoes: ComparacaoHolerite[]; avisos: string[]; existente: Holerite | null;
+}
+export interface RubricaConfirmada { codigo: string; descricao: string; referencia: string; valor: number; provento: boolean; tipo: TipoLinhaHolerite; }
+export interface ConfirmarHoleritePdf {
+  mes: string; rubricas: RubricaConfirmada[]; salarioBase: number | null; baseInss: number | null; baseFgts: number | null; fgtsDoMes: number | null;
+}
+export interface HoleritePdfGravado { holerite: Holerite; desfazer: string; }
 
 /** #214: o 13º salário do ano (estimativa). */
 export interface ParcelaDecimo { valor: number; data: string; informada: boolean; }

@@ -97,6 +97,16 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **Por quanto tempo** | Até você apagar. Desligar o módulo esconde a tela, mas guarda os dados |
 | **Como apagar** | Em **Trabalho › Salário**, **Editar emprego** › **Excluir emprego** apaga o emprego e tudo o que é dele (salários, holerites, férias, FGTS, rescisão); **Apagar** tira um salário do histórico. Em **Trabalho › Holerites**, **Excluir** apaga o holerite aberto (o fechado, reabra antes) |
 
+### Holerite em PDF (módulo Trabalho)
+
+| | |
+|---|---|
+| **O que é** | O PDF do holerite que a pessoa manda (#228): ele tem o CPF, o salário e o empregador. A senha, se houver. E `HoleriteRubricaEscolha`: o código, a descrição e o tipo das rubricas que a pessoa classificou, por emprego |
+| **De onde vem** | Da pessoa, em Trabalho › Holerites › “Ler holerite em PDF” ([ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) |
+| **Sai do computador?** | Não. O PDF é lido no site, sem nenhum serviço de fora |
+| **Por quanto tempo** | O PDF e a senha, só enquanto a leitura dura: não são gravados nem vão para o log (o erro não leva texto do PDF). Só os valores confirmados ficam, no holerite do mês (`Holerite.Calculo`, com `Origem` = 2). As escolhas das rubricas ficam até apagar o emprego |
+| **Como apagar** | Reabrir e excluir o holerite do mês; apagar o emprego apaga as escolhas |
+
 ### Cotações, índices e categorias públicas
 
 | | |
