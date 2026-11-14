@@ -84,7 +84,8 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `21-trabalho` | módulo Trabalho: emprego, salário, estimativa e tabelas | #210 | `/api/trabalho` |
 | `22-holerite` | holerite do mês do Trabalho | #211 | `/api/trabalho/holerites` |
 | `23-decimo-terceiro` | 13º salário do Trabalho | #214 | `/api/trabalho/empregos/{id}/decimo-terceiro` |
-| `24` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
+| `24-ferias` | férias do Trabalho | #213 | `/api/trabalho/empregos/{id}/ferias` |
+| `25` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
 | `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |
 
 - Um arquivo pode usar o `base.sql`, a sessão `principal` do `00-auth` e o que um arquivo de número menor **já mesclado** deixou no banco; nunca o de um assunto ainda em andamento.

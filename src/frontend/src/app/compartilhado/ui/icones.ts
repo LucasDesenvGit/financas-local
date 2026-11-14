@@ -44,6 +44,7 @@ export const Icones = {
   trabalhoSalario: LucideBanknote,
   trabalhoHolerites: LucideReceiptText,
   trabalhoDecimo: LucideGift,
+  trabalhoFerias: LucideLuggage,
   setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,

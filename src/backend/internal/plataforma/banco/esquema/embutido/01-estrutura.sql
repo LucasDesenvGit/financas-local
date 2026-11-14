@@ -784,3 +784,32 @@ CREATE TABLE IF NOT EXISTS DecimoTerceiro
     CONSTRAINT PK_DecimoTerceiro PRIMARY KEY (EmpregoId, Ano),
     CONSTRAINT FK_DecimoTerceiro_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
 );
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: férias (#213, ADR 0065)                                    */
+/* ------------------------------------------------------------------ */
+/* Os períodos aquisitivos saem da admissão (de 12 em 12 meses) e não são guardados. FeriasFaltas: as faltas sem
+   justificativa de um período (PeriodoInicio é o primeiro dia dele), que reduzem os dias de direito (CLT, art. 130).
+   FeriasAgendamento: uma fração das férias de um período, com os dias vendidos (abono pecuniário) e se a 1ª parcela do
+   13º vem junto. O cálculo é refeito a cada leitura; não é receita. */
+CREATE TABLE IF NOT EXISTS FeriasFaltas
+(
+    EmpregoId     INTEGER NOT NULL,
+    PeriodoInicio TEXT    NOT NULL,
+    Faltas        INTEGER NOT NULL,
+    CONSTRAINT PK_FeriasFaltas PRIMARY KEY (EmpregoId, PeriodoInicio),
+    CONSTRAINT FK_FeriasFaltas_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS FeriasAgendamento
+(
+    Id             INTEGER NOT NULL CONSTRAINT PK_FeriasAgendamento PRIMARY KEY AUTOINCREMENT,
+    EmpregoId      INTEGER NOT NULL,
+    PeriodoInicio  TEXT    NOT NULL,
+    Inicio         TEXT    NOT NULL,
+    Dias           INTEGER NOT NULL,
+    DiasVendidos   INTEGER NOT NULL DEFAULT 0,
+    AdiantarDecimo INTEGER NOT NULL DEFAULT 0,
+    CriadoEm       TEXT    NOT NULL,
+    CONSTRAINT FK_FeriasAgendamento_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_FeriasAgendamento_Emprego ON FeriasAgendamento (EmpregoId, Inicio);

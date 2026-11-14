@@ -106,6 +106,11 @@ export const rotas: Routes = [
             path: 'decimo-terceiro',
             loadComponent: () => import('./paginas/trabalho/decimo-terceiro.component').then((m) => m.TrabalhoDecimoTerceiroComponent),
             title: '13º salário · Trabalho · Finanças Local'
+          },
+          {
+            path: 'ferias',
+            loadComponent: () => import('./paginas/trabalho/ferias.component').then((m) => m.TrabalhoFeriasComponent),
+            title: 'Férias · Trabalho · Finanças Local'
           }
         ]
       },

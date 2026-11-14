@@ -1,0 +1,522 @@
+[
+  {
+    "nome": "os períodos",
+    "requisicao": "GET /api/trabalho/empregos/1/ferias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "agendamentos": [],
+        "completo": true,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2025-03-10",
+        "fimConcessivo": "2026-03-10",
+        "inicio": "2024-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": true
+      },
+      {
+        "agendamentos": [],
+        "completo": true,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2026-03-10",
+        "fimConcessivo": "2027-03-10",
+        "inicio": "2025-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": false
+      },
+      {
+        "agendamentos": [],
+        "completo": false,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2027-03-10",
+        "fimConcessivo": "2028-03-10",
+        "inicio": "2026-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": false
+      }
+    ]
+  },
+  {
+    "nome": "simular 30 dias em dezembro de 2026",
+    "requisicao": "GET /api/trabalho/empregos/1/ferias/simular?inicio=2026-12-01&dias=30",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abono": 0.00,
+      "adiantamentoDecimo": 0.00,
+      "dias": 30,
+      "diasVendidos": 0,
+      "ferias": 6049.58,
+      "inicio": "2026-12-01",
+      "inss": {
+        "base": 8066.11,
+        "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+        "noTeto": false,
+        "parcelas": [
+          {
+            "aliquota": 0.075,
+            "ate": 1621.00,
+            "de": 0.00,
+            "valor": 121.58
+          },
+          {
+            "aliquota": 0.09,
+            "ate": 2902.84,
+            "de": 1621.00,
+            "valor": 115.37
+          },
+          {
+            "aliquota": 0.12,
+            "ate": 4354.27,
+            "de": 2902.84,
+            "valor": 174.17
+          },
+          {
+            "aliquota": 0.14,
+            "ate": 8066.11,
+            "de": 4354.27,
+            "valor": 519.66
+          }
+        ],
+        "valor": 930.77
+      },
+      "irrf": {
+        "aliquota": 0.275,
+        "base": 7135.34,
+        "deducaoUsada": "legal",
+        "deducoesLegais": 930.77,
+        "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+        "impostoDaTabela": 1053.49,
+        "parcelaADeduzir": 908.73,
+        "reducaoLei15270": 0.00,
+        "rendimento": 8066.11,
+        "simplificado": 607.20,
+        "valor": 1053.49
+      },
+      "liquido": 6081.85,
+      "mediaVariaveis": 49.58,
+      "pagamento": "2026-11-29",
+      "remuneracao": 6049.58,
+      "retorno": "2026-12-31",
+      "tercoAbono": 0.00,
+      "tercoFerias": 2016.53
+    }
+  },
+  {
+    "nome": "simular 20 dias e vender 10, com o 13º junto",
+    "requisicao": "GET /api/trabalho/empregos/1/ferias/simular?inicio=2026-12-01&dias=20&vendidos=10&adiantar=true",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "abono": 2016.53,
+      "adiantamentoDecimo": 3024.79,
+      "dias": 20,
+      "diasVendidos": 10,
+      "ferias": 4033.05,
+      "inicio": "2026-12-01",
+      "inss": {
+        "base": 5377.40,
+        "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+        "noTeto": false,
+        "parcelas": [
+          {
+            "aliquota": 0.075,
+            "ate": 1621.00,
+            "de": 0.00,
+            "valor": 121.58
+          },
+          {
+            "aliquota": 0.09,
+            "ate": 2902.84,
+            "de": 1621.00,
+            "valor": 115.37
+          },
+          {
+            "aliquota": 0.12,
+            "ate": 4354.27,
+            "de": 2902.84,
+            "valor": 174.17
+          },
+          {
+            "aliquota": 0.14,
+            "ate": 5377.40,
+            "de": 4354.27,
+            "valor": 143.24
+          }
+        ],
+        "valor": 554.35
+      },
+      "irrf": {
+        "aliquota": 0.275,
+        "base": 4770.20,
+        "deducaoUsada": "simplificada",
+        "deducoesLegais": 554.35,
+        "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+        "impostoDaTabela": 403.08,
+        "parcelaADeduzir": 908.73,
+        "reducaoLei15270": 262.65,
+        "rendimento": 5377.40,
+        "simplificado": 607.20,
+        "valor": 140.43
+      },
+      "liquido": 10396.12,
+      "mediaVariaveis": 49.58,
+      "pagamento": "2026-11-29",
+      "remuneracao": 6049.58,
+      "retorno": "2026-12-21",
+      "tercoAbono": 672.18,
+      "tercoFerias": 1344.35
+    }
+  },
+  {
+    "nome": "agendar 20 dias e vender 10 do segundo período",
+    "requisicao": "POST /api/trabalho/empregos/1/ferias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "agendamentos": [],
+        "completo": true,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2025-03-10",
+        "fimConcessivo": "2026-03-10",
+        "inicio": "2024-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": true
+      },
+      {
+        "agendamentos": [
+          {
+            "adiantarDecimo": false,
+            "calculo": {
+              "abono": 2016.53,
+              "adiantamentoDecimo": 0.00,
+              "dias": 20,
+              "diasVendidos": 10,
+              "ferias": 4033.05,
+              "inicio": "2026-12-01",
+              "inss": {
+                "base": 5377.40,
+                "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+                "noTeto": false,
+                "parcelas": [
+                  {
+                    "aliquota": 0.075,
+                    "ate": 1621.00,
+                    "de": 0.00,
+                    "valor": 121.58
+                  },
+                  {
+                    "aliquota": 0.09,
+                    "ate": 2902.84,
+                    "de": 1621.00,
+                    "valor": 115.37
+                  },
+                  {
+                    "aliquota": 0.12,
+                    "ate": 4354.27,
+                    "de": 2902.84,
+                    "valor": 174.17
+                  },
+                  {
+                    "aliquota": 0.14,
+                    "ate": 5377.40,
+                    "de": 4354.27,
+                    "valor": 143.24
+                  }
+                ],
+                "valor": 554.35
+              },
+              "irrf": {
+                "aliquota": 0.275,
+                "base": 4770.20,
+                "deducaoUsada": "simplificada",
+                "deducoesLegais": 554.35,
+                "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+                "impostoDaTabela": 403.08,
+                "parcelaADeduzir": 908.73,
+                "reducaoLei15270": 262.65,
+                "rendimento": 5377.40,
+                "simplificado": 607.20,
+                "valor": 140.43
+              },
+              "liquido": 7371.33,
+              "mediaVariaveis": 49.58,
+              "pagamento": "2026-11-29",
+              "remuneracao": 6049.58,
+              "retorno": "2026-12-21",
+              "tercoAbono": 672.18,
+              "tercoFerias": 1344.35
+            },
+            "dias": 20,
+            "diasVendidos": 10,
+            "id": 1,
+            "inicio": "2026-12-01"
+          }
+        ],
+        "completo": true,
+        "diasAgendados": 20,
+        "diasDireito": 30,
+        "diasVendidos": 10,
+        "faltas": 0,
+        "fim": "2026-03-10",
+        "fimConcessivo": "2027-03-10",
+        "inicio": "2025-03-11",
+        "saldo": 0,
+        "vencendo": false,
+        "vencida": false
+      },
+      {
+        "agendamentos": [],
+        "completo": false,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2027-03-10",
+        "fimConcessivo": "2028-03-10",
+        "inicio": "2026-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": false
+      }
+    ],
+    "banco": {
+      "FeriasAgendamento": {
+        "inseridas": [
+          {
+            "AdiantarDecimo": 0,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Dias": 20,
+            "DiasVendidos": 10,
+            "EmpregoId": 1,
+            "Id": 1,
+            "Inicio": "2026-12-01",
+            "PeriodoInicio": "2025-03-11"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "fração curta demais",
+    "requisicao": "POST /api/trabalho/empregos/1/ferias",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "As férias vão em até 3 frações: uma de 14 dias ou mais, e as outras de 5 dias ou mais."
+    }
+  },
+  {
+    "nome": "faltas no primeiro período",
+    "requisicao": "PUT /api/trabalho/empregos/1/ferias/faltas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "agendamentos": [],
+        "completo": true,
+        "diasAgendados": 0,
+        "diasDireito": 24,
+        "diasVendidos": 0,
+        "faltas": 10,
+        "fim": "2025-03-10",
+        "fimConcessivo": "2026-03-10",
+        "inicio": "2024-03-11",
+        "saldo": 24,
+        "vencendo": false,
+        "vencida": true
+      },
+      {
+        "agendamentos": [
+          {
+            "adiantarDecimo": false,
+            "calculo": {
+              "abono": 2016.53,
+              "adiantamentoDecimo": 0.00,
+              "dias": 20,
+              "diasVendidos": 10,
+              "ferias": 4033.05,
+              "inicio": "2026-12-01",
+              "inss": {
+                "base": 5377.40,
+                "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+                "noTeto": false,
+                "parcelas": [
+                  {
+                    "aliquota": 0.075,
+                    "ate": 1621.00,
+                    "de": 0.00,
+                    "valor": 121.58
+                  },
+                  {
+                    "aliquota": 0.09,
+                    "ate": 2902.84,
+                    "de": 1621.00,
+                    "valor": 115.37
+                  },
+                  {
+                    "aliquota": 0.12,
+                    "ate": 4354.27,
+                    "de": 2902.84,
+                    "valor": 174.17
+                  },
+                  {
+                    "aliquota": 0.14,
+                    "ate": 5377.40,
+                    "de": 4354.27,
+                    "valor": 143.24
+                  }
+                ],
+                "valor": 554.35
+              },
+              "irrf": {
+                "aliquota": 0.275,
+                "base": 4770.20,
+                "deducaoUsada": "simplificada",
+                "deducoesLegais": 554.35,
+                "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+                "impostoDaTabela": 403.08,
+                "parcelaADeduzir": 908.73,
+                "reducaoLei15270": 262.65,
+                "rendimento": 5377.40,
+                "simplificado": 607.20,
+                "valor": 140.43
+              },
+              "liquido": 7371.33,
+              "mediaVariaveis": 49.58,
+              "pagamento": "2026-11-29",
+              "remuneracao": 6049.58,
+              "retorno": "2026-12-21",
+              "tercoAbono": 672.18,
+              "tercoFerias": 1344.35
+            },
+            "dias": 20,
+            "diasVendidos": 10,
+            "id": 1,
+            "inicio": "2026-12-01"
+          }
+        ],
+        "completo": true,
+        "diasAgendados": 20,
+        "diasDireito": 30,
+        "diasVendidos": 10,
+        "faltas": 0,
+        "fim": "2026-03-10",
+        "fimConcessivo": "2027-03-10",
+        "inicio": "2025-03-11",
+        "saldo": 0,
+        "vencendo": false,
+        "vencida": false
+      },
+      {
+        "agendamentos": [],
+        "completo": false,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2027-03-10",
+        "fimConcessivo": "2028-03-10",
+        "inicio": "2026-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": false
+      }
+    ],
+    "banco": {
+      "FeriasFaltas": {
+        "inseridas": [
+          {
+            "EmpregoId": 1,
+            "Faltas": 10,
+            "PeriodoInicio": "2024-03-11"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desmarcar o agendamento",
+    "requisicao": "DELETE /api/trabalho/empregos/1/ferias/1",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "agendamentos": [],
+        "completo": true,
+        "diasAgendados": 0,
+        "diasDireito": 24,
+        "diasVendidos": 0,
+        "faltas": 10,
+        "fim": "2025-03-10",
+        "fimConcessivo": "2026-03-10",
+        "inicio": "2024-03-11",
+        "saldo": 24,
+        "vencendo": false,
+        "vencida": true
+      },
+      {
+        "agendamentos": [],
+        "completo": true,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2026-03-10",
+        "fimConcessivo": "2027-03-10",
+        "inicio": "2025-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": false
+      },
+      {
+        "agendamentos": [],
+        "completo": false,
+        "diasAgendados": 0,
+        "diasDireito": 30,
+        "diasVendidos": 0,
+        "faltas": 0,
+        "fim": "2027-03-10",
+        "fimConcessivo": "2028-03-10",
+        "inicio": "2026-03-11",
+        "saldo": 30,
+        "vencendo": false,
+        "vencida": false
+      }
+    ],
+    "banco": {
+      "FeriasAgendamento": {
+        "removidas": [
+          {
+            "AdiantarDecimo": 0,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Dias": 20,
+            "DiasVendidos": 10,
+            "EmpregoId": 1,
+            "Id": 1,
+            "Inicio": "2026-12-01",
+            "PeriodoInicio": "2025-03-11"
+          }
+        ]
+      }
+    }
+  }
+]

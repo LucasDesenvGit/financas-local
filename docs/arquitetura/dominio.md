@@ -200,6 +200,8 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Tabela do INSS e do IRRF | `encargos.TabelaInss`, `encargos.TabelaIrrf`, `encargos.Vigente` | Vale a da última vigência que começou até o mês; o IRRF usa a dedução que der menos imposto e, desde 2026, a redução da Lei 15.270/2025 | — |
 | Holerite | `Holerite`, `holerite.Calcular` | Aberto, é calculado na hora; fechado, guarda o cálculo (`Calculo`) e não muda com o salário ou a tabela depois ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). Não é receita | — |
 | Avos do 13º | `decimoterceiro.Avos` | Cada mês do ano em que a pessoa trabalhou 15 dias ou mais (de calendário) conta 1/12 | — |
+| Período aquisitivo e concessivo | `ferias.Periodos` | Cada 12 meses de trabalho dão férias, que têm de ser tiradas nos 12 meses seguintes; vencido com saldo, a empresa paga em dobro | — |
+| Abono pecuniário | `ferias.Calcular` | A venda de até 1/3 dos dias de férias; o abono e o 1/3 dele não têm INSS nem IR | — |
 | DSR | `holerite.Calcular`, `DiasDoDsr` | Descanso semanal remunerado sobre as horas extras e o adicional noturno: o total ÷ os dias úteis × os domingos e feriados | — |
 | Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
 | Dívida total | `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |

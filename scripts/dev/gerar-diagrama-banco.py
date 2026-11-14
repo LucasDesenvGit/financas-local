@@ -24,7 +24,8 @@ ASSUNTOS = {
     "Índices e cotações": ["TaxaSelicDiaria", "IndiceMensal", "CotacaoMoeda", "CotacaoCripto"],
     "Sistema": ["ErroSistema"],
     "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Holerite",
-                          "HoleriteLancamento", "DecimoTerceiro"],
+                          "HoleriteLancamento", "DecimoTerceiro",
+                          "FeriasFaltas", "FeriasAgendamento"],
 }
 
 

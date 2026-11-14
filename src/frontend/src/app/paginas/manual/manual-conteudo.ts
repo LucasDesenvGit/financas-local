@@ -1257,14 +1257,14 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'trabalho',
     titulo: 'Trabalho (módulo)',
-    resumo: 'O salário pelo bruto, o holerite de cada mês e o 13º, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
+    resumo: 'O salário pelo bruto, o holerite de cada mês, o 13º e as férias, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
     secoes: [
       {
         id: 'ligar-trabalho',
         titulo: 'Ligar o Trabalho',
         paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
         passos: [
-          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites e 13º salário) aparece no menu na hora.',
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário e Férias) aparece no menu na hora.',
           'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
           'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
         ],
@@ -1324,6 +1324,24 @@ export const MANUAL: CapituloManual[] = [
         dicas: ['Se você saiu no ano, o 13º proporcional vem na rescisão, e a tela avisa.'],
         erros: ['“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.'],
         abrir: [{ rotulo: 'Abrir o 13º salário', rota: '/trabalho/decimo-terceiro' }]
+      },
+      {
+        id: 'ferias',
+        titulo: 'Férias',
+        paraQueServe: 'Saber quantos dias de férias você tem, até quando tirar, agendar e calcular quanto vem, inclusive vendendo dias.',
+        passos: [
+          'Abra Trabalho › Férias. Cada período aquisitivo (12 meses de trabalho, contados da admissão) mostra os dias de direito, os agendados, os vendidos, quantos sobram e até quando tirar (o concessivo, os 12 meses seguintes).',
+          '“Vencida” quer dizer que o prazo passou com dias sobrando: a empresa paga essas férias em dobro. “Vencendo”: faltam 60 dias ou menos para o prazo.',
+          'As faltas sem justificativa no período diminuem os dias de direito: até 5, 30 dias; de 6 a 14, 24; de 15 a 23, 18; de 24 a 32, 12; acima de 32, nenhum (CLT, art. 130). Digite as faltas no período.',
+          'Para agendar, escolha o período, o dia do início, os dias de férias e os vendidos (até 1/3, 10 de 30), e se a 1ª parcela do 13º vem junto. As férias podem ir em até 3 frações: uma de 14 dias ou mais e as outras de 5 ou mais.',
+          '“Ver a conta” mostra as férias e o 1/3 (com INSS e IRRF), o abono e o 1/3 dele (sem desconto), o 13º adiantado e o que cai na conta, até 2 dias antes do início. A remuneração é o salário do mês mais a média das horas extras dos 12 meses antes.',
+          '“Comparar 30 dias × vender 10” mostra lado a lado quanto entra em cada caso.',
+          '“Desmarcar” apaga um agendamento e devolve os dias ao período.'
+        ],
+        dicas: ['O salário do mês seguinte às férias vem menor: os dias de férias já foram pagos antes.',
+          'Se marcar o 13º junto, informe a 1ª parcela em Trabalho › 13º salário quando ela vier, para a 2ª ser recalculada.'],
+        erros: ['“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.'],
+        abrir: [{ rotulo: 'Abrir as Férias', rota: '/trabalho/ferias' }]
       }
     ]
   },
@@ -1531,5 +1549,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   trabalho: { capitulo: 'trabalho', secao: 'salario' },
   'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
   'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
+  'trabalho/ferias': { capitulo: 'trabalho', secao: 'ferias' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };
