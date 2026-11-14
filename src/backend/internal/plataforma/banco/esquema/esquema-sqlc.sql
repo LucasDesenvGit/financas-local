@@ -484,3 +484,13 @@ CREATE TABLE "FeriasAgendamento" (
     "AdiantarDecimo" INTEGER NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "FgtsLancamento" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Data" TEXT NOT NULL,
+    "Tipo" INTEGER NOT NULL,
+    "Valor" TEXT NOT NULL,
+    "Motivo" INTEGER,
+    "CriadoEm" TEXT NOT NULL
+);

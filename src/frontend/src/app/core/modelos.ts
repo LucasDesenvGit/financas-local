@@ -935,3 +935,11 @@ export interface PeriodoFerias {
   agendamentos: AgendamentoFerias[];
 }
 export interface AgendarFerias { periodoInicio: string; inicio: string; dias: number; diasVendidos: number; adiantarDecimo: boolean; }
+
+/** #216 (ADR 0066): o FGTS, estimado e conferido; fora do patrimônio. Tipo: 1 saldo do app, 2 saque, 3 distribuição. */
+export enum TipoLancamentoFgts { Conferencia = 1, Saque = 2, Distribuicao = 3 }
+export enum MotivoSaqueFgts { Rescisao = 1, SaqueAniversario = 2, Imovel = 3, Outro = 4 }
+export interface LancamentoFgts { id: number; data: string; tipo: TipoLancamentoFgts; valor: number; motivo: MotivoSaqueFgts | null; }
+export interface MesFgts { mes: string; correcao: number; deposito: number; distribuicao: number; saques: number; saldo: number; conferido: boolean; }
+export interface ConferenciaFgts { data: string; informado: number; estimado: number; diferenca: number; }
+export interface Fgts { saldo: number; ate: string; meses: MesFgts[]; conferencias: ConferenciaFgts[]; lancamentos: LancamentoFgts[]; }

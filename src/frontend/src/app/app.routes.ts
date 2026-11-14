@@ -111,6 +111,11 @@ export const rotas: Routes = [
             path: 'ferias',
             loadComponent: () => import('./paginas/trabalho/ferias.component').then((m) => m.TrabalhoFeriasComponent),
             title: 'Férias · Trabalho · Finanças Local'
+          },
+          {
+            path: 'fgts',
+            loadComponent: () => import('./paginas/trabalho/fgts.component').then((m) => m.TrabalhoFgtsComponent),
+            title: 'FGTS · Trabalho · Finanças Local'
           }
         ]
       },

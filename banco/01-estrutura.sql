@@ -813,3 +813,22 @@ CREATE TABLE IF NOT EXISTS FeriasAgendamento
     CONSTRAINT FK_FeriasAgendamento_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS IX_FeriasAgendamento_Emprego ON FeriasAgendamento (EmpregoId, Inicio);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: FGTS (#216, ADR 0066)                                     */
+/* ------------------------------------------------------------------ */
+/* Fora do patrimônio e dos relatórios: o saldo é estimado mês a mês (8% do bruto, corrigido a 3% ao ano) a partir da
+   última conferência. Tipo: 1 saldo conferido no app do FGTS, 2 saque, 3 distribuição de resultados. Motivo (só no
+   saque): 1 rescisão, 2 saque-aniversário, 3 imóvel, 4 outro. */
+CREATE TABLE IF NOT EXISTS FgtsLancamento
+(
+    Id        INTEGER NOT NULL CONSTRAINT PK_FgtsLancamento PRIMARY KEY AUTOINCREMENT,
+    EmpregoId INTEGER NOT NULL,
+    Data      TEXT    NOT NULL,
+    Tipo      INTEGER NOT NULL,
+    Valor     TEXT    NOT NULL,
+    Motivo    INTEGER NULL,
+    CriadoEm  TEXT    NOT NULL,
+    CONSTRAINT FK_FgtsLancamento_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_FgtsLancamento_Emprego_Data ON FgtsLancamento (EmpregoId, Data);

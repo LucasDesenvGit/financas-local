@@ -229,6 +229,16 @@ type FeriasFalta struct {
 	Faltas        int64
 }
 
+type FgtsLancamento struct {
+	Id        int64
+	EmpregoId int64
+	Data      string
+	Tipo      int64
+	Valor     string
+	Motivo    *int64
+	CriadoEm  string
+}
+
 type HistoricoInvestimento struct {
 	Id                 int64
 	PluggyInvestmentId string

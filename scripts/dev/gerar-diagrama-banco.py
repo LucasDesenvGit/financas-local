@@ -25,7 +25,7 @@ ASSUNTOS = {
     "Sistema": ["ErroSistema"],
     "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Holerite",
                           "HoleriteLancamento", "DecimoTerceiro",
-                          "FeriasFaltas", "FeriasAgendamento"],
+                          "FeriasFaltas", "FeriasAgendamento", "FgtsLancamento"],
 }
 
 
