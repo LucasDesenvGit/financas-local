@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.19.0] — 2026-11-14 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho: o crédito do salário ligado ao holerite** (#212). Em Trabalho › Holerites, "Recebido na conta":
+  - o site sugere os créditos que parecem o salário (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário), dizendo por quê; os outros créditos do período também podem ser ligados;
+  - um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite;
+  - a tela mostra quanto foi recebido e a diferença para o líquido estimado; a transação sem categoria vai para "Salário".
+  - **A receita não conta duas vezes:** ela continua sendo a transação; ligar só explica. Banco: a tabela `HoleriteRecebimento`.
+
 ## [3.18.0] — 2026-11-14 · desenvolvimento
 
 ### Funcionalidades

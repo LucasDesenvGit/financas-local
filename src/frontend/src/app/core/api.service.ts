@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -408,6 +408,16 @@ export class ApiService {
   }
   excluirLancamentoFgts(empregoId: number, id: number): Observable<Fgts> {
     return this.http.delete<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts/lancamentos/${id}`);
+  }
+  /** #212: o crédito do salário ligado ao holerite. */
+  recebimentosHolerite(holeriteId: number): Observable<RecebimentosHolerite> {
+    return this.http.get<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos`);
+  }
+  ligarRecebimento(holeriteId: number, transacaoId: number, valor: number | null): Observable<RecebimentosHolerite> {
+    return this.http.post<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos`, { transacaoId, valor });
+  }
+  desligarRecebimento(holeriteId: number, id: number): Observable<RecebimentosHolerite> {
+    return this.http.delete<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos/${id}`);
   }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 

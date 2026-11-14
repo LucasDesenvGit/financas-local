@@ -38,6 +38,16 @@ test('Trabalho › Holerites: o mês, os lançamentos e fechar', async ({ page }
     pedidos.push(`${r.request().method()} ${r.request().postData() ?? ''}`.trim());
     return r.fulfill(responder(holerite));
   });
+  const credito = { id: 31, data: '2026-11-05', descricao: 'CREDITO FOLHA', contaId: 1, conta: 'Conta salário', valor: 5053.13, livre: 5053.13 };
+  await page.route('**/api/trabalho/holerites/5/recebimentos', (r) => {
+    if (r.request().method() === 'POST') {
+      pedidos.push(`ligar ${r.request().postData()}`);
+      return r.fulfill(responder({ liquido: 5053.13, recebido: 5053.13, diferenca: 0, sugestoes: [], outros: [],
+        recebimentos: [{ ...credito, livre: 0, valorLigado: 5053.13 }] }));
+    }
+    return r.fulfill(responder({ liquido: 5053.13, recebido: 0, diferenca: -5053.13, recebimentos: [], outros: [],
+      sugestoes: [{ ...credito, motivos: ['Valor perto do líquido do holerite', 'O banco marcou como salário'] }] }));
+  });
   await page.route('**/api/trabalho/holerites/5/fechar', (r) => {
     pedidos.push('fechar');
     return r.fulfill(responder({ ...holerite, situacao: 2, fechadoEm: '2026-11-13T23:00:00' }));
@@ -58,6 +68,13 @@ test('Trabalho › Holerites: o mês, os lançamentos e fechar', async ({ page }
     mkdirSync(pasta, { recursive: true });
     await page.screenshot({ path: join(pasta, `trabalho-holerites-${test.info().project.name}.png`), fullPage: true });
   }
+
+  // #212: o crédito sugerido, com o motivo, e ligar.
+  const recebido = page.locator('section.recebimento');
+  await expect(recebido).toContainText('Valor perto do líquido do holerite · O banco marcou como salário');
+  await recebido.getByRole('button', { name: /^Ligar/ }).click();
+  await expect(recebido).toContainText('Recebido igual ao líquido estimado.');
+  expect(pedidos).toContain('ligar {"transacaoId":31,"valor":null}');
 
   // Mexeu: "Fechar o mês" espera o salvar.
   await holeriteBloco.getByRole('button', { name: '+ Lançamento' }).click();

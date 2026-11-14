@@ -494,3 +494,11 @@ CREATE TABLE "FgtsLancamento" (
     "Motivo" INTEGER,
     "CriadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "HoleriteRecebimento" (
+    "Id" INTEGER NOT NULL,
+    "HoleriteId" INTEGER NOT NULL,
+    "TransacaoId" INTEGER NOT NULL,
+    "Valor" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);

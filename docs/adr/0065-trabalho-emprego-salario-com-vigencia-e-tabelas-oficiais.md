@@ -48,6 +48,14 @@ O Trabalho é o primeiro módulo do site (ADR 0064): mora em `internal/modulos/t
 
 A receita dos relatórios continua vindo **só das transações** (o crédito do salário na conta). O emprego, o holerite, as férias, o 13º e a rescisão são o **registro e a explicação** desse dinheiro, nunca uma segunda receita. Nenhuma tabela do Trabalho entra na base dos relatórios (`internal/analises/relatorios`). Quando não há transação (conta não conectada), a pessoa lança como sempre. A ligação do holerite com a transação é a #212.
 
+### O recebimento (#212)
+
+- `HoleriteRecebimento` liga a transação (o crédito na conta) ao holerite, com a parte do valor: um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite. Sem saber o valor, a ligação leva o que está livre no crédito, até o que falta do líquido.
+- O site **sugere**, e a pessoa confirma: os créditos livres do dia 15 do mês ao dia 15 do seguinte, por pontos (valor até 5% do líquido; menor que o líquido, como o adiantamento; o tipo de lançamento "salário" do banco, ADR 0025; a descrição que cita o empregador; a conta do salário), com o motivo em texto. Os outros créditos da janela ficam para ligar à mão.
+- A transação ligada que estava **sem categoria** passa para "Salário", como escolha manual (`CategoriaManual`). Com categoria, fica como está.
+- **O teste de regressão** confere que a receita dos relatórios (`relatorios.Totais`) é a mesma antes de ligar, depois de ligar, ao dividir um crédito entre dois holerites e depois de desligar.
+- *Ficou de fora:* a etiqueta "salário de outubro" na tela de Transações, que é do núcleo: o núcleo não importa módulo (ADR 0064) e ainda não há um ponto de extensão para um módulo mostrar algo numa tela do núcleo.
+
 ### Holerite fechado (#211)
 
 O holerite de um mês, depois de fechado, guarda os números calculados (e não só as entradas): mudar o salário ou a tabela depois não muda o mês fechado. Reabrir para corrigir fica registrado.

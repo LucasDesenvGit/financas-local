@@ -1,0 +1,30 @@
+[
+  {
+    "nome": "o recebimento de outubro",
+    "requisicao": "GET /api/trabalho/holerites/1/recebimentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "diferenca": -5292.62,
+      "liquido": 5292.62,
+      "outros": [],
+      "recebido": 0.00,
+      "recebimentos": [],
+      "sugestoes": []
+    }
+  },
+  {
+    "nome": "ligar uma transação que não existe",
+    "requisicao": "POST /api/trabalho/holerites/1/recebimentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha um crédito (uma entrada de dinheiro)."
+    }
+  },
+  {
+    "nome": "holerite que não existe",
+    "requisicao": "GET /api/trabalho/holerites/999/recebimentos",
+    "status": 404
+  }
+]
