@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -337,6 +337,12 @@ export class ApiService {
     return this.http.post<void>(`${this.base}/auth/alterar-senha`, { senhaAtual, novaSenha });
   }
   auditoria(): Observable<Auditoria[]> { return this.http.get<Auditoria[]>(`${this.base}/auth/auditoria`); }
+  /** #191 (ADR 0064): os módulos que se ligam e desligam. */
+  modulos(): Observable<Modulo[]> { return this.http.get<Modulo[]>(`${this.base}/modulos`); }
+  definirModulo(id: string, ligado: boolean): Observable<Modulo> {
+    return this.http.put<Modulo>(`${this.base}/modulos/${encodeURIComponent(id)}`, { ligado });
+  }
+
   /** #328: o acesso pelo celular na rede de casa. */
   situacaoCelular(): Observable<SituacaoCelular> { return this.http.get<SituacaoCelular>(`${this.base}/celular`); }
   ligarCelular(ip: string): Observable<SituacaoCelular> { return this.http.post<SituacaoCelular>(`${this.base}/celular/ligar`, { ip }); }

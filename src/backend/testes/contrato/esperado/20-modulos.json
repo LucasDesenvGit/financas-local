@@ -1,0 +1,36 @@
+[
+  {
+    "nome": "lista vazia, sem módulo nesta versão",
+    "requisicao": "GET /api/modulos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": []
+  },
+  {
+    "nome": "ligar um módulo que não existe",
+    "requisicao": "PUT /api/modulos/nenhum",
+    "status": 404
+  },
+  {
+    "nome": "sem o ligado",
+    "requisicao": "PUT /api/modulos/nenhum",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "errors": {
+        "Ligado": [
+          "The Ligado field is required."
+        ]
+      },
+      "status": 400,
+      "title": "One or more validation errors occurred.",
+      "traceId": "<traceId>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
+    }
+  },
+  {
+    "nome": "sem login",
+    "requisicao": "GET /api/modulos",
+    "status": 401
+  }
+]
