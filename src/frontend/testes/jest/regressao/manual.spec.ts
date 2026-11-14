@@ -17,7 +17,7 @@ describe('Regressão: Manual acompanha o site', () => {
 
   it('toda tela do menu tem capítulo (e seção, quando indicada) no manual, também as de dentro dos grupos', () => {
     const itens = telasDoMenu();
-    expect(itens.length).toBe(17);   // #227: as 13 telas de antes, agora em grupos; #210, #211, #213 e #214: as do Trabalho (módulo)
+    expect(itens.length).toBe(18);   // #227: as 13 telas de antes, agora em grupos; e as 5 do Trabalho (módulo, #209)
     for (const item of itens) {
       const ajuda = ajudaDaUrl(item.rota)!;
       expect(ajuda).toBeDefined();

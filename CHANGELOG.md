@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.18.0] — 2026-11-14 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › FGTS** (#216, ADR 0066, Proposta):
+  - o saldo estimado mês a mês: 8% do bruto (do holerite, ou do salário), do 13º e das férias, corrigido a 3% ao ano;
+  - "Saldo que vi no app do FGTS": a estimativa recomeça do saldo do app, e a tela mostra a diferença (depósito que a empresa não fez, por exemplo);
+  - saques (rescisão, saque-aniversário, imóvel, outro) e a distribuição de resultados; os últimos meses com a correção, o depósito e o saldo.
+  - O FGTS fica fora do patrimônio do Painel e dos relatórios. Banco: a tabela `FgtsLancamento`, criada sozinha ao iniciar.
+
 ## [3.17.0] — 2026-11-14 · desenvolvimento
 
 ### Funcionalidades

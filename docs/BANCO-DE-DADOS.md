@@ -246,6 +246,10 @@ erDiagram
         INTEGER Id PK
         INTEGER EmpregoId FK
     }
+    FgtsLancamento {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
     Conta |o--o{ Emprego : "ContaId: SET NULL"
     Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
     InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
@@ -255,6 +259,7 @@ erDiagram
     Emprego ||--o{ DecimoTerceiro : "EmpregoId: CASCADE"
     Emprego ||--o{ FeriasFaltas : "EmpregoId: CASCADE"
     Emprego ||--o{ FeriasAgendamento : "EmpregoId: CASCADE"
+    Emprego ||--o{ FgtsLancamento : "EmpregoId: CASCADE"
 ```
 
 <!-- diagramas-do-banco: fim -->

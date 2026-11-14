@@ -69,3 +69,4 @@ internal/modulos/trabalho/emprego    100
 internal/modulos/trabalho/holerite   100
 internal/modulos/trabalho/decimoterceiro 100
 internal/modulos/trabalho/ferias       100
+internal/modulos/trabalho/fgts         100

@@ -102,3 +102,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0062](0062-qr-code-do-acesso-pelo-celular-desenhado-no-site.md) | QR code do acesso pelo celular desenhado no site (SVG, sem innerHTML), com o `qrcode-generator` só para a matriz (#677) | Aceita |
 | [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md) | Módulos compilados no executável, ligados e desligados no banco (micro-kernel): contrato em Go, rotas e tarefas guardadas pelo núcleo (#191) | Proposta |
 | [0065](0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md) | Trabalho: emprego, salário com vigência e as tabelas do INSS e do IRRF no banco, com a regra de não contar o salário duas vezes (#210) | Proposta |
+| [0066](0066-fgts-fora-do-patrimonio-estimado-no-trabalho.md) | FGTS fora do patrimônio: estimado no Trabalho (8%, corrigido a 3% ao ano) e conferido com o app (#216) | Proposta |

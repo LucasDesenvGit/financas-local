@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -400,6 +400,14 @@ export class ApiService {
   simularFerias(empregoId: number, inicio: string, dias: number, vendidos: number, adiantar: boolean): Observable<CalculoFerias> {
     return this.http.get<CalculoFerias>(`${this.base}/trabalho/empregos/${empregoId}/ferias/simular`,
       { params: this.params({ inicio, dias, vendidos, adiantar }) });
+  }
+  /** #216: o FGTS. */
+  fgts(empregoId: number): Observable<Fgts> { return this.http.get<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts`); }
+  lancarFgts(empregoId: number, l: { data: string; tipo: TipoLancamentoFgts; valor: number; motivo: MotivoSaqueFgts | null }): Observable<Fgts> {
+    return this.http.post<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts/lancamentos`, l);
+  }
+  excluirLancamentoFgts(empregoId: number, id: number): Observable<Fgts> {
+    return this.http.delete<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts/lancamentos/${id}`);
   }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 

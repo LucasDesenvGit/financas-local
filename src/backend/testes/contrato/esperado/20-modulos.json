@@ -7,7 +7,7 @@
     "corpo": [
       {
         "acessaInternet": false,
-        "descricao": "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º e as férias, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "descricao": "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º, as férias e o FGTS, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
         "destinos": [],
         "id": "trabalho",
         "ligado": false,

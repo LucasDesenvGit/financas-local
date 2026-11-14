@@ -1,0 +1,1316 @@
+[
+  {
+    "nome": "o FGTS estimado",
+    "requisicao": "GET /api/trabalho/empregos/1/fgts",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ate": "2026-10-01",
+      "conferencias": [],
+      "lancamentos": [],
+      "meses": [
+        {
+          "conferido": false,
+          "correcao": 0.00,
+          "deposito": 266.67,
+          "distribuicao": 0.00,
+          "mes": "2024-03-01",
+          "saldo": 266.67,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 0.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-04-01",
+          "saldo": 667.33,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 1.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-05-01",
+          "saldo": 1068.98,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 2.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-06-01",
+          "saldo": 1471.62,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 3.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-07-01",
+          "saldo": 1875.25,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 4.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-08-01",
+          "saldo": 2279.87,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 5.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-09-01",
+          "saldo": 2685.49,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 6.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-10-01",
+          "saldo": 3092.11,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 7.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-11-01",
+          "saldo": 3499.74,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 8.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-12-01",
+          "saldo": 3908.37,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 9.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-01-01",
+          "saldo": 4318.01,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 10.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-02-01",
+          "saldo": 4728.66,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 11.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-03-01",
+          "saldo": 5140.32,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 12.68,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-04-01",
+          "saldo": 5553.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 13.70,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-05-01",
+          "saldo": 5966.70,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 14.72,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-06-01",
+          "saldo": 6381.42,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 15.74,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-07-01",
+          "saldo": 6797.16,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 16.76,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-08-01",
+          "saldo": 7213.92,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 17.79,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-09-01",
+          "saldo": 7631.71,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 18.82,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-10-01",
+          "saldo": 8050.53,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 19.86,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-11-01",
+          "saldo": 8470.39,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 20.89,
+          "deposito": 800.00,
+          "distribuicao": 0.00,
+          "mes": "2025-12-01",
+          "saldo": 9291.28,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 22.92,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-01-01",
+          "saldo": 9714.20,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 23.96,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-02-01",
+          "saldo": 10138.16,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 25.00,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-03-01",
+          "saldo": 10563.16,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 26.05,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-04-01",
+          "saldo": 10989.21,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 27.10,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-05-01",
+          "saldo": 11416.31,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 28.16,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-06-01",
+          "saldo": 11924.47,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 29.41,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-07-01",
+          "saldo": 12433.88,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 30.67,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-08-01",
+          "saldo": 12944.55,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 31.93,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-09-01",
+          "saldo": 13456.48,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 33.19,
+          "deposito": 527.60,
+          "distribuicao": 0.00,
+          "mes": "2026-10-01",
+          "saldo": 14017.27,
+          "saques": 0.00
+        }
+      ],
+      "saldo": 14017.27
+    }
+  },
+  {
+    "nome": "o saldo que vi no app",
+    "requisicao": "POST /api/trabalho/empregos/1/fgts/lancamentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ate": "2026-10-01",
+      "conferencias": [
+        {
+          "data": "2025-12-31",
+          "diferenca": -291.28,
+          "estimado": 9291.28,
+          "informado": 9000.00
+        }
+      ],
+      "lancamentos": [
+        {
+          "data": "2025-12-31",
+          "id": 1,
+          "motivo": null,
+          "tipo": 1,
+          "valor": 9000.00
+        }
+      ],
+      "meses": [
+        {
+          "conferido": false,
+          "correcao": 0.00,
+          "deposito": 266.67,
+          "distribuicao": 0.00,
+          "mes": "2024-03-01",
+          "saldo": 266.67,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 0.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-04-01",
+          "saldo": 667.33,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 1.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-05-01",
+          "saldo": 1068.98,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 2.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-06-01",
+          "saldo": 1471.62,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 3.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-07-01",
+          "saldo": 1875.25,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 4.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-08-01",
+          "saldo": 2279.87,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 5.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-09-01",
+          "saldo": 2685.49,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 6.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-10-01",
+          "saldo": 3092.11,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 7.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-11-01",
+          "saldo": 3499.74,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 8.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-12-01",
+          "saldo": 3908.37,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 9.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-01-01",
+          "saldo": 4318.01,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 10.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-02-01",
+          "saldo": 4728.66,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 11.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-03-01",
+          "saldo": 5140.32,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 12.68,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-04-01",
+          "saldo": 5553.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 13.70,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-05-01",
+          "saldo": 5966.70,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 14.72,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-06-01",
+          "saldo": 6381.42,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 15.74,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-07-01",
+          "saldo": 6797.16,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 16.76,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-08-01",
+          "saldo": 7213.92,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 17.79,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-09-01",
+          "saldo": 7631.71,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 18.82,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-10-01",
+          "saldo": 8050.53,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 19.86,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-11-01",
+          "saldo": 8470.39,
+          "saques": 0.00
+        },
+        {
+          "conferido": true,
+          "correcao": 20.89,
+          "deposito": 800.00,
+          "distribuicao": 0.00,
+          "mes": "2025-12-01",
+          "saldo": 9000.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 22.20,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-01-01",
+          "saldo": 9422.20,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 23.24,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-02-01",
+          "saldo": 9845.44,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 24.28,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-03-01",
+          "saldo": 10269.72,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 25.33,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-04-01",
+          "saldo": 10695.05,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 26.38,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-05-01",
+          "saldo": 11121.43,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 27.43,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-06-01",
+          "saldo": 11628.86,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 28.68,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-07-01",
+          "saldo": 12137.54,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 29.93,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-08-01",
+          "saldo": 12647.47,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 31.19,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-09-01",
+          "saldo": 13158.66,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 32.45,
+          "deposito": 527.60,
+          "distribuicao": 0.00,
+          "mes": "2026-10-01",
+          "saldo": 13718.71,
+          "saques": 0.00
+        }
+      ],
+      "saldo": 13718.71
+    },
+    "banco": {
+      "FgtsLancamento": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2025-12-31",
+            "EmpregoId": 1,
+            "Id": 1,
+            "Motivo": null,
+            "Tipo": 1,
+            "Valor": "9000.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "saque sem motivo",
+    "requisicao": "POST /api/trabalho/empregos/1/fgts/lancamentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha o motivo do saque."
+    }
+  },
+  {
+    "nome": "saque-aniversário",
+    "requisicao": "POST /api/trabalho/empregos/1/fgts/lancamentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ate": "2026-10-01",
+      "conferencias": [
+        {
+          "data": "2025-12-31",
+          "diferenca": -291.28,
+          "estimado": 9291.28,
+          "informado": 9000.00
+        }
+      ],
+      "lancamentos": [
+        {
+          "data": "2025-12-31",
+          "id": 1,
+          "motivo": null,
+          "tipo": 1,
+          "valor": 9000.00
+        },
+        {
+          "data": "2026-02-10",
+          "id": 2,
+          "motivo": 2,
+          "tipo": 2,
+          "valor": 500.00
+        }
+      ],
+      "meses": [
+        {
+          "conferido": false,
+          "correcao": 0.00,
+          "deposito": 266.67,
+          "distribuicao": 0.00,
+          "mes": "2024-03-01",
+          "saldo": 266.67,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 0.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-04-01",
+          "saldo": 667.33,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 1.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-05-01",
+          "saldo": 1068.98,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 2.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-06-01",
+          "saldo": 1471.62,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 3.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-07-01",
+          "saldo": 1875.25,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 4.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-08-01",
+          "saldo": 2279.87,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 5.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-09-01",
+          "saldo": 2685.49,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 6.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-10-01",
+          "saldo": 3092.11,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 7.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-11-01",
+          "saldo": 3499.74,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 8.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-12-01",
+          "saldo": 3908.37,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 9.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-01-01",
+          "saldo": 4318.01,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 10.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-02-01",
+          "saldo": 4728.66,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 11.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-03-01",
+          "saldo": 5140.32,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 12.68,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-04-01",
+          "saldo": 5553.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 13.70,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-05-01",
+          "saldo": 5966.70,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 14.72,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-06-01",
+          "saldo": 6381.42,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 15.74,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-07-01",
+          "saldo": 6797.16,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 16.76,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-08-01",
+          "saldo": 7213.92,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 17.79,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-09-01",
+          "saldo": 7631.71,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 18.82,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-10-01",
+          "saldo": 8050.53,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 19.86,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-11-01",
+          "saldo": 8470.39,
+          "saques": 0.00
+        },
+        {
+          "conferido": true,
+          "correcao": 20.89,
+          "deposito": 800.00,
+          "distribuicao": 0.00,
+          "mes": "2025-12-01",
+          "saldo": 9000.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 22.20,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-01-01",
+          "saldo": 9422.20,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 23.24,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-02-01",
+          "saldo": 9345.44,
+          "saques": 500.00
+        },
+        {
+          "conferido": false,
+          "correcao": 23.05,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-03-01",
+          "saldo": 9768.49,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 24.09,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-04-01",
+          "saldo": 10192.58,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 25.14,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-05-01",
+          "saldo": 10617.72,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 26.19,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-06-01",
+          "saldo": 11123.91,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 27.43,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-07-01",
+          "saldo": 11631.34,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 28.69,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-08-01",
+          "saldo": 12140.03,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 29.94,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-09-01",
+          "saldo": 12649.97,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 31.20,
+          "deposito": 527.60,
+          "distribuicao": 0.00,
+          "mes": "2026-10-01",
+          "saldo": 13208.77,
+          "saques": 0.00
+        }
+      ],
+      "saldo": 13208.77
+    },
+    "banco": {
+      "FgtsLancamento": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-02-10",
+            "EmpregoId": 1,
+            "Id": 2,
+            "Motivo": 2,
+            "Tipo": 2,
+            "Valor": "500.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o saque",
+    "requisicao": "DELETE /api/trabalho/empregos/1/fgts/lancamentos/2",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ate": "2026-10-01",
+      "conferencias": [
+        {
+          "data": "2025-12-31",
+          "diferenca": -291.28,
+          "estimado": 9291.28,
+          "informado": 9000.00
+        }
+      ],
+      "lancamentos": [
+        {
+          "data": "2025-12-31",
+          "id": 1,
+          "motivo": null,
+          "tipo": 1,
+          "valor": 9000.00
+        }
+      ],
+      "meses": [
+        {
+          "conferido": false,
+          "correcao": 0.00,
+          "deposito": 266.67,
+          "distribuicao": 0.00,
+          "mes": "2024-03-01",
+          "saldo": 266.67,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 0.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-04-01",
+          "saldo": 667.33,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 1.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-05-01",
+          "saldo": 1068.98,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 2.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-06-01",
+          "saldo": 1471.62,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 3.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-07-01",
+          "saldo": 1875.25,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 4.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-08-01",
+          "saldo": 2279.87,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 5.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-09-01",
+          "saldo": 2685.49,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 6.62,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-10-01",
+          "saldo": 3092.11,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 7.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-11-01",
+          "saldo": 3499.74,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 8.63,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2024-12-01",
+          "saldo": 3908.37,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 9.64,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-01-01",
+          "saldo": 4318.01,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 10.65,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-02-01",
+          "saldo": 4728.66,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 11.66,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-03-01",
+          "saldo": 5140.32,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 12.68,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-04-01",
+          "saldo": 5553.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 13.70,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-05-01",
+          "saldo": 5966.70,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 14.72,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-06-01",
+          "saldo": 6381.42,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 15.74,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-07-01",
+          "saldo": 6797.16,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 16.76,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-08-01",
+          "saldo": 7213.92,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 17.79,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-09-01",
+          "saldo": 7631.71,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 18.82,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-10-01",
+          "saldo": 8050.53,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 19.86,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2025-11-01",
+          "saldo": 8470.39,
+          "saques": 0.00
+        },
+        {
+          "conferido": true,
+          "correcao": 20.89,
+          "deposito": 800.00,
+          "distribuicao": 0.00,
+          "mes": "2025-12-01",
+          "saldo": 9000.00,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 22.20,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-01-01",
+          "saldo": 9422.20,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 23.24,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-02-01",
+          "saldo": 9845.44,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 24.28,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-03-01",
+          "saldo": 10269.72,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 25.33,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-04-01",
+          "saldo": 10695.05,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 26.38,
+          "deposito": 400.00,
+          "distribuicao": 0.00,
+          "mes": "2026-05-01",
+          "saldo": 11121.43,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 27.43,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-06-01",
+          "saldo": 11628.86,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 28.68,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-07-01",
+          "saldo": 12137.54,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 29.93,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-08-01",
+          "saldo": 12647.47,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 31.19,
+          "deposito": 480.00,
+          "distribuicao": 0.00,
+          "mes": "2026-09-01",
+          "saldo": 13158.66,
+          "saques": 0.00
+        },
+        {
+          "conferido": false,
+          "correcao": 32.45,
+          "deposito": 527.60,
+          "distribuicao": 0.00,
+          "mes": "2026-10-01",
+          "saldo": 13718.71,
+          "saques": 0.00
+        }
+      ],
+      "saldo": 13718.71
+    },
+    "banco": {
+      "FgtsLancamento": {
+        "removidas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-02-10",
+            "EmpregoId": 1,
+            "Id": 2,
+            "Motivo": 2,
+            "Tipo": 2,
+            "Valor": "500.0"
+          }
+        ]
+      }
+    }
+  }
+]

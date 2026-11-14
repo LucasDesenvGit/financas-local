@@ -1257,14 +1257,14 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'trabalho',
     titulo: 'Trabalho (módulo)',
-    resumo: 'O salário pelo bruto, o holerite de cada mês, o 13º e as férias, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
+    resumo: 'O salário pelo bruto, o holerite de cada mês, o 13º, as férias e o FGTS, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
     secoes: [
       {
         id: 'ligar-trabalho',
         titulo: 'Ligar o Trabalho',
         paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
         passos: [
-          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário e Férias) aparece no menu na hora.',
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário, Férias e FGTS) aparece no menu na hora.',
           'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
           'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
         ],
@@ -1342,6 +1342,25 @@ export const MANUAL: CapituloManual[] = [
           'Se marcar o 13º junto, informe a 1ª parcela em Trabalho › 13º salário quando ela vier, para a 2ª ser recalculada.'],
         erros: ['“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.'],
         abrir: [{ rotulo: 'Abrir as Férias', rota: '/trabalho/ferias' }]
+      },
+      {
+        id: 'fgts',
+        titulo: 'FGTS',
+        paraQueServe: 'Acompanhar o FGTS do emprego: quanto entra por mês, o saldo e os saques.',
+        passos: [
+          'Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês (ou do salário, sem holerite), mais 8% do 13º em dezembro e das férias (com o 1/3) no mês em que começam, corrigido a 3% ao ano.',
+          'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. Diferença grande pode ser depósito que a empresa não fez.',
+          'Saque: escolha o motivo (rescisão, saque-aniversário, compra de imóvel ou outro). Distribuição de resultados: o valor que a Caixa creditou.',
+          '“Os últimos meses” mostra a correção, o depósito, os saques e o saldo de cada mês; “conferido” marca o mês em que o saldo é o do app.',
+          '“Excluir” apaga um lançamento, e o saldo é recalculado.'
+        ],
+        dicas: [
+          'O FGTS não entra no patrimônio do Painel nem nos relatórios: é seu, mas só sai em casos da lei. O saque entra pela transação na conta, como qualquer crédito.',
+          'A correção oficial é a TR mais 3% ao ano; a TR fica de fora da estimativa. Por isso, confira com o app de vez em quando.',
+          'Com o saque-aniversário, se você for demitido sem justa causa, sai só a multa de 40%: o saldo fica bloqueado.'
+        ],
+        erros: ['“Estágio e PJ não têm FGTS”: o emprego cadastrado não é CLT.'],
+        abrir: [{ rotulo: 'Abrir o FGTS', rota: '/trabalho/fgts' }]
       }
     ]
   },
@@ -1550,5 +1569,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
   'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
   'trabalho/ferias': { capitulo: 'trabalho', secao: 'ferias' },
+  'trabalho/fgts': { capitulo: 'trabalho', secao: 'fgts' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };
