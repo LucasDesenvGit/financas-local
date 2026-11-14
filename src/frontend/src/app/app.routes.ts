@@ -86,6 +86,19 @@ export const rotas: Routes = [
         title: 'Configurações · Finanças Local'
       },
       {
+        // #10 (ADR 0064): o módulo Notícias, dentro do portão (desligado, mostra o aviso e a tela nem é criada).
+        path: 'noticias',
+        loadComponent: () => import('./compartilhado/modulos/portao-modulo.component').then((m) => m.PortaoModuloComponent),
+        data: { modulo: 'noticias' },
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./paginas/noticias/noticias.component').then((m) => m.NoticiasComponent),
+            title: 'Notícias · Finanças Local'
+          }
+        ]
+      },
+      {
         path: 'manual',
         loadComponent: () => import('./paginas/manual/manual.component').then((m) => m.ManualComponent),
         title: 'Manual · Finanças Local'

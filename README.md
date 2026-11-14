@@ -21,6 +21,7 @@ flowchart LR
     cot["Yahoo Finance e brapi<br/>query1.finance.yahoo.com<br/>brapi.dev"]
     mb["Mercado Bitcoin<br/>api.mercadobitcoin.net"]
     gh["GitHub<br/>api.github.com<br/>github.com"]
+    not["Notícias (só com o módulo ligado)<br/>g1.globo.com, feeds.bbci.co.uk<br/>www.tabnews.com.br"]
     cel(["Seu celular<br/>no Wi-Fi de casa"])
 
     voce -->|"HTTPS, usuário e senha"| site
@@ -30,6 +31,7 @@ flowchart LR
     site -->|"código do ativo"| cot
     site -->|"pares fixos: BTC, ETH, SOL, USDT"| mb
     ger -->|"pedido da página de versões"| gh
+    site -.->|"só o pedido do feed"| not
 ```
 
 Tudo o que sai vai por HTTPS; valores, quantidades e dados pessoais não saem. Detalhes em [Segurança](#segurança).

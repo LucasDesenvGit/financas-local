@@ -4,7 +4,20 @@
     "requisicao": "GET /api/modulos",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
-    "corpo": []
+    "corpo": [
+      {
+        "acessaInternet": true,
+        "descricao": "As notícias do dia do G1, da BBC News Brasil e do TabNews: o título, a fonte e o link, que abre no site da notícia. Busca as fontes a cada 45 minutos.",
+        "destinos": [
+          "g1.globo.com",
+          "feeds.bbci.co.uk",
+          "www.tabnews.com.br"
+        ],
+        "id": "noticias",
+        "ligado": false,
+        "nome": "Notícias"
+      }
+    ]
   },
   {
     "nome": "ligar um módulo que não existe",

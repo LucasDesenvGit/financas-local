@@ -2,6 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.14.0] — 2026-11-14 · desenvolvimento
+
+### Funcionalidades
+- **Notícias, um módulo** (#10, ADR 0067, Proposta). Ligado em Configurações › Módulos (vem desligado, porque acessa a internet), aparece "Notícias" no menu:
+  - as notícias do dia do G1, da BBC News Brasil e do TabNews: o título (abre no site da notícia, em outra aba), a fonte e quando saiu, com o filtro por fonte;
+  - o site busca as fontes a cada 45 minutos e guarda as 20 mais novas de cada uma; "Atualizar agora" busca na hora (no máximo a cada 5 minutos);
+  - a situação de cada fonte: uma que falha mostra o aviso e não derruba as outras.
+  - Saídas de rede novas, só com o módulo ligado: `g1.globo.com`, `feeds.bbci.co.uk` e `www.tabnews.com.br`, só com o pedido do feed. Banco: as tabelas `Noticia` e `NoticiaFonte`.
+
 ## [3.13.0] — 2026-11-13 · desenvolvimento
 
 ### Funcionalidades

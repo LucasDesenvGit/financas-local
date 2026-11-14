@@ -1,0 +1,162 @@
+[
+  {
+    "nome": "desligado: a lista responde 409",
+    "requisicao": "GET /api/noticias",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O módulo Notícias está desligado. Ligue em Configurações › Módulos."
+    }
+  },
+  {
+    "nome": "desligado: atualizar responde 409, sem buscar nada",
+    "requisicao": "POST /api/noticias/atualizar",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O módulo Notícias está desligado. Ligue em Configurações › Módulos."
+    }
+  },
+  {
+    "nome": "o módulo no catálogo, com os destinos",
+    "requisicao": "GET /api/modulos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "acessaInternet": true,
+        "descricao": "As notícias do dia do G1, da BBC News Brasil e do TabNews: o título, a fonte e o link, que abre no site da notícia. Busca as fontes a cada 45 minutos.",
+        "destinos": [
+          "g1.globo.com",
+          "feeds.bbci.co.uk",
+          "www.tabnews.com.br"
+        ],
+        "id": "noticias",
+        "ligado": false,
+        "nome": "Notícias"
+      }
+    ]
+  },
+  {
+    "nome": "ligar as Notícias",
+    "requisicao": "PUT /api/modulos/noticias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "acessaInternet": true,
+      "descricao": "As notícias do dia do G1, da BBC News Brasil e do TabNews: o título, a fonte e o link, que abre no site da notícia. Busca as fontes a cada 45 minutos.",
+      "destinos": [
+        "g1.globo.com",
+        "feeds.bbci.co.uk",
+        "www.tabnews.com.br"
+      ],
+      "id": "noticias",
+      "ligado": true,
+      "nome": "Notícias"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ModuloLigado (noticias)",
+            "Id": 49,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Modulos.noticias.Ligado",
+            "Protegido": 0,
+            "Valor": "true"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "a lista, ainda sem notícia",
+    "requisicao": "GET /api/noticias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "fontes": [
+        {
+          "atualizadoEm": null,
+          "erro": null,
+          "id": "g1",
+          "nome": "G1"
+        },
+        {
+          "atualizadoEm": null,
+          "erro": null,
+          "id": "bbc",
+          "nome": "BBC News Brasil"
+        },
+        {
+          "atualizadoEm": null,
+          "erro": null,
+          "id": "tabnews",
+          "nome": "TabNews"
+        }
+      ],
+      "noticias": []
+    }
+  },
+  {
+    "nome": "desligar de novo",
+    "requisicao": "PUT /api/modulos/noticias",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "acessaInternet": true,
+      "descricao": "As notícias do dia do G1, da BBC News Brasil e do TabNews: o título, a fonte e o link, que abre no site da notícia. Busca as fontes a cada 45 minutos.",
+      "destinos": [
+        "g1.globo.com",
+        "feeds.bbci.co.uk",
+        "www.tabnews.com.br"
+      ],
+      "id": "noticias",
+      "ligado": false,
+      "nome": "Notícias"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ModuloDesligado (noticias)",
+            "Id": 50,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Modulos.noticias.Ligado"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "true",
+                "depois": "false"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+]

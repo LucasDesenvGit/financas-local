@@ -1255,6 +1255,30 @@ export const MANUAL: CapituloManual[] = [
     ]
   },
   {
+    id: 'noticias',
+    titulo: 'Notícias (módulo)',
+    resumo: 'As notícias do dia do G1, da BBC News Brasil e do TabNews. Vem desligado, porque acessa a internet.',
+    secoes: [
+      {
+        id: 'noticias',
+        titulo: 'Notícias',
+        paraQueServe: 'Ver as principais notícias do dia no mesmo lugar das finanças.',
+        passos: [
+          'Ligue o módulo em Configurações › Módulos (ou pelo botão “Ligar Notícias” no endereço da tela). Ligado, ele acessa g1.globo.com, feeds.bbci.co.uk e www.tabnews.com.br; desligado, nada sai do computador.',
+          'Com o módulo ligado, o site busca as notícias a cada 45 minutos e guarda as 20 mais novas de cada fonte. A tela “Notícias” aparece no menu.',
+          'Cada notícia mostra o título, a fonte e quando saiu. Clique no título para ler no site da notícia, em outra aba.',
+          'Os botões no topo filtram por fonte. Embaixo deles, a situação de cada fonte: quando foi atualizada e se a última tentativa falhou (as outras continuam aparecendo).',
+          '“Atualizar agora” busca na hora, no máximo uma vez a cada 5 minutos.'
+        ],
+        dicas: ['Só o pedido de cada fonte sai do computador, sem nada seu. As fontes ficam sabendo o endereço de internet da sua casa, como em qualquer site que você abre.',
+          'As imagens das notícias não aparecem: o site não carrega nada de fora (é a regra de segurança dele).'],
+        erros: ['“As notícias foram atualizadas há pouco”: espere 5 minutos para o “Atualizar agora”.',
+          'Uma fonte com “a última tentativa falhou”: o site dela não respondeu ou mudou o formato. Os detalhes ficam em Configurações › Erros.'],
+        abrir: [{ rotulo: 'Abrir as Notícias', rota: '/noticias' }, { rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
+      }
+    ]
+  },
+  {
     id: 'configuracoes',
     titulo: 'Configurações',
     resumo: 'Parametrização, módulos, aparência, segurança e os erros do sistema.',
@@ -1454,5 +1478,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   projecao: { capitulo: 'relatorios', secao: 'projecao' },
   categorias: { capitulo: 'categorias' },
   configuracoes: { capitulo: 'configuracoes' },
+  noticias: { capitulo: 'noticias' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

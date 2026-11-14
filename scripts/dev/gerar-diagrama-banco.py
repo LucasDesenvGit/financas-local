@@ -23,6 +23,7 @@ ASSUNTOS = {
                       "Emprestimo", "PagamentoEmprestimo", "ReservaConferencia"],
     "Índices e cotações": ["TaxaSelicDiaria", "IndiceMensal", "CotacaoMoeda", "CotacaoCripto"],
     "Sistema": ["ErroSistema"],
+    "Notícias (módulo)": ["Noticia", "NoticiaFonte"],
 }
 
 

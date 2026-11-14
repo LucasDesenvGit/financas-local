@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 09/11/2026, revisado no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
+> **Data:** 14/11/2026, revisado no módulo Notícias (#10, ADR 0067): três saídas de rede novas (G1, BBC News Brasil e TabNews), só com o módulo ligado, com o link das notícias filtrado pelo domínio da fonte. Antes, 09/11/2026, no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
@@ -46,12 +46,14 @@ flowchart TB
     subgraph internet["Serviços de fora"]
         pluggy["Pluggy"]
         cotacoes["Banco Central, Yahoo,<br/>brapi, Mercado Bitcoin"]
+        noticias["G1, BBC e TabNews<br/>(módulo Notícias ligado)"]
         github["GitHub"]
     end
 
     navegador -- "1. HTTPS, cookie e CSRF" --> api
     api -- "3. HTTPS" --> pluggy
     api -- "3. HTTPS" --> cotacoes
+    api -.->|"3. HTTPS, só com o módulo ligado"| noticias
     gerenciador -- "4. HTTPS" --> github
     api -- "5. arquivo" --> banco
     api -- "5. arquivo" --> chaves
@@ -85,12 +87,12 @@ Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Um servidor se passa pela Pluggy ou pela cotação | HTTPS, com host fixo no código. A URL da Pluggy é recusada se não for HTTPS | — |
+| **Falsificação** | Um servidor se passa pela Pluggy, pela cotação ou por uma fonte de notícias | HTTPS, com host fixo no código. A URL da Pluggy é recusada se não for HTTPS. As notícias só seguem redirecionamento para o mesmo host (até 2) | — |
 | **Adulteração** | Resposta alterada no caminho | HTTPS. A resposta é lida em tipos, com validação | — |
 | **Repúdio** | Não saber o que foi trazido | `SincronizacaoLog` | — |
-| **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo e à brapi (#68, complemento) |
-| **Negação de serviço** | Um serviço de fora trava ou cai | Tempo limite em cada cliente, e a falha de cotação não para o resto | — |
-| **Aumento de privilégio** | Texto de fora vira código | O Angular escapa o texto, não há `innerHTML`, e as consultas são parametrizadas | — |
+| **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy. As fontes de notícias recebem só o pedido do feed, e só com o módulo ligado (desligado por padrão, ADR 0067) | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo e à brapi (#68, complemento) |
+| **Negação de serviço** | Um serviço de fora trava ou cai | Tempo limite em cada cliente, e a falha de cotação não para o resto. As notícias: 15 s e 2 MB por fonte, e uma fonte que falha não derruba as outras | — |
+| **Aumento de privilégio** | Texto de fora vira código | O Angular escapa o texto, não há `innerHTML`, e as consultas são parametrizadas. O link de uma notícia só é guardado se for `https://` no domínio da fonte (barra `javascript:`), e abre fora do site com `noopener noreferrer` (#10) | — |
 
 ### 4. Gerenciador ↔ GitHub
 

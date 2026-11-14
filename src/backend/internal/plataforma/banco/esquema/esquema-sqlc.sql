@@ -380,3 +380,19 @@ CREATE TABLE "MetaAporte" (
     "Valor" TEXT NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "Noticia" (
+    "Id" INTEGER NOT NULL,
+    "Fonte" TEXT NOT NULL,
+    "Titulo" TEXT NOT NULL,
+    "Link" TEXT NOT NULL,
+    "PublicadaEm" TEXT,
+    "AtualizadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "NoticiaFonte" (
+    "Fonte" TEXT NOT NULL,
+    "AtualizadoEm" TEXT,
+    "TentadaEm" TEXT NOT NULL,
+    "Erro" TEXT
+);
