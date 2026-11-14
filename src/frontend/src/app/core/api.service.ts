@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, CalculoRescisao, ComparacaoRescisao, TipoRescisao, AvisoRescisao, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -418,6 +418,22 @@ export class ApiService {
   }
   desligarRecebimento(holeriteId: number, id: number): Observable<RecebimentosHolerite> {
     return this.http.delete<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos/${id}`);
+  }
+  /** #215: a rescisão (saida: "AAAA-MM-DD"). */
+  simularRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string): Observable<CalculoRescisao> {
+    return this.http.get<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/simular`, { params: this.params({ tipo, aviso, saida }) });
+  }
+  compararRescisao(empregoId: number, saida: string): Observable<ComparacaoRescisao[]> {
+    return this.http.get<ComparacaoRescisao[]>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/comparar`, { params: this.params({ saida }) });
+  }
+  rescisaoRegistrada(empregoId: number): Observable<{ registrada: CalculoRescisao | null }> {
+    return this.http.get<{ registrada: CalculoRescisao | null }>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);
+  }
+  registrarRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string): Observable<CalculoRescisao> {
+    return this.http.post<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`, { tipo, aviso, saida });
+  }
+  desfazerRescisao(empregoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);
   }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 

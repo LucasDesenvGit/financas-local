@@ -435,6 +435,15 @@ type RegraDescricao struct {
 	CriadoEm            string
 }
 
+type Rescisao struct {
+	EmpregoId int64
+	Data      string
+	Tipo      int64
+	Aviso     int64
+	Calculo   string
+	CriadoEm  string
+}
+
 type ReservaConferencium struct {
 	Id              int64
 	ContaId         int64

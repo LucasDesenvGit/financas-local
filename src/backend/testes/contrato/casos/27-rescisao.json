@@ -1,0 +1,44 @@
+{
+  "descricao": "Rescisão do módulo Trabalho (#215, ADR 0065). Usa o emprego 1 do 21-trabalho (admissão em 11/03/2024; 6000 de junho de 2026 em diante), o holerite do 22, o 13º do 23, as férias do 24 e o FGTS do 25. Simula e compara; o registro é desfeito no fim, para não mudar os arquivos seguintes. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "simular a dispensa sem justa causa",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/rescisao/simular?tipo=1&aviso=2&saida=2026-12-15"
+    },
+    {
+      "nome": "comparar os tipos",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/rescisao/comparar?saida=2026-12-15"
+    },
+    {
+      "nome": "tipo desconhecido",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/rescisao/simular?tipo=9&aviso=2&saida=2026-12-15"
+    },
+    {
+      "nome": "sem rescisão registrada",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/rescisao"
+    },
+    {
+      "nome": "registrar o acordo",
+      "comentario": "Fecha o emprego em 15/12/2026 e guarda a conta.",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/rescisao",
+      "corpo": { "tipo": 3, "aviso": 2, "saida": "2026-12-15" }
+    },
+    {
+      "nome": "registrar de novo",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/rescisao",
+      "corpo": { "tipo": 1, "aviso": 2, "saida": "2026-12-15" }
+    },
+    {
+      "nome": "desfazer o registro",
+      "comentario": "O emprego volta a ficar aberto.",
+      "metodo": "DELETE",
+      "caminho": "/api/trabalho/empregos/1/rescisao"
+    }
+  ]
+}

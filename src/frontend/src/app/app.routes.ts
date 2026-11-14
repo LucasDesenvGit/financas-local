@@ -116,6 +116,11 @@ export const rotas: Routes = [
             path: 'fgts',
             loadComponent: () => import('./paginas/trabalho/fgts.component').then((m) => m.TrabalhoFgtsComponent),
             title: 'FGTS · Trabalho · Finanças Local'
+          },
+          {
+            path: 'rescisao',
+            loadComponent: () => import('./paginas/trabalho/rescisao.component').then((m) => m.TrabalhoRescisaoComponent),
+            title: 'Rescisão · Trabalho · Finanças Local'
           }
         ]
       },

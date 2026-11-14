@@ -851,3 +851,20 @@ CREATE TABLE IF NOT EXISTS HoleriteRecebimento
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRecebimento_Holerite_Transacao ON HoleriteRecebimento (HoleriteId, TransacaoId);
 CREATE INDEX IF NOT EXISTS IX_HoleriteRecebimento_Transacao ON HoleriteRecebimento (TransacaoId);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: a rescisão registrada (#215, ADR 0065)                    */
+/* ------------------------------------------------------------------ */
+/* A simulação não é guardada; a rescisão real, sim: uma por emprego, com o tipo (1 sem justa causa, 2 pedido de
+   demissão, 3 acordo, 4 justa causa, 5 fim do contrato de experiência), o aviso (1 trabalhado, 2 indenizado, 0 sem) e o
+   cálculo em JSON, congelado como o holerite fechado. Registrar põe a data de saída no emprego. */
+CREATE TABLE IF NOT EXISTS Rescisao
+(
+    EmpregoId INTEGER NOT NULL CONSTRAINT PK_Rescisao PRIMARY KEY,
+    Data      TEXT    NOT NULL,
+    Tipo      INTEGER NOT NULL,
+    Aviso     INTEGER NOT NULL,
+    Calculo   TEXT    NOT NULL,
+    CriadoEm  TEXT    NOT NULL,
+    CONSTRAINT FK_Rescisao_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);

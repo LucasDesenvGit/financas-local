@@ -15,6 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/fgts"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/recebimento"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/rescisao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 )
@@ -30,6 +31,7 @@ type Modulo struct {
 	ferias   *ferias.Servico
 	fgts     *fgts.Servico
 	receb    *recebimento.Servico
+	rescisao *rescisao.Servico
 }
 
 // Novo monta o módulo com o banco, o relógio e o log do site.
@@ -38,9 +40,10 @@ func Novo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Modulo {
 	holerites := holerite.NovoServico(db, empregos, r, log)
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, r, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, r, log)
-	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimo, ferias: asFerias,
-		fgts:  fgts.NovoServico(db, empregos, holerites, decimo, asFerias, r, log),
-		receb: recebimento.NovoServico(db, empregos, holerites, r, log)}
+	oFgts := fgts.NovoServico(db, empregos, holerites, decimo, asFerias, r, log)
+	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimo, ferias: asFerias, fgts: oFgts,
+		receb:    recebimento.NovoServico(db, empregos, holerites, r, log),
+		rescisao: rescisao.NovoServico(db, empregos, holerites, decimo, asFerias, oFgts, r, log)}
 }
 
 // Info é o que Configurações › Módulos mostra.
@@ -48,7 +51,7 @@ func (m *Modulo) Info() modulos.Info {
 	return modulos.Info{
 		ID:        ID,
 		Nome:      "Trabalho",
-		Descricao: "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º, as férias e o FGTS, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+		Descricao: "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º, as férias, o FGTS e a rescisão, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
 	}
 }
 
@@ -60,6 +63,7 @@ func (m *Modulo) Registrar(r *modulos.Rotas) {
 	ferias.Registrar(r, m.ferias)
 	fgts.Registrar(r, m.fgts)
 	recebimento.Registrar(r, m.receb)
+	rescisao.RegistrarRotas(r, m.rescisao)
 }
 
 // Tarefas: o Trabalho não tem tarefa em segundo plano.

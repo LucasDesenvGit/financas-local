@@ -48,6 +48,14 @@ O Trabalho é o primeiro módulo do site (ADR 0064): mora em `internal/modulos/t
 
 A receita dos relatórios continua vindo **só das transações** (o crédito do salário na conta). O emprego, o holerite, as férias, o 13º e a rescisão são o **registro e a explicação** desse dinheiro, nunca uma segunda receita. Nenhuma tabela do Trabalho entra na base dos relatórios (`internal/analises/relatorios`). Quando não há transação (conta não conectada), a pessoa lança como sempre. A ligação do holerite com a transação é a #212.
 
+### A rescisão (#215)
+
+- A simulação não é guardada: junta o salário do mês da saída, a média das horas extras dos 12 meses antes, as férias (os períodos completos com os dias que sobram, em dobro se o prazo passou; os avos do período em curso), o 13º (os avos do ano e a 1ª parcela que já veio) e o FGTS estimado (ADR 0066).
+- O aviso indenizado conta como tempo de serviço: a **data projetada** vale para os avos do 13º e das férias. No acordo, metade dos dias (art. 484-A).
+- Por tipo: dispensa sem justa causa (tudo, multa de 40%, saque de 100%, seguro com 12 meses); pedido de demissão (sem aviso pago, e sem cumprir desconta 30 dias; sem multa e sem saque); acordo (aviso pela metade, multa de 20%, saque de 80%); justa causa (só o saldo de salário e as férias vencidas); fim da experiência (sem aviso e sem multa, saque de 100%).
+- INSS e IRRF só sobre o saldo de salário e, separados, sobre o 13º; as férias indenizadas e o aviso indenizado não têm.
+- **Registrar** guarda a conta (JSON, como o holerite fechado) e põe a data de saída no emprego; **desfazer** apaga o registro e reabre.
+
 ### O recebimento (#212)
 
 - `HoleriteRecebimento` liga a transação (o crédito na conta) ao holerite, com a parte do valor: um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite. Sem saber o valor, a ligação leva o que está livre no crédito, até o que falta do líquido.

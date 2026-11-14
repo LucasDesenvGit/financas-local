@@ -204,6 +204,7 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Abono pecuniário | `ferias.Calcular` | A venda de até 1/3 dos dias de férias; o abono e o 1/3 dele não têm INSS nem IR | — |
 | FGTS estimado | `fgts.Estimar` | 8% da base de cada mês (e do 13º e das férias), corrigido a 3% ao ano, recomeçando da última conferência com o app; fora do patrimônio ([ADR 0066](../adr/0066-fgts-fora-do-patrimonio-estimado-no-trabalho.md)) | — |
 | Recebimento do salário | `HoleriteRecebimento`, `recebimento.Pontuar` | A transação que pagou o holerite; só explica a receita, que continua sendo a transação, uma vez só ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)) | — |
+| Aviso prévio proporcional | `rescisao.DiasDeAviso`, `rescisao.AvisoPago` | 30 dias mais 3 por ano de casa, até 90 (Lei 12.506/2011); indenizado, conta como tempo de serviço (a data projetada) | — |
 | DSR | `holerite.Calcular`, `DiasDoDsr` | Descanso semanal remunerado sobre as horas extras e o adicional noturno: o total ÷ os dias úteis × os domingos e feriados | — |
 | Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
 | Dívida total | `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |
