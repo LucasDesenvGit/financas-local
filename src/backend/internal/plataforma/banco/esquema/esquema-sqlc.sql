@@ -467,3 +467,20 @@ CREATE TABLE "DecimoTerceiro" (
     "PrimeiraParcelaValor" TEXT,
     "AtualizadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "FeriasFaltas" (
+    "EmpregoId" INTEGER NOT NULL,
+    "PeriodoInicio" TEXT NOT NULL,
+    "Faltas" INTEGER NOT NULL
+);
+
+CREATE TABLE "FeriasAgendamento" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "PeriodoInicio" TEXT NOT NULL,
+    "Inicio" TEXT NOT NULL,
+    "Dias" INTEGER NOT NULL,
+    "DiasVendidos" INTEGER NOT NULL,
+    "AdiantarDecimo" INTEGER NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);

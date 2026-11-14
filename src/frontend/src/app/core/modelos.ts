@@ -919,3 +919,19 @@ export interface DecimoTerceiro {
   /** Saiu no ano: o 13º proporcional entra na rescisão. */
   saida: string | null;
 }
+
+/** #213: as férias. */
+export interface CalculoFerias {
+  inicio: string; retorno: string; pagamento: string; dias: number; diasVendidos: number; remuneracao: number;
+  mediaVariaveis: number; ferias: number; tercoFerias: number; abono: number; tercoAbono: number;
+  inss: CalculoInss; irrf: CalculoIrrf; adiantamentoDecimo: number; liquido: number;
+}
+export interface AgendamentoFerias {
+  id: number; inicio: string; dias: number; diasVendidos: number; adiantarDecimo: boolean; calculo: CalculoFerias | null;
+}
+export interface PeriodoFerias {
+  inicio: string; fim: string; fimConcessivo: string; completo: boolean; faltas: number; diasDireito: number;
+  diasAgendados: number; diasVendidos: number; saldo: number; vencida: boolean; vencendo: boolean;
+  agendamentos: AgendamentoFerias[];
+}
+export interface AgendarFerias { periodoInicio: string; inicio: string; dias: number; diasVendidos: number; adiantarDecimo: boolean; }

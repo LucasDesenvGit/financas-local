@@ -68,6 +68,13 @@ Como ficou na #211:
 - 2ª parcela: o total menos o INSS (sobre o total), o IRRF exclusivo na fonte e a 1ª. *Inferido:* o IR do 13º usa só as deduções da lei (INSS e dependentes), sem o desconto simplificado; a redução da Lei 15.270/2025 vale para ele (art. 3º-A, § 3º).
 - Quem saiu no ano recebe o proporcional na rescisão (#215): a tela avisa.
 
+### Férias (#213)
+
+- Os períodos aquisitivos saem da admissão (de 12 em 12 meses) e não são guardados; o concessivo são os 12 meses seguintes. Guardados: as faltas sem justificativa de cada período (`FeriasFaltas`, que dão os dias de direito do art. 130 da CLT) e as frações agendadas (`FeriasAgendamento`).
+- Regras conferidas ao agendar: as férias de um período começam depois que ele termina; até 3 frações, uma de 14 dias ou mais e as outras de 5 ou mais (art. 134, § 1º); venda de até 1/3 (art. 143); o total até o direito. *Ficou de fora:* não começar nos 2 dias antes de feriado ou do descanso (art. 134, § 3º), que pede o calendário de feriados.
+- A conta: a remuneração é o salário do mês do início mais a média das horas extras dos 12 meses antes (*inferido:* soma ÷ 12); férias + 1/3 com INSS e IRRF (pelas regras do salário, com o desconto simplificado e a redução da Lei 15.270/2025, *inferido*); o abono pecuniário + 1/3 sem INSS nem IR; pagamento até 2 dias antes (art. 145); a 1ª parcela do 13º junto, se pedida (metade da remuneração).
+- Vencida (o concessivo passou com saldo) e vencendo (faltam 60 dias ou menos) aparecem na tela.
+
 ## Consequências
 
 - **Positivas:**

@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -383,6 +383,23 @@ export class ApiService {
   definirPrimeiraParcela(empregoId: number, ano: number, em: string | null, valor: number | null): Observable<DecimoTerceiro> {
     return this.http.put<DecimoTerceiro>(`${this.base}/trabalho/empregos/${empregoId}/decimo-terceiro/${ano}`,
       { primeiraParcelaEm: em, primeiraParcelaValor: valor });
+  }
+  /** #213: as férias. */
+  ferias(empregoId: number): Observable<PeriodoFerias[]> {
+    return this.http.get<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias`);
+  }
+  agendarFerias(empregoId: number, a: AgendarFerias): Observable<PeriodoFerias[]> {
+    return this.http.post<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias`, a);
+  }
+  desmarcarFerias(empregoId: number, id: number): Observable<PeriodoFerias[]> {
+    return this.http.delete<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias/${id}`);
+  }
+  definirFaltas(empregoId: number, periodoInicio: string, faltas: number): Observable<PeriodoFerias[]> {
+    return this.http.put<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias/faltas`, { periodoInicio, faltas });
+  }
+  simularFerias(empregoId: number, inicio: string, dias: number, vendidos: number, adiantar: boolean): Observable<CalculoFerias> {
+    return this.http.get<CalculoFerias>(`${this.base}/trabalho/empregos/${empregoId}/ferias/simular`,
+      { params: this.params({ inicio, dias, vendidos, adiantar }) });
   }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 

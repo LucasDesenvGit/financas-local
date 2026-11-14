@@ -11,6 +11,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/decimoterceiro"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
@@ -24,13 +25,15 @@ type Modulo struct {
 	emprego  *emprego.Servico
 	holerite *holerite.Servico
 	decimo   *decimoterceiro.Servico
+	ferias   *ferias.Servico
 }
 
 // Novo monta o módulo com o banco, o relógio e o log do site.
 func Novo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Modulo {
 	empregos := emprego.NovoServico(db, r, log)
 	holerites := holerite.NovoServico(db, empregos, r, log)
-	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimoterceiro.NovoServico(db, empregos, holerites, r, log)}
+	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimoterceiro.NovoServico(db, empregos, holerites, r, log),
+		ferias: ferias.NovoServico(db, empregos, holerites, r, log)}
 }
 
 // Info é o que Configurações › Módulos mostra.
@@ -38,7 +41,7 @@ func (m *Modulo) Info() modulos.Info {
 	return modulos.Info{
 		ID:        ID,
 		Nome:      "Trabalho",
-		Descricao: "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais) e o 13º, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+		Descricao: "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º e as férias, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
 	}
 }
 
@@ -47,6 +50,7 @@ func (m *Modulo) Registrar(r *modulos.Rotas) {
 	emprego.Registrar(r, m.emprego)
 	holerite.Registrar(r, m.holerite)
 	decimoterceiro.Registrar(r, m.decimo)
+	ferias.Registrar(r, m.ferias)
 }
 
 // Tarefas: o Trabalho não tem tarefa em segundo plano.

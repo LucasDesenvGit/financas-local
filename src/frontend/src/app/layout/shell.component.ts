@@ -75,7 +75,8 @@ export const MENU: EntradaMenu[] = [
     id: 'trabalho', rotulo: 'Trabalho', icone: Icones.grupoTrabalho, telas: [
       { rota: '/trabalho/salario', rotulo: 'Salário', icone: Icones.trabalhoSalario, modulo: 'trabalho' },
       { rota: '/trabalho/holerites', rotulo: 'Holerites', icone: Icones.trabalhoHolerites, modulo: 'trabalho' },
-      { rota: '/trabalho/decimo-terceiro', rotulo: '13º salário', icone: Icones.trabalhoDecimo, modulo: 'trabalho' }
+      { rota: '/trabalho/decimo-terceiro', rotulo: '13º salário', icone: Icones.trabalhoDecimo, modulo: 'trabalho' },
+      { rota: '/trabalho/ferias', rotulo: 'Férias', icone: Icones.trabalhoFerias, modulo: 'trabalho' }
     ]
   }
 ];

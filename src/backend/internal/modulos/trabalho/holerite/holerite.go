@@ -452,7 +452,12 @@ func (s *Servico) Excluir(ctx context.Context, id int64) error {
 // quantos meses havia holerite. É a base da média do 13º e das férias (#213, #214). Holerite sem cálculo (sem tabela
 // do mês) não entra.
 func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int) (soma tipos.Decimal, meses int, err error) {
-	inicio, fim := tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1)
+	return s.VariaveisEntre(ctx, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1))
+}
+
+// VariaveisEntre é o VariaveisDoAno de um intervalo de meses: de inicio (incluído) até fim (fora). As férias usam os 12
+// meses antes do início delas (#213).
+func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, fim tipos.Data) (soma tipos.Decimal, meses int, err error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" >= ? AND "Mes" < ?
 		ORDER BY "Mes"`, empregoId, inicio, fim)
 	if err != nil {

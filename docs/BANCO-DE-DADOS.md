@@ -238,6 +238,14 @@ erDiagram
         INTEGER EmpregoId PK,FK
         INTEGER Ano PK
     }
+    FeriasFaltas {
+        INTEGER EmpregoId PK,FK
+        TEXT PeriodoInicio PK
+    }
+    FeriasAgendamento {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
     Conta |o--o{ Emprego : "ContaId: SET NULL"
     Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
     InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
@@ -245,6 +253,8 @@ erDiagram
     Emprego ||--o{ Holerite : "EmpregoId: CASCADE"
     Holerite ||--o{ HoleriteLancamento : "HoleriteId: CASCADE"
     Emprego ||--o{ DecimoTerceiro : "EmpregoId: CASCADE"
+    Emprego ||--o{ FeriasFaltas : "EmpregoId: CASCADE"
+    Emprego ||--o{ FeriasAgendamento : "EmpregoId: CASCADE"
 ```
 
 <!-- diagramas-do-banco: fim -->

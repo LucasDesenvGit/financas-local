@@ -212,6 +212,23 @@ type FaturaCartao struct {
 	AtualizadoEm   string
 }
 
+type FeriasAgendamento struct {
+	Id             int64
+	EmpregoId      int64
+	PeriodoInicio  string
+	Inicio         string
+	Dias           int64
+	DiasVendidos   int64
+	AdiantarDecimo int64
+	CriadoEm       string
+}
+
+type FeriasFalta struct {
+	EmpregoId     int64
+	PeriodoInicio string
+	Faltas        int64
+}
+
 type HistoricoInvestimento struct {
 	Id                 int64
 	PluggyInvestmentId string
