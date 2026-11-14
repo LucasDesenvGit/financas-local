@@ -216,6 +216,32 @@ type HistoricoInvestimento struct {
 	AtualizadoEm       string
 }
 
+type Holerite struct {
+	Id           int64
+	EmpregoId    int64
+	Mes          string
+	Situacao     int64
+	DiasUteis    int64
+	DiasDescanso int64
+	Calculo      *string
+	FechadoEm    *string
+	CriadoEm     string
+}
+
+type HoleriteLancamento struct {
+	Id         int64
+	HoleriteId int64
+	Tipo       int64
+	Descricao  string
+	Quantidade *string
+	Percentual *string
+	Valor      *string
+	IncideInss int64
+	IncideIrrf int64
+	DeduzIrrf  int64
+	Recorrente int64
+}
+
 type IndiceMensal struct {
 	Codigo     string
 	Mes        string

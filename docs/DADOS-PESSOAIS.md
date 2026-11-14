@@ -91,11 +91,11 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 
 | | |
 |---|---|
-| **O que é** | `Emprego`: empregador, CNPJ, admissão e saída, regime, jornada, dependentes para o IR e a conta onde o salário cai. `SalarioVigencia`: o salário bruto de cada período ([ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). As tabelas do INSS e do IRRF (`InssVigencia`, `InssFaixa`, `IrrfVigencia`, `IrrfFaixa`) são públicas, não pessoais |
-| **De onde vem** | De você, em **Trabalho › Salário**, com o módulo Trabalho ligado (Configurações › Módulos) |
+| **O que é** | `Emprego`: empregador, CNPJ, admissão e saída, regime, jornada, dependentes para o IR e a conta onde o salário cai. `SalarioVigencia`: o salário bruto de cada período. `Holerite` e `HoleriteLancamento`: o holerite de cada mês (horas extras, bônus, descontos como plano de saúde e pensão alimentícia) e, fechado, o cálculo guardado ([ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). As tabelas do INSS e do IRRF (`InssVigencia`, `InssFaixa`, `IrrfVigencia`, `IrrfFaixa`) são públicas, não pessoais |
+| **De onde vem** | De você, em **Trabalho › Salário** e **Trabalho › Holerites**, com o módulo Trabalho ligado (Configurações › Módulos) |
 | **Sai do computador?** | Não. O módulo não acessa a internet |
 | **Por quanto tempo** | Até você apagar. Desligar o módulo esconde a tela, mas guarda os dados |
-| **Como apagar** | Em **Trabalho › Salário**, **Editar emprego** › **Excluir emprego** apaga o emprego e o histórico de salários dele; **Apagar** tira um salário do histórico |
+| **Como apagar** | Em **Trabalho › Salário**, **Editar emprego** › **Excluir emprego** apaga o emprego, o histórico de salários e os holerites dele; **Apagar** tira um salário do histórico. Em **Trabalho › Holerites**, **Excluir** apaga o holerite aberto (o fechado, reabra antes) |
 
 ### Cotações, índices e categorias públicas
 

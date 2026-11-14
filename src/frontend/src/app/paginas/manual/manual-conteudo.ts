@@ -1257,14 +1257,14 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'trabalho',
     titulo: 'Trabalho (módulo)',
-    resumo: 'O salário pelo bruto, com o INSS e o IRRF estimados e o histórico de aumentos. Vem desligado.',
+    resumo: 'O salário pelo bruto e o holerite de cada mês, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
     secoes: [
       {
         id: 'ligar-trabalho',
         titulo: 'Ligar o Trabalho',
         paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
         passos: [
-          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” aparece no menu na hora.',
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário e Holerites) aparece no menu na hora.',
           'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
           'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
         ],
@@ -1289,6 +1289,25 @@ export const MANUAL: CapituloManual[] = [
         ],
         erros: ['“Ainda não há tabela do INSS ou do IRRF para esse mês”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026. Para meses antes disso, não há estimativa.'],
         abrir: [{ rotulo: 'Abrir o Salário', rota: '/trabalho/salario' }]
+      },
+      {
+        id: 'holerites',
+        titulo: 'Holerites',
+        paraQueServe: 'Montar o holerite de cada mês pelo salário bruto, com as horas extras e os descontos, e guardar o histórico.',
+        passos: [
+          'Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho › Salário, proporcional se você entrou ou saiu no meio do mês (o mês tem 30 dias, como na folha).',
+          'Os lançamentos que você marcou “Repetir nos próximos meses” no último holerite (plano de saúde, pensão) já vêm no mês novo.',
+          '“+ Lançamento” acrescenta: horas extras (as horas e o percentual, 50% ou 100%), adicional noturno (as horas, 20% se não disser), outro provento (bônus, PLR, comissão, ajuda de custo: marque se tem INSS e IRRF), vale-transporte (o custo do mês; o desconto fica em até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outro desconto (marque se deduz do IR).',
+          '“Dias úteis” e “Domingos e feriados” vêm do calendário (segunda a sábado, e os domingos): acerte os feriados. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
+          '“Salvar e calcular” mostra o holerite: cada provento e desconto com a referência, o INSS, o IRRF (com a dedução que der menos imposto e a redução da Lei 15.270/2025), os totais, o líquido e o FGTS do mês (que a empresa deposita, sem sair do salário).',
+          '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes.',
+          'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.'
+        ],
+        dicas: [
+          'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
+          'O holerite não é receita: a receita continua sendo a transação do salário na conta, sem contar duas vezes.'
+        ],
+        abrir: [{ rotulo: 'Abrir os Holerites', rota: '/trabalho/holerites' }]
       }
     ]
   },
@@ -1470,8 +1489,9 @@ export const MANUAL: CapituloManual[] = [
 
 /** Capítulo (e seção) do manual da tela de uma URL ("/transacoes?x=1" → transações); null fora das telas do menu. */
 export function ajudaDaUrl(url: string): { capitulo: string; secao?: string } | null {
-  const tela = url.split(/[/?#]/).filter(Boolean)[0] ?? '';
-  return AJUDA_POR_ROTA[tela] ?? null;
+  // #211: a tela de um módulo tem dois trechos ("trabalho/holerites"); vale o mais específico.
+  const partes = url.split(/[?#]/)[0].split('/').filter(Boolean);
+  return AJUDA_POR_ROTA[partes.slice(0, 2).join('/')] ?? AJUDA_POR_ROTA[partes[0] ?? ''] ?? null;
 }
 
 /**
@@ -1493,5 +1513,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   categorias: { capitulo: 'categorias' },
   configuracoes: { capitulo: 'configuracoes' },
   trabalho: { capitulo: 'trabalho', secao: 'salario' },
+  'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

@@ -433,3 +433,29 @@ CREATE TABLE "IrrfFaixa" (
     "Aliquota" TEXT NOT NULL,
     "Deducao" TEXT NOT NULL
 );
+
+CREATE TABLE "Holerite" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Mes" TEXT NOT NULL,
+    "Situacao" INTEGER NOT NULL,
+    "DiasUteis" INTEGER NOT NULL,
+    "DiasDescanso" INTEGER NOT NULL,
+    "Calculo" TEXT,
+    "FechadoEm" TEXT,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "HoleriteLancamento" (
+    "Id" INTEGER NOT NULL,
+    "HoleriteId" INTEGER NOT NULL,
+    "Tipo" INTEGER NOT NULL,
+    "Descricao" TEXT NOT NULL,
+    "Quantidade" TEXT,
+    "Percentual" TEXT,
+    "Valor" TEXT,
+    "IncideInss" INTEGER NOT NULL,
+    "IncideIrrf" INTEGER NOT NULL,
+    "DeduzIrrf" INTEGER NOT NULL,
+    "Recorrente" INTEGER NOT NULL
+);

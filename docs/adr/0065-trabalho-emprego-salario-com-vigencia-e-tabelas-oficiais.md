@@ -52,6 +52,14 @@ A receita dos relatórios continua vindo **só das transações** (o crédito do
 
 O holerite de um mês, depois de fechado, guarda os números calculados (e não só as entradas): mudar o salário ou a tabela depois não muda o mês fechado. Reabrir para corrigir fica registrado.
 
+Como ficou na #211:
+- `Holerite` (um por emprego e mês, `Situacao` aberto ou fechado) e `HoleriteLancamento` (horas extras, adicional noturno, outros proventos, vale-transporte, VR/VA, plano de saúde, pensão e outros descontos).
+- Fechado, a coluna `Calculo` guarda o resultado inteiro em JSON (as linhas, os totais, o INSS, o IRRF e o FGTS do mês); aberto, ela fica nula e o cálculo é refeito a cada leitura. *Inferido:* JSON em vez de uma tabela por número, porque o holerite fechado só é lido inteiro, nunca filtrado nem somado no SQL.
+- Reabrir grava `HoleriteReaberto (AAAA-MM)` na auditoria.
+- O salário do mês é proporcional na admissão e na saída, pelo mês comercial de 30 dias; o DSR das horas extras e do adicional noturno é o total ÷ dias úteis × domingos e feriados (o padrão vem do calendário, segunda a sábado; a pessoa acerta os feriados).
+- Outro provento (bônus, PLR, comissão) diz se tem INSS e IRRF; a pensão alimentícia e o "outro desconto" marcado deduzem do IR; o vale-transporte desconta o custo do mês até 6% do salário.
+- O lançamento marcado "repetir" passa para o holerite do mês seguinte, quando ele é aberto.
+
 ## Consequências
 
 - **Positivas:**

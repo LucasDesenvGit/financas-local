@@ -23,7 +23,8 @@ ASSUNTOS = {
                       "Emprestimo", "PagamentoEmprestimo", "ReservaConferencia"],
     "Índices e cotações": ["TaxaSelicDiaria", "IndiceMensal", "CotacaoMoeda", "CotacaoCripto"],
     "Sistema": ["ErroSistema"],
-    "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa"],
+    "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Holerite",
+                          "HoleriteLancamento"],
 }
 
 

@@ -73,7 +73,8 @@ export const MENU: EntradaMenu[] = [
   {
     // #209, #210: o módulo Trabalho (ADR 0064). Só aparece com ele ligado em Configurações › Módulos.
     id: 'trabalho', rotulo: 'Trabalho', icone: Icones.grupoTrabalho, telas: [
-      { rota: '/trabalho/salario', rotulo: 'Salário', icone: Icones.trabalhoSalario, modulo: 'trabalho' }
+      { rota: '/trabalho/salario', rotulo: 'Salário', icone: Icones.trabalhoSalario, modulo: 'trabalho' },
+      { rota: '/trabalho/holerites', rotulo: 'Holerites', icone: Icones.trabalhoHolerites, modulo: 'trabalho' }
     ]
   }
 ];

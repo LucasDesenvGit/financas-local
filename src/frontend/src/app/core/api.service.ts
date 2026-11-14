@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -360,6 +360,21 @@ export class ApiService {
   estimativaSalario(empregoId: number, mes: string): Observable<EstimativaSalario> {
     return this.http.get<EstimativaSalario>(`${this.base}/trabalho/empregos/${empregoId}/estimativa`, { params: this.params({ mes }) });
   }
+  /** #211: os holerites do mês. */
+  holerites(empregoId: number): Observable<ResumoHolerite[]> {
+    return this.http.get<ResumoHolerite[]>(`${this.base}/trabalho/empregos/${empregoId}/holerites`);
+  }
+  /** mes: "AAAA-MM". */
+  criarHolerite(empregoId: number, mes: string): Observable<Holerite> {
+    return this.http.post<Holerite>(`${this.base}/trabalho/empregos/${empregoId}/holerites`, { mes });
+  }
+  holerite(id: number): Observable<Holerite> { return this.http.get<Holerite>(`${this.base}/trabalho/holerites/${id}`); }
+  salvarHolerite(id: number, diasUteis: number, diasDescanso: number, lancamentos: LancamentoHolerite[]): Observable<Holerite> {
+    return this.http.put<Holerite>(`${this.base}/trabalho/holerites/${id}`, { diasUteis, diasDescanso, lancamentos });
+  }
+  fecharHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/fechar`, {}); }
+  reabrirHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/reabrir`, {}); }
+  excluirHolerite(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/trabalho/holerites/${id}`); }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 
   /** #328: o acesso pelo celular na rede de casa. */

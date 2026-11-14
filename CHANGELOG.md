@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.0] — 2026-11-14 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Holerites: o holerite de cada mês** (#211). Pelo salário bruto do Trabalho › Salário:
+  - horas extras (horas e percentual), adicional noturno, o DSR sobre eles, e outros proventos (bônus, PLR, comissão), dizendo se têm INSS e IRRF;
+  - descontos: vale-transporte (até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outros;
+  - o cálculo linha a linha, com o INSS, o IRRF, o líquido e o FGTS do mês; salário proporcional no mês da admissão e no da saída;
+  - "Fechar o mês" congela os números (um aumento ou uma tabela nova depois não mudam o mês); "Reabrir" fica nos acessos recentes;
+  - os lançamentos marcados "repetir" (plano de saúde, pensão) passam para o mês seguinte.
+  - Banco: as tabelas `Holerite` e `HoleriteLancamento`, criadas sozinhas ao iniciar. Não é receita: nada entra nos relatórios.
+
 ## [3.14.0] — 2026-11-13 · desenvolvimento
 
 ### Funcionalidades

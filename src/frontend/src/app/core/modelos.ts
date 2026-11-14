@@ -872,3 +872,41 @@ export interface TabelaIrrf {
   faixas: FaixaIrrf[];
 }
 export interface TabelasTrabalho { inss: TabelaInss[]; irrf: TabelaIrrf[]; }
+
+/** #211: o holerite do mês. Tipos: até 9 proventos (1 hora extra, 2 adicional noturno, 3 outro); de 10, descontos. */
+export enum TipoLancamentoHolerite {
+  HoraExtra = 1, AdicionalNoturno = 2, OutroProvento = 3,
+  ValeTransporte = 10, ValeAlimentacao = 11, PlanoDeSaude = 12, PensaoAlimenticia = 13, OutroDesconto = 14
+}
+export enum SituacaoHolerite { Aberto = 1, Fechado = 2 }
+
+export interface LancamentoHolerite {
+  id?: number;
+  tipo: TipoLancamentoHolerite;
+  descricao: string;
+  quantidade: number | null;
+  percentual: number | null;
+  valor: number | null;
+  incideInss: boolean;
+  incideIrrf: boolean;
+  deduzIrrf: boolean;
+  recorrente: boolean;
+}
+
+export interface LinhaHolerite { tipo: number; descricao: string; referencia: string; valor: number; }
+
+export interface CalculoHolerite {
+  mes: string; salarioContratual: number; diasTrabalhados: number; valorHora: number;
+  proventos: LinhaHolerite[]; descontos: LinhaHolerite[];
+  totalProventos: number; totalDescontos: number; liquido: number; baseInss: number;
+  inss: CalculoInss | null; irrf: CalculoIrrf | null; fgtsDoMes: number; semEncargos: boolean;
+}
+
+export interface Holerite {
+  id: number; empregoId: number; mes: string; situacao: SituacaoHolerite; diasUteis: number; diasDescanso: number;
+  fechadoEm: string | null; lancamentos: LancamentoHolerite[]; calculo: CalculoHolerite | null; aviso: string | null;
+}
+
+export interface ResumoHolerite {
+  id: number; mes: string; situacao: SituacaoHolerite; totalProventos: number | null; totalDescontos: number | null; liquido: number | null;
+}

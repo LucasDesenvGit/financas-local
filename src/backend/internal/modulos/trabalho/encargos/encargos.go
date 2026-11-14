@@ -114,12 +114,12 @@ func CalcularInss(t TabelaInss, base tipos.Decimal) Inss {
 	return r
 }
 
-// CalcularIrrf é o IRRF mensal: a base é o rendimento menos a dedução que der menos imposto (as legais, INSS e
-// dependentes, ou o desconto simplificado); o imposto é o da faixa da base; e, desde 2026, a redução da Lei 15.270/2025
-// sai do imposto, pelo rendimento tributável do mês.
-func CalcularIrrf(t TabelaIrrf, rendimento, inss tipos.Decimal, dependentes int) Irrf {
+// CalcularIrrf é o IRRF mensal: a base é o rendimento menos a dedução que der menos imposto (as legais, INSS,
+// dependentes e outras deduções da lei, como a pensão alimentícia, ou o desconto simplificado); o imposto é o da faixa
+// da base; e, desde 2026, a redução da Lei 15.270/2025 sai do imposto, pelo rendimento tributável do mês.
+func CalcularIrrf(t TabelaIrrf, rendimento, inss tipos.Decimal, dependentes int, outras tipos.Decimal) Irrf {
 	rend := rendimento.Decimal()
-	legais := inss.Decimal().Add(t.DeducaoDependente.Decimal().Mul(decimal.NewFromInt(int64(dependentes))))
+	legais := inss.Decimal().Add(t.DeducaoDependente.Decimal().Mul(decimal.NewFromInt(int64(dependentes)))).Add(outras.Decimal())
 	simplificado := t.DescontoSimplificado.Decimal()
 	r := Irrf{Rendimento: rendimento, DeducoesLegais: centavos(legais), Simplificado: t.DescontoSimplificado, Fonte: t.Fonte,
 		DeducaoUsada: DeducaoLegal}

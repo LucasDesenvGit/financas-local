@@ -446,7 +446,7 @@ func (s *Servico) Estimar(ctx context.Context, id int64, mes tipos.Data) (Estima
 		return Estimativa{}, ErrSemTabela
 	}
 	inss := encargos.CalcularInss(tInss, salario.SalarioBruto)
-	irrf := encargos.CalcularIrrf(tIrrf, salario.SalarioBruto, inss.Valor, int(e.Dependentes))
+	irrf := encargos.CalcularIrrf(tIrrf, salario.SalarioBruto, inss.Valor, int(e.Dependentes), tipos.Decimal{})
 	est.Inss, est.Irrf = &inss, &irrf
 	est.Liquido = tipos.DeDecimal(salario.SalarioBruto.Decimal().Sub(inss.Valor.Decimal()).Sub(irrf.Valor.Decimal()).Round(2))
 	return est, nil

@@ -226,10 +226,20 @@ erDiagram
         TEXT Inicio PK,FK
         INTEGER Ordem PK
     }
+    Holerite {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    HoleriteLancamento {
+        INTEGER Id PK
+        INTEGER HoleriteId FK
+    }
     Conta |o--o{ Emprego : "ContaId: SET NULL"
     Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
     InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
     IrrfVigencia ||--o{ IrrfFaixa : "Inicio: CASCADE"
+    Emprego ||--o{ Holerite : "EmpregoId: CASCADE"
+    Holerite ||--o{ HoleriteLancamento : "HoleriteId: CASCADE"
 ```
 
 <!-- diagramas-do-banco: fim -->
