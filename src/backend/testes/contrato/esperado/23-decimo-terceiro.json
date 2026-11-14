@@ -1,0 +1,182 @@
+[
+  {
+    "nome": "o 13º de 2026",
+    "requisicao": "GET /api/trabalho/empregos/1/decimo-terceiro/2026",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2026,
+      "avos": 12,
+      "inss": {
+        "base": 6049.58,
+        "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+        "noTeto": false,
+        "parcelas": [
+          {
+            "aliquota": 0.075,
+            "ate": 1621.00,
+            "de": 0.00,
+            "valor": 121.58
+          },
+          {
+            "aliquota": 0.09,
+            "ate": 2902.84,
+            "de": 1621.00,
+            "valor": 115.37
+          },
+          {
+            "aliquota": 0.12,
+            "ate": 4354.27,
+            "de": 2902.84,
+            "valor": 174.17
+          },
+          {
+            "aliquota": 0.14,
+            "ate": 6049.58,
+            "de": 4354.27,
+            "valor": 237.34
+          }
+        ],
+        "valor": 648.46
+      },
+      "irrf": {
+        "aliquota": 0.275,
+        "base": 5401.12,
+        "deducaoUsada": "legal",
+        "deducoesLegais": 648.46,
+        "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+        "impostoDaTabela": 576.58,
+        "parcelaADeduzir": 908.73,
+        "reducaoLei15270": 173.15,
+        "rendimento": 6049.58,
+        "simplificado": 0,
+        "valor": 403.43
+      },
+      "liquido": 4997.69,
+      "mediaVariaveis": 49.58,
+      "primeira": {
+        "data": "2026-11-30",
+        "informada": false,
+        "valor": 3024.79
+      },
+      "saida": null,
+      "salarioBase": 6000.00,
+      "segunda": {
+        "data": "2026-12-20",
+        "informada": false,
+        "valor": 1972.90
+      },
+      "total": 6049.58
+    }
+  },
+  {
+    "nome": "a 1ª parcela veio nas férias",
+    "requisicao": "PUT /api/trabalho/empregos/1/decimo-terceiro/2026",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "ano": 2026,
+      "avos": 12,
+      "inss": {
+        "base": 6049.58,
+        "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+        "noTeto": false,
+        "parcelas": [
+          {
+            "aliquota": 0.075,
+            "ate": 1621.00,
+            "de": 0.00,
+            "valor": 121.58
+          },
+          {
+            "aliquota": 0.09,
+            "ate": 2902.84,
+            "de": 1621.00,
+            "valor": 115.37
+          },
+          {
+            "aliquota": 0.12,
+            "ate": 4354.27,
+            "de": 2902.84,
+            "valor": 174.17
+          },
+          {
+            "aliquota": 0.14,
+            "ate": 6049.58,
+            "de": 4354.27,
+            "valor": 237.34
+          }
+        ],
+        "valor": 648.46
+      },
+      "irrf": {
+        "aliquota": 0.275,
+        "base": 5401.12,
+        "deducaoUsada": "legal",
+        "deducoesLegais": 648.46,
+        "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+        "impostoDaTabela": 576.58,
+        "parcelaADeduzir": 908.73,
+        "reducaoLei15270": 173.15,
+        "rendimento": 6049.58,
+        "simplificado": 0,
+        "valor": 403.43
+      },
+      "liquido": 4997.69,
+      "mediaVariaveis": 49.58,
+      "primeira": {
+        "data": "2026-07-10",
+        "informada": true,
+        "valor": 2800.00
+      },
+      "saida": null,
+      "salarioBase": 6000.00,
+      "segunda": {
+        "data": "2026-12-20",
+        "informada": false,
+        "valor": 2197.69
+      },
+      "total": 6049.58
+    },
+    "banco": {
+      "DecimoTerceiro": {
+        "inseridas": [
+          {
+            "Ano": 2026,
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "EmpregoId": 1,
+            "PrimeiraParcelaEm": "2026-07-10",
+            "PrimeiraParcelaValor": "2800.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "a 1ª parcela em outro ano",
+    "requisicao": "PUT /api/trabalho/empregos/1/decimo-terceiro/2026",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A 1ª parcela do 13º de 2026 é paga em 2026."
+    }
+  },
+  {
+    "nome": "o 13º de 2024 não tem tabela",
+    "requisicao": "GET /api/trabalho/empregos/1/decimo-terceiro/2024",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Ainda não há tabela do INSS ou do IRRF para esse ano."
+    }
+  },
+  {
+    "nome": "ano antes da admissão",
+    "requisicao": "GET /api/trabalho/empregos/1/decimo-terceiro/2023",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O emprego não estava ativo nesse ano."
+    }
+  }
+]

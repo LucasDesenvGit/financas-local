@@ -134,6 +134,14 @@ type CotacaoMoeda struct {
 	AtualizadoEm string
 }
 
+type DecimoTerceiro struct {
+	EmpregoId            int64
+	Ano                  int64
+	PrimeiraParcelaEm    *string
+	PrimeiraParcelaValor *string
+	AtualizadoEm         string
+}
+
 type Emprego struct {
 	Id                 int64
 	Empregador         string

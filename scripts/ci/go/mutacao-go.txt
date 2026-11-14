@@ -67,3 +67,4 @@ internal/plataforma/modulos         100
 internal/modulos/trabalho/encargos   100
 internal/modulos/trabalho/emprego    100
 internal/modulos/trabalho/holerite   100
+internal/modulos/trabalho/decimoterceiro 100

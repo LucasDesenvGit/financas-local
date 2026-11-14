@@ -60,6 +60,14 @@ Como ficou na #211:
 - Outro provento (bônus, PLR, comissão) diz se tem INSS e IRRF; a pensão alimentícia e o "outro desconto" marcado deduzem do IR; o vale-transporte desconta o custo do mês até 6% do salário.
 - O lançamento marcado "repetir" passa para o holerite do mês seguinte, quando ele é aberto.
 
+### 13º salário (#214)
+
+- Calculado, sem guardar o resultado: (salário de dezembro, ou o do mês da saída, + a média das horas extras, do adicional noturno e do DSR dos holerites do ano) × avos ÷ 12. Os avos contam o mês com 15 dias ou mais de calendário.
+- *Inferido:* a média divide a soma das variáveis do ano pelos avos (e não por 11 ou 12 fixos); bônus e comissão não entram (só o que é hora).
+- 1ª parcela: metade, sem desconto, até 30/11. A tabela `DecimoTerceiro` guarda só o que a pessoa informa (quando e quanto veio, como na 1ª adiantada nas férias).
+- 2ª parcela: o total menos o INSS (sobre o total), o IRRF exclusivo na fonte e a 1ª. *Inferido:* o IR do 13º usa só as deduções da lei (INSS e dependentes), sem o desconto simplificado; a redução da Lei 15.270/2025 vale para ele (art. 3º-A, § 3º).
+- Quem saiu no ano recebe o proporcional na rescisão (#215): a tela avisa.
+
 ## Consequências
 
 - **Positivas:**

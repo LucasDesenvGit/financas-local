@@ -266,3 +266,22 @@ func TestHoleriteSemTabela(t *testing.T) {
 		t.Fatalf("PJ = %+v", pj.Calculo)
 	}
 }
+
+func TestVariaveisDoAno(t *testing.T) {
+	t.Parallel()
+	a := novo(t)
+	empregoId := a.empregoDe5500()
+	out := a.criar(empregoId, "2026-10")
+	// 10 h a 50% (375), 20 h de adicional noturno (100) e o DSR (70,37); o PLR não entra.
+	a.chamar("PUT", fmt.Sprintf("/api/trabalho/holerites/%d", out.Id), lancamentosDeOutubro).ConferirStatus(t, http.StatusOK)
+	a.criar(empregoId, "2026-11")              // só o salário: conta o mês, sem variáveis
+	a.criar(empregoId, "2025-12")              // outro ano
+	semTabela := a.criar(empregoId, "2025-03") // sem tabela do IRRF: não conta
+	soma, meses, err := a.s.VariaveisDoAno(t.Context(), empregoId, 2026)
+	if err != nil || soma.String() != "545.37" || meses != 2 {
+		t.Fatalf("2026: soma %s em %d meses (%v); quer 545.37 em 2", soma, meses, err)
+	}
+	if soma, meses, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2025); soma.String() != "0.00" || meses != 1 || semTabela.Calculo != nil {
+		t.Fatalf("2025: soma %s em %d meses", soma, meses)
+	}
+}

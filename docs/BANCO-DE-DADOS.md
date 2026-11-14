@@ -234,12 +234,17 @@ erDiagram
         INTEGER Id PK
         INTEGER HoleriteId FK
     }
+    DecimoTerceiro {
+        INTEGER EmpregoId PK,FK
+        INTEGER Ano PK
+    }
     Conta |o--o{ Emprego : "ContaId: SET NULL"
     Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
     InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
     IrrfVigencia ||--o{ IrrfFaixa : "Inicio: CASCADE"
     Emprego ||--o{ Holerite : "EmpregoId: CASCADE"
     Holerite ||--o{ HoleriteLancamento : "HoleriteId: CASCADE"
+    Emprego ||--o{ DecimoTerceiro : "EmpregoId: CASCADE"
 ```
 
 <!-- diagramas-do-banco: fim -->

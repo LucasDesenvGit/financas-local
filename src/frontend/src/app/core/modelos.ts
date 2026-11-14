@@ -910,3 +910,12 @@ export interface Holerite {
 export interface ResumoHolerite {
   id: number; mes: string; situacao: SituacaoHolerite; totalProventos: number | null; totalDescontos: number | null; liquido: number | null;
 }
+
+/** #214: o 13º salário do ano (estimativa). */
+export interface ParcelaDecimo { valor: number; data: string; informada: boolean; }
+export interface DecimoTerceiro {
+  ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
+  primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
+  /** Saiu no ano: o 13º proporcional entra na rescisão. */
+  saida: string | null;
+}
