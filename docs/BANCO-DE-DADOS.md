@@ -200,6 +200,18 @@ erDiagram
     }
 ```
 
+### Notícias (módulo)
+
+```mermaid
+erDiagram
+    Noticia {
+        INTEGER Id PK
+    }
+    NoticiaFonte {
+        TEXT Fonte PK
+    }
+```
+
 <!-- diagramas-do-banco: fim -->
 
 ## Como alterar a estrutura

@@ -33,7 +33,8 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
     const t = await abrirShell();
     const links = Array.from(t.raiz.querySelectorAll<HTMLAnchorElement>('nav.menu a'));
     const rotas = links.map((a) => a.getAttribute('href'));
-    expect(rotas).toEqual([...telasDoMenu().map((i) => i.rota), '/manual']);
+    // A lista de módulos vem vazia (abrirShell): as telas de módulo ficam de fora.
+    expect(rotas).toEqual([...telasDoMenu().filter((i) => !i.modulo).map((i) => i.rota), '/manual']);
     expect(new Set(rotas).size).toBe(14);
     expect(links.at(-1)!.classList).toContain('item-manual');
     // Elementos do menu com data-roteiro estável e único, para o roteiro (#194) apontar sem depender de classe.

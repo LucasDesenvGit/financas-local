@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, ListaNoticias, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -342,6 +342,10 @@ export class ApiService {
   definirModulo(id: string, ligado: boolean): Observable<Modulo> {
     return this.http.put<Modulo>(`${this.base}/modulos/${encodeURIComponent(id)}`, { ligado });
   }
+
+  /** #10 (ADR 0067): as notícias guardadas e o "Atualizar agora" (no máximo a cada 5 minutos). */
+  noticias(): Observable<ListaNoticias> { return this.http.get<ListaNoticias>(`${this.base}/noticias`); }
+  atualizarNoticias(): Observable<ListaNoticias> { return this.http.post<ListaNoticias>(`${this.base}/noticias/atualizar`, {}); }
 
   /** #328: o acesso pelo celular na rede de casa. */
   situacaoCelular(): Observable<SituacaoCelular> { return this.http.get<SituacaoCelular>(`${this.base}/celular`); }

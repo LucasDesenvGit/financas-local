@@ -69,7 +69,9 @@ export const MENU: EntradaMenu[] = [
       { rota: '/categorias', rotulo: 'Categorias e regras', icone: Icones.categorias },
       { rota: '/configuracoes', rotulo: 'Configurações', icone: Icones.configuracoes }
     ]
-  }
+  },
+  // #10: o módulo Notícias (ADR 0064), uma tela solta: só aparece com ele ligado em Configurações › Módulos.
+  { rota: '/noticias', rotulo: 'Notícias', icone: Icones.noticias, modulo: 'noticias' }
 ];
 
 /** Todas as telas do menu, na ordem em que aparecem (as soltas e as de dentro dos grupos). */

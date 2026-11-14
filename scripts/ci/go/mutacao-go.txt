@@ -63,3 +63,6 @@ internal/analises/painel          100
 internal/plataforma/celular         100
 # #191: o núcleo dos módulos (ADR 0064), medido em 13/11/2026.
 internal/plataforma/modulos         100
+# #10: o módulo Notícias (ADR 0067), medido em 14/11/2026.
+internal/modulos/noticias              100
+internal/modulos/noticias/fontes       100

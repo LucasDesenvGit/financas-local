@@ -17,6 +17,7 @@ flowchart TB
     cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
     mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
     github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
+    noticias["G1, BBC News Brasil e TabNews<br/>[Sistemas de fora]<br/>Notícias, só com o módulo ligado"]
     celular["Seu celular<br/>[Pessoa, na rede de casa]<br/>Só com o acesso pelo celular ligado"]
 
     pessoa -- "usa pelo navegador, em 127.0.0.1" --> sistema
@@ -26,6 +27,7 @@ flowchart TB
     sistema -- "só o código do ativo" --> cotacoes
     sistema -- "só os pares fixos, como BTC-BRL" --> mercado
     sistema -- "só o gerenciador: procura e baixa a versão nova" --> github
+    sistema -.->|"só o pedido do feed (módulo Notícias, ADR 0067)"| noticias
 ```
 
 ## Contêineres
@@ -52,6 +54,7 @@ flowchart TB
     cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]"]
     mercado["Mercado Bitcoin<br/>[Sistema de fora]"]
     github["GitHub<br/>[Sistema de fora]"]
+    noticias["G1, BBC e TabNews<br/>[Sistemas de fora]"]
 
     pessoa -- "abre o site" --> navegador
     pessoa -- "abre o gerenciador" --> gerenciador
@@ -66,6 +69,7 @@ flowchart TB
     site -- "HTTPS" --> bcb
     site -- "HTTPS" --> cotacoes
     site -- "HTTPS" --> mercado
+    site -.->|"HTTPS, só com o módulo ligado"| noticias
     gerenciador -- "HTTPS" --> github
     celular -.->|"HTTPS no IP da rede:5443, só a sub-rede local"| site
 ```
@@ -106,7 +110,7 @@ flowchart TB
     end
 
     subgraph modulos["Módulos (#190)"]
-        nenhum["Nenhum ainda<br/>(o núcleo deles: plataforma/modulos)"]
+        noticiasmod["Notícias<br/>G1, BBC e TabNews"]
     end
 
     openfinance --> nucleo
@@ -136,7 +140,7 @@ flowchart TB
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos.
 - **Partida:** as seis rotinas que acertam dados ao subir o site (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem em que o .NET as rodava.
-- **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191, [ADR 0064](adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)). É compilado no executável, mora em `internal/modulos/<id>`, implementa o contrato do `internal/plataforma/modulos` e se liga em Configurações › Módulos (a escolha fica na `Configuracao`). Desligado, as rotas dele respondem 409 e as tarefas não rodam. Ainda não há nenhum.
+- **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191, [ADR 0064](adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)). É compilado no executável, mora em `internal/modulos/<id>`, implementa o contrato do `internal/plataforma/modulos` e se liga em Configurações › Módulos (a escolha fica na `Configuracao`). Desligado, as rotas dele respondem 409 e as tarefas não rodam. O de Notícias (#10, [ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) não usa nenhum assunto do núcleo.
 
 ## Onde roda o quê
 

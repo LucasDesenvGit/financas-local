@@ -17,6 +17,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/categorias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/painel"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/noticias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/conferenciabanco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contasagendadas"
@@ -106,6 +107,7 @@ func Montar(d Dependencias) Montado {
 	// Os módulos (#190, ADR 0064): um catalogo.Adicionar por módulo, na ordem em que aparecem em Configurações ›
 	// Módulos. O catálogo guarda as rotas de cada um (desligado, 409) e põe as dele (GET /api/modulos).
 	catalogo := modulos.NovoCatalogo(d.DB, d.Relogio, d.Log)
+	catalogo.Adicionar(noticias.Novo(d.DB, d.Relogio, d.Log)) // #10: acessa a internet, nasce desligado (ADR 0067)
 	catalogo.Montar(mux)
 	return Montado{Rotas: mux, Sincronizacao: sincronia, Modulos: catalogo}
 }

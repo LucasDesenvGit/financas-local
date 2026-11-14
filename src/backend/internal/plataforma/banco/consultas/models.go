@@ -255,6 +255,22 @@ type MetaAporte struct {
 	CriadoEm string
 }
 
+type NoticiaFonte struct {
+	Fonte        string
+	AtualizadoEm *string
+	TentadaEm    string
+	Erro         *string
+}
+
+type Noticium struct {
+	Id           int64
+	Fonte        string
+	Titulo       string
+	Link         string
+	PublicadaEm  *string
+	AtualizadoEm string
+}
+
 type OperacaoAtivo struct {
 	Id                int64
 	AtivoId           int64

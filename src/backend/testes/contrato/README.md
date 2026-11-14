@@ -81,7 +81,9 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `16-open-finance` | Open Finance (Pluggy) | #83 | `/api/open-finance` |
 | `17-erros` | erros do sistema | #298 | `/api/erros` |
 | `20-modulos` | módulos que se ligam e desligam | #191 | `/api/modulos` |
-| `21` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
+| `21` a `27` | o módulo Trabalho (#209), nos PRs dele | — | `/api/trabalho` |
+| `28-noticias` | módulo Notícias | #10 | `/api/noticias` |
+| `29` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
 | `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |
 
 - Um arquivo pode usar o `base.sql`, a sessão `principal` do `00-auth` e o que um arquivo de número menor **já mesclado** deixou no banco; nunca o de um assunto ainda em andamento.

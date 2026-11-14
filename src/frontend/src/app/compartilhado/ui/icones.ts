@@ -3,7 +3,7 @@
  * nada é baixado da internet (a CSP só permite recursos do próprio site). Para trocar um ícone, mude aqui.
  */
 import {
-  LucideBell, LucideArrowDownLeft, LucideArrowLeftRight, LucideArrowUpRight, LucideBanknote, LucideBookOpen, LucideBriefcase, LucideCalculator,
+  LucideBell, LucideNewspaper, LucideArrowDownLeft, LucideArrowLeftRight, LucideArrowUpRight, LucideBanknote, LucideBookOpen, LucideBriefcase, LucideCalculator,
   LucideCalendar, LucideCalendarClock, LucideCalendarRange, LucideChartColumn, LucideChartLine, LucideChartNoAxesCombined,
   LucideChartPie, LucideCheck, LucideChevronDown, LucideChevronRight, LucideCircleEllipsis, LucideCircleQuestionMark,
   LucideCar, LucideClapperboard, LucideClipboardList, LucideCoins, LucideCreditCard, LucideEye, LucideEyeOff,
@@ -39,6 +39,8 @@ export const Icones = {
   grupoPatrimonio: LucideCoins,
   grupoAnalises: LucideChartNoAxesCombined,
   grupoAjustes: LucideSlidersHorizontal,
+  // #10: o módulo Notícias (uma tela solta no menu)
+  noticias: LucideNewspaper,
   setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,
