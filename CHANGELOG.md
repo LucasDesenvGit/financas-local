@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.21.1] — 2026-11-14 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0069 (Proposta): OCR do holerite escaneado ou foto** (#229). Compara o Tesseract como programa à parte, o tesseract.js no navegador (que pediria afrouxar a CSP), o OCR do Windows e os de nuvem (rejeitados), e propõe o Tesseract chamado pela API, opcional. De onde ele vem (instalado à parte ou no `.msi`), onde se liga e o modelo esperam a decisão; a implementação vem depois dela.
+
 ## [3.21.0] — 2026-11-14 · desenvolvimento
 
 ### Funcionalidades

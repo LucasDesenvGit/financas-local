@@ -104,3 +104,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0065](0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md) | Trabalho: emprego, salário com vigência e as tabelas do INSS e do IRRF no banco, com a regra de não contar o salário duas vezes (#210) | Proposta |
 | [0066](0066-fgts-fora-do-patrimonio-estimado-no-trabalho.md) | FGTS fora do patrimônio: estimado no Trabalho (8%, corrigido a 3% ao ano) e conferido com o app (#216) | Proposta |
 | [0068](0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md) | Holerite em PDF lido no Go, com a `ledongthuc/pdf`, sem guardar o arquivo: a anatomia comum do holerite, a prova real, o dicionário de rubricas no código e as escolhas por emprego (#228) | Proposta |
+| [0069](0069-ocr-do-holerite-escaneado-ou-foto.md) | OCR do holerite escaneado ou foto: o Tesseract como programa à parte, chamado pela API, opcional; de onde vem e o modelo esperam o usuário (#229) | Proposta |
