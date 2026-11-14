@@ -134,6 +134,19 @@ type CotacaoMoeda struct {
 	AtualizadoEm string
 }
 
+type Emprego struct {
+	Id                 int64
+	Empregador         string
+	Cnpj               *string
+	Admissao           string
+	Saida              *string
+	Regime             int64
+	JornadaMensalHoras int64
+	Dependentes        int64
+	ContaId            *int64
+	CriadoEm           string
+}
+
 type Emprestimo struct {
 	Id                  int64
 	ConexaoBancariaId   int64
@@ -209,6 +222,18 @@ type IndiceMensal struct {
 	Fechamento string
 }
 
+type InssFaixa struct {
+	Inicio   string
+	Ordem    int64
+	Ate      string
+	Aliquota string
+}
+
+type InssVigencium struct {
+	Inicio string
+	Fonte  string
+}
+
 type Investimento struct {
 	Id                 int64
 	ConexaoBancariaId  int64
@@ -229,6 +254,26 @@ type Investimento struct {
 	Status             *string
 	NomePersonalizado  *string
 	AtualizadoEm       string
+}
+
+type IrrfFaixa struct {
+	Inicio   string
+	Ordem    int64
+	Ate      *string
+	Aliquota string
+	Deducao  string
+}
+
+type IrrfVigencium struct {
+	Inicio               string
+	DeducaoDependente    string
+	DescontoSimplificado string
+	ReducaoIsencaoAte    *string
+	ReducaoMaxima        *string
+	ReducaoAte           *string
+	ReducaoConstante     *string
+	ReducaoFator         *string
+	Fonte                string
 }
 
 type Meta struct {
@@ -328,6 +373,14 @@ type ReservaConferencium struct {
 	SaldoConferido  string
 	DataConferencia string
 	AtualizadoEm    string
+}
+
+type SalarioVigencium struct {
+	Id           int64
+	EmpregoId    int64
+	Inicio       string
+	SalarioBruto string
+	CriadoEm     string
 }
 
 type SincronizacaoLog struct {

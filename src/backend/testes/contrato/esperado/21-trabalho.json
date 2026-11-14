@@ -1,0 +1,505 @@
+[
+  {
+    "nome": "desligado: a rota responde 409",
+    "requisicao": "GET /api/trabalho/empregos",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O módulo Trabalho está desligado. Ligue em Configurações › Módulos."
+    }
+  },
+  {
+    "nome": "o módulo aparece no catálogo, desligado",
+    "requisicao": "GET /api/modulos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "acessaInternet": false,
+        "descricao": "O salário pelo bruto, com o INSS e o IRRF estimados pelas tabelas oficiais e o histórico de aumentos. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "destinos": [],
+        "id": "trabalho",
+        "ligado": false,
+        "nome": "Trabalho"
+      }
+    ]
+  },
+  {
+    "nome": "ligar o Trabalho",
+    "requisicao": "PUT /api/modulos/trabalho",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "acessaInternet": false,
+      "descricao": "O salário pelo bruto, com o INSS e o IRRF estimados pelas tabelas oficiais e o histórico de aumentos. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+      "destinos": [],
+      "id": "trabalho",
+      "ligado": true,
+      "nome": "Trabalho"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ModuloLigado (trabalho)",
+            "Id": 49,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "inseridas": [
+          {
+            "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Chave": "Modulos.trabalho.Ligado",
+            "Protegido": 0,
+            "Valor": "true"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "cadastrar o emprego",
+    "requisicao": "POST /api/trabalho/empregos",
+    "status": 201,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "admissao": "2024-03-11",
+      "cnpj": "12345678000190",
+      "contaId": null,
+      "contaNome": null,
+      "dependentes": 0,
+      "empregador": "Empresa Fictícia Ltda",
+      "id": 1,
+      "jornadaMensalHoras": 220,
+      "regime": 1,
+      "saida": null,
+      "salarios": [
+        {
+          "id": 1,
+          "inicio": "2024-03-01",
+          "salarioBruto": 5000.00
+        }
+      ]
+    },
+    "banco": {
+      "Emprego": {
+        "inseridas": [
+          {
+            "Admissao": "2024-03-11",
+            "Cnpj": "12345678000190",
+            "ContaId": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Dependentes": 0,
+            "Empregador": "Empresa Fictícia Ltda",
+            "Id": 1,
+            "JornadaMensalHoras": 220,
+            "Regime": 1,
+            "Saida": null
+          }
+        ]
+      },
+      "SalarioVigencia": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "EmpregoId": 1,
+            "Id": 1,
+            "Inicio": "2024-03-01",
+            "SalarioBruto": "5000.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "emprego sem empregador",
+    "requisicao": "POST /api/trabalho/empregos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Informe o empregador."
+    }
+  },
+  {
+    "nome": "aumento a partir de junho de 2026",
+    "requisicao": "POST /api/trabalho/empregos/1/salarios",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "admissao": "2024-03-11",
+      "cnpj": "12345678000190",
+      "contaId": null,
+      "contaNome": null,
+      "dependentes": 0,
+      "empregador": "Empresa Fictícia Ltda",
+      "id": 1,
+      "jornadaMensalHoras": 220,
+      "regime": 1,
+      "saida": null,
+      "salarios": [
+        {
+          "id": 2,
+          "inicio": "2026-06-01",
+          "salarioBruto": 6000.00
+        },
+        {
+          "id": 1,
+          "inicio": "2024-03-01",
+          "salarioBruto": 5000.00
+        }
+      ]
+    },
+    "banco": {
+      "SalarioVigencia": {
+        "inseridas": [
+          {
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "EmpregoId": 1,
+            "Id": 2,
+            "Inicio": "2026-06-01",
+            "SalarioBruto": "6000.0"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "estimativa de novembro de 2026",
+    "requisicao": "GET /api/trabalho/empregos/1/estimativa?mes=2026-11",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "inss": {
+        "base": 6000.00,
+        "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+        "noTeto": false,
+        "parcelas": [
+          {
+            "aliquota": 0.075,
+            "ate": 1621.00,
+            "de": 0.00,
+            "valor": 121.58
+          },
+          {
+            "aliquota": 0.09,
+            "ate": 2902.84,
+            "de": 1621.00,
+            "valor": 115.37
+          },
+          {
+            "aliquota": 0.12,
+            "ate": 4354.27,
+            "de": 2902.84,
+            "valor": 174.17
+          },
+          {
+            "aliquota": 0.14,
+            "ate": 6000.00,
+            "de": 4354.27,
+            "valor": 230.40
+          }
+        ],
+        "valor": 641.51
+      },
+      "irrf": {
+        "aliquota": 0.275,
+        "base": 5358.49,
+        "deducaoUsada": "legal",
+        "deducoesLegais": 641.51,
+        "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+        "impostoDaTabela": 564.85,
+        "parcelaADeduzir": 908.73,
+        "reducaoLei15270": 179.75,
+        "rendimento": 6000.00,
+        "simplificado": 607.20,
+        "valor": 385.10
+      },
+      "liquido": 4973.39,
+      "mes": "2026-11-01",
+      "salarioBruto": 6000.00,
+      "semEncargos": false,
+      "vigenciaDe": "2026-06-01"
+    }
+  },
+  {
+    "nome": "estimativa de maio de 2026, antes do aumento",
+    "requisicao": "GET /api/trabalho/empregos/1/estimativa?mes=2026-05",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "inss": {
+        "base": 5000.00,
+        "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+        "noTeto": false,
+        "parcelas": [
+          {
+            "aliquota": 0.075,
+            "ate": 1621.00,
+            "de": 0.00,
+            "valor": 121.58
+          },
+          {
+            "aliquota": 0.09,
+            "ate": 2902.84,
+            "de": 1621.00,
+            "valor": 115.37
+          },
+          {
+            "aliquota": 0.12,
+            "ate": 4354.27,
+            "de": 2902.84,
+            "valor": 174.17
+          },
+          {
+            "aliquota": 0.14,
+            "ate": 5000.00,
+            "de": 4354.27,
+            "valor": 90.40
+          }
+        ],
+        "valor": 501.51
+      },
+      "irrf": {
+        "aliquota": 0.225,
+        "base": 4392.80,
+        "deducaoUsada": "simplificada",
+        "deducoesLegais": 501.51,
+        "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+        "impostoDaTabela": 312.89,
+        "parcelaADeduzir": 675.49,
+        "reducaoLei15270": 312.89,
+        "rendimento": 5000.00,
+        "simplificado": 607.20,
+        "valor": 0.00
+      },
+      "liquido": 4498.49,
+      "mes": "2026-05-01",
+      "salarioBruto": 5000.00,
+      "semEncargos": false,
+      "vigenciaDe": "2024-03-01"
+    }
+  },
+  {
+    "nome": "as tabelas do INSS e do IRRF",
+    "requisicao": "GET /api/trabalho/tabelas",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "inss": [
+        {
+          "faixas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1518.00
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2793.88
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4190.83
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 8157.41
+            }
+          ],
+          "fonte": "Portaria Interministerial MPS/MF nº 6, de 10/01/2025",
+          "inicio": "2025-01-01"
+        },
+        {
+          "faixas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 8475.55
+            }
+          ],
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "inicio": "2026-01-01"
+        }
+      ],
+      "irrf": [
+        {
+          "deducaoDependente": 189.59,
+          "descontoSimplificado": 607.20,
+          "faixas": [
+            {
+              "aliquota": 0,
+              "ate": 2428.80,
+              "deducao": 0
+            },
+            {
+              "aliquota": 0.075,
+              "ate": 2826.65,
+              "deducao": 182.16
+            },
+            {
+              "aliquota": 0.15,
+              "ate": 3751.05,
+              "deducao": 394.16
+            },
+            {
+              "aliquota": 0.225,
+              "ate": 4664.68,
+              "deducao": 675.49
+            },
+            {
+              "aliquota": 0.275,
+              "ate": null,
+              "deducao": 908.73
+            }
+          ],
+          "fonte": "Lei nº 15.191/2025 (tabela mensal desde maio de 2025)",
+          "inicio": "2025-05-01",
+          "reducao": null
+        },
+        {
+          "deducaoDependente": 189.59,
+          "descontoSimplificado": 607.20,
+          "faixas": [
+            {
+              "aliquota": 0,
+              "ate": 2428.80,
+              "deducao": 0
+            },
+            {
+              "aliquota": 0.075,
+              "ate": 2826.65,
+              "deducao": 182.16
+            },
+            {
+              "aliquota": 0.15,
+              "ate": 3751.05,
+              "deducao": 394.16
+            },
+            {
+              "aliquota": 0.225,
+              "ate": 4664.68,
+              "deducao": 675.49
+            },
+            {
+              "aliquota": 0.275,
+              "ate": null,
+              "deducao": 908.73
+            }
+          ],
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "inicio": "2026-01-01",
+          "reducao": {
+            "ate": 7350.00,
+            "constante": 978.62,
+            "fator": 0.133145,
+            "isencaoAte": 5000.00,
+            "maxima": 312.89
+          }
+        }
+      ]
+    }
+  },
+  {
+    "nome": "listar os empregos",
+    "requisicao": "GET /api/trabalho/empregos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "admissao": "2024-03-11",
+        "cnpj": "12345678000190",
+        "contaId": null,
+        "contaNome": null,
+        "dependentes": 0,
+        "empregador": "Empresa Fictícia Ltda",
+        "id": 1,
+        "jornadaMensalHoras": 220,
+        "regime": 1,
+        "saida": null,
+        "salarios": [
+          {
+            "id": 2,
+            "inicio": "2026-06-01",
+            "salarioBruto": 6000.00
+          },
+          {
+            "id": 1,
+            "inicio": "2024-03-01",
+            "salarioBruto": 5000.00
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nome": "desligar o Trabalho de novo",
+    "requisicao": "PUT /api/modulos/trabalho",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "acessaInternet": false,
+      "descricao": "O salário pelo bruto, com o INSS e o IRRF estimados pelas tabelas oficiais e o histórico de aumentos. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+      "destinos": [],
+      "id": "trabalho",
+      "ligado": false,
+      "nome": "Trabalho"
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "ModuloDesligado (trabalho)",
+            "Id": 50,
+            "Ip": "127.0.0.1",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Configuracao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Chave": "Modulos.trabalho.Ligado"
+            },
+            "colunas": {
+              "AtualizadoEm": {
+                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
+              },
+              "Valor": {
+                "antes": "true",
+                "depois": "false"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "desligado de novo, 409",
+    "requisicao": "GET /api/trabalho/tabelas",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "O módulo Trabalho está desligado. Ligue em Configurações › Módulos."
+    }
+  }
+]

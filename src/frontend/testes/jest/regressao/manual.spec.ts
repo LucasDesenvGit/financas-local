@@ -2,7 +2,7 @@ import { Route } from '@angular/router';
 import { rotas } from '../../../src/app/app.routes';
 import { GLOSSARIO } from '../../../src/app/compartilhado/glossario/glossario';
 import { telasDoMenu } from '../../../src/app/layout/shell.component';
-import { AJUDA_POR_ROTA, MANUAL, ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
+import { MANUAL, ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
 import { abrirManual } from '../apoio/manual';
 
 /**
@@ -10,14 +10,16 @@ import { abrirManual } from '../apoio/manual';
  * "Abrir a tela" para rota que não existe ou âncora repetida quebram aqui.
  */
 describe('Regressão: Manual acompanha o site', () => {
+  // As rotas das telas, com as de dentro de um módulo (#210: "trabalho/salario", dentro do portão do módulo).
   const telas = (rotas.find((r) => r.path === '' && r.children)!.children as Route[])
-    .map((r) => r.path!).filter((p) => p && !p.startsWith('manual'));
+    .flatMap((r) => (r.children ? r.children.map((f) => `${r.path}/${f.path}`) : [r.path!]))
+    .filter((p) => p && !p.startsWith('manual'));
 
   it('toda tela do menu tem capítulo (e seção, quando indicada) no manual, também as de dentro dos grupos', () => {
     const itens = telasDoMenu();
-    expect(itens.length).toBe(13);   // #227: as 13 telas de antes continuam no menu, agora em grupos
+    expect(itens.length).toBe(14);   // #227: as 13 telas de antes, agora em grupos; #210: o Salário do Trabalho (módulo)
     for (const item of itens) {
-      const ajuda = AJUDA_POR_ROTA[item.rota.slice(1)];
+      const ajuda = ajudaDaUrl(item.rota);
       expect(ajuda).toBeDefined();
       const capitulo = MANUAL.find((c) => c.id === ajuda.capitulo);
       expect(capitulo).toBeDefined();

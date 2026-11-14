@@ -1,0 +1,75 @@
+{
+  "descricao": "Módulo Trabalho (#210, ADRs 0064 e 0065): o emprego, o salário com vigência, a estimativa do mês e as tabelas do INSS e do IRRF. Nasce desligado: as rotas respondem 409 até ligar em Configurações › Módulos. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "desligado: a rota responde 409",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos"
+    },
+    {
+      "nome": "o módulo aparece no catálogo, desligado",
+      "metodo": "GET",
+      "caminho": "/api/modulos"
+    },
+    {
+      "nome": "ligar o Trabalho",
+      "comentario": "Grava Modulos.trabalho.Ligado e o evento ModuloLigado (trabalho) na auditoria.",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/trabalho",
+      "corpo": { "ligado": true }
+    },
+    {
+      "nome": "cadastrar o emprego",
+      "comentario": "O CNPJ fica só com os dígitos e o primeiro salário começa no mês da admissão.",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos",
+      "corpo": { "empregador": "Empresa Fictícia Ltda", "cnpj": "12.345.678/0001-90", "admissao": "2024-03-11", "salarioBruto": 5000.00 }
+    },
+    {
+      "nome": "emprego sem empregador",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos",
+      "corpo": { "empregador": "", "admissao": "2024-03-11", "salarioBruto": 5000.00 }
+    },
+    {
+      "nome": "aumento a partir de junho de 2026",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/salarios",
+      "corpo": { "inicio": "2026-06-15", "salarioBruto": 6000.00 }
+    },
+    {
+      "nome": "estimativa de novembro de 2026",
+      "comentario": "6000: INSS 641,51 pela tabela de 2026; IRRF 564,85 menos a redução da Lei 15.270 (179,75) = 385,10.",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/estimativa?mes=2026-11"
+    },
+    {
+      "nome": "estimativa de maio de 2026, antes do aumento",
+      "comentario": "O salário de antes (5000): o IRRF zera pela redução.",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/estimativa?mes=2026-05"
+    },
+    {
+      "nome": "as tabelas do INSS e do IRRF",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/tabelas"
+    },
+    {
+      "nome": "listar os empregos",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos"
+    },
+    {
+      "nome": "desligar o Trabalho de novo",
+      "comentario": "Os dados ficam: ligar de novo traz o emprego de volta.",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/trabalho",
+      "corpo": { "ligado": false }
+    },
+    {
+      "nome": "desligado de novo, 409",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/tabelas"
+    }
+  ]
+}

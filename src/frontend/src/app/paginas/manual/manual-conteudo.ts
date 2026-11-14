@@ -1255,6 +1255,44 @@ export const MANUAL: CapituloManual[] = [
     ]
   },
   {
+    id: 'trabalho',
+    titulo: 'Trabalho (módulo)',
+    resumo: 'O salário pelo bruto, com o INSS e o IRRF estimados e o histórico de aumentos. Vem desligado.',
+    secoes: [
+      {
+        id: 'ligar-trabalho',
+        titulo: 'Ligar o Trabalho',
+        paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
+        passos: [
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” aparece no menu na hora.',
+          'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
+          'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
+        ],
+        abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
+      },
+      {
+        id: 'salario',
+        titulo: 'Salário',
+        paraQueServe: 'Saber o bruto, para onde vão os descontos e o líquido do mês, com o histórico de aumentos. É estimativa, não holerite.',
+        passos: [
+          'Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime, jornada mensal (220 h na CLT), dependentes para o IR, a conta onde o salário cai e o salário bruto.',
+          '“O mês” mostra o salário bruto, o INSS, o IRRF e o líquido estimado. Use ‹ › ou o nome do mês para ver outro mês.',
+          '“Como calculei” abre a conta linha a linha: as faixas do INSS, a dedução usada no IRRF (o INSS e os dependentes, ou o desconto simplificado, o que der menos imposto), a faixa, a redução da Lei 15.270/2025 (de 2026 em diante, para rendimento de até R$ 7.350,00) e a fonte de cada tabela.',
+          'Aumento: em “Histórico de salários”, informe o mês e o salário novo e clique em “Gravar aumento”. Os meses antes do aumento continuam com o salário de antes; gravar de novo no mesmo mês troca o valor.',
+          '“Apagar” tira um salário do histórico (os meses dele passam a usar o anterior). O primeiro salário não sai sozinho: o emprego precisa de pelo menos um.',
+          'Estágio e PJ ficam sem o cálculo do INSS e do IRRF.',
+          '“+ Outro emprego” cadastra mais um; os outros aparecem em “Outros empregos”. “Editar emprego” muda os dados ou exclui o emprego.'
+        ],
+        dicas: [
+          'Nada do Trabalho entra nos relatórios: a receita continua sendo a transação do salário na conta. O Trabalho explica esse dinheiro (bruto, descontos), sem contar duas vezes.',
+          'O valor que vale é o do seu holerite: convenção coletiva, benefícios da empresa e arredondamentos mudam o número.'
+        ],
+        erros: ['“Ainda não há tabela do INSS ou do IRRF para esse mês”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026. Para meses antes disso, não há estimativa.'],
+        abrir: [{ rotulo: 'Abrir o Salário', rota: '/trabalho/salario' }]
+      }
+    ]
+  },
+  {
     id: 'configuracoes',
     titulo: 'Configurações',
     resumo: 'Parametrização, módulos, aparência, segurança e os erros do sistema.',
@@ -1454,5 +1492,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   projecao: { capitulo: 'relatorios', secao: 'projecao' },
   categorias: { capitulo: 'categorias' },
   configuracoes: { capitulo: 'configuracoes' },
+  trabalho: { capitulo: 'trabalho', secao: 'salario' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };
