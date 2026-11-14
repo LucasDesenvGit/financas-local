@@ -1257,14 +1257,14 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'trabalho',
     titulo: 'Trabalho (módulo)',
-    resumo: 'O salário pelo bruto, o holerite de cada mês, o 13º, as férias e o FGTS, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
+    resumo: 'O salário pelo bruto, o holerite de cada mês, o 13º, as férias, o FGTS e a rescisão, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
     secoes: [
       {
         id: 'ligar-trabalho',
         titulo: 'Ligar o Trabalho',
         paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
         passos: [
-          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário, Férias e FGTS) aparece no menu na hora.',
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário, Férias, FGTS e Rescisão) aparece no menu na hora.',
           'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
           'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
         ],
@@ -1363,6 +1363,23 @@ export const MANUAL: CapituloManual[] = [
         ],
         erros: ['“Estágio e PJ não têm FGTS”: o emprego cadastrado não é CLT.'],
         abrir: [{ rotulo: 'Abrir o FGTS', rota: '/trabalho/fgts' }]
+      },
+      {
+        id: 'rescisao',
+        titulo: 'Rescisão',
+        paraQueServe: 'Simular quanto se recebe ao sair do emprego em cada tipo de desligamento, e registrar a rescisão real.',
+        passos: [
+          'Abra Trabalho › Rescisão, escolha o tipo (dispensa sem justa causa, pedido de demissão, acordo, justa causa ou fim do contrato de experiência), o aviso prévio e a data de saída, e clique em “Simular”.',
+          '“A conta” mostra as verbas: o saldo de salário, o aviso prévio indenizado (30 dias mais 3 por ano de casa, até 90; no acordo, a metade), o 13º e as férias proporcionais (com o 1/3) e as férias vencidas (em dobro, se o prazo para tirar passou). E os descontos: INSS e IRRF do saldo de salário e do 13º, a 1ª parcela do 13º que já veio e, no pedido de demissão sem cumprir o aviso, 30 dias de salário.',
+          'O aviso indenizado conta como tempo de serviço: a data projetada aparece e vale para o 13º e as férias.',
+          'O FGTS: o saldo estimado (Trabalho › FGTS), o depósito da rescisão, a multa (40% na dispensa sem justa causa, 20% no acordo) e quanto dá para sacar (tudo, 80% no acordo, nada no pedido de demissão e na justa causa). E se pode haver seguro-desemprego.',
+          '“Comparar os tipos” mostra, na mesma data, quanto cai na conta e quanto sai do FGTS em cada tipo.',
+          '“Registrar esta rescisão” guarda a conta como está e fecha o emprego na data de saída. “Desfazer o registro” reabre.'
+        ],
+        dicas: ['Na justa causa, só vêm o saldo de salário e as férias vencidas.',
+          'As férias indenizadas e o aviso indenizado não têm INSS nem IR; o 13º tem os dele, separados.'],
+        erros: ['“Ainda não há tabela do INSS ou do IRRF para o mês da saída”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026.'],
+        abrir: [{ rotulo: 'Abrir a Rescisão', rota: '/trabalho/rescisao' }]
       }
     ]
   },
@@ -1572,5 +1589,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
   'trabalho/ferias': { capitulo: 'trabalho', secao: 'ferias' },
   'trabalho/fgts': { capitulo: 'trabalho', secao: 'fgts' },
+  'trabalho/rescisao': { capitulo: 'trabalho', secao: 'rescisao' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

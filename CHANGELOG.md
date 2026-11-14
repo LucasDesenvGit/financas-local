@@ -2,6 +2,16 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.20.0] — 2026-11-14 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Rescisão** (#215):
+  - simula quanto se recebe ao sair do emprego: dispensa sem justa causa, pedido de demissão, acordo (art. 484-A), justa causa e fim do contrato de experiência, com o aviso trabalhado ou indenizado e a data de saída;
+  - as verbas (saldo de salário, aviso proporcional de 30 a 90 dias, 13º e férias proporcionais, férias vencidas em dobro quando o prazo passou, com o 1/3) e os descontos (INSS e IRRF do saldo e do 13º, a 1ª parcela do 13º que já veio, o aviso não cumprido);
+  - o FGTS (o saldo estimado, o depósito da rescisão, a multa de 40% ou 20% e quanto dá para sacar) e se pode haver seguro-desemprego;
+  - "Comparar os tipos" lado a lado na mesma data; "Registrar esta rescisão" guarda a conta e fecha o emprego (dá para desfazer).
+  - Banco: a tabela `Rescisao`, criada sozinha ao iniciar. Não é receita.
+
 ## [3.19.0] — 2026-11-14 · desenvolvimento
 
 ### Funcionalidades

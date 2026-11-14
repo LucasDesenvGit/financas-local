@@ -952,3 +952,18 @@ export interface RecebimentosHolerite {
   liquido: number | null; recebido: number; diferenca: number | null;
   recebimentos: RecebimentoHolerite[]; sugestoes: SugestaoRecebimento[]; outros: CreditoSalario[];
 }
+
+/** #215: a rescisão. Tipo: 1 sem justa causa, 2 pedido de demissão, 3 acordo, 4 justa causa, 5 fim da experiência. */
+export enum TipoRescisao { SemJustaCausa = 1, PedidoDemissao = 2, Acordo = 3, JustaCausa = 4, FimExperiencia = 5 }
+/** Aviso: 0 sem, 1 trabalhado, 2 indenizado (no pedido de demissão: não cumprido). */
+export enum AvisoRescisao { Sem = 0, Trabalhado = 1, Indenizado = 2 }
+export interface LinhaRescisao { descricao: string; referencia: string; valor: number; }
+export interface CalculoRescisao {
+  tipo: TipoRescisao; nomeDoTipo: string; aviso: AvisoRescisao; saida: string; dataProjetada: string; diasDeAviso: number;
+  remuneracao: number; verbas: LinhaRescisao[]; descontos: LinhaRescisao[]; totalVerbas: number; totalDescontos: number;
+  liquido: number; seguroDesemprego: boolean;
+  fgts: { saldo: number; depositoRescisao: number; percentualMulta: number; multa: number; percentualSaque: number; sacavel: number; };
+}
+export interface ComparacaoRescisao {
+  tipo: TipoRescisao; nome: string; aviso: AvisoRescisao; liquido: number; multa: number; sacavel: number; seguroDesemprego: boolean;
+}

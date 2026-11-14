@@ -46,6 +46,7 @@ export const Icones = {
   trabalhoDecimo: LucideGift,
   trabalhoFerias: LucideLuggage,
   trabalhoFgts: LucidePiggyBank,
+  trabalhoRescisao: LucideLogOut,
   setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,

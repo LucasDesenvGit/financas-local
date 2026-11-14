@@ -502,3 +502,12 @@ CREATE TABLE "HoleriteRecebimento" (
     "Valor" TEXT NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "Rescisao" (
+    "EmpregoId" INTEGER NOT NULL,
+    "Data" TEXT NOT NULL,
+    "Tipo" INTEGER NOT NULL,
+    "Aviso" INTEGER NOT NULL,
+    "Calculo" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);

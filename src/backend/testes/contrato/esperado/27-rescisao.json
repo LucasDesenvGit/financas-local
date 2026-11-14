@@ -1,0 +1,337 @@
+[
+  {
+    "nome": "simular a dispensa sem justa causa",
+    "requisicao": "GET /api/trabalho/empregos/1/rescisao/simular?tipo=1&aviso=2&saida=2026-12-15",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": 2,
+      "dataProjetada": "2027-01-20",
+      "descontos": [
+        {
+          "descricao": "INSS",
+          "referencia": "sobre o saldo de salário",
+          "valor": 248.60
+        },
+        {
+          "descricao": "INSS do 13º",
+          "referencia": "",
+          "valor": 648.46
+        },
+        {
+          "descricao": "IRRF do 13º",
+          "referencia": "",
+          "valor": 403.43
+        },
+        {
+          "descricao": "1ª parcela do 13º que já veio",
+          "referencia": "",
+          "valor": 2800.00
+        }
+      ],
+      "diasDeAviso": 36,
+      "fgts": {
+        "depositoRescisao": 1304.73,
+        "multa": 6614.54,
+        "percentualMulta": 40,
+        "percentualSaque": 100,
+        "sacavel": 23150.88,
+        "saldo": 15231.61
+      },
+      "liquido": 39902.23,
+      "nomeDoTipo": "Dispensa sem justa causa",
+      "remuneracao": 6049.58,
+      "saida": "2026-12-15",
+      "seguroDesemprego": true,
+      "tipo": 1,
+      "totalDescontos": 4100.49,
+      "totalVerbas": 44002.72,
+      "verbas": [
+        {
+          "descricao": "Saldo de salário",
+          "referencia": "15 dias",
+          "valor": 3000.00
+        },
+        {
+          "descricao": "Aviso prévio indenizado",
+          "referencia": "36 dias",
+          "valor": 7259.50
+        },
+        {
+          "descricao": "13º proporcional",
+          "referencia": "12/12",
+          "valor": 6049.58
+        },
+        {
+          "descricao": "Férias proporcionais",
+          "referencia": "10/12",
+          "valor": 5041.32
+        },
+        {
+          "descricao": "1/3 das férias proporcionais",
+          "referencia": "",
+          "valor": 1680.44
+        },
+        {
+          "descricao": "Férias vencidas (período de 11/03/2024)",
+          "referencia": "24 dias, em dobro",
+          "valor": 9679.33
+        },
+        {
+          "descricao": "1/3 das férias vencidas",
+          "referencia": "",
+          "valor": 3226.44
+        },
+        {
+          "descricao": "Férias vencidas (período de 11/03/2025)",
+          "referencia": "30 dias",
+          "valor": 6049.58
+        },
+        {
+          "descricao": "1/3 das férias vencidas",
+          "referencia": "",
+          "valor": 2016.53
+        }
+      ]
+    }
+  },
+  {
+    "nome": "comparar os tipos",
+    "requisicao": "GET /api/trabalho/empregos/1/rescisao/comparar?saida=2026-12-15",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": [
+      {
+        "aviso": 2,
+        "liquido": 39902.23,
+        "multa": 6614.54,
+        "nome": "Dispensa sem justa causa",
+        "sacavel": 23150.88,
+        "seguroDesemprego": true,
+        "tipo": 1
+      },
+      {
+        "aviso": 1,
+        "liquido": 31970.56,
+        "multa": 0.00,
+        "nome": "Pedido de demissão",
+        "sacavel": 0.00,
+        "seguroDesemprego": false,
+        "tipo": 2
+      },
+      {
+        "aviso": 2,
+        "liquido": 36272.48,
+        "multa": 3249.19,
+        "nome": "Acordo (art. 484-A)",
+        "sacavel": 16245.96,
+        "seguroDesemprego": false,
+        "tipo": 3
+      },
+      {
+        "aviso": 0,
+        "liquido": 23723.28,
+        "multa": 0.00,
+        "nome": "Justa causa",
+        "sacavel": 0.00,
+        "seguroDesemprego": false,
+        "tipo": 4
+      },
+      {
+        "aviso": 0,
+        "liquido": 31970.56,
+        "multa": 0.00,
+        "nome": "Fim do contrato de experiência",
+        "sacavel": 15955.58,
+        "seguroDesemprego": false,
+        "tipo": 5
+      }
+    ]
+  },
+  {
+    "nome": "tipo desconhecido",
+    "requisicao": "GET /api/trabalho/empregos/1/rescisao/simular?tipo=9&aviso=2&saida=2026-12-15",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha o tipo: sem justa causa, pedido de demissão, acordo, justa causa ou fim da experiência."
+    }
+  },
+  {
+    "nome": "sem rescisão registrada",
+    "requisicao": "GET /api/trabalho/empregos/1/rescisao",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "registrada": null
+    }
+  },
+  {
+    "nome": "registrar o acordo",
+    "requisicao": "POST /api/trabalho/empregos/1/rescisao",
+    "status": 201,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": 2,
+      "dataProjetada": "2027-01-02",
+      "descontos": [
+        {
+          "descricao": "INSS",
+          "referencia": "sobre o saldo de salário",
+          "valor": 248.60
+        },
+        {
+          "descricao": "INSS do 13º",
+          "referencia": "",
+          "valor": 648.46
+        },
+        {
+          "descricao": "IRRF do 13º",
+          "referencia": "",
+          "valor": 403.43
+        },
+        {
+          "descricao": "1ª parcela do 13º que já veio",
+          "referencia": "",
+          "valor": 2800.00
+        }
+      ],
+      "diasDeAviso": 36,
+      "fgts": {
+        "depositoRescisao": 1014.35,
+        "multa": 3249.19,
+        "percentualMulta": 20,
+        "percentualSaque": 80,
+        "sacavel": 16245.96,
+        "saldo": 15231.61
+      },
+      "liquido": 36272.48,
+      "nomeDoTipo": "Acordo (art. 484-A)",
+      "remuneracao": 6049.58,
+      "saida": "2026-12-15",
+      "seguroDesemprego": false,
+      "tipo": 3,
+      "totalDescontos": 4100.49,
+      "totalVerbas": 40372.97,
+      "verbas": [
+        {
+          "descricao": "Saldo de salário",
+          "referencia": "15 dias",
+          "valor": 3000.00
+        },
+        {
+          "descricao": "Aviso prévio indenizado",
+          "referencia": "18 dias",
+          "valor": 3629.75
+        },
+        {
+          "descricao": "13º proporcional",
+          "referencia": "12/12",
+          "valor": 6049.58
+        },
+        {
+          "descricao": "Férias proporcionais",
+          "referencia": "10/12",
+          "valor": 5041.32
+        },
+        {
+          "descricao": "1/3 das férias proporcionais",
+          "referencia": "",
+          "valor": 1680.44
+        },
+        {
+          "descricao": "Férias vencidas (período de 11/03/2024)",
+          "referencia": "24 dias, em dobro",
+          "valor": 9679.33
+        },
+        {
+          "descricao": "1/3 das férias vencidas",
+          "referencia": "",
+          "valor": 3226.44
+        },
+        {
+          "descricao": "Férias vencidas (período de 11/03/2025)",
+          "referencia": "30 dias",
+          "valor": 6049.58
+        },
+        {
+          "descricao": "1/3 das férias vencidas",
+          "referencia": "",
+          "valor": 2016.53
+        }
+      ]
+    },
+    "banco": {
+      "Emprego": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "Saida": {
+                "antes": null,
+                "depois": "2026-12-15"
+              }
+            }
+          }
+        ]
+      },
+      "Rescisao": {
+        "inseridas": [
+          {
+            "Aviso": 2,
+            "Calculo": "{\"tipo\":3,\"nomeDoTipo\":\"Acordo (art. 484-A)\",\"aviso\":2,\"saida\":\"2026-12-15\",\"dataProjetada\":\"2027-01-02\",\"diasDeAviso\":36,\"remuneracao\":6049.58,\"verbas\":[{\"descricao\":\"Saldo de salário\",\"referencia\":\"15 dias\",\"valor\":3000.00},{\"descricao\":\"Aviso prévio indenizado\",\"referencia\":\"18 dias\",\"valor\":3629.75},{\"descricao\":\"13º proporcional\",\"referencia\":\"12/12\",\"valor\":6049.58},{\"descricao\":\"Férias proporcionais\",\"referencia\":\"10/12\",\"valor\":5041.32},{\"descricao\":\"1/3 das férias proporcionais\",\"referencia\":\"\",\"valor\":1680.44},{\"descricao\":\"Férias vencidas (período de 11/03/2024)\",\"referencia\":\"24 dias, em dobro\",\"valor\":9679.33},{\"descricao\":\"1/3 das férias vencidas\",\"referencia\":\"\",\"valor\":3226.44},{\"descricao\":\"Férias vencidas (período de 11/03/2025)\",\"referencia\":\"30 dias\",\"valor\":6049.58},{\"descricao\":\"1/3 das férias vencidas\",\"referencia\":\"\",\"valor\":2016.53}],\"descontos\":[{\"descricao\":\"INSS\",\"referencia\":\"sobre o saldo de salário\",\"valor\":248.60},{\"descricao\":\"INSS do 13º\",\"referencia\":\"\",\"valor\":648.46},{\"descricao\":\"IRRF do 13º\",\"referencia\":\"\",\"valor\":403.43},{\"descricao\":\"1ª parcela do 13º que já veio\",\"referencia\":\"\",\"valor\":2800.00}],\"totalVerbas\":40372.97,\"totalDescontos\":4100.49,\"liquido\":36272.48,\"fgts\":{\"saldo\":15231.61,\"depositoRescisao\":1014.35,\"percentualMulta\":20,\"multa\":3249.19,\"percentualSaque\":80,\"sacavel\":16245.96},\"seguroDesemprego\":false}",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-12-15",
+            "EmpregoId": 1,
+            "Tipo": 3
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "registrar de novo",
+    "requisicao": "POST /api/trabalho/empregos/1/rescisao",
+    "status": 409,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "A rescisão deste emprego já está registrada: desfaça antes de registrar outra."
+    }
+  },
+  {
+    "nome": "desfazer o registro",
+    "requisicao": "DELETE /api/trabalho/empregos/1/rescisao",
+    "status": 204,
+    "banco": {
+      "Emprego": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "Saida": {
+                "antes": "2026-12-15",
+                "depois": null
+              }
+            }
+          }
+        ]
+      },
+      "Rescisao": {
+        "removidas": [
+          {
+            "Aviso": 2,
+            "Calculo": "{\"tipo\":3,\"nomeDoTipo\":\"Acordo (art. 484-A)\",\"aviso\":2,\"saida\":\"2026-12-15\",\"dataProjetada\":\"2027-01-02\",\"diasDeAviso\":36,\"remuneracao\":6049.58,\"verbas\":[{\"descricao\":\"Saldo de salário\",\"referencia\":\"15 dias\",\"valor\":3000.00},{\"descricao\":\"Aviso prévio indenizado\",\"referencia\":\"18 dias\",\"valor\":3629.75},{\"descricao\":\"13º proporcional\",\"referencia\":\"12/12\",\"valor\":6049.58},{\"descricao\":\"Férias proporcionais\",\"referencia\":\"10/12\",\"valor\":5041.32},{\"descricao\":\"1/3 das férias proporcionais\",\"referencia\":\"\",\"valor\":1680.44},{\"descricao\":\"Férias vencidas (período de 11/03/2024)\",\"referencia\":\"24 dias, em dobro\",\"valor\":9679.33},{\"descricao\":\"1/3 das férias vencidas\",\"referencia\":\"\",\"valor\":3226.44},{\"descricao\":\"Férias vencidas (período de 11/03/2025)\",\"referencia\":\"30 dias\",\"valor\":6049.58},{\"descricao\":\"1/3 das férias vencidas\",\"referencia\":\"\",\"valor\":2016.53}],\"descontos\":[{\"descricao\":\"INSS\",\"referencia\":\"sobre o saldo de salário\",\"valor\":248.60},{\"descricao\":\"INSS do 13º\",\"referencia\":\"\",\"valor\":648.46},{\"descricao\":\"IRRF do 13º\",\"referencia\":\"\",\"valor\":403.43},{\"descricao\":\"1ª parcela do 13º que já veio\",\"referencia\":\"\",\"valor\":2800.00}],\"totalVerbas\":40372.97,\"totalDescontos\":4100.49,\"liquido\":36272.48,\"fgts\":{\"saldo\":15231.61,\"depositoRescisao\":1014.35,\"percentualMulta\":20,\"multa\":3249.19,\"percentualSaque\":80,\"sacavel\":16245.96},\"seguroDesemprego\":false}",
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Data": "2026-12-15",
+            "EmpregoId": 1,
+            "Tipo": 3
+          }
+        ]
+      }
+    }
+  }
+]

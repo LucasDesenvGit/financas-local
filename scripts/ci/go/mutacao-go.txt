@@ -71,3 +71,4 @@ internal/modulos/trabalho/decimoterceiro 100
 internal/modulos/trabalho/ferias       100
 internal/modulos/trabalho/fgts         100
 internal/modulos/trabalho/recebimento  100
+internal/modulos/trabalho/rescisao     100
