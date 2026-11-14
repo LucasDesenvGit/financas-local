@@ -380,3 +380,56 @@ CREATE TABLE "MetaAporte" (
     "Valor" TEXT NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "Emprego" (
+    "Id" INTEGER NOT NULL,
+    "Empregador" TEXT NOT NULL,
+    "Cnpj" TEXT,
+    "Admissao" TEXT NOT NULL,
+    "Saida" TEXT,
+    "Regime" INTEGER NOT NULL,
+    "JornadaMensalHoras" INTEGER NOT NULL,
+    "Dependentes" INTEGER NOT NULL,
+    "ContaId" INTEGER,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "SalarioVigencia" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Inicio" TEXT NOT NULL,
+    "SalarioBruto" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "InssVigencia" (
+    "Inicio" TEXT NOT NULL,
+    "Fonte" TEXT NOT NULL
+);
+
+CREATE TABLE "InssFaixa" (
+    "Inicio" TEXT NOT NULL,
+    "Ordem" INTEGER NOT NULL,
+    "Ate" TEXT NOT NULL,
+    "Aliquota" TEXT NOT NULL
+);
+
+CREATE TABLE "IrrfVigencia" (
+    "Inicio" TEXT NOT NULL,
+    "DeducaoDependente" TEXT NOT NULL,
+    "DescontoSimplificado" TEXT NOT NULL,
+    "ReducaoIsencaoAte" TEXT,
+    "ReducaoMaxima" TEXT,
+    "ReducaoAte" TEXT,
+    "ReducaoConstante" TEXT,
+    "ReducaoFator" TEXT,
+    "Fonte" TEXT NOT NULL
+);
+
+CREATE TABLE "IrrfFaixa" (
+    "Inicio" TEXT NOT NULL,
+    "Ordem" INTEGER NOT NULL,
+    "Ate" TEXT,
+    "Aliquota" TEXT NOT NULL,
+    "Deducao" TEXT NOT NULL
+);

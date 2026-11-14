@@ -647,3 +647,82 @@ CREATE TABLE IF NOT EXISTS MetaAporte
     CONSTRAINT FK_MetaAporte_Meta FOREIGN KEY (MetaId) REFERENCES Meta (Id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS IX_MetaAporte_Meta_Data ON MetaAporte (MetaId, Data);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: emprego e salário com vigência (#210, ADR 0065)           */
+/* ------------------------------------------------------------------ */
+/* Módulo Trabalho (ADR 0064). Nada daqui entra nos relatórios: a receita continua vindo só das transações.
+   Regime: 1 CLT, 2 estágio, 3 PJ (estágio e PJ ficam sem cálculo de encargos). */
+CREATE TABLE IF NOT EXISTS Emprego
+(
+    Id                 INTEGER NOT NULL CONSTRAINT PK_Emprego PRIMARY KEY AUTOINCREMENT,
+    Empregador         TEXT    NOT NULL,
+    Cnpj               TEXT    NULL,
+    Admissao           TEXT    NOT NULL,
+    Saida              TEXT    NULL,
+    Regime             INTEGER NOT NULL DEFAULT 1,
+    JornadaMensalHoras INTEGER NOT NULL DEFAULT 220,
+    Dependentes        INTEGER NOT NULL DEFAULT 0,
+    ContaId            INTEGER NULL,
+    -- Preenchido pela API; sem DEFAULT no banco.
+    CriadoEm           TEXT    NOT NULL,
+    CONSTRAINT FK_Emprego_Conta FOREIGN KEY (ContaId) REFERENCES Conta (Id) ON DELETE SET NULL
+);
+
+/* O salário bruto a partir de um mês (Inicio é sempre o dia 1). O salário de um mês é o da última vigência que começou
+   até ele: um aumento é uma linha nova e não muda o passado. */
+CREATE TABLE IF NOT EXISTS SalarioVigencia
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_SalarioVigencia PRIMARY KEY AUTOINCREMENT,
+    EmpregoId    INTEGER NOT NULL,
+    Inicio       TEXT    NOT NULL,
+    SalarioBruto TEXT    NOT NULL,
+    CriadoEm     TEXT    NOT NULL,
+    CONSTRAINT FK_SalarioVigencia_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_SalarioVigencia_Emprego_Inicio ON SalarioVigencia (EmpregoId, Inicio);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: tabelas do INSS e do IRRF por vigência (#210, ADR 0065)   */
+/* ------------------------------------------------------------------ */
+/* A tabela de um mês é a da última vigência que começou até ele. Os valores oficiais vêm no 02-dados-iniciais.sql, com
+   a fonte. Faixa: "Ate" é o limite de cima (a última faixa do INSS é o teto; a do IRRF fica sem limite, NULL). */
+CREATE TABLE IF NOT EXISTS InssVigencia
+(
+    Inicio TEXT NOT NULL CONSTRAINT PK_InssVigencia PRIMARY KEY,
+    Fonte  TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS InssFaixa
+(
+    Inicio   TEXT    NOT NULL,
+    Ordem    INTEGER NOT NULL,
+    Ate      TEXT    NOT NULL,
+    Aliquota TEXT    NOT NULL,
+    CONSTRAINT PK_InssFaixa PRIMARY KEY (Inicio, Ordem),
+    CONSTRAINT FK_InssFaixa_InssVigencia FOREIGN KEY (Inicio) REFERENCES InssVigencia (Inicio) ON DELETE CASCADE
+);
+/* Reducao*: a redução mensal da Lei 15.270/2025 (art. 3º-A da Lei 9.250/1995), NULL antes de 2026. Até ReducaoIsencaoAte
+   o imposto zera (com a redução de até ReducaoMaxima); até ReducaoAte, a redução é ReducaoConstante - ReducaoFator x o
+   rendimento tributável do mês. */
+CREATE TABLE IF NOT EXISTS IrrfVigencia
+(
+    Inicio               TEXT NOT NULL CONSTRAINT PK_IrrfVigencia PRIMARY KEY,
+    DeducaoDependente    TEXT NOT NULL,
+    DescontoSimplificado TEXT NOT NULL,
+    ReducaoIsencaoAte    TEXT NULL,
+    ReducaoMaxima        TEXT NULL,
+    ReducaoAte           TEXT NULL,
+    ReducaoConstante     TEXT NULL,
+    ReducaoFator         TEXT NULL,
+    Fonte                TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS IrrfFaixa
+(
+    Inicio   TEXT    NOT NULL,
+    Ordem    INTEGER NOT NULL,
+    Ate      TEXT    NULL,
+    Aliquota TEXT    NOT NULL,
+    Deducao  TEXT    NOT NULL,
+    CONSTRAINT PK_IrrfFaixa PRIMARY KEY (Inicio, Ordem),
+    CONSTRAINT FK_IrrfFaixa_IrrfVigencia FOREIGN KEY (Inicio) REFERENCES IrrfVigencia (Inicio) ON DELETE CASCADE
+);

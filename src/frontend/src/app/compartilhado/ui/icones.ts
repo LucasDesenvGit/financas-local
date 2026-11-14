@@ -39,6 +39,9 @@ export const Icones = {
   grupoPatrimonio: LucideCoins,
   grupoAnalises: LucideChartNoAxesCombined,
   grupoAjustes: LucideSlidersHorizontal,
+  // #210: o grupo do módulo Trabalho (a pasta) e a tela do salário (a nota)
+  grupoTrabalho: LucideBriefcase,
+  trabalhoSalario: LucideBanknote,
   setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,

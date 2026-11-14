@@ -106,10 +106,11 @@ flowchart TB
     end
 
     subgraph modulos["Módulos (#190)"]
-        nenhum["Nenhum ainda<br/>(o núcleo deles: plataforma/modulos)"]
+        trabalho["Trabalho<br/>emprego, salário, INSS e IRRF"]
     end
 
     openfinance --> nucleo
+    trabalho --> contas
     openfinance --> investimentos
     openfinance --> painel
     painel --> nucleo
@@ -136,7 +137,7 @@ flowchart TB
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos.
 - **Partida:** as seis rotinas que acertam dados ao subir o site (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem em que o .NET as rodava.
-- **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191, [ADR 0064](adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)). É compilado no executável, mora em `internal/modulos/<id>`, implementa o contrato do `internal/plataforma/modulos` e se liga em Configurações › Módulos (a escolha fica na `Configuracao`). Desligado, as rotas dele respondem 409 e as tarefas não rodam. Ainda não há nenhum.
+- **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191, [ADR 0064](adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)). É compilado no executável, mora em `internal/modulos/<id>`, implementa o contrato do `internal/plataforma/modulos` e se liga em Configurações › Módulos (a escolha fica na `Configuracao`). Desligado, as rotas dele respondem 409 e as tarefas não rodam. O primeiro é o Trabalho (#209, [ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)), que lê o nome da conta onde o salário cai e não entra nos relatórios.
 
 ## Onde roda o quê
 

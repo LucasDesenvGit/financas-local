@@ -200,6 +200,38 @@ erDiagram
     }
 ```
 
+### Trabalho (módulo)
+
+```mermaid
+erDiagram
+    Emprego {
+        INTEGER Id PK
+        INTEGER ContaId FK
+    }
+    SalarioVigencia {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    InssVigencia {
+        TEXT Inicio PK
+    }
+    InssFaixa {
+        TEXT Inicio PK,FK
+        INTEGER Ordem PK
+    }
+    IrrfVigencia {
+        TEXT Inicio PK
+    }
+    IrrfFaixa {
+        TEXT Inicio PK,FK
+        INTEGER Ordem PK
+    }
+    Conta |o--o{ Emprego : "ContaId: SET NULL"
+    Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
+    InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
+    IrrfVigencia ||--o{ IrrfFaixa : "Inicio: CASCADE"
+```
+
 <!-- diagramas-do-banco: fim -->
 
 ## Como alterar a estrutura

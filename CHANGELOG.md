@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.14.0] — 2026-11-13 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho, o primeiro módulo: o salário pelo bruto** (#210, épico #209). Com o Trabalho ligado em Configurações › Módulos, o grupo "Trabalho" aparece no menu com a tela **Salário**:
+  - o emprego (empregador, CNPJ, admissão e saída, regime, jornada, dependentes e a conta do salário);
+  - "O mês": o salário bruto, o INSS, o IRRF e o líquido estimado, com "Como calculei" linha a linha e a fonte de cada tabela;
+  - o histórico de salários com "Aumento a partir de…": os meses antes do aumento continuam com o salário de antes.
+  - As tabelas do INSS (2025 e 2026, Portaria MPS/MF 13/2026) e do IRRF (desde maio de 2025, e a redução da Lei 15.270/2025 de 2026 em diante) vêm com o site, por vigência (ADR 0065, Proposta).
+  - É estimativa, não holerite, e nada do Trabalho entra nos relatórios: a receita continua sendo a transação do salário.
+  - Banco: as tabelas `Emprego`, `SalarioVigencia`, `InssVigencia`, `InssFaixa`, `IrrfVigencia` e `IrrfFaixa`, criadas sozinhas ao iniciar.
+
 ## [3.13.0] — 2026-11-13 · desenvolvimento
 
 ### Funcionalidades

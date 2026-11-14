@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -342,6 +342,25 @@ export class ApiService {
   definirModulo(id: string, ligado: boolean): Observable<Modulo> {
     return this.http.put<Modulo>(`${this.base}/modulos/${encodeURIComponent(id)}`, { ligado });
   }
+
+  /** #210 (ADR 0065): o módulo Trabalho. Desligado, a API responde 409 (a tela nem chama: o portão do módulo). */
+  empregos(): Observable<Emprego[]> { return this.http.get<Emprego[]>(`${this.base}/trabalho/empregos`); }
+  criarEmprego(e: SalvarEmprego): Observable<Emprego> { return this.http.post<Emprego>(`${this.base}/trabalho/empregos`, e); }
+  atualizarEmprego(id: number, e: SalvarEmprego): Observable<Emprego> {
+    return this.http.put<Emprego>(`${this.base}/trabalho/empregos/${id}`, e);
+  }
+  excluirEmprego(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/trabalho/empregos/${id}`); }
+  definirSalario(empregoId: number, inicio: string, salarioBruto: number): Observable<Emprego> {
+    return this.http.post<Emprego>(`${this.base}/trabalho/empregos/${empregoId}/salarios`, { inicio, salarioBruto });
+  }
+  excluirSalario(empregoId: number, salarioId: number): Observable<Emprego> {
+    return this.http.delete<Emprego>(`${this.base}/trabalho/empregos/${empregoId}/salarios/${salarioId}`);
+  }
+  /** mes: "AAAA-MM". */
+  estimativaSalario(empregoId: number, mes: string): Observable<EstimativaSalario> {
+    return this.http.get<EstimativaSalario>(`${this.base}/trabalho/empregos/${empregoId}/estimativa`, { params: this.params({ mes }) });
+  }
+  tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 
   /** #328: o acesso pelo celular na rede de casa. */
   situacaoCelular(): Observable<SituacaoCelular> { return this.http.get<SituacaoCelular>(`${this.base}/celular`); }

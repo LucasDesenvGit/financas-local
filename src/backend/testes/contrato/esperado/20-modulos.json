@@ -4,7 +4,16 @@
     "requisicao": "GET /api/modulos",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
-    "corpo": []
+    "corpo": [
+      {
+        "acessaInternet": false,
+        "descricao": "O salário pelo bruto, com o INSS e o IRRF estimados pelas tabelas oficiais e o histórico de aumentos. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "destinos": [],
+        "id": "trabalho",
+        "ligado": false,
+        "nome": "Trabalho"
+      }
+    ]
   },
   {
     "nome": "ligar um módulo que não existe",

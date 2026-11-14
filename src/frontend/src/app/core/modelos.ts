@@ -814,3 +814,61 @@ export interface Modulo {
   destinos: string[];
   ligado: boolean;
 }
+
+/** #210 (ADR 0065): módulo Trabalho. Regime: 1 CLT, 2 estágio, 3 PJ (estágio e PJ sem cálculo de encargos). */
+export enum RegimeEmprego { Clt = 1, Estagio = 2, Pj = 3 }
+
+/** Uma vigência do salário: o bruto a partir de um mês (sempre o dia 1). */
+export interface SalarioVigencia { id: number; inicio: string; salarioBruto: number; }
+
+export interface Emprego {
+  id: number;
+  empregador: string;
+  cnpj: string | null;
+  admissao: string;
+  saida: string | null;
+  regime: RegimeEmprego;
+  jornadaMensalHoras: number;
+  dependentes: number;
+  contaId: number | null;
+  contaNome: string | null;
+  /** Do mais novo para o mais antigo. */
+  salarios: SalarioVigencia[];
+}
+
+export interface SalvarEmprego {
+  empregador: string;
+  cnpj: string | null;
+  admissao: string;
+  saida: string | null;
+  regime: RegimeEmprego;
+  jornadaMensalHoras: number;
+  dependentes: number;
+  contaId: number | null;
+  /** Só ao criar: o primeiro salário, no mês da admissão. */
+  salarioBruto?: number;
+}
+
+export interface ParcelaInss { de: number; ate: number; aliquota: number; valor: number; }
+export interface CalculoInss { base: number; valor: number; noTeto: boolean; parcelas: ParcelaInss[]; fonte: string; }
+export interface CalculoIrrf {
+  rendimento: number; deducoesLegais: number; simplificado: number; deducaoUsada: 'legal' | 'simplificada';
+  base: number; aliquota: number; parcelaADeduzir: number; impostoDaTabela: number; reducaoLei15270: number;
+  valor: number; fonte: string;
+}
+
+/** A estimativa do mês: estimativa, não holerite. */
+export interface EstimativaSalario {
+  mes: string; salarioBruto: number; vigenciaDe: string; semEncargos: boolean;
+  inss: CalculoInss | null; irrf: CalculoIrrf | null; liquido: number;
+}
+
+export interface FaixaInss { ate: number; aliquota: number; }
+export interface TabelaInss { inicio: string; fonte: string; faixas: FaixaInss[]; }
+export interface FaixaIrrf { ate: number | null; aliquota: number; deducao: number; }
+export interface ReducaoIrrf { isencaoAte: number; maxima: number; ate: number; constante: number; fator: number; }
+export interface TabelaIrrf {
+  inicio: string; fonte: string; deducaoDependente: number; descontoSimplificado: number; reducao: ReducaoIrrf | null;
+  faixas: FaixaIrrf[];
+}
+export interface TabelasTrabalho { inss: TabelaInss[]; irrf: TabelaIrrf[]; }

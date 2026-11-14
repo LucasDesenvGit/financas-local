@@ -83,6 +83,7 @@ Os pacotes de `src/backend`, cada um em um componente só. O componente é o pap
 | Partida | `internal/partida` | As seis rotinas que acertam dados ao subir (#444). Só chama a regra de cada assunto. | assunto |
 | Tarefas | `internal/plataforma/tarefas` | O laço periódico das tarefas em segundo plano, que segue no próximo ciclo depois de um erro ou de um pânico. | transversal |
 | Núcleo dos módulos | `internal/plataforma/modulos` | O contrato que cada módulo implementa, o catálogo com o liga/desliga (na `Configuracao`), as rotas `/api/modulos`, a guarda das rotas de cada módulo (desligado, 409) e as tarefas dele, que só rodam com ele ligado (#191, ADR 0064). | transversal |
+| Módulo Trabalho | `internal/modulos/trabalho`, `internal/modulos/trabalho/emprego`, `internal/modulos/trabalho/encargos` | O primeiro módulo (#209, ADR 0065): o `trabalho` implementa o contrato e junta as rotas; o `emprego` guarda o emprego e o salário com vigência e estima o mês; o `encargos` calcula o INSS e o IRRF pelas tabelas da vigência, sem HTTP. Rotas em `/api/trabalho/`. | módulo |
 | Clientes de fora | `internal/openfinance/pluggy`, `internal/patrimonio/cotacoes`, `internal/patrimonio/selic` | HTTPS para a Pluggy (ADR 0006), o Yahoo Finance e a brapi, e a Selic do Banco Central. A PTAX e o Mercado Bitcoin moram no `cambio` e no `cripto`. | assunto |
 | Transversais | `internal/plataforma/auditoria`, `internal/plataforma/configuracao`, `internal/plataforma/erros`, `internal/plataforma/segredos`, `internal/plataforma/versao` | Auditoria, a tabela `Configuracao`, os erros do sistema (ADR 0022, com as rotas de Configurações › Erros), os segredos cifrados e a versão. | transversal |
 | Base | `internal/plataforma/banco`, `internal/plataforma/banco/consultas`, `internal/plataforma/banco/esquema`, `internal/plataforma/banco/esquema/embutido`, `internal/plataforma/config`, `internal/plataforma/relogio`, `internal/plataforma/respostas`, `internal/plataforma/texto`, `internal/plataforma/tipos` | O SQLite em WAL, a transação, as consultas do `sqlc`, o esquema ao iniciar com a cópia embutida dos scripts, os appsettings, o fuso de Brasília, as respostas HTTP de sempre e os tipos no formato do banco. | base |
@@ -114,7 +115,7 @@ Quem pode importar quem. As setas vão de quem importa para quem é importado.
 ```mermaid
 flowchart TB
     montadores["Montadores<br/>cmd/financas, api, testes/contrato"]
-    modulos["Módulos (#190, ADR 0064)<br/>internal/modulos/&lt;id&gt;"]
+    modulos["Módulos (#190, ADR 0064)<br/>internal/modulos/&lt;id&gt;: trabalho"]
     assuntos["Assuntos<br/>com rotas, regras, sincronização,<br/>partida e clientes de fora"]
     transversais["Transversais<br/>auditoria, configuracao, erros,<br/>segredos, tarefas, versao e modulos"]
     base["Base<br/>banco, servidor, respostas, sessao,<br/>tipos, texto, relogio, config e servicosistema"]

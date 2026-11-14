@@ -86,6 +86,20 @@ export const rotas: Routes = [
         title: 'Configurações · Finanças Local'
       },
       {
+        // #210 (ADR 0064): o módulo Trabalho, dentro do portão (desligado, mostra o aviso e a tela nem é criada).
+        path: 'trabalho',
+        loadComponent: () => import('./compartilhado/modulos/portao-modulo.component').then((m) => m.PortaoModuloComponent),
+        data: { modulo: 'trabalho' },
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'salario' },
+          {
+            path: 'salario',
+            loadComponent: () => import('./paginas/trabalho/salario.component').then((m) => m.TrabalhoSalarioComponent),
+            title: 'Salário · Trabalho · Finanças Local'
+          }
+        ]
+      },
+      {
         path: 'manual',
         loadComponent: () => import('./paginas/manual/manual.component').then((m) => m.ManualComponent),
         title: 'Manual · Finanças Local'
