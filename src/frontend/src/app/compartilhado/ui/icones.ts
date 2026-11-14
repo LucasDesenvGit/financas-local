@@ -43,6 +43,7 @@ export const Icones = {
   grupoTrabalho: LucideBriefcase,
   trabalhoSalario: LucideBanknote,
   trabalhoHolerites: LucideReceiptText,
+  trabalhoDecimo: LucideGift,
   setaGrupo: LucideChevronRight,
   // Ações e preferências
   ajuda: LucideCircleQuestionMark,

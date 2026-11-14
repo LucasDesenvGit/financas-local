@@ -447,3 +447,42 @@ func (s *Servico) Excluir(ctx context.Context, id int64) error {
 	}
 	return nil
 }
+
+// VariaveisDoAno soma as horas extras, o adicional noturno e o DSR dos holerites do ano (abertos e fechados) e diz em
+// quantos meses havia holerite. É a base da média do 13º e das férias (#213, #214). Holerite sem cálculo (sem tabela
+// do mês) não entra.
+func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int) (soma tipos.Decimal, meses int, err error) {
+	inicio, fim := tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1)
+	linhas, err := s.db.QueryContext(ctx, `SELECT "Id" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" >= ? AND "Mes" < ?
+		ORDER BY "Mes"`, empregoId, inicio, fim)
+	if err != nil {
+		return tipos.Decimal{}, 0, fmt.Errorf("ler os holerites do ano: %w", err)
+	}
+	var ids []int64
+	for linhas.Next() {
+		var id int64
+		if err := linhas.Scan(&id); err != nil {
+			linhas.Close()
+			return tipos.Decimal{}, 0, err
+		}
+		ids = append(ids, id)
+	}
+	linhas.Close()
+	total := decimal.Zero
+	for _, id := range ids {
+		h, err := s.Obter(ctx, id)
+		if err != nil {
+			return tipos.Decimal{}, 0, err
+		}
+		if h.Calculo == nil {
+			continue
+		}
+		meses++
+		for _, l := range h.Calculo.Proventos {
+			if l.Tipo == HoraExtra || l.Tipo == AdicionalNoturno || l.Tipo == TipoDSR {
+				total = total.Add(l.Valor.Decimal())
+			}
+		}
+	}
+	return centavos(total), meses, nil
+}

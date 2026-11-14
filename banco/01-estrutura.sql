@@ -768,3 +768,19 @@ CREATE TABLE IF NOT EXISTS HoleriteLancamento
     CONSTRAINT FK_HoleriteLancamento_Holerite FOREIGN KEY (HoleriteId) REFERENCES Holerite (Id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS IX_HoleriteLancamento_Holerite ON HoleriteLancamento (HoleriteId);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: 13º salário (#214, ADR 0065)                              */
+/* ------------------------------------------------------------------ */
+/* O 13º é calculado (salário, média das horas extras dos holerites do ano e os avos). Aqui fica só o que a pessoa
+   informa: quando e quanto recebeu da 1ª parcela (até 30/11, ou adiantada nas férias). Sem linha, vale o padrão. */
+CREATE TABLE IF NOT EXISTS DecimoTerceiro
+(
+    EmpregoId            INTEGER NOT NULL,
+    Ano                  INTEGER NOT NULL,
+    PrimeiraParcelaEm    TEXT    NULL,
+    PrimeiraParcelaValor TEXT    NULL,
+    AtualizadoEm         TEXT    NOT NULL,
+    CONSTRAINT PK_DecimoTerceiro PRIMARY KEY (EmpregoId, Ano),
+    CONSTRAINT FK_DecimoTerceiro_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);

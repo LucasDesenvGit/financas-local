@@ -1257,14 +1257,14 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'trabalho',
     titulo: 'Trabalho (módulo)',
-    resumo: 'O salário pelo bruto e o holerite de cada mês, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
+    resumo: 'O salário pelo bruto, o holerite de cada mês e o 13º, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
     secoes: [
       {
         id: 'ligar-trabalho',
         titulo: 'Ligar o Trabalho',
         paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
         passos: [
-          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário e Holerites) aparece no menu na hora.',
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites e 13º salário) aparece no menu na hora.',
           'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
           'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
         ],
@@ -1308,6 +1308,22 @@ export const MANUAL: CapituloManual[] = [
           'O holerite não é receita: a receita continua sendo a transação do salário na conta, sem contar duas vezes.'
         ],
         abrir: [{ rotulo: 'Abrir os Holerites', rota: '/trabalho/holerites' }]
+      },
+      {
+        id: 'decimo-terceiro',
+        titulo: '13º salário',
+        paraQueServe: 'Saber quanto vem de 13º, em quais datas, e quanto já veio adiantado.',
+        passos: [
+          'Abra Trabalho › 13º salário e escolha o ano em ‹ ›.',
+          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano.',
+          'A 1ª parcela, até 30/11, é metade do 13º, sem desconto. A 2ª, até 20/12, é o 13º menos o INSS, o IRRF e a 1ª parcela.',
+          'O IR do 13º é separado do salário: só as deduções da lei (INSS e dependentes), e a redução da Lei 15.270/2025 também vale para ele.',
+          'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. “Voltar ao padrão” desfaz.',
+          '“Como calculei” mostra cada passo da conta.'
+        ],
+        dicas: ['Se você saiu no ano, o 13º proporcional vem na rescisão, e a tela avisa.'],
+        erros: ['“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.'],
+        abrir: [{ rotulo: 'Abrir o 13º salário', rota: '/trabalho/decimo-terceiro' }]
       }
     ]
   },
@@ -1514,5 +1530,6 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   configuracoes: { capitulo: 'configuracoes' },
   trabalho: { capitulo: 'trabalho', secao: 'salario' },
   'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
+  'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

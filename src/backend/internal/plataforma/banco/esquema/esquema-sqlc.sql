@@ -459,3 +459,11 @@ CREATE TABLE "HoleriteLancamento" (
     "DeduzIrrf" INTEGER NOT NULL,
     "Recorrente" INTEGER NOT NULL
 );
+
+CREATE TABLE "DecimoTerceiro" (
+    "EmpregoId" INTEGER NOT NULL,
+    "Ano" INTEGER NOT NULL,
+    "PrimeiraParcelaEm" TEXT,
+    "PrimeiraParcelaValor" TEXT,
+    "AtualizadoEm" TEXT NOT NULL
+);

@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, DecimoTerceiro, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -375,6 +375,15 @@ export class ApiService {
   fecharHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/fechar`, {}); }
   reabrirHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/reabrir`, {}); }
   excluirHolerite(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/trabalho/holerites/${id}`); }
+  /** #214: o 13º salário do ano. */
+  decimoTerceiro(empregoId: number, ano: number): Observable<DecimoTerceiro> {
+    return this.http.get<DecimoTerceiro>(`${this.base}/trabalho/empregos/${empregoId}/decimo-terceiro/${ano}`);
+  }
+  /** A 1ª parcela recebida (quando e quanto); os dois nulos voltam ao padrão. */
+  definirPrimeiraParcela(empregoId: number, ano: number, em: string | null, valor: number | null): Observable<DecimoTerceiro> {
+    return this.http.put<DecimoTerceiro>(`${this.base}/trabalho/empregos/${empregoId}/decimo-terceiro/${ano}`,
+      { primeiraParcelaEm: em, primeiraParcelaValor: valor });
+  }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
 
   /** #328: o acesso pelo celular na rede de casa. */
