@@ -319,6 +319,8 @@ func iniciarTarefas(ctx context.Context, ligadas map[string]bool, db *sql.DB, mo
 		t := sincronizacao.NovaTarefa(montado.Sincronizacao, log)
 		emAndamento.Go(func() { t.Rodar(ctxTarefas) })
 	}
+	// As dos módulos (ADR 0064) rodam sempre, e cada ciclo confere antes se o módulo está ligado.
+	montado.Modulos.IniciarTarefas(ctxTarefas, &emAndamento)
 	return func() {
 		pararTarefas()
 		emAndamento.Wait()

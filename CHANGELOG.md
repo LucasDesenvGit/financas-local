@@ -2,6 +2,13 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.13.0] — 2026-11-13 · desenvolvimento
+
+### Funcionalidades
+- **Módulos: partes do site que se ligam e desligam** (#191, épico #190). Em Configurações › Módulos, um interruptor por módulo mostra o que ele faz e se acessa a internet (e para onde). Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet; ligar e desligar vale na hora, sem recarregar a página, e fica nos acessos recentes. Desligar não apaga os dados.
+  - Esta versão traz só a base: o primeiro módulo, o Trabalho (#209), chega na próxima.
+  - Por dentro (ADR 0064, Proposta): o módulo é compilado no site e implementa um contrato do núcleo (`internal/plataforma/modulos`); as rotas dele respondem 409 com ele desligado, as tarefas só rodam com ele ligado e a escolha fica na tabela `Configuracao`. Novas rotas `GET /api/modulos` e `PUT /api/modulos/{id}`.
+
 ## [3.12.1] — 2026-11-10 · desenvolvimento
 
 ### Correções

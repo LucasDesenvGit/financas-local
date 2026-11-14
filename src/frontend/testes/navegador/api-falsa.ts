@@ -377,6 +377,8 @@ const respostas: Record<string, unknown> = {
     { id: 1, dataHora: '2026-10-19T17:20:00', evento: 'CredencialPluggyAlterada', login: 'teste', ip: '127.0.0.1', userAgent: null }
   ],
   '/api/erros': { itens: [], total: 0, pagina: 1, tamanhoPagina: 50, abertos: 0, origens: [] },
+  // #191: nenhum módulo por padrão; o teste dos módulos põe os dele.
+  '/api/modulos': [],
   // #328: o acesso pelo celular, desligado, com dois IPs fictícios da rede de casa para escolher.
   '/api/celular': { ligado: false, ip: null, endereco: null, ipIndisponivel: false, impressaoDigital: null, avisos: [],
     enderecos: [{ ip: '192.168.0.10', interface: 'Wi-Fi', rede: '192.168.0.0/24' },

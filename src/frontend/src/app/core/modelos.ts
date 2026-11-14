@@ -803,3 +803,14 @@ export interface InvestimentoConferencia { chave: string; nome: string; origem: 
 export interface ConferenciaBanco {
   contas: ContaConferencia[]; cartoes: CartaoConferencia[]; investimentos: InvestimentoConferencia[];
 }
+
+/** #191 (ADR 0064): um módulo do catálogo, que se liga e desliga em Configurações › Módulos. */
+export interface Modulo {
+  id: string;
+  nome: string;
+  descricao: string;
+  /** Liga, o módulo acessa a internet: os destinos dizem para onde. */
+  acessaInternet: boolean;
+  destinos: string[];
+  ligado: boolean;
+}

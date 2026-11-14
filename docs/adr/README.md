@@ -100,3 +100,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0060](0060-cdbs-e-caixinhas-com-rendimento-e-a-regra-caixinha-x-reserva.md) | CDBs e caixinhas numa aba própria, com o rendimento no valor, e a regra caixinha × reserva (#338) | Proposta |
 | [0061](0061-acesso-pelo-celular-na-rede-local.md) | Acesso pelo celular na rede de casa: desligado por padrão, HTTPS pelo IP com uma autoridade local e porta só para a rede local (#328) | Aceita |
 | [0062](0062-qr-code-do-acesso-pelo-celular-desenhado-no-site.md) | QR code do acesso pelo celular desenhado no site (SVG, sem innerHTML), com o `qrcode-generator` só para a matriz (#677) | Aceita |
+| [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md) | Módulos compilados no executável, ligados e desligados no banco (micro-kernel): contrato em Go, rotas e tarefas guardadas pelo núcleo (#191) | Proposta |

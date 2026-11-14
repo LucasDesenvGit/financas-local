@@ -2,7 +2,8 @@ import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
 import { TestBed } from '@angular/core/testing';
 import { Icones } from '../../../src/app/compartilhado/ui/icones';
-import { MENU, ShellComponent, ehGrupo, filtrarMenu, grupoDaUrl, telasDoMenu } from '../../../src/app/layout/shell.component';
+import { EntradaMenu, MENU, ShellComponent, ehGrupo, filtrarMenu, grupoDaUrl, telaDeModuloVisivel, telasDoMenu } from '../../../src/app/layout/shell.component';
+import { ModulosService } from '../../../src/app/core/modulos.service';
 import { abrirShell } from '../apoio/shell';
 
 /**
@@ -206,7 +207,7 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
     expect(t.app().classList).toContain('menu-aberto');
   });
 
-  describe('módulos que se ligam e desligam (#190): o filtro já está pronto', () => {
+  describe('módulos que se ligam e desligam (#190, #191)', () => {
     it('tela escondida some do grupo; grupo sem nenhuma tela some também', () => {
       const semEmprestimos = filtrarMenu(MENU, (tela) => tela.rota !== '/emprestimos');
       const patrimonio = semEmprestimos.filter(ehGrupo).find((g) => g.id === 'patrimonio')!;
@@ -217,13 +218,23 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
       expect(MENU.filter(ehGrupo).length).toBe(5);   // o MENU original fica intacto
     });
 
-    it('na tela, trocar o filtro esconde a tela e o cabeçalho do grupo vazio', async () => {
+    it('a tela de um módulo só aparece com ele ligado; a do núcleo, sempre', () => {
+      const grupo: EntradaMenu = { id: 'exemplo', rotulo: 'Exemplo', icone: Icones.painel,
+        telas: [{ rota: '/exemplo', rotulo: 'Exemplo', icone: Icones.painel, modulo: 'exemplo' }] };
+      const menu = [...MENU, grupo];
+      const desligado = filtrarMenu(menu, (tela) => telaDeModuloVisivel(tela, () => false));
+      expect(desligado.filter(ehGrupo).map((g) => g.id)).toEqual(['movimentacao', 'planejamento', 'patrimonio', 'analises', 'ajustes']);
+      const ligado = filtrarMenu(menu, (tela) => telaDeModuloVisivel(tela, (id) => id === 'exemplo'));
+      expect(ligado.filter(ehGrupo).map((g) => g.id)).toContain('exemplo');
+    });
+
+    it('na tela, o filtro do menu segue a lista de módulos sem recarregar', async () => {
       const t = await abrirShell({ url: '/painel' });
-      t.shell.telaVisivel.set((tela) => !['/categorias', '/configuracoes'].includes(tela.rota));
-      await t.atualizar();
-      expect(t.cabecalho('ajustes')).toBeNull();
-      expect(t.raiz.querySelector('a[href="/categorias"]')).toBeNull();
-      expect(t.cabecalho('analises')).not.toBeNull();
+      const tela = { rota: '/exemplo', rotulo: 'Exemplo', icone: Icones.painel, modulo: 'exemplo' };
+      expect(t.shell.telaVisivel()(tela)).toBe(false);
+      expect(t.shell.telaVisivel()({ ...tela, modulo: undefined })).toBe(true);
+      TestBed.inject(ModulosService).lista.set([{ id: 'exemplo', nome: 'Exemplo', descricao: 'd', acessaInternet: false, destinos: [], ligado: true }]);
+      expect(t.shell.telaVisivel()(tela)).toBe(true);
     });
   });
 

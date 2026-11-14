@@ -195,6 +195,7 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 
 | Termo | No código | Regra principal | No glossário |
 |---|---|---|---|
+| Módulo | `modulos.Modulo`, `internal/modulos/<id>`, `ModulosService` | Visualização fora do núcleo que se liga e desliga em Configurações › Módulos; desligada, não roda nem acessa a internet ([ADR 0064](../adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)) | — |
 | Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
 | Dívida total | `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |
 | Natureza do gasto | `NaturezaGasto`, `Categoria.Natureza` | Essencial ou estilo de vida, para a regra 50/30/20 | — |
