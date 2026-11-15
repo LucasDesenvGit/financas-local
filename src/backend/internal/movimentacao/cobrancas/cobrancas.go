@@ -110,6 +110,7 @@ type contaAConciliar struct {
 
 // candidata é uma cobrança do extrato que pode ser a da conta a pagar.
 type candidata struct {
+	id              int64
 	data            tipos.Data
 	texto           string
 	estabelecimento *string
@@ -258,8 +259,8 @@ func lerContas(ctx context.Context, q consultas.DBTX) ([]*contaAConciliar, error
 // "menor que zero" é conferido em Go, com decimal.
 func lerCandidatas(ctx context.Context, q consultas.DBTX, desde, hoje tipos.Data, contaId *int64,
 	regrasPorValor map[int64]bool) ([]candidata, error) {
-	linhas, err := q.QueryContext(ctx, `SELECT "Data", "Descricao", "DescricaoOriginal", "RegraDescricaoId", "Estabelecimento",
-		"Valor", "CriadoEm" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ? AND (? IS NULL OR "ContaId" = ?)
+	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Data", "Descricao", "DescricaoOriginal", "RegraDescricaoId",
+		"Estabelecimento", "Valor", "CriadoEm" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ? AND (? IS NULL OR "ContaId" = ?)
 		AND "ReservaNome" IS NULL ORDER BY "Id"`,
 		desde, hoje, contaId, contaId)
 	if err != nil {
@@ -275,7 +276,7 @@ func lerCandidatas(ctx context.Context, q consultas.DBTX, desde, hoje tipos.Data
 			regraId           *int64
 			valor             tipos.Decimal
 		)
-		if err := linhas.Scan(&x.data, &descricao, &descricaoOriginal, &regraId, &x.estabelecimento, &valor, &x.criadoEm); err != nil {
+		if err := linhas.Scan(&x.id, &x.data, &descricao, &descricaoOriginal, &regraId, &x.estabelecimento, &valor, &x.criadoEm); err != nil {
 			return nil, fmt.Errorf("ler cobrança do extrato: %w", err)
 		}
 		if !valor.Decimal().IsNegative() {
