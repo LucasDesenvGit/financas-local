@@ -6,7 +6,7 @@
 
 ## Contexto
 
-No Mercado Pago dá para pagar uma conta em débito automático com o dinheiro de um cofrinho. Esse pagamento sai direto da reserva, não passa pela conta e não chega pelo Open Finance: o extrato da conta fecha com o saldo informado, e nem o `bankData` nem o `/investments` trazem a saída (levantamento da #691, com os dados de 11/11/2026). A ADR 0010 já registrava a limitação: "dinheiro que sai da reserva sem passar pela conta não aparece no extrato: só a conferência corrige".
+No Mercado Pago dá para pagar uma conta em débito automático com o dinheiro de um cofrinho. Esse pagamento sai direto da reserva, não passa pela conta e não chega pelo Open Finance: o extrato da conta fecha com o saldo informado, e nem o `bankData` nem o `/investments` trazem a saída (levantamento da #691, com os dados de 11/11/2026). O passo 0 da issue confirmou isso num débito automático de verdade, em 15/11/2026: a Pluggy não retorna nada do débito pago pelo cofrinho. A ADR 0010 já registrava a limitação: "dinheiro que sai da reserva sem passar pela conta não aparece no extrato: só a conferência corrige".
 
 Resultado: a despesa não entra nos relatórios, nos orçamentos e no painel, a reserva estimada fica acima do real, e não havia como registrar o gasto, porque o app não deixa lançar à mão numa conta do Open Finance.
 
