@@ -10,9 +10,13 @@ import { AssinaturasRecorrentesComponent } from './assinaturas-recorrentes.compo
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import {
-  AvisoContaAgendada, Categoria, Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, NOMES_RECORRENCIA, OrigemConta, Recorrencia,
-  SalvarContaAgendada, SugestaoContaAgendada, TipoCategoria, TipoConta
+  AvisoContaAgendada, Categoria, Conta, ContaAgendada, FormaCobranca, NOMES_FORMA_COBRANCA, NOMES_RECORRENCIA, Recorrencia,
+  Reserva, SalvarContaAgendada, SugestaoContaAgendada, TipoCategoria, TipoConta
 } from '../../core/modelos';
+import {
+  OpcaoCofrinho, aceitaCofrinho, baixaSozinha, cofrinhoEncontrado, mostrarPagar, opcoesCofrinho, podeLancar,
+  textoPagamentoCofrinho
+} from './pago-com-cofrinho';
 import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
 import { SeloServicoComponent } from '../../compartilhado/bancos/selo-servico.component';
 import { AvisosService } from '../../core/avisos.service';
@@ -48,6 +52,11 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
               @if (a.tipo === 'mudou-de-cartao' && a.contaNovaId !== null) {
                 <button type="button" class="botao botao-pequeno" (click)="atualizarPeloAviso(a)"
                   [attr.aria-label]="'Atualizar o catálogo de ' + a.descricao + ': cobra em ' + a.contaNovaNome">Atualizar o catálogo</button>
+              }
+              <!-- #691: a cobrança não chegou pelo extrato depois de sincronizar: pode ter saído direto de um cofrinho. -->
+              @if (a.tipo === 'nao-veio' && a.podeSerCofrinho) {
+                <button type="button" class="botao botao-pequeno" (click)="pagarPeloAviso(a)"
+                  [attr.aria-label]="'Foi paga com um cofrinho: ' + a.descricao">Foi paga com um cofrinho</button>
               }
             </li>
           }
@@ -104,7 +113,30 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
                   }
                   <!-- #158: como é cobrada, em texto (Nielsen 6: onde cai fica escrito na tela). -->
                   <small class="texto-suave forma-cobranca">{{ nomeForma(c.formaCobranca) }}
-                    @if (baixaSozinha(c)) { · baixa sozinha quando a cobrança com “{{ c.textoCobranca }}” chega }</small>
+                    <!-- #691: de onde sai o dinheiro fica escrito (Nielsen 6). -->
+                    @if (c.reservaNome) { · cofrinho {{ c.reservaNome }}@if (c.contaNome) { ({{ c.contaNome }})} }
+                    @if (c.reservaNome && c.formaCobranca === FormaCobranca.DebitoAutomatico) { · o app lança a despesa no vencimento }
+                    @else if (baixaSozinha(c)) { · baixa sozinha quando a cobrança com “{{ c.textoCobranca }}” chega }</small>
+                  @if (!cofrinhoEncontrado(c)) {
+                    <small class="texto-alerta">Cofrinho “{{ c.reservaNome }}” não encontrado nas reservas de {{ c.contaNome }}:
+                      a despesa continua sendo lançada com esse nome.</small>
+                  }
+                  <!-- #691: pagamento dado antes de marcar o cofrinho, sem a despesa: o app oferece lançar (Nielsen 1). -->
+                  @if (c.ultimoSemDespesa && c.reservaNome) {
+                    <small class="texto-alerta">o pagamento de {{ c.ultimoSemDespesa | date: 'dd/MM' }} está sem a despesa
+                      <button type="button" class="link" (click)="lancarUltimoPeloCofrinho(c)"
+                        [attr.aria-label]="'Lançar pelo cofrinho a despesa de ' + c.descricao">lançar pelo cofrinho</button></small>
+                  }
+                  <!-- #691: o que o app lançou sozinho fica à vista, com saída fácil (Nielsen 1 e 3). -->
+                  @if (c.ultimoPeloCofrinho; as u) {
+                    <small class="texto-suave pago-cofrinho">{{ textoPagamentoCofrinho(u) }} · {{ u.valor | currency }}
+                      <button type="button" class="link" (click)="abrirAjuste(c)"
+                        [attr.aria-label]="'Ajustar o valor pago de ' + c.descricao">ajustar valor</button>
+                      @if (u.podeDesfazer) {
+                        <button type="button" class="link" (click)="desfazerPagamento(c)"
+                          [attr.aria-label]="'Desfazer o pagamento de ' + c.descricao">desfazer</button>
+                      }</small>
+                  }
                   @if (c.observacao) { <small class="texto-suave">{{ c.observacao }}</small> }
                 </div></div></td>
               <td>{{ nomeRecorrencia(c.recorrencia) }}
@@ -118,7 +150,7 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
               <td>{{ c.categoriaNome ?? '—' }}</td>
               <td class="direita valor">{{ c.valor | currency }}</td>
               <td class="direita nowrap">
-                @if (c.ativa && !baixaSozinha(c)) {
+                @if (mostrarPagar(c)) {
                   <button type="button" class="botao botao-pequeno" (click)="abrirPagamento(c)"
                     [attr.aria-label]="'Pagar ' + c.descricao">Pagar</button>
                 }
@@ -254,11 +286,40 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
             </select>
           </label>
           <label>{{ fm.formaCobranca === FormaCobranca.CartaoCredito ? 'Cartão onde cai' : 'Conta de pagamento' }} (opcional)
-            <select name="conta" [(ngModel)]="fm.contaId">
+            <select name="conta" [(ngModel)]="fm.contaId" (ngModelChange)="fm.reservaNome = null; outroCofrinho = false">
               <option [ngValue]="null">—</option>
               @for (c of contas(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
             </select>
           </label>
+          <!-- #691 (ADR 0063): de onde sai o dinheiro. Só em conta do Open Finance, fora do cartão (divulgação
+               progressiva); os cofrinhos da conta numa lista, para escolher em vez de digitar (Nielsen 6). -->
+          @if (aceitaCofrinho(fm)) {
+            <label>Pago com
+              <select name="pagoCom" [ngModel]="outroCofrinho ? OUTRO : fm.reservaNome" (ngModelChange)="escolherCofrinho(fm, $event)"
+                aria-describedby="ajuda-cofrinho">
+                <option [ngValue]="null">Saldo da conta</option>
+                @for (r of opcoesCofrinho(fm); track r.nome) {
+                  <option [ngValue]="r.nome">Cofrinho {{ r.nome }}{{ r.saldo === null ? ' (não encontrado nas reservas)' : '' }}</option>
+                }
+                <option [ngValue]="OUTRO">Outro cofrinho…</option>
+              </select>
+            </label>
+            @if (outroCofrinho) {
+              <label>Nome do cofrinho
+                <input name="reservaNome" [(ngModel)]="fm.reservaNome" maxlength="100" required placeholder="ex.: Emergência"
+                  aria-describedby="ajuda-cofrinho"></label>
+            }
+            <p class="texto-suave pequeno-texto" id="ajuda-cofrinho">
+              @if (!fm.reservaNome) {
+                O dinheiro sai da conta, e o pagamento chega pela sincronização.
+              } @else if (fm.formaCobranca === FormaCobranca.DebitoAutomatico) {
+                Sai direto do cofrinho, sem passar pela conta: no vencimento, o app lança a despesa e baixa o cofrinho.
+                Se a cobrança chegar pelo extrato mesmo assim, vale a do banco.
+              } @else {
+                Sai direto do cofrinho: o “Pagar” lança a despesa e baixa o cofrinho.
+              }
+            </p>
+          }
           @if (fm.formaCobranca !== FormaCobranca.AMao) {
             <label>Texto da cobrança no extrato
               <input name="textoCobranca" [(ngModel)]="fm.textoCobranca" maxlength="100" placeholder="ex.: NETFLIX"
@@ -287,12 +348,30 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
 
     <app-modal [aberto]="pagando !== null" [titulo]="'Pagar · ' + (pagando?.descricao ?? '')" (fechar)="pagando = null">
       @if (pagando; as pg) {
-        <form (ngSubmit)="confirmarPagamento()" class="formulario">
+        <form (ngSubmit)="confirmarPagamento()" #fp="ngForm" class="formulario">
           <label>Data do pagamento <app-campo-data name="data" [(ngModel)]="dataPagamento" obrigatorio /></label>
           @if (pg.pagamentosRestantes === 1) {
             <p class="texto-suave" role="status">É o último pagamento (até {{ pg.dataLimite | date: 'dd/MM/yyyy' }}): a conta será encerrada.</p>
           }
-          @if (podeLancar(pg)) {
+          @if (cofrinhoNoPagamento !== null) {
+            <!-- #691: "foi paga com um cofrinho?": escolher em vez de digitar (Nielsen 6), e guardar para as próximas. -->
+            @if (opcoesCofrinhoDe(pg).length) {
+              <label>Qual cofrinho
+                <select name="cofrinhoPagamento" [(ngModel)]="cofrinhoNoPagamento" required>
+                  @for (r of opcoesCofrinhoDe(pg); track r.nome) { <option [ngValue]="r.nome">Cofrinho {{ r.nome }}</option> }
+                </select>
+              </label>
+            } @else {
+              <label>Nome do cofrinho
+                <input name="cofrinhoPagamento" [(ngModel)]="cofrinhoNoPagamento" required maxlength="100" placeholder="ex.: Emergência"></label>
+            }
+            <label class="checkbox"><input type="checkbox" name="guardarCofrinho" [(ngModel)]="guardarCofrinho">
+              Usar este cofrinho nas próximas (o app lança no vencimento)</label>
+            <p class="texto-suave">A despesa é lançada na conta {{ pg.contaNome }}, saindo do cofrinho: o saldo da conta não muda.</p>
+          } @else if (podeLancar(pg) && pg.reservaNome) {
+            <label class="checkbox"><input type="checkbox" name="lancar" [(ngModel)]="lancarTransacao">
+              Lançar a despesa saindo do cofrinho {{ pg.reservaNome }} ({{ pg.contaNome }})</label>
+          } @else if (podeLancar(pg)) {
             <label class="checkbox"><input type="checkbox" name="lancar" [(ngModel)]="lancarTransacao">
               Lançar a despesa na conta {{ pg.contaNome }}</label>
           } @else {
@@ -301,7 +380,23 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
           <div class="rodape-form">
             <span class="cresce"></span>
             <button type="button" class="botao" (click)="pagando = null">Cancelar</button>
-            <button class="botao botao-primario">Confirmar pagamento</button>
+            <button class="botao botao-primario" [disabled]="fp.invalid">Confirmar pagamento</button>
+          </div>
+        </form>
+      }
+    </app-modal>
+
+    <!-- #691: "Ajustar valor" da última baixa pelo cofrinho (conta de consumo que veio diferente). -->
+    <app-modal [aberto]="ajustando !== null" [titulo]="'Ajustar valor · ' + (ajustando?.descricao ?? '')" (fechar)="ajustando = null">
+      @if (ajustando; as aj) {
+        <form (ngSubmit)="confirmarAjuste()" #fa="ngForm" class="formulario">
+          <label>Valor pago <app-campo-valor name="valorPago" [(ngModel)]="valorAjuste" obrigatorio [minimo]="0.01" /></label>
+          <p class="texto-suave">Muda a despesa lançada em {{ aj.ultimoPeloCofrinho?.data | date: 'dd/MM/yyyy' }}. O valor da
+            conta a pagar continua o mesmo para os próximos meses.</p>
+          <div class="rodape-form">
+            <span class="cresce"></span>
+            <button type="button" class="botao" (click)="ajustando = null">Cancelar</button>
+            <button class="botao botao-primario" [disabled]="fa.invalid">Salvar</button>
           </div>
         </form>
       }
@@ -316,6 +411,7 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
     /* #242: o selo do banco junto do nome da conta, na mesma linha. */
     .conta-da-cobranca { display: inline-flex; align-items: center; gap: 5px; }
     .cobranca-texto .botao { margin-top: 4px; }
+    .pago-cofrinho .link { margin-left: 4px; }
   `
 })
 export class ContasAgendadasComponent implements OnInit {
@@ -347,6 +443,8 @@ export class ContasAgendadasComponent implements OnInit {
   readonly itens = signal<ContaAgendada[]>([]);
   readonly contas = signal<Conta[]>([]);
   readonly categorias = signal<Categoria[]>([]);
+  /** #691: as reservas (cofrinhos) das contas, para o "Pago com". */
+  readonly reservas = signal<Reserva[]>([]);
   readonly sugestoes = signal<SugestaoContaAgendada[]>([]);
   /** #158: avisos das recorrentes. */
   readonly avisosRecorrentes = signal<AvisoContaAgendada[]>([]);
@@ -364,6 +462,12 @@ export class ContasAgendadasComponent implements OnInit {
   /** Sugestão que originou o formulário aberto: ao salvar, ela sai da lista mesmo se a descrição for editada. */
   private chaveSugestaoEmCadastro: string | null = null;
   pagando: ContaAgendada | null = null;
+  /** #691: "Pago com" → "Outro cofrinho…": o nome é digitado. */
+  outroCofrinho = false;
+  readonly OUTRO = '__outro__';
+  /** #691: conta a pagar com o valor pago pelo cofrinho em ajuste. */
+  ajustando: ContaAgendada | null = null;
+  valorAjuste = 0;
   dataPagamento = dataIso();
   lancarTransacao = false;
 
@@ -371,6 +475,8 @@ export class ContasAgendadasComponent implements OnInit {
     this.carregar();
     this.api.contas().subscribe((c) => this.contas.set(c));
     this.api.categorias().subscribe((c) => this.categorias.set(c));
+    // Complementar: sem as reservas, o "Pago com" mostra só o saldo da conta e o "Outro cofrinho…".
+    this.api.reservas().subscribe({ next: (r) => this.reservas.set(r), error: () => this.reservas.set([]) });
   }
 
   nomeRecorrencia(r: Recorrencia): string {
@@ -392,11 +498,69 @@ export class ContasAgendadasComponent implements OnInit {
   }
 
   baixaSozinha(c: ContaAgendada): boolean {
-    return c.formaCobranca !== FormaCobranca.AMao && !!c.textoCobranca;
+    return baixaSozinha(c);
+  }
+
+  mostrarPagar(c: ContaAgendada): boolean {
+    return mostrarPagar(c);
   }
 
   podeLancar(c: ContaAgendada): boolean {
-    return this.contas().some((x) => x.id === c.contaId && x.origem === OrigemConta.Manual);
+    return podeLancar(c, this.contas());
+  }
+
+  /* -------------------------- #691: pago com o cofrinho -------------------------- */
+
+  readonly textoPagamentoCofrinho = textoPagamentoCofrinho;
+
+  aceitaCofrinho(fm: SalvarContaAgendada): boolean {
+    return aceitaCofrinho(this.contas().find((c) => c.id === fm.contaId), fm.formaCobranca);
+  }
+
+  opcoesCofrinho(fm: SalvarContaAgendada): OpcaoCofrinho[] {
+    return opcoesCofrinho(this.reservas(), fm.contaId, this.outroCofrinho ? null : fm.reservaNome);
+  }
+
+  cofrinhoEncontrado(c: ContaAgendada): boolean {
+    return cofrinhoEncontrado(c, this.reservas());
+  }
+
+  escolherCofrinho(fm: SalvarContaAgendada, valor: string | null): void {
+    this.outroCofrinho = valor === this.OUTRO;
+    fm.reservaNome = this.outroCofrinho ? '' : valor;
+  }
+
+  abrirAjuste(c: ContaAgendada): void {
+    this.ajustando = c;
+    this.valorAjuste = c.ultimoPeloCofrinho?.valor ?? c.valor;
+  }
+
+  confirmarAjuste(): void {
+    if (!this.ajustando) return;
+    this.api.ajustarPagamentoCofrinho(this.ajustando.id, Number(this.valorAjuste)).subscribe({
+      next: () => {
+        this.ajustando = null;
+        this.avisos.sucesso('Valor pago ajustado.');
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
+  }
+
+  /** O lançamento sai e o vencimento volta: pede confirmação (Nielsen 5), e a baixa automática não se repete. */
+  async desfazerPagamento(c: ContaAgendada): Promise<void> {
+    const u = c.ultimoPeloCofrinho;
+    if (!u || !(await this.confirmacao.confirmar({ titulo: 'Desfazer pagamento',
+      mensagem: `Apagar a despesa de ${c.descricao} paga pelo cofrinho ${u.reservaNome} e voltar o vencimento? `
+        + (u.automatico ? 'O app não lança de novo sozinho este vencimento: use “Pagar” se ele foi pago.' : ''),
+      confirmar: 'Desfazer', perigo: true }))) return;
+    this.api.desfazerPagamentoCofrinho(c.id).subscribe({
+      next: () => {
+        this.avisos.sucesso('Pagamento desfeito.');
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   carregar(): void {
@@ -417,8 +581,9 @@ export class ContasAgendadasComponent implements OnInit {
       categoriaId: s.categoriaId, contaId: s.contaId, ativa: true, dataLimite: null,
       formaCobranca: s.formaCobranca ?? FormaCobranca.AMao, textoCobranca: s.textoCobranca ?? null, observacao: null,
       // #205: a conta a pagar guarda de que sugestão veio; renomear não a traz de volta.
-      chaveExtrato: s.chaveExtrato ?? null
+      chaveExtrato: s.chaveExtrato ?? null, reservaNome: null
     };
+    this.outroCofrinho = false;
   }
 
   /**
@@ -452,7 +617,7 @@ export class ContasAgendadasComponent implements OnInit {
       proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia, categoriaId: c.categoriaId,
       contaId: a.tipo === 'mudou-de-cartao' && a.contaNovaId !== null ? a.contaNovaId : c.contaId,
       ativa: c.ativa, dataLimite: c.dataLimite, formaCobranca: c.formaCobranca, textoCobranca: c.textoCobranca,
-      observacao: c.observacao
+      observacao: c.observacao, reservaNome: c.reservaNome
     };
     this.api.atualizarContaAgendada(c.id, dto).subscribe({
       next: () => {
@@ -511,7 +676,8 @@ export class ContasAgendadasComponent implements OnInit {
     this.editandoId = null;
     this.chaveSugestaoEmCadastro = null;
     this.form = { descricao: '', valor: 0, proximoVencimento: dataIso(), recorrencia: Recorrencia.Mensal, categoriaId: null, contaId: null, ativa: true,
-      dataLimite: null, formaCobranca: FormaCobranca.AMao, textoCobranca: null, observacao: null };
+      dataLimite: null, formaCobranca: FormaCobranca.AMao, textoCobranca: null, observacao: null, reservaNome: null };
+    this.outroCofrinho = false;
   }
 
   editar(c: ContaAgendada): void {
@@ -520,8 +686,10 @@ export class ContasAgendadasComponent implements OnInit {
     this.form = {
       descricao: c.descricao, valor: c.valor, proximoVencimento: c.proximoVencimento, recorrencia: c.recorrencia,
       categoriaId: c.categoriaId, contaId: c.contaId, ativa: c.ativa, dataLimite: c.dataLimite,
-      formaCobranca: c.formaCobranca ?? FormaCobranca.AMao, textoCobranca: c.textoCobranca, observacao: c.observacao
+      formaCobranca: c.formaCobranca ?? FormaCobranca.AMao, textoCobranca: c.textoCobranca, observacao: c.observacao,
+      reservaNome: c.reservaNome
     };
+    this.outroCofrinho = false;
   }
 
   /** #69: data limite antes do próximo vencimento (só importa com a conta ativa; a API recusa do mesmo jeito). */
@@ -557,7 +725,9 @@ export class ContasAgendadasComponent implements OnInit {
       dataLimite: this.form.recorrencia === Recorrencia.Unica || !this.form.dataLimite ? null : this.form.dataLimite,
       // #158: o texto só vale para a cobrada sozinha.
       textoCobranca: this.form.formaCobranca === FormaCobranca.AMao ? null : this.form.textoCobranca?.trim() || null,
-      observacao: this.form.observacao?.trim() || null
+      observacao: this.form.observacao?.trim() || null,
+      // #691: o cofrinho só vale em conta do Open Finance, fora do cartão.
+      reservaNome: this.aceitaCofrinho(this.form) ? this.form.reservaNome?.trim() || null : null
     };
     const req = this.editandoId ? this.api.atualizarContaAgendada(this.editandoId, dto) : this.api.criarContaAgendada(dto);
     req.subscribe({
@@ -587,11 +757,52 @@ export class ContasAgendadasComponent implements OnInit {
     this.pagando = c;
     this.dataPagamento = dataIso();
     this.lancarTransacao = this.podeLancar(c);
+    this.cofrinhoNoPagamento = null;
+  }
+
+  /** #691: o cofrinho escolhido no "Pagar" aberto pelo aviso (null = o "Pagar" de sempre) e se ele fica para as próximas. */
+  cofrinhoNoPagamento: string | null = null;
+  guardarCofrinho = true;
+
+  opcoesCofrinhoDe(c: ContaAgendada): OpcaoCofrinho[] {
+    return opcoesCofrinho(this.reservas(), c.contaId, null);
+  }
+
+  /** #691: "Foi paga com um cofrinho": o "Pagar" com a data do vencimento e o primeiro cofrinho da conta já escolhidos. */
+  pagarPeloAviso(a: AvisoContaAgendada): void {
+    const c = this.itens().find((x) => x.id === a.contaAgendadaId);
+    if (!c) return;
+    this.pagando = c;
+    this.dataPagamento = a.data ?? dataIso();
+    this.lancarTransacao = true;
+    this.cofrinhoNoPagamento = this.opcoesCofrinhoDe(c)[0]?.nome ?? '';
+    this.guardarCofrinho = true;
+  }
+
+  /** #691: lança, pelo cofrinho, a despesa do último pagamento que ficou sem ela (confirma antes: Nielsen 5). */
+  async lancarUltimoPeloCofrinho(c: ContaAgendada): Promise<void> {
+    const data = c.ultimoSemDespesa;
+    if (!data || !c.reservaNome || c.contaId === null) return;
+    const [, m, d] = data.split('-');
+    if (!(await this.confirmacao.confirmar({ titulo: 'Lançar pelo cofrinho',
+      mensagem: `Lançar a despesa de ${c.descricao} de ${d}/${m}, no valor da conta a pagar, saindo do cofrinho ${c.reservaNome}? `
+        + 'Se o valor foi outro, ajuste depois em Transações.', confirmar: 'Lançar' }))) return;
+    this.api.registrarSaidaReserva({ contaId: c.contaId, nome: c.reservaNome, data, valor: c.valor, descricao: c.descricao,
+      categoriaId: c.categoriaId }).subscribe({
+      next: () => {
+        this.avisos.sucesso('Despesa lançada pelo cofrinho.');
+        this.carregar();
+      },
+      error: (e) => this.avisos.erro(mensagemDeErro(e))
+    });
   }
 
   confirmarPagamento(): void {
     if (!this.pagando) return;
-    this.api.pagarContaAgendada(this.pagando.id, this.lancarTransacao && this.podeLancar(this.pagando), this.dataPagamento)
+    const cofrinho = this.cofrinhoNoPagamento?.trim()
+      ? { reservaNome: this.cofrinhoNoPagamento.trim(), guardarCofrinho: this.guardarCofrinho } : undefined;
+    this.api.pagarContaAgendada(this.pagando.id, cofrinho ? true : this.lancarTransacao && this.podeLancar(this.pagando),
+      this.dataPagamento, cofrinho)
       .subscribe({
         next: () => {
           this.pagando = null;

@@ -403,7 +403,7 @@ func (r *rodada) rotinasDoFim(ctx context.Context) error {
 		func(tx *sql.Tx) (int, error) {
 			return categorizacao.IgnorarComprasParceladasEstornadas(ctx, tx, hoje, r.agora())
 		},
-		func(tx *sql.Tx) (int, error) { return cobrancas.Conciliar(ctx, tx, hoje) },
+		func(tx *sql.Tx) (int, error) { return cobrancas.Conciliar(ctx, tx, hoje, r.agora()) },
 	}
 	for _, rotina := range rotinas {
 		err := banco.EmTransacao(ctx, r.db, func(tx *sql.Tx) error {

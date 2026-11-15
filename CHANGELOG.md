@@ -2,6 +2,22 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.14.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Cofrinho: registrar saída, a diferença da conferência e "foi paga com um cofrinho?"** (#691, parte 2).
+  - Investimentos › Reservas: "registrar saída" lança um gasto pago direto do cofrinho (uma compra, por exemplo), que entra nos relatórios e baixa a estimativa. Na conferência com a data de hoje, com o saldo abaixo da estimativa, "Registrar a diferença como gasto do cofrinho" lança a diferença em vez de ela sumir.
+  - Contas a pagar: o aviso "não veio" de um débito automático do Open Finance, depois de sincronizar, pergunta "Foi paga com um cofrinho?" e abre o "Pagar" com o cofrinho e a data do vencimento, podendo guardá-lo como "Pago com". A conta com "Pago com" cujo último pagamento ficou sem a despesa oferece "lançar pelo cofrinho".
+
+## [3.13.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar: "Pago com" um cofrinho** (#691, parte 1). No Mercado Pago, o débito automático pago com o dinheiro de um cofrinho sai direto da reserva e não chega pelo Open Finance: a despesa sumia do mês e o cofrinho ficava acima do real. Agora, numa conta a pagar de conta do Open Finance, o campo "Pago com" escolhe o saldo da conta ou um cofrinho dela (ou outro, pelo nome).
+  - Com "débito automático", o site lança a despesa sozinho no vencimento, com o valor e a categoria, e o vencimento avança; com "paga à mão", o "Pagar" lança a mesma despesa. Ela entra no mês, na categoria, nos orçamentos e nos relatórios; o cofrinho baixa e o saldo da conta não muda.
+  - O lançamento sozinho só pega os vencimentos a partir do dia em que o "Pago com" foi marcado: cadastrar a conta com o vencimento meses atrás não põe despesa em meses já fechados. Conta do banco arquivada não recebe baixa.
+  - A lista mostra "paga pelo cofrinho … em … (automático)", com "ajustar valor" e "desfazer". Se a cobrança chegar pelo extrato mesmo assim, vale a do banco e a do site sai sozinha. O "desfazer" não reativa uma conta a pagar que você encerrou depois.
+  - Banco: colunas `ContaAgendada.ReservaNome`, `ContaAgendada.ReservaDesde` e `Transacao.ReservaNome` e a tabela `PagamentoCofrinho` (ADR 0063, proposta). O site aplica sozinho ao iniciar.
+
 ## [3.12.2] — 2026-11-11 · desenvolvimento
 
 ### Correções
