@@ -145,7 +145,7 @@ func lerSalvar(w http.ResponseWriter, r *http.Request) (salvarDto, bool) {
 	observacao := respostas.CampoTexto{Propriedade: "Observacao", Maximo: 300, Opcional: true,
 		MensagemDoTamanho: "A observação pode ter até 300 caracteres."}
 	chave := respostas.CampoTexto{Propriedade: "ChaveExtrato", Maximo: 150, Opcional: true}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarContaAgendadaDto", &descricao, &valor, &vencimento,
+	if !respostas.LerObjeto(w, r, &descricao, &valor, &vencimento,
 		&recorrencia, &categoria, &conta, &ativa, &limite, &forma, &textoCobranca, &observacao, &chave) {
 		return salvarDto{}, false
 	}
@@ -345,7 +345,7 @@ func (s *Servico) ligarExtrato(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chave := respostas.CampoTexto{Propriedade: "ChaveExtrato", Maximo: 150}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.LigarExtratoContaAgendadaDto", &chave) {
+	if !respostas.LerObjeto(w, r, &chave) {
 		return
 	}
 	// O "Informe a sugestão do extrato." do C# não chega a valer: o [Required] já recusa a chave só com espaços.
@@ -405,7 +405,7 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 	}
 	lancar := respostas.CampoBool{Propriedade: "LancarTransacao"}
 	data := respostas.CampoDataOpcional{Propriedade: "Data"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.PagarContaAgendadaDto", &lancar, &data) {
+	if !respostas.LerObjeto(w, r, &lancar, &data) {
 		return
 	}
 	ctx := r.Context()

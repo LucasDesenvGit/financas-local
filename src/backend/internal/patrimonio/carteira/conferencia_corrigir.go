@@ -644,11 +644,11 @@ func (s *Servico) loginDoPedido(r *http.Request) (*string, error) {
 // corrigir é o POST /api/carteira/conferencia/corrigir.
 func (s *Servico) corrigir(w http.ResponseWriter, r *http.Request) {
 	fii := respostas.CampoLista{Propriedade: "AtivosParaFii", Item: respostas.ItemInt, Opcional: true, Maximo: 200}
-	compras := respostas.CampoListaDeObjetos{Propriedade: "Compras", TipoItem: "Financas.Api.Dtos.ImportarExtratoItemDto", Maximo: 200, Novo: camposDoItemDoExtrato}
+	compras := respostas.CampoListaDeObjetos{Propriedade: "Compras", Maximo: 200, Novo: camposDoItemDoExtrato}
 	trocos := respostas.CampoLista{Propriedade: "Trocos", Item: respostas.ItemLong, Opcional: true, Maximo: 2000}
 	rendimentos := respostas.CampoLista{Propriedade: "Rendimentos", Item: respostas.ItemLong, Opcional: true, Maximo: 2000}
 	taxas := respostas.CampoLista{Propriedade: "Taxas", Item: respostas.ItemInt, Opcional: true, Maximo: 2000}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.CorrigirInvestimentosDto", &fii, &compras, &trocos, &rendimentos, &taxas) {
+	if !respostas.LerObjeto(w, r, &fii, &compras, &trocos, &rendimentos, &taxas) {
 		return
 	}
 	itens, ok := s.itensDaLista(w, r, "corrigir", compras.Itens)

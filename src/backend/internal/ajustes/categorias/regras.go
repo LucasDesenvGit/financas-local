@@ -58,7 +58,7 @@ func lerRegra(w http.ResponseWriter, r *http.Request) (RegraDto, bool) {
 	categoria := respostas.CampoInteiro{Propriedade: "CategoriaId"}
 	prioridade := respostas.CampoInteiro{Propriedade: "Prioridade", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 10000}}
 	ativa := respostas.CampoBool{Propriedade: "Ativa", Valor: true}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarRegraDto", &texto, &tipo, &categoria, &prioridade, &ativa) {
+	if !respostas.LerObjeto(w, r, &texto, &tipo, &categoria, &prioridade, &ativa) {
 		return RegraDto{}, false
 	}
 	return RegraDto{Texto: strings.TrimSpace(*texto.Valor), TipoCorrespondencia: tipo.Ou(0), CategoriaId: categoria.Valor,

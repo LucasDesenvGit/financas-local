@@ -245,15 +245,15 @@ func TestErrosDasRotas(t *testing.T) {
 		}
 		testeapoio.ConferirJSON(t, problema.Errors, erros)
 	}
-	validacao("/api/contas?incluirArquivadas=talvez", `{"incluirArquivadas":["The value 'talvez' is not valid."]}`)
-	validacao("/api/contas?incluirArquivadas=", `{"incluirArquivadas":["The value '' is invalid."]}`)
-	validacao("/api/contas/faturas-do-mes?ano=x&mes=dez", `{"ano":["The value 'x' is not valid."],"mes":["The value 'dez' is not valid."]}`)
+	validacao("/api/contas?incluirArquivadas=talvez", `{"incluirArquivadas":["O valor 'talvez' não é válido."]}`)
+	validacao("/api/contas?incluirArquivadas=", `{"incluirArquivadas":["O valor '' não é válido."]}`)
+	validacao("/api/contas/faturas-do-mes?ano=x&mes=dez", `{"ano":["O valor 'x' não é válido."],"mes":["O valor 'dez' não é válido."]}`)
 	// O int da query também vem em hexadecimal, como no TypeConverter do ASP.NET.
 	testeapoio.Chamar(t, mux, "GET", "/api/contas/faturas-do-mes?ano=0x7EA&mes=10", "").ConferirStatus(t, http.StatusOK)
 	// Os limites do período valem; sem o ano, o mês inválido ainda é o 400 do model binding.
 	testeapoio.Chamar(t, mux, "GET", "/api/contas/faturas-do-mes?ano=2000&mes=1", "").ConferirStatus(t, http.StatusOK)
 	testeapoio.Chamar(t, mux, "GET", "/api/contas/faturas-do-mes?ano=2100&mes=12", "").ConferirStatus(t, http.StatusOK)
-	validacao("/api/contas/faturas-do-mes?mes=dez", `{"mes":["The value 'dez' is not valid."]}`)
+	validacao("/api/contas/faturas-do-mes?mes=dez", `{"mes":["O valor 'dez' não é válido."]}`)
 	// Saldo inicial negativo só é recusado no investimento; investimento com saldo zero passa.
 	testeapoio.Chamar(t, mux, "POST", "/api/contas", `{"nome":"Cheque especial","tipo":1,"saldoInicial":-5,"cor":"#000000"}`).
 		ConferirStatus(t, http.StatusCreated)
@@ -268,11 +268,11 @@ func TestErrosDasRotas(t *testing.T) {
 		t.Fatal(err)
 	}
 	testeapoio.ConferirJSON(t, problema.Errors, `{
-		"Nome":["The Nome field is required."],
-		"Cor":["The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."],
-		"DiaFechamento":["The field DiaFechamento must be between 1 and 31."],
-		"DiaVencimento":["The field DiaVencimento must be between 1 and 31."],
-		"Banco":["The field Banco must be a string with a maximum length of 30."]}`)
+		"Nome":["O campo Nome é obrigatório."],
+		"Cor":["O campo Cor não está no formato esperado."],
+		"DiaFechamento":["O campo DiaFechamento tem de estar entre 1 e 31."],
+		"DiaVencimento":["O campo DiaVencimento tem de estar entre 1 e 31."],
+		"Banco":["O campo Banco pode ter até 30 caracteres."]}`)
 }
 
 // Regra: editar a conta manual muda tudo (o número aparado; limite e dias só no cartão); a do Open Finance só muda

@@ -68,7 +68,7 @@ func (s *Servico) situacaoHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Servico) ligarHTTP(w http.ResponseWriter, r *http.Request) {
 	ip := &respostas.CampoTexto{Propriedade: "Ip", Minimo: 7, Maximo: 15}
-	if !respostas.LerTextos(w, r, "dto", "LigarAcessoCelularDto", ip) {
+	if !respostas.LerTextos(w, r, ip) {
 		return
 	}
 	sit, err := s.Ligar(r.Context(), r, *ip.Valor)

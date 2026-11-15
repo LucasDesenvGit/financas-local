@@ -279,3 +279,12 @@ Dependência fora desta lista precisa de atualização desta ADR, ou de uma ADR 
   - na CI, o contrato caiu de 156 s para 40 s, e o "API e banco", de 88 s para 42 s;
   - os três primeiros números são os medidos no ensaio da #85, com o Go sozinho, e a medição final, no computador de quem usa, fica registrada na #86.
 - **Consequência negativa:** sem o .NET, não há mais uma referência para conferir um comportamento "como era". O contrato e os gabaritos guardam o que havia em 03/11/2026, e o que eles não cobrem só pode ser comparado rodando a tag.
+
+## Atualização de 2026-11-15: as mensagens de validação em português (issue #710)
+
+O item "as mensagens e o JSON de antes, que o contrato confere" deixa de valer para as respostas que a API monta sozinha (`internal/plataforma/respostas`), como pedia o levantamento da #689 (item 3a):
+- **As mensagens de validação saem em português** ("O campo Valor tem de estar entre 0,01 e 999999999."), porque o `erro.interceptor.ts` mostra as de `errors` na tela. Antes eram as do ASP.NET, em inglês.
+- **Saem o `traceId` e o nome do DTO do C#** (`Financas.Api.Dtos.…`), que só existiam para o texto ficar igual ao do .NET.
+- **O JSON quebrado tem uma mensagem só** ("Os dados do pedido não estão num formato válido."), na chave `$`. O Go deixou de reproduzir as mensagens e a posição em bytes do `System.Text.Json` (o `sintaxe.go` e o gabarito gravado do .NET saíram).
+- **O formato continua o mesmo:** `type`, `title`, `status` e `errors` por campo, e o `{"mensagem"}` da regra. O front-end não muda.
+- Os esperados do contrato mudaram de propósito, só nessas mensagens.

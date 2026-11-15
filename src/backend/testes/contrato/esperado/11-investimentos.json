@@ -289,12 +289,11 @@
     "corpo": {
       "errors": {
         "Nome": [
-          "The Nome field is required."
+          "O campo Nome é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -306,12 +305,11 @@
     "corpo": {
       "errors": {
         "Nome": [
-          "The field Nome must be a string with a maximum length of 100."
+          "O campo Nome pode ter até 100 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -323,12 +321,11 @@
     "corpo": {
       "errors": {
         "Saldo": [
-          "The field Saldo must be between 0 and 999999999999."
+          "O campo Saldo tem de estar entre 0 e 999999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -344,8 +341,7 @@
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -357,15 +353,11 @@
     "corpo": {
       "errors": {
         "$.data": [
-          "The JSON value could not be converted to Financas.Api.Dtos.ConferirReservaDto. Path: $.data | LineNumber: 4 | BytePositionInLine: 28."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de data não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -410,12 +402,11 @@
     "corpo": {
       "errors": {
         "nome": [
-          "The nome field is required."
+          "O campo nome é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -427,12 +418,11 @@
     "corpo": {
       "errors": {
         "contaId": [
-          "The value 'abc' is not valid."
+          "O valor 'abc' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1076,12 +1066,11 @@
     "corpo": {
       "errors": {
         "ativoId": [
-          "The value 'abc' is not valid."
+          "O valor 'abc' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1116,12 +1105,11 @@
     "corpo": {
       "errors": {
         "TokenBrapi": [
-          "The field TokenBrapi must be a string with a maximum length of 200."
+          "O campo TokenBrapi pode ter até 200 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1553,15 +1541,11 @@
     "corpo": {
       "errors": {
         "$.data": [
-          "The JSON value could not be converted to Financas.Api.Dtos.SalvarOperacaoDto. Path: $.data | LineNumber: 3 | BytePositionInLine: 28."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de data não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1582,15 +1566,11 @@
     "corpo": {
       "errors": {
         "$.tipo": [
-          "The JSON value could not be converted to Financas.Api.Dtos.SalvarOperacaoDto. Path: $.tipo | LineNumber: 2 | BytePositionInLine: 19."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de tipo não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1611,12 +1591,11 @@
     "corpo": {
       "errors": {
         "Quantidade": [
-          "The field Quantidade must be between 1E-06 and 1000000000."
+          "O campo Quantidade tem de estar entre 1E-06 e 1000000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1628,12 +1607,11 @@
     "corpo": {
       "errors": {
         "PrecoUnitario": [
-          "The field PrecoUnitario must be between 0 and 100000000."
+          "O campo PrecoUnitario tem de estar entre 0 e 100000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1645,12 +1623,11 @@
     "corpo": {
       "errors": {
         "Taxas": [
-          "The field Taxas must be between 0 and 10000000."
+          "O campo Taxas tem de estar entre 0 e 10000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1662,12 +1639,11 @@
     "corpo": {
       "errors": {
         "Cambio": [
-          "The field Cambio must be between 1E-06 and 100000."
+          "O campo Cambio tem de estar entre 1E-06 e 100000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1679,12 +1655,11 @@
     "corpo": {
       "errors": {
         "Observacao": [
-          "The field Observacao must be a string with a maximum length of 300."
+          "O campo Observacao pode ter até 300 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1696,12 +1671,11 @@
     "corpo": {
       "errors": {
         "Moeda": [
-          "The field Moeda must be a string with a maximum length of 3."
+          "O campo Moeda pode ter até 3 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1713,12 +1687,11 @@
     "corpo": {
       "errors": {
         "Ticker": [
-          "The Ticker field is required."
+          "O campo Ticker é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1730,13 +1703,12 @@
     "corpo": {
       "errors": {
         "Ticker": [
-          "The Ticker field is required.",
-          "The field Ticker must be a string with a minimum length of 1 and a maximum length of 12."
+          "O campo Ticker é obrigatório.",
+          "O campo Ticker tem de ter de 1 a 12 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1874,12 +1846,11 @@
     "corpo": {
       "errors": {
         "Quantidade": [
-          "The field Quantidade must be between 1E-06 and 1000000000."
+          "O campo Quantidade tem de estar entre 1E-06 e 1000000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2113,12 +2084,11 @@
     "corpo": {
       "errors": {
         "Nome": [
-          "The field Nome must be a string with a maximum length of 150."
+          "O campo Nome pode ter até 150 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2130,12 +2100,11 @@
     "corpo": {
       "errors": {
         "PrecoAtual": [
-          "The field PrecoAtual must be between 0 and 100000000."
+          "O campo PrecoAtual tem de estar entre 0 e 100000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2687,12 +2656,11 @@
     "corpo": {
       "errors": {
         "Itens": [
-          "The Itens field is required."
+          "O campo Itens é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2704,12 +2672,11 @@
     "corpo": {
       "errors": {
         "Itens": [
-          "The Itens field is required."
+          "O campo Itens é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2721,12 +2688,11 @@
     "corpo": {
       "errors": {
         "Itens": [
-          "The field Itens must be a string or array type with a minimum length of '1'."
+          "O campo Itens precisa de pelo menos 1 item."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2738,12 +2704,11 @@
     "corpo": {
       "errors": {
         "Itens[0].Ticker": [
-          "The field Ticker must be a string with a minimum length of 3 and a maximum length of 12."
+          "O campo Ticker tem de ter de 3 a 12 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2755,12 +2720,11 @@
     "corpo": {
       "errors": {
         "Itens[0].Quantidade": [
-          "The field Quantidade must be between 1E-06 and 1000000000."
+          "O campo Quantidade tem de estar entre 1E-06 e 1000000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2772,12 +2736,11 @@
     "corpo": {
       "errors": {
         "Itens[1].PrecoUnitario": [
-          "The field PrecoUnitario must be between 0 and 100000000."
+          "O campo PrecoUnitario tem de estar entre 0 e 100000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2789,15 +2752,11 @@
     "corpo": {
       "errors": {
         "$.itens[0].tipo": [
-          "The JSON value could not be converted to Financas.Api.Dtos.ImportarExtratoItemDto. Path: $.itens[0].tipo | LineNumber: 5 | BytePositionInLine: 23."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de itens[0].tipo não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -3753,8 +3712,7 @@
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

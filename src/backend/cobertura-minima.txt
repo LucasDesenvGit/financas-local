@@ -42,7 +42,7 @@ ajustes/regrasdescricao         91.3
 analises/relatorios             96.9
 plataforma/relogio              95.4
 patrimonio/reservas             93.2
-plataforma/respostas            98.5
+plataforma/respostas            100.0
 plataforma/saude                86.3
 plataforma/segredos             77.7
 patrimonio/selic                93.8

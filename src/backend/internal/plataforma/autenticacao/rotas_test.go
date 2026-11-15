@@ -172,7 +172,7 @@ func TestPostSemTokenCsrf(t *testing.T) {
 	n := a.navegador()
 	n.pedir("GET", "/api/auth/estado", nil, false)
 	status, corpo := n.pedir("POST", "/api/auth/configurar", credenciais{"ana.teste", "Senha-Forte-123"}, true)
-	if status != 400 || !strings.Contains(corpo, `"title":"Bad Request"`) {
+	if status != 400 || !strings.Contains(corpo, `"title":"Pedido recusado: o token de segurança não veio ou não confere."`) {
 		t.Errorf("%d %s", status, corpo)
 	}
 	// O token do anônimo não vale depois do login: o Angular pega o novo no cookie que o login devolve.

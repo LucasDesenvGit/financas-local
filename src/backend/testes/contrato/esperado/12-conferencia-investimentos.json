@@ -540,12 +540,11 @@
     "corpo": {
       "errors": {
         "AtivosParaFii": [
-          "The field AtivosParaFii must be a string or array type with a maximum length of '200'."
+          "O campo AtivosParaFii pode ter até 200 itens."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -557,12 +556,11 @@
     "corpo": {
       "errors": {
         "Compras": [
-          "The field Compras must be a string or array type with a maximum length of '200'."
+          "O campo Compras pode ter até 200 itens."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -574,15 +572,11 @@
     "corpo": {
       "errors": {
         "$.ativosParaFii": [
-          "The JSON value could not be converted to System.Collections.Generic.List`1[System.Int32]. Path: $.ativosParaFii | LineNumber: 1 | BytePositionInLine: 28."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de ativosParaFii não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -594,15 +588,11 @@
     "corpo": {
       "errors": {
         "$.trocos[0]": [
-          "The JSON value could not be converted to System.Int64. Path: $.trocos[0] | LineNumber: 2 | BytePositionInLine: 13."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de trocos[0] não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -614,15 +604,11 @@
     "corpo": {
       "errors": {
         "$.ativosParaFii[0]": [
-          "The JSON value could not be converted to System.Int32. Path: $.ativosParaFii[0] | LineNumber: 2 | BytePositionInLine: 20."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de ativosParaFii[0] não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -634,12 +620,11 @@
     "corpo": {
       "errors": {
         "Compras[0].Ticker": [
-          "The field Ticker must be a string with a minimum length of 3 and a maximum length of 12."
+          "O campo Ticker tem de ter de 3 a 12 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -651,12 +636,11 @@
     "corpo": {
       "errors": {
         "Compras[0].Quantidade": [
-          "The field Quantidade must be between 1E-06 and 1000000000."
+          "O campo Quantidade tem de estar entre 1E-06 e 1000000000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -668,15 +652,11 @@
     "corpo": {
       "errors": {
         "$.compras[0].tipo": [
-          "The JSON value could not be converted to Financas.Api.Dtos.ImportarExtratoItemDto. Path: $.compras[0].tipo | LineNumber: 5 | BytePositionInLine: 28."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de compras[0].tipo não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -696,8 +676,7 @@
     "tipo": "application/json; charset=utf-8",
     "corpo": {
       "status": 415,
-      "title": "Unsupported Media Type",
-      "traceId": "<traceId>",
+      "title": "Os dados do pedido têm de vir em JSON.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.16"
     }
   },

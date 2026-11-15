@@ -55,7 +55,7 @@ func lerEntradaDaOperacao(w http.ResponseWriter, r *http.Request) (entradaDaOper
 	observacao := respostas.CampoTexto{Propriedade: "Observacao", Maximo: 300, Opcional: true}
 	moeda := respostas.CampoTexto{Propriedade: "Moeda", Maximo: 3, Opcional: true}
 	cotacao := respostas.CampoDecimalOpcional{Propriedade: "Cambio", Faixa: &respostas.Faixa{Minimo: 0.000001, Maximo: 100000}}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarOperacaoDto", &ticker, &tipoAtivo, &tipo, &data, &quantidade, &preco, &taxas,
+	if !respostas.LerObjeto(w, r, &ticker, &tipoAtivo, &tipo, &data, &quantidade, &preco, &taxas,
 		&observacao, &moeda, &cotacao) {
 		return entradaDaOperacao{}, false
 	}
@@ -493,7 +493,7 @@ func (s *Servico) atualizarAtivo(w http.ResponseWriter, r *http.Request) {
 	segmentoLido := respostas.CampoTexto{Propriedade: "Segmento", Maximo: 40, Opcional: true}
 	manual := respostas.CampoBool{Propriedade: "PrecoManual"}
 	preco := respostas.CampoDecimalOpcional{Propriedade: "PrecoAtual", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 100000000}}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.AtualizarAtivoDto", &nome, &tipo, &segmentoLido, &manual, &preco) {
+	if !respostas.LerObjeto(w, r, &nome, &tipo, &segmentoLido, &manual, &preco) {
 		return
 	}
 	ctx := r.Context()
@@ -592,7 +592,7 @@ func tokenValido(token string) bool {
 func (s *Servico) salvarConfiguracao(w http.ResponseWriter, r *http.Request) {
 	token := respostas.CampoTexto{Propriedade: "TokenBrapi", Maximo: 200, Opcional: true}
 	remover := respostas.CampoBool{Propriedade: "Remover"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarConfiguracaoCotacaoDto", &token, &remover) {
+	if !respostas.LerObjeto(w, r, &token, &remover) {
 		return
 	}
 	var err error

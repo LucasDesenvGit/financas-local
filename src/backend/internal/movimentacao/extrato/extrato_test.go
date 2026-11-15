@@ -243,16 +243,16 @@ func TestCompararSemSinal(t *testing.T) {
 func TestErrosDoFiltro(t *testing.T) {
 	mux, _, _ := rotasDeTeste(t, minimoFixo{n: 4})
 	casos := []struct{ query, erros string }{
-		{"pagina=um&tamanhoPagina=", `{"Pagina":["The value 'um' is not valid for Pagina."],"TamanhoPagina":["The value '' is invalid."]}`},
-		{"inicio=2026-13-01&contaId=x&categoriaId=1.5", `{"Inicio":["The value '2026-13-01' is not valid for Inicio."],"ContaId":["The value 'x' is not valid for ContaId."],"CategoriaId":["The value '1.5' is not valid for CategoriaId."]}`},
-		{"ids=1&ids=x&categoriaIds=y", `{"Ids":["The value 'x' is not valid."],"CategoriaIds":["The value 'y' is not valid."]}`},
-		{"naturezas=9&naturezas=luxo", `{"Naturezas":["The value '9' is invalid.","The value 'luxo' is not valid."]}`},
-		{"tipo=abc&somenteEmergencias=sim&semCategoria=", `{"Tipo":["The value 'abc' is not valid for Tipo."],"SomenteEmergencias":["The value 'sim' is not valid for SomenteEmergencias."],"SemCategoria":["The value '' is invalid."]}`},
-		{"tipo=9", `{"Tipo":["The value '9' is invalid."]}`},
-		{"pagina=0&tamanhoPagina=501&ordem=x&direcao=y&lancamento=PIX", `{"Pagina":["The field Pagina must be between 1 and 2147483647."],"TamanhoPagina":["The field TamanhoPagina must be between 1 and 500."],"Ordem":["The field Ordem must match the regular expression '^(data|categoria|conta|valor)$'."],"Direcao":["The field Direcao must match the regular expression '^(asc|desc)$'."],"Lancamento":["The field Lancamento must match the regular expression '^(cartao|debito|pix|transferencia|entre-contas|fatura|boleto|saque-deposito|tarifas|investimentos|salario|credito|dinheiro|outros)$'."]}`},
-		{"busca=" + strings.Repeat("x", 101) + "&naturezas=1&naturezas=2&naturezas=1", `{"Busca":["The field Busca must be a string with a maximum length of 100."],"Naturezas":["The field Naturezas must be a string or array type with a maximum length of '2'."]}`},
-		{"ids=" + strings.Repeat("1&ids=", 200) + "1", `{"Ids":["The field Ids must be a string or array type with a maximum length of '200'."]}`},
-		{"categoriaIds=" + strings.Repeat("1&categoriaIds=", 200) + "1", `{"CategoriaIds":["The field CategoriaIds must be a string or array type with a maximum length of '200'."]}`},
+		{"pagina=um&tamanhoPagina=", `{"Pagina":["O valor 'um' não é válido para Pagina."],"TamanhoPagina":["O valor '' não é válido."]}`},
+		{"inicio=2026-13-01&contaId=x&categoriaId=1.5", `{"Inicio":["O valor '2026-13-01' não é válido para Inicio."],"ContaId":["O valor 'x' não é válido para ContaId."],"CategoriaId":["O valor '1.5' não é válido para CategoriaId."]}`},
+		{"ids=1&ids=x&categoriaIds=y", `{"Ids":["O valor 'x' não é válido."],"CategoriaIds":["O valor 'y' não é válido."]}`},
+		{"naturezas=9&naturezas=luxo", `{"Naturezas":["O valor '9' não é válido.","O valor 'luxo' não é válido."]}`},
+		{"tipo=abc&somenteEmergencias=sim&semCategoria=", `{"Tipo":["O valor 'abc' não é válido para Tipo."],"SomenteEmergencias":["O valor 'sim' não é válido para SomenteEmergencias."],"SemCategoria":["O valor '' não é válido."]}`},
+		{"tipo=9", `{"Tipo":["O valor '9' não é válido."]}`},
+		{"pagina=0&tamanhoPagina=501&ordem=x&direcao=y&lancamento=PIX", `{"Pagina":["O campo Pagina tem de estar entre 1 e 2147483647."],"TamanhoPagina":["O campo TamanhoPagina tem de estar entre 1 e 500."],"Ordem":["O campo Ordem não está no formato esperado."],"Direcao":["O campo Direcao não está no formato esperado."],"Lancamento":["O campo Lancamento não está no formato esperado."]}`},
+		{"busca=" + strings.Repeat("x", 101) + "&naturezas=1&naturezas=2&naturezas=1", `{"Busca":["O campo Busca pode ter até 100 caracteres."],"Naturezas":["O campo Naturezas pode ter até 2 itens."]}`},
+		{"ids=" + strings.Repeat("1&ids=", 200) + "1", `{"Ids":["O campo Ids pode ter até 200 itens."]}`},
+		{"categoriaIds=" + strings.Repeat("1&categoriaIds=", 200) + "1", `{"CategoriaIds":["O campo CategoriaIds pode ter até 200 itens."]}`},
 	}
 	for _, c := range casos {
 		resp := testeapoio.Chamar(t, mux, "GET", "/api/transacoes?"+c.query, "")

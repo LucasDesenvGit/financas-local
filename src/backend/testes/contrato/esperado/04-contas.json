@@ -353,12 +353,11 @@
     "corpo": {
       "errors": {
         "incluirArquivadas": [
-          "The value 'talvez' is not valid."
+          "O valor 'talvez' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -737,12 +736,11 @@
     "corpo": {
       "errors": {
         "mes": [
-          "The value 'dez' is not valid."
+          "O valor 'dez' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1168,27 +1166,26 @@
     "corpo": {
       "errors": {
         "Banco": [
-          "The field Banco must be a string with a maximum length of 30."
+          "O campo Banco pode ter até 30 caracteres."
         ],
         "Cor": [
-          "The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."
+          "O campo Cor não está no formato esperado."
         ],
         "DiaFechamento": [
-          "The field DiaFechamento must be between 1 and 31."
+          "O campo DiaFechamento tem de estar entre 1 e 31."
         ],
         "DiaVencimento": [
-          "The field DiaVencimento must be between 1 and 31."
+          "O campo DiaVencimento tem de estar entre 1 e 31."
         ],
         "Nome": [
-          "The Nome field is required."
+          "O campo Nome é obrigatório."
         ],
         "Numero": [
-          "The field Numero must be a string with a maximum length of 60."
+          "O campo Numero pode ter até 60 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1200,12 +1197,11 @@
     "corpo": {
       "errors": {
         "Nome": [
-          "The field Nome must be a string with a maximum length of 120."
+          "O campo Nome pode ter até 120 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1217,15 +1213,11 @@
     "corpo": {
       "errors": {
         "$.tipo": [
-          "The JSON value could not be converted to Financas.Api.Dtos.SalvarContaDto. Path: $.tipo | LineNumber: 2 | BytePositionInLine: 19."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de tipo não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1237,15 +1229,11 @@
     "corpo": {
       "errors": {
         "": [
-          "A non-empty request body is required."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O pedido veio sem dados."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

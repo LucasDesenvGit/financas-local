@@ -52,7 +52,7 @@ func (s *Servico) conferir(w http.ResponseWriter, r *http.Request) {
 	saldo := respostas.CampoDecimal{Propriedade: "Saldo", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 999999999999}}
 	data := respostas.CampoDataOpcional{Propriedade: "Data"}
 	moeda := respostas.CampoTexto{Propriedade: "Moeda", Maximo: math.MaxInt, Opcional: true, Padrao: padraoMoeda}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ConferirReservaDto", &conta, &nome, &saldo, &data, &moeda) {
+	if !respostas.LerObjeto(w, r, &conta, &nome, &saldo, &data, &moeda) {
 		return
 	}
 	hoje := relogio.Hoje(s.relogio)

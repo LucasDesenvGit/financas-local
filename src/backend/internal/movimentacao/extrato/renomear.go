@@ -128,7 +128,7 @@ func (s *Servico) previaRenomear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tipo := int64(igual)
-	// Vazio também é erro: o tipo não aceita null ("The value '' is invalid.").
+	// Vazio também é erro: o tipo não aceita null ("O valor '' não é válido.").
 	if v, ok := respostas.ParametroDaQuery(r, "tipo"); ok {
 		switch n, converte, definido := respostas.EnumDaQuery(v, nomesDaCorrespondencia); {
 		case !converte:
@@ -202,7 +202,7 @@ func (s *Servico) renomear(w http.ResponseWriter, r *http.Request) {
 	nasOutras := respostas.CampoBool{Propriedade: "AplicarNasOutras"}
 	tipoCampo := respostas.CampoEnum{Propriedade: "TipoCorrespondencia"}
 	textoCampo := respostas.CampoTexto{Propriedade: "Texto", Maximo: 200, Opcional: true}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.RenomearTransacaoDto", &descricaoCampo, &voltar, &nasOutras,
+	if !respostas.LerObjeto(w, r, &descricaoCampo, &voltar, &nasOutras,
 		&tipoCampo, &textoCampo) {
 		return
 	}
@@ -340,7 +340,7 @@ const maximoRegrasPorLote = 50
 func (s *Servico) renomearEmLote(w http.ResponseWriter, r *http.Request) {
 	descricaoCampo := respostas.CampoTexto{Propriedade: "Descricao", Minimo: 1, Maximo: 300}
 	criar := respostas.CampoBool{Propriedade: "CriarRegras"}
-	ids, ok := lerIds(w, r, "Financas.Api.Dtos.RenomearEmLoteDto", &descricaoCampo, &criar)
+	ids, ok := lerIds(w, r, &descricaoCampo, &criar)
 	if !ok {
 		return
 	}

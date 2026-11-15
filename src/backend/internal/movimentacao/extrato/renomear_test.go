@@ -74,8 +74,8 @@ func TestPreviaRenomear(t *testing.T) {
 		status  int
 		erro    string
 	}{
-		{fmt.Sprintf("/api/transacoes/%d/renomear/previa?tipo=9", luz.Id), 400, `{"tipo":["The value '9' is invalid."]}`},
-		{fmt.Sprintf("/api/transacoes/%d/renomear/previa?tipo=x", luz.Id), 400, `{"tipo":["The value 'x' is not valid."]}`},
+		{fmt.Sprintf("/api/transacoes/%d/renomear/previa?tipo=9", luz.Id), 400, `{"tipo":["O valor '9' não é válido."]}`},
+		{fmt.Sprintf("/api/transacoes/%d/renomear/previa?tipo=x", luz.Id), 400, `{"tipo":["O valor 'x' não é válido."]}`},
 		{"/api/transacoes/999/renomear/previa", 404, ""},
 		{"/api/transacoes/abc/renomear/previa", 404, ""},
 	}

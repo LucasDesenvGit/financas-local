@@ -10,24 +10,25 @@ import (
 	"strings"
 )
 
-// LeitorJSON lê o corpo token a token, na ordem do texto, como o Utf8JsonReader do System.Text.Json: a primeira
-// coisa errada é a que vira o erro, e a posição do erro é a do fim do token lido (o BytePositionInLine do .NET).
+// LeitorJSON lê o corpo token a token, na ordem do texto: a primeira coisa errada é a que vira o erro.
 type LeitorJSON struct {
-	corpo []byte
-	dec   *json.Decoder
+	dec *json.Decoder
 }
 
 func NovoLeitorJSON(corpo []byte) *LeitorJSON {
 	dec := json.NewDecoder(bytes.NewReader(corpo))
 	dec.UseNumber()
-	return &LeitorJSON{corpo: corpo, dec: dec}
+	return &LeitorJSON{dec: dec}
 }
 
-// Token é o próximo token (json.Delim, string, json.Number, bool ou nil); o erro já vem no formato do .NET.
+// erroDeSintaxe é o erro do corpo que não é JSON válido: uma mensagem só, para o pedido inteiro.
+func erroDeSintaxe() *ErroJSON { return &ErroJSON{Caminho: "$", Mensagem: MensagemJSONInvalido} }
+
+// Token é o próximo token (json.Delim, string, json.Number, bool ou nil).
 func (l *LeitorJSON) Token() (json.Token, *ErroJSON) {
 	t, err := l.dec.Token()
 	if err != nil {
-		return nil, ErroDeSintaxe(l.corpo)
+		return nil, erroDeSintaxe()
 	}
 	return t, nil
 }
@@ -56,18 +57,21 @@ func (l *LeitorJSON) Pular(inicio json.Token) *ErroJSON {
 	}
 }
 
-// Fim confere que não há nada depois do valor (o leitor do .NET recusa).
+// Fim confere que não há nada depois do valor.
 func (l *LeitorJSON) Fim() *ErroJSON {
 	if _, err := l.dec.Token(); !errors.Is(err, io.EOF) {
-		return ErroDeSintaxe(l.corpo)
+		return erroDeSintaxe()
 	}
 	return nil
 }
 
-// Conversao é o "The JSON value could not be converted to ..." com a posição logo depois do token lido.
-func (l *LeitorJSON) Conversao(caminho, tipo string) *ErroJSON {
-	return &ErroJSON{Caminho: caminho, Mensagem: fmt.Sprintf("The JSON value could not be converted to %s. Path: %s | %s.",
-		tipo, caminho, Posicao(l.corpo, int(l.dec.InputOffset())))}
+// Conversao é o erro do valor que não é do tipo do campo (texto num número, lista num objeto). O caminho "$" é o
+// pedido inteiro; os outros saem sem o "$." na mensagem ("valor", "itens[0].id").
+func (l *LeitorJSON) Conversao(caminho string) *ErroJSON {
+	if caminho == "$" {
+		return &ErroJSON{Caminho: caminho, Mensagem: MensagemJSONInvalido}
+	}
+	return &ErroJSON{Caminho: caminho, Mensagem: fmt.Sprintf("O valor de %s não é do tipo esperado.", strings.TrimPrefix(caminho, "$."))}
 }
 
 // Campo é uma propriedade de um DTO lido por LerObjeto: um campoSimples (o valor é um token só) ou um campoComposto
@@ -95,13 +99,13 @@ type campoComposto interface {
 // CampoTexto é um parâmetro string de um DTO com [StringLength(maximo, MinimumLength = minimo)] e, se não for
 // Opcional, [Required].
 type CampoTexto struct {
-	Propriedade string // o nome da propriedade no C#, que é a chave em "errors" ("Login", "SenhaAtual")
+	Propriedade string // o nome do campo, que é a chave em "errors" ("Login", "SenhaAtual")
 	Minimo      int
 	Maximo      int
 	Opcional    bool    // sem [Required] (string? no C#)
 	Padrao      *Padrao // [RegularExpression], se houver
-	// MensagemDoTamanho é o ErrorMessage do [StringLength], quando o record dá um ("O texto da cobrança pode ter até
-	// 100 caracteres."); vazio, vale a mensagem padrão do .NET.
+	// MensagemDoTamanho é a mensagem própria do tamanho, quando o campo dá uma ("O texto da cobrança pode ter até 100
+	// caracteres."); vazio, vale a mensagem padrão.
 	MensagemDoTamanho string
 	Valor             *string
 }
@@ -132,10 +136,9 @@ func (c *CampoTexto) validar(erros map[string][]string) {
 			if c.MensagemDoTamanho != "" {
 				lista = append(lista, c.MensagemDoTamanho)
 			} else if c.Minimo > 0 {
-				lista = append(lista, fmt.Sprintf("The field %s must be a string with a minimum length of %d and a maximum length of %d.",
-					c.Propriedade, c.Minimo, c.Maximo))
+				lista = append(lista, fmt.Sprintf("O campo %s tem de ter de %d a %d caracteres.", c.Propriedade, c.Minimo, c.Maximo))
 			} else {
-				lista = append(lista, fmt.Sprintf("The field %s must be a string with a maximum length of %d.", c.Propriedade, c.Maximo))
+				lista = append(lista, fmt.Sprintf("O campo %s pode ter até %d caracteres.", c.Propriedade, c.Maximo))
 			}
 		}
 		if c.Padrao != nil && *c.Valor != "" && !c.Padrao.re.MatchString(*c.Valor) {
@@ -163,35 +166,20 @@ func (c *CampoBool) ler(t json.Token) bool {
 
 func (c *CampoBool) validar(map[string][]string) {}
 
-// LerObjeto faz o model binding e a validação do [ApiController] para um record do C# com construtor (o
-// System.Text.Json com as opções web do ASP.NET): devolve false se já respondeu (415, 413 ou 400).
-//
-//   - parametro é o nome do parâmetro da action ("dto"), que aparece quando o corpo não abre;
-//   - tipoDto é o nome completo do tipo no C#: o erro de tipo num campo de um record com construtor cita o tipo do
-//     record, e não o do campo (o contrato 17-erros mostra: "could not be converted to ...ErroFrontEndDto");
-//   - nomes sem diferença de maiúsculas, propriedades a mais ignoradas, a última repetida vale.
-func LerObjeto(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, campos ...Campo) bool {
-	return lerEValidar(w, r, parametro, tipoDto, doRecord(tipoDto), campos)
-}
-
-// LerClasse é o LerObjeto de uma classe com propriedades (o AlterarCategoriasEmLoteDto), e não de um record: o erro de
-// tipo num campo cita o tipo do campo ("System.Nullable`1[System.Int32]"), e não o da classe.
-func LerClasse(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, campos ...Campo) bool {
-	return lerEValidar(w, r, parametro, tipoDto, daClasse, campos)
-}
-
-func lerEValidar(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, tipo tipoDoErro, campos []Campo) bool {
-	corpo, ok := LerCorpo(w, r, parametro)
+// LerObjeto lê o corpo JSON nos campos e confere cada um (obrigatório, tamanho, faixa): devolve false se já respondeu
+// (415, 413 ou 400). Os nomes não diferenciam maiúsculas, propriedade a mais é ignorada e, repetida, vale a última.
+func LerObjeto(w http.ResponseWriter, r *http.Request, campos ...Campo) bool {
+	corpo, ok := LerCorpo(w, r)
 	if !ok {
 		return false
 	}
-	nulo, erroJSON := lerObjeto(corpo, tipoDto, tipo, campos)
+	nulo, erroJSON := lerObjeto(corpo, campos)
 	switch {
 	case erroJSON != nil:
-		Validacao(w, map[string][]string{erroJSON.Caminho: {erroJSON.Mensagem}, parametro: {Obrigatorio(parametro)}})
+		Validacao(w, map[string][]string{erroJSON.Caminho: {erroJSON.Mensagem}})
 		return false
 	case nulo:
-		CorpoVazio(w, parametro)
+		CorpoVazio(w)
 		return false
 	}
 	erros := map[string][]string{}
@@ -205,31 +193,17 @@ func lerEValidar(w http.ResponseWriter, r *http.Request, parametro, tipoDto stri
 	return true
 }
 
-// LerTextos é o LerObjeto de um DTO só com strings obrigatórias ou opcionais (CampoTexto).
-func LerTextos(w http.ResponseWriter, r *http.Request, parametro, tipoDto string, campos ...*CampoTexto) bool {
+// LerTextos é o LerObjeto de um corpo só com textos (CampoTexto).
+func LerTextos(w http.ResponseWriter, r *http.Request, campos ...*CampoTexto) bool {
 	todos := make([]Campo, len(campos))
 	for i, c := range campos {
 		todos[i] = c
 	}
-	return LerObjeto(w, r, parametro, tipoDto, todos...)
+	return LerObjeto(w, r, todos...)
 }
 
-// tipoDoErro diz o tipo que o erro de conversão de um campo cita.
-type tipoDoErro func(Campo) string
-
-// doRecord: num record com construtor, o erro cita o próprio record.
-func doRecord(tipoDto string) tipoDoErro { return func(Campo) string { return tipoDto } }
-
-// daClasse: numa classe com propriedades, o erro cita o tipo da propriedade.
-func daClasse(c Campo) string { return c.(comTipo).tipoCSharp() }
-
-// comTipo é o campo que sabe o nome do tipo dele no C#, para o erro de conversão numa classe.
-type comTipo interface {
-	tipoCSharp() string
-}
-
-// lerObjeto lê o objeto e devolve se o JSON inteiro era "null" (o ASP.NET trata como corpo vazio).
-func lerObjeto(corpo []byte, tipoDto string, tipo tipoDoErro, campos []Campo) (bool, *ErroJSON) {
+// lerObjeto lê o objeto e devolve se o JSON inteiro era "null" (que vale como corpo vazio).
+func lerObjeto(corpo []byte, campos []Campo) (bool, *ErroJSON) {
 	l := NovoLeitorJSON(corpo)
 	primeiro, erro := l.Token()
 	if erro != nil {
@@ -239,9 +213,9 @@ func lerObjeto(corpo []byte, tipoDto string, tipo tipoDoErro, campos []Campo) (b
 		return true, l.Fim()
 	}
 	if primeiro != json.Delim('{') {
-		return false, l.Conversao("$", tipoDto)
+		return false, l.Conversao("$")
 	}
-	if erro := lerPropriedades(l, "$", tipo, campos); erro != nil {
+	if erro := lerPropriedades(l, "$", campos); erro != nil {
 		return false, erro
 	}
 	return false, l.Fim()
@@ -249,7 +223,7 @@ func lerObjeto(corpo []byte, tipoDto string, tipo tipoDoErro, campos []Campo) (b
 
 // lerPropriedades lê os pares nome e valor de um objeto já aberto, até o "}" (que consome). caminho é o do objeto ("$",
 // "$.filtro", "$.itens[0]").
-func lerPropriedades(l *LeitorJSON, caminho string, tipo tipoDoErro, campos []Campo) *ErroJSON {
+func lerPropriedades(l *LeitorJSON, caminho string, campos []Campo) *ErroJSON {
 	for l.Mais() {
 		nomeToken, erro := l.Token()
 		if erro != nil {
@@ -274,7 +248,7 @@ func lerPropriedades(l *LeitorJSON, caminho string, tipo tipoDoErro, campos []Ca
 			}
 		case campoSimples:
 			if !c.ler(valor) {
-				return l.Conversao(CaminhoDaChave(caminho, nome), tipo(campo))
+				return l.Conversao(CaminhoDaChave(caminho, nome))
 			}
 		}
 	}

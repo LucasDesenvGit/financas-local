@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.12.3] — 2026-11-15 · desenvolvimento
+
+### Correções
+- **Mensagens de erro dos formulários em português** (#710). Quando um valor passava pelo formulário e a API recusava (um número fora da faixa, um campo obrigatório em branco), a tela mostrava o texto em inglês do .NET antigo ("The field Valor must be between…"). Agora sai em português ("O campo Valor tem de estar entre 0,01 e 999999999."). Por dentro, a API deixou de imitar o .NET nessas respostas: sem o `traceId` e sem o nome das classes do C#, e o JSON quebrado tem uma mensagem só.
+
 ## [3.12.2] — 2026-11-11 · desenvolvimento
 
 ### Correções

@@ -8,13 +8,8 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 )
 
-// Nomes do C# que aparecem nas mensagens do System.Text.Json.
-const (
-	tipoDto        = "Financas.Api.Dtos.SalvarParametrosDto"
-	tipoDicionario = "System.Collections.Generic.Dictionary`2[System.String,System.Int32]"
-	tipoInt32      = "System.Int32"
-	caminhoValores = "$.valores" // o nome da propriedade no caminho é o do contrato (camelCase), não o que veio
-)
+// caminhoValores é o caminho do erro em "valores": o nome do contrato (camelCase), não o que veio.
+const caminhoValores = "$.valores"
 
 // corpoSalvar é o SalvarParametrosDto lido do JSON.
 type corpoSalvar struct {
@@ -38,7 +33,7 @@ func lerSalvar(corpo []byte) (corpoSalvar, *respostas.ErroJSON) {
 		return corpoSalvar{nulo: true}, l.Fim()
 	}
 	if primeiro != json.Delim('{') {
-		return corpoSalvar{}, l.Conversao("$", tipoDto)
+		return corpoSalvar{}, l.Conversao("$")
 	}
 
 	var resultado corpoSalvar
@@ -75,7 +70,7 @@ func lerValores(l *respostas.LeitorJSON, inicio json.Token) ([]Valor, *respostas
 		return nil, nil
 	}
 	if inicio != json.Delim('{') {
-		return nil, l.Conversao(caminhoValores, tipoDicionario)
+		return nil, l.Conversao(caminhoValores)
 	}
 	valores := []Valor{}
 	posicao := map[string]int{}
@@ -91,7 +86,7 @@ func lerValores(l *respostas.LeitorJSON, inicio json.Token) ([]Valor, *respostas
 		}
 		n, ok := inteiro(valorToken)
 		if !ok {
-			return nil, l.Conversao(respostas.CaminhoDaChave(caminhoValores, chave), tipoInt32)
+			return nil, l.Conversao(respostas.CaminhoDaChave(caminhoValores, chave))
 		}
 		if i, repetida := posicao[chave]; repetida {
 			valores[i].Valor = n

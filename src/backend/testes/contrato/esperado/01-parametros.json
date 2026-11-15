@@ -223,8 +223,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -250,12 +249,11 @@
     "corpo": {
       "errors": {
         "Valores": [
-          "The Valores field is required."
+          "O campo Valores é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -267,15 +265,11 @@
     "corpo": {
       "errors": {
         "$.valores['Sincronizacao.IntervaloHoras']": [
-          "The JSON value could not be converted to System.Int32. Path: $.valores['Sincronizacao.IntervaloHoras'] | LineNumber: 0 | BytePositionInLine: 50."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de valores['Sincronizacao.IntervaloHoras'] não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

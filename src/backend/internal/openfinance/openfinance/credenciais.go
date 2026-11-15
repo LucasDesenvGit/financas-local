@@ -66,8 +66,7 @@ func (s *Servico) salvarConfiguracao(w http.ResponseWriter, r *http.Request) {
 	intervalo := respostas.CampoInteiroOpcional{Propriedade: "IntervaloHoras", Faixa: &respostas.Faixa{Minimo: 1, Maximo: 48}}
 	dias := respostas.CampoInteiroOpcional{Propriedade: "DiasRetroativos", Faixa: &respostas.Faixa{Minimo: 1, Maximo: 365}}
 	habilitada := respostas.CampoBoolOpcional{Propriedade: "Habilitada"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarConfiguracaoPluggyDto",
-		&clientId, &clientSecret, &intervalo, &dias, &habilitada) {
+	if !respostas.LerObjeto(w, r, &clientId, &clientSecret, &intervalo, &dias, &habilitada) {
 		return
 	}
 	ctx := r.Context()
@@ -140,7 +139,7 @@ func (s *Servico) removerSecret(w http.ResponseWriter, r *http.Request) {
 // salvarMeuNome grava o seu nome como aparece nos Pix (#172, ADR 0031) e reclassifica as transferências na hora. Vazio apaga.
 func (s *Servico) salvarMeuNome(w http.ResponseWriter, r *http.Request) {
 	nome := respostas.CampoTexto{Propriedade: "Nome", Maximo: 120, Opcional: true, MensagemDoTamanho: "O nome pode ter até 120 caracteres."}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.MeuNomeDto", &nome) {
+	if !respostas.LerObjeto(w, r, &nome) {
 		return
 	}
 	var valor *string

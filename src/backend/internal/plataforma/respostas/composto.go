@@ -7,23 +7,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Os nomes dos tipos no C#, para o erro de conversão numa classe com propriedades (LerClasse, CampoObjeto): o
-// System.Text.Json cita o tipo da propriedade. Os anuláveis saem como o Type.ToString() do .NET.
-func anulavel(tipo string) string { return "System.Nullable`1[" + tipo + "]" }
-
-func (c *CampoTexto) tipoCSharp() string           { return "System.String" }
-func (c *CampoBool) tipoCSharp() string            { return "System.Boolean" }
-func (c *CampoInteiro) tipoCSharp() string         { return "System.Int32" }
-func (c *CampoInteiroOpcional) tipoCSharp() string { return anulavel("System.Int32") }
-func (c *CampoDataOpcional) tipoCSharp() string    { return anulavel("System.DateOnly") }
-
-func (c *CampoEnum) tipoCSharp() string {
-	if c.Anulavel {
-		return anulavel(c.Tipo)
-	}
-	return c.Tipo
-}
-
 // CampoLong é um long (não anulável) de um record: número JSON inteiro ou o mesmo número em texto; null é erro.
 type CampoLong struct {
 	Propriedade string
@@ -31,7 +14,6 @@ type CampoLong struct {
 }
 
 func (c *CampoLong) propriedade() string { return c.Propriedade }
-func (c *CampoLong) tipoCSharp() string  { return "System.Int64" }
 
 func (c *CampoLong) ler(t json.Token) bool {
 	n, ok := inteiroDoTokenEm(t, 64)
@@ -64,13 +46,11 @@ func (c *CampoDataOpcional) ler(t json.Token) bool {
 
 func (c *CampoDataOpcional) validar(map[string][]string) {}
 
-// CampoObjeto é uma propriedade que é outro DTO, uma classe com propriedades (o FiltroTransacoesDto dentro do
-// AlterarCategoriasEmLoteDto). Sem ela ou com null, Veio fica false. O erro de tipo num campo dele cita o tipo do campo,
-// e a validação dos campos sai com o nome da propriedade na frente ("Filtro.Busca", contrato 07-transacoes,
+// CampoObjeto é uma propriedade que é outro objeto (o filtro dentro das categorias em lote). Sem ela ou com null, Veio
+// fica false. A validação dos campos sai com o nome da propriedade na frente ("Filtro.Busca", contrato 07-transacoes,
 // "categorias em lote com o filtro inválido").
 type CampoObjeto struct {
 	Propriedade string
-	Tipo        string // o nome completo da classe no C#
 	Campos      []Campo
 	Veio        bool
 }
@@ -83,10 +63,10 @@ func (c *CampoObjeto) lerValor(l *LeitorJSON, inicio json.Token, caminho string)
 		return nil
 	}
 	if inicio != json.Delim('{') {
-		return l.Conversao(caminho, c.Tipo)
+		return l.Conversao(caminho)
 	}
 	c.Veio = true
-	return lerPropriedades(l, caminho, daClasse, c.Campos)
+	return lerPropriedades(l, caminho, c.Campos)
 }
 
 func (c *CampoObjeto) validar(erros map[string][]string) {
@@ -102,14 +82,12 @@ func (c *CampoObjeto) validar(erros map[string][]string) {
 	}
 }
 
-// CampoListaDeObjetos é uma lista de records de um DTO (List<AlteracaoCategoriaDto>), com [MinLength] e [MaxLength] se
-// Minimo e Maximo não forem 0, e [Required] com Obrigatoria. Novo dá os campos de um item; cada item é lido como um
-// record, e o erro de tipo num campo dele cita o record do item e o caminho do campo ("$.itens[0].id"). Os atributos dos
-// campos de um item valem com a chave "Itens[0].Ticker". null fica nil; um item null fica nil na lista (o C# o recebe
-// null).
+// CampoListaDeObjetos é uma lista de objetos, com o tamanho mínimo e o máximo se Minimo e Maximo não forem 0, e
+// obrigatória com Obrigatoria. Novo dá os campos de um item; o erro de tipo num campo dele sai com o caminho do campo
+// ("$.itens[0].id"), e a validação dos campos de um item com a chave "Itens[0].Ticker". null fica nil; um item null
+// fica nil na lista.
 type CampoListaDeObjetos struct {
 	Propriedade string
-	TipoItem    string // o nome completo do record do item no C#
 	Minimo      int
 	Maximo      int
 	Obrigatoria bool
@@ -125,7 +103,7 @@ func (c *CampoListaDeObjetos) lerValor(l *LeitorJSON, inicio json.Token, caminho
 		return nil
 	}
 	if inicio != json.Delim('[') {
-		return l.Conversao(caminho, "System.Collections.Generic.List`1["+c.TipoItem+"]")
+		return l.Conversao(caminho)
 	}
 	itens := [][]Campo{}
 	for i := 0; l.Mais(); i++ {
@@ -140,10 +118,10 @@ func (c *CampoListaDeObjetos) lerValor(l *LeitorJSON, inicio json.Token, caminho
 			continue
 		case json.Delim('{'):
 		default:
-			return l.Conversao(doItem, c.TipoItem)
+			return l.Conversao(doItem)
 		}
 		campos := c.Novo()
-		if erro := lerPropriedades(l, doItem, doRecord(c.TipoItem), campos); erro != nil {
+		if erro := lerPropriedades(l, doItem, campos); erro != nil {
 			return erro
 		}
 		itens = append(itens, campos)

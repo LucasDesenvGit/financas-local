@@ -44,7 +44,7 @@ func lerSalvarTransacao(w http.ResponseWriter, r *http.Request) (salvarTransacao
 	ignorar := respostas.CampoBool{Propriedade: "IgnorarRelatorios"}
 	status := respostas.CampoEnum{Propriedade: "Status"}
 	emergencia := respostas.CampoBool{Propriedade: "Emergencia"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarTransacaoDto", &conta, &data, &descricao, &valor, &tipo,
+	if !respostas.LerObjeto(w, r, &conta, &data, &descricao, &valor, &tipo,
 		&categoria, &observacao, &ignorar, &status, &emergencia) {
 		return salvarTransacaoDto{}, false
 	}
