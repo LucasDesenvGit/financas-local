@@ -80,15 +80,17 @@ func estadoDoCofrinho(t *testing.T, db *sql.DB, id int64) string {
 
 // Regra (#691, ADR 0063): a conta em débito automático pelo cofrinho recebe a baixa sozinha no vencimento: a despesa
 // do app na data dele, com a categoria e a reserva, e o vencimento avança. Atrasada, uma baixa por vencimento; na data
-// limite, encerra. À mão, de conta manual, ainda não vencida ou cobrada pelo extrato, nada.
+// limite, encerra. À mão, de conta manual, ainda não vencida ou cobrada pelo extrato, nada. Vencimento de antes do dia
+// em que o "Pago com" passou a valer, ou de conta arquivada, também nada.
 func TestBaixaPeloCofrinho(t *testing.T) {
 	t.Parallel()
 	casos := []struct {
-		nome    string
-		ajustar func(*testeapoio.ContaAgendada, testeapoio.Conta)
-		extrato func(*testeapoio.Fabrica, testeapoio.Conta)
-		quer    string
-		mudaram int
+		nome      string
+		ajustar   func(*testeapoio.ContaAgendada, testeapoio.Conta)
+		extrato   func(*testeapoio.Fabrica, testeapoio.Conta)
+		arquivada bool
+		quer      string
+		mudaram   int
 	}{
 		{nome: "venceu: baixa no vencimento", mudaram: 1,
 			quer: "próximo 2026-11-10; último 2026-10-10; 2026-10-10 -100.0 Emergência"},
@@ -125,6 +127,21 @@ func TestBaixaPeloCofrinho(t *testing.T) {
 					tr.Data, tr.Valor, tr.Descricao = testeapoio.Dia(2026, 10, 11), testeapoio.Valor("-98.0"), "PAGAMENTO ENEL"
 				})
 			}, mudaram: 1, quer: "próximo 2026-11-10; último 2026-10-11"},
+		{nome: "Pago com marcado depois do vencimento: espera o Pagar", ajustar: func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+			a.ReservaDesde = ptrData(testeapoio.Dia(2026, 10, 12))
+		}, quer: "próximo 2026-10-10"},
+		{nome: "Pago com marcado no dia do vencimento: baixa", ajustar: func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+			a.ReservaDesde = ptrData(testeapoio.Dia(2026, 10, 10))
+		}, mudaram: 1, quer: "próximo 2026-11-10; último 2026-10-10; 2026-10-10 -100.0 Emergência"},
+		{nome: "cadastrada com o vencimento meses atrás: nenhuma despesa nos meses passados",
+			ajustar: func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+				a.ProximoVencimento, a.ReservaDesde = testeapoio.Dia(2026, 4, 10), ptrData(testeapoio.Dia(2026, 10, 14))
+			}, quer: "próximo 2026-04-10"},
+		{nome: "atrasada desde que marcou o Pago com: põe em dia", ajustar: func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+			a.ProximoVencimento, a.ReservaDesde = testeapoio.Dia(2026, 8, 10), ptrData(testeapoio.Dia(2026, 8, 1))
+		}, mudaram: 3, quer: "próximo 2026-11-10; último 2026-10-10; 2026-08-10 -100.0 Emergência; " +
+			"2026-09-10 -100.0 Emergência; 2026-10-10 -100.0 Emergência"},
+		{nome: "conta do banco arquivada: nada", arquivada: true, quer: "próximo 2026-10-10"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -134,6 +151,11 @@ func TestBaixaPeloCofrinho(t *testing.T) {
 				ajustes = append(ajustes, c.ajustar)
 			}
 			db, fab, conta, agendada := cenarioDoCofrinho(t, ajustes...)
+			if c.arquivada {
+				if _, err := db.Exec(`UPDATE "Conta" SET "Arquivada" = 1 WHERE "Id" = ?`, conta.Id); err != nil {
+					t.Fatal(err)
+				}
+			}
 			if c.extrato != nil {
 				c.extrato(fab, conta)
 			}
@@ -339,4 +361,82 @@ func TestConciliarDepoisDeTextoEmBranco(t *testing.T) {
 	if mudaram, err := Conciliar(t.Context(), db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err != nil || mudaram != 1 {
 		t.Errorf("Conciliar = %d, %v; esperado 1", mudaram, err)
 	}
+}
+
+func ptrData(d tipos.Data) *tipos.Data { return &d }
+
+// Regra (#691): a baixa pelo cofrinho é só de conta a pagar ativa, e o "Desfazer" só a reativa quando foi a própria
+// baixa que a encerrou (a última). Encerrada pela pessoa depois da baixa, não desfaz (a conta mudou) e a lista não
+// oferece; o "Pagar" pelo cofrinho de conta encerrada é recusado, sem gravar nada.
+func TestEncerradaPeloCofrinho(t *testing.T) {
+	t.Parallel()
+	ctx, hoje := t.Context(), testeapoio.Dia(2026, 10, 14)
+	podeDesfazer := func(t *testing.T, db *sql.DB, id int64) bool {
+		t.Helper()
+		ultimos, err := UltimosPeloCofrinho(ctx, db)
+		if err != nil {
+			t.Fatal(err)
+		}
+		u, ok := ultimos[id]
+		if !ok {
+			t.Fatalf("UltimosPeloCofrinho sem a conta %d: %+v", id, ultimos)
+		}
+		return u.PodeDesfazer
+	}
+
+	t.Run("a baixa encerrou: desfazer reativa", func(t *testing.T) {
+		t.Parallel()
+		db, _, _, agendada := cenarioDoCofrinho(t, func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+			a.DataLimite = ptrData(testeapoio.Dia(2026, 10, 10))
+		})
+		if _, err := Conciliar(ctx, db, hoje, agoraDoTeste); err != nil {
+			t.Fatal(err)
+		}
+		if !podeDesfazer(t, db, agendada.Id) {
+			t.Error("a lista não oferece desfazer a baixa que encerrou")
+		}
+		if err := DesfazerPagamento(ctx, db, agendada.Id); err != nil {
+			t.Fatal(err)
+		}
+		if obtido, quer := estadoDoCofrinho(t, db, agendada.Id), "próximo 2026-10-10"; obtido != quer {
+			t.Errorf("depois de desfazer: %q, esperado %q", obtido, quer)
+		}
+	})
+
+	t.Run("encerrada depois da baixa: não desfaz", func(t *testing.T) {
+		t.Parallel()
+		db, _, _, agendada := cenarioDoCofrinho(t)
+		if _, err := Conciliar(ctx, db, hoje, agoraDoTeste); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := db.Exec(`UPDATE "ContaAgendada" SET "Ativa" = 0 WHERE "Id" = ?`, agendada.Id); err != nil {
+			t.Fatal(err)
+		}
+		if podeDesfazer(t, db, agendada.Id) {
+			t.Error("a lista oferece desfazer a baixa de uma conta encerrada depois")
+		}
+		if err := DesfazerPagamento(ctx, db, agendada.Id); !errors.Is(err, ErrPagamentoMudou) {
+			t.Errorf("DesfazerPagamento = %v, esperado ErrPagamentoMudou", err)
+		}
+		quer := "próximo 2026-11-10; último 2026-10-10; encerrada; 2026-10-10 -100.0 Emergência"
+		if obtido := estadoDoCofrinho(t, db, agendada.Id); obtido != quer {
+			t.Errorf("depois de tentar desfazer: %q, esperado %q", obtido, quer)
+		}
+	})
+
+	t.Run("pagar pelo cofrinho a encerrada: recusa", func(t *testing.T) {
+		t.Parallel()
+		db, _, _, agendada := cenarioDoCofrinho(t, func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+			a.Ativa = false
+		})
+		c := &ContaDoCofrinho{Id: agendada.Id, Descricao: "Conta de luz", Valor: testeapoio.Valor("100.0"),
+			ProximoVencimento: testeapoio.Dia(2026, 10, 10), Recorrencia: 1, ContaId: *agendada.ContaId,
+			ReservaNome: "Emergência"}
+		if err := PagarPeloCofrinho(ctx, db, c, hoje, false, agoraDoTeste); !errors.Is(err, ErrContaEncerrada) {
+			t.Errorf("PagarPeloCofrinho = %v, esperado ErrContaEncerrada", err)
+		}
+		if obtido, quer := estadoDoCofrinho(t, db, agendada.Id), "próximo 2026-10-10; encerrada"; obtido != quer {
+			t.Errorf("depois de pagar: %q, esperado %q", obtido, quer)
+		}
+	})
 }

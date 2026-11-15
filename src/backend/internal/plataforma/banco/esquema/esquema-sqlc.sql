@@ -253,6 +253,7 @@ CREATE TABLE "ContaAgendada" (
     "Observacao" TEXT,
     "ChaveExtrato" TEXT,
     "ReservaNome" TEXT,
+    "ReservaDesde" TEXT,
     "CriadoEm" TEXT NOT NULL
 );
 

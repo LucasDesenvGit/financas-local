@@ -902,6 +902,7 @@ export const MANUAL: CapituloManual[] = [
           'No cadastro, escolha a conta de pagamento do Open Finance onde fica o cofrinho. Aparece o campo “Pago com”.',
           'Em “Pago com”, escolha o cofrinho. Se ele ainda não aparece na lista, use “Outro cofrinho…” e digite o nome como está no app do banco.',
           'Com “débito automático”, o site lança a despesa sozinho no dia do vencimento, com o valor e a categoria da conta a pagar, e o vencimento avança. Com “paga à mão”, o “Pagar” já vem com o cofrinho.',
+          'O lançamento sozinho vale a partir do dia em que você marca o “Pago com”: um vencimento mais antigo que isso fica vencido, com “Pagar”, para não aparecer despesa em meses já fechados.',
           'A despesa entra no mês, na categoria, nos orçamentos e nos relatórios. O saldo estimado do cofrinho baixa; o saldo da conta não muda.',
           'Na lista aparece “paga pelo cofrinho … em …”. Use “ajustar valor” quando a conta veio diferente (luz, água) e “desfazer” se ela não foi paga assim. Desfeita a baixa automática, o site não lança de novo aquele vencimento sozinho: use “Pagar” se ela foi paga.',
           'Se a cobrança chegar pelo extrato mesmo assim (o cofrinho estava sem saldo e o banco tirou da conta), com o “Texto da cobrança no extrato”, vale a do banco e a despesa do site sai sozinha.'
