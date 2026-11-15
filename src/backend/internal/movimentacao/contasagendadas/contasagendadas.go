@@ -136,13 +136,15 @@ const diasSemDespesa = 45
 
 // ultimosSemDespesa são as contas a pagar com "Pago com" um cofrinho cujo último pagamento (de até 45 dias) não tem
 // lançamento: nem do app pelo cofrinho (o despesaDoCofrinho), nem cobrança do banco com o texto da cobrança na data. É
-// o pagamento dado antes de marcar o cofrinho (#691).
+// o pagamento dado antes de marcar o cofrinho (#691). Conta arquivada ou fora do saldo fica de fora, como na aba
+// Reservas: a despesa lançada ali não baixaria cofrinho nenhum.
 func (s *Servico) ultimosSemDespesa(ctx context.Context, hoje tipos.Data) (map[int64]tipos.Data, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT a."Id", a."UltimoPagamentoEm", a."TextoCobranca",
 		EXISTS (SELECT 1 FROM "PagamentoCofrinho" AS p INNER JOIN "Transacao" AS t ON t."Id" = p."TransacaoId"
 			WHERE p."ContaAgendadaId" = a."Id" AND (t."Data" = a."UltimoPagamentoEm" OR p."ProximoVencimento" = a."ProximoVencimento"))
 		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
-		WHERE a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND a."UltimoPagamentoEm" IS NOT NULL
+		WHERE a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND NOT c."Arquivada" AND c."IncluirNoSaldo"
+		AND a."UltimoPagamentoEm" IS NOT NULL
 		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, origemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
 	if err != nil {
 		return nil, fmt.Errorf("ler os pagamentos pelo cofrinho sem despesa: %w", err)

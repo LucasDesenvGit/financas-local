@@ -906,7 +906,7 @@ export const MANUAL: CapituloManual[] = [
           'A despesa entra no mês, na categoria, nos orçamentos e nos relatórios. O saldo estimado do cofrinho baixa; o saldo da conta não muda.',
           'Na lista aparece “paga pelo cofrinho … em …”. Use “ajustar valor” quando a conta veio diferente (luz, água) e “desfazer” se ela não foi paga assim. Desfeita a baixa automática, o site não lança de novo aquele vencimento sozinho: use “Pagar” se ela foi paga.',
           'Se a cobrança chegar pelo extrato mesmo assim (o cofrinho estava sem saldo e o banco tirou da conta), com o “Texto da cobrança no extrato”, vale a do banco e a despesa do site sai sozinha.',
-          'Não marcou o cofrinho e o débito automático não apareceu? Depois de uma sincronização, o aviso “não veio” pergunta “Foi paga com um cofrinho?”. O botão abre o “Pagar” com o cofrinho e a data do vencimento, lança a despesa e, marcado “Usar este cofrinho nas próximas”, guarda o “Pago com”.',
+          'Não marcou o cofrinho e o débito automático não apareceu? Depois de uma sincronização sem erro, com os dados do banco já de depois do vencimento, o aviso “não veio” pergunta “Foi paga com um cofrinho?”. Se a cobrança chegar pelo extrato depois mesmo assim, vale a do banco, e a despesa pelo cofrinho sai sozinha. O botão abre o “Pagar” com o cofrinho e a data do vencimento, lança a despesa e, marcado “Usar este cofrinho nas próximas”, guarda o “Pago com”.',
           'O último pagamento ficou sem a despesa (dado antes de marcar o cofrinho)? A conta mostra “o pagamento de … está sem a despesa” com “lançar pelo cofrinho”, que lança no valor da conta a pagar.'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],

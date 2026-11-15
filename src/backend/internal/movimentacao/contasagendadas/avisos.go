@@ -54,6 +54,8 @@ type recorrente struct {
 	contaOpenFinance  bool
 	reservaNome       *string
 	ultimaSync        *tipos.DataHora // a da conexão da conta (UTC)
+	syncComErro       bool            // a última sincronização terminou com erro da instituição (UltimoErro)
+	dadosDoBancoEm    *tipos.DataHora // até quando os dados da instituição estão em dia (UltimaAtualizacaoInstituicao, UTC)
 }
 
 // cobranca é uma saída do extrato, com o texto já normalizado e o valor positivo.
@@ -159,11 +161,15 @@ func aumento(c recorrente, minhas []cobranca, ultima cobranca) (AvisoDto, bool) 
 }
 
 // podeSerCofrinho é o "foi paga com um cofrinho?" do "não veio" (#691): débito automático numa conta do Open
-// Finance, sem "Pago com", e uma sincronização bem-sucedida depois do dia do vencimento (o que o banco mandou já
-// chegou, e a cobrança não estava).
+// Finance, sem "Pago com", e o que o banco mandou já cobre o dia do vencimento, e a cobrança não estava: a última
+// sincronização terminou sem erro da instituição, e ela e os dados da instituição são de depois do dia do vencimento.
+// Uma sincronização recente com os dados do banco ainda de antes não diz que a cobrança faltou: ela pode só não ter
+// chegado, e o cofrinho lançado agora viraria despesa em dobro.
 func podeSerCofrinho(c recorrente) bool {
+	depois := relogio.InicioDoDiaUtc(c.proximoVencimento.SomarDias(1))
+	emDia := func(d *tipos.DataHora) bool { return d != nil && !d.Tempo().Before(depois) }
 	return c.formaCobranca == cobrancas.FormaDebitoAutomatico && c.contaOpenFinance && c.reservaNome == nil &&
-		c.ultimaSync != nil && !c.ultimaSync.Tempo().Before(relogio.InicioDoDiaUtc(c.proximoVencimento.SomarDias(1)))
+		!c.syncComErro && emDia(c.ultimaSync) && emDia(c.dadosDoBancoEm)
 }
 
 func valorOuVazio(t *string) string {
@@ -176,7 +182,7 @@ func valorOuVazio(t *string) string {
 func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT c."Id", c."Descricao", c."Valor", c."ProximoVencimento", c."FormaCobranca",
 		c."TextoCobranca", c."ContaId", co."Nome", COALESCE(co."Arquivada", 0), COALESCE(co."Origem", 0) = ?, c."ReservaNome",
-		b."UltimaSincronizacaoEm"
+		b."UltimaSincronizacaoEm", b."UltimoErro" IS NOT NULL, b."UltimaAtualizacaoInstituicao"
 		FROM "ContaAgendada" AS c LEFT JOIN "Conta" AS co ON c."ContaId" = co."Id"
 		LEFT JOIN "ConexaoBancaria" AS b ON b."Id" = co."ConexaoBancariaId"
 		WHERE c."Ativa" AND c."Recorrencia" <> ? ORDER BY c."Id"`, origemOpenFinance, relatorios.RecorrenciaUnica)
@@ -188,7 +194,8 @@ func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 	for linhas.Next() {
 		var c recorrente
 		if err := linhas.Scan(&c.id, &c.descricao, &c.valor, &c.proximoVencimento, &c.formaCobranca, &c.textoCobranca,
-			&c.contaId, &c.contaNome, &c.contaArquivada, &c.contaOpenFinance, &c.reservaNome, &c.ultimaSync); err != nil {
+			&c.contaId, &c.contaNome, &c.contaArquivada, &c.contaOpenFinance, &c.reservaNome, &c.ultimaSync,
+			&c.syncComErro, &c.dadosDoBancoEm); err != nil {
 			return nil, fmt.Errorf("ler conta a pagar recorrente: %w", err)
 		}
 		lista = append(lista, c)
